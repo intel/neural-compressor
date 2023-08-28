@@ -17,6 +17,7 @@
 """Block detector for Transformer-based model."""
 
 from ...utils.utility import LazyImport
+
 torch = LazyImport("torch")
 from typing import Dict, List, Union
 
@@ -25,13 +26,13 @@ from .util import get_depth, get_dict_at_depth, get_element_under_depth
 
 BLOCK_PATTERNS = [
     # [['OP_TYPE1', NUM_OPS], ['OP_TYPE2', NUM_OPS], ...]
-    [['Linear', 4], ['Linear', 4]], # TODO add model name
-    [['Linear', 2], ['Linear', 2]], # TODO add model name
-    [['Conv1D', 2], ['Conv1D', 2]], # GPT-2
-    [['Linear', 4], ['Linear', 3]], # Llama
-    [['Linear', 4], ['Linear', 2]], # T5-Encoder, OPT
-    [['Linear', 4], ['Linear', 1], ['Linear', 1]], # Bert
-    [['Linear', 4], ['Linear', 4], ['Linear', 2]],  # T5-Decoder
+    [["Linear", 4], ["Linear", 4]],  # TODO add model name
+    [["Linear", 2], ["Linear", 2]],  # TODO add model name
+    [["Conv1D", 2], ["Conv1D", 2]],  # GPT-2
+    [["Linear", 4], ["Linear", 3]],  # Llama
+    [["Linear", 4], ["Linear", 2]],  # T5-Encoder, OPT
+    [["Linear", 4], ["Linear", 1], ["Linear", 1]],  # Bert
+    [["Linear", 4], ["Linear", 4], ["Linear", 2]],  # T5-Decoder
 ]
 
 
@@ -50,8 +51,7 @@ class TransformerBasedModelBlockPatternDetector:
         self.pos_info = None
 
     def detect_block(self) -> Dict[str, List[List[str]]]:
-        """
-        Traverse the model definition and return the attention blocks and ffn blocks.
+        """Traverse the model definition and return the attention blocks and ffn blocks.
 
         Returns:
 
@@ -76,7 +76,7 @@ class TransformerBasedModelBlockPatternDetector:
         return blocks
 
     @staticmethod
-    def traverse_model(model, prefix="", depth=1, result=None, key = 0):
+    def traverse_model(model, prefix="", depth=1, result=None, key=0):
         """Traverse the pytorch model according to its hierarchical structure.
 
         Args:
@@ -86,22 +86,23 @@ class TransformerBasedModelBlockPatternDetector:
             result: depth and its included ops. Defaults to {0: {}}.
             key: current root key. Defaults to 0.
         """
-        module_lst =list(model.named_children())
+        module_lst = list(model.named_children())
         if len(module_lst) == 0:
             # layer name: 'encoder.layer.7.attention.self.query'
             # model repr: Linear(in_features=768, out_features=768, bias=True)
             # class name: 'Linear'
             result[key] = (prefix, model, model.__class__.__name__)
         for i, (name, sub_module) in enumerate(module_lst, 1):
-            indent = "    "*depth
-            new_name = prefix + '.' + name if prefix != "" else name
+            indent = "    " * depth
+            new_name = prefix + "." + name if prefix != "" else name
             model_type = sub_module.__class__.__name__
-            logger.debug( f"Depth: [{depth}]" + indent + f"[{model_type}]{ new_name}")
+            logger.debug(f"Depth: [{depth}]" + indent + f"[{model_type}]{ new_name}")
             sub_key = (depth, i, model_type)
             if sub_key not in result[key]:
                 result[key][sub_key] = dict()
-            TransformerBasedModelBlockPatternDetector.traverse_model(sub_module, prefix=new_name, \
-                depth=depth+1, result=result[key], key = sub_key)
+            TransformerBasedModelBlockPatternDetector.traverse_model(
+                sub_module, prefix=new_name, depth=depth + 1, result=result[key], key=sub_key
+            )
 
     @staticmethod
     def _search_pattern(pos_info: Dict, pattern: List[List[Union[str, int]]]) -> List[List[str]]:
@@ -150,6 +151,7 @@ class TransformerBasedModelBlockPatternDetector:
     def _group_block(detect_result):
         """Collect attention and ffn blocks from detect result."""
         import itertools
+
         ffn_block_lst = []
         attention_block_lst = []
         for block_lst, pattern in detect_result:

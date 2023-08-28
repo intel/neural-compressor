@@ -53,8 +53,8 @@ Users can specify a built-in objective in `neural_compressor.config.TuningCriter
 
 ```python
 from neural_compressor.config import TuningCriterion
-tuning_criterion = TuningCriterion(objective='accuracy')
 
+tuning_criterion = TuningCriterion(objective="accuracy")
 ```
 
 ### Config Multiple Objectives
@@ -63,7 +63,8 @@ Users can specify built-in multiple objectives in `neural_compressor.config.Tuni
 
 ```python
 from neural_compressor.config import TuningCriterion
-tuning_criterion = TuningCriterion(objective=['performance', 'accuracy'])
+
+tuning_criterion = TuningCriterion(objective=["performance", "accuracy"])
 ```
 
 ## Example

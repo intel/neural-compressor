@@ -14,7 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Built-in datasets class for multiple framework backends."""
 
 from .coco_dataset import COCORecordDataset
@@ -25,9 +24,8 @@ import glob
 modules = glob.glob(join(dirname(__file__), "*.py"))
 
 for f in modules:
-    if isfile(f) and not f.startswith('__') and not f.endswith('__init__.py'):
+    if isfile(f) and not f.startswith("__") and not f.endswith("__init__.py"):
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-__all__ = ["Datasets", "Dataset", "IterableDataset", "dataset_registry", "TensorflowImageRecord",
-            "COCORecordDataset"]
+__all__ = ["Datasets", "Dataset", "IterableDataset", "dataset_registry", "TensorflowImageRecord", "COCORecordDataset"]

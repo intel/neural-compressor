@@ -103,8 +103,7 @@ As is shown in the chart, the distribution of weights often concentrates in a sm
 
 Therefore, you can disable this Op:
 ```python
-op_name_dict = {'v0/cg/conv0/conv2d/Conv2D': {
-   'activation':  {'dtype': ['fp32']}}}
+op_name_dict = {"v0/cg/conv0/conv2d/Conv2D": {"activation": {"dtype": ["fp32"]}}}
 conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100], op_name_dict=op_name_dict)
 ```
 

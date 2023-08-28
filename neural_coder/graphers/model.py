@@ -14,15 +14,16 @@
 
 # FOR PYTORCH ONLY
 
-from .function import get_all_wrap_children
-from ..utils.line_operation import get_line_indent_level, of_definition_format
-from typing import List
-from .. import globals
 import logging
+from typing import List
 
-logging.basicConfig(level=globals.logging_level,
-                    format='%(asctime)s %(levelname)s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S +0000')
+from .. import globals
+from ..utils.line_operation import get_line_indent_level, of_definition_format
+from .function import get_all_wrap_children
+
+logging.basicConfig(
+    level=globals.logging_level, format="%(asctime)s %(levelname)s %(message)s", datefmt="%a, %d %b %Y %H:%M:%S +0000"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -61,11 +62,16 @@ class ModelDefinition:
 
 # search nnModule classes
 def register_nnModule_class():
-    logger.info(f"Analyzing nn.Module class definitions in all files ...")
+    logger.info("Analyzing nn.Module class definitions in all files ...")
     # search raw nnModule class (e.g. class ClassName(nn.Module):)
     for cl in globals.list_code_line_instance:
-        parent_class_has_nnModule = list(set(cl.parent_class_name) & set(
-            ["nn.Module", "torch.nn.Module", "nn.Sequential", "torch.Sequential", "_BaseAutoModelClass"])) != []
+        parent_class_has_nnModule = (
+            list(
+                set(cl.parent_class_name)
+                & set(["nn.Module", "torch.nn.Module", "nn.Sequential", "torch.Sequential", "_BaseAutoModelClass"])
+            )
+            != []
+        )
         if cl.is_class_def_line and parent_class_has_nnModule:
             CD = ClassDefinition(
                 class_name=cl.class_name,
@@ -85,8 +91,7 @@ def register_nnModule_class():
     while do_search:
         list_child_class_name = []
         for cl in globals.list_code_line_instance:
-            parent_class_has_nnModule = list(
-                set(cl.parent_class_name) & set(search_scope)) != []
+            parent_class_has_nnModule = list(set(cl.parent_class_name) & set(search_scope)) != []
             if cl.is_class_def_line and parent_class_has_nnModule:
                 CD = ClassDefinition(
                     class_name=cl.class_name,
@@ -111,8 +116,7 @@ def register_nnModule_class():
 
 # search nnModule instance definition
 def register_nnModule_instance_definition():
-    logger.info(
-        f"Analyzing nn.Module instance (model instance) definitions in all files ...")
+    logger.info("Analyzing nn.Module instance (model instance) definitions in all files ...")
 
     # search model definition lines like "model_name = ClassName(xxx)"
     def_cl = []
@@ -120,10 +124,12 @@ def register_nnModule_instance_definition():
         if not cl.is_multi_line_comment and not cl.is_single_line_comment_or_empty:
             is_def, lhs, rhs = of_definition_format(cl.line_content)
             stripped = cl.line_content.replace(" ", "")
-            if is_def and \
-               rhs in globals.list_class_name + ["Module", "Sequential"] and \
-               cl.class_name not in globals.list_class_name and \
-               "(" not in cl.return_item:
+            if (
+                is_def
+                and rhs in globals.list_class_name + ["Module", "Sequential"]
+                and cl.class_name not in globals.list_class_name
+                and "(" not in cl.return_item
+            ):
                 def_cl.append(cl)
             elif is_def and "__dict__[args.arch]" in cl.line_content:
                 def_cl.append(cl)
@@ -134,8 +140,11 @@ def register_nnModule_instance_definition():
                 def_cl.append(cl)
             elif is_def and "keras.Sequential" in cl.line_content:
                 def_cl.append(cl)
-            elif is_def and "." in stripped and \
-                stripped[stripped.find("=") + 1: stripped.find(".")] in globals.list_class_name:
+            elif (
+                is_def
+                and "." in stripped
+                and stripped[stripped.find("=") + 1 : stripped.find(".")] in globals.list_class_name
+            ):
                 def_cl.append(cl)
 
     list_lhs = []
@@ -176,8 +185,11 @@ def register_nnModule_instance_definition():
             globals.list_model_def_instance.append(MD)
         elif list_is_in_func[i]:  # situation 2: "model = Net()" is inside a function
             # situation 2-1: the function does not return another model's name, and is not __init__
-            if list_return_item[i] not in list_lhs and \
-                    list_func_name[i] != "__init__" and "tokenizer" not in list_lhs[i]:
+            if (
+                list_return_item[i] not in list_lhs
+                and list_func_name[i] != "__init__"
+                and "tokenizer" not in list_lhs[i]
+            ):
                 # register this model
                 globals.list_model_name.append(list_lhs[i])
                 MD = ModelDefinition(
@@ -193,13 +205,15 @@ def register_nnModule_instance_definition():
                 globals.list_model_def_instance.append(MD)
             # situation 2-2: the function returns another model's name
             elif list_return_item[i] in list_lhs:
-                globals.list_wrapper_base_function_name.append(
-                    list_func_name[i])
+                globals.list_wrapper_base_function_name.append(list_func_name[i])
 
     # register function_name like "xxx" in "def xxx() ... return NNModuleClass()"
     for cl in globals.list_code_line_instance:
-        if cl.is_in_func and cl.line_idx == cl.func_return_idx and \
-                cl.return_item[:cl.return_item.find("(")] in globals.list_class_name:
+        if (
+            cl.is_in_func
+            and cl.line_idx == cl.func_return_idx
+            and cl.return_item[: cl.return_item.find("(")] in globals.list_class_name
+        ):
             globals.list_wrapper_base_function_name.append(cl.func_name)
 
     # for all base function_name (that returns nnModule instance),
@@ -208,47 +222,53 @@ def register_nnModule_instance_definition():
     globals.list_wrapper_children_function_name = []
     for i in globals.list_wrapper_base_function_name:
         globals.list_wrapper_children_function_name += get_all_wrap_children(i)
-    globals.list_wrapper_all_function_name = globals.list_wrapper_base_function_name + \
-        globals.list_wrapper_children_function_name
+    globals.list_wrapper_all_function_name = (
+        globals.list_wrapper_base_function_name + globals.list_wrapper_children_function_name
+    )
     globals.list_wrapper_all_function_name = list(set(globals.list_wrapper_all_function_name))
 
     # register function_name like "xxx" in "def xxx() ... model = some_wrapper_function() ... return model"
     for cl in globals.list_code_line_instance:
         if cl.is_in_func and not cl.is_multi_line_comment and not cl.is_single_line_comment_or_empty:
             is_def, lhs, rhs = of_definition_format(cl.line_content)
-            if is_def and \
-               rhs in globals.list_wrapper_all_function_name and \
-               cl.class_name not in globals.list_class_name and \
-               cl.return_item == lhs:
+            if (
+                is_def
+                and rhs in globals.list_wrapper_all_function_name
+                and cl.class_name not in globals.list_class_name
+                and cl.return_item == lhs
+            ):
                 globals.list_wrapper_base_function_name.append(cl.func_name)
 
     # (again)
     # for all base function_name (that returns nnModule instance),
     # find all wrapper function_name of the base wrapper function_name
-    globals.list_wrapper_base_function_name = list(
-        set(globals.list_wrapper_base_function_name))
+    globals.list_wrapper_base_function_name = list(set(globals.list_wrapper_base_function_name))
     for i in globals.list_wrapper_base_function_name:
         globals.list_wrapper_children_function_name += get_all_wrap_children(i)
-    globals.list_wrapper_all_function_name += globals.list_wrapper_base_function_name + \
-        globals.list_wrapper_children_function_name
-    globals.list_wrapper_all_function_name = list(
-        set(globals.list_wrapper_all_function_name))
+    globals.list_wrapper_all_function_name += (
+        globals.list_wrapper_base_function_name + globals.list_wrapper_children_function_name
+    )
+    globals.list_wrapper_all_function_name = list(set(globals.list_wrapper_all_function_name))
 
     # print all wrapper function names for debug purpose
-    logger.debug(
-        f"globals.list_wrapper_all_function_name: {globals.list_wrapper_all_function_name}")
+    logger.debug(f"globals.list_wrapper_all_function_name: {globals.list_wrapper_all_function_name}")
 
     for cl in globals.list_code_line_instance:
         if not cl.is_multi_line_comment and not cl.is_single_line_comment_or_empty and cl.func_name != "__init__":
             is_def, lhs, rhs = of_definition_format(cl.line_content)
-            if is_def and \
-                rhs in globals.list_wrapper_all_function_name and \
-                rhs not in ["self.model", "model", "self.call", "call"] and \
-                "forward" not in rhs and \
-                "config" not in lhs and "congfig" not in lhs and "," not in lhs and "inference" not in lhs and \
-                    "tokenizer" not in lhs and \
-                cl.class_name not in globals.list_class_name and \
-                    cl.func_name not in globals.list_wrapper_all_function_name:
+            if (
+                is_def
+                and rhs in globals.list_wrapper_all_function_name
+                and rhs not in ["self.model", "model", "self.call", "call"]
+                and "forward" not in rhs
+                and "config" not in lhs
+                and "congfig" not in lhs
+                and "," not in lhs
+                and "inference" not in lhs
+                and "tokenizer" not in lhs
+                and cl.class_name not in globals.list_class_name
+                and cl.func_name not in globals.list_wrapper_all_function_name
+            ):
                 # register this model
                 globals.list_model_name.append(lhs)
                 MD = ModelDefinition(
@@ -263,7 +283,6 @@ def register_nnModule_instance_definition():
                 # model def can be outside any function, or in a function that is not itself a wrapper function
                 MD.print_info()
                 globals.list_model_def_instance.append(MD)
-
 
     globals.list_model_name = list(set(globals.list_model_name))
 

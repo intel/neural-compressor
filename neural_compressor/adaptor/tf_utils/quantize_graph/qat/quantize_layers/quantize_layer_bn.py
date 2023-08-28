@@ -18,7 +18,8 @@
 
 from .quantize_layer_base import QuantizeLayerBase
 
-class QuantizeLayerBatchNormalization(QuantizeLayerBase): # pragma: no cover
+
+class QuantizeLayerBatchNormalization(QuantizeLayerBase):  # pragma: no cover
     """The class for quantization of BatchNormalization."""
 
     def __init__(self):
@@ -37,7 +38,7 @@ class QuantizeLayerBatchNormalization(QuantizeLayerBase): # pragma: no cover
         input_layer = self._find_input_layers(self.layer)
         assert len(input_layer) == 1, "BatchNormalization only has one input."
         input_layer_class = input_layer.__class__.__name__
-        if 'Conv' not in input_layer_class:
+        if "Conv" not in input_layer_class:
             return True
 
         return False
@@ -50,8 +51,8 @@ class QuantizeLayerBatchNormalization(QuantizeLayerBase): # pragma: no cover
         as quantizable by QuantizeConfig.
 
         Args:
-            layer (tf.keras.layers.Layer): The keras layer to be estimated. 
+            layer (tf.keras.layers.Layer): The keras layer to be estimated.
         """
         self.layer = layer
         if self._quantizable_bn():
-            self.quantize_config.add_quantize_recipe({self.layer.name: {'quantize': True}})
+            self.quantize_config.add_quantize_recipe({self.layer.name: {"quantize": True}})

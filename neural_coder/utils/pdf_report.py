@@ -400,7 +400,7 @@
 #         bc.categoryAxis.categoryNames = ["Default: " + str(format(TCO_raw, ',')) + " (sample/$)",
 #                                          "Optimized: " + str(format(TCO_accelerated, ',')) + " (sample/$)"]
 #         drawing.add(bc)
-        
+
 #         # add label
 #         lab = Label()
 #         lab.setOrigin(0, 0)

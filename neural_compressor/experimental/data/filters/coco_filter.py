@@ -14,12 +14,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Built-in COCO filter."""
 
 from neural_compressor.utils.utility import LazyImport
+
 from .filter import Filter, filter_registry
-tf = LazyImport('tensorflow')
+
+tf = LazyImport("tensorflow")
 
 
 @filter_registry(filter_type="LabelBalanceCOCORecord", framework="tensorflow, tensorflow_itex")
@@ -40,8 +41,11 @@ class LabelBalanceCOCORecordFilter(Filter):
         return tf.math.equal(len(label[0]), self.size)
 
 
-@filter_registry(filter_type="LabelBalanceCOCORaw", framework="tensorflow, \
-                 tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
+@filter_registry(
+    filter_type="LabelBalanceCOCORaw",
+    framework="tensorflow, \
+                 tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops",
+)
 class LabelBalanceCOCORawFilter(Filter):
     """The label balance filter for COCO raw data."""
 
@@ -57,4 +61,3 @@ class LabelBalanceCOCORawFilter(Filter):
             label: label of a sample.
         """
         return len(label) == self.size
-

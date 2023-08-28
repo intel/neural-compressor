@@ -17,7 +17,7 @@ import os
 import socket
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Union, Optional
+from typing import Optional, Union
 
 from neural_insights.utils.exceptions import ClientErrorException, NotFoundException
 
@@ -61,7 +61,10 @@ def get_size(path: str, unit: str = "MB", add_unit: bool = False) -> Union[str, 
 
 
 def check_module(module_name: str) -> None:
-    """Check if module exists. Raise exception when not found."""
+    """Check if module exists.
+
+    Raise exception when not found.
+    """
     if module_name == "onnxrt":
         module_name = "onnxruntime"
     if module_name == "pytorch":

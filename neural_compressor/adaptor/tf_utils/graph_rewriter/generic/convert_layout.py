@@ -17,14 +17,15 @@
 """Convert Layout Graph Rewriter."""
 
 import tensorflow as tf
-from tensorflow.python.training import saver as saver_lib
-from tensorflow.core.protobuf import config_pb2
-from tensorflow.core.protobuf import rewriter_config_pb2
+from tensorflow.core.protobuf import config_pb2, meta_graph_pb2, rewriter_config_pb2
 from tensorflow.python.grappler import tf_optimizer
-from tensorflow.core.protobuf import meta_graph_pb2
-from neural_compressor.utils.utility import dump_elapsed_time
-from ..graph_base import GraphRewriterBase
+from tensorflow.python.training import saver as saver_lib
+
 from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
+from neural_compressor.utils.utility import dump_elapsed_time
+
+from ..graph_base import GraphRewriterBase
+
 
 class ConvertLayoutOptimizer(GraphRewriterBase):
     """The layout convertion optimizer, convert NCHW to NHWC format.
@@ -36,6 +37,7 @@ class ConvertLayoutOptimizer(GraphRewriterBase):
 
     Return: converted graph_def
     """
+
     def __init__(self, model, outputs):
         """Initilization."""
         super().__init__(model)
@@ -46,26 +48,24 @@ class ConvertLayoutOptimizer(GraphRewriterBase):
         """Execute converting layout."""
         convert = False
         for node in self.model.node:
-            if 'Conv' in node.op and \
-               'data_format' in node.attr and \
-               node.attr['data_format'].s == b'NCHW':
+            if "Conv" in node.op and "data_format" in node.attr and node.attr["data_format"].s == b"NCHW":
                 convert = True
                 break
-        if convert and version1_gt_version2(tf.version.VERSION, '2.3.0'):
+        if convert and version1_gt_version2(tf.version.VERSION, "2.3.0"):
             g = tf.Graph()
-            with g.as_default(): # pylint: disable=not-context-manager
-                g = tf.compat.v1.import_graph_def(self.model, name='')
-                meta_graph = saver_lib.export_meta_graph(
-                    graph_def=self.model, graph=g, clear_devices=False)
+            with g.as_default():  # pylint: disable=not-context-manager
+                g = tf.compat.v1.import_graph_def(self.model, name="")
+                meta_graph = saver_lib.export_meta_graph(graph_def=self.model, graph=g, clear_devices=False)
                 fetch_collection = meta_graph_pb2.CollectionDef()
                 for fetch in self.outputs:
-                    fetch_collection.node_list.value.append(fetch) # pylint: disable=no-member
-                meta_graph.collection_def["train_op"].CopyFrom( # pylint: disable=no-member
-                                                    fetch_collection) # pylint: disable=no-member
+                    fetch_collection.node_list.value.append(fetch)  # pylint: disable=no-member
+                meta_graph.collection_def["train_op"].CopyFrom(  # pylint: disable=no-member
+                    fetch_collection
+                )  # pylint: disable=no-member
 
             config = config_pb2.ConfigProto()
-            convert = rewriter_config_pb2.RewriterConfig.NCHW_TO_NHWC # pylint: disable=no-member
-            config.graph_options.rewrite_options.CopyFrom( # pylint: disable=no-member
+            convert = rewriter_config_pb2.RewriterConfig.NCHW_TO_NHWC  # pylint: disable=no-member
+            config.graph_options.rewrite_options.CopyFrom(  # pylint: disable=no-member
                 rewriter_config_pb2.RewriterConfig(
                     disable_model_pruning=True,
                     constant_folding=rewriter_config_pb2.RewriterConfig.OFF,
@@ -77,7 +77,9 @@ class ConvertLayoutOptimizer(GraphRewriterBase):
                     function_optimization=rewriter_config_pb2.RewriterConfig.OFF,
                     remapping=rewriter_config_pb2.RewriterConfig.OFF,
                     implementation_selector=rewriter_config_pb2.RewriterConfig.OFF,
-                    cpu_layout_conversion=convert))
+                    cpu_layout_conversion=convert,
+                )
+            )
 
             optimized_graph = tf_optimizer.OptimizeGraph(config, meta_graph)
             return optimized_graph

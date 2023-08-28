@@ -25,7 +25,7 @@ This part helps user to get a quick understand about design structure and workfl
 Python-based APIs contains more details about the functional APIs in Intel® Neural Compressor,
 which introduce the mechanism of each function and provides a tutorial to help the user apply in their own cases.
 Please note that we will stop to support Intel Neural Compressor 1.X API in the future.
-So we provide a comprehensive migration document in Code Migration to help the user update their code from previous 1.X version to the new 2.X version.
+So we provide a comprehensive migration document in Code Migration to help the user update their code from previous 1.X version to the new 2.X version.  
 In 2.X API, it's very important to create the `DataLoader` and `Metrics` for your examples, so we provide the detail introductions.
 
 <table class="docutils">

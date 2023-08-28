@@ -44,7 +44,7 @@
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QLinear']
       },
-      'Relu': *default_static_qlinear_qdq, 
+      'Relu': *default_static_qlinear_qdq,
       'Clip': *default_static_qlinear_qdq,
       'MaxPool': *default_static_qlinear_qdq,
       'Add': *default_static_qlinear,
@@ -54,7 +54,7 @@
     'Softmax', 'Gemm', 'MatMul', 'Conv', 'Concat', 'Upsample', 'Pow', 'Sqrt', 'DepthToSpace',
     'Clip', 'BatchNormalization', 'Transpose', 'Softmax', 'AveragePool', 'Squeeze', 'MaxPool',
     'Relu', 'Concat']
- 
+
   recipes: &default_optimization
     graph_optimization:   # from onnxruntime graph_optimization_level
       level: ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']

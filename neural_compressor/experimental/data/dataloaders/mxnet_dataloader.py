@@ -17,26 +17,41 @@
 # ==============================================================================
 """MXNet Dataloader implementation."""
 
-from neural_compressor.utils.utility import LazyImport
-from .base_dataloader import BaseDataLoader
 import logging
-mx = LazyImport('mxnet')
+
+from neural_compressor.utils.utility import LazyImport
+
+from .base_dataloader import BaseDataLoader
+
+mx = LazyImport("mxnet")
+
 
 class MXNetDataLoader(BaseDataLoader):
     """Subclass of BaseDataLoader."""
-    def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
-                             sampler, batch_sampler, num_workers, pin_memory,
-                             shuffle, distributed):
+
+    def _generate_dataloader(
+        self,
+        dataset,
+        batch_size,
+        last_batch,
+        collate_fn,
+        sampler,
+        batch_sampler,
+        num_workers,
+        pin_memory,
+        shuffle,
+        distributed,
+    ):
         """Overwrite _generate_dataloader function."""
         if shuffle:
-            logging.warning('Shuffle is not supported yet in MXNetDataLoader, ' \
-                            'ignoring shuffle keyword.')
+            logging.warning("Shuffle is not supported yet in MXNetDataLoader, " "ignoring shuffle keyword.")
         return mx.gluon.data.DataLoader(
-                dataset,
-                batch_size=batch_size,
-                batchify_fn=collate_fn,
-                last_batch=last_batch,
-                num_workers=num_workers,
-                pin_memory=pin_memory,
-                sampler=sampler,
-                batch_sampler=batch_sampler)
+            dataset,
+            batch_size=batch_size,
+            batchify_fn=collate_fn,
+            last_batch=last_batch,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            sampler=sampler,
+            batch_sampler=batch_sampler,
+        )

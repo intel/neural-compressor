@@ -13,7 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """WSGI Web Server."""
 import gevent.monkey
 
@@ -22,6 +21,7 @@ gevent.monkey.patch_all()
 
 def execute():
     from neural_insights.main import main
+
     main()
 
 

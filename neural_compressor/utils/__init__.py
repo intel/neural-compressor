@@ -14,7 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Utils: provide useful methods and auxiliary functionalities."""
 
 from .collect_layer_histogram import LayerHistogramCollector
@@ -22,5 +21,15 @@ from .logger import log, info, debug, warn, warning, error, fatal
 from .options import OPTIONS
 from .utility import alias_param
 
-__all__ = ["LayerHistogramCollector", "log", "info", "debug", "warn", "warning", "error", "fatal",
-           "OPTIONS", "alias_param"]
+__all__ = [
+    "LayerHistogramCollector",
+    "log",
+    "info",
+    "debug",
+    "warn",
+    "warning",
+    "error",
+    "fatal",
+    "OPTIONS",
+    "alias_param",
+]

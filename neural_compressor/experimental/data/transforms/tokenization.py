@@ -32,17 +32,20 @@
 # ==============================================================================
 """Tokenization helper classes."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from neural_compressor.utils.utility import LazyImport
+from __future__ import absolute_import, division, print_function
+
 import collections
 import re
 import unicodedata
-import six
-tf =  LazyImport('tensorflow')
 
-def convert_to_unicode(text): # pragma: no cover
+import six
+
+from neural_compressor.utils.utility import LazyImport
+
+tf = LazyImport("tensorflow")
+
+
+def convert_to_unicode(text):  # pragma: no cover
     """Convert `text` to Unicode (if it's not already), assuming utf-8 input."""
     if six.PY3:
         if isinstance(text, str):
@@ -54,12 +57,13 @@ def convert_to_unicode(text): # pragma: no cover
     elif six.PY2:
         if isinstance(text, str):
             return text.decode("utf-8", "ignore")
-        elif isinstance(text, unicode): # pylint: disable=undefined-variable
+        elif isinstance(text, unicode):  # pylint: disable=undefined-variable # noqa: F821
             return text
         else:
             raise ValueError("Unsupported string type: %s" % (type(text)))
     else:
         raise ValueError("Not running on Python2 or Python 3?")
+
 
 def load_vocab(vocab_file):
     """Load a vocabulary file into a dictionary."""
@@ -75,12 +79,14 @@ def load_vocab(vocab_file):
             index += 1
     return vocab
 
+
 def convert_by_vocab(vocab, items):
     """Convert a sequence of [tokens|ids] using the vocab."""
     output = []
     for item in items:
         output.append(vocab[item])
     return output
+
 
 def whitespace_tokenize(text):
     """Run basic whitespace cleaning and splitting on a piece of text."""
@@ -195,7 +201,7 @@ class BasicTokenizer(object):
         output = []
         for char in text:
             cp = ord(char)
-            if self._is_chinese_char(cp): # pragma: no cover
+            if self._is_chinese_char(cp):  # pragma: no cover
                 output.append(" ")
                 output.append(char)
                 output.append(" ")
@@ -213,14 +219,16 @@ class BasicTokenizer(object):
         # as is Japanese Hiragana and Katakana. Those alphabets are used to write
         # space-separated words, so they are not treated specially and handled
         # like the all of the other languages.
-        if ((cp >= 0x4E00 and cp <= 0x9FFF) or  #
-            (cp >= 0x3400 and cp <= 0x4DBF) or  #
-            (cp >= 0x20000 and cp <= 0x2A6DF) or  #
-            (cp >= 0x2A700 and cp <= 0x2B73F) or  #
-            (cp >= 0x2B740 and cp <= 0x2B81F) or  #
-            (cp >= 0x2B820 and cp <= 0x2CEAF) or
-            (cp >= 0xF900 and cp <= 0xFAFF) or  #
-            (cp >= 0x2F800 and cp <= 0x2FA1F)):  #
+        if (
+            (cp >= 0x4E00 and cp <= 0x9FFF)
+            or (cp >= 0x3400 and cp <= 0x4DBF)  #
+            or (cp >= 0x20000 and cp <= 0x2A6DF)  #
+            or (cp >= 0x2A700 and cp <= 0x2B73F)  #
+            or (cp >= 0x2B740 and cp <= 0x2B81F)  #
+            or (cp >= 0x2B820 and cp <= 0x2CEAF)  #
+            or (cp >= 0xF900 and cp <= 0xFAFF)
+            or (cp >= 0x2F800 and cp <= 0x2FA1F)  #
+        ):  #
             return True
 
         return False
@@ -230,7 +238,7 @@ class BasicTokenizer(object):
         output = []
         for char in text:
             cp = ord(char)
-            if cp == 0 or cp == 0xfffd or _is_control(char):
+            if cp == 0 or cp == 0xFFFD or _is_control(char):
                 continue
             if _is_whitespace(char):
                 output.append(" ")
@@ -274,7 +282,7 @@ class WordpieceTokenizer(object):
         output_tokens = []
         for token in whitespace_tokenize(text):
             chars = list(token)
-            if len(chars) > self.max_input_chars_per_word: # pragma: no cover
+            if len(chars) > self.max_input_chars_per_word:  # pragma: no cover
                 output_tokens.append(self.unk_token)
                 continue
 
@@ -304,6 +312,7 @@ class WordpieceTokenizer(object):
                 output_tokens.extend(sub_tokens)
         return output_tokens
 
+
 def _is_whitespace(char):
     """Check whether `chars` is a whitespace character."""
     # \t, \n, and \r are technically contorl characters but we treat them
@@ -311,11 +320,12 @@ def _is_whitespace(char):
     if char == " " or char == "\t" or char == "\n" or char == "\r":
         return True
     cat = unicodedata.category(char)
-    if cat == "Zs": # pragma: no cover
+    if cat == "Zs":  # pragma: no cover
         return True
     return False
 
-def _is_control(char): # pragma: no cover
+
+def _is_control(char):  # pragma: no cover
     """Check whether `chars` is a control character."""
     # These are technically control characters but we count them as whitespace
     # characters.
@@ -326,15 +336,15 @@ def _is_control(char): # pragma: no cover
         return True
     return False
 
-def _is_punctuation(char): # pragma: no cover
+
+def _is_punctuation(char):  # pragma: no cover
     """Check whether `chars` is a punctuation character."""
     cp = ord(char)
     # We treat all non-letter/number ASCII as punctuation.
     # Characters such as "^", "$", and "`" are not in the Unicode
     # Punctuation class but we treat them as punctuation anyways, for
     # consistency.
-    if ((cp >= 33 and cp <= 47) or (cp >= 58 and cp <= 64) or
-        (cp >= 91 and cp <= 96) or (cp >= 123 and cp <= 126)):
+    if (cp >= 33 and cp <= 47) or (cp >= 58 and cp <= 64) or (cp >= 91 and cp <= 96) or (cp >= 123 and cp <= 126):
         return True
     cat = unicodedata.category(char)
     if cat.startswith("P"):

@@ -21,4 +21,5 @@ from .patterns import PATTERNS, patterns
 
 __all__ = [
     "PATTERNS",
-    "patterns",]
+    "patterns",
+]

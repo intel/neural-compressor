@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ...utils.line_operation import get_line_left_hand_side, get_line_indent_level
+from ...utils.line_operation import get_line_indent_level, get_line_left_hand_side
+
 
 class TensorFlowKerasINC(object):
     def __init__(self, file) -> None:
@@ -22,7 +23,7 @@ class TensorFlowKerasINC(object):
     def transform(self):
         # import pdb
         # pdb.set_trace()
-        lines = self.file.split('\n')
+        lines = self.file.split("\n")
         for line in lines:
             if self.is_modify(line):
                 model_name = "model"
@@ -37,13 +38,13 @@ class TensorFlowKerasINC(object):
             else:
                 self.result.append(line)
         for index, line in enumerate(self.result):
-            if index != len(self.result)-1:
-                self.result[index] += '\n'
-        return ''.join(self.result)
+            if index != len(self.result) - 1:
+                self.result[index] += "\n"
+        return "".join(self.result)
 
     def is_modify(self, s):
-        if 'model = tf.' in s or 'model = load_model(' in s:
-            if 'self.model' not in s:
+        if "model = tf." in s or "model = load_model(" in s:
+            if "self.model" not in s:
                 return True
         else:
             return False

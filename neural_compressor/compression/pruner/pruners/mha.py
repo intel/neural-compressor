@@ -1,4 +1,4 @@
-"""mha pruner."""
+"""Mha pruner."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -16,17 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .base import (register_pruner,
-                   PytorchBasePruner)
-from ..schedulers import get_scheduler
-from ..patterns import get_pattern
 from ..criteria import get_criterion
-from ..utils import logger
+from ..patterns import get_pattern
+from ..schedulers import get_scheduler
+from ..utils import logger, torch
+from .base import PytorchBasePruner, register_pruner
 
-from ..utils import torch
 
-
-@register_pruner('pt_mha')
+@register_pruner("pt_mha")
 class PythonMultiheadAttentionPruner(PytorchBasePruner):
     """Pruning Pruner.
 
@@ -71,22 +68,21 @@ class PythonMultiheadAttentionPruner(PytorchBasePruner):
         self.mha_modules = mha_modules
         self.global_step = 0
         self.handled_global_step = -1
-        self.start_step = self.config['start_step']
-        self.end_step = self.config['end_step']
-        self.pruning_frequency = self.config['pruning_frequency']
+        self.start_step = self.config["start_step"]
+        self.end_step = self.config["end_step"]
+        self.pruning_frequency = self.config["pruning_frequency"]
         # this is different with original code
-        self.total_prune_cnt = (self.end_step - self.start_step + self.pruning_frequency) \
-            // self.pruning_frequency
+        self.total_prune_cnt = (self.end_step - self.start_step + self.pruning_frequency) // self.pruning_frequency
         self.completed_pruned_cnt = 0
         self.total_prune_cnt -= 1  # not pruning at step 0
         if self.total_prune_cnt == 0:
             self.total_prune_cnt = 1
             self.completed_pruned_cnt = 1
-        self.target_sparsity_ratio = self.config['target_sparsity']
+        self.target_sparsity_ratio = self.config["target_sparsity"]
         self.current_sparsity_ratio = 0.0
         self.init_sparsity_ratio = 0.0
-        self.criterion_reduce_type = self.config['criterion_reduce_type']
-        self.pruning_scope = self.config['pruning_scope']
+        self.criterion_reduce_type = self.config["criterion_reduce_type"]
+        self.pruning_scope = self.config["pruning_scope"]
         # ------------------------Custom attributes for MHA Pruner--------------------------------------
         # main initialize process.
         # define some attributes.
@@ -107,24 +103,24 @@ class PythonMultiheadAttentionPruner(PytorchBasePruner):
     def _init_mha_attrs(self):
         """Initialize self.mha_compressions, self.linear_layers, self.head_masks
         # similar to original mha slim process, but only hook mha modules and their attributes,
-        # do not call slim main functions.
-        """
+        # do not call slim main functions."""
         # auto slim related: head pruning objects
         from ..model_slim.weight_slim import MHACompression
+
         for mha_module in self.mha_modules:
             # initialize self.mha_compressions
             mha_comp = MHACompression(mha_module)
-            self.mha_compressions[mha_module['mha_name'][0]] = mha_comp
-            head_nums_for_this_mha = getattr(mha_comp.mha[0], mha_comp.attributes_for_this_mha['head_nums'])
+            self.mha_compressions[mha_module["mha_name"][0]] = mha_comp
+            head_nums_for_this_mha = getattr(mha_comp.mha[0], mha_comp.attributes_for_this_mha["head_nums"])
             # initialize head_masks
             # why use 1 x head_num shape? because this provides convenience for permute mask for qkv and ffn
-            self.head_masks[mha_module['mha_name'][0]] = torch.ones(1, head_nums_for_this_mha)
+            self.head_masks[mha_module["mha_name"][0]] = torch.ones(1, head_nums_for_this_mha)
             # initialize self.linear_layers
-            for idx in range(mha_module['qkv_name'].__len__()):
+            for idx in range(mha_module["qkv_name"].__len__()):
                 # update qkv layers
-                self.linear_layers[mha_module['qkv_name'][idx]] = mha_module['qkv_module'][idx]
-            for idx in range(mha_module['ffn_name'].__len__()):
-                self.linear_layers[mha_module['ffn_name'][idx]] = mha_module['ffn_module'][idx]
+                self.linear_layers[mha_module["qkv_name"][idx]] = mha_module["qkv_module"][idx]
+            for idx in range(mha_module["ffn_name"].__len__()):
+                self.linear_layers[mha_module["ffn_name"][idx]] = mha_module["ffn_module"][idx]
 
     def reduce_mha_scores(self, score, dim=0):
         # an 2D tensor, return its compiled scores
@@ -145,8 +141,8 @@ class PythonMultiheadAttentionPruner(PytorchBasePruner):
         for mha_name, mha_comp in self.mha_compressions.items():
             device = mha_comp.device
             # step 0: obtain hooked attributes in mha modules
-            head_size = getattr(mha_comp.mha[0], mha_comp.attributes_for_this_mha['head_size'])
-            head_nums = getattr(mha_comp.mha[0], mha_comp.attributes_for_this_mha['head_nums'])
+            head_size = getattr(mha_comp.mha[0], mha_comp.attributes_for_this_mha["head_size"])
+            head_nums = getattr(mha_comp.mha[0], mha_comp.attributes_for_this_mha["head_nums"])
             # step 1: gather qkv and ffn which belong to same mha together
             qkv_scores_for_this_mha = {}
             ffn_scores_for_this_mha = {}
@@ -165,7 +161,7 @@ class PythonMultiheadAttentionPruner(PytorchBasePruner):
                 qkv_shape[0] // qkv_block_size[0],
                 qkv_block_size[0],
                 qkv_shape[1] // qkv_block_size[1],
-                qkv_block_size[1]
+                qkv_block_size[1],
             ]
             for qkv_name, qkv_score in qkv_scores_for_this_mha.items():
                 qkv_score_new = qkv_score.reshape(qkv_new_shape)
@@ -179,7 +175,7 @@ class PythonMultiheadAttentionPruner(PytorchBasePruner):
                 ffn_shape[0] // ffn_block_size[0],
                 ffn_block_size[0],
                 ffn_shape[1] // ffn_block_size[1],
-                ffn_block_size[1]
+                ffn_block_size[1],
             ]
             for ffn_name, ffn_score in ffn_scores_for_this_mha.items():
                 ffn_score_new = ffn_score.reshape(ffn_new_shape)
@@ -188,13 +184,13 @@ class PythonMultiheadAttentionPruner(PytorchBasePruner):
                 ffn_gather_scores += ffn_score_new
             # step 3: compile qkv ffn scores to obtain individual head's score
             self.mha_scores[mha_name] = qkv_gather_scores + ffn_gather_scores.permute(1, 0)
-            self.mha_scores[mha_name] /= (len(qkv_scores_for_this_mha) + len(ffn_scores_for_this_mha))  # should be 4
+            self.mha_scores[mha_name] /= len(qkv_scores_for_this_mha) + len(ffn_scores_for_this_mha)  # should be 4
         return True
 
     def update_masks(self, local_step):
         """Update the masks at a given local step."""
         if self.global_step == self.start_step:
-            if self.config['lock_init_sparsity']:
+            if self.config["lock_init_sparsity"]:
                 self.masks = self.pattern.get_pattern_lock_masks(self.modules)
                 self.init_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
                 self.current_sparsity_ratio = self.init_sparsity_ratio
@@ -206,11 +202,13 @@ class PythonMultiheadAttentionPruner(PytorchBasePruner):
             return
 
         self.criterion.on_step_begin()
-        current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(self.target_sparsity_ratio,
-                                                                             self.completed_pruned_cnt,
-                                                                             self.total_prune_cnt,
-                                                                             self.head_masks,
-                                                                             self.init_sparsity_ratio)
+        current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(
+            self.target_sparsity_ratio,
+            self.completed_pruned_cnt,
+            self.total_prune_cnt,
+            self.head_masks,
+            self.init_sparsity_ratio,
+        )
         logger.info(f"current target ratio is {current_target_sparsity_ratio}")
 
         self.completed_pruned_cnt += 1

@@ -1,12 +1,13 @@
 import os
 import shutil
 import unittest
-from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.data import Datasets
 
 import torch
-import torchvision
 import torch.nn as nn
+import torchvision
+
+from neural_compressor.data import Datasets
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 
 def build_fake_yaml():
@@ -101,8 +102,9 @@ def build_fake_yaml():
             timeout: 0                                   # tuning timeout (seconds)
           random_seed: 9527                            # random seed
     """
-    with open('fake.yaml', 'w', encoding="utf-8") as f:
+    with open("fake.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
+
 
 def build_fake_yaml_unstructured():
     fake_yaml_unstructured = """
@@ -134,33 +136,36 @@ def build_fake_yaml_unstructured():
         metric:
           topk: 1
     """
-    with open('fake_unstructured.yaml', 'w', encoding="utf-8") as f:
+    with open("fake_unstructured.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml_unstructured)
 
-class TestGradientSensitivity(unittest.TestCase):
 
+class TestGradientSensitivity(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         build_fake_yaml()
 
     @classmethod
     def tearDownClass(cls):
-        os.remove('fake.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
-
+        os.remove("fake.yaml")
+        shutil.rmtree("./saved", ignore_errors=True)
+        shutil.rmtree("runs", ignore_errors=True)
 
     def test_gradient_sensitivity(self):
         from neural_compressor.experimental import Pruning, common
-        prune = Pruning('fake.yaml')
+
+        prune = Pruning("fake.yaml")
 
         from transformers import BertForSequenceClassification
-        model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
+
+        model = BertForSequenceClassification.from_pretrained("bert-base-uncased")
 
         def training_func_for_nc(model):
-            inputs = {'input_ids': torch.rand([1,12]).long(),
-                      'attention_mask': torch.rand([1,12]).long(),
-                      'labels': torch.tensor([1]).long()}
+            inputs = {
+                "input_ids": torch.rand([1, 12]).long(),
+                "attention_mask": torch.rand([1, 12]).long(),
+                "labels": torch.tensor([1]).long(),
+            }
             model.eval()
 
             # To calculate head prune
@@ -189,6 +194,7 @@ class TestGradientSensitivity(unittest.TestCase):
             self.assertEqual(bertlayer.intermediate.dense.weight.shape, (600, 768))
             self.assertEqual(bertlayer.output.dense.weight.shape, (768, 600))
 
+
 class TestGradientSensitivityUnstructured(unittest.TestCase):
     cv_model = torchvision.models.resnet18()
 
@@ -198,15 +204,16 @@ class TestGradientSensitivityUnstructured(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove('fake_unstructured.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
+        os.remove("fake_unstructured.yaml")
+        shutil.rmtree("./saved", ignore_errors=True)
+        shutil.rmtree("runs", ignore_errors=True)
 
     def test_unstructured_pruning(self):
         from neural_compressor.experimental import Pruning, common
-        prune_cv = Pruning('fake_unstructured.yaml')
-        datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
+
+        prune_cv = Pruning("fake_unstructured.yaml")
+        datasets = Datasets("pytorch")
+        dummy_dataset = datasets["dummy"](shape=(100, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         def training_func_for_cv(model):
@@ -221,7 +228,7 @@ class TestGradientSensitivityUnstructured(unittest.TestCase):
                 prune_cv.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
                     prune_cv.on_step_begin(cnt)
-                    print('.', end='')
+                    print(".", end="")
                     cnt += 1
                     output = model(image)
                     loss = criterion(output, target)
@@ -233,6 +240,7 @@ class TestGradientSensitivityUnstructured(unittest.TestCase):
                         break
                 prune_cv.on_epoch_end()
             prune_cv.on_train_end()
+
         prune_cv.model = self.cv_model
         prune_cv.pruning_func = training_func_for_cv
         prune_cv.eval_dataloader = dummy_dataloader
@@ -242,12 +250,9 @@ class TestGradientSensitivityUnstructured(unittest.TestCase):
         # assert sparsity ratio
         conv1_weight = self.cv_model.layer1[0].conv1.weight
         conv2_weight = self.cv_model.layer1[0].conv2.weight
-        self.assertAlmostEqual((conv1_weight == 0).sum().item() / conv1_weight.numel(),
-                               0.8,
-                               delta=0.01)
-        self.assertAlmostEqual((conv2_weight == 0).sum().item() / conv2_weight.numel(),
-                               0.48,
-                               delta=0.01)
+        self.assertAlmostEqual((conv1_weight == 0).sum().item() / conv1_weight.numel(), 0.8, delta=0.01)
+        self.assertAlmostEqual((conv2_weight == 0).sum().item() / conv2_weight.numel(), 0.48, delta=0.01)
+
 
 if __name__ == "__main__":
     unittest.main()

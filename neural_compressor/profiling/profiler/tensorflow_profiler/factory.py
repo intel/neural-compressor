@@ -16,13 +16,10 @@
 
 from typing import Optional
 
-from neural_compressor.experimental.data.dataloaders.tensorflow_dataloader import \
-    TensorflowDataLoader
+from neural_compressor.experimental.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
 from neural_compressor.model.tensorflow_model import TensorflowBaseModel
 from neural_compressor.profiling.profiler.profiler import Profiler
-from neural_compressor.profiling.profiler.tensorflow_profiler.profiler import (
-    Profiler as FrozenPbProfiler
-)
+from neural_compressor.profiling.profiler.tensorflow_profiler.profiler import Profiler as FrozenPbProfiler
 
 
 class ProfilerFactory:
@@ -30,11 +27,11 @@ class ProfilerFactory:
 
     @staticmethod
     def get_profiler(
-            model: TensorflowBaseModel,
-            dataloader: TensorflowDataLoader,
-            log_file: Optional[str] = None,
-            *args,
-            **kwargs,
+        model: TensorflowBaseModel,
+        dataloader: TensorflowDataLoader,
+        log_file: Optional[str] = None,
+        *args,
+        **kwargs,
     ) -> Profiler:
         """Get profiling for specified framework.
 

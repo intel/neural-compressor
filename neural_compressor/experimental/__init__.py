@@ -14,8 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques."""
 
 from .component import Component
@@ -30,6 +28,16 @@ from .nas import NAS
 from . import export
 from .contrib import *
 
-__all__ = ['Component', 'Quantization', 'Pruning', 'Benchmark', 'Graph_Optimization', \
-           'GraphOptimization', 'ModelConversion', 'Distillation', 'NAS', 'MixedPrecision', \
-           'export']
+__all__ = [
+    "Component",
+    "Quantization",
+    "Pruning",
+    "Benchmark",
+    "Graph_Optimization",
+    "GraphOptimization",
+    "ModelConversion",
+    "Distillation",
+    "NAS",
+    "MixedPrecision",
+    "export",
+]

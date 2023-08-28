@@ -54,9 +54,7 @@ def _convert_shape_to_list(
         if tf_module.__version__ >= "2.0.0":
             shape = [item if item is not None else fix_dynamic_shape for item in _shape]
         else:
-            shape = [
-                item.value if item.value is not None else fix_dynamic_shape for item in _shape
-            ]
+            shape = [item.value if item.value is not None else fix_dynamic_shape for item in _shape]
         # if shape dimension > 1, suppose first dimension is batch-size
         if isinstance(shape, list) and len(shape) > 1:
             return shape[1:]

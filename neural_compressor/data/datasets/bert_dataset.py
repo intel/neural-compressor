@@ -14,26 +14,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Built-in BERT datasets class for multiple framework backends."""
 
-import os
-import logging
-import json
 import dataclasses
+import json
+import logging
+import os
 from dataclasses import dataclass
 from typing import List, Optional, Union
+
 from neural_compressor.utils.utility import LazyImport
-from .dataset import dataset_registry, Dataset
-torch = LazyImport('torch')
-transformers = LazyImport('transformers')
+
+from .dataset import Dataset, dataset_registry
+
+torch = LazyImport("torch")
+transformers = LazyImport("transformers")
 
 logger = logging.getLogger("neural_compressor")
 
-@dataset_registry(dataset_type="bert", framework="pytorch", dataset_format='')
-class PytorchBertDataset(Dataset):         # pragma: no cover
+
+@dataset_registry(dataset_type="bert", framework="pytorch", dataset_format="")
+class PytorchBertDataset(Dataset):  # pragma: no cover
     """PyTorch dataset used for model Bert.
-    
+
        This Dataset is to construct from the Bert TensorDataset and not a full implementation
        from yaml config. The original repo link is: https://github.com/huggingface/transformers.
        When you want use this Dataset, you should add it before you initialize your DataLoader.
@@ -66,7 +69,7 @@ class PytorchBertDataset(Dataset):         # pragma: no cover
                                      transform=preprocess, filter=filter)
     """
 
-    def __init__(self, dataset, task, model_type='bert', transform=None, filter=None):
+    def __init__(self, dataset, task, model_type="bert", transform=None, filter=None):
         """Initialize the attributes of class."""
         self.dataset = dataset
         assert task in ("classifier", "squad"), "Bert task support only classifier squad"
@@ -86,36 +89,37 @@ class PytorchBertDataset(Dataset):         # pragma: no cover
         sample = self.dataset[index]
         if self.transform is not None:
             sample = self.transform(sample)
-        if self.task == 'classifier':
-            inputs = {
-                'input_ids': sample[0],
-                'attention_mask': sample[1],
-                'labels': sample[3]}
+        if self.task == "classifier":
+            inputs = {"input_ids": sample[0], "attention_mask": sample[1], "labels": sample[3]}
 
-            if self.model_type != 'distilbert':
+            if self.model_type != "distilbert":
                 # XLM, DistilBERT and RoBERTa don't use segment_ids
-                if self.model_type in ['bert', 'xlnet']:
-                    inputs['token_type_ids'] = sample[2]
-            sample = (inputs, inputs['labels'])
+                if self.model_type in ["bert", "xlnet"]:
+                    inputs["token_type_ids"] = sample[2]
+            sample = (inputs, inputs["labels"])
 
-        elif self.task == 'squad':
+        elif self.task == "squad":
             inputs = {
-                'input_ids': sample[0],
-                'attention_mask': sample[1], }
-            if self.model_type != 'distilbert':
+                "input_ids": sample[0],
+                "attention_mask": sample[1],
+            }
+            if self.model_type != "distilbert":
                 # XLM, DistilBERT and RoBERTa don't use segment_ids
-                inputs['token_type_ids'] = sample[2] if self.model_type in [
-                    'bert', 'xlnet'] else None
-            if self.model_type in ['xlnet', 'xlm']:
-                inputs.update({'cls_index': sample[4], 'p_mask': sample[5]})
+                inputs["token_type_ids"] = sample[2] if self.model_type in ["bert", "xlnet"] else None
+            if self.model_type in ["xlnet", "xlm"]:
+                inputs.update({"cls_index": sample[4], "p_mask": sample[5]})
             example_indices = sample[3]
             sample = (inputs, example_indices)
         return sample
 
 
-@dataset_registry(dataset_type="GLUE", framework="onnxrt_qlinearops, \
-                    onnxrt_integerops", dataset_format='')
-class ONNXRTBertDataset(Dataset):    # pragma: no cover
+@dataset_registry(
+    dataset_type="GLUE",
+    framework="onnxrt_qlinearops, \
+                    onnxrt_integerops",
+    dataset_format="",
+)
+class ONNXRTBertDataset(Dataset):  # pragma: no cover
     """ONNXRT dataset used for model Bert.
 
     Args: data_dir (str): The input data dir.
@@ -141,24 +145,39 @@ class ONNXRTBertDataset(Dataset):    # pragma: no cover
         dataset = ONNXRTBertDataset(data_dir=data_dir, model_name_or_path='bert-base-uncase',
                                      transform=preprocess, filter=filter)
     """
-    def __init__(self, data_dir, model_name_or_path, max_seq_length=128,\
-                do_lower_case=True, task='mrpc', model_type='bert', dynamic_length=False,\
-                evaluate=True, transform=None, filter=None):
+
+    def __init__(
+        self,
+        data_dir,
+        model_name_or_path,
+        max_seq_length=128,
+        do_lower_case=True,
+        task="mrpc",
+        model_type="bert",
+        dynamic_length=False,
+        evaluate=True,
+        transform=None,
+        filter=None,
+    ):
         """Initialize the attributes of class."""
         task = task.lower()
         model_type = model_type.lower()
-        assert task in ['mrpc', 'qqp', 'qnli', 'rte', 'sts-b', 'cola', \
-            'mnli', 'wnli'], 'Unsupported task type'
-        assert model_type in ['distilbert', 'bert', 'mobilebert', 'roberta'], 'Unsupported \
-            model type'
+        assert task in ["mrpc", "qqp", "qnli", "rte", "sts-b", "cola", "mnli", "wnli"], "Unsupported task type"
+        assert model_type in [
+            "distilbert",
+            "bert",
+            "mobilebert",
+            "roberta",
+        ], "Unsupported \
+            model type"
 
         self.dynamic_length = dynamic_length
         self.model_type = model_type
         self.max_seq_length = max_seq_length
-        tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path,
-            do_lower_case=do_lower_case)
-        self.dataset = load_and_cache_examples(data_dir, model_name_or_path, \
-            max_seq_length, task, model_type, tokenizer, evaluate)
+        tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path, do_lower_case=do_lower_case)
+        self.dataset = load_and_cache_examples(
+            data_dir, model_name_or_path, max_seq_length, task, model_type, tokenizer, evaluate
+        )
 
     def __len__(self):
         """Length of the dataset."""
@@ -172,8 +191,9 @@ class ONNXRTBertDataset(Dataset):    # pragma: no cover
         return self.dataset[index]
 
 
-def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, \
-                model_type, tokenizer, evaluate):    # pragma: no cover
+def load_and_cache_examples(
+    data_dir, model_name_or_path, max_seq_length, task, model_type, tokenizer, evaluate
+):  # pragma: no cover
     """Load and cache the examples.
 
     Helper Function for ONNXRTBertDataset.
@@ -185,28 +205,32 @@ def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, 
     # Load data features from cache or dataset file
     if not os.path.exists("./dataset_cached"):
         os.makedirs("./dataset_cached")
-    cached_features_file = os.path.join("./dataset_cached", 'cached_{}_{}_{}_{}'.format(
-        'dev' if evaluate else 'train',
-        list(filter(None, model_name_or_path.split('/'))).pop(),
-        str(max_seq_length),
-        str(task)))
+    cached_features_file = os.path.join(
+        "./dataset_cached",
+        "cached_{}_{}_{}_{}".format(
+            "dev" if evaluate else "train",
+            list(filter(None, model_name_or_path.split("/"))).pop(),
+            str(max_seq_length),
+            str(task),
+        ),
+    )
     if os.path.exists(cached_features_file):
         logger.info("Load features from cached file {}.".format(cached_features_file))
         features = torch.load(cached_features_file)
     else:
         logger.info("Create features from dataset file at {}.".format(data_dir))
         label_list = processor.get_labels()
-        if task in ['mnli', 'mnli-mm'] and model_type in ['roberta']:
+        if task in ["mnli", "mnli-mm"] and model_type in ["roberta"]:
             # HACK(label indices are swapped in RoBERTa pretrained model)
             label_list[1], label_list[2] = label_list[2], label_list[1]
-        examples = processor.get_dev_examples(data_dir) if evaluate else \
-            processor.get_train_examples(data_dir)
-        features = convert_examples_to_features(examples,
-                                                tokenizer,
-                                                task=task,
-                                                label_list=label_list,
-                                                max_length=max_seq_length,
-                                                output_mode=output_mode,
+        examples = processor.get_dev_examples(data_dir) if evaluate else processor.get_train_examples(data_dir)
+        features = convert_examples_to_features(
+            examples,
+            tokenizer,
+            task=task,
+            label_list=label_list,
+            max_length=max_seq_length,
+            output_mode=output_mode,
         )
         logger.info("Save features into cached file {}.".format(cached_features_file))
         torch.save(features, cached_features_file)
@@ -219,8 +243,7 @@ def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, 
         all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
     elif output_mode == "regression":
         all_labels = torch.tensor([f.label for f in features], dtype=torch.float)
-    dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, \
-        all_seq_lengths, all_labels)
+    dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_seq_lengths, all_labels)
     return dataset
 
 
@@ -234,7 +257,7 @@ def convert_examples_to_features(
     pad_token=0,
     pad_token_segment_id=0,
     mask_padding_with_zero=True,
-    ):      # pragma: no cover
+):  # pragma: no cover
     """Convert examples to features.
 
     Helper function for load_and_cache_examples.
@@ -245,7 +268,7 @@ def convert_examples_to_features(
         logger.info("Use label list {} for task {}.".format(label_list, task))
     label_map = {label: i for i, label in enumerate(label_list)}
     features = []
-    for (ex_index, example) in enumerate(examples):
+    for ex_index, example in enumerate(examples):
         inputs = tokenizer.encode_plus(
             example.text_a,
             example.text_b,
@@ -264,19 +287,14 @@ def convert_examples_to_features(
         padding_length = max_length - len(input_ids)
 
         input_ids = input_ids + ([pad_token] * padding_length)
-        attention_mask = attention_mask + \
-            ([0 if mask_padding_with_zero else 1] * padding_length)
+        attention_mask = attention_mask + ([0 if mask_padding_with_zero else 1] * padding_length)
         token_type_ids = token_type_ids + ([pad_token_segment_id] * padding_length)
 
-        assert len(input_ids) == max_length, \
-            "Error with input_ids length {} vs {}".format(
-            len(input_ids), max_length)
-        assert len(attention_mask) == max_length, \
-            "Error with attention_mask length {} vs {}".format(
+        assert len(input_ids) == max_length, "Error with input_ids length {} vs {}".format(len(input_ids), max_length)
+        assert len(attention_mask) == max_length, "Error with attention_mask length {} vs {}".format(
             len(attention_mask), max_length
         )
-        assert len(token_type_ids) == max_length, \
-            "Error with token_type_ids length {} vs {}".format(
+        assert len(token_type_ids) == max_length, "Error with token_type_ids length {} vs {}".format(
             len(token_type_ids), max_length
         )
         if output_mode == "classification":
@@ -298,7 +316,7 @@ def convert_examples_to_features(
 
 
 @dataclass(frozen=True)
-class InputFeatures:    # pragma: no cover
+class InputFeatures:  # pragma: no cover
     """Single set of features of data.
 
     Property names are the same names as the corresponding inputs to a model.
@@ -326,8 +344,8 @@ class InputFeatures:    # pragma: no cover
         return json.dumps(dataclasses.asdict(self)) + "\n"
 
 
-@dataset_registry(dataset_type="bert", framework="tensorflow, tensorflow_itex", dataset_format='')
-class TensorflowBertDataset(Dataset):    # pragma: no cover
+@dataset_registry(dataset_type="bert", framework="tensorflow, tensorflow_itex", dataset_format="")
+class TensorflowBertDataset(Dataset):  # pragma: no cover
     """Tensorflow dataset used for model Bert.
 
     This dataset supports tfrecord data, please refer to Guide to create tfrecord file first.
@@ -341,14 +359,14 @@ class TensorflowBertDataset(Dataset):    # pragma: no cover
                                                  to specific conditions
     """
 
-    def __init__(self, root, label_file, task='squad',
-            model_type='bert', transform=None, filter=None):
+    def __init__(self, root, label_file, task="squad", model_type="bert", transform=None, filter=None):
         """Initialize the attributes of class."""
         import json
+
         with open(label_file) as lf:
             label_json = json.load(lf)
-            assert label_json['version'] == '1.1', 'only support squad 1.1'
-            self.label = label_json['data']
+            assert label_json["version"] == "1.1", "only support squad 1.1"
+            self.label = label_json["data"]
         self.root = root
         self.transform = transform
         self.filter = filter
@@ -365,7 +383,7 @@ class TensorflowBertDataset(Dataset):    # pragma: no cover
         return 1
 
 
-class ParseDecodeBert():    # pragma: no cover
+class ParseDecodeBert:  # pragma: no cover
     """Helper function for TensorflowModelZooBertDataset.
 
     Parse the features from sample.
@@ -378,26 +396,25 @@ class ParseDecodeBert():    # pragma: no cover
             sample: Data to be parsed.
         """
         import tensorflow as tf
+
         # Dense features in Example proto.
         feature_map = {
-            'input_ids':
-            tf.compat.v1.VarLenFeature(dtype=tf.int64),
-            'input_mask':
-            tf.compat.v1.VarLenFeature(dtype=tf.int64),
-            'segment_ids':
-            tf.compat.v1.VarLenFeature(dtype=tf.int64),
+            "input_ids": tf.compat.v1.VarLenFeature(dtype=tf.int64),
+            "input_mask": tf.compat.v1.VarLenFeature(dtype=tf.int64),
+            "segment_ids": tf.compat.v1.VarLenFeature(dtype=tf.int64),
         }
 
         features = tf.io.parse_single_example(sample, feature_map)
 
-        input_ids = features['input_ids'].values
-        input_mask = features['input_mask'].values
-        segment_ids = features['segment_ids'].values
+        input_ids = features["input_ids"].values
+        input_mask = features["input_mask"].values
+        segment_ids = features["segment_ids"].values
 
         return (input_ids, input_mask, segment_ids)
 
-@dataset_registry(dataset_type="mzbert", framework="tensorflow, tensorflow_itex", dataset_format='')
-class TensorflowModelZooBertDataset(Dataset):    # pragma: no cover
+
+@dataset_registry(dataset_type="mzbert", framework="tensorflow, tensorflow_itex", dataset_format="")
+class TensorflowModelZooBertDataset(Dataset):  # pragma: no cover
     """Tensorflow dataset for three-input Bert in tf record format.
 
     Root is a full path to tfrecord file, which contains the file name.
@@ -410,37 +427,43 @@ class TensorflowModelZooBertDataset(Dataset):    # pragma: no cover
           filter (Filter objects, default=None): filter out examples according.
     """
 
-    def __init__(self, root, label_file, task='squad',
-            model_type='bert', transform=None, filter=None, num_cores=28):
+    def __init__(self, root, label_file, task="squad", model_type="bert", transform=None, filter=None, num_cores=28):
         """Initialize the attributes of class."""
         import json
+
         with open(label_file) as lf:
             label_json = json.load(lf)
-            assert label_json['version'] == '1.1', 'only support squad 1.1'
-            self.label = label_json['data']
+            assert label_json["version"] == "1.1", "only support squad 1.1"
+            self.label = label_json["data"]
         import tensorflow as tf
+
         record_iterator = tf.compat.v1.python_io.tf_record_iterator(root)
         example = tf.train.SequenceExample()
         for element in record_iterator:
             example.ParseFromString(element)
             break
         feature = example.context.feature
-        if len(feature['input_ids'].int64_list.value) == 0 \
-            and len(feature['input_mask'].int64_list.value) == 0:
-            raise ValueError("Tfrecord format is incorrect, please refer\
+        if len(feature["input_ids"].int64_list.value) == 0 and len(feature["input_mask"].int64_list.value) == 0:
+            raise ValueError(
+                "Tfrecord format is incorrect, please refer\
                 'https://github.com/tensorflow/models/blob/master/research/\
-                object_detection/dataset_tools/' to create correct tfrecord")
+                object_detection/dataset_tools/' to create correct tfrecord"
+            )
         # pylint: disable=no-name-in-module
         from tensorflow.python.data.experimental import parallel_interleave
+
         tfrecord_paths = [root]
         ds = tf.data.TFRecordDataset.list_files(tfrecord_paths)
         ds = ds.apply(
-            parallel_interleave(tf.data.TFRecordDataset,
-                                cycle_length=num_cores,
-                                block_length=5,
-                                sloppy=True,
-                                buffer_output_elements=10000,
-                                prefetch_input_elements=10000))
+            parallel_interleave(
+                tf.data.TFRecordDataset,
+                cycle_length=num_cores,
+                block_length=5,
+                sloppy=True,
+                buffer_output_elements=10000,
+                prefetch_input_elements=10000,
+            )
+        )
         if transform is not None:
             transform.transform_list.insert(0, ParseDecodeBert())
         else:
@@ -450,6 +473,7 @@ class TensorflowModelZooBertDataset(Dataset):    # pragma: no cover
             ds = ds.filter(filter)
         ds = ds.prefetch(buffer_size=1000)
         from ..dataloaders.tensorflow_dataloader import TFDataDataLoader
+
         ds = TFDataDataLoader(ds)
         self.root = []
         for inputs in ds:

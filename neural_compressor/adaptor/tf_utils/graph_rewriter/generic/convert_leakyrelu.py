@@ -16,13 +16,13 @@
 # limitations under the License.
 """Convert LeakyRelu Graph Rewriter."""
 
-from tensorflow.python.framework import dtypes
-from tensorflow.python.framework import tensor_util
+from tensorflow.python.framework import dtypes, tensor_util
+
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
-from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 
 class ConvertLeakyReluOptimizer(GraphRewriterBase):
@@ -37,13 +37,14 @@ class ConvertLeakyReluOptimizer(GraphRewriterBase):
         Maximum           LeakyRelu
     Note, the coefficient of Mul should be less than 1 or the conversion is not valid.
     """
+
     @dump_elapsed_time("Pass ConvertLeakyReluOptimizer")
     def do_transformation(self):
         """Fuse small ops to LeakyRelu."""
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()
-        target_nodes = g.query_fusion_pattern_nodes([['Mul'], ['Maximum']])
+        target_nodes = g.query_fusion_pattern_nodes([["Mul"], ["Maximum"]])
         for i in target_nodes:
             successor_node_names = graph_info[i[1]].outputs
 
@@ -55,17 +56,17 @@ class ConvertLeakyReluOptimizer(GraphRewriterBase):
                 continue
             mul_coeff_node_name = list(set(mul_input_names).difference(set(max_input_names)))[0]
             mul_coeff_node = graph_info[mul_coeff_node_name].node
-            if mul_coeff_node.op != 'Const':
+            if mul_coeff_node.op != "Const":
                 continue
-            nd = tensor_util.MakeNdarray(mul_coeff_node.attr['value'].tensor).ndim
+            nd = tensor_util.MakeNdarray(mul_coeff_node.attr["value"].tensor).ndim
             if nd > 1:
                 continue
-            alpha_value = float(tensor_util.MakeNdarray(mul_coeff_node.attr['value'].tensor))
+            alpha_value = float(tensor_util.MakeNdarray(mul_coeff_node.attr["value"].tensor))
             if alpha_value > 1.0:
                 continue
 
-            leaky_relu_node_name = i[1] + '_leakyrelu'
-            leaky_relu_node = Helper.create_node('LeakyRelu', leaky_relu_node_name, common_input)
+            leaky_relu_node_name = i[1] + "_leakyrelu"
+            leaky_relu_node = Helper.create_node("LeakyRelu", leaky_relu_node_name, common_input)
             Helper.set_attr_dtype(leaky_relu_node, "T", dtypes.float32)
             Helper.set_attr_float(leaky_relu_node, "alpha", alpha_value)
 
