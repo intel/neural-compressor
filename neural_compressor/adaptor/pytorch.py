@@ -931,7 +931,13 @@ class TemplateAdaptor(Adaptor):
     def eval_func(self, model, dataloader, postprocess, metrics, measurer, iteration, conf=None):
         results = []
         try:
-            for idx, (input, label) in enumerate(dataloader):
+            for idx, input in enumerate(dataloader):
+                if isinstance(input, list) and len(input) == 2:
+                    label = input[1]
+                    input = input[0]
+                else:
+                    label = input['labels']
+
                 if measurer is not None:
                     measurer.start()
 
