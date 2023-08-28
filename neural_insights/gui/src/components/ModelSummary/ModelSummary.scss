@@ -12,11 +12,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-@import './variables.scss';
+@import './../../variables.scss';
 
-body {
-  margin: 0;
-  font-family: IntelClearRg;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.summary {
+  font-family: IntelOneMono;
+  white-space: pre;
+  overflow: auto;
+  max-height: 90vh;
 }

@@ -20,6 +20,7 @@ import OpList from './../OpList/OpList';
 import Histogram from './../Histogram/Histogram';
 import Workloads from './../Workloads/Workloads';
 import WorkloadDetails from './../WorkloadDetails/WorkloadDetails';
+import ModelSummary from './../ModelSummary/ModelSummary';
 import Profiling from './../Profiling/Profiling';
 import Warning from './../Warning/Warning';
 import Form from 'react-bootstrap/Form';
@@ -55,7 +56,12 @@ function Diagnosis() {
         }
         {selectedWorkload?.mode === 'quantization' &&
           <div className="flex-item">
-            <Graph setSelectedNode={setSelectedNode} selectedWorkload={selectedWorkload} selectedOp={selectedOp} selectedPattern={selectedPattern} setWarningText={setWarningText} />
+            {selectedWorkload.framework !== 'PyTorch' &&
+              <Graph setSelectedNode={setSelectedNode} selectedWorkload={selectedWorkload} selectedOp={selectedOp} selectedPattern={selectedPattern} setWarningText={setWarningText} />
+            }
+            {selectedWorkload.framework === 'PyTorch' &&
+              <ModelSummary selectedWorkload={selectedWorkload} setWarningText={setWarningText} />
+            }
           </div>
         }
         {selectedWorkload?.mode === 'quantization' &&
