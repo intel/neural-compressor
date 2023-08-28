@@ -1,11 +1,12 @@
-"""Tests for new data type"""
-import unittest
-import shutil
+"""Tests for new data type."""
 import os
+import shutil
+import unittest
 
 
 def build_model():
     import torch
+
     class M(torch.nn.Module):
         def __init__(self):
             super().__init__()
@@ -17,45 +18,48 @@ def build_model():
             x = x.view(1, -1)
             x = self.linear(x)
             return x
+
     return M()
 
 
 def add_cap(filename):
     import yaml
+
     int4_cap = {
-        'static': {
-            'Conv2d': {
-                'weight': {
-                            'dtype': ['int4'],
-                            'scheme': ['sym'],
-                            'granularity': ['per_channel'],
-                            'algorithm': ['minmax']
-                            },
-                'activation': {
-                            'dtype': ['uint4'],
-                            'scheme': ['sym'],
-                            'granularity': ['per_tensor'],
-                            'algorithm': ['kl', 'minmax']
-                            },
-                        },
+        "static": {
+            "Conv2d": {
+                "weight": {
+                    "dtype": ["int4"],
+                    "scheme": ["sym"],
+                    "granularity": ["per_channel"],
+                    "algorithm": ["minmax"],
+                },
+                "activation": {
+                    "dtype": ["uint4"],
+                    "scheme": ["sym"],
+                    "granularity": ["per_tensor"],
+                    "algorithm": ["kl", "minmax"],
+                },
+            },
         }
     }
 
     with open(filename) as f:
         con = yaml.safe_load(f)
-    con[0]['int4'] = int4_cap
-    with open(filename, 'w') as out:
+    con[0]["int4"] = int4_cap
+    with open(filename, "w") as out:
         yaml.dump(con, out)
 
-class TestLowerBitQuant(unittest.TestCase):
 
+class TestLowerBitQuant(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        import shutil
         import importlib
-        nc_path = os.path.dirname(importlib.util.find_spec('neural_compressor').origin)
-        self.src = os.path.join(nc_path, 'adaptor/pytorch_cpu.yaml')
-        self.dst = os.path.join(nc_path, 'adaptor/pytorch_cpu_backup.yaml')
+        import shutil
+
+        nc_path = os.path.dirname(importlib.util.find_spec("neural_compressor").origin)
+        self.src = os.path.join(nc_path, "adaptor/pytorch_cpu.yaml")
+        self.dst = os.path.join(nc_path, "adaptor/pytorch_cpu_backup.yaml")
         shutil.copyfile(self.src, self.dst)
         add_cap(self.src)
 
@@ -63,12 +67,12 @@ class TestLowerBitQuant(unittest.TestCase):
     def tearDownClass(self):
         shutil.copyfile(self.dst, self.src)
         os.remove(self.dst)
-        shutil.rmtree('saved', ignore_errors=True)
+        shutil.rmtree("saved", ignore_errors=True)
 
     def test_add_int4(self):
-        from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
-        from neural_compressor.data import Datasets, DATALOADERS
+        from neural_compressor.data import DATALOADERS, Datasets
+        from neural_compressor.quantization import fit
 
         # dataset and dataloader
         dataset = Datasets("pytorch")["dummy"](((100, 3, 224, 224)))
@@ -76,6 +80,7 @@ class TestLowerBitQuant(unittest.TestCase):
         model = build_model()
 
         acc_lst = [1, 1.1, 0.9, 1.1, 1.0]
+
         def fake_eval(model):
             res = acc_lst.pop(0)
             return res

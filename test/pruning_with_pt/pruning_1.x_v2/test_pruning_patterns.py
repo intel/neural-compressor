@@ -1,12 +1,12 @@
 import unittest
 
 import torch
-import torchvision
 import torch.nn as nn
+import torchvision
 
+from neural_compressor.conf.pythonic_config import Config, WeightPruningConfig
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.conf.pythonic_config import Config, WeightPruningConfig
 from neural_compressor.experimental.pruning_v2 import Pruning
 
 
@@ -15,26 +15,17 @@ class TestPruningPatterns(unittest.TestCase):
 
     def test_pruning_pattern(self):
         local_configs = [
-            {
-                "op_names": ['layer1.*'],
-                'target_sparsity': 0.5,
-                "pattern": '5:8',
-                "pruning_type": "magnitude"
-            },
-            {
-                "op_names": ['layer2.*'],
-                "pattern": '1xchannel',
-                "pruning_scope": "global"
-            },
+            {"op_names": ["layer1.*"], "target_sparsity": 0.5, "pattern": "5:8", "pruning_type": "magnitude"},
+            {"op_names": ["layer2.*"], "pattern": "1xchannel", "pruning_scope": "global"},
             {
                 "start_step": 2,
                 "end_step": 20,
-                "op_names": ['layer3.*'],
-                'target_sparsity': 0.666666,
-                'pattern': '4x2',
+                "op_names": ["layer3.*"],
+                "target_sparsity": 0.666666,
+                "pattern": "4x2",
                 "pruning_type": "snip_progressive",
-                "pruning_frequency": 5
-            }
+                "pruning_frequency": 5,
+            },
         ]
         conf = WeightPruningConfig(
             local_configs,
@@ -42,7 +33,7 @@ class TestPruningPatterns(unittest.TestCase):
             sparsity_decay_type="cos",
             excluded_op_names=["downsample.*"],
             pruning_scope="local",
-            min_sparsity_ratio_per_op=0.1
+            min_sparsity_ratio_per_op=0.1,
         )
         config = Config(quantization=None, benchmark=None, pruning=conf, distillation=None)
         prune = Pruning(config)
@@ -51,8 +42,8 @@ class TestPruningPatterns(unittest.TestCase):
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
-        datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
+        datasets = Datasets("pytorch")
+        dummy_dataset = datasets["dummy"](shape=(10, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         prune.on_train_begin()

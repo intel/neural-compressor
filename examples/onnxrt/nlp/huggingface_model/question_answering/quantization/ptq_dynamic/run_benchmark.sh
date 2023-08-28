@@ -51,6 +51,7 @@ function run_benchmark {
             --overwrite_output_dir \
             --dataset_name=squad \
             --batch_size=${batch_size} \
+            --do_eval \
             --benchmark \
              ${extra_cmd}
             

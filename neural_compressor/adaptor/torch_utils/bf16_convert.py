@@ -17,15 +17,18 @@
 """Bf16 Convert for Torch Utils."""
 import torch
 import torch.nn as nn
-from ...utils import logger
 from torch.fx import symbolic_trace
+
+from ...utils import logger
+
 
 class BF16ModuleWrapper(nn.Module):
     """BF16Module Wrapper Class."""
+
     def __init__(self, module):
         """Init a BF16ModuleWrapper object."""
         super(BF16ModuleWrapper, self).__init__()
-        self.add_module('module', module)
+        self.add_module("module", module)
         self.train(module.training)
 
     def forward(self, X):
@@ -35,29 +38,30 @@ class BF16ModuleWrapper(nn.Module):
         X = self.module(X)
         return X.float()
 
+
 def Convert(model, tune_cfg):
-        """Convert to bf16 model.
+    """Convert to bf16 model.
 
-        Args:
-            model (object): the input model.
-            tune_cfg (dict): dictionary of quantization configuration.
+    Args:
+        model (object): the input model.
+        tune_cfg (dict): dictionary of quantization configuration.
 
-        Returns:
-            mixed_precision_model (object): model with mixed precision.
-        """
-        bf16_ops_list = tune_cfg['bf16_ops_list']
-        fx_sub_module_list = tune_cfg['fx_sub_module_list'] \
-                             if 'fx_sub_module_list' in tune_cfg.keys() else []
-        if len(bf16_ops_list) > 0:
-            logger.info("Convert operators to bfloat16")
-        mixed_precision_model = _bf16_wrapper_model(model, bf16_ops_list)
-        if fx_sub_module_list is not None and len(fx_sub_module_list) > 0:
-            mixed_precision_model = bf16_symbolic_trace(mixed_precision_model, fx_sub_module_list)
-        return mixed_precision_model
+    Returns:
+        mixed_precision_model (object): model with mixed precision.
+    """
+    bf16_ops_list = tune_cfg["bf16_ops_list"]
+    fx_sub_module_list = tune_cfg["fx_sub_module_list"] if "fx_sub_module_list" in tune_cfg.keys() else []
+    if len(bf16_ops_list) > 0:
+        logger.info("Convert operators to bfloat16")
+    mixed_precision_model = _bf16_wrapper_model(model, bf16_ops_list)
+    if fx_sub_module_list is not None and len(fx_sub_module_list) > 0:
+        mixed_precision_model = bf16_symbolic_trace(mixed_precision_model, fx_sub_module_list)
+    return mixed_precision_model
 
-def _bf16_wrapper_model(model, bf16_ops_list, prefix=''):
+
+def _bf16_wrapper_model(model, bf16_ops_list, prefix=""):
     for name, child in model.named_children():
-        op_name = prefix + '.' + name if prefix != '' else name
+        op_name = prefix + "." + name if prefix != "" else name
         for bf16_op_name in bf16_ops_list:
             if op_name == bf16_op_name[0]:
                 child = BF16ModuleWrapper(child)
@@ -67,7 +71,7 @@ def _bf16_wrapper_model(model, bf16_ops_list, prefix=''):
     return model
 
 
-def bf16_symbolic_trace(model, fx_sub_module_list, prefix=''):
+def bf16_symbolic_trace(model, fx_sub_module_list, prefix=""):
     """Symbolic trace for bf16 models.
 
     Args:
@@ -79,7 +83,7 @@ def bf16_symbolic_trace(model, fx_sub_module_list, prefix=''):
         model (object)
     """
     for name, child in model.named_children():
-        op_name = prefix + '.' + name if prefix != '' else name
+        op_name = prefix + "." + name if prefix != "" else name
         for fx_sub_module_name in fx_sub_module_list:
             if op_name == fx_sub_module_name:
                 child = symbolic_trace(child)

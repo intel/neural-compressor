@@ -17,8 +17,8 @@
 -
   version:
     name: 'default'
-    # (MXNet-specific): 
-    # 'int8' for this version specifies quantization in general (both int8 and uint8), as 
+    # (MXNet-specific):
+    # 'int8' for this version specifies quantization in general (both int8 and uint8), as
     # quantization dtype is selected automatically for each quantized node according to the
     # calibration results: min_value < 0 => int8; min_value >= 0 => uint8.
     # 'int8' here means 'auto' in MXNet
@@ -84,7 +84,7 @@
                 'granularity': ['per_tensor'],
                 'algorithm': ['minmax', 'kl']}
             }
-        ], 
+        ],
         'Flatten': &capability_flatten [
             {'activation': {
                 'dtype': ['int8'],
@@ -233,7 +233,7 @@
 
   patterns: &common_patterns
   # (MXNet-specific):
-  # fusion patterns are hardcoded in the framework 
+  # fusion patterns are hardcoded in the framework
     fp32: [
         # conv + bn
         # conv + act + sum

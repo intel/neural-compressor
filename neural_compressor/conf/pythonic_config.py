@@ -15,11 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Configs for Neural Compressor 1.x."""
-import logging
 import datetime
-from schema import Schema, And, Optional
-from .dotdict import DotDict
+import logging
 
+from schema import And, Optional, Schema
+
+from .dotdict import DotDict
 
 logger = logging.getLogger("neural_compressor")
 default_workspace = './nc_workspace/{}/'.format(
@@ -116,7 +117,6 @@ class Options:
         set_workspace("workspace_path")
         set_resume_from("workspace_path")
         set_tensorboard(True)
-
     """
     def __init__(self, random_seed=1978, workspace=default_workspace,
                  resume_from=None, tensorboard=False):
@@ -187,7 +187,7 @@ class AccuracyCriterion:
         from neural_compressor.config import AccuracyCriterion
 
         accuracy_criterion = AccuracyCriterion(
-            higher_is_better=True,  # optional. 
+            higher_is_better=True,  # optional.
             criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
             tolerable_loss=0.01,  # optional.
         )
@@ -340,7 +340,7 @@ class _BaseQuantizationConfig:
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
                              If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
-        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+        quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
                      strategy, auto (default) is the combination of 0 and 1.
         accuracy_criterion: Accuracy constraint settings.
         use_distributed_tuning: Whether use distributed tuning or not.
@@ -786,7 +786,7 @@ class BenchmarkConfig:
     def __getitem__(self, item):
         """Get the dict."""
         return getattr(self, item)
-    
+
     @property
     def backend(self):
         """Get backend."""
@@ -904,7 +904,7 @@ class BenchmarkConfig:
     def model(self):
         """Get model."""
         return self._model
-    
+
     @model.setter
     def model(self, model):
         """Set model."""
@@ -920,12 +920,12 @@ class BenchmarkConfig:
         """Set model name."""
         if _check_value("model_name", model_name, str):
             self._model_name = model_name
-    
+
     @property
     def framework(self):
         """Set framework."""
         return self._framework
-    
+
     @framework.setter
     def framework(self, framework):
         """Get framework."""
@@ -991,7 +991,7 @@ class QuantizationConfig(_BaseQuantizationConfig):
 
 class WeightPruningConfig:
     """Config Class for Pruning. Define a single or a sequence of pruning configs.
-    
+
     Args:
         pruning_configs (list of dicts, optional): Local pruning configs only valid to linked layers.
             Parameters defined out of pruning_configs are valid for all layers.
@@ -1000,8 +1000,8 @@ class WeightPruningConfig:
         target_sparsity (float, optional): Sparsity ratio the model can reach after pruning.
             Supports a float between 0 and 1.
             Default to 0.90.
-        pruning_type (str, optional): A string define the criteria for pruning. 
-            Supports "magnitude", "snip", "snip_momentum", 
+        pruning_type (str, optional): A string define the criteria for pruning.
+            Supports "magnitude", "snip", "snip_momentum",
                      "magnitude_progressive", "snip_progressive", "snip_momentum_progressive", "pattern_lock"
             Default to "snip_momentum", which is the most feasible pruning criteria under most situations.
         pattern (str, optional): Sparsity's structure (or unstructure) types.
@@ -1017,15 +1017,15 @@ class WeightPruningConfig:
         end_step: (int, optional): The step to end pruning.
             Supports an integer.
             Default to 0.
-        pruning_scope (str, optional): Determine layers' scores should be gather together to sort 
-            Supports "global" and "local". 
+        pruning_scope (str, optional): Determine layers' scores should be gather together to sort
+            Supports "global" and "local".
             Default: "global", since this leads to less accuracy loss.
         pruning_frequency: the frequency of pruning operation.
             Supports an integer.
             Default to 1.
         min_sparsity_ratio_per_op (float, optional): Minimum restriction for every layer's sparsity.
             Supports a float between 0 and 1.
-            Default to 0.0.  
+            Default to 0.0.
         max_sparsity_ratio_per_op (float, optional): Maximum restriction for every layer's sparsity.
             Supports a float between 0 and 1.
             Default to 0.98.
@@ -1151,7 +1151,7 @@ class KnowledgeDistillationLossConfig:
         loss_types (list[str], optional): loss types, should be a list of length 2.
             First item is the loss type for student model output and groundtruth label,
             second item is the loss type for student model output and teacher model output.
-            Supported tpyes for first item are "CE", "MSE". 
+            Supported tpyes for first item are "CE", "MSE".
             Supported tpyes for second item are "CE", "MSE", "KL".
             Defaults to ['CE', 'CE'].
         loss_weights (list[float], optional): loss weights, should be a list of length 2 and sum to 1.0.

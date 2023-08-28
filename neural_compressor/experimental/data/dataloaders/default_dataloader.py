@@ -18,12 +18,15 @@
 """Default dataloader for multiple framework backends."""
 
 import collections
-import numpy as np
-from math import ceil, floor
 from abc import abstractmethod
-from .sampler import IterableSampler, SequentialSampler, BatchSampler
-from .fetcher import FETCHERS
+from math import ceil, floor
+
+import numpy as np
+
 from .base_dataloader import BaseDataLoader
+from .fetcher import FETCHERS
+from .sampler import BatchSampler, IterableSampler, SequentialSampler
+
 
 def default_collate(batch):
     """Merge data with outer dimension batch size."""
@@ -41,12 +44,23 @@ def default_collate(batch):
     else:
         return batch
 
+
 class DefaultDataLoader(BaseDataLoader):
     """DefaultDataLoader for multiple framework backends."""
-    
-    def __init__(self, dataset, batch_size=1, last_batch='rollover', collate_fn=None,
-                 sampler=None, batch_sampler=None, num_workers=0, pin_memory=False,
-                 shuffle=False, distributed=False):
+
+    def __init__(
+        self,
+        dataset,
+        batch_size=1,
+        last_batch="rollover",
+        collate_fn=None,
+        sampler=None,
+        batch_sampler=None,
+        num_workers=0,
+        pin_memory=False,
+        shuffle=False,
+        distributed=False,
+    ):
         """Initialize DefaultDataLoader.
 
         Args:
@@ -61,7 +75,7 @@ class DefaultDataLoader(BaseDataLoader):
             num_workers (int, optional): number of subprocesses to use for data loading. Defaults to 0.
             pin_memory (bool, optional): whether to copy data into pinned memory before returning. Defaults to False.
             shuffle (bool, optional): whether to shuffle data. Defaults to False.
-            distributed (bool, optional): whether the dataloader is distributed. Defaults to False.            
+            distributed (bool, optional): whether the dataloader is distributed. Defaults to False.
         """
         self.dataset = dataset
         self.last_batch = last_batch
@@ -73,11 +87,11 @@ class DefaultDataLoader(BaseDataLoader):
         self._batch_size = batch_size
         self.shuffle = shuffle
         self.distributed = distributed
-        self.drop_last = False if last_batch == 'rollover' else True
-        if self.collate_fn == None:
+        self.drop_last = False if last_batch == "rollover" else True
+        if self.collate_fn is None:
             self.collate_fn = default_collate
 
-    def batch(self, batch_size, last_batch='rollover'):
+    def batch(self, batch_size, last_batch="rollover"):
         """Set batch_size and last_batch."""
         self._batch_size = batch_size
         self.last_batch = last_batch
@@ -99,7 +113,8 @@ class DefaultDataLoader(BaseDataLoader):
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
             shuffle=self.shuffle,
-            distributed=self.distributed)
+            distributed=self.distributed,
+        )
 
     def __len__(self):
         """Get dataset length."""
@@ -110,17 +125,29 @@ class DefaultDataLoader(BaseDataLoader):
             for _ in self.dataset:
                 dataset_len += 1
         except Exception:
-            raise ValueError(f"{self.dataset} is invalid, {self.dataset}" \
-                " does not support calculating the length of its dataloader")
-        if self.drop_last == False:
+            raise ValueError(
+                f"{self.dataset} is invalid, {self.dataset}"
+                " does not support calculating the length of its dataloader"
+            )
+        if self.drop_last is False:
             dataloader_len = ceil(dataset_len / self.batch_size)
         else:
             dataloader_len = floor(dataset_len / self.batch_size)
         return dataloader_len
 
-    def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn, sampler,
-                             batch_sampler, num_workers, pin_memory, shuffle, distributed):
-
+    def _generate_dataloader(
+        self,
+        dataset,
+        batch_size,
+        last_batch,
+        collate_fn,
+        sampler,
+        batch_sampler,
+        num_workers,
+        pin_memory,
+        shuffle,
+        distributed,
+    ):
         sampler = self._generate_sampler(dataset, distributed)
         self.batch_sampler = BatchSampler(sampler, batch_size, self.drop_last)
         self.fetcher = FETCHERS[self.dataset_type](dataset, collate_fn, self.drop_last, distributed)
@@ -134,10 +161,10 @@ class DefaultDataLoader(BaseDataLoader):
 
     def _generate_sampler(self, dataset, distributed):
         if hasattr(dataset, "__getitem__"):
-            self.dataset_type = 'index'
+            self.dataset_type = "index"
             return SequentialSampler(dataset, distributed)
         elif hasattr(dataset, "__iter__"):
-            self.dataset_type = 'iter'
+            self.dataset_type = "iter"
             return IterableSampler(dataset)
         else:
             raise ValueError("dataset type only support (index, iter)")

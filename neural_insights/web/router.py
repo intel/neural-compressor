@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Connector between api.py and components."""
 import json
 import os
@@ -233,8 +232,7 @@ def get_histogram(data: Dict[str, Any]) -> list:
     parsed_histogram_type: Optional[str] = histogram_type_map.get(histogram_type, None)
     if parsed_histogram_type is None:
         raise ClientErrorException(
-            f"Histogram type not supported. "
-            f"Use one of following: {histogram_type_map.keys()}",
+            f"Histogram type not supported. " f"Use one of following: {histogram_type_map.keys()}",
         )
 
     histogram_data = diagnosis.get_histogram_data(op_name, parsed_histogram_type)

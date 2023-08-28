@@ -14,14 +14,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Gradient sensitivity pruner."""
 
-import numpy as np
-from .pruner import pruner_registry, Pruner
-from heapq import heappush, heappop
-from neural_compressor.utils import logger
 import re
+from heapq import heappop, heappush
+
+import numpy as np
+
+from neural_compressor.utils import logger
+
+from .pruner import Pruner, pruner_registry
+
 
 @pruner_registry
 class GradientSensitivityPruner(Pruner):
@@ -47,8 +50,7 @@ class GradientSensitivityPruner(Pruner):
             self.model.register_forward_pre_hook()
         if self.elementwise_prune:
             self.sparsity = self.update_sparsity(epoch)
-            logger.debug("Start pruning in epoch {} with sparsity {}.".
-                         format(str(epoch), str(self.sparsity)))
+            logger.debug("Start pruning in epoch {} with sparsity {}.".format(str(epoch), str(self.sparsity)))
             self.is_last_epoch = epoch == self.end_epoch
             if epoch >= self.start_epoch and epoch <= self.end_epoch:
                 self.compute_mask()
@@ -58,9 +60,9 @@ class GradientSensitivityPruner(Pruner):
         if self.elementwise_prune:
             for weight_name in self.weights:
                 if weight_name in self.masks:
-                    new_weight = self.masks[weight_name].reshape(\
-                            np.array(self.model.get_weight(weight_name).shape)) * \
-                            np.array(self.model.get_weight(weight_name))
+                    new_weight = self.masks[weight_name].reshape(
+                        np.array(self.model.get_weight(weight_name).shape)
+                    ) * np.array(self.model.get_weight(weight_name))
                     self.model.update_weights(weight_name, new_weight)
 
     def on_epoch_end(self):
@@ -71,22 +73,20 @@ class GradientSensitivityPruner(Pruner):
                     if weight_name in self.masks:
                         logger.info(
                             "Set {} sparsity with mask {} {} {}.".format(
-                                weight_name, str(
-                                self.masks[weight_name].size), str(
-                                self.masks[weight_name].sum()), str(
-                                1 - self.masks[weight_name].sum() /
-                                self.masks[weight_name].size)))
-                        new_weight = self.masks[weight_name].reshape(\
-                                np.array(self.model.get_weight(weight_name).shape)) * \
-                                np.array(self.model.get_weight(weight_name))
+                                weight_name,
+                                str(self.masks[weight_name].size),
+                                str(self.masks[weight_name].sum()),
+                                str(1 - self.masks[weight_name].sum() / self.masks[weight_name].size),
+                            )
+                        )
+                        new_weight = self.masks[weight_name].reshape(
+                            np.array(self.model.get_weight(weight_name).shape)
+                        ) * np.array(self.model.get_weight(weight_name))
                         self.model.update_weights(weight_name, new_weight)
         else:
             for weight_name_raw in self.weights:
                 for weight_name in self.parse_weight_name(weight_name_raw):
-                    self.prune_weight(self.model,
-                                      self.importance,
-                                      weight_name,
-                                      self.parameters)
+                    self.prune_weight(self.model, self.importance, weight_name, self.parameters)
         if self.is_last_epoch:
             # remove hooks for FWK model to ensure model saving
             self.model.remove_hooks()
@@ -94,50 +94,42 @@ class GradientSensitivityPruner(Pruner):
     def parse_weight_name(self, weight_name_pattern):
         """Parse weight name."""
         # check if asterisk is used to match bert layer indexes
-        if '*' not in weight_name_pattern:
+        if "*" not in weight_name_pattern:
             yield weight_name_pattern
         else:
             weight_all_names = self.model.get_all_weight_names()
-            importance_inputs = self.parameters['importance_inputs']
+            importance_inputs = self.parameters["importance_inputs"]
             for single_weight_name in weight_all_names:
-                index_group = re.match(
-                        weight_name_pattern.replace('*', '(\d+)'), single_weight_name)
+                index_group = re.match(weight_name_pattern.replace("*", "(\d+)"), single_weight_name)
                 if index_group is not None:
                     index = index_group.group(1)
                     if self.parameters.get(index) is None:
-                        self.parameters['index'] = int(index)
+                        self.parameters["index"] = int(index)
                     # dynamic change importance_inputs with matched index
-                    self.parameters['importance_inputs'] = [
-                            x.replace('*', index) for x in self.parameters['importance_inputs']]
+                    self.parameters["importance_inputs"] = [
+                        x.replace("*", index) for x in self.parameters["importance_inputs"]
+                    ]
                     yield single_weight_name
                     # change importance_inputs back
-                    self.parameters['importance_inputs'] = importance_inputs
+                    self.parameters["importance_inputs"] = importance_inputs
 
     def on_step_end(self):
         """Update importance tensor."""
         if self.elementwise_prune:
             for weight_name in self.weights:
-                self.update_importance_elementwise(self.model,
-                                                   self.importance,
-                                                   weight_name)
+                self.update_importance_elementwise(self.model, self.importance, weight_name)
                 if weight_name in self.masks:
-                    new_weight = self.masks[weight_name].reshape(\
-                            np.array(self.model.get_weight(weight_name).shape)) * \
-                            np.array(self.model.get_weight(weight_name))
+                    new_weight = self.masks[weight_name].reshape(
+                        np.array(self.model.get_weight(weight_name).shape)
+                    ) * np.array(self.model.get_weight(weight_name))
                     self.model.update_weights(weight_name, new_weight)
         else:
             for weight_name_raw in self.weights:
                 for weight_name in self.parse_weight_name(weight_name_raw):
-                    if self.parameters['importance_metric'] == 'abs_gradient':
-                        self.update_importance_abs(self.model,
-                                                   self.importance,
-                                                   weight_name,
-                                                   self.parameters)
-                    elif self.parameters['importance_metric'] == 'weighted_gradient':
-                        self.update_importance_weighted(self.model,
-                                                        self.importance,
-                                                        weight_name,
-                                                        self.parameters)
+                    if self.parameters["importance_metric"] == "abs_gradient":
+                        self.update_importance_abs(self.model, self.importance, weight_name, self.parameters)
+                    elif self.parameters["importance_metric"] == "weighted_gradient":
+                        self.update_importance_weighted(self.model, self.importance, weight_name, self.parameters)
 
     def compute_mask(self):
         """Compute masks according to absolute values."""
@@ -161,21 +153,17 @@ class GradientSensitivityPruner(Pruner):
 
     def prune_weight(self, model, importance, weight_name, parameters):
         """Prune the specified weight by importance."""
-        if parameters['normalize']:
+        if parameters["normalize"]:
             exponent = 2
-            norm_by_layer = np.power(
-                    np.power(importance[weight_name], exponent).sum(-1), 1 / exponent)
+            norm_by_layer = np.power(np.power(importance[weight_name], exponent).sum(-1), 1 / exponent)
             importance[weight_name] /= np.expand_dims(norm_by_layer, -1) + 1e-20
         importance = importance[weight_name]
         weight_tensor = np.array(model.get_weight(weight_name))
-        if parameters['transpose']:
+        if parameters["transpose"]:
             weight_tensor = weight_tensor.transpose((1, 0))
 
-        weight_tensor = self.prune_by_importance(weight_tensor,
-                                                 importance,
-                                                 parameters['target'],
-                                                 parameters['stride'])
-        if parameters['transpose']:
+        weight_tensor = self.prune_by_importance(weight_tensor, importance, parameters["target"], parameters["stride"])
+        if parameters["transpose"]:
             weight_tensor = weight_tensor.transpose((1, 0))
 
         model.update_weights(weight_name, weight_tensor)
@@ -183,25 +171,25 @@ class GradientSensitivityPruner(Pruner):
     def update_importance_elementwise(self, model, importance, weight_name):
         """Update importance tensor elementwisely."""
         if importance.get(weight_name) is not None:
-           importance[weight_name] += np.absolute(
-                np.array(np.array(model.get_gradient(weight_name)) * np.array(model.get_weight(weight_name))))
+            importance[weight_name] += np.absolute(
+                np.array(np.array(model.get_gradient(weight_name)) * np.array(model.get_weight(weight_name)))
+            )
         else:
             importance[weight_name] = np.absolute(
-                np.array(model.get_gradient(weight_name) * np.array(model.get_weight(weight_name))))
+                np.array(model.get_gradient(weight_name) * np.array(model.get_weight(weight_name)))
+            )
 
     def update_importance_abs(self, model, importance, weight_name, parameters):
         """Update importance tensor with absolute gradient."""
-        head_mask = model.get_inputs(
-                input_name=parameters['importance_inputs'][0])
+        head_mask = model.get_inputs(input_name=parameters["importance_inputs"][0])
         if importance.get(weight_name) is not None:
-           importance[weight_name] += np.absolute(
-                np.array(model.get_gradient(head_mask)))[parameters['index']]
+            importance[weight_name] += np.absolute(np.array(model.get_gradient(head_mask)))[parameters["index"]]
         else:
-            importance[weight_name] = np.absolute(
-                np.array(model.get_gradient(head_mask)))[parameters['index']]
+            importance[weight_name] = np.absolute(np.array(model.get_gradient(head_mask)))[parameters["index"]]
 
     def update_importance_weighted(self, model, importance, weight_name, parameters):
         """Update importance tensor with weighted gradient."""
+
         def weighted_grad(input_weight):
             """Compute weighted gradient."""
             weight_grad = np.array(model.get_gradient(input_weight))
@@ -212,8 +200,7 @@ class GradientSensitivityPruner(Pruner):
                 weighted_grad = weighted_grad.sum(1)
             return weighted_grad
 
-        accumulated_grad = sum([weighted_grad(input_weight) for input_weight \
-                            in parameters['importance_inputs']])
+        accumulated_grad = sum([weighted_grad(input_weight) for input_weight in parameters["importance_inputs"]])
 
         if importance.get(weight_name) is not None:
             importance[weight_name] += np.absolute(accumulated_grad)
@@ -234,11 +221,11 @@ class GradientSensitivityPruner(Pruner):
             head_to_add = heappop(importance_ordered)[1]
             if sorted_tensor_to_concat is None:
                 sorted_tensor_to_concat = (
-                        tensor[int(head_to_add * stride): int(head_to_add * stride) +
-                               int(stride), ...], )
+                    tensor[int(head_to_add * stride) : int(head_to_add * stride) + int(stride), ...],
+                )
             else:
                 sorted_tensor_to_concat += (
-                        tensor[int(head_to_add * stride): int(head_to_add * stride) +
-                               int(stride), ...], )
+                    tensor[int(head_to_add * stride) : int(head_to_add * stride) + int(stride), ...],
+                )
             i += 1
         return np.concatenate(sorted_tensor_to_concat)

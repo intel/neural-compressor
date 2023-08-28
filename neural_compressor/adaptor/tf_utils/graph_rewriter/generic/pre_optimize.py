@@ -16,63 +16,74 @@
 # limitations under the License.
 """Pre Optimization Entrance."""
 
-import logging
 import copy
+import logging
+
 import tensorflow as tf
+
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.util import version1_eq_version2, version1_gte_version2, version1_lt_version2
 from neural_compressor.utils.utility import dump_elapsed_time
-from .fuse_column_wise_mul import FuseColumnWiseMulOptimizer
-from .remove_training_nodes import RemoveTrainingNodesOptimizer
-from .split_shared_input import SplitSharedInputOptimizer
-from .strip_unused_nodes import StripUnusedNodesOptimizer
-from .graph_cse_optimizer import GraphCseOptimizer
-from .fold_constant import GraphFoldConstantOptimizer
-from .fold_batch_norm import FoldBatchNormNodesOptimizer
-from .rename_batch_norm import RenameBatchNormOptimizer
-from .convert_layout import ConvertLayoutOptimizer
-from .fuse_gelu import FuseGeluOptimizer
-from .fuse_reshape_transpose import FuseTransposeReshapeOptimizer
-from .convert_leakyrelu import ConvertLeakyReluOptimizer
-from .dummy_biasadd import InjectDummyBiasAddOptimizer
+
 from .convert_add_to_biasadd import ConvertAddToBiasAddOptimizer
-from .grappler_pass import GrapplerOptimizer
-from .fuse_conv_with_math import FuseConvWithMathOptimizer
-from .fuse_biasadd_add import FuseBiasAddAndAddOptimizer
-from .switch_optimizer import SwitchOptimizer
-from .move_squeeze_after_relu import MoveSqueezeAfterReluOptimizer
+from .convert_layout import ConvertLayoutOptimizer
+from .convert_leakyrelu import ConvertLeakyReluOptimizer
 from .convert_nan_to_random import ConvertNanToRandom
+from .convert_placeholder_to_const import ConvertPlaceholderToConst
+from .dilated_contraction import DilatedContraction
+from .dummy_biasadd import InjectDummyBiasAddOptimizer
 from .expanddims_optimizer import ExpandDimsOptimizer
 from .fetch_weight_from_reshape import FetchWeightFromReshapeOptimizer
+from .fold_batch_norm import FoldBatchNormNodesOptimizer
+from .fold_constant import GraphFoldConstantOptimizer
+from .fuse_biasadd_add import FuseBiasAddAndAddOptimizer
+from .fuse_column_wise_mul import FuseColumnWiseMulOptimizer
+from .fuse_conv_with_math import FuseConvWithMathOptimizer
 from .fuse_decomposed_bn import FuseDecomposedBNOptimizer
 from .fuse_decomposed_in import FuseDecomposedINOptimizer
+from .fuse_gelu import FuseGeluOptimizer
 from .fuse_layer_norm import FuseLayerNormOptimizer
+from .fuse_reshape_transpose import FuseTransposeReshapeOptimizer
+from .graph_cse_optimizer import GraphCseOptimizer
+from .grappler_pass import GrapplerOptimizer
+from .move_squeeze_after_relu import MoveSqueezeAfterReluOptimizer
+from .remove_training_nodes import RemoveTrainingNodesOptimizer
+from .rename_batch_norm import RenameBatchNormOptimizer
+from .split_shared_input import SplitSharedInputOptimizer
 from .strip_equivalent_nodes import StripEquivalentNodesOptimizer
-from .dilated_contraction import DilatedContraction
-from .convert_placeholder_to_const import ConvertPlaceholderToConst
-from neural_compressor.adaptor.tf_utils.util import version1_gte_version2, version1_eq_version2
-from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
+from .strip_unused_nodes import StripUnusedNodesOptimizer
+from .switch_optimizer import SwitchOptimizer
 
-class PreOptimization():
+
+class PreOptimization:
     """Pre optimization for the FP32 models."""
 
     def __init__(self, model, new_api, device):
         """Initilization."""
         self.model = model
-        if version1_gte_version2(tf.version.VERSION, '2.1.0') or \
-           version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
-            self.optimization = {'pruning': True, 'shape': True,
-                                'constfold': False, 'arithmetic': False,
-                                'dependency': True, 'debug_stripper': True,
-                                'loop': True}
+        if version1_gte_version2(tf.version.VERSION, "2.1.0") or version1_eq_version2(tf.version.VERSION, "1.15.0-up3"):
+            self.optimization = {
+                "pruning": True,
+                "shape": True,
+                "constfold": False,
+                "arithmetic": False,
+                "dependency": True,
+                "debug_stripper": True,
+                "loop": True,
+            }
         else:
-            self.optimization = {'pruning': True, 'shape': True,
-                                'dependency': True, 'debug_stripper': True,
-                                'loop': True}
+            self.optimization = {
+                "pruning": True,
+                "shape": True,
+                "dependency": True,
+                "debug_stripper": True,
+                "loop": True,
+            }
         # Table initialization should disable grappler dependency and pruning pass
         node_names = [node.name for node in model.graph_def.node]
-        if 'init_all_tables' in node_names:
-            self.optimization['dependency'] = False
-            self.optimization['pruning'] = False
+        if "init_all_tables" in node_names:
+            self.optimization["dependency"] = False
+            self.optimization["pruning"] = False
         self.new_api = new_api
         self.device = device
         self.analyzer = GraphAnalyzer()
@@ -80,7 +91,6 @@ class PreOptimization():
         self.analyzer.parse_graph()
         self._tmp_graph_def = None
         self._excluded_node_names = []
-
 
     def get_excluded_node_names(self):
         """Get the excluded node name.
@@ -120,50 +130,51 @@ class PreOptimization():
         input_output_names = output_node_names + input_node_names
 
         # Add device info before convert layout
-        # Google in layout optimizer where all nodes in the graph are expected to have their device 
+        # Google in layout optimizer where all nodes in the graph are expected to have their device
         # information set (earlier version < 2.10.0 this was not needed).
-        if version1_gte_version2(tf.version.VERSION, '2.10.0'):
+        if version1_gte_version2(tf.version.VERSION, "2.10.0"):
             cur_graph = GraphAnalyzer()
             cur_graph.graph = self.model.graph_def
             graph_info = cur_graph.parse_graph()
 
-            if self.device == 'cpu':
+            if self.device == "cpu":
                 cpus = tf.config.list_physical_devices("CPU")
-                node_device = cpus[0].name.replace('physical_device:', '')
+                node_device = cpus[0].name.replace("physical_device:", "")
             else:
                 gpus = tf.config.list_physical_devices("GPU")
                 if len(gpus) == 0:
                     xpus = tf.config.list_physical_devices("XPU")
                     if len(xpus) == 0:
                         cpus = tf.config.list_physical_devices("CPU")
-                        node_device = cpus[0].name.replace('physical_device:', '')
+                        node_device = cpus[0].name.replace("physical_device:", "")
                     else:
-                        node_device = xpus[0].name.replace('physical_device:', '')
+                        node_device = xpus[0].name.replace("physical_device:", "")
                 else:
-                    node_device = gpus[0].name.replace('physical_device:', '')
+                    node_device = gpus[0].name.replace("physical_device:", "")
             for node_name in list(graph_info.keys()):
                 node = graph_info[node_name].node
                 node.device = node_device
             self._tmp_graph_def = cur_graph.dump_graph()
 
-            self._tmp_graph_def = ConvertLayoutOptimizer(
-                self._tmp_graph_def, output_node_names).do_transformation()
+            self._tmp_graph_def = ConvertLayoutOptimizer(self._tmp_graph_def, output_node_names).do_transformation()
         else:
-            self._tmp_graph_def = ConvertLayoutOptimizer(
-                self.model.graph_def, output_node_names).do_transformation()
+            self._tmp_graph_def = ConvertLayoutOptimizer(self.model.graph_def, output_node_names).do_transformation()
 
         self._tmp_graph_def = ConvertPlaceholderToConst(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = SwitchOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = GrapplerOptimizer(
-            self._tmp_graph_def, input_output_names, self.optimization).do_transformation()
+            self._tmp_graph_def, input_output_names, self.optimization
+        ).do_transformation()
 
-        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def,
-            input_node_names, output_node_names).do_transformation()
+        self._tmp_graph_def = StripUnusedNodesOptimizer(
+            self._tmp_graph_def, input_node_names, output_node_names
+        ).do_transformation()
 
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
-            self._tmp_graph_def, protected_nodes=input_output_names).do_transformation()
+            self._tmp_graph_def, protected_nodes=input_output_names
+        ).do_transformation()
 
         self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
 
@@ -182,63 +193,52 @@ class PreOptimization():
 
         self._tmp_graph_def = FuseColumnWiseMulOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def,
-            input_node_names, output_node_names).do_transformation()
+        self._tmp_graph_def = StripUnusedNodesOptimizer(
+            self._tmp_graph_def, input_node_names, output_node_names
+        ).do_transformation()
 
         self._tmp_graph_def = FuseGeluOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = GraphCseOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = FoldBatchNormNodesOptimizer(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = RenameBatchNormOptimizer(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = RenameBatchNormOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = ConvertLeakyReluOptimizer(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = ConvertLeakyReluOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = ConvertAddToBiasAddOptimizer(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = ConvertAddToBiasAddOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = FuseTransposeReshapeOptimizer(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = FuseTransposeReshapeOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = FuseConvWithMathOptimizer(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = FuseConvWithMathOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = ExpandDimsOptimizer(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = ExpandDimsOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = FetchWeightFromReshapeOptimizer(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = FetchWeightFromReshapeOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = MoveSqueezeAfterReluOptimizer(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = MoveSqueezeAfterReluOptimizer(self._tmp_graph_def).do_transformation()
 
         if not self.new_api and not itex_mode:
-            #TODO we need to remove below optimizer once the TF enabled the single
+            # TODO we need to remove below optimizer once the TF enabled the single
             # matmul op quantization
             self._tmp_graph_def = InjectDummyBiasAddOptimizer(
-                self._tmp_graph_def, output_node_names).do_transformation()
-                
-        self._tmp_graph_def = FuseBiasAddAndAddOptimizer(
-            self._tmp_graph_def).do_transformation()
+                self._tmp_graph_def, output_node_names
+            ).do_transformation()
 
+        self._tmp_graph_def = FuseBiasAddAndAddOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = ConvertNanToRandom(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = ConvertNanToRandom(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = StripEquivalentNodesOptimizer(
-            self._tmp_graph_def, output_node_names).do_transformation()
+        self._tmp_graph_def = StripEquivalentNodesOptimizer(self._tmp_graph_def, output_node_names).do_transformation()
 
         if self.new_api or itex_mode:
-            self._tmp_graph_def = DilatedContraction(
-                self._tmp_graph_def).do_transformation()
+            self._tmp_graph_def = DilatedContraction(self._tmp_graph_def).do_transformation()
 
         # node device info will be removed by GrapplerOptimizer, insert it again.
-        if version1_lt_version2(tf.version.VERSION, '2.0.0'): # pragma: no cover
+        if version1_lt_version2(tf.version.VERSION, "2.0.0"):  # pragma: no cover
             from tensorflow._api.v1.config import experimental
+
             list_physical_devices = experimental.list_physical_devices
         else:
             list_physical_devices = tf.config.list_physical_devices
@@ -246,20 +246,20 @@ class PreOptimization():
         cur_graph.graph = self._tmp_graph_def
         graph_info = cur_graph.parse_graph()
 
-        if self.device == 'cpu':
+        if self.device == "cpu":
             cpus = list_physical_devices("CPU")
-            node_device = cpus[0].name.replace('physical_device:', '')
+            node_device = cpus[0].name.replace("physical_device:", "")
         else:
             gpus = list_physical_devices("GPU")
             if len(gpus) == 0:
                 xpus = list_physical_devices("XPU")
                 if len(xpus) == 0:
                     cpus = list_physical_devices("CPU")
-                    node_device = cpus[0].name.replace('physical_device:', '')
+                    node_device = cpus[0].name.replace("physical_device:", "")
                 else:
-                    node_device = xpus[0].name.replace('physical_device:', '')
+                    node_device = xpus[0].name.replace("physical_device:", "")
             else:
-                node_device = gpus[0].name.replace('physical_device:', '')
+                node_device = gpus[0].name.replace("physical_device:", "")
         for node_name in list(graph_info.keys()):
             node = graph_info[node_name].node
             node.device = node_device
@@ -268,7 +268,7 @@ class PreOptimization():
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 
         for function_def in self.model.graph_def.library.function:
-            if function_def.signature.name == 'swish_f32':
+            if function_def.signature.name == "swish_f32":
                 self._tmp_graph_def.library.function.extend([copy.deepcopy(function_def)])
 
         origin_model.graph_def = self._tmp_graph_def
@@ -290,8 +290,7 @@ class PreOptimization():
         res = []
 
         for sub_pattern in patterns:
-            res.extend([i for i in self.analyzer.query_fusion_pattern_nodes(
-                sub_pattern) if i not in res])
+            res.extend([i for i in self.analyzer.query_fusion_pattern_nodes(sub_pattern) if i not in res])
         return res
 
     def has_positive_input(self, node_name):

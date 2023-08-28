@@ -28,10 +28,10 @@ Generate a quantized model.
 ```python
 onnx_model = onnx.load(input_model)
 calib_dataset = IncDataset(eval_dataset, onnx_model)
-config = PostTrainingQuantConfig(approach='static', quant_format="QOperator")
-q_model = quantization.fit(onnx_model, 
-                           config,
-                           calib_dataloader=DataLoader(framework='onnxruntime', dataset=calib_dataset))
+config = PostTrainingQuantConfig(approach="static", quant_format="QOperator")
+q_model = quantization.fit(
+    onnx_model, config, calib_dataloader=DataLoader(framework="onnxruntime", dataset=calib_dataset)
+)
 ```
 
 Execute benchmark to get the F1 score of both FP32 and INT8 models and then compute the relative accuracy ratio.
@@ -45,11 +45,12 @@ fp32 f1 = 0.9049, int8 f1 = 0.2989, accuracy ratio = -66.9631%
 In this section, the diagnosis tool is used for debugging to achieve higher INT8 model accuracy.
 We need to set `diagnosis` parameter to `True` as shown below.
 ```python
-config = PostTrainingQuantConfig(approach="static", quant_format="QOperator", quant_level=1, diagnosis=True) # set 'diagnosis' to True
-q_model = quantization.fit(onnx_model, 
-                           config, 
-                           eval_func=eval_func, 
-                           calib_dataloader=DataLoader(framework='onnxruntime', dataset=calib_dataset))
+config = PostTrainingQuantConfig(
+    approach="static", quant_format="QOperator", quant_level=1, diagnosis=True
+)  # set 'diagnosis' to True
+q_model = quantization.fit(
+    onnx_model, config, eval_func=eval_func, calib_dataloader=DataLoader(framework="onnxruntime", dataset=calib_dataset)
+)
 ```
 The diagnosis tool will output `Activations summary` and `Weights summary` in terminal. 
 
@@ -57,21 +58,22 @@ For easy to check, here we reload them to .csv files as shown below.
 ```python
 import glob
 import pandas as pd
-pd.set_option('display.max_rows',None)
-pd.set_option('display.max_columns',None)
+
+pd.set_option("display.max_rows", None)
+pd.set_option("display.max_columns", None)
 
 subfolders = glob.glob("./nc_workspace" + "/*/")
 subfolders.sort(key=os.path.getmtime, reverse=True)
 if subfolders:
     activations_table = os.path.join(subfolders[0], "activations_table.csv")
     weights_table = os.path.join(subfolders[0], "weights_table.csv")
-    
+
     activations_table = pd.read_csv(activations_table)
     weights_table = pd.read_csv(weights_table)
-    
+
     print("Activations summary")
     display(activations_table)
-    
+
     print("\nWeights summary")
     display(weights_table)
 ```
@@ -104,13 +106,18 @@ Refer to [diagnosis.md](https://github.com/intel/neural-compressor/blob/master/d
 
 ```python
 from neural_compressor.utils.constant import FP32
-config = PostTrainingQuantConfig(approach="static", 
-                                 quant_format="QOperator",
-                                 op_name_dict={"/layoutlmv3/encoder/layer.\d+/output/dense/MatMul":FP32,
-                                               "/layoutlmv3/encoder/layer.\d+/output/Add":FP32})
-q_model = quantization.fit(onnx_model, 
-                           config,
-                           calib_dataloader=DataLoader(framework='onnxruntime', dataset=calib_dataset))
+
+config = PostTrainingQuantConfig(
+    approach="static",
+    quant_format="QOperator",
+    op_name_dict={
+        "/layoutlmv3/encoder/layer.\d+/output/dense/MatMul": FP32,
+        "/layoutlmv3/encoder/layer.\d+/output/Add": FP32,
+    },
+)
+q_model = quantization.fit(
+    onnx_model, config, calib_dataloader=DataLoader(framework="onnxruntime", dataset=calib_dataset)
+)
 q_model.save(output_model)
 ```
 

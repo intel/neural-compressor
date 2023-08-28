@@ -1,12 +1,12 @@
 import unittest
 
 import torch
-import torchvision
 import torch.nn as nn
+import torchvision
 
+from neural_compressor.conf.pythonic_config import Config, WeightPruningConfig
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.conf.pythonic_config import Config, WeightPruningConfig
 from neural_compressor.experimental.pruning_v2 import Pruning
 
 
@@ -16,37 +16,33 @@ class TestPruningCriteria(unittest.TestCase):
     def test_pruning_criteria(self):
         local_configs = [
             {
-                "op_names": ['layer1.*'],
-                'target_sparsity': 0.4,
-                "pattern": '8x2',
+                "op_names": ["layer1.*"],
+                "target_sparsity": 0.4,
+                "pattern": "8x2",
                 "pruning_type": "magnitude_progressive",
                 "pruning_scope": "local",
-                "sparsity_decay_type": "cube"
+                "sparsity_decay_type": "cube",
             },
             {
-                "op_names": ['layer2.*'],
-                'target_sparsity': 0.45,
-                'pattern': '2:4',
+                "op_names": ["layer2.*"],
+                "target_sparsity": 0.45,
+                "pattern": "2:4",
                 "pruning_type": "snip",
-                'start_step': 6,
-                'end_step': 6
+                "start_step": 6,
+                "end_step": 6,
             },
             {
-                "op_names": ['layer3.*'],
-                'excluded_op_names': ['downsample.*'],
-                'target_sparsity': 0.7,
-                'pattern': '4x1',
+                "op_names": ["layer3.*"],
+                "excluded_op_names": ["downsample.*"],
+                "target_sparsity": 0.7,
+                "pattern": "4x1",
                 "pruning_type": "snip_momentum_progressive",
                 "pruning_frequency": 4,
                 "min_sparsity_ratio_per_op": 0.5,
                 "max_sparsity_ratio_per_op": 0.8,
-            }
+            },
         ]
-        conf = WeightPruningConfig(
-            local_configs,
-            target_sparsity=0.8,
-            sparsity_decay_type="cube"
-        )
+        conf = WeightPruningConfig(local_configs, target_sparsity=0.8, sparsity_decay_type="cube")
         config = Config(quantization=None, benchmark=None, pruning=conf, distillation=None)
         prune = Pruning(config)
         prune.update_config(start_step=1, end_step=10)
@@ -54,8 +50,8 @@ class TestPruningCriteria(unittest.TestCase):
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
-        datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
+        datasets = Datasets("pytorch")
+        dummy_dataset = datasets["dummy"](shape=(10, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         prune.on_train_begin()

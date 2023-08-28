@@ -14,10 +14,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The base filter class for all frameworks."""
 
 from abc import abstractmethod
+
 from neural_compressor.utils.utility import singleton
 
 
@@ -78,28 +78,31 @@ ONNXRT_QL_FILTERS = {}
 PYTORCH_FILTERS = {}
 MXNET_FILTERS = {}
 
-framework_filters = {"tensorflow": TensorflowFilters,
-                     "tensorflow_itex": TensorflowFilters,
-                     "pytorch": PyTorchFilters,
-                     "pytorch_ipex": PyTorchFilters,
-                     "pytorch_fx": PyTorchFilters,
-                     "mxnet": MXNetFilters,
-                     "onnxrt_qlinearops": ONNXRTQLFilters,
-                     "onnxrt_qdq": ONNXRTQLFilters,
-                     "onnxruntime": ONNXRTQLFilters,
-                     "onnxrt_integerops": ONNXRTITFilters,
-                     }
+framework_filters = {
+    "tensorflow": TensorflowFilters,
+    "tensorflow_itex": TensorflowFilters,
+    "pytorch": PyTorchFilters,
+    "pytorch_ipex": PyTorchFilters,
+    "pytorch_fx": PyTorchFilters,
+    "mxnet": MXNetFilters,
+    "onnxrt_qlinearops": ONNXRTQLFilters,
+    "onnxrt_qdq": ONNXRTQLFilters,
+    "onnxruntime": ONNXRTQLFilters,
+    "onnxrt_integerops": ONNXRTITFilters,
+}
 
-registry_filters = {"tensorflow": TENSORFLOW_FILTERS,
-                    "tensorflow_itex": TENSORFLOW_ITEX_FILTERS,
-                    "pytorch": PYTORCH_FILTERS,
-                    "pytorch_ipex": PYTORCH_FILTERS,
-                    "pytorch_fx": PYTORCH_FILTERS,
-                    "mxnet": MXNET_FILTERS,
-                    "onnxrt_integerops": ONNXRT_IT_FILTERS,
-                    "onnxrt_qdq": ONNXRT_QL_FILTERS,
-                    "onnxruntime": ONNXRT_QL_FILTERS,
-                    "onnxrt_qlinearops": ONNXRT_QL_FILTERS}
+registry_filters = {
+    "tensorflow": TENSORFLOW_FILTERS,
+    "tensorflow_itex": TENSORFLOW_ITEX_FILTERS,
+    "pytorch": PYTORCH_FILTERS,
+    "pytorch_ipex": PYTORCH_FILTERS,
+    "pytorch_fx": PYTORCH_FILTERS,
+    "mxnet": MXNET_FILTERS,
+    "onnxrt_integerops": ONNXRT_IT_FILTERS,
+    "onnxrt_qdq": ONNXRT_QL_FILTERS,
+    "onnxruntime": ONNXRT_QL_FILTERS,
+    "onnxrt_qlinearops": ONNXRT_QL_FILTERS,
+}
 
 
 class FILTERS(object):
@@ -114,10 +117,19 @@ class FILTERS(object):
 
     def __init__(self, framework):
         """Initialize the attribute of class."""
-        assert framework in ["tensorflow", "tensorflow_itex", "keras",
-                             "mxnet", "onnxrt_qdq", "pytorch", "pytorch_ipex", "pytorch_fx",
-                             "onnxrt_integerops", "onnxrt_qlinearops", "onnxruntime"], \
-                             "framework support tensorflow pytorch mxnet onnxrt"
+        assert framework in [
+            "tensorflow",
+            "tensorflow_itex",
+            "keras",
+            "mxnet",
+            "onnxrt_qdq",
+            "pytorch",
+            "pytorch_ipex",
+            "pytorch_fx",
+            "onnxrt_integerops",
+            "onnxrt_qlinearops",
+            "onnxruntime",
+        ], "framework support tensorflow pytorch mxnet onnxrt"
         self.filters = framework_filters[framework]().filters
         self.framework = framework
 
@@ -126,8 +138,7 @@ class FILTERS(object):
 
         x[i] is roughly equivalent to type(x).__getitem__(x, index)
         """
-        assert filter_type in self.filters.keys(), "filter support {}".\
-            format(self.filters.keys())
+        assert filter_type in self.filters.keys(), "filter support {}".format(self.filters.keys())
         return self.filters[filter_type]
 
 
@@ -142,11 +153,12 @@ def filter_registry(filter_type, framework):
     Returns:
         cls: The class of register.
     """
+
     def decorator_transform(cls):
         """Decorate a class."""
-        for single_framework in [fwk.strip() for fwk in framework.split(',')]:
+        for single_framework in [fwk.strip() for fwk in framework.split(",")]:
             assert single_framework in [
-                "tensorflow", 
+                "tensorflow",
                 "tensorflow_itex",
                 "pytorch",
                 "pytorch_ipex",
@@ -155,12 +167,13 @@ def filter_registry(filter_type, framework):
                 "onnxrt_integerops",
                 "onnxrt_qdq",
                 "onnxrt_qlinearops",
-                "onnxruntime"
+                "onnxruntime",
             ], "The framework support tensorflow mxnet pytorch onnxrt"
             if filter_type in registry_filters[single_framework].keys():
-                raise ValueError('Cannot have two transforms with the same name')
+                raise ValueError("Cannot have two transforms with the same name")
             registry_filters[single_framework][filter_type] = cls
         return cls
+
     return decorator_transform
 
 
@@ -168,7 +181,6 @@ class Filter(object):
     """The base class for transform.
 
     __call__ method is needed when write user specific transform.
-
     """
 
     @abstractmethod
