@@ -69,9 +69,10 @@ class TestHPO(unittest.TestCase):
             return np.mean(np.log(x**2), axis=1)
         points = np.random.randn(5, 6)
         optimizer = SimulatedAnnealingOptimizer(T0=100, Tf=0, alpha=0.9, higher_is_better=True)
-        optimizer.gen_next_params(f, points)
+        result = optimizer.gen_next_params(f, points)
         optimizer = SimulatedAnnealingOptimizer(T0=1, Tf=0.01, alpha=None, higher_is_better=False)
-        optimizer.gen_next_params(f, points)
+        result2 = optimizer.gen_next_params(f, points)
+        self.assertTrue(len(result) == len(result2))
 
 
 if __name__ == "__main__":
