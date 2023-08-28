@@ -91,7 +91,8 @@ def _get_act_scale(input_val):
 class ActAwareWeightQuant:
     """Implementation of Activation-aware Weight quantization (AWQ) algo."""
     def __init__(self, model, example_inputs=None, calib_func=None, dataloader=None, n_samples=128,
-                 bits=4,  group_size=32, scheme='asym', sym_full_range=False, weight_config={},):
+                 data_type='int', bits=4,  group_size=32, scheme='asym', sym_full_range=False, 
+                 weight_config={},):
         self.example_inputs = example_inputs
         if example_inputs is None:
             assert dataloader is not None, "datalaoder or example_inputs is required."
@@ -103,6 +104,7 @@ class ActAwareWeightQuant:
         # Step 2: get block list and block prefix, number
         self.block_prefix, self.block_num = get_block_prefix(model)
         self.block_list = fetch_module(model, self.block_prefix)
+        self.data_type = data_type
         self.bits = bits
         self.group_size = group_size
         self.scheme = scheme
@@ -188,11 +190,13 @@ class ActAwareWeightQuant:
         for module_tuple in module_list:
             # Step 1: Initailize quantization configuration.
             if module_tuple[0] in self.weight_config:
+                cur_dtype = self.weight_config[module_tuple[0]]['dtype']
                 cur_bits = self.weight_config[module_tuple[0]]['bits']
                 cur_group_size = self.weight_config[module_tuple[0]]['group_size']
                 cur_scheme = self.weight_config[module_tuple[0]]['scheme']
             else:
-                cur_bits, cur_group_size, cur_scheme = self.bits, self.group_size, self.scheme
+                cur_dtype, cur_bits, cur_group_size, cur_scheme = \
+                            self.data_type, self.bits, self.group_size, self.scheme
             if cur_bits < 0:
                 continue
             logger.info(f"[SCALE] Processing module: {module_tuple}")
@@ -231,6 +235,7 @@ class ActAwareWeightQuant:
                     module.weight.data = module.weight.data.mul(scales.view(1, -1))
                     module.weight.data = quant_weight(
                         module.weight.data,
+                        data_type=cur_dtype,
                         num_bits=cur_bits, 
                         group_size=cur_group_size, 
                         scheme=cur_scheme,
@@ -310,11 +315,13 @@ class ActAwareWeightQuant:
             for module_name in module_tuple:
                 # Step 1: Initailize quantization configuration.
                 if module_name in self.weight_config:
+                    cur_dtype = self.weight_config[module_name]['dtype']
                     cur_bits = self.weight_config[module_name]['bits']
                     cur_group_size = self.weight_config[module_name]['group_size']
                     cur_scheme = self.weight_config[module_name]['scheme']
                 else:
-                    cur_bits, cur_group_size, cur_scheme = self.bits, self.group_size, self.scheme
+                    cur_dtype, cur_bits, cur_group_size, cur_scheme = \
+                                self.data_type, self.bits, self.group_size, self.scheme
                 if cur_bits < 0:
                     continue
                 logger.info(f"[CLIP] Processing module: {module_name}")
@@ -335,6 +342,7 @@ class ActAwareWeightQuant:
                     # MulLinear can also work with @weight.setter
                     module.weight.data = quant_weight(
                         module.weight.data,
+                        data_type=cur_dtype,
                         num_bits=cur_bits, 
                         group_size=cur_group_size, 
                         scheme=cur_scheme,
