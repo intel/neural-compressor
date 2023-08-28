@@ -26,7 +26,7 @@ from .sa_optimizer import SimulatedAnnealingOptimizer
 
 try:
     from neural_compressor.utils import logger
-except:
+except:  # pragma: no cover
     import logging
     logger = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ class Searcher(object):
         for key in self.search_space_keys:
             if isinstance(self.search_space[key], (list, tuple)):
                 space = DiscreteSearchSpace(value=self.search_space[key])
-            else:
+            else:  # pragma: no cover
                 space = self.search_space[key]
             search_space_pool.append(space)
         return search_space_pool
@@ -163,7 +163,7 @@ class GridSearcher(Searcher):
         param = []
         for i in range(len(self.idx)):
             param.append(self.search_space_pool[i].get_value(self.idx[i]))
-        if not self._add_idx():
+        if not self._add_idx():  # pragma: no cover
             logger.warning('run out of search space pool, rebuild...')
             self.idx = [0] * len(self.search_space_pool)
         return self.params_vec2params_dict(param)
@@ -295,7 +295,7 @@ class XgbSearcher(Searcher):
                                           reg_lambda=1.00,
                                           reg_alpha=0,
                                           objective='reg:squarederror')
-        elif loss_type == "rank":
+        elif loss_type == "rank":  # pragma: no cover
             self.model = xgb.XGBRanker(max_depth=3,
                                        n_estimators=100,
                                        gamma=0.0001,
