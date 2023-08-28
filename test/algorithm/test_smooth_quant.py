@@ -15,6 +15,7 @@ from neural_compressor import PostTrainingQuantConfig, quantization
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
 from neural_compressor.adaptor.torch_utils.model_wrapper import SQLinearWrapper
+from transformers import AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoTokenizer
 import logging
 logger = logging.getLogger("neural_compressor")
 
@@ -1091,6 +1092,60 @@ class TestTuneSqAlpha(unittest.TestCase):
             partial_fake_eval = partial(fake_eval, eval_result_lst=eval_result_lst)
             self._test_sq_tune_alpha_common(partial_fake_eval, alpha=alpha, quant_level=quant_level)
 
+class TestTextGeneration(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        from modeling_gptj import GPTJForCausalLM
+        self.clm_model = GPTJForCausalLM.from_pretrained(
+            "hf-internal-testing/tiny-random-gptj",
+            torchscript=True
+        )
+
+    def test_text_generation(self):
+        input_ids = torch.tensor([[531, 574, 658, 492, 156],
+                                [309, 296, 471, 817, 435],
+                                [182, 176, 756, 944, 768]])
+        input_bs, input_len = input_ids.shape
+        new_shape = [input_bs, 4, 1, 8]
+        dummy_tensor = torch.ones(size=new_shape)
+        pkv = tuple(dummy_tensor for _ in range(2))
+        past_key_values = tuple(tuple(pkv) for _ in range(28))
+
+        attention_mask = torch.ones(input_bs, input_len + 1)
+        attention_mask[:,0] = 0
+        example_inputs = (
+            input_ids,
+            tuple(past_key_values),
+            attention_mask,
+        )
+
+        def calib_func(prepared_model):
+            for i in range(10):
+                prepared_model(
+                    input_ids=input_ids,
+                    past_key_values=past_key_values,
+                    attention_mask=attention_mask,
+                )
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        recipes = {"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}}
+        conf = PostTrainingQuantConfig(
+            backend="ipex",
+            excluded_precisions=["bf16"],
+            recipes=recipes,
+            example_inputs=example_inputs,
+        )
+        q_model = quantization.fit(
+            self.clm_model,
+            conf,
+            calib_func=calib_func,
+        )
+        out = q_model(*example_inputs)
+        values, indices = out[0][:, -1, :].log_softmax(dim=-1).topk(1)
+        self.assertEqual(indices[0], torch.tensor([887]))
+        self.assertEqual(indices[1], torch.tensor([362]))
+        self.assertEqual(indices[2], torch.tensor([504]))
+
+       
 
 if __name__ == '__main__':
     unittest.main()

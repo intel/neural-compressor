@@ -1482,7 +1482,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         with self.assertRaises(AssertionError) as context:
           adaptor = FRAMEWORKS[framework](framework_specific_info)
         self.assertEqual(str(context.exception), "'test_backend' backend is not supported, "\
-          "supported backends include ['default', 'onnxrt_trt_ep', 'onnxrt_dnnl_ep', 'onnxrt_cuda_ep']")
+          "supported backends include ['default', 'onnxrt_trt_ep', 'onnxrt_dnnl_ep', 'onnxrt_cuda_ep', 'onnxrt_dml_ep']")
         
         framework_specific_info = {"device": "cpu",
                                    "backend": "onnxrt_trt_ep",

@@ -57,6 +57,7 @@ function run_tuning {
             --model_name_or_path=${model_name_or_path} \
             --num_heads ${num_heads} \
             --hidden_size ${hidden_size} \
+            --do_eval \
             --tune \
             ${extra_cmd}
 }

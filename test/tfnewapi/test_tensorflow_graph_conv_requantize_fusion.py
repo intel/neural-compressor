@@ -415,7 +415,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                     if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu']):
                         found_conv_biasadd_fusion = True
             self.assertEqual(found_conv_sumadd_fusion, True)
-            self.assertEqual(found_conv_biasadd_fusion, True)
+            self.assertEqual(found_conv_biasadd_fusion, False)
 
     @disable_random()
     def test_conv3d_add_addn_fusion(self):
@@ -562,8 +562,8 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             self.assertEqual(found_conv_fusion, True)
 
     @disable_random()
-    def test_conv3d_add_const_addn_relu_fusion(self):
-        logging.getLogger().info("test_conv3d_add_const_addn_relu_fusion")
+    def test_conv3d_add_const_addn_relu_requantize_fusion(self):
+        logging.getLogger().info("test_conv3d_add_const_addn_relu_requantize_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")

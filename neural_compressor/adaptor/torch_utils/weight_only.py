@@ -29,6 +29,58 @@ tqdm = LazyImport("tqdm")
 torch = LazyImport("torch")
 
 
+NF4 = [-1.0, -0.6961928009986877, -0.5250730514526367, -0.39491748809814453, -0.28444138169288635,
+       -0.18477343022823334, -0.09105003625154495, 0.0, 0.07958029955625534, 0.16093020141124725,
+       0.24611230194568634, 0.33791524171829224, 0.44070982933044434, 0.5626170039176941,
+       0.7229568362236023, 1.0]
+FP4_BNB = [-12.0, -8.0, -6.0, -4.0, -3.0, -2.0, -0.0625, 0, 0.0625, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0]
+FP4_E2M1 = [-6.0, -4.0, -3.0, -2.0, -1.5, -1.0, -0.0625, 0, 0.0625, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0]
+
+# the order is the same as float list, bit value range is [-7, 7]
+# 1111 = -1, 1110 = -2, 1101= -3, ...
+
+NF4_BIT = [7, 1, 2, 3, 4, 5, 6, 0, -8, -7, -6, -5, -4, -3, -2, -1]
+FP4_BNB_BIT = [-5, -6, -3, -4, -1, -2, -7, 0, 1, 6, 7, 4, 5, 2, 3]
+FP4_E2M1_BIT = [-1, -2, -3, -4, -5, -6, -7, 0, 1, 2, 3, 4, 5, 6, 7]
+
+FLOAT_MAPPING = {'nf4': NF4, 'fp4': FP4_BNB, 'fp4_e2m1_bnb': FP4_BNB, 'fp4_e2m1': FP4_E2M1}
+INT_MAPPING = {'nf4': NF4_BIT, 'fp4': FP4_BNB_BIT, 'fp4_e2m1_bnb': FP4_BNB_BIT, 
+               'fp4_e2m1': FP4_E2M1_BIT}
+
+def quantize_4bit(tensor, quantile=1.0, data_type='nf4', return_int=False):
+    """Quantize tensor to NF4/FP4 data type.
+
+    Args:
+        tensor: input tensor
+        quantile (float, optional): percentile of clip. Defaults to 1.0.
+        data_type (str, optional): data type. Defaults to 'nf4'.
+        return_int (bool, optional): whether return int data. Defaults to False.
+
+    Returns:
+        q_tensor: fake quantized tensor
+    """
+    assert data_type in FLOAT_MAPPING, "unexpected data type."
+    allow_data = FLOAT_MAPPING[data_type]
+    allow_data_bit = INT_MAPPING[data_type]
+    # get scale and update tensor
+    scale = tensor.max(1)[0] * quantile / max(allow_data)
+    scale.unsqueeze_(dim=-1)
+    tensor = tensor / scale
+    mid_data = [(allow_data[i] + allow_data[i+1])/2 for i in range(len(allow_data)-1)]
+    q_tensor = torch.zeros_like(tensor)
+    for i in range(len(allow_data)):
+        data = allow_data_bit[i] if return_int else allow_data[i]
+        if i == 0:
+            q_tensor += torch.where(tensor <= mid_data[i], data, 0)
+        elif i == len(allow_data) - 1:
+            q_tensor += torch.where(tensor > mid_data[i-1], data, 0)
+        else:
+            q_tensor += torch.where((mid_data[i-1] < tensor) & (tensor <= mid_data[i]), data, 0)
+    if return_int:
+        return q_tensor.type(torch.int8), scale.type(torch.float), None
+    return q_tensor * scale
+
+
 def qdq_weight_asym(weight, num_bits=4, quantile=1.0, return_int=False):
     """Quant and dequant tensor with asym schema.
 
@@ -106,7 +158,7 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_rang
     return scale * q
 
 
-def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, 
+def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, data_type='int', 
                      return_int=False, full_range=False):
     """Quant and dequant tensor per channel.
 
@@ -114,6 +166,7 @@ def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0,
         weight : input weight
         num_bits (int, optional): num_bits. Defaults to 4.
         quantile (float, optional): percentile of clip. Defaults to 1.0.
+        data_type (str, optional): select from int, nf4, fp4. Defaults to int.
         return_int (bool, optional): Choose return fp32 or int8/uint8 data.
                                      Defaults to False.
         full_range (bool, optional): Choose sym range whether use -2**(bits-1).
@@ -122,6 +175,9 @@ def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0,
         output: qdq weight
     """
     assert num_bits > 0, "num_bits should be larger than 0"
+    if 'int' not in data_type and num_bits == 4:
+        return quantize_4bit(weight, quantile=quantile, data_type=data_type, 
+                             return_int=return_int)
     if scheme == "sym":
         return qdq_weight_sym(weight, num_bits, quantile, return_int, full_range)
     else:
@@ -129,7 +185,7 @@ def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0,
 
 
 def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0, 
-                 return_int=False, full_range=False):
+                 data_type='int', return_int=False, full_range=False):
     """Quant and dequant tensor with group size.
 
     Args:
@@ -138,6 +194,7 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
         group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
         scheme (str, optional): sym or asym. Defaults to "asym".
         quantile (float, optional): percentile of clip. Defaults to 1.0.
+        data_type (str, optional): select from int, nf4, fp4. Defaults to int.
         return_int (bool, optional): Choose return fp32 or int8/uint8 data.
                                      Defaults to False.
         full_range (bool, optional): Choose sym range whether use -2**(bits-1).
@@ -149,7 +206,8 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
         return weight
     if group_size == -1 or weight.shape[1] < group_size:
         return qdq_weight_actor(weight, num_bits, scheme=scheme, quantile=quantile, 
-                                return_int=return_int, full_range=full_range)
+                                return_int=return_int, full_range=full_range, 
+                                data_type=data_type,)
 
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
@@ -157,7 +215,7 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
         if return_int:
             weight, scale, zp = qdq_weight_actor(
                 weight, num_bits, scheme=scheme, quantile=quantile, 
-                return_int=True, full_range=full_range
+                return_int=True, full_range=full_range, data_type=data_type,
             )
             weight = weight.reshape(orig_shape)
             scale = scale.reshape(orig_shape[0], -1)
@@ -166,7 +224,8 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
             return weight, scale, zp
         else:
             weight = qdq_weight_actor(
-                weight, num_bits, scheme=scheme, quantile=quantile, full_range=full_range
+                weight, num_bits, scheme=scheme, data_type=data_type,
+                quantile=quantile, full_range=full_range
             )
             return weight.reshape(orig_shape)
     else:
@@ -175,7 +234,7 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
         weight1 = weight1.reshape(-1, group_size)
         if return_int:
             weight1, scale1, zp1 = qdq_weight_actor(
-                weight1, num_bits, scheme=scheme, 
+                weight1, num_bits, scheme=scheme, data_type=data_type,
                 quantile=quantile, return_int=True, full_range=full_range
             )
             scale1 = scale1.reshape(orig_shape[0], -1)
@@ -183,14 +242,15 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
                 zp1 = zp1.reshape(orig_shape[0], -1)
         else:
             weight1 = qdq_weight_actor(
-                weight1, num_bits, scheme=scheme, quantile=quantile, full_range=full_range
+                weight1, num_bits, scheme=scheme, quantile=quantile, 
+                data_type=data_type, full_range=full_range
             )
         weight1 = weight1.reshape(orig_shape[0], split_index)
         weight2 = weight[:, split_index:]
         if return_int:
             weight2, scale2, zp2 = qdq_weight_actor(
-                weight2, num_bits, scheme=scheme, 
-                quantile=quantile, return_int=True, full_range=full_range
+                weight2, num_bits, scheme=scheme, data_type=data_type,
+                quantile=quantile, return_int=True, full_range=full_range,
             )
             weight = torch.cat([weight1, weight2], dim=1)
             scale = torch.cat([scale1, scale2], dim=1)
@@ -201,14 +261,15 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0,
             return weight, scale, zp
         else:
             weight2 = qdq_weight_actor(
-                weight2, num_bits, scheme=scheme, 
+                weight2, num_bits, scheme=scheme, data_type=data_type,
                 quantile=quantile, full_range=full_range
             )
             weight = torch.cat([weight1, weight2], dim=1)
             return weight
 
 
-def search_clip(m, num_bits, group_size, scheme, sym_full_range):
+def search_clip(m, num_bits=4, group_size=32, scheme='asym', 
+                data_type='int', sym_full_range=False):
     """Search best clip range of each linears in current block.
 
     Args:
@@ -216,6 +277,7 @@ def search_clip(m, num_bits, group_size, scheme, sym_full_range):
         num_bits (int, optional): num bits.
         group_size (int, optional): how many elements share one scale/zp.
         scheme (str, optional): sym or asym.
+        data_type (str, optional): select from int, nf4, fp4. Defaults to int.
         sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
     
     Returns:
@@ -236,6 +298,7 @@ def search_clip(m, num_bits, group_size, scheme, sym_full_range):
             num_bits=num_bits, 
             group_size=group_size, 
             scheme=scheme,
+            data_type=data_type,
             full_range=sym_full_range,
             quantile=ratio,
         )
@@ -250,7 +313,8 @@ def search_clip(m, num_bits, group_size, scheme, sym_full_range):
     return best_clip_ratio
 
 def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym", 
-                 quantile=1.0, weight_config={}, return_int=False, 
+                 quantile=1.0, weight_config={}, 
+                 return_int=False, data_type='int',
                  sym_full_range=False, mse_range=False, **kwargs):
     """Quant the model with round to nearst method.
 
@@ -260,6 +324,7 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
         group_size (int, optional): how many elements share one scale/zp. Defaults to 32.
         scheme (str, optional): sym or asym. Defaults to "asym".
         quantile (float, optional): percentile of clip. Defaults to 1.0.
+        data_type (str, optional): select from int, nf4, fp4. Defaults to int.
         weight_config (dict, optional): specific layer wise configirations. Defaults to {}.
             For example, 
                 weight_config={
@@ -297,26 +362,29 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
             scheme = weight_config[name]['scheme']
             quantile = weight_config[name].get('quantile', 1.0)
         logger.debug(f"RTN quantized module:{name, m}")
-        if scheme == 'sym':
-            logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
-                        f"scheme={scheme}, quantile={quantile}, sym_full_range={sym_full_range}")
-        else:
-            logger.debug(f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
-                        f"scheme={scheme}, quantile={quantile}")
+        #import pdb; pdb.set_trace()
+        log_msg = f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, " + \
+                  f"scheme={scheme}, quantile={quantile}"
+        if data_type != 'int':
+            log_msg += f", dtype={data_type}"
+        elif scheme == 'sym': # nf4/fp4 is always [-7,7]
+            log_msg += f", sym_full_range={sym_full_range}"
+        logger.debug(log_msg)
         if num_bits <= 0:
             logger.info(f"Skip {name}")
             continue
         weight = m.weight
         if mse_range:
-            quantile = search_clip(m, num_bits, group_size, scheme, sym_full_range)
+            quantile = search_clip(m, num_bits, group_size, scheme, data_type, sym_full_range)
         if return_int:
             from .model_wrapper import WeightOnlyLinear
             int_weight, scale, zp = quant_weight(
-                weight, num_bits, group_size, scheme, 
-                quantile, return_int=True, full_range=sym_full_range
+                weight, num_bits, group_size, scheme, quantile, 
+                data_type=data_type, return_int=True, full_range=sym_full_range,
             )
             new_module = WeightOnlyLinear(
                 m.in_features, m.out_features, num_bits, group_size,
+                dtype=data_type,
                 zp=zp is not None, bias=m.bias is not None, 
                 compression_dtype=compression_dtype, 
                 compression_dim=compression_dim, 
@@ -331,7 +399,7 @@ def rtn_quantize(model, num_bits=4, group_size=32, scheme="asym",
         else:
             q_weight = quant_weight(
                 weight, num_bits, group_size, scheme, quantile, 
-                full_range=sym_full_range
+                data_type=data_type, full_range=sym_full_range,
             )
             m.weight.data.copy_(q_weight)
     return model
@@ -351,7 +419,7 @@ def gptq_quantize(model, weight_config={}, dataloader=None, nsamples=128, use_ma
 def awq_quantize(model, bits=4,  group_size=32, scheme='asym', weight_config={}, 
                  example_inputs=None, dataloader=None, n_samples=128, calib_func=None,
                  auto_scale=True, mse_range=True, folding=False, return_int=False, 
-                 sym_full_range=False):
+                 sym_full_range=False, data_type='int'):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
     Args:
@@ -399,7 +467,8 @@ def awq_quantize(model, bits=4,  group_size=32, scheme='asym', weight_config={},
         group_size=group_size, 
         scheme=scheme, 
         sym_full_range=sym_full_range, 
-        weight_config=weight_config
+        weight_config=weight_config,
+        data_type=data_type,
     )
     qdq_model = awq.quantize(
         auto_scale=auto_scale,
