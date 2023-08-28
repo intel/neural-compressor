@@ -216,7 +216,7 @@ class GPTQDataloader:
                         "attention_mask": mask.detach().cpu().numpy().astype("int64")}, 0
                 else:
                     outputs = self.sess.run(None, {"input_ids": inp[:, :-1].detach().cpu().numpy().astype("int64"),
-                                                   "attention_mask": mask[:, -1].detach().cpu().numpy().astype("int64")})
+                                                   "attention_mask": mask[:, :-1].detach().cpu().numpy().astype("int64")})
                     ort_input = {}
                     ort_input["input_ids"] = inp[:, -1].unsqueeze(0).detach().cpu().numpy().astype("int64")
                     for i in range(int((len(outputs) - 1) / 2)):
