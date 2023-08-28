@@ -25,7 +25,7 @@ def register_neural_insights_workload(
     workload_location: str,
     model: Any,
     workload_mode: str,
-        workload_name: str,
+    workload_name: str,
 ) -> Optional[str]:
     """Register workload to Neural Insights.
 
@@ -72,7 +72,7 @@ def register_neural_insights_workload(
             model_summary_file = os.path.join(workload_location, "model_summary.txt")
             with open(model_summary_file, "w", encoding="utf-8") as summary_file:
                 summary_file.write(summary_str)
-        assert isinstance(model_path, str), 'Model path not detected'
+        assert isinstance(model_path, str), "Model path not detected"
 
         neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
         ni_workload_uuid = neural_insights.add_workload(

@@ -72,16 +72,13 @@ class Diagnosis:
         if not os.path.exists(config_path):
             log.debug("Could not find config data for specified optimization. Getting data from inspect files.")
             input_model_tensors: dict = self.get_tensors_info(model_type="input")["activation"][0]
-            optimized_model_tensors: dict = self.get_tensors_info(model_type="optimized")[
-                "activation"
-            ][0]
-            common_ops = list(
-                set(input_model_tensors.keys()) & set(optimized_model_tensors.keys()))
+            optimized_model_tensors: dict = self.get_tensors_info(model_type="optimized")["activation"][0]
+            common_ops = list(set(input_model_tensors.keys()) & set(optimized_model_tensors.keys()))
             config_data = {
                 "op": {},
             }
             for op in common_ops:
-                config_data["op"].update({(op, ): {}})
+                config_data["op"].update({(op,): {}})
             return config_data
 
         with open(config_path, "rb") as config_pickle:
@@ -96,9 +93,7 @@ class Diagnosis:
         op_list: List[dict] = []
 
         input_model_tensors: dict = self.get_tensors_info(model_type="input")["activation"][0]
-        optimized_model_tensors: dict = self.get_tensors_info(model_type="optimized")[
-            "activation"
-        ][0]
+        optimized_model_tensors: dict = self.get_tensors_info(model_type="optimized")["activation"][0]
 
         minmax_file_path = os.path.join(
             self.workload_location,
@@ -111,9 +106,8 @@ class Diagnosis:
                 min_max_data: dict = pickle.load(min_max_file)
         except FileNotFoundError:
             log.debug("Could not find minmax file.")
-            common_ops = list(
-                set(input_model_tensors.keys()) & set(optimized_model_tensors.keys()))
-            min_max_data = dict(zip(common_ops, [{"min": None, "max": None}]*len(common_ops)))
+            common_ops = list(set(input_model_tensors.keys()) & set(optimized_model_tensors.keys()))
+            min_max_data = dict(zip(common_ops, [{"min": None, "max": None}] * len(common_ops)))
 
         for op_name, min_max in min_max_data.items():
             mse = self.calculate_mse(op_name, input_model_tensors, optimized_model_tensors)
