@@ -344,19 +344,26 @@
 <span class="n">model</span> <span class="o">=</span> <span class="n">ResNet50</span><span class="p">()</span>
 <span class="n">val_dataset</span> <span class="o">=</span> <span class="o">...</span>
 <span class="n">val_dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataloader</span><span class="p">(</span>
-                     <span class="n">val_dataset</span><span class="p">,</span>
-                     <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                     <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span> <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">val_dataset</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+    <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span>
+    <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="c1"># Quantization code</span>
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span> <span class="c1"># default approach is &quot;auto&quot;, you can set &quot;dynamic&quot;:PostTrainingQuantConfig(approach=&quot;dynamic&quot;)</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-                           <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span>
-                           <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">)</span>
-<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;./output&#39;</span><span class="p">)</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
+<span class="p">)</span>  <span class="c1"># default approach is &quot;auto&quot;, you can set &quot;dynamic&quot;:PostTrainingQuantConfig(approach=&quot;dynamic&quot;)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span>
+    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./output&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <ol class="simple">
@@ -365,39 +372,49 @@
 <p>This means user could leverage the advance feature of Intel(R) Neural Compressor to tune out a best quantized model which has best accuracy and good performance. User should provide either <code class="docutils literal notranslate"><span class="pre">eval_func</span></code> or <code class="docutils literal notranslate"><span class="pre">eval_dataloader</span></code> <code class="docutils literal notranslate"><span class="pre">eval_metric</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
 
+
 <span class="c1"># Original code</span>
 <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="n">val_loader</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
     <span class="o">...</span>
     <span class="k">return</span> <span class="n">top1</span><span class="o">.</span><span class="n">avg</span>
 
+
 <span class="n">model</span> <span class="o">=</span> <span class="n">ResNet50</span><span class="p">()</span>
 <span class="n">val_dataset</span> <span class="o">=</span> <span class="o">...</span>
 <span class="n">val_dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataloader</span><span class="p">(</span>
-                     <span class="n">val_dataset</span><span class="p">,</span>
-                     <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                     <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span> <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">val_dataset</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+    <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span>
+    <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="c1"># Quantization code</span>
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
 
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-                           <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span>
-                           <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
-                           <span class="n">eval_func</span><span class="o">=</span><span class="n">validate</span><span class="p">)</span>
-<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;./output&#39;</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span>
+    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
+    <span class="n">eval_func</span><span class="o">=</span><span class="n">validate</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./output&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>or</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.metric</span> <span class="kn">import</span> <span class="n">METRICS</span>
-<span class="n">metrics</span> <span class="o">=</span> <span class="n">METRICS</span><span class="p">(</span><span class="s1">&#39;pytorch&#39;</span><span class="p">)</span>
-<span class="n">top1</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;topk&#39;</span><span class="p">]()</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-                           <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span>
-                           <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
-                           <span class="n">eval_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
-                           <span class="n">eval_metric</span><span class="o">=</span><span class="n">top1</span><span class="p">)</span>
+
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">METRICS</span><span class="p">(</span><span class="s2">&quot;pytorch&quot;</span><span class="p">)</span>
+<span class="n">top1</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;topk&quot;</span><span class="p">]()</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span>
+    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
+    <span class="n">eval_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
+    <span class="n">eval_metric</span><span class="o">=</span><span class="n">top1</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -413,24 +430,30 @@ This method only requires the user to call the callback function during the trai
 <span class="n">model</span> <span class="o">=</span> <span class="n">ResNet50</span><span class="p">()</span>
 <span class="n">train_dataset</span> <span class="o">=</span> <span class="o">...</span>
 <span class="n">train_dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataloader</span><span class="p">(</span>
-                     <span class="n">train_dataset</span><span class="p">,</span>
-                     <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                     <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span> <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">train_dataset</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+    <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span>
+    <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="n">criterion</span> <span class="o">=</span> <span class="o">...</span>
+
 
 <span class="c1"># Quantization code</span>
 <span class="k">def</span> <span class="nf">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
     <span class="o">...</span>
 
+
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">QuantizationAwareTrainingConfig</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+
 <span class="n">conf</span> <span class="o">=</span> <span class="n">QuantizationAwareTrainingConfig</span><span class="p">()</span>
 <span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
 <span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">model</span>
 <span class="n">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 <span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
-<span class="n">compression_manager</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;./output&#39;</span><span class="p">)</span>
+<span class="n">compression_manager</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./output&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <ol class="simple">
@@ -443,26 +466,33 @@ This method requires the user to provide training function and evaluation functi
 <span class="n">model</span> <span class="o">=</span> <span class="n">ResNet50</span><span class="p">()</span>
 <span class="n">val_dataset</span> <span class="o">=</span> <span class="o">...</span>
 <span class="n">val_dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataloader</span><span class="p">(</span>
-                     <span class="n">val_dataset</span><span class="p">,</span>
-                     <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                     <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span> <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">val_dataset</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+    <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span>
+    <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="n">criterion</span> <span class="o">=</span> <span class="o">...</span>
+
 
 <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="n">val_loader</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
     <span class="o">...</span>
     <span class="k">return</span> <span class="n">top1</span><span class="o">.</span><span class="n">avg</span>
+
 
 <span class="c1"># Quantization code</span>
 <span class="k">def</span> <span class="nf">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
     <span class="o">...</span>
     <span class="k">return</span> <span class="n">model</span>  <span class="c1"># user should return a best performance model here</span>
 
+
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">QuantizationAwareTrainingConfig</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span><span class="p">,</span> <span class="n">fit</span>
+
 <span class="n">conf</span> <span class="o">=</span> <span class="n">QuantizationAwareTrainingConfig</span><span class="p">()</span>
 <span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">compression_manager</span><span class="o">=</span><span class="n">compression_manager</span><span class="p">,</span> <span class="n">train_func</span><span class="o">=</span><span class="n">train_func</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="n">validate</span><span class="p">)</span>
-<span class="n">compression_manager</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;./output&#39;</span><span class="p">)</span>
+<span class="n">compression_manager</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./output&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -475,25 +505,25 @@ This method requires the user to provide training function and evaluation functi
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">op_name_dict</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;layer1.0.conv1&quot;</span><span class="p">:</span> <span class="p">{</span>
         <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]</span>
+            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">],</span>
         <span class="p">},</span>
         <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]</span>
-        <span class="p">}</span>
+            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
     <span class="p">},</span>
     <span class="s2">&quot;layer2.0.conv1&quot;</span><span class="p">:</span> <span class="p">{</span>
         <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;uint8&quot;</span><span class="p">],</span>
             <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;minmax&quot;</span><span class="p">],</span>
             <span class="s2">&quot;granularity&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;per_tensor&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sym&quot;</span><span class="p">]</span>
+            <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sym&quot;</span><span class="p">],</span>
         <span class="p">},</span>
         <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;int8&quot;</span><span class="p">],</span>
             <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;minmax&quot;</span><span class="p">],</span>
             <span class="s2">&quot;granularity&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;per_channel&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sym&quot;</span><span class="p">]</span>
-        <span class="p">}</span>
+            <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sym&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
     <span class="p">},</span>
 <span class="p">}</span>
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">op_name_dict</span><span class="o">=</span><span class="n">op_name_dict</span><span class="p">)</span>
@@ -502,16 +532,7 @@ This method requires the user to provide training function and evaluation functi
 <ol class="simple">
 <li><p>Example of <code class="docutils literal notranslate"><span class="pre">op_type_dict</span></code></p></li>
 </ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">op_type_dict</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;Conv&#39;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;fp32&#39;</span><span class="p">]</span>
-        <span class="p">},</span>
-        <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;fp32&#39;</span><span class="p">]</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">op_type_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Conv&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]},</span> <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]}}}</span>
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">op_type_dict</span><span class="o">=</span><span class="n">op_type_dict</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -606,8 +627,8 @@ This method requires the user to provide training function and evaluation functi
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">recipes</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;smooth_quant&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
     <span class="s2">&quot;smooth_quant_args&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="mf">0.5</span> <span class="c1"># default value is 0.5</span>
-    <span class="p">},</span>
+        <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="p">},</span>  <span class="c1"># default value is 0.5</span>
     <span class="s2">&quot;fast_bias_correction&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">}</span>
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">recipes</span><span class="o">=</span><span class="n">recipes</span><span class="p">)</span>

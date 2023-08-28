@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   quantization auto-tuning config system.
+   Quantization auto-tuning config system.
 
    This file specifies default config options for quantization auto-tuning tool.
    User should not change values in this file. Instead, user should write a config
@@ -299,7 +299,7 @@ Functions
 
 
 
-   access yaml using attributes instead of using the dictionary notation.
+   Access yaml using attributes instead of using the dictionary notation.
 
    :param value: The dict object to access.
    :type value: dict

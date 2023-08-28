@@ -194,7 +194,7 @@ Functions
 
 .. py:function:: gptq_quantize(model, weight_config={}, dataloader=None, nsamples=128, use_max_length=True, device=None)
 
-   Run weight-only quantization with
+   Run weight-only quantization with.
 
 
 .. py:function:: awq_quantize(model, bits=4, group_size=32, scheme='asym', weight_config={}, example_inputs=None, dataloader=None, n_samples=128, calib_func=None, auto_scale=True, mse_range=True, folding=False, return_int=False, sym_full_range=False, data_type='int')
@@ -243,7 +243,7 @@ Functions
 
 .. py:function:: teq_quantize(model, weight_config={}, absorb_to_layer={}, extra_config={}, dataloader=None, calib_func=None, example_inputs=None)
 
-   Run weight-only quantization with
+   Run weight-only quantization with.
 
 
 .. py:function:: quant_weight_w_scale(weight, scale, zp, group_size=-1)

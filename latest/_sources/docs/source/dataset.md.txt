@@ -148,12 +148,14 @@ After defining the dataset class, pass it to the quantizer:
 
 ```python
 from neural_compressor.experimental import Quantization, common
+
 quantizer = Quantization(yaml_file)
-quantizer.calib_dataloader = common.DataLoader(dataset) # user can pass more optional args to dataloader such as batch_size and collate_fn
+quantizer.calib_dataloader = common.DataLoader(
+    dataset
+)  # user can pass more optional args to dataloader such as batch_size and collate_fn
 quantizer.model = graph
 quantizer.eval_func = eval_func
-q_model = quantizer.fit() 
-
+q_model = quantizer.fit()
 ```
 
 ## Examples

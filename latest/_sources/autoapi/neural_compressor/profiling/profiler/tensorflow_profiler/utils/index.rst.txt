@@ -33,7 +33,6 @@ Functions
    Returns:
 
 
-
 .. py:function:: create_tf_config(tf_module: Any, intra_num_of_threads: int, inter_num_of_threads: int) -> Any
 
    Create tensorflow config.

@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   distillation init.
+   Distillation init.
 
 
 

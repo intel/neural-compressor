@@ -102,7 +102,7 @@ Functions
 
 
 
-   tensorflow Adam optimizer.
+   Tensorflow Adam optimizer.
 
    :param param_dict: The dict of parameters setting by user for Adam optimizer
    :type param_dict: dict

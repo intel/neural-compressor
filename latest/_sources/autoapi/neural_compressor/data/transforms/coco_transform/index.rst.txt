@@ -27,4 +27,3 @@ Classes
    Coco decoding will be performed automatically from Neural Compressor v1.4.
 
 
-

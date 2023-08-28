@@ -26,6 +26,7 @@ Classes
 
 
    Layer wise quantization.
+
    Layer-by-layer quantize the model, in order to save memomery.
 
 

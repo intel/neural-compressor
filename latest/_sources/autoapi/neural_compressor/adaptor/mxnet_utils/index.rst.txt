@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   mxnet util init.
+   Mxnet util init.
 
 
 

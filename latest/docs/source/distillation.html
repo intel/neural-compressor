@@ -113,9 +113,7 @@
 </section>
 <section id="self-distillation">
 <h3>Self Distillation<a class="headerlink" href="#self-distillation" title="Permalink to this heading"></a></h3>
-<p>Self-distillation ia a one-stage training method where the teacher model and student models can be trained together. It attaches several attention modules and shallow classifiers at different depths of neural networks and distills knowledge from the deepest classifier to the shallower classifiers. Different from the conventional knowledge distillation methods where the knowledge of the teacher model is transferred to another student model, self-distillation can be considered as knowledge transfer in the same model, from the deeper layers to the shallower layers.
-The additional classifiers in self-distillation allow the neural network to work in a dynamic manner, which leads to a much higher acceleration.
-<br></p>
+<p>Self-distillation ia a one-stage training method where the teacher model and student models can be trained together. It attaches several attention modules and shallow classifiers at different depths of neural networks and distills knowledge from the deepest classifier to the shallower classifiers. Different from the conventional knowledge distillation methods where the knowledge of the teacher model is transferred to another student model, self-distillation can be considered as knowledge transfer in the same model, from the deeper layers to the shallower layers.<br />The additional classifiers in self-distillation allow the neural network to work in a dynamic manner, which leads to a much higher acceleration.<br /><br></p>
 <img src="./imgs/self-distillation.png" alt="Architecture" width=800 height=350><p>Architecture from paper <a class="reference external" href="https://ieeexplore.ieee.org/document/9381661">Self-Distillation: Towards Efficient and Compact Neural Networks</a></p>
 </section>
 </section>
@@ -193,7 +191,10 @@ The additional classifiers in self-distillation allow the neural network to work
 </pre></div>
 </div>
 <p>For Intermediate Layer Knowledge Distillation or Self Distillation, the only difference to above launcher code is that <code class="docutils literal notranslate"><span class="pre">distil_loss_conf</span></code> should be set accordingly as shown below. More detailed settings can be found in this <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/distillation_for_quantization/fx/run_glue_no_trainer.py#L510">example</a> for Intermediate Layer Knowledge Distillation and this <a class="reference external" href="../../examples/pytorch/image_recognition/torchvision_models/self_distillation/eager/main.py#L344">example</a> for Self Distillation.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">IntermediateLayersKnowledgeDistillationLossConfig</span><span class="p">,</span> <span class="n">SelfKnowledgeDistillationLossConfig</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">IntermediateLayersKnowledgeDistillationLossConfig</span><span class="p">,</span>
+    <span class="n">SelfKnowledgeDistillationLossConfig</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="c1"># for Intermediate Layer Knowledge Distillation</span>
 <span class="n">distil_loss_conf</span> <span class="o">=</span> <span class="n">IntermediateLayersKnowledgeDistillationLossConfig</span><span class="p">(</span><span class="n">layer_mappings</span><span class="o">=</span><span class="n">layer_mappings</span><span class="p">)</span>

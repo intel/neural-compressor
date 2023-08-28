@@ -60,7 +60,7 @@ Functions
 
 
 
-   control the Algorithm in different phase.
+   Control the Algorithm in different phase.
 
 
 .. py:class:: Algorithm

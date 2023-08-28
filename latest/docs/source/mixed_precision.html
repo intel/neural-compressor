@@ -244,9 +244,9 @@ which will fallback converted ops to FP32 automatically to get better accuracy. 
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">mix_precision</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">MixedPrecisionConfig</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">MixedPrecisionConfig</span><span class="p">()</span> <span class="c1"># default precision is bf16</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">MixedPrecisionConfig</span><span class="p">()</span>  <span class="c1"># default precision is bf16</span>
 <span class="n">converted_model</span> <span class="o">=</span> <span class="n">mix_precision</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">)</span>
-<span class="n">converted_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;./path/to/save/&#39;</span><span class="p">)</span>
+<span class="n">converted_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./path/to/save/&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -256,11 +256,12 @@ which will fallback converted ops to FP32 automatically to get better accuracy. 
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">MixedPrecisionConfig</span>
 
 <span class="n">conf</span> <span class="o">=</span> <span class="n">MixedPrecisionConfig</span><span class="p">(</span>
-        <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;onnxrt_cuda_ep&#39;</span><span class="p">,</span>
-        <span class="n">device</span><span class="o">=</span><span class="s1">&#39;gpu&#39;</span><span class="p">,</span>
-        <span class="n">precisions</span><span class="o">=</span><span class="s1">&#39;fp16&#39;</span><span class="p">)</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;onnxrt_cuda_ep&quot;</span><span class="p">,</span>
+    <span class="n">device</span><span class="o">=</span><span class="s2">&quot;gpu&quot;</span><span class="p">,</span>
+    <span class="n">precisions</span><span class="o">=</span><span class="s2">&quot;fp16&quot;</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="n">converted_model</span> <span class="o">=</span> <span class="n">mix_precision</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">)</span>
-<span class="n">converted_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;./path/to/save/&#39;</span><span class="p">)</span>
+<span class="n">converted_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./path/to/save/&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>

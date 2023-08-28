@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   Simulated Annealing Optimizer
+   Simulated Annealing Optimizer.
 
 
 

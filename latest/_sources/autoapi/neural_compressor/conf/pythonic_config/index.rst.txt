@@ -67,7 +67,6 @@ Classes
        set_tensorboard(True)
 
 
-
 .. py:class:: AccuracyCriterion(higher_is_better=True, criterion='relative', tolerable_loss=0.01)
 
 

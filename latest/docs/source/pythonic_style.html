@@ -159,19 +159,22 @@ Pythonic API step by step.</p>
 <ul class="simple">
 <li><p>Next, assign values to the attributes of <em>config.quantization</em> to use specific configurations, and pass the config to <em>Quantization</em> API.</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;image&#39;</span><span class="p">]</span> <span class="c1"># list of str</span>
-<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;out&#39;</span><span class="p">]</span> <span class="c1"># list of str</span>
-<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="s1">&#39;onnxrt_integerops&#39;</span> <span class="c1"># support tensorflow, tensorflow_itex, pytorch, pytorch_ipex, pytorch_fx, onnxrt_qlinearops, onnxrt_integerops, onnxrt_qdq, onnxrt_qoperator, mxnet</span>
-<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">approach</span> <span class="o">=</span> <span class="s1">&#39;post_training_dynamic_quant&#39;</span> <span class="c1"># support post_training_static_quant, post_training_dynamic_quant, quant_aware_training</span>
-<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s1">&#39;cpu&#39;</span> <span class="c1"># support cpu, gpu</span>
-<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">op_type_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Conv&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;fp32&#39;</span><span class="p">]},</span> <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;fp32&#39;</span><span class="p">]}}}</span> <span class="c1"># dict </span>
-<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="s1">&#39;mse&#39;</span> <span class="c1"># support basic, mse, bayesian, random, exhaustive</span>
-<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="s1">&#39;accuracy&#39;</span> <span class="c1"># support performance, accuracy, modelsize, footprint</span>
-<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="mi">100</span> <span class="c1"># int, default is 0</span>
-<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">accuracy_criterion</span><span class="o">.</span><span class="n">relative</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="c1"># float, default is 0.01</span>
-<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">reduce_range</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># bool. default value depends on hardware, True if cpu supports VNNI instruction, otherwise is False</span>
-<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">use_bf16</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># bool</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]</span>  <span class="c1"># list of str</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;out&quot;</span><span class="p">]</span>  <span class="c1"># list of str</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="s2">&quot;onnxrt_integerops&quot;</span>  <span class="c1"># support tensorflow, tensorflow_itex, pytorch, pytorch_ipex, pytorch_fx, onnxrt_qlinearops, onnxrt_integerops, onnxrt_qdq, onnxrt_qoperator, mxnet</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">approach</span> <span class="o">=</span> <span class="s2">&quot;post_training_dynamic_quant&quot;</span>  <span class="c1"># support post_training_static_quant, post_training_dynamic_quant, quant_aware_training</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span>  <span class="c1"># support cpu, gpu</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">op_type_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Conv&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]},</span> <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]}}}</span>  <span class="c1"># dict</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="s2">&quot;mse&quot;</span>  <span class="c1"># support basic, mse, bayesian, random, exhaustive</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="s2">&quot;accuracy&quot;</span>  <span class="c1"># support performance, accuracy, modelsize, footprint</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># int, default is 0</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">accuracy_criterion</span><span class="o">.</span><span class="n">relative</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># float, default is 0.01</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">reduce_range</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="kc">False</span>  <span class="c1"># bool. default value depends on hardware, True if cpu supports VNNI instruction, otherwise is False</span>
+<span class="p">)</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">use_bf16</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># bool</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Quantization</span>
+
 <span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -181,9 +184,11 @@ Pythonic API step by step.</p>
 <p>To specify distillation configurations, users can assign values to
 the corresponding attributes.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
-<span class="n">config</span><span class="o">.</span><span class="n">distillation</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;SGD&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;learning_rate&#39;</span><span class="p">:</span> <span class="mf">0.0001</span><span class="p">}}</span>
+
+<span class="n">config</span><span class="o">.</span><span class="n">distillation</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;SGD&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;learning_rate&quot;</span><span class="p">:</span> <span class="mf">0.0001</span><span class="p">}}</span>
 
 <span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Distillation</span>
+
 <span class="n">distiller</span> <span class="o">=</span> <span class="n">Distillation</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -192,6 +197,7 @@ the corresponding attributes.</p>
 <h4>Pruning<a class="headerlink" href="#pruning" title="Permalink to this heading"></a></h4>
 <p>To specify pruning configurations, users can assign values to the corresponding attributes.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+
 <span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">initial_sparsity</span> <span class="o">=</span> <span class="mf">0.0</span>
 <span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">target_sparsity</span> <span class="o">=</span> <span class="mf">0.9</span>
 <span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">max_sparsity_ratio_per_layer</span> <span class="o">=</span> <span class="mf">0.98</span>
@@ -206,6 +212,7 @@ the corresponding attributes.</p>
 <span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">pattern</span> <span class="o">=</span> <span class="s2">&quot;tile_pattern_1x1&quot;</span>
 
 <span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Pruning</span>
+
 <span class="n">prune</span> <span class="o">=</span> <span class="n">Pruning</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -215,8 +222,10 @@ the corresponding attributes.</p>
 <p>To specify nas configurations, users can assign values to the
 corresponding attributes.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
-<span class="n">config</span><span class="o">.</span><span class="n">nas</span><span class="o">.</span><span class="n">approach</span> <span class="o">=</span> <span class="s1">&#39;dynas&#39;</span>
+
+<span class="n">config</span><span class="o">.</span><span class="n">nas</span><span class="o">.</span><span class="n">approach</span> <span class="o">=</span> <span class="s2">&quot;dynas&quot;</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">NAS</span>
+
 <span class="n">nas</span> <span class="o">=</span> <span class="n">NAS</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -226,6 +235,7 @@ corresponding attributes.</p>
 <p>To specify benchmark configurations, users can assign values to the
 corresponding attributes.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+
 <span class="n">config</span><span class="o">.</span><span class="n">benchmark</span><span class="o">.</span><span class="n">warmup</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="n">config</span><span class="o">.</span><span class="n">benchmark</span><span class="o">.</span><span class="n">iteration</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="n">config</span><span class="o">.</span><span class="n">benchmark</span><span class="o">.</span><span class="n">cores_per_instance</span> <span class="o">=</span> <span class="mi">10</span>
@@ -234,6 +244,7 @@ corresponding attributes.</p>
 <span class="n">config</span><span class="o">.</span><span class="n">benchmark</span><span class="o">.</span><span class="n">intra_num_of_threads</span> <span class="o">=</span> <span class="mi">10</span>
 
 <span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Benchmark</span>
+
 <span class="n">benchmark</span> <span class="o">=</span> <span class="n">Benchmark</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -244,8 +255,8 @@ corresponding attributes.</p>
 <p>Now, let’s go through the Pythonic API for Configurations in setting up similar framework
 capabilities as in YAML files. Users can specify a framework’s (eg. ONNX Runtime) capability by
 assigning values to corresponding attributes.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span><span class="o">.</span><span class="n">onnxruntime</span><span class="o">.</span><span class="n">precisions</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;int8&#39;</span><span class="p">,</span> <span class="s1">&#39;uint8&#39;</span><span class="p">]</span>
-<span class="n">config</span><span class="o">.</span><span class="n">onnxruntime</span><span class="o">.</span><span class="n">graph_optimization_level</span> <span class="o">=</span> <span class="s1">&#39;DISABLE_ALL&#39;</span> <span class="c1"># only onnxruntime has graph_optimization_level attribute</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span><span class="o">.</span><span class="n">onnxruntime</span><span class="o">.</span><span class="n">precisions</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;int8&quot;</span><span class="p">,</span> <span class="s2">&quot;uint8&quot;</span><span class="p">]</span>
+<span class="n">config</span><span class="o">.</span><span class="n">onnxruntime</span><span class="o">.</span><span class="n">graph_optimization_level</span> <span class="o">=</span> <span class="s2">&quot;DISABLE_ALL&quot;</span>  <span class="c1"># only onnxruntime has graph_optimization_level attribute</span>
 </pre></div>
 </div>
 </section>

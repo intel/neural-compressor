@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   prune utils.
+   Prune utils.
 
 
 

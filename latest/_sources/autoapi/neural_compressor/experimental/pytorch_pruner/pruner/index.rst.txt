@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   pruner module.
+   Pruner module.
 
 
 

@@ -151,19 +151,13 @@ python<span class="w"> </span>setup.py<span class="w"> </span>install
 <p>Modify quantization/benchmark script to run diagnosis by adding argument <code class="docutils literal notranslate"><span class="pre">diagnosis</span></code> set to <code class="docutils literal notranslate"><span class="pre">True</span></code> to <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code>/<code class="docutils literal notranslate"><span class="pre">BenchmarkConfig</span></code> as shown below.</p>
 <section id="quantization-diagnosis">
 <h3>Quantization diagnosis<a class="headerlink" href="#quantization-diagnosis" title="Permalink to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="o">...</span>
-<span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 <section id="benchmark-diagnosis">
 <h3>Benchmark diagnosis<a class="headerlink" href="#benchmark-diagnosis" title="Permalink to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">BenchmarkConfig</span><span class="p">(</span>
-    <span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="o">...</span>
-<span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">BenchmarkConfig</span><span class="p">(</span><span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -261,13 +255,19 @@ $\sigma_x$ - input model variance</p>
 </section>
 <section id="fallback-setting-example">
 <h3>Fallback setting example<a class="headerlink" href="#fallback-setting-example" title="Permalink to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span> 
-<span class="n">op_name_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;v0/cg/conv0/conv2d/Conv2D&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;activation&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;fp32&#39;</span><span class="p">]}}}</span> 
-<span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span> 
-       <span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  
-       <span class="n">op_name_dict</span><span class="o">=</span><span class="n">op_name_dict</span> 
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span>
+
+<span class="n">op_name_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;v0/cg/conv0/conv2d/Conv2D&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]}}}</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">op_name_dict</span><span class="o">=</span><span class="n">op_name_dict</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="nb">eval</span><span class="p">)</span> 
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">,</span>
+    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+    <span class="n">eval_func</span><span class="o">=</span><span class="nb">eval</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </section>

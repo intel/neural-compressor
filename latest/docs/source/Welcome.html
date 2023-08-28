@@ -126,14 +126,16 @@ wget<span class="w"> </span>https://storage.googleapis.com/intel-optimized-tenso
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.data</span> <span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">Datasets</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
 
-<span class="n">dataset</span> <span class="o">=</span> <span class="n">Datasets</span><span class="p">(</span><span class="s1">&#39;tensorflow&#39;</span><span class="p">)[</span><span class="s1">&#39;dummy&#39;</span><span class="p">](</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s1">&#39;tensorflow&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Datasets</span><span class="p">(</span><span class="s2">&quot;tensorflow&quot;</span><span class="p">)[</span><span class="s2">&quot;dummy&quot;</span><span class="p">](</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;tensorflow&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">neural_compressor.quantization</span> <span class="kn">import</span> <span class="n">fit</span>
+
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span>
     <span class="n">model</span><span class="o">=</span><span class="s2">&quot;./mobilenet_v1_1.0_224_frozen.pb&quot;</span><span class="p">,</span>
     <span class="n">conf</span><span class="o">=</span><span class="n">PostTrainingQuantConfig</span><span class="p">(),</span>
-    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">)</span>
+    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </section>

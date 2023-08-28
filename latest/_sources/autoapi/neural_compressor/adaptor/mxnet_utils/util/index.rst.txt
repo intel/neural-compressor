@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   mxnet util module.
+   Mxnet util module.
 
 
 
@@ -376,7 +376,9 @@ Functions
 
 
 
-   Tensors collector. Builds up qtensor_to_tensor mapping.
+   Tensors collector.
+
+   Builds up qtensor_to_tensor mapping.
 
 
 .. py:class:: NameCollector

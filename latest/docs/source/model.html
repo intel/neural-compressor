@@ -91,8 +91,7 @@
 </ol>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
-<p>The Neural Compressor Model feature is used to encapsulate the behavior of model building and saving. By simply providing information such as different model formats and framework_specific_info, Neural Compressor performs optimizations and quantization on this model object and returns a Neural Compressor Model object for further model persistence or benchmarking. A Neural Compressor Model helps users to maintain necessary model information which is required during optimization and quantization such as the input/output names, workspace path, and other model format knowledge. This helps unify the features gap brought by different model formats and frameworks.
-<a target="_blank" href="./imgs/inc_model.png" text-align:center>
+<p>The Neural Compressor Model feature is used to encapsulate the behavior of model building and saving. By simply providing information such as different model formats and framework_specific_info, Neural Compressor performs optimizations and quantization on this model object and returns a Neural Compressor Model object for further model persistence or benchmarking. A Neural Compressor Model helps users to maintain necessary model information which is required during optimization and quantization such as the input/output names, workspace path, and other model format knowledge. This helps unify the features gap brought by different model formats and frameworks.<br /><a target="_blank" href="./imgs/inc_model.png" text-align:center>
 <center>
 <img src="./imgs/model.png" alt="Architecture" width=480 height=200>
 </center>
@@ -187,6 +186,7 @@
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <p>Users can create, use, and save models in the following manners:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.model</span> <span class="kn">import</span> <span class="n">Model</span>
+
 <span class="n">inc_model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">input_model</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -195,7 +195,7 @@
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
 
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">inc_model</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">inc_model</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">)</span>
 <span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;saved_result&quot;</span><span class="p">)</span>
 </pre></div>
 </div>

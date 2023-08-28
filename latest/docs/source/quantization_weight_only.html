@@ -181,14 +181,14 @@
 <section id="user-code">
 <h3><strong>User code</strong>:<a class="headerlink" href="#user-code" title="Permalink to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">approach</span><span class="o">=</span><span class="s1">&#39;weight_only&#39;</span><span class="p">,</span>
+    <span class="n">approach</span><span class="o">=</span><span class="s2">&quot;weight_only&quot;</span><span class="p">,</span>
     <span class="n">op_type_dict</span><span class="o">=</span><span class="p">{</span>
-        <span class="s1">&#39;.*&#39;</span><span class="p">:{</span> 	<span class="c1"># re.match</span>
+        <span class="s2">&quot;.*&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># re.match</span>
             <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s1">&#39;bits&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="c1"># 1-8 bit </span>
-                <span class="s1">&#39;group_size&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># -1 (per-channel)</span>
-                <span class="s1">&#39;scheme&#39;</span><span class="p">:</span> <span class="s1">&#39;sym&#39;</span><span class="p">,</span> 
-                <span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="s1">&#39;RTN&#39;</span><span class="p">,</span> 
+                <span class="s2">&quot;bits&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>  <span class="c1"># 1-8 bit</span>
+                <span class="s2">&quot;group_size&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># -1 (per-channel)</span>
+                <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="s2">&quot;sym&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="s2">&quot;RTN&quot;</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">},</span>
     <span class="p">},</span>
@@ -198,13 +198,13 @@
     <span class="p">},</span>
 <span class="p">)</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
-<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;saved_results&#39;</span><span class="p">)</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;saved_results&quot;</span><span class="p">)</span>
 <span class="n">compressed_model</span> <span class="o">=</span> <span class="n">q_model</span><span class="o">.</span><span class="n">export_compressed_model</span><span class="p">(</span>
     <span class="n">compression_dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span>
     <span class="n">compression_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">scale_dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">compressed_model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span> <span class="s1">&#39;compressed_model.pt&#39;</span><span class="p">)</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">compressed_model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span> <span class="s2">&quot;compressed_model.pt&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The saved_results folder contains two files: <code class="docutils literal notranslate"><span class="pre">best_model.pt</span></code> and <code class="docutils literal notranslate"><span class="pre">qconfig.json</span></code>, and the generated q_model is a fake quantized model.</p>

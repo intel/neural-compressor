@@ -436,7 +436,7 @@ Functions
 
 .. py:function:: register_customer_metric(user_metric, framework)
 
-   register customer metric class or a dict of built-in metric configures.
+   Register customer metric class or a dict of built-in metric configures.
 
    1. neural_compressor have many built-in metrics,
       user can pass a metric configure dict to tell neural compressor what metric will be use.

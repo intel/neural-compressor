@@ -50,7 +50,6 @@ Module Contents
    dump() method.
 
 
-
 .. py:exception:: UnpicklingError
 
 
@@ -62,6 +61,5 @@ Module Contents
    Note that other exceptions may also be raised during unpickling, including
    (but not necessarily limited to) AttributeError, EOFError, ImportError,
    and IndexError.
-
 
 

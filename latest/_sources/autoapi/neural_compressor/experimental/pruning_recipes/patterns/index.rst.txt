@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   different patterns.
+   Different patterns.
 
 
 

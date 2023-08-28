@@ -132,11 +132,11 @@ below:</p>
 <p>User can control the tuning process by setting the exit policy by specifying the <code class="docutils literal notranslate"><span class="pre">timeout</span></code>, and <code class="docutils literal notranslate"><span class="pre">max_trials</span></code> fields in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">TuningCriterion</span>
 
-<span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
-    <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="c1"># optional. tuning timeout (seconds). When set to 0, early stopping is enabled.</span>
-    <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="c1"># optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.</span>
-    <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;basic&quot;</span><span class="p">,</span> <span class="c1"># optional. name of the tuning strategy. </span>
-    <span class="n">strategy_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="c1"># optional. see concrete tuning strategy for available settings.</span>
+<span class="n">tuning_criterion</span> <span class="o">=</span> <span class="n">TuningCriterion</span><span class="p">(</span>
+    <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># optional. tuning timeout (seconds). When set to 0, early stopping is enabled.</span>
+    <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.</span>
+    <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;basic&quot;</span><span class="p">,</span>  <span class="c1"># optional. name of the tuning strategy.</span>
+    <span class="n">strategy_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># optional. see concrete tuning strategy for available settings.</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -147,8 +147,8 @@ below:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">AccuracyCriterion</span>
 
 <span class="n">accuracy_criterion</span> <span class="o">=</span> <span class="n">AccuracyCriterion</span><span class="p">(</span>
-    <span class="n">higher_is_better</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># optional. </span>
-    <span class="n">criterion</span><span class="o">=</span><span class="s1">&#39;relative&#39;</span><span class="p">,</span>  <span class="c1"># optional. Available values are &#39;relative&#39; and &#39;absolute&#39;.</span>
+    <span class="n">higher_is_better</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># optional.</span>
+    <span class="n">criterion</span><span class="o">=</span><span class="s2">&quot;relative&quot;</span><span class="p">,</span>  <span class="c1"># optional. Available values are &#39;relative&#39; and &#39;absolute&#39;.</span>
     <span class="n">tolerable_loss</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># optional.</span>
 <span class="p">)</span>
 </pre></div>
@@ -275,9 +275,7 @@ flowchart TD
 
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
     <span class="n">quant_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
-        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;basic&quot;</span>  <span class="c1"># optional. name of tuning strategy. </span>
-    <span class="p">),</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;basic&quot;</span><span class="p">),</span>  <span class="c1"># optional. name of tuning strategy.</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -300,9 +298,7 @@ the op-wise fallback in this order.</p>
 
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
     <span class="n">quant_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
-        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;mse&quot;</span> 
-    <span class="p">),</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;mse&quot;</span><span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -323,7 +319,7 @@ the op-wise fallback in this order.</p>
     <span class="n">quant_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
         <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;mse_v2&quot;</span><span class="p">,</span>
-        <span class="n">strategy_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;confidence_batches&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>  <span class="c1"># optional. the number of batches to score the op impact.</span>
+        <span class="n">strategy_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;confidence_batches&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>  <span class="c1"># optional. the number of batches to score the op impact.</span>
     <span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
@@ -350,7 +346,7 @@ the op-wise fallback in this order.</p>
     <span class="n">quant_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
         <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;hawq_v2&quot;</span><span class="p">,</span>
-        <span class="n">strategy_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;hawq_v2_loss&quot;</span><span class="p">:</span> <span class="n">model_loss</span><span class="p">}</span>  <span class="c1"># required. the loss function for calculating the hessian trace.</span>
+        <span class="n">strategy_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;hawq_v2_loss&quot;</span><span class="p">:</span> <span class="n">model_loss</span><span class="p">},</span>  <span class="c1"># required. the loss function for calculating the hessian trace.</span>
     <span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
@@ -384,7 +380,7 @@ value as shown in below example, because the param space for <code class="docuti
     <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
         <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># optional. tuning timeout (seconds). When set to 0, early stopping is enabled.</span>
         <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.</span>
-        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;bayesian&quot;</span>
+        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;bayesian&quot;</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
@@ -516,9 +512,7 @@ take from 24 hours to a few days to complete, depending on the model.</p>
 
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
     <span class="n">quant_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
-        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;tpe&quot;</span>
-    <span class="p">)</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;tpe&quot;</span><span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -551,14 +545,13 @@ take from 24 hours to a few days to complete, depending on the model.</p>
 <p>For example, user can implement an <code class="docutils literal notranslate"><span class="pre">Abc</span></code> strategy like below:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@strategy_registry</span>
 <span class="k">class</span> <span class="nc">AbcTuneStrategy</span><span class="p">(</span><span class="n">TuneStrategy</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">q_dataloader</span><span class="p">,</span> <span class="n">q_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">eval_dataloader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dicts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">q_dataloader</span><span class="p">,</span> <span class="n">q_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eval_dataloader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dicts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="o">...</span>
 
     <span class="k">def</span> <span class="nf">next_tune_cfg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># generate the next tuning config</span>
         <span class="o">...</span>
-    
+
     <span class="k">def</span> <span class="nf">traverse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">tune_cfg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_tune_cfg</span><span class="p">():</span>
             <span class="c1"># do quantization</span>

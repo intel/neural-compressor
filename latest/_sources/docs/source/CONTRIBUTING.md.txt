@@ -22,21 +22,21 @@ Before sending your pull requests, follow the information below:
 
 ## Pull Request Template
 
-**Type of Change**
+**Type of Change**  
 feature or bug fix or documentation or validation or others
 API changed or not
 
-**Description**
-detail description
+**Description**  
+detail description  
 JIRA ticket: xxx
 
-**Expected Behavior & Potential Risk**
+**Expected Behavior & Potential Risk**  
 the expected behavior that triggered by this PR
 
-**How has this PR been tested?**
+**How has this PR been tested?**  
 how to reproduce the test (including hardware information)
 
-**Dependency Change?**
+**Dependency Change?**  
 any library dependency introduced or removed
 
 ## Support

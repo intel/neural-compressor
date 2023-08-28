@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   retrain free pruner.
+   Retrain free pruner.
 
 
 

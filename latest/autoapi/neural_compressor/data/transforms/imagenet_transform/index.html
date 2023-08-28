@@ -104,10 +104,10 @@
 <td><p>Imagenet decoding will be performed automatically from Neural Compressor v1.4.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.imagenet_transform.TensorflowTransposeLastChannel" title="neural_compressor.data.transforms.imagenet_transform.TensorflowTransposeLastChannel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowTransposeLastChannel</span></code></a></p></td>
-<td><p>Transpose NHWC to NCHW</p></td>
+<td><p>Transpose NHWC to NCHW.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.imagenet_transform.TensorflowShiftRescale" title="neural_compressor.data.transforms.imagenet_transform.TensorflowShiftRescale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowShiftRescale</span></code></a></p></td>
-<td><p>label shift by 1 and rescale</p></td>
+<td><p>Label shift by 1 and rescale.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.imagenet_transform.TensorflowResizeCropImagenetTransform" title="neural_compressor.data.transforms.imagenet_transform.TensorflowResizeCropImagenetTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowResizeCropImagenetTransform</span></code></a></p></td>
 <td><p>Combination of a series of transforms which is applicable to images in Imagenet.</p></td>
@@ -182,7 +182,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.data.transforms.imagenet_transform.TensorflowTransposeLastChannel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">TensorflowTransposeLastChannel</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/data/transforms/imagenet_transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.transforms.imagenet_transform.TensorflowTransposeLastChannel" title="Permalink to this definition"></a></dt>
-<dd><p>Transpose NHWC to NCHW</p>
+<dd><p>Transpose NHWC to NCHW.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple of processed image and label</p>
@@ -193,7 +193,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.data.transforms.imagenet_transform.TensorflowShiftRescale">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">TensorflowShiftRescale</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/data/transforms/imagenet_transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.transforms.imagenet_transform.TensorflowShiftRescale" title="Permalink to this definition"></a></dt>
-<dd><p>label shift by 1 and rescale</p>
+<dd><p>Label shift by 1 and rescale.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple of processed image and label</p>

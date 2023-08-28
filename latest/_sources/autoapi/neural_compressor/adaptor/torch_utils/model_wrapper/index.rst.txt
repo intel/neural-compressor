@@ -29,8 +29,7 @@ Classes
 
 
 
-   Fake version of affine quantization
-
+   Fake version of affine quantization.
 
 
 .. py:class:: TEQLinearFakeQuant(orig_layer, alpha=None, num_bits=4, group_size=-1, scheme='asym')
@@ -38,7 +37,7 @@ Classes
 
 
 
-   wrapper quantization linear
+   Wrapper quantization linear.
 
 
 .. py:class:: MulLinear(module, input_scale=None)

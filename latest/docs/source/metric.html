@@ -405,7 +405,7 @@
 
 <span class="n">top1</span> <span class="o">=</span> <span class="n">Metric</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;topk&quot;</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">calib_dataloader</span><span class="p">,</span> <span class="n">eval_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">,</span><span class="n">eval_metric</span><span class="o">=</span><span class="n">top1</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">calib_dataloader</span><span class="p">,</span> <span class="n">eval_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">,</span> <span class="n">eval_metric</span><span class="o">=</span><span class="n">top1</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -433,7 +433,7 @@
 
 <span class="n">new_metric</span> <span class="o">=</span> <span class="n">NewMetric</span><span class="p">()</span>
 <span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">calib_dataloader</span><span class="p">,</span> <span class="n">eval_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">,</span><span class="n">eval_metric</span><span class="o">=</span><span class="n">new_metric</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">calib_dataloader</span><span class="p">,</span> <span class="n">eval_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">,</span> <span class="n">eval_metric</span><span class="o">=</span><span class="n">new_metric</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>

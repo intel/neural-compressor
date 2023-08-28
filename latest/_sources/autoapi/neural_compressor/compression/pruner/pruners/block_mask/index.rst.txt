@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   block mask pruner.
+   Block mask pruner.
 
 
 

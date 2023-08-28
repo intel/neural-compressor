@@ -112,22 +112,38 @@
     end
 </pre></div>
 </div>
-<p>❶ Design the framework YAML, inherit QueryBackendCapability class to parse the framework yaml. <br>
-❷ Utilizes adaptor.query_fw_capability to query the framework’s capabilities. <br>
-❸ Parse the framework YAML and get quantization capability. <br>
-❹ Send the capability including ‘opwise’ and ‘optypewise’ ability to Strategy. <br>
-❺ Build the tuning space in Strategy. <br>
-❻ Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process. <br>
-❼ Invokes the specific kernels for the calibration and quantization based on the tuning configuration.<br></p>
+<p>❶ Design the framework YAML, inherit QueryBackendCapability class to parse the framework yaml.<br />❷ Utilizes adaptor.query_fw_capability to query the framework’s capabilities.<br />❸ Parse the framework YAML and get quantization capability.<br />❹ Send the capability including ‘opwise’ and ‘optypewise’ ability to Strategy.<br />❺ Build the tuning space in Strategy.<br />❻ Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.<br />❼ Invokes the specific kernels for the calibration and quantization based on the tuning configuration.</p>
 </section>
 <section id="api-list-that-need-to-implement">
 <h2>API List that Need to Implement<a class="headerlink" href="#api-list-that-need-to-implement" title="Permalink to this heading"></a></h2>
-<p>These APIs are necessary to add a new adapter. Here are the parameter types and functionality descriptions of these APIs. The following chapters will introduce the specific implementation and data format of these APIs in detail.
-| API | Parameters |Output   |Usage   | Comments|
-| :—— | :——|:—— |:—— | :—— |
-| query_fw_capability(self, model) | <strong>model</strong> (object): A INC model object to query quantization tuning capability. |output format: <br> {’opwise’: {(node_name, node_op): [{’weight’: {’dtype’: …#int8/fp32 or other data type}, ‘activation’: {’dtype’: …#int8/fp32 or other data type}}, …]},<br> ‘optypewise’:{node_op: [{’weight’: {’dtype’: …#int8/fp32 or other data type}, ‘activation’: {’dtype’: …#int8/fp32}}], …}} |The function is used to return framework tuning capability. |Confirm the the data format output by the function must meet the requirements |
-| quantize(self, tune_cfg, model, dataloader, q_func=None) | <strong>tune_cfg</strong> (dict): the chosen tuning configuration.<br> <strong>model</strong> (object): The model to do quantization.<br><strong>dataloader</strong> (object): The dataloader used to load quantization dataset. <strong>q_func</strong>(optional): training function for quantization aware training mode.| output quantized model object|This function use the dataloader to generate the data required by the model, and then insert Quantize/Dequantize operator into the quantizable op required in the tune_config and generate the model for calibration, after calibration, generate the final quantized model according to the obtained data range from calibration| |</p>
-</section>
+<p>These APIs are necessary to add a new adapter. Here are the parameter types and functionality descriptions of these APIs. The following chapters will introduce the specific implementation and data format of these APIs in detail.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">API</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Output</th>
+<th style="text-align: left;">Usage</th>
+<th style="text-align: left;">Comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">query_fw_capability(self, model)</td>
+<td style="text-align: left;"><strong>model</strong> (object): A INC model object to query quantization tuning capability.</td>
+<td style="text-align: left;">output format: <br> {'opwise': {(node_name, node_op): [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32 or other data type}}, ...]},<br> 'optypewise':{node_op: [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32}}], ...}}</td>
+<td style="text-align: left;">The function is used to return framework tuning capability.</td>
+<td style="text-align: left;">Confirm the the data format output by the function must meet the requirements</td>
+</tr>
+<tr>
+<td style="text-align: left;">quantize(self, tune_cfg, model, dataloader, q_func=None)</td>
+<td style="text-align: left;"><strong>tune_cfg</strong> (dict): the chosen tuning configuration.<br> <strong>model</strong> (object): The model to do quantization.<br><strong>dataloader</strong> (object): The dataloader used to load quantization dataset. <strong>q_func</strong>(optional): training function for quantization aware training mode.</td>
+<td style="text-align: left;">output quantized model object</td>
+<td style="text-align: left;">This function use the dataloader to generate the data required by the model, and then insert Quantize/Dequantize operator into the quantizable op required in the tune_config and generate the model for calibration, after calibration, generate the final quantized model according to the obtained data range from calibration</td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table></section>
 <section id="design-the-framework-yaml">
 <h2>Design the framework YAML<a class="headerlink" href="#design-the-framework-yaml" title="Permalink to this heading"></a></h2>
 <p>To enable accuracy-aware tuning with a specific framework, we should define the <a class="reference internal" href="framework_yaml.html"><span class="doc">framework YAML</span></a> which unifies the configuration format for quantization and provides a description for the capabilities of the specific framework.</p>
@@ -138,49 +154,49 @@
 <section id="add-query-fw-capability-to-adaptor">
 <h2>Add query_fw_capability to Adaptor<a class="headerlink" href="#add-query-fw-capability-to-adaptor" title="Permalink to this heading"></a></h2>
 <p>Each framework adaptor should implement the <code class="docutils literal notranslate"><span class="pre">query_fw_capability</span></code> function, this function will only be invoked once and will loop over the graph/model for the quantizable operators and collect each operator’s opwise details and optypewise capability. You should return a standard dict of the input model’s tuning capability. The format is like below:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="n">capability</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;opwise&#39;</span><span class="p">:</span> <span class="p">{(</span><span class="s1">&#39;conv2d&#39;</span><span class="p">,</span> <span class="s1">&#39;Conv2D&#39;</span><span class="p">):</span> <span class="p">[</span><span class="n">int8_conv_config</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;bf16&#39;</span><span class="p">},</span> <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;bf16&#39;</span><span class="p">}},</span> <span class="p">{</span><span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;fp32&#39;</span><span class="p">},</span> <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;fp32&#39;</span><span class="p">}}],</span> <span class="o">...</span><span class="c1"># all quantizable opwise key-value pair with key tuple: (node_name, node_op)}</span>
-        <span class="s1">&#39;optypewise&#39;</span><span class="p">:</span> <span class="n">optype_wise_ability</span><span class="p">,</span>
-    <span class="p">}</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">capability</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;opwise&#39;</span><span class="p">:</span> <span class="p">{(</span><span class="s1">&#39;conv2d&#39;</span><span class="p">,</span> <span class="s1">&#39;Conv2D&#39;</span><span class="p">):</span> <span class="p">[</span><span class="n">int8_conv_config</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;bf16&#39;</span><span class="p">},</span> <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;bf16&#39;</span><span class="p">}},</span> <span class="p">{</span><span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;fp32&#39;</span><span class="p">},</span> <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;fp32&#39;</span><span class="p">}}],</span> <span class="o">...</span> <span class="p">}</span><span class="c1"># all quantizable opwise key-value pair with key tuple: (node_name, node_op)}</span>
+    <span class="s1">&#39;optypewise&#39;</span><span class="p">:</span> <span class="n">optype_wise_ability</span><span class="p">,</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 <p>The int8_conv_config is like below, it’s parsed from the framework YAML.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="n">int8_conv_config</span> <span class="o">=</span> <span class="p">{</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">int8_conv_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="s2">&quot;minmax&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;granularity&quot;</span><span class="p">:</span> <span class="s2">&quot;per_channel&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="s2">&quot;sym&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;quant_mode&quot;</span><span class="p">:</span> <span class="s2">&quot;static&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="s2">&quot;kl&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;granularity&quot;</span><span class="p">:</span> <span class="s2">&quot;per_tensor&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="s2">&quot;sym&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">optype_wise_ability</span></code> exmaple config is like below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">optype_wise_ability</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;Conv2D&#39;</span><span class="p">:</span> <span class="p">{</span>
         <span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span>
                <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;int8&#39;</span><span class="p">,</span>
                <span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="s1">&#39;minmax&#39;</span><span class="p">,</span>
                <span class="s1">&#39;granularity&#39;</span><span class="p">:</span> <span class="s1">&#39;per_channel&#39;</span><span class="p">,</span>
-               <span class="s1">&#39;scheme&#39;</span><span class="p">:</span> <span class="s1">&#39;sym&#39;</span>
+               <span class="s1">&#39;scheme&#39;</span><span class="p">:</span> <span class="s1">&#39;sym&#39;</span><span class="p">,</span>
         <span class="p">},</span>
         <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span>
                <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;int8&#39;</span><span class="p">,</span>
                <span class="s1">&#39;quant_mode&#39;</span><span class="p">:</span> <span class="s1">&#39;static&#39;</span><span class="p">,</span>
                <span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="s1">&#39;kl&#39;</span><span class="p">,</span>
                <span class="s1">&#39;granularity&#39;</span><span class="p">:</span> <span class="s1">&#39;per_tensor&#39;</span><span class="p">,</span>
-               <span class="s1">&#39;scheme&#39;</span><span class="p">:</span> <span class="s1">&#39;sym&#39;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-<p>The <code class="docutils literal notranslate"><span class="pre">optype_wise_ability</span></code> exmaple config is like below.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="n">optype_wise_ability</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;Conv2D&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span>
-                   <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;int8&#39;</span><span class="p">,</span>
-                   <span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="s1">&#39;minmax&#39;</span><span class="p">,</span>
-                   <span class="s1">&#39;granularity&#39;</span><span class="p">:</span> <span class="s1">&#39;per_channel&#39;</span><span class="p">,</span>
-                   <span class="s1">&#39;scheme&#39;</span><span class="p">:</span> <span class="s1">&#39;sym&#39;</span>
-            <span class="p">},</span>
-            <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span>
-                   <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;int8&#39;</span><span class="p">,</span>
-                   <span class="s1">&#39;quant_mode&#39;</span><span class="p">:</span> <span class="s1">&#39;static&#39;</span><span class="p">,</span>
-                   <span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="s1">&#39;kl&#39;</span><span class="p">,</span>
-                   <span class="s1">&#39;granularity&#39;</span><span class="p">:</span> <span class="s1">&#39;per_tensor&#39;</span><span class="p">,</span>
-                   <span class="s1">&#39;scheme&#39;</span><span class="p">:</span> <span class="s1">&#39;sym&#39;</span>
-            <span class="p">}</span>
+               <span class="s1">&#39;scheme&#39;</span><span class="p">:</span> <span class="s1">&#39;sym&#39;</span><span class="p">,</span>
         <span class="p">},</span>
-        <span class="o">...</span> <span class="c1">#all optype wise ability</span>
-    <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="o">...</span> <span class="c1">#all optype wise ability</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 <p>After the work above, we have implement the <code class="docutils literal notranslate"><span class="pre">query_fw_capability</span></code> API and get the tuning capability dict for the Strategy object. Then the Strategy object will fetch tuning configuration and give to the quantize API to get the quantized model.</p>

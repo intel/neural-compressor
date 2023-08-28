@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   common Model just collects the information to construct a Model.
+   Common Model just collects the information to construct a Model.
 
 
 

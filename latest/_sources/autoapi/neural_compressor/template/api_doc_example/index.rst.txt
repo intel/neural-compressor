@@ -103,7 +103,7 @@ Attributes
 
 .. py:function:: function2(param1: str, param2: float) -> bool
 
-   function with PEP 484 type annotations.
+   Function with PEP 484 type annotations.
 
    :param param1: The parameter1.
    :param param2: The parameter2.
@@ -169,7 +169,6 @@ Attributes
 
        >>> print([i for i in example_generator(4)])
        [0, 1, 2, 3]
-
 
 
 .. py:class:: ExampleClass(param1, param2, param3)

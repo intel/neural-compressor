@@ -48,7 +48,6 @@ Functions
    1) capability -> internal format -> merge -> tuning space (tree)
 
 
-
 .. py:function:: pattern_to_internal(pattern, default_dtype='int8')
 
    Convert pattern to internal format.

@@ -140,25 +140,65 @@
 <h2>Get Started with DataLoader<a class="headerlink" href="#get-started-with-dataloader" title="Permalink to this heading"></a></h2>
 <section id="use-intel-neural-compressor-dataloader-api">
 <h3>Use Intel® Neural Compressor DataLoader API<a class="headerlink" href="#use-intel-neural-compressor-dataloader-api" title="Permalink to this heading"></a></h3>
-<p>Acceptable parameters for <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API including:
-| Parameter     | Description     |
-|:————–|:———-|
-|framework (str)| different frameworks, such as <code class="docutils literal notranslate"><span class="pre">tensorflow</span></code>, <code class="docutils literal notranslate"><span class="pre">tensorflow_itex</span></code>, <code class="docutils literal notranslate"><span class="pre">keras</span></code>, <code class="docutils literal notranslate"><span class="pre">mxnet</span></code>, <code class="docutils literal notranslate"><span class="pre">pytorch</span></code> and <code class="docutils literal notranslate"><span class="pre">onnxruntime</span></code>.|
-|dataset (object)| A dataset object from which to get data. Dataset must implement <strong>iter</strong> or <strong>getitem</strong> method.|
-|batch_size (int, optional)| How many samples per batch to load. Defaults to 1.|
-|collate_fn (Callable, optional)| Callable function that processes the batch you want to return from your dataloader. Defaults to None.|
-|last_batch (str, optional)| How to handle the last batch if the batch size does not evenly divide by the number of examples in the dataset. ‘discard’: throw it away. ‘rollover’: insert the examples to the beginning of the next batch.Defaults to ‘rollover’.|
-|sampler (Iterable, optional)| Defines the strategy to draw samples from the dataset.Defaults to None.|
-|batch_sampler (Iterable, optional)| Returns a batch of indices at a time. Defaults to None.|
-|num_workers (int, optional)| how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process. Defaults to 0.|
-|pin_memory (bool, optional)| If True, the data loader will copy Tensors into device pinned memory before returning them. Defaults to False.|
-|shuffle (bool, optional)| Set to <code class="docutils literal notranslate"><span class="pre">True</span></code> to have the data reshuffled at every epoch. Defaults to False.|
-|distributed (bool, optional)| Set to <code class="docutils literal notranslate"><span class="pre">True</span></code> to support distributed computing. Defaults to False.|</p>
-<p>Users can use the unified <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API in the following manners.</p>
+<p>Acceptable parameters for <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API including:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Parameter</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>framework (str)</td>
+<td style="text-align: center;">different frameworks, such as <code>tensorflow</code>, <code>tensorflow_itex</code>, <code>keras</code>, <code>mxnet</code>, <code>pytorch</code> and <code>onnxruntime</code>.</td>
+</tr>
+<tr>
+<td>dataset (object)</td>
+<td style="text-align: center;">A dataset object from which to get data. Dataset must implement <code>__iter__</code> or <code>__getitem__</code> method.</td>
+</tr>
+<tr>
+<td>batch_size (int, optional)</td>
+<td style="text-align: center;">How many samples per batch to load. Defaults to 1.</td>
+</tr>
+<tr>
+<td>collate_fn (Callable, optional)</td>
+<td style="text-align: center;">Callable function that processes the batch you want to return from your dataloader. Defaults to None.</td>
+</tr>
+<tr>
+<td>last_batch (str, optional)</td>
+<td style="text-align: center;">How to handle the last batch if the batch size does not evenly divide by the number of examples in the dataset. 'discard': throw it away. 'rollover': insert the examples to the beginning of the next batch.Defaults to 'rollover'.</td>
+</tr>
+<tr>
+<td>sampler (Iterable, optional)</td>
+<td style="text-align: center;">Defines the strategy to draw samples from the dataset.Defaults to None.</td>
+</tr>
+<tr>
+<td>batch_sampler (Iterable, optional)</td>
+<td style="text-align: center;">Returns a batch of indices at a time. Defaults to None.</td>
+</tr>
+<tr>
+<td>num_workers (int, optional)</td>
+<td style="text-align: center;">how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process. Defaults to 0.</td>
+</tr>
+<tr>
+<td>pin_memory (bool, optional)</td>
+<td style="text-align: center;">If True, the data loader will copy Tensors into device pinned memory before returning them. Defaults to False.</td>
+</tr>
+<tr>
+<td>shuffle (bool, optional)</td>
+<td style="text-align: center;">Set to <code>True</code> to have the data reshuffled at every epoch. Defaults to False.</td>
+</tr>
+<tr>
+<td>distributed (bool, optional)</td>
+<td style="text-align: center;">Set to <code>True</code> to support distributed computing. Defaults to False.</td>
+</tr>
+</tbody>
+</table><p>Users can use the unified <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API in the following manners.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span>
 
-<span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s1">&#39;tensorflow&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
+<span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;tensorflow&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
 <span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="nb">eval</span><span class="p">)</span>
 </pre></div>
@@ -180,7 +220,9 @@
         <span class="k">for</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">label</span>
 
+
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span>
+
 <span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
 <span class="n">dataloader</span> <span class="o">=</span> <span class="n">NewDataloader</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="nb">eval</span><span class="p">)</span>

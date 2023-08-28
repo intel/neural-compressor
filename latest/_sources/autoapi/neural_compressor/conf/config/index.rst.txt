@@ -31,7 +31,7 @@ Classes
 .. py:class:: PrunerV2(target_sparsity=None, pruning_type=None, pattern=None, op_names=None, excluded_op_names=None, start_step=None, end_step=None, pruning_scope=None, pruning_frequency=None, min_sparsity_ratio_per_op=None, max_sparsity_ratio_per_op=None, sparsity_decay_type=None, pruning_op_types=None, reg_type=None, criterion_reduce_type=None, parameters=None, resume_from_pruned_checkpoint=None)
 
 
-   similiar to torch optimizer's interface
+   Similiar to torch optimizer's interface.
 
 
 .. py:class:: Conf(cfg_fname)
@@ -39,7 +39,7 @@ Classes
 
 
 
-   config parser.
+   Config parser.
 
    :param cfg_fname: The path to the configuration file.
    :type cfg_fname: string
@@ -50,7 +50,7 @@ Classes
 
 
 
-   config parser.
+   Config parser.
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
@@ -60,7 +60,7 @@ Classes
 
 
 
-   config parser.
+   Config parser.
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
@@ -70,7 +70,7 @@ Classes
 
 
 
-   config parser.
+   Config parser.
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
@@ -80,7 +80,7 @@ Classes
 
 
 
-   config parser.
+   Config parser.
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
@@ -90,7 +90,7 @@ Classes
 
 
 
-   config parser.
+   Config parser.
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
@@ -100,7 +100,7 @@ Classes
 
 
 
-   config parser.
+   Config parser.
 
    :param cfg: The path to the configuration file or DotDict object or None.
 
@@ -110,7 +110,7 @@ Classes
 
 
 
-   config parser.
+   Config parser.
 
    :param approach: The approach of the NAS.
    :param search_algorithm: The search algorithm for NAS procedure.
@@ -121,7 +121,7 @@ Classes
 
 
 
-   access yaml using attributes instead of using the dictionary notation.
+   Access yaml using attributes instead of using the dictionary notation.
 
    :param value: The dict object to access.
    :type value: dict

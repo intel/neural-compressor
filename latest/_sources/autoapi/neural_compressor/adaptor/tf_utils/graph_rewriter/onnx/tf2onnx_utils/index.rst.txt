@@ -127,7 +127,9 @@ Functions
 
 .. py:function:: make_onnx_shape(shape)
 
-   Shape with -1 is not valid in onnx ... make it a name.
+   Shape with -1 is not valid in onnx ...
+
+   make it a name.
 
 
 .. py:class:: SeqType(tensor_dtype)

@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   pattern module.
+   Pattern module.
 
 
 

@@ -24,7 +24,7 @@ Functions
 
 .. py:function:: load(f: FILE_LIKE, tensor_name: str = None, prefix: str = None, map_location: MAP_LOCATION = None, pickle_module: Any = None, *, weights_only: bool = False, **pickle_load_args: Any) -> Any
 
-   load(f, map_location=None, pickle_module=pickle, *, weights_only=False, **pickle_load_args)
+   Load(f, map_location=None, pickle_module=pickle, *, weights_only=False, **pickle_load_args)
 
    Loads an object saved with :func:`torch.save` from a file.
 

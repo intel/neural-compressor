@@ -222,15 +222,16 @@ The capabilities should include the quantized data types and quantization scheme
 <h2>Use the New Data Type<a class="headerlink" href="#use-the-new-data-type" title="Permalink to this heading"></a></h2>
 <p>Once the new data type has been added to Intel® Neural Compressor, it can be used in the same way as any other data type within the framework. Below is an example of specifying that all <code class="docutils literal notranslate"><span class="pre">Conv2d</span></code> operators should utilize 4-bit quantization:”</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
+
 <span class="n">op_type_dict</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;Conv2d&#39;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;int4&#39;</span><span class="p">]</span>
+    <span class="s2">&quot;Conv2d&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;int4&quot;</span><span class="p">],</span>
         <span class="p">},</span>
-        <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;uint4&#39;</span><span class="p">]</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
+        <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;uint4&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
 <span class="p">}</span>
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">op_type_dict</span><span class="o">=</span><span class="n">op_type_dict</span><span class="p">)</span>
 <span class="o">...</span>

@@ -88,11 +88,13 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostPostTrainingQuantConfig</span>
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">excluded_precisions</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bf16&#39;</span><span class="p">])</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model_origin</span><span class="p">,</span>
-                           <span class="n">conf</span><span class="p">,</span>
-                           <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
-                           <span class="n">calib_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">excluded_precisions</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;bf16&quot;</span><span class="p">])</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">model_origin</span><span class="p">,</span>
+    <span class="n">conf</span><span class="p">,</span>
+    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+    <span class="n">calib_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </section>

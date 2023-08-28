@@ -12,26 +12,28 @@ Refer to below examples for details.
 
 ```python
 # user facing API example in v1.1
-quantizer = Quantization('/path/to/user.yaml')
-ds = dataset('/path/to/dataset')
+quantizer = Quantization("/path/to/user.yaml")
+ds = dataset("/path/to/dataset")
 dataloader = quantizer.dataloader(ds, batch_size=100)
-quantizer.metric('metric', metric)
-q_model = quantizer('/path/to/model', q_dataloader = dataloader, eval_dataloader = dataloader)
-... # user to write framework specific code to save q_model
-
+quantizer.metric("metric", metric)
+q_model = quantizer(
+    "/path/to/model",
+    q_dataloader=dataloader,
+    eval_dataloader=dataloader,
+)
+...  # user to write framework specific code to save q_model
 ```
 
 ```python
 # user facing API example in v1.2
 quantizer = Quantization(conf.yaml)
-quantizer.model = '/path/to/model'
-dl = dataset('/path/to/dataset')
+quantizer.model = "/path/to/model"
+dl = dataset("/path/to/dataset")
 quantizer.calib_dataloader = common.DataLoader(dl, batch_size=32)
 quantizer.eval_dataloader = common.DataLoader(dl, batch_size=32)
-quantizer.metric = common.Metric(custom_metric) 
+quantizer.metric = common.Metric(custom_metric)
 q_model = quantizer.fit()
-q_model.save('/path/to/output/dir') # explicitly call to save q_model
-
+q_model.save("/path/to/output/dir")  # explicitly call to save q_model
 ```
 
 ## Built-in transform/dataset/metric APIs

@@ -264,83 +264,89 @@ Users can pass the customized training/evaluation functions to <code class="docu
 <p>The following section exemplifies how to use hooks in user pass-in training function to perform model pruning. Through the pruning API, multiple pruner objects are supported in one single Pruning object to enable layer-specific configurations and a default set is used as a complement.</p>
 <ul>
 <li><p>Step 1: Define a dict-like configuration in your training codes. Usually only 5-7 configuration items need to be identified. For customized pruning, a configuration template is shown below:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="n">configs</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">{</span> <span class="c1">## Example of a regular configuration</span>
-              <span class="s2">&quot;op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;layer1.*&#39;</span><span class="p">],</span> <span class="c1"># A list of modules that would be pruned. All linear/conv layers will be hooked when op_names is not explicitly defined.</span>
-              <span class="s2">&quot;start_step&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># Step at which to begin pruning, if a gradient-based criterion is used (e.g., snip-momentum), start_step should be equal to or greater than 1.</span>
-              <span class="s2">&quot;end_step&quot;</span><span class="p">:</span> <span class="mi">10000</span><span class="p">,</span> <span class="c1"># Step at which to end pruning, for one-shot pruning start_step = end_step.</span>
-              <span class="s2">&quot;excluded_op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;.*embeddings*&#39;</span><span class="p">],</span> <span class="c1"># A list of modules that would not be pruned.</span>
-              <span class="s1">&#39;target_sparsity&#39;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span>   <span class="c1"># Target sparsity ratio of modules.</span>
-              <span class="s2">&quot;pruning_frequency&quot;</span><span class="p">:</span> <span class="mi">250</span><span class="p">,</span>   <span class="c1"># Frequency of applying pruning, The recommended setting is one fortieth of the pruning steps.</span>
-              <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;4x1&quot;</span><span class="p">,</span>   <span class="c1"># Default pruning pattern.</span>
-            <span class="p">},</span> <span class="c1"># The missing parameter items would be complemented by default settings (i.e. start_step = 1)</span>
-
-
-            <span class="c1"># It also supports setting multiple pruners, and fine-grained pruning by partition.</span>
-            <span class="p">{</span> <span class="c1">## pruner2</span>
-                <span class="s1">&#39;target_sparsity&#39;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span>   <span class="c1"># Target sparsity ratio of modules.</span>
-                <span class="s1">&#39;pruning_type&#39;</span><span class="p">:</span> <span class="s2">&quot;snip_momentum&quot;</span><span class="p">,</span> <span class="c1"># Default pruning type.</span>
-                <span class="s1">&#39;pattern&#39;</span><span class="p">:</span> <span class="s2">&quot;4x1&quot;</span><span class="p">,</span> <span class="c1"># Default pruning pattern.</span>
-                <span class="s1">&#39;op_names&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;layer2.*&#39;</span><span class="p">],</span>  <span class="c1"># A list of modules that would be pruned.</span>
-                <span class="s1">&#39;excluded_op_names&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;layer3.*&#39;</span><span class="p">],</span>  <span class="c1"># A list of modules that would not be pruned.</span>
-                <span class="s1">&#39;start_step&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># Step at which to begin pruning.</span>
-                <span class="s1">&#39;end_step&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>   <span class="c1"># Step at which to end pruning.</span>
-                <span class="s1">&#39;pruning_scope&#39;</span><span class="p">:</span> <span class="s2">&quot;global&quot;</span><span class="p">,</span> <span class="c1"># Default pruning scope.</span>
-                <span class="s1">&#39;pruning_frequency&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="c1"># Frequency of applying pruning.</span>
-                <span class="s1">&#39;min_sparsity_ratio_per_op&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># Minimum sparsity ratio of each module.</span>
-                <span class="s1">&#39;max_sparsity_ratio_per_op&#39;</span><span class="p">:</span> <span class="mf">0.98</span><span class="p">,</span> <span class="c1"># Maximum sparsity ratio of each module.</span>
-                <span class="s1">&#39;sparsity_decay_type&#39;</span><span class="p">:</span> <span class="s2">&quot;exp&quot;</span><span class="p">,</span> <span class="c1"># Function applied to control pruning rate.</span>
-                <span class="s1">&#39;pruning_op_types&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Conv&#39;</span><span class="p">,</span> <span class="s1">&#39;Linear&#39;</span><span class="p">],</span> <span class="c1"># Types of op that would be pruned.</span>
-            <span class="p">}</span>
-        <span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">configs</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>  <span class="c1">## Example of a regular configuration</span>
+        <span class="s2">&quot;op_names&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s2">&quot;layer1.*&quot;</span>
+        <span class="p">],</span>  <span class="c1"># A list of modules that would be pruned. All linear/conv layers will be hooked when op_names is not explicitly defined.</span>
+        <span class="s2">&quot;start_step&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># Step at which to begin pruning, if a gradient-based criterion is used (e.g., snip-momentum), start_step should be equal to or greater than 1.</span>
+        <span class="s2">&quot;end_step&quot;</span><span class="p">:</span> <span class="mi">10000</span><span class="p">,</span>  <span class="c1"># Step at which to end pruning, for one-shot pruning start_step = end_step.</span>
+        <span class="s2">&quot;excluded_op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;.*embeddings*&quot;</span><span class="p">],</span>  <span class="c1"># A list of modules that would not be pruned.</span>
+        <span class="s2">&quot;target_sparsity&quot;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span>  <span class="c1"># Target sparsity ratio of modules.</span>
+        <span class="s2">&quot;pruning_frequency&quot;</span><span class="p">:</span> <span class="mi">250</span><span class="p">,</span>  <span class="c1"># Frequency of applying pruning, The recommended setting is one fortieth of the pruning steps.</span>
+        <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;4x1&quot;</span><span class="p">,</span>  <span class="c1"># Default pruning pattern.</span>
+    <span class="p">},</span>  <span class="c1"># The missing parameter items would be complemented by default settings (i.e. start_step = 1)</span>
+    <span class="c1"># It also supports setting multiple pruners, and fine-grained pruning by partition.</span>
+    <span class="p">{</span>  <span class="c1">## pruner2</span>
+        <span class="s2">&quot;target_sparsity&quot;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span>  <span class="c1"># Target sparsity ratio of modules.</span>
+        <span class="s2">&quot;pruning_type&quot;</span><span class="p">:</span> <span class="s2">&quot;snip_momentum&quot;</span><span class="p">,</span>  <span class="c1"># Default pruning type.</span>
+        <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;4x1&quot;</span><span class="p">,</span>  <span class="c1"># Default pruning pattern.</span>
+        <span class="s2">&quot;op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;layer2.*&quot;</span><span class="p">],</span>  <span class="c1"># A list of modules that would be pruned.</span>
+        <span class="s2">&quot;excluded_op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;layer3.*&quot;</span><span class="p">],</span>  <span class="c1"># A list of modules that would not be pruned.</span>
+        <span class="s2">&quot;start_step&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># Step at which to begin pruning.</span>
+        <span class="s2">&quot;end_step&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>  <span class="c1"># Step at which to end pruning.</span>
+        <span class="s2">&quot;pruning_scope&quot;</span><span class="p">:</span> <span class="s2">&quot;global&quot;</span><span class="p">,</span>  <span class="c1"># Default pruning scope.</span>
+        <span class="s2">&quot;pruning_frequency&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># Frequency of applying pruning.</span>
+        <span class="s2">&quot;min_sparsity_ratio_per_op&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># Minimum sparsity ratio of each module.</span>
+        <span class="s2">&quot;max_sparsity_ratio_per_op&quot;</span><span class="p">:</span> <span class="mf">0.98</span><span class="p">,</span>  <span class="c1"># Maximum sparsity ratio of each module.</span>
+        <span class="s2">&quot;sparsity_decay_type&quot;</span><span class="p">:</span> <span class="s2">&quot;exp&quot;</span><span class="p">,</span>  <span class="c1"># Function applied to control pruning rate.</span>
+        <span class="s2">&quot;pruning_op_types&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Conv&quot;</span><span class="p">,</span> <span class="s2">&quot;Linear&quot;</span><span class="p">],</span>  <span class="c1"># Types of op that would be pruned.</span>
+    <span class="p">},</span>
+<span class="p">]</span>
 </pre></div>
 </div>
 </li>
 <li><p>Step 2: Enable pruning functionalities</p>
 <p>[<strong>Experimental option</strong> ]Modify model and optimizer.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">WeightPruningConfig</span>
-    <span class="kn">from</span> <span class="nn">neural_compressor.experimental.compression</span> <span class="kn">import</span> <span class="n">prepare_pruning</span>
-    <span class="n">config</span> <span class="o">=</span> <span class="n">WeightPruningConfig</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span>
-    <span class="n">prepare_pruning</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span> <span class="c1"># modify model and optimizer</span>
-    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_train_epochs</span><span class="p">):</span>
-      <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-      <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">):</span>
-          <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">batch</span><span class="p">)</span>
-          <span class="n">loss</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">loss</span>
-          <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-          <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-          <span class="n">lr_scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-          <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">WeightPruningConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental.compression</span> <span class="kn">import</span> <span class="n">prepare_pruning</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">WeightPruningConfig</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span>
+<span class="n">prepare_pruning</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>  <span class="c1"># modify model and optimizer</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_train_epochs</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">):</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">batch</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">loss</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">lr_scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>[<strong>Stable Option</strong> ]Insert Hook functions in your codes.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="sd">&quot;&quot;&quot; All you need is to insert following API functions to your codes:</span>
-<span class="sd">    on_train_begin() # Setup pruners</span>
-<span class="sd">    on_step_begin() # Prune weights</span>
-<span class="sd">    on_before_optimizer_step() # Do weight regularization</span>
-<span class="sd">    on_after_optimizer_step() # Update weights&#39; criteria, mask weights</span>
-<span class="sd">    on_train_end() # End of pruner, print sparse information</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span><span class="p">,</span> <span class="n">WeightPruningConfig</span>
-    <span class="n">config</span> <span class="o">=</span> <span class="n">WeightPruningConfig</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span>
-    <span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span> <span class="c1"># Define a pruning object.</span>
-    <span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>  <span class="c1">## insert hook  </span>
-    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_train_epochs</span><span class="p">):</span>
-        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">):</span>
-            <span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_step_begin</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
-            <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">batch</span><span class="p">)</span>
-            <span class="n">loss</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">loss</span>
-            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-            <span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_before_optimizer_step</span><span class="p">()</span>
-            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-            <span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_after_optimizer_step</span><span class="p">()</span>
-            <span class="n">lr_scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-            <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
-    <span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[**Stable Option** ]Insert Hook functions in your codes. 
+
+```python
+    &quot;&quot;&quot; All you need is to insert following API functions to your codes:
+    on_train_begin() # Setup pruners
+    on_step_begin() # Prune weights
+    on_before_optimizer_step() # Do weight regularization
+    on_after_optimizer_step() # Update weights&#39; criteria, mask weights
+    on_train_end() # End of pruner, print sparse information
+    &quot;&quot;&quot;
+    from neural_compressor.training import prepare_compression, WeightPruningConfig
+    config = WeightPruningConfig(configs)
+    compression_manager = prepare_compression(model, config) # Define a pruning object.
+    compression_manager.callbacks.on_train_begin()  ## insert hook  
+    for epoch in range(num_train_epochs):
+        model.train()
+        for step, batch in enumerate(train_dataloader):
+            compression_manager.callbacks.on_step_begin(step)
+            outputs = model(**batch)
+            loss = outputs.loss
+            loss.backward()
+            compression_manager.callbacks.on_before_optimizer_step()
+            optimizer.step()
+            compression_manager.callbacks.on_after_optimizer_step()
+            lr_scheduler.step()
+            model.zero_grad()
+    compression_manager.callbacks.on_train_end()
 </pre></div>
 </div>
-<p>In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="n">the</span> <span class="n">case</span> <span class="n">mentioned</span> <span class="n">above</span><span class="p">,</span> <span class="n">pruning</span> <span class="n">process</span> <span class="n">can</span> <span class="n">be</span> <span class="n">done</span> <span class="n">by</span> <span class="n">pre</span><span class="o">-</span><span class="n">defined</span> <span class="n">hooks</span> <span class="ow">in</span> <span class="n">Neural</span> <span class="n">Compressor</span><span class="o">.</span> <span class="n">Users</span> <span class="n">need</span> <span class="n">to</span> <span class="n">place</span> <span class="n">those</span> <span class="n">hooks</span> <span class="n">inside</span> <span class="n">the</span> <span class="n">training</span> <span class="n">function</span><span class="o">.</span>
+
+</pre></div>
+</div>
 </li>
 </ul>
 </section>

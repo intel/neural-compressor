@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   pattern classes.
+   Pattern classes.
 
 
 

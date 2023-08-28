@@ -149,8 +149,9 @@ and registering this adaptor by the <code class="docutils literal notranslate"><
     <span class="k">def</span> <span class="nf">quantize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tune_cfg</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">q_func</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="o">...</span>
 
-    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">postprocess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">metric</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">measurer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">tensorboard</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">postprocess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">measurer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">tensorboard</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">):</span>
         <span class="o">...</span>
 
     <span class="k">def</span> <span class="nf">query_fw_capability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
@@ -221,40 +222,40 @@ Onnxruntime already has <a class="reference external" href="https://github.com/m
 <section id="implement-onnxrtadaptor-class">
 <h3>Implement ONNXRTAdaptor Class<a class="headerlink" href="#implement-onnxrtadaptor-class" title="Permalink to this heading"></a></h3>
 <p>The base class ONNXRTAdaptor inherits from the Adaptor class. Please refer to <a class="reference external" href="../neural_compressor/adaptor/onnxrt.py">onnxrt.py</a>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="nd">@adaptor_registry</span>
- <span class="k">class</span> <span class="nc">ONNXRT_QLinearOpsAdaptor</span><span class="p">(</span><span class="n">ONNXRTAdaptor</span><span class="p">):</span>
-   <span class="nd">@dump_elapsed_time</span><span class="p">(</span><span class="s2">&quot;Pass quantize model&quot;</span><span class="p">)</span>
-   <span class="k">def</span> <span class="nf">quantize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tune_cfg</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">,</span> <span class="n">q_func</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-     <span class="o">......</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@adaptor_registry</span>
+<span class="k">class</span> <span class="nc">ONNXRT_QLinearOpsAdaptor</span><span class="p">(</span><span class="n">ONNXRTAdaptor</span><span class="p">):</span>
+  <span class="nd">@dump_elapsed_time</span><span class="p">(</span><span class="s2">&quot;Pass quantize model&quot;</span><span class="p">)</span>
+  <span class="k">def</span> <span class="nf">quantize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tune_cfg</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">,</span> <span class="n">q_func</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="o">......</span>
 
-   <span class="nd">@dump_elapsed_time</span><span class="p">(</span><span class="s2">&quot;Pass recover model&quot;</span><span class="p">)</span>
-   <span class="k">def</span> <span class="nf">recover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">q_config</span><span class="p">):</span>
-     <span class="o">......</span>
+  <span class="nd">@dump_elapsed_time</span><span class="p">(</span><span class="s2">&quot;Pass recover model&quot;</span><span class="p">)</span>
+  <span class="k">def</span> <span class="nf">recover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">q_config</span><span class="p">):</span>
+    <span class="o">......</span>
 
-   <span class="k">def</span> <span class="nf">inspect_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">op_list</span><span class="o">=</span><span class="p">[],</span>
-                    <span class="n">iteration_list</span><span class="o">=</span><span class="p">[],</span>
-                    <span class="n">inspect_type</span><span class="o">=</span><span class="s1">&#39;activation&#39;</span><span class="p">,</span>
-                    <span class="n">save_to_disk</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                    <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                    <span class="n">quantization_cfg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-     <span class="o">......</span>
+  <span class="k">def</span> <span class="nf">inspect_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">op_list</span><span class="o">=</span><span class="p">[],</span>
+                   <span class="n">iteration_list</span><span class="o">=</span><span class="p">[],</span>
+                   <span class="n">inspect_type</span><span class="o">=</span><span class="s1">&#39;activation&#39;</span><span class="p">,</span>
+                   <span class="n">save_to_disk</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">quantization_cfg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="o">......</span>
 
-   <span class="k">def</span> <span class="nf">set_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">tensor_dict</span><span class="p">):</span>
-     <span class="o">......</span>
+  <span class="k">def</span> <span class="nf">set_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">tensor_dict</span><span class="p">):</span>
+    <span class="o">......</span>
 
-   <span class="k">def</span> <span class="nf">query_fw_capability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-     <span class="o">......</span>
+  <span class="k">def</span> <span class="nf">query_fw_capability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+    <span class="o">......</span>
 
-   <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_graph</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">postprocess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-              <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">measurer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
-              <span class="n">tensorboard</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fp32_baseline</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-     <span class="o">......</span>
+  <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_graph</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">postprocess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">measurer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+             <span class="n">tensorboard</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fp32_baseline</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="o">......</span>
 
-   <span class="k">def</span> <span class="nf">diagnosis_helper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fp32_model</span><span class="p">,</span> <span class="n">int8_model</span><span class="p">,</span> <span class="n">tune_cfg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-     <span class="o">......</span>
+  <span class="k">def</span> <span class="nf">diagnosis_helper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fp32_model</span><span class="p">,</span> <span class="n">int8_model</span><span class="p">,</span> <span class="n">tune_cfg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="o">......</span>
 
-   <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-     <span class="o">......</span>
+  <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="o">......</span>
 </pre></div>
 </div>
 </section>

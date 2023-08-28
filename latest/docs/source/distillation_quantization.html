@@ -92,8 +92,7 @@
 </ol>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
-<p>Distillation and quantization are both promising methods to reduce the computational and memory footprint that huge transformer-based networks require. Quantization refers to a process of reducing the bit precision for both activations and weights. Distillation method transfers knowledge from a heavy teacher model to a light one (student) and it could be used as a performance-booster in lower-bits quantizations. Quantization-aware training recovers accuracy degradation from representation loss in the retraining process and typically provides better performance compared to post-training quantization.
-Intel provides a quantization-aware training (QAT) method that incorporates a novel layer-by-layer knowledge distillation step for INT8 quantization pipelines.</p>
+<p>Distillation and quantization are both promising methods to reduce the computational and memory footprint that huge transformer-based networks require. Quantization refers to a process of reducing the bit precision for both activations and weights. Distillation method transfers knowledge from a heavy teacher model to a light one (student) and it could be used as a performance-booster in lower-bits quantizations. Quantization-aware training recovers accuracy degradation from representation loss in the retraining process and typically provides better performance compared to post-training quantization.<br />Intel provides a quantization-aware training (QAT) method that incorporates a novel layer-by-layer knowledge distillation step for INT8 quantization pipelines.</p>
 </section>
 <section id="distillation-for-quantization-support-matrix">
 <h2>Distillation for Quantization Support Matrix<a class="headerlink" href="#distillation-for-quantization-support-matrix" title="Permalink to this heading"></a></h2>
@@ -147,6 +146,7 @@ Intel provides a quantization-aware training (QAT) method that incorporates a no
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">KnowledgeDistillationLossConfig</span>
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">QuantizationAwareTrainingConfig</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+
 <span class="n">combs</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="n">distillation_criterion</span> <span class="o">=</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">()</span>
 <span class="n">d_conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">teacher_model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">distillation_criterion</span><span class="p">)</span>

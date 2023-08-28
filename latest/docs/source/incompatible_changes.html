@@ -93,23 +93,27 @@
 </ol>
 <p>Refer to below examples for details.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># user facing API example in v1.1</span>
-<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="s1">&#39;/path/to/user.yaml&#39;</span><span class="p">)</span>
-<span class="n">ds</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">(</span><span class="s1">&#39;/path/to/dataset&#39;</span><span class="p">)</span>
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="s2">&quot;/path/to/user.yaml&quot;</span><span class="p">)</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">(</span><span class="s2">&quot;/path/to/dataset&quot;</span><span class="p">)</span>
 <span class="n">dataloader</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">dataloader</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-<span class="n">quantizer</span><span class="o">.</span><span class="n">metric</span><span class="p">(</span><span class="s1">&#39;metric&#39;</span><span class="p">,</span> <span class="n">metric</span><span class="p">)</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantizer</span><span class="p">(</span><span class="s1">&#39;/path/to/model&#39;</span><span class="p">,</span> <span class="n">q_dataloader</span> <span class="o">=</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">eval_dataloader</span> <span class="o">=</span> <span class="n">dataloader</span><span class="p">)</span>
-<span class="o">...</span> <span class="c1"># user to write framework specific code to save q_model</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">metric</span><span class="p">(</span><span class="s2">&quot;metric&quot;</span><span class="p">,</span> <span class="n">metric</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantizer</span><span class="p">(</span>
+    <span class="s2">&quot;/path/to/model&quot;</span><span class="p">,</span>
+    <span class="n">q_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+    <span class="n">eval_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="o">...</span>  <span class="c1"># user to write framework specific code to save q_model</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># user facing API example in v1.2</span>
 <span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">yaml</span><span class="p">)</span>
-<span class="n">quantizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;/path/to/model&#39;</span>
-<span class="n">dl</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">(</span><span class="s1">&#39;/path/to/dataset&#39;</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s2">&quot;/path/to/model&quot;</span>
+<span class="n">dl</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">(</span><span class="s2">&quot;/path/to/dataset&quot;</span><span class="p">)</span>
 <span class="n">quantizer</span><span class="o">.</span><span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dl</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
 <span class="n">quantizer</span><span class="o">.</span><span class="n">eval_dataloader</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dl</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
-<span class="n">quantizer</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Metric</span><span class="p">(</span><span class="n">custom_metric</span><span class="p">)</span> 
+<span class="n">quantizer</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Metric</span><span class="p">(</span><span class="n">custom_metric</span><span class="p">)</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
-<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;/path/to/output/dir&#39;</span><span class="p">)</span> <span class="c1"># explicitly call to save q_model</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;/path/to/output/dir&quot;</span><span class="p">)</span>  <span class="c1"># explicitly call to save q_model</span>
 </pre></div>
 </div>
 </section>

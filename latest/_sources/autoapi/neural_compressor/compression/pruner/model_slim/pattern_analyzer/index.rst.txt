@@ -55,7 +55,6 @@ Functions
    Get the module which contains layer1 and layer2 (nearest father nodes)
 
 
-
 .. py:function:: print_iterables(data_iters)
 
    Print the auto slim logs.

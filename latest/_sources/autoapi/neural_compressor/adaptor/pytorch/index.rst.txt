@@ -36,6 +36,7 @@ Functions
 
    This is a helper function for `graph_info`,
        and it will get all ops from model.
+
    :param model: input model
    :type model: object
    :param prefix: prefix of op name
@@ -108,6 +109,7 @@ Functions
 
 
    Base class that defines Query Interface.
+
    Each adaption layer should implement the inherited class for specific backend on their own.
 
 

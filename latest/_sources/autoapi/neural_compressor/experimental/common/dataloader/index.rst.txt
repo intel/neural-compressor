@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   common DataLoader just collects the information to construct a dataloader.
+   Common DataLoader just collects the information to construct a dataloader.
 
 
 

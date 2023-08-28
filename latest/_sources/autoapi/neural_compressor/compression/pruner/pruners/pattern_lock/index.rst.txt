@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   pattern lock pruner.
+   Pattern lock pruner.
 
 
 

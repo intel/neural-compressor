@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   mha pruner.
+   Mha pruner.
 
 
 

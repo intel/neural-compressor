@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   common Metric just collects the information to construct a Metric.
+   Common Metric just collects the information to construct a Metric.
 
 
 

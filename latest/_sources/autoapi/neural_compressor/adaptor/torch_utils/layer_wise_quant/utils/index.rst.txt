@@ -33,7 +33,7 @@ Functions
 
 .. py:function:: get_module(model, key)
 
-   Get module from model by key name
+   Get module from model by key name.
 
    :param model: original model
    :type model: torch.nn.Module

@@ -145,7 +145,8 @@
 <h3>Config Single Objective<a class="headerlink" href="#config-single-objective" title="Permalink to this heading"></a></h3>
 <p>Users can specify a built-in objective in <code class="docutils literal notranslate"><span class="pre">neural_compressor.config.TuningCriterion</span></code> as shown below:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">TuningCriterion</span>
-<span class="n">tuning_criterion</span> <span class="o">=</span> <span class="n">TuningCriterion</span><span class="p">(</span><span class="n">objective</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">)</span>
+
+<span class="n">tuning_criterion</span> <span class="o">=</span> <span class="n">TuningCriterion</span><span class="p">(</span><span class="n">objective</span><span class="o">=</span><span class="s2">&quot;accuracy&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -153,7 +154,8 @@
 <h3>Config Multiple Objectives<a class="headerlink" href="#config-multiple-objectives" title="Permalink to this heading"></a></h3>
 <p>Users can specify built-in multiple objectives in <code class="docutils literal notranslate"><span class="pre">neural_compressor.config.TuningCriterion</span></code> as shown below:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">TuningCriterion</span>
-<span class="n">tuning_criterion</span> <span class="o">=</span> <span class="n">TuningCriterion</span><span class="p">(</span><span class="n">objective</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;performance&#39;</span><span class="p">,</span> <span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+
+<span class="n">tuning_criterion</span> <span class="o">=</span> <span class="n">TuningCriterion</span><span class="p">(</span><span class="n">objective</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;performance&quot;</span><span class="p">,</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">])</span>
 </pre></div>
 </div>
 </section>

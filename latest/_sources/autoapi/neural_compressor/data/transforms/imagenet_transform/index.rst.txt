@@ -83,7 +83,7 @@ Classes
 
 
 
-   Transpose NHWC to NCHW
+   Transpose NHWC to NCHW.
 
    :returns: tuple of processed image and label
 
@@ -93,7 +93,7 @@ Classes
 
 
 
-   label shift by 1 and rescale
+   Label shift by 1 and rescale.
 
    :returns: tuple of processed image and label
 

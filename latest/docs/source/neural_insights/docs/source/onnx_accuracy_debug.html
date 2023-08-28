@@ -120,10 +120,10 @@ pip<span class="w"> </span>install<span class="w"> </span>accelerate<span class=
 <p>Generate a quantized model.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">onnx_model</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">input_model</span><span class="p">)</span>
 <span class="n">calib_dataset</span> <span class="o">=</span> <span class="n">IncDataset</span><span class="p">(</span><span class="n">eval_dataset</span><span class="p">,</span> <span class="n">onnx_model</span><span class="p">)</span>
-<span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">approach</span><span class="o">=</span><span class="s1">&#39;static&#39;</span><span class="p">,</span> <span class="n">quant_format</span><span class="o">=</span><span class="s2">&quot;QOperator&quot;</span><span class="p">)</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">onnx_model</span><span class="p">,</span> 
-                           <span class="n">config</span><span class="p">,</span>
-                           <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s1">&#39;onnxruntime&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">calib_dataset</span><span class="p">))</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">approach</span><span class="o">=</span><span class="s2">&quot;static&quot;</span><span class="p">,</span> <span class="n">quant_format</span><span class="o">=</span><span class="s2">&quot;QOperator&quot;</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">onnx_model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;onnxruntime&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">calib_dataset</span><span class="p">)</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 <p>Execute benchmark to get the F1 score of both FP32 and INT8 models and then compute the relative accuracy ratio.
@@ -136,32 +136,34 @@ The output results indicate that the quantized model’s accuracy is noticeably 
 <h1>Analyzing the result of quantization<a class="headerlink" href="#analyzing-the-result-of-quantization" title="Permalink to this heading"></a></h1>
 <p>In this section, the diagnosis tool is used for debugging to achieve higher INT8 model accuracy.
 We need to set <code class="docutils literal notranslate"><span class="pre">diagnosis</span></code> parameter to <code class="docutils literal notranslate"><span class="pre">True</span></code> as shown below.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">approach</span><span class="o">=</span><span class="s2">&quot;static&quot;</span><span class="p">,</span> <span class="n">quant_format</span><span class="o">=</span><span class="s2">&quot;QOperator&quot;</span><span class="p">,</span> <span class="n">quant_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># set &#39;diagnosis&#39; to True</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">onnx_model</span><span class="p">,</span> 
-                           <span class="n">config</span><span class="p">,</span> 
-                           <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">,</span> 
-                           <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s1">&#39;onnxruntime&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">calib_dataset</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">approach</span><span class="o">=</span><span class="s2">&quot;static&quot;</span><span class="p">,</span> <span class="n">quant_format</span><span class="o">=</span><span class="s2">&quot;QOperator&quot;</span><span class="p">,</span> <span class="n">quant_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>  <span class="c1"># set &#39;diagnosis&#39; to True</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">onnx_model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;onnxruntime&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">calib_dataset</span><span class="p">)</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 <p>The diagnosis tool will output <code class="docutils literal notranslate"><span class="pre">Activations</span> <span class="pre">summary</span></code> and <code class="docutils literal notranslate"><span class="pre">Weights</span> <span class="pre">summary</span></code> in terminal.</p>
 <p>For easy to check, here we reload them to .csv files as shown below.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">glob</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">&#39;display.max_rows&#39;</span><span class="p">,</span><span class="kc">None</span><span class="p">)</span>
-<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">&#39;display.max_columns&#39;</span><span class="p">,</span><span class="kc">None</span><span class="p">)</span>
+
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s2">&quot;display.max_rows&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s2">&quot;display.max_columns&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
 <span class="n">subfolders</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;./nc_workspace&quot;</span> <span class="o">+</span> <span class="s2">&quot;/*/&quot;</span><span class="p">)</span>
 <span class="n">subfolders</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">if</span> <span class="n">subfolders</span><span class="p">:</span>
     <span class="n">activations_table</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">subfolders</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;activations_table.csv&quot;</span><span class="p">)</span>
     <span class="n">weights_table</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">subfolders</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;weights_table.csv&quot;</span><span class="p">)</span>
-    
+
     <span class="n">activations_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">activations_table</span><span class="p">)</span>
     <span class="n">weights_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">weights_table</span><span class="p">)</span>
-    
+
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Activations summary&quot;</span><span class="p">)</span>
     <span class="n">display</span><span class="p">(</span><span class="n">activations_table</span><span class="p">)</span>
-    
+
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Weights summary&quot;</span><span class="p">)</span>
     <span class="n">display</span><span class="p">(</span><span class="n">weights_table</span><span class="p">)</span>
 </pre></div>
@@ -186,13 +188,18 @@ We need to set <code class="docutils literal notranslate"><span class="pre">diag
 <p>According to the results displayed above, it is evident that the nodes of type <code class="docutils literal notranslate"><span class="pre">/layoutlmv3/encoder/layer.\d+/output/Add</span></code> and <code class="docutils literal notranslate"><span class="pre">/layoutlmv3/encoder/layer.\d+/output/dense/MatMul</span></code> have significantly higher values for <code class="docutils literal notranslate"><span class="pre">Min-Max</span> <span class="pre">data</span> <span class="pre">range</span></code> compared to other node types. This indicates that they may have caused a loss of accuracy. Therefore, we can try to fallback these nodes.</p>
 <p>Refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/source/diagnosis.md">diagnosis.md</a> for more tips for diagnosis.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.utils.constant</span> <span class="kn">import</span> <span class="n">FP32</span>
-<span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">approach</span><span class="o">=</span><span class="s2">&quot;static&quot;</span><span class="p">,</span> 
-                                 <span class="n">quant_format</span><span class="o">=</span><span class="s2">&quot;QOperator&quot;</span><span class="p">,</span>
-                                 <span class="n">op_name_dict</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;/layoutlmv3/encoder/layer.\d+/output/dense/MatMul&quot;</span><span class="p">:</span><span class="n">FP32</span><span class="p">,</span>
-                                               <span class="s2">&quot;/layoutlmv3/encoder/layer.\d+/output/Add&quot;</span><span class="p">:</span><span class="n">FP32</span><span class="p">})</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">onnx_model</span><span class="p">,</span> 
-                           <span class="n">config</span><span class="p">,</span>
-                           <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s1">&#39;onnxruntime&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">calib_dataset</span><span class="p">))</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">approach</span><span class="o">=</span><span class="s2">&quot;static&quot;</span><span class="p">,</span>
+    <span class="n">quant_format</span><span class="o">=</span><span class="s2">&quot;QOperator&quot;</span><span class="p">,</span>
+    <span class="n">op_name_dict</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;/layoutlmv3/encoder/layer.\d+/output/dense/MatMul&quot;</span><span class="p">:</span> <span class="n">FP32</span><span class="p">,</span>
+        <span class="s2">&quot;/layoutlmv3/encoder/layer.\d+/output/Add&quot;</span><span class="p">:</span> <span class="n">FP32</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">onnx_model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;onnxruntime&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">calib_dataset</span><span class="p">)</span>
+<span class="p">)</span>
 <span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_model</span><span class="p">)</span>
 </pre></div>
 </div>

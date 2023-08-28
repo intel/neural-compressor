@@ -62,18 +62,12 @@ Modify quantization/benchmark script to run diagnosis by adding argument `diagno
 
 ### Quantization diagnosis
 ```python
-config = PostTrainingQuantConfig(
-    diagnosis=True,
-    ...
-)
+config = PostTrainingQuantConfig(diagnosis=True, ...)
 ``` 
 
 ### Benchmark diagnosis
 ```python
-config = BenchmarkConfig(
-    diagnosis=True,
-    ...
-)
+config = BenchmarkConfig(diagnosis=True, ...)
 ```
 
 # Example
@@ -181,13 +175,19 @@ $\sigma_x$ - input model variance
 
 ### Fallback setting example
 ```python
-from neural_compressor import quantization, PostTrainingQuantConfig 
-op_name_dict = {'v0/cg/conv0/conv2d/Conv2D': {'activation':  {'dtype': ['fp32']}}} 
-config = PostTrainingQuantConfig( 
-       diagnosis=True,  
-       op_name_dict=op_name_dict 
+from neural_compressor import quantization, PostTrainingQuantConfig
+
+op_name_dict = {"v0/cg/conv0/conv2d/Conv2D": {"activation": {"dtype": ["fp32"]}}}
+config = PostTrainingQuantConfig(
+    diagnosis=True,
+    op_name_dict=op_name_dict,
 )
-q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval) 
+q_model = quantization.fit(
+    model,
+    config,
+    calib_dataloader=dataloader,
+    eval_func=eval,
+)
 ```
 
 ## See profiling data

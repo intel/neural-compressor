@@ -91,7 +91,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.conf.dotdict.DotDict" title="neural_compressor.conf.dotdict.DotDict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DotDict</span></code></a></p></td>
-<td><p>access yaml using attributes instead of using the dictionary notation.</p></td>
+<td><p>Access yaml using attributes instead of using the dictionary notation.</p></td>
 </tr>
 </tbody>
 </table>
@@ -101,19 +101,21 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.conf.dotdict.deep_get" title="neural_compressor.conf.dotdict.deep_get"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deep_get</span></code></a>(dictionary, keys[, default])</p></td>
-<td><p>get the dot key's item in nested dict</p></td>
+<td><p>Get the dot key's item in nested dict</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.conf.dotdict.deep_set" title="neural_compressor.conf.dotdict.deep_set"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deep_set</span></code></a>(dictionary, keys, value)</p></td>
-<td><p>set the dot key's item in nested dict</p></td>
+<td><p>Set the dot key's item in nested dict</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.conf.dotdict.deep_get">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.conf.dotdict.</span></span><span class="sig-name descname"><span class="pre">deep_get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dictionary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/conf/dotdict.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.conf.dotdict.deep_get" title="Permalink to this definition"></a></dt>
-<dd><p>get the dot key’s item in nested dict
-eg person = {‘person’:{‘name’:{‘first’:’John’}}}
-deep_get(person, “person.name.first”) will output ‘John’</p>
+<dd><dl class="simple">
+<dt>Get the dot key’s item in nested dict</dt><dd><p>eg person = {‘person’:{‘name’:{‘first’:’John’}}}
+deep_get(person, “person.name.first”) will output ‘John’.</p>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -134,10 +136,12 @@ deep_get(person, “person.name.first”) will output ‘John’</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.conf.dotdict.deep_set">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.conf.dotdict.</span></span><span class="sig-name descname"><span class="pre">deep_set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dictionary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/conf/dotdict.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.conf.dotdict.deep_set" title="Permalink to this definition"></a></dt>
-<dd><p>set the dot key’s item in nested dict
-eg person = {‘person’:{‘name’:{‘first’:’John’}}}
+<dd><dl class="simple">
+<dt>Set the dot key’s item in nested dict</dt><dd><p>eg person = {‘person’:{‘name’:{‘first’:’John’}}}
 deep_set(person, “person.sex”, ‘male’) will output
 {‘person’: {‘name’: {‘first’: ‘John’}, ‘sex’: ‘male’}}</p>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -152,7 +156,7 @@ deep_set(person, “person.sex”, ‘male’) will output
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.conf.dotdict.DotDict">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.conf.dotdict.</span></span><span class="sig-name descname"><span class="pre">DotDict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/conf/dotdict.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.conf.dotdict.DotDict" title="Permalink to this definition"></a></dt>
-<dd><p>access yaml using attributes instead of using the dictionary notation.</p>
+<dd><p>Access yaml using attributes instead of using the dictionary notation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>value</strong> (<em>dict</em>) – The dict object to access.</p>

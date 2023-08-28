@@ -87,6 +87,7 @@ Functions
 
 
    Main API for GPTQ algorithm.
+
    Please refer to:
    GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers
    url: https://arxiv.org/abs/2210.17323
