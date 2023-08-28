@@ -936,7 +936,7 @@ class TemplateAdaptor(Adaptor):
                     label = input[1]
                     input = input[0]
                 else:
-                    label = input['labels']
+                    label = input["labels"]
 
                 if measurer is not None:
                     measurer.start()
