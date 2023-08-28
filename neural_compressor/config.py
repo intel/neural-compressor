@@ -801,7 +801,8 @@ class _BaseQuantizationConfig:
         accuracy_criterion=accuracy_criterion,
         tuning_criterion=tuning_criterion,
         diagnosis=False,
-        ni_workload_name='quantization'):
+        ni_workload_name="quantization",
+    ):
         """Initialize _BaseQuantizationConfig class."""
         self.inputs = inputs
         self.outputs = outputs
@@ -1296,7 +1297,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         accuracy_criterion=accuracy_criterion,
         tuning_criterion=tuning_criterion,
         diagnosis=False,
-        ni_workload_name='quantization'):
+        ni_workload_name="quantization",
+    ):
         """Init a PostTrainingQuantConfig object."""
         super().__init__(
             inputs=inputs,
@@ -1316,13 +1318,14 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
             accuracy_criterion=accuracy_criterion,
             tuning_criterion=tuning_criterion,
             diagnosis=diagnosis,
-            ni_workload_name=ni_workload_name)
+            ni_workload_name=ni_workload_name,
+        )
         self.approach = approach
         self.diagnosis = diagnosis
         self.ni_workload_name = ni_workload_name
         if self.diagnosis:
             self.tuning_criterion.max_trials = 1
-        
+
     @property
     def approach(self):
         """Get approach."""
@@ -1357,7 +1360,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
     @ni_workload_name.setter
     def ni_workload_name(self, ni_workload_name):
         """Set Neural Insights workload name."""
-        if _check_value('ni_workload_name', ni_workload_name, str):
+        if _check_value("ni_workload_name", ni_workload_name, str):
             self._ni_workload_name = ni_workload_name
 
 
