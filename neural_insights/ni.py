@@ -32,8 +32,8 @@ class NeuralInsights:
         workload_location: str,
         model_path: str,
         workload_mode: WorkloadModes,
-            workload_name: str,
-            model_summary_file: Optional[str]
+        workload_name: str,
+        model_summary_file: Optional[str],
     ) -> str:
         """Add workload to Neural Insights."""
         if workload_mode == WorkloadModes.QUANTIZATION:

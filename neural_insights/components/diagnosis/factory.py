@@ -15,9 +15,8 @@
 """Diagnosis class factory."""
 from neural_insights.components.diagnosis.diagnosis import Diagnosis
 from neural_insights.components.diagnosis.onnx_diagnosis.onnxrt_diagnosis import OnnxRtDiagnosis
+from neural_insights.components.diagnosis.pytorch_diagnosis.pytorch_diagnosis import PyTorchDiagnosis
 from neural_insights.components.diagnosis.tensorflow_diagnosis.tensorflow_diagnosis import TensorflowDiagnosis
-from neural_insights.components.diagnosis.pytorch_diagnosis.pytorch_diagnosis import \
-    PyTorchDiagnosis
 from neural_insights.components.workload_manager.workload import Workload
 from neural_insights.utils.consts import Frameworks
 from neural_insights.utils.exceptions import InternalException
