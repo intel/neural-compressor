@@ -80,7 +80,7 @@ def download_model(url, model_name, retry_times=5):
 
 
 def prepare_model(input_model, output_model):
-    download_model(MODEL_URL.get("bert"), output_model, MAX_TIMES_RETRY_DOWNLOAD)
+    download_model(MODEL_URL.get("bert"), "uncased_L-12_H-768_A-12.zip", MAX_TIMES_RETRY_DOWNLOAD)
     download_model(MODEL_URL.get("BERT-Squad"), output_model, MAX_TIMES_RETRY_DOWNLOAD)
 
 
