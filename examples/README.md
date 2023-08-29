@@ -279,6 +279,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/image_recognition/tensorflow_models/vision_transformer/">pb</a></td>
   </tr>
+  <tr>
+    <td>GraphSage</td>
+    <td>Graph Networks</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/graph_networks/graphsage/">pb</a></td>
+  </tr>
 </tbody>
 </table>
 

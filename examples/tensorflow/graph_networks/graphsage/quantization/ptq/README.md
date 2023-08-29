@@ -47,9 +47,8 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 > The version compatibility of stock Tensorflow and ITEX can be checked [here](https://github.com/intel/intel-extension-for-tensorflow#compatibility-table). Please make sure you have installed compatible Tensorflow and ITEX.
 
 ## 2. Prepare Model
-
-```shell
 Download Frozen graph:
+```shell
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/2_12_0/graphsage_frozen_model.pb
 ```
 
