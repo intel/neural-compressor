@@ -170,7 +170,7 @@ class GridSearcher(Searcher):
         for i in range(len(self.idx)):
             param.append(self.search_space_pool[i].get_value(self.idx[i]))
         if not self._add_idx():  # pragma: no cover
-            logger.warning('run out of search space pool, rebuild...')
+            logger.warning("run out of search space pool, rebuild...")
             self.idx = [0] * len(self.search_space_pool)
         return self.params_vec2params_dict(param)
 
