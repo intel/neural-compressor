@@ -5,6 +5,9 @@ import sys
 import tarfile
 from urllib import request
 
+import onnx
+from onnx import version_converter
+
 MODEL_URL = "http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_2018_01_28.tar.gz"
 MAX_TIMES_RETRY_DOWNLOAD = 5
 
@@ -83,7 +86,7 @@ def export_model(input_model, output_model):
             "--graphdef",
             "ssd_mobilenet_v1_coco_2018_01_28/frozen_inference_graph.pb",
             "--opset",
-            "13",
+            "14",
             "--output",
             output_model,
             "--inputs",
@@ -94,6 +97,12 @@ def export_model(input_model, output_model):
         stdout=subprocess.PIPE,
         text=True,
     )
+
+    # Convert opset version to 13 for more quantization capability.
+    model = onnx.load(output_model)
+    model = version_converter.convert_version(model, 13)
+    onnx.save_model(model, output_model)
+
     assert os.path.exists(output_model), f"Export failed! {output_model} doesn't exist!"
 
 
