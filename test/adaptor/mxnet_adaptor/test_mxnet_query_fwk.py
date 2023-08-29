@@ -2,25 +2,29 @@
 #  -*- coding: utf-8 -*-
 #
 import os
+import platform
 import sys
 import unittest
+
 import yaml
-import platform
-sys.path.append('..')
+
+sys.path.append("..")
 
 import mxnet as mx
+
 import neural_compressor
 import neural_compressor.adaptor
 
-class TestMXNetQuery(unittest.TestCase):
 
+class TestMXNetQuery(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         if platform.system().lower() == "windows":
             self.skipTest(self, "not support mxnet on windows yet")
         import importlib
-        nc_path = os.path.dirname(importlib.util.find_spec('neural_compressor').origin)
-        self.yaml_path = os.path.join(nc_path, 'adaptor/mxnet.yaml')
+
+        nc_path = os.path.dirname(importlib.util.find_spec("neural_compressor").origin)
+        self.yaml_path = os.path.join(nc_path, "adaptor/mxnet.yaml")
         self.Queryhandler = neural_compressor.adaptor.mxnet.MXNetQuery(self.yaml_path)
         self.version = mx.__version__
 
@@ -37,11 +41,11 @@ class TestMXNetQuery(unittest.TestCase):
     def test_get_version(self):
         Query_version = self.Queryhandler.get_version()
         # if the mxnet version not in cfgs, the default maybe be ok.
-        self.assertNotIn([mx.__version__, 'default'], [Query_version])
+        self.assertNotIn([mx.__version__, "default"], [Query_version])
 
     def test_get_precisions(self):
         Query_precisions = self.Queryhandler.get_precisions()
-        res = Query_precisions.split(',')
+        res = Query_precisions.split(",")
         self.assertEqual(len(res), len(set(res)))
 
     def test_get_op_types(self):
@@ -58,7 +62,8 @@ class TestMXNetQuery(unittest.TestCase):
 
     def test_get_mixed_precision_combination(self):
         Query_mixed_precision = self.Queryhandler.get_mixed_precision_combination()
-        self.assertNotIn(['int8', 'bf16'], Query_mixed_precision)
+        self.assertNotIn(["int8", "bf16"], Query_mixed_precision)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -1,40 +1,53 @@
-import unittest
-import numpy as np
 import sys
-sys.path.insert(0, './')
+import unittest
+
+import numpy as np
+
+sys.path.insert(0, "./")
+from neural_compressor.compression.hpo import (
+    ContinuousSearchSpace,
+    DiscreteSearchSpace,
+    GridSearcher,
+    SearchSpace,
+    SimulatedAnnealingOptimizer,
+    prepare_hpo,
+)
 from neural_compressor.config import HPOConfig
-from neural_compressor.compression.hpo import (GridSearcher,
-                                               DiscreteSearchSpace,
-                                               ContinuousSearchSpace,
-                                               SearchSpace,
-                                               prepare_hpo,
-                                               SimulatedAnnealingOptimizer)
 
 
 class TestHPO(unittest.TestCase):
     search_space = {
-        'learning_rate': SearchSpace((0.0001, 0.001)),
-        'num_train_epochs': SearchSpace(bound=(20, 100), interval=1),
-        'weight_decay': SearchSpace((0.0001, 0.001)),
-        'cooldown_epochs': SearchSpace(bound=(0, 10), interval=1),
-        'sparsity_warm_epochs': SearchSpace(bound=(0, 5), interval=1),
-        'per_device_train_batch_size': SearchSpace((5, 20), 1)
+        "learning_rate": SearchSpace((0.0001, 0.001)),
+        "num_train_epochs": SearchSpace(bound=(20, 100), interval=1),
+        "weight_decay": SearchSpace((0.0001, 0.001)),
+        "cooldown_epochs": SearchSpace(bound=(0, 10), interval=1),
+        "sparsity_warm_epochs": SearchSpace(bound=(0, 5), interval=1),
+        "per_device_train_batch_size": SearchSpace((5, 20), 1),
     }
 
     def test_searcher(self):
-        hpo_config = HPOConfig({'num_train_epochs': self.search_space['num_train_epochs'],
-                                'cooldown_epochs': self.search_space['cooldown_epochs']}, searcher='grid')
-        searcher = GridSearcher({'num_train_epochs': self.search_space['num_train_epochs'],
-                                 'cooldown_epochs': self.search_space['cooldown_epochs']})
+        hpo_config = HPOConfig(
+            {
+                "num_train_epochs": self.search_space["num_train_epochs"],
+                "cooldown_epochs": self.search_space["cooldown_epochs"],
+            },
+            searcher="grid",
+        )
+        searcher = GridSearcher(
+            {
+                "num_train_epochs": self.search_space["num_train_epochs"],
+                "cooldown_epochs": self.search_space["cooldown_epochs"],
+            }
+        )
         conf_searcher = prepare_hpo(hpo_config)
         self.assertEqual(searcher.__class__, conf_searcher.__class__)
         for _ in range(5):
             self.assertEqual(searcher.suggest(), conf_searcher.suggest())
-        hpo_config = HPOConfig(self.search_space, 'random')
+        hpo_config = HPOConfig(self.search_space, "random")
         searcher = prepare_hpo(hpo_config)
         for _ in range(5):
             searcher.suggest()
-        hpo_config = HPOConfig(self.search_space, 'bo')
+        hpo_config = HPOConfig(self.search_space, "bo")
         searcher = prepare_hpo(hpo_config)
         for _ in range(5):
             searcher.suggest()
@@ -70,6 +83,7 @@ class TestHPO(unittest.TestCase):
     def test_sa(self):
         def f(x):
             return np.mean(np.log(x**2), axis=1)
+
         points = np.random.randn(5, 6)
         optimizer = SimulatedAnnealingOptimizer(T0=100, Tf=0, alpha=0.9, higher_is_better=True)
         result = optimizer.gen_next_params(f, points)

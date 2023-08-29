@@ -65,7 +65,7 @@
                     'scheme': ['asym'],
                     'granularity': ['per_channel', 'per_tensor'],
                     'algorithm': ['minmax']
-                    }, 
+                    },
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QDQ', 'QLinear']
       },
@@ -75,7 +75,7 @@
                     'scheme': ['sym'],
                     'granularity': ['per_tensor'],
                     'algorithm': ['minmax']
-                    }, 
+                    },
         'activation': *uint8_asym_pertensor,
         'mode': ['QDQ', 'QLinear']
       },
@@ -89,7 +89,7 @@
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QLinear']
       },
-      'Relu': *default_static_qlinear_qdq_minmax, 
+      'Relu': *default_static_qlinear_qdq_minmax,
       'Clip': *default_static_qlinear_qdq_minmax,
       'LeakyRelu': *default_static_qlinear_qdq_minmax,
       'Sigmoid': *default_static_qlinear_qdq_minmax,
@@ -156,7 +156,7 @@
       'Split': *default_static_qlinear_qdq_minmax,
       'Add': *default_static_qlinear,
     },
-    'dynamic': *ref_1_6_dynamic 
+    'dynamic': *ref_1_6_dynamic
   }
   recipes:
     <<: *default_optimization
@@ -417,7 +417,7 @@
       'Abs': *default_static_qlinear_qdq_minmax,
       'Shrink': *default_static_qlinear_qdq_minmax,
       'Sign': *default_static_qlinear_qdq_minmax,
-      'Flatten': *default_static_qlinear_qdq_minmax, 
+      'Flatten': *default_static_qlinear_qdq_minmax,
       'Expand': *default_static_qlinear_qdq_minmax,
       'Slice': *default_static_qlinear_qdq_minmax,
       'Mod': *default_static_qlinear_qdq_minmax,

@@ -54,5 +54,3 @@ python setup.py neural_solution install
 # Contact
 
 Please contact us at [inc.maintainers@intel.com](mailto:inc.maintainers@intel.com) for any Neural Solution related question.
-
-

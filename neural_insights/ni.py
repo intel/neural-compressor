@@ -16,23 +16,21 @@
 """Neural Insights main class."""
 from os import PathLike
 
-from neural_insights.components.workload_manager.quantization_workload import \
-    QuantizationWorkload
-from neural_insights.components.workload_manager.workload_manager import WorkloadManager
+from neural_insights.components.workload_manager.quantization_workload import QuantizationWorkload
 from neural_insights.components.workload_manager.workload import Workload
+from neural_insights.components.workload_manager.workload_manager import WorkloadManager
 from neural_insights.utils.consts import WorkloadModes
 
 
 class NeuralInsights:
-
     def __init__(self, workdir_location: PathLike) -> None:
         self.workdir_location: PathLike = workdir_location
 
     def add_workload(
-            self,
-            workload_location: str,
-            model_path: str,
-            workload_mode: WorkloadModes,
+        self,
+        workload_location: str,
+        model_path: str,
+        workload_mode: WorkloadModes,
     ) -> str:
         """Add workload to Neural Insights."""
         if workload_mode == WorkloadModes.QUANTIZATION:
@@ -54,10 +52,10 @@ class NeuralInsights:
         workload_manager.update_workload_status(workload_uuid, status)
 
     def update_workload_accuracy_data(
-            self,
-            workload_uuid: str,
-            baseline_accuracy: float,
-            optimized_accuracy: float,
+        self,
+        workload_uuid: str,
+        baseline_accuracy: float,
+        optimized_accuracy: float,
     ) -> None:
         """Update accuracy data of specified workload."""
         workload_manager = WorkloadManager(workdir_location=self.workdir_location)

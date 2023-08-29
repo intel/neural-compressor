@@ -1,11 +1,8 @@
 import unittest
 
 import torch.nn as nn
-from transformers import (
-    AutoConfig,
-    AutoModelForSequenceClassification,
-    AutoTokenizer
-)
+from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer
+
 
 class NaiveMLP(nn.Module):
     def __init__(self, hidden_size=16):
@@ -15,7 +12,7 @@ class NaiveMLP(nn.Module):
         self.linear2 = nn.Linear(hidden_size, hidden_size, bias=True)
         self.ac2 = nn.ReLU()
         self.linear3 = nn.Linear(hidden_size, 2, bias=True)
-        
+
     def forward(self, x):
         x = self.linear1(x)
         x = self.ac1(x)
@@ -24,8 +21,8 @@ class NaiveMLP(nn.Module):
         x = self.linear3(x)
         return x
 
+
 class TestPruning(unittest.TestCase):
-    
     def test_pruning_basic(self):
         # import pdb;pdb.set_trace()
         hidden_size = 32
@@ -33,6 +30,7 @@ class TestPruning(unittest.TestCase):
         # import classifier searching functions
         # A naive MLP model
         from neural_compressor.compression.pruner.model_slim.pattern_analyzer import ClassifierHeadSearcher
+
         searcher = ClassifierHeadSearcher(model)
         layer = searcher.search(return_name=True)
         assert layer == "linear3"
@@ -52,6 +50,7 @@ class TestPruning(unittest.TestCase):
         searcher = ClassifierHeadSearcher(model)
         layer = searcher.search(return_name=True)
         assert layer == "classifier"
+
 
 if __name__ == "__main__":
     unittest.main()

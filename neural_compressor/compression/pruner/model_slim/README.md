@@ -49,14 +49,11 @@ Auto Slim
 
 ```python
 # auto slim config
-# part1 generate pruning configs for the second linear layers. 
+# part1 generate pruning configs for the second linear layers.
 pruning_configs = []
 from neural_compressor.compression.pruner import parse_auto_slim_config
-auto_slim_configs = parse_auto_slim_config(
-    model, 
-    multi_head_attention_sparsity, 
-    feed_forward_sparsity
-)
+
+auto_slim_configs = parse_auto_slim_config(model, multi_head_attention_sparsity, feed_forward_sparsity)
 pruning_configs += auto_slim_configs
 
 ################
@@ -67,6 +64,7 @@ pruning_configs += auto_slim_configs
 ################
 
 from neural_compressor.compression.pruner import model_slim
+
 model = model_slim(model)
 ```
 

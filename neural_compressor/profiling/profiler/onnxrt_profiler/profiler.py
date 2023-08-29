@@ -18,11 +18,9 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from neural_compressor.experimental.data.dataloaders.onnxrt_dataloader import \
-    ONNXRTDataLoader
+from neural_compressor.experimental.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
 from neural_compressor.model.onnx_model import ONNXModel
-from neural_compressor.profiling.profiler.onnxrt_profiler.utils import \
-    create_onnx_config
+from neural_compressor.profiling.profiler.onnxrt_profiler.utils import create_onnx_config
 from neural_compressor.profiling.profiler.profiler import Profiler as Parent
 
 

@@ -20,14 +20,16 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.platform import tf_logging
+
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer, GraphRewriterHelper
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
-from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer, GraphRewriterHelper
 
 
 class GraphFoldConstantOptimizer(GraphRewriterBase):
     """Folding all the sequences only consist of const and self.supported_op_type."""
+
     supported_op_type = ["Add", "AddV2", "Const", "Mul", "Rsqrt", "Sub"]
 
     def __init__(self, model=None):
@@ -70,7 +72,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
             if end_node.op == "Mul":
                 first_value = self._fold_value(list(end_node.input)[0])
                 first_type = first_value.dtype
-                fold_value = np.array(1.).astype(first_type)
+                fold_value = np.array(1.0).astype(first_type)
                 for index, input in enumerate(end_node.input):
                     # broadcast if needed
                     input_value = self._fold_value(input)
@@ -78,45 +80,46 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
                     if can_broadcast(fold_value, input_value):
                         fold_value = fold_value * input_value
                     else:
-                        raise ValueError("input {} of node {} can't be broadcast".format(
-                            input.name, end_node.name))
+                        raise ValueError("input {} of node {} can't be broadcast".format(input.name, end_node.name))
                 return fold_value.astype(first_type)
             elif end_node.op == "Add" or end_node.op == "AddV2":
                 first_value = self._fold_value(list(end_node.input)[0])
                 first_type = first_value.dtype
-                fold_value = np.array(0.).astype(first_type).reshape(())
+                fold_value = np.array(0.0).astype(first_type).reshape(())
                 for index, input in enumerate(end_node.input):
                     # broadcast if needed
                     input_value = self._fold_value(input)
                     if can_broadcast(fold_value, input_value):
                         fold_value = fold_value + input_value
                     else:
-                        raise ValueError("input {} of node {} can't be broadcast".format(
-                            input.name, end_node.name))
+                        raise ValueError("input {} of node {} can't be broadcast".format(input.name, end_node.name))
                 return fold_value.astype(first_type)
             elif end_node.op == "Rsqrt":
                 return 1 / np.sqrt(self._fold_value(end_node.input[0]))
             elif end_node.op == "Sub":
                 first_value = self._fold_value(list(end_node.input)[0])
                 first_type = first_value.dtype
-                fold_value = np.array(0., dtype=first_type)
+                fold_value = np.array(0.0, dtype=first_type)
                 for index, input in enumerate(end_node.input):
                     # broadcast if needed
                     input_value = self._fold_value(input)
                     if first_type != input_value.dtype:
                         raise ValueError(
                             "input of node {} must be in same dtype but get {}and {}".format(
-                                input.name, first_type, input_value.dtype))
+                                input.name, first_type, input_value.dtype
+                            )
+                        )
                     if can_broadcast(fold_value, input_value):
-                        fold_value = fold_value + (-1)**index * input_value
+                        fold_value = fold_value + (-1) ** index * input_value
                     else:
-                        raise ValueError("input {} of node {} can't be broadcast".format(
-                            input.name, end_node.name))
+                        raise ValueError("input {} of node {} can't be broadcast".format(input.name, end_node.name))
                 return fold_value.astype(first_type)
             else:
                 tf_logging.info(
                     "Currently fold-constant only support limited ops {} but face {}".format(
-                        self.supported_op_type, end_node.op))
+                        self.supported_op_type, end_node.op
+                    )
+                )
         else:
             return GraphRewriterHelper.values_from_const(end_node)
 
@@ -170,9 +173,9 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
                     fold_value = self._fold_value(node_name)
                     fold_type = tf.as_dtype(fold_value.dtype)
                     new_constant_node = GraphRewriterHelper.create_constant_node(
-                        node_name + "_const", fold_value, fold_type)
-                    self.graph_analyzer.replace_constant_graph_with_constant_node(
-                        new_constant_node, node_name)
+                        node_name + "_const", fold_value, fold_type
+                    )
+                    self.graph_analyzer.replace_constant_graph_with_constant_node(new_constant_node, node_name)
 
         output_graph_def = self.graph_analyzer.dump_graph()
 

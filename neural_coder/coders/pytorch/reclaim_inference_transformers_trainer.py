@@ -12,35 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
+
 from ... import globals
 from ...utils.line_operation import (
     get_line_indent_level,
-    is_eval_func_model_name,
     get_line_left_hand_side,
-    single_line_comment_or_empty_line_detection
+    is_eval_func_model_name,
+    single_line_comment_or_empty_line_detection,
 )
 
-import logging
-
-logging.basicConfig(level=globals.logging_level,
-                    format='%(asctime)s %(levelname)s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S +0000')
+logging.basicConfig(
+    level=globals.logging_level, format="%(asctime)s %(levelname)s %(message)s", datefmt="%a, %d %b %Y %H:%M:%S +0000"
+)
 logger = logging.getLogger(__name__)
 
 
 class ReclaimInferenceTransformersTrainer(object):
     def __init__(self, list_model_def_instance):
         self.list_model_def_instance = list_model_def_instance
-        
+
     def print_info(self):
         for i in self.list_model_def_instance:
             logger.debug(f"i.print_info(): {i.print_info()}")
 
-    # collect file transformation info and register (store) in globals 
+    # collect file transformation info and register (store) in globals
     # (i.e. which file to add which lines at which location)
-    def register_transformation(self): 
+    def register_transformation(self):
         file_path = globals.list_code_path[0]
-        lines = open(file_path, 'r').read().split('\n')
+        lines = open(file_path, "r").read().split("\n")
         line_idx = 0
 
         for i in range(len(lines)):
@@ -68,7 +68,7 @@ class ReclaimInferenceTransformersTrainer(object):
                     globals.list_trans_insert_lines_to_insert[idx].append(lines_to_insert)
 
             line_idx += 1
-        
+
         logger.debug(f"globals.list_trans_insert_modified_file: {globals.list_trans_insert_modified_file}")
         logger.debug(f"globals.list_trans_insert_location_idxs: {globals.list_trans_insert_location_idxs}")
         logger.debug(f"globals.list_trans_insert_number_insert_lines: {globals.list_trans_insert_number_insert_lines}")

@@ -17,10 +17,12 @@
 """Switch Graph Rewriter."""
 
 
-from ..graph_base import GraphRewriterBase
+from tensorflow.python.framework import tensor_util
+
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.utils.utility import dump_elapsed_time
-from tensorflow.python.framework import tensor_util
+
+from ..graph_base import GraphRewriterBase
 
 
 class SwitchOptimizer(GraphRewriterBase):
@@ -44,18 +46,21 @@ class SwitchOptimizer(GraphRewriterBase):
 
         for node_combination in target_nodes:
             switch_node = graph_info[node_combination[0]].node
-            pred_node =  graph_info[switch_node.input[1]].node
-            if (pred_node.op == 'Const' and tensor_util.MakeNdarray( \
-               graph_info[pred_node.name].node.attr['value'].tensor)) or \
-               (pred_node.op == 'PlaceholderWithDefault' and tensor_util.MakeNdarray(
-                graph_info[pred_node.input[0]].node.attr['value'].tensor)):
+            pred_node = graph_info[switch_node.input[1]].node
+            if (
+                pred_node.op == "Const"
+                and tensor_util.MakeNdarray(graph_info[pred_node.name].node.attr["value"].tensor)
+            ) or (
+                pred_node.op == "PlaceholderWithDefault"
+                and tensor_util.MakeNdarray(graph_info[pred_node.input[0]].node.attr["value"].tensor)
+            ):
                 condition = []
                 for output in graph_info[node_combination[0]].outputs:
                     successor_node = graph_info[output].node
                     for index, value in enumerate(successor_node.input):
-                        if value == node_combination[0] + ':1':
+                        if value == node_combination[0] + ":1":
                             condition.append(True)
-                        elif value == node_combination[0] + ':0':
+                        elif value == node_combination[0] + ":0":
                             condition.append(False)
 
                 if not all(condition):
@@ -65,7 +70,7 @@ class SwitchOptimizer(GraphRewriterBase):
                     successor_node = graph_info[output].node
                     replace_index = None
                     for index, value in enumerate(successor_node.input):
-                        if value == node_combination[0] + ':1':
+                        if value == node_combination[0] + ":1":
                             replace_index = index
                             break
                     if not replace_index:
@@ -73,8 +78,7 @@ class SwitchOptimizer(GraphRewriterBase):
                     successor_node.input[replace_index] = switch_node.input[0]
                     switch_node_outputs = list(graph_info[node_combination[0]].outputs)
                     if switch_node_outputs.index(output) == len(switch_node_outputs) - 1:
-                        cur_graph.remove_node_with_single_input_output(
-                            node_combination[0])
+                        cur_graph.remove_node_with_single_input_output(node_combination[0])
             else:
                 continue
 

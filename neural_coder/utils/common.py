@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 def move_element_to_front(list, element):
     if element in list:
         idx = list.index(element)

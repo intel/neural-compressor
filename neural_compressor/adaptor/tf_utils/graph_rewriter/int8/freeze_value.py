@@ -16,21 +16,22 @@
 # limitations under the License.
 """Freeze value with calibration Graph Rewriter."""
 
-from tensorflow.core.framework import node_def_pb2
-from tensorflow.core.framework import attr_value_pb2
-from tensorflow.python.framework import tensor_util
-from tensorflow.python.framework import dtypes
+import re
 
-from ..graph_base import GraphRewriterBase
+import numpy as np
+from tensorflow.core.framework import attr_value_pb2, node_def_pb2
+from tensorflow.python.framework import dtypes, tensor_util
+
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
-import numpy as np
-import re
+from ..graph_base import GraphRewriterBase
+
 
 class FreezeValueTransformer(GraphRewriterBase):
     """Freeze Value with calibration."""
-    def __init__(self, model, max_min_data, postfix, tensor_data=None, th=1, device='gpu', itex_mode=False):
+
+    def __init__(self, model, max_min_data, postfix, tensor_data=None, th=1, device="gpu", itex_mode=False):
         """Free Max/Min value into QuantizeV2 op.
 
         Args:
@@ -48,8 +49,7 @@ class FreezeValueTransformer(GraphRewriterBase):
         if 0.0 < th <= 1.0:
             self.threshold = th
         else:
-            self.logger.warning("The threshold value for clipping is invalid, " \
-                                "Reset it to 0.95 by default.")
+            self.logger.warning("The threshold value for clipping is invalid, " "Reset it to 0.95 by default.")
             self.threshold = 0.95
         self.postfix = postfix
         self.device = device
@@ -72,9 +72,9 @@ class FreezeValueTransformer(GraphRewriterBase):
         """
         output = []
 
-        target_lines = [i.strip() for i in self.data if i.strip().find(';') != -1]
+        target_lines = [i.strip() for i in self.data if i.strip().find(";") != -1]
         for i in target_lines:
-            semi_count = i.count(';')
+            semi_count = i.count(";")
             if semi_count == 2:
                 output.append(i)
             elif semi_count % 2 != 0:
@@ -83,8 +83,8 @@ class FreezeValueTransformer(GraphRewriterBase):
                 loop_times = int(semi_count / 2)
                 semi_index = [index for index, value in enumerate(i) if value == ";"]
                 for index in range(loop_times - 1):
-                    output.append(i[semi_index[index * 2]:semi_index[index * 2 + 2]])
-                output.append(i[semi_index[loop_times * 2 - 2]:])
+                    output.append(i[semi_index[index * 2] : semi_index[index * 2 + 2]])
+                output.append(i[semi_index[loop_times * 2 - 2] :])
         return output
 
     def _parse_max_min_log(self):
@@ -99,13 +99,12 @@ class FreezeValueTransformer(GraphRewriterBase):
         temp = {}
         pattern_def = r"{};{}\[\-?\d+\.?\d*e?-?\+?\d*\]".format(print_suffix, self.postfix)
         for i in lines:
-
             if not re.search(pattern_def, i):
                 continue
 
-            max_line_data = i.split(';')
-            name = max_line_data[1][:-len(print_suffix)]
-            value = max_line_data[-1].split('[')[-1].split(']')[0]
+            max_line_data = i.split(";")
+            name = max_line_data[1][: -len(print_suffix)]
+            value = max_line_data[-1].split("[")[-1].split("]")[0]
             if "eightbit" in name and name not in temp:
                 temp[name] = []
             if "eightbit" in name:
@@ -114,7 +113,7 @@ class FreezeValueTransformer(GraphRewriterBase):
             target_index = int(len(temp[key]) * self.threshold)
             if target_index > len(temp[key]) - 1:
                 target_index = len(temp[key]) - 1
-            if self.postfix == '__min:':
+            if self.postfix == "__min:":
                 res[key] = sorted(temp[key], reverse=True)[target_index]
             else:
                 res[key] = sorted(temp[key])[target_index]
@@ -137,9 +136,9 @@ class FreezeValueTransformer(GraphRewriterBase):
                 continue
 
             max_line_data = i.split(print_suffix + ";" + self.postfix)[-1]
-            min_value = max_line_data.split('][')[0].split('[')[1]
-            max_value = max_line_data.split('][')[1].split(']')[0]
-            name = i.split(';')[1].strip()[:-len(print_suffix)]
+            min_value = max_line_data.split("][")[0].split("[")[1]
+            max_value = max_line_data.split("][")[1].split("]")[0]
+            name = i.split(";")[1].strip()[: -len(print_suffix)]
             if name not in temp_min:
                 temp_min[name] = []
             if name not in temp_max:
@@ -185,44 +184,45 @@ class FreezeValueTransformer(GraphRewriterBase):
                 continue
             new_node = node_def_pb2.NodeDef()
             new_node.op = "Const"
-            new_node_postfix = "/frozen_{}_only".format(''.join(
-                [x for x in self.postfix if x.isalpha()]))
+            new_node_postfix = "/frozen_{}_only".format("".join([x for x in self.postfix if x.isalpha()]))
             new_node.name = node_name + new_node_postfix
-            new_node.attr["dtype"].CopyFrom(
-                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+            new_node.attr["dtype"].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
             new_node.attr["value"].CopyFrom(
-                attr_value_pb2.AttrValue(
-                    tensor=tensor_util.make_tensor_proto(float(value),
-                    dtypes.float32, [])))
+                attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(float(value), dtypes.float32, []))
+            )
             output_node_name = self.graph_info[node_name].outputs[0]
 
-            if not self.itex_mode and node_name in self.cur_graph.parent_frame_details and \
-               self.cur_graph.parent_frame_details[node_name]:   # pragma: no cover      
-                new_node_enter_node = Helper.create_node(
-                    'Enter', new_node.name+'_enter', [new_node.name])
-                Helper.set_attr_string(new_node_enter_node,
-                       'frame_name', self.cur_graph.parent_frame_details[node_name].attr['frame_name'].s)
-                Helper.set_attr_dtype(new_node_enter_node, 'T', dtypes.float32)
-                Helper.set_attr_bool(new_node_enter_node, 'is_constant', True)
-                Helper.set_attr_int(new_node_enter_node, 'parallel_iterations', 
-                       self.cur_graph.parent_frame_details[node_name].attr['parallel_iterations'].i)
+            if (
+                not self.itex_mode
+                and node_name in self.cur_graph.parent_frame_details
+                and self.cur_graph.parent_frame_details[node_name]
+            ):  # pragma: no cover
+                new_node_enter_node = Helper.create_node("Enter", new_node.name + "_enter", [new_node.name])
+                Helper.set_attr_string(
+                    new_node_enter_node,
+                    "frame_name",
+                    self.cur_graph.parent_frame_details[node_name].attr["frame_name"].s,
+                )
+                Helper.set_attr_dtype(new_node_enter_node, "T", dtypes.float32)
+                Helper.set_attr_bool(new_node_enter_node, "is_constant", True)
+                Helper.set_attr_int(
+                    new_node_enter_node,
+                    "parallel_iterations",
+                    self.cur_graph.parent_frame_details[node_name].attr["parallel_iterations"].i,
+                )
 
                 self.cur_graph.add_node(new_node, None, [new_node_enter_node.name])
-                #self.cur_graph.add_node(new_node_enter_node, new_node.name, 
+                # self.cur_graph.add_node(new_node_enter_node, new_node.name,
                 #        [Helper.node_name_from_input(output_node_name)])
-                self.cur_graph.replace_const_node(new_node_enter_node,
-                                                  [Helper.node_name_from_input(output_node_name)],
-                                                  node_name)
+                self.cur_graph.replace_const_node(
+                    new_node_enter_node, [Helper.node_name_from_input(output_node_name)], node_name
+                )
                 self.cur_graph.remove_node(node_name)
             else:
-                self.cur_graph.replace_const_node(new_node,
-                                                  [Helper.node_name_from_input(output_node_name)],
-                                                  node_name)
+                self.cur_graph.replace_const_node(new_node, [Helper.node_name_from_input(output_node_name)], node_name)
                 self.cur_graph.remove_node(node_name)
 
-            self.quantizeV2_min_max[node_name] = tensor_util.MakeNdarray(
-                                                    new_node.attr["value"].tensor
-                                                    )
+            self.quantizeV2_min_max[node_name] = tensor_util.MakeNdarray(new_node.attr["value"].tensor)
         self.scale_info[self.postfix[:-1]] = self.quantizeV2_min_max
 
         return GraphAnalyzer().dump_graph(), self.scale_info
@@ -234,26 +234,26 @@ class FreezeValueTransformer(GraphRewriterBase):
         :return: transformed graph
         """
         for node_name, value in max_name_value.items():
-            bn_node_name = node_name.replace('eightbit_requant_range', 'eightbit_quantized_bn')
-            in_node_name = node_name.replace('eightbit_requant_range', 'eightbit_quantized_in')
-            if not self.graph_info.get(bn_node_name) or \
-                not bn_node_name.endswith('_eightbit_quantized_bn'):
+            bn_node_name = node_name.replace("eightbit_requant_range", "eightbit_quantized_bn")
+            in_node_name = node_name.replace("eightbit_requant_range", "eightbit_quantized_in")
+            if not self.graph_info.get(bn_node_name) or not bn_node_name.endswith("_eightbit_quantized_bn"):
                 bn_node_name = None
-            if not self.graph_info.get(in_node_name) or \
-                not in_node_name.endswith('_eightbit_quantized_in'):
+            if not self.graph_info.get(in_node_name) or not in_node_name.endswith("_eightbit_quantized_in"):
                 in_node_name = None
 
-            if self.itex_mode and 'BatchNorm' in node_name:
-                bn_node_name = node_name[:-len("_eightbit_requant_range")]
+            if self.itex_mode and "BatchNorm" in node_name:
+                bn_node_name = node_name[: -len("_eightbit_requant_range")]
                 if bn_node_name not in self.graph_info:
                     bn_node_name = None
                 else:
-                    if 'FusedBatchNorm' not in self.graph_info[bn_node_name].node.op:
+                    if "FusedBatchNorm" not in self.graph_info[bn_node_name].node.op:
                         bn_node_name = None
 
-            if node_name not in self.graph_info \
-                and bn_node_name not in self.graph_info \
-                    and in_node_name not in self.graph_info:
+            if (
+                node_name not in self.graph_info
+                and bn_node_name not in self.graph_info
+                and in_node_name not in self.graph_info
+            ):
                 continue
 
             min_node = node_def_pb2.NodeDef()
@@ -265,12 +265,10 @@ class FreezeValueTransformer(GraphRewriterBase):
                 min_node.name = in_node_name + "/frozen_in_output_min"
             else:
                 min_node.name = node_name + min_node_postfix
-            min_node.attr["dtype"].CopyFrom(
-                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+            min_node.attr["dtype"].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
             min_node.attr["value"].CopyFrom(
-                attr_value_pb2.AttrValue(
-                    tensor=tensor_util.make_tensor_proto(float(value[0]),
-                    dtypes.float32, [])))
+                attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(float(value[0]), dtypes.float32, []))
+            )
 
             max_node = node_def_pb2.NodeDef()
             max_node.op = "Const"
@@ -281,100 +279,99 @@ class FreezeValueTransformer(GraphRewriterBase):
                 max_node.name = in_node_name + "/frozen_in_output_max"
             else:
                 max_node.name = node_name + max_node_postfix
-            max_node.attr["dtype"].CopyFrom(
-                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+            max_node.attr["dtype"].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
             max_node.attr["value"].CopyFrom(
-                attr_value_pb2.AttrValue(
-                    tensor=tensor_util.make_tensor_proto(float(value[1]),
-                    dtypes.float32, [])))
+                attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(float(value[1]), dtypes.float32, []))
+            )
 
             if bn_node_name:
                 if self.itex_mode:
                     self.cur_graph.replace_const_node(
                         min_node,
-                        [Helper.node_name_from_input(bn_node_name+'_eightbit_quantize_bn')],
-                        bn_node_name + '_eightbit_input7_output_min'
+                        [Helper.node_name_from_input(bn_node_name + "_eightbit_quantize_bn")],
+                        bn_node_name + "_eightbit_input7_output_min",
                     )
                     self.cur_graph.replace_const_node(
                         max_node,
-                        [Helper.node_name_from_input(bn_node_name+'_eightbit_quantize_bn')],
-                        bn_node_name + '_eightbit_input8_output_max'
+                        [Helper.node_name_from_input(bn_node_name + "_eightbit_quantize_bn")],
+                        bn_node_name + "_eightbit_input8_output_max",
                     )
                 else:
                     self.cur_graph.replace_const_node(
-                        min_node,
-                        [Helper.node_name_from_input(bn_node_name)],
-                        bn_node_name + '_input7_output_min'
+                        min_node, [Helper.node_name_from_input(bn_node_name)], bn_node_name + "_input7_output_min"
                     )
                     self.cur_graph.replace_const_node(
-                        max_node,
-                        [Helper.node_name_from_input(bn_node_name)],
-                        bn_node_name + '_input8_output_max'
+                        max_node, [Helper.node_name_from_input(bn_node_name)], bn_node_name + "_input8_output_max"
                     )
             elif in_node_name:
                 self.cur_graph.replace_const_node(
-                    min_node,
-                    [Helper.node_name_from_input(in_node_name)],
-                    in_node_name + '_input7_output_min'
+                    min_node, [Helper.node_name_from_input(in_node_name)], in_node_name + "_input7_output_min"
                 )
                 self.cur_graph.replace_const_node(
-                    max_node,
-                    [Helper.node_name_from_input(in_node_name)],
-                    in_node_name + '_input8_output_max'
+                    max_node, [Helper.node_name_from_input(in_node_name)], in_node_name + "_input8_output_max"
                 )
-            elif not self.itex_mode and node_name in self.cur_graph.parent_frame_details and \
-                 self.cur_graph.parent_frame_details[node_name]:         # pragma: no cover
+            elif (
+                not self.itex_mode
+                and node_name in self.cur_graph.parent_frame_details
+                and self.cur_graph.parent_frame_details[node_name]
+            ):  # pragma: no cover
                 output_node_name = self.graph_info[node_name].outputs[0]
-                min_node_enter_node = Helper.create_node(
-                    'Enter', min_node.name+'_enter', [min_node.name])
-                Helper.set_attr_string(min_node_enter_node,
-                       'frame_name', self.cur_graph.parent_frame_details[node_name].attr['frame_name'].s)
-                Helper.set_attr_dtype(min_node_enter_node, 'T', dtypes.float32)
-                Helper.set_attr_bool(min_node_enter_node, 'is_constant', True)
-                Helper.set_attr_int(min_node_enter_node, 'parallel_iterations',
-                       self.cur_graph.parent_frame_details[node_name].attr['parallel_iterations'].i)
+                min_node_enter_node = Helper.create_node("Enter", min_node.name + "_enter", [min_node.name])
+                Helper.set_attr_string(
+                    min_node_enter_node,
+                    "frame_name",
+                    self.cur_graph.parent_frame_details[node_name].attr["frame_name"].s,
+                )
+                Helper.set_attr_dtype(min_node_enter_node, "T", dtypes.float32)
+                Helper.set_attr_bool(min_node_enter_node, "is_constant", True)
+                Helper.set_attr_int(
+                    min_node_enter_node,
+                    "parallel_iterations",
+                    self.cur_graph.parent_frame_details[node_name].attr["parallel_iterations"].i,
+                )
 
                 self.cur_graph.add_node(min_node, None, [min_node_enter_node.name])
-                #self.cur_graph.add_node(min_node_enter_node, min_node.name, 
+                # self.cur_graph.add_node(min_node_enter_node, min_node.name,
                 #            [Helper.node_name_from_input(output_node_name)])
-                self.cur_graph.replace_const_node(min_node_enter_node,
-                                                  [Helper.node_name_from_input(output_node_name)],
-                                                  node_name + ':0')
+                self.cur_graph.replace_const_node(
+                    min_node_enter_node, [Helper.node_name_from_input(output_node_name)], node_name + ":0"
+                )
 
-                max_node_enter_node = Helper.create_node(
-                    'Enter', max_node.name+'_enter', [max_node.name])
-                Helper.set_attr_string(max_node_enter_node,
-                       'frame_name', self.cur_graph.parent_frame_details[node_name].attr['frame_name'].s)
-                Helper.set_attr_dtype(max_node_enter_node, 'T', dtypes.float32)
-                Helper.set_attr_bool(max_node_enter_node, 'is_constant', True)
-                Helper.set_attr_int(max_node_enter_node, 'parallel_iterations',
-                       self.cur_graph.parent_frame_details[node_name].attr['parallel_iterations'].i)
+                max_node_enter_node = Helper.create_node("Enter", max_node.name + "_enter", [max_node.name])
+                Helper.set_attr_string(
+                    max_node_enter_node,
+                    "frame_name",
+                    self.cur_graph.parent_frame_details[node_name].attr["frame_name"].s,
+                )
+                Helper.set_attr_dtype(max_node_enter_node, "T", dtypes.float32)
+                Helper.set_attr_bool(max_node_enter_node, "is_constant", True)
+                Helper.set_attr_int(
+                    max_node_enter_node,
+                    "parallel_iterations",
+                    self.cur_graph.parent_frame_details[node_name].attr["parallel_iterations"].i,
+                )
 
                 self.cur_graph.add_node(max_node, None, [max_node_enter_node.name])
-                #self.cur_graph.add_node(max_node_enter_node, max_node.name, 
+                # self.cur_graph.add_node(max_node_enter_node, max_node.name,
                 #              [Helper.node_name_from_input(output_node_name)])
-                self.cur_graph.replace_const_node(max_node_enter_node,
-                                                  [Helper.node_name_from_input(output_node_name)],
-                                                  node_name + ':1')
+                self.cur_graph.replace_const_node(
+                    max_node_enter_node, [Helper.node_name_from_input(output_node_name)], node_name + ":1"
+                )
 
                 self.cur_graph.remove_node(node_name)
             else:
                 output_node_name = self.graph_info[node_name].outputs[0]
                 self.cur_graph.replace_const_node(
-                    min_node,
-                    [Helper.node_name_from_input(output_node_name)],
-                    node_name + ':0'
+                    min_node, [Helper.node_name_from_input(output_node_name)], node_name + ":0"
                 )
                 self.cur_graph.replace_const_node(
-                    max_node,
-                    [Helper.node_name_from_input(output_node_name)],
-                    node_name + ':1'
+                    max_node, [Helper.node_name_from_input(output_node_name)], node_name + ":1"
                 )
                 self.cur_graph.remove_node(node_name)
 
                 self.requant_min_max[node_name] = [
                     tensor_util.MakeNdarray(min_node.attr["value"].tensor),
-                    tensor_util.MakeNdarray(max_node.attr["value"].tensor)
+                    tensor_util.MakeNdarray(max_node.attr["value"].tensor),
                 ]
 
         self.scale_info[self.postfix] = self.requant_min_max
@@ -390,7 +387,7 @@ class FreezeValueTransformer(GraphRewriterBase):
 
     def do_transformation(self):
         """Apply the transformation of freeze value."""
-        if self.postfix == '__requant_min_max':
+        if self.postfix == "__requant_min_max":
             range_data = self._parse_requantization_ranges()
 
             return self.generate_output_graph_ranges(range_data)

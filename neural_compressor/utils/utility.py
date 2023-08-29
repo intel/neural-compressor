@@ -14,8 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-"""quantization auto-tuning config system.
+"""Quantization auto-tuning config system.
 
 This file specifies default config options for quantization auto-tuning tool.
 User should not change values in this file. Instead, user should write a config
@@ -38,7 +37,7 @@ from contextlib import contextmanager
 from enum import Enum
 from functools import wraps
 from tempfile import NamedTemporaryFile
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 import cpuinfo
 import numpy as np
@@ -49,14 +48,14 @@ from pkg_resources import parse_version
 from neural_compressor.utils import logger
 
 required_libs = {
-    'tensorflow': ['tensorflow'],
-    'pytorch': ['torch'],
-    'pytorch_fx': ['torch'],
-    'pytorch_ipex': ['torch', 'intel_extension_for_pytorch'],
-    'onnxrt_qlinearops': ['onnx', 'onnxruntime'],
-    'onnxrt_integerops': ['onnx', 'onnxruntime'],
-    'onnxruntime': ['onnx', 'onnxruntime'],
-    'mxnet': ['mxnet'],
+    "tensorflow": ["tensorflow"],
+    "pytorch": ["torch"],
+    "pytorch_fx": ["torch"],
+    "pytorch_ipex": ["torch", "intel_extension_for_pytorch"],
+    "onnxrt_qlinearops": ["onnx", "onnxruntime"],
+    "onnxrt_integerops": ["onnx", "onnxruntime"],
+    "onnxruntime": ["onnx", "onnxruntime"],
+    "mxnet": ["mxnet"],
 }
 
 
@@ -103,15 +102,15 @@ class LazyImport(object):
             self.module = importlib.import_module(self.module_name)
             mod = getattr(self.module, name)
         except:
-            spec = importlib.util.find_spec(str(self.module_name + '.' + name))
+            spec = importlib.util.find_spec(str(self.module_name + "." + name))
             mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
         return mod
 
     def __call__(self, *args, **kwargs):
         """Call the function in that module."""
-        function_name = self.module_name.split('.')[-1]
-        module_name = self.module_name.split(f'.{function_name}')[0]
+        function_name = self.module_name.split(".")[-1]
+        module_name = self.module_name.split(f".{function_name}")[0]
         self.module = importlib.import_module(module_name)
         function = getattr(self.module, function_name)
         return function(*args, **kwargs)
@@ -129,6 +128,7 @@ def singleton(cls):
         if cls not in instances:
             instances[cls] = cls(*args, **kw)
         return instances[cls]
+
     return _singleton
 
 
@@ -136,7 +136,7 @@ def singleton(cls):
 def time_limit(seconds):
     """Limit the time for context execution."""
     if seconds == 0:
-        #seconds = threading.TIMEOUT_MAX
+        # seconds = threading.TIMEOUT_MAX
         # TODO WA for fixed the crash for py 3.11.3
         seconds = 3600 * 24 * 365
     timer = threading.Timer(seconds, lambda: _thread.interrupt_main())
@@ -146,6 +146,7 @@ def time_limit(seconds):
     finally:
         # if the action ends in specified time, timer is canceled
         timer.cancel()
+
 
 def get_size(obj, seen=None):
     """Recursively finds size of objects."""
@@ -162,8 +163,7 @@ def get_size(obj, seen=None):
     # for Tensorflow case
     if isinstance(obj, tf.Graph):
         _graph_def = obj.as_graph_def()
-        _graph_node = _graph_def.node if isinstance(_graph_def, tf.compat.v1.GraphDef) \
-                      else _graph_def.graph_def.node
+        _graph_node = _graph_def.node if isinstance(_graph_def, tf.compat.v1.GraphDef) else _graph_def.graph_def.node
         for node in _graph_node:
             if node.op == "Const":
                 input_tensor = node.attr["value"].tensor
@@ -203,8 +203,7 @@ def compute_sparsity(tensor):
 def fault_tolerant_file(name):
     """Make another temporary copy of the file."""
     dirpath, filename = osp.split(name)
-    with NamedTemporaryFile(dir=os.path.abspath(os.path.expanduser(dirpath)),
-                            delete=False, suffix='.tmp') as f:
+    with NamedTemporaryFile(dir=os.path.abspath(os.path.expanduser(dirpath)), delete=False, suffix=".tmp") as f:
         yield f
         f.flush()
         os.fsync(f)
@@ -215,14 +214,14 @@ def fault_tolerant_file(name):
 def equal_dicts(d1, d2, compare_keys=None, ignore_keys=None):
     """Check whether two dicts are same except for those ignored keys."""
     assert not (compare_keys and ignore_keys)
-    if compare_keys == None and ignore_keys == None:
+    if compare_keys is None and ignore_keys is None:
         return d1 == d2
-    elif compare_keys == None and ignore_keys != None:
-        return {k: v for k, v in d1.items() if k not in ignore_keys} == \
-               {k: v for k, v in d2.items() if k not in ignore_keys}
-    elif compare_keys != None and ignore_keys == None:
-        return {k: v for k, v in d1.items() if k in compare_keys} == \
-            {k: v for k, v in d2.items() if k in compare_keys}
+    elif compare_keys is None and ignore_keys is not None:
+        return {k: v for k, v in d1.items() if k not in ignore_keys} == {
+            k: v for k, v in d2.items() if k not in ignore_keys
+        }
+    elif compare_keys is not None and ignore_keys is None:
+        return {k: v for k, v in d1.items() if k in compare_keys} == {k: v for k, v in d2.items() if k in compare_keys}
     else:
         assert False
 
@@ -230,28 +229,24 @@ def equal_dicts(d1, d2, compare_keys=None, ignore_keys=None):
 @singleton
 class CpuInfo(object):
     """Get CPU Info."""
+
     def __init__(self):
         """Get whether the cpu numerical format is bf16, the number of sockets, cores and cores per socket."""
         self._bf16 = False
         self._vnni = False
         info = cpuinfo.get_cpu_info()
-        if 'arch' in info and 'X86' in info['arch']:
+        if "arch" in info and "X86" in info["arch"]:
             cpuid = cpuinfo.CPUID()
             max_extension_support = cpuid.get_max_extension_support()
             if max_extension_support >= 7:
                 ecx = cpuid._run_asm(
-                    b"\x31\xC9",             # xor ecx, ecx
-                    b"\xB8\x07\x00\x00\x00"  # mov eax, 7
-                    b"\x0f\xa2"              # cpuid
-                    b"\x89\xC8"              # mov ax, cx
-                    b"\xC3"                  # ret
+                    b"\x31\xC9",  # xor ecx, ecx
+                    b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\x89\xC8" b"\xC3",  # mov eax, 7  # cpuid  # mov ax, cx  # ret
                 )
                 self._vnni = bool(ecx & (1 << 11))
                 eax = cpuid._run_asm(
                     b"\xB9\x01\x00\x00\x00",  # mov ecx, 1
-                    b"\xB8\x07\x00\x00\x00"  # mov eax, 7
-                    b"\x0f\xa2"              # cpuid
-                    b"\xC3"                  # ret
+                    b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\xC3",  # mov eax, 7  # cpuid  # ret
                 )
                 self._bf16 = bool(eax & (1 << 5))
         self._sockets = self.get_number_of_sockets()
@@ -299,16 +294,20 @@ def dump_elapsed_time(customized_msg=""):
     Args:
         customized_msg (string, optional): The parameter passed to decorator. Defaults to None.
     """
+
     def f(func):
         def fi(*args, **kwargs):
             start = time.time()
             res = func(*args, **kwargs)
             end = time.time()
-            logging.getLogger("neural_compressor").info('%s elapsed time: %s ms' %
-                                     (customized_msg if customized_msg else func.__qualname__,
-                                      round((end - start) * 1000, 2)))
+            logging.getLogger("neural_compressor").info(
+                "%s elapsed time: %s ms"
+                % (customized_msg if customized_msg else func.__qualname__, round((end - start) * 1000, 2))
+            )
             return res
+
         return fi
+
     return f
 
 
@@ -319,23 +318,17 @@ def combine_histogram(old_hist, arr):
     new_th = max(abs(new_min), abs(new_max))
     (old_hist, old_hist_edges, old_min, old_max, old_th) = old_hist
     if new_th <= old_th:
-        hist, _ = np.histogram(arr,
-                               bins=len(old_hist),
-                               range=(-old_th, old_th))
-        return (old_hist + hist, old_hist_edges, min(old_min, new_min),
-                max(old_max, new_max), old_th)
+        hist, _ = np.histogram(arr, bins=len(old_hist), range=(-old_th, old_th))
+        return (old_hist + hist, old_hist_edges, min(old_min, new_min), max(old_max, new_max), old_th)
     else:
         old_num_bins = len(old_hist)
         old_step = 2 * old_th / old_num_bins
         half_increased_bins = int((new_th - old_th) // old_step + 1)
         new_num_bins = half_increased_bins * 2 + old_num_bins
         new_th = half_increased_bins * old_step + old_th
-        hist, hist_edges = np.histogram(arr,
-                                        bins=new_num_bins,
-                                        range=(-new_th, new_th))
-        hist[half_increased_bins:new_num_bins - half_increased_bins] += old_hist
-        return (hist, hist_edges, min(old_min, new_min), max(old_max,
-                                                             new_max), new_th)
+        hist, hist_edges = np.histogram(arr, bins=new_num_bins, range=(-new_th, new_th))
+        hist[half_increased_bins : new_num_bins - half_increased_bins] += old_hist
+        return (hist, hist_edges, min(old_min, new_min), max(old_max, new_max), new_th)
 
 
 def get_tensor_histogram(tensor_data, bins=2048):
@@ -349,7 +342,7 @@ def get_tensor_histogram(tensor_data, bins=2048):
 
 def get_all_fp32_data(data):
     """Get all the fp32 data."""
-    return [float(i) for i in data.replace('[', ' ').replace(']', ' ').split(' ') if i.strip() and len(i) < 32]
+    return [float(i) for i in data.replace("[", " ").replace("]", " ").split(" ") if i.strip() and len(i) < 32]
 
 
 def get_tuning_history(tuning_history_path):
@@ -358,7 +351,7 @@ def get_tuning_history(tuning_history_path):
     Args:
         tuning_history_path: The tuning history path, which need users to assign
     """
-    with open(tuning_history_path, 'rb') as f:
+    with open(tuning_history_path, "rb") as f:
         strategy_object = pickle.load(f)
     tuning_history = strategy_object.tuning_history
     return tuning_history
@@ -373,32 +366,37 @@ def recover(fp32_model, tuning_history_path, num, **kwargs):
         num: tune index
     """
     tuning_history = get_tuning_history(tuning_history_path)
-    target_history = tuning_history[0]['history']
-    q_config = target_history[num]['q_config']
+    target_history = tuning_history[0]["history"]
+    q_config = target_history[num]["q_config"]
     try:
-        framework = tuning_history[0]['cfg']['model']['framework']
+        framework = tuning_history[0]["cfg"]["model"]["framework"]
     except Exception as e:
-        framework = tuning_history[0]['cfg'].quantization.framework
+        framework = tuning_history[0]["cfg"].quantization.framework
 
-    if 'pytorch' in framework:
+    if "pytorch" in framework:
         from neural_compressor.utils.pytorch import load
+
         tune_index_qmodel = load(model=fp32_model, history_cfg=q_config, **kwargs)
         return tune_index_qmodel
 
     from neural_compressor.adaptor import FRAMEWORKS
-    adaptor = FRAMEWORKS[framework](q_config['framework_specific_info'])
-    if 'onnx' in framework:
+
+    adaptor = FRAMEWORKS[framework](q_config["framework_specific_info"])
+    if "onnx" in framework:
         from neural_compressor.model import Model
+
         ox_fp32_model = Model(fp32_model)
         tune_index_qmodel = adaptor.recover(ox_fp32_model, q_config)
         return tune_index_qmodel
-    elif 'tensorflow' in framework:
+    elif "tensorflow" in framework:
         from neural_compressor.model import Model
+
         tf_fp32_model = Model(fp32_model)
         tune_index_qmodel = adaptor.recover_tuned_model(tf_fp32_model, q_config)
         return tune_index_qmodel
-    elif 'mxnet' in framework:
+    elif "mxnet" in framework:
         from neural_compressor.model import Model
+
         mx_fp32_model = Model(fp32_model)
         tune_index_qmodel = adaptor.recover_tuned_model(mx_fp32_model, q_config)
         return tune_index_qmodel
@@ -406,9 +404,9 @@ def recover(fp32_model, tuning_history_path, num, **kwargs):
 
 def str2array(s):
     """Get the array of the string."""
-    s = re.sub(r'\[ +', '[', s.strip())
-    s = re.sub(r'[,\s]+', ', ', s)
-    s = re.sub(r'\]\[', '], [', s)
+    s = re.sub(r"\[ +", "[", s.strip())
+    s = re.sub(r"[,\s]+", ", ", s)
+    s = re.sub(r"\]\[", "], [", s)
 
     return np.array(ast.literal_eval(s))
 
@@ -417,16 +415,20 @@ def dequantize_weight(weight_tensor, min_filter_tensor, max_filter_tensor):
     """Dequantize the weight with min-max filter tensors."""
     weight_channel = weight_tensor.shape[-1]
     if len(min_filter_tensor) == 1:
-         weight_tensor = weight_tensor * ((max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
+        weight_tensor = weight_tensor * ((max_filter_tensor[0] - min_filter_tensor[0]) / 127.0)
     else:
         # TODO to calculate the de-quantized result in a parallel way
         for i in range(weight_channel):
-            weight_tensor[:,:,:,i] = weight_tensor[:,:,:,i] * ((max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
+            weight_tensor[:, :, :, i] = weight_tensor[:, :, :, i] * (
+                (max_filter_tensor[i] - min_filter_tensor[i]) / 127.0
+            )
     return weight_tensor
+
 
 def Dequantize(data, scale_info):
     """Dequantize the data with the scale_info."""
     import numpy as np
+
     original_shape = data.shape
     max_value = 255.0 if scale_info[0].find("Relu") != -1.0 else 127.0
     _scale = (np.array(scale_info[2]) - np.array(scale_info[1])) / max_value
@@ -440,10 +442,11 @@ class CaptureOutputToFile(object):
 
     Capture the output to file.
     """
+
     def __init__(self, tmp_file_path, stream=sys.stderr):
         """Open a temporary file."""
         self.orig_stream_fileno = stream.fileno()
-        self.tmp_file = open(tmp_file_path, 'w')
+        self.tmp_file = open(tmp_file_path, "w")
 
     def __enter__(self):
         """Duplicate the file desciptor to the stream."""
@@ -458,8 +461,9 @@ class CaptureOutputToFile(object):
         self.tmp_file.close()
 
 
-class Statistics():
+class Statistics:
     """The statistics printer."""
+
     def __init__(self, data, header, field_names, output_handle=logger.info):
         """Init a Statistics object.
 
@@ -493,21 +497,23 @@ class Statistics():
                     tmp_data.append(value)
             if any(tmp_data[1:]):
                 self.tb.add_row(tmp_data)
-        lines = self.tb.get_string().split('\n')
-        self.output_handle('|' + self.header.center(len(lines[0]) - 2, "*") + '|')
+        lines = self.tb.get_string().split("\n")
+        self.output_handle("|" + self.header.center(len(lines[0]) - 2, "*") + "|")
         for i in lines:
             self.output_handle(i)
 
 
 class MODE(Enum):
     """Mode: Quantization, Benchmark or Pruning."""
+
     QUANTIZATION = 1
     BENCHMARK = 2
     PRUNING = 3
 
 
-class GLOBAL_STATE():
+class GLOBAL_STATE:
     """Access the global model."""
+
     STATE = MODE.QUANTIZATION
 
 
@@ -520,11 +526,11 @@ def load_data_from_pkl(path, filename):
     """
     try:
         file_path = os.path.join(path, filename)
-        with open(file_path, 'rb') as fp:
+        with open(file_path, "rb") as fp:
             data = pickle.load(fp)
             return data
     except FileExistsError:
-        logging.getLogger("neural_compressor").info('Can not open %s.' % path)
+        logging.getLogger("neural_compressor").info("Can not open %s." % path)
 
 
 def dump_data_to_local(data, path, filename):
@@ -539,10 +545,11 @@ def dump_data_to_local(data, path, filename):
         loaded data
     """
     from pathlib import Path
+
     if not os.path.exists(path):
         Path(path).mkdir(parents=True, exist_ok=True)
     file_path = os.path.join(path, filename)
-    with open(file_path, 'wb') as fp:
+    with open(file_path, "wb") as fp:
         pickle.dump(data, fp)
         logging.getLogger("neural_compressor").info("Dumped data to %s" % file_path)
 
@@ -550,24 +557,28 @@ def dump_data_to_local(data, path, filename):
 def set_random_seed(seed: int):
     """Set the random seed in config."""
     from neural_compressor.config import options
+
     options.random_seed = seed
 
 
 def set_workspace(workspace: str):
     """Set the workspace in config."""
     from neural_compressor.config import options
+
     options.workspace = workspace
 
 
 def set_resume_from(resume_from: str):
     """Set the resume_from in config."""
     from neural_compressor.config import options
+
     options.resume_from = resume_from
 
 
 def set_tensorboard(tensorboard: bool):
     """Set the tensorboard in config."""
     from neural_compressor.config import options
+
     options.tensorboard = tensorboard
 
 
@@ -577,8 +588,8 @@ def show_memory_info(hint):
     p = psutil.Process(pid)
 
     info = p.memory_full_info()
-    memory = info.uss / 1024. / 1024
-    print('{} memory used: {} MB'.format(hint, memory))
+    memory = info.uss / 1024.0 / 1024
+    print("{} memory used: {} MB".format(hint, memory))
 
 
 def dump_class_attrs(obj, result={}):
@@ -595,19 +606,18 @@ def dump_class_attrs(obj, result={}):
         if not attr.startswith("__"):
             value = getattr(obj, attr)
             value_class_name = value.__class__.__name__
-            if 'Config' in value_class_name or 'Criterion' in value_class_name:
+            if "Config" in value_class_name or "Criterion" in value_class_name:
                 dump_class_attrs(value, result=result[obj_name])
             else:
-                attr = attr[1:] if attr.startswith('_') else attr
+                attr = attr[1:] if attr.startswith("_") else attr
                 result[obj_name][attr] = value
 
 
 class DotDict(dict):
-    """access yaml using attributes instead of using the dictionary notation.
+    """Access yaml using attributes instead of using the dictionary notation.
 
     Args:
         value (dict): The dict object to access.
-
     """
 
     def __init__(self, value=None):
@@ -622,7 +632,7 @@ class DotDict(dict):
             for key in value:
                 self.__setitem__(key, value[key])
         else:
-            raise TypeError('expected dict')
+            raise TypeError("expected dict")
 
     def __getitem__(self, key):
         """Get value by key.
@@ -642,11 +652,9 @@ class DotDict(dict):
         """
         if isinstance(value, dict) and not isinstance(value, DotDict):
             value = DotDict(value)
-        if isinstance(value, list) and len(value) == 1 and isinstance(
-                value[0], dict):
+        if isinstance(value, list) and len(value) == 1 and isinstance(value[0], dict):
             value = DotDict(value[0])
-        if isinstance(value, list) and len(value) > 1 and all(isinstance(
-                v, dict) for v in value):
+        if isinstance(value, list) and len(value) > 1 and all(isinstance(v, dict) for v in value):
             value = DotDict({k: v for d in value for k, v in d.items()})
         super(DotDict, self).__setitem__(key, value)
 
@@ -695,6 +703,7 @@ def alias_param(param_name: str, param_alias: str):
         param_name: Name of param in function to alias.
         param_alias: Alias that can be used for this param.
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -704,17 +713,19 @@ def alias_param(param_name: str, param_alias: str):
                 del kwargs[param_alias]
             result = func(*args, **kwargs)
             return result
+
         return wrapper
+
     return decorator
 
 
 def print_table(
-        column_mapping: Dict[str, str],
-        table_entries: List[Any],
-        output_handler=logger.info,
-        title: Optional[str] = None,
-        insert_newlines=False,
-        precision: Optional[int] = None,
+    column_mapping: Dict[str, str],
+    table_entries: List[Any],
+    output_handler=logger.info,
+    title: Optional[str] = None,
+    insert_newlines=False,
+    precision: Optional[int] = None,
 ) -> None:
     """Print table with prettytable.
 
@@ -732,7 +743,9 @@ def print_table(
         None
     """
     from functools import reduce
+
     import numpy as np
+
     table = pt.PrettyTable(min_table_width=40)
     if title is not None:
         table.title = title
@@ -746,12 +759,12 @@ def print_table(
                 value = reduce(getattr, [entry] + attribute.split("."))
                 if (isinstance(value, np.floating) or isinstance(value, float)) and isinstance(precision, int):
                     if "e" in str(value):
-                        value = f'{value:.{precision}e}'
+                        value = f"{value:.{precision}e}"
                     else:
-                         value = round(value, precision)
+                        value = round(value, precision)
                 table_row.append(value)
         table.add_row(table_row)
-    lines = table.get_string().split('\n')
+    lines = table.get_string().split("\n")
     for i in lines:
         if insert_newlines:
             i += "\n"
@@ -798,16 +811,14 @@ def get_weights_details(workload_location: str) -> list:
         list of WeightDetails objects
     """
     from neural_compressor.utils.weights_details import WeightsDetails
+
     weights_details = []
 
     input_model_tensors: dict = get_tensors_info(workload_location, model_type="input")["weight"]
-    optimized_model_tensors: dict = get_tensors_info(workload_location, model_type="optimized")[
-        "weight"
-    ]
+    optimized_model_tensors: dict = get_tensors_info(workload_location, model_type="optimized")["weight"]
 
     common_ops = list(set(input_model_tensors.keys()) & set(optimized_model_tensors.keys()))
     for op_name in common_ops:
-
         input_model_op_tensors = input_model_tensors[op_name]
         optimized_model_op_tensors = optimized_model_tensors[op_name]
 
@@ -827,10 +838,10 @@ def get_weights_details(workload_location: str) -> list:
 
 
 def dump_table(
-        filepath: str,
-        column_mapping: Dict[str, str],
-        table_entries: List[Any],
-        file_type: str = "csv",
+    filepath: str,
+    column_mapping: Dict[str, str],
+    table_entries: List[Any],
+    file_type: str = "csv",
 ) -> None:
     """Dump table data to file.
 
@@ -953,11 +964,15 @@ def print_op_list(workload_location: str):
     input_model_tensors = get_tensors_info(
         workload_location,
         model_type="input",
-    )["activation"][0]
+    )[
+        "activation"
+    ][0]
     optimized_model_tensors = get_tensors_info(
         workload_location,
         model_type="optimized",
-    )["activation"][0]
+    )[
+        "activation"
+    ][0]
     op_list = get_op_list(minmax_file_path, input_model_tensors, optimized_model_tensors)
     sorted_op_list = sorted(op_list, key=lambda x: x.mse, reverse=True)
     if len(op_list) <= 0:

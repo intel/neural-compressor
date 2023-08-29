@@ -1,27 +1,33 @@
-from neural_compressor.experimental.data.transforms.tokenization import FullTokenizer
-import unittest
 import os
 import shutil
+import unittest
+
+from neural_compressor.experimental.data.transforms.tokenization import FullTokenizer
 from neural_compressor.utils.utility import LazyImport
-tf =  LazyImport('tensorflow') 
+
+tf = LazyImport("tensorflow")
 
 basic_text = ["un", "##aff", "##able"]
+
+
 class TestFullTokenizer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        os.makedirs('val', exist_ok=True)
-        vocab_file = 'val/temp.txt'
-        with tf.io.gfile.GFile(vocab_file,"w+") as f:
+        os.makedirs("val", exist_ok=True)
+        vocab_file = "val/temp.txt"
+        with tf.io.gfile.GFile(vocab_file, "w+") as f:
             for vocab in basic_text:
-                f.write(vocab + '\n')
+                f.write(vocab + "\n")
         f.close()
+
     @classmethod
     def tearDownClass(cls):
-        if os.path.exists('val'):
-            shutil.rmtree('val')
+        if os.path.exists("val"):
+            shutil.rmtree("val")
+
     def test_tokenizer(self):
-        tokenizer = FullTokenizer('val/temp.txt')
-        ids = [2,1,0]
+        tokenizer = FullTokenizer("val/temp.txt")
+        ids = [2, 1, 0]
         tokens = basic_text[::-1]
         tokens_to_ids = tokenizer.convert_tokens_to_ids(tokens)
         self.assertEqual(tokens_to_ids, ids)

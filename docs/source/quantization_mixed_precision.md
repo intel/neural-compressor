@@ -6,11 +6,13 @@ BF16 conversion during quantization is default ON. To force disable it, users ne
 from neural_compressor.config import PostPostTrainingQuantConfig
 from neural_compressor import quantization
 
-conf = PostTrainingQuantConfig(excluded_precisions=['bf16'])
-q_model = quantization.fit(model_origin,
-                           conf,
-                           calib_dataloader=dataloader,
-                           calib_func=eval_func)
+conf = PostTrainingQuantConfig(excluded_precisions=["bf16"])
+q_model = quantization.fit(
+    model_origin,
+    conf,
+    calib_dataloader=dataloader,
+    calib_func=eval_func,
+)
 ```
 
 ### Tensorflow

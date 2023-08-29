@@ -16,11 +16,12 @@
 # limitations under the License.
 """Common Postprocess."""
 
+
 class Postprocess(object):
-# class Transform(object):
+    # class Transform(object):
     """Just collect the infos to construct a Postprocess."""
 
-    def __init__(self, postprocess_cls, name='user_postprocess', **kwargs):
+    def __init__(self, postprocess_cls, name="user_postprocess", **kwargs):
         """Initialize `Postprocess` class."""
         self.postprocess_cls = postprocess_cls
         self.name = name

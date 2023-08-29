@@ -1,4 +1,4 @@
-"""pruning module."""
+"""Pruning module."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -16,27 +16,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .component import Component
-from ..utils import logger
-from ..utils.utility import GLOBAL_STATE, MODE
-from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
-from ..model import BaseModel
 from ..adaptor import FRAMEWORKS
+from ..compression.pruner.pruners import get_pruner
+from ..compression.pruner.utils import (
+    check_config,
+    generate_pruner_config,
+    parse_to_prune,
+    process_config,
+    update_params,
+)
 from ..conf.config import PruningConf
 from ..conf.pythonic_config import Config
 from ..config import WeightPruningConfig
-
+from ..model import BaseModel
+from ..utils import logger
+from ..utils.create_obj_from_config import create_dataloader, create_eval_func, create_train_func
+from ..utils.utility import GLOBAL_STATE, MODE, LazyImport
+from .component import Component
 from .pruner_legacy import PRUNERS
-from ..compression.pruner.utils import generate_pruner_config
-from ..compression.pruner.utils import process_config, parse_to_prune, check_config, update_params
-from ..utils.utility import LazyImport
-from ..compression.pruner.pruners import get_pruner
 
-LazyImport('torch.nn')
-torch = LazyImport('torch')
+LazyImport("torch.nn")
+torch = LazyImport("torch")
+
+import re
 
 from deprecated import deprecated
-import re
 
 
 class Pruning(Component):
@@ -55,7 +59,6 @@ class Pruning(Component):
     Attributes:
         conf: A config dict object. Contains pruning setting parameters.
         pruners: A list of Pruner object.
-
     """
 
     def __init__(self, conf_fname_or_obj=None):
@@ -119,21 +122,22 @@ class Pruning(Component):
         linear_conv_cnt = 0
         param_cnt = 0
         for name, module in self._model.model.named_modules():
-            if type(module).__name__ in ["Linear"] or re.search(r'Conv.d', type(module).__name__) != None:
+            if type(module).__name__ in ["Linear"] or re.search(r"Conv.d", type(module).__name__) is not None:
                 linear_conv_cnt += module.weight.numel()
 
         for n, param in self._model.model.named_parameters():
             param_cnt += param.numel()
- 
+
         blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt if linear_conv_cnt != 0 else 0
         elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt if linear_conv_cnt != 0 else 0
-        
+
         elementwise_over_all = float(element_sparsity_cnt) / param_cnt if param_cnt != 0 else 0
 
         logger.info(
             f"elementwise_over_matmul_gemm_conv:{elementwise_over_matmul_gemm_conv},"
             f" elementwise_over_all:{elementwise_over_all},"
-            f"blockwise_over_matmul_gemm_conv:{blockwise_over_matmul_gemm_conv}")
+            f"blockwise_over_matmul_gemm_conv:{blockwise_over_matmul_gemm_conv}"
+        )
 
         return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
 
@@ -209,19 +213,20 @@ class Pruning(Component):
 
     def pre_process(self):
         """Functions called before pruning begins, usually set up pruners."""
-        assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for pruning....'
+        assert isinstance(self._model, BaseModel), "need set neural_compressor Model for pruning...."
 
         GLOBAL_STATE.STATE = MODE.PRUNING
-        framework_specific_info = {'device': self.cfg.device,
-                                   'random_seed': self.cfg.tuning.random_seed,
-                                   'workspace_path': self.cfg.tuning.workspace.path,
-                                   'q_dataloader': None,
-                                   'format': 'default',
-                                   'backend': 'default'}
+        framework_specific_info = {
+            "device": self.cfg.device,
+            "random_seed": self.cfg.tuning.random_seed,
+            "workspace_path": self.cfg.tuning.workspace.path,
+            "q_dataloader": None,
+            "format": "default",
+            "backend": "default",
+        }
 
-        if self.framework == 'tensorflow':
-            framework_specific_info.update(
-                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
+        if self.framework == "tensorflow":
+            framework_specific_info.update({"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
 
         self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
 
@@ -229,44 +234,53 @@ class Pruning(Component):
 
         if self._train_dataloader is None and self._train_func is None:
             train_dataloader_cfg = self.cfg.pruning.train.dataloader
-            assert train_dataloader_cfg is not None, \
-                'dataloader field of train field of pruning section ' \
-                'in yaml file should be configured as train_dataloader property is NOT set!'
+            assert train_dataloader_cfg is not None, (
+                "dataloader field of train field of pruning section "
+                "in yaml file should be configured as train_dataloader property is NOT set!"
+            )
             train_dataloader_cfg.distributed = self.train_distributed
             self._train_dataloader = create_dataloader(self.framework, train_dataloader_cfg)
 
         if self._eval_dataloader is None and self._eval_func is None:
             eval_dataloader_cfg = self.cfg.evaluation.accuracy.dataloader
-            assert eval_dataloader_cfg is not None, \
-                'dataloader field of evaluation ' \
-                'in yaml file should be configured as eval_dataloader property is NOT set!'
+            assert eval_dataloader_cfg is not None, (
+                "dataloader field of evaluation "
+                "in yaml file should be configured as eval_dataloader property is NOT set!"
+            )
             eval_dataloader_cfg.distributed = self.evaluation_distributed
             self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
 
         if self._train_func is None:
             # train section of pruning section in yaml file should be configured.
             train_cfg = self.cfg.pruning.train
-            assert train_cfg, "train field of pruning section in yaml file must " \
-                              "be configured for pruning if pruning_func is NOT set."
-            self._train_func = create_train_func(self.framework, \
-                                                 self.train_dataloader, \
-                                                 self.adaptor, \
-                                                 train_cfg, \
-                                                 hooks=self.hooks, \
-                                                 callbacks=self.callbacks)
+            assert train_cfg, (
+                "train field of pruning section in yaml file must "
+                "be configured for pruning if pruning_func is NOT set."
+            )
+            self._train_func = create_train_func(
+                self.framework,
+                self.train_dataloader,
+                self.adaptor,
+                train_cfg,
+                hooks=self.hooks,
+                callbacks=self.callbacks,
+            )
         if self._eval_func is None:
             # eval section in yaml file should be configured.
             eval_cfg = self.cfg.evaluation
-            assert eval_cfg, "eval field of pruning section in yaml file must " \
-                             "be configured for pruning if eval_func is NOT set."
-            self._eval_func = create_eval_func(self.framework, \
-                                               self.eval_dataloader, \
-                                               self.adaptor, \
-                                               eval_cfg.accuracy.metric, \
-                                               eval_cfg.accuracy.postprocess, \
-                                               fp32_baseline=False)
-        if getattr(self.train_dataloader, 'distributed', False):
-            self.register_hook('on_train_begin', self.adaptor._pre_hook_for_hvd)
+            assert eval_cfg, (
+                "eval field of pruning section in yaml file must " "be configured for pruning if eval_func is NOT set."
+            )
+            self._eval_func = create_eval_func(
+                self.framework,
+                self.eval_dataloader,
+                self.adaptor,
+                eval_cfg.accuracy.metric,
+                eval_cfg.accuracy.postprocess,
+                fp32_baseline=False,
+            )
+        if getattr(self.train_dataloader, "distributed", False):
+            self.register_hook("on_train_begin", self.adaptor._pre_hook_for_hvd)
 
     def execute(self):
         """Functions that execute the pruning process.
@@ -274,30 +288,31 @@ class Pruning(Component):
         Follow the working flow: evaluate the dense model -> train/prune the model, evaluate the sparse model.
         """
         logger.info("Start to get the baseline model's score before pruning.")
-        self.baseline_score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
-                                                  else self._model.model)
+        self.baseline_score = self._eval_func(
+            self._model if getattr(self._eval_func, "builtin", None) else self._model.model
+        )
         logger.info("Baseline model's score is {}.".format(str(self.baseline_score)))
         logger.info("Model pruning begins.")
-        self._train_func(self._model if getattr(self._train_func, 'builtin', None) \
-                             else self._model.model)
+        self._train_func(self._model if getattr(self._train_func, "builtin", None) else self._model.model)
         logger.info("Model pruning is done. Start to evaluate the pruned model.")
-        self.last_score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
-                                              else self._model.model)
+        self.last_score = self._eval_func(
+            self._model if getattr(self._eval_func, "builtin", None) else self._model.model
+        )
         logger.info("Pruned model score is {}.".format(str(self.last_score)))
         return self._model
 
     def generate_hooks(self):
         """Register hooks for pruning."""
-        self.register_hook('on_train_begin', self._on_train_begin)
-        self.register_hook('on_train_end', self._on_train_end)
-        self.register_hook('on_epoch_begin', self._on_epoch_begin)
-        self.register_hook('on_epoch_end', self._on_epoch_end)
-        self.register_hook('on_step_begin', self._on_step_begin)
-        self.register_hook('on_step_end', self._on_step_end)
-        self.register_hook('on_before_optimizer_step', self._on_before_optimizer_step)
-        self.register_hook('on_after_optimizer_step', self._on_after_optimizer_step)
-        self.register_hook('on_before_eval', self._on_before_eval)
-        self.register_hook('on_after_eval', self._on_after_eval)
+        self.register_hook("on_train_begin", self._on_train_begin)
+        self.register_hook("on_train_end", self._on_train_end)
+        self.register_hook("on_epoch_begin", self._on_epoch_begin)
+        self.register_hook("on_epoch_end", self._on_epoch_end)
+        self.register_hook("on_step_begin", self._on_step_begin)
+        self.register_hook("on_step_end", self._on_step_end)
+        self.register_hook("on_before_optimizer_step", self._on_before_optimizer_step)
+        self.register_hook("on_after_optimizer_step", self._on_after_optimizer_step)
+        self.register_hook("on_before_eval", self._on_before_eval)
+        self.register_hook("on_after_eval", self._on_after_eval)
 
     def _generate_pruners(self):
         """Obtain Pruner objects."""
@@ -308,37 +323,25 @@ class Pruning(Component):
                     logger.warning("one pruner hooks no layers, please have a check")
 
                 self.pruners.append(get_pruner(info, modules))
-                info['modules'] = [key for key in modules.keys()]
-                info['len_of_modules'] = len(info['modules'])
+                info["modules"] = [key for key in modules.keys()]
+                info["len_of_modules"] = len(info["modules"])
                 logger.info(info)
         else:
             for info in self.pruners_info:
                 pruner = generate_pruner_config(info)
-                if info.prune_type == 'magnitude':
-                    self.pruners.append(PRUNERS['BasicMagnitude'](\
-                                            self._model, \
-                                            pruner,
-                                            None))
-                elif info.prune_type == 'pattern_lock':
-                    self.pruners.append(PRUNERS['PatternLock'](\
-                                            self._model, \
-                                            pruner,
-                                            None))
-                elif info.prune_type == 'gradient_sensitivity':
-                    self.pruners.append(PRUNERS['GradientSensitivity'](\
-                                            self._model, \
-                                            pruner,
-                                            None))
-                elif info.prune_type == 'group_lasso':
-                    self.pruners.append(PRUNERS['GroupLasso'](\
-                                            self._model, \
-                                            pruner,
-                                            None))
+                if info.prune_type == "magnitude":
+                    self.pruners.append(PRUNERS["BasicMagnitude"](self._model, pruner, None))
+                elif info.prune_type == "pattern_lock":
+                    self.pruners.append(PRUNERS["PatternLock"](self._model, pruner, None))
+                elif info.prune_type == "gradient_sensitivity":
+                    self.pruners.append(PRUNERS["GradientSensitivity"](self._model, pruner, None))
+                elif info.prune_type == "group_lasso":
+                    self.pruners.append(PRUNERS["GroupLasso"](self._model, pruner, None))
                 else:
                     ##print(pruner.prune_type)
-                    assert False, 'now only support {}'.format(PRUNERS.keys())
+                    assert False, "now only support {}".format(PRUNERS.keys())
                 logger.info(info)
-                
+
     def __call__(self):
         """Entry point of pruning.
 
@@ -374,7 +377,6 @@ class Pruning(Component):
 
         Returns:
             pruned model: best pruned model found, otherwise return None
-
         """
         return super(Pruning, self).__call__()
 
@@ -384,11 +386,11 @@ class Pruning(Component):
     @property
     def pruning_func(self):
         """Not support get pruning_func."""
-        assert False, 'Should not try to get the value of `pruning_func` attribute.'
+        assert False, "Should not try to get the value of `pruning_func` attribute."
         return None
 
     @pruning_func.setter
-    @deprecated(version='2.0', reason="please use `train_func` instead")
+    @deprecated(version="2.0", reason="please use `train_func` instead")
     def pruning_func(self, user_pruning_func):
         """Training function for pruning.
 
@@ -406,7 +408,7 @@ class Pruning(Component):
     def evaluation_distributed(self):
         """Getter to know whether need distributed evaluation dataloader."""
         eval_dataloader_cfg = self.cfg.evaluation.accuracy.dataloader
-        yaml_distributed = eval_dataloader_cfg.get('distributed', False)
+        yaml_distributed = eval_dataloader_cfg.get("distributed", False)
         return self._evaluation_distributed or yaml_distributed
 
     @evaluation_distributed.setter
@@ -418,7 +420,7 @@ class Pruning(Component):
     def train_distributed(self):
         """Getter to know whether need distributed training dataloader."""
         train_dataloader_cfg = self.cfg.pruning.train.dataloader
-        yaml_distributed = train_dataloader_cfg.get('distributed', False)
+        yaml_distributed = train_dataloader_cfg.get("distributed", False)
         return self._train_distributed or yaml_distributed
 
     @train_distributed.setter
@@ -428,7 +430,7 @@ class Pruning(Component):
 
     def __repr__(self):
         """Return the class's string representation."""
-        return 'Pruning'
+        return "Pruning"
 
 
 class TfPruningCallback(object):
@@ -459,18 +461,18 @@ class TfPruningCallback(object):
 
     def on_train_begin(self, logs=None, dataloader=None):
         """Call the same-name function from hooks."""
-        self.hooks['on_train_begin'](dataloader)
+        self.hooks["on_train_begin"](dataloader)
 
     def on_train_end(self, logs=None):
         """Call the same-name function from hooks."""
-        self.hooks['on_train_end']()
+        self.hooks["on_train_end"]()
 
-    @deprecated(version='2.0', reason="please use `on_train_begin` instead")
+    @deprecated(version="2.0", reason="please use `on_train_begin` instead")
     def pre_epoch_begin(self, logs=None, dataloader=None):  # pragma: no cover
         """Call the same-name function from hooks."""
         self.on_train_begin(logs, dataloader)
 
-    @deprecated(version='2.0', reason="please use `on_train_end` instead")
+    @deprecated(version="2.0", reason="please use `on_train_end` instead")
     def post_epoch_end(self, logs=None):  # pragma: no cover
         """Call the same-name function from hooks."""
         self.on_train_end(logs)
@@ -478,12 +480,12 @@ class TfPruningCallback(object):
     def on_epoch_begin(self, epoch, logs=None):
         """Call the same-name function from hooks."""
         self._set_weights()
-        self.hooks['on_epoch_begin'](epoch)
+        self.hooks["on_epoch_begin"](epoch)
 
     def on_epoch_end(self, logs=None):
         """Call the same-name function from hooks."""
         self._set_weights()
-        res = self.hooks['on_epoch_end']()
+        res = self.hooks["on_epoch_end"]()
         for layer_index, weights in res[0][0].items():
             get_weights = self.model.layers[layer_index].get_weights()
             get_weights[0] = weights
@@ -492,32 +494,31 @@ class TfPruningCallback(object):
     def on_step_begin(self, batch, logs=None):
         """Call the same-name function from hooks."""
         self._set_weights()
-        res = self.hooks['on_step_begin'](batch)
+        res = self.hooks["on_step_begin"](batch)
         for layer_index, weights in res[0][0].items():
             get_weights = self.model.layers[layer_index].get_weights()
             get_weights[0] = weights
             self.model.layers[layer_index].set_weights(get_weights)
 
-    @deprecated(version='2.0', reason="please use `on_step_begin` instead")
+    @deprecated(version="2.0", reason="please use `on_step_begin` instead")
     def on_batch_begin(self, batch, logs=None):  # pragma: no cover
         """Call the same-name function from hooks."""
         self.on_step_begin(batch, logs)
 
     def on_after_compute_loss(self, input, s_outputs, s_loss, t_outputs=None):
         """Call the same-name function from hooks."""
-        return self.hooks['on_after_compute_loss'](input, s_outputs, s_loss, t_outputs)
+        return self.hooks["on_after_compute_loss"](input, s_outputs, s_loss, t_outputs)
 
     def on_step_end(self, logs=None):
         """Call the same-name function from hooks."""
         self._set_weights()
-        res = self.hooks['on_step_end']()
+        res = self.hooks["on_step_end"]()
         for layer_index, weights in res[0][0].items():
             get_weights = self.model.layers[layer_index].get_weights()
             get_weights[0] = weights
             self.model.layers[layer_index].set_weights(get_weights)
 
-    @deprecated(version='2.0', reason="please use `on_step_end` instead")
+    @deprecated(version="2.0", reason="please use `on_step_end` instead")
     def on_batch_end(self, logs=None):  # pragma: no cover
         """Call the same-name function from hooks."""
         self.on_step_end(logs)
-

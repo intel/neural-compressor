@@ -2,6 +2,7 @@ import unittest
 
 from neural_coder.utils import common
 
+
 class TestCommon(unittest.TestCase):
     def test_move_element_to_front(self):
         f = common.move_element_to_front
@@ -14,5 +15,6 @@ class TestCommon(unittest.TestCase):
         self.assertEqual(f(["a", "b", "c", "d"], "d"), ["d", "a", "b", "c"])
         self.assertEqual(f(["ab", "a", "ac", "ad"], "a"), ["a", "ab", "ac", "ad"])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

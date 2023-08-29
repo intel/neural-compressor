@@ -18,52 +18,57 @@
 """Without calibration Graph Converter Class."""
 
 import copy
-import os
 import logging
-import tensorflow as tf
+import os
 
+import tensorflow as tf
 from tensorflow.python.platform import gfile
+
 from neural_compressor.conf.dotdict import deep_get
 from neural_compressor.model import Model
-from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
-from .transform_graph.bias_correction import BiasCorrection
-from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from .quantize_graph_common import QuantizeGraphHelper
 
-from .graph_util import GraphAnalyzer
-from .graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOptimizer
-from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
+from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from .graph_rewriter.generic.fuse_pad_with_conv import FusePadWithConv2DOptimizer
-
+from .graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOptimizer
+from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from .graph_rewriter.int8.freeze_value_without_calib import FreezeValueWithoutCalibTransformer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
-from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTransformer
-from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeTransformer
-from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
-from .graph_rewriter.bf16.bf16_convert import BF16Convert
-from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
+from .graph_rewriter.int8.fuse_matmul_requantize import (
+    FuseMatMulRequantizeDequantizeTransformer,
+    FuseMatMulRequantizeTransformer,
+)
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
+from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
-from .util import version1_gte_version2,version1_gt_version2,version1_eq_version2
-from .util import version1_lt_version2, version1_lte_version2
-from .util import TF_SPR_BASE_VERSIONS
+from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
+from .graph_util import GraphAnalyzer
+from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from .quantize_graph_common import QuantizeGraphHelper
+from .transform_graph.bias_correction import BiasCorrection
+from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
+from .util import (
+    TF_SPR_BASE_VERSIONS,
+    version1_eq_version2,
+    version1_gt_version2,
+    version1_gte_version2,
+    version1_lt_version2,
+    version1_lte_version2,
+)
 
-TF_SUPPORTED_MAX_VERSION = '2.12.0'
-TF_SUPPORTED_MIN_VERSION = '1.14.0'
+TF_SUPPORTED_MAX_VERSION = "2.12.0"
+TF_SUPPORTED_MIN_VERSION = "1.14.0"
 
 logger = logging.getLogger("neural_compressor")
 debug = bool(logger.level == logging.DEBUG)
 
+
 class GraphConverterWithoutCalib:
     """Graph Converter without calibration Class is used to generate the quantization graph without calibration."""
-    def __init__(self,
-                 model,
-                 data_loader=None,
-                 recover_config=None,
-                 new_api=False,
-                 performance_only=False,
-                 use_bf16=False):
+
+    def __init__(
+        self, model, data_loader=None, recover_config=None, new_api=False, performance_only=False, use_bf16=False
+    ):
         """Convert graph without calibration.
 
         :param model: input tensorflow model.
@@ -75,17 +80,17 @@ class GraphConverterWithoutCalib:
         """
         # Logger initial
         self.model = model
-        #(TODO) does it right to make the internal model format as graph_def
+        # (TODO) does it right to make the internal model format as graph_def
         self.output_tensor_names = self.model.output_tensor_names
         self.input_tensor_names = self.model.input_tensor_names
         # quantize specific config
-        self.op_wise_config = recover_config['op_wise_config']
-        self.advance_config = deep_get(recover_config, 'advance')
-        self.device = recover_config['device'] if 'device' in recover_config else 'cpu'
-        self.int8_sequences = recover_config['int8_sequences']
-        self.fp32_ops = recover_config['fp32_ops']
-        self.bf16_ops = recover_config['bf16_ops']
-        self.recipes = recover_config['recipes']
+        self.op_wise_config = recover_config["op_wise_config"]
+        self.advance_config = deep_get(recover_config, "advance")
+        self.device = recover_config["device"] if "device" in recover_config else "cpu"
+        self.int8_sequences = recover_config["int8_sequences"]
+        self.fp32_ops = recover_config["fp32_ops"]
+        self.bf16_ops = recover_config["bf16_ops"]
+        self.recipes = recover_config["recipes"]
         self.quantized_node_info = []
         self._calibration_data = []
         self._fp32_print_data = []
@@ -106,8 +111,10 @@ class GraphConverterWithoutCalib:
         is_sprbase_version = False
         try:
             from tensorflow import python
-            if (hasattr(python, "pywrap_tensorflow")
-                    and hasattr(python.pywrap_tensorflow, "IsMklEnabled")):# pragma: no cover
+
+            if hasattr(python, "pywrap_tensorflow") and hasattr(
+                python.pywrap_tensorflow, "IsMklEnabled"
+            ):  # pragma: no cover
                 from tensorflow.python.pywrap_tensorflow import IsMklEnabled
             elif hasattr(python.util, "_pywrap_util_port"):
                 from tensorflow.python.util._pywrap_util_port import IsMklEnabled
@@ -115,14 +122,14 @@ class GraphConverterWithoutCalib:
                 from tensorflow.python._pywrap_util_port import IsMklEnabled
             if IsMklEnabled() and (version1_lte_version2(TF_SUPPORTED_MIN_VERSION, tf.version.VERSION)):
                 is_supported_version = True
-                
-            if version1_gte_version2(tf.version.VERSION, '2.6.0') and os.getenv('TF_ENABLE_ONEDNN_OPTS') == '1':
+
+            if version1_gte_version2(tf.version.VERSION, "2.6.0") and os.getenv("TF_ENABLE_ONEDNN_OPTS") == "1":
                 is_supported_version = True
 
-            if version1_gte_version2(tf.version.VERSION, '2.9.0'):
+            if version1_gte_version2(tf.version.VERSION, "2.9.0"):
                 is_supported_version = True
 
-            if tf.version.VERSION == '1.15.0-up3':
+            if tf.version.VERSION == "1.15.0-up3":
                 is_supported_version = True
 
             if tf.version.VERSION in TF_SPR_BASE_VERSIONS:
@@ -131,47 +138,56 @@ class GraphConverterWithoutCalib:
 
         except Exception as e:
             raise ValueError(e)
-        finally:# pragma: no cover
+        finally:  # pragma: no cover
             if version1_gt_version2(tf.version.VERSION, TF_SUPPORTED_MAX_VERSION) and not is_sprbase_version:
                 logger.warning(
-                    str('Please note the {} version of TensorFlow is not fully verified! '
-                        'Suggest to use the versions between {} and {} if meet problem.')
-                        .format(tf.version.VERSION, TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
+                    str(
+                        "Please note the {} version of TensorFlow is not fully verified! "
+                        "Suggest to use the versions between {} and {} if meet problem."
+                    ).format(tf.version.VERSION, TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION)
+                )
 
-            if version1_eq_version2(tf.version.VERSION, '2.5.0') and os.getenv('TF_ENABLE_MKL_NATIVE_FORMAT') != '0':
-                logger.fatal("Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 "
-                             "when TensorFlow 2.5.0 installed.")
+            if version1_eq_version2(tf.version.VERSION, "2.5.0") and os.getenv("TF_ENABLE_MKL_NATIVE_FORMAT") != "0":
+                logger.fatal(
+                    "Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 " "when TensorFlow 2.5.0 installed."
+                )
 
-            if version1_gte_version2(tf.version.VERSION, '2.6.0') and \
-               version1_lt_version2(tf.version.VERSION, '2.9.0') and \
-               os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
-                logger.fatal("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
-                             "when TensorFlow >= 2.6.0 and < 2.9.0 installed.")
+            if (
+                version1_gte_version2(tf.version.VERSION, "2.6.0")
+                and version1_lt_version2(tf.version.VERSION, "2.9.0")
+                and os.getenv("TF_ENABLE_ONEDNN_OPTS") != "1"
+            ):
+                logger.fatal(
+                    "Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
+                    "when TensorFlow >= 2.6.0 and < 2.9.0 installed."
+                )
 
             if not is_supported_version:
                 raise ValueError(
-                    str('Please install TensorFlow within version >={} and <={}.')
-                    .format(TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
+                    str("Please install TensorFlow within version >={} and <={}.").format(
+                        TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION
+                    )
+                )
 
     def _check_args(self):
         """Check model's arguments."""
-        if self.model.workspace_path and not os.path.isdir(self.model.workspace_path) \
-                and not os.path.exists(os.path.dirname(self.model.workspace_path)):
+        if (
+            self.model.workspace_path
+            and not os.path.isdir(self.model.workspace_path)
+            and not os.path.exists(os.path.dirname(self.model.workspace_path))
+        ):
             raise ValueError('"output_graph" directory does not exist.')
         self._output_path = self.model.workspace_path
 
     def _gen_tmp_filenames(self):
         """Generate the temporary file names."""
-        self._int8_dynamic_range_model_path = os.path.join(self._output_path, \
-                                                      'int8_dynamic_range_graph')
-        self._int8_logged_model_path = os.path.join(self._output_path, 'int8_logged_graph')
-        self._fp32_logged_model_path = os.path.join(self._output_path, 'fp32_logged_graph')
-        self._int8_frozen_range_model_path = os.path.join(self._output_path,
-                                                          'int8_frozen_range_graph')
-        self._bf16_mixed_precision_model_path = os.path.join(self._output_path,
-                                                        'int8_bf16_mixed_precision_graph')
+        self._int8_dynamic_range_model_path = os.path.join(self._output_path, "int8_dynamic_range_graph")
+        self._int8_logged_model_path = os.path.join(self._output_path, "int8_logged_graph")
+        self._fp32_logged_model_path = os.path.join(self._output_path, "fp32_logged_graph")
+        self._int8_frozen_range_model_path = os.path.join(self._output_path, "int8_frozen_range_graph")
+        self._bf16_mixed_precision_model_path = os.path.join(self._output_path, "int8_bf16_mixed_precision_graph")
 
-        self.output_graph = os.path.join(self._output_path, 'int8_final_fused_graph')
+        self.output_graph = os.path.join(self._output_path, "int8_final_fused_graph")
         # to keep temp model
         self._tmp_model = Model(self.model._model, **self.model.kwargs)
         self._tmp_model.output_tensor_names = self.output_tensor_names
@@ -201,13 +217,12 @@ class GraphConverterWithoutCalib:
         g = GraphAnalyzer()
         g.graph = self._tmp_graph_def
         graph_info = g.parse_graph()
-        rnn_pattern = [['TensorArrayV3'], ['Enter'], ['TensorArrayReadV3'], \
-            ['MatMul'], ['BiasAdd']]
+        rnn_pattern = [["TensorArrayV3"], ["Enter"], ["TensorArrayReadV3"], ["MatMul"], ["BiasAdd"]]
         target_nodes = g.query_fusion_pattern_nodes(rnn_pattern)
         res = {}
         for i in target_nodes:
             if i[-3] not in self.bf16_ops and i[-3] not in self.fp32_ops:
-                res[(i[-3], i[-2])] = graph_info[i[1]].node.attr['frame_name'].s.decode()
+                res[(i[-3], i[-2])] = graph_info[i[1]].node.attr["frame_name"].s.decode()
 
         return res
 
@@ -227,9 +242,10 @@ class GraphConverterWithoutCalib:
             self._fuse_requantize_with_fused_quantized_node()
         except Exception as e:
             import traceback
+
             traceback.print_exc()
             self._tmp_model = None
-            logger.error('Fail to quantize graph due to {}.'.format(str(e)))
+            logger.error("Fail to quantize graph due to {}.".format(str(e)))
         finally:
             if not debug:
                 self._post_clean()
@@ -239,13 +255,12 @@ class GraphConverterWithoutCalib:
         """Convert fp32 nodes in bf16_node to bf16 dtype based on FP32 + INT8 mixed precision graph."""
         try:
             self._tmp_model.graph_def = BF16Convert(
-                self._tmp_model.graph_def,
-                self.fp32_ops,
-                self.bf16_ops).do_transformation()
+                self._tmp_model.graph_def, self.fp32_ops, self.bf16_ops
+            ).do_transformation()
 
         except Exception as e:
             self._tmp_model = None
-            logger.error('Fail to convert graph due to {}.'.format(str(e)))
+            logger.error("Fail to convert graph due to {}.".format(str(e)))
         finally:
             if debug:
                 self._tmp_model.save(self._bf16_mixed_precision_model_path)
@@ -256,16 +271,12 @@ class GraphConverterWithoutCalib:
         """Quantize graph."""
         non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
         self._tmp_graph_def = FusePadWithConv2DOptimizer(
-            self._tmp_graph_def,
-            non_pad_ops,
-            self._tmp_model.input_node_names,
-            self.op_wise_config,
-            self.new_api).do_transformation()
+            self._tmp_graph_def, non_pad_ops, self._tmp_model.input_node_names, self.op_wise_config, self.new_api
+        ).do_transformation()
 
         self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(
-            self._tmp_graph_def,
-            self._tmp_model.input_node_names,
-            self._tmp_model.output_node_names)
+            self._tmp_graph_def, self._tmp_model.input_node_names, self._tmp_model.output_node_names
+        )
 
         self._tmp_graph_def, self.quantized_node_info, _ = QuantizeGraphForIntel(
             self._tmp_graph_def,
@@ -276,7 +287,8 @@ class GraphConverterWithoutCalib:
             self.device,
             False,
             self.new_api,
-            self.performance_only).do_transform()
+            self.performance_only,
+        ).do_transform()
 
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
         if debug:
@@ -286,26 +298,21 @@ class GraphConverterWithoutCalib:
     def _freeze_requantization_ranges_without_calib(self):
         """Freeze requantization ranges after doing quantization."""
         self._tmp_graph_def = FreezeValueWithoutCalibTransformer(
-            self._tmp_graph_def,
-            self.recover_config,
-            postfix='__min').do_transformation_without_calib()
+            self._tmp_graph_def, self.recover_config, postfix="__min"
+        ).do_transformation_without_calib()
         self._tmp_graph_def = FreezeValueWithoutCalibTransformer(
-            self._tmp_graph_def,
-            self.recover_config,
-            postfix='__max').do_transformation_without_calib()
+            self._tmp_graph_def, self.recover_config, postfix="__max"
+        ).do_transformation_without_calib()
         self._tmp_graph_def = FreezeValueWithoutCalibTransformer(
-            self._tmp_graph_def,
-            self.recover_config,
-            postfix='__requant_min_max',
-            device = self.device).do_transformation_without_calib()
+            self._tmp_graph_def, self.recover_config, postfix="__requant_min_max", device=self.device
+        ).do_transformation_without_calib()
 
         self._tmp_graph_def = QuantizedRNNConverter(
-            self._tmp_graph_def, self._calibration_data, self._rnn_details).do_transformation()
+            self._tmp_graph_def, self._calibration_data, self._rnn_details
+        ).do_transformation()
 
-        if 'scale_propagation_max_pooling' in self.recipes and \
-                self.recipes['scale_propagation_max_pooling']:
-            self._tmp_graph_def = ScaleProPagationTransformer(
-                self._tmp_graph_def).do_transformation()
+        if "scale_propagation_max_pooling" in self.recipes and self.recipes["scale_propagation_max_pooling"]:
+            self._tmp_graph_def = ScaleProPagationTransformer(self._tmp_graph_def).do_transformation()
 
         if debug:
             self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
@@ -315,39 +322,30 @@ class GraphConverterWithoutCalib:
     def _fuse_requantize_with_fused_quantized_node(self):
         """Fuse the Requantize/Dequantize with fused quantized Ops."""
         self._tmp_graph_def = FuseConvRequantizeTransformer(
-            self._tmp_graph_def,
-            self.device,
-            self.new_api).do_transformation()
+            self._tmp_graph_def, self.device, self.new_api
+        ).do_transformation()
 
-        self._tmp_graph_def = FuseMatMulRequantizeTransformer(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = FuseMatMulRequantizeTransformer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = StripUnusedNodesOptimizer(
-            self._tmp_graph_def,
-            self._tmp_model.input_node_names,
-            self._tmp_model.output_node_names).do_transformation()
+            self._tmp_graph_def, self._tmp_model.input_node_names, self._tmp_model.output_node_names
+        ).do_transformation()
 
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
-            self._tmp_graph_def,
-            protected_nodes=self._tmp_model.output_node_names).do_transformation()
+            self._tmp_graph_def, protected_nodes=self._tmp_model.output_node_names
+        ).do_transformation()
 
-        self._tmp_graph_def = FoldBatchNormNodesOptimizer(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
 
-        if 'scale_propagation_concat' in self.recipes and self.recipes['scale_propagation_concat']:
-            self._tmp_graph_def = RerangeQuantizedConcat(self._tmp_graph_def,
-                                                     self.device).do_transformation()
+        if "scale_propagation_concat" in self.recipes and self.recipes["scale_propagation_concat"]:
+            self._tmp_graph_def = RerangeQuantizedConcat(self._tmp_graph_def, self.device).do_transformation()
 
-        self._tmp_graph_def = MetaInfoChangingMemOpOptimizer(
-            self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = MetaInfoChangingMemOpOptimizer(self._tmp_graph_def).do_transformation()
 
-        if self.advance_config is not None and \
-           deep_get(self.advance_config, 'bias_correction') is not None:
-            self._tmp_graph_def = BiasCorrection(
-                self._tmp_graph_def, self.model.graph_def).do_transformation()
+        if self.advance_config is not None and deep_get(self.advance_config, "bias_correction") is not None:
+            self._tmp_graph_def = BiasCorrection(self._tmp_graph_def, self.model.graph_def).do_transformation()
 
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 
@@ -358,10 +356,10 @@ class GraphConverterWithoutCalib:
 
         :return: None
         """
-        if os.path.exists(self._int8_logged_model_path) and \
-            os.path.isdir(self._int8_logged_model_path):
+        if os.path.exists(self._int8_logged_model_path) and os.path.isdir(self._int8_logged_model_path):
             import shutil
+
             shutil.rmtree(self._int8_logged_model_path)
 
-        elif gfile.Exists(self._int8_logged_model_path + '.pb'):
-            os.remove(self._int8_logged_model_path + '.pb')
+        elif gfile.Exists(self._int8_logged_model_path + ".pb"):
+            os.remove(self._int8_logged_model_path + ".pb")

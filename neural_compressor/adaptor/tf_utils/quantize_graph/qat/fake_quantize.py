@@ -17,8 +17,10 @@
 """QAT Fake Quantize Graph Class."""
 
 import abc
+
 import six
 import tensorflow as tf
+
 
 @six.add_metaclass(abc.ABCMeta)
 class FakeQuantizeBase(object):
@@ -46,7 +48,7 @@ class FakeQuantizeBase(object):
     @abc.abstractmethod
     def get_config(self):
         """Returns the config used to serialize the 'FakeQuantize'."""
-        raise NotImplementedError('FakeQuantize should implement get_config().')
+        raise NotImplementedError("FakeQuantize should implement get_config().")
 
     @classmethod
     def from_config(cls, config):
@@ -60,17 +62,11 @@ class FakeQuantizeBase(object):
         """
         return cls(**config)
 
+
 class FakeQuantize(FakeQuantizeBase):
     """The class that applies fake quantization."""
 
-    def __init__(
-        self, 
-        per_channel=False, 
-        num_bits=8, 
-        channel_axis=-1, 
-        symmetric=True, 
-        narrow_range=True
-        ):
+    def __init__(self, per_channel=False, num_bits=8, channel_axis=-1, symmetric=True, narrow_range=True):
         """Initialize a FakeQuantize class.
 
         Args:
@@ -89,7 +85,7 @@ class FakeQuantize(FakeQuantizeBase):
         self.symmetric = symmetric
         self.narrow_range = narrow_range
         self.channel_axis = channel_axis
-        self.name_prefix = 'FakeQuantize'
+        self.name_prefix = "FakeQuantize"
 
     def __call__(self, inputs, ranges, training, **kwargs):
         """Applying fake quantization by insert qdq.
@@ -122,9 +118,7 @@ class FakeQuantize(FakeQuantizeBase):
 
             if self.per_channel:
                 if input_dim >= 2:
-                    batch_min = tf.math.reduce_min(
-                        inputs, axis=reduce_dims, name="BatchMin"
-                    )
+                    batch_min = tf.math.reduce_min(inputs, axis=reduce_dims, name="BatchMin")
                 else:
                     batch_min = inputs
             else:
@@ -132,9 +126,7 @@ class FakeQuantize(FakeQuantizeBase):
 
             if self.per_channel:
                 if input_dim >= 2:
-                    batch_max = tf.math.reduce_max(
-                        inputs, axis=reduce_dims, name="BatchMax"
-                    )
+                    batch_max = tf.math.reduce_max(inputs, axis=reduce_dims, name="BatchMax")
                 else:
                     batch_max = inputs
             else:
@@ -168,12 +160,11 @@ class FakeQuantize(FakeQuantizeBase):
             inputs (tf.Tensor): A tensor containing values to be quantized.
             min_var (tf.Variable): A variable containing quantization range lower end(s).
             max_var (tf.Variable): A variable containing quantization range upper end(s).
-            
+
         Returns:
             outputs (tf.Tensor): A tensor containing quantized values.
         """
         if self.per_channel:
-
             return tf.quantization.quantize_and_dequantize_v2(
                 inputs,
                 min_var,
@@ -203,10 +194,10 @@ class FakeQuantize(FakeQuantizeBase):
             config (dict): A dict containing required information.
         """
         return {
-            'num_bits': self.num_bits,
-            'per_channel': self.per_channel,
-            'symmetric': self.symmetric,
-            'narrow_range': self.narrow_range
+            "num_bits": self.num_bits,
+            "per_channel": self.per_channel,
+            "symmetric": self.symmetric,
+            "narrow_range": self.narrow_range,
         }
 
     def __eq__(self, other):
@@ -221,10 +212,12 @@ class FakeQuantize(FakeQuantizeBase):
         if not isinstance(other, FakeQuantize):
             return False
 
-        return (self.num_bits == other.num_bits and
-                self.per_channel == other.per_channel and
-                self.symmetric == other.symmetric and
-                self.narrow_range == other.narrow_range)
+        return (
+            self.num_bits == other.num_bits
+            and self.per_channel == other.per_channel
+            and self.symmetric == other.symmetric
+            and self.narrow_range == other.narrow_range
+        )
 
     def __ne__(self, other):
         """Check if this instance is not equal to another instance.
