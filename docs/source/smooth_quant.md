@@ -38,10 +38,13 @@ Suppose the weight tensor is：
 
 ```python
 import torch
+
 W = torch.Tensor(
-    [[0.6839, 0.4741, 0.7451],
-    [0.9301, 0.1742, 0.6835]]
-    )
+    [
+        [0.6839, 0.4741, 0.7451],
+        [0.9301, 0.1742, 0.6835],
+    ]
+)
 ```
 
 According to the formula (1), we need scale $S$ and zero point $Z$ to calculate the integer matrix.
@@ -58,13 +61,13 @@ The per-tensor quantization function is:
 
 ```python
 def quantize(x, num_bits=8):
-    q_min, q_max = 0, 2. ** num_bits - 1.
-    scale = (torch.max(x) - torch.min(x)) / (2 ** num_bits - 1)
+    q_min, q_max = 0, 2.0**num_bits - 1.0
+    scale = (torch.max(x) - torch.min(x)) / (2**num_bits - 1)
     scale = torch.clip(scale, min=1e-5)
     zp = torch.round(0 - (torch.min(x)) / scale)
     q_x = x / scale + zp
     q_x.clamp_(q_min, q_max).round_()
-    print(f'scale = {scale}, zp = {zp}')
+    print(f"scale = {scale}, zp = {zp}")
     return q_x, scale, zp
 ```
 
@@ -111,14 +114,15 @@ Similarly, the example of per-channel quantization is as follows:
 
 ```python
 def quantize_per_channel(x, num_bits=8):
-    q_min, q_max = 0, 2. ** num_bits - 1.
+    q_min, q_max = 0, 2.0**num_bits - 1.0
     x_tmp = x.detach().reshape(x.shape[0], -1)
-    scales = x_tmp.max(dim=-1, keepdim=True)[0] / (2 ** num_bits - 1)
-    zp =  torch.round(0 - x_tmp.min(dim=-1, keepdim=True)[0].divide(scales))
+    scales = x_tmp.max(dim=-1, keepdim=True)[0] / (2**num_bits - 1)
+    zp = torch.round(0 - x_tmp.min(dim=-1, keepdim=True)[0].divide(scales))
     q_x = x_tmp.divide(scales) + zp
     q_x.clamp_(q_min, q_max).round_()
-    print(f'scale = {scales}, \n zp = {zp}')
+    print(f"scale = {scales}, \n zp = {zp}")
     return q_x, scale, zp
+
 
 def dequantize_per_channel(q_x, scales, zp):
     print(q_x, scales, zp)
@@ -160,11 +164,12 @@ Using per-tensor scale quantization to show the process.
 ```python
 def quantize_per_tensor_absmax(x, n_bits=8):
     scales = x.abs().max()
-    q_max = 2**(n_bits-1)-1
+    q_max = 2 ** (n_bits - 1) - 1
     scales.clamp_(min=1e-5).div_(q_max)
     q_x = x / scales
     q_x = q_x.clamp_(-q_max, q_max).round_()
     return q_x, scales
+
 
 def dequantize(q_x, scale):
     return scale * q_x
@@ -295,8 +300,9 @@ In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is 
 
 ```python
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
+
 sq = TorchSmoothQuant(model, dataloader)
-sq.transform(alpha) ##alpha could be a float or a string 'auto'
+sq.transform(alpha)  ##alpha could be a float or a string 'auto'
 ```
 
 please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False"

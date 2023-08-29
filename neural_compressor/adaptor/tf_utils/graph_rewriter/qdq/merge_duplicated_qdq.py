@@ -17,11 +17,12 @@
 """Merge duplicated QDQ patterns Graph Rewriter."""
 
 from tensorflow.core.framework import node_def_pb2
+
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
-from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 
 class MergeDuplicatedQDQOptimizer(GraphRewriterBase):
@@ -34,7 +35,7 @@ class MergeDuplicatedQDQOptimizer(GraphRewriterBase):
         cur_graph.graph = self.model
         graph_info = cur_graph.parse_graph()
 
-        patterns = [['QuantizeV2'], ['Dequantize']]
+        patterns = [["QuantizeV2"], ["Dequantize"]]
         matched_nodes = cur_graph.query_fusion_pattern_nodes(patterns)
 
         quantizev2_input_map = {}
@@ -60,8 +61,7 @@ class MergeDuplicatedQDQOptimizer(GraphRewriterBase):
 
                 do_merge = True
                 for i in quantizev2_nodes:
-                    if i.name != new_quantize_node.name and \
-                       i.attr['T'].type != new_quantize_node.attr['T'].type:
+                    if i.name != new_quantize_node.name and i.attr["T"].type != new_quantize_node.attr["T"].type:
                         do_merge = False
                         break
 
@@ -76,10 +76,10 @@ class MergeDuplicatedQDQOptimizer(GraphRewriterBase):
                 # set the new QuantizeV2 node as all the other input of the Dequantize nodes
                 for i in dequantize_map[input_map_node_name]:
                     if i.name != new_dequantize_node.name:
-                        cur_graph.node_name_details[i.name].node.ClearField('input')
-                        cur_graph.node_name_details[i.name].node.input.extend([
-                            new_quantize_node.name, new_quantize_node.name + ':1',
-                            new_quantize_node.name + ':2'])
+                        cur_graph.node_name_details[i.name].node.ClearField("input")
+                        cur_graph.node_name_details[i.name].node.input.extend(
+                            [new_quantize_node.name, new_quantize_node.name + ":1", new_quantize_node.name + ":2"]
+                        )
 
                 # remove the duplicated quantized nodes
                 for i in quantizev2_nodes:

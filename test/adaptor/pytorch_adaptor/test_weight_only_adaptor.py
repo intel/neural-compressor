@@ -1,13 +1,15 @@
-import sys
 import copy
+import sys
+
 sys.path.append("./")
 import os
 import shutil
-import torch
 import unittest
-import transformers
-from neural_compressor import quantization, PostTrainingQuantConfig
 
+import torch
+import transformers
+
+from neural_compressor import PostTrainingQuantConfig, quantization
 from neural_compressor.adaptor.torch_utils.model_wrapper import MulLinear, WeightOnlyLinear
 
 
@@ -29,12 +31,13 @@ def eval_func(model):
     # switch to evaluate mode
     model.eval()
     with torch.no_grad():
-        input = torch.randn(3,30)
+        input = torch.randn(3, 30)
         # compute output
         output = model(input)
     return 0.0
 
-class SimpleDataLoader():
+
+class SimpleDataLoader:
     def __init__(self):
         self.batch_size = 1
 
@@ -43,7 +46,7 @@ class SimpleDataLoader():
             yield torch.randn([1, 30])
 
 
-class LLMDataLoader():
+class LLMDataLoader:
     def __init__(self):
         self.batch_size = 1
 
@@ -53,17 +56,17 @@ class LLMDataLoader():
 
 
 class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
-    approach = 'weight_only'
+    approach = "weight_only"
 
     @classmethod
     def setUpClass(self):
         self.dataloader = SimpleDataLoader()
         self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
-            'hf-internal-testing/tiny-random-GPTJForCausalLM',
+            "hf-internal-testing/tiny-random-GPTJForCausalLM",
             torchscript=True,
         )
         self.gptj_no_jit = transformers.AutoModelForCausalLM.from_pretrained(
-            'hf-internal-testing/tiny-random-GPTJForCausalLM',
+            "hf-internal-testing/tiny-random-GPTJForCausalLM",
         )
         self.gptj.seqlen = 512
         self.llm_dataloader = LLMDataLoader()
@@ -74,13 +77,12 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
 
-    def test_RTN_quant(self):
-        input = torch.randn(3,30)
-
+    def test_RTN_int_quant(self):
+        input = torch.randn(3, 30)
         model = Model()
         out1 = model(input)
         conf = PostTrainingQuantConfig(
-            approach='weight_only',
+            approach="weight_only",
         )
         q_model = quantization.fit(model, conf)
         out2 = q_model(input)
@@ -88,16 +90,16 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertFalse(torch.all(out1 == out2))
         compressed_model = q_model.export_compressed_model()
         out3 = compressed_model(input)
-        self.assertTrue(torch.all(out3==out2))
-        
+        self.assertTrue(torch.all(out3 == out2))
+
         model = Model()
         out1 = model(input)
         conf = PostTrainingQuantConfig(
-            approach='weight_only',
+            approach="weight_only",
             recipes={
                 # By default, sym_full_range is False and 4 bit sym will only use range [-7,7].
-                'rtn_args': {'sym_full_range': True}
-            }
+                "rtn_args": {"sym_full_range": True}
+            },
         )
         q_model = quantization.fit(model, conf)
         out2 = q_model(input)
@@ -105,17 +107,24 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertFalse(torch.all(out1 == out2))
         compressed_model = q_model.export_compressed_model(sym_full_range=True)
         out3 = compressed_model(input)
-        self.assertTrue(torch.all(out3==out2))
+        self.assertTrue(torch.all(out3 == out2))
 
         model = Model()
         out1 = model(input)
         conf = PostTrainingQuantConfig(
-            approach='weight_only',
+            approach="weight_only",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "dtype": "int4",  # 1-8 bits
+                    },
+                },
+            },
             recipes={
                 # By default, sym_full_range is False and 4 bit sym will only use range [-7,7].
                 # When mse_range is set to True, enable clip for weight by checking mse.
-                'rtn_args': {'sym_full_range': True, 'mse_range': True}
-            }
+                "rtn_args": {"sym_full_range": True, "mse_range": True}
+            },
         )
         q_model = quantization.fit(model, conf)
         out2 = q_model(input)
@@ -141,19 +150,19 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         conf = PostTrainingQuantConfig(
             approach='weight_only',
             op_type_dict={
-                '.*':{ 	# re.match
+                ".*": {  # re.match
                     "weight": {
-                        'bits': 8, # 1-8 bits 
-                        'group_size': -1,  # -1 (per-channel)
-                        'scheme': 'sym', 
-                        'algorithm': 'RTN', 
+                        "bits": 8,  # 1-8 bits
+                        "group_size": -1,  # -1 (per-channel)
+                        "scheme": "sym",
+                        "algorithm": "RTN",
                     },
                 },
             },
             recipes={
                 # By default, sym_full_range is False and 4 bit sym will only use range [-7,7].
-                'rtn_args': {'return_int': True}
-            }
+                "rtn_args": {"return_int": True}
+            },
         )
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
@@ -163,14 +172,14 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         model = Model()
         out1 = model(input)
         conf = PostTrainingQuantConfig(
-            approach='weight_only',
+            approach="weight_only",
             op_type_dict={
-                '.*':{ 	# re.match
+                ".*": {  # re.match
                     "weight": {
-                        'bits': 4, # 1-8 bits 
-                        'group_size': 32,  # 1 - 1024 or higher
-                        'scheme': 'asym', 
-                        'algorithm': 'RTN', 
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 32,  # 1 - 1024 or higher
+                        "scheme": "asym",
+                        "algorithm": "RTN",
                     },
                 },
             },
@@ -183,27 +192,27 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         model = Model()
         out1 = model(input)
         conf = PostTrainingQuantConfig(
-            approach='weight_only',
+            approach="weight_only",
             op_name_dict={
-                'fc1':{ 	# re.match
+                "fc1": {  # re.match
                     "weight": {
-                        'bits': 4, # 1-8 bits 
-                        'group_size': 32,  # 1 - 1024 or higher
-                        'scheme': 'sym', 
-                        'algorithm': 'RTN', 
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 32,  # 1 - 1024 or higher
+                        "scheme": "sym",
+                        "algorithm": "RTN",
                     },
                 },
-                'fc2':{ 	# re.match
+                "fc2": {  # re.match
                     "weight": {
-                        'bits': 3, # 1-8 bits 
-                        'group_size': 16,  # 1 - 1024 or higher
-                        'scheme': 'asym', 
-                        'algorithm': 'RTN', 
+                        "bits": 3,  # 1-8 bits
+                        "group_size": 16,  # 1 - 1024 or higher
+                        "scheme": "asym",
+                        "algorithm": "RTN",
                     },
                 },
-                'fc3':{ 	# re.match
+                "fc3": {  # re.match
                     "weight": {
-                        'dtype': 'fp32',
+                        "dtype": "fp32",
                     },
                 },
             },
@@ -212,73 +221,97 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
-        q_model.save('saved')
+        q_model.save("saved")
         from neural_compressor.utils.pytorch import load
-        new_model = load('saved', model, weight_only=True)
+
+        new_model = load("saved", model, weight_only=True)
         out1 = new_model(input)
         self.assertTrue(torch.all(out1 == out2))
 
-
-        model_size1 = os.path.getsize('saved/best_model.pt')/1024
+        model_size1 = os.path.getsize("saved/best_model.pt") / 1024
         print("FP32 Model size:{:.3f}M".format(model_size1))
         from neural_compressor.model import Model as INCModel
+
         inc_model = INCModel(new_model)
-        inc_model.export_compressed_model(qweight_config_path = 'saved/qconfig.json')
-        torch.save(inc_model.state_dict(), 'saved/tmp.pt')
-        model_size2 = os.path.getsize('saved/tmp.pt')/1024
+        inc_model.export_compressed_model(qweight_config_path="saved/qconfig.json")
+        torch.save(inc_model.state_dict(), "saved/tmp.pt")
+        model_size2 = os.path.getsize("saved/tmp.pt") / 1024
         print("WeightOnlyLinear Model size:{:.3f}M".format(model_size2))
         self.assertTrue(isinstance(inc_model.model.fc1, WeightOnlyLinear))
         self.assertTrue(model_size1 / model_size2 > 2)
 
+    def test_RTN_fp4_quant(self):
+        for dtype in ["nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"]:
+            input = torch.randn(3, 30)
+            model = Model()
+            out1 = model(input)
+            conf = PostTrainingQuantConfig(
+                approach="weight_only",
+                op_type_dict={
+                    ".*": {  # re.match
+                        "weight": {
+                            "dtype": dtype,  # select from int, nf4, or fp4
+                            # nf4/fp4 have fixed bits and scheme.
+                            "group_size": 32,  # -1 (per-channel)
+                            "algorithm": "RTN",
+                        },
+                    },
+                },
+            )
+            q_model = quantization.fit(model, conf)
+            out2 = q_model(input)
+            self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
+            self.assertFalse(torch.all(out1 == out2))
+            compressed_model = q_model.export_compressed_model()
+            out3 = compressed_model(input)
+            self.assertTrue(torch.all(out3 == out2))
+
     def test_AWQ_quant(self):
         conf = PostTrainingQuantConfig(
-            approach='weight_only',
+            approach="weight_only",
             op_type_dict={
-                '.*':{ 	# re.match
+                ".*": {  # re.match
                     "weight": {
-                        'bits': 4, # 1-8 bits 
-                        'group_size': 32,  # -1 (per-channel)
-                        'scheme': 'asym', 
-                        'algorithm': 'AWQ', 
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 32,  # -1 (per-channel)
+                        "scheme": "asym",
+                        "algorithm": "AWQ",
                     },
                 },
             },
             op_name_dict={
-                '.*3.*':{ 	# re.match
+                ".*3.*": {  # re.match
+                    "weight": {"dtype": "fp32"},
+                },
+                ".*4.*": {  # re.match
                     "weight": {
-                        'dtype': 'fp32'
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 32,  # -1 (per-channel)
+                        "scheme": "asym",
+                        "algorithm": "RTN",
                     },
                 },
-                '.*4.*':{ 	# re.match
-                    "weight": {
-                        'bits': 4, # 1-8 bits 
-                        'group_size': 32,  # -1 (per-channel)
-                        'scheme': 'asym', 
-                        'algorithm': 'RTN', 
-                    },
-                },
-                '.*lm_head':{ 	# re.match
-                    "weight": {
-                        'dtype': 'fp32'
-                    },
+                ".*lm_head": {  # re.match
+                    "weight": {"dtype": "fp32"},
                 },
             },
             recipes={
-                'awq_args':{'auto_scale': True, 'mse_range': True, 'folding': False},
+                "awq_args": {"auto_scale": True, "mse_range": True, "folding": False},
             },
         )
         fp32_model = copy.deepcopy(self.gptj)
         q_model = quantization.fit(
-            fp32_model, 
-            conf, 
+            fp32_model,
+            conf,
             calib_dataloader=self.llm_dataloader,
         )
-        q_model.save('saved')
+        q_model.save("saved")
         input = torch.ones([1, 10], dtype=torch.long)
         out1 = q_model(input)
         from neural_compressor.utils.pytorch import load
+
         fp32_model = copy.deepcopy(self.gptj)
-        reload_model = load('saved', fp32_model, weight_only=True)
+        reload_model = load("saved", fp32_model, weight_only=True)
         out2 = reload_model(input)
         q_model.export_compressed_model()
         out3 = q_model(input)
@@ -289,77 +322,108 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(isinstance(q_model.model.lm_head, torch.nn.Linear))
 
         conf = PostTrainingQuantConfig(
-            approach='weight_only',
+            approach="weight_only",
             op_type_dict={
-                '.*':{ 	# re.match
+                ".*": {  # re.match
                     "weight": {
-                        'bits': 4, # 1-8 bits 
-                        'group_size': 32,  # -1 (per-channel)
-                        'scheme': 'asym', 
-                        'algorithm': 'AWQ', 
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 32,  # -1 (per-channel)
+                        "scheme": "asym",
+                        "algorithm": "AWQ",
                     },
                 },
             },
             op_name_dict={
-                '.*3.*':{ 	# re.match
+                ".*3.*": {  # re.match
+                    "weight": {"dtype": "fp32"},
+                },
+                ".*4.*": {  # re.match
                     "weight": {
-                        'dtype': 'fp32'
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 32,  # -1 (per-channel)
+                        "scheme": "asym",
+                        "algorithm": "RTN",
                     },
                 },
-                '.*4.*':{ 	# re.match
-                    "weight": {
-                        'bits': 4, # 1-8 bits 
-                        'group_size': 32,  # -1 (per-channel)
-                        'scheme': 'asym', 
-                        'algorithm': 'RTN', 
-                    },
-                },
-                '.*lm_head':{ 	# re.match
-                    "weight": {
-                        'dtype': 'fp32'
-                    },
+                ".*lm_head": {  # re.match
+                    "weight": {"dtype": "fp32"},
                 },
             },
             recipes={
-                'rtn_args': {'return_int': True}, 
-                'awq_args':{'auto_scale': True, 'mse_range': True, 'folding': False},
+                "rtn_args": {"return_int": True},
+                "awq_args": {"auto_scale": True, "mse_range": True, "folding": False},
             },
         )
         fp32_model = copy.deepcopy(self.gptj)
         q_model = quantization.fit(
-            fp32_model, 
-            conf, 
+            fp32_model,
+            conf,
             calib_dataloader=self.llm_dataloader,
         )
         self.assertTrue(isinstance(q_model.model.transformer.h[0].mlp.fc_out, MulLinear))
         self.assertTrue(isinstance(q_model.model.transformer.h[3].mlp.fc_out, torch.nn.Linear))
         self.assertTrue(isinstance(q_model.model.transformer.h[4].mlp.fc_out, WeightOnlyLinear))
 
-
         conf = PostTrainingQuantConfig(
-            approach='weight_only',
+            approach="weight_only",
             op_type_dict={
-                '.*':{ 	# re.match
+                ".*": {  # re.match
                     "weight": {
-                        'bits': 4, # 1-8 bits 
-                        'group_size': 32,  # -1 (per-channel)
-                        'scheme': 'asym', 
-                        'algorithm': 'AWQ', 
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 32,  # -1 (per-channel)
+                        "scheme": "asym",
+                        "algorithm": "AWQ",
                     },
                 },
             },
         )
         fp32_model = copy.deepcopy(self.gptj_no_jit)
         q_model = quantization.fit(
-            fp32_model, 
-            conf, 
+            fp32_model,
+            conf,
             calib_dataloader=self.llm_dataloader,
         )
         self.assertTrue(isinstance(q_model.model.transformer.h[0].mlp.fc_in, MulLinear))
         self.assertTrue(isinstance(q_model.model.transformer.h[0].mlp.fc_out, MulLinear))
 
+    def test_AWQ_nf4_quant(self):
+        input = torch.ones([1, 10], dtype=torch.long)
+        fp32_model = copy.deepcopy(self.gptj)
+        out1 = fp32_model(input)
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "dtype": "nf4",  # select from int, nf4, or fp4
+                        # nf4/fp4 have fixed bits and scheme.
+                        "group_size": 32,  # -1 (per-channel)
+                        "algorithm": "RTN",
+                    },
+                },
+            },
+            op_name_dict={
+                "lm_head": {  # re.match
+                    "weight": {
+                        "dtype": "fp32",
+                    },
+                },
+            },
+        )
+        q_model = quantization.fit(
+            fp32_model,
+            conf,
+            calib_dataloader=self.llm_dataloader,
+        )
+        out2 = q_model(input)
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
+        compressed_model = q_model.export_compressed_model()
+        out3 = compressed_model(input)
+        self.assertTrue(torch.all(out3[0] == out2[0]))
+
     def test_AWQ_util(self):
         from neural_compressor.adaptor.torch_utils.util import get_module_input_output
+
         class DemoModel(torch.nn.Module):
             def __init__(self):
                 super(DemoModel, self).__init__()
@@ -372,25 +436,24 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 return out
 
         tmp = torch.randn([3, 3])
+
         class DemoCalibDataloader:
             def __init__(self):
                 self.batch_size = 1
+
             def __iter__(self):
                 for i in range(3):
                     yield tmp
 
-        module_hook_config = {
-            'fc1': ['output'],
-            'fc2': ['input', 'output']
-        }
+        module_hook_config = {"fc1": ["output"], "fc2": ["input", "output"]}
         model = DemoModel()
         out = model(tmp)
         values = get_module_input_output(model, module_hook_config, DemoCalibDataloader())
-        self.assertTrue(torch.allclose(values['fc1']['output'][0], values['fc2']['input'][0]))
-        self.assertTrue(torch.allclose(values['fc2']['output'][0], out))
+        self.assertTrue(torch.allclose(values["fc1"]["output"][0], values["fc2"]["input"][0]))
+        self.assertTrue(torch.allclose(values["fc2"]["output"][0], out))
 
     def test_GPTQ_fixed_length_quant(self):
-        class GPTQLLMDataLoader():
+        class GPTQLLMDataLoader:
             def __init__(self):
                 self.batch_size = 1
 
@@ -398,88 +461,102 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 for i in range(10):
                     yield torch.ones([1, 512], dtype=torch.long)
 
-        class GPTQLLMDataLoaderList():
+        class GPTQLLMDataLoaderList:
             def __init__(self):
                 self.batch_size = 1
 
             def __iter__(self):
                 for i in range(10):
                     yield (torch.ones([1, 512], dtype=torch.long), torch.ones([1, 512], dtype=torch.long))
-    
-        class GPTQLLMDataLoaderDict():
+
+        class GPTQLLMDataLoaderDict:
             def __init__(self):
                 self.batch_size = 1
 
             def __iter__(self):
                 for i in range(10):
-                    yield {'input_ids': torch.ones([1, 512], dtype=torch.long), 'attention_mask': torch.ones([1, 512], dtype=torch.long)}
+                    yield {
+                        "input_ids": torch.ones([1, 512], dtype=torch.long),
+                        "attention_mask": torch.ones([1, 512], dtype=torch.long),
+                    }
 
         dataloader = GPTQLLMDataLoader()
         dataloader_list = GPTQLLMDataLoaderList()
         dataloader_dict = GPTQLLMDataLoaderDict()
 
         conf = PostTrainingQuantConfig(
-            approach='weight_only',
+            approach="weight_only",
             op_type_dict={
-                '.*':{ 	# re.match
+                ".*": {  # re.match
                     "weight": {
-                        'bits': 4, # 1-8 bits 
-                        'group_size': 8,  # -1 (per-channel)
-                        'scheme': 'sym', 
-                        'algorithm': 'GPTQ', 
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 8,  # -1 (per-channel)
+                        "scheme": "sym",
+                        "algorithm": "GPTQ",
                     },
                 },
             },
             op_name_dict={
-                '.*lm_head':{ 	# re.match
-                    "weight": {
-                        'dtype': 'fp32'
-                    },
+                ".*lm_head": {  # re.match
+                    "weight": {"dtype": "fp32"},
                 },
             },
             recipes={
-                'gptq_args':{'percdamp': 0.01, 'act_order': False},
+                "gptq_args": {"percdamp": 0.01, "act_order": False},
             },
         )
-        
+
         # case 1: tensor
         model_1 = copy.deepcopy(self.gptj)
         input = torch.ones([1, 512], dtype=torch.long)
-        q_model = quantization.fit(model_1, conf, calib_dataloader=dataloader,)
-        q_model.save('saved')
+        q_model = quantization.fit(
+            model_1,
+            conf,
+            calib_dataloader=dataloader,
+        )
+        q_model.save("saved")
         out1 = q_model.model(input)
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(input)
-        torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
+        torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
 
         # # case 2: list or tuple
         model_2 = copy.deepcopy(self.gptj)
         input = torch.ones([1, 512], dtype=torch.long)
-        q_model = quantization.fit(model_2, conf, calib_dataloader=dataloader_list,)
-        q_model.save('saved')
+        q_model = quantization.fit(
+            model_2,
+            conf,
+            calib_dataloader=dataloader_list,
+        )
+        q_model.save("saved")
         out1 = q_model.model(input)
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(input)
-        torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
+        torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
-    
+
         # # case 2: list or tuple
         model_3 = copy.deepcopy(self.gptj)
         input = torch.ones([1, 512], dtype=torch.long)
-        q_model = quantization.fit(model_3, conf, calib_dataloader=dataloader_dict,)
-        q_model.save('saved')
+        q_model = quantization.fit(
+            model_3,
+            conf,
+            calib_dataloader=dataloader_dict,
+        )
+        q_model.save("saved")
         out1 = q_model.model(input)
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(input)
-        torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
+        torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
 
         print("GPTQ with fixed length Done")
 
     def test_GPTQ_unfixed_length_quant(self):
         import random
-        class GPTQLLMDataLoader():
+
+        class GPTQLLMDataLoader:
             def __init__(self):
                 self.batch_size = 1
 
@@ -488,7 +565,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     length = random.randint(1, 1024)
                     yield torch.ones([1, length], dtype=torch.long)
 
-        class GPTQLLMDataLoaderList():
+        class GPTQLLMDataLoaderList:
             def __init__(self):
                 self.batch_size = 1
 
@@ -496,75 +573,88 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 for i in range(10):
                     length = random.randint(1, 1024)
                     yield (torch.ones([1, length], dtype=torch.long), torch.ones([1, length], dtype=torch.long))
-    
-        class GPTQLLMDataLoaderDict():
+
+        class GPTQLLMDataLoaderDict:
             def __init__(self):
                 self.batch_size = 1
 
             def __iter__(self):
                 for i in range(10):
                     length = random.randint(1, 1024)
-                    yield {'input_ids': torch.ones([1, length], dtype=torch.long), 'attention_mask': torch.ones([1, length], dtype=torch.long)}
+                    yield {
+                        "input_ids": torch.ones([1, length], dtype=torch.long),
+                        "attention_mask": torch.ones([1, length], dtype=torch.long),
+                    }
 
         dataloader = GPTQLLMDataLoader()
         dataloader_list = GPTQLLMDataLoaderList()
         dataloader_dict = GPTQLLMDataLoaderDict()
 
         conf = PostTrainingQuantConfig(
-            approach='weight_only',
+            approach="weight_only",
             op_type_dict={
-                '.*':{ 	# re.match
+                ".*": {  # re.match
                     "weight": {
-                        'bits': 4, # 1-8 bits 
-                        'group_size': 8,  # -1 (per-channel)
-                        'scheme': 'sym', 
-                        'algorithm': 'GPTQ', 
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 8,  # -1 (per-channel)
+                        "scheme": "sym",
+                        "algorithm": "GPTQ",
                     },
                 },
             },
             op_name_dict={
-                '.*lm_head':{ 	# re.match
-                    "weight": {
-                        'dtype': 'fp32'
-                    },
+                ".*lm_head": {  # re.match
+                    "weight": {"dtype": "fp32"},
                 },
             },
             recipes={
-                'gptq_args':{'percdamp': 0.01, 'act_order': False, 'use_max_length': True},
+                "gptq_args": {"percdamp": 0.01, "act_order": False, "use_max_length": True},
             },
         )
-        
+
         # case 1: tensor
         model_1 = copy.deepcopy(self.gptj)
         input = torch.ones([1, 512], dtype=torch.long)
-        q_model = quantization.fit(model_1, conf, calib_dataloader=dataloader,)
-        q_model.save('saved')
+        q_model = quantization.fit(
+            model_1,
+            conf,
+            calib_dataloader=dataloader,
+        )
+        q_model.save("saved")
         out1 = q_model.model(input)
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(input)
-        torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
+        torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
 
         # # case 2: list or tuple
         model_2 = copy.deepcopy(self.gptj)
         input = torch.ones([1, 512], dtype=torch.long)
-        q_model = quantization.fit(model_2, conf, calib_dataloader=dataloader_list,)
-        q_model.save('saved')
+        q_model = quantization.fit(
+            model_2,
+            conf,
+            calib_dataloader=dataloader_list,
+        )
+        q_model.save("saved")
         out1 = q_model.model(input)
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(input)
-        torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
+        torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
-    
+
         # # case 2: list or tuple
         model_3 = copy.deepcopy(self.gptj)
         input = torch.ones([1, 512], dtype=torch.long)
-        q_model = quantization.fit(model_3, conf, calib_dataloader=dataloader_dict,)
-        q_model.save('saved')
+        q_model = quantization.fit(
+            model_3,
+            conf,
+            calib_dataloader=dataloader_dict,
+        )
+        q_model.save("saved")
         out1 = q_model.model(input)
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(input)
-        torch.save(compressed_model.state_dict(), 'saved/compressed_model.pt')
+        torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
 
         print("GPTQ with fixed length Done")
@@ -583,32 +673,35 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     yield (torch.ones([1, 512], dtype=torch.long), torch.ones([1, 512], dtype=torch.long))
 
         conf = PostTrainingQuantConfig(
-            approach='weight_only',
+            approach="weight_only",
             op_type_dict={
-                '.*':{  # re.match
+                ".*": {  # re.match
                     "weight": {
-                        'bits': 4, # 1-8 bits
-                        'group_size': 32,  # -1 (per-channel)
-                        'scheme': 'sym',
-                        'algorithm': 'TEQ',
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 32,  # -1 (per-channel)
+                        "scheme": "sym",
+                        "algorithm": "TEQ",
                     },
                 },
             },
             op_name_dict={
-                '.*lm_head':{   # re.match
-                    "weight": {
-                        'dtype': 'fp32'
-                    },
+                ".*lm_head": {  # re.match
+                    "weight": {"dtype": "fp32"},
                 },
             },
             recipes={
-                'teq_args':{"folding": True},
+                "teq_args": {"folding": True},
             },
         )
 
         dataloader = teq_inc_loader()
         model_1 = copy.deepcopy(self.gptj)
-        q_model = quantization.fit(model_1, conf, calib_dataloader=dataloader,)
+        q_model = quantization.fit(
+            model_1,
+            conf,
+            calib_dataloader=dataloader,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

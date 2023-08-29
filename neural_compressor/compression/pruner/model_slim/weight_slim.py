@@ -16,8 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..utils import torch, logger
-import random 
+import random
+
+from ..utils import logger, torch
 
 # since we have to modify the attribute's name in MHA module after slim,
 # we need to locate them automatically.
@@ -28,6 +29,7 @@ MHA_ATTRIBUTE_NAMES = {
     "hidden_size": ["all_head_size", "embed_dim", "hidden_size"],
 }
 
+
 class PostCompressionUtils(object):
     """Operations library related to weight compression."""
 
@@ -36,7 +38,7 @@ class PostCompressionUtils(object):
         """Obtain a lower dimension mask for an sparse weight matrix."""
         # dim 1 is input channel
         tensor_reduce = torch.sum(tensor.abs(), 1)
-        mask_reduce = torch.where(tensor_reduce==0.0, 0, 1)
+        mask_reduce = torch.where(tensor_reduce == 0.0, 0, 1)
         return mask_reduce
 
     @staticmethod
@@ -44,7 +46,7 @@ class PostCompressionUtils(object):
         """Obtain a lower dimension mask for an sparse weight matrix."""
         # dim 0 is output channel
         tensor_reduce = torch.sum(tensor.abs(), 0)
-        mask_reduce = torch.where(tensor_reduce==0.0, 0, 1)
+        mask_reduce = torch.where(tensor_reduce == 0.0, 0, 1)
         return mask_reduce
 
     @staticmethod
@@ -52,10 +54,10 @@ class PostCompressionUtils(object):
         """Obtain a lower dimension mask for an sparse weight matrix."""
         head_size = hidden_size // head_nums
         tensor_reduce = torch.sum(tensor.abs(), 1)
-        mask_reduce = torch.where(tensor_reduce==0.0, 0, 1)
+        mask_reduce = torch.where(tensor_reduce == 0.0, 0, 1)
         mask_reduce_headwise = mask_reduce.reshape(mask_reduce.shape[0] // head_size, head_size).sum(1) / head_size
         mask_reduce_indice = torch.nonzero(torch.where(mask_reduce_headwise <= 0.00001, 1, 0) == 1).squeeze().tolist()
-        if isinstance(mask_reduce_indice, int): 
+        if isinstance(mask_reduce_indice, int):
             # only one channel is pruned
             return [mask_reduce_indice]
         return mask_reduce_indice
@@ -65,10 +67,10 @@ class PostCompressionUtils(object):
         """Obtain a lower dimension mask for an sparse weight matrix."""
         head_size = hidden_size // head_nums
         tensor_reduce = torch.sum(tensor.abs(), 0)
-        mask_reduce = torch.where(tensor_reduce==0.0, 0, 1)
+        mask_reduce = torch.where(tensor_reduce == 0.0, 0, 1)
         mask_reduce_headwise = mask_reduce.reshape(mask_reduce.shape[0] // head_size, head_size).sum(1) / head_size
         mask_reduce_indice = torch.nonzero(torch.where(mask_reduce_headwise <= 0.00001, 1, 0) == 1).squeeze().tolist()
-        if isinstance(mask_reduce_indice, int): 
+        if isinstance(mask_reduce_indice, int):
             # only one channel is pruned
             return [mask_reduce_indice]
         return mask_reduce_indice
@@ -92,7 +94,7 @@ class PostCompressionUtils(object):
             n_head: int. number of head to prune
             head_size: for head pruning, it is head size, for channel pruning, it is 1
             round_option: if pruning channel number does not equals to 32x, (16x), round it to a 32x int
-        
+
         Return:
             indice: the mask' zero-value elements indice
             indice_to_keep: the masks one-value elements indice
@@ -118,9 +120,9 @@ class PostCompressionUtils(object):
         return indice, indice_to_keep
 
     @staticmethod
-    def prune_linear(layer, index, device, dim = 0, prune_bias = True):
+    def prune_linear(layer, index, device, dim=0, prune_bias=True):
         """Operation to compress a sparse linear layer's weight.
-        
+
         Args:
             layer (torch.nn.Linear): a linear layer
             index (list): the indice which channels/heads should be kept
@@ -128,11 +130,11 @@ class PostCompressionUtils(object):
             prune_bias (bool): if output channel is pruned, bias should also be pruned.
 
         Return:
-            The same layer object whose weight (probability also bias) has been compressed. 
+            The same layer object whose weight (probability also bias) has been compressed.
         """
         index = index.to(device)
         _w = layer.weight.index_select(dim, index).clone().detach()
-        if layer.bias != None:
+        if layer.bias is not None:
             if prune_bias:
                 _b = layer.bias[index].clone().detach()
             else:
@@ -144,7 +146,7 @@ class PostCompressionUtils(object):
         setattr(layer, "in_features", new_size[1])
         setattr(layer, "out_features", new_size[0])
         setattr(layer, "weight", torch.nn.Parameter(_w.clone()))
-        if _b != None:
+        if _b is not None:
             setattr(layer, "bias", torch.nn.Parameter(_b.clone()))
         else:
             setattr(layer, "bias", None)
@@ -154,17 +156,18 @@ class PostCompressionUtils(object):
         layer.weight.copy_(_w.contiguous())
         layer.weight.requires_grad = True
 
-        if prune_bias and layer.bias != None:
+        if prune_bias and layer.bias is not None:
             layer.bias.requires_grad = False
             layer.bias.copy_(_b.contiguous())
             layer.bias.requires_grad = True
 
+
 class LinearCompression(object):
     """Class which automatically compresses two consecutive linear layers.
 
-    For two consecutive linear layer, when the second layer's input channel is pruned, 
-    then the first layer's output channel can also be pruned, 
-    while the second layer's output hidden state value is identical. 
+    For two consecutive linear layer, when the second layer's input channel is pruned,
+    then the first layer's output channel can also be pruned,
+    while the second layer's output hidden state value is identical.
     for example, two consecutive linears have following structure.
     x = layer_1(input)
     x = act_fn(x)
@@ -189,12 +192,12 @@ class LinearCompression(object):
         self.target_linears = target_linears
         self.device = self.root_linear.weight.device
         self.log = {
-            'root_before': [self.root_linear.out_features, self.root_linear.in_features],
-            'target_before': [
+            "root_before": [self.root_linear.out_features, self.root_linear.in_features],
+            "target_before": [
                 [linear_layer.out_features, linear_layer.in_features] for linear_layer in self.target_linears
             ],
         }
-    
+
     def __call__(self, mask=None, round_value=32):
         """Operation to execute weight compression process.
 
@@ -202,7 +205,6 @@ class LinearCompression(object):
             mask: the predefined mask of the second layer's input channel.
                   if is None, the API automatically detects the sparse channel and generates the mask.
             round_value (int): if pruning channel number does not equals to 32x, (16x), round it to a 32x int
-
         """
         if mask is not None:
             root_linear_mask = mask.clone().to(self.device)
@@ -210,29 +212,25 @@ class LinearCompression(object):
             root_linear_mask = PostCompressionUtils.obtain_input_masks(self.root_linear.weight)
         root_linear_indice_to_prune = PostCompressionUtils.get_mask_indices(root_linear_mask)
         _, root_linear_indice_to_keep = PostCompressionUtils.find_pruneable_indices(
-            root_linear_indice_to_prune, 
-            self.root_linear.in_features, 1, round_value
-        ) # 1 refer to channel-wise pruning
+            root_linear_indice_to_prune, self.root_linear.in_features, 1, round_value
+        )  # 1 refer to channel-wise pruning
         # slim the root linear layer
         PostCompressionUtils.prune_linear(
-            self.root_linear, 
-            root_linear_indice_to_keep, 
-            device=self.device, dim=1, prune_bias=False
+            self.root_linear, root_linear_indice_to_keep, device=self.device, dim=1, prune_bias=False
         )
         for target_linear in self.target_linears:
             PostCompressionUtils.prune_linear(
-                target_linear, 
-                root_linear_indice_to_keep, 
-                device=self.device, dim=0, prune_bias=True
+                target_linear, root_linear_indice_to_keep, device=self.device, dim=0, prune_bias=True
             )
         # Summary:
-        self.log['root_after'] = [self.root_linear.out_features, self.root_linear.in_features]
-        self.log['target_after'] = [
+        self.log["root_after"] = [self.root_linear.out_features, self.root_linear.in_features]
+        self.log["target_after"] = [
             [linear_layer.out_features, linear_layer.in_features] for linear_layer in self.target_linears
         ]
         logger.info(f"linear compression: {self.log['root_before']} -> {self.log['root_after']}")
-        for idx in range(len(self.log['target_before'])):
+        for idx in range(len(self.log["target_before"])):
             logger.info(f"linear compression: {self.log['target_before'][idx]} -> {self.log['target_after'][idx]}")
+
 
 class LinearCompressionIterator(object):
     """Pruner of a sequence of consecutive linear patterns.
@@ -252,7 +250,6 @@ class LinearCompressionIterator(object):
             mask: the predefined masks of the second layers input channel.
                   if is None, the API automatically detects the sparse channel and generates the mask.
             round_value (int): if pruning channel number does not equals to 32x, (16x), round it to a 32x int
-
         """
         # masks should have same length as layers patterns
         # self.linear_patterns: a list or dict
@@ -262,7 +259,7 @@ class LinearCompressionIterator(object):
             mask_len = masks.shape[0]
         layer_idx = 0
         for pattern in self.linear_patterns:
-            linear_pruner = LinearCompression(pattern['root_linear'], pattern['target_frontier_linears'])
+            linear_pruner = LinearCompression(pattern["root_linear"], pattern["target_frontier_linears"])
             # if isinstance(self.linear_patterns, dict):
             #     linear_pruner = LinearCompression(self.linear_patterns[pattern][0], self.linear_patterns[pattern][1])
             # elif isinstance(self.linear_patterns, list):
@@ -270,13 +267,14 @@ class LinearCompressionIterator(object):
             # else:
             #     raise NotImplementedError
             # compression
-            if masks != None and layer_idx < len(masks):
+            if masks is not None and layer_idx < len(masks):
                 linear_pruner(mask=masks[layer_idx], round_value=round_value)
             else:
                 linear_pruner(round_value=round_value)
             layer_idx += 1
             del linear_pruner
-        logger.info(f"Post pruning model slim finished.")
+        logger.info("Post pruning model slim finished.")
+
 
 class MHACompression(object):
     def __init__(self, mha_object):
@@ -290,14 +288,14 @@ class MHACompression(object):
             'qkv_module': [torch.nn.Linear, torch.nn.Linear, torch.nn.Linear],
             'ffn_module': [torch.nn.Linear],
             'mha_module': [torch.nn.Module] (keep not change),
-        }   
+        }
         """
-        self.qkv_name = mha_object['qkv_name'] # list
-        self.ffn_name = mha_object['ffn_name'] # list
-        self.mha_name = mha_object['mha_name'] # list
-        self.qkv = mha_object['qkv_module'] # list
-        self.ffn = mha_object['ffn_module'] # list
-        self.mha = mha_object['mha_module'] # list
+        self.qkv_name = mha_object["qkv_name"]  # list
+        self.ffn_name = mha_object["ffn_name"]  # list
+        self.mha_name = mha_object["mha_name"]  # list
+        self.qkv = mha_object["qkv_module"]  # list
+        self.ffn = mha_object["ffn_module"]  # list
+        self.mha = mha_object["mha_module"]  # list
 
         self.attributes_for_this_mha = self.check_mha_attributes(self.mha[0])
         logger.info(f"Following attributes are hooked and might be modified: {self.attributes_for_this_mha}")
@@ -317,7 +315,7 @@ class MHACompression(object):
                 if hasattr(mha, attr_name):
                     attributes_for_this_mha[k] = attr_name
         for k, v in attributes_for_this_mha.items():
-            if v == None:
+            if v is None:
                 logger.warning(f"Cannot locate attributes {k} in {type(mha).__name__}, please set them manually.")
                 raise NotImplementedError
         return attributes_for_this_mha
@@ -328,13 +326,13 @@ class MHACompression(object):
             common_indice = set(common_indice) & set(v)
         return list(common_indice)
 
-    def mask_mha_weights(self, head_mask = None):
-        head_size = getattr(self.mha[0], self.attributes_for_this_mha['head_size'])
-        head_nums = getattr(self.mha[0], self.attributes_for_this_mha['head_nums'])
+    def mask_mha_weights(self, head_mask=None):
+        head_size = getattr(self.mha[0], self.attributes_for_this_mha["head_size"])
+        head_nums = getattr(self.mha[0], self.attributes_for_this_mha["head_nums"])
         # check
         assert head_mask.numel() == head_nums, f"Module {self.mha_name}'s head num and head mask does not match."
         # extend the masks
-        ffn_mask = torch.repeat_interleave(head_mask, head_size, dim = -1)
+        ffn_mask = torch.repeat_interleave(head_mask, head_size, dim=-1)
         qkv_mask = ffn_mask.permute(1, 0)
         # mask the weight data
         for qkv_linear in self.qkv:
@@ -343,29 +341,29 @@ class MHACompression(object):
         for ffn_linear in self.ffn:
             # 1 linears
             ffn_linear.weight.data = ffn_linear.weight.data * ffn_mask.to(self.device)
-    
-    def __call__(self, head_mask = None):
-        """
-        for qkv, prune output channel, for output, prune input channel
-        four linear shares identical masks (attention mask)
-        """
+
+    def __call__(self, head_mask=None):
+        """For qkv, prune output channel, for output, prune input channel
+        four linear shares identical masks (attention mask)"""
         # obtain mha attributes
-        hidden_size = getattr(self.mha[0], self.attributes_for_this_mha['hidden_size'])
-        head_nums = getattr(self.mha[0], self.attributes_for_this_mha['head_nums'])
-        head_size = getattr(self.mha[0], self.attributes_for_this_mha['head_size'])
+        hidden_size = getattr(self.mha[0], self.attributes_for_this_mha["hidden_size"])
+        head_nums = getattr(self.mha[0], self.attributes_for_this_mha["head_nums"])
+        head_size = getattr(self.mha[0], self.attributes_for_this_mha["head_size"])
         qkv_indice = [
             PostCompressionUtils.get_mha_output_indice(
-                layer.weight, 
-                hidden_size, 
+                layer.weight,
+                hidden_size,
                 head_nums,
-            ) for layer in self.qkv
+            )
+            for layer in self.qkv
         ]
         ffn_indice = [
             PostCompressionUtils.get_mha_input_indice(
-                layer.weight, 
-                hidden_size, 
+                layer.weight,
+                hidden_size,
                 head_nums,
-            ) for layer in self.ffn
+            )
+            for layer in self.ffn
         ]
         all_indice_to_prune = {
             "qkv": qkv_indice,
@@ -374,7 +372,7 @@ class MHACompression(object):
         all_indice_to_prune_list = []
         for k, v in all_indice_to_prune.items():
             all_indice_to_prune_list += v
-        
+
         # alignment, take the least heads to prune
         # logger.info(all_indice_to_prune)
         prune_indice = self.find_common_indice(all_indice_to_prune_list)
@@ -390,7 +388,7 @@ class MHACompression(object):
 
         # Update hyper params and store pruned heads, this is critical for mha slim
         for mha in self.mha:
-            new_head_nums = getattr(mha, self.attributes_for_this_mha['head_nums']) - len(prune_indice)
-            new_hidden_size = getattr(mha, self.attributes_for_this_mha['head_size']) * new_head_nums
-            setattr(mha, self.attributes_for_this_mha['head_nums'], new_head_nums)
-            setattr(mha, self.attributes_for_this_mha['hidden_size'], new_hidden_size)
+            new_head_nums = getattr(mha, self.attributes_for_this_mha["head_nums"]) - len(prune_indice)
+            new_hidden_size = getattr(mha, self.attributes_for_this_mha["head_size"]) * new_head_nums
+            setattr(mha, self.attributes_for_this_mha["head_nums"], new_head_nums)
+            setattr(mha, self.attributes_for_this_mha["hidden_size"], new_hidden_size)

@@ -17,25 +17,31 @@
 
 """Tuning sampler."""
 
-from itertools import product
 import copy
-from collections import deque, OrderedDict, defaultdict
-from typing import List, Dict, Any
+from collections import OrderedDict, defaultdict, deque
+from itertools import product
+from typing import Any, Dict, List
+
+from ....utils import logger
 from .tuning_space import TuningSpace, pattern_to_internal, pattern_to_path, quant_mode_from_pattern
 from .tuning_structs import OpTuningConfig
-from ....utils import logger
 
-TUNING_ITEM_PRIORITY = [('activation','scheme'), ('activation','algorithm'),('activation','granularity'), 
-                        ('activation','compute_dtype'), ('weight','scheme'), ('weight','algorithm'), \
-                        ('weight','granularity')]
-
+TUNING_ITEM_PRIORITY = [
+    ("activation", "scheme"),
+    ("activation", "algorithm"),
+    ("activation", "granularity"),
+    ("activation", "compute_dtype"),
+    ("weight", "scheme"),
+    ("weight", "algorithm"),
+    ("weight", "granularity"),
+]
 
 
 class TuningSamplerRegistry:
     """Class decorator used to register all TuningSampler subclasses."""
-    
+
     sampler_dict = {}
-    
+
     @classmethod
     def register(cls, name):
         """Register new tuning sampler.
@@ -43,10 +49,13 @@ class TuningSamplerRegistry:
         Args:
             name: the name of new tuning sampler.
         """
+
         def decorator(sampler):
             assert name not in cls.sampler_dict, "Cannot have two sampler with the same name."
             cls.sampler_dict[name] = sampler
+
         return decorator
+
 
 class TuningOrder:
     """Not displayed in API Docs."""
@@ -58,15 +67,17 @@ class TuningOrder:
 
 class TuningSampler:
     """Not displayed in API Docs.
-    
+
     Basic class of tuning sampler.
     """
 
-    def __init__(self,
-                 tuning_space: TuningSpace,
-                 tuning_order_lst: List[TuningOrder],
-                 initial_op_tuning_cfg: Dict,
-                 kwargs: Dict = {}):
+    def __init__(
+        self,
+        tuning_space: TuningSpace,
+        tuning_order_lst: List[TuningOrder],
+        initial_op_tuning_cfg: Dict,
+        kwargs: Dict = {},
+    ):
         """Init tuning sampler.
 
         Args:
@@ -85,61 +96,64 @@ class TuningSampler:
     def __iter__(self, tune_cfg=None):
         """Interface for generate the next tuning config."""
         pass
-    
+
     def _set_dtype(self, op_name_type, config_args):
-        has_weight = op_name_type in self.tuning_space.ops_attr['weight']
-        path = self.op_complete_path[op_name_type].get('activation', None)
-        config_args['activation_dtype'] = self.tuning_space.ops_data_type[op_name_type][path]
+        has_weight = op_name_type in self.tuning_space.ops_attr["weight"]
+        path = self.op_complete_path[op_name_type].get("activation", None)
+        config_args["activation_dtype"] = self.tuning_space.ops_data_type[op_name_type][path]
         if has_weight:
-            path = self.op_complete_path[op_name_type].get('weight', None)
-            config_args['weight_dtype'] =  self.tuning_space.ops_data_type[op_name_type][path]
-       
+            path = self.op_complete_path[op_name_type].get("weight", None)
+            config_args["weight_dtype"] = self.tuning_space.ops_data_type[op_name_type][path]
+
 
 class ModelWiseTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
 
-    def __init__(self,
-                 tuning_space: TuningSpace,
-                 tuning_items_priority: List[str],
-                 tuning_order_lst: List[TuningOrder],
-                 op_dtype_dict: Dict[tuple, str],
-                 initial_op_tuning_cfg: Dict[tuple, OpTuningConfig]):
+    def __init__(
+        self,
+        tuning_space: TuningSpace,
+        tuning_items_priority: List[str],
+        tuning_order_lst: List[TuningOrder],
+        op_dtype_dict: Dict[tuple, str],
+        initial_op_tuning_cfg: Dict[tuple, OpTuningConfig],
+    ):
         """Model type wise tuning sampler.
 
         step1. create a default tuning config for each op
         step2. collect all tuning items and options, and build the model-wise traverse order
-        step3. yield the tuning item with option one by one, query the existence of tuning item 
+        step3. yield the tuning item with option one by one, query the existence of tuning item
                and specific option for one op if exist, use the default tuning config if not exist
-               
+
         Args:
             tuning_space: Tuning space.
             tuning_items_priority: The priority to traverse the tuning items.
             tuning_order_lst: The tuning orders.
             op_dtype_dict: The (op name, op type) and its target data type.
             initial_op_tuning_cfg: The initial tuning config.
-        
         """
         super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg)
 
         self.op_dtype_dict = op_dtype_dict
         self.tuning_space = tuning_space
         self.default_op_config = {}
-        tuning_items = defaultdict(set) # item name: options
+        tuning_items = defaultdict(set)  # item name: options
         for op_name_type, quant_mode in op_dtype_dict.items():
             full_path = self.tuning_space.get_op_default_path_by_pattern(op_name_type, quant_mode)
             self.op_complete_path[op_name_type] = copy.deepcopy(full_path)
             # step1, set the default config for each op
             self.default_op_config[op_name_type] = tuning_space.get_default_config(op_name_type, quant_mode)
-            if quant_mode[0] == 'precision': continue
-            mode_items = copy.deepcopy(full_path) # TODO refactor the initialization method
+            if quant_mode[0] == "precision":
+                continue
+            mode_items = copy.deepcopy(full_path)  # TODO refactor the initialization method
             # step2, collect all tuning items and their options
             for att in mode_items:
-                if att not in full_path: continue
-                quant_mode_item = self.tuning_space.query_quant_mode_item_by_full_path(op_name_type ,full_path[att])
+                if att not in full_path:
+                    continue
+                quant_mode_item = self.tuning_space.query_quant_mode_item_by_full_path(op_name_type, full_path[att])
                 for tuning_item in quant_mode_item.options:
                     tuning_items[tuning_item.name] = tuning_items[tuning_item.name].union(tuning_item.options)
         self.tuning_items = tuning_items
-    
+
     def __iter__(self):
         """Yield the next tuning config.
 
@@ -151,39 +165,41 @@ class ModelWiseTuningSampler(TuningSampler):
             # traverse all possible combinations by model-wise level
             tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
             for op_name_type, quant_mode in self.op_dtype_dict.items():
-                if quant_mode[0] == 'precision': continue
+                if quant_mode[0] == "precision":
+                    continue
                 all_exist_flag = True
                 for method_name, method_val in zip(keys, vals):
                     full_path = self.op_complete_path[op_name_type]
-                    if method_name[0] not in full_path: continue
-                    if not self.tuning_space.query_item_option(op_name_type,
-                                                               full_path[method_name[0]],
-                                                               method_name, method_val):
+                    if method_name[0] not in full_path:
+                        continue
+                    if not self.tuning_space.query_item_option(
+                        op_name_type, full_path[method_name[0]], method_name, method_val
+                    ):
                         all_exist_flag = False
                         tune_cfg[op_name_type] = self.default_op_config[op_name_type]
                         break
                 if all_exist_flag:
                     config_args = dict(zip(keys, vals))
-                    self._set_dtype( op_name_type, config_args)
+                    self._set_dtype(op_name_type, config_args)
                     internal_pattern = pattern_to_internal(quant_mode)
                     quant_mode = quant_mode_from_pattern(internal_pattern)
-                    tune_cfg[op_name_type] = OpTuningConfig(op_name_type[0],
-                                                            op_name_type[1],
-                                                            quant_mode,
-                                                            self.tuning_space,
-                                                            kwargs=config_args)
+                    tune_cfg[op_name_type] = OpTuningConfig(
+                        op_name_type[0], op_name_type[1], quant_mode, self.tuning_space, kwargs=config_args
+                    )
             yield tune_cfg
-                
+
 
 class OpTypeWiseTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
 
-    def __init__(self,
-                 tuning_space: TuningSpace,
-                 tuning_items_priority: List[str],
-                 tuning_order_lst: List[TuningOrder],
-                 op_dtype_dict: Dict[tuple, str],
-                 initial_op_tuning_cfg: Dict[tuple, OpTuningConfig]):
+    def __init__(
+        self,
+        tuning_space: TuningSpace,
+        tuning_items_priority: List[str],
+        tuning_order_lst: List[TuningOrder],
+        op_dtype_dict: Dict[tuple, str],
+        initial_op_tuning_cfg: Dict[tuple, OpTuningConfig],
+    ):
         """Op type wise tuning sampler.
 
         Args:
@@ -197,27 +213,28 @@ class OpTypeWiseTuningSampler(TuningSampler):
         tuning_items_priority = TUNING_ITEM_PRIORITY
         # (op_type, quant_mode) : {tuning_item_name : [option1, option2]}
         #  {('activation', 'scheme'): ['sym', 'sym'], ('activation', 'algorithm'): ['minmax', 'kl', 'minmax', 'kl']}
-        
+
         self.optype_quant_mode_option = {}
         self.optype_quant_mode_items_name = defaultdict(list)
         self.op_type_quant_mode_wise_combination = {}
         self.op_dtype_dict = op_dtype_dict
         self.default_op_config = {}
-        
+
         for op_name_type, quant_mode in op_dtype_dict.items():
             full_path = self.tuning_space.get_op_default_path_by_pattern(op_name_type, quant_mode)
             self.op_complete_path[op_name_type] = copy.deepcopy(full_path)
             self.default_op_config[op_name_type] = self.tuning_space.get_default_config(op_name_type, quant_mode)
             op_name, op_type = op_name_type
-            if quant_mode[0] == 'precision': continue
-            mode_items = copy.deepcopy(full_path) # TODO refactor the initialization method
+            if quant_mode[0] == "precision":
+                continue
+            mode_items = copy.deepcopy(full_path)  # TODO refactor the initialization method
             op_type_quant_mode = (op_type, quant_mode)
             filtered_tuning_items = []
             for item_name in tuning_items_priority:
                 att, method_name = item_name
                 if att not in mode_items:
                     continue
-                quant_mode_item = self.tuning_space.query_quant_mode_item_by_full_path(op_name_type ,full_path[att])
+                quant_mode_item = self.tuning_space.query_quant_mode_item_by_full_path(op_name_type, full_path[att])
                 item = quant_mode_item.get_option_by_name(item_name)
                 if item:
                     if op_type_quant_mode not in self.optype_quant_mode_option:
@@ -247,41 +264,40 @@ class OpTypeWiseTuningSampler(TuningSampler):
             for index, op_type_quant_mode in enumerate(self.op_type_quant_mode_wise_combination.keys()):
                 for op_name_type, quant_mode in self.op_dtype_dict.items():
                     if op_name_type[1] == op_type_quant_mode[0] and quant_mode == op_type_quant_mode[1]:
-                        op_tuning_items = [item.name for item in \
-                                           self.optype_quant_mode_items_name[op_type_quant_mode]]
+                        op_tuning_items = [item.name for item in self.optype_quant_mode_items_name[op_type_quant_mode]]
                         op_tuning_item_vals = options_lst[index]
                         all_exist_flag = True
                         for method_name, method_val in zip(op_tuning_items, op_tuning_item_vals):
                             full_path = self.op_complete_path[op_name_type]
-                            if not self.tuning_space.query_item_option(op_name_type, 
-                                                                       full_path[method_name[0]], 
-                                                                       method_name, 
-                                                                       method_val):
+                            if not self.tuning_space.query_item_option(
+                                op_name_type, full_path[method_name[0]], method_name, method_val
+                            ):
                                 all_exist_flag = False
                                 op_tuning_config = self.default_op_config[op_name_type]
                                 break
                         if all_exist_flag:
                             config_args = dict(zip(op_tuning_items, op_tuning_item_vals))
-                            self._set_dtype( op_name_type, config_args)
+                            self._set_dtype(op_name_type, config_args)
                             internal_pattern = pattern_to_internal(quant_mode)
                             quant_mode = quant_mode_from_pattern(internal_pattern)
-                            op_tuning_config = OpTuningConfig(op_name_type[0],
-                                                              op_name_type[1],
-                                                              quant_mode,
-                                                              self.tuning_space,
-                                                              kwargs=config_args)
+                            op_tuning_config = OpTuningConfig(
+                                op_name_type[0], op_name_type[1], quant_mode, self.tuning_space, kwargs=config_args
+                            )
                         new_tune_cfg.update({op_name_type: op_tuning_config})
             yield new_tune_cfg
+
 
 class OpWiseTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
 
-    def __init__(self,
-                 tuning_space: TuningSpace,
-                 tuning_items_priority: List[str],
-                 tuning_order_lst: List[TuningOrder],
-                 op_dtype_dict: Dict[tuple, str],
-                 initial_op_tuning_cfg: Dict):
+    def __init__(
+        self,
+        tuning_space: TuningSpace,
+        tuning_items_priority: List[str],
+        tuning_order_lst: List[TuningOrder],
+        op_dtype_dict: Dict[tuple, str],
+        initial_op_tuning_cfg: Dict,
+    ):
         """Op wise tuning config sampler.
 
         Args:
@@ -303,13 +319,14 @@ class OpWiseTuningSampler(TuningSampler):
             mode_items = copy.deepcopy(full_path)
             internal_pattern = pattern_to_internal(op_quant_mode)
             op_quant_mode = quant_mode_from_pattern(internal_pattern)
-            if internal_pattern[0] == 'precision': continue
+            if internal_pattern[0] == "precision":
+                continue
             filtered_tuning_items = []
             for item_name in tuning_items_priority:
                 att, method_name = item_name
                 if att not in mode_items:
                     continue
-                quant_mode_item = self.tuning_space.query_quant_mode_item_by_full_path(op_name_type ,full_path[att])
+                quant_mode_item = self.tuning_space.query_quant_mode_item_by_full_path(op_name_type, full_path[att])
                 item = quant_mode_item.get_option_by_name(item_name)
                 if item:
                     filtered_tuning_items.append(item)
@@ -333,12 +350,12 @@ class OpWiseTuningSampler(TuningSampler):
                 self._set_dtype(op_name_type, config_args)
                 internal_pattern = pattern_to_internal(op_quant_mode)
                 quant_mode = quant_mode_from_pattern(internal_pattern)
-                op_tuning_config = OpTuningConfig(op_name_type[0], op_name_type[1],
-                                                  quant_mode, self.tuning_space,
-                                                  kwargs=config_args)
+                op_tuning_config = OpTuningConfig(
+                    op_name_type[0], op_name_type[1], quant_mode, self.tuning_space, kwargs=config_args
+                )
                 new_tune_cfg.update({op_name_type: op_tuning_config})
             yield new_tune_cfg
-    
+
     def get_opwise_candidate(self):
         """Collect all op-wise setting.
 
@@ -354,12 +371,12 @@ class OpWiseTuningSampler(TuningSampler):
             self.op_complete_path[op_name_type] = copy.deepcopy(full_path)
             op_wise_configs[op_name_type] = []
             # For precision
-            if internal_pattern[0] == 'precision':
+            if internal_pattern[0] == "precision":
                 config_args = {}
                 self._set_dtype(op_name_type, config_args)
-                op_tuning_config = OpTuningConfig(op_name_type[0], op_name_type[1],
-                                                  quant_mode, self.tuning_space,
-                                                  kwargs=config_args)
+                op_tuning_config = OpTuningConfig(
+                    op_name_type[0], op_name_type[1], quant_mode, self.tuning_space, kwargs=config_args
+                )
                 op_wise_configs[op_name_type].append(op_tuning_config)
                 continue
             # For quantization
@@ -368,24 +385,26 @@ class OpWiseTuningSampler(TuningSampler):
 
             for op_tuning_item_vals in op_options:
                 config_args = dict(zip(op_tuning_items, op_tuning_item_vals))
-                self._set_dtype( op_name_type, config_args)
-                op_tuning_config = OpTuningConfig(op_name_type[0], op_name_type[1], 
-                                                  quant_mode, self.tuning_space,
-                                                  kwargs=config_args)
+                self._set_dtype(op_name_type, config_args)
+                op_tuning_config = OpTuningConfig(
+                    op_name_type[0], op_name_type[1], quant_mode, self.tuning_space, kwargs=config_args
+                )
                 op_wise_configs[op_name_type].append(op_tuning_config)
         return op_wise_configs
+
 
 class FallbackTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
 
-    def __init__(self,
-                 tuning_space: TuningSpace,
-                 tuning_order_lst: List[TuningOrder],
-                 initial_op_tuning_cfg: Dict[tuple, Any],
-                 op_dtypes: Dict[str, str],
-                 accumulate: bool,
-                 skip_first: bool = True
-                 ):
+    def __init__(
+        self,
+        tuning_space: TuningSpace,
+        tuning_order_lst: List[TuningOrder],
+        initial_op_tuning_cfg: Dict[tuple, Any],
+        op_dtypes: Dict[str, str],
+        accumulate: bool,
+        skip_first: bool = True,
+    ):
         """Sampler for generate the tuning config of fallback stage.
 
         Args:
@@ -419,9 +438,9 @@ class FallbackTuningSampler(TuningSampler):
             self._set_dtype(op_name_type, config_args)
             internal_pattern = pattern_to_internal(target_dtype)
             quant_mode = quant_mode_from_pattern(internal_pattern)
-            new_op_config = OpTuningConfig(op_name_type[0], op_name_type[1],
-                                           quant_mode, self.tuning_space,
-                                           kwargs=config_args)
+            new_op_config = OpTuningConfig(
+                op_name_type[0], op_name_type[1], quant_mode, self.tuning_space, kwargs=config_args
+            )
 
             new_tune_cfg.update({op_name_type: new_op_config})
             if self.accumulate and skip_first:  # skip the first one
@@ -430,22 +449,25 @@ class FallbackTuningSampler(TuningSampler):
             logger.debug(f"fallback {op_name_type} to {target_dtype}")
             yield new_tune_cfg  # need to skip the first one
 
+
 @TuningSamplerRegistry.register("smooth_quant")
 class SmoothQuantSampler(TuningSampler):
     """Sampler for the hyperparameter tuning of smooth quantization."""
-    
-    def __init__(self,
-                 tuning_space: TuningSpace,
-                 tuning_order_lst: List[TuningOrder],
-                 initial_op_tuning_cfg: Dict,
-                 kwargs: Dict ={}):
+
+    def __init__(
+        self,
+        tuning_space: TuningSpace,
+        tuning_order_lst: List[TuningOrder],
+        initial_op_tuning_cfg: Dict,
+        kwargs: Dict = {},
+    ):
         """Initialize the sampler."""
         super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg, kwargs)
         # TODO use the alpha list specified by user
         self._kwargs = kwargs
         self._alpha_lst = [0.5]
-        if kwargs.get('smooth_quant_agrs', {}):
-            self._alpha_lst = kwargs['smooth_quant_agrs'].get('alpha_lst', [0.5])
+        if kwargs.get("smooth_quant_agrs", {}):
+            self._alpha_lst = kwargs["smooth_quant_agrs"].get("alpha_lst", [0.5])
 
     def __iter__(self, tune_cfg=None) -> OpTuningConfig:
         """Yield the next tuning config with update alpha.
@@ -455,9 +477,9 @@ class SmoothQuantSampler(TuningSampler):
         """
         for alpha in self._alpha_lst:
             new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg) if not tune_cfg else copy.deepcopy(tune_cfg)
-            sq_args = {'smooth_quant': True, 'smooth_quant_args': {'alpha': alpha}}
-            if 'recipe_cfgs' not in new_tune_cfg:
-                new_tune_cfg['recipe_cfgs'] = sq_args
+            sq_args = {"smooth_quant": True, "smooth_quant_args": {"alpha": alpha}}
+            if "recipe_cfgs" not in new_tune_cfg:
+                new_tune_cfg["recipe_cfgs"] = sq_args
             else:
-                new_tune_cfg['recipe_cfgs'].update(sq_args)
+                new_tune_cfg["recipe_cfgs"].update(sq_args)
             yield new_tune_cfg

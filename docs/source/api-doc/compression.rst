@@ -7,5 +7,3 @@ The compression API information is available:
 
    neural_compressor.compression.distillation.criterions
    neural_compressor.compression.pruner
-
-   

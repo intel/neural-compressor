@@ -14,13 +14,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques."""
 from .version import __version__
+
 # we need to set a global 'NA' backend, or Model can't be used
-from .config import DistillationConfig, PostTrainingQuantConfig, \
-                    WeightPruningConfig, QuantizationAwareTrainingConfig, \
-                    MixedPrecisionConfig
+from .config import (
+    DistillationConfig,
+    PostTrainingQuantConfig,
+    WeightPruningConfig,
+    QuantizationAwareTrainingConfig,
+    MixedPrecisionConfig,
+)
 from .contrib import *
 from .model import *
 from .metric import *

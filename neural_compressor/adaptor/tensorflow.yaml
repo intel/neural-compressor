@@ -37,7 +37,7 @@
           "Where","Unpack","ZerosLike" #clear list
           ]
   fp32: ['*'] # '*' means all op types
-  int8: { 
+  int8: {
     'static': {
         'Conv2D': {
           'weight': {
@@ -243,4 +243,3 @@
     'dynamic': {
     }
   }
-

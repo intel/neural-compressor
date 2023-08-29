@@ -27,7 +27,7 @@
                            'LinearReLU', 'ConvBn2d', 'ConvBnReLU2d']
     uint8: *ops_s8_default
     fp32: ['*'] # '*' means all op types
-  
+
   capabilities: &default_capabilities
     int8: &cap_s8_default {
           'Conv1d': &cap_s8_default_Conv1d {

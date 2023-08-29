@@ -618,7 +618,7 @@ def main():
         if model_args.int8:
             from neural_compressor.utils.pytorch import load
             new_model = load(
-                    os.path.abspath(os.path.expanduser(training_args.output_dir)), model)
+                    os.path.abspath(os.path.expanduser(training_args.output_dir)), model, weight_only=True)
         else:
             new_model = model
 

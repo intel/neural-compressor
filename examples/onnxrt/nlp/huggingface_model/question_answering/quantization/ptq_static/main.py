@@ -301,9 +301,6 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer_name or model_args.model_name_or_path)
 
-    training_args.do_eval = True
-    training_args.do_predict = False
-
     # Prepare the dataset downloading, preprocessing and metric creation to perform the evaluation step(s)
     # Get the datasets: you can either provide your own CSV/JSON/TXT training and evaluation files (see below)
     # or just provide the name of one of the public datasets available on the hub at

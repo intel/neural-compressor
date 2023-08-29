@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import os
 from typing import List
-from .. import globals
-import logging
 
-logging.basicConfig(level=globals.logging_level,
-                    format='%(asctime)s %(levelname)s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S +0000')
+from .. import globals
+
+logging.basicConfig(
+    level=globals.logging_level, format="%(asctime)s %(levelname)s %(message)s", datefmt="%a, %d %b %Y %H:%M:%S +0000"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +32,7 @@ def get_all_code_path(user_input: str) -> List:
         import_path = []
 
     # if import_path intersects user_code_path, clear import_path: this is
-    # for cases where there is import of self folder and we only care about 
+    # for cases where there is import of self folder and we only care about
     # the main file (user_code_path) itself
     if len(list(set(user_code_path).intersection(set(import_path)))) > 0:
         import_path = []
@@ -65,7 +66,8 @@ def get_user_code_path(user_input: str) -> List:
     # get list of file path
     if user_input_type == "url_repo":
         from git import Repo
-        Repo.clone_from(user_input,  "./cloned_github_repo")
+
+        Repo.clone_from(user_input, "./cloned_github_repo")
         dir_input = "./cloned_github_repo"
     if user_input_type == "folder":
         dir_input = user_input
@@ -74,7 +76,8 @@ def get_user_code_path(user_input: str) -> List:
         list_path.append(os.path.abspath(user_input))
     elif user_input_type == "url_py":
         import requests
-        user_input = user_input.replace("github.com", "raw.githubusercontent.com").replace("/blob","")
+
+        user_input = user_input.replace("github.com", "raw.githubusercontent.com").replace("/blob", "")
         r = requests.get(user_input)
         save_py_path = "./neural_coder_workspace/model.py"
         f = open(save_py_path, "wb")
@@ -93,7 +96,6 @@ def get_user_code_path(user_input: str) -> List:
 
 
 def get_imports_path(user_code_path: List) -> List:
-
     pip_name_exceptions = [
         "argparse",
         "ast",
@@ -176,7 +178,7 @@ def get_imports_path(user_code_path: List) -> List:
 
     # get list of pip name
     for path in user_code_path:
-        lines = open(path, 'r').read().split('\n')
+        lines = open(path, "r").read().split("\n")
         for line in lines:
             is_import_line = False
             if line[0:6] == "import" and line[0:8] != "import ." and "," not in line:  # to-do: handle "," case
@@ -191,11 +193,11 @@ def get_imports_path(user_code_path: List) -> List:
                 if space_idx == -1 and dot_idx == -1:
                     pip_name = line[start:]
                 elif space_idx > 0 and dot_idx == -1:
-                    pip_name = line[start: start + space_idx]
+                    pip_name = line[start : start + space_idx]
                 elif space_idx == -1 and dot_idx > 0:
-                    pip_name = line[start: start + dot_idx]
+                    pip_name = line[start : start + dot_idx]
                 elif space_idx > 0 and dot_idx > 0:
-                    pip_name = line[start: start + min(space_idx, dot_idx)]
+                    pip_name = line[start : start + min(space_idx, dot_idx)]
                 list_pip_name.append(pip_name)
     list_pip_name = list(set(list_pip_name).difference(set(pip_name_exceptions)))
     for item in list_pip_name:
@@ -216,10 +218,11 @@ def get_imports_path(user_code_path: List) -> List:
         quit()
 
     import inspect
+
     for i in list_pip_name:
         try:
             pip_dir_path = inspect.getsourcefile(eval(i))
-            pip_dir_path = pip_dir_path[0:pip_dir_path.rfind("/")]
+            pip_dir_path = pip_dir_path[0 : pip_dir_path.rfind("/")]
             for path, dir_list, file_list in os.walk(pip_dir_path):
                 for file_name in file_list:
                     file_path = os.path.join(path, file_name)

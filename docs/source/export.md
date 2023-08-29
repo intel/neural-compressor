@@ -72,16 +72,19 @@ Here is the workflow of our export API for PyTorch/Tensorflow FP32/INT8 model.
 ```python
 from neural_compressor.experimental.common import Model
 from neural_compressor.config import Torch2ONNXConfig
+
 inc_model = Model(model)
 fp32_onnx_config = Torch2ONNXConfig(
     dtype="fp32",
     example_inputs=torch.randn(1, 3, 224, 224),
-    input_names=['input'],
-    output_names=['output'],
-    dynamic_axes={"input": {0: "batch_size"},
-                    "output": {0: "batch_size"}},
+    input_names=["input"],
+    output_names=["output"],
+    dynamic_axes={
+        "input": {0: "batch_size"},
+        "output": {0: "batch_size"},
+    },
 )
-inc_model.export('fp32-model.onnx', fp32_onnx_config)
+inc_model.export("fp32-model.onnx", fp32_onnx_config)
 ```
 
 #### INT8 Model Export
@@ -89,17 +92,17 @@ inc_model.export('fp32-model.onnx', fp32_onnx_config)
 ```python
 # q_model is a Neural Compressor model after performing quantization.
 from neural_compressor.config import Torch2ONNXConfig
+
 int8_onnx_config = Torch2ONNXConfig(
     dtype="int8",
     opset_version=14,
-    quant_format="QOperator", # or QDQ
+    quant_format="QOperator",  # or QDQ
     example_inputs=torch.randn(1, 3, 224, 224),
-    input_names=['input'],
-    output_names=['output'],
-    dynamic_axes={"input": {0: "batch_size"},
-                    "output": {0: "batch_size"}},
+    input_names=["input"],
+    output_names=["output"],
+    dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
 )
-q_model.export('int8-model.onnx', int8_onnx_config)
+q_model.export("int8-model.onnx", int8_onnx_config)
 ```
 > **Note**: Two export examples covering computer vision and natural language processing tasks exist in examples. Users can leverage them to verify the accuracy and performance of the exported ONNX model.
  - [Image recognition](/examples/pytorch/image_recognition/torchvision_models/export/fx/)
@@ -112,9 +115,10 @@ q_model.export('int8-model.onnx', int8_onnx_config)
 ```python
 from neural_compressor.experimental.common import Model
 from neural_compressor.config import TF2ONNXConfig
+
 inc_model = Model(model)
-config = TF2ONNXConfig(dtype='fp32')
-inc_model.export('fp32-model.onnx', config)
+config = TF2ONNXConfig(dtype="fp32")
+inc_model.export("fp32-model.onnx", config)
 ```
 
 ### INT8 Model Export
@@ -122,8 +126,9 @@ inc_model.export('fp32-model.onnx', config)
 ```python
 # q_model is a Neural Compressor model after performing quantization.
 from neural_compressor.config import TF2ONNXConfig
-config = TF2ONNXConfig(dtype='int8')
-q_model.export('int8-model.onnx', config)
+
+config = TF2ONNXConfig(dtype="int8")
+q_model.export("int8-model.onnx", config)
 ```
 
 > **Note**: Some export examples of computer vision task exist in examples. Users can leverage them to verify the accuracy and performance of the exported ONNX model.
@@ -158,4 +163,3 @@ This table lists the TorchScript operators that are supported by ONNX export wit
 | ``quantized::sigmoid``       | Since opset 10   |
 
 > **Note**: The export function may fail due to unsupported operations. Please fallback unsupported quantized ops by setting 'op_type_dict' or 'op_name_dict' in 'QuantizationAwareTrainingConfig' or 'PostTrainingQuantConfig' config. Fallback examples please refer to [Text classification](/examples/pytorch/nlp/huggingface_models/text-classification/export/fx/)
-

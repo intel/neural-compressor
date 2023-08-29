@@ -20,6 +20,3 @@ Sections
    docs/source/legal_information.md
    docs/source/SECURITY.md
    Repo <https://github.com/intel/neural-compressor>
-
-
-

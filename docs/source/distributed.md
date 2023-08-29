@@ -28,6 +28,7 @@ pip install horovod
 
 ## Supported Feature Matrix
 Distributed training and inference are supported in PyTorch and TensorFlow currently.
+
 | Framework  | Type    | Distributed Support |
 |------------|---------|:-------------------:|
 | PyTorch    | QAT     |       &#10004;      |

@@ -1,4 +1,4 @@
-"""pattern lock pruner."""
+"""Pattern lock pruner."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -16,13 +16,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .base import (register_pruner,
-                   PytorchBasePruner,
-                   KerasBasePruner)
 from ..patterns import get_pattern
+from .base import KerasBasePruner, PytorchBasePruner, register_pruner
 
 
-@register_pruner('pt_pattern_lock')
+@register_pruner("pt_pattern_lock")
 class PytorchPatternLockPruner(PytorchBasePruner):
     """Pruning Pruner.
 

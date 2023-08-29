@@ -17,22 +17,29 @@
 # ==============================================================================
 """Dummy dataset for dummy data generation on multiple framework backends."""
 
-from .dataset import dataset_registry, Dataset
-import numpy as np
-from neural_compressor.utils.utility import LazyImport
 import logging
 
-mx = LazyImport('mxnet')
-torch = LazyImport('torch')
+import numpy as np
+
+from neural_compressor.utils.utility import LazyImport
+
+from .dataset import Dataset, dataset_registry
+
+mx = LazyImport("mxnet")
+torch = LazyImport("torch")
 
 logger = logging.getLogger("neural_compressor")
 
-@dataset_registry(dataset_type="dummy", framework="tensorflow, tensorflow_itex, \
+
+@dataset_registry(
+    dataset_type="dummy",
+    framework="tensorflow, tensorflow_itex, \
                                                    onnxrt_qlinearops, onnxrt_integerops, \
                                                    pytorch, pytorch_ipex, pytorch_fx, \
                                                    mxnet",
-                                                   dataset_format='')
-class DummyDataset(Dataset):    # pragma: no cover 
+    dataset_format="",
+)
+class DummyDataset(Dataset):  # pragma: no cover
     """Dataset used for dummy data generation.
 
     This Dataset is to construct a dataset from a specific shape.
@@ -40,8 +47,7 @@ class DummyDataset(Dataset):    # pragma: no cover
     (TODO) construct dummy data from real dataset or iteration of data.
     """
 
-    def __init__(self, shape, low=-128., high=127., dtype='float32', label=True, \
-        transform=None, filter=None):
+    def __init__(self, shape, low=-128.0, high=127.0, dtype="float32", label=True, transform=None, filter=None):
         """Initialize `DummyDataset` class.
 
         Args:
@@ -59,37 +65,47 @@ class DummyDataset(Dataset):    # pragma: no cover
                 If transform is not None, it will ignore it.
             filter (Filter objects, default=None): Filter out examples according to specific conditions.
         """
-        dtype_map = {'float32':np.float32, 'float16':np.float16, 'uint8':np.uint8, \
-                     'int8': np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':bool,\
-                     'string': str}
+        dtype_map = {
+            "float32": np.float32,
+            "float16": np.float16,
+            "uint8": np.uint8,
+            "int8": np.int8,
+            "int32": np.int32,
+            "int64": np.int64,
+            "bool": bool,
+            "string": str,
+        }
 
         np.random.seed(9527)
         self.transform = transform
         self.label = label
-        if len(shape)==0:
+        if len(shape) == 0:
             logger.info("No data in the dummy dataset.")
         elif isinstance(shape, list):
             # list tensor should same first demension n
             n = shape[0][0]
-            assert all(isinstance(elem, tuple) and elem[0] == n for elem in shape), \
-                'each tensor shape should be tuple and same fisrt demension'
+            assert all(
+                isinstance(elem, tuple) and elem[0] == n for elem in shape
+            ), "each tensor shape should be tuple and same fisrt demension"
 
             if isinstance(low, list):
-                assert len(low) == len(shape) and all(isinstance(elem, float) for elem in low), \
-                    'low list should have same length with shape with element data type float'
+                assert len(low) == len(shape) and all(
+                    isinstance(elem, float) for elem in low
+                ), "low list should have same length with shape with element data type float"
             else:
                 low = (low * np.ones(len(shape))).astype(float)
 
             if isinstance(high, list):
-                assert len(high) == len(shape) and all(isinstance(elem, float) for elem in high), \
-                    'high list should have same length with shape with element data type float'
+                assert len(high) == len(shape) and all(
+                    isinstance(elem, float) for elem in high
+                ), "high list should have same length with shape with element data type float"
             else:
                 high = (high * np.ones(len(shape))).astype(float)
 
             if isinstance(dtype, list):
-                assert len(dtype) == len(shape) and \
-                    all(elem in dtype_map.keys() for elem in dtype), \
-                    'high list should have same length with shape with element data type float'
+                assert len(dtype) == len(shape) and all(
+                    elem in dtype_map.keys() for elem in dtype
+                ), "high list should have same length with shape with element data type float"
             else:
                 dtype = [dtype for i in range(0, len(shape))]
 
@@ -98,22 +114,24 @@ class DummyDataset(Dataset):    # pragma: no cover
             if isinstance(low, float):
                 low = [low]
             else:
-                assert isinstance(low, list) and len(low) == 1 and isinstance(low[0], float), \
-                    'low should be float or list of float with length 1'
+                assert (
+                    isinstance(low, list) and len(low) == 1 and isinstance(low[0], float)
+                ), "low should be float or list of float with length 1"
 
             if isinstance(high, float):
                 high = [high]
             else:
-                assert isinstance(high, list) and len(high) == 1 and isinstance(high[0], float), \
-                    'high should be float or list of float with length 1'
+                assert (
+                    isinstance(high, list) and len(high) == 1 and isinstance(high[0], float)
+                ), "high should be float or list of float with length 1"
 
             if isinstance(dtype, str):
-                assert dtype in dtype_map.keys(), 'dtype only support {}'.format(dtype_map.keys())
+                assert dtype in dtype_map.keys(), "dtype only support {}".format(dtype_map.keys())
                 dtype = [dtype]
             else:
-                assert isinstance(dtype, list) and \
-                    len(dtype) == 1 and dtype[0] in dtype_map.keys(), \
-                    'dtype should be str or list of str in supported dtypes'
+                assert (
+                    isinstance(dtype, list) and len(dtype) == 1 and dtype[0] in dtype_map.keys()
+                ), "dtype should be str or list of str in supported dtypes"
 
         self.dataset = []
         for idx in range(0, len(shape)):
@@ -125,7 +143,6 @@ class DummyDataset(Dataset):    # pragma: no cover
             self.dataset = self.dataset[0]
         else:
             self.dataset = [elem for elem in zip(*self.dataset)]
-
 
     def __len__(self):
         """Return the length of dataset."""

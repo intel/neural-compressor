@@ -14,13 +14,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Common Model just collects the information to construct a Model."""
 
-"""common Model just collects the information to construct a Model."""
-
-from neural_compressor.model.model import get_model_fwk_name, MODELS
+from neural_compressor.model.model import MODELS, get_model_fwk_name
 from neural_compressor.model.tensorflow_model import get_model_type
 from neural_compressor.utils import logger
-BACKEND = 'default'
+
+BACKEND = "default"
+
 
 class Model(object):
     """A wrapper of the information needed to construct a Model."""
@@ -29,12 +30,12 @@ class Model(object):
         """Create a new instance object of Model.
 
         Args:
-            root (object): raw model format. For Tensorflow model, could be path to frozen pb file, 
+            root (object): raw model format. For Tensorflow model, could be path to frozen pb file,
                 path to ckpt or savedmodel folder, loaded estimator/graph_def/graph/keras model object.
-                For PyTorch model, it's torch.nn.model instance. For MXNet model, it's mxnet.symbol.Symbol 
-                or gluon.HybirdBlock instance. For ONNX model, it's path to onnx model or loaded ModelProto 
+                For PyTorch model, it's torch.nn.model instance. For MXNet model, it's mxnet.symbol.Symbol
+                or gluon.HybirdBlock instance. For ONNX model, it's path to onnx model or loaded ModelProto
                 model object.
-                
+
         Returns:
             BaseModel: neural_compressor built-in model
         """
@@ -42,18 +43,18 @@ class Model(object):
         if framework == "NA":
             framework = get_model_fwk_name(root)
 
-        if 'tensorflow' in framework:
-            if 'modelType' in kwargs:
-                model_type = kwargs['modelType']
+        if "tensorflow" in framework:
+            if "modelType" in kwargs:
+                model_type = kwargs["modelType"]
             else:
                 model_type = get_model_type(root)
-            if model_type =='AutoTrackable': # pragma: no cover
-                model = MODELS['tensorflow']("keras", root, **kwargs)
+            if model_type == "AutoTrackable":  # pragma: no cover
+                model = MODELS["tensorflow"]("keras", root, **kwargs)
             else:
-                model = MODELS['tensorflow'](model_type, root, **kwargs)
-        elif framework == 'keras':
-            model = MODELS['keras'](root, **kwargs)
-        elif framework == 'pytorch':
+                model = MODELS["tensorflow"](model_type, root, **kwargs)
+        elif framework == "keras":
+            model = MODELS["keras"](root, **kwargs)
+        elif framework == "pytorch":
             if BACKEND != "default":
                 framework = BACKEND
             model = MODELS[framework](root, **kwargs)

@@ -14,21 +14,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """Intel Neural Compressor Metric."""
 
-from .metric import (METRICS, Metric, BaseMetric, TensorflowTopK, metric_registry, COCOmAPv2, SquadF1, GeneralTopK,
-                     register_customer_metric)
+from .metric import (
+    METRICS,
+    Metric,
+    BaseMetric,
+    TensorflowTopK,
+    metric_registry,
+    COCOmAPv2,
+    SquadF1,
+    GeneralTopK,
+    register_customer_metric,
+)
 from os.path import dirname, basename, isfile, join
 import glob
 
 modules = glob.glob(join(dirname(__file__), "*.py"))
 
 for f in modules:
-    if isfile(f) and not f.startswith('__') and not f.endswith('__init__.py'):
+    if isfile(f) and not f.startswith("__") and not f.endswith("__init__.py"):
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-__all__ = ["METRICS", "Metric", "BaseMetric", "TensorflowTopK", "metric_registry",
-           "COCOmAPv2", "SquadF1", "GeneralTopK", "register_customer_metric"]
+__all__ = [
+    "METRICS",
+    "Metric",
+    "BaseMetric",
+    "TensorflowTopK",
+    "metric_registry",
+    "COCOmAPv2",
+    "SquadF1",
+    "GeneralTopK",
+    "register_customer_metric",
+]
