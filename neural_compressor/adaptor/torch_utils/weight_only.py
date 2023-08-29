@@ -354,6 +354,7 @@ def rtn_quantize(
     data_type="int",
     sym_full_range=False,
     mse_range=False,
+    group_dim=1,
     **kwargs,
 ):
     """Quant the model with round to nearst method.
