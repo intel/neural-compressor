@@ -24,7 +24,6 @@ def sample_data(dataset, max_sample_length):
         data["label"].append(record['label'])
     return datasets.Dataset.from_dict(data)
 
-sub_calib_dataset = sample_data(calib_dataset, MAX_SAMPLE_LENGTG)
 sub_eval_dataset = sample_data(eval_dataset, MAX_SAMPLE_LENGTG)
 
 from neural_compressor.data.transforms.imagenet_transform import TensorflowResizeCropImagenetTransform
@@ -64,7 +63,6 @@ from neural_compressor import quantization
 from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.utils.create_obj_from_config import create_dataloader
 
-calib_dataloader = CustomDataloader(dataset=sub_calib_dataset, batch_size=1)
 eval_dataloader = CustomDataloader(dataset=sub_eval_dataset, batch_size=1)
 
 
