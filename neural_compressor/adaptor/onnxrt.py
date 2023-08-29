@@ -1089,23 +1089,22 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             # index of Attention is used as split to find FFN MatMul
             first_attention_index = attention_matmul_optype.index("Attention")
             attention_matmul_optype = attention_matmul_optype[first_attention_index:]
-            attention_index = list(np.where(np.array(attention_matmul_optype) == 'Attention')[0])
+            attention_index = list(np.where(np.array(attention_matmul_optype) == "Attention")[0])
             block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
-            ffn_matmul = self.pre_optimized_model.find_ffn_matmul(attention_index, 
-                                                                  attention_matmul[first_attention_index:], 
-                                                                  block_len)
-            
+            ffn_matmul = self.pre_optimized_model.find_ffn_matmul(
+                attention_index, attention_matmul[first_attention_index:], block_len
+            )
+
             # in case there are unfused Attentions
             qkv = self.pre_optimized_model.find_qkv_in_attention(find_all=True)
             if len(qkv) != 0:
                 attention_starts = [nodes[0] for nodes in qkv]
-                attention_index = [np.where(np.array([n.name for n in attention_matmul]) \
-                                            == attention_start)[0].tolist()[0] \
-                                                for attention_start in attention_starts]
+                attention_index = [
+                    np.where(np.array([n.name for n in attention_matmul]) == attention_start)[0].tolist()[0]
+                    for attention_start in attention_starts
+                ]
                 block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
-                for matmul in self.pre_optimized_model.find_ffn_matmul(attention_index, 
-                                                                       attention_matmul, 
-                                                                       block_len):
+                for matmul in self.pre_optimized_model.find_ffn_matmul(attention_index, attention_matmul, block_len):
                     if matmul not in ffn_matmul:
                         ffn_matmul.append(matmul)
         else:
@@ -1119,9 +1118,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     for attention_start in attention_starts
                 ]
                 block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
-                ffn_matmul = self.pre_optimized_model.find_ffn_matmul(attention_index, 
-                                                                      attention_matmul, 
-                                                                      block_len)
+                ffn_matmul = self.pre_optimized_model.find_ffn_matmul(attention_index, attention_matmul, block_len)
 
         block_wise = []
         for block in reversed(ffn_matmul):
