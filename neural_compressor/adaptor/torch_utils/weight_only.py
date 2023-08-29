@@ -216,7 +216,7 @@ def quant_weight(
     Returns:
         output: qdq weight.
     """
-    if num_bits <= 0: # pragma: no cover
+    if num_bits <= 0:  # pragma: no cover
         return weight
     if group_size == -1 or weight.shape[1] < group_size:
         return qdq_weight_actor(
