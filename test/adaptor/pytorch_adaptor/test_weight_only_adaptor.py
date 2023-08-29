@@ -134,11 +134,11 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         model = Model()
         out1 = model(input)
         conf = PostTrainingQuantConfig(
-            approach='weight_only',
+            approach="weight_only",
             recipes={
                 # 0 means splitting output channel
-                'rtn_args': {'group_dim': 0}
-            }
+                "rtn_args": {"group_dim": 0}
+            },
         )
         q_model = quantization.fit(model, conf)
         out2 = q_model(input)
@@ -148,7 +148,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         model = Model()
         out1 = model(input)
         conf = PostTrainingQuantConfig(
-            approach='weight_only',
+            approach="weight_only",
             op_type_dict={
                 ".*": {  # re.match
                     "weight": {

@@ -382,7 +382,7 @@ def rtn_quantize(
                                      Defaults to False.
         mse_range (bool, optional):  Whether search clip range.
                                      Defaults to True.
-        group_dim (int, optional):   0 means splitting output channel, 
+        group_dim (int, optional):   0 means splitting output channel,
                                      1 means splitting input channel. Defaults to 1.
 
     Returns:
