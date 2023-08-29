@@ -40,6 +40,8 @@ class TestDistillation(unittest.TestCase):
     def tearDownClass(cls):
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
+        shutil.rmtree("./nc_workspace", ignore_errors=True)
+        shutil.rmtree("./distillation_model", ignore_errors=True)
 
     def test_distillation(self):
         criterion = nn.CrossEntropyLoss()
