@@ -753,6 +753,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
     )
     distilbert_export_path = "distilbert.onnx"
 
+    model_name_or_path = "Alireza1044/albert-base-v2-sst2"
+    albert_model = AutoModelForSequenceClassification.from_pretrained(
+        model_name_or_path, config=AutoConfig.from_pretrained(model_name_or_path)
+    )
+    albert_export_path = "albert.onnx"
+
     datasets = Datasets("onnxrt_qlinearops")
     cv_dataset = datasets["dummy"](shape=(10, 3, 224, 224), low=0.0, high=1.0, label=True)
     cv_dataloader = DATALOADERS["onnxrt_qlinearops"](cv_dataset)
@@ -799,7 +805,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.gemm_model = build_gemm_model()
         self.conv_model2 = build_conv_model2()
         export_onnx_nlp_model(self.distilbert_model, self.distilbert_export_path, 14)
+        export_onnx_nlp_model(self.albert_model, self.albert_export_path, 14)
         self.distilbert_model = onnx.load(self.distilbert_export_path)
+        self.albert_model = onnx.load(self.albert_export_path)
         self.gather_matmul_model = build_matmul_gather_model()
         build_benchmark()
 
@@ -1559,12 +1567,28 @@ class TestAdaptorONNXRT(unittest.TestCase):
             "format": "default",
             "domain": "auto",
             "recipes": {},
-            "workspace_path": "./nc_workspace/{}/{}/".format("onnxrt", "imagenet"),
+            "workspace_path": "./nc_workspace/{}/{}/".format("onnxrt", "nlp"),
         }
         framework = "onnxrt_qlinearops"
         adaptor = FRAMEWORKS[framework](framework_specific_info)
         q_capability = adaptor.query_fw_capability(Model(self.distilbert_model))
         self.assertEqual(len(q_capability["block_wise"]), 6)
+
+        framework_specific_info = {
+            "device": "cpu",
+            "approach": "post_training_static_quant",
+            "random_seed": 1234,
+            "q_dataloader": None,
+            "backend": "default",
+            "format": "default",
+            "domain": "auto",
+            "recipes": {},
+            "workspace_path": "./nc_workspace/{}/{}/".format("onnxrt", "nlp"),
+        }
+        framework = "onnxrt_qlinearops"
+        adaptor = FRAMEWORKS[framework](framework_specific_info)
+        q_capability = adaptor.query_fw_capability(Model(self.albert_model))
+        self.assertEqual(len(q_capability["block_wise"]), 12)
 
     def test_dataloader_input(self):
         cv_dataloader = DataLoader(framework="onnxruntime", dataset=DummyCVDataset_list(shape=(3, 224, 224)))
