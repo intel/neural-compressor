@@ -244,8 +244,12 @@ class GraphConverter:
                     # we should check and pair them
                     def check_shape(tensor, data):
                         # scalar or 1 dim default True
-                        if tensor.shape is None or tensor.shape == tf.TensorShape(None) or \
-                                    len(tensor.shape.dims) == 1 or not hasattr(data, "shape"):
+                        if (
+                            tensor.shape is None
+                            or tensor.shape == tf.TensorShape(None)
+                            or len(tensor.shape.dims) == 1
+                            or not hasattr(data, "shape")
+                        ):
                             return True
                         tensor_shape = tuple(tensor.shape)
                         data_shape = tuple(data.shape)
