@@ -11,9 +11,7 @@ exclude: |
       neural_solution/test/.+|
       neural_coder/extensions/.+|
       neural_coder/examples/.+|
-      examples/.+|
-      neural_compressor/adaptor/ox_utils/quantizer.py|
-      neural_compressor/objective.py
+      examples/.+
   )$
 
 repos:
