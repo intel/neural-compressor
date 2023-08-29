@@ -4548,6 +4548,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     data_type=dtype,
                     sym_full_range=sym_full_range,
                     mse_range=mse_range,
+                    group_dim=group_dim,
                 )
                 set_module(model, op_name, m)
         return model
