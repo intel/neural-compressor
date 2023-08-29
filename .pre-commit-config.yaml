@@ -104,6 +104,14 @@ repos:
         args: [--line-length=120, --skip-errors]
         exclude: docs/source-app
 
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.4
+    hooks:
+    - id: codespell
+      files: (neural-compressor/examples\.*)$
+      additional_dependencies:
+        - tomli
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.0.286
     hooks:
