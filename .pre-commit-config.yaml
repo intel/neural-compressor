@@ -12,8 +12,6 @@ exclude: |
       neural_coder/extensions/.+|
       neural_coder/examples/.+|
       examples/.+|
-      neural_compressor/adaptor/ox_utils/calibrator.py|
-      neural_compressor/adaptor/ox_utils/calibration.py|
       neural_compressor/adaptor/ox_utils/quantizer.py|
       neural_compressor/objective.py
   )$
@@ -108,7 +106,6 @@ repos:
     rev: v2.2.4
     hooks:
     - id: codespell
-      files: (neural-compressor/examples\.*)$
       additional_dependencies:
         - tomli
 
