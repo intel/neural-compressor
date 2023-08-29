@@ -216,7 +216,7 @@ def quant_weight(
     Returns:
         output: qdq weight.
     """
-    if num_bits <= 0:
+    if num_bits <= 0: # pragma: no cover
         return weight
     if group_size == -1 or weight.shape[1] < group_size:
         return qdq_weight_actor(
@@ -405,7 +405,6 @@ def rtn_quantize(
             scheme = weight_config[name]["scheme"]
             quantile = weight_config[name].get("quantile", 1.0)
         logger.debug(f"RTN quantized module:{name, m}")
-        # import pdb; pdb.set_trace()
         log_msg = (
             f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, "
             + f"scheme={scheme}, quantile={quantile}"
