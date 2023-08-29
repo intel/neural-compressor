@@ -196,6 +196,7 @@ CropResize
 CropToBoundingBox
 CrossEntropyLoss
 Curran
+CustomDataset
 CustomObj
 CvAClvFfyA
 DBMDZ
@@ -1671,6 +1672,7 @@ gpus
 grafftti
 graphDef
 graphdef
+graphsage
 grappler
 grey
 groupnorm
@@ -2198,6 +2200,7 @@ postprocess
 postprocessed
 postprocessing
 powersave
+ppi
 pplm
 ppn
 pragma
@@ -2440,6 +2443,7 @@ ssd
 sshleifer
 sst
 stackoverflow
+stanford
 startswith
 startup
 stderr
@@ -2714,7 +2718,3 @@ zrelro
 zrl
 zxvf
 Éric
-graphsage
-ppi
-CustomDataset
-stanford
