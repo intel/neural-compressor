@@ -152,7 +152,7 @@ Functions
    :rtype: best_clip_ratio (float)
 
 
-.. py:function:: rtn_quantize(model, num_bits=4, group_size=32, scheme='asym', quantile=1.0, weight_config={}, return_int=False, data_type='int', sym_full_range=False, mse_range=False, **kwargs)
+.. py:function:: rtn_quantize(model, num_bits=4, group_size=32, scheme='asym', quantile=1.0, weight_config={}, return_int=False, data_type='int', sym_full_range=False, mse_range=False, group_dim=1, **kwargs)
 
    Quant the model with round to nearst method.
 
@@ -187,6 +187,9 @@ Functions
    :param mse_range: Whether search clip range.
                      Defaults to True.
    :type mse_range: bool, optional
+   :param group_dim: 0 means splitting output channel,
+                     1 means splitting input channel. Defaults to 1.
+   :type group_dim: int, optional
 
    :returns: fake quantized torch module
    :rtype: model

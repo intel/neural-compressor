@@ -152,7 +152,8 @@
 |:———-:|:————-:|:——————————————————————-:|
 | sym_full_range |      False     |   Whether use -2**(bits-1) in sym scheme, for example,    |
 |  mse_range |      False     | Whether search for the best clip range from range [0.805, 1.0, 0.005] |
-|  return_int |      False     | Whether return compressed model with int data type |</p>
+|  return_int |      False     | Whether return compressed model with int data type |
+|  group_dim  |       1       |   0 means splitting output channel, 1 means splitting input channel   |</p>
 <p><strong>AWQ arguments</strong>:
 |  awq_args  | default value |                               comments                              |
 |:———-:|:————-:|:——————————————————————-:|
@@ -197,8 +198,9 @@
         <span class="p">},</span>
     <span class="p">},</span>
     <span class="n">recipes</span><span class="o">=</span><span class="p">{</span>
+        <span class="c1"># &#39;rtn_args&#39;:{&#39;sym_full_range&#39;: True, &#39;mse_range&#39;: True},</span>
         <span class="c1"># &#39;gptq_args&#39;:{&#39;percdamp&#39;: 0.01, &#39;actorder&#39;:True, &#39;block_size&#39;: 128, &#39;nsamples&#39;: 128, &#39;use_full_length&#39;: False},</span>
-        <span class="c1"># &#39;awq_args&#39;:{&#39;auto_scale&#39;: True, &#39;mse_range&#39;: True},</span>
+        <span class="c1"># &#39;awq_args&#39;:{&#39;auto_scale&#39;: True, &#39;mse_range&#39;: True, &#39;n_blocks&#39;: 5},</span>
     <span class="p">},</span>
 <span class="p">)</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
