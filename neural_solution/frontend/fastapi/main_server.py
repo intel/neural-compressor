@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Fast api server."""
 import asyncio
 import json
@@ -19,9 +18,9 @@ import os
 import socket
 import sqlite3
 import uuid
-import uvicorn
 import zipfile
 
+import uvicorn
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from starlette.background import BackgroundTask
@@ -40,11 +39,7 @@ from neural_solution.frontend.utility import (
     list_to_string,
     serialize,
 )
-from neural_solution.utils.utility import (
-    get_db_path,
-    get_task_log_workspace,
-    get_task_workspace
-)
+from neural_solution.utils.utility import get_db_path, get_task_log_workspace, get_task_workspace
 
 # Get config from Launcher.sh
 task_monitor_port = None
@@ -414,6 +409,7 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
         observer.stop()
         await observer.join()
 
+
 @app.get("/download/{task_id}")
 async def download_file(task_id: str):
     """Download quantized model.
@@ -432,7 +428,7 @@ async def download_file(task_id: str):
     if os.path.isfile(db_path):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id, ))
+        cursor.execute(r"select status, result, q_model_path from task where id=?", (task_id,))
         res = cursor.fetchone()
         cursor.close()
         conn.close()
@@ -450,8 +446,13 @@ async def download_file(task_id: str):
                 file_path = os.path.join(root, file)
                 zip_file.write(file_path, os.path.basename(file_path))
 
-    return FileResponse(zip_filepath, media_type='application/octet-stream',
-                        filename=zip_filename, background=BackgroundTask(os.remove, zip_filepath))
+    return FileResponse(
+        zip_filepath,
+        media_type="application/octet-stream",
+        filename=zip_filename,
+        background=BackgroundTask(os.remove, zip_filepath),
+    )
+
 
 if __name__ == "__main__":
     # parse the args and modified the config accordingly
