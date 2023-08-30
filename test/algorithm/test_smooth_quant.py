@@ -480,7 +480,7 @@ class TestSqListInput(unittest.TestCase):
                 return out
 
         model = Model()
-        model = model.to("cuda")
+        model.device = 'cuda'
 
         sq = TorchSmoothQuant(model, self.list_tuple_dl)
         sq.transform(alpha=0.5, calib_iter=1, folding=True)

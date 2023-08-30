@@ -73,6 +73,7 @@ def get_tuple_input(input, res=[], device=torch.device("cpu")):
 ##TODO potential bug, data typeR
 def forward_wrapper(model, input, device=torch.device("cpu")):
     try:
+        model = model.to(device)
         input = move_input_to_device(input, device)
     except:
         logger.warning("Please check the input device if the error raised.")
@@ -1244,7 +1245,11 @@ class GraphTrace:
                     logger.warning(e)
                     logger.warning("Jit trace in GraphTrace failed, absorb layer detection is skipped")
         if orig_device != "cpu":
-            model = model.to(orig_device)
+            if orig_device == 'cuda':
+                if torch.cuda.is_available():
+                    model = model.to(orig_device)
+            else:
+                model = model.to(orig_device)
         return traced_model
 
     def get_nodes(self, traced_model, op_types=["Linear"]):
