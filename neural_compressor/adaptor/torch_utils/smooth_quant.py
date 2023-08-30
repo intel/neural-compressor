@@ -175,8 +175,7 @@ def quant_dequant_x(x, min_x=None, max_x=None, num_bits=8):
     eps = torch.finfo(torch.float32).eps
     q_min, q_max = 0, 2.0**num_bits - 1.0
     if max_x is None or min_x is None:
-        max_x = torch.max(x)
-        min_x = torch.min(x)
+        max_x, min_x = torch.max(x), torch.min(x)
     else:
         max_x = torch.max(max_x)
         min_x = torch.min(min_x)
@@ -688,15 +687,11 @@ class TorchSmoothQuant:
             and self.scales_per_op == scales_per_op
             and self.calib_iter == calib_iter
         ):
-            if isinstance(alpha, float):
-                need_calib = False
-            elif self.alpha == "auto":
+            if isinstance(alpha, float) or self.alpha == "auto":
                 need_calib = False
 
-        self.alpha = alpha
-        self.percentile = percentile
-        self.op_types = op_types
-        self.scales_per_op = scales_per_op
+        self.alpha, self.percentile = alpha, percentile
+        self.op_types, self.scales_per_op = op_types, scales_per_op
         self.calib_iter = calib_iter
         return need_calib
 
@@ -714,11 +709,11 @@ class TorchSmoothQuant:
             max_value = torch.clip(max_value, 1e-5)
         output = output / max_value  ##FIXME need copy not replace
         output_q = output_q / max_value
-        if loss_type == "nsr":
-            output[output == 0] = 1e-5
-            loss = torch.sum(torch.log(1.0 + torch.abs(output - output_q) / torch.abs(output)))
-            return loss
-        elif loss_type == "abs":
+        # if loss_type == "nsr":  # nsr is unused at this point.
+        #     output[output == 0] = 1e-5
+        #     loss = torch.sum(torch.log(1.0 + torch.abs(output - output_q) / torch.abs(output)))
+        #     return loss
+        if loss_type == "abs":
             return torch.sum(torch.pow(torch.abs(output - output_q), 0.5))
         else:
             return torch.sum((output - output_q) ** 2)
@@ -1015,8 +1010,8 @@ class TorchSmoothQuant:
                 self.absorb_to_layer.update(self.self_absorb_layers)
 
                 if self.absorb_to_layer is None and no_absorb_layers is None:
-                    logger.warning("sorry, could not trace the model, smooth quant is ignored")
-                    logger.warning("if you are using huggingface model," "you could set torchscript to True ")
+                    logger.warning("sorry, could not trace the model, smooth quant is ignored."
+                        "If you are using huggingface model," "you could set torchscript to True ")
                     return self.model
                 save_input_output = False if alpha == "auto" else True
                 # if alpha == "auto":
@@ -1150,9 +1145,8 @@ class TorchSmoothQuant:
         if not skip_unsupported_layers:
             return absorb_to_layer
         if absorb_to_layer is None and no_absorb_layers is None:
-            logger.warning("sorry, could not trace the model, smooth quant is skipped")
-            logger.warning(
-                "if you are using huggingface model,"
+            logger.warning("sorry, could not trace the model, smooth quant is skipped."
+                "If you are using huggingface model,"
                 "you could set torchscript to True "
                 "when loading the model or set the return_dict to False"
             )
