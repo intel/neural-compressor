@@ -697,14 +697,11 @@ class ONNXModel(BaseModel):
         for idx in range(len(attention_index)):
             if idx != len(attention_index) - 1:
                 index = attention_index[idx + 1]
-                if index - 2 >= 0 and index - 1 >= 0:
+                if index - 2 >= 0:
                     ffn_matmul.append([attention_matmul_list[index - 2], attention_matmul_list[index - 1]])
             else:
                 index = attention_index[idx]
-
-                if index + block_len - 2 < len(attention_matmul_list) and index + block_len - 1 < len(
-                    attention_matmul_list
-                ):
+                if index + block_len - 1 < len(attention_matmul_list):
                     ffn_matmul.append(
                         [attention_matmul_list[index + block_len - 2], attention_matmul_list[index + block_len - 1]]
                     )
