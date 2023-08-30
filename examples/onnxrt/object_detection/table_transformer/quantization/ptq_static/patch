@@ -156,11 +156,9 @@ index e3a0565..5514db5 100644
              if batch_num % args.eval_step == 0 or batch_num == num_batches:
                  arguments = zip(targets_collection, pred_logits_collection, pred_bboxes_collection,
                                  repeat(args.mode))
--                with multiprocessing.Pool(args.eval_pool_size) as pool:
--                    metrics = pool.starmap_async(eval_tsr_sample, arguments).get()
--                tsr_metrics += metrics
-+                for argument in arguments:
-+                    tsr_metrics += eval_tsr_sample(*argument)
+                 with multiprocessing.Pool(args.eval_pool_size) as pool:
+                     metrics = pool.starmap_async(eval_tsr_sample, arguments).get()
+                 tsr_metrics += metrics
                  pred_logits_collection = []
                  pred_bboxes_collection = []
                  targets_collection = []
@@ -304,6 +302,8 @@ index 74cd13c..1e5e5e9 100644
 +            op_name_dict={
 +                     '/transformer/decoder.*': {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
 +                     '/bbox_embed.*': {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
++                     '/Sigmoid': {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
++                     '/class_embed/MatMul': {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
 +            })
 +        q_model = quantization.fit(args.input_onnx_model, config, calib_dataloader=data_loader_test)
 +        q_model.save(args.output_model)
