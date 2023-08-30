@@ -52,7 +52,7 @@ def move_input_to_device(input, device=torch.device("cpu")):
                         input_res.append(inp)
             else:
                 input_res.append(inp.to(device) if isinstance(inp, torch.Tensor) else inp)
-                
+
             if isinstance(inp, torch.Tensor):
                 prev_size = inp.size()
         input = input_res
@@ -61,14 +61,13 @@ def move_input_to_device(input, device=torch.device("cpu")):
     return input
 
 
-def get_tuple_input(input, res=[], device=torch.device('cpu')):
+def get_tuple_input(input, res=[], device=torch.device("cpu")):
     for inp in input:
         if isinstance(inp, (tuple, list)):
             res = get_tuple_input(inp, res)
         else:
             res.append(inp.to(device))
     return res
-
 
 
 ##TODO potential bug, data typeR
@@ -1222,7 +1221,7 @@ class GraphTrace:
             try:
                 orig_device = next(model.parameters()).device.type
             except:
-                orig_device = 'cpu'
+                orig_device = "cpu"
         if orig_device != "cpu" and orig_device != "meta":
             model = model.to("cpu")
             dummy_input = move_input_to_device(dummy_input, "cpu")

@@ -401,7 +401,7 @@ class TestSqListInput(unittest.TestCase):
         class ListTupleDataLoader:
             def __init__(self):
                 pass
-        
+
             def __iter__(self):
                 input1 = torch.rand((1, 3))
                 input2 = torch.rand((1, 3))
@@ -457,7 +457,6 @@ class TestSqListInput(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-
     @classmethod
     def test_sq_linear_LlamaRMSNorm_list_tuple(self):
         class Model(torch.nn.Module):
@@ -479,13 +478,13 @@ class TestSqListInput(unittest.TestCase):
                 out = self.norm(out)
                 out = self.fc3(out)
                 return out
+
         model = Model()
-        model = model.to('cuda')
+        model = model.to("cuda")
 
         sq = TorchSmoothQuant(model, self.list_tuple_dl)
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 2
-
 
 
 class TestAlphaAutoLinear(unittest.TestCase):
