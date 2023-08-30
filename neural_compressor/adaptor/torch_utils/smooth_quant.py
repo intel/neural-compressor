@@ -1245,7 +1245,7 @@ class GraphTrace:
                     logger.warning(e)
                     logger.warning("Jit trace in GraphTrace failed, absorb layer detection is skipped")
         if orig_device != "cpu":
-            if orig_device == 'cuda':
+            if orig_device == "cuda":
                 if torch.cuda.is_available():
                     model = model.to(orig_device)
             else:
