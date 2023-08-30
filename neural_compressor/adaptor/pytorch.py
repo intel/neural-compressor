@@ -931,13 +931,7 @@ class TemplateAdaptor(Adaptor):
     def eval_func(self, model, dataloader, postprocess, metrics, measurer, iteration, conf=None):
         results = []
         try:
-            for idx, input in enumerate(dataloader):
-                if isinstance(input, list) and len(input) == 2:
-                    label = input[1]
-                    input = input[0]
-                else:
-                    label = input["labels"]
-
+            for idx, (input, label) in enumerate(dataloader):
                 if measurer is not None:
                     measurer.start()
 
@@ -973,8 +967,8 @@ class TemplateAdaptor(Adaptor):
             for idx, input in enumerate(dataloader):
                 if isinstance(input, dict) or isinstance(input, UserDict):
                     if not self.benchmark:
-                        assert "label" in input, "The dataloader must include label to measure the metric!"
-                        label = input["label"].to("cpu")
+                        assert "label" in input or "labels" in input, "The dataloader must include label to measure the metric!"
+                        label = input["label"].to("cpu") if "label" in input else input["labels"].to("cpu")
                 elif not self.benchmark:
                     assert False, "The dataloader must include label to measure the metric!"
 
