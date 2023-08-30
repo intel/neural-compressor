@@ -152,16 +152,6 @@ index e3a0565..5514db5 100644
  
          if args.debug:
              for target, pred_logits, pred_boxes in zip(targets, outputs['pred_logits'], outputs['pred_boxes']):
-@@ -646,9 +653,8 @@ def evaluate(args, model, criterion, postprocessors, data_loader, base_ds, devic
-             if batch_num % args.eval_step == 0 or batch_num == num_batches:
-                 arguments = zip(targets_collection, pred_logits_collection, pred_bboxes_collection,
-                                 repeat(args.mode))
-                 with multiprocessing.Pool(args.eval_pool_size) as pool:
-                     metrics = pool.starmap_async(eval_tsr_sample, arguments).get()
-                 tsr_metrics += metrics
-                 pred_logits_collection = []
-                 pred_bboxes_collection = []
-                 targets_collection = []
 diff --git a/src/main.py b/src/main.py
 index 74cd13c..1e5e5e9 100644
 --- a/src/main.py
@@ -279,7 +269,7 @@ index 74cd13c..1e5e5e9 100644
          print("Running evaluation/inference in DEBUG mode, processing will take longer. Saving output to: {}.".format(args.debug_save_dir))
          os.makedirs(args.debug_save_dir, exist_ok=True)
  
-@@ -366,10 +414,31 @@ def main():
+@@ -366,10 +414,33 @@ def main():
  
      if args.mode == "train":
          train(args, model, criterion, postprocessors, device)
@@ -313,6 +303,6 @@ index 74cd13c..1e5e5e9 100644
 +        from neural_compressor.config import BenchmarkConfig
 +        config = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1)
 +        fit(args.input_onnx_model, config, b_dataloader=data_loader_test)
- 
+
  if __name__ == "__main__":
      main()
