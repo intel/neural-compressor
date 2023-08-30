@@ -41,7 +41,9 @@ There are many excellent works for weight only quantization to improve its accur
 | scheme | ['asym', 'sym'] |
 | algorithm | ['RTN', 'AWQ', 'GPTQ'] |
 
-Notes: 4-bit NormalFloat(NF4) is proposed in QLoRA[5]. 'fp4' includes [fp4_e2m1](../../neural_compressor/adaptor/torch_utils/weight_only.py#L37) and [fp4_e2m1_bnb](https://github.com/TimDettmers/bitsandbytes/blob/18e827d666fa2b70a12d539ccedc17aa51b2c97c/bitsandbytes/functional.py#L735). By default, fp4 refers to fp4_e2m1_bnb.
+Notes:
+- *group_size = -1* refers to **per output channel quantization**. Taking a linear layer (input channel = $C_{in}$, output channel = $C_{out}$) for instance, when *group size = -1*, quantization will calculate total $C_{out}$ quantization parameters. Otherwise, when *group_size = gs* quantization parameters are calculate with every $gs$ elements along with the input channel, leading to total $C_{out} \times (C_{in} / gs)$ quantization parameters. 
+- 4-bit NormalFloat(NF4) is proposed in QLoRA[5]. 'fp4' includes [fp4_e2m1](../../neural_compressor/adaptor/torch_utils/weight_only.py#L37) and [fp4_e2m1_bnb](https://github.com/TimDettmers/bitsandbytes/blob/18e827d666fa2b70a12d539ccedc17aa51b2c97c/bitsandbytes/functional.py#L735). By default, fp4 refers to fp4_e2m1_bnb.
 
 **RTN arguments**:
 |  rtn_args  | default value |                               comments                              |
@@ -49,6 +51,7 @@ Notes: 4-bit NormalFloat(NF4) is proposed in QLoRA[5]. 'fp4' includes [fp4_e2m1]
 | sym_full_range |      False     |   Whether use -2**(bits-1) in sym scheme, for example,    |
 |  mse_range |      False     | Whether search for the best clip range from range [0.805, 1.0, 0.005] |
 |  return_int |      False     | Whether return compressed model with int data type |
+|  group_dim  |       1       |   0 means splitting output channel, 1 means splitting input channel   |
 
 **AWQ arguments**:
 |  awq_args  | default value |                               comments                              |
@@ -97,8 +100,9 @@ conf = PostTrainingQuantConfig(
         },
     },
     recipes={
+        # 'rtn_args':{'sym_full_range': True, 'mse_range': True},
         # 'gptq_args':{'percdamp': 0.01, 'actorder':True, 'block_size': 128, 'nsamples': 128, 'use_full_length': False},
-        # 'awq_args':{'auto_scale': True, 'mse_range': True},
+        # 'awq_args':{'auto_scale': True, 'mse_range': True, 'n_blocks': 5},
     },
 )
 q_model = quantization.fit(model, conf, eval_func=eval_func)

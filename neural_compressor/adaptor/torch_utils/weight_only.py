@@ -216,7 +216,7 @@ def quant_weight(
     Returns:
         output: qdq weight.
     """
-    if num_bits <= 0:
+    if num_bits <= 0:  # pragma: no cover
         return weight
     if group_size == -1 or weight.shape[1] < group_size:
         return qdq_weight_actor(
@@ -354,6 +354,7 @@ def rtn_quantize(
     data_type="int",
     sym_full_range=False,
     mse_range=False,
+    group_dim=1,
     **kwargs,
 ):
     """Quant the model with round to nearst method.
@@ -382,6 +383,8 @@ def rtn_quantize(
                                      Defaults to False.
         mse_range (bool, optional):  Whether search clip range.
                                      Defaults to True.
+        group_dim (int, optional):   0 means splitting output channel,
+                                     1 means splitting input channel. Defaults to 1.
 
     Returns:
         model: fake quantized torch module
@@ -402,7 +405,6 @@ def rtn_quantize(
             scheme = weight_config[name]["scheme"]
             quantile = weight_config[name].get("quantile", 1.0)
         logger.debug(f"RTN quantized module:{name, m}")
-        # import pdb; pdb.set_trace()
         log_msg = (
             f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, "
             + f"scheme={scheme}, quantile={quantile}"
@@ -415,7 +417,7 @@ def rtn_quantize(
         if num_bits <= 0:
             logger.info(f"Skip {name}")
             continue
-        weight = m.weight
+        weight = m.weight.T if group_dim == 0 else m.weight
         if mse_range:
             quantile = search_clip(m, num_bits, group_size, scheme, data_type, sym_full_range)
         if return_int:
@@ -431,6 +433,9 @@ def rtn_quantize(
                 return_int=True,
                 full_range=sym_full_range,
             )
+            int_weight = int_weight.T if group_dim == 0 else int_weight
+            scale = scale.T if group_dim == 0 else scale
+            zp = zp.T if group_dim == 0 and zp is not None else zp
             new_module = WeightOnlyLinear(
                 m.in_features,
                 m.out_features,
@@ -459,6 +464,7 @@ def rtn_quantize(
                 data_type=data_type,
                 full_range=sym_full_range,
             )
+            q_weight = q_weight.T if group_dim == 0 else q_weight
             m.weight.data.copy_(q_weight)
     return model
 

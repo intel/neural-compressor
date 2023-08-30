@@ -475,7 +475,7 @@ def benchmark_with_raw_cmd(raw_cmd, conf=None):
         if conf.backend == "ipex":
             import intel_extension_for_pytorch
         assert sys.platform in ["linux", "win32"], "only support platform windows and linux..."
-        # disable multi-instance for running bechmark on GPU device
+        # disable multi-instance for running benchmark on GPU device
         set_all_env_var(conf)
 
     config_instance(raw_cmd)
