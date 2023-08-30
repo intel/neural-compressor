@@ -41,7 +41,9 @@ def move_input_to_device(input, device=torch.device("cpu")):
     elif isinstance(input, list) or isinstance(input, tuple):
         input_res, prev_size = [], None
         for inp in input:
-            if prev_size:
+            if isinstance(inp, tuple):
+                input_res = get_tuple_input(inp, res=input_res, device=device)
+            elif prev_size:
                 if isinstance(inp, torch.Tensor):
                     if inp.size() == prev_size:
                         input_res.append(inp.to(device))
@@ -50,14 +52,26 @@ def move_input_to_device(input, device=torch.device("cpu")):
                         input_res.append(inp)
             else:
                 input_res.append(inp.to(device) if isinstance(inp, torch.Tensor) else inp)
-            prev_size = torch.tensor(inp).size()
+                
+            if isinstance(inp, torch.Tensor):
+                prev_size = inp.size()
         input = input_res
     else:
         input = input.to(device)  # pylint: disable=no-member
     return input
 
 
-##TODO potential bug, data type
+def get_tuple_input(input, res=[], device=torch.device('cpu')):
+    for inp in input:
+        if isinstance(inp, (tuple, list)):
+            res = get_tuple_input(inp, res)
+        else:
+            res.append(inp.to(device))
+    return res
+
+
+
+##TODO potential bug, data typeR
 def forward_wrapper(model, input, device=torch.device("cpu")):
     try:
         input = move_input_to_device(input, device)
@@ -1205,7 +1219,10 @@ class GraphTrace:
             if hasattr(model.device, "type"):
                 orig_device = model.device.type
         else:
-            orig_device = "cpu"
+            try:
+                orig_device = next(model.parameters()).device.type
+            except:
+                orig_device = 'cpu'
         if orig_device != "cpu" and orig_device != "meta":
             model = model.to("cpu")
             dummy_input = move_input_to_device(dummy_input, "cpu")

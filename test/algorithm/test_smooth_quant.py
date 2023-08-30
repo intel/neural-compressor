@@ -398,8 +398,18 @@ class TestSqListInput(unittest.TestCase):
             def __iter__(self):
                 yield (torch.rand((1, 3)))
 
+        class ListTupleDataLoader:
+            def __init__(self):
+                pass
+        
+            def __iter__(self):
+                input1 = torch.rand((1, 3))
+                input2 = torch.rand((1, 3))
+                yield [input1, ((input2, input1)), input2]
+
         self.list_dl = ListDataloader()
         self.tuple_dl = TupleDataloader()
+        self.list_tuple_dl = ListTupleDataLoader()
 
     @classmethod
     def test_sq_linear_LlamaRMSNorm(self):
@@ -446,6 +456,36 @@ class TestSqListInput(unittest.TestCase):
         sq = TorchSmoothQuant(model, self.tuple_dl)
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
+
+
+    @classmethod
+    def test_sq_linear_LlamaRMSNorm_list_tuple(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1_1 = torch.nn.Linear(3, 4)
+                self.fc1_2 = torch.nn.Linear(3, 4)
+                self.fc1_3 = torch.nn.Linear(4, 4)
+                self.fc2 = torch.nn.Linear(4, 4)
+                self.norm = LlamaRMSNorm(4)
+                self.fc3 = torch.nn.Linear(4, 3)
+
+            def forward(self, x1, x2, x3, x4):
+                out1 = self.fc1_1(x1 + x4)
+                out2 = self.fc1_2(x2 + x3)
+                out = out1 + out2
+                out = self.fc1_3(out)
+                out = self.fc2(out)
+                out = self.norm(out)
+                out = self.fc3(out)
+                return out
+        model = Model()
+        model = model.to('cuda')
+
+        sq = TorchSmoothQuant(model, self.list_tuple_dl)
+        sq.transform(alpha=0.5, calib_iter=1, folding=True)
+        assert len(sq.absorb_to_layer) == 2
+
 
 
 class TestAlphaAutoLinear(unittest.TestCase):
