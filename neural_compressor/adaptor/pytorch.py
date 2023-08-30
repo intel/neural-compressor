@@ -967,7 +967,9 @@ class TemplateAdaptor(Adaptor):
             for idx, input in enumerate(dataloader):
                 if isinstance(input, dict) or isinstance(input, UserDict):
                     if not self.benchmark:
-                        assert "label" in input or "labels" in input, "The dataloader must include label to measure the metric!"
+                        assert (
+                            "label" in input or "labels" in input
+                        ), "The dataloader must include label to measure the metric!"
                         label = input["label"].to("cpu") if "label" in input else input["labels"].to("cpu")
                 elif not self.benchmark:
                     assert False, "The dataloader must include label to measure the metric!"
