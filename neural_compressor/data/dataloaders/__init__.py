@@ -18,7 +18,4 @@
 
 from .dataloader import DataLoader, DATALOADERS
 
-__all__ = [
-    "DataLoader",
-    "DATALOADERS"
-]
+__all__ = ["DataLoader", "DATALOADERS"]

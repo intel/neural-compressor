@@ -44,7 +44,7 @@ Tuning Strategies
 ## Introduction
 
 Intel® Neural Compressor aims to help users quickly deploy
-the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch, ONNX, and MXNet. With built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several strategies, including `O0`, `Basic`, `MSE`, `MSE_V2`, `HAWQ_V2`, `Bayesian`, `Exhaustive`, `Random`, `SigOpt`, `TPE`, etc are supported. By default, the `Basic` strategy is used for tuning.
+the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch, ONNX, and MXNet. With built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several tuning strategies, including `auto`, `O0`, `O1`, `Basic`, `MSE`, `MSE_V2`, `HAWQ_V2`, `Bayesian`, `Exhaustive`, `Random`, `SigOpt`, `TPE`, etc are supported. By default, the [`quant_level="auto"`](./tuning_strategies.md#auto) is used for tuning.
 
 ## Strategy Design
 Before tuning, the `tuning space` was constructed according to the framework capability and user configuration. Then the selected strategy generates the next quantization configuration according to its traverse process and the previous tuning record. The tuning process stops when meeting the exit policy. The function of strategies is shown
@@ -54,10 +54,12 @@ below:
 
 ### Tuning Space
 
-Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it may have multiple quantization scheme(symmetric/asymmetric), calibration algorithm(Min-Max/KL Divergence), etc. We use the `framework capability` to represent the methods that we have already supported. The `tuning space` includes all tuning items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
+Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it may have multiple quantization scheme(symmetric/asymmetric), calibration algorithm(Min-Max/KL Divergence), etc. We use the [`framework capability`](./framework_yaml.md) to represent the methods that we have already supported. The `tuning space` includes all tuning items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
 ![Conv2D_PyTorch_Cap](./imgs/Conv2D_PyTorch_Cap.png "Conv2D PyTorch Capability")
 
 To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the `op_name_dict` and `op_type_dict` in `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`). Before tuning, the strategy will merge these configurations with framework capability to create the final tuning space.
+
+> Note: Any options in the `op_name_dict` and `op_type_dict` that are not included in the [`framework capability`](./framework_yaml.md) will be ignored by the strategy.
 
 ### Exit Policy
 User can control the tuning process by setting the exit policy by specifying the `timeout`, and `max_trials` fields in the `TuningCriterion`.
@@ -65,11 +67,11 @@ User can control the tuning process by setting the exit policy by specifying the
 ```python
 from neural_compressor.config import TuningCriterion
 
-tuning_criterion=TuningCriterion(
-    timeout=0, # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
-    max_trials=100, # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
-    strategy="basic", # optional. name of the tuning strategy. 
-    strategy_kwargs=None, # optional. see concrete tuning strategy for available settings.
+tuning_criterion = TuningCriterion(
+    timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+    max_trials=100,  # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
+    strategy="basic",  # optional. name of the tuning strategy.
+    strategy_kwargs=None,  # optional. see concrete tuning strategy for available settings.
 )
 ```
 
@@ -81,8 +83,8 @@ User can set the accuracy criteria by specifying the `higher_is_better`, `criter
 from neural_compressor.config import AccuracyCriterion
 
 accuracy_criterion = AccuracyCriterion(
-    higher_is_better=True,  # optional. 
-    criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
+    higher_is_better=True,  # optional.
+    criterion="relative",  # optional. Available values are 'relative' and 'absolute'.
     tolerable_loss=0.01,  # optional.
 )
 ```
@@ -177,6 +179,9 @@ flowchart TD
 
 > `*` INC will detect the block pattern for [transformer-like](https://arxiv.org/abs/1706.03762) model by default.
 
+> For [smooth quantization](./smooth_quant.md), users can tune the smooth quantization alpha by providing a list of scalars for the `alpha` item. The tuning process will take place at the **start stage** of the tuning procedure. For details usage, please refer to the [smooth quantization example](./smooth_quant.md#Example).
+
+
 **1.** Default quantization
 
 At this stage, it attempts to quantize OPs with the default quantization configuration which is consistent with the framework's behavior.
@@ -223,11 +228,8 @@ from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
     quant_level=1,
-    tuning_criterion=TuningCriterion(
-        strategy="basic"  # optional. name of tuning strategy. 
-    ),
+    tuning_criterion=TuningCriterion(strategy="basic"),  # optional. name of tuning strategy.
 )
-
 ```
 
 ### MSE
@@ -250,11 +252,8 @@ from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
     quant_level=1,
-    tuning_criterion=TuningCriterion(
-        strategy="mse" 
-    ),
+    tuning_criterion=TuningCriterion(strategy="mse"),
 )
-
 ```
 
 ### MSE_V2
@@ -273,7 +272,7 @@ conf = PostTrainingQuantConfig(
     quant_level=1,
     tuning_criterion=TuningCriterion(
         strategy="mse_v2",
-        strategy_kwargs={"confidence_batches": 2}  # optional. the number of batches to score the op impact.
+        strategy_kwargs={"confidence_batches": 2},  # optional. the number of batches to score the op impact.
     ),
 )
 ```
@@ -298,7 +297,7 @@ conf = PostTrainingQuantConfig(
     quant_level=1,
     tuning_criterion=TuningCriterion(
         strategy="hawq_v2",
-        strategy_kwargs={"hawq_v2_loss": model_loss}  # required. the loss function for calculating the hessian trace.
+        strategy_kwargs={"hawq_v2_loss": model_loss},  # required. the loss function for calculating the hessian trace.
     ),
 )
 ```
@@ -332,10 +331,9 @@ conf = PostTrainingQuantConfig(
     tuning_criterion=TuningCriterion(
         timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
         max_trials=100,  # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
-        strategy="bayesian"
+        strategy="bayesian",
     ),
 )
-
 ```
 
 ### Exhaustive
@@ -466,9 +464,7 @@ from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
     quant_level=1,
-    tuning_criterion=TuningCriterion(
-        strategy="tpe"
-    )
+    tuning_criterion=TuningCriterion(strategy="tpe"),
 )
 ```
 
@@ -485,6 +481,9 @@ An example of customizing a new tuning strategy can be reached at [TPE Strategy]
 ### Design
 
 Intel® Neural Compressor provides distributed tuning to speed up the tuning process by leveraging the multi-node cluster. It seamlessly parallelizes the tuning process across multi nodes by using the MPI. In distributed tuning, the `fp32` model is replicated on every node, and each original model replica is fed with a different quantization configuration. The master handler coordinates the tuning process and synchronizes the tuning result of each stage to every slave handler. The distributed tuning allows the tuning process to scale up significantly to the number of nodes, which translates into faster results and more efficient utilization of computing resources. 
+
+The diagram below provides an overview of the distributed tuning process.
+![distributed tuning](./imgs/distributed_tuning_intro.png "Distributed Tuning")
 
 
 ### Usage
@@ -506,17 +505,15 @@ For example, user can implement an `Abc` strategy like below:
 ```python
 @strategy_registry
 class AbcTuneStrategy(TuneStrategy):
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None):
+    def __init__(self, model, conf, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
         ...
 
     def next_tune_cfg(self):
         # generate the next tuning config
         ...
-    
+
     def traverse(self):
         for tune_cfg in self.next_tune_cfg():
             # do quantization
             ...
-
 ```

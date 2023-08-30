@@ -14,11 +14,13 @@
 
 """Neural Solution task submitter."""
 
-import socket
 import json
+import socket
+
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
 from neural_solution.config import config
+
 
 class Task(BaseModel):
     """Task definition for submitting requests.
@@ -33,6 +35,7 @@ class Task(BaseModel):
     approach: str
     requirements: list
     workers: int
+
 
 class TaskSubmitter:
     """Responsible for submitting tasks."""
@@ -65,5 +68,7 @@ class TaskSubmitter:
         s.send(self.serialize(tid))
         s.close()
 
-task_submitter = TaskSubmitter(task_monitor_port=config.task_monitor_port,
-                               result_monitor_port=config.result_monitor_port)
+
+task_submitter = TaskSubmitter(
+    task_monitor_port=config.task_monitor_port, result_monitor_port=config.result_monitor_port
+)

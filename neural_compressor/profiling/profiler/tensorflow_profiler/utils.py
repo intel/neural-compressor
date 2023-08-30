@@ -24,7 +24,6 @@ def delete_assign(graph_def: Any) -> Any:
         graph_def: TensorFlow GraphDef
 
     Returns:
-
     """
     for node in graph_def.node:
         if node.op == "RefSwitch":

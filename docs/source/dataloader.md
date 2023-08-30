@@ -5,9 +5,9 @@ DataLoader
 
 2. [Supported Framework Dataloader Matrix](#supported-framework-dataloader-matrix)
 
-3. [Get Started with Dataloader](#get-start-with-dataloader)
+3. [Get Started with Dataloader](#get-started-with-dataloader)
 
-    3.1 [Use Intel® Neural Compressor DataLoader API](#use-intel®-neural-compressor-dataloader-api)
+    3.1 [Use Intel® Neural Compressor DataLoader API](#use-intel-neural-compressor-dataloader-api)
 
     3.2 [Build Custom Dataloader with Python API](#build-custom-dataloader-with-python-api)
 
@@ -42,10 +42,11 @@ Of cause, users can also use frameworks own dataloader in Neural Compressor.
 ### Use Intel® Neural Compressor DataLoader API
 
 Acceptable parameters for `DataLoader` API including:
+
 | Parameter     | Description     |
-|:--------------|:----------|
-|framework (str)| different frameworks, such as `tensorflow`, `keras`, `mxnet`, `pytorch` and `onnxrt`.|
-|dataset (object)| A dataset object from which to get data. Dataset must implement __iter__ or __getitem__ method.|
+|---------------|:----------:|
+|framework (str)| different frameworks, such as `tensorflow`, `tensorflow_itex`, `keras`, `mxnet`, `pytorch` and `onnxruntime`.|
+|dataset (object)| A dataset object from which to get data. Dataset must implement `__iter__` or `__getitem__` method.|
 |batch_size (int, optional)| How many samples per batch to load. Defaults to 1.|
 |collate_fn (Callable, optional)| Callable function that processes the batch you want to return from your dataloader. Defaults to None.|
 |last_batch (str, optional)| How to handle the last batch if the batch size does not evenly divide by the number of examples in the dataset. 'discard': throw it away. 'rollover': insert the examples to the beginning of the next batch.Defaults to 'rollover'.|
@@ -62,10 +63,11 @@ Users can use the unified `DataLoader` API in the following manners.
 from neural_compressor.data import DataLoader
 from neural_compressor import quantization, PostTrainingQuantConfig
 
-dataloader = DataLoader(framework='tensorflow', dataset=dataset)
+dataloader = DataLoader(framework="tensorflow", dataset=dataset)
 config = PostTrainingQuantConfig()
 q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval)
 ```
+> Note: `DataLoader(framework='onnxruntime', dataset=dataset)` failed in neural-compressor v2.2. We have fixed it in this [PR](https://github.com/intel/neural-compressor/pull/1048).
 
 ### Build Custom Dataloader with Python API
 
@@ -82,7 +84,9 @@ class NewDataloader:
         for input_data, label in self.dataset:
             yield input_data, label
 
+
 from neural_compressor import quantization, PostTrainingQuantConfig
+
 config = PostTrainingQuantConfig()
 dataloader = NewDataloader(batch_size, **kwargs)
 q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval)

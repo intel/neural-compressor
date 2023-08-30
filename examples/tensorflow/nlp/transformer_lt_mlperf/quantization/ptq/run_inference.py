@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ from google.protobuf import text_format
 from utils import tokenizer
 from utils.tokenizer import Subtokenizer
 from utils import metrics
-from neural_compressor.data import DATALOADERS
+from neural_compressor.data import DataLoader
 from neural_compressor.utils.utility import dump_elapsed_time
 from neural_compressor.utils import logger
 
@@ -219,8 +219,8 @@ def collate_fn(batch):
 def eval_func(infer_graph):
     dataset = Dataset(FLAGS.input_file, FLAGS.vocab_file)
     sorted_keys = dataset.sorted_keys
-    dataloader = DATALOADERS['tensorflow'] \
-        (dataset, batch_size=FLAGS.batch_size, collate_fn=collate_fn)
+    dataloader = DataLoader(framework='tensorflow', dataset=dataset, 
+                                batch_size=FLAGS.batch_size, collate_fn=collate_fn)
     input_tensors = list(map(infer_graph.get_tensor_by_name, INPUT_TENSOR_NAMES))
     output_tensors = list(map(infer_graph.get_tensor_by_name, OUTPUT_TENSOR_NAMES))
 
@@ -306,12 +306,11 @@ def main(unused_args):
     if FLAGS.tune:
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.data import DataLoader
         dataset = Dataset(FLAGS.input_file, FLAGS.vocab_file)
-        calib_dataloader = DataLoader(dataset = dataset,
-                                      framework ='tensorflow',
-                                      collate_fn = collate_fn,
-                                      batch_size = FLAGS.batch_size)
+        calib_dataloader = DataLoader(framework ='tensorflow',
+                                      dataset = dataset,
+                                      batch_size = FLAGS.batch_size,
+                                      collate_fn = collate_fn)
 
         conf = PostTrainingQuantConfig(inputs=['input_tokens'],
                                         outputs=['model/Transformer/strided_slice_15', 'model/Transformer/strided_slice_16'],

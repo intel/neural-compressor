@@ -121,4 +121,3 @@ class Cluster{
 ### Extensibility
 
 - The service can be deployed on various resource pool, including a set of worker nodes, such as a local cluster or cloud cluster (AWS and GCP).
-

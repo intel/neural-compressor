@@ -60,7 +60,7 @@ config = PostTrainingQuantConfig(
 
 ## Quantization
   ```shell
-  bash run_tuning.sh --input_model=./inception_resnet_v2_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
+  bash run_quant.sh --input_model=./inception_resnet_v2_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
   ```
 
 ## Benchmark

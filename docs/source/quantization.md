@@ -223,20 +223,26 @@ This means user could leverage Intel(R) Neural Compressor to directly generate a
 model = ResNet50()
 val_dataset = ...
 val_dataloader = torch.utils.data.Dataloader(
-                     val_dataset,
-                     batch_size=args.batch_size, shuffle=False,
-                     num_workers=args.workers, ping_memory=True)
+    val_dataset,
+    batch_size=args.batch_size,
+    shuffle=False,
+    num_workers=args.workers,
+    ping_memory=True,
+)
 
 # Quantization code
 from neural_compressor import quantization
 from neural_compressor.config import PostTrainingQuantConfig
 
-conf = PostTrainingQuantConfig() # default approach is "auto", you can set "dynamic":PostTrainingQuantConfig(approach="dynamic")
-q_model = quantization.fit(model=model,
-                           conf=conf,
-                           calib_dataloader=val_dataloader)
-q_model.save('./output')
-
+conf = (
+    PostTrainingQuantConfig()
+)  # default approach is "auto", you can set "dynamic":PostTrainingQuantConfig(approach="dynamic")
+q_model = quantization.fit(
+    model=model,
+    conf=conf,
+    calib_dataloader=val_dataloader,
+)
+q_model.save("./output")
 ```
 
 2. With Accuracy Aware Tuning
@@ -246,40 +252,50 @@ This means user could leverage the advance feature of Intel(R) Neural Compressor
 ``` python
 # main.py
 
+
 # Original code
 def validate(val_loader, model, criterion, args):
     ...
     return top1.avg
 
+
 model = ResNet50()
 val_dataset = ...
 val_dataloader = torch.utils.data.Dataloader(
-                     val_dataset,
-                     batch_size=args.batch_size, shuffle=False,
-                     num_workers=args.workers, ping_memory=True)
+    val_dataset,
+    batch_size=args.batch_size,
+    shuffle=False,
+    num_workers=args.workers,
+    ping_memory=True,
+)
 
 # Quantization code
 from neural_compressor import quantization
 from neural_compressor.config import PostTrainingQuantConfig
 
 conf = PostTrainingQuantConfig()
-q_model = quantization.fit(model=model,
-                           conf=conf,
-                           calib_dataloader=val_dataloader,
-                           eval_func=validate)
-q_model.save('./output')
+q_model = quantization.fit(
+    model=model,
+    conf=conf,
+    calib_dataloader=val_dataloader,
+    eval_func=validate,
+)
+q_model.save("./output")
 ```
 or
 
 ```python
 from neural_compressor.metric import METRICS
-metrics = METRICS('pytorch')
-top1 = metrics['topk']()
-q_model = quantization.fit(model=model,
-                           conf=conf,
-                           calib_dataloader=val_dataloader,
-                           eval_dataloader=val_dataloader,
-                           eval_metric=top1)
+
+metrics = METRICS("pytorch")
+top1 = metrics["topk"]()
+q_model = quantization.fit(
+    model=model,
+    conf=conf,
+    calib_dataloader=val_dataloader,
+    eval_dataloader=val_dataloader,
+    eval_metric=top1,
+)
 ```
 ### Quantization Aware Training
 
@@ -293,25 +309,30 @@ This method only requires the user to call the callback function during the trai
 model = ResNet50()
 train_dataset = ...
 train_dataloader = torch.utils.data.Dataloader(
-                     train_dataset,
-                     batch_size=args.batch_size, shuffle=True,
-                     num_workers=args.workers, ping_memory=True)
+    train_dataset,
+    batch_size=args.batch_size,
+    shuffle=True,
+    num_workers=args.workers,
+    ping_memory=True,
+)
 criterion = ...
+
 
 # Quantization code
 def train_func(model):
     ...
 
+
 from neural_compressor import QuantizationAwareTrainingConfig
 from neural_compressor.training import prepare_compression
+
 conf = QuantizationAwareTrainingConfig()
 compression_manager = prepare_compression(model, conf)
 compression_manager.callbacks.on_train_begin()
 model = compression_manager.model
 train_func(model)
 compression_manager.callbacks.on_train_end()
-compression_manager.save('./output')
-
+compression_manager.save("./output")
 ```
 
 2. With Accuracy Aware Tuning
@@ -324,26 +345,33 @@ This method requires the user to provide training function and evaluation functi
 model = ResNet50()
 val_dataset = ...
 val_dataloader = torch.utils.data.Dataloader(
-                     val_dataset,
-                     batch_size=args.batch_size, shuffle=False,
-                     num_workers=args.workers, ping_memory=True)
+    val_dataset,
+    batch_size=args.batch_size,
+    shuffle=False,
+    num_workers=args.workers,
+    ping_memory=True,
+)
 criterion = ...
+
 
 def validate(val_loader, model, criterion, args):
     ...
     return top1.avg
+
 
 # Quantization code
 def train_func(model):
     ...
     return model  # user should return a best performance model here
 
+
 from neural_compressor import QuantizationAwareTrainingConfig
 from neural_compressor.training import prepare_compression, fit
+
 conf = QuantizationAwareTrainingConfig()
 compression_manager = prepare_compression(model, conf)
 q_model = fit(compression_manager=compression_manager, train_func=train_func, eval_func=validate)
-compression_manager.save('./output')
+compression_manager.save("./output")
 ```
 
 ### Specify Quantization Rules
@@ -354,42 +382,32 @@ Intel(R) Neural Compressor support specify quantization rules by operator name o
 op_name_dict = {
     "layer1.0.conv1": {
         "activation": {
-            "dtype": ["fp32"]
+            "dtype": ["fp32"],
         },
         "weight": {
-            "dtype": ["fp32"]
-        }
+            "dtype": ["fp32"],
+        },
     },
     "layer2.0.conv1": {
         "activation": {
             "dtype": ["uint8"],
             "algorithm": ["minmax"],
             "granularity": ["per_tensor"],
-            "scheme": ["sym"]
+            "scheme": ["sym"],
         },
         "weight": {
             "dtype": ["int8"],
             "algorithm": ["minmax"],
             "granularity": ["per_channel"],
-            "scheme": ["sym"]
-        }
+            "scheme": ["sym"],
+        },
     },
 }
 conf = PostTrainingQuantConfig(op_name_dict=op_name_dict)
-
 ```
 2. Example of `op_type_dict`
 ```python
-op_type_dict = {
-    'Conv': {
-        'weight': {
-            'dtype': ['fp32']
-        },
-        'activation': {
-            'dtype': ['fp32']
-        }
-    }
-}
+op_type_dict = {"Conv": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}}
 conf = PostTrainingQuantConfig(op_type_dict=op_type_dict)
 ```
 
@@ -416,12 +434,11 @@ Example of recipe:
 recipes = {
     "smooth_quant": True,
     "smooth_quant_args": {
-        "alpha": 0.5 # default value is 0.5
-    },
+        "alpha": 0.5,
+    },  # default value is 0.5
     "fast_bias_correction": False,
 }
 conf = PostTrainingQuantConfig(recipes=recipes)
-
 ```
 
 ### Specify Quantization Backend and Device
@@ -452,7 +469,7 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
             <td align="left">cpu</td>
         </tr>
         <tr>
-            <td rowspan="3" align="left">ONNX Runtime</td>
+            <td rowspan="4" align="left">ONNX Runtime</td>
             <td align="left">CPUExecutionProvider</td>
             <td align="left">MLAS</td>
             <td align="left">"default"</td>
@@ -469,6 +486,12 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
             <td align="left">CUDA</td>
             <td align="left">"onnxrt_cuda_ep"</td>
             <td align="left">gpu</td>
+        </tr>
+        <tr>
+            <td align="left">DnnlExecutionProvider</td>
+            <td align="left">OneDNN</td>
+            <td align="left">"onnxrt_dnnl_ep"</td>
+            <td align="left">cpu</td>
         </tr>
         <tr>
             <td rowspan="2" align="left">Tensorflow</td>

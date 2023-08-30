@@ -48,7 +48,7 @@ Follow the [instructions](https://github.com/IntelAI/models/blob/master/benchmar
 ## Run Command
 ### Run Tuning:
 ```
-bash run_tuning.sh \
+bash run_quant.sh \
     --input_model=$INPUT_MODEL \
     --dataset_location=$DATASET_DIR \
     --output_model=$OUTPUT_MODEL \

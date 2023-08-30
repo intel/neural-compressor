@@ -14,23 +14,45 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Strategy constant."""
 
-PRECISION_LIST = ['bf16', 'fp16' , 'fp32']
-QUANT_MODE_SET = {'static', 'dynamic'}
-LOWER_BIT_LIST = ['int4']
+PRECISION_LIST = ["bf16", "fp16", "fp32"]
+QUANT_MODE_SET = {"static", "dynamic"}
+LOWER_BIT_LIST = ["int4"]
 
-TUNING_ITEMS_LST = [('activation','scheme'), ('activation','algorithm'), ('activation','granularity'),
-                    ('weight','scheme'), ('weight','algorithm'), ('weight','granularity'), 'sampling_size']
+TUNING_ITEMS_LST = [
+    ("activation", "scheme"),
+    ("activation", "algorithm"),
+    ("activation", "granularity"),
+    ("weight", "scheme"),
+    ("weight", "algorithm"),
+    ("weight", "granularity"),
+    "sampling_size",
+]
+WEIGHT_ONLY_TUNING_ITEMS_LST = [
+    ("activation", "scheme"),
+    ("activation", "algorithm"),
+    ("activation", "granularity"),
+    ("weight", "scheme"),
+    ("weight", "algorithm"),
+    ("weight", "granularity"),
+    ("weight", "bits"),
+    ("weight", "group_size"),
+    ("weight", "dtype"),
+    "sampling_size",
+]
 
-PRECISION_SET_V2_0 = {'fp32', 'bf16'}
+PRECISION_SET_V2_0 = {"fp32", "bf16", "fp16"}
 
-auto_query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
-static_query_order = ['static', 'bf16', 'fp16', 'fp32']
-dynamic_query_order = ['dynamic', 'bf16', 'fp16', 'fp32']
-auto_query_order_o0 = ['bf16', 'fp16', 'fp32', 'static', 'dynamic']
+auto_query_order = ["static", "dynamic", "bf16", "fp16", "fp32"]
+static_query_order = ["static", "bf16", "fp16", "fp32"]
+dynamic_query_order = ["dynamic", "bf16", "fp16", "fp32"]
+auto_query_order_o0 = ["bf16", "fp16", "fp32", "static", "dynamic"]
+weight_only_query_order = ["weight_only", "fp32"]
 
 
-FALLBACK_RECIPES_SET = {'first_conv_or_matmul_quantization', 'last_conv_or_matmul_quantization', \
-    'pre_post_process_quantization'}
+FALLBACK_RECIPES_SET = {
+    "first_conv_or_matmul_quantization",
+    "last_conv_or_matmul_quantization",
+    "pre_post_process_quantization",
+}

@@ -66,7 +66,7 @@ curl -X GET {host_ip}:port/task/status/{task_id}
 
 | Status Code | Description      | Content       |
 | ----------- | ---------------- | ------------- |
-| 200         | The status of task .  | `status`: "running"/"done"/"pending"/"failed" |
+| 200         | The status of task .  | `status`: "running"/"done"/"pending"/"failed"</br> `tuning_info`: tuning information</br> `optimization_result`: optimization time, Accuracy, Duration, result_path|
 
 ### GET /task/log/{task_id}
 
@@ -142,6 +142,26 @@ curl -X GET {host_ip}:port/cluster
 | Status Code | Description | Content                                    |
 | ----------- | ------------| ------------------------------------------ |
 | 200         | Cluster information. |  `msg`: "Cluster information." |
+
+### GET /download/{task_id}
+
+#### Description
+
+Download optimized result locally.
+
+#### Usage
+```bash
+curl -X GET {host_ip}:port/download/{task_id} --output quantized_model.zip
+```
+
+#### Responses
+
+| Status Code | Description | Content          |
+| ----------- | ----------- | ---------------- |
+| 200         | Download optimized model. | zip file |
+| 400         | No quantized model when task failed. | `msg`: "Please check URL." |
+| 404         | Download optimized model. | `msg`: "Task failed, file not found" |
+
 
 ### GET /description
 

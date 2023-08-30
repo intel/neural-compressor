@@ -1,14 +1,14 @@
-import unittest
 import copy
 import re
+import unittest
+
 import numpy as np
+import tensorflow as tf
+from tensorflow.core.framework import attr_value_pb2, graph_pb2, node_def_pb2
+from tensorflow.python.framework import tensor_util
+
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer, GraphRewriterHelper
 
-import tensorflow as tf
-from tensorflow.core.framework import attr_value_pb2
-from tensorflow.core.framework import graph_pb2
-from tensorflow.core.framework import node_def_pb2
-from tensorflow.python.framework import tensor_util
 
 class TestGraph_util(unittest.TestCase):
     x_node = node_def_pb2.NodeDef()
@@ -20,16 +20,20 @@ class TestGraph_util(unittest.TestCase):
     input0_node.op = "Const"
     input0_value = np.float32(np.abs(np.random.randn(4, 3, 2)))
     input0_node.attr["value"].CopyFrom(
-        attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
-            input0_value, input0_value.dtype.type, input0_value.shape)))
+        attr_value_pb2.AttrValue(
+            tensor=tensor_util.make_tensor_proto(input0_value, input0_value.dtype.type, input0_value.shape)
+        )
+    )
 
     input1_node = node_def_pb2.NodeDef()
     input1_node.name = "input1"
     input1_node.op = "Const"
     input1_value = np.float32(np.abs(np.random.randn(4, 1, 1)))
     input1_node.attr["value"].CopyFrom(
-        attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
-            input1_value, input1_value.dtype.type, input1_value.shape)))
+        attr_value_pb2.AttrValue(
+            tensor=tensor_util.make_tensor_proto(input1_value, input1_value.dtype.type, input1_value.shape)
+        )
+    )
 
     add_node = node_def_pb2.NodeDef()
     add_node.op = "Add"
@@ -41,16 +45,20 @@ class TestGraph_util(unittest.TestCase):
     input2_node.op = "Const"
     input2_value = np.float32(np.abs(np.random.randn(1)))
     input2_node.attr["value"].CopyFrom(
-        attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
-            input2_value, input2_value.dtype.type, input2_value.shape)))
+        attr_value_pb2.AttrValue(
+            tensor=tensor_util.make_tensor_proto(input2_value, input2_value.dtype.type, input2_value.shape)
+        )
+    )
 
     input3_node = node_def_pb2.NodeDef()
     input3_node.name = "input3"
     input3_node.op = "Const"
     input3_value = np.float32(np.abs(np.random.randn(1)))
     input3_node.attr["value"].CopyFrom(
-        attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
-            input3_value, input3_value.dtype.type, input3_value.shape)))
+        attr_value_pb2.AttrValue(
+            tensor=tensor_util.make_tensor_proto(input3_value, input3_value.dtype.type, input3_value.shape)
+        )
+    )
 
     mul_node = node_def_pb2.NodeDef()
     mul_node.op = "Mul"
@@ -83,10 +91,22 @@ class TestGraph_util(unittest.TestCase):
     end_node.input.extend([block_node.name, res_node.name])
 
     graph_def = graph_pb2.GraphDef()
-    graph_def.node.extend([
-        x_node, input0_node, input1_node, input2_node, input3_node, add_node, mul_node, sqrt_node,
-        sqrt1_node, block_node, res_node, end_node
-    ])
+    graph_def.node.extend(
+        [
+            x_node,
+            input0_node,
+            input1_node,
+            input2_node,
+            input3_node,
+            add_node,
+            mul_node,
+            sqrt_node,
+            sqrt1_node,
+            block_node,
+            res_node,
+            end_node,
+        ]
+    )
 
     def test_replace_constant_graph_with_constant_node(self):
         graph_analyzer = GraphAnalyzer()
@@ -97,36 +117,36 @@ class TestGraph_util(unittest.TestCase):
         new_constant_value = np.random.random([4, 1])
         new_constant_type = tf.as_dtype(np.float32(new_constant_value).dtype)
         new_constant_node = GraphRewriterHelper.create_constant_node(
-            self.add_node.name + "_const", new_constant_value, new_constant_type)
-        assert graph_analyzer.replace_constant_graph_with_constant_node(
-            new_constant_node, self.add_node.name)
+            self.add_node.name + "_const", new_constant_value, new_constant_type
+        )
+        assert graph_analyzer.replace_constant_graph_with_constant_node(new_constant_node, self.add_node.name)
         result_graph = graph_analyzer.dump_graph()
         assert len(list(result_graph.node)) == 10
 
         new_constant_value = np.random.random([4, 1])
         new_constant_type = tf.as_dtype(np.float32(new_constant_value).dtype)
         new_constant_node = GraphRewriterHelper.create_constant_node(
-            self.mul_node.name + "_const", new_constant_value, new_constant_type)
-        assert graph_analyzer.replace_constant_graph_with_constant_node(
-            new_constant_node, self.mul_node.name)
+            self.mul_node.name + "_const", new_constant_value, new_constant_type
+        )
+        assert graph_analyzer.replace_constant_graph_with_constant_node(new_constant_node, self.mul_node.name)
         result_graph = graph_analyzer.dump_graph()
         assert len(list(result_graph.node)) == 8
 
         new_constant_value = np.random.random([4, 1])
         new_constant_type = tf.as_dtype(np.float32(new_constant_value).dtype)
         new_constant_node = GraphRewriterHelper.create_constant_node(
-            self.sqrt_node.name + "_const", new_constant_value, new_constant_type)
-        assert graph_analyzer.replace_constant_graph_with_constant_node(
-            new_constant_node, self.sqrt_node.name)
+            self.sqrt_node.name + "_const", new_constant_value, new_constant_type
+        )
+        assert graph_analyzer.replace_constant_graph_with_constant_node(new_constant_node, self.sqrt_node.name)
         result_graph = graph_analyzer.dump_graph()
         assert len(list(result_graph.node)) == 7
 
         new_constant_value = np.random.random([4, 1])
         new_constant_type = tf.as_dtype(np.float32(new_constant_value).dtype)
         new_constant_node = GraphRewriterHelper.create_constant_node(
-            self.block_node.name + "_const", new_constant_value, new_constant_type)
-        assert not graph_analyzer.replace_constant_graph_with_constant_node(
-            new_constant_node, self.block_node.name)
+            self.block_node.name + "_const", new_constant_value, new_constant_type
+        )
+        assert not graph_analyzer.replace_constant_graph_with_constant_node(new_constant_node, self.block_node.name)
 
     def test_replace_node(self):
         graph_analyzer = GraphAnalyzer()
@@ -143,16 +163,16 @@ class TestGraph_util(unittest.TestCase):
         assert self.add_node not in list(result_graph.node)
         assert new_add_node in list(result_graph.node)
 
-
     def test_freeze_value_regrex(self):
-        sample_str_1 = ';efficientnet-b3/model/blocks_14/se/conv2d/Conv2D_eightbit_requant_range__print__;__requant_min_max:[-2.35420851e+09][2.59383834e+09]'
-        sample_str_2 = ';efficientnet-b3/model/blocks_15/se/conv2d/Conv2D_eightbit_requant_range__print__;__requant_min_max:[-1.254][2.59383834]'
-        print_suffix = '__print__'
-        postfix = '__requant_min_max'
+        sample_str_1 = ";efficientnet-b3/model/blocks_14/se/conv2d/Conv2D_eightbit_requant_range__print__;__requant_min_max:[-2.35420851e+09][2.59383834e+09]"
+        sample_str_2 = ";efficientnet-b3/model/blocks_15/se/conv2d/Conv2D_eightbit_requant_range__print__;__requant_min_max:[-1.254][2.59383834]"
+        print_suffix = "__print__"
+        postfix = "__requant_min_max"
         res_1 = re.search(r"{};{}:\[\-?\d+\.?\d*e?\+?\d*\]".format(print_suffix, postfix), sample_str_1)
         res_2 = re.search(r"{};{}:\[\-?\d+\.?\d*e?\+?\d*\]".format(print_suffix, postfix), sample_str_2)
         self.assertNotEqual(res_1, None)
         self.assertNotEqual(res_2, None)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -23,7 +23,7 @@ from neural_compressor.utils.utility import LazyImport
 from .nas import NASBase
 from .nas_utils import nas_registry
 
-DyNASManager = LazyImport('dynast.dynast_manager.DyNAS')
+DyNASManager = LazyImport("dynast.dynast_manager.DyNAS")
 
 
 @nas_registry("DyNAS")
@@ -47,7 +47,7 @@ class DyNAS(NASBase):
             supernet=self.supernet,
             optimization_metrics=self.metrics,
             measurements=self.metrics,
-            search_tactic='linas',
+            search_tactic="linas",
             num_evals=self.num_evals,
             results_path=self.results_csv_path,
             dataset_path=self.dataset_path,
@@ -68,7 +68,7 @@ class DyNAS(NASBase):
         """
         return self.dynas_manager.search()
 
-    def select_model_arch(self): # pragma: no cover
+    def select_model_arch(self):  # pragma: no cover
         """Select the model architecture."""
         # model_arch_proposition intrinsically contained in
         # pymoo.minimize API of search_manager.run_search method,
@@ -77,7 +77,7 @@ class DyNAS(NASBase):
 
     def init_cfg(self, conf_fname_or_obj):
         """Initialize the configuration."""
-        logger.info('init_cfg')
+        logger.info("init_cfg")
         if isinstance(conf_fname_or_obj, str):
             if os.path.isfile(conf_fname_or_obj):
                 self.conf = Conf(conf_fname_or_obj).usr_cfg
@@ -85,11 +85,9 @@ class DyNAS(NASBase):
             conf_fname_or_obj.validate()
             self.conf = conf_fname_or_obj.usr_cfg
         else:  # pragma: no cover
-            raise NotImplementedError(
-                "Please provide a str path to the config file or an object of NASConfig."
-            )
+            raise NotImplementedError("Please provide a str path to the config file or an object of NASConfig.")
         # self.init_search_cfg(self.conf.nas)
-        assert 'dynas' in self.conf.nas, "Must specify dynas section."
+        assert "dynas" in self.conf.nas, "Must specify dynas section."
         dynas_config = self.conf.nas.dynas
         self.seed = self.conf.nas.search.seed
         self.search_algo = self.conf.nas.search.search_algorithm
@@ -103,8 +101,6 @@ class DyNAS(NASBase):
         self.batch_size = dynas_config.batch_size
         self.num_workers = dynas_config.num_workers
         if dynas_config.population < 10:  # pragma: no cover
-            raise NotImplementedError(
-                "Please specify a population size >= 10"
-            )
+            raise NotImplementedError("Please specify a population size >= 10")
         else:
             self.population = dynas_config.population

@@ -14,19 +14,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The Bayesian tuning strategy."""
 
 import warnings
+from copy import deepcopy
+
 import numpy as np
 from scipy.optimize import minimize
-from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import Matern
 
-from copy import deepcopy
 from ..config import options
 from ..utils import logger
-from .strategy import strategy_registry, TuneStrategy
+from .strategy import TuneStrategy, strategy_registry
 from .utils.tuning_sampler import OpWiseTuningSampler
 
 
@@ -34,16 +34,18 @@ from .utils.tuning_sampler import OpWiseTuningSampler
 class BayesianTuneStrategy(TuneStrategy):
     """The Bayesian tuning strategy."""
 
-    def __init__(self,
-                 model,
-                 conf,
-                 q_dataloader=None,
-                 q_func=None,
-                 eval_func=None,
-                 eval_dataloader=None,
-                 eval_metric=None,
-                 resume=None,
-                 q_hooks=None):
+    def __init__(
+        self,
+        model,
+        conf,
+        q_dataloader=None,
+        q_func=None,
+        eval_func=None,
+        eval_dataloader=None,
+        eval_metric=None,
+        resume=None,
+        q_hooks=None,
+    ):
         """Init the BaySian tuning strategy.
 
         Args:
@@ -60,15 +62,17 @@ class BayesianTuneStrategy(TuneStrategy):
             q_hooks: The dict of training hooks, supported keys are: on_epoch_begin, on_epoch_end, on_step_begin,
                 on_step_end. Their values are functions to be executed in adaptor layer.. Defaults to None.
         """
-        super().__init__(model=model,
-                         conf=conf,
-                         q_dataloader=q_dataloader,
-                         q_func=q_func,
-                         eval_func=eval_func,
-                         eval_dataloader=eval_dataloader,
-                         eval_metric=eval_metric,
-                         resume=resume,
-                         q_hooks=q_hooks)
+        super().__init__(
+            model=model,
+            conf=conf,
+            q_dataloader=q_dataloader,
+            q_func=q_func,
+            eval_func=eval_func,
+            eval_dataloader=eval_dataloader,
+            eval_metric=eval_metric,
+            resume=resume,
+            q_hooks=q_hooks,
+        )
         self.bayes_opt = None
 
     def __getstate__(self):
@@ -78,24 +82,24 @@ class BayesianTuneStrategy(TuneStrategy):
             dict: Saved dict for resuming
         """
         for history in self.tuning_history:
-            if self._same_conf(history['cfg'], self.conf):
-                history['bayes_opt'] = self.bayes_opt
+            if self._same_conf(history["cfg"], self.conf):
+                history["bayes_opt"] = self.bayes_opt
         save_dict = super().__getstate__()
         return save_dict
 
     def _params_to_tune_configs(self, params):
         op_tuning_cfg = {}
-        calib_sampling_size_lst = self.tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        calib_sampling_size_lst = self.tuning_space.root_item.get_option_by_name("calib_sampling_size").options
         for op_name_type, configs in self.op_configs.items():
             if len(configs) == 1:
                 op_tuning_cfg[op_name_type] = configs[0]
             else:
                 op_tuning_cfg[op_name_type] = configs[min(len(configs) - 1, int(params[op_name_type[0]]))]
         if len(calib_sampling_size_lst) > 1:
-            calib_sampling_size = calib_sampling_size_lst[min(len(configs) - 1, int(params['calib_sampling_size']))]
+            calib_sampling_size = calib_sampling_size_lst[min(len(configs) - 1, int(params["calib_sampling_size"]))]
         else:
             calib_sampling_size = calib_sampling_size_lst[0]
-        op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+        op_tuning_cfg["calib_sampling_size"] = calib_sampling_size
         return op_tuning_cfg
 
     def next_tune_cfg(self):
@@ -112,23 +116,21 @@ class BayesianTuneStrategy(TuneStrategy):
         params = None
         pbounds = {}
         tuning_space = self.tuning_space
-        calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        calib_sampling_size_lst = tuning_space.root_item.get_option_by_name("calib_sampling_size").options
         op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
-        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [],
-                                           op_item_dtype_dict, initial_op_tuning_cfg)
+        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [], op_item_dtype_dict, initial_op_tuning_cfg)
         self.op_configs = op_wise_pool.get_opwise_candidate()
 
         for op_name_type, configs in self.op_configs.items():
             if len(configs) > 1:
                 pbounds[op_name_type[0]] = (0, len(configs))
         if len(calib_sampling_size_lst) > 1:
-            pbounds['calib_sampling_size'] = (0, len(calib_sampling_size_lst))
+            pbounds["calib_sampling_size"] = (0, len(calib_sampling_size_lst))
         if len(pbounds) == 0:
             yield self._params_to_tune_configs(params)
             return
         if self.bayes_opt is None:
-            self.bayes_opt = BayesianOptimization(
-                pbounds=pbounds, random_seed=options.random_seed)
+            self.bayes_opt = BayesianOptimization(pbounds=pbounds, random_seed=options.random_seed)
         while True:
             params = self.bayes_opt.gen_next_params()
             logger.debug("Dump current bayesian params:")
@@ -139,6 +141,7 @@ class BayesianTuneStrategy(TuneStrategy):
             except KeyError:
                 logger.debug("Find registered params, skip it.")
                 pass
+
 
 # Util part
 # Bayesian opt acq function
@@ -160,21 +163,18 @@ def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
         x_max: The arg max of the acquisition function.
     """
     # Warm up with random points
-    x_tries = np.random.uniform(bounds[:, 0], bounds[:, 1],
-                                size=(n_warmup, bounds.shape[0]))
+    x_tries = np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_warmup, bounds.shape[0]))
     ys = ac(x_tries, gp=gp, y_max=y_max)
     x_max = x_tries[ys.argmax()]
     max_acq = ys.max()
 
     # Explore the parameter space more thoroughly
-    x_seeds = np.random.uniform(bounds[:, 0], bounds[:, 1],
-                                size=(n_iter, bounds.shape[0]))
+    x_seeds = np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_iter, bounds.shape[0]))
     for x_try in x_seeds:
         # Find the minimum of minus the acquisition function
-        res = minimize(lambda x: -ac(x.reshape(1, -1), gp=gp, y_max=y_max),
-                       x_try.reshape(1, -1),
-                       bounds=bounds,
-                       method="L-BFGS-B")
+        res = minimize(
+            lambda x: -ac(x.reshape(1, -1), gp=gp, y_max=y_max), x_try.flatten(), bounds=bounds, method="L-BFGS-B"
+        )
 
         # See if success
         if not res.success:
@@ -196,6 +196,7 @@ def _hashable(x):
     """Ensure that an point is hashable by a python dict."""
     return tuple(map(float, x))
 
+
 # Target space part
 class TargetSpace(object):
     """Holds the param-space coordinates (X) and target values (Y).
@@ -216,10 +217,7 @@ class TargetSpace(object):
         names = list(pbounds.keys())
         self._keys = deepcopy(names)
         # Create an array with parameters bounds
-        self._bounds = np.array(
-            [pbounds[name] for name in names],
-            dtype=np.float32
-        )
+        self._bounds = np.array([pbounds[name] for name in names], dtype=np.float32)
 
         # preallocated memory for X and Y points
         self._params = np.empty(shape=(0, self.dim))
@@ -281,8 +279,8 @@ class TargetSpace(object):
             assert set(params) == set(self.keys)
         except AssertionError:
             raise ValueError(
-                "Parameters' keys ({}) do ".format(list(params.keys())) +
-                "not match the expected set of keys ({}).".format(self.keys)
+                "Parameters' keys ({}) do ".format(list(params.keys()))
+                + "not match the expected set of keys ({}).".format(self.keys)
             )
         return np.asarray([params[key] for key in self.keys])
 
@@ -299,8 +297,8 @@ class TargetSpace(object):
             assert len(x) == len(self.keys)
         except AssertionError:
             raise ValueError(
-                "Size of array ({}) is different than the ".format(len(x)) +
-                "expected number of parameters ({}).".format(len(self.keys))
+                "Size of array ({}) is different than the ".format(len(x))
+                + "expected number of parameters ({}).".format(len(self.keys))
             )
         return dict(zip(self.keys, x))
 
@@ -315,8 +313,8 @@ class TargetSpace(object):
             assert x.size == self.dim
         except AssertionError:
             raise ValueError(
-                "Size of array ({}) is different than the ".format(len(x)) +
-                "expected number of parameters ({}).".format(len(self.keys))
+                "Size of array ({}) is different than the ".format(len(x))
+                + "expected number of parameters ({}).".format(len(self.keys))
             )
         return x
 
@@ -334,7 +332,7 @@ class TargetSpace(object):
         """
         x = self._as_array(params)
         if x in self:
-            raise KeyError('Params point {} is not unique'.format(x))
+            raise KeyError("Params point {} is not unique".format(x))
 
         # Insert data into unique dictionary
         self._cache[_hashable(x.ravel())] = target
@@ -364,19 +362,13 @@ class TargetSpace(object):
         # TODO: support integer, category, and basic scipy.optimize constraints
         data = np.empty((1, self.dim))
         for col, (lower, upper) in enumerate(self._bounds):
-            data.T[col] = np.random.uniform(  # pylint: disable=unsupported-assignment-operation
-                lower, upper, size=1)
+            data.T[col] = np.random.uniform(lower, upper, size=1)  # pylint: disable=unsupported-assignment-operation
         return data.ravel()
 
     def max(self):
         """Get maximum target value found and corresponding parametes."""
         try:
-            res = {
-                'target': self.target.max(),
-                'params': dict(
-                    zip(self.keys, self.params[self.target.argmax()])
-                )
-            }
+            res = {"target": self.target.max(), "params": dict(zip(self.keys, self.params[self.target.argmax()]))}
         except ValueError:
             res = {}
         return res
@@ -385,13 +377,11 @@ class TargetSpace(object):
         """Get all target values found and corresponding parametes."""
         params = [dict(zip(self.keys, p)) for p in self.params]
 
-        return [
-            {"target": target, "params": param}
-            for target, param in zip(self.target, params)
-        ]
+        return [{"target": target, "params": param} for target, param in zip(self.target, params)]
+
 
 # Tuning part
-class BayesianOptimization():
+class BayesianOptimization:
     """The class for bayesian optimization.
 
     This class takes the parameters bounds in order to find which values for
@@ -461,7 +451,7 @@ class BayesianOptimization():
             gp=self._gp,
             y_max=self._space.target.max(),
             bounds=self._space.bounds,
-            random_seed=self._random_seed
+            random_seed=self._random_seed,
         )
         return self._space.array_to_params(suggestion)
 

@@ -90,8 +90,10 @@ parser.add_argument('--int8', dest='int8', action='store_true', help='run benchm
 parser.add_argument('--export', dest='export', action='store_true', help='run export')
 parser.add_argument('--export_dtype', default='fp32', choices=['fp32', 'int8'],
                     help='choose the data type [fp32/int8] of PyTorch model to be exported.')
-parser.add_argument('--quant_format', default='QDQ', choices=['QDQ', 'QLinear'],
-                    help='choose the format [QDQ/QLinear] of int8 ONNX model exported.')
+parser.add_argument('--quant_format', default='QDQ', choices=['QDQ', 'QOperator'],
+                    help='choose the format [QDQ/QOperator] of int8 ONNX model exported.')
+parser.add_argument('--approach', default='static', choices=['static', 'dynamic'],
+                    help='Post-Training Quantization method.')
 
 best_acc1 = 0
 
@@ -190,7 +192,7 @@ def main():
     if args.export and args.export_dtype == 'int8':
         from neural_compressor import PostTrainingQuantConfig
         from neural_compressor import quantization
-        conf = PostTrainingQuantConfig()
+        conf = PostTrainingQuantConfig(approach=args.approach)
         q_model = quantization.fit(model,
                                     conf,
                                     calib_dataloader=val_loader,

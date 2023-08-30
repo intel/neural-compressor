@@ -16,16 +16,14 @@
 
 import argparse
 import json
-import grpc
 import os
 
-from neural_solution.frontend.gRPC.proto import (
-    neural_solution_pb2,
-    neural_solution_pb2_grpc
-)
+import grpc
 
-from neural_solution.utils import logger
 from neural_solution.config import config
+from neural_solution.frontend.gRPC.proto import neural_solution_pb2, neural_solution_pb2_grpc
+from neural_solution.utils import logger
+
 
 def _parse_task_from_json(request_path):
     file_path = os.path.abspath(request_path)
@@ -33,33 +31,34 @@ def _parse_task_from_json(request_path):
         task = json.load(fp)
     return task
 
+
 def submit_task(args):
     """Implement main entry point for the client of gRPC frontend."""
     task = _parse_task_from_json(args.request)
     logger.info("Parsed task:")
     logger.info(task)
-    
+
     # Create a gRPC channel
     port = str(config.grpc_api_port)
-    channel = grpc.insecure_channel('localhost:' + port)
+    channel = grpc.insecure_channel("localhost:" + port)
 
     # Create a stub (client)
     stub = neural_solution_pb2_grpc.TaskServiceStub(channel)
 
     # Ping serve
-    request = neural_solution_pb2.EmptyRequest() # pylint: disable=no-member
+    request = neural_solution_pb2.EmptyRequest()  # pylint: disable=no-member
     response = stub.Ping(request)
     logger.info(response.status)
     logger.info(response.msg)
 
     # Create a task request with the desired fields
-    request = neural_solution_pb2.Task( # pylint: disable=no-member
-        script_url=task['script_url'],
-        optimized=task['optimized'] == 'True',
-        arguments=task['arguments'],
-        approach=task['approach'],
-        requirements=task['requirements'],
-        workers=task['workers']
+    request = neural_solution_pb2.Task(  # pylint: disable=no-member
+        script_url=task["script_url"],
+        optimized=task["optimized"] == "True",
+        arguments=task["arguments"],
+        approach=task["approach"],
+        requirements=task["requirements"],
+        workers=task["workers"],
     )
 
     # Call the SubmitTask RPC on the server
@@ -80,16 +79,17 @@ def run_query_task_result(args):
     task_id = args.task_id
     # Create a gRPC channel
     port = str(config.grpc_api_port)
-    channel = grpc.insecure_channel('localhost:' + port)
+    channel = grpc.insecure_channel("localhost:" + port)
 
     # Create a stub (client)
     stub = neural_solution_pb2_grpc.TaskServiceStub(channel)
 
-    request = neural_solution_pb2.TaskId(task_id=task_id) # pylint: disable=no-member
+    request = neural_solution_pb2.TaskId(task_id=task_id)  # pylint: disable=no-member
     response = stub.QueryTaskResult(request)
     logger.info(response.status)
     logger.info(response.tuning_information)
     logger.info(response.optimization_result)
+
 
 def run_query_task_status(args):
     """Query task status according to id.
@@ -100,26 +100,26 @@ def run_query_task_status(args):
     task_id = args.task_id
     # Create a gRPC channel
     port = str(config.grpc_api_port)
-    channel = grpc.insecure_channel('localhost:' + port)
+    channel = grpc.insecure_channel("localhost:" + port)
 
     # Create a stub (client)
     stub = neural_solution_pb2_grpc.TaskServiceStub(channel)
 
-    request = neural_solution_pb2.TaskId(task_id=task_id) # pylint: disable=no-member
+    request = neural_solution_pb2.TaskId(task_id=task_id)  # pylint: disable=no-member
     response = stub.GetTaskById(request)
     logger.info(response.status)
     logger.info(response.optimized_result)
     logger.info(response.result_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logger.info(f"Try to start gRPC server.")
     """Parse the command line options."""
     parser = argparse.ArgumentParser(description="gRPC Client")
     subparsers = parser.add_subparsers(help="Action", dest="action")
 
     submit_action_parser = subparsers.add_parser("submit", help="Submit help")
-    
+
     submit_action_parser.set_defaults(func=submit_task)
     submit_action_parser.add_argument("--request", type=str, default=None, help="Request json file path.")
 

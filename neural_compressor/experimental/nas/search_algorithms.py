@@ -18,9 +18,11 @@
 # limitations under the License.
 
 import random
-from .nas_utils import create_search_space_pool
+
 from neural_compressor.strategy.bayesian import BayesianOptimization
 from neural_compressor.utils import logger
+
+from .nas_utils import create_search_space_pool
 
 
 class Searcher(object):
@@ -32,18 +34,17 @@ class Searcher(object):
 
     def __init__(self, search_space) -> None:
         """Initialize the attributes."""
-        assert isinstance(search_space, dict) and search_space, \
-            "Expect search_space to be a dict."
+        assert isinstance(search_space, dict) and search_space, "Expect search_space to be a dict."
         self.search_space = search_space
         self.search_space_keys = sorted(search_space.keys())
         for k in self.search_space_keys:
-            assert isinstance(self.search_space[k], (list, tuple)), \
-                "Value of key \'{}\' must be a list or tuple to specify choices".format(
-                    k)
+            assert isinstance(
+                self.search_space[k], (list, tuple)
+            ), "Value of key '{}' must be a list or tuple to specify choices".format(k)
 
     def suggest(self):
         """Suggest the model architecture."""
-        raise NotImplementedError('Depends on specific search algorithm.') # pragma: no cover
+        raise NotImplementedError("Depends on specific search algorithm.")  # pragma: no cover
 
     def get_feedback(self, metric):
         """Get metric feedback for the search algorithm."""
@@ -57,8 +58,9 @@ class Searcher(object):
         Returns:
             Parameters dictionary defining the model architecture.
         """
-        assert len(para_vec) == len(self.search_space_keys), \
-            "Length of para_vec and search_space_keys should be the same."
+        assert len(para_vec) == len(
+            self.search_space_keys
+        ), "Length of para_vec and search_space_keys should be the same."
         return {k: para_vec[i] for i, k in enumerate(self.search_space_keys)}
 
 
@@ -130,10 +132,8 @@ class BayesianOptimizationSearcher(Searcher):
     def __init__(self, search_space, seed=42) -> None:
         """Initialize the attributes."""
         super(BayesianOptimizationSearcher, self).__init__(search_space)
-        idx_search_space = {
-            k: (0, len(search_space[k])-1) for k in self.search_space_keys}
-        self.bo_agent = BayesianOptimization(
-            idx_search_space, random_seed=seed)
+        idx_search_space = {k: (0, len(search_space[k]) - 1) for k in self.search_space_keys}
+        self.bo_agent = BayesianOptimization(idx_search_space, random_seed=seed)
         self.last_param_indices = None
 
     def suggest(self):
@@ -148,8 +148,9 @@ class BayesianOptimizationSearcher(Searcher):
 
     def get_feedback(self, metric):
         """Get metric feedback and register this metric."""
-        assert self.last_param_indices is not None, "Need run suggest first " + \
-            "to get parameters and the input metric is corresponding to this parameters."
+        assert self.last_param_indices is not None, (
+            "Need run suggest first " + "to get parameters and the input metric is corresponding to this parameters."
+        )
         try:
             self.bo_agent._space.register(self.last_param_indices, metric)
         except KeyError:  # pragma: no cover
@@ -162,6 +163,6 @@ class BayesianOptimizationSearcher(Searcher):
         res = []
         for key, ind in indices.items():
             # keep ind within the index range of self.search_space[key]
-            ind = int(min(max(round(ind), 0), len(self.search_space[key])-1))
+            ind = int(min(max(round(ind), 0), len(self.search_space[key]) - 1))
             res.append(self.search_space[key][ind])
         return res

@@ -80,14 +80,14 @@ fi
 cd ${model_src_dir}
 pip install ruamel_yaml
 pip install psutil
-pip install protobuf==3.20.1
+pip install protobuf==4.23.4
 if [[ "${framework}" == "tensorflow" ]]; then
     pip install intel-tensorflow==${fwk_ver}
 elif [[ "${framework}" == "pytorch" ]]; then
     pip install torch==${fwk_ver} -f https://download.pytorch.org/whl/torch_stable.html
     pip install torchvision==${torch_vision_ver} -f https://download.pytorch.org/whl/torch_stable.html
 elif [[ "${framework}" == "onnxrt" ]]; then
-    pip install onnx==1.13.1
+    pip install onnx==1.14.0
     pip install onnxruntime==${fwk_ver}
 elif [[ "${framework}" == "mxnet" ]]; then
     pip install numpy==1.23.5

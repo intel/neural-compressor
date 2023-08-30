@@ -84,7 +84,7 @@ Two .tfrecords files are generated and will be used later on:
 
 ## Quantization
   ```shell
-  bash run_tuning.sh --dataset_location=/path/to/datasets --input_model=/path/to/wide_deep_fp32_pretrained_model.pb --output_model=./wnd_int8_opt.pb
+  bash run_quant.sh --dataset_location=/path/to/datasets --input_model=/path/to/wide_deep_fp32_pretrained_model.pb --output_model=./wnd_int8_opt.pb
   ```
 
 ### Quantization Config

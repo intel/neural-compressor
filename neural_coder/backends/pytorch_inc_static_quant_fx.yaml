@@ -35,7 +35,7 @@ transformation:
       [+]     MODEL_NAME = torch.jit.freeze(MODEL_NAME)
       [+] except:
       [+]     pass
-      
+
   order:
     - below:
       above:

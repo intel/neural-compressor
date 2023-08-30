@@ -2,6 +2,7 @@ import unittest
 
 from neural_coder.utils import line_operation
 
+
 class TestLineOperation(unittest.TestCase):
     def test_get_line_indent_level(self):
         f = line_operation.get_line_indent_level
@@ -40,5 +41,6 @@ class TestLineOperation(unittest.TestCase):
         self.assertEqual(f("model = Net()"), (True, "model", "Net"))
         self.assertEqual(f("model = Net"), (False, "", ""))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

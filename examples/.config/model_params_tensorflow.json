@@ -1800,6 +1800,20 @@
       "input_model": "/tf_dataset2/models/tensorflow/facebook-opt-125m",
       "main_script": "main.py",
       "batch_size": 16
+    },
+    "ViT": {
+      "model_src_dir": "image_recognition/tensorflow_models/vision_transformer/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset/tensorflow/vit/HF-ViT-Base16-Img224-frozen.pb",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "GraphSage": {
+      "model_src_dir": "graph_networks/graphsage/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/ppi",
+      "input_model": "/tf_dataset/tensorflow/graphsage/graphsage_frozen_model.pb",
+      "main_script": "main.py",
+      "batch_size": 1000
     }
   }
 }

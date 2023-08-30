@@ -14,16 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Neural Insights utils functions."""
-from typing import Optional, Any
+from typing import Any, Optional
 
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.utils import logger
 
 
 def register_neural_insights_workload(
-        workload_location: str,
-        model: Any,
-        workload_mode: str,
+    workload_location: str,
+    model: Any,
+    workload_mode: str,
 ) -> Optional[str]:
     """Register workload to Neural Insights.
 
@@ -37,8 +37,9 @@ def register_neural_insights_workload(
     """
     try:
         import os
+
         from neural_insights import NeuralInsights
-        from neural_insights.utils.consts import WorkloadModes, WORKDIR_LOCATION
+        from neural_insights.utils.consts import WORKDIR_LOCATION, WorkloadModes
 
         try:
             mode = WorkloadModes(workload_mode)
@@ -50,10 +51,11 @@ def register_neural_insights_workload(
             model_path: str = os.path.abspath(model.model_path)
         elif isinstance(model, ONNXModel):
             import onnx
+
             model_path: str = os.path.join(workload_location, "input_model.onnx")
             os.makedirs(workload_location, exist_ok=True)
             onnx.save(model.model, model_path)
-        assert isinstance(model_path, str), 'Model path not detected'
+        assert isinstance(model_path, str), "Model path not detected"
 
         neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
         ni_workload_uuid = neural_insights.add_workload(
@@ -83,6 +85,7 @@ def update_neural_insights_workload(workload_uuid: str, status: str) -> None:
     try:
         from neural_insights import NeuralInsights
         from neural_insights.utils.consts import WORKDIR_LOCATION
+
         neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
         neural_insights.update_workload_status(workload_uuid, status)
     except ImportError:
@@ -92,9 +95,9 @@ def update_neural_insights_workload(workload_uuid: str, status: str) -> None:
 
 
 def update_neural_insights_workload_accuracy_data(
-        workload_uuid: str,
-        baseline_accuracy: float,
-        optimized_accuracy: float,
+    workload_uuid: str,
+    baseline_accuracy: float,
+    optimized_accuracy: float,
 ) -> None:
     """Update accuracy data of specific workload.
 
@@ -109,6 +112,7 @@ def update_neural_insights_workload_accuracy_data(
     try:
         from neural_insights import NeuralInsights
         from neural_insights.utils.consts import WORKDIR_LOCATION
+
         neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
         neural_insights.update_workload_accuracy_data(
             workload_uuid,

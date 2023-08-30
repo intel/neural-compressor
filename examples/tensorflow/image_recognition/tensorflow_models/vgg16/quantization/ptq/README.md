@@ -11,21 +11,8 @@ This example can run on Intel CPUs and GPUs.
 ## 1. Environment
 
 ### Installation
-Recommend python 3.6 or higher version.
-
+Recommend python 3.7 or higher version.
 ```shell
-# Install Intel® Neural Compressor
-pip install neural-compressor
-```
-
-### Install Intel Tensorflow
-```shell
-pip install intel-tensorflow
-```
-
-### Installation Dependency packages
-```shell
-cd examples/tensorflow/object_detection/tensorflow_models/quantization/ptq
 pip install -r requirements.txt
 ```
 
@@ -118,7 +105,7 @@ config = PostTrainingQuantConfig(
 
   ```shell
   cd examples/tensorflow/image_recognition/tensorflow_models/vgg16/quantization/ptq
-  bash run_tuning.sh --input_model=/PATH/TO/frozen_vgg16.pb \
+  bash run_quant.sh --input_model=/PATH/TO/frozen_vgg16.pb \
       --output_model=./nc_vgg16.pb --dataset_location=/path/to/ImageNet/
   ```
 

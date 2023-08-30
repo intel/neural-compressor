@@ -16,11 +16,11 @@
 # limitations under the License.
 """Graph Rewrite Base Class."""
 
-from abc import abstractmethod
 import logging
+from abc import abstractmethod
 
 
-class GraphRewriterBase():
+class GraphRewriterBase:
     """Graph Rewrite Base class.
 
     We abstract this base class and define the interface only.
@@ -28,6 +28,7 @@ class GraphRewriterBase():
     Args:
         object (model): the input model to be converted.
     """
+
     def __init__(self, model):
         """Initilization."""
         self.model = model

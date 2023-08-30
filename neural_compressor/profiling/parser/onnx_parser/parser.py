@@ -23,6 +23,7 @@ from neural_compressor.profiling.parser.result import ProfilingResult
 
 class OnnxProfilingParser(ProfilingParser):
     """Parser class is responsible for parsing profiling log files."""
+
     def process(self) -> List[dict]:
         """Process profiling logs.
 
@@ -51,7 +52,7 @@ class OnnxProfilingParser(ProfilingParser):
                 dur = int(node.get("dur") or 0)  # Get the duration of the node
 
                 # Skip nodes with missing or invalid values
-                if (category is None or node.get("name") is None or op_name is None):
+                if category is None or node.get("name") is None or op_name is None:
                     continue
 
                 # Update the summarized data for this operation
@@ -62,8 +63,9 @@ class OnnxProfilingParser(ProfilingParser):
                 elif category == "kernel":
                     summarized[op_name]["accelerator_execution_time"] += dur
                 summarized[op_name]["op_defined"] += 1
-                summarized[op_name]["op_run"] += 0 if not (
-                    dur or node.get("args", {}).get("thread_scheduling_stats")) else 1
+                summarized[op_name]["op_run"] += (
+                    0 if not (dur or node.get("args", {}).get("thread_scheduling_stats")) else 1
+                )
 
         for node in summarized.values():
             self.add_result(ProfilingResult(**node))

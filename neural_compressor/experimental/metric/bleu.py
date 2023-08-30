@@ -17,10 +17,11 @@
 """Script for BLEU metric."""
 
 import re
-import six
 import sys
 import unicodedata
 from typing import List, Sequence
+
+import six
 
 from .bleu_util import compute_bleu
 from .metric import metric_registry
@@ -31,8 +32,8 @@ class UnicodeRegex(object):
 
     Attributes:
         nondigit_punct_re: The compiled regular expressions to recognize
-          punctuation preceded with a digit.  
-        punct_nondigit_re: The compiled regular expressions to recognize 
+          punctuation preceded with a digit.
+        punct_nondigit_re: The compiled regular expressions to recognize
           punctuation followed by a digit.
         symbol_re: The compiled regular expressions to recognize symbols.
     """
@@ -54,8 +55,9 @@ class UnicodeRegex(object):
             punctuation: The join result of all Unicode strings starting
               with a specific prefix.
         """
-        punctuation = "".join(six.unichr(x) for x in range(sys.maxunicode) \
-                              if unicodedata.category(six.unichr(x)).startswith(prefix))
+        punctuation = "".join(
+            six.unichr(x) for x in range(sys.maxunicode) if unicodedata.category(six.unichr(x)).startswith(prefix)
+        )
         return punctuation
 
 
@@ -81,14 +83,14 @@ def bleu_tokenize(string: str) -> List[str]:
     return tokens
 
 
-@metric_registry('BLEU', 'tensorflow, tensorflow_itex')
+@metric_registry("BLEU", "tensorflow, tensorflow_itex")
 class BLEU(object):
     """Computes the BLEU (Bilingual Evaluation Understudy) score.
 
-    BLEU is an algorithm for evaluating the quality of text which has 
-    been machine-translated from one natural language to another. 
-    This implementent approximate the BLEU score since we do not 
-    glue word pieces or decode the ids and tokenize the output. 
+    BLEU is an algorithm for evaluating the quality of text which has
+    been machine-translated from one natural language to another.
+    This implementent approximate the BLEU score since we do not
+    glue word pieces or decode the ids and tokenize the output.
     By default, we use ngram order of 4 and use brevity penalty.
     Also, this does not have beam search.
 
@@ -119,9 +121,11 @@ class BLEU(object):
             and label are different.
         """
         if len(label) != len(prediction):
-            raise ValueError("Reference and prediction files have different number "
-                             "of lines. If training only a few steps (100-200), the "
-                             "translation may be empty.")
+            raise ValueError(
+                "Reference and prediction files have different number "
+                "of lines. If training only a few steps (100-200), the "
+                "translation may be empty."
+            )
         label = [x.lower() for x in label]
         prediction = [x.lower() for x in prediction]
         label = [bleu_tokenize(x) for x in label]

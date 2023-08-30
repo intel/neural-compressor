@@ -39,8 +39,8 @@ Where $D$ is a distance measurement as before, $F_t^{n_i}$ the output feature of
 
 ### Self Distillation
 
-Self-distillation ia a one-stage training method where the teacher model and student models can be trained together. It attaches several attention modules and shallow classifiers at different depths of neural networks and distills knowledge from the deepest classifier to the shallower classifiers. Different from the conventional knowledge distillation methods where the knowledge of the teacher model is transferred to another student model, self-distillation can be considered as knowledge transfer in the same model, from the deeper layers to the shallower layers.
-The additional classifiers in self-distillation allow the neural network to work in a dynamic manner, which leads to a much higher acceleration.
+Self-distillation ia a one-stage training method where the teacher model and student models can be trained together. It attaches several attention modules and shallow classifiers at different depths of neural networks and distills knowledge from the deepest classifier to the shallower classifiers. Different from the conventional knowledge distillation methods where the knowledge of the teacher model is transferred to another student model, self-distillation can be considered as knowledge transfer in the same model, from the deeper layers to the shallower layers.  
+The additional classifiers in self-distillation allow the neural network to work in a dynamic manner, which leads to a much higher acceleration.  
 <br>
 
 <img src="./imgs/self-distillation.png" alt="Architecture" width=800 height=350>
@@ -110,7 +110,10 @@ eval_func(model)
 For Intermediate Layer Knowledge Distillation or Self Distillation, the only difference to above launcher code is that `distil_loss_conf` should be set accordingly as shown below. More detailed settings can be found in this [example](../../examples/pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/distillation_for_quantization/fx/run_glue_no_trainer.py#L510) for Intermediate Layer Knowledge Distillation and this [example](../../examples/pytorch/image_recognition/torchvision_models/self_distillation/eager/main.py#L344) for Self Distillation.
 
 ```python
-from neural_compressor.config import IntermediateLayersKnowledgeDistillationLossConfig, SelfKnowledgeDistillationLossConfig
+from neural_compressor.config import (
+    IntermediateLayersKnowledgeDistillationLossConfig,
+    SelfKnowledgeDistillationLossConfig,
+)
 
 # for Intermediate Layer Knowledge Distillation
 distil_loss_conf = IntermediateLayersKnowledgeDistillationLossConfig(layer_mappings=layer_mappings)

@@ -1,17 +1,19 @@
 # Diagnosis
-1. [Diagnosis introduction](#diagnosis-introduction)
+1. [Diagnosis Introduction](#diagnosis-introduction)
 2. [Supported Feature Matrix](#supported-feature-matrix)
-3. [Get started](#get-started)
+3. [Get Started](#get-started)
 4. [Example](#example)
+5. [Step by Step Diagnosis Example with TensorFlow](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/tf_accuracy_debug.md)
+5. [Step by Step Diagnosis Example with ONNXRT](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/onnx_accuracy_debug.md)
 
-# Diagnosis introduction
+# Diagnosis Introduction
 The diagnosis feature provides methods to debug the accuracy loss during quantization and profile the performance gap during benchmark.
 There are 2 ways to diagnose a model with Intel® Neural Compressor. First is non-GUI mode that is described below and second is GUI mode with [Neural Insights](https://github.com/intel/neural-compressor/tree/master/neural_insights) component.
 
 The workflow is described in the diagram below. First we have to configure scripts with diagnosis, then run them and check diagnosis info in the terminal. Test if the result is satisfying and repeat the steps if needed.
 ![workflow](./imgs/workflow.jpg)
 
-# Supported feature matrix
+# Supported Feature Matrix
 <table class="center">
     <thead>
         <tr>
@@ -45,7 +47,7 @@ The workflow is described in the diagram below. First we have to configure scrip
     </tbody>
 </table>
 
-# Get started 
+# Get Started 
 ## Install Intel® Neural Compressor
 First you need to install Intel® Neural Compressor.
 ```shell
@@ -60,18 +62,12 @@ Modify quantization/benchmark script to run diagnosis by adding argument `diagno
 
 ### Quantization diagnosis
 ```python
-config = PostTrainingQuantConfig(
-    diagnosis=True,
-    ...
-)
+config = PostTrainingQuantConfig(diagnosis=True, ...)
 ``` 
 
 ### Benchmark diagnosis
 ```python
-config = BenchmarkConfig(
-    diagnosis=True,
-    ...
-)
+config = BenchmarkConfig(diagnosis=True, ...)
 ```
 
 # Example
@@ -179,13 +175,19 @@ $\sigma_x$ - input model variance
 
 ### Fallback setting example
 ```python
-from neural_compressor import quantization, PostTrainingQuantConfig 
-op_name_dict = {'v0/cg/conv0/conv2d/Conv2D': {'activation':  {'dtype': ['fp32']}}} 
-config = PostTrainingQuantConfig( 
-       diagnosis=True,  
-       op_name_dict=op_name_dict 
+from neural_compressor import quantization, PostTrainingQuantConfig
+
+op_name_dict = {"v0/cg/conv0/conv2d/Conv2D": {"activation": {"dtype": ["fp32"]}}}
+config = PostTrainingQuantConfig(
+    diagnosis=True,
+    op_name_dict=op_name_dict,
 )
-q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval) 
+q_model = quantization.fit(
+    model,
+    config,
+    calib_dataloader=dataloader,
+    eval_func=eval,
+)
 ```
 
 ## See profiling data

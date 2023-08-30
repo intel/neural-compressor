@@ -11,9 +11,9 @@ Metrics
 
     2.4. [ONNXRT](#onnxrt)
 
-3. [Get Started with Metric](#get-start-with-metric)
+3. [Get Started with Metric](#get-started-with-metric)
     
-    3.1. [Use Intel® Neural Compressor Metric API](#use-intel®-neural-compressor-metric-api)
+    3.1. [Use Intel® Neural Compressor Metric API](#use-intel-neural-compressor-metric-api)
     
     3.2. [Build Custom Metric with Python API](#build-custom-metric-with-python-api)
 
@@ -100,12 +100,12 @@ from neural_compressor import quantization, PostTrainingQuantConfig
 
 top1 = Metric(name="topk", k=1)
 config = PostTrainingQuantConfig()
-q_model = fit(model, config, calib_dataloader=calib_dataloader, eval_dataloader=eval_dataloader,eval_metric=top1)
+q_model = fit(model, config, calib_dataloader=calib_dataloader, eval_dataloader=eval_dataloader, eval_metric=top1)
 ```
 
 ### Build Custom Metric with Python API
 
-Please refer to [Metrics code](../neural_compressor/metric), users can also register their own metric as follows:
+Please refer to [Metrics code](../../neural_compressor/metric), users can also register their own metric as follows:
 
 ```python
 class NewMetric(object):
@@ -133,7 +133,7 @@ from neural_compressor import quantization, PostTrainingQuantConfig
 
 new_metric = NewMetric()
 config = PostTrainingQuantConfig()
-q_model = fit(model, config, calib_dataloader=calib_dataloader, eval_dataloader=eval_dataloader,eval_metric=new_metric)
+q_model = fit(model, config, calib_dataloader=calib_dataloader, eval_dataloader=eval_dataloader, eval_metric=new_metric)
 ```
 
 ## Example

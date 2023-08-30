@@ -16,12 +16,12 @@
 
 from typing import List, Optional
 
-from neural_compressor.profiling.parser.tensorflow_parser.parser import \
-    TensorFlowProfilingParser
+from neural_compressor.profiling.parser.tensorflow_parser.parser import TensorFlowProfilingParser
 
 
 class TensorFlowParserFactory:
     """Parser factory."""
+
     @staticmethod
     def get_parser(
         logs: List,

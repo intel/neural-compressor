@@ -16,27 +16,24 @@
 # limitations under the License.
 """Mix Precision for Neural Compressor."""
 import os
-import sys
 import pickle
-import numpy as np
 import random
+import sys
+
+import numpy as np
 
 from neural_compressor.data import check_dataloader
 from neural_compressor.metric import register_customer_metric
+
 from .config import _Config, options
 from .model import Model
 from .strategy import STRATEGIES
 from .utils import alias_param, logger
-from .utils.utility import time_limit, CpuInfo
+from .utils.utility import CpuInfo, time_limit
 
 
-@alias_param("conf", param_alias='config')
-def fit(model,
-        conf,
-        eval_func=None,
-        eval_dataloader=None,
-        eval_metric=None,
-        **kwargs):
+@alias_param("conf", param_alias="config")
+def fit(model, conf, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs):
     """Fit low precision model generation across multiple framework backends.
 
     Args:
@@ -90,29 +87,39 @@ def fit(model,
         check_dataloader(eval_dataloader)
 
     if conf.precisions in conf.excluded_precisions:
-        logger.warning("Target precision is in excluded_precisions, "
-                       "please modify precision or excluded_precisions to make it understandable.")
+        logger.warning(
+            "Target precision is in excluded_precisions, "
+            "please modify precision or excluded_precisions to make it understandable."
+        )
         sys.exit(0)
 
     wrapped_model = Model(model, conf=conf)
 
     precisions = list(set(conf.precisions) - set(conf.excluded_precisions))
-    if ('bf16' in precisions or 'fp16' in precisions) and conf.framework == "onnxruntime":  # pragma: no cover
-        if conf.device == "cpu":
-            logger.warning("Mix precision exits due to device isn't gpu for onnx models.")
+    if ("bf16" in precisions or "fp16" in precisions) and conf.framework == "onnxruntime":  # pragma: no cover
+        if "fp16" in precisions and not (conf.device == "gpu" and conf.backend == "onnxrt_cuda_ep"):
+            logger.warning(
+                "Mix precision exits due to fp16 for onnx models" "needs 'gpu' device and 'onnxrt_cuda_ep' backend."
+            )
             sys.exit(0)
-        elif conf.backend != "onnxrt_cuda_ep":
-            logger.warning("Mix precision exits due to backend isn't onnxrt_cuda_ep for onnx models.")
+        elif "bf16" in precisions and (
+            not (conf.backend == "onnxrt_cuda_ep" and conf.device == "gpu")
+            and not (conf.backend == "onnxrt_dnnl_ep" and conf.device == "cpu")
+        ):
+            logger.warning(
+                "Mix precision exits due to bf16 for onnx models needs "
+                "'gpu' device and 'onnxrt_cuda_ep' backend, or 'cpu' device and 'onnxrt_dnnl_ep' backend."
+            )
             sys.exit(0)
-    elif 'bf16' in precisions and not CpuInfo().bf16 and conf.framework != "onnxruntime":  # pragma: no cover
-        if os.getenv('FORCE_BF16') == '1':
-            logger.warning("Mix precision will generate bf16 graph although "
-                           "the hardware doesn't support bf16 instruction.")
+    elif "bf16" in precisions and not CpuInfo().bf16 and conf.framework != "onnxruntime":  # pragma: no cover
+        if os.getenv("FORCE_BF16") == "1":
+            logger.warning(
+                "Mix precision will generate bf16 graph although " "the hardware doesn't support bf16 instruction."
+            )
         else:
-            logger.warning("Mix precision exits due to the hardware "
-                           "doesn't support bf16 instruction.")
+            logger.warning("Mix precision exits due to the hardware " "doesn't support bf16 instruction.")
             sys.exit(0)
-    elif 'fp16' in precisions and conf.framework != "onnxruntime":
+    elif "fp16" in precisions and conf.framework != "onnxruntime":
         logger.warning("Currently mix precision only supports fp16 for onnx models.")
         sys.exit(0)
 
@@ -121,12 +128,7 @@ def fit(model,
     else:
         metric = None
 
-    config = _Config(mixed_precision=conf,
-                   quantization=None,
-                   benchmark=None,
-                   pruning=None,
-                   distillation=None,
-                   nas=None)
+    config = _Config(mixed_precision=conf, quantization=None, benchmark=None, pruning=None, distillation=None, nas=None)
     seed = options.random_seed
     random.seed(seed)
     np.random.seed(seed)
@@ -134,22 +136,23 @@ def fit(model,
     _resume = None
     # check if interrupted tuning procedure exists. if yes, it will resume the
     # whole auto tune process.
-    resume_file = os.path.abspath(os.path.expanduser(
-        options.resume_from)) if options.workspace and options.resume_from else None
+    resume_file = (
+        os.path.abspath(os.path.expanduser(options.resume_from)) if options.workspace and options.resume_from else None
+    )
     if resume_file:
-        assert os.path.exists(resume_file), \
-            "The specified resume file {} doesn't exist!".format(resume_file)
-        with open(resume_file, 'rb') as f:
+        assert os.path.exists(resume_file), "The specified resume file {} doesn't exist!".format(resume_file)
+        with open(resume_file, "rb") as f:
             _resume = pickle.load(f).__dict__
 
-    strategy = STRATEGIES['automixedprecision'](
+    strategy = STRATEGIES["automixedprecision"](
         model=wrapped_model,
         conf=config,
         eval_func=eval_func,
         eval_dataloader=eval_dataloader,
         eval_metric=metric,
         resume=_resume,
-        q_hooks=None)
+        q_hooks=None,
+    )
 
     try:
         with time_limit(conf.tuning_criterion.timeout):
@@ -159,16 +162,18 @@ def fit(model,
     except Exception as e:
         logger.error("Unexpected exception {} happened during tuning.".format(repr(e)))
         import traceback
+
         traceback.print_exc()
     finally:
         if strategy.best_qmodel:
             logger.info(
-                "Specified timeout or max trials is reached! "
-                "Found a quantized model which meet accuracy goal. Exit.")
+                "Specified timeout or max trials is reached! " "Found a quantized model which meet accuracy goal. Exit."
+            )
             strategy.deploy_config()
         else:
             logger.error(
                 "Specified timeout or max trials is reached! "
-                "Not found any quantized model which meet accuracy goal. Exit.")
+                "Not found any quantized model which meet accuracy goal. Exit."
+            )
 
         return strategy.best_qmodel

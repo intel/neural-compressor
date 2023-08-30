@@ -17,8 +17,10 @@
 """EmbedLayerNormalization Operator."""
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
+
+from neural_compressor.adaptor.ox_utils.operators.ops import Operator, QOperator, op_registry, qop_registry
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
+
 
 @op_registry(op_types="EmbedLayerNormalization")
 class EmbedLayerNormalizationOperator(Operator):
@@ -37,10 +39,12 @@ class EmbedLayerNormalizationOperator(Operator):
     def convert_check(self, convert_format):
         """Check if conversion can be done."""
         node = self.node
-        assert convert_format in ['dynamic', 'static'], \
-            "convert format for {} should be in ['dynamic', 'static']".format(node.op_type)
-            
-        if not node.name.endswith('_quant'):
+        assert convert_format in [
+            "dynamic",
+            "static",
+        ], "convert format for {} should be in ['dynamic', 'static']".format(node.op_type)
+
+        if not node.name.endswith("_quant"):
             return False
         return True
 
@@ -48,8 +52,7 @@ class EmbedLayerNormalizationOperator(Operator):
         """Convert to QOperator format."""
         node = self.node
 
-        parents = [i for i in self.quantizer.model.get_parents(node) \
-            if i.op_type == 'DequantizeLinear']
+        parents = [i for i in self.quantizer.model.get_parents(node) if i.op_type == "DequantizeLinear"]
         inputs = []
         # 'input_ids'
         inputs.extend([node.input[0]])
@@ -65,18 +68,19 @@ class EmbedLayerNormalizationOperator(Operator):
             inputs.append(parent.input[1])
         for parent in parents:
             inputs.append(parent.input[2])
- 
+
         kwargs = {}
-        for attribute in node.attribute: # pragma: no cover
+        for attribute in node.attribute:  # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
         kwargs["domain"] = ms_domain
 
-        qembed_layer_norm_node = onnx.helper.make_node("QEmbedLayerNormalization", 
-                                                       inputs, node.output,
-                                                       node.name, **kwargs)
+        qembed_layer_norm_node = onnx.helper.make_node(
+            "QEmbedLayerNormalization", inputs, node.output, node.name, **kwargs
+        )
         self.quantizer.new_nodes.append(qembed_layer_norm_node)
         self.quantizer.remove_nodes.extend(parents)
         self.quantizer.remove_nodes.append(node)
+
 
 @qop_registry(op_types="QEmbedLayerNormalization")
 class QEmbedLayerNormalizationOperator(QOperator):
@@ -95,22 +99,23 @@ class QEmbedLayerNormalizationOperator(QOperator):
         # input dq
         for i in range(5):
             in_dq = onnx.helper.make_node(
-                'DequantizeLinear',
-                [node.input[2+i], node.input[-10+i], node.input[-5+i]],
-                [node.name + '_in_dequant_' + str(i)],
-                node.name + '_in_dequant_' + str(i))
-            inputs.append(node.name + '_in_dequant_' + str(i))
+                "DequantizeLinear",
+                [node.input[2 + i], node.input[-10 + i], node.input[-5 + i]],
+                [node.name + "_in_dequant_" + str(i)],
+                node.name + "_in_dequant_" + str(i),
+            )
+            inputs.append(node.name + "_in_dequant_" + str(i))
             add_nodes.append(in_dq)
         if len(node.input) > 17:
             inputs.append(node.input[7])
 
         outputs = node.output
         kwargs = {}
-        for attribute in node.attribute: # pragma: no cover
+        for attribute in node.attribute:  # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
 
         binary_node = onnx.helper.make_node(
-            'EmbedLayerNormalization', inputs,
-            outputs, node.name + '_convert', **kwargs)
+            "EmbedLayerNormalization", inputs, outputs, node.name + "_convert", **kwargs
+        )
         add_nodes.append(binary_node)
         return True, add_nodes, inits

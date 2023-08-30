@@ -43,24 +43,13 @@ class OnnxrtModel(Model):
     def domain(self) -> Domain:
         """Get model domain."""
         try:
-            input_node_names = {
-                node.name for node in self.nc_model_instance.graph().input  # pylint: disable=E1101
-            }
-            node_names = {
-                node.name for node in self.nc_model_instance.nodes()  # pylint: disable=E1101
-            }
-            boundary_nodes = [
-                node.name for node in self.nc_model_instance.graph().input  # pylint: disable=E1101
-            ]
+            input_node_names = {node.name for node in self.nc_model_instance.graph().input}  # pylint: disable=E1101
+            node_names = {node.name for node in self.nc_model_instance.nodes()}  # pylint: disable=E1101
+            boundary_nodes = [node.name for node in self.nc_model_instance.graph().input]  # pylint: disable=E1101
             boundary_nodes.extend(
-                [
-                    node.name
-                    for node in self.nc_model_instance.graph().output  # pylint: disable=E1101
-                ],
+                [node.name for node in self.nc_model_instance.graph().output],  # pylint: disable=E1101
             )
-            op_names = {
-                node.op_type for node in self.nc_model_instance.nodes()  # pylint: disable=E1101
-            }
+            op_names = {node.op_type for node in self.nc_model_instance.nodes()}  # pylint: disable=E1101
 
         except Exception:
             return Domain()
@@ -152,9 +141,7 @@ class OnnxrtModel(Model):
 
             for input_node in self.filtered_input_nodes:
                 node_dict = MessageToDict(input_node)
-                dimensions = (
-                    node_dict.get("type", {}).get("tensorType", {}).get("shape", {}).get("dim", [])
-                )
+                dimensions = node_dict.get("type", {}).get("tensorType", {}).get("shape", {}).get("dim", [])
                 input_shape = []
                 for dim in dimensions:
                     if dim.get("dimValue", None) is not None:
@@ -217,7 +204,7 @@ class OnnxrtModel(Model):
         """Ensure all requirements are installed."""
         check_module("onnx")
         check_module("onnxruntime")
-        if sys.version_info < (3, 10):  # pragma: no cover
+        if sys.version_info < (3, 11):  # pragma: no cover
             check_module("onnxruntime_extensions")
 
     @property

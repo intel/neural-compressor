@@ -352,7 +352,7 @@ if __name__ == "__main__":
                                 task=args.task,
                                 model_type=args.model_type,
                                 dynamic_length=args.dynamic_length)
-    dataloader = DataLoader(framework='onnxrt', dataset=dataset, batch_size=args.batch_size)
+    dataloader = DataLoader(framework='onnxruntime', dataset=dataset, batch_size=args.batch_size)
     metric = ONNXRTGLUE(args.task)
 
     def eval_func(model):

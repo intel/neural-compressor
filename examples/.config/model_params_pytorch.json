@@ -8,7 +8,7 @@
       "batch_size": 100
     },
     "resnet18": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnet18",
       "main_script": "main.py",
@@ -29,21 +29,21 @@
       "batch_size": 100
      },
     "efficientnet_b0": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b0",
       "main_script": "main.py",
       "batch_size": 100
     },
     "efficientnet_b3": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b3",
       "main_script": "main.py",
       "batch_size": 100
     },
     "efficientnet_b7": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b7",
       "main_script": "main.py",
@@ -263,14 +263,12 @@
       "main_script": "dlrm_s_pytorch.py",
       "batch_size": 16384
     },
-    "blendcnn": {
-      "model_src_dir": "nlp/blendcnn/quantization/ptq/eager",
+    "blendcnn_ipex": {
+      "model_src_dir": "nlp/blendcnn/quantization/ptq/ipex",
       "dataset_location": "/tf_dataset/pytorch/blendcnn/MRPC/",
       "input_model": "/tf_dataset/pytorch/blendcnn/models/",
-      "yaml": "blendcnn.yaml",
-      "strategy": "basic",
-      "batch_size": 32,
-      "new_benchmark": false
+      "main_script": "classify.py",
+      "batch_size": 32
     },
     "gpt_WikiText(rm)": {
       "model_src_dir": "eager/language_translation/ptq",
@@ -327,23 +325,19 @@
       "batch_size": 100,
       "new_benchmark": false
     },
-    "wav2vec2":{
-      "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager",
+    "wav2vec2_dynamic":{
+      "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
       "input_model": "wav2vec2",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": false
+      "main_script": "run_asr.py",
+      "batch_size": 1
     },
-    "hubert":{
-       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager",
+    "hubert_dynamic":{
+       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx",
        "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
        "input_model": "hubert",
-       "yaml": "conf.yaml",
-       "strategy": "basic",
-       "batch_size": 1,
-       "new_benchmark": false
+       "main_script": "run_asr.py",
+       "batch_size": 1
     },
     "whisper_large":{
        "model_src_dir": "speech_recognition/whisper_large/quantization/ptq_dynamic/fx",
@@ -352,7 +346,7 @@
        "main_script": "run_whisper_large.py",
        "batch_size": 1
     },
-    "hubert_fx":{
+    "hubert":{
       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
       "input_model": "hubert",
@@ -453,6 +447,13 @@
     },
     "gpt_j_wikitext":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/fx",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/pytorch/gpt-j-6B",
+      "main_script": "run_clm.py",
+      "batch_size": 8
+    },
+    "gpt_j_wikitext_weight_only":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_weight_only",
       "dataset_location": "",
       "input_model": "/tf_dataset2/models/pytorch/gpt-j-6B",
       "main_script": "run_clm.py",

@@ -347,7 +347,7 @@ if __name__ == "__main__":
                                 data_dir=args.data_path,
                                 model_name_or_path=args.model_name_or_path,
                                 task=args.task)
-    dataloader = DataLoader(framework='onnxrt', dataset=dataset, batch_size=args.batch_size)
+    dataloader = DataLoader(framework='onnxruntime', dataset=dataset, batch_size=args.batch_size)
     metric = ONNXRTGLUE(args.task)
 
     def eval_func(model, *args):

@@ -45,19 +45,19 @@ pip install tensorflow
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 ```
 ```python
+from neural_compressor.data import DataLoader, Datasets
 from neural_compressor.config import PostTrainingQuantConfig
-from neural_compressor.data import DataLoader
-from neural_compressor.data import Datasets
 
-dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
-dataloader = DataLoader(framework='tensorflow', dataset=dataset)
+dataset = Datasets("tensorflow")["dummy"](shape=(1, 224, 224, 3))
+dataloader = DataLoader(framework="tensorflow", dataset=dataset)
 
 from neural_compressor.quantization import fit
+
 q_model = fit(
     model="./mobilenet_v1_1.0_224_frozen.pb",
     conf=PostTrainingQuantConfig(),
     calib_dataloader=dataloader,
-    eval_dataloader=dataloader)
+)
 ```
 
 ## Documentation
@@ -120,6 +120,9 @@ q_model = fit(
           <td colspan="2" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
           <td colspan="2" align="center"><a href="./docs/source/smooth_quant.md">SmoothQuant</td>
       </tr>
+      <tr>
+          <td colspan="8" align="center"><a href="./docs/source/quantization_weight_only.md">Weight-Only Quantization</td>
+      </tr>
   </tbody>
   <thead>
       <tr>
@@ -134,14 +137,17 @@ q_model = fit(
   </tbody>
 </table>
 
+> More documentations can be found at [User Guide](./docs/source/user_guide.md).
+
 ## Selected Publications/Events
-* Blog on Medium: [Intel Optimization at Netflix](https://medium.com/@amerather_9719/intel-optimization-at-netflix-79ef0efb9d2) (May 2023)
-* Blog on Medium: [Effective Post-training Quantization for Large Language Models with Enhanced SmoothQuant Approach](https://medium.com/@NeuralCompressor/effective-post-training-quantization-for-large-language-models-with-enhanced-smoothquant-approach-93e9d104fb98) (Apr 2023)
-* Blog by Intel: [Intel® Xeon® Processors Are Still the Only CPU With MLPerf Results, Raising the Bar By 5x](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Intel-Xeon-Processors-Are-Still-the-Only-CPU-With-MLPerf-Results/post/1472750) (Apr 2023)
+* Post on Social Media: [ONNXCommunityMeetup2023: INT8 Quantization for Large Language Models with Intel Neural Compressor](https://www.youtube.com/watch?v=luYBWA1Q5pQ)  (July 2023)
+* Blog by Intel: [Accelerate Llama 2 with Intel AI Hardware and Software Optimizations](https://www.intel.com/content/www/us/en/developer/articles/news/llama2.html) (July 2023)
+* Blog on Medium: [Quantization Accuracy Loss Diagnosis with Neural Insights](https://medium.com/@NeuralCompressor/quantization-accuracy-loss-diagnosis-with-neural-insights-5d73f4ca2601) (Aug 2023)
+* Blog on Medium: [Faster Stable Diffusion Inference with Intel Extension for Transformers](https://medium.com/intel-analytics-software/faster-stable-diffusion-inference-with-intel-extension-for-transformers-on-intel-platforms-7e0f563186b0) (July 2023)
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 
-> View our [Full Publication List](./docs/source/publication_list.md).
+> View [Full Publication List](./docs/source/publication_list.md).
 
 ## Additional Content
 
@@ -153,4 +159,3 @@ q_model = fit(
 ## Research Collaborations
 
 Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us ([inc.maintainers@intel.com](mailto:inc.maintainers@intel.com)). Look forward to our collaborations on Intel Neural Compressor!
-

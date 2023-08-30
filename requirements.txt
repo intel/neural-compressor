@@ -1,14 +1,14 @@
-numpy
-pandas
-pyyaml
-scikit-learn
-schema
-py-cpuinfo
-requests
-psutil
-Pillow
-pycocotools-windows; sys_platform != 'linux'
-pycocotools; sys_platform == 'linux'
-opencv-python
-prettytable
 deprecated >= 1.2.13
+numpy
+opencv-python-headless
+pandas
+Pillow
+prettytable
+psutil
+py-cpuinfo
+pycocotools; sys_platform != 'win32' or python_version > '3.8'
+pycocotools-windows; sys_platform == 'win32' and python_version <= '3.8'
+pyyaml
+requests
+schema
+scikit-learn

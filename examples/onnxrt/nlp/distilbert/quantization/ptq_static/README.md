@@ -64,7 +64,7 @@ bash prepare_model.sh --input_dir=$OUT_DIR \
 Static quantization with QDQ format:
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune \ # model path as *.onnx
                    --dataset_location=path/to/glue_data \
                    --quant_format="QDQ"

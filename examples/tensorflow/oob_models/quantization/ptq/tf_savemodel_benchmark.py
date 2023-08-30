@@ -23,9 +23,8 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.client import timeline
 from tensorflow.python.tools import optimize_for_inference_lib
-from tensorflow.python.framework import graph_util
 from tensorflow.core.protobuf import rewriter_config_pb2
-
+from tensorflow.compat.v1 import graph_util
 
 def get_dynamic_inputshape(model_dir,dshape):
     # judge object_detection model

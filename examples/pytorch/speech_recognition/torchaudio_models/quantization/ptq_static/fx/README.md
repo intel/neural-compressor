@@ -37,7 +37,7 @@ BOOKS.TXT  CHAPTERS.TXT  dataset_infos.json  LICENSE.TXT  README.TXT  SPEAKERS.T
 ## Hubert
 
 ```bash
-bash run_tuning.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --input_model=hubert --output_model=./saved_results
+bash run_quant.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --input_model=hubert --output_model=./saved_results
 ```
 ```bash
 bash run_benchmark.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --input_model=hubert --output_model=./saved_results --mode=performance

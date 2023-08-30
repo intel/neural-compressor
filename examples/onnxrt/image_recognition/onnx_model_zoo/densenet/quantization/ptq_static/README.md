@@ -34,7 +34,7 @@ tar -xvzf caffe_ilsvrc12.tar.gz val.txt
 ## 1. Quantization
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model \  # model path as *.onnx
                    --dataset_location=/path/to/imagenet \
                    --label_path=/path/to/val.txt \
                    --output_model=path/to/save

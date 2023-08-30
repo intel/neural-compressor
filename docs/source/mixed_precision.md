@@ -10,13 +10,14 @@ Mixed Precision
 
 The recent growth of Deep Learning has driven the development of more complex models that require significantly more compute and memory capabilities. Several low precision numeric formats have been proposed to address the problem. Google's [bfloat16](https://cloud.google.com/tpu/docs/bfloat16) and the [FP16: IEEE](https://en.wikipedia.org/wiki/Half-precision_floating-point_format) half-precision format are two of the most widely used sixteen bit formats. [Mixed precision](https://arxiv.org/abs/1710.03740) training and inference using low precision formats have been developed to reduce compute and bandwidth requirements.
 
-The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Cooper Lake), featuring Intel® Deep Learning Boost, is the first general-purpose x86 CPU to support the bfloat16 format. Specifically, three new bfloat16 instructions are added as a part of the AVX512_BF16 extension within Intel Deep Learning Boost: VCVTNE2PS2BF16, VCVTNEPS2BF16, and VDPBF16PS. The first two instructions allow converting to and from bfloat16 data type, while the last one performs a dot product of bfloat16 pairs. Further details can be found in the [hardware numerics document](https://software.intel.com/content/www/us/en/develop/download/bfloat16-hardware-numerics-definition.html) published by Intel.
+The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Cooper Lake), featuring Intel® Deep Learning Boost, is the first general-purpose x86 CPU to support the bfloat16 format. Specifically, three new bfloat16 instructions are added as a part of the AVX512_BF16 extension within Intel Deep Learning Boost: VCVTNE2PS2BF16, VCVTNEPS2BF16, and VDPBF16PS. The first two instructions allow converting to and from bfloat16 data type, while the last one performs a dot product of bfloat16 pairs. Further details can be found in the [hardware numerics document](https://software.intel.com/content/www/us/en/develop/download/bfloat16-hardware-numerics-definition.html) published by Intel.  
 
 <p align="center" width="100%">
     <img src="./imgs/data_format.png" alt="Architecture" height=230>
 </p>
 
 ## Mixed Precision Support Matrix
+
 <table class="center">
     <thead>
         <tr>
@@ -48,7 +49,7 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
             <td align="left">:x:</td>
         </tr>
         <tr>
-            <td rowspan="3" align="left">ONNX Runtime</td>
+            <td rowspan="4" align="left">ONNX Runtime</td>
             <td align="left">CPUExecutionProvider</td>
             <td align="left">MLAS</td>
             <td align="left">"default"</td>
@@ -71,6 +72,14 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
             <td align="left">gpu</td>
             <td align="left">&#10004;</td>
             <td align="left">&#10004;</td>
+        </tr>
+        <tr>
+            <td align="left">DnnlExecutionProvider</td>
+            <td align="left">OneDNN</td>
+            <td align="left">"onnxrt_dnnl_ep"</td>
+            <td align="left">cpu</td>
+            <td align="left">&#10004;</td>
+            <td align="left">:x:</td>
         </tr>
         <tr>
             <td rowspan="2" align="left">Tensorflow</td>
@@ -138,9 +147,9 @@ To get a bf16/fp16 model, users can use the Mixed Precision API as follows.
 from neural_compressor import mix_precision
 from neural_compressor.config import MixedPrecisionConfig
 
-conf = MixedPrecisionConfig() # default precision is bf16
+conf = MixedPrecisionConfig()  # default precision is bf16
 converted_model = mix_precision.fit(model, conf=conf)
-converted_model.save('./path/to/save/')
+converted_model.save("./path/to/save/")
 ```
 
 - FP16:
@@ -150,11 +159,12 @@ from neural_compressor import mix_precision
 from neural_compressor.config import MixedPrecisionConfig
 
 conf = MixedPrecisionConfig(
-        backend='onnxrt_cuda_ep',
-        device='gpu',
-        precisions='fp16')
+    backend="onnxrt_cuda_ep",
+    device="gpu",
+    precisions="fp16",
+)
 converted_model = mix_precision.fit(model, conf=conf)
-converted_model.save('./path/to/save/')
+converted_model.save("./path/to/save/")
 ```
   
 ## Examples
@@ -162,4 +172,5 @@ converted_model.save('./path/to/save/')
 - Quick started with [helloworld example](/examples/helloworld/tf_example3)
 - PyTorch [ResNet18](/examples/pytorch/image_recognition/torchvision_models/mixed_precision/resnet18)
 - IPEX [DistilBERT base](/examples/pytorch/nlp/huggingface_models/question-answering/mixed_precision/ipex)
-- Tensorflow [ResNet50](/examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/mixed_precision) 
+- Tensorflow [ResNet50](/examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/mixed_precision)
+- ONNX Runtime [Bert base](/examples/onnxrt/nlp/huggingface_model/text_classification/mix_precision)

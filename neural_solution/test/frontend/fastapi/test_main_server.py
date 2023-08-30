@@ -1,18 +1,19 @@
-import unittest
 import asyncio
-from unittest.mock import patch, Mock, MagicMock
-from fastapi.testclient import TestClient
-from fastapi import WebSocket
-from neural_solution.frontend.fastapi.main_server import app,  LogEventHandler, start_log_watcher, Observer
-import sqlite3
 import os
 import shutil
+import sqlite3
+import unittest
+from unittest.mock import MagicMock, Mock, patch
+
+from fastapi import WebSocket
+from fastapi.testclient import TestClient
 
 from neural_solution.config import config
+from neural_solution.frontend.fastapi.main_server import LogEventHandler, Observer, app, start_log_watcher
 
 NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
 DB_PATH = NEURAL_SOLUTION_WORKSPACE + "/db"
-TASK_WORKSPACE =  NEURAL_SOLUTION_WORKSPACE + "/task_workspace"
+TASK_WORKSPACE = NEURAL_SOLUTION_WORKSPACE + "/task_workspace"
 TASK_LOG_path = NEURAL_SOLUTION_WORKSPACE + "/task_log"
 SERVE_LOG_PATH = NEURAL_SOLUTION_WORKSPACE + "/serve_log"
 
@@ -22,26 +23,33 @@ client = TestClient(app)
 def build_db():
     if not os.path.exists(DB_PATH):
         os.makedirs(DB_PATH)
-    conn = sqlite3.connect(f'{DB_PATH}/task.db', check_same_thread=False)  # sqlite should set this check_same_thread to False
+    conn = sqlite3.connect(
+        f"{DB_PATH}/task.db", check_same_thread=False
+    )  # sqlite should set this check_same_thread to False
     cursor = conn.cursor()
     cursor.execute(
-        'create table if not exists task(id TEXT PRIMARY KEY, arguments varchar(100), ' +
-            'workers int, status varchar(20), script_url varchar(500), optimized integer, ' +
-            'approach varchar(20), requirements varchar(500), result varchar(500), q_model_path varchar(200))')
-    cursor.execute('drop table if exists cluster ')
-    cursor.execute(r'create table cluster(id INTEGER PRIMARY KEY AUTOINCREMENT,' +
-            'node_info varchar(500),' +
-            'status varchar(100),' +
-            'free_sockets int,' +
-            'busy_sockets int,' +
-            'total_sockets int)')
+        "create table if not exists task(id TEXT PRIMARY KEY, arguments varchar(100), "
+        + "workers int, status varchar(20), script_url varchar(500), optimized integer, "
+        + "approach varchar(20), requirements varchar(500), result varchar(500), q_model_path varchar(200))"
+    )
+    cursor.execute("drop table if exists cluster ")
+    cursor.execute(
+        r"create table cluster(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        + "node_info varchar(500),"
+        + "status varchar(100),"
+        + "free_sockets int,"
+        + "busy_sockets int,"
+        + "total_sockets int)"
+    )
 
     conn.commit()
     conn.close
 
+
 def delete_db():
     if os.path.exists(DB_PATH):
         shutil.rmtree(DB_PATH)
+
 
 def use_db():
     def f(func):
@@ -49,11 +57,13 @@ def use_db():
             build_db()
             res = func(*args, **kwargs)
             delete_db()
+
         return fi
+
     return f
 
-class TestMain(unittest.TestCase):
 
+class TestMain(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         if not os.path.exists(TASK_LOG_path):
@@ -69,7 +79,7 @@ class TestMain(unittest.TestCase):
         assert response.status_code == 200
         self.assertEqual(response.json(), {"message": "Welcome to Neural Solution!"})
 
-    @patch('neural_solution.frontend.fastapi.main_server.socket')
+    @patch("neural_solution.frontend.fastapi.main_server.socket")
     def test_ping(self, mock_socket):
         response = client.get("/ping")
         self.assertEqual(response.status_code, 200)
@@ -92,11 +102,12 @@ class TestMain(unittest.TestCase):
         data = {
             "description": "",
         }
-        path  = "../../doc"
+        path = "../../doc"
         if not os.path.exists(path):
             os.makedirs(path)
         with open(os.path.join(path, "user_facing_api.json"), "w") as f:
             import json
+
             json.dump(data, f)
         response = client.get("/description")
         assert response.status_code == 200
@@ -111,7 +122,7 @@ class TestMain(unittest.TestCase):
             "arguments": ["arg1", "arg2"],
             "approach": "approach1",
             "requirements": ["req1", "req2"],
-            "workers": 3
+            "workers": 3,
         }
 
         # test no db case
@@ -131,7 +142,6 @@ class TestMain(unittest.TestCase):
         self.assertIn("msg", response.json())
         self.assertIn("successfully", response.json()["status"])
         mock_submit_task.assert_called_once()
-
 
         # test ConnectionRefusedError case
         mock_submit_task.side_effect = ConnectionRefusedError
@@ -166,7 +176,7 @@ class TestMain(unittest.TestCase):
             "arguments": ["arg1", "arg2"],
             "approach": "approach1",
             "requirements": ["req1", "req2"],
-            "workers": 3
+            "workers": 3,
         }
         response = client.post("/task/submit/", json=task)
         task_id = response.json()["task_id"]
@@ -192,7 +202,7 @@ class TestMain(unittest.TestCase):
             "arguments": ["arg1", "arg2"],
             "approach": "approach1",
             "requirements": ["req1", "req2"],
-            "workers": 3
+            "workers": 3,
         }
         response = client.post("/task/submit/", json=task)
         task_id = response.json()["task_id"]
@@ -214,8 +224,8 @@ class TestMain(unittest.TestCase):
         self.assertIn(task_id, response.text)
         os.remove(log_path)
 
-class TestLogEventHandler(unittest.TestCase):
 
+class TestLogEventHandler(unittest.TestCase):
     def setUp(self):
         self.loop = asyncio.get_event_loop()
 
@@ -231,6 +241,7 @@ class TestLogEventHandler(unittest.TestCase):
 
     def test_on_modified(self):
         from neural_solution.config import config
+
         config.workspace = NEURAL_SOLUTION_WORKSPACE
         mock_websocket = MagicMock()
         mock_websocket.send_text = MagicMock()
@@ -249,7 +260,7 @@ class TestLogEventHandler(unittest.TestCase):
         task_id = "1234"
         log_path = f"{TASK_LOG_path}/task_{task_id}.txt"
         event.src_path = log_path
-        with patch('builtins.open', MagicMock()) as mock_file:
+        with patch("builtins.open", MagicMock()) as mock_file:
             mock_file.return_value.__enter__.return_value.seek.return_value = None
             mock_file.return_value.__enter__.return_value.readlines.return_value = ["test line"]
             handler.on_modified(event)
@@ -259,20 +270,20 @@ class TestLogEventHandler(unittest.TestCase):
             # handler.queue.put_nowait.assert_called_once_with("test line")
         os.remove(log_path)
 
-class TestStartLogWatcher(unittest.TestCase):
 
+class TestStartLogWatcher(unittest.TestCase):
     def setUp(self):
         self.loop = asyncio.get_event_loop()
 
     def test_start_log_watcher(self):
         mock_observer = MagicMock()
         mock_observer.schedule = MagicMock()
-        with patch('neural_solution.frontend.fastapi.main_server.Observer', MagicMock(return_value=mock_observer)):
+        with patch("neural_solution.frontend.fastapi.main_server.Observer", MagicMock(return_value=mock_observer)):
             observer = start_log_watcher("test_websocket", "1234", 0)
             self.assertIsInstance(observer, type(mock_observer))
 
-class TestWebsocketEndpoint(unittest.TestCase):
 
+class TestWebsocketEndpoint(unittest.TestCase):
     def setUp(self):
         self.loop = asyncio.get_event_loop()
         self.client = TestClient(app)
@@ -282,5 +293,6 @@ class TestWebsocketEndpoint(unittest.TestCase):
         # with self.assertRaises(HTTPException):
         #     asyncio.run(websocket_endpoint(WebSocket, "nonexistent_task"))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -11,14 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Neural Solution entry point."""
 
 
 def exec():
     """Execute Neural Solution launch."""
     from neural_solution.launcher import main
+
     main()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     exec()

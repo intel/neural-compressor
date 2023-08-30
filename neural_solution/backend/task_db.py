@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Neural Solution task database."""
-import threading
 import sqlite3
+import threading
 from collections import deque
-from neural_solution.backend.utils.utility import create_dir
+
 from neural_solution.backend.task import Task
+from neural_solution.backend.utils.utility import create_dir
+
 
 class TaskDB:
     """TaskDb manages all the tasks.
@@ -39,12 +40,13 @@ class TaskDB:
         self.task_queue = deque()
         create_dir(db_path)
         # sqlite should set this check_same_thread to False
-        self.conn = sqlite3.connect(f'{db_path}', check_same_thread=False)
+        self.conn = sqlite3.connect(f"{db_path}", check_same_thread=False)
         self.cursor = self.conn.cursor()
         self.cursor.execute(
-            'create table if not exists task(id TEXT PRIMARY KEY, arguments varchar(100), ' +
-                'workers int, status varchar(20), script_url varchar(500), optimized integer, ' +
-                'approach varchar(20), requirements varchar(500), result varchar(500), q_model_path varchar(200))')
+            "create table if not exists task(id TEXT PRIMARY KEY, arguments varchar(100), "
+            + "workers int, status varchar(20), script_url varchar(500), optimized integer, "
+            + "approach varchar(20), requirements varchar(500), result varchar(500), q_model_path varchar(200))"
+        )
         self.conn.commit()
         # self.task_collections = []
         self.lock = threading.Lock()
@@ -72,7 +74,7 @@ class TaskDB:
         """Update the task status with the task id and the status."""
         if status not in ["pending", "running", "done", "failed"]:
             raise Exception("status invalid, should be one of pending/running/done")
-        self.cursor.execute(r"update task set status='{}' where id=?".format(status), (task_id, ))
+        self.cursor.execute(r"update task set status='{}' where id=?".format(status), (task_id,))
         self.conn.commit()
 
     def update_result(self, task_id, result_str):
@@ -82,13 +84,14 @@ class TaskDB:
 
     def update_q_model_path_and_result(self, task_id, q_model_path, result_str):
         """Update the task result with the result string."""
-        self.cursor.execute(r"update task set q_model_path='{}', result='{}' where id=?"
-                            .format(q_model_path, result_str), (task_id, ))
+        self.cursor.execute(
+            r"update task set q_model_path='{}', result='{}' where id=?".format(q_model_path, result_str), (task_id,)
+        )
         self.conn.commit()
 
     def lookup_task_status(self, task_id):
         """Look up the current task status and result."""
-        self.cursor.execute(r"select status, result from task where id=?", (task_id, ))
+        self.cursor.execute(r"select status, result from task where id=?", (task_id,))
         status, result = self.cursor.fetchone()
         return {"status": status, "result": result}
 
@@ -98,7 +101,6 @@ class TaskDB:
         attr_tuple = self.cursor.fetchone()
         return Task(*attr_tuple)
 
-    def remove_task(self, task_id): # currently no garbage collection
+    def remove_task(self, task_id):  # currently no garbage collection
         """Remove task."""
         pass
-

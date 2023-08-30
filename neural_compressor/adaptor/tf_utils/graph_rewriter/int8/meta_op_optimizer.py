@@ -17,11 +17,12 @@
 """Meta OP Graph Rewriter."""
 
 
+from tensorflow.python.framework import dtypes
+
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
-from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-from tensorflow.python.framework import dtypes
 
 
 class MetaInfoChangingMemOpOptimizer(GraphRewriterBase):
@@ -29,6 +30,7 @@ class MetaInfoChangingMemOpOptimizer(GraphRewriterBase):
 
     With such changes, the Quantize and Dequantize OP will removed for better performance.
     """
+
     def __init__(self, model):
         """Initilization."""
         super().__init__(model)
@@ -41,8 +43,9 @@ class MetaInfoChangingMemOpOptimizer(GraphRewriterBase):
     @dump_elapsed_time("Pass MetaOpOptimizer")
     def do_transformation(self):
         """Apply the fusion of Dequantize + MetaOp + QuantizeV2."""
-        target_nodes = self.graph_analyzer.query_fusion_pattern_nodes( \
-                          [['Dequantize'], ('Squeeze', 'Reshape'), ('Squeeze','Reshape'), ['QuantizeV2']])
+        target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(
+            [["Dequantize"], ("Squeeze", "Reshape"), ("Squeeze", "Reshape"), ["QuantizeV2"]]
+        )
         for i in target_nodes:
             if len(i[-1]) == 2:
                 continue
@@ -60,11 +63,11 @@ class MetaInfoChangingMemOpOptimizer(GraphRewriterBase):
             if len(self.graph_info[dequantize_node_name].outputs) != 1:
                 continue
 
-            if quant_node.attr['mode'].s.decode() == deq_node.attr['mode'].s.decode():
+            if quant_node.attr["mode"].s.decode() == deq_node.attr["mode"].s.decode():
                 deq_min_range = self.graph_info[dequantize_node_name].node.input[1]
                 deq_max_range = self.graph_info[dequantize_node_name].node.input[2]
-                quant_output_min = quantize_node_name + ':1'
-                quant_output_max = quantize_node_name + ':2'
+                quant_output_min = quantize_node_name + ":1"
+                quant_output_max = quantize_node_name + ":2"
                 if len(i[-1]) == 3:
                     quantize_input_name = i[1]
                 else:
@@ -73,9 +76,10 @@ class MetaInfoChangingMemOpOptimizer(GraphRewriterBase):
                 quantized_node_name = self.graph_info[quantize_node_name].outputs[0]
                 # _QuantizedBatchMatMul requires T1 and T2 with qint8 type
                 # _QuantizedFusedBatchNorm requires T with qint8 type
-                if (self.graph_info[quantized_node_name].node.op == '_QuantizedBatchMatMul' or \
-                    self.graph_info[quantized_node_name].node.op == '_QuantizedFusedBatchNorm') and \
-                    self.graph_info[dequantize_node_name].node.attr['T'].type != dtypes.qint8.as_datatype_enum:
+                if (
+                    self.graph_info[quantized_node_name].node.op == "_QuantizedBatchMatMul"
+                    or self.graph_info[quantized_node_name].node.op == "_QuantizedFusedBatchNorm"
+                ) and self.graph_info[dequantize_node_name].node.attr["T"].type != dtypes.qint8.as_datatype_enum:
                     continue
 
                 for index, value in enumerate(self.graph_info[quantized_node_name].node.input):
@@ -88,24 +92,23 @@ class MetaInfoChangingMemOpOptimizer(GraphRewriterBase):
                     if index == 0:
                         self.graph_info[quantized_node_name].node.input[index] = quantize_input_name
 
-                new_dtype = self.graph_info[dequantize_node_name].node.attr['T'].type
-                for node_name in i[1: -1]:
-                    self.graph_info[node_name].node.attr['T'].type = new_dtype
+                new_dtype = self.graph_info[dequantize_node_name].node.attr["T"].type
+                for node_name in i[1:-1]:
+                    self.graph_info[node_name].node.attr["T"].type = new_dtype
 
-                if 'T1' in self.graph_info[quantized_node_name].node.attr:
-                    self.graph_info[quantized_node_name].node.attr['T1'].type = new_dtype
+                if "T1" in self.graph_info[quantized_node_name].node.attr:
+                    self.graph_info[quantized_node_name].node.attr["T1"].type = new_dtype
 
-                if 'Tinput' in self.graph_info[quantized_node_name].node.attr:
-                    self.graph_info[quantized_node_name].node.attr['Tinput'].type = new_dtype
+                if "Tinput" in self.graph_info[quantized_node_name].node.attr:
+                    self.graph_info[quantized_node_name].node.attr["Tinput"].type = new_dtype
 
-                if 'Thost_inputs' in self.graph_info[quantized_node_name].node.attr:
-                    self.graph_info[quantized_node_name].node.attr['Thost_inputs'].list.type[0] = new_dtype
+                if "Thost_inputs" in self.graph_info[quantized_node_name].node.attr:
+                    self.graph_info[quantized_node_name].node.attr["Thost_inputs"].list.type[0] = new_dtype
 
-                if 'T' in self.graph_info[quantized_node_name].node.attr:
-                    self.graph_info[quantized_node_name].node.attr['T'].type = new_dtype
+                if "T" in self.graph_info[quantized_node_name].node.attr:
+                    self.graph_info[quantized_node_name].node.attr["T"].type = new_dtype
 
-                self.graph_info[i[1]].node.input[0] = \
-                     self.graph_info[dequantize_node_name].node.input[0]
+                self.graph_info[i[1]].node.input[0] = self.graph_info[dequantize_node_name].node.input[0]
                 self.graph_analyzer.remove_node(dequantize_node_name)
                 self.graph_analyzer.remove_node(self.graph_info[quantize_node_name].node.input[1])
                 self.graph_analyzer.remove_node(self.graph_info[quantize_node_name].node.input[2])

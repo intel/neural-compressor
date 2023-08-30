@@ -38,7 +38,7 @@ Please download [WikiText-2 dataset](https://s3.amazonaws.com/research.metamind.
 Quantize model with dynamic quantization:
 
 ```bash
-bash run_tuning.sh --dataset_location=/path/to/wikitext-2-raw/wiki.test.raw \ 
+bash run_quant.sh --dataset_location=/path/to/wikitext-2-raw/wiki.test.raw \ 
                    --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune
 ```
