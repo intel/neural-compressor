@@ -1010,8 +1010,11 @@ class TorchSmoothQuant:
                 self.absorb_to_layer.update(self.self_absorb_layers)
 
                 if self.absorb_to_layer is None and no_absorb_layers is None:
-                    logger.warning("sorry, could not trace the model, smooth quant is ignored."
-                        "If you are using huggingface model," "you could set torchscript to True ")
+                    logger.warning(
+                        "sorry, could not trace the model, smooth quant is ignored."
+                        "If you are using huggingface model,"
+                        "you could set torchscript to True "
+                    )
                     return self.model
                 save_input_output = False if alpha == "auto" else True
                 # if alpha == "auto":
@@ -1145,7 +1148,8 @@ class TorchSmoothQuant:
         if not skip_unsupported_layers:
             return absorb_to_layer
         if absorb_to_layer is None and no_absorb_layers is None:
-            logger.warning("sorry, could not trace the model, smooth quant is skipped."
+            logger.warning(
+                "sorry, could not trace the model, smooth quant is skipped."
                 "If you are using huggingface model,"
                 "you could set torchscript to True "
                 "when loading the model or set the return_dict to False"
