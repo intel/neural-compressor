@@ -3,6 +3,9 @@ import os
 import sys
 from urllib import request
 
+import onnx
+from onnx import version_converter
+
 MODEL_URL = "https://github.com/onnx/models/raw/main/vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_12.onnx"
 MAX_TIMES_RETRY_DOWNLOAD = 5
 
@@ -47,9 +50,19 @@ def download_model(url, model_name, retry_times=5):
     return retries < retry_times
 
 
+def export_model(output_model):
+    # Convert opset version to 13 for more quantization capability.
+    model = onnx.load(output_model)
+    model = version_converter.convert_version(model, 13)
+    onnx.save_model(model, output_model)
+
+    assert os.path.exists(output_model), f"Export failed! {output_model} doesn't exist!"
+
+
 def prepare_model(input_model, output_model):
     # Download model from [ONNX Model Zoo](https://github.com/onnx/models)
     download_model(MODEL_URL, output_model, MAX_TIMES_RETRY_DOWNLOAD)
+    export_model(output_model)
 
 
 if __name__ == "__main__":
