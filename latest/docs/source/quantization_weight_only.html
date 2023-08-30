@@ -142,7 +142,11 @@
 | group_size | [-1, 1-N] |
 | scheme | [’asym’, ‘sym’] |
 | algorithm | [’RTN’, ‘AWQ’, ‘GPTQ’] |</p>
-<p>Notes: 4-bit NormalFloat(NF4) is proposed in QLoRA[5]. ‘fp4’ includes <a class="reference external" href="../../neural_compressor/adaptor/torch_utils/weight_only.py#L37">fp4_e2m1</a> and <a class="reference external" href="https://github.com/TimDettmers/bitsandbytes/blob/18e827d666fa2b70a12d539ccedc17aa51b2c97c/bitsandbytes/functional.py#L735">fp4_e2m1_bnb</a>. By default, fp4 refers to fp4_e2m1_bnb.</p>
+<p>Notes:</p>
+<ul class="simple">
+<li><p><em>group_size = -1</em> refers to <strong>per output channel quantization</strong>. Taking a linear layer (input channel = $C_{in}$, output channel = $C_{out}$) for instance, when <em>group size = -1</em>, quantization will calculate total $C_{out}$ quantization parameters. Otherwise, when <em>group_size = gs</em> quantization parameters are calculate with every $gs$ elements along with the input channel, leading to total $C_{out} \times (C_{in} / gs)$ quantization parameters.</p></li>
+<li><p>4-bit NormalFloat(NF4) is proposed in QLoRA[5]. ‘fp4’ includes <a class="reference external" href="../../neural_compressor/adaptor/torch_utils/weight_only.py#L37">fp4_e2m1</a> and <a class="reference external" href="https://github.com/TimDettmers/bitsandbytes/blob/18e827d666fa2b70a12d539ccedc17aa51b2c97c/bitsandbytes/functional.py#L735">fp4_e2m1_bnb</a>. By default, fp4 refers to fp4_e2m1_bnb.</p></li>
+</ul>
 <p><strong>RTN arguments</strong>:
 |  rtn_args  | default value |                               comments                              |
 |:———-:|:————-:|:——————————————————————-:|
