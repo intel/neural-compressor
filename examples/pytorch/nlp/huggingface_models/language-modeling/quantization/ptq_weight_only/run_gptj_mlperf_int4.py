@@ -31,9 +31,8 @@ def get_gptj(model):
     torch.nn.init.uniform_ = skip
     torch.nn.init.normal_ = skip
     from transformers import GPTJForCausalLM, AutoModelForCausalLM
-    model = GPTJForCausalLM.from_pretrained(model, torch_dtype=torch.bfloat16)
+    model = GPTJForCausalLM.from_pretrained(model) # load the model with fp32 percision
     #model = AutoModelForCausalLM.from_pretrained(model, torch_dtype=torch.float16)
-    model.seqlen = 2048
     return model
 
 def postprocess_text(preds, targets):
@@ -251,11 +250,23 @@ if __name__ == '__main__':
     parser.add_argument('--check', action='store_true', help='Whether to compute perplexity during benchmarking for verification.')
     parser.add_argument('--use_fp16', action='store_true', help='Whether to convert model to fp16 before using GPTQ.')
     parser.add_argument('--use_gpu', action='store_true', help='Whether to use GPU.')
+    parser.add_argument(
+        '--block_size', type=int, default=128,
+        help='Block size. sub weight matrix size to run GPTQ.'
+    )
+    parser.add_argument(
+        '--pad_max_length', type=int, default=2048,
+        help='sequence length for GPTQ calibration'
+    )
+    parser.add_argument('--use_max_length', action='store_true', 
+        help='Only select data whose length equals or more than model.seqlen, please refer to GPTQ original implementation'
+    )
 
     # load the gptj model
     args = parser.parse_args()
     # method 1: directly import AutoModelForCausalLM
     model = get_gptj(args.model_name_or_path)
+    model.seqlen = args.pad_max_length
     model.eval()
 
     if args.use_gpu and torch.cuda.is_available():
@@ -298,10 +309,16 @@ if __name__ == '__main__':
             },
         },
         recipes={
-            'gptq_args':{'percdamp': 0.01, 'actorder':args.act_order},
+            'gptq_args':{
+                'percdamp': 0.01, 
+                'act_order':args.act_order,
+                'block_size': args.block_size, 
+                'nsampeles': args.nsamples,
+                'use_max_length': args.use_max_length
+            },
         },
     )
-
+    import pdb;pdb.set_trace()
     q_model = quantization.fit(model, conf, calib_dataloader=dataloader,)
 
     q_model.save("./gptj-gptq-gs128-calib128-calibration-fp16/")

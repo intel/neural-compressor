@@ -6,9 +6,11 @@ python -u examples/pytorch/nlp/huggingface_models/language-modeling/quantization
     --model_name_or_path ${MODEL_DIR} \
     --wbits 4 \
     --sym \
-    --group_size 128 \
+    --group_size -1 \
     --nsamples 128 \
     --calib-data-path ${CALIBRATION_DATA} \
     --val-data-path ${VALIDATION_DATA} \
     --calib-iters 128 \
-    --use_fp16
+    --use_max_length \
+    --use_fp16 \
+    --use_gpu
