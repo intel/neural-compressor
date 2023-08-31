@@ -290,6 +290,11 @@ def parse_args():
         default=0,
         help="Number of epochs the network not be purned"
     )
+    parser.add_argument(
+        "--cpu",
+        action="store_true",
+        help="Whether use cpu for training."
+    )
 
     args = parser.parse_args()
 
@@ -326,7 +331,7 @@ def main():
         accelerator_log_kwargs["log_with"] = args.report_to
         accelerator_log_kwargs["project_dir"] = args.output_dir
 
-    accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs)
+    accelerator = Accelerator(cpu=args.cpu, gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs)
 
     # Make one log on every process with the configuration for debugging.
     logging.basicConfig(
