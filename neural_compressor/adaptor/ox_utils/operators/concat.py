@@ -62,6 +62,38 @@ class ConcatOperator(Operator):
         children = self.quantizer.model.get_children(node)
         if len(children) == 0 or len(parents) == 0 or not node.name.endswith("_quant"):
             return False
+
+        # check input type
+        if all([i.op_type == "DequantizeLinear" for i in parents]) and any(
+            [i.op_type == "QuantizeLinear" for i in children]
+        ):
+            input_zp, input_scale, output_zp = [], [], []
+            input_zp = [parent.input[2] for parent in parents]
+            input_scale = [parent.input[1] for parent in parents]
+            output_zp = [child.input[2] for child in children if child.op_type == "QuantizeLinear"]
+
+            if (
+                any([self.quantizer.model.get_initializer(zp) is None for zp in input_zp])
+                or any([self.quantizer.model.get_initializer(zp) is None for zp in output_zp])
+                or any([self.quantizer.model.get_initializer(scale) is None for scale in input_scale])
+            ):  # pragma: no cover
+                return False
+
+            # check input scale is float type
+            if any(
+                [self.quantizer.model.get_initializer(scale).data_type != 1 for scale in input_scale]
+            ):  # pragma: no cover
+                return False
+            # check input zp type is the same with output zp type
+            if any(
+                [
+                    self.quantizer.model.get_initializer(in_zp).data_type
+                    not in [self.quantizer.model.get_initializer(out_zp).data_type for out_zp in output_zp]
+                    for in_zp in input_zp
+                ]
+            ):
+                return False
+
         return True
 
     def convert(self, convert_format):
