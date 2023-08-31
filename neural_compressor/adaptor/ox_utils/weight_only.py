@@ -302,7 +302,7 @@ def prepare_inputs(model, n_samples, dataloader):
 
     Args:
         model (ModelProto or ONNXModel): onnx model
-        n_samples (int, optional): calibration sample number.
+        n_samples (int, optional): calibration sample number. -1 means all samples.
         dataloader (object): dataloader for calibration.
 
     Returns:
@@ -337,7 +337,7 @@ def prepare_inputs(model, n_samples, dataloader):
 
     inputs = []
     for i, data in enumerate(dataloader):
-        if ((i + 1) * dataloader.batch_size) > n_samples:
+        if n_samples != -1 and ((i + 1) * dataloader.batch_size) > n_samples:
             break
         if len(inputs_names) != 1 or isinstance(data[0], dict):
             assert len(data[0]) == len(inputs_names), "Input number mismatch, " "require {} but get {}".format(
@@ -368,7 +368,7 @@ def awq_quantize(model, tune_cfg, dataloader, n_samples=128, auto_scale=True, ms
                         }
                 }
         dataloader (object): dataloader for calibration.
-        n_samples (int, optional): calibration sample number.
+        n_samples (int, optional): calibration sample number. -1 means all samples.
         auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
         mse_range (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
         n_blocks (int, optional): split model into block number to avoid OOM.
@@ -583,7 +583,7 @@ def gptq_quantize(
                         }
                 }
         dataloader (object): dataloader for calibration.
-        n_samples (int, optional): calibration sample number.
+        n_samples (int, optional): calibration sample number. -1 means all samples.
         percdamp (float, optional): percent of the average Hessian diagonal to use for dampening.
         blocksize (int, optional): blocksize to quantize weight.
         actorder (bool, optional): whether rearrange Hessian matrix considering the diag's value.
