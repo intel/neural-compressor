@@ -25,7 +25,7 @@ wget https://huggingface.co/bsmock/tatr-pubtables1m-v1.0/resolve/main/pubtables1
 
 bash export.sh --input_model=/path/to/pubtables1m_structure_detr_r18.pth \
                --output_model=/path/to/export \ # model path as *.onnx
-               --dataset_location=/path/to/dataset_folder # dataset_folder should contains PubTables1M-Structure-PASCAL-VOC and PubTables1M-Table-Words-JSON sub-folders
+               --dataset_location=/path/to/dataset_folder # dataset_folder should contains 'words' sub-folder
 ```
 
 # Run
@@ -37,13 +37,13 @@ Static quantization with QOperator format:
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
                    --output_model=path/to/save \ # model path as *.onnx
-                   --dataset_location=/path/to/dataset_folder # dataset_folder should contains PubTables1M-Structure-PASCAL-VOC and PubTables1M-Table-Words-JSON sub-folders
+                   --dataset_location=/path/to/dataset_folder # dataset_folder should contains 'words' sub-folder
 ```
 
 ## 2. Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model  \ # model path as *.onnx
-                      --dataset_location=/path/to/dataset_folder # dataset_folder should contains PubTables1M-Structure-PASCAL-VOC and PubTables1M-Table-Words-JSON sub-folders
+                      --dataset_location=/path/to/dataset_folder # dataset_folder should contains 'words' sub-folder
                       --mode=performance # or accuracy
 ```
