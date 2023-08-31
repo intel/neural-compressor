@@ -41,7 +41,9 @@ def move_input_to_device(input, device=torch.device("cpu")):
     elif isinstance(input, list) or isinstance(input, tuple):
         input_res, prev_size = [], None
         for inp in input:
-            if prev_size:
+            if isinstance(inp, tuple):
+                input_res = get_tuple_input(inp, res=input_res, device=device)
+            elif prev_size:
                 if isinstance(inp, torch.Tensor):
                     if inp.size() == prev_size:
                         input_res.append(inp.to(device))
@@ -50,16 +52,28 @@ def move_input_to_device(input, device=torch.device("cpu")):
                         input_res.append(inp)
             else:
                 input_res.append(inp.to(device) if isinstance(inp, torch.Tensor) else inp)
-            prev_size = torch.tensor(inp).size()
+
+            if isinstance(inp, torch.Tensor):
+                prev_size = inp.size()
         input = input_res
     else:
         input = input.to(device)  # pylint: disable=no-member
     return input
 
 
-##TODO potential bug, data type
+def get_tuple_input(input, res=[], device=torch.device("cpu")):
+    for inp in input:
+        if isinstance(inp, (tuple, list)):
+            res = get_tuple_input(inp, res)
+        else:
+            res.append(inp.to(device))
+    return res
+
+
+##TODO potential bug, data typeR
 def forward_wrapper(model, input, device=torch.device("cpu")):
     try:
+        model = model.to(device)
         input = move_input_to_device(input, device)
     except:
         logger.warning("Please check the input device if the error raised.")
@@ -161,8 +175,7 @@ def quant_dequant_x(x, min_x=None, max_x=None, num_bits=8):
     eps = torch.finfo(torch.float32).eps
     q_min, q_max = 0, 2.0**num_bits - 1.0
     if max_x is None or min_x is None:
-        max_x = torch.max(x)
-        min_x = torch.min(x)
+        max_x, min_x = torch.max(x), torch.min(x)
     else:
         max_x = torch.max(max_x)
         min_x = torch.min(min_x)
@@ -674,15 +687,11 @@ class TorchSmoothQuant:
             and self.scales_per_op == scales_per_op
             and self.calib_iter == calib_iter
         ):
-            if isinstance(alpha, float):
-                need_calib = False
-            elif self.alpha == "auto":
+            if isinstance(alpha, float) or self.alpha == "auto":
                 need_calib = False
 
-        self.alpha = alpha
-        self.percentile = percentile
-        self.op_types = op_types
-        self.scales_per_op = scales_per_op
+        self.alpha, self.percentile = alpha, percentile
+        self.op_types, self.scales_per_op = op_types, scales_per_op
         self.calib_iter = calib_iter
         return need_calib
 
@@ -700,11 +709,11 @@ class TorchSmoothQuant:
             max_value = torch.clip(max_value, 1e-5)
         output = output / max_value  ##FIXME need copy not replace
         output_q = output_q / max_value
-        if loss_type == "nsr":
-            output[output == 0] = 1e-5
-            loss = torch.sum(torch.log(1.0 + torch.abs(output - output_q) / torch.abs(output)))
-            return loss
-        elif loss_type == "abs":
+        # if loss_type == "nsr":  # nsr is unused at this point.
+        #     output[output == 0] = 1e-5
+        #     loss = torch.sum(torch.log(1.0 + torch.abs(output - output_q) / torch.abs(output)))
+        #     return loss
+        if loss_type == "abs":
             return torch.sum(torch.pow(torch.abs(output - output_q), 0.5))
         else:
             return torch.sum((output - output_q) ** 2)
@@ -1001,8 +1010,11 @@ class TorchSmoothQuant:
                 self.absorb_to_layer.update(self.self_absorb_layers)
 
                 if self.absorb_to_layer is None and no_absorb_layers is None:
-                    logger.warning("sorry, could not trace the model, smooth quant is ignored")
-                    logger.warning("if you are using huggingface model," "you could set torchscript to True ")
+                    logger.warning(
+                        "sorry, could not trace the model, smooth quant is ignored."
+                        "If you are using huggingface model,"
+                        "you could set torchscript to True "
+                    )
                     return self.model
                 save_input_output = False if alpha == "auto" else True
                 # if alpha == "auto":
@@ -1136,9 +1148,9 @@ class TorchSmoothQuant:
         if not skip_unsupported_layers:
             return absorb_to_layer
         if absorb_to_layer is None and no_absorb_layers is None:
-            logger.warning("sorry, could not trace the model, smooth quant is skipped")
             logger.warning(
-                "if you are using huggingface model,"
+                "sorry, could not trace the model, smooth quant is skipped."
+                "If you are using huggingface model,"
                 "you could set torchscript to True "
                 "when loading the model or set the return_dict to False"
             )
@@ -1205,7 +1217,10 @@ class GraphTrace:
             if hasattr(model.device, "type"):
                 orig_device = model.device.type
         else:
-            orig_device = "cpu"
+            try:
+                orig_device = next(model.parameters()).device.type
+            except:
+                orig_device = "cpu"
         if orig_device != "cpu" and orig_device != "meta":
             model = model.to("cpu")
             dummy_input = move_input_to_device(dummy_input, "cpu")
@@ -1228,7 +1243,11 @@ class GraphTrace:
                     logger.warning(e)
                     logger.warning("Jit trace in GraphTrace failed, absorb layer detection is skipped")
         if orig_device != "cpu":
-            model = model.to(orig_device)
+            if orig_device == "cuda":
+                if torch.cuda.is_available():
+                    model = model.to(orig_device)
+            else:
+                model = model.to(orig_device)
         return traced_model
 
     def get_nodes(self, traced_model, op_types=["Linear"]):
