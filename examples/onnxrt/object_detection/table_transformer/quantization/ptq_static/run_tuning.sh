@@ -39,8 +39,8 @@ function run_tuning {
     python main.py \
             --input_onnx_model ${input_model} \
             --output_model ${output_model} \
-            --data_root_dir ${dataset_location}/PubTables1M-Structure-PASCAL-VOC \
-            --table_words_dir ${dataset_location}/PubTables1M-Table-Words-JSON \
+            --data_root_dir ${dataset_location} \
+            --table_words_dir ${dataset_location}/words \
             --mode quantize \
             --data_type structure \
             --device cpu \
