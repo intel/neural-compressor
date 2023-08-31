@@ -1,5 +1,17 @@
-"""
-This module is only used as reference to convert Python docstring to API document.
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""This module is only used as reference to convert Python docstring to API document.
 
 The created the API document is in `API Doc`_.
 
@@ -26,11 +38,9 @@ Todo:
 
 .. _API Doc:
    https://intel.github.io/neural-compressor/latest/autoapi/neural_compressor/api_doc_example/index.html
-
 """
 
 module_debug_level1 = 1
-
 """int: Module debug level document.
 
 """
@@ -59,7 +69,7 @@ def function1(param1, param2):
 
 
 def function2(param1: str, param2: float) -> bool:
-    """function with PEP 484 type annotations.
+    """Function with PEP 484 type annotations.
 
     Args:
         param1: The parameter1.
@@ -83,7 +93,6 @@ def function2(param1: str, param2: float) -> bool:
 
     Returns:
         The return value. True|False.
-
     """
 
 
@@ -113,10 +122,9 @@ def function3(param1, param2=None, *args, **kwargs):
     Raises:
         AttributeError: The ``Raises`` section is a list of exceptions.
         ValueError: If `param2` is equal to `param1`.
-
     """
     if param1 == param2:
-        raise ValueError('param1 may not be equal to param2')
+        raise ValueError("param1 may not be equal to param2")
     return True
 
 
@@ -133,7 +141,6 @@ def generator1(n):
 
         >>> print([i for i in example_generator(4)])
         [0, 1, 2, 3]
-
     """
     yield from range(n)
 
@@ -147,7 +154,6 @@ class ExampleClass:
     Attributes:
         attr1 (str): Description of `attr1`.
         attr2 (:obj:`int`, optional): Description of `attr2`.
-
     """
 
     def __init__(self, param1, param2, param3):
@@ -161,14 +167,13 @@ class ExampleClass:
             param2 (:obj:`int`, optional): Description of `param2`. Multiple
                 lines are supported.
             param3 (list(str)): Description of `param3`.
-
         """
         self.attr1 = param1
         self.attr2 = param2
         self.attr3 = param3  #: Doc comment *inline*
 
         #: list(str): Doc comment *before* attribute, with type specified
-        self.attr4 = ['attr4']
+        self.attr4 = ["attr4"]
 
         self.attr5 = None
         """str: Docstring *after* attribute, with type specified."""
@@ -176,11 +181,10 @@ class ExampleClass:
     @property
     def property1(self):
         """str: Property is documented."""
-        return 'property1'
-
+        return "property1"
 
     def method1(self, param1, param2):
-        """method1 for execute.
+        """Method1 for execute.
 
         Note:
             It's public.
@@ -191,18 +195,14 @@ class ExampleClass:
 
         Returns:
             True|False.
-
         """
         return True
 
     def __special__(self):
         """This function won't be documented that start with and
-        end with a double underscore.
-        """
+        end with a double underscore."""
         pass
 
     def _private(self):
-        """private members are not included.
-        """
+        """Private members are not included."""
         pass
-

@@ -1,9 +1,11 @@
-import unittest
 import shutil
+import unittest
+
 
 def train_func():
     import tensorflow as tf
     from tensorflow import keras
+
     # Load MNIST dataset
     mnist = keras.datasets.mnist
     (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
@@ -13,19 +15,20 @@ def train_func():
     test_images = test_images / 255.0
 
     # Define the model architecture.
-    model = keras.Sequential([
-        keras.layers.InputLayer(input_shape=(28, 28)),
-        keras.layers.Reshape(target_shape=(28, 28, 1)),
-        keras.layers.Conv2D(filters=12, kernel_size=(3, 3), activation='relu'),
-        keras.layers.MaxPooling2D(pool_size=(2, 2)),
-        keras.layers.Flatten(),
-        keras.layers.Dense(10)
-    ])
+    model = keras.Sequential(
+        [
+            keras.layers.InputLayer(input_shape=(28, 28)),
+            keras.layers.Reshape(target_shape=(28, 28, 1)),
+            keras.layers.Conv2D(filters=12, kernel_size=(3, 3), activation="relu"),
+            keras.layers.MaxPooling2D(pool_size=(2, 2)),
+            keras.layers.Flatten(),
+            keras.layers.Dense(10),
+        ]
+    )
     # Train the digit classification model
-    model.compile(optimizer='adam',
-                  loss=tf.keras.losses.SparseCategoricalCrossentropy(
-                      from_logits=True),
-                  metrics=['accuracy'])
+    model.compile(
+        optimizer="adam", loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=["accuracy"]
+    )
 
     model.fit(
         train_images,
@@ -36,6 +39,7 @@ def train_func():
 
     model.save("baseline_model")
 
+
 class TestTensorflowPruning(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -43,10 +47,11 @@ class TestTensorflowPruning(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        shutil.rmtree('baseline_model',ignore_errors=True)
-    
+        shutil.rmtree("baseline_model", ignore_errors=True)
+
     def test_pruning_utility(self):
         from neural_compressor.model import Model
+
         pruning_model = Model("baseline_model")
         all_weights_name = pruning_model.get_all_weight_names()
         df, sparsity = pruning_model.report_sparsity()
@@ -54,5 +59,6 @@ class TestTensorflowPruning(unittest.TestCase):
         self.assertEqual(df.empty, False)
         self.assertNotEqual(sparsity, None)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

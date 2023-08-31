@@ -46,10 +46,22 @@ Use the following link to get
 [**CNN Daily Mail** datasets](https://github.com/intel-innersource/frameworks.ai.benchmarking.mlperf.submission.inference-submission-v3-1/tree/master/closed/Intel/code/gpt-j/pytorch-cpu#download-and-prepare-dataset)
 and [gpt-j-6B mlperf model](https://github.com/mlcommons/inference/tree/master/language/gpt-j#download-gpt-j-model)
 
-Then run following command to do quantization
+Then run following command to do quantization (please refer to *run_gptj_mlperf_int4.sh*)
 ```shell
-sh run_gptj_mlperf_int4.sh
+python -u examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_weight_only/run_gptj_mlperf_int4.py \
+    --model_name_or_path /your/gptj/model/ \
+    --wbits 4 \
+    --sym \
+    --group_size -1 \
+    --nsamples 128 \
+    --calib-data-path /your/data/calibration-data/cnn_dailymail_calibration.json \
+    --val-data-path /your/data/validation-data/cnn_dailymail_validation.json \
+    --calib-iters 128 \
+    --use_max_length \
+    --use_fp16 \
+    --use_gpu
 ```
+Notes: for per channel quantization, set group_size to **-1**, otherwise 32, 128, etc. More comprehensive details about user-defined arguments are available at our [weight_onlly quantization documentations](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_weight_only.md#quantization-capability)
 
 ## 2. Benchmark
 ```bash

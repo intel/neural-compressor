@@ -32,6 +32,7 @@ stages:
     dependsOn: []
     jobs:
       - job:
+        displayName: Test FWKs adaptor
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -41,10 +42,11 @@ stages:
               utArtifact: "ut-coverage-adaptor"
 
   - stage: API
-    displayName: User facing API
+    displayName: Unit Test User facing API
     dependsOn: []
     jobs:
       - job:
+        displayName: Test User facing API
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -58,7 +60,7 @@ stages:
     dependsOn: []
     jobs:
       - job:
-        displayName: PyTorch Pruning
+        displayName: Test PyTorch Pruning
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -67,7 +69,7 @@ stages:
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut-coverage-pt-pruning"
       - job:
-        displayName: TensorFlow Pruning
+        displayName: Test TensorFlow Pruning
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -77,10 +79,11 @@ stages:
               utArtifact: "ut-coverage-tf-pruning"
 
   - stage: TFNewAPI
-    displayName: Unit Test tf newAPI
+    displayName: Unit Test TF newAPI
     dependsOn: []
     jobs:
       - job:
+        displayName: Test TF newAPI
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -94,6 +97,7 @@ stages:
     dependsOn: []
     jobs:
       - job:
+        displayName: Test ITEX
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -107,6 +111,7 @@ stages:
     dependsOn: []
     jobs:
       - job:
+        displayName: Test other basic case
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -120,6 +125,7 @@ stages:
     dependsOn: []
     jobs:
       - job:
+        displayName: Test FWKs adaptor baseline
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -130,10 +136,11 @@ stages:
               repo: $(REPO)
 
   - stage: API_base
-    displayName: User facing API baseline
+    displayName: Unit Test User facing API baseline
     dependsOn: []
     jobs:
       - job:
+        displayName: Test User facing API baseline
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -148,7 +155,7 @@ stages:
     dependsOn: []
     jobs:
       - job:
-        displayName: PyTorch Pruning baseline
+        displayName: Test PyTorch Pruning baseline
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -158,7 +165,7 @@ stages:
               utArtifact: "ut-coverage-pt-pruning-base"
               repo: $(REPO)
       - job:
-        displayName: TensorFlow Pruning baseline
+        displayName: Test TensorFlow Pruning baseline
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -169,10 +176,11 @@ stages:
               repo: $(REPO)
 
   - stage: TFNewAPI_base
-    displayName: Unit Test tf newAPI baseline
+    displayName: Unit Test TF newAPI baseline
     dependsOn: []
     jobs:
       - job:
+        displayName: Test TF newAPI baseline
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -187,6 +195,7 @@ stages:
     dependsOn: []
     jobs:
       - job:
+        displayName: Test ITEX baseline
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -201,6 +210,7 @@ stages:
     dependsOn: []
     jobs:
       - job:
+        displayName: Test other cases baseline
         steps:
           - template: template/ut-template.yml
             parameters:

@@ -17,8 +17,10 @@
 """Attention operator."""
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, qop_registry, QOperator
-from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain, find_by_name
+
+from neural_compressor.adaptor.ox_utils.operators.ops import Operator, QOperator, op_registry, qop_registry
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, find_by_name, ms_domain
+
 
 @op_registry(op_types="Attention")
 class AttentionOperator(Operator):
@@ -37,10 +39,12 @@ class AttentionOperator(Operator):
     def convert_check(self, convert_format):
         """Check if conversion can be done."""
         node = self.node
-        assert convert_format in ['dynamic', 'static'], \
-            "convert format for {} should be in ['dynamic', 'static']".format(node.op_type)
-            
-        if not node.name.endswith('_quant'):
+        assert convert_format in [
+            "dynamic",
+            "static",
+        ], "convert format for {} should be in ['dynamic', 'static']".format(node.op_type)
+
+        if not node.name.endswith("_quant"):
             return False
         return True
 
@@ -52,16 +56,16 @@ class AttentionOperator(Operator):
         scale = []
         zp = []
         for parent in parents[:2]:
-            if parent.op_type == 'DequantizeLinear':
+            if parent.op_type == "DequantizeLinear":
                 quantized_name.append(parent.input[0])
                 scale.append(parent.input[1])
                 zp.append(parent.input[2])
                 self.quantizer.remove_nodes.append(parent)
-            elif parent.op_type == 'DynamicQuantizeLinear':
+            elif parent.op_type == "DynamicQuantizeLinear":
                 quantized_name.append(parent.output[0])
                 scale.append(parent.output[1])
                 zp.append(parent.output[2])
- 
+
         inputs = []
         inputs.extend(quantized_name)
         inputs.append(node.input[2])
@@ -72,14 +76,14 @@ class AttentionOperator(Operator):
             inputs.append(node.input[4])
 
         kwargs = {}
-        for attribute in node.attribute: # pragma: no cover
+        for attribute in node.attribute:  # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
         kwargs["domain"] = ms_domain
-        qattention_node = onnx.helper.make_node("QAttention", inputs, node.output, 
-                                                 node.name, **kwargs)
+        qattention_node = onnx.helper.make_node("QAttention", inputs, node.output, node.name, **kwargs)
         self.quantizer.new_nodes.append(qattention_node)
 
         self.quantizer.remove_nodes.append(node)
+
 
 @qop_registry(op_types="QAttention")
 class QAttentionOperator(QOperator):
@@ -99,31 +103,28 @@ class QAttentionOperator(QOperator):
             return False, add_nodes, inits
         # input dq
         in_dq1 = onnx.helper.make_node(
-            'DequantizeLinear',
+            "DequantizeLinear",
             [node.input[0], node.input[3], node.input[6]],
-            [node.name + '_in_dequant1'],
-            node.name + '_in_dequant1')
-        
+            [node.name + "_in_dequant1"],
+            node.name + "_in_dequant1",
+        )
+
         in_dq2 = onnx.helper.make_node(
-            'DequantizeLinear',
+            "DequantizeLinear",
             [node.input[1], node.input[4], node.input[7]],
-            [node.name + '_in_dequant2'],
-            node.name + '_in_dequant2')
-        inputs = [node.name + '_in_dequant1',
-                  node.name + '_in_dequant2',
-                  node.input[2],
-                  node.input[5]]
-        
+            [node.name + "_in_dequant2"],
+            node.name + "_in_dequant2",
+        )
+        inputs = [node.name + "_in_dequant1", node.name + "_in_dequant2", node.input[2], node.input[5]]
+
         add_nodes.extend([in_dq1, in_dq2])
 
         outputs = node.output
         kwargs = {}
-        for attribute in node.attribute: # pragma: no cover
+        for attribute in node.attribute:  # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
         kwargs["domain"] = ms_domain
 
-        binary_node = onnx.helper.make_node(
-            'Attention', inputs,
-            outputs, node.name + '_convert', **kwargs)
+        binary_node = onnx.helper.make_node("Attention", inputs, outputs, node.name + "_convert", **kwargs)
         add_nodes.append(binary_node)
         return True, add_nodes, inits

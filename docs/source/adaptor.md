@@ -50,8 +50,9 @@ class AbcAdaptor(Adaptor):
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
         ...
 
-    def evaluate(self, model, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1, tensorboard=False):
+    def evaluate(
+        self, model, dataloader, postprocess=None, metric=None, measurer=None, iteration=-1, tensorboard=False
+    ):
         ...
 
     def query_fw_capability(self, model):
@@ -119,38 +120,38 @@ Onnxruntime already has [quantization tools](https://github.com/microsoft/onnxru
    The base class ONNXRTAdaptor inherits from the Adaptor class. Please refer to [onnxrt.py](../neural_compressor/adaptor/onnxrt.py).
 
    ```python
-    @adaptor_registry
-    class ONNXRT_QLinearOpsAdaptor(ONNXRTAdaptor):
-      @dump_elapsed_time("Pass quantize model")
-      def quantize(self, tune_cfg, model, data_loader, q_func=None):
-        ......
+   @adaptor_registry
+   class ONNXRT_QLinearOpsAdaptor(ONNXRTAdaptor):
+     @dump_elapsed_time("Pass quantize model")
+     def quantize(self, tune_cfg, model, data_loader, q_func=None):
+       ......
 
-      @dump_elapsed_time("Pass recover model")
-      def recover(self, model, q_config):
-        ......
+     @dump_elapsed_time("Pass recover model")
+     def recover(self, model, q_config):
+       ......
 
-      def inspect_tensor(self, model, dataloader, op_list=[],
-                       iteration_list=[],
-                       inspect_type='activation',
-                       save_to_disk=False,
-                       save_path=None,
-                       quantization_cfg=None):
-        ......
+     def inspect_tensor(self, model, dataloader, op_list=[],
+                      iteration_list=[],
+                      inspect_type='activation',
+                      save_to_disk=False,
+                      save_path=None,
+                      quantization_cfg=None):
+       ......
 
-      def set_tensor(self, model, tensor_dict):
-        ......
+     def set_tensor(self, model, tensor_dict):
+       ......
 
-      def query_fw_capability(self, model):
-        ......
+     def query_fw_capability(self, model):
+       ......
 
-      def evaluate(self, input_graph, dataloader, postprocess=None,
-                 metrics=None, measurer=None, iteration=-1,
-                 tensorboard=False, fp32_baseline=False):
-        ......
+     def evaluate(self, input_graph, dataloader, postprocess=None,
+                metrics=None, measurer=None, iteration=-1,
+                tensorboard=False, fp32_baseline=False):
+       ......
 
-      def diagnosis_helper(self, fp32_model, int8_model, tune_cfg=None, save_path=None):
-        ......
+     def diagnosis_helper(self, fp32_model, int8_model, tune_cfg=None, save_path=None):
+       ......
 
-      def save(self, model, path):
-        ......
+     def save(self, model, path):
+       ......
    ```

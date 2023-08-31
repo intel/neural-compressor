@@ -16,8 +16,10 @@
 # limitations under the License.
 
 from neural_compressor.utils.utility import LazyImport
+
 ipex = LazyImport("intel_extension_for_pytorch")
 torch = LazyImport("torch")
+
 
 def ipex_mixed_precision(model, example_inputs=None):
     """The function is used for ipex mixed precision quantization."""

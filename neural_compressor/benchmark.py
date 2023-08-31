@@ -28,19 +28,17 @@ import psutil
 
 from neural_compressor.profiling.parser.factory import ParserFactory
 from neural_compressor.profiling.profiler.factory import ProfilerFactory
+
 from .adaptor import FRAMEWORKS
-from .config import BenchmarkConfig
-from .config import options
+from .config import BenchmarkConfig, options
 from .data import check_dataloader
 from .model import BaseModel, Model
 from .objective import MultiObjective
 from .profiling.parser.parser import ProfilingParser
 from .profiling.profiler.profiler import Profiler
-from .utils import alias_param, logger, OPTIONS
-from .utils.neural_insights_utils import register_neural_insights_workload, \
-    update_neural_insights_workload
-from .utils.utility import GLOBAL_STATE, MODE, print_table, dump_table
-from .utils.utility import Statistics
+from .utils import OPTIONS, alias_param, logger
+from .utils.neural_insights_utils import register_neural_insights_workload, update_neural_insights_workload
+from .utils.utility import GLOBAL_STATE, MODE, Statistics, dump_table, print_table
 
 
 def set_env_var(env_var, value, overwrite_existing=False):
@@ -60,15 +58,14 @@ def set_all_env_var(conf, overwrite_existing=False):
     Neural Compressor only uses physical cores
     """
     cpu_counts = psutil.cpu_count(logical=False)
-    assert isinstance(conf, BenchmarkConfig), \
-        'input has to be a Config object'
+    assert isinstance(conf, BenchmarkConfig), "input has to be a Config object"
 
     if conf.cores_per_instance is not None:
-        assert conf.cores_per_instance * conf.num_of_instance <= cpu_counts, \
-            'num_of_instance * cores_per_instance should <= cpu physical cores'
+        assert (
+            conf.cores_per_instance * conf.num_of_instance <= cpu_counts
+        ), "num_of_instance * cores_per_instance should <= cpu physical cores"
     else:
-        assert conf.num_of_instance <= cpu_counts, \
-            'num_of_instance should <= cpu counts'
+        assert conf.num_of_instance <= cpu_counts, "num_of_instance should <= cpu counts"
         conf.cores_per_instance = int(cpu_counts / conf.num_of_instance)
     for var, value in dict(conf).items():
         set_env_var(var.upper(), value, overwrite_existing)
@@ -79,9 +76,9 @@ def get_architecture():
     p1 = subprocess.Popen("lscpu", stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     p2 = subprocess.Popen(["grep", "Architecture"], stdin=p1.stdout, stdout=subprocess.PIPE)
     p3 = subprocess.Popen(["cut", "-d", ":", "-f2"], stdin=p2.stdout, stdout=subprocess.PIPE)
-    res=None
-    for line in iter(p3.stdout.readline, b''):
-        res=line.decode("utf-8").strip()
+    res = None
+    for line in iter(p3.stdout.readline, b""):
+        res = line.decode("utf-8").strip()
     return res
 
 
@@ -91,40 +88,40 @@ def get_threads_per_core():
     p2 = subprocess.Popen(["grep", "Thread(s) per core"], stdin=p1.stdout, stdout=subprocess.PIPE)
     p3 = subprocess.Popen(["cut", "-d", ":", "-f2"], stdin=p2.stdout, stdout=subprocess.PIPE)
     res = None
-    for line in iter(p3.stdout.readline, b''):
-        res=line.decode("utf-8").strip()
+    for line in iter(p3.stdout.readline, b""):
+        res = line.decode("utf-8").strip()
     return res
 
 
 def get_threads():
     """Get the list of threads."""
-    p1 = subprocess.Popen(["cat","/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p1 = subprocess.Popen(["cat", "/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     p2 = subprocess.Popen(["grep", "processor"], stdin=p1.stdout, stdout=subprocess.PIPE)
     p3 = subprocess.Popen(["cut", "-d", ":", "-f2"], stdin=p2.stdout, stdout=subprocess.PIPE)
     res = []
-    for line in iter(p3.stdout.readline, b''):
+    for line in iter(p3.stdout.readline, b""):
         res.append(line.decode("utf-8").strip())
     return res
 
 
 def get_physical_ids():
     """Get the list of sockets."""
-    p1 = subprocess.Popen(["cat","/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p1 = subprocess.Popen(["cat", "/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     p2 = subprocess.Popen(["grep", "physical id"], stdin=p1.stdout, stdout=subprocess.PIPE)
     p3 = subprocess.Popen(["cut", "-d", ":", "-f2"], stdin=p2.stdout, stdout=subprocess.PIPE)
     res = []
-    for line in iter(p3.stdout.readline, b''):
+    for line in iter(p3.stdout.readline, b""):
         res.append(line.decode("utf-8").strip())
     return res
 
 
 def get_core_ids():
     """Get the ids list of the cores."""
-    p1 = subprocess.Popen(["cat","/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p1 = subprocess.Popen(["cat", "/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     p2 = subprocess.Popen(["grep", "core id"], stdin=p1.stdout, stdout=subprocess.PIPE)
     p3 = subprocess.Popen(["cut", "-d", ":", "-f2"], stdin=p2.stdout, stdout=subprocess.PIPE)
     res = []
-    for line in iter(p3.stdout.readline, b''):
+    for line in iter(p3.stdout.readline, b""):
         res.append(line.decode("utf-8").strip())
     return res
 
@@ -156,45 +153,40 @@ def run_instance(model, conf, b_dataloader=None, b_func=None):
     results = {}
     if b_func is None:
         GLOBAL_STATE.STATE = MODE.BENCHMARK
-        framework_specific_info = {'device': conf.device,
-                                   'approach': None,
-                                   'random_seed': options.random_seed,
-                                   'backend': conf.backend if conf.backend is not None else 'default',
-                                   'format': 'default'}
+        framework_specific_info = {
+            "device": conf.device,
+            "approach": None,
+            "random_seed": options.random_seed,
+            "backend": conf.backend if conf.backend is not None else "default",
+            "format": "default",
+        }
         framework = conf.framework.lower()
-        if 'tensorflow' in framework:
-            framework_specific_info.update({"inputs": conf.inputs, \
-                                            "outputs": conf.outputs, \
-                                            "recipes": {}, \
-                                            'workspace_path': options.workspace})
-        if framework == 'keras':
-            framework_specific_info.update({'workspace_path': options.workspace})
-        if framework == 'mxnet':
-            framework_specific_info.update({"b_dataloader": b_dataloader})
-        if 'onnx' in framework:
+        if "tensorflow" in framework:
             framework_specific_info.update(
-                                 {'workspace_path': options.workspace, \
-                                 'graph_optimization': OPTIONS[framework].graph_optimization})
-        if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
-            framework_specific_info.update({"workspace_path": options.workspace,
-                                            "q_dataloader": None})
+                {"inputs": conf.inputs, "outputs": conf.outputs, "recipes": {}, "workspace_path": options.workspace}
+            )
+        if framework == "keras":
+            framework_specific_info.update({"workspace_path": options.workspace})
+        if framework == "mxnet":
+            framework_specific_info.update({"b_dataloader": b_dataloader})
+        if "onnx" in framework:
+            framework_specific_info.update(
+                {"workspace_path": options.workspace, "graph_optimization": OPTIONS[framework].graph_optimization}
+            )
+        if framework == "pytorch_ipex" or framework == "pytorch" or framework == "pytorch_fx":
+            framework_specific_info.update({"workspace_path": options.workspace, "q_dataloader": None})
 
-        assert isinstance(model, BaseModel), 'need set neural_compressor Model for quantization....'
+        assert isinstance(model, BaseModel), "need set neural_compressor Model for quantization...."
 
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 
         assert b_dataloader is not None, "dataloader should not be None"
 
         from neural_compressor.utils.create_obj_from_config import create_eval_func
-        b_func = create_eval_func(conf.framework,
-                                  b_dataloader,
-                                  adaptor,
-                                  None,
-                                  iteration=conf.iteration)
 
-        objectives = MultiObjective(["performance"],
-                                    {'relative': 0.1},
-                                    is_measure=True)
+        b_func = create_eval_func(conf.framework, b_dataloader, adaptor, None, iteration=conf.iteration)
+
+        objectives = MultiObjective(["performance"], {"relative": 0.1}, is_measure=True)
 
         val = objectives.evaluate(b_func, model)
         # measurer contain info not only performance(eg, memory, model_size)
@@ -217,7 +209,7 @@ def run_instance(model, conf, b_dataloader=None, b_func=None):
             logger.debug("Iteration {} result {}:".format(i, res))
         logger.info("Batch size = {}".format(batch_size))
         logger.info("Latency: {:.3f} ms".format(latency * 1000))
-        logger.info("Throughput: {:.3f} images/sec".format(1. / latency))
+        logger.info("Throughput: {:.3f} images/sec".format(1.0 / latency))
         return results
     else:
         b_func(model.model)
@@ -229,36 +221,38 @@ def generate_prefix(core_list):
     Args:
         core_list: a list of core indexes bound with specific instances
     """
-    if sys.platform in ['linux'] and os.system('numactl --show >/dev/null 2>&1') == 0:
-        return 'OMP_NUM_THREADS={} numactl --localalloc --physcpubind={}'.format(\
-            len(core_list), ','.join(core_list.astype(str)))
-    elif sys.platform in ['win32']:  # pragma: no cover
+    if sys.platform in ["linux"] and os.system("numactl --show >/dev/null 2>&1") == 0:
+        return "OMP_NUM_THREADS={} numactl --localalloc --physcpubind={}".format(
+            len(core_list), ",".join(core_list.astype(str))
+        )
+    elif sys.platform in ["win32"]:  # pragma: no cover
         # (TODO) should we move the hw_info from ux?
         from neural_compressor.utils.utility import get_number_of_sockets
+
         num_of_socket = int(get_number_of_sockets())
-        cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+        cores_per_instance = int(os.environ.get("CORES_PER_INSTANCE"))
         cores_per_socket = int(psutil.cpu_count(logical=False)) / num_of_socket
         socket_id = int(core_list[0] // cores_per_socket)
         # cores per socket should integral multiple of cores per instance, else not bind core
         if cores_per_socket % cores_per_instance == 0:
             from functools import reduce
-            hex_core = hex(reduce(lambda x, y : x | y, [1 << p for p in core_list]))
-            return 'start /b /WAIT /node {} /affinity {} CMD /c'.format(socket_id, hex_core)
+
+            hex_core = hex(reduce(lambda x, y: x | y, [1 << p for p in core_list]))
+            return "start /b /WAIT /node {} /affinity {} CMD /c".format(socket_id, hex_core)
     else:
-        return ''
+        return ""
 
 
 def call_one(cmd, log_file):
     """Execute one command for one instance in one thread and dump the log (for Windows)."""
-    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT,
-                            shell=True) # nosec
+    proc = subprocess.Popen(
+        cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True
+    )  # nosec
     with open(log_file, "w", 1, encoding="utf-8") as log_file:
         log_file.write(f"[ COMMAND ] {cmd} \n")
         for line in proc.stdout:
             decoded_line = line.decode("utf-8", errors="ignore").strip()
-            logger.info(decoded_line)   # redirect to terminal
+            logger.info(decoded_line)  # redirect to terminal
             log_file.write(decoded_line + "\n")
 
 
@@ -268,49 +262,49 @@ def config_instance(raw_cmd):
     Args:
         raw_cmd: raw command used for benchmark
     """
-    multi_instance_cmd = ''
-    num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
-    cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+    multi_instance_cmd = ""
+    num_of_instance = int(os.environ.get("NUM_OF_INSTANCE"))
+    cores_per_instance = int(os.environ.get("CORES_PER_INSTANCE"))
 
     logger.info("num of instance: {}".format(num_of_instance))
     logger.info("cores per instance: {}".format(cores_per_instance))
 
-    if (sys.platform in ['linux'] and get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
-        raise OSError('Currently no support on ARM with hyperthreads')
-    elif sys.platform in ['linux']:
+    if sys.platform in ["linux"] and get_architecture() == "aarch64" and int(get_threads_per_core()) > 1:
+        raise OSError("Currently no support on ARM with hyperthreads")
+    elif sys.platform in ["linux"]:
         bounded_threads = get_bounded_threads(get_core_ids(), get_threads(), get_physical_ids())
 
     for i in range(0, num_of_instance):
-        if sys.platform in ['linux'] and get_architecture() == 'x86_64':
+        if sys.platform in ["linux"] and get_architecture() == "x86_64":
             core_list_idx = np.arange(0, cores_per_instance) + i * cores_per_instance
             core_list = np.array(bounded_threads)[core_list_idx]
         else:
             core_list = np.arange(0, cores_per_instance) + i * cores_per_instance
         # bind cores only allowed in linux/mac os with numactl enabled
         prefix = generate_prefix(core_list)
-        instance_cmd = '{} {}'.format(prefix, raw_cmd)
-        if sys.platform in ['linux']:
-            instance_log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
-            multi_instance_cmd += '{} 2>&1|tee {} & \\\n'.format(
-                instance_cmd, instance_log)
+        instance_cmd = "{} {}".format(prefix, raw_cmd)
+        if sys.platform in ["linux"]:
+            instance_log = "{}_{}_{}.log".format(num_of_instance, cores_per_instance, i)
+            multi_instance_cmd += "{} 2>&1|tee {} & \\\n".format(instance_cmd, instance_log)
         else:  # pragma: no cover
-            multi_instance_cmd += '{} \n'.format(instance_cmd)
+            multi_instance_cmd += "{} \n".format(instance_cmd)
 
-    multi_instance_cmd += 'wait' if sys.platform in ['linux'] else ''
+    multi_instance_cmd += "wait" if sys.platform in ["linux"] else ""
     logger.info("Running command is\n{}".format(multi_instance_cmd))
     # each instance will execute single instance
-    set_env_var('NC_ENV_CONF', True, overwrite_existing=True)
-    if sys.platform in ['linux']:
-        p = subprocess.Popen(multi_instance_cmd, preexec_fn=os.setsid, shell=True) # nosec
-    elif sys.platform in ['win32']:  # pragma: no cover
+    set_env_var("NC_ENV_CONF", True, overwrite_existing=True)
+    if sys.platform in ["linux"]:
+        p = subprocess.Popen(multi_instance_cmd, preexec_fn=os.setsid, shell=True)  # nosec
+    elif sys.platform in ["win32"]:  # pragma: no cover
         cmd_list = multi_instance_cmd.split("\n")[:-1]
         threads = []
         for idx, cmd in enumerate(cmd_list):
             # wrap each execution of windows bat file in one thread
             # write the log to the log file of the corresponding instance
-            logger.info('Will dump to {}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))
-            threads.append(Thread(target=call_one, args=(cmd,
-                '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))))
+            logger.info("Will dump to {}_{}_{}.log".format(num_of_instance, cores_per_instance, idx))
+            threads.append(
+                Thread(target=call_one, args=(cmd, "{}_{}_{}.log".format(num_of_instance, cores_per_instance, idx)))
+            )
         for command_thread in threads:
             command_thread.start()
             logger.info("Worker threads start")
@@ -327,13 +321,13 @@ def config_instance(raw_cmd):
 
 def summary_benchmark():
     """Get the summary of the benchmark."""
-    if sys.platform in ['linux']:
-        num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
-        cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+    if sys.platform in ["linux"]:
+        num_of_instance = int(os.environ.get("NUM_OF_INSTANCE"))
+        cores_per_instance = int(os.environ.get("CORES_PER_INSTANCE"))
         latency_l = []
         throughput_l = []
         for i in range(0, num_of_instance):
-            log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
+            log = "{}_{}_{}.log".format(num_of_instance, cores_per_instance, i)
             with open(log, "r") as f:
                 for line in f:
                     latency = re.search(r"[L,l]atency:\s+(\d+(\.\d+)?)", line)
@@ -341,18 +335,18 @@ def summary_benchmark():
                     throughput = re.search(r"[T,t]hroughput:\s+(\d+(\.\d+)?)", line)
                     throughput_l.append(float(throughput.group(1))) if throughput and throughput.group(1) else None
         if throughput_l and latency_l:
-            assert len(latency_l)==len(throughput_l)==num_of_instance, \
-                "Multiple instance benchmark failed with some instance!"
+            assert (
+                len(latency_l) == len(throughput_l) == num_of_instance
+            ), "Multiple instance benchmark failed with some instance!"
 
             output_data = [
-                ["Latency average [second/sample]", "{:.6f}".format((sum(latency_l)/len(latency_l))/1000)],
-                ["Throughput sum [samples/second]", "{:.3f}".format(sum(throughput_l))]
+                ["Latency average [second/sample]", "{:.6f}".format((sum(latency_l) / len(latency_l)) / 1000)],
+                ["Throughput sum [samples/second]", "{:.3f}".format(sum(throughput_l))],
             ]
             logger.info("********************************************")
             Statistics(
-                output_data,
-                header='Multiple Instance Benchmark Summary',
-                field_names=["Items", "Result"]).print_stat()
+                output_data, header="Multiple Instance Benchmark Summary", field_names=["Items", "Result"]
+            ).print_stat()
     else:
         # (TODO) should add summary after win32 benchmark has log
         pass
@@ -480,15 +474,15 @@ def benchmark_with_raw_cmd(raw_cmd, conf=None):
     if conf is not None:
         if conf.backend == "ipex":
             import intel_extension_for_pytorch
-        assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
-        # disable multi-instance for running bechmark on GPU device
+        assert sys.platform in ["linux", "win32"], "only support platform windows and linux..."
+        # disable multi-instance for running benchmark on GPU device
         set_all_env_var(conf)
 
     config_instance(raw_cmd)
     summary_benchmark()
 
 
-@alias_param("conf", param_alias='config')
+@alias_param("conf", param_alias="config")
 def fit(model, conf, b_dataloader=None, b_func=None):
     """Benchmark the model performance with the configure.
 
@@ -517,13 +511,13 @@ def fit(model, conf, b_dataloader=None, b_func=None):
     if b_dataloader is not None:
         check_dataloader(b_dataloader)
 
-    assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
+    assert sys.platform in ["linux", "win32"], "only support platform windows and linux..."
     # disable multi-instance for running benchmark on GPU device
     set_all_env_var(conf)
-    if conf.device == 'gpu':
-        set_env_var('NC_ENV_CONF', True, overwrite_existing=True)
+    if conf.device == "gpu":
+        set_env_var("NC_ENV_CONF", True, overwrite_existing=True)
 
-    if conf.diagnosis and os.environ.get('NC_ENV_CONF', None) in [None, 'False']:
+    if conf.diagnosis and os.environ.get("NC_ENV_CONF", None) in [None, "False"]:
         logger.info("Start to run Profiling")
         ni_workload_id = register_neural_insights_workload(
             workload_location=os.path.abspath(os.path.abspath(options.workspace)),
@@ -539,7 +533,7 @@ def fit(model, conf, b_dataloader=None, b_func=None):
             update_neural_insights_workload(ni_workload_id, "failure")
 
     logger.info("Start to run Benchmark.")
-    if os.environ.get('NC_ENV_CONF') == 'True':
+    if os.environ.get("NC_ENV_CONF") == "True":
         return run_instance(model=wrapped_model, conf=conf, b_dataloader=b_dataloader, b_func=b_func)
-    raw_cmd = sys.executable + ' ' + ' '.join(sys.argv)
+    raw_cmd = sys.executable + " " + " ".join(sys.argv)
     benchmark_with_raw_cmd(raw_cmd)

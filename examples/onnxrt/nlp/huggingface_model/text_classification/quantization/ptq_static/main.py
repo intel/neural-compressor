@@ -421,8 +421,7 @@ if __name__ == "__main__":
             fp32_op_names = ['/model/(en|de)coder/layers.*/fc(1|2)/MatMul']
             specific_quant_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
         elif args.model_name_or_path == 'Alireza1044/albert-base-v2-sst2':
-            fp32_op_names = ['Gemm_1410_MatMul', 'MatMul_(259|168)']
-            specific_quant_config['op_name_dict'] = {op_name:FP32 for op_name in fp32_op_names}
+            specific_quant_config['recipes'] = {'first_conv_or_matmul_quantization': False}
         elif args.model_name_or_path == 'Intel/deberta-v3-base-mrpc':
             specific_quant_config['op_type_dict'] = {'^((?!(MatMul|Gather)).)*$': FP32}
             specific_quant_config['quant_level'] = 1

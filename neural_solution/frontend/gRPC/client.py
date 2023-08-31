@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Client of gRPC frontend."""
 
 import argparse
@@ -113,7 +112,7 @@ def run_query_task_status(args):
 
 
 if __name__ == "__main__":
-    logger.info(f"Try to start gRPC server.")
+    logger.info("Try to start gRPC server.")
     """Parse the command line options."""
     parser = argparse.ArgumentParser(description="gRPC Client")
     subparsers = parser.add_subparsers(help="Action", dest="action")

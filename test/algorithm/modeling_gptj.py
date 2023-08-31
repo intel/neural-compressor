@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" PyTorch GPT-J model."""
+"""PyTorch GPT-J model."""
 
 import warnings
 from typing import Optional, Tuple, Union
@@ -22,7 +22,6 @@ import torch.fx
 import torch.utils.checkpoint
 from torch import nn
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
-
 from transformers.activations import ACT2FN
 from transformers.modeling_outputs import (
     BaseModelOutputWithPast,
@@ -31,6 +30,7 @@ from transformers.modeling_outputs import (
     SequenceClassifierOutputWithPast,
 )
 from transformers.modeling_utils import PreTrainedModel
+from transformers.models.gptj.configuration_gptj import GPTJConfig
 from transformers.utils import (
     add_code_sample_docstrings,
     add_start_docstrings,
@@ -39,8 +39,6 @@ from transformers.utils import (
     logging,
 )
 from transformers.utils.model_parallel_utils import assert_device_map, get_device_map
-from transformers.models.gptj.configuration_gptj import GPTJConfig
-
 
 logger = logging.get_logger(__name__)
 
@@ -114,9 +112,7 @@ class GPTJAttention(nn.Module):
         self.embed_positions = create_sinusoidal_positions(max_positions, pos_embd_dim)
 
     def _split_heads(self, tensor, num_attention_heads, attn_head_size, rotary):
-        """
-        Splits hidden dim into attn_head_size and num_attention_heads
-        """
+        """Splits hidden dim into attn_head_size and num_attention_heads."""
         new_shape = tensor.size()[:-1] + (num_attention_heads, attn_head_size)
         tensor = tensor.view(new_shape)
         if rotary:
@@ -129,9 +125,7 @@ class GPTJAttention(nn.Module):
             raise ValueError(f"Input tensor rank should be one of [4, 5], but is: {len(tensor.shape)}")
 
     def _merge_heads(self, tensor, num_attention_heads, attn_head_size):
-        """
-        Merges attn_head_size dim and num_attn_heads dim into hidden dim
-        """
+        """Merges attn_head_size dim and num_attn_heads dim into hidden dim."""
         if len(tensor.shape) == 5:
             tensor = tensor.permute(0, 1, 3, 2, 4).contiguous()
         elif len(tensor.shape) == 4:
@@ -329,10 +323,8 @@ class GPTJBlock(nn.Module):
 
 
 class GPTJPreTrainedModel(PreTrainedModel):
-    """
-    An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
-    models.
-    """
+    """An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
+    models."""
 
     config_class = GPTJConfig
     base_model_prefix = "transformer"
@@ -599,7 +591,9 @@ class GPTJModel(GPTJPreTrainedModel):
             past_length = past_key_values[0][0].size(-2)
 
         if position_ids is None:
-            position_ids = torch.arange(past_length, torch.tensor(input_shape[-1]) + torch.tensor(past_length), dtype=torch.long, device=device)
+            position_ids = torch.arange(
+                past_length, torch.tensor(input_shape[-1]) + torch.tensor(past_length), dtype=torch.long, device=device
+            )
             position_ids = position_ids.unsqueeze(0).view(-1, input_shape[-1])
 
         # Attention mask.
@@ -841,11 +835,11 @@ class GPTJForCausalLM(GPTJPreTrainedModel):
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
-        r"""
-        labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
-            Labels for language modeling. Note that the labels **are shifted** inside the model, i.e. you can set
-            `labels = input_ids` Indices are selected in `[-100, 0, ..., config.vocab_size]` All labels set to `-100`
-            are ignored (masked), the loss is only computed for labels in `[0, ..., config.vocab_size]`
+        r"""Labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
+
+        Labels for language modeling. Note that the labels **are shifted** inside the model, i.e. you can set
+        `labels = input_ids` Indices are selected in `[-100, 0, ..., config.vocab_size]` All labels set to `-100`
+        are ignored (masked), the loss is only computed for labels in `[0, ..., config.vocab_size]`
         """
 
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
@@ -902,9 +896,10 @@ class GPTJForCausalLM(GPTJPreTrainedModel):
     def _reorder_cache(
         past_key_values: Tuple[Tuple[torch.Tensor]], beam_idx: torch.Tensor
     ) -> Tuple[Tuple[torch.Tensor]]:
-        """
-        This function is used to re-order the `past_key_values` cache if [`~PretrainedModel.beam_search`] or
-        [`~PretrainedModel.beam_sample`] is called. This is required to match `past_key_values` with the correct
+        """This function is used to re-order the `past_key_values` cache if [`~PretrainedModel.beam_search`] or
+        [`~PretrainedModel.beam_sample`] is called.
+
+        This is required to match `past_key_values` with the correct
         beam_idx at every generation step.
         """
         return tuple(
@@ -966,11 +961,11 @@ class GPTJForSequenceClassification(GPTJPreTrainedModel):
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
     ) -> Union[Tuple, SequenceClassifierOutputWithPast]:
-        r"""
-        labels (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
-            Labels for computing the sequence classification/regression loss. Indices should be in `[0, ...,
-            config.num_labels - 1]`. If `config.num_labels == 1` a regression loss is computed (Mean-Square loss), If
-            `config.num_labels > 1` a classification loss is computed (Cross-Entropy).
+        r"""Labels (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
+
+        Labels for computing the sequence classification/regression loss. Indices should be in `[0, ...,
+        config.num_labels - 1]`. If `config.num_labels == 1` a regression loss is computed (Mean-Square loss), If
+        `config.num_labels > 1` a classification loss is computed (Cross-Entropy).
         """
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
@@ -1091,9 +1086,9 @@ class GPTJForQuestionAnswering(GPTJPreTrainedModel):
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
     ) -> Union[Tuple, QuestionAnsweringModelOutput]:
-        r"""
-        start_positions (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
-            Labels for position (index) of the start of the labelled span for computing the token classification loss.
+        r"""start_positions (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
+
+        Labels for position (index) of the start of the labelled span for computing the token classification loss.
             Positions are clamped to the length of the sequence (`sequence_length`). Position outside of the sequence
             are not taken into account for computing the loss.
         end_positions (`torch.LongTensor` of shape `(batch_size,)`, *optional*):

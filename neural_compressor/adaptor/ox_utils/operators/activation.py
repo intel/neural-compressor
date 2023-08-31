@@ -17,8 +17,10 @@
 """Activation operator."""
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
+
+from neural_compressor.adaptor.ox_utils.operators.ops import Operator, QOperator, op_registry, qop_registry
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
+
 
 @op_registry(op_types="LeakyRelu, Sigmoid")
 class ActivationOperator(Operator):
@@ -35,7 +37,7 @@ class ActivationOperator(Operator):
         if not data_found:
             return False
         return True
-    
+
     def quantize(self):
         """Do quantizaion."""
         node = self.node
@@ -45,11 +47,10 @@ class ActivationOperator(Operator):
     def convert_check(self, convert_format):
         """Check if conversion can be done."""
         node = self.node
-        assert convert_format in ['static'], \
-            "convert format for {} should be in ['static']".format(node.op_type)
-        
+        assert convert_format in ["static"], "convert format for {} should be in ['static']".format(node.op_type)
+
         children = self.quantizer.model.get_children(node)
-        if len(children) == 0 or not node.name.endswith('_quant'):
+        if len(children) == 0 or not node.name.endswith("_quant"):
             return False
         return True
 
@@ -66,21 +67,22 @@ class ActivationOperator(Operator):
 
         qlinear_activation_output = child.output[0]
         kwargs = {}
-        for attribute in node.attribute: # pragma: no cover
+        for attribute in node.attribute:  # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
         kwargs["domain"] = ms_domain
 
         qlinear_activation_node = onnx.helper.make_node(
-            "QLinear" + node.op_type, inputs,
-            [qlinear_activation_output], node.name, **kwargs)
+            "QLinear" + node.op_type, inputs, [qlinear_activation_output], node.name, **kwargs
+        )
 
         self.quantizer.new_nodes.append(qlinear_activation_node)
         self.quantizer.remove_nodes.extend([parent, child, node])
 
+
 @op_registry(op_types="Relu, Clip")
 class RemovableActivationOperator(Operator):
     """Removable activation operator."""
-    
+
     def __init__(self, onnx_quantizer, onnx_node):
         """Initialization."""
         super(RemovableActivationOperator, self).__init__(onnx_quantizer, onnx_node)
@@ -91,7 +93,7 @@ class RemovableActivationOperator(Operator):
         if node.input[0] not in self.quantizer.quantized_value_map:
             return False
         return True
-    
+
     def quantize(self):
         """Do quantization."""
         node = self.node
@@ -101,9 +103,11 @@ class RemovableActivationOperator(Operator):
             self.quantizer.model.replace_input_of_all_nodes(node.output[0], node.input[0])
             self.quantizer.remove_nodes.append(node)
 
+
 @qop_registry(op_types="QLinearLeakyRelu, QLinearSigmoid")
 class QActivationOperator(QOperator):
     """INT8 activation operator in QOperator format."""
+
     def __init__(self, onnx_node, children, initializers):
         """Initialization."""
         super().__init__(onnx_node, children, initializers)
@@ -115,30 +119,27 @@ class QActivationOperator(QOperator):
         inits = []
         # input dq
         in_dq = onnx.helper.make_node(
-            'DequantizeLinear',
-            node.input[:3],
-            [node.name + '_in_dequant'],
-            node.name + '_in_dequant')
-        inputs = [node.name + '_in_dequant']
+            "DequantizeLinear", node.input[:3], [node.name + "_in_dequant"], node.name + "_in_dequant"
+        )
+        inputs = [node.name + "_in_dequant"]
         add_nodes.append(in_dq)
         # output q
         out_q = onnx.helper.make_node(
-            'QuantizeLinear',
-            [node.name + '_out', node.input[3], node.input[4]],
-            node.output,
-            node.name + '_out_quant')
-        outputs = [node.name + '_out']
+            "QuantizeLinear", [node.name + "_out", node.input[3], node.input[4]], node.output, node.name + "_out_quant"
+        )
+        outputs = [node.name + "_out"]
         add_nodes.append(out_q)
 
         kwargs = {}
-        for attribute in node.attribute: # pragma: no cover
+        for attribute in node.attribute:  # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
 
         activation_node = onnx.helper.make_node(
-            node.op_type.split('QLinear')[-1], inputs,
-            outputs, node.name + '_convert', **kwargs)
+            node.op_type.split("QLinear")[-1], inputs, outputs, node.name + "_convert", **kwargs
+        )
         add_nodes.append(activation_node)
         return True, add_nodes, inits
+
 
 @op_registry(op_types="Softmax, BiasGelu, Elu, Exp, FastGelu, Gelu, Softplus, Tanh")
 class Float16ActivationOperator(Operator):
