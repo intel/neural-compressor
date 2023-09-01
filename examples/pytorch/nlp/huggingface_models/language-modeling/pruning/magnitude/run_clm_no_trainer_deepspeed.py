@@ -268,6 +268,13 @@ def parse_args():
         help="Sparse step frequency for iterative pruning, default to a quarter of pruning steps."
     )
     parser.add_argument(
+        "--pruning_type",
+        type=str,
+        default="magnitude",
+        help="pruning criteria to use.",
+        choices=["magnitude", "snip", "snip_momentum"],
+    )
+    parser.add_argument(
         "--warm_epochs",
         type=int,
         default=0,
@@ -680,7 +687,7 @@ def main():
         pruning_end = pruning_start
     pruning_configs=[
         {
-            "pruning_type": "magnitude",
+            "pruning_type": args.pruning_type,
             "pruning_scope": "global",
             "sparsity_decay_type": "exp",
             "excluded_op_names": ["pooler"],
