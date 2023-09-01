@@ -318,30 +318,31 @@ The following section exemplifies how to use hooks in user pass-in training func
   ```
   [**Stable Option** ]Insert Hook functions in your codes. 
   ```python
-    """ All you need is to insert following API functions to your codes:
-    on_train_begin() # Setup pruners
-    on_step_begin() # Prune weights
-    on_before_optimizer_step() # Do weight regularization
-    on_after_optimizer_step() # Update weights' criteria, mask weights
-    on_train_end() # End of pruner, print sparse information
-    """
-    from neural_compressor.training import prepare_compression, WeightPruningConfig
-    config = WeightPruningConfig(configs)
-    compression_manager = prepare_compression(model, config) # Define a pruning object.
-    compression_manager.callbacks.on_train_begin()  ## insert hook  
-    for epoch in range(num_train_epochs):
-        model.train()
-        for step, batch in enumerate(train_dataloader):
-            compression_manager.callbacks.on_step_begin(step)
-            outputs = model(**batch)
-            loss = outputs.loss
-            loss.backward()
-            compression_manager.callbacks.on_before_optimizer_step()
-            optimizer.step()
-            compression_manager.callbacks.on_after_optimizer_step()
-            lr_scheduler.step()
-            model.zero_grad()
-    compression_manager.callbacks.on_train_end()
+  """ All you need is to insert following API functions to your codes:
+  on_train_begin() # Setup pruners
+  on_step_begin() # Prune weights
+  on_before_optimizer_step() # Do weight regularization
+  on_after_optimizer_step() # Update weights' criteria, mask weights
+  on_train_end() # End of pruner, print sparse information
+  """
+  from neural_compressor.training import prepare_compression, WeightPruningConfig
+
+  config = WeightPruningConfig(configs)
+  compression_manager = prepare_compression(model, config)  # Define a pruning object.
+  compression_manager.callbacks.on_train_begin()  ## insert hook
+  for epoch in range(num_train_epochs):
+      model.train()
+      for step, batch in enumerate(train_dataloader):
+          compression_manager.callbacks.on_step_begin(step)
+          outputs = model(**batch)
+          loss = outputs.loss
+          loss.backward()
+          compression_manager.callbacks.on_before_optimizer_step()
+          optimizer.step()
+          compression_manager.callbacks.on_after_optimizer_step()
+          lr_scheduler.step()
+          model.zero_grad()
+  compression_manager.callbacks.on_train_end()
   ```
 
 In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function.
