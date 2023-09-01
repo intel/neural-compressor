@@ -90,7 +90,7 @@ Functions
 
    :param model: onnx model
    :type model: ModelProto or ONNXModel
-   :param n_samples: calibration sample number.
+   :param n_samples: calibration sample number. -1 means all samples.
    :type n_samples: int, optional
    :param dataloader: dataloader for calibration.
    :type dataloader: object
@@ -120,7 +120,7 @@ Functions
    :type tune_cfg: dict
    :param dataloader: dataloader for calibration.
    :type dataloader: object
-   :param n_samples: calibration sample number.
+   :param n_samples: calibration sample number. -1 means all samples.
    :type n_samples: int, optional
    :param auto_scale: whether enable scale for salient weight. Defaults to True.
    :type auto_scale: bool, optional
@@ -178,7 +178,7 @@ Functions
    :type tune_cfg: dict
    :param dataloader: dataloader for calibration.
    :type dataloader: object
-   :param n_samples: calibration sample number.
+   :param n_samples: calibration sample number. -1 means all samples.
    :type n_samples: int, optional
    :param percdamp: percent of the average Hessian diagonal to use for dampening.
    :type percdamp: float, optional

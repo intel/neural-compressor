@@ -205,7 +205,7 @@ tune_cfg={</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>ModelProto</em><em> or </em><a class="reference internal" href="../../../model/onnx_model/index.html#neural_compressor.model.onnx_model.ONNXModel" title="neural_compressor.model.onnx_model.ONNXModel"><em>ONNXModel</em></a>) – onnx model</p></li>
-<li><p><strong>n_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – calibration sample number.</p></li>
+<li><p><strong>n_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – calibration sample number. -1 means all samples.</p></li>
 <li><p><strong>dataloader</strong> (<em>object</em>) – dataloader for calibration.</p></li>
 </ul>
 </dd>
@@ -246,7 +246,7 @@ tune_cfg={</p>
 <p>}</p>
 </p></li>
 <li><p><strong>dataloader</strong> (<em>object</em>) – dataloader for calibration.</p></li>
-<li><p><strong>n_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – calibration sample number.</p></li>
+<li><p><strong>n_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – calibration sample number. -1 means all samples.</p></li>
 <li><p><strong>auto_scale</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether enable scale for salient weight. Defaults to True.</p></li>
 <li><p><strong>mse_range</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether enable clip for weight by checking mse. Defaults to True.</p></li>
 <li><p><strong>n_blocks</strong> (<em>int</em><em>, </em><em>optional</em>) – split model into block number to avoid OOM.</p></li>
@@ -314,7 +314,7 @@ tune_cfg={</p>
 <p>}</p>
 </p></li>
 <li><p><strong>dataloader</strong> (<em>object</em>) – dataloader for calibration.</p></li>
-<li><p><strong>n_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – calibration sample number.</p></li>
+<li><p><strong>n_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – calibration sample number. -1 means all samples.</p></li>
 <li><p><strong>percdamp</strong> (<em>float</em><em>, </em><em>optional</em>) – percent of the average Hessian diagonal to use for dampening.</p></li>
 <li><p><strong>blocksize</strong> (<em>int</em><em>, </em><em>optional</em>) – blocksize to quantize weight.</p></li>
 <li><p><strong>actorder</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether rearrange Hessian matrix considering the diag’s value.</p></li>
