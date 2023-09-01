@@ -305,7 +305,7 @@ The following section exemplifies how to use hooks in user pass-in training func
   from neural_compressor.training import prepare_pruning, WeightPruningConfig
 
   config = WeightPruningConfig(configs)
-  prepare_pruning(config, model, optimizer)  # modify model and optimizer
+  prepare_pruning(model, config, optimizer)  # modify model and optimizer
   for epoch in range(num_train_epochs):
       model.train()
       for step, batch in enumerate(train_dataloader):
