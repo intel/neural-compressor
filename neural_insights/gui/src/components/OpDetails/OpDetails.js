@@ -110,26 +110,21 @@ export default function OpDetails({ selectedWorkload, selectedOp, setHistogramTy
             </table>
           }
           {selectedWorkload.framework === 'PyTorch' &&
-            <table className="property-table">
-              <tbody>
-                <tr>
-                  <td className="table-key">OP name</td>
-                  <td className="table-value" colSpan={2}>{opDetails['OP name']}</td>
-                </tr>
-                <tr>
-                  <td className="table-key">Weights</td>
-                  <td className="table-value">
-                    <Button variant="primary" className="histogram-btn" onClick={() => setHistogramType('weights')}>Show weights histogram</Button>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="table-key">Activation</td>
-                  <td className="table-value">
-                    <Button variant="primary" className="histogram-btn" onClick={() => setHistogramType('activation')}>Show activation histogram</Button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <>
+              <table className="property-table">
+                <tbody>
+                  <tr>
+                    <td className="table-key">OP name</td>
+                    <td className="table-value" colSpan={2}>{opDetails['OP name']}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <br />
+              <Button variant="primary" className="histogram-btn" onClick={() => setHistogramType('weights')}>Show weights histogram</Button>
+              <br />
+              <br />
+              <Button variant="primary" className="histogram-btn" onClick={() => setHistogramType('activation')}>Show activation histogram</Button>
+            </>
           }
         </div>
       }
