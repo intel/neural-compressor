@@ -4,7 +4,15 @@ Step-by-Step
 # single GPU
 
 ```
-bash run.sh
+export CUDA_VISIBLE_DEVICES=0
+bash run.sh \
+    --model_name_or_path=facebook/opt-125m \
+    --dataset_name=NeelNanda/pile-10k \
+    --block_size=128 \
+    --output_dir=./test-clm \
+    --pruning_type=magnitude \
+    --pruning_pattern=4x1 \
+    --pruning_frequency=1000
 ```
 
 # multi GPU
@@ -86,5 +94,14 @@ with the contents of `config/zero_stage2_config.json` being:
 ### pruning
 
 ```
-bash run_ds.sh 
+# 2 gpu cards example
+export CUDA_VISIBLE_DEVICES=0,1
+bash run_ds.sh \
+    --model_name_or_path=facebook/opt-125m \
+    --dataset_name=NeelNanda/pile-10k \
+    --block_size=128 \
+    --output_dir=./test-clm \
+    --pruning_type=magnitude \
+    --pruning_pattern=4x1 \
+    --pruning_frequency=1000
 ```
