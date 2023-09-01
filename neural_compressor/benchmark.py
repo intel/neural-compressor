@@ -523,6 +523,7 @@ def fit(model, conf, b_dataloader=None, b_func=None):
             workload_location=os.path.abspath(os.path.abspath(options.workspace)),
             model=wrapped_model,
             workload_mode="benchmark",
+            workload_name=conf.ni_workload_name,
         )
         try:
             update_neural_insights_workload(ni_workload_id, "wip")

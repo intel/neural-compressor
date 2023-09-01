@@ -302,6 +302,7 @@ class BenchmarkConfig:
         inter_num_of_threads=None,
         intra_num_of_threads=None,
         diagnosis=False,
+        ni_workload_name="profiling"
     ):
         """Init a BenchmarkConfig object."""
         self.inputs = inputs
@@ -316,6 +317,7 @@ class BenchmarkConfig:
         self.inter_num_of_threads = inter_num_of_threads
         self.intra_num_of_threads = intra_num_of_threads
         self.diagnosis = diagnosis
+        self.ni_workload_name = ni_workload_name
         self._framework = None
 
     def keys(self):
@@ -463,6 +465,17 @@ class BenchmarkConfig:
         """Set diagnosis property."""
         if _check_value("diagnosis", diagnosis, bool):
             self._diagnosis = diagnosis
+
+    @property
+    def ni_workload_name(self):
+        """Get Neural Insights workload name."""
+        return self._ni_workload_name
+
+    @ni_workload_name.setter
+    def ni_workload_name(self, ni_workload_name):
+        """Set Neural Insights workload name."""
+        if _check_value("ni_workload_name", ni_workload_name, str):
+            self._ni_workload_name = ni_workload_name
 
     @property
     def model_name(self):
