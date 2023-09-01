@@ -32,6 +32,7 @@ from .metric import register_customer_metric
 from .model.model import Model
 from .utils import logger
 from .utils.utility import time_limit
+from .compression.pruner import prepare_pruning
 
 
 class CompressionManager:
