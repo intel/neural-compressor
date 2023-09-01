@@ -4,7 +4,7 @@ set -x
 function main {
 
   init_params "$@"
-  run_tuning
+  run_pruning
 
 }
 
@@ -67,8 +67,8 @@ function init_params {
 }
 
 # run_tuning
-function run_tuning {
-  python run_clm_no_trainer_pruning.py \
+function run_pruning {
+  python run_clm_no_trainer.py \
       --dataset_name $dataset_name \
       --model_name_or_path $model_name_or_path \
       --block_size $block_size \

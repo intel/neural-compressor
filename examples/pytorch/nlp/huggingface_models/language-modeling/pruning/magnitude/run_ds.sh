@@ -4,7 +4,7 @@ set -x
 function main {
 
   init_params "$@"
-  run_tuning
+  run_pruning
 
 }
 
@@ -67,7 +67,7 @@ function init_params {
 }
 
 # run_tuning
-function run_tuning {
+function run_pruning {
   accelerate launch --deepspeed_config_file config/ds_config.json --mixed_precision fp16 \
       run_clm_no_trainer_deepspeed.py \
       --dataset_name $dataset_name \
