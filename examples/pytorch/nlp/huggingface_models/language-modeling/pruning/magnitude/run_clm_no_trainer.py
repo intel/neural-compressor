@@ -23,7 +23,6 @@ https://huggingface.co/models?filter=text-generation
 # You can also adapt this script on your own causal language modeling task. Pointers for this are left as comments.
 
 import sys
-sys.path.append("/data3/lkk/neural-compressor")
 import argparse
 import json
 import logging
@@ -283,6 +282,13 @@ def parse_args():
         "--pruning_frequency",
         type=int, default=-1,
         help="Sparse step frequency for iterative pruning, default to a quarter of pruning steps."
+    )
+    parser.add_argument(
+        "--pruning_type",
+        type=str,
+        default="magnitude",
+        help="pruning criteria to use.",
+        choices=["magnitude", "snip", "snip_momentum"],
     )
     parser.add_argument(
         "--warm_epochs",
@@ -698,7 +704,7 @@ def main():
         pruning_end = pruning_start
     pruning_configs=[
         {
-            "pruning_type": "magnitude",
+            "pruning_type": args.pruning_type,
             "pruning_scope": "global",
             "sparsity_decay_type": "exp",
             "excluded_op_names": ["pooler"],

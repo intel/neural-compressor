@@ -22,7 +22,6 @@ https://huggingface.co/models?filter=text-generation
 """
 # You can also adapt this script on your own causal language modeling task. Pointers for this are left as comments.
 import sys
-sys.path.append("/data3/lkk/neural-compressor")
 import argparse
 import json
 import logging
