@@ -24,16 +24,9 @@
 }
 
 .workloads-list {
-  overflow: auto;
-  max-height: 35vh;
+  width: 330px;
 }
 
 .no-data {
   min-width: 99vw;
-}
-
-.delete-button {
-  float: right;
-  width: 25px;
-  height: 25px;
 }
