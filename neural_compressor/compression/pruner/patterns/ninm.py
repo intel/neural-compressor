@@ -339,7 +339,7 @@ class PytorchPatternNInM(PytorchBasePattern):
                     masks[key] = self.get_single_mask_per_target_ratio(new_scores[key], adjust_ratio)
                     masks[key] = masks[key].repeat_interleave(self.M, dim=-1)
                     # both zero will be zero
-                    masks[key] = (masks[key] + least_ninm_masks[key])
+                    masks[key] = masks[key] + least_ninm_masks[key]
                     zero = torch.tensor([0.0]).to(score.device)
                     one = torch.tensor([1.0]).to(score.device)
                     masks[key] = torch.where(masks[key] <= 0, zero, one)

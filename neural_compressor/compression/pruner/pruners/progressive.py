@@ -207,7 +207,11 @@ class PytorchProgressivePruner(PytorchBasePruner):
                 current_target_sparsity_ratio,
                 self.masks,
             )
-        self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks, )
+        self.masks = self.pattern.get_masks(
+            self.criterion.scores,
+            current_target_sparsity_ratio,
+            self.masks,
+        )
         self.progressive_masks = self.pattern.update_progressive_masks(
             self.pre_masks, self.masks, self.criterion.scores, 1, self.progressive_configs
         )
