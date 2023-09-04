@@ -202,33 +202,36 @@ class PytorchPatternNInM(PytorchBasePattern):
 
     def get_least_ninm_masks(self, scores):
         least_ninm_masks = {}
+        new_scores = {}
         for key in scores.keys():
             if key in self.invalid_layers:
                 continue
             if self.keep_mask_layers.get(key, False):
                 continue
-            current_score = self.reshape_reduced_to_orig(scores[key], key, self.modules[key].weight.shape)
+            current_score = scores[key]
+            new_scores[key] = current_score
+            current_score = self.reshape_reduced_to_orig(current_score, key, self.modules[key].weight.shape)
             mask = self.get_least_ninm_mask_from_data(current_score)
             least_ninm_masks[key] = mask
-        return least_ninm_masks
+        return new_scores, least_ninm_masks
 
-    def reduce_score(self, score, key, force=False):
-        if not force:
-            if key in self.invalid_layers:
-                return score
-            if self.keep_mask_layers.get(key, False):
-                return score
-        M = self.M
-        mask = self.get_least_ninm_mask_from_data(score)
-        current_score_new = self._reshape_orig_to_2dims(score)
-        shape = current_score_new.shape
-        current_score_new = current_score_new.reshape((shape[0], shape[1]))
-        # to get the sum of N scores in each block with M
-        # current_score_new = current_score_new * (1.0 - mask)
-        current_score_new = current_score_new * ~mask
-        current_score_new = current_score_new.reshape(shape[0], shape[1] // M, M)
-        score_sum = self.reduce_tensor(current_score_new, dim=-1)
-        return score_sum
+    # def reduce_score(self, score, key, force=False):
+    #     if not force:
+    #         if key in self.invalid_layers:
+    #             return score
+    #         if self.keep_mask_layers.get(key, False):
+    #             return score
+    #     M = self.M
+    #     mask = self.get_least_ninm_mask_from_data(score)
+    #     current_score_new = self._reshape_orig_to_2dims(score)
+    #     shape = current_score_new.shape
+    #     current_score_new = current_score_new.reshape((shape[0], shape[1]))
+    #     # to get the sum of N scores in each block with M
+    #     # current_score_new = current_score_new * (1.0 - mask)
+    #     current_score_new = current_score_new * ~mask
+    #     current_score_new = current_score_new.reshape(shape[0], shape[1] // M, M)
+    #     score_sum = self.reduce_tensor(current_score_new, dim=-1)
+    #     return score_sum
 
     def reduce_scores(self, scores):  # pragma: no cover
         """Calculate the pruning scores after reducing the data and obtain the least N scores in M.
@@ -254,7 +257,8 @@ class PytorchPatternNInM(PytorchBasePattern):
             shape = current_score_new.shape
             current_score_new = current_score_new.reshape((shape[0], shape[1]))
             # to get the sum of N scores in each block with M
-            current_score_new = current_score_new * (1.0 - mask)
+            # current_score_new = current_score_new * (1.0 - mask)
+            current_score_new = current_score_new * ~mask
             current_score_new = current_score_new.reshape(shape[0], shape[1] // M, M)
             score_sum = self.reduce_tensor(current_score_new, dim=-1)
             least_ninm_masks[key] = mask
@@ -304,9 +308,9 @@ class PytorchPatternNInM(PytorchBasePattern):
         k_blockwise = self.update_residual_cnt(pre_masks, block_sparsity_ratio)
         if k_blockwise <= 0:
             return masks
-        # new_scores, least_ninm_masks = self.reduce_scores(scores)
-        new_scores = scores
-        least_ninm_masks = self.get_least_ninm_masks(scores)
+        new_scores, least_ninm_masks = self.reduce_scores(scores)
+        # new_scores = scores
+        # new_scores, least_ninm_masks = self.get_least_ninm_masks(scores)
         global_scores = torch.cat([torch.flatten(v) for v in new_scores.values()])  # block_wise
         residual_k = k_blockwise
         not_exceed_layers = [key for key in new_scores.keys()]
@@ -335,7 +339,7 @@ class PytorchPatternNInM(PytorchBasePattern):
                     masks[key] = self.get_single_mask_per_target_ratio(new_scores[key], adjust_ratio)
                     masks[key] = masks[key].repeat_interleave(self.M, dim=-1)
                     # both zero will be zero
-                    masks[key] = masks[key] + least_ninm_masks[key]
+                    masks[key] = (masks[key] + least_ninm_masks[key])
                     zero = torch.tensor([0.0]).to(score.device)
                     one = torch.tensor([1.0]).to(score.device)
                     masks[key] = torch.where(masks[key] <= 0, zero, one)
@@ -356,7 +360,7 @@ class PytorchPatternNInM(PytorchBasePattern):
         for key in masks.keys():
             if key in self.invalid_layers:
                 continue
-            orig_shape = self.modules[key].weight.grad.shape
+            orig_shape = self.modules[key].weight.shape
             if len(orig_shape) == 4 or len(orig_shape) == 3:  # need to permute
                 mask = masks[key]
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)

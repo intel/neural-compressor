@@ -822,7 +822,7 @@ class KerasPatternNxM(KerasBasePattern):
         for key in masks.keys():
             if key in self.invalid_layers:
                 continue
-            if len(scores[key].shape) == 4 or len(score[key].shape) == 3:  # need to permute
+            if len(scores[key].shape) == 4:  # need to permute
                 mask = masks[key]
                 orig_shape = scores[key].shape
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)
