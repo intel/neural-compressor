@@ -5,4 +5,3 @@ torch>=1.8.0+cpu
 torchvision>=0.9.0+cpu
 numpy<=1.23.5
 tqdm
-cudatoolkit
