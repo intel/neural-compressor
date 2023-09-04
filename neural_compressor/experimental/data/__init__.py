@@ -34,4 +34,5 @@ __all__ = [
     "transform_registry",
     "FILTERS",
     "Filter",
-    "filter_registry",]
+    "filter_registry",
+]

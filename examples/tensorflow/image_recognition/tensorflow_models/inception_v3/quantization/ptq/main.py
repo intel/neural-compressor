@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -113,7 +113,8 @@ class eval_classifier_optimized_graph:
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
             op_name_dict = {'v0/cg/conv0/conv2d/Conv2D': {
                'activation':  {'dtype': ['fp32']}}}
-            conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100], op_name_dict=op_name_dict)
+            conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100], \
+                                op_name_dict=op_name_dict, excluded_precisions=['bf16'])
             from neural_compressor import Metric
             top1 = Metric(name="topk", k=1)
             q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,

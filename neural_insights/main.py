@@ -13,7 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """WSGI Web Server."""
 import sys
 
@@ -44,8 +43,7 @@ def main() -> None:
 
     if configuration.allow_insecure_connections:
         log.warning(
-            "Running in insecure mode.\n"
-            "Everyone in your network may attempt to access this server.\n",
+            "Running in insecure mode.\n" "Everyone in your network may attempt to access this server.\n",
         )
 
     log.info(f"Open address {configuration.get_url()}")

@@ -48,14 +48,16 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobil
 from neural_compressor.data import DataLoader, Datasets
 from neural_compressor.config import PostTrainingQuantConfig
 
-dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
-dataloader = DataLoader(framework='tensorflow', dataset=dataset)
+dataset = Datasets("tensorflow")["dummy"](shape=(1, 224, 224, 3))
+dataloader = DataLoader(framework="tensorflow", dataset=dataset)
 
 from neural_compressor.quantization import fit
+
 q_model = fit(
     model="./mobilenet_v1_1.0_224_frozen.pb",
     conf=PostTrainingQuantConfig(),
-    calib_dataloader=dataloader)
+    calib_dataloader=dataloader,
+)
 ```
 
 ## Documentation
@@ -138,11 +140,10 @@ q_model = fit(
 > More documentations can be found at [User Guide](./docs/source/user_guide.md).
 
 ## Selected Publications/Events
-* Blog by MSFT: [Olive: A user-friendly toolchain for hardware-aware model optimization](https://cloudblogs.microsoft.com/opensource/2023/06/26/olive-a-user-friendly-toolchain-for-hardware-aware-model-optimization/) (June 2023)
-* Blog by MSFT: [Automate optimization techniques for transformer models](https://cloudblogs.microsoft.com/opensource/2023/06/26/automate-optimization-techniques-for-transformer-models/) (June 2023)
-* Post on Social Media: [Get Started Post-Training Dynamic Quantization | AI Model Optimization with Intel® Neural Compressor](https://www.youtube.com/watch?v=5xHKe4wWLes&list=PLg-UKERBljNxC8dmjx7jJA2YADWOFuj_p&index=4) (June 2023)
-* Post on Social Media: [How to Choose AI Model Quantization Techniques | AI Model Optimization with Intel® Neural Compressor](https://www.youtube.com/watch?v=ie3w_j0Ntsk) (June 2023)
-* Post on Social Media: [What is AI Model Optimization | AI Model Optimization with Intel® Neural Compressor | Intel Software](https://www.youtube.com/watch?v=m2LokuUdeVg&list=PLg-UKERBljNxC8dmjx7jJA2YADWOFuj_p&index=2) (June 2023)
+* Post on Social Media: [ONNXCommunityMeetup2023: INT8 Quantization for Large Language Models with Intel Neural Compressor](https://www.youtube.com/watch?v=luYBWA1Q5pQ)  (July 2023)
+* Blog by Intel: [Accelerate Llama 2 with Intel AI Hardware and Software Optimizations](https://www.intel.com/content/www/us/en/developer/articles/news/llama2.html) (July 2023)
+* Blog on Medium: [Quantization Accuracy Loss Diagnosis with Neural Insights](https://medium.com/@NeuralCompressor/quantization-accuracy-loss-diagnosis-with-neural-insights-5d73f4ca2601) (Aug 2023)
+* Blog on Medium: [Faster Stable Diffusion Inference with Intel Extension for Transformers](https://medium.com/intel-analytics-software/faster-stable-diffusion-inference-with-intel-extension-for-transformers-on-intel-platforms-7e0f563186b0) (July 2023)
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 
@@ -158,4 +159,3 @@ q_model = fit(
 ## Research Collaborations
 
 Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us ([inc.maintainers@intel.com](mailto:inc.maintainers@intel.com)). Look forward to our collaborations on Intel Neural Compressor!
-

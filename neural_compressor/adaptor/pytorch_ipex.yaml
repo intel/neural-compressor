@@ -149,6 +149,3 @@
     'quant_aware':{}
   }
   uint8: *cap_default_s8
-
-
-

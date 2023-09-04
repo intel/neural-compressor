@@ -100,7 +100,7 @@ from neural_compressor import quantization, PostTrainingQuantConfig
 
 top1 = Metric(name="topk", k=1)
 config = PostTrainingQuantConfig()
-q_model = fit(model, config, calib_dataloader=calib_dataloader, eval_dataloader=eval_dataloader,eval_metric=top1)
+q_model = fit(model, config, calib_dataloader=calib_dataloader, eval_dataloader=eval_dataloader, eval_metric=top1)
 ```
 
 ### Build Custom Metric with Python API
@@ -133,7 +133,7 @@ from neural_compressor import quantization, PostTrainingQuantConfig
 
 new_metric = NewMetric()
 config = PostTrainingQuantConfig()
-q_model = fit(model, config, calib_dataloader=calib_dataloader, eval_dataloader=eval_dataloader,eval_metric=new_metric)
+q_model = fit(model, config, calib_dataloader=calib_dataloader, eval_dataloader=eval_dataloader, eval_metric=new_metric)
 ```
 
 ## Example

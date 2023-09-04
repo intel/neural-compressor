@@ -102,14 +102,14 @@ config = PostTrainingQuantConfig(
   
   ```shell
   # The cmd of running mask_rcnn_inception_v2
-  bash run_tuning.sh --input_model=./mask_rcnn_inception_v2_coco_2018_01_28/frozen_inference_graph.pb --output_model=./tensorflow-mask_rcnn_inception_v2-tune.pb --dataset_location=/path/to/dataset/coco_val.record
+  bash run_quant.sh --input_model=./mask_rcnn_inception_v2_coco_2018_01_28/frozen_inference_graph.pb --output_model=./tensorflow-mask_rcnn_inception_v2-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
 ### For ckpt format
   
   ```shell
   # The cmd of running mask_rcnn_inception_v2
-  bash run_tuning.sh --input_model=./mask_rcnn_inception_v2_coco_2018_01_28/ --output_model=./tensorflow-mask_rcnn_inception_v2-tune.pb --dataset_location=/path/to/dataset/coco_val.record
+  bash run_quant.sh --input_model=./mask_rcnn_inception_v2_coco_2018_01_28/ --output_model=./tensorflow-mask_rcnn_inception_v2-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
 ## 2. Benchmark

@@ -128,15 +128,31 @@ class OnnxrtReader:
         """Convert NodeDef attribute to our format."""
         from onnx.mapping import TENSOR_TYPE_TO_NP_TYPE
 
-        if 0 != len(attribute.s):
-            return Attribute(attribute.name, "string", str(attribute.s.decode("utf-8")))
-        if 0 != attribute.type:
-            return Attribute(
-                attribute.name,
-                "type",
-                str(TENSOR_TYPE_TO_NP_TYPE.get(attribute.type, "UNKNOWN")),
-            )
-        return None
+        attr_type = str(TENSOR_TYPE_TO_NP_TYPE.get(attribute.type, "UNKNOWN"))
+
+        attr_float = attribute.f
+        attr_floats = attribute.floats
+
+        attr_int = attribute.i
+        attr_ints = attribute.ints
+
+        value = None
+        if "int" in attr_type:
+            value = attr_int
+            if len(attr_ints) > 0:
+                value = list(attr_ints)
+        elif "float" in attr_type:
+            value = attr_float
+            if len(attr_floats) > 0:
+                value = list(attr_floats)
+        else:
+            print("Attribute type not yet supported")
+
+        return Attribute(
+            attribute.name,
+            str(TENSOR_TYPE_TO_NP_TYPE.get(attribute.type, "UNKNOWN")),
+            value,
+        )
 
     def _add_boundary_nodes(self, graph: Graph) -> Graph:
         """Add boundary nodes to graph."""

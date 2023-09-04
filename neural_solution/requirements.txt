@@ -1,8 +1,8 @@
-neural_compressor>=2.2
-pydantic
 fastapi
-uvicorn[standard]
-watchdog
-protobuf
 grpcio
 mpi4py
+neural_compressor>=2.2
+protobuf
+pydantic
+uvicorn[standard]
+watchdog

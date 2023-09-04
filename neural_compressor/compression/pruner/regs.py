@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .patterns import BasePattern
+from .patterns.base import PytorchBasePattern
 from .utils import torch
 
 REGS = {}
@@ -24,7 +24,7 @@ REGS = {}
 
 def register_reg(name):
     """Register a regularizator to the registry.
-    
+
     Args:
         name: A string that defines the scheduler type.
 
@@ -41,26 +41,26 @@ def register_reg(name):
 
 def get_reg_type(config):
     """Obtain the regularizer type.
-    
+
     Args:
         config: A config dict object that includes information of the regularizer.
     """
     for key in REGS.keys():  ##assume there is only one reg
-        if config.get(key, None) != None:
+        if config.get(key, None) is not None:
             return key
     return None
 
 
 def get_reg(config, modules, pattern):
     """Get registered regularizator class.
-    
+
     Args:
         config: A config dict object that includes information of the regularizer.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
-        pattern: A config dict object that includes information of the pattern.  
+        pattern: A config dict object that includes information of the pattern.
     """
     reg_type = config["reg_type"]
-    if reg_type == None:
+    if reg_type is None:
         return BaseReg(config, modules, pattern)
     if reg_type not in REGS.keys():
         assert False, f"regularizator does not support {reg_type}, currently only support {REGS.keys()}"
@@ -75,10 +75,10 @@ class BaseReg:
     Args:
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
         config: A config dict object that includes information of the regularizer.
-        pattern: A config dict object that includes information of the pattern.  
+        pattern: A config dict object that includes information of the pattern.
     """
 
-    def __init__(self, config: dict, modules: dict, pattern: BasePattern):
+    def __init__(self, config: dict, modules: dict, pattern: PytorchBasePattern):
         """Initialize."""
         self.modules = modules
         self.config = config
@@ -103,14 +103,14 @@ class GroupLasso(BaseReg):
     Args:
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
         config: A config dict object that includes information of the regularizer.
-        pattern: A config dict object that includes information of the pattern.    
+        pattern: A config dict object that includes information of the pattern.
 
     Attributes:
         reg_terms: A dict {"module_name": Tensor} of regularization terms.
         alpha: A float representing the coeffient related to group lasso.
     """
 
-    def __init__(self, config: dict, modules: dict, pattern: BasePattern, coeff):
+    def __init__(self, config: dict, modules: dict, pattern: PytorchBasePattern, coeff):
         """Initialize."""
         super(GroupLasso, self).__init__(config, modules, pattern)
         assert "x" in self.config.pattern, "group lasso only supports NXM pattern"
@@ -121,7 +121,7 @@ class GroupLasso(BaseReg):
     def on_before_optimizer_step(self):
         """Calculate the group-lasso score map."""
         with torch.no_grad():
-            if self.pattern.invalid_layers == None:
+            if self.pattern.invalid_layers is None:
                 self.pattern.check_layer_validity()
             for key in self.modules.keys():
                 if key in self.pattern.invalid_layers:
@@ -138,7 +138,7 @@ class GroupLasso(BaseReg):
             for key in self.modules.keys():
                 if key in self.pattern.invalid_layers:
                     continue
-                reg_term = self.pattern.reshape_reduced_to_orig(self.reg_terms[key], key,
-                                                                self.modules[key].weight.shape)
+                reg_term = self.pattern.reshape_reduced_to_orig(
+                    self.reg_terms[key], key, self.modules[key].weight.shape
+                )
                 self.modules[key].weight -= reg_term * self.modules[key].weight
-

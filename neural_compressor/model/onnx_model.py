@@ -14,20 +14,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Class for ONNX model."""
 
-import os
 import logging
+import os
 from pathlib import Path
-from neural_compressor.utils.utility import LazyImport
-from neural_compressor.model.base_model import BaseModel
 
-onnx = LazyImport('onnx')
+from neural_compressor.model.base_model import BaseModel
+from neural_compressor.utils.utility import LazyImport
+
+onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
 ortq = LazyImport("neural_compressor.adaptor.ox_utils.util")
 
 logger = logging.getLogger("neural_compressor")
+
 
 class ONNXModel(BaseModel):
     """Build ONNX model."""
@@ -44,11 +45,20 @@ class ONNXModel(BaseModel):
         try:
             ort.InferenceSession(self._model.SerializeToString())
         except Exception as e:  # pragma: no cover
-            if 'maximum protobuf size of 2GB' in str(e) or 'string length exceeds max size' in str(e) or \
-                'protobuf parsing failed' in str(e):
+            if (
+                "maximum protobuf size of 2GB" in str(e)
+                or "string length exceeds max size" in str(e)
+                or "protobuf parsing failed" in str(e)
+            ):
                 self._is_large_model = True
                 if self._model_path is None:
-                    logger.warning('Please use model path instead of onnx model object to quantize')
+                    logger.warning("Please use model path instead of onnx model object to quantize")
+
+        self._config = None
+        if isinstance(model, str) and os.path.exists(Path(model).parent.joinpath("config.json").as_posix()):
+            from transformers import PretrainedConfig
+
+            self._config = PretrainedConfig.from_pretrained(Path(model).parent.as_posix())
 
         self.node_name_counter = {}
         self._output_name_to_node = {}
@@ -76,7 +86,7 @@ class ONNXModel(BaseModel):
 
     def framework(self):
         """Return framework."""
-        return 'onnxruntime'
+        return "onnxruntime"
 
     @property
     def q_config(self):
@@ -133,17 +143,29 @@ class ONNXModel(BaseModel):
 
     def save(self, root):
         """Save ONNX model."""
-        if os.path.split(root)[0] != '' and not os.path.exists(os.path.split(root)[0]):
+        if os.path.split(root)[0] != "" and not os.path.exists(os.path.split(root)[0]):
             raise ValueError('"root" directory does not exists.')
-        if self.is_large_model: # pragma: no cover
-            from onnx.external_data_helper import convert_model_to_external_data, \
-                load_external_data_for_model
+        if self.is_large_model:  # pragma: no cover
+            from onnx.external_data_helper import convert_model_to_external_data, load_external_data_for_model
+
             load_external_data_for_model(self._model, os.path.split(self._model_path)[0])
-            convert_model_to_external_data(self._model,
-                                           all_tensors_to_one_file=True,
-                                           location="int8_weights.pb",
-                                           convert_attribute=False)
-        onnx.save(self._model, root)
+            onnx.save_model(
+                self._model,
+                root,
+                save_as_external_data=True,
+                all_tensors_to_one_file=True,
+                location=root.split("/")[-1] + "_data",
+                size_threshold=1024,
+                convert_attribute=False,
+            )
+        else:
+            onnx.save(self._model, root)
+
+        if self._config is not None:
+            model_type = "" if not hasattr(self._config, "model_type") else getattr(self._config, "model_type")
+            setattr(self._config.__class__, "model_type", model_type)
+            output_config_file = Path(root).parent.joinpath("config.json").as_posix()
+            self._config.to_json_file(output_config_file, use_diff=False)
 
     def nodes(self):
         """Return model nodes."""
@@ -217,25 +239,32 @@ class ONNXModel(BaseModel):
         for initializer in init_to_remove:
             self.remove_initializer(initializer)
 
-    def set_initializer(self, tensor, array):
+    def set_initializer(self, tensor, array, raw=False):
         """Update initializer."""
         old_tensor = self.get_initializer(tensor)
         self.remove_initializer(old_tensor)
         dims = old_tensor.dims
         data_type = old_tensor.data_type
-        new_tensor = onnx.helper.make_tensor(tensor, data_type, dims, array.flatten().tolist())
+        new_tensor = (
+            onnx.helper.make_tensor(tensor, data_type, dims, array.flatten().tolist())
+            if not raw
+            else onnx.helper.make_tensor(tensor, data_type, dims, array.tostring(), raw=raw)
+        )
         self.add_initializer(new_tensor)
-    
+
     @property
     def input_name_to_nodes(self):
         """Return input names of nodes."""
         return self._input_name_to_nodes
-    
+
     def _get_input_name_to_nodes(self, nodes):
         """Get input names of nodes."""
         for node in nodes:
-            attrs = [attr for attr in node.attribute if attr.type == onnx.AttributeProto.GRAPH \
-                or attr.type == onnx.AttributeProto.GRAPHS]
+            attrs = [
+                attr
+                for attr in node.attribute
+                if attr.type == onnx.AttributeProto.GRAPH or attr.type == onnx.AttributeProto.GRAPHS
+            ]
             if len(attrs) > 0:
                 for attr in attrs:
                     self._get_input_name_to_nodes(attr.g.node)
@@ -254,8 +283,11 @@ class ONNXModel(BaseModel):
     def _get_output_name_to_node(self, nodes):
         """Get output names of nodes."""
         for node in nodes:
-            attrs = [attr for attr in node.attribute if attr.type == onnx.AttributeProto.GRAPH \
-                or attr.type == onnx.AttributeProto.GRAPHS]
+            attrs = [
+                attr
+                for attr in node.attribute
+                if attr.type == onnx.AttributeProto.GRAPH or attr.type == onnx.AttributeProto.GRAPHS
+            ]
             if len(attrs) > 0:
                 for attr in attrs:
                     self._get_output_name_to_node(attr.g.node)
@@ -271,7 +303,7 @@ class ONNXModel(BaseModel):
                 if child.name != node.name:
                     siblings.append(child)
         return siblings
-    
+
     def get_children(self, node, input_name_to_nodes=None):
         """Get children nodes."""
         if input_name_to_nodes is None:
@@ -311,7 +343,7 @@ class ONNXModel(BaseModel):
 
     def find_node_by_name(self, node_name, new_nodes_list, graph):
         """Find out node by name."""
-        graph_nodes_list = list(graph.node)  #deep copy
+        graph_nodes_list = list(graph.node)  # deep copy
         graph_nodes_list.extend(new_nodes_list)
         node = ortq.find_by_name(node_name, graph_nodes_list)
         return node
@@ -327,42 +359,62 @@ class ONNXModel(BaseModel):
 
     def get_scale_zero(self, tensor):
         """Help function to get scale and zero_point."""
-        if not tensor.endswith('_quantized'):
+        if not tensor.endswith("_quantized"):
             logger.debug("Find {} in the quantized graph is not quantized.".format(tensor))
             return None, None
-        node = self._input_name_to_nodes[tensor][0]
-        parent = self._output_name_to_node[tensor] if tensor in self._output_name_to_node else None
-        direct_int8 = ['Reshape', 'Transpose', 'Squeeze', 'Unsqueeze', 'MaxPool', 'Pad']
-        if parent is not None and parent.op_type in direct_int8:
-            fp32_tensor_name = \
-                parent.input[0].replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
-        elif node.op_type in ['Gather']:
-            fp32_tensor_name = \
-                node.output[0].replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
-        else:
-            fp32_tensor_name = \
-                tensor.replace('_quantized', '').replace('_QuantizeLinear', '').replace('_QuantizeInput', '')
-        scale = fp32_tensor_name + '_scale'
-        scale_tensor = self.get_initializer(scale)
-        zo = fp32_tensor_name + '_zero_point'
-        zo_tensor = self.get_initializer(zo)
 
-        #TODO check if scale_tensor and zero_point is needed
+        def _searcher(tensor_name):
+            """Search scale and zero point tensor recursivly."""
+            node = self._input_name_to_nodes[tensor_name][0]
+            parent = self._output_name_to_node[tensor_name] if tensor_name in self._output_name_to_node else None
+            direct_int8 = ["Reshape", "Transpose", "Squeeze", "Unsqueeze", "MaxPool", "Pad", "Split"]
+            if parent is not None and parent.op_type in direct_int8:
+                fp32_tensor_name = (
+                    parent.input[0]
+                    .replace("_quantized", "")
+                    .replace("_QuantizeLinear", "")
+                    .replace("_QuantizeInput", "")
+                )
+            elif node.op_type in ["Gather"]:  # pragma: no cover
+                fp32_tensor_name = (
+                    node.output[0]
+                    .replace("_quantized", "")
+                    .replace("_QuantizeLinear", "")
+                    .replace("_QuantizeInput", "")
+                )
+            else:
+                fp32_tensor_name = (
+                    tensor_name.replace("_quantized", "").replace("_QuantizeLinear", "").replace("_QuantizeInput", "")
+                )
+            scale = fp32_tensor_name + "_scale"
+            scale_tensor = self.get_initializer(scale)
+            zo = fp32_tensor_name + "_zero_point"
+            zo_tensor = self.get_initializer(zo)
+
+            if scale_tensor is None or zo_tensor is None:
+                if parent is not None:
+                    scale_tensor, zo_tensor = _searcher(parent.input[0])
+            return scale_tensor, zo_tensor
+
+        node = self._input_name_to_nodes[tensor][0]
+        # TODO check if scale_tensor and zero_point is needed
         # for bias of qlinearconv, scale and zero_point is not needed
-        if (node.op_type == 'QLinearConv' and tensor == node.input[-1]) or \
-            (node.op_type == 'QGemm' and tensor == node.input[-3]):
-            pass
+        if (node.op_type == "QLinearConv" and tensor == node.input[-1]) or (
+            node.op_type == "QGemm" and tensor == node.input[-3]
+        ):
+            return None, None
         else:
-            assert scale_tensor, 'missing scale for tensor {}'.format(tensor)
-            assert zo_tensor, 'missing zero point for tensor {}'.format(tensor)
-        return scale_tensor, zo_tensor
+            scale_tensor, zo_tensor = _searcher(tensor)
+            assert scale_tensor, "missing scale for tensor {}".format(tensor)
+            assert zo_tensor, "missing zero point for tensor {}".format(tensor)
+            return scale_tensor, zo_tensor
 
     def save_model_to_file(self, output_path, use_external_data_format=False):
         """Save model to external data, which is needed for model size > 2GB."""
         if use_external_data_format:
-            onnx.external_data_helper.convert_model_to_external_data(self._model,
-                                                    all_tensors_to_one_file=True,
-                                                    location=Path(output_path).name + ".data")
+            onnx.external_data_helper.convert_model_to_external_data(
+                self._model, all_tensors_to_one_file=True, location=Path(output_path).name + ".data"
+            )
         onnx.save_model(self._model, output_path)
 
     @staticmethod
@@ -373,8 +425,7 @@ class ONNXModel(BaseModel):
             if node.input[j] == old_input_name:
                 node.input[j] = new_input_name
 
-    def replace_input_of_all_nodes(self, old_input_name, new_input_name,
-        white_optype=[], black_optype=[]):
+    def replace_input_of_all_nodes(self, old_input_name, new_input_name, white_optype=[], black_optype=[]):
         """Replace inputs of all nodes."""
         if len(white_optype) > 0:
             for node in self.model.graph.node:
@@ -385,7 +436,6 @@ class ONNXModel(BaseModel):
                 if node.op_type not in black_optype:
                     ONNXModel.replace_node_input(node, old_input_name, new_input_name)
 
-
     @staticmethod
     def replace_node_output(node, old_output_name, new_output_name):
         """Replace output of a node."""
@@ -394,8 +444,7 @@ class ONNXModel(BaseModel):
             if node.output[j] == old_output_name:
                 node.output[j] = new_output_name
 
-    def replace_output_of_all_nodes(self, old_output_name, new_output_name, 
-        white_optype=[], black_optype=[]):
+    def replace_output_of_all_nodes(self, old_output_name, new_output_name, white_optype=[], black_optype=[]):
         """Replace outputs of all nodes."""
         if len(white_optype) > 0:
             for node in self.model.graph.node:
@@ -406,20 +455,41 @@ class ONNXModel(BaseModel):
                 if node.op_type not in black_optype:
                     ONNXModel.replace_node_output(node, old_output_name, new_output_name)
 
-    def remove_unused_constant(self):
-        """Remove unused constant."""
+    def remove_unused_nodes(self):
+        """Remove unused nodes."""
         unused_nodes = []
         nodes = self.nodes()
         for node in nodes:
-            if node.op_type == "Constant" and node.output[0] not in self._model.graph.output \
-                and node.output[0] not in self._input_name_to_nodes:
+            if (
+                node.op_type == "Constant"
+                and node.output[0] not in self._model.graph.output
+                and node.output[0] not in self._input_name_to_nodes
+            ):
                 unused_nodes.append(node)
-            elif node.op_type == 'QuantizeLinear' and len(self.get_children(node)) == 1 and \
-                self.get_children(node)[0].op_type == 'DequantizeLinear' and \
-                node.input[0] not in self._output_name_to_node and \
-                self.get_children(node)[0].output[0] not in self._input_name_to_nodes:
+            elif (
+                node.op_type == "QuantizeLinear"
+                and len(self.get_children(node)) == 1
+                and self.get_children(node)[0].op_type == "DequantizeLinear"
+                and node.input[0] not in self._output_name_to_node
+                and self.get_children(node)[0].output[0] not in self._input_name_to_nodes
+            ):
                 unused_nodes.append(node)
                 unused_nodes.extend(self.get_children(node))
+            else:
+                # remove the node if it does not serve as the input or output of any other nodes
+                unused = True
+                for output in node.output:
+                    if output in self._input_name_to_nodes or output in self.output():
+                        unused = False
+                        break
+                for input in node.input:
+                    if self.get_initializer(input) is not None:
+                        continue
+                    elif input in self._output_name_to_node or input in self.input():
+                        unused = False
+                        break
+                if unused:
+                    unused_nodes.append(node)
         self.remove_nodes(unused_nodes)
 
         ununsed_weights = []
@@ -436,9 +506,10 @@ class ONNXModel(BaseModel):
 
     def topological_sort(self, enable_subgraph=False):
         """Topological sort the model."""
+        import copy
         from collections import deque
         from functools import reduce
-        import copy
+
         if not enable_subgraph:
             input_name_to_nodes = {}
             output_name_to_node = {}
@@ -452,7 +523,7 @@ class ONNXModel(BaseModel):
                 for output_name in node.output:
                     if len(output_name.strip()) != 0:
                         output_name_to_node[output_name] = node
-        else: # pragma: no cover
+        else:  # pragma: no cover
             input_name_to_nodes = self._input_name_to_nodes
             output_name_to_node = self._output_name_to_node
 
@@ -467,8 +538,7 @@ class ONNXModel(BaseModel):
 
         while q:
             n = q.popleft()
-            if not all([output_name_to_node[i].name in all_nodes for \
-                i in n.input if i in output_name_to_node]):
+            if not all([output_name_to_node[i].name in all_nodes for i in n.input if i in output_name_to_node]):
                 if n not in wait:
                     wait.append(n)
                 continue
@@ -476,20 +546,19 @@ class ONNXModel(BaseModel):
             all_nodes[n.name] = n
             for out in n.output:
                 if out in input_name_to_nodes:
-                    q.extend([i for i in input_name_to_nodes[out] if \
-                        i.name not in all_nodes and i not in q])
+                    q.extend([i for i in input_name_to_nodes[out] if i.name not in all_nodes and i not in q])
             if len(q) == 0 and len(wait) != 0:
                 q = copy.deepcopy(wait)
                 wait.clear()
         nodes = [i[1] for i in all_nodes.items()]
-        assert len(list(set([n.name for n in nodes]))) == \
-            len(list(set([n.name for n in self.model.graph.node])))
-        self.model.graph.ClearField('node')
+        assert len(list(set([n.name for n in nodes]))) == len(list(set([n.name for n in self.model.graph.node])))
+        self.model.graph.ClearField("node")
         self.model.graph.node.extend(nodes)
 
     def get_nodes_chain(self, start, stop, result_chain=[]):
         """Get nodes chain with given start node and stop node."""
         from collections import deque
+
         from onnx import NodeProto
 
         # process start node list
@@ -500,9 +569,8 @@ class ONNXModel(BaseModel):
             elif isinstance(node, NodeProto):
                 start_node.append(node.name)
             else:
-                assert False, "'get_nodes_chain' function only support list[string]" \
-                              "or list[NodeProto] params"
-        
+                assert False, "'get_nodes_chain' function only support list[string]" "or list[NodeProto] params"
+
         # process stop node list
         stop_node = []
         for node in stop:
@@ -511,8 +579,7 @@ class ONNXModel(BaseModel):
             elif isinstance(node, NodeProto):
                 stop_node.append(node.name)
             else:
-                assert False, "'get_nodes_chain' function only support list[string]" \
-                              "or list[NodeProto] params"
+                assert False, "'get_nodes_chain' function only support list[string]" "or list[NodeProto] params"
 
         while start_node:
             node_name = start_node.popleft()
@@ -528,7 +595,7 @@ class ONNXModel(BaseModel):
                 start_node.append(parent.name)
 
         return result_chain
-    
+
     def find_qkv_in_attention(self, find_all=False):
         """Find qkv MatMul in Attention.
 
@@ -540,46 +607,56 @@ class ONNXModel(BaseModel):
         """
         qkv = []
         for node in self._model.graph.node:
+            if node.op_type == "Attention":
+                qkv.append([node.name])
+                continue
             start_node, qkv_nodes_list = None, None
-            if node.op_type == 'SkipLayerNormalization':
+            if node.op_type == "SkipLayerNormalization":
                 start_node = node
                 qkv_nodes_list = [
                     self.match_parent_path(
                         start_node,
                         ["MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
-                        [None, 0, 0, 0, 0],)
+                        [None, 0, 0, 0, 0],
+                    ),
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
+                        [1, 1, 0, 0, 0],
+                    ),
                 ]
-            if node.op_type == 'Add':
+            if node.op_type == "Add":
                 start_node = node
                 qkv_nodes_list = [
                     # match base attention structure
                     self.match_parent_path(
                         start_node,
                         ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
-                        [0, None, 0, 0, 0],),
+                        [0, None, 0, 0, 0],
+                    ),
                     self.match_parent_path(
-                        start_node,
-                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
-                        [1, None, 0, 0, 0]),
-
+                        start_node, ["Add", "MatMul", "Reshape", "Transpose", "MatMul"], [1, None, 0, 0, 0]
+                    ),
                     # match gpt attention no past structure
                     self.match_parent_path(
                         start_node,
                         ["Reshape", "Gemm", "Reshape", "Reshape", "Transpose", "MatMul"],
-                        [ None, 0, 0, 0, 0, 0],
+                        [None, 0, 0, 0, 0, 0],
                         output_name_to_node=self.output_name_to_node,
-                        return_indice=[]),
-
+                        return_indice=[],
+                    ),
                     # match bart attention structure
                     self.match_parent_path(
                         start_node,
                         ["Add", "MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
-                        [0, None, 0, 0, 0, 0]),
+                        [0, None, 0, 0, 0, 0],
+                    ),
                     self.match_parent_path(
                         start_node,
                         ["Add", "MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
-                        [1, None, 0, 0, 0, 0]),
-                    ]
+                        [1, None, 0, 0, 0, 0],
+                    ),
+                ]
 
             if not start_node:
                 continue
@@ -605,23 +682,47 @@ class ONNXModel(BaseModel):
                     break
         return qkv
 
+    def find_ffn_matmul(self, attention_index, attention_matmul_list, block_len):
+        """Find MatMul in FFN.
+
+        Args:
+            attention_index (list): index of Attention
+            attention_matmul_list (list): list of Attention and MatMul nodes
+            block_len (int): block length
+
+        Returns:
+            list: list of MatMul in FFN
+        """
+        ffn_matmul = []
+        for idx in range(len(attention_index)):
+            if idx != len(attention_index) - 1:
+                index = attention_index[idx + 1]
+                if index - 2 >= 0:
+                    ffn_matmul.append([attention_matmul_list[index - 2], attention_matmul_list[index - 1]])
+            else:
+                index = attention_index[idx]
+                if index + block_len - 1 < len(attention_matmul_list):
+                    ffn_matmul.append(
+                        [attention_matmul_list[index + block_len - 2], attention_matmul_list[index + block_len - 1]]
+                    )
+        return ffn_matmul
+
     def export(self, save_path, conf):
         """Export Qlinear to QDQ model."""
-        from neural_compressor.experimental.export import onnx_qlinear_to_qdq
         from neural_compressor.config import ONNXQlinear2QDQConfig
+        from neural_compressor.experimental.export import onnx_qlinear_to_qdq
+
         if isinstance(conf, ONNXQlinear2QDQConfig):
-            add_nodes, remove_nodes, inits = onnx_qlinear_to_qdq(self._model,
-                                             self._input_name_to_nodes)
+            add_nodes, remove_nodes, inits = onnx_qlinear_to_qdq(self._model, self._input_name_to_nodes)
             self.add_nodes(add_nodes)
             self.remove_nodes(remove_nodes)
             self.add_initializers(inits)
             self.update()
-            self.remove_unused_constant()
+            self.remove_unused_nodes()
             self.topological_sort()
             self.save(save_path)
         else:
-            logger.warning("Unsupported config for export, "
-                "only ONNXQlinear2QDQConfig is supported!")
+            logger.warning("Unsupported config for export, " "only ONNXQlinear2QDQConfig is supported!")
             exit(0)
 
     def add_tensors_to_outputs(self, tensor_names):
@@ -700,10 +801,7 @@ class ONNXModel(BaseModel):
             output_name_to_node = self._output_name_to_node
 
         if input_index is None:
-            parent, index = self.match_first_parent(node, 
-                                                    parent_op_type, 
-                                                    output_name_to_node, 
-                                                    exclude)
+            parent, index = self.match_first_parent(node, parent_op_type, output_name_to_node, exclude)
             if return_indice is not None:
                 return_indice.append(index)
             return parent
@@ -716,6 +814,39 @@ class ONNXModel(BaseModel):
             return parent
 
         return None
+
+    def get_absorb_pairs(self, target_optype):
+        """Find absorbable nodes based on parent op_type and their own input status.
+
+        Args:
+            target_optype (list): target absorbable optype.
+
+        Returns:
+            absorb_pairs (dict): a dict of absorb pairs {parent: list of absorbable children}.
+        """
+        absorbable_optypes = [
+            "LayerNormalization",
+            "BatchNormalization",
+            "InstanceNormalization",
+            "Conv",
+            "SimplifiedLayerNormalization",
+            "MatMul",
+            "Gemm",
+            "Mul",
+            "FusedConv",
+        ]
+        absorb_pairs = {}
+        for node in self.nodes():
+            if node.op_type in target_optype and self.get_initializer(node.input[1]) is not None:
+                parent = self.get_parent(node, 0)
+                if (
+                    parent is None
+                    or parent.op_type not in absorbable_optypes
+                    or self.get_initializer(parent.input[1]) is None
+                ):
+                    continue
+                absorb_pairs.setdefault(parent.name, []).append(node)
+        return absorb_pairs
 
     def match_parent_path(
         self,
@@ -730,10 +861,10 @@ class ONNXModel(BaseModel):
         Args:
             node (str): current node name.
             parent_op_types (str): constraint of parent node op_type of each input edge.
-            parent_input_index (list): constraint of input index of each input edge. 
+            parent_input_index (list): constraint of input index of each input edge.
                                        None means no constraint.
             output_name_to_node (dict): dictionary with output name as key, and node as value.
-            return_indice (list): a list to append the input index when there is 
+            return_indice (list): a list to append the input index when there is
                                   no constraint on input index of an edge.
 
         Returns:
@@ -762,3 +893,14 @@ class ONNXModel(BaseModel):
             current_node = matched_parent
 
         return matched_parents
+
+    def is_smoothquant_model(self):
+        """Check the model is smooth quantized or not.
+
+        Returns:
+            bool: the model is smooth quantized or not.
+        """
+        for init in self.model.graph.initializer:
+            if "_smooth_scale" in init.name:
+                return True
+        return False

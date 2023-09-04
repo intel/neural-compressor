@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The quantization_workload module for Neural Insights quantization workloads."""
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from neural_insights.components.workload_manager.workload import Workload
 from neural_insights.utils.json_serializer import JsonSerializer
@@ -70,8 +70,9 @@ class AccuracyData(JsonSerializer):
         Returns: accuracy ratio if baseline and optimized accuracy are present
                  Otherwise returns None
         """
-        if self.optimized_accuracy is None or self.baseline_accuracy is None:
+        if self.optimized_accuracy in [None, 0] or self.baseline_accuracy in [None, 0]:
             return None
+
         return (self.optimized_accuracy - self.baseline_accuracy) / self.baseline_accuracy
 
     def serialize(self, serialization_type: str = "default") -> Dict[str, Any]:

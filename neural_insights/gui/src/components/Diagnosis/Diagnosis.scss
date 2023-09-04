@@ -50,17 +50,17 @@
 
   .flexbox {
     display: flex;
-    align-content: stretch;
     max-height: 99vh;
     background-color: $light-gray;
   }
 
   .flexbox-inside {
+    flex-shrink: 0;
+    padding: 3px;
     display: flex;
     flex-direction: column;
     max-height: 90vh;
-    overflow: auto;
-    min-width: 300px;
+    width: 300px;
   }
 
   .overflow-table {
@@ -72,22 +72,17 @@
 
   .flex-item {
     padding: 3px;
-    flex-grow: 1;
+    width: 98%;
+    max-width: calc(100vw - 320px);
   }
 
   .flex-bigger {
     padding: 3px;
-    flex-grow: 4;
-    min-width: 40vw;
-  }
-
-  .flex-smaller {
-    padding: 3px;
-    flex-grow: 0;
+    width: 98%;
   }
 
   .accuracy-table {
-    width: 100%;
+    width: 98%;
   }
 
   .accuracy-number {

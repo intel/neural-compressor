@@ -30,17 +30,19 @@
 # limitations under the License.
 # ==============================================================================
 
+from neural_compressor.data.transforms import BaseTransform, transform_registry
 from neural_compressor.utils import logger
-from neural_compressor.data.transforms import transform_registry, BaseTransform
+
 
 # BELOW IS TO BE DEPRECATED!
-@transform_registry(transform_type="ParseDecodeCoco", \
-                    process="preprocess", framework="tensorflow")
-class ParseDecodeCocoTransform(BaseTransform):    # pragma: no cover 
-    """Coco decoding will be performed automatically from Neural Compressor v1.4.
-    """
+@transform_registry(transform_type="ParseDecodeCoco", process="preprocess", framework="tensorflow")
+class ParseDecodeCocoTransform(BaseTransform):  # pragma: no cover
+    """Coco decoding will be performed automatically from Neural Compressor v1.4."""
+
     def __call__(self, sample):
         """Convert `ParseDecodeCocoTransform` feature."""
-        logger.warning("This transform is going to be deprecated, " \
-            "coco decoding will be performed automatically from Neural Compressor v1.4.")
+        logger.warning(
+            "This transform is going to be deprecated, "
+            "coco decoding will be performed automatically from Neural Compressor v1.4."
+        )
         return sample

@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Common utilities for all frontend components."""
 
 import json
@@ -74,7 +73,7 @@ def query_task_result(task_id, db_path, workspace):
         res = cursor.fetchone()
         cursor.close()
         conn.close()
-    print(f"in query")
+    print("in query")
     if not res:
         status = "Please check url."
     elif res[0] == "done":

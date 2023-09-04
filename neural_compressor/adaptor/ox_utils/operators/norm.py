@@ -17,8 +17,10 @@
 """Normalization Operator."""
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
+
+from neural_compressor.adaptor.ox_utils.operators.ops import Operator, QOperator, op_registry, qop_registry
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
+
 
 @op_registry(op_types="BatchNormalization")
 class BatchNormalizationOperator(Operator):
@@ -30,11 +32,12 @@ class BatchNormalizationOperator(Operator):
 
     def cast(self):
         """Cast node."""
-        if self.dtype == 'bf16':
+        if self.dtype == "bf16":
             self.quantizer.cast_inputs(self.node, self.dtype, [0])
         else:
             self.quantizer.cast_inputs(self.node, self.dtype)
         self.quantizer.cast_outputs(self.node, self.dtype)
+
 
 @op_registry(op_types="LayerNormalization")
 class NormalizationOperator(Operator):

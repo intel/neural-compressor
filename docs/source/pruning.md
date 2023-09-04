@@ -52,8 +52,9 @@ Pruning
 
 4. [Sparse Model Deployment](#sparse-model-deployment)
 
+5. [Pruning With HPO](#pruning-with-hyperparameter-optimization)
 
-5. [Reference](#reference)
+6. [Reference](#reference)
 
 
 ## Introduction
@@ -104,7 +105,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 </div>
 
 
-- Multi-head Attention Pruning (Work in progress)
+- Multi-head Attention Pruning
 
   Multi-head attention mechanism boosts transformer models' capability of contextual information analysis. However, different heads' contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. **We haven't support it in pruning, but we have provided experimental feature in Model Auto Slim**. Please refer to [multi-head attention auto slim examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/model_slim)
 
@@ -265,35 +266,35 @@ The following section exemplifies how to use hooks in user pass-in training func
 - Step 1: Define a dict-like configuration in your training codes. Usually only 5-7 configuration items need to be identified. For customized pruning, a configuration template is shown below:
 
   ```python
-      configs = [
-              { ## Example of a regular configuration
-                "op_names": ['layer1.*'], # A list of modules that would be pruned. All linear/conv layers will be hooked when op_names is not explicitly defined.
-                "start_step": 1,  # Step at which to begin pruning, if a gradient-based criterion is used (e.g., snip-momentum), start_step should be equal to or greater than 1.
-                "end_step": 10000, # Step at which to end pruning, for one-shot pruning start_step = end_step.
-                "excluded_op_names": ['.*embeddings*'], # A list of modules that would not be pruned.
-                'target_sparsity': 0.9,   # Target sparsity ratio of modules.
-                "pruning_frequency": 250,   # Frequency of applying pruning, The recommended setting is one fortieth of the pruning steps.
-                "pattern": "4x1",   # Default pruning pattern.
-              }, # The missing parameter items would be complemented by default settings (i.e. start_step = 1)
-
-
-              # It also supports setting multiple pruners, and fine-grained pruning by partition.
-              { ## pruner2
-                  'target_sparsity': 0.9,   # Target sparsity ratio of modules.
-                  'pruning_type': "snip_momentum", # Default pruning type.
-                  'pattern': "4x1", # Default pruning pattern.
-                  'op_names': ['layer2.*'],  # A list of modules that would be pruned.
-                  'excluded_op_names': ['layer3.*'],  # A list of modules that would not be pruned.
-                  'start_step': 1,  # Step at which to begin pruning.
-                  'end_step': 10,   # Step at which to end pruning.
-                  'pruning_scope': "global", # Default pruning scope.
-                  'pruning_frequency': 1, # Frequency of applying pruning.
-                  'min_sparsity_ratio_per_op': 0.0,  # Minimum sparsity ratio of each module.
-                  'max_sparsity_ratio_per_op': 0.98, # Maximum sparsity ratio of each module.
-                  'sparsity_decay_type': "exp", # Function applied to control pruning rate.
-                  'pruning_op_types': ['Conv', 'Linear'], # Types of op that would be pruned.
-              }
-          ]
+  configs = [
+      {  ## Example of a regular configuration
+          "op_names": [
+              "layer1.*"
+          ],  # A list of modules that would be pruned. All linear/conv layers will be hooked when op_names is not explicitly defined.
+          "start_step": 1,  # Step at which to begin pruning, if a gradient-based criterion is used (e.g., snip-momentum), start_step should be equal to or greater than 1.
+          "end_step": 10000,  # Step at which to end pruning, for one-shot pruning start_step = end_step.
+          "excluded_op_names": [".*embeddings*"],  # A list of modules that would not be pruned.
+          "target_sparsity": 0.9,  # Target sparsity ratio of modules.
+          "pruning_frequency": 250,  # Frequency of applying pruning, The recommended setting is one fortieth of the pruning steps.
+          "pattern": "4x1",  # Default pruning pattern.
+      },  # The missing parameter items would be complemented by default settings (i.e. start_step = 1)
+      # It also supports setting multiple pruners, and fine-grained pruning by partition.
+      {  ## pruner2
+          "target_sparsity": 0.9,  # Target sparsity ratio of modules.
+          "pruning_type": "snip_momentum",  # Default pruning type.
+          "pattern": "4x1",  # Default pruning pattern.
+          "op_names": ["layer2.*"],  # A list of modules that would be pruned.
+          "excluded_op_names": ["layer3.*"],  # A list of modules that would not be pruned.
+          "start_step": 1,  # Step at which to begin pruning.
+          "end_step": 10,  # Step at which to end pruning.
+          "pruning_scope": "global",  # Default pruning scope.
+          "pruning_frequency": 1,  # Frequency of applying pruning.
+          "min_sparsity_ratio_per_op": 0.0,  # Minimum sparsity ratio of each module.
+          "max_sparsity_ratio_per_op": 0.98,  # Maximum sparsity ratio of each module.
+          "sparsity_decay_type": "exp",  # Function applied to control pruning rate.
+          "pruning_op_types": ["Conv", "Linear"],  # Types of op that would be pruned.
+      },
+  ]
   ```
 
 - Step 2: Enable pruning functionalities 
@@ -301,49 +302,50 @@ The following section exemplifies how to use hooks in user pass-in training func
      [**Experimental option** ]Modify model and optimizer.
 
     ```python
-        from neural_compressor import WeightPruningConfig
-        from neural_compressor.experimental.compression import prepare_pruning
-        config = WeightPruningConfig(configs)
-        prepare_pruning(config, model, optimizer) # modify model and optimizer
-        for epoch in range(num_train_epochs):
-          model.train()
-          for step, batch in enumerate(train_dataloader):
-              outputs = model(**batch)
-              loss = outputs.loss
-              loss.backward()
-              optimizer.step()
-              lr_scheduler.step()
-              model.zero_grad()
-  ```
+    from neural_compressor import WeightPruningConfig
+    from neural_compressor.experimental.compression import prepare_pruning
+
+    config = WeightPruningConfig(configs)
+    prepare_pruning(config, model, optimizer)  # modify model and optimizer
+    for epoch in range(num_train_epochs):
+        model.train()
+        for step, batch in enumerate(train_dataloader):
+            outputs = model(**batch)
+            loss = outputs.loss
+            loss.backward()
+            optimizer.step()
+            lr_scheduler.step()
+            model.zero_grad()
+    ```
 
 
-    [**Stable Option** ]Insert Hook functions in your codes. 
-    
-    ```python
-        """ All you need is to insert following API functions to your codes:
-        on_train_begin() # Setup pruners
-        on_step_begin() # Prune weights
-        on_before_optimizer_step() # Do weight regularization
-        on_after_optimizer_step() # Update weights' criteria, mask weights
-        on_train_end() # End of pruner, print sparse information
-        """
-        from neural_compressor.training import prepare_compression, WeightPruningConfig
-        config = WeightPruningConfig(configs)
-        compression_manager = prepare_compression(model, config) # Define a pruning object.
-        compression_manager.callbacks.on_train_begin()  ## insert hook  
-        for epoch in range(num_train_epochs):
-            model.train()
-            for step, batch in enumerate(train_dataloader):
-                compression_manager.callbacks.on_step_begin(step)
-                outputs = model(**batch)
-                loss = outputs.loss
-                loss.backward()
-                compression_manager.callbacks.on_before_optimizer_step()
-                optimizer.step()
-                compression_manager.callbacks.on_after_optimizer_step()
-                lr_scheduler.step()
-                model.zero_grad()
-        compression_manager.callbacks.on_train_end()
+      [**Stable Option** ]Insert Hook functions in your codes. 
+
+      ```python
+          """ All you need is to insert following API functions to your codes:
+          on_train_begin() # Setup pruners
+          on_step_begin() # Prune weights
+          on_before_optimizer_step() # Do weight regularization
+          on_after_optimizer_step() # Update weights' criteria, mask weights
+          on_train_end() # End of pruner, print sparse information
+          """
+          from neural_compressor.training import prepare_compression, WeightPruningConfig
+          config = WeightPruningConfig(configs)
+          compression_manager = prepare_compression(model, config) # Define a pruning object.
+          compression_manager.callbacks.on_train_begin()  ## insert hook  
+          for epoch in range(num_train_epochs):
+              model.train()
+              for step, batch in enumerate(train_dataloader):
+                  compression_manager.callbacks.on_step_begin(step)
+                  outputs = model(**batch)
+                  loss = outputs.loss
+                  loss.backward()
+                  compression_manager.callbacks.on_before_optimizer_step()
+                  optimizer.step()
+                  compression_manager.callbacks.on_after_optimizer_step()
+                  lr_scheduler.step()
+                  model.zero_grad()
+          compression_manager.callbacks.on_train_end()
     ```
    In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function.
 
@@ -385,6 +387,10 @@ Please refer to [pruning examples](../../examples/README.md#Pruning-1) for more 
 ## Sparse Model Deployment
 
 Particular hardware/software like [Intel Extension for Transformer](https://github.com/intel/intel-extension-for-transformers) are required to obtain inference speed and footprints' optimization for most sparse models. However, using [model slim](#click) for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)
+
+## Pruning with Hyperparameter Optimization
+Intel® Neural Compressor currently support grid search, random, bayesian optimization and xgboost search algorithms for pruning with HPO. 
+For more details, please refer to [HPO document](../../neural_compressor/compression/hpo/README.md)
 
 ## Reference
 

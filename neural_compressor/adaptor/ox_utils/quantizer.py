@@ -149,7 +149,7 @@ class Quantizer:
         """Quantize onnx model."""
         # step 1: insert q-dq, cast-cast pairs
         self.insert_qdq()
- 
+        
         # step 2: remove redundant pairs -> qdq model
         self.remove_redundant_pairs()
  
@@ -158,7 +158,7 @@ class Quantizer:
  
         self.merge_dedicated_qdq_pair() 
  
-        self.model.remove_unused_constant()
+        self.model.remove_unused_nodes()
 
         self.model.model.producer_name = __producer__
         self.model.model.producer_version = __version__
@@ -246,8 +246,11 @@ class Quantizer:
     def should_cast(self, node):
         """Check if node should be casted."""
         if node.name in self.config and self.config[node.name] != 'fp32': # pragma: no cover
-            return True
-        else:
+            parent = self.model.get_parent(node, 0)
+            if parent is not None and (parent.op_type != 'Cast' or parent.attribute[0].i in [1, 10, 16]):
+                return True
+            elif parent is None and node.input[0] in self.model.input():
+                return True
             return False
 
     def insert_qdq(self):
@@ -333,6 +336,7 @@ class Quantizer:
                     children = self.model.get_children(match_nodes[1])
                     input_dtype = '1' # float32
                     output_dtype = '1' # 'float32'
+                    outs = None
                     for inp in parent.input:
                         if inp in self.new_value_info:
                             input_dtype = str(self.new_value_info[inp].new_dtype)
@@ -342,7 +346,7 @@ class Quantizer:
                         if len(outs) > 0:
                             output_dtype = str(self.new_value_info[outs[0]].new_dtype)
                             break
-                    if len(outs) == 0 or all([not self.should_cast(i) for i in children]):
+                    if outs is None or len(outs) == 0 or all([not self.should_cast(i) for i in children]):
                         return
                     if input_dtype == str(match_nodes[1].attribute[0].i) and \
                         output_dtype == str(match_nodes[0].attribute[0].i) and \
@@ -596,7 +600,7 @@ class Quantizer:
                                     find_by_name(zeropoint_name, self.model.initializer()))
                             qlinear_node = onnx.helper.make_node("DynamicQuantizeLinear", 
                                 [tensor_name],
-                                [tensor_name + "_quantized", scale_name, zeropoint_name],
+                                [tensor_name + "_dynamic_quantized", scale_name, zeropoint_name],
                                 tensor_name + "_QuantizeLinear")
                         else:
                             scale_name, zp_name, _, _ = \

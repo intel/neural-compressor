@@ -37,7 +37,7 @@
           "Where","Unpack","ZerosLike" #clear list
           ]
   fp32: ['*'] # '*' means all op types
-  int8: { 
+  int8: {
     'static': {
         'Conv2D': {
           'weight': {
@@ -87,7 +87,7 @@
           'weight': {
                       'dtype': ['int8'],
                       'scheme': ['sym'],
-                      'granularity': ['per_tensor'],
+                      'granularity': ['per_tensor', 'per_channel'],
                       'algorithm': ['minmax']
                       },
           'activation': {
@@ -243,4 +243,3 @@
     'dynamic': {
     }
   }
-

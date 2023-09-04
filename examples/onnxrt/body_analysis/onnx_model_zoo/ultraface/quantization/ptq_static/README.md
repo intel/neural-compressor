@@ -37,7 +37,7 @@ Download dataset [WIDER FACE dataset (Validation Images)](http://shuoyang1213.me
 ## 1. Quantization
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model  \ # model path as *.onnx
                    --dataset_location=/path/to/data \
                    --output_model=path/to/save
 ```

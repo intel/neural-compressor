@@ -3,6 +3,9 @@ Examples
 Intel® Neural Compressor validated examples with multiple compression techniques, including quantization, pruning, knowledge distillation and orchestration. Part of the validated cases can be found in the example tables, and the release data is available [here](../docs/source/validated_model_list.md).
 > Note: The example marked with `*` means it still use 1.x API.
 
+# Quick Get Started Notebook Examples
+* [Quick Get Started Notebook of Intel® Neural Compressor for ONNXRuntime](/examples/notebook/onnxruntime/Quick_Started_Notebook_of_INC_for_ONNXRuntime.ipynb)
+
 # Helloworld Examples
 
 * [tf_example1](/examples/helloworld/tf_example1): quantize with built-in dataloader and metric.
@@ -275,6 +278,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/image_recognition/tensorflow_models/vision_transformer/">pb</a></td>
+  </tr>
+  <tr>
+    <td>GraphSage</td>
+    <td>Graph Networks</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/graph_networks/graphsage/">pb</a></td>
   </tr>
 </tbody>
 </table>
@@ -1115,6 +1124,18 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
+    <td>CodeBert</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/code_detection/quantization/ptq_static">qlinearops</a></td>
+  </tr>
+  <tr>
+    <td>CodeBert</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/code_detection/quantization/ptq_dynamic">integerops</a></td>
+  </tr>
+  <tr>
     <td>BERT base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
@@ -1147,17 +1168,17 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>BERT SQuAD (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Dynamic / Static Quantization</td>
+    <td>Post-Training Dynamic Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/bert-squad/quantization/ptq_dynamic">integerops</a> </td>
   </tr>
   <tr>
-    <td>GPT2 lm head WikiText</td>
+    <td>GPT2 lm head WikiText (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/gpt2/quantization/ptq_dynamic">integerops</a></td>
   </tr>
   <tr>
-    <td>MobileBERT SQuAD MLPerf</td>
+    <td>MobileBERT SQuAD MLPerf (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/mobilebert/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/onnx_model_zoo/mobilebert/quantization/ptq_static">qdq</a></td>
@@ -1345,11 +1366,19 @@ Intel® Neural Compressor validated examples with multiple compression technique
     </td>
   </tr>
   <tr>
+    <td>LayoutLMv2 FUNSD (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td>
+      <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmv2/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmv2/quantization/ptq_static">qlinearops</a>
+    </td>
+  </tr>
+  <tr>
     <td>LayoutLM FUNSD (HuggingFace)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
     <td>
-      <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmft/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmft/quantization/ptq_static">qlinearops</a>
+      <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlm/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlm/quantization/ptq_static">qlinearops</a>
     </td>
   </tr>
   <tr>
@@ -1429,7 +1458,15 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Text Generation</td>
     <td>Post-Training Dynamic / Static Quantization</td>
     <td>
-      <a href="./onnxrt/nlp/huggingface_model/text_generation/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/text_generation/quantization/ptq_static">qlinearops</a>
+      <a href="./onnxrt/nlp/huggingface_model/text_generation/gptj/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/text_generation/gptj/quantization/ptq_static">qlinearops</a>
+    </td>
+  </tr>
+  <tr>
+    <td>Llama-7B (HuggingFace)</td>
+    <td>Text Generation</td>
+    <td>Static / Weight Only Quantization</td>
+    <td>
+      <a href="./onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only">weight_only</a>
     </td>
   </tr>
 </tbody>

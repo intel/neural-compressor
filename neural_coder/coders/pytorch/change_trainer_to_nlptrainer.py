@@ -15,13 +15,14 @@
 
 from ...utils.line_operation import get_line_indent_level
 
+
 class TrainerToNLPTrainer(object):
     def __init__(self, file) -> None:
         self.file = file
         self.result = []
 
     def transform(self):
-        lines = self.file.split('\n')
+        lines = self.file.split("\n")
 
         for line in lines:
             if self.is_modify(line):
@@ -30,17 +31,17 @@ class TrainerToNLPTrainer(object):
             else:
                 self.result.append(line)
         for index, line in enumerate(self.result):
-            if index != len(self.result)-1:
-                self.result[index] += '\n'
-        return ''.join(self.result)
+            if index != len(self.result) - 1:
+                self.result[index] += "\n"
+        return "".join(self.result)
 
     def is_modify(self, s):
-        if 'trainer = Trainer(' in s:
+        if "trainer = Trainer(" in s:
             return True
         else:
             return False
 
     def modify(self, s):
-        old = 'Trainer'
-        s = s.replace(old, 'NLPTrainer')
+        old = "Trainer"
+        s = s.replace(old, "NLPTrainer")
         return s
