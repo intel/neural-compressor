@@ -167,15 +167,15 @@ class GPTQuantizer(object):
     """
 
     def __init__(
-            self, 
-            model, 
-            weight_config={}, 
-            dataloader=None, 
-            nsamples=128, 
-            use_max_length=True, 
-            pad_max_length=2048,
-            device=None
-        ):
+        self,
+        model,
+        weight_config={},
+        dataloader=None,
+        nsamples=128,
+        use_max_length=True,
+        pad_max_length=2048,
+        device=None,
+    ):
         """
         Args:
             model: the fp32 model to quantize

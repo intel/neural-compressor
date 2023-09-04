@@ -124,6 +124,7 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
 
     def test_gptq(self):
         import random
+
         class GPTQLLMDataLoader:
             def __init__(self):
                 self.batch_size = 1
@@ -168,11 +169,7 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
             },
         }
         quantizer = gptq_quantize(
-            model,
-            weight_config=weight_config,
-            dataloader=dataloader,
-            use_max_length=True, 
-            pad_max_length = 512
+            model, weight_config=weight_config, dataloader=dataloader, use_max_length=True, pad_max_length=512
         )
         self.assertTrue(isinstance(model, torch.nn.Module))
         del model
@@ -180,14 +177,11 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
         model = copy.deepcopy(self.gptj)
         weight_config = {"wbits": 4}
         quantizer = gptq_quantize(
-            model, 
-            weight_config=weight_config, 
-            dataloader=dataloader, 
-            use_max_length=False, 
-            pad_max_length = 512
+            model, weight_config=weight_config, dataloader=dataloader, use_max_length=False, pad_max_length=512
         )
         self.assertTrue(isinstance(model, torch.nn.Module))
         del model
+
 
 class TestTEQWeightOnlyQuant(unittest.TestCase):
     @classmethod

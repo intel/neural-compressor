@@ -470,14 +470,8 @@ def rtn_quantize(
 
 
 def gptq_quantize(
-        model, 
-        weight_config={}, 
-        dataloader=None, 
-        nsamples=128, 
-        use_max_length=True, 
-        pad_max_length = 2048, 
-        device=None
-    ):
+    model, weight_config={}, dataloader=None, nsamples=128, use_max_length=True, pad_max_length=2048, device=None
+):
     """Run weight-only quantization with."""
     # TODO: unify weight_config keys, add docstring, and support default config
     assert isinstance(model, torch.nn.Module), "only support torch module"
