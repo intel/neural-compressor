@@ -448,7 +448,10 @@ class PytorchPatternNxM(PytorchBasePattern):
         score_or_linear = progressive_configs["progressive_type"]  # "scores" or "linear"
         new_scores = {}
         for key in scores.keys():
-            new_scores[key] = self.reshape_reduced_to_orig(scores[key], key, pre_masks[key].shape)
+            block_size = self.block_size[key]
+            data = scores[key].repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
+            data = self._reshape_2dims_to_orig(data, pre_masks[key].shape)
+            new_scores[key] = data
         if score_or_linear == "scores":
             return ProgressivePatternUtils.update_progressive_masks_scores_order(
                 pre_masks, cur_masks, new_scores, progressive_step, progressive_configs

@@ -394,11 +394,11 @@ class PytorchPatternNInM(PytorchBasePattern):
     def update_progressive_masks(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
         assert progressive_configs["progressive_type"] == "scores", "N:M progressive pruning only supports 'scores'."
         # we only have to handle global score or local score
-        new_scores = {}
-        for key in scores.keys():
-            new_scores[key] = self.reshape_reduced_to_orig(scores[key], key, pre_masks[key].shape)
+        # new_scores = {}
+        # for key in scores.keys():
+        #     new_scores[key] = self.reshape_reduced_to_orig(scores[key], key, pre_masks[key].shape)
         return ProgressivePatternUtils.update_progressive_masks_scores_order(
-            pre_masks, cur_masks, new_scores, progressive_step, progressive_configs
+            pre_masks, cur_masks, scores, progressive_step, progressive_configs
         )
 
     def fasterprune(self, gpt, blocksize=128, percdamp=0.01):
