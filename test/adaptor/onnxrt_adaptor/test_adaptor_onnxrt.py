@@ -1662,9 +1662,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantization.fit(
             self.distilbert_model,
             config,
-            calib_dataloader=DummyNLPDataloader_dict("distilbert-base-uncased-finetuned-sst-2-english")
+            calib_dataloader=DummyNLPDataloader_dict("distilbert-base-uncased-finetuned-sst-2-english"),
         )
-        
+
         # check TENSORRT is not loaded if backend is not onnxrt_trt_ep
         self.assertEqual(os.environ.get("ORT_TENSORRT_UNAVAILABLE"), "1")
 

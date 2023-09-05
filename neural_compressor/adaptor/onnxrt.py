@@ -83,7 +83,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 self.format = "integerops"
                 if "format" in framework_specific_info and framework_specific_info["format"].lower() == "qdq":
                     logger.warning("Dynamic approach doesn't support QDQ format.")
-        
+
         # do not load TensorRT if backend is not TensorrtExecutionProvider
         if self.backend != "TensorrtExecutionProvider":
             os.environ["ORT_TENSORRT_UNAVAILABLE"] = "1"
