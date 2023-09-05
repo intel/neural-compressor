@@ -83,6 +83,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 self.format = "integerops"
                 if "format" in framework_specific_info and framework_specific_info["format"].lower() == "qdq":
                     logger.warning("Dynamic approach doesn't support QDQ format.")
+        
+        # do not load TensorRT if backend is not TensorrtExecutionProvider
+        if self.backend != "TensorrtExecutionProvider":
+            os.environ["ORT_TENSORRT_UNAVAILABLE"] = "1"
 
         # get quantization config file according to backend
         config_file = None
@@ -700,9 +704,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         # typically, NLP models have multiple inputs,
         # and the dimension of each input is usually 2 (batch_size, max_seq_len)
         if not model.is_large_model:
-            sess = ort.InferenceSession(model.model.SerializeToString(), providers=ort.get_available_providers())
+            sess = ort.InferenceSession(model.model.SerializeToString(), providers=["CPUExecutionProvider"])
         elif model.model_path is not None:  # pragma: no cover
-            sess = ort.InferenceSession(model.model_path, providers=ort.get_available_providers())
+            sess = ort.InferenceSession(model.model_path, providers=["CPUExecutionProvider"])
         else:  # pragma: no cover
             assert False, "Please use model path instead of onnx model object to quantize."
         input_shape_lens = [len(input.shape) for input in sess.get_inputs()]
