@@ -351,7 +351,9 @@ def prepare_inputs(model, n_samples, dataloader):
     return inputs, so
 
 
-def awq_quantize(model, tune_cfg, dataloader, n_samples=128, enable_auto_scale=True, enable_mse_search=True, n_blocks=5):
+def awq_quantize(
+    model, tune_cfg, dataloader, n_samples=128, enable_auto_scale=True, enable_mse_search=True, n_blocks=5
+):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
     Args:
