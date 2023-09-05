@@ -131,7 +131,7 @@ Functions
    :rtype: output
 
 
-.. py:function:: search_clip(m, num_bits=4, group_size=32, scheme='asym', data_type='int', sym_full_range=False)
+.. py:function:: search_clip(m, num_bits=4, group_size=32, scheme='asym', data_type='int', enable_full_range=False)
 
    Search best clip range of each linears in current block.
 
@@ -145,14 +145,14 @@ Functions
    :type scheme: str, optional
    :param data_type: select from int, nf4, fp4. Defaults to int.
    :type data_type: str, optional
-   :param sym_full_range: Choose sym range whether use -2**(bits-1).
-   :type sym_full_range: bool, optional
+   :param enable_full_range: Choose sym range whether use -2**(bits-1).
+   :type enable_full_range: bool, optional
 
    :returns: best percentile of clip
    :rtype: best_clip_ratio (float)
 
 
-.. py:function:: rtn_quantize(model, num_bits=4, group_size=32, scheme='asym', quantile=1.0, weight_config={}, return_int=False, data_type='int', sym_full_range=False, mse_range=False, group_dim=1, **kwargs)
+.. py:function:: rtn_quantize(model, num_bits=4, group_size=32, scheme='asym', quantile=1.0, weight_config={}, return_int=False, data_type='int', enable_full_range=False, enable_mse_search=False, group_dim=1, **kwargs)
 
    Quant the model with round to nearst method.
 
@@ -181,12 +181,12 @@ Functions
    :param return_int: Choose return fp32 or int32 model.
                       Defaults to False.
    :type return_int: bool, optional
-   :param sym_full_range: Choose sym range whether use -2**(bits-1).
-                          Defaults to False.
-   :type sym_full_range: bool, optional
-   :param mse_range: Whether search clip range.
-                     Defaults to True.
-   :type mse_range: bool, optional
+   :param enable_full_range: Choose sym range whether use -2**(bits-1).
+                             Defaults to False.
+   :type enable_full_range: bool, optional
+   :param enable_mse_search: Whether search clip range.
+                             Defaults to True.
+   :type enable_mse_search: bool, optional
    :param group_dim: 0 means splitting output channel,
                      1 means splitting input channel. Defaults to 1.
    :type group_dim: int, optional
@@ -200,7 +200,7 @@ Functions
    Run weight-only quantization with.
 
 
-.. py:function:: awq_quantize(model, bits=4, group_size=32, scheme='asym', weight_config={}, example_inputs=None, dataloader=None, n_samples=128, calib_func=None, auto_scale=True, mse_range=True, folding=False, return_int=False, sym_full_range=False, data_type='int')
+.. py:function:: awq_quantize(model, bits=4, group_size=32, scheme='asym', weight_config={}, example_inputs=None, dataloader=None, n_samples=128, calib_func=None, enable_auto_scale=True, enable_mse_search=True, folding=False, return_int=False, enable_full_range=False, data_type='int')
 
    Quant the model with Activation-aware Weight quantization(AWQ) method.
 
@@ -228,17 +228,17 @@ Functions
                            # self absorb module will replace with MulLinear, which contains torch.mul and module.
    :type absorb_dict: dict, optional
    :param n_samples: calibration sample number.
-   :param auto_scale: whether enable scale for salient weight. Defaults to True.
-   :type auto_scale: bool, optional
-   :param mse_range: whether enable clip for weight by checking mse. Defaults to True.
-   :type mse_range: bool, optional
+   :param enable_auto_scale: whether enable scale for salient weight. Defaults to True.
+   :type enable_auto_scale: bool, optional
+   :param enable_mse_search: whether enable clip for weight by checking mse. Defaults to True.
+   :type enable_mse_search: bool, optional
    :param calib_func: a custom inference function to replace dataloader and iters.
    :param n_blocks: split model into block number to avoid OOM.
    :param return_int: Choose return fp32 or int32 model.
                       Defaults to False.
    :type return_int: bool, optional
-   :param sym_full_range: Choose sym range whether use -2**(bits-1).
-   :type sym_full_range: bool, optional
+   :param enable_full_range: Choose sym range whether use -2**(bits-1).
+   :type enable_full_range: bool, optional
 
    :returns: fake quantized model
    :rtype: model

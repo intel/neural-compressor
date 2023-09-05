@@ -100,7 +100,7 @@ Functions
    :rtype: inputs
 
 
-.. py:function:: awq_quantize(model, tune_cfg, dataloader, n_samples=128, auto_scale=True, mse_range=True, n_blocks=5)
+.. py:function:: awq_quantize(model, tune_cfg, dataloader, n_samples=128, enable_auto_scale=True, enable_mse_search=True, n_blocks=5)
 
    Quant the model with Activation-aware Weight quantization(AWQ) method.
 
@@ -122,10 +122,10 @@ Functions
    :type dataloader: object
    :param n_samples: calibration sample number. -1 means all samples.
    :type n_samples: int, optional
-   :param auto_scale: whether enable scale for salient weight. Defaults to True.
-   :type auto_scale: bool, optional
-   :param mse_range: whether enable clip for weight by checking mse. Defaults to True.
-   :type mse_range: bool, optional
+   :param enable_auto_scale: whether enable scale for salient weight. Defaults to True.
+   :type enable_auto_scale: bool, optional
+   :param enable_mse_search: whether enable clip for weight by checking mse. Defaults to True.
+   :type enable_mse_search: bool, optional
    :param n_blocks: split model into block number to avoid OOM.
    :type n_blocks: int, optional
 
