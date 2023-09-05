@@ -83,9 +83,9 @@ def get_model_fwk_name(model):
 
                 so.register_custom_ops_library(get_library_path())
             if isinstance(model, str):
-                ort.InferenceSession(model, so, providers=ort.get_available_providers())
+                ort.InferenceSession(model, so, providers=["CPUExecutionProvider"])
             else:
-                ort.InferenceSession(model.SerializeToString(), so, providers=ort.get_available_providers())
+                ort.InferenceSession(model.SerializeToString(), so, providers=["CPUExecutionProvider"])
         except Exception as e:  # pragma: no cover
             if "Message onnx.ModelProto exceeds maximum protobuf size of 2GB" in str(e):
                 logger.warning("Please use model path instead of onnx model object to quantize")
