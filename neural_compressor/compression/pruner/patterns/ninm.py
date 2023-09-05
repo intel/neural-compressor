@@ -215,23 +215,6 @@ class PytorchPatternNInM(PytorchBasePattern):
             least_ninm_masks[key] = mask
         return new_scores, least_ninm_masks
 
-    # def reduce_score(self, score, key, force=False):
-    #     if not force:
-    #         if key in self.invalid_layers:
-    #             return score
-    #         if self.keep_mask_layers.get(key, False):
-    #             return score
-    #     M = self.M
-    #     mask = self.get_least_ninm_mask_from_data(score)
-    #     current_score_new = self._reshape_orig_to_2dims(score)
-    #     shape = current_score_new.shape
-    #     current_score_new = current_score_new.reshape((shape[0], shape[1]))
-    #     # to get the sum of N scores in each block with M
-    #     # current_score_new = current_score_new * (1.0 - mask)
-    #     current_score_new = current_score_new * ~mask
-    #     current_score_new = current_score_new.reshape(shape[0], shape[1] // M, M)
-    #     score_sum = self.reduce_tensor(current_score_new, dim=-1)
-    #     return score_sum
 
     def reduce_scores(self, scores):  # pragma: no cover
         """Calculate the pruning scores after reducing the data and obtain the least N scores in M.
@@ -309,8 +292,6 @@ class PytorchPatternNInM(PytorchBasePattern):
         if k_blockwise <= 0:
             return masks
         new_scores, least_ninm_masks = self.reduce_scores(scores)
-        # new_scores = scores
-        # new_scores, least_ninm_masks = self.get_least_ninm_masks(scores)
         global_scores = torch.cat([torch.flatten(v) for v in new_scores.values()])  # block_wise
         residual_k = k_blockwise
         not_exceed_layers = [key for key in new_scores.keys()]
@@ -394,9 +375,7 @@ class PytorchPatternNInM(PytorchBasePattern):
     def update_progressive_masks(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
         assert progressive_configs["progressive_type"] == "scores", "N:M progressive pruning only supports 'scores'."
         # we only have to handle global score or local score
-        # new_scores = {}
-        # for key in scores.keys():
-        #     new_scores[key] = self.reshape_reduced_to_orig(scores[key], key, pre_masks[key].shape)
+        # need to reshape score, if store reduced score for ninm pattern
         return ProgressivePatternUtils.update_progressive_masks_scores_order(
             pre_masks, cur_masks, scores, progressive_step, progressive_configs
         )
