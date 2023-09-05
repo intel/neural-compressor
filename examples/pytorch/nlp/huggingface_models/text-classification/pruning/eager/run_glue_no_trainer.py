@@ -524,7 +524,7 @@ def main():
     # pruner.model = model
     # pruner.on_train_begin()
     from neural_compressor.compression.pruner import prepare_pruning
-    prepare_pruning(configs, model, optimizer)
+    prepare_pruning(model, configs, optimizer)
 
 
     for epoch in range(args.num_train_epochs):

@@ -181,7 +181,7 @@ def _prepare_hooks(model, pruning_list, opt=None):
 
 
 def prepare_pruning(
-    config, model, optimizer=None, dataloader=None, loss_func=None, framework="pytorch", device: str = None
+    model, config, optimizer=None, dataloader=None, loss_func=None, framework="pytorch", device: str = None
 ):
     """Get registered pruning class, wrapper the model and optimizer to support all the pruning functionality.
 
