@@ -134,8 +134,8 @@ class eval_classifier_optimized_graph:
 
             conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100],
                                            accuracy_criterion = AccuracyCriterion(tolerable_loss=0.01),
-                                           op_type_dict={'conv2d':{ 'weight':{'dtype':['fp32']}, 'activation':{'dtype':['fp32']} }},
-                                           backend='itex')
+                                           op_type_dict={'conv2d':{ 'weight':{'dtype':['fp32']}, 'activation':{'dtype':['fp32']} }}
+                                           )
             from neural_compressor import METRICS
             metrics = METRICS('tensorflow')
             top1 = metrics['topk']()
