@@ -287,30 +287,32 @@ class GraphButtons extends React.Component {
 
 const getElements = (graph) => {
   const elements = [];
-  graph.nodes.forEach(node => {
-    elements.push({
-      data: {
-        id: node.id,
-        label: getLabel(node.label),
-        parent: node.parent,
-        attributes: node.attributes,
-        properties: node.properties,
-        node_type: node.node_type,
-        highlight: String(node.highlight),
-        border_color: node.node_type === 'group_node' ? '#5B69FF' : customColor[getHash(node.label)],
-        color: node.node_type === 'group_node' ? '#fff' : customColor[getHash(node.label)],
-      },
-      grabbable: false,
+  if (graph.nodes && graph.edges) {
+    graph.nodes.forEach(node => {
+      elements.push({
+        data: {
+          id: node.id,
+          label: getLabel(node.label),
+          parent: node.parent,
+          attributes: node.attributes,
+          properties: node.properties,
+          node_type: node.node_type,
+          highlight: String(node.highlight),
+          border_color: node.node_type === 'group_node' ? '#5B69FF' : customColor[getHash(node.label)],
+          color: node.node_type === 'group_node' ? '#fff' : customColor[getHash(node.label)],
+        },
+        grabbable: false,
+      });
     });
-  });
-  graph.edges.forEach(edge => {
-    elements.push({
-      data: {
-        source: edge.source,
-        target: edge.target,
-      }
+    graph.edges.forEach(edge => {
+      elements.push({
+        data: {
+          source: edge.source,
+          target: edge.target,
+        }
+      });
     });
-  });
+  }
   return elements;
 }
 

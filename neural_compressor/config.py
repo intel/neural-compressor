@@ -302,7 +302,7 @@ class BenchmarkConfig:
         inter_num_of_threads=None,
         intra_num_of_threads=None,
         diagnosis=False,
-        ni_workload_name="profiling"
+        ni_workload_name="profiling",
     ):
         """Init a BenchmarkConfig object."""
         self.inputs = inputs
