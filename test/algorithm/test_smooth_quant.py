@@ -697,13 +697,13 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1)  # By default, folding=False
         assert isinstance(sq.model.fc1, SQLinearWrapper)
 
-
     def test_sq_trace_failure(self):
         class Output:
             out = None
 
         class Model(torch.nn.Module):
-            device = torch.device('cpu')
+            device = torch.device("cpu")
+
             def __init__(self):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
@@ -717,7 +717,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
 
         model = Model()
         sq = TorchSmoothQuant(model, self.linear_dl)
-        sq.transform(alpha=0.5, calib_iter=1) # By default, folding=False
+        sq.transform(alpha=0.5, calib_iter=1)  # By default, folding=False
         assert isinstance(sq.model.fc1, SQLinearWrapper)
 
     def test_sq_qkv(self):
