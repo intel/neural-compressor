@@ -215,7 +215,6 @@ class PytorchPatternNInM(PytorchBasePattern):
             least_ninm_masks[key] = mask
         return new_scores, least_ninm_masks
 
-
     def reduce_scores(self, scores):  # pragma: no cover
         """Calculate the pruning scores after reducing the data and obtain the least N scores in M.
 
