@@ -351,7 +351,7 @@ def prepare_inputs(model, n_samples, dataloader):
     return inputs, so
 
 
-def awq_quantize(model, tune_cfg, dataloader, n_samples=128, auto_scale=True, mse_range=True, n_blocks=5):
+def awq_quantize(model, tune_cfg, dataloader, n_samples=128, enable_auto_scale=True, enable_mse_search=True, n_blocks=5):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
     Args:
@@ -369,8 +369,8 @@ def awq_quantize(model, tune_cfg, dataloader, n_samples=128, auto_scale=True, ms
                 }
         dataloader (object): dataloader for calibration.
         n_samples (int, optional): calibration sample number. -1 means all samples.
-        auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
-        mse_range (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
+        enable_auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
+        enable_mse_search (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
         n_blocks (int, optional): split model into block number to avoid OOM.
 
     Returns:
@@ -379,7 +379,7 @@ def awq_quantize(model, tune_cfg, dataloader, n_samples=128, auto_scale=True, ms
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
     output_dicts = {}
 
-    if mse_range or mse_range:
+    if enable_mse_search or enable_mse_search:
         absorb_pairs = model.get_absorb_pairs(["MatMul", "Attention"])
 
         inputs, so = prepare_inputs(model, n_samples, dataloader)
@@ -418,9 +418,9 @@ def awq_quantize(model, tune_cfg, dataloader, n_samples=128, auto_scale=True, ms
                         output_dicts.setdefault(dump_tensor[output_idx], []).append(output)
 
                 model.remove_tensors_from_outputs(dump_tensor)
-                if auto_scale:
+                if enable_auto_scale:
                     model, output_dicts = apply_awq_scale(model, tune_cfg, dump_pairs, output_dicts)
-                if mse_range:
+                if enable_mse_search:
                     model = apply_awq_clip(model, tune_cfg, dump_pairs, output_dicts)
                 del output_dicts
                 dump_pairs = {}

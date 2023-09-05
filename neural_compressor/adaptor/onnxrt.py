@@ -1648,11 +1648,11 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         if "AWQ" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
 
-            auto_scale = self.recipes.get("awq_args", {}).get("auto_scale", True)
-            mse_range = self.recipes.get("awq_args", {}).get("mse_range", True)
+            enable_auto_scale = self.recipes.get("awq_args", {}).get("enable_auto_scale", True)
+            enable_mse_search = self.recipes.get("awq_args", {}).get("enable_mse_search", True)
             n_blocks = self.recipes.get("awq_args", {}).get("n_blocks", 5)
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
-            model = awq_quantize(model, quant_config, data_loader, calib_sampling_size, auto_scale, mse_range, n_blocks)
+            model = awq_quantize(model, quant_config, data_loader, calib_sampling_size, enable_auto_scale, enable_mse_search, n_blocks)
         elif "RTN" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
 
