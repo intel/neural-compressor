@@ -518,20 +518,23 @@ def fit(model, conf, b_dataloader=None, b_func=None):
         set_env_var("NC_ENV_CONF", True, overwrite_existing=True)
 
     if conf.diagnosis and os.environ.get("NC_ENV_CONF", None) in [None, "False"]:
-        logger.info("Start to run Profiling")
-        ni_workload_id = register_neural_insights_workload(
-            workload_location=os.path.abspath(os.path.abspath(options.workspace)),
-            model=wrapped_model,
-            workload_mode="benchmark",
-            workload_name=conf.ni_workload_name,
-        )
-        try:
-            update_neural_insights_workload(ni_workload_id, "wip")
-            profile(wrapped_model, conf, b_dataloader)
-            update_neural_insights_workload(ni_workload_id, "success")
-        except Exception as e:
-            logger.error(e)
-            update_neural_insights_workload(ni_workload_id, "failure")
+        if b_dataloader is not None:
+            logger.info("Start to run Profiling")
+            ni_workload_id = register_neural_insights_workload(
+                workload_location=os.path.abspath(os.path.abspath(options.workspace)),
+                model=wrapped_model,
+                workload_mode="benchmark",
+                workload_name=conf.ni_workload_name,
+            )
+            try:
+                update_neural_insights_workload(ni_workload_id, "wip")
+                profile(wrapped_model, conf, b_dataloader=b_dataloader)
+                update_neural_insights_workload(ni_workload_id, "success")
+            except Exception as e:
+                logger.error(e)
+                update_neural_insights_workload(ni_workload_id, "failure")
+        else:
+            logger.warning("Profiling is only supported with b_dataloader.")
 
     logger.info("Start to run Benchmark.")
     if os.environ.get("NC_ENV_CONF") == "True":
