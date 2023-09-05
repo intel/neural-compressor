@@ -60,7 +60,7 @@ Functions
    :return:
 
 
-.. py:function:: prepare_pruning(config, model, optimizer=None, dataloader=None, loss_func=None, framework='pytorch', device: str = None)
+.. py:function:: prepare_pruning(model, config, optimizer=None, dataloader=None, loss_func=None, framework='pytorch', device: str = None)
 
    Get registered pruning class, wrapper the model and optimizer to support all the pruning functionality.
 
