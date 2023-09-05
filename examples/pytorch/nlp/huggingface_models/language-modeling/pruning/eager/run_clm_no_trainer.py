@@ -718,7 +718,7 @@ def main():
         end_step=pruning_end,
     )
     
-    from neural_compressor.compression.pruner import prepare_pruning
+    from neural_compressor.training import prepare_pruning
     pruning = prepare_pruning(model, configs, dataloader=train_dataloader)
     
     model.eval()
