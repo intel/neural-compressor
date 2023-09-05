@@ -95,7 +95,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                "awq_args": {"auto_scale": True, "mse_range": True},
+                "awq_args": {"enable_auto_scale": True, "enable_mse_search": True},
             },
         )
         q_model = quantization.fit(self.model, conf, calib_dataloader=self.dataloader)
@@ -118,7 +118,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                "awq_args": {"auto_scale": False, "mse_range": True},
+                "awq_args": {"enable_auto_scale": False, "enable_mse_search": True},
             },
         )
         q_model = quantization.fit(self.model, conf, calib_dataloader=self.dataloader)
@@ -141,7 +141,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                "awq_args": {"auto_scale": True, "mse_range": False},
+                "awq_args": {"enable_auto_scale": True, "enable_mse_search": False},
             },
         )
         q_model = quantization.fit(self.model, conf, calib_dataloader=self.dataloader)
