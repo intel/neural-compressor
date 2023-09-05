@@ -66,7 +66,8 @@ pygments_style = "sphinx"
 html_theme = "sphinx_rtd_theme"
 
 html_static_path = ["_static"]
-templates_path = ['_templates']
+templates_path = ["_templates"]
+
 
 def skip_util_classes(app, what, name, obj, skip, options):
     if what == "property" or what == "method":
