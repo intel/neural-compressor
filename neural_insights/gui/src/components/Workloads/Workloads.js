@@ -64,7 +64,6 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
 
   return (
     <div>
-      {spinner && <Spinner className="spinner" animation="border" />}
       {workloadsList.length > 0 &&
         <div className="data-panel workloads-list">
           <h3>Workloads</h3>
@@ -75,6 +74,11 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
         <div className="data-panel">
           <h3>Neural Insights</h3>
           <p>Run diagnosis or profiling process to see workloads on this page.</p>
+        </div>
+      }
+      {spinner &&
+        <div className="spinner-container">
+          <Spinner className="spinner" animation="border" />
         </div>
       }
     </div>

@@ -17,6 +17,7 @@ import './Graph.scss';
 import { getLabel, customColor } from './../Diagnosis/Diagnosis';
 import Button from 'react-bootstrap/Button';
 import { api } from './../../App';
+import Spinner from 'react-bootstrap/Spinner';
 
 const cytoscape = require('cytoscape');
 const nodeHtmlLabel = require('cytoscape-node-html-label');
@@ -240,6 +241,11 @@ class CytoGraph extends React.Component {
       <div>
         <div className="graph-buttons">
           <GraphButtons parentCallback={this.handleCallback} />
+          {!this.props.graph &&
+            <div className="spinner-container">
+              <Spinner className="spinner" animation="border" />
+            </div>
+          }
           {this.props.groupNode.length > 0 &&
             <div className="nodes-table-container">
               <table className="nodes-table">

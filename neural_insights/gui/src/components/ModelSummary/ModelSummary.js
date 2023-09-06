@@ -15,6 +15,7 @@
 import React, { useEffect, useState } from 'react';
 import './ModelSummary.scss';
 import { api } from './../../App';
+import Spinner from 'react-bootstrap/Spinner';
 
 export default function ModelSummary({ selectedWorkload, setWarningText }) {
   const [summary, setSummary] = useState(null);
@@ -37,6 +38,11 @@ export default function ModelSummary({ selectedWorkload, setWarningText }) {
 
   return (
     <div className='data-panel summary'>
+      {!summary &&
+        <div className="spinner-container">
+          <Spinner className="spinner" animation="border" />
+        </div>
+      }
       <pre>
         <code>
           {summary?.data?.summary.replaceAll('\n\n', '\n')}

@@ -45,13 +45,6 @@
     margin-bottom: 6px;
   }
 
-  .data-panel-top {
-    background-color: white;
-    padding: 10px;
-    border-radius: 0.5rem;
-    margin-top: 6px;
-  }
-
   .flexbox {
     display: flex;
     max-height: 99vh;
@@ -64,14 +57,11 @@
     display: flex;
     flex-direction: column;
     max-height: 90vh;
-    width: 350px;
   }
 
   .workloads-flex {
-    flex: 1;
     display: flex;
     overflow: auto;
-    width: 350px;
   }
 
   .overflow-table {
@@ -135,6 +125,7 @@
   .spinner-container {
     width: 50px;
     margin: auto;
+    padding: 20px;
   }
 
   .spinner {
