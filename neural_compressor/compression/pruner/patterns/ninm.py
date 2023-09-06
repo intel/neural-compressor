@@ -296,6 +296,8 @@ class PytorchPatternNInM(PytorchBasePattern):
         not_exceed_layers = [key for key in new_scores.keys()]
 
         while True:
+            if residual_k < 1:
+                break
             threshold, _ = torch.kthvalue(global_scores, residual_k)
             for key in not_exceed_layers:
                 score = new_scores[key]

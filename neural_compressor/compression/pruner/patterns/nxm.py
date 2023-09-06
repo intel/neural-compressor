@@ -318,6 +318,8 @@ class PytorchPatternNxM(PytorchBasePattern):
                 break
             not_exceed_layers = new_not_exceed_layers
             global_scores = torch.cat([torch.flatten(new_scores[key]) for key in not_exceed_layers])
+            if residual_k < 1:
+                break
             threshold, _ = torch.kthvalue(global_scores, residual_k)
 
             for key in not_exceed_layers:
