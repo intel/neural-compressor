@@ -3028,7 +3028,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             None
         """
 
-        # group ops by postion for transform-based model
+        # group ops by position for transform-based model
         from .torch_utils.pattern_detector import TransformerBasedModelBlockPatternDetector
 
         detector = TransformerBasedModelBlockPatternDetector(model)
@@ -3273,7 +3273,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     }
                     logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
-        # Check save_qconf_summary part is a workaroud for IPEX bug.
+        # Check save_qconf_summary part is a workaround for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
         if not hasattr(model._model, "save_qconf_summary") or not hasattr(model._model, "load_qconf_summary"):
             static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)

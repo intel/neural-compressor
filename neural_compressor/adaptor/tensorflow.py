@@ -301,7 +301,7 @@ class TensorFlowAdaptor(Adaptor):
             measurer (object, optional): for precise benchmark measurement.
             iteration(int, optional): control steps of mini-batch
             tensorboard (boolean, optional): for tensorboard inspect tensor.
-            fp32_baseline (boolen, optional): only for compare_label=False pipeline
+            fp32_baseline (boolean, optional): only for compare_label=False pipeline
 
         Returns:
             [float]: evaluation result, the larger is better.
@@ -337,7 +337,7 @@ class TensorFlowAdaptor(Adaptor):
                                 "different between processes, please reset dataloader's batch_size."
                             )
             logger.info(
-                "Rank {!s} dataloaders' data distribution balance check for evaluation have been finnished.".format(
+                "Rank {!s} dataloaders' data distribution balance check for evaluation have been finished.".format(
                     hvd.allgather_object(hvd.rank())
                 )
             )
@@ -2061,7 +2061,7 @@ class TensorflowQuery(QueryBackendCapability):
                 sorted_list.remove("default") if "default" in sorted_list else None
                 if isinstance(sorted_list, list):
                     # TensorFlow 1.15.0-up1/up2/up3 release versions are abnoraml release naming
-                    # convention. Replacing them with dot for version comparision.
+                    # convention. Replacing them with dot for version comparison.
                     sorted_list = [i.replace("-up", ".") for i in sorted_list]
                     sorted_list = sorted(sorted_list, key=cmp_to_key(_compare), reverse=True)
                 else:
@@ -2108,14 +2108,14 @@ class TensorflowQuery(QueryBackendCapability):
         self._update_cfg_with_usr_definition()
 
     def _update_cfg_with_usr_definition(self):
-        """Add user defined precesion configuration."""
+        """Add user defined precision configuration."""
         from neural_compressor.conf.pythonic_config import tensorflow_config
 
         if tensorflow_config.precisions is not None:
             self.cur_config["precisions"]["names"] = ",".join(tensorflow_config.precisions)
 
     def get_version(self):
-        """Get the current backend version infomation.
+        """Get the current backend version information.
 
         Returns:
             [string]: version string.

@@ -68,7 +68,7 @@ class HessianTrace:
         self.q_model = q_model
         tmp_model = model.model
         if "graph" in (str(dir(tmp_model))):  # check the attribute and it's length
-            logger.info("This is aready fused model")
+            logger.info("This is already fused model")
             self.model = model.model
         else:
             logger.info("fusing model")
@@ -89,7 +89,7 @@ class HessianTrace:
         self.get_params()
 
     def is_fused_module(self, module):
-        """This is a helper function for `_propagate_qconfig_helper` to detecte if this module is fused.
+        """This is a helper function for `_propagate_qconfig_helper` to detect if this module is fused.
 
         Args:
             module (object): the input module.
@@ -194,8 +194,8 @@ class HessianTrace:
     #     return disable_input_grad_hook
 
     def _unregister_hook(self):
-        for handel in self.hook_handles:
-            handel.remove()
+        for handle in self.hook_handles:
+            handle.remove()
 
     def register_act_grad_hooks(self, model):
         """Append hook handles."""

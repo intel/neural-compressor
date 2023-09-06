@@ -1196,7 +1196,7 @@ class GraphTrace:
         }
 
         ##TODO potential bug, need to check only have one bug
-        ##TODO, must statisfy af(x)=f(ax),current skip layer may be incomplete
+        ##TODO, must satisfy af(x)=f(ax),current skip layer may be incomplete
         self.skip_ops_to_find_absorb = ["aten::to", "aten::relu", "aten::leaky_relu", "aten::hardtanh"]
 
         self.could_absorb_layers = [

@@ -153,7 +153,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
             fallback_records = []
             self.re_quant = True
             while not self.objectives.compare(self.last_tune_result, self.baseline):
-                # Record the time of calcutating the sensitivity
+                # Record the time of calculating the sensitivity
                 start = time()
                 ops_lst = self.adaptor.calculate_op_sensitivity(
                     self.model,

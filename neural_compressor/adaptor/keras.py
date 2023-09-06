@@ -567,7 +567,7 @@ class KerasAdaptor(Adaptor):
             measurer (object, optional): for precise benchmark measurement.
             iteration(int, optional): control steps of mini-batch
             tensorboard (boolean, optional): for tensorboard inspect tensor.
-            fp32_baseline (boolen, optional): only for compare_label=False pipeline
+            fp32_baseline (boolean, optional): only for compare_label=False pipeline
         """
         # use keras object
         keras_model = model.model
@@ -978,7 +978,7 @@ class KerasQuery(QueryBackendCapability):
         return default_config
 
     def get_version(self):
-        """Get the current backend version infomation.
+        """Get the current backend version information.
 
         Returns:
             [string]: version string.

@@ -208,7 +208,7 @@ def start_service(args):
     ip_address = get_local_service_ip(80)
 
     # Check if the service is started
-    # Set the maximum waiting time to 3 senconds
+    # Set the maximum waiting time to 3 seconds
     timeout = 3
     # Start time
     start_time = time.time()

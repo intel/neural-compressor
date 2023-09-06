@@ -78,7 +78,7 @@ class QuantizeLayerBase:  # pragma: no cover
         """The main logic of QuantizeLayerBase.
 
         Neural Compressor will enumerate all layers of the input model to check
-        if there are any layer meeting the criteria. The choosen ones will be marked
+        if there are any layer meeting the criteria. The chosen ones will be marked
         as quantizable by QuantizeConfig.
 
         Args:

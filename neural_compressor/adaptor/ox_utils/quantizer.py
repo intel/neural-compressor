@@ -125,7 +125,7 @@ class Quantizer:
         self.fixed_qrange_int8_name = "fixed_quantization_range_int8"
         # For uint8 data-type, to compute zero point, we subtract rmin from 0 (represented by fixed_zero_name tensor)
         self.fixed_zero_name = "fixed_zero"
-        # For int8 data-type, zero point is always zero (respresented by fixed_zero_point_name tensor)
+        # For int8 data-type, zero point is always zero (represented by fixed_zero_point_name tensor)
         self.fixed_zero_zp_name = "fixed_zero_zp"
 
         if not self.static:
@@ -337,7 +337,7 @@ class Quantizer:
         self.model.update()
 
     def remove_redundant_pairs(self):
-        """Remove redudant Q/DQ, Cast/Cast pairs."""
+        """Remove redundant Q/DQ, Cast/Cast pairs."""
         self.remove_nodes = []
         self.replace_input = []
         pairs = [
@@ -757,7 +757,7 @@ class Quantizer:
             else self.tensor_proto_to_array(inputscale_initializer)
         )
 
-        # calcuate scale for bias
+        # calculate scale for bias
 
         bias_scale = input_scale * weight_scale * beta
 
@@ -1045,7 +1045,7 @@ class Quantizer:
         if weight is None:
             raise ValueError("Expected {} to be an initializer".format(node.input[1]))
 
-        # Add reshape for correct broadcase
+        # Add reshape for correct broadcast
         reshape_input_data = quantized_bias_name
         reshape_input_shape = quantized_bias_name + "_reshape_shape"
         reshape_input = [reshape_input_data, reshape_input_shape]

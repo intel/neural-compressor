@@ -775,7 +775,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                 self.mycat = nnq.FloatFunctional()
                 self.myadd = nnq.FloatFunctional()
                 self.myadd_relu = nnq.FloatFunctional()
-                # Tracing doesnt work yet for c10 ops with scalar inputs
+                # Tracing doesn't work yet for c10 ops with scalar inputs
                 # https://github.com/pytorch/pytorch/issues/27097
                 self.my_scalar_add = nnq.FloatFunctional()
                 self.mymul = nnq.FloatFunctional()
@@ -788,7 +788,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                 y = self.mycat.cat([x, x, x])
                 z = self.myadd.add(y, y)
                 w = self.myadd_relu.add_relu(z, z)
-                # Tracing doesnt work yet for c10 ops with scalar inputs
+                # Tracing doesn't work yet for c10 ops with scalar inputs
                 # https://github.com/pytorch/pytorch/issues/27097
                 w = self.my_scalar_add.add_scalar(w, -0.5)
                 w = self.mymul.mul(w, w)
@@ -822,7 +822,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         self.assertTrue(np.allclose(y, qy, **tol))
 
 
-@unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
+@unittest.skipIf(not FX_MODE, "Unsupported Fx Mode with PyTorch Version Below 1.8")
 class TestPytorchFXAdaptor(unittest.TestCase):
     framework_specific_info = {
         "device": "cpu",

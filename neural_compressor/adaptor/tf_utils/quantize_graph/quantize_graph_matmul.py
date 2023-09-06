@@ -29,7 +29,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
     """Quantize MatMul and apply the fusion."""
 
     def __init__(self, **kwargs):
-        """Initilization."""
+        """Initialization."""
         super().__init__(**kwargs)
 
         self.sorted_patterns = sorted(self.patterns, key=lambda i: len(i), reverse=True)

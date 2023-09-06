@@ -59,7 +59,7 @@ class PreOptimization:
     """Pre optimization for the FP32 models."""
 
     def __init__(self, model, new_api, device):
-        """Initilization."""
+        """Initialization."""
         self.model = model
         if version1_gte_version2(tf.version.VERSION, "2.1.0") or version1_eq_version2(tf.version.VERSION, "1.15.0-up3"):
             self.optimization = {

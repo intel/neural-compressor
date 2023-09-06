@@ -124,7 +124,7 @@ def warn(msg, *args, **kwargs):
 
 
 def warning(msg, *args, **kwargs):
-    """Output log with the warining level (Alias of the method warn)."""
+    """Output log with the warning level (Alias of the method warn)."""
     if isinstance(msg, dict):
         for _, line in enumerate(_pretty_dict(msg).split("\n")):
             Logger().get_logger().warning(line, *args, **kwargs)

@@ -408,7 +408,7 @@ class TensorflowWrapFunction(object):
         """Initialize `TensorflowWrapFunction` class.
 
         Args:
-            transform_func (function): tensorflow tranform function
+            transform_func (function): tensorflow transform function
         """
         self.transform_func = transform_func
 
@@ -428,7 +428,7 @@ class TensorflowTransform(BaseTransform):
         """Initialize `TensorflowTransform` class.
 
         Args:
-            transform_func (function): tensorflow tranform function
+            transform_func (function): tensorflow transform function
         """
         self.kwargs = kwargs
         self.transform_func = transform_func
@@ -437,7 +437,7 @@ class TensorflowTransform(BaseTransform):
         """__call__ method.
 
         Returns:
-            a tuple of image and lable which get from tensorflow tranform processing
+            a tuple of image and label which get from tensorflow transform processing
         """
         image, label = sample
         image = self.transform_func(image, **self.kwargs)
@@ -451,7 +451,7 @@ class PytorchMxnetWrapFunction(object):
         """Initialize `PytorchMxnetWrapFunction` class.
 
         Args:
-            transform_func (function): pytorch or mxnet tranform function
+            transform_func (function): pytorch or mxnet transform function
         """
         self.transform_func = transform_func
 
@@ -471,7 +471,7 @@ class PytorchMxnetTransform(BaseTransform):
         """Initialize `PytorchMxnetTransform` class.
 
         Args:
-            transform_func (function): pytorch or mxnet tranform function
+            transform_func (function): pytorch or mxnet transform function
         """
         self.transform_func = transform_func
 
@@ -479,7 +479,7 @@ class PytorchMxnetTransform(BaseTransform):
         """__call__ method.
 
         Returns:
-            a tuple of image and lable which get from pytorch or mxnet tranform processing
+            a tuple of image and label which get from pytorch or mxnet transform processing
         """
         image, label = sample
         image = self.transform_func(image)
@@ -1421,7 +1421,7 @@ class RandomResizedCropTFTransform(BaseTransform):
             raise ValueError("Scale and ratio should be of kind (min, max)")
 
     def get_params(self, image, scale, ratio):
-        """Get the image prameters: position, height and width."""
+        """Get the image parameters: position, height and width."""
         shape = image.shape
         height = tf.cast(shape[0], dtype=tf.float32)
         width = tf.cast(shape[1], dtype=tf.float32)
@@ -1608,7 +1608,7 @@ class AlignImageChannelTransform(BaseTransform):
         """Initialize `AlignImageChannelTransform` class."""
         logger.warning("This transform is going to be deprecated")
         if dim < 1 or dim > 4:
-            raise ValueError("Unsupport image dim!")
+            raise ValueError("Unsupported image dim!")
         self.dim = dim
 
     def __call__(self, sample):
@@ -1623,7 +1623,7 @@ class AlignImageChannelTransform(BaseTransform):
                 image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
                 image = np.expand_dims(image, axis=-1)
             else:
-                raise ValueError("Unsupport conversion!")
+                raise ValueError("Unsupported conversion!")
         return (image, label)
 
 
@@ -1641,7 +1641,7 @@ class PyTorchAlignImageChannel(BaseTransform):
         """Initialize `PyTorchAlignImageChannel` class."""
         logger.warning("This transform is going to be deprecated")
         if dim != 1 and dim != 3:
-            raise ValueError("Unsupport image dim!")
+            raise ValueError("Unsupported image dim!")
         self.dim = dim
 
     def __call__(self, sample):
@@ -1655,7 +1655,7 @@ class PyTorchAlignImageChannel(BaseTransform):
         elif self.dim == 1:
             image = image.convert("L")
         else:
-            raise ValueError("Unsupport conversion!")
+            raise ValueError("Unsupported conversion!")
         return (image, label)
 
 
@@ -2130,7 +2130,7 @@ class RandomResizedCropTransform(BaseTransform):
             raise ValueError("Scale and ratio should be of kind (min, max)")
 
     def get_params(self, image, scale, ratio):
-        """Get the image prameters: position, height and width."""
+        """Get the image parameters: position, height and width."""
         h, w = image.shape[0], image.shape[1]
         src_area = h * w
 

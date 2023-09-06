@@ -299,7 +299,7 @@ class ONNXRTAugment:
                                 if q_config and node_name in q_config and "activation" in q_config[node_name]
                                 else "minmax"
                             )
-                            assert calib_method in CALIBRATOR, "Calibration method {} is not registerd.".format(
+                            assert calib_method in CALIBRATOR, "Calibration method {} is not registered.".format(
                                 calib_method
                             )
                             calibrator = CALIBRATOR[calib_method]()
@@ -355,7 +355,7 @@ class ONNXRTAugment:
             return self._dequantize_activation(tensor, scale_tensor, zo_tensor)
 
     def _dequantize_activation(self, activation_tensor_name, scale_tensor, zo_tensor):
-        """Helper funtion to dequantize activation."""
+        """Helper function to dequantize activation."""
         added_nodes, added_output = self._add_dequantize_node(activation_tensor_name, scale_tensor, zo_tensor)
         self.dequantized_output[added_output] = activation_tensor_name
         return added_nodes, added_output

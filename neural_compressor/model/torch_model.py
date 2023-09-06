@@ -58,7 +58,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
 
     def __repr__(self):
         """Describe a PyTorchBaseModel as a string."""
-        # rewirte this func to avoid printing fp32_model
+        # rewrite this func to avoid printing fp32_model
         from torch.nn.modules.module import _addindent
 
         # We treat the extra repr like the sub-module, one item per line
@@ -407,7 +407,7 @@ class PyTorchModel(PyTorchBaseModel):
                 verbose=True,
             )
         else:  # pragma: no cover
-            assert False, "Not allowed dtype: {}, pleas use 'fp32' or 'int8'.".format(conf.dtype)
+            assert False, "Not allowed dtype: {}, please use 'fp32' or 'int8'.".format(conf.dtype)
 
     def export_compressed_model(
         self,

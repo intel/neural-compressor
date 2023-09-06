@@ -1080,7 +1080,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         assert fields is None or skip_fields is None
         assert optypes is None or skip_optypes is None
         if not isinstance(self.adaptor, TensorFlowAdaptor):
-            logger.debug("OpType statistics comparation is only available for TensorFlow adaptor.")
+            logger.debug("OpType statistics comparison is only available for TensorFlow adaptor.")
             return
 
         adaptor_statistics = self.adaptor.optype_statistics

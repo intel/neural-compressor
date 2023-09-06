@@ -608,7 +608,7 @@ class ORTSmoothQuant:
 
         Args:
             weights (numpy.ndarray): weight data
-            specific_alpha (float): current alpha for this weigths
+            specific_alpha (float): current alpha for this weights
             tensor (str): tensor name
         """
         weights = np.abs(weights.reshape(weights.shape[0], -1))

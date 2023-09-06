@@ -1548,7 +1548,7 @@ class ONNXRTGLUE(BaseMetric):
             labels: The labels corresponding to the predictions.
         """
         if getattr(self, "_hvd", None) is not None:
-            raise NotImplementedError("Metric ONNXRTGLUE currently do not support distribued inference.")
+            raise NotImplementedError("Metric ONNXRTGLUE currently do not support distributed inference.")
         if isinstance(preds, list) and len(preds) == 1:
             preds = preds[0]
         if isinstance(labels, list) and len(labels) == 1:

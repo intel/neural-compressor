@@ -486,7 +486,6 @@ Leibler
 LessEqual
 LiTS
 LibriSpeech
-Limitting
 LinkedIn
 ListDataset
 Liu
@@ -910,7 +909,6 @@ SummaryWriter
 SuperBench
 Supernet
 SupportMatrix
-Supprted
 Sutskever
 Suyue
 Suárez
@@ -1098,7 +1096,6 @@ adaptor
 adaptor's
 addr
 ade
-adresses
 ae
 aea
 af
@@ -1135,7 +1132,6 @@ ap
 apache
 api
 apis
-approch
 arXiv
 arange
 arcface
@@ -1346,10 +1342,8 @@ connectSSH
 const
 constexpr
 constfold
-contaning
 contrib
 conv
-convertion
 convolutional
 cooldown
 copt
@@ -1380,7 +1374,6 @@ cudatoolkit
 cudnn
 curr
 customised
-custormer
 cv
 cwad
 cwd
@@ -1404,7 +1397,6 @@ datasets
 datatype
 datatypes
 dathath
-datset
 dbaeumer
 dbmdz
 dbox
@@ -1552,9 +1544,7 @@ evaluator
 evel
 exdb
 exemplarily
-exising
 existing
-exmaple
 expanduser
 extensibility
 extmanager
@@ -1611,7 +1601,6 @@ fp
 fpic
 fpn
 frac
-frequence
 frontend
 fstack
 ftfy
@@ -1662,7 +1651,6 @@ googleapis
 googleblog
 googlenet
 googlesource
-governer
 gpb
 gpg
 gpt
@@ -1914,6 +1902,7 @@ mailto
 mainpage
 manylinux
 marianmt
+masia
 maskrcnn
 maskrnn
 massa
@@ -1953,7 +1942,6 @@ minmax
 mins
 misalignments
 miscs
-missmatches
 mixedprecision
 mixnet
 mixup
@@ -2141,6 +2129,7 @@ optypewise
 opwise
 os
 osJJ
+ot
 oup
 outPut
 outdir
@@ -2195,7 +2184,6 @@ pnasnet
 png
 polynet
 pos
-postprocesing
 postprocess
 postprocessed
 postprocessing
@@ -2210,7 +2198,6 @@ prebuilt
 precisions
 pred
 preds
-preformance
 preload
 preprint
 preprocess
@@ -2307,14 +2294,12 @@ regex
 registerCommand
 rehm
 reinstall
-relase
 releaser
 relu
 repo
 repo's
 repos
 repo’s
-representating
 requantize
 resampled
 resampling
@@ -2325,7 +2310,6 @@ resnest
 resnet
 resnetv
 resnext
-ressource
 ressources
 ret
 retinaNet
@@ -2473,7 +2457,6 @@ summarization
 superbench
 supernet
 superseeds
-suported
 sut
 sv
 svg
@@ -2491,6 +2474,7 @@ tb
 tbe
 tbody
 td
+te
 techdecoded
 tencent
 tensor's

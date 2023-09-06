@@ -31,7 +31,7 @@ class ConvertAddToBiasAddOptimizer(GraphRewriterBase):
 
     @dump_elapsed_time("Pass ConvertAddToBiasAddOptimizer")
     def do_transformation(self):
-        """Execute convertion Add to BiasAdd."""
+        """Execute conversion Add to BiasAdd."""
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()

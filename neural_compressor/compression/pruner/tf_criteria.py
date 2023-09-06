@@ -51,7 +51,7 @@ class PruningCriterion:
     """
 
     def __init__(self, modules, config):
-        """Initiliaze a pruning criterion."""
+        """Initialize a pruning criterion."""
         self.scores = {}
         self.modules = modules
         self.config = config
@@ -85,7 +85,7 @@ class MagnitudeCriterion(PruningCriterion):
     """
 
     def __init__(self, modules, config):
-        """Initiliaze a magnitude pruning criterion."""
+        """Initialize a magnitude pruning criterion."""
         super(MagnitudeCriterion, self).__init__(modules, config)
 
     def on_step_begin(self):
