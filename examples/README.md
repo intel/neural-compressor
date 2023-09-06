@@ -279,6 +279,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/image_recognition/tensorflow_models/vision_transformer/">pb</a></td>
   </tr>
+  <tr>
+    <td>GraphSage</td>
+    <td>Graph Networks</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/graph_networks/graphsage/">pb</a></td>
+  </tr>
 </tbody>
 </table>
 
@@ -1452,9 +1458,9 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>Llama-7B (HuggingFace)</td>
     <td>Text Generation</td>
-    <td>Static Quantization</td>
+    <td>Static / Weight Only Quantization</td>
     <td>
-      <a href="./onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static">qlinearops</a>
+      <a href="./onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only">weight_only</a>
     </td>
   </tr>
 </tbody>

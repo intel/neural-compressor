@@ -154,7 +154,7 @@ class ONNXModel(BaseModel):
                 root,
                 save_as_external_data=True,
                 all_tensors_to_one_file=True,
-                location="int8_weights.pb",
+                location=root.split("/")[-1] + "_data",
                 size_threshold=1024,
                 convert_attribute=False,
             )
@@ -607,6 +607,9 @@ class ONNXModel(BaseModel):
         """
         qkv = []
         for node in self._model.graph.node:
+            if node.op_type == "Attention":
+                qkv.append([node.name])
+                continue
             start_node, qkv_nodes_list = None, None
             if node.op_type == "SkipLayerNormalization":
                 start_node = node
@@ -615,7 +618,12 @@ class ONNXModel(BaseModel):
                         start_node,
                         ["MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
                         [None, 0, 0, 0, 0],
-                    )
+                    ),
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
+                        [1, 1, 0, 0, 0],
+                    ),
                 ]
             if node.op_type == "Add":
                 start_node = node
@@ -673,6 +681,31 @@ class ONNXModel(BaseModel):
                 if not find_all:
                     break
         return qkv
+
+    def find_ffn_matmul(self, attention_index, attention_matmul_list, block_len):
+        """Find MatMul in FFN.
+
+        Args:
+            attention_index (list): index of Attention
+            attention_matmul_list (list): list of Attention and MatMul nodes
+            block_len (int): block length
+
+        Returns:
+            list: list of MatMul in FFN
+        """
+        ffn_matmul = []
+        for idx in range(len(attention_index)):
+            if idx != len(attention_index) - 1:
+                index = attention_index[idx + 1]
+                if index - 2 >= 0:
+                    ffn_matmul.append([attention_matmul_list[index - 2], attention_matmul_list[index - 1]])
+            else:
+                index = attention_index[idx]
+                if index + block_len - 1 < len(attention_matmul_list):
+                    ffn_matmul.append(
+                        [attention_matmul_list[index + block_len - 2], attention_matmul_list[index + block_len - 1]]
+                    )
+        return ffn_matmul
 
     def export(self, save_path, conf):
         """Export Qlinear to QDQ model."""

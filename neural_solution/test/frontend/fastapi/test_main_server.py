@@ -210,7 +210,7 @@ class TestMain(unittest.TestCase):
         assert response.status_code == 200
         self.assertIn("pending", response.text)
 
-        response = client.get(f"/task/status/error_id")
+        response = client.get("/task/status/error_id")
         assert response.status_code == 200
         self.assertIn("Please check url", response.text)
 
@@ -240,8 +240,6 @@ class TestLogEventHandler(unittest.TestCase):
         self.assertIsInstance(handler.timer, asyncio.Task)
 
     def test_on_modified(self):
-        from neural_solution.config import config
-
         config.workspace = NEURAL_SOLUTION_WORKSPACE
         mock_websocket = MagicMock()
         mock_websocket.send_text = MagicMock()

@@ -27,6 +27,7 @@ from neural_compressor.strategy.strategy import STRATEGIES
 
 from .adaptor import FRAMEWORKS
 from .compression.callbacks import DistillationCallbacks, PruningCallbacks, QuantizationAwareTrainingCallbacks
+from .compression.pruner import prepare_pruning
 from .config import _Config, options
 from .metric import register_customer_metric
 from .model.model import Model

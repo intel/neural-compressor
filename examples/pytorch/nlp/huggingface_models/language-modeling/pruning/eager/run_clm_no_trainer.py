@@ -723,7 +723,7 @@ def main():
     )
     
     from neural_compressor.compression.pruner import prepare_pruning
-    pruning = prepare_pruning(configs, model, dataloader=train_dataloader)
+    pruning = prepare_pruning(model, configs, dataloader=train_dataloader)
     
     model.eval()
     if args.evaluation_dataset_name != None:

@@ -7,8 +7,7 @@ exclude: |
       conda_meta/.+|
       neural_insights/gui.+|
       neural_insights/test.+|
-      neural_solution/frontend/.+|
-      neural_solution/test/.+|
+      neural_solution/frontend/gRPC/proto/neural_solution_pb2.py|
       neural_coder/extensions/.+|
       neural_coder/examples/.+|
       examples/.+
@@ -50,6 +49,10 @@ repos:
             neural_solution/.*(py|yaml|yml|sh)|
             neural_compressor/.*(py|yaml|yml|sh)|
             neural_insights/.*(py|yaml|yml|sh)
+          )$
+        exclude: |
+          (?x)^(
+              neural_solution/test/.*
           )$
         args:
           [
