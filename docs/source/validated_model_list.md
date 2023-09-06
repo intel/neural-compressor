@@ -1344,7 +1344,7 @@ For more complete information about performance and benchmark results, visit www
     <th class="tg-im72">Accuracy</th>
     <th class="tg-im72">Accuracy</th>
     <th class="tg-im72">Accuracy</th>
-    <th class="tg-iire">Accuracy Ratio<br>[(INT8-FP32)/FP32]</th>
+    <th class="tg-iire">Accuracy Ratio<br>[INT8/FP32]</th>
     <th class="tg-haiz">Word_perplexity</th>
   </tr>
 </thead>
