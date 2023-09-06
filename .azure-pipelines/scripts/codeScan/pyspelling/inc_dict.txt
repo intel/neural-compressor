@@ -1008,7 +1008,6 @@ WARMUPS
 WIDERFACE
 WIP
 WLYDCRB
-WOQ
 Wallach
 Wasserblat
 WeChat
@@ -2644,7 +2643,6 @@ wip
 wmt
 wnd
 wnli
-woq
 workdir
 workflow
 workflows
@@ -2720,3 +2718,20 @@ zrelro
 zrl
 zxvf
 Éric
+Hellaswag
+Piqa
+Winogrande
+bloomz
+cy
+databricks
+folj
+haiz
+iire
+mosaicml
+mpt
+neo
+oo
+rq
+storywriter
+tiiuae
+vxga
