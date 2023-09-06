@@ -469,7 +469,8 @@ class TestSqListInput(unittest.TestCase):
                 self.norm = LlamaRMSNorm(4)
                 self.fc3 = torch.nn.Linear(4, 3)
 
-            def forward(self, x1, x2, x3, x4):
+            def forward(self, x1, x_tuple, x4):
+                x2, x3 = x_tuple
                 out1 = self.fc1_1(x1 + x4)
                 out2 = self.fc1_2(x2 + x3)
                 out = out1 + out2
@@ -480,12 +481,16 @@ class TestSqListInput(unittest.TestCase):
                 return out
 
         model = Model()
-        model.device = "cuda"
-
         sq = TorchSmoothQuant(model, self.list_tuple_dl)
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 2
 
+    def test_device(self):
+        input1 = torch.rand((1, 3))
+        input2 = torch.rand((1, 3))
+        example_input = {'k': [input1, ((input2, input1)), input2]}
+        from neural_compressor.adaptor.torch_utils.smooth_quant import move_input_to_device
+        move_input_to_device(example_input)
 
 class TestAlphaAutoLinear(unittest.TestCase):
     @classmethod
