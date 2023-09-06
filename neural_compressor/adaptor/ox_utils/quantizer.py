@@ -395,7 +395,10 @@ class Quantizer:
                     node.input[idx] = do_cast_new_tensor.name
 
                     # if origin initializer is no more used, remove it
-                    if self.model.get_initializer(initializer.name) is None:
+                    self.model.update()
+                    input_name_to_nodes = self.model.input_name_to_nodes
+                    if initializer.name not in input_name_to_nodes or \
+                        len(input_name_to_nodes[initializer.name]) == 0:
                         self.model.remove_initializer(initializer)
 
                     self.new_value_info[do_cast_new_tensor.name] = ValueInfo(do_cast_new_tensor.name,
