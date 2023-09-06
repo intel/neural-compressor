@@ -227,7 +227,6 @@ class GPTQuantizer(object):
         self.prepare_dataloader()
 
     def prepare_dataloader(self):
-        # import pdb;pdb.set_trace()
         if self.use_max_length:
             # (Recommend) only take sequence whose length exceeds self.pad_max_length,
             # which perserves calibration's tokens are all valid
@@ -252,6 +251,7 @@ class GPTQuantizer(object):
         for batch in self.dataloader_original:
             # process data, depends on its data type.
             if len(self.dataloader) == self.nsamples:
+                logger.info(f"Successfully collect {self.nsamples} calibration samples.")
                 break
             # list, tuple
             if isinstance(batch, list) or isinstance(batch, tuple):
@@ -299,6 +299,7 @@ class GPTQuantizer(object):
         unified_length = self.pad_max_length
         for batch in self.dataloader_original:
             if len(self.dataloader) == self.nsamples:
+                logger.info(f"Successfully collect {self.nsamples} calibration samples.")
                 break
             # list & tuple
             if isinstance(batch, list) or isinstance(batch, tuple):
