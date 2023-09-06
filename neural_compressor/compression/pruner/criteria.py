@@ -97,8 +97,10 @@ class MagnitudeCriterion(PruningCriterion):
         with torch.no_grad():
             for key in self.modules.keys():
                 p = self.modules[key].weight.data
-                # self.scores[key] = torch.abs(p)
-                self.scores[key] = self.pattern.reduce_score(torch.abs(p), key)
+                if hasattr(self.pattern, "reduce_score"):
+                    self.scores[key] = self.pattern.reduce_score(torch.abs(p), key)
+                else:
+                    self.scores[key] = torch.abs(p)
 
 
 @register_criterion("gradient")
@@ -127,7 +129,10 @@ class GradientCriterion(PruningCriterion):
             for key in self.modules.keys():
                 p = self.modules[key].weight
                 # self.scores[key] = torch.abs(p.grad)
-                self.scores[key] = self.pattern.reduce_score(torch.abs(p.grad), key)
+                if hasattr(self.pattern, "reduce_score"):
+                    self.scores[key] = self.pattern.reduce_score(torch.abs(p.grad), key)
+                else:
+                    self.scores[key] = torch.abs(p.grad)
 
 
 @register_criterion("snip")
@@ -158,7 +163,10 @@ class SnipCriterion(PruningCriterion):
             for key in self.modules.keys():
                 p = self.modules[key].weight
                 # self.scores[key] = torch.abs(p * p.grad)
-                self.scores[key] = self.pattern.reduce_score(torch.abs(p * p.grad), key)
+                if hasattr(self.pattern, "reduce_score"):
+                    self.scores[key] = self.pattern.reduce_score(torch.abs(p * p.grad), key)
+                else:
+                    self.scores[key] = torch.abs(p * p.grad)
 
 
 @register_criterion("snip_momentum")

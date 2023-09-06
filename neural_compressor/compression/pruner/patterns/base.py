@@ -683,7 +683,7 @@ class KerasBasePattern(BasePattern):
             one = tf.convert_to_tensor([1.0])
             mask = tf.where(score <= threshold, zero, one)
         else:
-            mask = tf.ones_like(score.shape)
+            mask = tf.ones_like(score)
         return mask
 
     def get_sparsity_ratio_each_layer(self, masks):
