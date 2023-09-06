@@ -35,10 +35,13 @@ There are many excellent works for weight only quantization to improve its accur
 ### **Quantization Capability**:
 | Config | Capability |
 | :---: | :---:|
+| dtype | ['int', 'nf4', 'fp4'] |
 | bits | [1-8] |
 | group_size | [-1, 1-N] | 
 | scheme | ['asym', 'sym'] |
 | algorithm | ['RTN', 'AWQ', 'GPTQ'] |
+
+Notes: 4-bit NormalFloat(NF4) is proposed in QLoRA[5]. 'fp4' includes [fp4_e2m1](../../neural_compressor/adaptor/torch_utils/weight_only.py#L37) and [fp4_e2m1_bnb](https://github.com/TimDettmers/bitsandbytes/blob/18e827d666fa2b70a12d539ccedc17aa51b2c97c/bitsandbytes/functional.py#L735). By default, fp4 refers to fp4_e2m1_bnb.
 
 **RTN arguments**:
 |  rtn_args  | default value |                               comments                              |
@@ -82,30 +85,30 @@ To support low memory inference, Neural Compressor implemented WeightOnlyLinear,
 ### **User code**:
 ```python
 conf = PostTrainingQuantConfig(
-    approach='weight_only',
+    approach="weight_only",
     op_type_dict={
-        '.*':{ 	# re.match
+        ".*": {  # re.match
             "weight": {
-                'bits': 8, # 1-8 bit 
-                'group_size': -1,  # -1 (per-channel)
-                'scheme': 'sym', 
-                'algorithm': 'RTN', 
+                "bits": 8,  # 1-8 bit
+                "group_size": -1,  # -1 (per-channel)
+                "scheme": "sym",
+                "algorithm": "RTN",
             },
         },
     },
     recipes={
         # 'gptq_args':{'percdamp': 0.01, 'actorder':True, 'block_size': 128, 'nsamples': 128, 'use_full_length': False},
-        'awq_args':{'auto_scale': True, 'mse_range': True, 'n_blocks': 5},
+        # 'awq_args':{'auto_scale': True, 'mse_range': True},
     },
 )
 q_model = quantization.fit(model, conf, eval_func=eval_func)
-q_model.save('saved_results')
+q_model.save("saved_results")
 compressed_model = q_model.export_compressed_model(
     compression_dtype=torch.int32,
     compression_dim=1,
     scale_dtype=torch.float16,
 )
-torch.save(compressed_model.state_dict(), 'compressed_model.pt')
+torch.save(compressed_model.state_dict(), "compressed_model.pt")
 ```
 
 The saved_results folder contains two files: `best_model.pt` and `qconfig.json`, and the generated q_model is a fake quantized model.
@@ -119,3 +122,5 @@ The saved_results folder contains two files: `best_model.pt` and `qconfig.json`,
 [3]. Lin, Ji, et al. "AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration." arXiv preprint arXiv:2306.00978 (2023).
 
 [4]. Frantar, Elias, et al. "Gptq: Accurate post-training quantization for generative pre-trained transformers." arXiv preprint arXiv:2210.17323 (2022).
+
+[5]. Dettmers, Tim, et al. "Qlora: Efficient finetuning of quantized llms." arXiv preprint arXiv:2305.14314 (2023).

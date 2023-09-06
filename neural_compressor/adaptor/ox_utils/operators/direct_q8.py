@@ -16,9 +16,12 @@
 # limitations under the License.
 """Direct8Bit Operator."""
 
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, qop_registry, QOperator
+from neural_compressor.adaptor.ox_utils.operators.ops import Operator, QOperator, op_registry, qop_registry
 
-@op_registry(op_types="Reshape, Transpose, Squeeze, Unsqueeze, Flatten, Expand, Slice")
+
+@op_registry(
+    op_types="Reshape, Transpose, Squeeze, Unsqueeze, Flatten, Expand, Slice, " "SpaceToDepth, DepthToSpace, Upsample"
+)
 class Direct8BitOperator(Operator):
     """Direct8Bit Operator."""
 
@@ -32,55 +35,54 @@ class Direct8BitOperator(Operator):
         if not self.quantizer.is_valid_quantize_weight(node.input[0]):
             return False
         return True
-        
+
     def quantize(self):
         """Do quantizaion."""
         node = self.node
         self.quantizer.quantize_inputs(self.node, [0], direct_int8=True)
-        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
+        if not self.disable_qdq_for_node_output or self.quantizer.mode != "qdq":
             self.quantizer.quantize_outputs(self.node, direct_int8=True)
         node.name = node.name + "_quant"
 
     def convert_check(self, convert_format):
         """Check if conversion can be done."""
         node = self.node
-        assert convert_format in ['static'], \
-            "convert format for {} should be in ['static']".format(node.op_type)
-            
+        assert convert_format in ["static"], "convert format for {} should be in ['static']".format(node.op_type)
+
         parents = self.quantizer.model.get_parents(node)
         children = self.quantizer.model.get_children(node)
-        if (len(children) == 0 and len(parents) == 0) or \
-            not node.name.endswith('_quant'):
+        if (len(children) == 0 and len(parents) == 0) or not node.name.endswith("_quant"):
             return False
         return True
 
     def convert(self, convert_format):
         """Convert to QOperator format."""
         node = self.node
-       
+
         parents = self.quantizer.model.get_parents(node)
         children = self.quantizer.model.get_children(node)
-        if any([i.op_type == 'DequantizeLinear' for i in parents]) and \
-            any([i.op_type == 'QuantizeLinear' for i in children]):
+        if any([i.op_type == "DequantizeLinear" for i in parents]) and any(
+            [i.op_type == "QuantizeLinear" for i in children]
+        ):
             for parent in parents:
-                if parent.op_type == 'DequantizeLinear':
+                if parent.op_type == "DequantizeLinear":
                     self.node.input[0] = parent.input[0]
                     self.quantizer.remove_nodes.append(parents[0])
                     break
             for child in children:
-                if child.op_type == 'QuantizeLinear':
+                if child.op_type == "QuantizeLinear":
                     self.quantizer.remove_nodes.append(child)
-                    self.quantizer.model.replace_input_of_all_nodes(
-                        child.output[0], node.output[0] + '_quantized')
-            node.output[0] = node.output[0] + '_quantized' 
-    
-    def cast(self): # pragma: no cover
+                    self.quantizer.model.replace_input_of_all_nodes(child.output[0], node.output[0] + "_quantized")
+            node.output[0] = node.output[0] + "_quantized"
+
+    def cast(self):  # pragma: no cover
         """Cast node."""
         node = self.node
         if node.input[0] not in [i.tensor_name for i in self.quantizer.new_value_info.values()]:
             return
         self.quantizer.cast_inputs(self.node, self.dtype, [0])
         self.quantizer.cast_outputs(self.node, self.dtype)
+
 
 @qop_registry(op_types="Reshape, Transpose, Squeeze, Unsqueeze")
 class QDirectOperator(QOperator):

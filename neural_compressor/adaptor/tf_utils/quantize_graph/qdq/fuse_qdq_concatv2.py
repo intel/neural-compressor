@@ -16,12 +16,15 @@
 # limitations under the License.
 """Quantize ConcatV2 to int8 op."""
 
-import re
 import os
-from tensorflow.python.framework import dtypes
+import re
+
 from tensorflow.core.framework import node_def_pb2
-from ..quantize_graph_base import QuantizeNodeBase
+from tensorflow.python.framework import dtypes
+
 from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
+
+from ..quantize_graph_base import QuantizeNodeBase
 
 
 class FuseNodeStartWithConcatV2(QuantizeNodeBase):
@@ -30,9 +33,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
     def __init__(self, **kwargs):
         """Initilizaiton."""
         super().__init__(**kwargs)
-        self.sorted_patterns = sorted(self.patterns,
-                                      key=lambda i: len(i),
-                                      reverse=True)
+        self.sorted_patterns = sorted(self.patterns, key=lambda i: len(i), reverse=True)
         self.dtype = dtypes.quint8
         self.exclude_concat_nodes = []
 
@@ -41,7 +42,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         if name.startswith("^"):
             name = name[1:]
         if re.search(r"\w+:\d+", name):
-            node = self.node_name_mapping[name.rsplit(':', 1)[0]].node
+            node = self.node_name_mapping[name.rsplit(":", 1)[0]].node
         else:
             node = self.node_name_mapping[name].node
         return node
@@ -52,50 +53,53 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
             return name
         node = self._get_node_from_name(name)
         if len(node.input) == 0:
-            return ''
+            return ""
         return node.input[0]
 
     def _quantizable_concat(self, node):
         """Check if the ConcatV2 is quantizable."""
         deq_type = []
         is_quantizable = True
-        if self.performance_only or os.getenv('TF_FORCE_CONCAT_OPTS') == '1':
+        if self.performance_only or os.getenv("TF_FORCE_CONCAT_OPTS") == "1":
             _, normal_inputs = self._get_node_input(node.name)
-            original_inputs = normal_inputs[:node.attr['N'].i]
+            original_inputs = normal_inputs[: node.attr["N"].i]
 
             # the input chain of concatv2 is QuantizedOp -> (req) -> q -> dq -> concat
             for each_input in original_inputs:
                 dq_input = self._get_first_input_from_name(each_input)
                 q_input = self._get_first_input_from_name(dq_input)
                 pre_input = self._get_first_input_from_name(q_input)
-                if pre_input == '':
+                if pre_input == "":
                     continue
                 req_input = self._get_node_from_name(pre_input)
-                
+
                 # the concatv2 with these Ops as inputs can't be reranged
-                if req_input.op in ['_QuantizedFusedBatchNorm', '_QuantizedFusedInstanceNorm']:
+                if req_input.op in ["_QuantizedFusedBatchNorm", "_QuantizedFusedInstanceNorm"]:
                     is_quantizable = False
                     break
-                if req_input.op == 'Requantize' or req_input.op == 'RequantizePerChannel' \
-                    or req_input.op.startswith('Quantized'):
+                if (
+                    req_input.op == "Requantize"
+                    or req_input.op == "RequantizePerChannel"
+                    or req_input.op.startswith("Quantized")
+                ):
                     is_quantizable = True
-                    if str(self.node_name_mapping[pre_input].node.attr['out_type']) != '':
-                        deq_type.append(self.node_name_mapping[pre_input].node.attr['out_type'].type)
+                    if str(self.node_name_mapping[pre_input].node.attr["out_type"]) != "":
+                        deq_type.append(self.node_name_mapping[pre_input].node.attr["out_type"].type)
                     else:
-                        deq_type.append(self.node_name_mapping[pre_input].node.attr['T'].type)
+                        deq_type.append(self.node_name_mapping[pre_input].node.attr["T"].type)
         else:
-            for input_node_name in node.input[:node.attr['N'].i]:
+            for input_node_name in node.input[: node.attr["N"].i]:
                 node_name = helper.node_name_from_input(input_node_name)
                 if self.node_name_mapping[node_name].node.op != "Dequantize":
                     self.exclude_concat_nodes.append(node.name)
                     return False
 
-                deq_type.append(self.node_name_mapping[node_name].node.attr['T'].type)
+                deq_type.append(self.node_name_mapping[node_name].node.attr["T"].type)
 
         if len(set(deq_type)) != 1:
             is_quantizable = False
         else:
-            if self.performance_only or os.getenv('TF_FORCE_CONCAT_OPTS') == '1':
+            if self.performance_only or os.getenv("TF_FORCE_CONCAT_OPTS") == "1":
                 self.dtype = dtypes.DType(deq_type[0])
 
         if not is_quantizable:
@@ -111,7 +115,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         _, normal_inputs = self._get_node_input(matched_node.node.name)
         num_input = len(normal_inputs)
         shape_input_name = normal_inputs[num_input - 1]
-        original_inputs = normal_inputs[0:num_input - 1]
+        original_inputs = normal_inputs[0 : num_input - 1]
 
         input_names = []
         min_names = []
@@ -160,27 +164,26 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         """Get longest fusion pattern."""
         self._get_op_list()
         matched_node_name = []
-        
+
         for k, v in enumerate(self.op_list):
             if v in set(fusion[1] for fusion in self.sorted_patterns):
-                cur_node = self.node_name_mapping[list(
-                    self.node_name_mapping.keys())[k]].node
+                cur_node = self.node_name_mapping[list(self.node_name_mapping.keys())[k]].node
 
                 if cur_node.name != self.start_node_name:
                     continue
-                
+
                 # possible attributes that decide output data type
-                output_attr_list = ['out_type', 'T', 'dtype', 'Taxis', 'Tindices', 'Tparams']
+                output_attr_list = ["out_type", "T", "dtype", "Taxis", "Tindices", "Tparams"]
                 if not do_transform:
                     _, normal_inputs = self._get_node_input(cur_node.name)
-                    original_inputs = normal_inputs[:cur_node.attr['N'].i]
+                    original_inputs = normal_inputs[: cur_node.attr["N"].i]
                     unsupported_input_type = False
                     for each_input in original_inputs:
                         each_input_name = helper.node_name_from_input(each_input)
                         input_dtype = None
                         for output_attr in output_attr_list:
                             input_dtype_attr = self.node_name_mapping[each_input_name].node.attr[output_attr]
-                            if str(input_dtype_attr) != '':
+                            if str(input_dtype_attr) != "":
                                 input_dtype = dtypes.DType(input_dtype_attr.type)
                                 break
                         if input_dtype != dtypes.bfloat16 and input_dtype != dtypes.float32:
@@ -194,41 +197,41 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                         continue
                     if v != sub_rule[1]:
                         continue
-                
-                if (self.performance_only or os.getenv('TF_FORCE_CONCAT_OPTS') == '1') \
-                   and not do_transform:
+
+                if (self.performance_only or os.getenv("TF_FORCE_CONCAT_OPTS") == "1") and not do_transform:
                     matched_node_name.clear()
                     matched_node_name.append(cur_node.name)
                     return sub_rule, matched_node_name
-                
+
                 if self._quantizable_concat(cur_node):
-                    if dtypes.as_dtype(cur_node.attr["T"].type) == dtypes.float32 and \
-                    not re.search(r'map(_\d+)?/while', cur_node.name):
+                    if dtypes.as_dtype(cur_node.attr["T"].type) == dtypes.float32 and not re.search(
+                        r"map(_\d+)?/while", cur_node.name
+                    ):
                         matched_node_name.clear()
                         matched_node_name.append(sub_rule[0])
                         matched_node_name.append(cur_node.name)
                         matched_node_name.append(sub_rule[-1])
                         return sub_rule, matched_node_name
                 else:
-                    if self.performance_only or os.getenv('TF_FORCE_CONCAT_OPTS') == '1':
+                    if self.performance_only or os.getenv("TF_FORCE_CONCAT_OPTS") == "1":
                         new_inputs = []
                         control_inputs, normal_inputs = self._get_node_input(cur_node.name)
-                        original_inputs = normal_inputs[:cur_node.attr['N'].i]
+                        original_inputs = normal_inputs[: cur_node.attr["N"].i]
                         for each_input in original_inputs:
                             each_node = self._get_node_from_name(each_input)
-                            if each_node.op == 'Dequantize':
+                            if each_node.op == "Dequantize":
                                 q_input = self._get_first_input_from_name(each_input)
-                                if q_input == '':
+                                if q_input == "":
                                     continue
-                                if self._get_node_from_name(q_input).op == 'QuantizeV2':
+                                if self._get_node_from_name(q_input).op == "QuantizeV2":
                                     pre_input = self._get_first_input_from_name(q_input)
                                     new_inputs.append(pre_input)
-                                elif self._get_node_from_name(q_input).op == 'Requantize':
+                                elif self._get_node_from_name(q_input).op == "Requantize":
                                     new_inputs.append(each_input)
                             else:
                                 new_inputs.append(each_input)
                         new_inputs.append(normal_inputs[-1])
-                        cur_node.ClearField('input')
+                        cur_node.ClearField("input")
                         cur_node.input.extend(new_inputs + control_inputs)
 
         return None, None
@@ -238,10 +241,10 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         self._get_op_list()
         matched_rule, matched_node_name = self.get_longest_fuse(do_transform=True)
         if matched_node_name:
-            fusion_name = ''.join(matched_rule)
+            fusion_name = "".join(matched_rule)
             if fusion_name == "DequantizeConcatV2QuantizeV2":
                 self._apply_concatv2_quantization(matched_node_name)
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 self.logger.info("Unknown fusion pattern {}.".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)

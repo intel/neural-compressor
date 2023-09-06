@@ -16,12 +16,12 @@
 
 from typing import List, Optional
 
-from neural_compressor.profiling.parser.onnx_parser.parser import \
-    OnnxProfilingParser
+from neural_compressor.profiling.parser.onnx_parser.parser import OnnxProfilingParser
 
 
 class OnnxrtParserFactory:
     """Parser factory."""
+
     @staticmethod
     def get_parser(
         logs: List,

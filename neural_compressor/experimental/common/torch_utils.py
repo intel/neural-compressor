@@ -14,12 +14,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """This is an utility file for PyTorch distillation."""
 
 from neural_compressor.utils.utility import LazyImport
 
-torch = LazyImport('torch')
+torch = LazyImport("torch")
 
 STUDENT_FEATURES = {}
 TEACHER_FEATURES = {}
@@ -33,7 +32,7 @@ def record_output(output, name, output_process, student=False):
     It is a help function.
     """
     recorded_output = output
-    if output_process != '':
+    if output_process != "":
         if isinstance(output, dict) and output_process in output:
             recorded_output = output[output_process]
         elif isinstance(output, (tuple, list)) and str.isnumeric(output_process):
@@ -41,10 +40,12 @@ def record_output(output, name, output_process, student=False):
         elif callable(output_process):
             recorded_output = output_process(output)
         else:
-            raise NotImplementedError('Current only support get the data with ' + \
-                'integer index in case the output is tuple or list and only ' + \
-                'need one item or with key in case the output is dict,  ' + \
-                'or output_process is a function.')
+            raise NotImplementedError(
+                "Current only support get the data with "
+                + "integer index in case the output is tuple or list and only "
+                + "need one item or with key in case the output is dict,  "
+                + "or output_process is a function."
+            )
     if student:
         STUDENT_FEATURES[name].append(recorded_output)
     else:
@@ -52,11 +53,13 @@ def record_output(output, name, output_process, student=False):
     return output
 
 
-def get_activation(name, output_process='', student=False):
+def get_activation(name, output_process="", student=False):
     """Get a hook for getting activation."""
+
     def hook(model, input, output):
         if model.training or not student:
             return record_output(output, name, output_process, student=student)
         else:
             return output
+
     return hook

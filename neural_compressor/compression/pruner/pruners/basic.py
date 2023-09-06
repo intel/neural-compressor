@@ -16,15 +16,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .base import (register_pruner,
-                   PytorchBasePruner,
-                   KerasBasePruner)
-from ..schedulers import get_scheduler
-from ..patterns import get_pattern
 from ..criteria import get_criterion
-from ..tf_criteria import get_tf_criterion
+from ..patterns import get_pattern
 from ..regs import get_reg
+from ..schedulers import get_scheduler
+from ..tf_criteria import get_tf_criterion
 from ..utils import logger
+from .base import KerasBasePruner, PytorchBasePruner, register_pruner
 
 
 @register_pruner("pt_basic")
@@ -45,6 +43,7 @@ class PytorchBasicPruner(PytorchBasePruner):
         scheduler: A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
         reg: A Reg object that defines regulization terms.
     """
+
     def __init__(self, config, modules):
         """Initialize."""
         super().__init__(config, modules)
@@ -76,7 +75,7 @@ class PytorchBasicPruner(PytorchBasePruner):
     def update_masks(self, local_step):
         """Update the masks at a given local step."""
         if self.global_step == self.start_step:
-            if self.config['lock_init_sparsity']:
+            if self.config["lock_init_sparsity"]:
                 self.masks = self.pattern.get_pattern_lock_masks(self.modules)
                 self.init_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
                 self.current_sparsity_ratio = self.init_sparsity_ratio
@@ -88,10 +87,13 @@ class PytorchBasicPruner(PytorchBasePruner):
             return
 
         self.criterion.on_step_begin()
-        current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(self.target_sparsity_ratio,
-                                                                             self.completed_pruned_cnt,
-                                                                             self.total_prune_cnt, self.masks,
-                                                                             self.init_sparsity_ratio)
+        current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(
+            self.target_sparsity_ratio,
+            self.completed_pruned_cnt,
+            self.total_prune_cnt,
+            self.masks,
+            self.init_sparsity_ratio,
+        )
         logger.info(f"current target ratio is {current_target_sparsity_ratio}")
 
         self.completed_pruned_cnt += 1
@@ -136,9 +138,10 @@ class KerasBasicPruner(KerasBasePruner):
         scheduler: A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
         reg: A Reg object that defines regulization terms.
     """
+
     def _init(self):
         """Auxiliary function for initializing."""
-        self.pattern = get_pattern(self.config, self.modules, framework='keras')
+        self.pattern = get_pattern(self.config, self.modules, framework="keras")
         self.scheduler = get_scheduler(self.config)
         self.criterion = get_tf_criterion(self.config, self.modules)
         self.reg = get_reg(self.config, self.modules, self.pattern)
@@ -163,7 +166,7 @@ class KerasBasicPruner(KerasBasePruner):
     def update_masks(self, local_step):
         """Update the masks at a given local step."""
         if self.global_step == self.start_step:
-            if self.config['lock_init_sparsity']:
+            if self.config["lock_init_sparsity"]:
                 self.masks = self.pattern.get_pattern_lock_masks(self.modules)
                 self.init_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
                 self.current_sparsity_ratio = self.init_sparsity_ratio
@@ -175,10 +178,13 @@ class KerasBasicPruner(KerasBasePruner):
             return
 
         self.criterion.on_step_begin()
-        current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(self.target_sparsity_ratio,
-                                                                             self.completed_pruned_cnt,
-                                                                             self.total_prune_cnt, self.masks,
-                                                                             self.init_sparsity_ratio)
+        current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(
+            self.target_sparsity_ratio,
+            self.completed_pruned_cnt,
+            self.total_prune_cnt,
+            self.masks,
+            self.init_sparsity_ratio,
+        )
         logger.info(f"current target ratio is {current_target_sparsity_ratio}")
 
         self.completed_pruned_cnt += 1

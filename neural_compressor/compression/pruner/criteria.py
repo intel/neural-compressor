@@ -1,4 +1,4 @@
-"""pruning criterion."""
+"""Pruning criterion."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -47,7 +47,7 @@ class PruningCriterion:
     Args:
         config: A config dict object that includes information about pruner and pruning criterion.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
-    
+
     Attributes:
         scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
     """
@@ -58,7 +58,7 @@ class PruningCriterion:
         self.modules = modules
         self.config = config
         self.pattern = pattern
-        self.low_memory_usage = config['low_memory_usage']
+        self.low_memory_usage = config["low_memory_usage"]
 
     def on_step_begin(self):
         """Calculate and store the pruning scores of pruning modules at the beginning of a step."""
@@ -73,17 +73,17 @@ class PruningCriterion:
         pass
 
 
-@register_criterion('magnitude')
+@register_criterion("magnitude")
 class MagnitudeCriterion(PruningCriterion):
     """Pruning criterion.
-    
+
     The magnitude criterion_class is derived from PruningCriterion.
     The magnitude value is used to score and determine if a weight is to be pruned.
 
     Args:
         config: A config dict object that includes information about pruner and pruning criterion.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
-    
+
     Attributes:
         scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
     """
@@ -101,17 +101,17 @@ class MagnitudeCriterion(PruningCriterion):
                 self.scores[key] = self.pattern.reduce_score(torch.abs(p), key)
 
 
-@register_criterion('gradient')
+@register_criterion("gradient")
 class GradientCriterion(PruningCriterion):
     """Pruning criterion.
-    
+
     The gradient criterion_class is derived from PruningCriterion.
     The absolute value of gradient is used to score and determine if a weight is to be pruned.
 
     Args:
         config: A config dict object that includes information about pruner and pruning criterion.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
-    
+
     Attributes:
         scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
     """
@@ -130,10 +130,10 @@ class GradientCriterion(PruningCriterion):
                 self.scores[key] = self.pattern.reduce_score(torch.abs(p.grad), key)
 
 
-@register_criterion('snip')
+@register_criterion("snip")
 class SnipCriterion(PruningCriterion):
     """Pruning criterion.
-    
+
     The snip criterion_class is derived from PruningCriterion.
     The product of magnitude and gradient is used to score and determine if a weight is to be pruned.
     Please refer to SNIP: Single-shot Network Pruning based on Connection Sensitivity.
@@ -142,7 +142,7 @@ class SnipCriterion(PruningCriterion):
     Args:
         config: A config dict object that includes information about pruner and pruning criterion.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
-    
+
     Attributes:
         scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
     """
@@ -159,13 +159,12 @@ class SnipCriterion(PruningCriterion):
                 p = self.modules[key].weight
                 # self.scores[key] = torch.abs(p * p.grad)
                 self.scores[key] = self.pattern.reduce_score(torch.abs(p * p.grad), key)
-        
 
 
-@register_criterion('snip_momentum')
+@register_criterion("snip_momentum")
 class SnipMomentumCriterion(PruningCriterion):
     """Pruning criterion.
-    
+
     The snip_momentum criterion_class is derived from PruningCriterion.
     A momentum mechanism is used to calculate snip score, which determines if a weight is to be pruned.
 
@@ -174,7 +173,7 @@ class SnipMomentumCriterion(PruningCriterion):
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
         alpha: A parameter that determines how much of the snip score is preserved from last pruning step.
         beta: A parameter that determines how much of the snip score is updated at the current step.
-    
+
     Attributes:
         scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
     """
@@ -187,9 +186,9 @@ class SnipMomentumCriterion(PruningCriterion):
             p = modules[key].weight
             dtype = torch.float32
             if self.low_memory_usage:
-                dtype = torch.bfloat16 if p.device.type == 'cpu' else torch.float16
+                dtype = torch.bfloat16 if p.device.type == "cpu" else torch.float16
             # self.scores[key] = torch.zeros(p.shape, dtype=dtype).to(p.device)
-            if hasattr(self.pattern, 'reduce_score'):
+            if hasattr(self.pattern, "reduce_score"):
                 self.scores[key] = self.pattern.reduce_score(torch.zeros(p.shape, dtype=dtype).to(p.device), key)
             else:
                 self.scores[key] = torch.zeros(p.shape, dtype=dtype).to(p.device)
@@ -204,17 +203,17 @@ class SnipMomentumCriterion(PruningCriterion):
                 p = self.modules[key].weight
                 self.scores[key] *= self.alpha
                 tmp = torch.abs(p * p.grad)
-                if hasattr(self.pattern, 'reduce_score'):
+                if hasattr(self.pattern, "reduce_score"):
                     tmp = self.pattern.reduce_score(tmp, key, force=True)
                 if self.low_memory_usage:
-                    tmp = tmp.bfloat16() if p.device.type == 'cpu' else tmp.half()
+                    tmp = tmp.bfloat16() if p.device.type == "cpu" else tmp.half()
                 self.scores[key] += self.beta * tmp
 
 
-@register_criterion('block_mask')
+@register_criterion("block_mask")
 class BlockMaskCriterion(PruningCriterion):
     """Pruning criterion.
-    
+
     The block_mask criterion_class is derived from PruningCriterion.
     A momentum mechanism is used to calculate snip score, which determines if a block of weights is to be pruned.
 
@@ -223,7 +222,7 @@ class BlockMaskCriterion(PruningCriterion):
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
         alpha: A parameter that determines how much of the snip score is preserved from last pruning step.
         beta: A parameter that determines how much of the snip score is updated at the current step.
-    
+
     Attributes:
         scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
     """
@@ -236,7 +235,7 @@ class BlockMaskCriterion(PruningCriterion):
             mask = masks[key]
             dtype = torch.float32
             if self.low_memory_usage:
-                dtype = torch.bfloat16 if mask.device.type == 'cpu' else torch.float16
+                dtype = torch.bfloat16 if mask.device.type == "cpu" else torch.float16
             self.scores[key] = torch.zeros(mask.shape, dtype=dtype).to(mask.device)
         self.alpha = alpha
         self.beta = beta
@@ -248,15 +247,15 @@ class BlockMaskCriterion(PruningCriterion):
                 grad = masks[key].grad
                 if self.low_memory_usage:
                     # TODO check bf16 grad availability
-                    grad = grad.bfloat16() if grad.device.type == 'cpu' else grad.half()
+                    grad = grad.bfloat16() if grad.device.type == "cpu" else grad.half()
                 self.scores[key] *= self.alpha
                 self.scores[key] += self.beta * torch.abs(grad)
 
 
-@register_criterion('retrain_free')
+@register_criterion("retrain_free")
 class RetrainFreeCriterion(PruningCriterion):
     """Pruning criterion.
-    
+
     The retrain_free criterion_class is derived from PruningCriterion.
 
     Args:
@@ -264,7 +263,7 @@ class RetrainFreeCriterion(PruningCriterion):
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
         alpha: A parameter that determines how much of the snip score is preserved from last pruning step.
         beta: A parameter that determines how much of the snip score is updated at the current step.
-    
+
     Attributes:
         scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
     """
@@ -276,14 +275,14 @@ class RetrainFreeCriterion(PruningCriterion):
         self.collected_grads = {}
         for key in self.modules.keys():
             for name, param in self.modules[key].named_parameters():
-                param.requires_grad_(False) # only for retrain-free criterion
-                
+                param.requires_grad_(False)  # only for retrain-free criterion
+
             if key not in masks.keys():
-                continue # No corresponding block mask, skip.
+                continue  # No corresponding block mask, skip.
             mask = masks[key]
             dtype = torch.float32
             if self.low_memory_usage:
-                dtype = torch.bfloat16 if mask.device.type == 'cpu' else torch.float16
+                dtype = torch.bfloat16 if mask.device.type == "cpu" else torch.float16
             self.scores[key] = torch.zeros(mask.shape, dtype=dtype).to(mask.device)
             self.collected_grads[key] = []
 
@@ -293,6 +292,6 @@ class RetrainFreeCriterion(PruningCriterion):
             for key in masks.keys():
                 mask_grad = masks[key].grad.clone()
                 if self.low_memory_usage:
-                    mask_grad = mask_grad.bfloat16() if mask_grad.device.type == 'cpu' else mask_grad.half()
+                    mask_grad = mask_grad.bfloat16() if mask_grad.device.type == "cpu" else mask_grad.half()
                 self.collected_grads[key].append(mask_grad.cpu())
                 self.scores[key] += mask_grad.pow(2)

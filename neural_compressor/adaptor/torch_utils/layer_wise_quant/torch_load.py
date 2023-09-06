@@ -19,52 +19,50 @@
 import io
 import os
 import warnings
-from typing import Any, BinaryIO, Callable, Dict, Optional, Union, IO
-
-from .utils import torch
-from neural_compressor.adaptor.torch_utils.layer_wise_quant import modified_pickle as pickle
+from typing import IO, Any, BinaryIO, Callable, Dict, Optional, Union
 
 from torch.serialization import (
-    _get_restore_location,
     StorageType,
+    _get_restore_location,
+    _is_torchscript_zip,
+    _is_zipfile,
     _maybe_decode_ascii,
     _open_file_like,
     _open_zipfile_reader,
-    _is_torchscript_zip,
-    _is_zipfile
 )
 
+from neural_compressor.adaptor.torch_utils.layer_wise_quant import modified_pickle as pickle
+
+from .utils import torch
+
 FILE_LIKE = Union[str, os.PathLike, BinaryIO, IO[bytes]]
-MAP_LOCATION = Optional[Union[Callable[[torch.Tensor, str], torch.Tensor],
-                              torch.device, str, Dict[str, str]]]
+MAP_LOCATION = Optional[Union[Callable[[torch.Tensor, str], torch.Tensor], torch.device, str, Dict[str, str]]]
 
 
-def _load(zip_file, tensor_name, prefix, map_location, pickle_module,
-          pickle_file='data.pkl', **pickle_load_args):
+def _load(zip_file, tensor_name, prefix, map_location, pickle_module, pickle_file="data.pkl", **pickle_load_args):
     restore_location = _get_restore_location(map_location)
 
     loaded_storages = {}
 
     from packaging.version import Version
-    torch_version = torch.__version__.split('+')[0]
+
+    torch_version = torch.__version__.split("+")[0]
     version = Version(torch_version)
 
     def load_tensor(dtype, numel, key, location):
-        name = f'data/{key}'
+        name = f"data/{key}"
 
-        if version.release < Version("2.0.0").release: # pragma: no cover
+        if version.release < Version("2.0.0").release:  # pragma: no cover
             storage = zip_file.get_storage_from_record(name, numel, torch.UntypedStorage).storage().untyped()
-            typed_storage = torch.storage.TypedStorage(
-                wrap_storage=restore_location(storage, location),
-                dtype=dtype)
+            typed_storage = torch.storage.TypedStorage(wrap_storage=restore_location(storage, location), dtype=dtype)
             loaded_storages[key] = typed_storage
         else:
-            storage = zip_file.get_storage_from_record(name, numel, torch.UntypedStorage)\
-                ._typed_storage()._untyped_storage
+            storage = (
+                zip_file.get_storage_from_record(name, numel, torch.UntypedStorage)._typed_storage()._untyped_storage
+            )
             typed_storage = torch.storage.TypedStorage(
-                wrap_storage=restore_location(storage, location),
-                dtype=dtype,
-                _internal=True)
+                wrap_storage=restore_location(storage, location), dtype=dtype, _internal=True
+            )
 
             if typed_storage._data_ptr() != 0:
                 loaded_storages[key] = typed_storage
@@ -93,16 +91,14 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module,
 
     #     return typed_storage
 
-    load_module_mapping: Dict[str, str] = {
-        'torch.tensor': 'torch._tensor'
-    }
+    load_module_mapping: Dict[str, str] = {"torch.tensor": "torch._tensor"}
 
     # Need to subclass Unpickler instead of directly monkey-patching the find_class method
     # because it's marked readonly in pickle.
     # The type: ignore is because mypy can't statically determine the type of this class.
     class UnpicklerWrapper(pickle_module.Unpickler):  # type: ignore[name-defined]
         def find_class(self, mod_name, name):
-            if type(name) is str and 'Storage' in name:
+            if type(name) is str and "Storage" in name:
                 try:
                     return StorageType(name)
                 except KeyError:  # pragma: no cover
@@ -115,10 +111,11 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module,
             typename = _maybe_decode_ascii(saved_id[0])
             data = saved_id[1:]
 
-            assert typename == 'storage', \
-                f"Unknown typename for persistent_load, expected 'storage' but got '{typename}'"
+            assert (
+                typename == "storage"
+            ), f"Unknown typename for persistent_load, expected 'storage' but got '{typename}'"
             storage_type, key, location, numel = data
-            if storage_type is torch.UntypedStorage: # pragma: no cover
+            if storage_type is torch.UntypedStorage:  # pragma: no cover
                 dtype = torch.uint8
             else:
                 dtype = storage_type.dtype
@@ -128,9 +125,9 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module,
             else:
                 name_list = [self.tensor_name]
                 if prefix:
-                    no_prefix_name = self.tensor_name.split('.')
+                    no_prefix_name = self.tensor_name.split(".")
                     no_prefix_name.remove(prefix)
-                    no_prefix_name = '.'.join(no_prefix_name)
+                    no_prefix_name = ".".join(no_prefix_name)
                     name_list.append(no_prefix_name)
                 if self.tensor_name and self.metastack[-1][-2] not in name_list:
                     # typed_storage = None
@@ -143,6 +140,7 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module,
                     typed_storage = load_tensor(dtype, nbytes, key, _maybe_decode_ascii(location))
 
             return typed_storage
+
     # Load the data (which may in turn use `persistent_load` to load tensors)
     data_file = io.BytesIO(zip_file.get_record(pickle_file))
 
@@ -162,14 +160,14 @@ def load(
     pickle_module: Any = None,
     *,
     weights_only: bool = False,
-    **pickle_load_args: Any
+    **pickle_load_args: Any,
 ) -> Any:
     # Reference: https://github.com/pytorch/pytorch/issues/54354
     # The first line of this docstring overrides the one Sphinx generates for the
     # documentation. We need it so that Sphinx doesn't leak `pickle`s path from
     # the build environment (e.g. `<module 'pickle' from '/leaked/path').
 
-    """load(f, map_location=None, pickle_module=pickle, *, weights_only=False, **pickle_load_args)
+    """Load(f, map_location=None, pickle_module=pickle, *, weights_only=False, **pickle_load_args)
 
     Loads an object saved with :func:`torch.save` from a file.
 
@@ -256,8 +254,7 @@ def load(
     """
     torch._C._log_api_usage_once("torch.load")
     # Add ability to force safe only weight loads via environment variable
-    if os.getenv("TORCH_FORCE_WEIGHTS_ONLY_LOAD", "0").lower() \
-            in ['1', 'y', 'yes', 'true']:  # pragma: no cover
+    if os.getenv("TORCH_FORCE_WEIGHTS_ONLY_LOAD", "0").lower() in ["1", "y", "yes", "true"]:  # pragma: no cover
         weights_only = True
 
     if weights_only:  # pragma: no cover
@@ -267,10 +264,10 @@ def load(
         if pickle_module is None:
             pickle_module = pickle
 
-    if 'encoding' not in pickle_load_args.keys():
-        pickle_load_args['encoding'] = 'utf-8'
+    if "encoding" not in pickle_load_args.keys():
+        pickle_load_args["encoding"] = "utf-8"
 
-    with _open_file_like(f, 'rb') as opened_file:
+    with _open_file_like(f, "rb") as opened_file:
         if _is_zipfile(opened_file):
             # The zipfile reader is going to advance the current file position.
             # If we want to actually tail call to torch.jit.load, we need to
@@ -278,9 +275,12 @@ def load(
             orig_position = opened_file.tell()
             with _open_zipfile_reader(opened_file) as opened_zipfile:
                 if _is_torchscript_zip(opened_zipfile):  # pragma: no cover
-                    warnings.warn("'torch.load' received a zip file that looks like a TorchScript archive"
-                                  " dispatching to 'torch.jit.load' (call 'torch.jit.load' directly to"
-                                  " silence this warning)", UserWarning)
+                    warnings.warn(
+                        "'torch.load' received a zip file that looks like a TorchScript archive"
+                        " dispatching to 'torch.jit.load' (call 'torch.jit.load' directly to"
+                        " silence this warning)",
+                        UserWarning,
+                    )
                     opened_file.seek(orig_position)
                     return torch.jit.load(opened_file, map_location=map_location)
                 return _load(opened_zipfile, tensor_name, prefix, map_location, pickle_module, **pickle_load_args)

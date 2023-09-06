@@ -16,11 +16,14 @@
 # limitations under the License.
 """QAT Quantize Wrapper Class."""
 
-import tensorflow as tf
 from abc import abstractmethod
-from .fake_quantize import FakeQuantize
+
+import tensorflow as tf
 from tensorflow.python.util import tf_inspect
-from .quantize_config import layer_wise_config, global_config
+
+from .fake_quantize import FakeQuantize
+from .quantize_config import global_config, layer_wise_config
+
 
 class QuantizeWrapperBase(tf.keras.layers.Wrapper):
     """Base class for quantize wrapper."""
@@ -36,9 +39,10 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
         """
         assert layer is not None, "'layer' should not be None."
 
-        assert isinstance(layer, tf.keras.layers.Layer) or isinstance(layer, 
-            tf.keras.Model),("'layer' can only be a 'tf.keras.layers.Layer' instance."
-            " You passed an instance of type: {input}.".format(input=layer.__class__.__name__))
+        assert isinstance(layer, tf.keras.layers.Layer) or isinstance(layer, tf.keras.Model), (
+            "'layer' can only be a 'tf.keras.layers.Layer' instance."
+            " You passed an instance of type: {input}.".format(input=layer.__class__.__name__)
+        )
 
         if "name" not in kwargs:
             kwargs["name"] = self._make_layer_name(layer)
@@ -82,25 +86,25 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
         """
         min_variable = self.layer.add_weight(
             name + "_min",
-            shape = (shape),
-            trainable = False,
-            initializer = tf.keras.initializers.Constant(-6.0),
+            shape=(shape),
+            trainable=False,
+            initializer=tf.keras.initializers.Constant(-6.0),
         )
         max_variable = self.layer.add_weight(
             name + "_max",
-            shape = (shape),
-            trainable = False,
-            initializer = tf.keras.initializers.Constant(6.0),
+            shape=(shape),
+            trainable=False,
+            initializer=tf.keras.initializers.Constant(6.0),
         )
 
         return min_variable, max_variable
 
     def query_input_index(self):
         """Query QuantizeConfig to check if there is any designated input index for this layer."""
-        quantize_config = global_config['quantize_config']
+        quantize_config = global_config["quantize_config"]
         custom_layer_config = quantize_config.query_layer(self.layer)
-        if custom_layer_config and 'index' in custom_layer_config:
-            self.index = custom_layer_config['index']
+        if custom_layer_config and "index" in custom_layer_config:
+            self.index = custom_layer_config["index"]
 
     @abstractmethod
     def call(self, inputs, training=None):
@@ -108,7 +112,7 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
 
         Args:
           inputs (tf.Tensor or dict/list/tuple): Inputs of the wrapped layer.
-            
+
         Returns:
           outputs (tf.Tensor or dict/list/tuple): Outputs of the wrapped layer.
         """
@@ -122,7 +126,7 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
     @trainable.setter
     def trainable(self, value):
         """Set trainable attribute for the layer and its sublayers.
-        
+
         Args:
           value (Boolean): The desired state for the layer's trainable attribute.
         """
@@ -170,6 +174,7 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
         """
         return self.layer.losses + self._losses
 
+
 class QuantizeWrapper(QuantizeWrapperBase):
     """General QuantizeWrapper for quantizable layers.
 
@@ -187,13 +192,13 @@ class QuantizeWrapper(QuantizeWrapperBase):
         """
         super().__init__(layer, **kwargs)
 
-        self.kernel = 'kernel'
+        self.kernel = "kernel"
         self.kernel_weights = None
         self.channel_axis = kwargs.get("axis", -1)
-        if self._layer_class == 'DepthwiseConv2D':
-            self.kernel = 'depthwise_kernel'
+        if self._layer_class == "DepthwiseConv2D":
+            self.kernel = "depthwise_kernel"
             self.channel_axis = 2
-        if self._layer_class in layer_wise_config['multiple_inputs_layers']:
+        if self._layer_class in layer_wise_config["multiple_inputs_layers"]:
             self.query_input_index()
 
     def build(self, input_shape):
@@ -204,13 +209,12 @@ class QuantizeWrapper(QuantizeWrapperBase):
         """
         super().build(input_shape)
 
-        if self._layer_class in layer_wise_config['weighted_layers']:
+        if self._layer_class in layer_wise_config["weighted_layers"]:
             self.kernel_weights = getattr(self.layer, self.kernel)
 
             weight_min, weight_max = self._init_min_max_variables(
-                name = self.kernel_weights.name.split(":")[0], 
-                shape = self.kernel_weights.shape[self.channel_axis]
-                )
+                name=self.kernel_weights.name.split(":")[0], shape=self.kernel_weights.shape[self.channel_axis]
+            )
 
             self.weight_range = {"min_var": weight_min, "max_var": weight_max}
             self._trainable_weights.append(self.kernel_weights)
@@ -224,9 +228,8 @@ class QuantizeWrapper(QuantizeWrapperBase):
 
         if num_input == 1:
             inputs_min, inputs_max = self._init_min_max_variables(
-                name = self.layer.name + "_input{}".format(0), 
-                shape = None
-                )
+                name=self.layer.name + "_input{}".format(0), shape=None
+            )
             self.inputs_range = {"min_var": inputs_min, "max_var": inputs_max}
         else:
             self.inputs_range = []
@@ -234,9 +237,8 @@ class QuantizeWrapper(QuantizeWrapperBase):
                 self.inputs_range.append({})
                 if i in self.index:
                     inputs_min, inputs_max = self._init_min_max_variables(
-                        name = self.layer.name + "_input{}".format(i), 
-                        shape = None
-                        )
+                        name=self.layer.name + "_input{}".format(i), shape=None
+                    )
                     self.inputs_range[i] = {"min_var": inputs_min, "max_var": inputs_max}
 
     def call(self, inputs, training=None):
@@ -252,18 +254,18 @@ class QuantizeWrapper(QuantizeWrapperBase):
             training = tf.keras.backend.learning_phase()
 
         # Quantize all weights, and replace them in the underlying layer.
-        if self._layer_class in layer_wise_config['weighted_layers']:
+        if self._layer_class in layer_wise_config["weighted_layers"]:
             weight_quantizer = FakeQuantize(
-                per_channel = True,
-                channel_axis = self.channel_axis,
+                per_channel=True,
+                channel_axis=self.channel_axis,
             )
             quantized_weight = weight_quantizer(self.kernel_weights, self.weight_range, training)
             setattr(self.layer, self.kernel, quantized_weight)
 
         quantized_inputs = inputs
         inputs_quantizer = FakeQuantize(
-            per_channel = False,
-            channel_axis = self.channel_axis,
+            per_channel=False,
+            channel_axis=self.channel_axis,
         )
 
         if not isinstance(quantized_inputs, tf.Tensor):
@@ -272,7 +274,7 @@ class QuantizeWrapper(QuantizeWrapperBase):
                     quantized_inputs[i] = inputs_quantizer(inputs[i], self.inputs_range[i], training)
         else:
             quantized_inputs = inputs_quantizer(inputs, self.inputs_range, training)
-        
+
         args = tf_inspect.getfullargspec(self.layer.call).args
         if "training" in args:
             outputs = self.layer.call(quantized_inputs, training=training)

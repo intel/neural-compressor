@@ -1,4 +1,4 @@
-"""Simulated Annealing Optimizer"""
+"""Simulated Annealing Optimizer."""
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2021 Intel Corporation
@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time
 import math
+import time
 from random import random
 
 import numpy as np
@@ -25,21 +25,22 @@ try:
     from neural_compressor.utils import logger
 except:
     import logging
+
     logger = logging.getLogger("sa_optimizer")
 
 
 class SimulatedAnnealingOptimizer(object):
     def __init__(
-            self,
-            generate_func=None,
-            T0=100,
-            Tf=0.01,
-            higher_is_better=True,
-            alpha=None,
-            iter=500,
-            early_stop=50,
-            log_interval=50
-            ):
+        self,
+        generate_func=None,
+        T0=100,
+        Tf=0.01,
+        higher_is_better=True,
+        alpha=None,
+        iter=500,
+        early_stop=50,
+        log_interval=50,
+    ):
         """Initialize."""
         self.generate_func = generate_func
         self.T0 = T0
@@ -50,9 +51,9 @@ class SimulatedAnnealingOptimizer(object):
         self.iter = iter
         self.early_stop = early_stop
         self.log_interval = log_interval
-        self.best = (float('-inf'), None) if self.higher_is_better else (float('inf'), None)
-        self.history = {'T': [], 'F': []}
-    
+        self.best = (float("-inf"), None) if self.higher_is_better else (float("inf"), None)
+        self.history = {"T": [], "F": []}
+
     def _metrospolis(self, f, f_new):
         if (not self.higher_is_better and f_new <= f) or (self.higher_is_better and f_new >= f):
             return 1
@@ -65,7 +66,7 @@ class SimulatedAnnealingOptimizer(object):
                 return 1
             else:
                 return 0
-    
+
     def _generate_new_points(self, points):
         new_points = np.array(points)
         new_points += self.T * (np.random.random(new_points.shape) - np.random.random(new_points.shape))
@@ -76,10 +77,10 @@ class SimulatedAnnealingOptimizer(object):
         count = 0
         last_modify = 0
         self.T = self.T0
-        self.best = (float('-inf'), None) if self.higher_is_better else (float('inf'), None)
+        self.best = (float("-inf"), None) if self.higher_is_better else (float("inf"), None)
         scores = func(points)
 
-        self.history = {'T': [], 'F': [], 'P': []}
+        self.history = {"T": [], "F": [], "P": []}
         st = time.time()
 
         while self.T > self.Tf:
@@ -93,18 +94,19 @@ class SimulatedAnnealingOptimizer(object):
                 if self._metrospolis(scores[i], s):
                     points[i] = new_points[i]
                     scores[i] = s
-                if (not self.higher_is_better and scores[i] < self.best[0]) \
-                   or (self.higher_is_better and scores[i] > self.best[0]):
+                if (not self.higher_is_better and scores[i] < self.best[0]) or (
+                    self.higher_is_better and scores[i] > self.best[0]
+                ):
                     last_modify = count
                     self.best = (scores[i], [float(v) for v in points[i]])
-            
-            self.history['T'].append(self.T)
+
+            self.history["T"].append(self.T)
             if self.higher_is_better:
-                self.history['F'].append(max(scores))
-                self.history['P'].append(points[np.argmax(scores)])
+                self.history["F"].append(max(scores))
+                self.history["P"].append(points[np.argmax(scores)])
             else:
-                self.history['F'].append(min(scores))
-                self.history['P'].append(points[np.argmax(scores)])
+                self.history["F"].append(min(scores))
+                self.history["P"].append(points[np.argmax(scores)])
 
             if self.alpha:
                 self.T *= self.alpha
@@ -114,9 +116,11 @@ class SimulatedAnnealingOptimizer(object):
 
             if self.log_interval and count % self.log_interval == 0:
                 elapse = time.time() - st
-                logger.debug(f'SA iter: {count}\tlast_update: {last_modify}\t \
+                logger.debug(
+                    f"SA iter: {count}\tlast_update: {last_modify}\t \
                              max score: {self.best[0]}\tpoint: {self.best[1]}\t \
-                             temp: {self.T}\telasped: {elapse}')
+                             temp: {self.T}\telasped: {elapse}"
+                )
 
             if count - last_modify > self.early_stop:
                 break

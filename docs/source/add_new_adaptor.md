@@ -33,16 +33,17 @@ The diagram below illustrates all the relevant steps of how adaptor is invoked, 
 
     end
 ```
-❶ Design the framework YAML, inherit QueryBackendCapability class to parse the framework yaml. <br>
-❷ Utilizes adaptor.query_fw_capability to query the framework's capabilities. <br>
-❸ Parse the framework YAML and get quantization capability. <br>
-❹ Send the capability including 'opwise' and 'optypewise' ability to Strategy. <br>
-❺ Build the tuning space in Strategy. <br>
-❻ Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process. <br>
-❼ Invokes the specific kernels for the calibration and quantization based on the tuning configuration.<br>
+❶ Design the framework YAML, inherit QueryBackendCapability class to parse the framework yaml.  
+❷ Utilizes adaptor.query_fw_capability to query the framework's capabilities.  
+❸ Parse the framework YAML and get quantization capability.  
+❹ Send the capability including 'opwise' and 'optypewise' ability to Strategy.  
+❺ Build the tuning space in Strategy.  
+❻ Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.  
+❼ Invokes the specific kernels for the calibration and quantization based on the tuning configuration.  
 
 ## API List that Need to Implement
 These APIs are necessary to add a new adapter. Here are the parameter types and functionality descriptions of these APIs. The following chapters will introduce the specific implementation and data format of these APIs in detail.
+
 | API | Parameters |Output   |Usage   | Comments|
 | :------ | :------|:------ |:------ | :------ |
 | query_fw_capability(self, model) | **model** (object): A INC model object to query quantization tuning capability. |output format: <br> {'opwise': {(node_name, node_op): [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32 or other data type}}, ...]},<br> 'optypewise':{node_op: [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32}}], ...}} |The function is used to return framework tuning capability. |Confirm the the data format output by the function must meet the requirements |
@@ -56,51 +57,50 @@ To enable accuracy-aware tuning with a specific framework, we should define the 
 Each framework adaptor should implement the `query_fw_capability` function, this function will only be invoked once and will loop over the graph/model for the quantizable operators and collect each operator's opwise details and optypewise capability. You should return a standard dict of the input model's tuning capability. The format is like below:
 
 ```python
-    capability = {
-        'opwise': {('conv2d', 'Conv2D'): [int8_conv_config, {'weight': {'dtype': 'bf16'}, 'activation': {'dtype': 'bf16'}}, {'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}], ...# all quantizable opwise key-value pair with key tuple: (node_name, node_op)}
-        'optypewise': optype_wise_ability,
-    }
+capability = {
+    'opwise': {('conv2d', 'Conv2D'): [int8_conv_config, {'weight': {'dtype': 'bf16'}, 'activation': {'dtype': 'bf16'}}, {'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}], ... }# all quantizable opwise key-value pair with key tuple: (node_name, node_op)}
+    'optypewise': optype_wise_ability,
+}
 ```
 The int8_conv_config is like below, it's parsed from the framework YAML.
 ```python
-    int8_conv_config = {
+int8_conv_config = {
+    "weight": {
+        "dtype": "int8",
+        "algorithm": "minmax",
+        "granularity": "per_channel",
+        "scheme": "sym",
+    },
+    "activation": {
+        "dtype": "int8",
+        "quant_mode": "static",
+        "algorithm": "kl",
+        "granularity": "per_tensor",
+        "scheme": "sym",
+    },
+}
+```
+The `optype_wise_ability` exmaple config is like below.
+
+```python
+optype_wise_ability = {
+    'Conv2D': {
         'weight': {
                'dtype': 'int8',
                'algorithm': 'minmax',
                'granularity': 'per_channel',
-               'scheme': 'sym'
+               'scheme': 'sym',
         },
         'activation': {
                'dtype': 'int8',
                'quant_mode': 'static',
                'algorithm': 'kl',
                'granularity': 'per_tensor',
-               'scheme': 'sym'
-        }
-    }
-
-```
-The `optype_wise_ability` exmaple config is like below.
-
-```python
-    optype_wise_ability = {
-        'Conv2D': {
-            'weight': {
-                   'dtype': 'int8',
-                   'algorithm': 'minmax',
-                   'granularity': 'per_channel',
-                   'scheme': 'sym'
-            },
-            'activation': {
-                   'dtype': 'int8',
-                   'quant_mode': 'static',
-                   'algorithm': 'kl',
-                   'granularity': 'per_tensor',
-                   'scheme': 'sym'
-            }
+               'scheme': 'sym',
         },
-        ... #all optype wise ability
-    }
+    },
+    ... #all optype wise ability
+}
 ```
 After the work above, we have implement the `query_fw_capability` API and get the tuning capability dict for the Strategy object. Then the Strategy object will fetch tuning configuration and give to the quantize API to get the quantized model.
 
@@ -147,4 +147,3 @@ Calibration data can only approximate the data distribution of the entire datase
  You can use different algorithms to make the data range more in line with the real data distribution. After applying these algorithms, we obtained the data distribution range of each operator. At this time, you can generate the quantized model.
 
 This quantized model can be evaluated. If the evaluation meets the set metric goal, the entire quantization process will be over. Otherwise, a new tuning configuration will be generated until a quantized model that meets the metric requirements.
-

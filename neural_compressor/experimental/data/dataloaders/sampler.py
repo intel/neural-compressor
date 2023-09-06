@@ -19,9 +19,10 @@
 
 from abc import abstractmethod
 
+
 class Sampler(object):
     """Base class for all Samplers.
-    
+
     __iter__ is needed no matter whether you use IterableSampler
     or Squential sampler, if you want implement your own sampler, make clear what the type is
     your Dataset, if IterableDataset(method __iter__ implemented), try to use IterableSampler,
@@ -41,7 +42,7 @@ class Sampler(object):
 
 class IterableSampler(Sampler):
     """Interally samples elements.
-    
+
     Used for datasets retrieved element by interator. Yield None to act as a placeholder for each iteration.
     """
 
@@ -63,6 +64,7 @@ class IterableSampler(Sampler):
         """Return the length of dataset."""
         raise NotImplementedError("'__len__' for IterableDataset object has not defined")
 
+
 class SequentialSampler(Sampler):
     """Sequentially samples elements, used for datasets retrieved element by index."""
 
@@ -78,24 +80,28 @@ class SequentialSampler(Sampler):
 
     def __iter__(self):
         """Yield data in iterative order."""
-        self.process_rank = 0 # The default rank is 0, which represents the main process
-        self.process_size = 1 # By default, process_size=1, only the main process is running
+        self.process_rank = 0  # The default rank is 0, which represents the main process
+        self.process_size = 1  # By default, process_size=1, only the main process is running
         if self.distributed:
             import horovod.tensorflow as hvd
+
             hvd.init()
             self.process_rank = hvd.rank()
             self.process_size = hvd.size()
             if self.process_size < 2:
-                raise EnvironmentError("The program is now trying to traverse" \
-                    " the distributed TensorFlow DefaultDataLoader in only one process." \
-                    " If you do not want to use distributed DataLoader, please set" \
-                    " 'distributed: False'. Or If you want to use distributed DataLoader," \
-                    " please set 'distributed: True' and launch multiple processes.")
+                raise EnvironmentError(
+                    "The program is now trying to traverse"
+                    " the distributed TensorFlow DefaultDataLoader in only one process."
+                    " If you do not want to use distributed DataLoader, please set"
+                    " 'distributed: False'. Or If you want to use distributed DataLoader,"
+                    " please set 'distributed: True' and launch multiple processes."
+                )
         return iter(range(self.process_rank, len(self.whole_dataset), self.process_size))
 
     def __len__(self):
         """Return the length of dataset."""
         return len(self.whole_dataset)
+
 
 class BatchSampler(Sampler):
     """Yield a batch of indices and number of batches."""

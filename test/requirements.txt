@@ -1,19 +1,19 @@
-intel-tensorflow>=2.12.0
-onnx
-onnxruntime
 --find-links https://download.pytorch.org/whl/torch_stable.html
-torch
-torchvision
+accelerate==0.21.0
+dynast==1.3.0
+horovod
+intel-extension-for-pytorch
+intel-tensorflow>=2.12.0
 mxnet-mkl
 neural-compressor
-tf_slim
-transformers>=4.30.2
-accelerate==0.21.0
-horovod
-tensorflow-addons
+onnx
+onnxruntime
 onnxruntime-extensions; python_version < '3.11'
-dynast==1.3.0
-intel-extension-for-pytorch
-tf2onnx
-xgboost
 optimum
+tensorflow-addons
+tf2onnx
+tf_slim
+torch
+torchvision
+transformers>=4.30.2
+xgboost

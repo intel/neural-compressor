@@ -1,12 +1,12 @@
 import unittest
 
 import torch
-import torchvision
 import torch.nn as nn
+import torchvision
 
+from neural_compressor.conf.pythonic_config import Config, WeightPruningConfig
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.conf.pythonic_config import Config, WeightPruningConfig
 from neural_compressor.experimental.pruning_v2 import Pruning
 
 local_regs_config = [
@@ -14,13 +14,13 @@ local_regs_config = [
         "start_step": 0,
         "end_step": 10,
         "pruning_type": "magnitude",
-        "op_names": ['layer1.*'],
-        "excluded_op_names": ['layer2.*'],
+        "op_names": ["layer1.*"],
+        "excluded_op_names": ["layer2.*"],
         "pruning_scope": "global",
         "target_sparsity": 0.5,
         "pattern": "4x1",
         "reg_type": "group_lasso",
-        "parameters": {'reg_coeff': 0.2}
+        "parameters": {"reg_coeff": 0.2},
     },
     {
         "start_step": 1,
@@ -28,30 +28,31 @@ local_regs_config = [
         "target_sparsity": 0.5,
         "pruning_type": "snip_momentum",
         "pruning_frequency": 2,
-        "op_names": ['layer2.*'],
+        "op_names": ["layer2.*"],
         "pruning_scope": "local",
         "pattern": "1x1",
         "sparsity_decay_type": "exp",
         "reg_type": "group_lasso",
-        "parameters": {'reg_coeff': 0.1}
+        "parameters": {"reg_coeff": 0.1},
     },
     {
         "start_step": 2,
         "end_step": 8,
         "pruning_type": "gradient",
         "pruning_frequency": 2,
-        "op_names": ['fc'],
+        "op_names": ["fc"],
         "pruning_scope": "local",
         "target_sparsity": 0.75,
         "pattern": "1x1",
         "sparsity_decay_type": "cube",
         "reg_type": "group_lasso",
-        "parameters": {'reg_coeff': 0.0}
-    }
+        "parameters": {"reg_coeff": 0.0},
+    },
 ]
 
-fake_snip_config = WeightPruningConfig(local_regs_config, target_sparsity=0.9, start_step=0, \
-                                       end_step=10, pruning_frequency=1, sparsity_decay_type="exp")
+fake_snip_config = WeightPruningConfig(
+    local_regs_config, target_sparsity=0.9, start_step=0, end_step=10, pruning_frequency=1, sparsity_decay_type="exp"
+)
 
 
 class TestPruningRegs(unittest.TestCase):

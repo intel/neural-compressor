@@ -1,21 +1,21 @@
-import os
 import copy
+import os
 import shutil
 import unittest
 
 import torch
-import torchvision
 import torch.nn as nn
-import neural_compressor.adaptor.pytorch as nc_torch
+import torchvision
+from packaging.version import Version
 
+import neural_compressor.adaptor.pytorch as nc_torch
 from neural_compressor.conf.config import DistillationConf, PruningConf
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.experimental.scheduler import Scheduler
 from neural_compressor.training import prepare_compression
-from neural_compressor.utils.pytorch import load
 from neural_compressor.utils import logger
-from packaging.version import Version
+from neural_compressor.utils.pytorch import load
 
 PT_VERSION = nc_torch.get_torch_version()
 if PT_VERSION >= Version("1.8.0-rc1"):
@@ -118,35 +118,35 @@ tuning:
 
 
 def build_fake_yaml():
-    with open('fake.yaml', 'w', encoding="utf-8") as f:
+    with open("fake.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
 
 def build_fake_yaml2():
-    with open('fake2.yaml', 'w', encoding="utf-8") as f:
+    with open("fake2.yaml", "w", encoding="utf-8") as f:
         f.write(fake2_yaml)
 
 
 def build_fake_yaml3():
-    with open('fake3.yaml', 'w', encoding="utf-8") as f:
+    with open("fake3.yaml", "w", encoding="utf-8") as f:
         f.write(fake3_yaml)
 
 
 def build_fx_fake_yaml():
-    fx_fake_yaml = fake_yaml.replace('pytorch', 'pytorch_fx')
-    with open('fx_fake.yaml', 'w', encoding="utf-8") as f:
+    fx_fake_yaml = fake_yaml.replace("pytorch", "pytorch_fx")
+    with open("fx_fake.yaml", "w", encoding="utf-8") as f:
         f.write(fx_fake_yaml)
 
 
 def build_fx_fake_yaml2():
-    fx_fake2_yaml = fake2_yaml.replace('pytorch', 'pytorch_fx')
-    with open('fx_fake2.yaml', 'w', encoding="utf-8") as f:
+    fx_fake2_yaml = fake2_yaml.replace("pytorch", "pytorch_fx")
+    with open("fx_fake2.yaml", "w", encoding="utf-8") as f:
         f.write(fx_fake2_yaml)
 
 
 def build_fx_fake_yaml3():
-    fx_fake3_yaml = fake3_yaml.replace('pytorch', 'pytorch_fx')
-    with open('fx_fake3.yaml', 'w', encoding="utf-8") as f:
+    fx_fake3_yaml = fake3_yaml.replace("pytorch", "pytorch_fx")
+    with open("fx_fake3.yaml", "w", encoding="utf-8") as f:
         f.write(fx_fake3_yaml)
 
 
@@ -182,24 +182,25 @@ class TestPruning(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove('fake.yaml')
-        os.remove('fake2.yaml')
-        os.remove('fake3.yaml')
-        os.remove('fx_fake.yaml')
-        os.remove('fx_fake2.yaml')
-        os.remove('fx_fake3.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
-        shutil.rmtree('nc_workspace', ignore_errors=True)
+        os.remove("fake.yaml")
+        os.remove("fake2.yaml")
+        os.remove("fake3.yaml")
+        os.remove("fx_fake.yaml")
+        os.remove("fx_fake2.yaml")
+        os.remove("fx_fake3.yaml")
+        shutil.rmtree("./saved", ignore_errors=True)
+        shutil.rmtree("runs", ignore_errors=True)
+        shutil.rmtree("nc_workspace", ignore_errors=True)
 
     def test_prune_qat_oneshot(self):
         from neural_compressor.experimental import Pruning, Quantization
-        datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
+
+        datasets = Datasets("pytorch")
+        dummy_dataset = datasets["dummy"](shape=(16, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         q_model = copy.deepcopy(self.q_model)
-        prune = Pruning('./fake.yaml')
-        quantizer = Quantization('./fake2.yaml')
+        prune = Pruning("./fake.yaml")
+        quantizer = Quantization("./fake2.yaml")
         scheduler = Scheduler()
         scheduler.model = q_model
         combination = scheduler.combine(prune, quantizer)
@@ -216,7 +217,7 @@ class TestPruning(unittest.TestCase):
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
                     combination.on_step_begin(cnt)
-                    print('.', end='')
+                    print(".", end="")
                     cnt += 1
                     output = model(image)
                     loss = criterion(output, target)
@@ -234,19 +235,17 @@ class TestPruning(unittest.TestCase):
         combination.train_dataloader = dummy_dataloader
         scheduler.append(combination)
         opt_model = scheduler()
-        opt_model.save('./saved')
-        logger.info(20 * '=' + 'test_prune_qat_oneshot' + 20 * '=')
+        opt_model.save("./saved")
+        logger.info(20 * "=" + "test_prune_qat_oneshot" + 20 * "=")
 
         try:
             conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
         except:
             conv_weight = opt_model.model.layer1[0].conv1.weight
-        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.64,
-                               delta=0.05)
-        self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
+        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(), 0.64, delta=0.05)
+        self.assertEqual(combination.__repr__().lower(), "combination of pruning,quantization")
         # reloading int8 model
-        reloaded_model = load('./saved', copy.deepcopy(self.q_model))
+        reloaded_model = load("./saved", copy.deepcopy(self.q_model))
         try:
             reloaded_conv_weight = reloaded_model.layer1[0].conv1.weight().dequantize()
         except:
@@ -255,13 +254,14 @@ class TestPruning(unittest.TestCase):
 
     def test_distillation_qat_oneshot(self):
         from neural_compressor.experimental import Distillation, Quantization
-        datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
+
+        datasets = Datasets("pytorch")
+        dummy_dataset = datasets["dummy"](shape=(16, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         model = copy.deepcopy(self.model)
         q_model = copy.deepcopy(self.q_model)
-        distiller = Distillation('./fake3.yaml')
-        quantizer = Quantization('./fake2.yaml')
+        distiller = Distillation("./fake3.yaml")
+        quantizer = Quantization("./fake2.yaml")
         scheduler = Scheduler()
         distiller.teacher_model = model
         scheduler.model = q_model
@@ -279,7 +279,7 @@ class TestPruning(unittest.TestCase):
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
                     combination.on_step_begin(cnt)
-                    print('.', end='')
+                    print(".", end="")
                     cnt += 1
                     output = model(image)
                     loss = criterion(output, target)
@@ -298,23 +298,24 @@ class TestPruning(unittest.TestCase):
         combination.train_dataloader = dummy_dataloader
         scheduler.append(combination)
         opt_model = scheduler()
-        opt_model.save('./saved')
-        logger.info(20 * '=' + 'test_distillation_qat_oneshot' + 20 * '=')
+        opt_model.save("./saved")
+        logger.info(20 * "=" + "test_distillation_qat_oneshot" + 20 * "=")
 
-        self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
+        self.assertEqual(combination.__repr__().lower(), "combination of distillation,quantization")
         # reloading int8 model
-        reloaded_model = load('./saved', copy.deepcopy(self.q_model))
+        reloaded_model = load("./saved", copy.deepcopy(self.q_model))
 
     def test_prune_qat_distillation_oneshot(self):
-        from neural_compressor.experimental import Pruning, Quantization, Distillation
-        datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
+        from neural_compressor.experimental import Distillation, Pruning, Quantization
+
+        datasets = Datasets("pytorch")
+        dummy_dataset = datasets["dummy"](shape=(16, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         model = copy.deepcopy(self.model)
         q_model = copy.deepcopy(self.q_model)
-        prune = Pruning('./fake.yaml')
-        quantizer = Quantization('./fake2.yaml')
-        distiller = Distillation('./fake3.yaml')
+        prune = Pruning("./fake.yaml")
+        quantizer = Quantization("./fake2.yaml")
+        distiller = Distillation("./fake3.yaml")
         scheduler = Scheduler()
         distiller.teacher_model = model
         scheduler.model = q_model
@@ -332,7 +333,7 @@ class TestPruning(unittest.TestCase):
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
                     combination.on_step_begin(cnt)
-                    print('.', end='')
+                    print(".", end="")
                     cnt += 1
                     output = model(image)
                     loss = criterion(output, target)
@@ -352,24 +353,23 @@ class TestPruning(unittest.TestCase):
         combination.train_dataloader = dummy_dataloader
         scheduler.append(combination)
         opt_model = scheduler()
-        logger.info(20 * '=' + 'test_prune_qat_distillation_oneshot' + 20 * '=')
+        logger.info(20 * "=" + "test_prune_qat_distillation_oneshot" + 20 * "=")
 
         try:
             conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
         except:
             conv_weight = opt_model.model.layer1[0].conv1.weight
-        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.64,
-                               delta=0.05)
-        self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization,distillation')
+        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(), 0.64, delta=0.05)
+        self.assertEqual(combination.__repr__().lower(), "combination of pruning,quantization,distillation")
 
     def test_prune_qat_oneshot_fx(self):
         from neural_compressor.experimental import Pruning, Quantization
-        datasets = Datasets('pytorch_fx')
-        dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
+
+        datasets = Datasets("pytorch_fx")
+        dummy_dataset = datasets["dummy"](shape=(16, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        prune = Pruning('./fx_fake.yaml')
-        quantizer = Quantization('./fx_fake2.yaml')
+        prune = Pruning("./fx_fake.yaml")
+        quantizer = Quantization("./fx_fake2.yaml")
         scheduler = Scheduler()
         model = copy.deepcopy(self.model)
         scheduler.model = model
@@ -388,7 +388,7 @@ class TestPruning(unittest.TestCase):
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
                     combination.on_step_begin(cnt)
-                    print('.', end='')
+                    print(".", end="")
                     cnt += 1
                     output = model(image)
                     loss = criterion(output, target)
@@ -407,28 +407,26 @@ class TestPruning(unittest.TestCase):
         combination.train_dataloader = dummy_dataloader
         scheduler.append(combination)
         opt_model = scheduler()
-        opt_model.save('./saved')
-        logger.info(20 * '=' + 'test_prune_qat_oneshot_fx' + 20 * '=')
-        conv_weight = opt_model.model.state_dict()['layer1.0.conv1.weight']
-        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.64,
-                               delta=0.05)
-        self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
+        opt_model.save("./saved")
+        logger.info(20 * "=" + "test_prune_qat_oneshot_fx" + 20 * "=")
+        conv_weight = opt_model.model.state_dict()["layer1.0.conv1.weight"]
+        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(), 0.64, delta=0.05)
+        self.assertEqual(combination.__repr__().lower(), "combination of pruning,quantization")
         # reloading int8 model
-        reloaded_model = load('./saved', copy.deepcopy(self.model), dataloader=dummy_dataloader)
-        reloaded_conv_weight = reloaded_model.state_dict()['layer1.0.conv1.weight']
+        reloaded_model = load("./saved", copy.deepcopy(self.model), dataloader=dummy_dataloader)
+        reloaded_conv_weight = reloaded_model.state_dict()["layer1.0.conv1.weight"]
         self.assertTrue(torch.equal(reloaded_conv_weight, conv_weight))
 
-    @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"),
-                     "requires higher version of torch than 1.9.0")
+    @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"), "requires higher version of torch than 1.9.0")
     def test_distillation_qat_oneshot_fx(self):
         from neural_compressor.experimental import Distillation, Quantization
-        datasets = Datasets('pytorch_fx')
-        dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
+
+        datasets = Datasets("pytorch_fx")
+        dummy_dataset = datasets["dummy"](shape=(16, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         model = DynamicControlModel()
-        distiller = Distillation('./fx_fake3.yaml')
-        quantizer = Quantization('./fx_fake2.yaml')
+        distiller = Distillation("./fx_fake3.yaml")
+        quantizer = Quantization("./fx_fake2.yaml")
         scheduler = Scheduler()
         distiller.teacher_model = copy.deepcopy(model)
         scheduler.model = model
@@ -446,7 +444,7 @@ class TestPruning(unittest.TestCase):
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
                     combination.on_step_begin(cnt)
-                    print('.', end='')
+                    print(".", end="")
                     cnt += 1
                     output = model(image)
                     loss = criterion(output, target)
@@ -466,21 +464,22 @@ class TestPruning(unittest.TestCase):
         combination.train_dataloader = dummy_dataloader
         scheduler.append(combination)
         opt_model = scheduler()
-        opt_model.save('./saved')
-        logger.info(20 * '=' + 'test_distillation_qat_oneshot_fx' + 20 * '=')
+        opt_model.save("./saved")
+        logger.info(20 * "=" + "test_distillation_qat_oneshot_fx" + 20 * "=")
 
-        self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
+        self.assertEqual(combination.__repr__().lower(), "combination of distillation,quantization")
         # reloading int8 model
         model = DynamicControlModel()
-        reloaded_model = load('./saved', model, dataloader=dummy_dataloader)
+        reloaded_model = load("./saved", model, dataloader=dummy_dataloader)
 
     def test_distillation_prune_oneshot_fx(self):
         from neural_compressor.experimental import Distillation, Pruning
-        datasets = Datasets('pytorch_fx')
-        dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
+
+        datasets = Datasets("pytorch_fx")
+        dummy_dataset = datasets["dummy"](shape=(16, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        distiller = Distillation('./fx_fake3.yaml')
-        pruner = Pruning('./fx_fake.yaml')
+        distiller = Distillation("./fx_fake3.yaml")
+        pruner = Pruning("./fx_fake.yaml")
         scheduler = Scheduler()
         model = copy.deepcopy(self.model)
         distiller.teacher_model = copy.deepcopy(model)
@@ -499,7 +498,7 @@ class TestPruning(unittest.TestCase):
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
                     combination.on_step_begin(cnt)
-                    print('.', end='')
+                    print(".", end="")
                     cnt += 1
                     output = model(image)
                     loss = criterion(output, target)
@@ -519,28 +518,26 @@ class TestPruning(unittest.TestCase):
         combination.train_dataloader = dummy_dataloader
         scheduler.append(combination)
         opt_model = scheduler()
-        logger.info(20 * '=' + 'test_distillation_prune_oneshot_fx' + 20 * '=')
+        logger.info(20 * "=" + "test_distillation_prune_oneshot_fx" + 20 * "=")
 
         try:
-            conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
+            conv_weight = dict(opt_model.model.layer1.named_modules())["0"].conv1.weight().dequantize()
         except:
-            conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
-        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.64,
-                               delta=0.05)
-        self.assertEqual(combination.__repr__().lower(), 'combination of distillation,pruning')
+            conv_weight = dict(opt_model.model.layer1.named_modules())["0"].conv1.weight
+        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(), 0.64, delta=0.05)
+        self.assertEqual(combination.__repr__().lower(), "combination of distillation,pruning")
 
-    @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"),
-                     "requires higher version of torch than 1.9.0")
+    @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"), "requires higher version of torch than 1.9.0")
     def test_prune_qat_distillation_oneshot_fx(self):
-        from neural_compressor.experimental import Pruning, Quantization, Distillation
-        datasets = Datasets('pytorch_fx')
-        dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
+        from neural_compressor.experimental import Distillation, Pruning, Quantization
+
+        datasets = Datasets("pytorch_fx")
+        dummy_dataset = datasets["dummy"](shape=(16, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         model = copy.deepcopy(self.model)
-        prune = Pruning('./fx_fake.yaml')
-        quantizer = Quantization('./fx_fake2.yaml')
-        distiller = Distillation('./fx_fake3.yaml')
+        prune = Pruning("./fx_fake.yaml")
+        quantizer = Quantization("./fx_fake2.yaml")
+        distiller = Distillation("./fx_fake3.yaml")
         scheduler = Scheduler()
         distiller.teacher_model = copy.deepcopy(model)
         scheduler.model = model
@@ -558,7 +555,7 @@ class TestPruning(unittest.TestCase):
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
                     combination.on_step_begin(cnt)
-                    print('.', end='')
+                    print(".", end="")
                     cnt += 1
                     output = model(image)
                     loss = criterion(output, target)
@@ -578,19 +575,14 @@ class TestPruning(unittest.TestCase):
         combination.train_dataloader = dummy_dataloader
         scheduler.append(combination)
         opt_model = scheduler()
-        logger.info(20 * '=' + 'test_prune_qat_distillation_oneshot_fx' + 20 * '=')
+        logger.info(20 * "=" + "test_prune_qat_distillation_oneshot_fx" + 20 * "=")
 
         try:
-            conv_weight = \
-                dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
+            conv_weight = dict(opt_model.model.layer1.named_modules())["0"].conv1.weight().dequantize()
         except:
-            conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
-        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.64,
-                               delta=0.05)
-        self.assertEqual(
-            combination.__repr__().lower(), 'combination of pruning,quantization,distillation'
-        )
+            conv_weight = dict(opt_model.model.layer1.named_modules())["0"].conv1.weight
+        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(), 0.64, delta=0.05)
+        self.assertEqual(combination.__repr__().lower(), "combination of pruning,quantization,distillation")
 
 
 if __name__ == "__main__":

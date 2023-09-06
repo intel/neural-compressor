@@ -54,6 +54,7 @@ class WeightsStatistics(JsonSerializer):
         """Initialize Weights details."""
         check_module("numpy")
         import numpy as np
+
         super().__init__()
         self.min: float = np.min(tensor_data)
         self.max: float = np.max(tensor_data)
@@ -62,8 +63,8 @@ class WeightsStatistics(JsonSerializer):
         self.var: float = np.var(tensor_data)
 
     def serialize(
-            self,
-            serialization_type: str = "default",
+        self,
+        serialization_type: str = "default",
     ) -> Dict[str, Any]:
         """Serialize Weights details."""
         return {

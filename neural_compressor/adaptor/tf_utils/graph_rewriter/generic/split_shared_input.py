@@ -17,15 +17,17 @@
 """Split shared input Graph Rewriter."""
 
 from tensorflow.core.framework import node_def_pb2
+
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
-from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 
 class SplitSharedInputOptimizer(GraphRewriterBase):
     """Split the shared input if the input node is shared and const."""
+
     @dump_elapsed_time("Pass SplitSharedInputOptimizer")
     def do_transformation(self):
         """Execute splitting the shared input."""
@@ -40,9 +42,9 @@ class SplitSharedInputOptimizer(GraphRewriterBase):
         for node_name in list(graph_info.keys()):
             node = graph_info[node_name].node
             for _, input_node_name in enumerate(node.input):
-                if input_node_name.startswith('^'):
+                if input_node_name.startswith("^"):
                     continue
-                if graph_info[Helper.node_name_from_input(input_node_name)].node.op == 'Const':
+                if graph_info[Helper.node_name_from_input(input_node_name)].node.op == "Const":
                     # is shared and current node is not the first one
                     # sharing the input
                     if input_node_name in input_map:
@@ -50,10 +52,8 @@ class SplitSharedInputOptimizer(GraphRewriterBase):
                         input_map[input_node_name].append(node.name)
                         new_input_node = node_def_pb2.NodeDef()
                         new_input_node.CopyFrom(graph_info[input_node_name].node)
-                        new_input_node.name = input_node_name + '_nc_share_' + str(
-                            len(input_map[input_node_name]))
-                        cur_graph.replace_const_node(
-                            new_input_node, [node.name], input_node_name, False)
+                        new_input_node.name = input_node_name + "_nc_share_" + str(len(input_map[input_node_name]))
+                        cur_graph.replace_const_node(new_input_node, [node.name], input_node_name, False)
                     else:
                         input_map[input_node_name] = [node.name]
 

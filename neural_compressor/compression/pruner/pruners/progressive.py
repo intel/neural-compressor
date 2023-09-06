@@ -1,4 +1,4 @@
-"""progressive pruner."""
+"""Progressive pruner."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -18,15 +18,15 @@
 
 import copy
 
-from .base import register_pruner, PytorchBasePruner
-from ..schedulers import get_scheduler
-from ..patterns import get_pattern
 from ..criteria import get_criterion
+from ..patterns import get_pattern
 from ..regs import get_reg
+from ..schedulers import get_scheduler
 from ..utils import logger, torch
+from .base import PytorchBasePruner, register_pruner
 
 
-@register_pruner('pt_progressive')
+@register_pruner("pt_progressive")
 class PytorchProgressivePruner(PytorchBasePruner):
     """Pruning Pruner.
 
@@ -56,11 +56,7 @@ class PytorchProgressivePruner(PytorchBasePruner):
         self.use_progressive = self.config["progressive"]
         # progressive parameters
         # dict passed to Pattern's functions
-        self.progressive_configs = {
-            "progressive_steps": 4,
-            "progressive_type": "scores",
-            "use_global": True
-        }
+        self.progressive_configs = {"progressive_steps": 4, "progressive_type": "scores", "use_global": True}
         self.progressive_steps = self.progressive_configs["progressive_steps"]
         self.progressive_type = self.progressive_configs["progressive_type"]
         self.use_global = self.progressive_configs["use_global"]
@@ -116,7 +112,8 @@ class PytorchProgressivePruner(PytorchBasePruner):
                 if progressive_direction % self.progressive_steps != 0:
                     raise ValueError(
                         f"In layer {key}, its pruning pattern is {block_size}, "
-                        f"while progressive steps {self.progressive_steps} is indivisible.")
+                        f"while progressive steps {self.progressive_steps} is indivisible."
+                    )
         else:
             # score based progressive pruning, support both NxM and N:M patterns
             if type(self.pattern).__name__ == "PytorchPatternNxM":
@@ -126,12 +123,14 @@ class PytorchProgressivePruner(PytorchBasePruner):
                     if total_block_size < self.progressive_steps:
                         raise ValueError(
                             f"In layer {key}, its pruning pattern is {block_size}, "
-                            f"while progressive steps {self.progressive_steps} is overflowing.")
+                            f"while progressive steps {self.progressive_steps} is overflowing."
+                        )
             elif type(self.pattern).__name__ == "PytorchPatternNInM":
                 if self.pattern.N < self.progressive_steps:
                     raise ValueError(
                         f"Pruning pattern is {self.pattern.N} in {self.pattern.M}, "
-                        f"while progressive steps {self.progressive_steps} is overflowing.")
+                        f"while progressive steps {self.progressive_steps} is overflowing."
+                    )
             else:
                 raise NotImplementedError
 
@@ -154,29 +153,31 @@ class PytorchProgressivePruner(PytorchBasePruner):
     def update_masks_progressive(self, local_step):
         """Update the masks in progressive pruning mode at a given local step."""
         if self.global_step == self.start_step:
-            if self.config['lock_init_sparsity']:
+            if self.config["lock_init_sparsity"]:
                 self.masks = self.pattern.get_pattern_lock_masks(self.modules)
                 self.init_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
                 self.current_sparsity_ratio = self.init_sparsity_ratio
 
         # case 1: step is not in [start_step, end_step] or it is not either pruning or progressive pruning step.
         if (self.check_is_pruned_step(self.global_step) is False) and (
-                self.check_is_pruned_progressive_step(self.global_step) is False):
+            self.check_is_pruned_progressive_step(self.global_step) is False
+        ):
             return
         if self.current_sparsity_ratio > self.target_sparsity_ratio:
             return
 
         # case 2: step which does progressive update, but it is not a pruning step in case 3
-        if self.check_is_pruned_progressive_step(self.global_step) \
-                and self.check_is_pruned_step(self.global_step) is False:
+        if (
+            self.check_is_pruned_progressive_step(self.global_step)
+            and self.check_is_pruned_step(self.global_step) is False
+        ):
             # do not do global pruning, only do the progressive mask update.
             step_offset = self.global_step - self.structured_update_step
             progressive_idx = step_offset // self.pruning_frequency_progressive
             if progressive_idx < (self.progressive_steps - 1):
-                self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks,
-                                                                               self.criterion.scores,
-                                                                               progressive_idx + 1,
-                                                                               self.progressive_configs)
+                self.progressive_masks = self.pattern.update_progressive_masks(
+                    self.pre_masks, self.masks, self.criterion.scores, progressive_idx + 1, self.progressive_configs
+                )
             else:
                 # in the end, directly use new masks.
                 for n in self.masks.keys():
@@ -189,9 +190,9 @@ class PytorchProgressivePruner(PytorchBasePruner):
         # case 3: a pruning step, generate new masks, progressive masks also update.
         tmp_step = self.global_step
         self.structured_update_step = tmp_step
-        current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(self.target_sparsity_ratio,
-                                                                             self.completed_pruned_cnt,
-                                                                             self.total_prune_cnt, self.masks)
+        current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(
+            self.target_sparsity_ratio, self.completed_pruned_cnt, self.total_prune_cnt, self.masks
+        )
         logger.info(f"current target ratio is {current_target_sparsity_ratio}")
         self.criterion.on_step_begin()
         self.completed_pruned_cnt += 1
@@ -201,10 +202,14 @@ class PytorchProgressivePruner(PytorchBasePruner):
             self.pre_masks[n] = self.masks[n].clone()
         # update new masks
         if not self.use_progressive:
-            self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks, )
-        self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks,
-                                                                       self.criterion.scores, 1,
-                                                                       self.progressive_configs)
+            self.masks = self.pattern.get_masks(
+                self.criterion.scores,
+                current_target_sparsity_ratio,
+                self.masks,
+            )
+        self.progressive_masks = self.pattern.update_progressive_masks(
+            self.pre_masks, self.masks, self.criterion.scores, 1, self.progressive_configs
+        )
         self.mask_weights_general(self.progressive_masks)
         if self.progressive_logger:
             self.print_progressive_sparsity()
@@ -242,7 +247,7 @@ class PytorchProgressivePruner(PytorchBasePruner):
             self.mask_weights_general(self.progressive_masks)
 
         self.global_step += 1
-    
+
     def mask_weights_general(self, input_masks):
         """Apply input masks to corresponding modules' weights.
 

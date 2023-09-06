@@ -23,6 +23,4 @@ from .metric import Metric
 from .criterion import Criterions
 from .optimizer import Optimizers
 
-__all__ = ['Model', 'DataLoader', 'Postprocess', 'Metric', '_generate_common_dataloader']
-
-
+__all__ = ["Model", "DataLoader", "Postprocess", "Metric", "_generate_common_dataloader"]

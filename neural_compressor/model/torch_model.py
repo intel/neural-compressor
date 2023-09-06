@@ -14,26 +14,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Class for PyTorch model."""
 
 import copy
-import os
 import inspect
+import os
 import sys
 from collections import OrderedDict, UserDict
-from neural_compressor.utils.utility import LazyImport, compute_sparsity
-from neural_compressor.utils import logger
+
 from neural_compressor import config as cfg
 from neural_compressor.model.base_model import BaseModel
+from neural_compressor.utils import logger
+from neural_compressor.utils.utility import LazyImport, compute_sparsity
 
-torch = LazyImport('torch')
-yaml = LazyImport('yaml')
-json = LazyImport('json')
-np = LazyImport('numpy')
-onnx = LazyImport('onnx')
-ort = LazyImport('onnxruntime')
-ortq = LazyImport('onnxruntime.quantization')
+torch = LazyImport("torch")
+yaml = LazyImport("yaml")
+json = LazyImport("json")
+np = LazyImport("numpy")
+onnx = LazyImport("onnx")
+ort = LazyImport("onnxruntime")
+ortq = LazyImport("onnxruntime.quantization")
 
 
 class PyTorchBaseModel(torch.nn.Module, BaseModel):
@@ -48,10 +48,11 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         torch.nn.Module.__init__(self)
         self._model = model
         assert isinstance(model, torch.nn.Module), "model should be pytorch nn.Module."
+        self._model_path = None if not isinstance(model, str) else model
         self.handles = []
-        self.tune_cfg= None
+        self.tune_cfg = None
         self.q_config = None
-        self._workspace_path = ''
+        self._workspace_path = ""
         self.is_quantized = False
         self.fp32_model = model
         self.kwargs = kwargs if kwargs else None
@@ -60,28 +61,29 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         """Describe a PyTorchBaseModel as a string."""
         # rewirte this func to avoid printing fp32_model
         from torch.nn.modules.module import _addindent
+
         # We treat the extra repr like the sub-module, one item per line
         extra_lines = []
         extra_repr = self.extra_repr()
         # empty string will be split into list ['']
         if extra_repr:
-            extra_lines = extra_repr.split('\n')
+            extra_lines = extra_repr.split("\n")
         child_lines = []
         for key, module in self._modules.items():
-            if key == 'fp32_model':
+            if key == "fp32_model":
                 continue
             mod_str = repr(module)
             mod_str = _addindent(mod_str, 2)
-            child_lines.append('(' + key + '): ' + mod_str)
+            child_lines.append("(" + key + "): " + mod_str)
         lines = extra_lines + child_lines
-        main_str = self._get_name() + '('
+        main_str = self._get_name() + "("
         if lines:
             # simple one-liner info, which most builtin Modules will use
             if len(extra_lines) == 1 and not child_lines:
                 main_str += extra_lines[0]
             else:
-                main_str += '\n  ' + '\n  '.join(lines) + '\n'
-        main_str += ')'
+                main_str += "\n  " + "\n  ".join(lines) + "\n"
+        main_str += ")"
         return main_str
 
     def forward(self, *args, **kwargs):
@@ -99,6 +101,16 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         self._model = model
 
     @property
+    def model_path(self):
+        """Return model path."""
+        return self._model_path
+
+    @model_path.setter
+    def model_path(self, path):
+        """Set model path."""
+        self._model_path = path
+
+    @property
     def fp32_model(self):
         """Getter to model."""
         return self._fp32_model
@@ -110,8 +122,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
 
     def register_forward_pre_hook(self):
         """Register forward pre hook."""
-        self.handles.append(
-                self._model.register_forward_pre_hook(self.generate_forward_pre_hook()))
+        self.handles.append(self._model.register_forward_pre_hook(self.generate_forward_pre_hook()))
 
     def remove_hooks(self):
         """Remove hooks."""
@@ -121,21 +132,23 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
     def generate_forward_pre_hook(self):
         """Generate forward pre hook."""
         # skip input argument 'self' in forward
-        self.input_args = OrderedDict().fromkeys(
-                inspect.getfullargspec(self._model.forward).args[1:], None)
+        self.input_args = OrderedDict().fromkeys(inspect.getfullargspec(self._model.forward).args[1:], None)
+
         # a wrapper is needed to insert self into the actual hook
         def actual_forward_pre_hook(module, input):
             args, _, _, values = inspect.getargvalues(inspect.stack()[1].frame)
             # intersection update kw arguments
-            self.input_args.update(values['kwargs'])
+            self.input_args.update(values["kwargs"])
             # update arguments
             if "input" in values:
-                for (single_input, single_arg) in \
-                        zip(values['input'], list(self.input_args.keys())[:len(values['input'])]):
+                for single_input, single_arg in zip(
+                    values["input"], list(self.input_args.keys())[: len(values["input"])]
+                ):
                     self.input_args[single_arg] = single_input
             elif "args" in values:
-                for (single_input, single_arg) in \
-                        zip(values['args'], list(self.input_args.keys())[:len(values['args'])]):
+                for single_input, single_arg in zip(
+                    values["args"], list(self.input_args.keys())[: len(values["args"])]
+                ):
                     self.input_args[single_arg] = single_input
             else:
                 assert False, "there is no input field was found!"
@@ -144,7 +157,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
 
     def framework(self):
         """Return framework."""
-        return 'pytorch'
+        return "pytorch"
 
     def get_all_weight_names(self):
         """Get weight names."""
@@ -170,9 +183,9 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         # TODO: copy tensor option to new tensor is better
         device = next(self._model.parameters()).device
         new_tensor = torch.tensor(new_tensor).float().to(device)
-        module_index = '.'.join(tensor_name.split('.')[:-1])
+        module_index = ".".join(tensor_name.split(".")[:-1])
         module = dict(self._model.named_modules())[module_index]
-        getattr(module, tensor_name.split('.')[-1]).data = new_tensor.data
+        getattr(module, tensor_name.split(".")[-1]).data = new_tensor.data
 
     def update_gradient(self, grad_name, new_grad):
         """Update grad value.
@@ -183,7 +196,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         """
         device = next(self._model.parameters()).device
         new_grad = torch.tensor(new_grad).float().to(device)
-        params = [p for n,p in self._model.named_parameters() if n == grad_name]
+        params = [p for n, p in self._model.named_parameters() if n == grad_name]
         assert len(params) == 1, "lpot can only update grad of one tensor at one time"
         param = params[0]
         param.grad.copy_(new_grad)
@@ -198,7 +211,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         state_dict = self._model.state_dict()
         for name in state_dict:
             if name == tensor_name:
-                state_dict[name].masked_fill_(mask.to(state_dict[name].device), 0.)
+                state_dict[name].masked_fill_(mask.to(state_dict[name].device), 0.0)
 
     def get_inputs(self, input_name=None):
         """Get inputs of model.
@@ -223,14 +236,13 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         if isinstance(input_tensor, str):
             for name, tensor in self._model.named_parameters():
                 if name == input_tensor:
-                    assert tensor.grad is not None, 'Please call backward() before get_gradient'
+                    assert tensor.grad is not None, "Please call backward() before get_gradient"
                     return np.array(tensor.grad.cpu())
         elif isinstance(input_tensor, torch.Tensor):
-            assert input_tensor.grad is not None, 'Please call backward() before get_gradient'
+            assert input_tensor.grad is not None, "Please call backward() before get_gradient"
             return np.array(input_tensor.grad.cpu())
-        else:   # pragma: no cover
-            logger.error("Expect str or torch.Tensor in get_gradient, " \
-                         "but get {}.".format(type(input_tensor)))
+        else:  # pragma: no cover
+            logger.error("Expect str or torch.Tensor in get_gradient, " "but get {}.".format(type(input_tensor)))
 
     def report_sparsity(self):
         """Get sparsity of the model.
@@ -243,8 +255,9 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
             logger.info("INC IPEX don't support compute sparsity for model in TorchScript format now.")
             return [0.0]
         import pandas as pd
-        df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)"])
-        pd.set_option('display.precision', 2)
+
+        df = pd.DataFrame(columns=["Name", "Shape", "NNZ (dense)", "NNZ (sparse)", "Sparsity(%)"])
+        pd.set_option("display.precision", 2)
         # TODO: need to specify modules(Conv2d, Linear, etc.) instead of dims
         param_dims = [2, 4]
         params_size = 0
@@ -252,34 +265,38 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         model_params = dict(self._model.state_dict())
         for name, param in model_params.items():
             # '_packed_params._packed_params' and dtype is specific for quantized module
-            if '_packed_params._packed_params' in name and isinstance(param, tuple):
+            if "_packed_params._packed_params" in name and isinstance(param, tuple):
                 param = param[0]
-            if hasattr(param, 'dtype') and param.dtype in [torch.qint8, torch.quint8]:
+            if hasattr(param, "dtype") and param.dtype in [torch.qint8, torch.quint8]:
                 param = param.dequantize()
-            if hasattr(param, 'dim') and param.dim() in param_dims \
-              and any(type in name for type in ['weight', 'bias', '_packed_params']):
-                param_size, sparse_param_size, dense_param_size = compute_sparsity(
-                    param.detach().cpu().numpy())
+            if (
+                hasattr(param, "dim")
+                and param.dim() in param_dims
+                and any(type in name for type in ["weight", "bias", "_packed_params"])
+            ):
+                param_size, sparse_param_size, dense_param_size = compute_sparsity(param.detach().cpu().numpy())
                 density = dense_param_size / param_size
                 params_size += param_size
                 sparse_params_size += sparse_param_size
-                df.loc[len(df.index)] = ([
+                df.loc[len(df.index)] = [
                     name,
                     list(param.shape),
                     dense_param_size,
                     sparse_param_size,
                     (1 - density) * 100,
-                ])
+                ]
 
         total_sparsity = sparse_params_size / params_size * 100
 
-        df.loc[len(df.index)] = ([
-            'Total sparsity:',
+        df.loc[len(df.index)] = [
+            "Total sparsity:",
             "-",
             params_size,
             sparse_params_size,
-            total_sparsity,])
+            total_sparsity,
+        ]
         return df, total_sparsity
+
 
 class PyTorchModel(PyTorchBaseModel):
     """Build PyTorchModel object."""
@@ -297,11 +314,10 @@ class PyTorchModel(PyTorchBaseModel):
     def workspace_path(self, path):
         """Set workspace path."""
         from neural_compressor.utils.pytorch import load
+
         workspace_path = path
-        weights_file = os.path.join(os.path.abspath(os.path.expanduser(workspace_path)),
-                                    'best_model.pt')
-        assert os.path.exists(
-            weights_file), "weight file %s didn't exist" % weights_file
+        weights_file = os.path.join(os.path.abspath(os.path.expanduser(workspace_path)), "best_model.pt")
+        assert os.path.exists(weights_file), "weight file %s didn't exist" % weights_file
         self._model = load(weights_file, self._model)
 
     def save(self, root=None):
@@ -313,44 +329,47 @@ class PyTorchModel(PyTorchBaseModel):
         try:
             stat_dict = self._model.state_dict()
             if self.q_config:
-                if self.q_config['approach'] == 'post_training_weight_only':
+                if self.q_config["approach"] == "post_training_weight_only":
                     from ..adaptor.torch_utils.util import collect_weight_info
+
                     weight_config_path = os.path.join(root, "qconfig.json")
                     weight_config = collect_weight_info(self.model, self.q_config)
-                    with open(weight_config_path, 'w') as f:
-                        json.dump(weight_config, f, indent = 4)
-                    if hasattr(self, 'gptq_config') and self.gptq_config:
+                    with open(weight_config_path, "w") as f:
+                        json.dump(weight_config, f, indent=4)
+                    if hasattr(self, "gptq_config") and self.gptq_config:
                         gptq_config_path = os.path.join(root, "gptq_config.json")
-                        with open(gptq_config_path, 'w') as f:
-                            json.dump(self.gptq_config, f, indent = 4)
+                        with open(gptq_config_path, "w") as f:
+                            json.dump(self.gptq_config, f, indent=4)
                 else:
-                    stat_dict['best_configure'] = self.q_config
+                    stat_dict["best_configure"] = self.q_config
             torch.save(stat_dict, os.path.join(root, "best_model.pt"))
             logger.info("Save config file and weights of quantized model to {}.".format(root))
-        except IOError as e:   # pragma: no cover
+        except IOError as e:  # pragma: no cover
             logger.error("Fail to save configure file and weights due to {}.".format(e))
 
     def quantized_state_dict(self):
         """Load quantized state dict."""
         try:
             stat_dict = self._model.state_dict()
-            stat_dict['best_configure'] = self.q_config
-        except IOError as e:   # pragma: no cover
+            stat_dict["best_configure"] = self.q_config
+        except IOError as e:  # pragma: no cover
             logger.error("Fail to dump configure and weights due to {}.".format(e))
         return stat_dict
 
     def load_quantized_state_dict(self, stat_dict):
         """Load quantized state with given dict."""
         from ..utils.pytorch import load
-        self.q_config = stat_dict['best_configure']
+
+        self.q_config = stat_dict["best_configure"]
         self._model = load(stat_dict, self._model)
 
     @property
     def graph_info(self):
         """Return graph info."""
         from ..adaptor.pytorch import get_ops_recursively
+
         op_map = {}
-        get_ops_recursively(self._model, '', op_map)
+        get_ops_recursively(self._model, "", op_map)
         return op_map
 
     def export(
@@ -360,17 +379,19 @@ class PyTorchModel(PyTorchBaseModel):
     ):
         """Export PyTorch model to ONNX model."""
         from packaging.version import Version
+
         from ..adaptor.pytorch import get_torch_version
+
         version = get_torch_version()
-        if version.release < Version("1.12.0").release: # pragma: no cover
-            assert False, "PyTorch to ONNX export function requires a minimum torch version of {}, " \
+        if version.release < Version("1.12.0").release:  # pragma: no cover
+            assert False, (
+                "PyTorch to ONNX export function requires a minimum torch version of {}, "
                 "but the torch version found is {}".format(Version("1.12.0"), version)
+            )
 
-        from neural_compressor.experimental.export import (
-            torch_to_fp32_onnx,
-            torch_to_int8_onnx)
+        from neural_compressor.experimental.export import torch_to_fp32_onnx, torch_to_int8_onnx
 
-        if conf.dtype == 'int8':
+        if conf.dtype == "int8":
             torch_to_int8_onnx(
                 self.fp32_model,
                 self.model,
@@ -382,8 +403,9 @@ class PyTorchModel(PyTorchBaseModel):
                 input_names=conf.input_names,
                 output_names=conf.output_names,
                 quant_format=conf.quant_format,
-                verbose=True,)
-        elif conf.dtype == 'fp32':
+                verbose=True,
+            )
+        elif conf.dtype == "fp32":
             torch_to_fp32_onnx(
                 self.model,
                 save_path,
@@ -393,84 +415,99 @@ class PyTorchModel(PyTorchBaseModel):
                 input_names=conf.input_names,
                 output_names=conf.output_names,
                 do_constant_folding=True,
-                verbose=True,)
-        else:   # pragma: no cover
+                verbose=True,
+            )
+        else:  # pragma: no cover
             assert False, "Not allowed dtype: {}, pleas use 'fp32' or 'int8'.".format(conf.dtype)
 
-    def export_compressed_model(self, qweight_config_path=None, sym_full_range=False, 
-                                compression_dtype=torch.int32, compression_dim=1, 
-                                scale_dtype=torch.float32, gptq_config_path=None,
-                                device='cpu'):
+    def export_compressed_model(
+        self,
+        qweight_config_path=None,
+        sym_full_range=False,
+        compression_dtype=torch.int32,
+        compression_dim=1,
+        scale_dtype=torch.float32,
+        gptq_config_path=None,
+        device="cpu",
+    ):
         """Convert Linear to WeightOnlyLinear for low memory inference.
 
         Args:
             qweight_config_path (str, optional): Path of qconfig.json. Defaults to None.
             sym_full_range (bool, optional): Whether to leverage the full compression range
                                              under symmetric quantization. Defaults to False.
-            compression_dtype (torch.Tensor, optional): The target dtype after comoression. 
+            compression_dtype (torch.Tensor, optional): The target dtype after comoression.
                                                         Defaults to torch.int32.
-            compression_dim (int, optional): Select from [0, 1], 0 is output channel, 
+            compression_dim (int, optional): Select from [0, 1], 0 is output channel,
                                                 1 is input channel. Defaults to 1.
-            scale_dtype (torch.Tensor, optional): Use float32 or float16. 
+            scale_dtype (torch.Tensor, optional): Use float32 or float16.
                                                     Defaults to torch.float32.
             gptq_config_path (str, optional): Path of gptq_config.json. Defaults to None.
             device (str, optional): choose device for compression. Defaults to cpu.
         """
-        from ..adaptor.torch_utils.util import fetch_module, set_module
-        from ..adaptor.torch_utils.weight_only import rtn_quantize, quant_weight_w_scale
-        from ..adaptor.torch_utils.util import collect_weight_info
         from ..adaptor.torch_utils.model_wrapper import WeightOnlyLinear
+        from ..adaptor.torch_utils.util import collect_weight_info, fetch_module, set_module
+        from ..adaptor.torch_utils.weight_only import quant_weight_w_scale, rtn_quantize
+
         if qweight_config_path is not None:
-            with open(qweight_config_path, 'r') as f:
+            with open(qweight_config_path, "r") as f:
                 weight_config = json.load(f)
         else:
             weight_config = collect_weight_info(self.model, self.q_config)
         if gptq_config_path is not None:
-            with open(gptq_config_path, 'r') as f:
+            with open(gptq_config_path, "r") as f:
                 gptq_config = json.load(f)
         else:
-            gptq_config = self.gptq_config if hasattr(self, 'gptq_config') else {}
+            gptq_config = self.gptq_config if hasattr(self, "gptq_config") else {}
         if gptq_config:
             for k, v in weight_config.items():
                 logger.debug(f"Compressing {k} on device {device}")
-                if v['dtype'] == 'fp32':
+                if v["dtype"] == "fp32":
                     continue
                 else:
-                    num_bits = v['bits']
-                    group_size = v['group_size']
-                    scheme = v['scheme']
+                    dtype = v["dtype"]
+                    num_bits = v["bits"]
+                    group_size = v["group_size"]
+                    scheme = v["scheme"]
                 m = fetch_module(self.model, k)
                 if k not in gptq_config:
                     new_module = rtn_quantize(
-                        m, num_bits, group_size, scheme, 
-                        return_int=True, 
+                        m,
+                        num_bits,
+                        group_size,
+                        scheme,
+                        data_type=dtype,
+                        return_int=True,
                         sym_full_range=sym_full_range,
-                        compression_dtype=compression_dtype, 
-                        compression_dim=compression_dim, 
-                        scale_dtype=scale_dtype, 
-                        device=device
+                        compression_dtype=compression_dtype,
+                        compression_dim=compression_dim,
+                        scale_dtype=scale_dtype,
+                        device=device,
                     )
                     set_module(self.model, k, new_module)
                     continue
                 gptq_conf = gptq_config[k]
-                if 'perm' in gptq_conf:
-                    gptq_perm = torch.tensor(gptq_conf['perm'])
+                if "perm" in gptq_conf:
+                    gptq_perm = torch.tensor(gptq_conf["perm"])
                     fp32_weight = m.weight.data[:, gptq_perm]
                 else:
                     fp32_weight = m.weight.data
                     gptq_perm = None
-                gptq_scale = torch.tensor(gptq_conf['scale'])
-                gptq_zp = None if scheme == 'sym' else torch.tensor(gptq_conf['zero'])
-                int_weight = quant_weight_w_scale(
-                    fp32_weight, gptq_scale, gptq_zp, group_size
-                )
+                gptq_scale = torch.tensor(gptq_conf["scale"])
+                gptq_zp = None if scheme == "sym" else torch.tensor(gptq_conf["zero"])
+                int_weight = quant_weight_w_scale(fp32_weight, gptq_scale, gptq_zp, group_size)
                 new_module = WeightOnlyLinear(
-                    m.in_features, m.out_features, num_bits, group_size,
-                    zp=gptq_zp is not None, bias=m.bias is not None, 
+                    m.in_features,
+                    m.out_features,
+                    num_bits,
+                    group_size,
+                    dtype=dtype,
+                    zp=gptq_zp is not None,
+                    bias=m.bias is not None,
                     gptq_perm=gptq_perm is not None,
-                    compression_dtype=compression_dtype, 
-                    compression_dim=compression_dim, 
-                    scale_dtype=scale_dtype, 
+                    compression_dtype=compression_dtype,
+                    compression_dim=compression_dim,
+                    scale_dtype=scale_dtype,
                     device=device,
                 )
                 new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
@@ -478,21 +515,26 @@ class PyTorchModel(PyTorchBaseModel):
         else:
             for k, v in weight_config.items():
                 logger.debug(f"Compressing {k} on device {device}")
-                if v['dtype'] == 'fp32':
+                if v["dtype"] == "fp32":
                     continue
                 else:
-                    num_bits = v['bits']
-                    group_size = v['group_size']
-                    scheme = v['scheme']
+                    dtype = v["dtype"]
+                    num_bits = v["bits"]
+                    group_size = v["group_size"]
+                    scheme = v["scheme"]
                 mod = fetch_module(self.model, k)
                 mod = rtn_quantize(
-                    mod, num_bits, group_size, scheme, 
-                    return_int=True, 
+                    mod,
+                    num_bits,
+                    group_size,
+                    scheme,
+                    data_type=dtype,
+                    return_int=True,
                     sym_full_range=sym_full_range,
-                    compression_dtype=compression_dtype, 
-                    compression_dim=compression_dim, 
-                    scale_dtype=scale_dtype, 
-                    device=device
+                    compression_dtype=compression_dtype,
+                    compression_dim=compression_dim,
+                    scale_dtype=scale_dtype,
+                    device=device,
                 )
                 set_module(self.model, k, mod)
         return self.model
@@ -506,7 +548,7 @@ class PyTorchFXModel(PyTorchModel):
         super(PyTorchFXModel, self).__init__(model, **kwargs)
 
 
-class IPEXModel(PyTorchBaseModel):   # pragma: no cover
+class IPEXModel(PyTorchBaseModel):  # pragma: no cover
     """Build IPEXModel object."""
 
     def __init__(self, model, **kwargs):
@@ -527,12 +569,10 @@ class IPEXModel(PyTorchBaseModel):   # pragma: no cover
     def workspace_path(self, path):
         """Set workspace path."""
         self._workspace_path = path
-        tune_cfg_file = os.path.join(os.path.abspath(os.path.expanduser(path)),
-                                     'best_configure.json')
-        assert os.path.exists(
-            tune_cfg_file), "tune configure file %s didn't exist" % tune_cfg_file
+        tune_cfg_file = os.path.join(os.path.abspath(os.path.expanduser(path)), "best_configure.json")
+        assert os.path.exists(tune_cfg_file), "tune configure file %s didn't exist" % tune_cfg_file
 
-        with open(tune_cfg_file, 'r') as f:
+        with open(tune_cfg_file, "r") as f:
             self.tune_cfg = json.load(f)
 
     def save(self, root=None):
@@ -542,8 +582,8 @@ class IPEXModel(PyTorchBaseModel):   # pragma: no cover
         root = os.path.abspath(os.path.expanduser(root))
         os.makedirs(root, exist_ok=True)
         try:
-            with open(os.path.join(root, "best_configure.json"), 'w') as f:
-                json.dump(self.tune_cfg, f, indent = 4)
+            with open(os.path.join(root, "best_configure.json"), "w") as f:
+                json.dump(self.tune_cfg, f, indent=4)
             logger.info("Save config file of quantized model to {}.".format(root))
         except IOError as e:
             logger.error("Fail to save configure file and weights due to {}.".format(e))

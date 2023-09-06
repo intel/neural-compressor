@@ -1,11 +1,14 @@
 """Tests for collecting layer histogram."""
-from neural_compressor.utils.collect_layer_histogram import LayerHistogramCollector
+import unittest
 from collections import OrderedDict
-from neural_compressor.utils import logger
+
 import numpy as np
 import torch
 import torch.nn as nn
-import unittest
+
+from neural_compressor.utils import logger
+from neural_compressor.utils.collect_layer_histogram import LayerHistogramCollector
+
 
 class InvertedResidual(nn.Module):
     def __init__(self, inp, oup, stride, expand_ratio):
@@ -42,25 +45,18 @@ class InvertedResidual(nn.Module):
         else:
             return self.conv(x)
 
+
 class BuildFakeModel(nn.Module):
     def conv_1x1_bn(self, inp, oup):
-        return nn.Sequential(
-            nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
-            nn.BatchNorm2d(oup),
-            nn.ReLU6(inplace=True)
-        )
+        return nn.Sequential(nn.Conv2d(inp, oup, 1, 1, 0, bias=False), nn.BatchNorm2d(oup), nn.ReLU6(inplace=True))
 
     def conv_bn(self, inp, oup, stride):
-        return nn.Sequential(
-            nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
-            nn.BatchNorm2d(oup),
-            nn.ReLU6(inplace=True)
-        )
+        return nn.Sequential(nn.Conv2d(inp, oup, 3, stride, 1, bias=False), nn.BatchNorm2d(oup), nn.ReLU6(inplace=True))
 
     def make_divisible(self, x, divisor=8):
-        return int(np.ceil(x * 1. / divisor) * divisor)
+        return int(np.ceil(x * 1.0 / divisor) * divisor)
 
-    def __init__(self, n_class=1000, input_size=224, width_mult=1.):
+    def __init__(self, n_class=1000, input_size=224, width_mult=1.0):
         super().__init__()
         block = InvertedResidual
         input_channel = 32
@@ -96,6 +92,7 @@ class BuildFakeModel(nn.Module):
         x = self.classifier(x)
         return x
 
+
 class CollectLayerHistogram(unittest.TestCase):
     def setUp(self):
         model = BuildFakeModel(width_mult=1)
@@ -104,20 +101,23 @@ class CollectLayerHistogram(unittest.TestCase):
         for key, value in model.state_dict().items():
             if not value.ndim:
                 value = np.expand_dims(value, axis=0)
-            if i>200:
+            if i > 200:
                 pass
             else:
                 include_layer[key] = np.array(value, dtype=np.float32)
             layer_tensor[key] = np.array(value, dtype=np.float32)
             i += 1
-        self.layer_histogram_collector = LayerHistogramCollector \
-            (num_bins=8001, layer_tensor=layer_tensor, include_layer=include_layer, logger=logger)
-        
+        self.layer_histogram_collector = LayerHistogramCollector(
+            num_bins=8001, layer_tensor=layer_tensor, include_layer=include_layer, logger=logger
+        )
+
     def test_layer_histogram(self):
         self.layer_histogram_collector.collect()
-        self.assertEqual(self.layer_histogram_collector.layer_tensor.keys() \
-            & self.layer_histogram_collector.include_layer.keys(), \
-                self.layer_histogram_collector.hist_dict.keys())
+        self.assertEqual(
+            self.layer_histogram_collector.layer_tensor.keys() & self.layer_histogram_collector.include_layer.keys(),
+            self.layer_histogram_collector.hist_dict.keys(),
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

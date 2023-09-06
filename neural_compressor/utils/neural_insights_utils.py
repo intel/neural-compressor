@@ -14,16 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Neural Insights utils functions."""
-from typing import Optional, Any
+from typing import Any, Optional
 
 from neural_compressor.model.onnx_model import ONNXModel
+from neural_compressor.model.torch_model import PyTorchModel
 from neural_compressor.utils import logger
 
 
 def register_neural_insights_workload(
-        workload_location: str,
-        model: Any,
-        workload_mode: str,
+    workload_location: str,
+    model: Any,
+    workload_mode: str,
+    workload_name: str,
 ) -> Optional[str]:
     """Register workload to Neural Insights.
 
@@ -31,14 +33,16 @@ def register_neural_insights_workload(
         workload_location: path to workload directory
         model: Neural Compressor's model instance to be registered
         workload_mode: workload mode
+        workload_name: Name of the workload
 
     Returns:
         String with Neural Insight workload UUID if registered else None
     """
     try:
         import os
+
         from neural_insights import NeuralInsights
-        from neural_insights.utils.consts import WorkloadModes, WORKDIR_LOCATION
+        from neural_insights.utils.consts import WORKDIR_LOCATION, WorkloadModes
 
         try:
             mode = WorkloadModes(workload_mode)
@@ -46,20 +50,37 @@ def register_neural_insights_workload(
             raise Exception(f"Workload mode '{workload_mode}' is not supported.")
 
         model_path = None
+        model_summary_file = None
         if isinstance(model.model_path, str):
             model_path: str = os.path.abspath(model.model_path)
         elif isinstance(model, ONNXModel):
             import onnx
+
             model_path: str = os.path.join(workload_location, "input_model.onnx")
             os.makedirs(workload_location, exist_ok=True)
             onnx.save(model.model, model_path)
-        assert isinstance(model_path, str), 'Model path not detected'
+        elif isinstance(model, PyTorchModel):
+            import torch
+            from torchinfo import summary
+
+            model_path: str = os.path.join(workload_location, "input_model.pt")
+            os.makedirs(workload_location, exist_ok=True)
+            torch.save(model.model.state_dict(), model_path)
+
+            model_stats = summary(model.model, verbose=0)
+            summary_str = str(model_stats)
+            model_summary_file = os.path.join(workload_location, "model_summary.txt")
+            with open(model_summary_file, "w", encoding="utf-8") as summary_file:
+                summary_file.write(summary_str)
+        assert isinstance(model_path, str), "Model path not detected"
 
         neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
         ni_workload_uuid = neural_insights.add_workload(
             workload_location=workload_location,
             workload_mode=mode,
             model_path=model_path,
+            workload_name=workload_name,
+            model_summary_file=model_summary_file,
         )
         logger.info(f"Registered {workload_mode} workload to Neural Insights.")
         return ni_workload_uuid
@@ -83,6 +104,7 @@ def update_neural_insights_workload(workload_uuid: str, status: str) -> None:
     try:
         from neural_insights import NeuralInsights
         from neural_insights.utils.consts import WORKDIR_LOCATION
+
         neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
         neural_insights.update_workload_status(workload_uuid, status)
     except ImportError:
@@ -92,9 +114,9 @@ def update_neural_insights_workload(workload_uuid: str, status: str) -> None:
 
 
 def update_neural_insights_workload_accuracy_data(
-        workload_uuid: str,
-        baseline_accuracy: float,
-        optimized_accuracy: float,
+    workload_uuid: str,
+    baseline_accuracy: float,
+    optimized_accuracy: float,
 ) -> None:
     """Update accuracy data of specific workload.
 
@@ -109,6 +131,7 @@ def update_neural_insights_workload_accuracy_data(
     try:
         from neural_insights import NeuralInsights
         from neural_insights.utils.consts import WORKDIR_LOCATION
+
         neural_insights = NeuralInsights(workdir_location=WORKDIR_LOCATION)
         neural_insights.update_workload_accuracy_data(
             workload_uuid,

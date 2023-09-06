@@ -17,16 +17,16 @@
 #
 """GraphTransform Base Class."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import logging
 import re
+
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
 
 logger = logging.getLogger("neural_compressor")
+
 
 class GraphTransformBase(object):
     """GraphTransform Base Class."""
@@ -41,11 +41,10 @@ class GraphTransformBase(object):
             self.input_graph = input_pb
         else:
             try:
-                with gfile.Open(input_pb, 'rb') as f:
+                with gfile.Open(input_pb, "rb") as f:
                     self.input_graph.ParseFromString(f.read())
             except Exception as e:
-                logger.error("Fail to read input pb from {} due to {}.".format(
-                    input_pb, str(e)))
+                logger.error("Fail to read input pb from {} due to {}.".format(input_pb, str(e)))
 
         self.node_mapping = {}
         self.node_name_list = []
@@ -74,8 +73,7 @@ class GraphTransformBase(object):
             if node_name not in self.input_node_map:
                 self.input_node_map[node_name] = node
             else:
-                raise ValueError("Duplicate node names detected for ",
-                                 node.name)
+                raise ValueError("Duplicate node names detected for ", node.name)
 
     def node_name_from_input(self, node_name):
         """Get the original node name from input string.
@@ -86,7 +84,7 @@ class GraphTransformBase(object):
         Returns:
             node's name
         """
-        if node_name.startswith("^"): # pragma: no cover
+        if node_name.startswith("^"):  # pragma: no cover
             node_name = node_name[1:]
         m = re.search(r"(.*):\d+$", node_name)
         if m:
@@ -102,9 +100,12 @@ class GraphTransformBase(object):
         Returns:
             node's name
         """
-        node_names = node_name.split(':')
+        node_names = node_name.split(":")
         return node_names[0]
 
     def do_transformation(self):
-        """Virtual Interface. Each transformation should implement it."""
+        """Virtual Interface.
+
+        Each transformation should implement it.
+        """
         pass

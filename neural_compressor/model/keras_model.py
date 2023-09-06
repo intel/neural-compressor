@@ -14,14 +14,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Class for Keras model."""
 
 import os
 from abc import abstractmethod
+
 from neural_compressor.model.base_model import BaseModel
 from neural_compressor.utils.utility import LazyImport, compute_sparsity
-tf = LazyImport('tensorflow')
+
+tf = LazyImport("tensorflow")
+
 
 class KerasModel(BaseModel):
     """Build Keras model."""
@@ -58,7 +60,7 @@ class KerasModel(BaseModel):
     @property
     def graph_info(self):
         """Return graph info."""
-        #(TODO) get the graph info
+        # (TODO) get the graph info
         return None
 
     @abstractmethod
@@ -77,7 +79,7 @@ class KerasModel(BaseModel):
     @abstractmethod
     def framework(self):
         """Return framework."""
-        return 'keras'
+        return "keras"
 
     def get_all_weight_names(self):
         """Get weight names of model.
@@ -98,11 +100,12 @@ class KerasModel(BaseModel):
             df (DataFrame): DataFrame of sparsity of each weight.
             total_sparsity (float): total sparsity of model.
         """
+        import numpy as np
         import pandas as pd
         import tensorflow as tf
-        import numpy as np
-        df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)"])
-        pd.set_option('display.precision', 2)
+
+        df = pd.DataFrame(columns=["Name", "Shape", "NNZ (dense)", "NNZ (sparse)", "Sparsity(%)"])
+        pd.set_option("display.precision", 2)
         param_dims = [2, 4]
         params_size = 0
         sparse_params_size = 0
@@ -113,27 +116,27 @@ class KerasModel(BaseModel):
             # as its "type"
             weights = layer.get_weights()[0]
             if weights.ndim in param_dims:
-                param_size, sparse_param_size, dense_param_size = compute_sparsity(
-                    weights)
+                param_size, sparse_param_size, dense_param_size = compute_sparsity(weights)
                 density = dense_param_size / param_size
                 params_size += param_size
                 sparse_params_size += sparse_param_size
-                df.loc[len(df.index)] = ([
+                df.loc[len(df.index)] = [
                     index,
                     list(weights.shape),
                     dense_param_size,
                     sparse_param_size,
                     (1 - density) * 100,
-                ])
+                ]
 
         total_sparsity = sparse_params_size / params_size * 100
 
-        df.loc[len(df.index)] = ([
-            'Total sparsity:',
+        df.loc[len(df.index)] = [
+            "Total sparsity:",
             "-",
             params_size,
             sparse_params_size,
-            total_sparsity,])
+            total_sparsity,
+        ]
 
         return df, total_sparsity
 
