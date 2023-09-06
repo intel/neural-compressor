@@ -19,11 +19,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
     1.7. [ONNX Models with ONNX Runtime 1.15.0](#onnx-models-with-onnx-runtime-1150)
 
-2. [Validated Pruning Examples](#Validated-Pruning-Examples)
+    1.8. [ONNX Models with ONNX Runtime 1.15.0 in WOQ Mode](#onnx-models-with-onnx-runtime-1150-in-woq-mode)
 
-3. [Validated Knowledge Distillation Examples](#Validated-Knowledge-Distillation-Examples)
+3. [Validated Pruning Examples](#Validated-Pruning-Examples)
 
-4. [Validated ONNX QDQ INT8 Models on Multiple Hardware through ONNX Runtime](#validated-onnx-qdq-int8-models-on-multiple-hardware-through-onnx-runtime)
+4. [Validated Knowledge Distillation Examples](#Validated-Knowledge-Distillation-Examples)
+
+5. [Validated ONNX QDQ INT8 Models on Multiple Hardware through ONNX Runtime](#validated-onnx-qdq-int8-models-on-multiple-hardware-through-onnx-runtime)
 
 ## Validated Quantization Examples
 
@@ -3167,6 +3169,108 @@ For more complete information about performance and benchmark results, visit www
   </tr>
 </tbody>
 </table>
+
+### ONNX Models with ONNX Runtime 1.15.0 in WOQ Mode
+
+<table class="tg">
+<thead>
+  <tr>
+    <th rowspan="2">Model name</th>
+    <th rowspan="2">Configuration</th>
+    <th colspan="2">Lambada_openai</th>
+    <th rowspan="2">Accuracy Ratio<br>[INT8/FP32]</th>
+  </tr>
+  <tr>
+    <th>Accuracy</th>
+    <th>Perplexity</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td rowspan="2">meta-llama/Llama-2-7b-chat-hf</td>
+    <td>FP32</td>
+    <td>0.7058</td>
+    <td>3.2788</td>
+    <td>/</td>
+  </tr>
+  <tr>
+    <td>GPTQ<br>W4G32Asym</td>
+    <td>0.7002</td>
+    <td>3.4124</td>
+    <td>0.9921</td>
+  </tr>
+  <tr>
+    <td rowspan="2">meta-llama/Llama-2-7b-hf</td>
+    <td>FP32</td>
+    <td>0.7392</td>
+    <td>3.3950</td>
+    <td>/</td>
+  </tr>
+  <tr>
+    <td>RTN<br>W4G128Asym</td>
+    <td>0.7369</td>
+    <td>3.5803</td>
+    <td>0.9969</td>
+  </tr>
+  <tr>
+    <td rowspan="2">meta-llama/Llama-2-13b-chat-hf</td>
+    <td>FP32</td>
+    <td>0.7312</td>
+    <td>2.9163</td>
+    <td>/</td>
+  </tr>
+  <tr>
+    <td>GPTQ<br>W4G128Asym</td>
+    <td>0.7240</td>
+    <td>2.9945</td>
+    <td>0.9902</td>
+  <tr>
+    <td rowspan="3">meta-llama/Llama-2-13b-hf</td>
+    <td>FP32</td>
+    <td>0.7677</td>
+    <td>3.0438</td>
+    <td>/</td>
+  </tr>
+  <tr>
+    <td>GPTQ<br>W4G128Asym</td>
+    <td>0.7634</td>
+    <td>3.1186</td>
+    <td>0.9944</td>
+  <tr>
+    <td>GPTQ<br>W4G32Asym</td>
+    <td>0.7615</td>
+    <td>3.1276</td>
+    <td>0.9919</td>
+  </tr>
+  <tr>
+    <td rowspan="2">meta-llama/Llama-2-70b-chat-hf</td>
+    <td>FP32</td>
+    <td>0.7543</td>
+    <td>2.6181</td>
+    <td>/</td>
+  </tr>
+  <tr>
+    <td>RTN<br>W4G32Asym</td>
+    <td>0.7518</td>
+    <td>2.6496</td>
+    <td>0.9967</td>
+  </tr>
+  <tr>
+    <td rowspan="2">meta-llama/Llama-2-70b-hf</td>
+    <td>FP32</td>
+    <td>0.7964</td>
+    <td>2.6612</td>
+    <td>/</td>
+  </tr>
+  <tr>
+    <td>RTN<br>W4G32Sym</td>
+    <td>0.7941</td>
+    <td>2.7243</td>
+    <td>0.9971</td>
+  </tr>
+</tbody>
+</table>
+
 
 ## Validated Pruning Examples
 
