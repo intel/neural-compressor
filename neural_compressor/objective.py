@@ -75,7 +75,7 @@ class Objective(object):
     representation = ""
 
     def __init__(self):
-        """The defination of the objective."""
+        """The definition of the objective."""
         self._result_list = []
         self._model = None
 
@@ -107,7 +107,7 @@ class Objective(object):
     def result(self, start=None, end=None):
         """The result will return the total mean of the result.
 
-        The interface to get benchmark measuring result measurer may sart and end many times,
+        The interface to get benchmark measuring result measurer may start and end many times,
         can set the start and end index of the result list to calculate.
 
         Args:

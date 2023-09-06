@@ -48,7 +48,7 @@ class TensorflowQDQToOnnxQDQConverter:
         inputs_as_nchw=None,
         opset_version=utils.DEFAULT_OPSET_VERSION,
     ):
-        """Constructor, initilization.
+        """Constructor, initialization.
 
         Args:
             model (graphdef): tensorflow QDQ graphdef
@@ -312,7 +312,7 @@ class TensorflowQDQToOnnxQDQConverter:
 
         op_cnt, attr_cnt = onnx_graph.dump_node_statistics(include_attrs=True, include_subgraphs=False)
         logger.info(
-            "Summay Stats:\n"
+            "Summary Stats:\n"
             "\ttensorflow ops: {}\n"
             "\ttensorflow attr: {}\n"
             "\tonnx mapped: {}\n"

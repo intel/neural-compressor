@@ -84,11 +84,11 @@ class RecipeSearcher(object):
 
     Args:
         model (torch.nn.Module): The PyTorch model for searching.
-        recipe (dict): A dict containing infomation of the searching pattern.
+        recipe (dict): A dict containing information of the searching pattern.
 
     Attributes:
         model: The PyTorch model for searching.
-        recipe: A dict containing infomation of the searching pattern.
+        recipe: A dict containing information of the searching pattern.
         targets: The basic module's name which contains searching pattern.
         searching_results: The list/dict which store matched patterns.
     """
@@ -97,7 +97,7 @@ class RecipeSearcher(object):
         """Initialize the attributes."""
         assert isinstance(model, torch.nn.Module)
         if "PyTorchFXModel" in type(model).__name__:
-            # neural compressor build-in model type
+            # neural compressor built-in model type
             self.model = model.model
         else:
             self.model = model
@@ -146,7 +146,7 @@ class JitBasicSearcher(object):
         """Initialize the attributes."""
         assert isinstance(model, torch.nn.Module)
         if "PyTorchFXModel" in type(model).__name__:
-            # neural compressor build-in model type
+            # neural compressor built-in model type
             self.model = model.model
         else:
             self.model = model
@@ -327,7 +327,7 @@ class JitBasicSearcher(object):
         # step6: compile all information in a dict and return
         res = {
             "output_names": output_names,  # should be a list
-            "input_names": input_names,  # shoule be a list
+            "input_names": input_names,  # should be a list
             "op_shape": op_shape,
             "op_type": op_type,
             "op_trace": op_trace,
@@ -359,7 +359,7 @@ class JitBasicSearcher(object):
         except:
             logger.warning(f"{scope_code} does contain wanted scope info.")
             return ""
-        # strip scope keyword, only keep contrete items
+        # strip scope keyword, only keep concrete items
         scope_part = scope_part[7:-2].strip()
         # the last content contains the complete route from top to down
         scope_contents = scope_part.split("/")[-1]
@@ -378,7 +378,7 @@ class JitBasicSearcher(object):
         except:
             logger.warning(f"{scope_code} does contain wanted scope info.")
             return ""
-        # strip scope keyword, only keep contrete items
+        # strip scope keyword, only keep concrete items
         scope_part = scope_part[7:-2].strip()
         scope_contents = scope_part.split("/")[-1]
         level_names = scope_contents.split(".")
@@ -659,7 +659,7 @@ class SelfMHASearcher(JitBasicSearcher):
                 if True: return two lists: one contains all query, key and value layers,
                     the other contains all forward layers.
                 if False: only return one list containing self-attention's linear layers,
-                    query, key, value layers and forward layers are not splited.
+                    query, key, value layers and forward layers are not split.
 
         Return:
             two lists containing self-attention modules' layer names.

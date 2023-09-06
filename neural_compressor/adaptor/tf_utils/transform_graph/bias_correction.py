@@ -42,7 +42,7 @@ class BiasCorrection(GraphTransformBase):
     """
 
     def __init__(self, input_graph, fp32_graph, method="weight_empirical", new_api=False):
-        """Initilization."""
+        """Initialization."""
         # only support weight_empirical now
         self.bias_correct_map = {"weight_empirical": self._weight_empirical}
         assert method in self.bias_correct_map, "only support weight empirical correction method"

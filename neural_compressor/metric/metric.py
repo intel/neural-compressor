@@ -182,7 +182,7 @@ class METRICS(object):
         """Initialize the metrics collection based on the framework name.
 
         Args:
-            framework: The framwork name.
+            framework: The framework name.
         """
         assert framework in (
             "tensorflow",
@@ -270,7 +270,7 @@ class BaseMetric(object):
         Args:
             metric: The metric class.
             single_output: Whether the output is single or not, defaults to False.
-            hvd: The Horovod class for distributed trainig, defaults to None.
+            hvd: The Horovod class for distributed training, defaults to None.
         """
         self._metric_cls = metric
         self._single_output = single_output
@@ -340,7 +340,7 @@ class BaseMetric(object):
         """Set its hvd.
 
         Args:
-            hvd: The Horovod class for distributed trainig.
+            hvd: The Horovod class for distributed training.
         """
         self._hvd = hvd
 
@@ -545,7 +545,7 @@ class F1(BaseMetric):
 
 
 def _accuracy_shape_check(preds, labels):
-    """Check and conver the shape of predictions and labels.
+    """Check and convert the shape of predictions and labels.
 
     Args:
         preds: The predictions.
@@ -907,7 +907,7 @@ class MSE(BaseMetric):
         squares = [(a - b) ** 2.0 for (a, b) in zip(self.label_list, self.pred_list)]
         squares_sum = sum([np.sum(square) for square in squares])
         squares_size = sum([square.size for square in squares])
-        assert squares_size, "predictions should't be None"
+        assert squares_size, "predictions shouldn't be None"
         if getattr(self, "_hvd", None) is not None:
             squares_sum = sum(self._hvd.allgather_object(squares_sum))
             squares_size = sum(self._hvd.allgather_object(squares_size))
@@ -1269,7 +1269,7 @@ class TensorflowMAP(BaseMetric):
             sample_weight: The sample weight.
         """
         if getattr(self, "_hvd", None) is not None:
-            raise NotImplementedError("Metric TensorflowMAP currently do not support distribued inference.")
+            raise NotImplementedError("Metric TensorflowMAP currently do not support distributed inference.")
 
         from .coco_tools import ExportSingleImageDetectionBoxesToCoco, ExportSingleImageGroundtruthToCoco
 

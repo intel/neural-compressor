@@ -974,7 +974,7 @@ class TorchSmoothQuant:
         else:
             self.insert_mul, self.allow_absorb = True, False
         if isinstance(alpha, float) and (alpha < 0 or alpha > 1):
-            logger.warning("reset alpah to in range [0.0, 1.0]")
+            logger.warning("reset alpha to in range [0.0, 1.0]")
             import numpy
 
             alpha = numpy.clip(alpha, 0.0, 1.0)
@@ -1207,7 +1207,7 @@ class GraphTrace:
             "aten::group_norm",
             "aten::instance_norm",
             "aten::mul",
-        ]  ##TODO,suppport more norm
+        ]  ##TODO,support more norm
 
     def trace(self, model, dummy_input):
         traced_model = None

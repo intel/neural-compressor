@@ -55,7 +55,7 @@ class BaseModel:
         save_path: str,
         conf,
     ):
-        """Abstract method of model convertion to ONNX."""
+        """Abstract method of model conversion to ONNX."""
         raise NotImplementedError
 
     @abstractmethod

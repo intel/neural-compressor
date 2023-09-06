@@ -289,7 +289,7 @@ class QuantizeNodeBase:
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
-        """Find relu node algorithm to identify the poistive input."""
+        """Find relu node algorithm to identify the positive input."""
         # if node.op.find("HardSwish") != -1:
         #    return False
         if (

@@ -47,7 +47,7 @@ class ModelConversion:  # pragma: no cover
 
     Args:
         conf_fname_or_obj (string or obj): Optional. The path to the YAML configuration file or
-            Conf class containing model conversion and evaluation setting if not specifed by code.
+            Conf class containing model conversion and evaluation setting if not specified by code.
     """
 
     def __init__(self, conf_fname_or_obj=None):
@@ -55,7 +55,7 @@ class ModelConversion:  # pragma: no cover
 
         Args:
             conf_fname_or_obj (string or obj): Optional. The path to the YAML configuration file or
-                Conf class containing model conversion and evaluation setting if not specifed by code.
+                Conf class containing model conversion and evaluation setting if not specified by code.
         """
         self.conf_name = conf_fname_or_obj
         self._model = None
@@ -217,7 +217,7 @@ class ModelConversion:  # pragma: no cover
                                     a 'real' eval_dataloader will be created,
                                     the reason is we have to know the framework info
                                     and only after the Quantization object created then
-                                    framework infomation can be known. Future we will support
+                                    framework information can be known. Future we will support
                                     creating iterable dataloader from neural_compressor.common.DataLoader
         """
         from .common import _generate_common_dataloader

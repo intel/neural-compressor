@@ -165,7 +165,7 @@ class SparseGPTPruning(BasePruning):
         config: A config dict object that contains the pruner information.
         model: The model that need to be pruned.
         dataloader: Processed datasets, which is necessary for sparseGPT pruning.
-        device: avilable device of pruning.
+        device: available device of pruning.
     """
 
     def __init__(self, config, model, dataloader, framework="pytorch", device: str = None):

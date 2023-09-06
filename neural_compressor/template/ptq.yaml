@@ -31,7 +31,7 @@ quantization:                                        # optional. tuning constrai
     first_conv_or_matmul_quantization: True          # optional. default value is True.
     last_conv_or_matmul_quantization: True
     pre_post_process_quantization: True
-  calibration:                                       # optional. used to specify calibration behavior of post-training-static-quant. other quantization approachs are not necessary.
+  calibration:                                       # optional. used to specify calibration behavior of post-training-static-quant. other quantization approaches are not necessary.
     sampling_size: 1000, 2000                        # optional. default value is 100. used to set how many samples should be used in calibration.
     dataloader:                                      # optional. if not specified, user need construct a calib_dataloader in code for neural_compressor.experimental.Quantization.
       dataset:                                       # optional. if not specified, user need construct a calibration dataset in code for calib_dataloader of neural_compressor.experimental.Quantization.

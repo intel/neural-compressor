@@ -356,7 +356,7 @@ def strip_unused_nodes(graph_def, input_node_names, output_node_names):
         if node_name in not_found:
             not_found.remove(node_name)
             node = graph_info[node_name].node
-            # skip the convertion to Placeholder that with type list
+            # skip the conversion to Placeholder that with type list
             if "component_types" in node.attr:
                 continue
             original_output = graph_info[node_name].outputs

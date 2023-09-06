@@ -104,7 +104,7 @@ class Router:
 
     @staticmethod
     def _validate_deffered_routing_data(data: dict) -> None:
-        """Validate input data for Deffered Routing and raises in case of issues."""
+        """Validate input data for Deferred Routing and raises in case of issues."""
         request_id = str(data.get("request_id", ""))
         if not request_id:
             raise ClientErrorException("Missing request id.")
