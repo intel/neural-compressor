@@ -223,7 +223,7 @@ if __name__ == '__main__':
     calib_dataset = load_dataset(args.dataset, split="train") # default
     # calib_dataset = datasets.load_from_disk('/your/local/pile-10k/') # use this if trouble with connecting to HF
     calib_dataset = calib_dataset.shuffle(seed=args.seed)
-    calib_evaluator = Evaluator(calib_dataset, tokenizer, args.calib_size, is_calib=False)
+    calib_evaluator = Evaluator(calib_dataset, tokenizer, args.calib_size, is_calib=True)
     calib_dataloader = DataLoader(
         calib_evaluator.dataset,
         batch_size=args.calib_size,
