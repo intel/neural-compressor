@@ -14,14 +14,18 @@ Intel® Neural Compressor validated examples with multiple compression technique
     1.4. [PyTorch Models with Torch 2.0.1+cpu in QAT Mode](#pytorch-models-with-torch-201cpu-in-qat-mode)
 
     1.5. [PyTorch Models with Intel® Extension for PyTorch* 2.0.1+cpu](#pytorch-models-with-intel-extension-for-pytorch-201cpu)
-    
-    1.6. [ONNX Models with ONNX Runtime 1.15.0](#onnx-models-with-onnx-runtime-1150)
 
-2. [Validated Pruning Examples](#Validated-Pruning-Examples)
+    1.6. [PyTorch Models with Torch 2.0.1+cpu in WOQ Mode](#pytorch-models-with-torch-201cpu-in-woq-mode)
 
-3. [Validated Knowledge Distillation Examples](#Validated-Knowledge-Distillation-Examples)
+    1.7. [ONNX Models with ONNX Runtime 1.15.0](#onnx-models-with-onnx-runtime-1150)
 
-4. [Validated ONNX QDQ INT8 Models on Multiple Hardware through ONNX Runtime](#validated-onnx-qdq-int8-models-on-multiple-hardware-through-onnx-runtime)
+    1.8. [ONNX Models with ONNX Runtime 1.15.0 in WOQ Mode](#onnx-models-with-onnx-runtime-1150-in-woq-mode)
+
+3. [Validated Pruning Examples](#Validated-Pruning-Examples)
+
+4. [Validated Knowledge Distillation Examples](#Validated-Knowledge-Distillation-Examples)
+
+5. [Validated ONNX QDQ INT8 Models on Multiple Hardware through ONNX Runtime](#validated-onnx-qdq-int8-models-on-multiple-hardware-through-onnx-runtime)
 
 ## Validated Quantization Examples
 
@@ -1321,6 +1325,697 @@ For more complete information about performance and benchmark results, visit www
 </tbody>
 </table>
 
+
+### PyTorch Models with Torch 2.0.1+cpu in WOQ Mode
+
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-rq3n" rowspan="2">Model name</th>
+    <th class="tg-rq3n" rowspan="2">Configuration</th>
+    <th class="tg-rq5v">Lambada_openai</th>
+    <th class="tg-oo9c">Hellaswag</th>
+    <th class="tg-oo9c">Winogrande</th>
+    <th class="tg-oo9c">Piqa</th>
+    <th class="tg-oo9c" colspan="2">Average<br>[Mean accuracy of previous four tasks]</th>
+    <th class="tg-oo9c">Wikitext</th>
+  </tr>
+  <tr>
+    <th class="tg-71nf">Accuracy</th>
+    <th class="tg-im72">Accuracy</th>
+    <th class="tg-im72">Accuracy</th>
+    <th class="tg-im72">Accuracy</th>
+    <th class="tg-im72">Accuracy</th>
+    <th class="tg-iire">Accuracy Ratio<br>[INT8/FP32]</th>
+    <th class="tg-haiz">Word_perplexity</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-rq3n" rowspan="5">EleutherAI/gpt-j-6b</td>
+    <td class="tg-rq3n">FP32</td>
+    <td class="tg-rq3n">0.6831</td>
+    <td class="tg-vxga">0.4954</td>
+    <td class="tg-vxga">0.6409</td>
+    <td class="tg-vxga">0.7541</td>
+    <td class="tg-vxga">0.6434</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-vxga">10.8816</td>
+  </tr>
+  <tr>
+    <td class="tg-rq3n">GPTQ<br>W4G128Asym</td>
+    <td class="tg-rq3n">0.679</td>
+    <td class="tg-vxga">0.4895</td>
+    <td class="tg-vxga">0.6433</td>
+    <td class="tg-vxga">0.7476</td>
+    <td class="tg-vxga">0.6399</td>
+    <td class="tg-p7cy">0.9945</td>
+    <td class="tg-vxga">11.0999</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-vxga">0.6829</td>
+    <td class="tg-vxga">0.4923</td>
+    <td class="tg-vxga">0.6401</td>
+    <td class="tg-vxga">0.7486</td>
+    <td class="tg-vxga">0.6410</td>
+    <td class="tg-p7cy">0.9963</td>
+    <td class="tg-vxga">11.0141</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Sym</td>
+    <td class="tg-vxga">0.685</td>
+    <td class="tg-vxga">0.4907</td>
+    <td class="tg-vxga">0.6361</td>
+    <td class="tg-vxga">0.7443</td>
+    <td class="tg-vxga">0.6390</td>
+    <td class="tg-p7cy">0.9932</td>
+    <td class="tg-vxga">11.1498</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Sym</td>
+    <td class="tg-vxga">0.6911</td>
+    <td class="tg-vxga">0.4899</td>
+    <td class="tg-vxga">0.6448</td>
+    <td class="tg-vxga">0.7497</td>
+    <td class="tg-vxga">0.6439</td>
+    <td class="tg-p7cy">1.0008</td>
+    <td class="tg-vxga">11.0927</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="3">facebook/opt-6.7b</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.6769</td>
+    <td class="tg-vxga">0.5049</td>
+    <td class="tg-im72">0.6543</td>
+    <td class="tg-im72">0.7628</td>
+    <td class="tg-vxga">0.6497</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">12.2862</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.6804</td>
+    <td class="tg-folj">0.4984</td>
+    <td class="tg-im72">0.6535</td>
+    <td class="tg-im72">0.7568</td>
+    <td class="tg-vxga">0.6473</td>
+    <td class="tg-p7cy">0.9962</td>
+    <td class="tg-im72">12.4193</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Sym</td>
+    <td class="tg-im72">0.6885</td>
+    <td class="tg-vxga">0.4973</td>
+    <td class="tg-im72">0.6433</td>
+    <td class="tg-im72">0.753</td>
+    <td class="tg-vxga">0.6455</td>
+    <td class="tg-p7cy">0.9935</td>
+    <td class="tg-im72">12.4607</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="2">decapoda-research/llama-7b-hf</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.7361</td>
+    <td class="tg-vxga">0.5642</td>
+    <td class="tg-im72">0.6709</td>
+    <td class="tg-im72">0.7835</td>
+    <td class="tg-vxga">0.6887</td>
+    <td class="tg-p7cy">/</td>
+    <td class="tg-im72">9.4202</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.7244</td>
+    <td class="tg-folj">0.5603</td>
+    <td class="tg-im72">0.6614</td>
+    <td class="tg-im72">0.7835</td>
+    <td class="tg-vxga">0.6824</td>
+    <td class="tg-p7cy">0.9909</td>
+    <td class="tg-im72">9.5881</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="4">decapoda-research/llama-13b-hf</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.7627</td>
+    <td class="tg-vxga">0.5911</td>
+    <td class="tg-im72">0.7009</td>
+    <td class="tg-im72">0.7878</td>
+    <td class="tg-vxga">0.7106</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">8.212</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.7518</td>
+    <td class="tg-vxga">0.5843</td>
+    <td class="tg-im72">0.6961</td>
+    <td class="tg-im72">0.7911</td>
+    <td class="tg-vxga">0.7058</td>
+    <td class="tg-p7cy">0.9932</td>
+    <td class="tg-im72">8.4319</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.7572</td>
+    <td class="tg-im72">0.5898</td>
+    <td class="tg-im72">0.7056</td>
+    <td class="tg-im72">0.7894</td>
+    <td class="tg-vxga">0.7105</td>
+    <td class="tg-p7cy">0.9998</td>
+    <td class="tg-im72">8.3429</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Sym</td>
+    <td class="tg-im72">0.7596</td>
+    <td class="tg-im72">0.5841</td>
+    <td class="tg-im72">0.6977</td>
+    <td class="tg-im72">0.7905</td>
+    <td class="tg-vxga">0.7080</td>
+    <td class="tg-p7cy">0.9963</td>
+    <td class="tg-im72">8.4916</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="4">decapoda-research/llama-30b-hf</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.7759</td>
+    <td class="tg-im72">0.6266</td>
+    <td class="tg-im72">0.7277</td>
+    <td class="tg-im72">0.8096</td>
+    <td class="tg-vxga">0.7350</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">6.2384</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.778</td>
+    <td class="tg-im72">0.624</td>
+    <td class="tg-im72">0.7269</td>
+    <td class="tg-im72">0.8047</td>
+    <td class="tg-vxga">0.7334</td>
+    <td class="tg-p7cy">0.9979</td>
+    <td class="tg-im72">6.4237</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.7706</td>
+    <td class="tg-im72">0.6239</td>
+    <td class="tg-im72">0.7285</td>
+    <td class="tg-im72">0.8058</td>
+    <td class="tg-vxga">0.7322</td>
+    <td class="tg-p7cy">0.9963</td>
+    <td class="tg-im72">6.4697</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Sym</td>
+    <td class="tg-im72">0.7836</td>
+    <td class="tg-im72">0.6195</td>
+    <td class="tg-im72">0.7269</td>
+    <td class="tg-im72">0.8047</td>
+    <td class="tg-vxga">0.7337</td>
+    <td class="tg-p7cy">0.9983</td>
+    <td class="tg-im72">6.5604</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="3">meta-llama/Llama-2-7b-chat-hf</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.7058</td>
+    <td class="tg-im72">0.5732</td>
+    <td class="tg-im72">0.648</td>
+    <td class="tg-im72">0.7715</td>
+    <td class="tg-vxga">0.6746</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">11.7107</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.6982</td>
+    <td class="tg-im72">0.5637</td>
+    <td class="tg-im72">0.6527</td>
+    <td class="tg-im72">0.7704</td>
+    <td class="tg-vxga">0.6713</td>
+    <td class="tg-p7cy">0.9950</td>
+    <td class="tg-im72">11.9702</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.6953</td>
+    <td class="tg-im72">0.5682</td>
+    <td class="tg-im72">0.6575</td>
+    <td class="tg-im72">0.7758</td>
+    <td class="tg-vxga">0.6742</td>
+    <td class="tg-p7cy">0.9994</td>
+    <td class="tg-im72">11.9317</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="3">meta-llama/Llama-2-7b-hf</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.7392</td>
+    <td class="tg-im72">0.567</td>
+    <td class="tg-im72">0.6709</td>
+    <td class="tg-im72">0.7835</td>
+    <td class="tg-vxga">0.6902</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">8.7911</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.7353</td>
+    <td class="tg-im72">0.5642</td>
+    <td class="tg-im72">0.6622</td>
+    <td class="tg-im72">0.7829</td>
+    <td class="tg-vxga">0.6862</td>
+    <td class="tg-p7cy">0.9942</td>
+    <td class="tg-im72">8.9635</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Sym</td>
+    <td class="tg-im72">0.7246</td>
+    <td class="tg-im72">0.5617</td>
+    <td class="tg-im72">0.6756</td>
+    <td class="tg-im72">0.7797</td>
+    <td class="tg-vxga">0.6854</td>
+    <td class="tg-p7cy">0.9931</td>
+    <td class="tg-im72">9.2799</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="4">meta-llama/Llama-2-13b-chat-hf</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.7312</td>
+    <td class="tg-im72">0.6059</td>
+    <td class="tg-im72">0.7103</td>
+    <td class="tg-im72">0.7835</td>
+    <td class="tg-vxga">0.7077</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">10.2213</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.7273</td>
+    <td class="tg-im72">0.6018</td>
+    <td class="tg-im72">0.7088</td>
+    <td class="tg-im72">0.7742</td>
+    <td class="tg-vxga">0.7030</td>
+    <td class="tg-p7cy">0.9934</td>
+    <td class="tg-im72">2538.083</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.7283</td>
+    <td class="tg-im72">0.6053</td>
+    <td class="tg-im72">0.7024</td>
+    <td class="tg-im72">0.7764</td>
+    <td class="tg-vxga">0.7031</td>
+    <td class="tg-p7cy">0.9935</td>
+    <td class="tg-im72">1889.374</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Sym</td>
+    <td class="tg-im72">0.727</td>
+    <td class="tg-im72">0.5997</td>
+    <td class="tg-im72">0.7024</td>
+    <td class="tg-im72">0.778</td>
+    <td class="tg-vxga">0.7018</td>
+    <td class="tg-p7cy">0.9916</td>
+    <td class="tg-im72">2504.497</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="4">meta-llama/Llama-2-13b-hf</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.7677</td>
+    <td class="tg-im72">0.5972</td>
+    <td class="tg-im72">0.6961</td>
+    <td class="tg-im72">0.7878</td>
+    <td class="tg-vxga">0.7122</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">7.8984</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.7627</td>
+    <td class="tg-im72">0.5933</td>
+    <td class="tg-im72">0.689</td>
+    <td class="tg-im72">0.7851</td>
+    <td class="tg-vxga">0.7075</td>
+    <td class="tg-p7cy">0.9934</td>
+    <td class="tg-im72">1556.448</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.7675</td>
+    <td class="tg-im72">0.5934</td>
+    <td class="tg-im72">0.6977</td>
+    <td class="tg-im72">0.7856</td>
+    <td class="tg-vxga">0.7111</td>
+    <td class="tg-p7cy">0.9984</td>
+    <td class="tg-im72">1514.927</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Sym</td>
+    <td class="tg-im72">0.7566</td>
+    <td class="tg-im72">0.5899</td>
+    <td class="tg-im72">0.7032</td>
+    <td class="tg-im72">0.7856</td>
+    <td class="tg-vxga">0.7088</td>
+    <td class="tg-p7cy">0.9953</td>
+    <td class="tg-im72">1374.728</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="2">bigscience/bloom-7b1</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.5764</td>
+    <td class="tg-im72">0.4628</td>
+    <td class="tg-im72">0.6456</td>
+    <td class="tg-im72">0.7269</td>
+    <td class="tg-vxga">0.6029</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">30.6438</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Sym</td>
+    <td class="tg-im72">0.5799</td>
+    <td class="tg-im72">0.4542</td>
+    <td class="tg-im72">0.6361</td>
+    <td class="tg-im72">0.7312</td>
+    <td class="tg-vxga">0.6004</td>
+    <td class="tg-p7cy">0.9957</td>
+    <td class="tg-im72">32.0626</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="2">bigscience/bloomz-7b1</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.5593</td>
+    <td class="tg-im72">0.4789</td>
+    <td class="tg-im72">0.6527</td>
+    <td class="tg-im72">0.7628</td>
+    <td class="tg-vxga">0.6134</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">51.7432</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.5525</td>
+    <td class="tg-im72">0.4731</td>
+    <td class="tg-im72">0.6504</td>
+    <td class="tg-im72">0.7617</td>
+    <td class="tg-vxga">0.6094</td>
+    <td class="tg-p7cy">0.9935</td>
+    <td class="tg-im72">52.7828</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="4">databricks/dolly-v1-6b</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.6866</td>
+    <td class="tg-im72">0.5098</td>
+    <td class="tg-im72">0.6433</td>
+    <td class="tg-im72">0.7622</td>
+    <td class="tg-im72">0.6505</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">11.3242</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.6878</td>
+    <td class="tg-im72">0.5058</td>
+    <td class="tg-im72">0.6393</td>
+    <td class="tg-im72">0.7633</td>
+    <td class="tg-im72">0.6491</td>
+    <td class="tg-iire">0.9978</td>
+    <td class="tg-im72">11.5514</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.6864</td>
+    <td class="tg-im72">0.5084</td>
+    <td class="tg-im72">0.6519</td>
+    <td class="tg-im72">0.7568</td>
+    <td class="tg-im72">0.6509</td>
+    <td class="tg-iire">1.0006</td>
+    <td class="tg-im72">11.4728</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Sym</td>
+    <td class="tg-im72">0.6876</td>
+    <td class="tg-im72">0.5045</td>
+    <td class="tg-im72">0.6433</td>
+    <td class="tg-im72">0.7541</td>
+    <td class="tg-im72">0.6474</td>
+    <td class="tg-iire">0.9952</td>
+    <td class="tg-im72">11.6474</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="2">databricks/dolly-v2-7b</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.6379</td>
+    <td class="tg-im72">0.5282</td>
+    <td class="tg-im72">0.614</td>
+    <td class="tg-im72">0.7448</td>
+    <td class="tg-im72">0.6312</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">16.161</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.6377</td>
+    <td class="tg-im72">0.5228</td>
+    <td class="tg-im72">0.5991</td>
+    <td class="tg-im72">0.7448</td>
+    <td class="tg-im72">0.6261</td>
+    <td class="tg-iire">0.9919</td>
+    <td class="tg-im72">16.4096</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="4">EleutherAI/gpt-neo-2.7b</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.6224</td>
+    <td class="tg-im72">0.4271</td>
+    <td class="tg-im72">0.577</td>
+    <td class="tg-im72">0.722</td>
+    <td class="tg-im72">0.5871</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">13.9359</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.6123</td>
+    <td class="tg-im72">0.4227</td>
+    <td class="tg-im72">0.5738</td>
+    <td class="tg-im72">0.7203</td>
+    <td class="tg-im72">0.5823</td>
+    <td class="tg-iire">0.9917</td>
+    <td class="tg-im72">14.3377</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.615</td>
+    <td class="tg-im72">0.4259</td>
+    <td class="tg-im72">0.5714</td>
+    <td class="tg-im72">0.7247</td>
+    <td class="tg-im72">0.5843</td>
+    <td class="tg-iire">0.9951</td>
+    <td class="tg-im72">14.2083</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Sym</td>
+    <td class="tg-im72">0.6154</td>
+    <td class="tg-im72">0.4208</td>
+    <td class="tg-im72">0.5777</td>
+    <td class="tg-im72">0.7198</td>
+    <td class="tg-im72">0.5834</td>
+    <td class="tg-iire">0.9937</td>
+    <td class="tg-im72">14.3121</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="3">EleutherAI/gpt-neox-20b</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.7233</td>
+    <td class="tg-im72">0.5359</td>
+    <td class="tg-im72">0.6614</td>
+    <td class="tg-im72">0.7753</td>
+    <td class="tg-im72">0.6740</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">9.195</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.7186</td>
+    <td class="tg-im72">0.5328</td>
+    <td class="tg-im72">0.6535</td>
+    <td class="tg-im72">0.7699</td>
+    <td class="tg-im72">0.6687</td>
+    <td class="tg-iire">0.9922</td>
+    <td class="tg-im72">9.3463</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.7268</td>
+    <td class="tg-im72">0.533</td>
+    <td class="tg-im72">0.659</td>
+    <td class="tg-im72">0.7715</td>
+    <td class="tg-im72">0.6726</td>
+    <td class="tg-iire">0.9979</td>
+    <td class="tg-im72">9.2897</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="2">mosaicml/mpt-7b</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.7056</td>
+    <td class="tg-im72">0.5718</td>
+    <td class="tg-im72">0.6859</td>
+    <td class="tg-im72">0.7927</td>
+    <td class="tg-im72">0.6890</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">9.9324</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.7006</td>
+    <td class="tg-im72">0.5655</td>
+    <td class="tg-im72">0.6803</td>
+    <td class="tg-im72">0.7965</td>
+    <td class="tg-im72">0.6857</td>
+    <td class="tg-iire">0.9952</td>
+    <td class="tg-im72">10.1515</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="2">mosaicml/mpt-7b-chat</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.655</td>
+    <td class="tg-im72">0.5752</td>
+    <td class="tg-im72">0.6748</td>
+    <td class="tg-im72">0.7845</td>
+    <td class="tg-im72">0.6724</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">13.5951</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.6472</td>
+    <td class="tg-im72">0.5716</td>
+    <td class="tg-im72">0.6685</td>
+    <td class="tg-im72">0.784</td>
+    <td class="tg-im72">0.6678</td>
+    <td class="tg-iire">0.9932</td>
+    <td class="tg-im72">13.8539</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="2">mosaicml/mpt-7b-instruct</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.6918</td>
+    <td class="tg-im72">0.5819</td>
+    <td class="tg-im72">0.678</td>
+    <td class="tg-im72">0.7927</td>
+    <td class="tg-im72">0.6861</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">10.8863</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.6864</td>
+    <td class="tg-im72">0.5765</td>
+    <td class="tg-im72">0.6827</td>
+    <td class="tg-im72">0.7873</td>
+    <td class="tg-im72">0.6832</td>
+    <td class="tg-iire">0.9958</td>
+    <td class="tg-im72">11.1451</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="2">mosaicml/mpt-7b-storywriter</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.693</td>
+    <td class="tg-im72">0.5477</td>
+    <td class="tg-im72">0.663</td>
+    <td class="tg-im72">0.784</td>
+    <td class="tg-im72">0.6719</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">9.9125</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.6854</td>
+    <td class="tg-im72">0.5443</td>
+    <td class="tg-im72">0.6661</td>
+    <td class="tg-im72">0.7813</td>
+    <td class="tg-im72">0.6693</td>
+    <td class="tg-iire">0.9961</td>
+    <td class="tg-im72">10.1137</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="4">tiiuae/falcon-rw-7b</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.6604</td>
+    <td class="tg-im72">0.5419</td>
+    <td class="tg-im72">0.6598</td>
+    <td class="tg-im72">0.7753</td>
+    <td class="tg-im72">0.6594</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">11.7616</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.6484</td>
+    <td class="tg-im72">0.5369</td>
+    <td class="tg-im72">0.6575</td>
+    <td class="tg-im72">0.7807</td>
+    <td class="tg-im72">0.6559</td>
+    <td class="tg-iire">0.9947</td>
+    <td class="tg-im72">11.9411</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.6571</td>
+    <td class="tg-im72">0.5398</td>
+    <td class="tg-im72">0.6582</td>
+    <td class="tg-im72">0.7764</td>
+    <td class="tg-im72">0.6579</td>
+    <td class="tg-iire">0.9978</td>
+    <td class="tg-im72">11.8809</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Sym</td>
+    <td class="tg-im72">0.652</td>
+    <td class="tg-im72">0.535</td>
+    <td class="tg-im72">0.6575</td>
+    <td class="tg-im72">0.7682</td>
+    <td class="tg-im72">0.6532</td>
+    <td class="tg-iire">0.9906</td>
+    <td class="tg-im72">12.0048</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga" rowspan="3">tiiuae/falcon-7b-instruct</td>
+    <td class="tg-vxga">FP32</td>
+    <td class="tg-im72">0.6437</td>
+    <td class="tg-im72">0.5177</td>
+    <td class="tg-im72">0.6669</td>
+    <td class="tg-im72">0.7824</td>
+    <td class="tg-im72">0.6527</td>
+    <td class="tg-iire">/</td>
+    <td class="tg-im72">14.5053</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G128Asym</td>
+    <td class="tg-im72">0.6301</td>
+    <td class="tg-im72">0.5142</td>
+    <td class="tg-im72">0.6654</td>
+    <td class="tg-im72">0.7835</td>
+    <td class="tg-im72">0.6483</td>
+    <td class="tg-iire">0.9933</td>
+    <td class="tg-im72">14.8146</td>
+  </tr>
+  <tr>
+    <td class="tg-vxga">GPTQ<br>W4G32Asym</td>
+    <td class="tg-im72">0.6377</td>
+    <td class="tg-im72">0.517</td>
+    <td class="tg-im72">0.6598</td>
+    <td class="tg-im72">0.7807</td>
+    <td class="tg-im72">0.6488</td>
+    <td class="tg-iire">0.9941</td>
+    <td class="tg-im72">14.6953</td>
+  </tr>
+</tbody>
+</table>
+
+
 ### ONNX Models with ONNX Runtime 1.15.0
 
 <table>
@@ -2474,6 +3169,108 @@ For more complete information about performance and benchmark results, visit www
   </tr>
 </tbody>
 </table>
+
+### ONNX Models with ONNX Runtime 1.15.0 in WOQ Mode
+
+<table class="tg">
+<thead>
+  <tr>
+    <th rowspan="2">Model name</th>
+    <th rowspan="2">Configuration</th>
+    <th colspan="2">Lambada_openai</th>
+    <th rowspan="2">Accuracy Ratio<br>[INT8/FP32]</th>
+  </tr>
+  <tr>
+    <th>Accuracy</th>
+    <th>Perplexity</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td rowspan="2">meta-llama/Llama-2-7b-chat-hf</td>
+    <td>FP32</td>
+    <td>0.7058</td>
+    <td>3.2788</td>
+    <td>/</td>
+  </tr>
+  <tr>
+    <td>GPTQ<br>W4G32Asym</td>
+    <td>0.7002</td>
+    <td>3.4124</td>
+    <td>0.9921</td>
+  </tr>
+  <tr>
+    <td rowspan="2">meta-llama/Llama-2-7b-hf</td>
+    <td>FP32</td>
+    <td>0.7392</td>
+    <td>3.3950</td>
+    <td>/</td>
+  </tr>
+  <tr>
+    <td>GPTQ<br>W4G32Asym</td>
+    <td>0.7312</td>
+    <td>3.5711</td>
+    <td>0.9892</td>
+  </tr>
+  <tr>
+    <td rowspan="2">meta-llama/Llama-2-13b-chat-hf</td>
+    <td>FP32</td>
+    <td>0.7312</td>
+    <td>2.9163</td>
+    <td>/</td>
+  </tr>
+  <tr>
+    <td>GPTQ<br>W4G128Asym</td>
+    <td>0.7240</td>
+    <td>2.9945</td>
+    <td>0.9902</td>
+  <tr>
+    <td rowspan="3">meta-llama/Llama-2-13b-hf</td>
+    <td>FP32</td>
+    <td>0.7677</td>
+    <td>3.0438</td>
+    <td>/</td>
+  </tr>
+  <tr>
+    <td>GPTQ<br>W4G128Asym</td>
+    <td>0.7634</td>
+    <td>3.1186</td>
+    <td>0.9944</td>
+  <tr>
+    <td>GPTQ<br>W4G32Asym</td>
+    <td>0.7615</td>
+    <td>3.1276</td>
+    <td>0.9919</td>
+  </tr>
+  <tr>
+    <td rowspan="2">meta-llama/Llama-2-70b-chat-hf</td>
+    <td>FP32</td>
+    <td>0.7543</td>
+    <td>2.6181</td>
+    <td>/</td>
+  </tr>
+  <tr>
+    <td>RTN<br>W4G32Asym</td>
+    <td>0.7518</td>
+    <td>2.6496</td>
+    <td>0.9967</td>
+  </tr>
+  <tr>
+    <td rowspan="2">meta-llama/Llama-2-70b-hf</td>
+    <td>FP32</td>
+    <td>0.7964</td>
+    <td>2.6612</td>
+    <td>/</td>
+  </tr>
+  <tr>
+    <td>RTN<br>W4G32Sym</td>
+    <td>0.7941</td>
+    <td>2.7243</td>
+    <td>0.9971</td>
+  </tr>
+</tbody>
+</table>
+
 
 ## Validated Pruning Examples
 
