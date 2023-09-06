@@ -38,8 +38,8 @@ There are many excellent works for weight only quantization to improve its accur
 | Config | Capability |
 | :---: | :---:|
 | dtype | ['int', 'nf4', 'fp4'] |
-| bits | [1-8] |
-| group_size | [-1, 1-N] | 
+| bits | [1, ..., 8] |
+| group_size | [-1, 1, ..., $C_{in}$] | 
 | scheme | ['asym', 'sym'] |
 | algorithm | ['RTN', 'AWQ', 'GPTQ'] |
 
@@ -73,8 +73,6 @@ Notes:
 |  block_size  | 128 | Channel number in one block to execute a GPTQ quantization iteration |
 
 
-**Note**: `group_size=-1` indicates the per-channel quantization per output channel. `group_size=[1-N]` indicates splitting the input channel elements per group_size. Term **group_size** in GPTQ refers to number of channels which share the same quantization parameters. 
-
 ### **Export Compressed Model**
 To support low memory inference, Neural Compressor implemented WeightOnlyLinear, a torch.nn.Module, to compress the fake quantized fp32 model. Since torch does not provide flexible data type storage, WeightOnlyLinear combines low bits data into a long date type, such as torch.int8 and torch.int32. Low bits data includes weights and zero points. When using WeightOnlyLinear for inference, it will restore the compressed data to float32 and run torch linear function.
 
@@ -83,7 +81,7 @@ To support low memory inference, Neural Compressor implemented WeightOnlyLinear,
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
 | qweight_config_path |      None     |  If need to export model with fp32_model and json file, set the path of qconfig.json |
 |  sym_full_range |      False     | Whether to leverage the full compression range under symmetric quantization |
-|  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8|16|32|64]   |
+|  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8\|16\|32\|64]   |
 |  compression_dim  |       1       |   0 means output channel while 1 means input channel   |
 |  scale_dtype  |       torch.float32       |  Data type for scale and bias   |
 
