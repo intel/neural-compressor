@@ -350,7 +350,7 @@ class GPTQuantizer(object):
         if len(self.dataloader) < self.nsamples:  # pragma: no cover
             logger.warning(
                 f"Trying to allocate {self.nsamples} data with fixed length {unified_length}, \
-            but only {len(self.dataloader)} samples satisfy your setting. You may choose smaller 'self.pad_max_length' value."
+            but only {len(self.dataloader)} samples are found. Please use smaller 'self.pad_max_length' value."
             )
 
     def get_full_layer_name(self, sub_layer_name, block_idx):
