@@ -917,13 +917,13 @@ class TemplateAdaptor(Adaptor):
                     dataloader.batch(1)
                     self.calib_func(q_model, dataloader, calib_sampling_size, conf)
             else:  # pragma: no cover
-                dataloader.batch_size = getattr(dataloader, "batch_size") or getattr(dataloader, "total_batch_size")
-                if hasattr(dataloader, "batch_size") and calib_sampling_size % dataloader.batch_size != 0:
+                dataloader_batch_size = getattr(dataloader, "batch_size") or getattr(dataloader, "total_batch_size")
+                if hasattr(dataloader, "batch_size") and calib_sampling_size % dataloader_batch_size != 0:
                     logger.warning(
                         "Please note that calibration sampling size {} "
                         "isn't divisible exactly by batch size {}. "
                         "So the real sampling size is {}.".format(
-                            calib_sampling_size, dataloader.batch_size, dataloader.batch_size * iterations
+                            calib_sampling_size, dataloader_batch_size, dataloader_batch_size * iterations
                         )
                     )
 
