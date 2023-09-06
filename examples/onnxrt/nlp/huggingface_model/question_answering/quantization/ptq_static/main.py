@@ -481,14 +481,13 @@ def main():
         calib_dataset = SQuADDataset(eval_dataset, model, label_names=["start_positions", "end_positions"])
         fp32_op_names = None
         if model_args.model_name_or_path == 'mrm8488/spanbert-finetuned-squadv1':
-            fp32_op_names = ['Gather_94', 'MatMul_(660|754|848|1036)']
-        elif model_args.model_name_or_path == 'salti/bert-base-multilingual-cased-finetuned-squad':
-            fp32_op_names = ['MatMul_(660|566)', 'Unsqueeze_91']
+            fp32_op_names = ['/bert/embeddings/word_embeddings/Gather', 
+                             '/bert/encoder/layer.[5-7|9]/output/dense/MatMul']
         elif model_args.model_name_or_path == 'distilbert-base-uncased-distilled-squad':
-            fp32_op_names = ['MatMul_(1[7-8]|2[6-7]|3[5-6]|4[3-4]|5[2-3])\d']
+            fp32_op_names = ['/distilbert/transformer/layer.[1-5]/ffn/lin[1-2]/MatMul']
         elif model_args.model_name_or_path == 'deepset/roberta-large-squad2':
-            fp32_op_names = ['MatMul_(1[34]\d|[2-6][45]\d|[7-9][56]\d)',
-                             'MatMul_(1[01][56]\d|1[2-6][67]\d|(1[7-9]|2[01])[78]\d|2[2-4][89]\d)']
+            fp32_op_names = ['/roberta/encoder/layer.[0-23]/intermediate/dense/MatMul',
+                             '/roberta/encoder/layer.[0-23]/output/dense/MatMul']
         config = PostTrainingQuantConfig(approach='static',
                                          quant_format=model_args.quant_format,
                                          op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
