@@ -488,9 +488,11 @@ class TestSqListInput(unittest.TestCase):
     def test_device(self):
         input1 = torch.rand((1, 3))
         input2 = torch.rand((1, 3))
-        example_input = {'k': [input1, ((input2, input1)), input2]}
+        example_input = {"k": [input1, ((input2, input1)), input2]}
         from neural_compressor.adaptor.torch_utils.smooth_quant import move_input_to_device
+
         move_input_to_device(example_input)
+
 
 class TestAlphaAutoLinear(unittest.TestCase):
     @classmethod
