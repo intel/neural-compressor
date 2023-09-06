@@ -988,13 +988,14 @@ class TorchSmoothQuant:
                     self.self_absorb_layers = self._get_all_layer_names()  # TODO: only support linear now.
                     # fetch modules with the same input
                     group_modules = self._trace(op_types, skip_unsupported_layers=False)
-                    for k, v in group_modules.items():
+                    if group_modules is not None:
                         # use one input for qkv
-                        for i in v:
-                            if i in self.self_absorb_layers:
-                                self.self_absorb_layers.pop(i)
-                        self.self_absorb_layers[v[0]] = v
-                    logger.debug(f"self_absorb_layers:{self.self_absorb_layers}")
+                        for k, v in group_modules.items():
+                            for i in v:
+                                if i in self.self_absorb_layers:
+                                    self.self_absorb_layers.pop(i)
+                            self.self_absorb_layers[v[0]] = v
+                        logger.debug(f"self_absorb_layers:{self.self_absorb_layers}")
                 if self.allow_absorb:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         op_types
