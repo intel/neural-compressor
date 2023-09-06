@@ -55,7 +55,7 @@ function Diagnosis() {
           </div>
         }
         {selectedWorkload?.mode === 'quantization' &&
-          <div className="flex-item">
+          <div className="flex-bigger">
             {selectedWorkload.framework !== 'PyTorch' &&
               <Graph setSelectedNode={setSelectedNode} selectedWorkload={selectedWorkload} selectedOp={selectedOp} selectedPattern={selectedPattern} setWarningText={setWarningText} />
             }
@@ -102,7 +102,7 @@ function NodeProperties({ selectedNode }) {
           <td className="table-key">{attribute.name}</td>
           <td className="table-value">{attribute.attribute_type}</td>
           {attribute.attribute_type !== "float32" &&
-            <td className="table-value">{attribute.value.toString()}</td>
+            <td className="table-value">{attribute.value?.toString()}</td>
           }
           {attribute.attribute_type === "float32" &&
             <td className="table-value">{attribute.value.toExponential(2)}</td>

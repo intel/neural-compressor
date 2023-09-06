@@ -72,7 +72,7 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
         </div>
       }
       {workloadsList.length === 0 &&
-        <div className="data-panel no-data workloads-list">
+        <div className="data-panel">
           <h3>Neural Insights</h3>
           <p>Run diagnosis or profiling process to see workloads on this page.</p>
         </div>

@@ -30,7 +30,7 @@ function Histogram({ selectedWorkload, selectedOp, histogramType, setWarningText
             setHistogramData(response.data);
           })
         .catch(error => {
-          setWarningText(error.message);
+          setWarningText(error?.response?.data);
         });
     }
   }, [histogramType, selectedOp]);
