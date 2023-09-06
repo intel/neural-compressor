@@ -645,7 +645,7 @@ def main():
         device = args.device
         if device != 'cpu':
             device = "cuda:"+str(device)
-        from neural_compressor.compression.pruner import prepare_pruning
+        from neural_compressor.training import prepare_pruning
         pruning = prepare_pruning(model, configs,  dataloader=train_dataloader, device=device)
         model.config.use_cache = use_cache
         
@@ -700,3 +700,4 @@ def main():
     
 if __name__ == "__main__":
     main()
+

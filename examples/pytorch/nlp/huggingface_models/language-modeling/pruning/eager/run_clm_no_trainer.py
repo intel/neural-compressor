@@ -63,7 +63,6 @@ from neural_compressor.training import WeightPruningConfig
 from timers import CPUTimer, GPUTimer
 from neural_compressor.compression.pruner import model_slim
 from neural_compressor.compression.pruner import parse_auto_slim_config
-
     
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.23.0.dev0")
@@ -172,7 +171,7 @@ class Net(torch.nn.Module):
     def __init__(self, ori_model):
         super(Net, self).__init__()
         self.model = ori_model
-    def forward(self, input_ids, pastkv, mask):
+    def forward(self, input_ids, mask, pastkv):
         return self.model(input_ids=input_ids, attention_mask=mask, past_key_values=pastkv, return_dict=False)
         
 def trace_model(model, tokenizer):
@@ -190,11 +189,8 @@ def trace_model(model, tokenizer):
     init_input_ids = tokenizer(prompt, return_tensors="pt").input_ids[0]
     traced_model = None
     if 'llama' in model_type:
-        input_ids = init_input_ids.clone()
-        attention_mask = torch.ones(len(input_ids)+1)
-        attention_mask[0] = 0
-        input_ids = input_ids[0:1].unsqueeze(0)
-        attention_mask = attention_mask.unsqueeze(0)
+        input_ids = init_input_ids.clone().unsqueeze(0)
+        attention_mask = torch.ones(input_ids.shape)
         past_key_value = tuple([(torch.zeros([1,32,34,128]), torch.zeros([1,32,34,128])) for i in range(32)])
         if 'llama_13b' in model_type:
             past_key_value = tuple([(torch.zeros([1,40,34,128]), torch.zeros([1,40,34,128])) for i in range(40)])
@@ -202,11 +198,11 @@ def trace_model(model, tokenizer):
         traced_model = torch.jit.trace(net, (input_ids, attention_mask, past_key_value))
     else:
         input_ids = init_input_ids.clone().unsqueeze(0)
-        attention_mask = torch.ones(len(input_ids)).unsqueeze(0)
+        attention_mask = torch.ones(input_ids.shape)
         past_key_value = tuple([(torch.zeros([1,num_attention_heads,0,d_k]),
                                     torch.zeros([1,num_attention_heads,0,d_k])) for i in range(num_layers)])
         net = Net(model)
-        traced_model = torch.jit.trace(net, (input_ids, past_key_value, attention_mask))
+        traced_model = torch.jit.trace(net, (input_ids, attention_mask, past_key_value))
     return traced_model
     
 
@@ -722,7 +718,7 @@ def main():
         end_step=pruning_end,
     )
     
-    from neural_compressor.compression.pruner import prepare_pruning
+    from neural_compressor.training import prepare_pruning
     pruning = prepare_pruning(model, configs, dataloader=train_dataloader)
     
     model.eval()
@@ -761,23 +757,23 @@ def main():
         acc, _ = eval_func(model)
         logger.info(f"total_steps:{args.max_pruning_steps} accuracy:{acc}")
     else:
-        if 'bloom' not in model_name:
-            logger.info(f"***** Running Evaluation before ffn auto slim*****")
-            accuracy, avg_latency = eval_func(model)
-            logger.info(f"accuracy:{accuracy}  avg_latency:{avg_latency}")
-            model = model_slim(model, round_multiplier=32)
+        logger.info(f"***** Running Evaluation before ffn auto slim*****")
+        accuracy, avg_latency = eval_func(model)
+        logger.info(f"accuracy:{accuracy}  avg_latency:{avg_latency}")
+        model = model_slim(model, round_multiplier=32)
 
-            logger.info(f"***** Running Evaluation after ffn auto_slim*****")
-            accuracy, avg_latency = eval_func(model)
-            logger.info(f"accuracy:{accuracy}  avg_latency:{avg_latency}")
-            
-            if args.output_dir is not None:
-                accelerator.wait_for_everyone()
+        logger.info(f"***** Running Evaluation after ffn auto_slim*****")
+        accuracy, avg_latency = eval_func(model)
+        logger.info(f"accuracy:{accuracy}  avg_latency:{avg_latency}")
+        
+        if args.output_dir is not None:
+            accelerator.wait_for_everyone()
+            try:
                 traced_model = trace_model(model, tokenizer)
-                logger.info(f"Save silmed jit model")
+                logger.info(f"Saving silmed jit model")
                 torch.jit.save(traced_model, args.output_dir+"/slimed_jit_model.pt")
-        else:
-            logger.info(f"Trace on BLOOM MODEL is not supported yet.")
+            except:
+                logger.info(f"Trace on **{model_name}** is not supported yet.")
             
     
     if args.with_tracking:
@@ -786,4 +782,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
