@@ -222,6 +222,17 @@ class ONNXModel(BaseModel):
                 return tensor
         return None
 
+    def get_initializer_share_num(self, name):
+        """Get the number of shares of initializer"""
+        num = 0
+        if self.get_initializer(name) is None:
+            return num
+
+        for node in self.nodes():
+            if name in node.input:
+                num += 1
+        return num
+
     def get_node(self, name):
         """Get a node by name."""
         for node in self._model.graph.node:
