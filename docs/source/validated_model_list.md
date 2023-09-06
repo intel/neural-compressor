@@ -16,9 +16,8 @@ Intel® Neural Compressor validated examples with multiple compression technique
     1.5. [PyTorch Models with Intel® Extension for PyTorch* 2.0.1+cpu](#pytorch-models-with-intel-extension-for-pytorch-201cpu)
 
     1.6. [PyTorch Models with Torch 2.0.1+cpu in WOQ Mode](#pytorch-models-with-torch-201cpu-in-woq-mode)
-    
-    
-    1.6. [ONNX Models with ONNX Runtime 1.15.0](#onnx-models-with-onnx-runtime-1150)
+
+    1.7. [ONNX Models with ONNX Runtime 1.15.0](#onnx-models-with-onnx-runtime-1150)
 
 2. [Validated Pruning Examples](#Validated-Pruning-Examples)
 
