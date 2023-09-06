@@ -251,7 +251,7 @@ if __name__ == "__main__":
                 config = PostTrainingQuantConfig(
                     approach="weight_only",
                     calibration_sampling_size=[8],
-                    recipes={"awq_args": {"mse_range": False}},
+                    recipes={"awq_args": {"enable_mse_search": False}},
                     op_type_dict={".*": {"weight": {"algorithm": ["AWQ"]}}},
                     )
  

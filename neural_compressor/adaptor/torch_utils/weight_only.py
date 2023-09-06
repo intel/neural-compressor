@@ -300,7 +300,7 @@ def quant_weight(
             return weight
 
 
-def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", sym_full_range=False):
+def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", enable_full_range=False):
     """Search best clip range of each linears in current block.
 
     Args:
@@ -309,7 +309,7 @@ def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", sy
         group_size (int, optional): how many elements share one scale/zp.
         scheme (str, optional): sym or asym.
         data_type (str, optional): select from int, nf4, fp4. Defaults to int.
-        sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+        enable_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
 
     Returns:
         best_clip_ratio (float): best percentile of clip
@@ -329,7 +329,7 @@ def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", sy
             group_size=group_size,
             scheme=scheme,
             data_type=data_type,
-            full_range=sym_full_range,
+            full_range=enable_full_range,
             quantile=ratio,
         )
         loss = (org_weight - cur_weight).float().pow(2).mean().item()
@@ -352,8 +352,8 @@ def rtn_quantize(
     weight_config={},
     return_int=False,
     data_type="int",
-    sym_full_range=False,
-    mse_range=False,
+    enable_full_range=False,
+    enable_mse_search=False,
     group_dim=1,
     **kwargs,
 ):
@@ -379,9 +379,9 @@ def rtn_quantize(
                 }
         return_int (bool, optional): Choose return fp32 or int32 model.
                                      Defaults to False.
-        sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+        enable_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
                                      Defaults to False.
-        mse_range (bool, optional):  Whether search clip range.
+        enable_mse_search (bool, optional):  Whether search clip range.
                                      Defaults to True.
         group_dim (int, optional):   0 means splitting output channel,
                                      1 means splitting input channel. Defaults to 1.
@@ -412,14 +412,14 @@ def rtn_quantize(
         if data_type != "int":
             log_msg += f", dtype={data_type}"
         elif scheme == "sym":  # nf4/fp4 is always [-7,7]
-            log_msg += f", sym_full_range={sym_full_range}"
+            log_msg += f", enable_full_range={enable_full_range}"
         logger.debug(log_msg)
         if num_bits <= 0:
             logger.info(f"Skip {name}")
             continue
         weight = m.weight.T if group_dim == 0 else m.weight
-        if mse_range:
-            quantile = search_clip(m, num_bits, group_size, scheme, data_type, sym_full_range)
+        if enable_mse_search:
+            quantile = search_clip(m, num_bits, group_size, scheme, data_type, enable_full_range)
         if return_int:
             from .model_wrapper import WeightOnlyLinear
 
@@ -431,7 +431,7 @@ def rtn_quantize(
                 quantile,
                 data_type=data_type,
                 return_int=True,
-                full_range=sym_full_range,
+                full_range=enable_full_range,
             )
             int_weight = int_weight.T if group_dim == 0 else int_weight
             scale = scale.T if group_dim == 0 else scale
@@ -462,7 +462,7 @@ def rtn_quantize(
                 scheme,
                 quantile,
                 data_type=data_type,
-                full_range=sym_full_range,
+                full_range=enable_full_range,
             )
             q_weight = q_weight.T if group_dim == 0 else q_weight
             m.weight.data.copy_(q_weight)
@@ -492,11 +492,11 @@ def awq_quantize(
     dataloader=None,
     n_samples=128,
     calib_func=None,
-    auto_scale=True,
-    mse_range=True,
+    enable_auto_scale=True,
+    enable_mse_search=True,
     folding=False,
     return_int=False,
-    sym_full_range=False,
+    enable_full_range=False,
     data_type="int",
 ):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
@@ -523,13 +523,13 @@ def awq_quantize(
                 } # in this case, fc2 and fc3 need to share the same scale. fc1 is self absorbed.
                 # self absorb module will replace with MulLinear, which contains torch.mul and module.
         n_samples: calibration sample number.
-        auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
-        mse_range (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
+        enable_auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
+        enable_mse_search (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
         calib_func: a custom inference function to replace dataloader and iters.
         n_blocks: split model into block number to avoid OOM.
         return_int (bool, optional): Choose return fp32 or int32 model.
                                      Defaults to False.
-        sym_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+        enable_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
 
     Returns:
         model: fake quantized model
@@ -546,13 +546,13 @@ def awq_quantize(
         bits=bits,
         group_size=group_size,
         scheme=scheme,
-        sym_full_range=sym_full_range,
+        enable_full_range=enable_full_range,
         weight_config=weight_config,
         data_type=data_type,
     )
     qdq_model = awq.quantize(
-        auto_scale=auto_scale,
-        mse_range=mse_range,
+        enable_auto_scale=enable_auto_scale,
+        enable_mse_search=enable_mse_search,
         folding=folding,
         return_int=return_int,
     )

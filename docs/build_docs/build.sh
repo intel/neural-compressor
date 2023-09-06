@@ -87,6 +87,13 @@ cp -rf ../neural_solution ./source/docs/source
 cp -f "../README.md" "./source/docs/source/Welcome.md"
 cp -f "../SECURITY.md" "./source/docs/source/SECURITY.md"
 
+all_md_files=`find ./source/docs -name "*.md"`
+for md_file in ${all_md_files}
+do
+  sed -i 's/.md/.html/g' ${md_file}
+done
+
+
 sed -i 's/.\/docs\/source\/_static/./g' ./source/docs/source/Welcome.md ./source/docs/source/user_guide.md
 sed -i 's/.md/.html/g; s/.\/docs\/source\//.\//g' ./source/docs/source/Welcome.md ./source/docs/source/user_guide.md
 sed -i 's/\/examples\/README.html/https:\/\/github.com\/intel\/neural-compressor\/blob\/master\/examples\/README.md/g' ./source/docs/source/user_guide.md

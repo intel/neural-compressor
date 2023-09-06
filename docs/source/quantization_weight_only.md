@@ -50,16 +50,16 @@ Notes:
 **RTN arguments**:
 |  rtn_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
-| sym_full_range |      False     |   Whether use -2**(bits-1) in sym scheme, for example,    |
-|  mse_range |      False     | Whether search for the best clip range from range [0.805, 1.0, 0.005] |
+| enable_full_range |      False     |   Whether use -2**(bits-1) in sym scheme, for example,    |
+|  enable_mse_search |      False     | Whether search for the best clip range from range [0.805, 1.0, 0.005] |
 |  return_int |      False     | Whether return compressed model with int data type |
 |  group_dim  |       1       |   0 means splitting output channel, 1 means splitting input channel   |
 
 **AWQ arguments**:
 |  awq_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
-| auto_scale |      True     | Whether search for best scales based on activation distribution   |
-|  mse_range |      True     | Whether search for the best clip range from range [0.91, 1.0, 0.01] |
+| enable_auto_scale |      True     | Whether search for best scales based on activation distribution   |
+|  enable_mse_search |      True     | Whether search for the best clip range from range [0.91, 1.0, 0.01] |
 |  folding   |      False    | False will allow insert mul before linear when the scale cannot be absorbed by last layer, else won't |
 
 **GPTQ arguments**:
@@ -100,9 +100,9 @@ conf = PostTrainingQuantConfig(
         },
     },
     recipes={
-        # 'rtn_args':{'sym_full_range': True, 'mse_range': True},
+        # 'rtn_args':{'enable_full_range': True, 'enable_mse_search': True},
         # 'gptq_args':{'percdamp': 0.01, 'actorder':True, 'block_size': 128, 'nsamples': 128, 'use_full_length': False},
-        # 'awq_args':{'auto_scale': True, 'mse_range': True, 'n_blocks': 5},
+        # 'awq_args':{'enable_auto_scale': True, 'enable_mse_search': True, 'n_blocks': 5},
     },
 )
 q_model = quantization.fit(model, conf, eval_func=eval_func)

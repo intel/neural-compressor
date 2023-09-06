@@ -1657,6 +1657,17 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
         self.assertEqual(mock_warning.call_count, 2)
 
+    def test_cuda_ep_env_set(self):
+        config = PostTrainingQuantConfig(approach="static", backend="onnxrt_cuda_ep", device="gpu", quant_level=1)
+        quantization.fit(
+            self.distilbert_model,
+            config,
+            calib_dataloader=DummyNLPDataloader_dict("distilbert-base-uncased-finetuned-sst-2-english"),
+        )
+
+        # check TENSORRT is not loaded if backend is not onnxrt_trt_ep
+        self.assertEqual(os.environ.get("ORT_TENSORRT_UNAVAILABLE"), "1")
+
 
 if __name__ == "__main__":
     unittest.main()
