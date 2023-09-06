@@ -3207,10 +3207,10 @@ For more complete information about performance and benchmark results, visit www
     <td>/</td>
   </tr>
   <tr>
-    <td>RTN<br>W4G128Asym</td>
-    <td>0.7369</td>
-    <td>3.5803</td>
-    <td>0.9969</td>
+    <td>GPTQ<br>W4G32Asym</td>
+    <td>0.7312</td>
+    <td>3.5711</td>
+    <td>0.9892</td>
   </tr>
   <tr>
     <td rowspan="2">meta-llama/Llama-2-13b-chat-hf</td>
