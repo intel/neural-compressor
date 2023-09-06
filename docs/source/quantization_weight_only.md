@@ -1,4 +1,4 @@
-Weight Only Quantization
+Weight Only Quantization (WOQ)
 =====
 
 1. [Introduction](#introduction)
@@ -30,6 +30,8 @@ There are many excellent works for weight only quantization to improve its accur
 |       AWQ      |  &#10004;  | &#10004; |
 |      GPTQ      | &#10004; | &#10004; |
 |      TEQ      | &#10004; | stay tuned |
+
+**Note:** To get the validated accuracy results on popular models, please refer to [PyTorch Models with Torch 2.0.1+cpu in WOQ Mode](./validated_model_list.md/#pytorch-models-with-torch-201cpu-in-woq-mode)
 
 ## Examples
 ### **Quantization Capability**:
