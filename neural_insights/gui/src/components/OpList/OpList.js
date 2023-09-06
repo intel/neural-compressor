@@ -15,6 +15,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../App';
 import Table from 'react-bootstrap/Table';
+import Spinner from 'react-bootstrap/Spinner';
 
 export default function OpList({ selectedWorkload, setSelectedOp, selectedOp, setWarningText }) {
   const [opList, setOpList] = useState([]);
@@ -60,6 +61,11 @@ export default function OpList({ selectedWorkload, setSelectedOp, selectedOp, se
 
   return (
     <div className="overflow-table">
+      {opList.length === 0 &&
+        <div className="spinner-container">
+          <Spinner className="spinner" animation="border" />
+        </div>
+      }
       {opList.length > 0 &&
         <Table className="rounded" hover>
           <thead>
