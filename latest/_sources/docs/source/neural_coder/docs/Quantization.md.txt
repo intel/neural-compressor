@@ -5,7 +5,7 @@ This feature helps automatically enable quantization on Deep Learning models and
 
 ## Features Supported
 - Post-Training Static Quantization for [Stock PyTorch](https://pytorch.org/tutorials/prototype/fx_graph_mode_ptq_static.html) (with FX backend)
-- Post-Training Static Quantization for [IPEX](https://github.com/intel/intel-extension-for-pytorch/blob/v1.12.0/docs/tutorials/features/int8.md)
+- Post-Training Static Quantization for [IPEX](https://github.com/intel/intel-extension-for-pytorch/blob/v1.12.0/docs/tutorials/features/int8.html)
 - Post-Training Dynamic Quantization for [Stock PyTorch](https://pytorch.org/tutorials/recipes/recipes/dynamic_quantization.html)
 - Mixed Precision for [Stock PyTorch](https://pytorch.org/tutorials/recipes/recipes/amp_recipe.html)
 
@@ -16,7 +16,7 @@ This feature helps automatically enable quantization on Deep Learning models and
 
 ## Usage
 - PyPI distribution with a one-line API call
-- [JupyterLab extension](../extensions/neural_compressor_ext_lab/README.md)
+- [JupyterLab extension](../extensions/neural_compressor_ext_lab/README.html)
 
 ## Example
 ### PyPI distribution:

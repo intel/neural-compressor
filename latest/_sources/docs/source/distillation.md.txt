@@ -122,8 +122,8 @@ distil_loss_conf = IntermediateLayersKnowledgeDistillationLossConfig(layer_mappi
 distil_loss_conf = SelfKnowledgeDistillationLossConfig(layer_mappings=layer_mappings)
 ```
 ## Examples
-[Distillation PyTorch Examples](../../examples/README.md#distillation-1)
+[Distillation PyTorch Examples](../../examples/README.html#distillation-1)
 <br>
-[Distillation TensorFlow Examples](../../examples/README.md#distillation)
+[Distillation TensorFlow Examples](../../examples/README.html#distillation)
 <br>
-[Distillation Examples Results](./validated_model_list.md#validated-knowledge-distillation-examples)
+[Distillation Examples Results](./validated_model_list.html#validated-knowledge-distillation-examples)

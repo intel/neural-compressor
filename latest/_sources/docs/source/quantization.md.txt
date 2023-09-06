@@ -207,7 +207,7 @@ If a user needs to tune the model accuracy, the user should provide either `eval
 
 `evaluation dataloader` is a data loader for evaluation. It is iterable and should yield a tuple of (input, label). The input could be a object, list, tuple or dict, depending on user implementation, as well as it can be taken as model input. The label should be able to take as input of supported metrics. If this parameter is not None, user needs to specify pre-defined evaluation metrics through configuration file and should set "eval_func" parameter as None. Tuner will combine model, eval_dataloader and pre-defined metrics to run evaluation process.
 
-`evaluation metric` is an object to compute the metric to evaluating the performance of the model or a dict of built-in metric configures, neural_compressor will initialize this class when evaluation. `evaluation metric` must be supported by neural compressor. Please refer to [metric.md](metric.md).
+`evaluation metric` is an object to compute the metric to evaluating the performance of the model or a dict of built-in metric configures, neural_compressor will initialize this class when evaluation. `evaluation metric` must be supported by neural compressor. Please refer to [metric.html](metric.html).
 
 User could execute:
 ### Post Training Quantization
@@ -539,4 +539,4 @@ conf = PostTrainingQuantConfig(backend="itex", device="gpu")
 
 ## Examples
 
-User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/README.md) on how to quantize a new model.
+User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/README.html) on how to quantize a new model.

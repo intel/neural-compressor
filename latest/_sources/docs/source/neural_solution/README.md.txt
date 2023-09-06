@@ -43,13 +43,13 @@ python setup.py neural_solution install
 ```
 
 ## End-to-end examples
-- [Quantizing a Hugging Face model](./examples/hf_models/README.md)
-- [Quantizing a custom model](./examples/custom_models_optimized/tf_example1/README.md)
+- [Quantizing a Hugging Face model](./examples/hf_models/README.html)
+- [Quantizing a custom model](./examples/custom_models_optimized/tf_example1/README.html)
 ## Learn More
 <!-- TODO more docs(Install details, API and so on...) -->
 
 - The Architecture documents
-- [APIs Reference](./docs/source/description_api.md)
+- [APIs Reference](./docs/source/description_api.html)
 
 # Contact
 

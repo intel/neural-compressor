@@ -50,8 +50,8 @@ These APIs are necessary to add a new adapter. Here are the parameter types and 
 | quantize(self, tune_cfg, model, dataloader, q_func=None) | **tune_cfg** (dict): the chosen tuning configuration.<br> **model** (object): The model to do quantization.<br>**dataloader** (object): The dataloader used to load quantization dataset. **q_func**(optional): training function for quantization aware training mode.| output quantized model object|This function use the dataloader to generate the data required by the model, and then insert Quantize/Dequantize operator into the quantizable op required in the tune_config and generate the model for calibration, after calibration, generate the final quantized model according to the obtained data range from calibration| |
 
 ## Design the framework YAML
-To enable accuracy-aware tuning with a specific framework, we should define the [framework YAML](./framework_yaml.md) which unifies the configuration format for quantization and provides a description for the capabilities of the specific framework. 
->**Note**: You should refer to [framework_yaml.md](./framework_yaml.md) to define the framework specific YAML.
+To enable accuracy-aware tuning with a specific framework, we should define the [framework YAML](./framework_yaml.html) which unifies the configuration format for quantization and provides a description for the capabilities of the specific framework. 
+>**Note**: You should refer to [framework_yaml.html](./framework_yaml.html) to define the framework specific YAML.
 
 ## Add query_fw_capability to Adaptor
 Each framework adaptor should implement the `query_fw_capability` function, this function will only be invoked once and will loop over the graph/model for the quantizable operators and collect each operator's opwise details and optypewise capability. You should return a standard dict of the input model's tuning capability. The format is like below:

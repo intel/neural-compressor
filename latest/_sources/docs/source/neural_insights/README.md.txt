@@ -4,7 +4,7 @@ Neural Insights
 ===========================
 </div>
 
-Neural Insights is a web application for easier use of Intel® Neural Compressor [diagnosis](/docs/source/diagnosis.md) feature.
+Neural Insights is a web application for easier use of Intel® Neural Compressor [diagnosis](/docs/source/diagnosis.html) feature.
 It provides the capability to show the model graph, histograms of weights and activations, quantization configs, etc. 
 The workflow shows the relationship of Neural Insights and diagnosis. 
 ![workflow](/docs/source/imgs/workflow.jpg)
@@ -115,7 +115,7 @@ When the quantization is started, the workload should appear on the Neural Insig
 > Note that above example uses dummy data which is used to describe usage of Neural Insights. For diagnosis purposes you should use real dataset specific for your use case.
 
 ## Step by Step Diagnosis Example
-Refer to [Step by Step Diagnosis Example with TensorFlow](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/tf_accuracy_debug.md) and [Step by Step Diagnosis Example with ONNXRT](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/onnx_accuracy_debug.md) to get started with some basic quantization accuracy diagnostic skills.
+Refer to [Step by Step Diagnosis Example with TensorFlow](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/tf_accuracy_debug.html) and [Step by Step Diagnosis Example with ONNXRT](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/onnx_accuracy_debug.html) to get started with some basic quantization accuracy diagnostic skills.
 
 ## Research Collaborations
 

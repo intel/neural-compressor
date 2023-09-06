@@ -23,7 +23,7 @@ With the importance of a dataloader, different frameworks can have their own Dat
 
 - Neural Compressor treats batch size as a tuning parameter which means it can dynamically change the batch size to reach the accuracy goal.
 
-The unified  `DataLoader` API takes a [dataset](./dataset.md) as the input parameter and loads data from the dataset when needed. In special cases, users can also define their own dataloader classes, which must have `batch_size` attribute and `__iter__` function.
+The unified  `DataLoader` API takes a [dataset](./dataset.html) as the input parameter and loads data from the dataset when needed. In special cases, users can also define their own dataloader classes, which must have `batch_size` attribute and `__iter__` function.
 
 Of cause, users can also use frameworks own dataloader in Neural Compressor.
 

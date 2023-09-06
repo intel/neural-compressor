@@ -38,15 +38,15 @@ simultaneously on below PyTorch evaluation code, we generate the optimized code 
 There are currently 3 ways to use Neural Coder for automatic quantization enabling and benchmark.
 
 ### Jupyter Lab Extension
-We offer Neural Coder as an extension plugin in Jupyter Lab. This enables users to utilize Neural Coder while writing their Deep Learning models in Jupyter Lab coding platform. Users can simply search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab and install Neural Coder with one click. For more details, please refer to this [guide](extensions/neural_compressor_ext_lab/README.md).
+We offer Neural Coder as an extension plugin in Jupyter Lab. This enables users to utilize Neural Coder while writing their Deep Learning models in Jupyter Lab coding platform. Users can simply search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab and install Neural Coder with one click. For more details, please refer to this [guide](extensions/neural_compressor_ext_lab/README.html).
 
-[AWS Amazon SageMaker](https://aws.amazon.com/sagemaker/) users can also use Neural Coder as an extension following this [guide](docs/AWSSageMakerSupport.md).
+[AWS Amazon SageMaker](https://aws.amazon.com/sagemaker/) users can also use Neural Coder as an extension following this [guide](docs/AWSSageMakerSupport.html).
 
 ### Python Launcher
-Neural Coder can be used as a Python Launcher. Users can run the Python Deep Learning model code as it is with automatic enabling of optimizations by simply adding an inline prefix ```-m neural_coder``` to the Python command line. For more details, please refer to this [guide](docs/PythonLauncher.md).
+Neural Coder can be used as a Python Launcher. Users can run the Python Deep Learning model code as it is with automatic enabling of optimizations by simply adding an inline prefix ```-m neural_coder``` to the Python command line. For more details, please refer to this [guide](docs/PythonLauncher.html).
 
 ### Python API
-There are 3 user-facing APIs for Neural Coder: enable, bench and superbench. For more details, please refer to this [guide](docs/PythonAPI.md). We have provided a [list](docs/SupportMatrix.md) of supported Deep Learning optimization features. Specifically for quantization, we provide an auto-quantization API that helps automatically enable quantization on Deep Learning models and automatically evaluates for the best performance on the model with no manual coding needed. Supported features include Post-Training Static Quantization, Post-Training Dynamic Quantization, and Mixed Precision. For more details, please refer to this [guide](docs/Quantization.md).
+There are 3 user-facing APIs for Neural Coder: enable, bench and superbench. For more details, please refer to this [guide](docs/PythonAPI.html). We have provided a [list](docs/SupportMatrix.html) of supported Deep Learning optimization features. Specifically for quantization, we provide an auto-quantization API that helps automatically enable quantization on Deep Learning models and automatically evaluates for the best performance on the model with no manual coding needed. Supported features include Post-Training Static Quantization, Post-Training Dynamic Quantization, and Mixed Precision. For more details, please refer to this [guide](docs/Quantization.html).
 
 ## Contact
 Please contact us at [inc.maintainers@intel.com](mailto:inc.maintainers@intel.com) for any Neural Coder related question.

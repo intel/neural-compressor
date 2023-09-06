@@ -34,7 +34,7 @@ Submit a new task to Neural Solution OaaS.
 
 #### Parameters
 
-Refer to [task_request_description.md](./template/task_request_description.md).
+Refer to [task_request_description.html](./template/task_request_description.html).
 
 #### Usage
 ```bash

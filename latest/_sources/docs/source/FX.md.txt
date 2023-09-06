@@ -75,7 +75,7 @@ For detailed description, please refer to [PyTorch FX](https://pytorch.org/docs/
 
 ## Examples
 
-User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx/README.md) on how to quantize a model with FX backend.
+User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx/README.html) on how to quantize a model with FX backend.
 
 ## Note
 Right now, we support auto quantization method and can avoid below common problem.   

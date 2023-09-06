@@ -9,16 +9,20 @@
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/js/theme.js"></script>
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
@@ -91,7 +95,7 @@
 </ol>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
-<p>Intel® Neural Compressor provides deep-learning model compression techniques like quantization, knowledge distillation, pruning/sparsity and neural architecture search (NAS). These features are already validated on intel cpu/gpu. Quantized models by Intel® Neural Compressor are validated on broad hardware platforms: amd cpu/arm cpu/nvidia gpu through OnnxRuntime extension provider. Intel® Neural Compressor supports different deep-learning frameworks via unified interfaces, so users can define their own evaluation function to support various models. For quantization, 420+ examples are validated with a performance speedup geomean of 2.2x and up to 4.2x on Intel VNNI. Over 30 pruning and knowledge distillation samples are also available.</p>
+<p>Intel® Neural Compressor provides deep-learning model compression techniques like quantization, knowledge distillation, pruning/sparsity and neural architecture search (NAS). These features are already validated on intel cpu/gpu. Quantized models by Intel® Neural Compressor are validated on broad hardware platforms: .html cpu/arm cpu/nvidia gpu through OnnxRuntime extension provider. Intel® Neural Compressor supports different deep-learning frameworks via unified interfaces, so users can define their own evaluation function to support various models. For quantization, 420+ examples are validated with a performance speedup geomean of 2.2x and up to 4.2x on Intel VNNI. Over 30 pruning and knowledge distillation samples are also available.</p>
 <p>Neural Coder automatically inserts quantization code snippets on a PyTorch model script with one-line API, so this feature can increase the productivity. Intel® Neural Compressor provides other no-code features like GUI etc., so users can do basic optimization by uploading the models and clicking the button. After the optimization, the users will get optimized models and performance results.</p>
 </section>
 <section id="architecture">
@@ -102,7 +106,7 @@
 </section>
 <section id="supported-feature-matrix">
 <h2>Supported Feature Matrix<a class="headerlink" href="#supported-feature-matrix" title="Permalink to this heading"></a></h2>
-<p><a class="reference internal" href="quantization.html"><span class="doc">Quantization</span></a>:</p>
+<p><a class="reference external" href="quantization.html">Quantization</a>:</p>
 <table class="center">
     <thead>
         <tr>
@@ -146,7 +150,7 @@
     </tbody>
 </table>
 <br>
-<br><p><a class="reference internal" href="pruning.html"><span class="doc">Pruning</span></a>:</p>
+<br><p><a class="reference external" href="pruning.html">Pruning</a>:</p>
 <table>
 <thead>
   <tr>
@@ -202,14 +206,14 @@
 </tbody>
 </table>
 </br>
-</br><p><a class="reference internal" href="distillation.html"><span class="doc">Distillation</span></a>:
+</br><p><a class="reference external" href="distillation.html">Distillation</a>:
 |Distillation Algorithm                          |PyTorch   |TensorFlow |
 |————————————————|:——–:|:———:|
 |Knowledge Distillation                          |✔  |✔   |
 |Intermediate Layer Knowledge Distillation       |✔  |Will be supported|
 |Self Distillation                               |✔  |✖   |</p>
 </br>
-</br><p><a class="reference internal" href="orchestration.html"><span class="doc">Orchestration</span></a>:</p>
+</br><p><a class="reference external" href="orchestration.html">Orchestration</a>:</p>
 <table>
     <thead>
         <tr>
@@ -255,13 +259,13 @@
         </tr>
     </tbody>
 </table></br>
-</br><p><a class="reference internal" href="NAS.html"><span class="doc">Neural architecture search</span></a>:
+</br><p><a class="reference external" href="NAS.html">Neural architecture search</a>:
 |Approach                          |Framework    |
 |————————————————|:———–:|
 |Basic                          |PyTorch     |
 |DyNas       |PyTorch     |</p>
 </br>
-</br><p><a class="reference internal" href="mixed_precision.html"><span class="doc">Mixed precision</span></a>:
+</br><p><a class="reference external" href="mixed_precision.html">Mixed precision</a>:
 |Framework     |         |
 |————–|:———–:|
 |TensorFlow    |✔     |
@@ -285,7 +289,9 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+   <jinja2.runtime.BlockReference object at 0x7f44b576d5a0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
 
 </footer>
         </div>

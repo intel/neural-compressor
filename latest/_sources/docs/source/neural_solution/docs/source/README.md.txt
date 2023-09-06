@@ -88,7 +88,7 @@ optional arguments:
 - For RESTful API: `[user@server hf_model]$ curl -H "Content-Type: application/json" --data @./task.json  http://localhost:8000/task/submit/`
 - For gRPC API: `python  -m neural_solution.frontend.gRPC.client submit --request="test.json"`
 
-> For more details, please reference the [API description](./description_api.md) and [examples](../../examples/README.md).
+> For more details, please reference the [API description](./description_api.html) and [examples](../../examples/README.html).
 
 ## Query task status
 
@@ -97,7 +97,7 @@ Query the task status and result according to the `task_id`.
 - For RESTful API: `[user@server hf_model]$ curl  -X GET  http://localhost:8000/task/status/{task_id}`
 - For gRPC API: `python  -m neural_solution.frontend.gRPC.client query --task_id={task_id}`
 
-> For more details, please reference the [API description](./description_api.md) and [examples](../../examples/README.md).
+> For more details, please reference the [API description](./description_api.html) and [examples](../../examples/README.html).
 
 ## Stop service
 

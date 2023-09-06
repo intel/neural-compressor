@@ -9,16 +9,20 @@
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/js/theme.js"></script>
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
@@ -330,7 +334,7 @@
 <p>If a user needs to tune the model accuracy, the user should provide either <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">function</span></code> or <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">dataloader</span></code> <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code>. If the user won’t to tune the model accuracy, then the user should provide neither <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">function</span></code> nor <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">dataloader</span></code> <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">function</span></code> is a function used to evaluate model accuracy. It is a optional. This function should be same with how user makes evaluation on fp32 model, just taking <code class="docutils literal notranslate"><span class="pre">model</span></code> as input and returning a scalar value represented the evaluation accuracy.</p>
 <p><code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">dataloader</span></code> is a data loader for evaluation. It is iterable and should yield a tuple of (input, label). The input could be a object, list, tuple or dict, depending on user implementation, as well as it can be taken as model input. The label should be able to take as input of supported metrics. If this parameter is not None, user needs to specify pre-defined evaluation metrics through configuration file and should set “eval_func” parameter as None. Tuner will combine model, eval_dataloader and pre-defined metrics to run evaluation process.</p>
-<p><code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code> is an object to compute the metric to evaluating the performance of the model or a dict of built-in metric configures, neural_compressor will initialize this class when evaluation. <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code> must be supported by neural compressor. Please refer to <a class="reference internal" href="metric.html"><span class="doc">metric.md</span></a>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code> is an object to compute the metric to evaluating the performance of the model or a dict of built-in metric configures, neural_compressor will initialize this class when evaluation. <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code> must be supported by neural compressor. Please refer to <a class="reference external" href="metric.html">metric.html</a>.</p>
 <p>User could execute:</p>
 <section id="post-training-quantization">
 <h3>Post Training Quantization<a class="headerlink" href="#post-training-quantization" title="Permalink to this heading"></a></h3>
@@ -731,7 +735,7 @@ This method requires the user to provide training function and evaluation functi
 </section>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
-<p>User could refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/README.md">examples</a> on how to quantize a new model.</p>
+<p>User could refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/README.html">examples</a> on how to quantize a new model.</p>
 </section>
 </section>
 
@@ -749,7 +753,9 @@ This method requires the user to provide training function and evaluation functi
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+   <jinja2.runtime.BlockReference object at 0x7f44b5a982e0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
 
 </footer>
         </div>

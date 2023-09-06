@@ -40,4 +40,4 @@ q_model.save("/path/to/output/dir")  # explicitly call to save q_model
 
 v1.2 refines Neural Compressor built-in transform/dataset/metric to unify APIs cross different framework backends.
 
-Refer to [dataset](./dataset.md), [transform](./transform.md), and [metric](./metric.md) to learn how to use them in yaml or code.
+Refer to [dataset](./dataset.html), [transform](./transform.html), and [metric](./metric.html) to learn how to use them in yaml or code.

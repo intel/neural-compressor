@@ -3,8 +3,8 @@
 2. [Supported Feature Matrix](#supported-feature-matrix)
 3. [Get Started](#get-started)
 4. [Example](#example)
-5. [Step by Step Diagnosis Example with TensorFlow](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/tf_accuracy_debug.md)
-5. [Step by Step Diagnosis Example with ONNXRT](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/onnx_accuracy_debug.md)
+5. [Step by Step Diagnosis Example with TensorFlow](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/tf_accuracy_debug.html)
+5. [Step by Step Diagnosis Example with ONNXRT](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/onnx_accuracy_debug.html)
 
 # Diagnosis Introduction
 The diagnosis feature provides methods to debug the accuracy loss during quantization and profile the performance gap during benchmark.

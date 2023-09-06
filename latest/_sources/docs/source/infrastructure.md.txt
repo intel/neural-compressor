@@ -5,7 +5,7 @@ Infrastructure of Intel® Neural Compressor
 3. [Supported Feature Matrix](#supported-feature-matrix)
 
 ## Introduction
-Intel® Neural Compressor provides deep-learning model compression techniques like quantization, knowledge distillation, pruning/sparsity and neural architecture search (NAS). These features are already validated on intel cpu/gpu. Quantized models by Intel® Neural Compressor are validated on broad hardware platforms: amd cpu/arm cpu/nvidia gpu through OnnxRuntime extension provider. Intel® Neural Compressor supports different deep-learning frameworks via unified interfaces, so users can define their own evaluation function to support various models. For quantization, 420+ examples are validated with a performance speedup geomean of 2.2x and up to 4.2x on Intel VNNI. Over 30 pruning and knowledge distillation samples are also available. 
+Intel® Neural Compressor provides deep-learning model compression techniques like quantization, knowledge distillation, pruning/sparsity and neural architecture search (NAS). These features are already validated on intel cpu/gpu. Quantized models by Intel® Neural Compressor are validated on broad hardware platforms: .html cpu/arm cpu/nvidia gpu through OnnxRuntime extension provider. Intel® Neural Compressor supports different deep-learning frameworks via unified interfaces, so users can define their own evaluation function to support various models. For quantization, 420+ examples are validated with a performance speedup geomean of 2.2x and up to 4.2x on Intel VNNI. Over 30 pruning and knowledge distillation samples are also available. 
 
 Neural Coder automatically inserts quantization code snippets on a PyTorch model script with one-line API, so this feature can increase the productivity. Intel® Neural Compressor provides other no-code features like GUI etc., so users can do basic optimization by uploading the models and clicking the button. After the optimization, the users will get optimized models and performance results.
 
@@ -18,7 +18,7 @@ Neural Coder automatically inserts quantization code snippets on a PyTorch model
 Intel® Neural Compressor has unified interfaces which dispatch tasks to different frameworks via adaptor layer. The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs. Users can select tuning strategies and the strategy module contains model configs and tuning configs. Model configs define the quantization approach, if it's post-training static quantization, users need to set more parameters like calibration and so on. There are several tuning strategies for users to choose from while the basic strategy is set as default.
 
 ## Supported Feature Matrix
-[Quantization](quantization.md):
+[Quantization](quantization.html):
 <table class="center">
     <thead>
         <tr>
@@ -64,7 +64,7 @@ Intel® Neural Compressor has unified interfaces which dispatch tasks to differe
 <br>
 <br>
 
-[Pruning](pruning.md):
+[Pruning](pruning.html):
 <table>
 <thead>
   <tr>
@@ -122,7 +122,7 @@ Intel® Neural Compressor has unified interfaces which dispatch tasks to differe
 </br>
 </br>
 
-[Distillation](distillation.md):
+[Distillation](distillation.html):
 |Distillation Algorithm                          |PyTorch   |TensorFlow |
 |------------------------------------------------|:--------:|:---------:|
 |Knowledge Distillation                          |&#10004;  |&#10004;   |
@@ -134,7 +134,7 @@ Intel® Neural Compressor has unified interfaces which dispatch tasks to differe
 </br>
 
 
-[Orchestration](orchestration.md):
+[Orchestration](orchestration.html):
 <table>
     <thead>
         <tr>
@@ -185,7 +185,7 @@ Intel® Neural Compressor has unified interfaces which dispatch tasks to differe
 </br>
 </br>
 
-[Neural architecture search](NAS.md):
+[Neural architecture search](NAS.html):
 |Approach                          |Framework    |
 |------------------------------------------------|:-----------:|
 |Basic                          |PyTorch     |
@@ -195,7 +195,7 @@ Intel® Neural Compressor has unified interfaces which dispatch tasks to differe
 </br>
 
 
-[Mixed precision](mixed_precision.md):
+[Mixed precision](mixed_precision.html):
 |Framework     |         |
 |--------------|:-----------:|
 |TensorFlow    |&#10004;     |

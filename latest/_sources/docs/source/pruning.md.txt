@@ -380,7 +380,7 @@ The pruning technique  is validated on typical models across various domains (in
 
   Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../examples/pytorch/image_recognition/ResNet50/pruning/eager/).
 
-Please refer to [pruning examples](../../examples/README.md#Pruning-1) for more information.
+Please refer to [pruning examples](../../examples/README.html#Pruning-1) for more information.
 
 ## Sparse Model Deployment
 
@@ -388,7 +388,7 @@ Particular hardware/software like [Intel Extension for Transformer](https://gith
 
 ## Pruning with Hyperparameter Optimization
 Intel® Neural Compressor currently support grid search, random, bayesian optimization and xgboost search algorithms for pruning with HPO. 
-For more details, please refer to [HPO document](../../neural_compressor/compression/hpo/README.md)
+For more details, please refer to [HPO document](../../neural_compressor/compression/hpo/README.html)
 
 ## Reference
 

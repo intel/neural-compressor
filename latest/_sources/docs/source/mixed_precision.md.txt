@@ -129,7 +129,7 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
 
 ### During quantization mixed precision
 During quantization, if the hardware support BF16, the conversion is default enabled. So you may get an INT8/BF16/FP32 mixed precision model on those hardware. FP16 can be executed if 'device' of config is 'gpu'.
-Please refer to this [document](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_mixed_precision.md) for its workflow.
+Please refer to this [document](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_mixed_precision.html) for its workflow.
 
 ### Accuracy-driven mixed precision
 BF16/FP16 conversion may lead to accuracy drop. Intel® Neural Compressor provides an accuracy-driven tuning function to reduce accuracy loss, 

@@ -102,7 +102,7 @@ The results should look like below:
 
 According to the results displayed above, it is evident that the nodes of type `/layoutlmv3/encoder/layer.\d+/output/Add` and `/layoutlmv3/encoder/layer.\d+/output/dense/MatMul` have significantly higher values for `Min-Max data range` compared to other node types. This indicates that they may have caused a loss of accuracy. Therefore, we can try to fallback these nodes.
 
-Refer to [diagnosis.md](https://github.com/intel/neural-compressor/blob/master/docs/source/diagnosis.md) for more tips for diagnosis.
+Refer to [diagnosis.html](https://github.com/intel/neural-compressor/blob/master/docs/source/diagnosis.html) for more tips for diagnosis.
 
 ```python
 from neural_compressor.utils.constant import FP32

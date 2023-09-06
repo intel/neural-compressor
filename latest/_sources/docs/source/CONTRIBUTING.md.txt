@@ -13,7 +13,7 @@ If you have improvements to Intel® Neural Compressor, send your pull requests f
 
 Before sending your pull requests, follow the information below:
 
-- Changes are consistent with the Python [Coding Style](https://github.com/google/styleguide/blob/gh-pages/pyguide.md).
+- Changes are consistent with the Python [Coding Style](https://github.com/google/styleguide/blob/gh-pages/pyguide.html).
 - Use pylint to check your Python code.
 - Use flake8 and autopep8 to make Python code clean.
 - Add unit tests in [Unit Tests](https://github.com/intel/neural-compressor/tree/master/test) to cover the code you would like to contribute.
@@ -46,4 +46,4 @@ Submit your questions, feature requests, and bug reports to the
 
 ## Contributor Covenant Code of Conduct
 
-This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant Code of Conduct](./CODE_OF_CONDUCT.md).
+This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant Code of Conduct](./CODE_OF_CONDUCT.html).

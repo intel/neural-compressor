@@ -9,16 +9,20 @@
       <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
       <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../../../../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../../../../_static/jquery.js"></script>
-        <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
-        <script src="../../../../../_static/doctools.js"></script>
-        <script src="../../../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../../../_static/js/theme.js"></script>
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
     <link rel="index" title="Index" href="../../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../../search.html" /> 
 </head>
@@ -186,7 +190,7 @@ We need to set <code class="docutils literal notranslate"><span class="pre">diag
 <p>The results should look like below:</p>
 <p><img alt="min-max" src="../../../../../_images/min-max.jpg" /></p>
 <p>According to the results displayed above, it is evident that the nodes of type <code class="docutils literal notranslate"><span class="pre">/layoutlmv3/encoder/layer.\d+/output/Add</span></code> and <code class="docutils literal notranslate"><span class="pre">/layoutlmv3/encoder/layer.\d+/output/dense/MatMul</span></code> have significantly higher values for <code class="docutils literal notranslate"><span class="pre">Min-Max</span> <span class="pre">data</span> <span class="pre">range</span></code> compared to other node types. This indicates that they may have caused a loss of accuracy. Therefore, we can try to fallback these nodes.</p>
-<p>Refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/source/diagnosis.md">diagnosis.md</a> for more tips for diagnosis.</p>
+<p>Refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/source/diagnosis.html">diagnosis.html</a> for more tips for diagnosis.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.utils.constant</span> <span class="kn">import</span> <span class="n">FP32</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
@@ -224,7 +228,9 @@ We need to set <code class="docutils literal notranslate"><span class="pre">diag
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+   <jinja2.runtime.BlockReference object at 0x7f44b5a99db0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
 
 </footer>
         </div>

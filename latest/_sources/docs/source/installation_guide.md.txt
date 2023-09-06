@@ -33,7 +33,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 - Python version: 3.7 or 3.8 or 3.9 or 3.10 or 3.11
 
 > Notes:
-> - If you get some build issues, please check [frequently asked questions](faq.md) at first.
+> - If you get some build issues, please check [frequently asked questions](faq.html) at first.
 
 ### Install from Binary
 

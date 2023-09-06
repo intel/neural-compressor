@@ -86,4 +86,4 @@ eval_func(model)
 
 ### Examples
 
-For examples of distillation for quantization, please refer to [distillation-for-quantization examples](../../examples/pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/distillation_for_quantization/fx/README.md)
+For examples of distillation for quantization, please refer to [distillation-for-quantization examples](../../examples/pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/distillation_for_quantization/fx/README.html)

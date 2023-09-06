@@ -745,4 +745,4 @@ fit(model="./int8.pb", config=conf, b_dataloader=eval_dataloader)
 
 ## Examples
 
-User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/README.md) for more details about the migration from Intel Neural Compressor 1.X to Intel Neural Compressor 2.X.
+User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/README.html) for more details about the migration from Intel Neural Compressor 1.X to Intel Neural Compressor 2.X.

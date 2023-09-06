@@ -9,16 +9,20 @@
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/js/theme.js"></script>
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
@@ -370,7 +374,7 @@ Users can pass the customized training/evaluation functions to <code class="docu
 <p>Pruning on ResNet50 model using ImageNet dataset <a class="reference external" href="../../examples/pytorch/image_recognition/ResNet50/pruning/eager/">Image-recognition examples</a>.</p>
 </li>
 </ul>
-<p>Please refer to <a class="reference external" href="../../examples/README.md#Pruning-1">pruning examples</a> for more information.</p>
+<p>Please refer to <a class="reference external" href="../../examples/README.html#Pruning-1">pruning examples</a> for more information.</p>
 </section>
 <section id="sparse-model-deployment">
 <h2>Sparse Model Deployment<a class="headerlink" href="#sparse-model-deployment" title="Permalink to this heading"></a></h2>
@@ -379,7 +383,7 @@ Users can pass the customized training/evaluation functions to <code class="docu
 <section id="pruning-with-hyperparameter-optimization">
 <h2>Pruning with Hyperparameter Optimization<a class="headerlink" href="#pruning-with-hyperparameter-optimization" title="Permalink to this heading"></a></h2>
 <p>Intel® Neural Compressor currently support grid search, random, bayesian optimization and xgboost search algorithms for pruning with HPO.
-For more details, please refer to <a class="reference external" href="../../neural_compressor/compression/hpo/README">HPO document</a></p>
+For more details, please refer to <a class="reference external" href="../../neural_compressor/compression/hpo/README.html">HPO document</a></p>
 </section>
 <section id="reference">
 <h2>Reference<a class="headerlink" href="#reference" title="Permalink to this heading"></a></h2>
@@ -402,7 +406,9 @@ For more details, please refer to <a class="reference external" href="../../neur
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+   <jinja2.runtime.BlockReference object at 0x7f44b639b5b0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
 
 </footer>
         </div>

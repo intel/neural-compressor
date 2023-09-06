@@ -9,16 +9,20 @@
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/js/theme.js"></script>
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
@@ -91,7 +95,7 @@
 <a class="reference external" href="https://github.com/intel/neural-compressor"><img alt="coverage" src="https://img.shields.io/badge/coverage-85%25-green" /></a>
 <a class="reference external" href="https://pepy.tech/project/neural-compressor"><img alt="Downloads" src="https://static.pepy.tech/personalized-badge/neural-compressor?period=total&amp;units=international_system&amp;left_color=grey&amp;right_color=green&amp;left_text=downloads" /></a></p>
 <p><a class="reference external" href="./design.html#architecture">Architecture</a>   |   <a class="reference external" href="./design.html#workflow">Workflow</a>   |   <a class="reference external" href="./validated_model_list.html">Results</a>   |   <a class="reference external" href="./https://github.com/intel/neural-compressor/blob/master/examples/README">Examples</a>   |   <a class="reference external" href="https://intel.github.io/neural-compressor">Documentations</a></p>
-</div><hr class="docutils" />
+<hr class="docutils" />
 <div align="left"><p>Intel® Neural Compressor aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as <a class="reference external" href="https://www.tensorflow.org/">TensorFlow</a>, <a class="reference external" href="https://pytorch.org/">PyTorch</a>, <a class="reference external" href="https://onnxruntime.ai/">ONNX Runtime</a>, and <a class="reference external" href="https://mxnet.apache.org/">MXNet</a>,
 as well as Intel extensions such as <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow">Intel Extension for TensorFlow</a> and <a class="reference external" href="https://github.com/intel/intel-extension-for-pytorch">Intel Extension for PyTorch</a>.
 In particular, the tool provides the key features, typical examples, and open collaborations as below:</p>
@@ -262,7 +266,9 @@ wget<span class="w"> </span>https://storage.googleapis.com/intel-optimized-tenso
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+   <jinja2.runtime.BlockReference object at 0x7f44b28f6830> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
 
 </footer>
         </div>

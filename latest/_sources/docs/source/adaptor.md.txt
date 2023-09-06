@@ -31,7 +31,7 @@ tuning strategy and vanilla framework quantization APIs.
 
 
 ## Working Flow
-Adaptor only provide framework API for tuning strategy. So we can find complete working flow in [tuning strategy working flow](./tuning_strategies.md).
+Adaptor only provide framework API for tuning strategy. So we can find complete working flow in [tuning strategy working flow](./tuning_strategies.html).
 
 ## Get Started with Adaptor API
 

@@ -11,7 +11,7 @@ How to Support New Data Type, Like Int4, with a Few Line Changes
 - [Summary](#summary)
 
 ## Introduction
-To enable accuracy-aware tuning with various frameworks, Intel® Neural Compressor introduced the [framework YAML](./framework_yaml.md) which unifies the configuration format for quantization and provides a description for the capabilities of specific framework. Before explaining how to add a new data type, let's first introduce the overall process, from defining the operator behavior in YAML to invoking it by the adaptor. The diagram below illustrates all the relevant steps, with additional details provided for each annotated step.
+To enable accuracy-aware tuning with various frameworks, Intel® Neural Compressor introduced the [framework YAML](./framework_yaml.html) which unifies the configuration format for quantization and provides a description for the capabilities of specific framework. Before explaining how to add a new data type, let's first introduce the overall process, from defining the operator behavior in YAML to invoking it by the adaptor. The diagram below illustrates all the relevant steps, with additional details provided for each annotated step.
 
 > Note: The `adaptor` is a layer that abstracts various frameworks supported by Intel® Neural Compressor.
 

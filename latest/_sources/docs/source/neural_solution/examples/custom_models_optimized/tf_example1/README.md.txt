@@ -22,7 +22,7 @@ The folder structure is as follows:
 │   └── train-00173-of-01024
 ├── model
 │   └── mobilenet_v1_1.0_224_frozen.pb
-├── README.md
+├── README.html
 ├── task_request_distributed.json
 ├── task_request.json
 └── test.py

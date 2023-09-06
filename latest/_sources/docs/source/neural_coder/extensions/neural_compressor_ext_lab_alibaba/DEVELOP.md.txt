@@ -72,4 +72,4 @@ folder is located. Then you can remove the symlink named `neural_compressor_ext_
 
 ### Packaging the extension
 
-See [RELEASE](RELEASE.md)
+See [RELEASE](RELEASE.html)
