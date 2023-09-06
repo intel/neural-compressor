@@ -1958,31 +1958,32 @@ class TestCastONNXRT(unittest.TestCase):
 
         from neural_compressor import MixedPrecisionConfig
         from neural_compressor.mix_precision import fit
-        config = MixedPrecisionConfig(backend="onnxrt_cuda_ep",
-                                      device="gpu",
-                                      precision="fp16",
-                                      op_type_dict={"Clip":
-                                                    {"activation": {"dtype": ["fp32"]},
-                                                     "weight": {"dtype": ["fp32"]}}})
+
+        config = MixedPrecisionConfig(
+            backend="onnxrt_cuda_ep",
+            device="gpu",
+            precision="fp16",
+            op_type_dict={"Clip": {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}}},
+        )
         converted_model = fit(model, config)
         less_init = converted_model.get_node("Less").input[1]
         clip_1_init = converted_model.get_node("Clip").input[1]
-        self.assertEqual(clip_1_init + '_init_cast', less_init)
+        self.assertEqual(clip_1_init + "_init_cast", less_init)
         self.assertTrue("Cast" in set([i.op_type for i in converted_model.nodes()]))
         self.assertTrue(10 in set([i.attribute[0].i for i in converted_model.nodes() if i.op_type == "Cast"]))
 
-        config = MixedPrecisionConfig(backend="onnxrt_cuda_ep",
-                                      device="gpu",
-                                      precision="fp16",)
+        config = MixedPrecisionConfig(
+            backend="onnxrt_cuda_ep",
+            device="gpu",
+            precision="fp16",
+        )
         converted_model = fit(model, config)
         less_init = converted_model.get_node("Less").input[1]
         clip_1_init = converted_model.get_node("Clip").input[1]
-        self.assertTrue(less_init.endswith('_init_cast'))
-        self.assertTrue(clip_1_init.endswith('_init_cast'))
+        self.assertTrue(less_init.endswith("_init_cast"))
+        self.assertTrue(clip_1_init.endswith("_init_cast"))
         self.assertTrue("Cast" in set([i.op_type for i in converted_model.nodes()]))
         self.assertTrue(10 in set([i.attribute[0].i for i in converted_model.nodes() if i.op_type == "Cast"]))
-
-
 
 
 if __name__ == "__main__":

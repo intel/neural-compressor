@@ -201,20 +201,21 @@ def cast_tensor(tensor, dtype, is_large_model=False):  # pragma: no cover
 
         if not is_large_model:
             new_tensor = helper.make_tensor(
-                name=tensor.name + '_init_cast',
+                name=tensor.name + "_init_cast",
                 data_type=dtype_mapping[dtype],
                 dims=numpy_helper.to_array(tensor).shape if len(numpy_helper.to_array(tensor).shape) != 0 else [],
                 vals=new_val if len(numpy_helper.to_array(tensor).shape) != 0 else [numpy_helper.to_array(tensor)],
             )
         else:
             new_tensor = helper.make_tensor(
-                name=tensor.name + '_init_cast',
+                name=tensor.name + "_init_cast",
                 data_type=dtype_mapping[dtype],
                 dims=numpy_helper.to_array(tensor).shape if len(numpy_helper.to_array(tensor).shape) != 0 else [],
                 vals=new_val.tostring(),
-                raw=True
+                raw=True,
             )
     return new_tensor
+
 
 def remove_init_from_model_input(model):
     """Remove initializer from model input."""
