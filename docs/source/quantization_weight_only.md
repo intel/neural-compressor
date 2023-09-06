@@ -70,7 +70,7 @@ Notes:
 |  nsamples  | 128 |  Calibration samples' size |
 |  pad_max_length  | 2048 | Whether to align calibration data to a fixed length. This value should not exceed model's acceptable sequence length. Please refer to  model's config json to find out this value.|
 |  use_max_length  | False | Whether to align all calibration data to fixed length, which equals to pad_max_length. |
-|  block_size  | 128 | Channel number in one block to execute a GPTQ quantization iteration |
+|  block_size  | 128 | Execute GPTQ quantization per block, block shape = [$C_{out}$, block_size] |
 
 
 ### **Export Compressed Model**
