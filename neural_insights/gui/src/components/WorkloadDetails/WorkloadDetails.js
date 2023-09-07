@@ -12,7 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Image from 'react-bootstrap/Image';
 import Tooltip from 'react-bootstrap/Tooltip';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
@@ -21,7 +21,7 @@ import { api } from '../../App';
 import { getLabel } from '../Diagnosis/Diagnosis';
 import Workloads from './../Workloads/Workloads';
 
-export default function WorkloadDetails({ setSelectedWorkload, selectedWorkload, setWarningText, setSelectedOp }) {
+export default function WorkloadDetails({ selectedWorkload, setWarningText, setSelectedOp }) {
   const [spinner, setSpinner] = useState(true);
 
   let deleteWorkload = (selectedWorkload) => {
@@ -58,7 +58,7 @@ export default function WorkloadDetails({ setSelectedWorkload, selectedWorkload,
   return (
     <div>
       {selectedWorkload &&
-        <div className="data-panel-top details-list">
+        <div className="data-panel details-list">
           <h3>Details
             <OverlayTrigger placement="right" overlay={tooltipDelete}>
               <div className="delete-button" role="button" onClick={e => { deleteWorkload(selectedWorkload); setSelectedOp(null); }}>
