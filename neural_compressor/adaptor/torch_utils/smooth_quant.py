@@ -1192,11 +1192,8 @@ class GraphTrace:
     def trace(self, model, dummy_input):
         traced_model = None
         optimize_numerics = False
-        try:
-            orig_device = next(model.parameters()).device.type
-        except:
-            orig_device = "cpu"
-        if orig_device != "cpu" and orig_device != "meta":
+        orig_device = next(model.parameters()).device.type
+        if orig_device != "cpu" and orig_device != "meta": # pragma: no cover
             model = model.to("cpu")
             dummy_input = move_input_to_device(dummy_input, "cpu")
         if isinstance(dummy_input, dict) or isinstance(dummy_input, UserDict):
