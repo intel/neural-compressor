@@ -126,14 +126,7 @@ if __name__ == "__main__":
     query_action_parser.set_defaults(func=run_query_task_result)
     query_action_parser.add_argument("--task_id", type=str, default=None, help="Query task by task id.")
 
-    parser.add_argument("--grpc_api_port", type=str, default=None, help="grpc server port.")
-    parser.add_argument("--result_monitor_port", type=str, default=None, help="result monitor port.")
-    parser.add_argument("--task_monitor_port", type=str, default=None, help="task monitor port.")
-
     args = parser.parse_args()
-    config.grpc_api_port = args.grpc_api_port
-    config.result_monitor_port = args.result_monitor_port
-    config.task_monitor_port = args.task_monitor_port
     args.func(args)
 
 # for test:

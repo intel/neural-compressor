@@ -1,11 +1,11 @@
 {
-    "script_url": "custom_models_optimized/tf_example1",
+    "script_url": "tf_example1_dis",
     "optimized": "True",
     "arguments": [
         "--dataset_location=dataset --model_path=model"
     ],
     "approach": "static",
-    "requirements": ["tensorflow"
+    "requirements": [
     ],
     "workers": 3
 }
