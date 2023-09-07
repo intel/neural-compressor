@@ -25,6 +25,7 @@ from datetime import datetime
 import psutil
 from prettytable import PrettyTable
 
+from neural_solution.utils import logger
 from neural_solution.utils.utility import get_db_path
 
 
@@ -46,7 +47,7 @@ def check_port(port):
         port (int): port number.
     """
     if not str(port).isdigit() or int(port) < 0 or int(port) > 65535:
-        print(f"Error: Invalid port number: {port}")
+        logger.info(f"Error: Invalid port number: {port}")
         sys.exit(1)
 
 
@@ -85,7 +86,7 @@ def stop_service():
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     # Service End
-    print("Neural Solution Service Stopped!")
+    logger.info("Neural Solution Service Stopped!")
 
 
 def check_port_free(port):
@@ -114,10 +115,10 @@ def start_service(args):
     for port in [args.restful_api_port, args.task_monitor_port, args.result_monitor_port]:
         # Check if the port is occupied
         if not check_port_free(port):
-            print(f"Port {port} is in use!")
+            logger.info(f"Port {port} is in use!")
             ports_flag += 1
     if ports_flag > 0:
-        print("Please replace the occupied port!")
+        logger.info("Please replace the occupied port!")
         sys.exit(1)
     # Check completed
 
@@ -125,10 +126,10 @@ def start_service(args):
     if not args.conda_env:
         conda_env = os.environ.get("CONDA_DEFAULT_ENV")
         if not conda_env:
-            print("No environment specified or conda environment activated !!!")
+            logger.info("No environment specified or conda environment activated !!!")
             sys.exit(1)
         else:
-            print(
+            logger.info(
                 "No environment specified, use environment activated:"
                 + f" ({conda_env}) as the task runtime environment."
             )
@@ -226,7 +227,7 @@ def start_service(args):
             elapsed_time = current_time - start_time
             if elapsed_time >= timeout:
                 # If timed out, break the loop
-                print("Timeout!")
+                logger.info("Timeout!")
                 break
 
         # Continue to wait for all ports to be in use
@@ -248,14 +249,14 @@ def start_service(args):
         fail_msg = f"{fail_msg}\nPlease check backend serve log!"
 
     if ports_flag < 3:
-        print(fail_msg)
+        logger.info(fail_msg)
         sys.exit(1)
     # Check completed
 
-    print("Neural Solution Service Started!")
-    print(f'Service log saving path is in "{os.path.abspath(serve_log_dir)}"')
-    print(f"To submit task at: {ip_address}:{args.restful_api_port}/task/submit/")
-    print("[For information] neural_solution -h")
+    logger.info("Neural Solution Service Started!")
+    logger.info(f'Service log saving path is in "{os.path.abspath(serve_log_dir)}"')
+    logger.info(f"To submit task at: {ip_address}:{args.restful_api_port}/task/submit/")
+    logger.info("[For information] neural_solution -h")
 
 
 def query_cluster(db_path: str):
@@ -277,7 +278,7 @@ def query_cluster(db_path: str):
         table.add_row(row)
 
     table.title = "Neural Solution Cluster Management System"
-    print(table)
+    logger.info(table)
     cursor.close()
     conn.close()
 
@@ -318,7 +319,7 @@ def join_node_to_cluster(db_path: str, args):
 
     # Insert node into cluster table.
     for count, node in enumerate(node_lst):
-        print(node)
+        logger.info(node)
         conn = sqlite3.connect(f"{db_path}")
         cursor = conn.cursor()
         if count == 0:
@@ -334,7 +335,7 @@ def join_node_to_cluster(db_path: str, args):
         )
         conn.commit()
         index += 1
-        print(f"Insert node-id: {index} successfully!")
+        logger.info(f"Insert node-id: {index} successfully!")
 
     cursor.close()
     conn.close()
@@ -354,16 +355,16 @@ def remove_node_from_cluster(db_path: str, node_id: int):
     results = cursor.fetchone()
 
     if results is None:
-        print(f"No node-id {node_id} in cluster table.")
+        logger.info(f"No node-id {node_id} in cluster table.")
         return
     elif results[1] == 0:
         sql = f"UPDATE cluster SET status = 'remove' WHERE id = {node_id}"
         cursor.execute(sql)
-        print(f"Remove node-id {node_id} successfully.")
+        logger.info(f"Remove node-id {node_id} successfully.")
     else:
         sql = f"UPDATE cluster SET status = 'remove' WHERE id = {node_id}"
         cursor.execute(sql)
-        print("Resource occupied, will be removed after resource release")
+        logger.info("Resource occupied, will be removed after resource release")
     conn.commit()
 
     cursor.close()
