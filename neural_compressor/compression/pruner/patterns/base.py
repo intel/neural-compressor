@@ -536,12 +536,12 @@ class PytorchBasePattern(BasePattern):
         """
         flattern_score = torch.flatten(score)
         k = int(exact_sparsity_ratio * flattern_score.numel())
-        threshold, _ = torch.kthvalue(flattern_score, k)
         if not k < 1:
+            threshold, _ = torch.kthvalue(flattern_score, k)
             zero = torch.tensor([False]).to(score.device)
             one = torch.tensor([True]).to(score.device)
             mask = torch.where(score <= threshold, zero, one)
-        else:
+        else:  # pragma: no cover
             mask = torch.ones(score.shape, device=score.device)
         if self.block:
             mask = mask.float()
