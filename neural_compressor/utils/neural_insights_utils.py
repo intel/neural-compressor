@@ -146,7 +146,9 @@ def get_model_path(model: Any, workload_location: str) -> Any:
         return os.path.abspath(model.model_path)
     if onnx_installed:
         import onnx
+
         from neural_compressor.model.onnx_model import ONNXModel
+
         if isinstance(model, ONNXModel):
             model_path: str = os.path.join(workload_location, "input_model.onnx")
             os.makedirs(workload_location, exist_ok=True)
@@ -155,7 +157,9 @@ def get_model_path(model: Any, workload_location: str) -> Any:
     if pytorch_installed:
         import torch
         from torchinfo import summary
+
         from neural_compressor.model.torch_model import PyTorchModel
+
         if isinstance(model, PyTorchModel):
             model_path: str = os.path.join(workload_location, "input_model.pt")
             os.makedirs(workload_location, exist_ok=True)
