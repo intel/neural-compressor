@@ -262,7 +262,7 @@
   weight_only_integer: &cap_weight_only_integer {
       'Linear': &cap_weight_only_integer_linear {  # only Linear now
           'weight': {
-                      'dtype': ['int', 'int4', 'nf4', 'fp4', 'fp4_e2m1_bnb', 'fp4_e2m1'],
+                      'dtype': ['int', 'int8', 'int4', 'nf4', 'fp4', 'fp4_e2m1_bnb', 'fp4_e2m1'],
                       'bits': [4, 1, 2, 3, 5, 6, 7, 8], # [1-8], # 4
                       # group_size=-1 means per-channel, others means per-group
                       'group_size': [32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024], # [1-inf], # 32

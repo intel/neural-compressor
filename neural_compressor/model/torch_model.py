@@ -423,7 +423,7 @@ class PyTorchModel(PyTorchBaseModel):
     def export_compressed_model(
         self,
         qweight_config_path=None,
-        sym_full_range=False,
+        enable_full_range=False,
         compression_dtype=torch.int32,
         compression_dim=1,
         scale_dtype=torch.float32,
@@ -434,7 +434,7 @@ class PyTorchModel(PyTorchBaseModel):
 
         Args:
             qweight_config_path (str, optional): Path of qconfig.json. Defaults to None.
-            sym_full_range (bool, optional): Whether to leverage the full compression range
+            enable_full_range (bool, optional): Whether to leverage the full compression range
                                              under symmetric quantization. Defaults to False.
             compression_dtype (torch.Tensor, optional): The target dtype after comoression.
                                                         Defaults to torch.int32.
@@ -478,7 +478,7 @@ class PyTorchModel(PyTorchBaseModel):
                         scheme,
                         data_type=dtype,
                         return_int=True,
-                        sym_full_range=sym_full_range,
+                        enable_full_range=enable_full_range,
                         compression_dtype=compression_dtype,
                         compression_dim=compression_dim,
                         scale_dtype=scale_dtype,
@@ -530,7 +530,7 @@ class PyTorchModel(PyTorchBaseModel):
                     scheme,
                     data_type=dtype,
                     return_int=True,
-                    sym_full_range=sym_full_range,
+                    enable_full_range=enable_full_range,
                     compression_dtype=compression_dtype,
                     compression_dim=compression_dim,
                     scale_dtype=scale_dtype,

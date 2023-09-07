@@ -81,7 +81,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         input = torch.randn(3, 30)
         model = Model()
         out1 = model(input)
-
         conf = PostTrainingQuantConfig(
             approach="weight_only",
         )
@@ -92,21 +91,21 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         compressed_model = q_model.export_compressed_model()
         out3 = compressed_model(input)
         self.assertTrue(torch.all(out3 == out2))
+
         model = Model()
         out1 = model(input)
-
         conf = PostTrainingQuantConfig(
             approach="weight_only",
             recipes={
-                # By default, sym_full_range is False and 4 bit sym will only use range [-7,7].
-                "rtn_args": {"sym_full_range": True}
+                # By default, enable_full_range is False and 4 bit sym will only use range [-7,7].
+                "rtn_args": {"enable_full_range": True}
             },
         )
         q_model = quantization.fit(model, conf)
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
-        compressed_model = q_model.export_compressed_model(sym_full_range=True)
+        compressed_model = q_model.export_compressed_model(enable_full_range=True)
         out3 = compressed_model(input)
         self.assertTrue(torch.all(out3 == out2))
 
@@ -122,9 +121,23 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                # By default, sym_full_range is False and 4 bit sym will only use range [-7,7].
-                # When mse_range is set to True, enable clip for weight by checking mse.
-                "rtn_args": {"sym_full_range": True, "mse_range": True}
+                # By default, enable_full_range is False and 4 bit sym will only use range [-7,7].
+                # When enable_mse_search is set to True, enable clip for weight by checking mse.
+                "rtn_args": {"enable_full_range": True, "enable_mse_search": True}
+            },
+        )
+        q_model = quantization.fit(model, conf)
+        out2 = q_model(input)
+        self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
+        self.assertFalse(torch.all(out1 == out2))
+
+        model = Model()
+        out1 = model(input)
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            recipes={
+                # 0 means splitting output channel
+                "rtn_args": {"group_dim": 0}
             },
         )
         q_model = quantization.fit(model, conf)
@@ -147,7 +160,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                # By default, sym_full_range is False and 4 bit sym will only use range [-7,7].
+                # By default, enable_full_range is False and 4 bit sym will only use range [-7,7].
                 "rtn_args": {"return_int": True}
             },
         )
@@ -283,7 +296,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                "awq_args": {"auto_scale": True, "mse_range": True, "folding": False},
+                "awq_args": {"enable_auto_scale": True, "enable_mse_search": True, "folding": False},
             },
         )
         fp32_model = copy.deepcopy(self.gptj)
@@ -338,7 +351,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             },
             recipes={
                 "rtn_args": {"return_int": True},
-                "awq_args": {"auto_scale": True, "mse_range": True, "folding": False},
+                "awq_args": {"enable_auto_scale": True, "enable_mse_search": True, "folding": False},
             },
         )
         fp32_model = copy.deepcopy(self.gptj)
