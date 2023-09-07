@@ -8,7 +8,7 @@ from tensorflow import keras
 from neural_compressor import mix_precision
 from neural_compressor.config import MixedPrecisionConfig
 from neural_compressor.data import DataLoader, Datasets
-from .neural_compressor.utils import logger
+from neural_compressor.utils import logger
 
 
 def build_sequential_model():
