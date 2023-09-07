@@ -881,7 +881,7 @@ class TorchSmoothQuant:
             return best_alphas
 
         for idx, input in enumerate(self.dataloader):
-            if isinstance(input, tuple):
+            if isinstance(input, (tuple, list)):
                 input = input[0]
             best_alphas_per_module = best_alphas
             if isinstance(best_alphas, dict):
