@@ -90,7 +90,7 @@ ln -s /path/of/weights pytorch/e2e_mask_rcnn_R_50_FPN_1x.pth
 # Run
 
 ```shell
-bash run_tuning.sh --output_model=/path/to/tuned_checkpoint
+bash run_quant.sh --output_model=/path/to/tuned_checkpoint
 ```
 
 # Saving and loading model:
