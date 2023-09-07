@@ -1399,6 +1399,8 @@ class TemplateAdaptor(Adaptor):
                     if isinstance(observer_dict[key], torch.nn.modules.linear.Identity):
                         continue
                     op_name = key.replace(".activation_post_process", "")
+                    if len(observer_dict[key].get_tensor_value()) == 0:
+                        continue
                     value = observer_dict[key].get_tensor_value()[i]
                     if op_name in op_list:
                         if type(value) is list:
