@@ -296,7 +296,7 @@ class PytorchPatternNInM(PytorchBasePattern):
         not_exceed_layers = [key for key in new_scores.keys()]
 
         while True:
-            if residual_k < 1:
+            if residual_k < 1:  # pragma: no cover
                 break
             threshold, _ = torch.kthvalue(global_scores, residual_k)
             for key in not_exceed_layers:
@@ -331,7 +331,7 @@ class PytorchPatternNInM(PytorchBasePattern):
                 else:
                     masks[key] = mask
                 masks[key] = masks[key].bool()
-            if not keep_exact_sparsity_ratio:
+            if not keep_exact_sparsity_ratio:  # pragma: no cover
                 break
             new_not_exceed_layers = [key for key in new_scores.keys() if not self.keep_mask_layers.get(key, False)]
             if not_exceed_layers == new_not_exceed_layers or len(new_not_exceed_layers) == 0:

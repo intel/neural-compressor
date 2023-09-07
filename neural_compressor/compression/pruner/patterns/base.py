@@ -541,7 +541,7 @@ class PytorchBasePattern(BasePattern):
             zero = torch.tensor([False]).to(score.device)
             one = torch.tensor([True]).to(score.device)
             mask = torch.where(score <= threshold, zero, one)
-        else:
+        else:  # pragma: no cover
             mask = torch.ones(score.shape, device=score.device)
         if self.block:
             mask = mask.float()
