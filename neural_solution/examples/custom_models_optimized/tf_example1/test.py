@@ -15,7 +15,7 @@
 import tensorflow as tf
 
 from neural_compressor import Metric
-from neural_compressor.config import PostTrainingQuantConfig
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 from neural_compressor.data import BilinearImagenetTransform, ComposeTransform, DefaultDataLoader, TensorflowImageRecord
 from neural_compressor.quantization import fit
 
@@ -42,7 +42,8 @@ eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=1)
 def main():
     """Implement running function."""
     top1 = Metric(name="topk", k=1)
-    config = PostTrainingQuantConfig(calibration_sampling_size=[20])
+    tuning_criterion = TuningCriterion(strategy="basic")
+    config = PostTrainingQuantConfig(calibration_sampling_size=[20], quant_level=1, tuning_criterion=tuning_criterion)
     model_path = FLAGS.model_path + "/mobilenet_v1_1.0_224_frozen.pb"
     q_model = fit(
         model=model_path,

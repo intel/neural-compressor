@@ -145,4 +145,9 @@ if __name__ == "__main__":
     print(args.workspace)
     config.workspace = args.workspace
     config.grpc_api_port = args.grpc_api_port
+    config.result_monitor_port = args.result_monitor_port
+    config.task_monitor_port = args.task_monitor_port
+    # initialize the task submitter
+    task_submitter.task_monitor_port = config.task_monitor_portq
+    task_submitter.result_monitor_port = config.result_monitor_port
     serve()
