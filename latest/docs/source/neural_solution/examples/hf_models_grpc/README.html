@@ -182,7 +182,7 @@ optional<span class="w"> </span>arguments:
 <ul class="simple">
 <li><p>Query the task status and result according to the <code class="docutils literal notranslate"><span class="pre">task_id</span></code>.</p></li>
 </ul>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>user@server<span class="w"> </span>hf_models_grpc<span class="o">]</span>$<span class="w"> </span>python<span class="w"> </span>client.py<span class="w"> </span>query<span class="w"> </span>--task_id<span class="o">=</span><span class="s2">&quot;d3e10a49326449fb9d0d62f2bfc1cb43&quot;</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>user@server<span class="w"> </span>hf_models_grpc<span class="o">]</span>$<span class="w"> </span>python<span class="w"> </span>client.py<span class="w"> </span>--task_monitor_port<span class="o">=</span><span class="m">22222</span><span class="w"> </span>--result_monitor_port<span class="o">=</span><span class="m">33333</span><span class="w"> </span>--grpc_api_port<span class="o">=</span><span class="m">8001</span><span class="w"> </span>query<span class="w"> </span>--task_id<span class="o">=</span><span class="s2">&quot;d3e10a49326449fb9d0d62f2bfc1cb43&quot;</span>
 </pre></div>
 </div>
 </section>
@@ -208,7 +208,7 @@ optional<span class="w"> </span>arguments:
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f9eef866aa0> 
+   <jinja2.runtime.BlockReference object at 0x7ff49215ffd0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
