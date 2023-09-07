@@ -68,7 +68,6 @@ BatchMatMul
 BatchMatMulV
 BatchNorm
 BayesianOptimization
-bcc
 BenchmarkConf
 BenchmarkConfig
 Benchmarking
@@ -200,7 +199,6 @@ Curran
 CustomDataset
 CustomObj
 CvAClvFfyA
-daf
 DBMDZ
 DCMAKE
 DDP
@@ -276,7 +274,6 @@ EAQkaohzrJbd
 EMC
 EdgeTPU
 Edouard
-eec
 EfficientNet
 EfficientNets
 EleutherAI
@@ -1196,6 +1193,7 @@ bbox
 bboxes
 bc
 bcb
+bcc
 bccf
 bce
 bd
@@ -1394,6 +1392,7 @@ dNative
 dXY
 da
 dae
+daf
 dailymail
 darknet
 dataLoader
@@ -1509,6 +1508,7 @@ ecotrust
 edgetpu
 edu
 ee
+eec
 eer
 ef
 efb
