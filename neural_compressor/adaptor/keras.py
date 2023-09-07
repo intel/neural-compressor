@@ -108,6 +108,7 @@ class KerasAdaptor(Adaptor):
         self.conv_format = {}
 
     def _check_itex(self):
+        logger.info("Checking ITEX Installation...")
         try:
             import intel_extension_for_tensorflow
         except:

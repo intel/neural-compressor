@@ -127,7 +127,9 @@ class TestMixedPrecisionWithKerasModel(unittest.TestCase):
         conv2d_layer_policy = bf16_model.model.get_layer("conv2d").dtype_policy
 
         self.assertEqual(model_policy.compute_dtype, bf16_policy.compute_dtype)
+        logger.info("Passed check of keras model dtype for computation")
         self.assertEqual(conv2d_layer_policy.compute_dtype, bf16_policy.compute_dtype)
+        logger.info("Passed check of keras layer dtype for computation")
 
 
 if __name__ == "__main__":
