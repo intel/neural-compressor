@@ -121,16 +121,18 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
             torchscript=True,
         )
-        self.gptj.seqlen = 512
 
     def test_gptq(self):
+        import random
+
         class GPTQLLMDataLoader:
             def __init__(self):
                 self.batch_size = 1
 
             def __iter__(self):
-                for i in range(2):
-                    yield torch.ones([1, 512], dtype=torch.long)
+                for i in range(20):
+                    length = random.randint(1, 1024)
+                    yield torch.ones([1, length], dtype=torch.long)
 
         dataloader = GPTQLLMDataLoader()
         model = copy.deepcopy(self.gptj)
@@ -167,16 +169,16 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
             },
         }
         quantizer = gptq_quantize(
-            model,
-            weight_config=weight_config,
-            dataloader=dataloader,
+            model, weight_config=weight_config, dataloader=dataloader, use_max_length=True, pad_max_length=512
         )
         self.assertTrue(isinstance(model, torch.nn.Module))
         del model
 
         model = copy.deepcopy(self.gptj)
         weight_config = {"wbits": 4}
-        quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, use_max_length=False)
+        quantizer = gptq_quantize(
+            model, weight_config=weight_config, dataloader=dataloader, use_max_length=False, pad_max_length=512
+        )
         self.assertTrue(isinstance(model, torch.nn.Module))
         del model
 

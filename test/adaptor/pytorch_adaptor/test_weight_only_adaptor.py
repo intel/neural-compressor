@@ -68,7 +68,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.gptj_no_jit = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
         )
-        self.gptj.seqlen = 512
         self.llm_dataloader = LLMDataLoader()
         self.lm_input = torch.ones([1, 10], dtype=torch.long)
 
@@ -502,7 +501,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                "gptq_args": {"percdamp": 0.01, "act_order": False},
+                "gptq_args": {"percdamp": 0.01, "act_order": False, "use_max_length": True, "pad_max_length": 512},
             },
         )
 
@@ -608,7 +607,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                "gptq_args": {"percdamp": 0.01, "act_order": False, "use_max_length": True},
+                "gptq_args": {"percdamp": 0.01, "act_order": False, "use_max_length": False, "pad_max_length": 512},
             },
         )
 
