@@ -99,7 +99,7 @@ Functions
    Convert float to bfloat16.
 
 
-.. py:function:: cast_tensor(tensor, dtype)
+.. py:function:: cast_tensor(tensor, dtype, is_large_model=False)
 
    Convert tensor float to target dtype.
 
@@ -107,6 +107,8 @@ Functions
    :type tensor: TensorProto
    :param dtype: target data type
    :type dtype: int
+   :param is_large_model: if is large model, make tensor with raw=True
+   :type is_large_model: bool
 
 
 .. py:function:: remove_init_from_model_input(model)

@@ -144,7 +144,7 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.float_to_bfloat16" title="neural_compressor.adaptor.ox_utils.util.float_to_bfloat16"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float_to_bfloat16</span></code></a>(tensor)</p></td>
 <td><p>Convert float to bfloat16.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.cast_tensor" title="neural_compressor.adaptor.ox_utils.util.cast_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cast_tensor</span></code></a>(tensor, dtype)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.cast_tensor" title="neural_compressor.adaptor.ox_utils.util.cast_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cast_tensor</span></code></a>(tensor, dtype[, is_large_model])</p></td>
 <td><p>Convert tensor float to target dtype.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.remove_init_from_model_input" title="neural_compressor.adaptor.ox_utils.util.remove_init_from_model_input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_init_from_model_input</span></code></a>(model)</p></td>
@@ -238,13 +238,14 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.cast_tensor">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">cast_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.cast_tensor" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">cast_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_large_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.cast_tensor" title="Permalink to this definition"></a></dt>
 <dd><p>Convert tensor float to target dtype.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tensor</strong> (<em>TensorProto</em>) – TensorProto object</p></li>
 <li><p><strong>dtype</strong> (<em>int</em>) – target data type</p></li>
+<li><p><strong>is_large_model</strong> (<em>bool</em>) – if is large model, make tensor with raw=True</p></li>
 </ul>
 </dd>
 </dl>
@@ -433,7 +434,7 @@ z: zero point</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f4f25d59ea0> 
+   <jinja2.runtime.BlockReference object at 0x7f193e82ed10> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
