@@ -1139,8 +1139,10 @@ schema = Schema({
             Optional("dataset_path", default=None): str,
             Optional("supernet_ckpt_path", default=None): str,
             Optional("batch_size", default=64): int,
+            Optional("eval_batch_size", default=64): int,
             Optional("num_workers", default=20): int,
             Optional("distributed", default=False): bool,
+            Optional("test_fraction", default=1.0): float,
             },
     },
 
