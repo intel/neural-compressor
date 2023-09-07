@@ -81,7 +81,7 @@ Functions
    Do quantization.
 
 
-.. py:class:: GPTQuantizer(model, weight_config={}, dataloader=None, nsamples=128, use_max_length=True, device=None)
+.. py:class:: GPTQuantizer(model, weight_config={}, dataloader=None, nsamples=128, use_max_length=True, pad_max_length=2048, device=None)
 
 
 
