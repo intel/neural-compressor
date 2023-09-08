@@ -14,10 +14,22 @@ pip install -r requirements.txt
 ```
 
 ### Install Intel Extension for Tensorflow
+#### Quantizing the model on Intel GPU(Mandatory to install ITEX)
+Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[gpu]
+```
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_gpu.md#install-gpu-drivers)
+
+#### Quantizing the model on Intel CPU(Optional to install ITEX)
+Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
+> **Note**: 
+> The version compatibility of stock Tensorflow and ITEX can be checked [here](https://github.com/intel/intel-extension-for-tensorflow#compatibility-table). Please make sure you have installed compatible Tensorflow and ITEX.
 
 ## 2. Prepare Pretrained model
 
@@ -40,10 +52,22 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/2_11_0/HF-
 
 # Run
 
-## 1. Quantization
+## Quantization Config
+
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
 
 ```
-bash run_quant.sh --input_model <path to HF-ViT-Base16-Img224-frozen.pb> --output_model ./output --dataset_location <path to imagenet>
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    ...
+    )
+```
+
+## 1. Quantization
+
+```shell
+bash run_quant.sh --input_model=<path to HF-ViT-Base16-Img224-frozen.pb> --output_model=./output --dataset_location=<path to imagenet>
 ```
 
 
@@ -51,12 +75,12 @@ bash run_quant.sh --input_model <path to HF-ViT-Base16-Img224-frozen.pb> --outpu
 
 ### Benchmark the fp32 model
 
-```
+```shell
 bash run_benchmark.sh --input_model=<path to HF-ViT-Base16-Img224-frozen.pb> --mode=accuracy --dataset_location=<path to imagenet> --batch_size=32
 ```
 
 ### Benchmark the int8 model
 
-```
+```shell
 bash run_benchmark.sh --input_model=./output.pb --mode=accuracy --dataset_location=<path to imagenet> --batch_size=32 --int8=true
 ```

@@ -917,12 +917,13 @@ class TemplateAdaptor(Adaptor):
                     dataloader.batch(1)
                     self.calib_func(q_model, dataloader, calib_sampling_size, conf)
             else:  # pragma: no cover
-                if hasattr(dataloader, "batch_size") and calib_sampling_size % dataloader.batch_size != 0:
+                dataloader_batch_size = getattr(dataloader, "batch_size") or getattr(dataloader, "total_batch_size")
+                if hasattr(dataloader, "batch_size") and calib_sampling_size % dataloader_batch_size != 0:
                     logger.warning(
                         "Please note that calibration sampling size {} "
                         "isn't divisible exactly by batch size {}. "
                         "So the real sampling size is {}.".format(
-                            calib_sampling_size, dataloader.batch_size, dataloader.batch_size * iterations
+                            calib_sampling_size, dataloader_batch_size, dataloader_batch_size * iterations
                         )
                     )
 
@@ -1398,6 +1399,8 @@ class TemplateAdaptor(Adaptor):
                     if isinstance(observer_dict[key], torch.nn.modules.linear.Identity):
                         continue
                     op_name = key.replace(".activation_post_process", "")
+                    if len(observer_dict[key].get_tensor_value()) == 0:
+                        continue
                     value = observer_dict[key].get_tensor_value()[i]
                     if op_name in op_list:
                         if type(value) is list:
@@ -4516,12 +4519,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
     def rtn_quantize(self, model, tune_cfg):
         logger.info("quantizing with the round-to-nearest algorithm")
         if "rtn_args" in self.recipes:
-            sym_full_range = self.recipes["rtn_args"].get("sym_full_range", False)
-            mse_range = self.recipes["rtn_args"].get("mse_range", False)
+            enable_full_range = self.recipes["rtn_args"].get("enable_full_range", False)
+            enable_mse_search = self.recipes["rtn_args"].get("enable_mse_search", False)
             group_dim = self.recipes["rtn_args"].get("group_dim", 1)
         else:  # pragma: no cover
-            sym_full_range = False
-            mse_range = False
+            enable_full_range = False
+            enable_mse_search = False
             group_dim = 1
         from .torch_utils.util import fetch_module, set_module
         from .torch_utils.weight_only import rtn_quantize
@@ -4546,8 +4549,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     scheme,
                     return_int=False,
                     data_type=dtype,
-                    sym_full_range=sym_full_range,
-                    mse_range=mse_range,
+                    enable_full_range=enable_full_range,
+                    enable_mse_search=enable_mse_search,
                     group_dim=group_dim,
                 )
                 set_module(model, op_name, m)
@@ -4594,9 +4597,15 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 }
         nsamples = self.recipes["gptq_args"].get("nsamples", 128)
         use_max_length = self.recipes["gptq_args"].get("use_max_length", False)
+        pad_max_length = self.recipes["gptq_args"].get("pad_max_length", 2048)
+        if use_max_length and "pad_max_length" not in self.recipes["gptq_args"]:
+            logger.warning(
+                "You choose to use unified sequence length for calibration, \
+            but you have not set length value. Default sequence length is 2048 and this might cause inference error!"
+            )
         # tune_cfg => weight_config
         model, quantization_perm = gptq_quantize(
-            model, weight_config, dataloader, nsamples, use_max_length, self.device
+            model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, self.device
         )
         return model, quantization_perm
 
@@ -4715,16 +4724,16 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 weight_config[op_name] = config["weight"]
 
         if "awq_args" in self.recipes:
-            auto_scale = self.recipes["awq_args"].get("auto_scale", True)
-            mse_range = self.recipes["awq_args"].get("mse_range", True)
+            enable_auto_scale = self.recipes["awq_args"].get("enable_auto_scale", True)
+            enable_mse_search = self.recipes["awq_args"].get("enable_mse_search", True)
             folding = self.recipes["awq_args"].get("folding", False)
         else:
-            auto_scale, mse_range, folding = True, True, False
+            enable_auto_scale, enable_mse_search, folding = True, True, False
         if "rtn_args" in self.recipes:
-            sym_full_range = self.recipes["rtn_args"].get("sym_full_range", False)
+            enable_full_range = self.recipes["rtn_args"].get("enable_full_range", False)
             return_int = self.recipes["rtn_args"].get("return_int", False)
         else:
-            sym_full_range, return_int = False, False
+            enable_full_range, return_int = False, False
         calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
         model = awq_quantize(
             model,
@@ -4733,12 +4742,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             weight_config=weight_config,
             dataloader=dataloader,
             n_samples=calib_sampling_size,
-            auto_scale=auto_scale,
-            mse_range=mse_range,
+            enable_auto_scale=enable_auto_scale,
+            enable_mse_search=enable_mse_search,
             calib_func=calib_func,
             folding=folding,
             return_int=return_int,
-            sym_full_range=sym_full_range,
+            enable_full_range=enable_full_range,
         )
         return model
 

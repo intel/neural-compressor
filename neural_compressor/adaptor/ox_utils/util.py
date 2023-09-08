@@ -178,16 +178,18 @@ def float_to_bfloat16(tensor):
     return tensor
 
 
-def cast_tensor(tensor, dtype):  # pragma: no cover
+def cast_tensor(tensor, dtype, is_large_model=False):  # pragma: no cover
     """Convert tensor float to target dtype.
 
     Args:
         tensor (TensorProto): TensorProto object
         dtype (int): target data type
+        is_large_model (bool): if is large model, make tensor with raw=True
     """
     if not isinstance(tensor, onnx_proto.TensorProto):
         raise ValueError("Expected input type is an ONNX TensorProto but got %s" % type(tensor))
 
+    new_tensor = None
     if tensor.data_type == onnx_proto.TensorProto.FLOAT:
         val = numpy_helper.to_array(tensor).copy()
         if dtype == "fp16":
@@ -196,21 +198,23 @@ def cast_tensor(tensor, dtype):  # pragma: no cover
             new_val = float_to_bfloat16(val)
         else:
             raise ValueError("Expect fp16 or bf16 but get {}.".format(dtype))
-        try:
+
+        if not is_large_model:
             new_tensor = helper.make_tensor(
-                name=tensor.name,
+                name=tensor.name + "_init_cast",
                 data_type=dtype_mapping[dtype],
                 dims=numpy_helper.to_array(tensor).shape if len(numpy_helper.to_array(tensor).shape) != 0 else [],
-                vals=new_val if len(numpy_helper.to_array(tensor)) != 0 else [numpy_helper.to_array(tensor)],
+                vals=new_val if len(numpy_helper.to_array(tensor).shape) != 0 else [numpy_helper.to_array(tensor)],
             )
-            tensor.CopyFrom(new_tensor)
-        except:
-            tensor.float_data[:] = []
-            tensor.int32_data[:] = []
-            tensor.raw_data = new_val.tostring()
-            tensor.data_type = dtype_mapping[dtype]
-        return True
-    return False
+        else:
+            new_tensor = helper.make_tensor(
+                name=tensor.name + "_init_cast",
+                data_type=dtype_mapping[dtype],
+                dims=numpy_helper.to_array(tensor).shape if len(numpy_helper.to_array(tensor).shape) != 0 else [],
+                vals=new_val.tostring(),
+                raw=True,
+            )
+    return new_tensor
 
 
 def remove_init_from_model_input(model):

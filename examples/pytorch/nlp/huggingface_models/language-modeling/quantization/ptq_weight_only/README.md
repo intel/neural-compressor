@@ -28,10 +28,6 @@ python run_clm.py \
   --tune \
   --output_dir saved_results
 ```
-> NOTE
->
-> `saved_results` is the path to finetuned output_dir.
-
 or
 ```bash
 sh run_quant.sh --topology=gpt_j_wikitext_weight_only --input_model=EleutherAI/gpt-j-6B --weight_only_bits=8 --weight_only_group=-1 --weight_only_scheme=sym --weight_only_algorithm=RTN

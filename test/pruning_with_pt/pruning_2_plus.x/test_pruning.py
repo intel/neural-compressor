@@ -38,7 +38,7 @@ class TestPruning(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         from neural_compressor.compression.pruner import prepare_pruning
 
-        pruning = prepare_pruning(config, self.model, optimizer)
+        pruning = prepare_pruning(self.model, config, optimizer)
 
         for epoch in range(4):
             self.model.train()

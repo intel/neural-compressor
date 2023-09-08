@@ -116,7 +116,7 @@ class ActAwareWeightQuant:
         bits=4,
         group_size=32,
         scheme="asym",
-        sym_full_range=False,
+        enable_full_range=False,
         weight_config={},
     ):
         self.example_inputs = example_inputs
@@ -134,16 +134,16 @@ class ActAwareWeightQuant:
         self.bits = bits
         self.group_size = group_size
         self.scheme = scheme
-        self.sym_full_range = sym_full_range
+        self.enable_full_range = enable_full_range
         self.weight_config = weight_config
         self.model = model
 
-    def quantize(self, auto_scale=True, mse_range=True, folding=False, return_int=False):
+    def quantize(self, enable_auto_scale=True, enable_mse_search=True, folding=False, return_int=False):
         """Execute AWQ quantization.
 
         Args:
-            auto_scale (bool, optional): whether search scale. Defaults to True.
-            mse_range (bool, optional): whether search clip range. Defaults to True.
+            enable_auto_scale (bool, optional): whether search scale. Defaults to True.
+            enable_mse_search (bool, optional): whether search clip range. Defaults to True.
             folding (bool, optional): whether only allow update scale when it can be fold
                                       to upper layer. Defaults to False.
             return_int (bool, optional): whether return int dtype with WeightOnlyLinear.
@@ -158,8 +158,8 @@ class ActAwareWeightQuant:
         self.block_absorb_dict, self.absorb_layer_dict = _get_absorb_per_block(
             self.model,
             self.example_inputs,
-            # for only mse_range, folding is useless.
-            folding=folding if auto_scale else False,
+            # for only enable_mse_search, folding is useless.
+            folding=folding if enable_auto_scale else False,
             weight_config=self.weight_config,
         )
         # process per block
@@ -184,17 +184,17 @@ class ActAwareWeightQuant:
                 calib_func=block_calibration,
             )
             # Step 3: search best scale for linears in one block and apply it
-            if auto_scale:
+            if enable_auto_scale:
                 scale_info = self.search_scale(block, block_name, module_list, input_values)
             # Step 2: update self.total_block_args, self.total_block_kwargs for next block
             out_list = self.block_inference(block)
             self.update_block_input(out_list)
             # Step 4: get input of next block before update scale
             # weights of linear is updated by scale
-            if auto_scale:
+            if enable_auto_scale:
                 self.apply_scale(scale_info)
             # Step 5: search best clip range for linears in one block and save to weight_config
-            if mse_range:
+            if enable_mse_search:
                 self.search_clip(block_name, module_list, input_values)
         # Step 6: apply clip range in weight_config when quantizing model weights
         self.apply_quantize_with_clip(return_int)
@@ -270,7 +270,7 @@ class ActAwareWeightQuant:
                         num_bits=cur_bits,
                         group_size=cur_group_size,
                         scheme=cur_scheme,
-                        full_range=self.sym_full_range,
+                        full_range=self.enable_full_range,
                     ) / scales.view(1, -1)
                 loss = 0
                 if len(module_tuple) > 1:
@@ -382,7 +382,7 @@ class ActAwareWeightQuant:
                         num_bits=cur_bits,
                         group_size=cur_group_size,
                         scheme=cur_scheme,
-                        full_range=self.sym_full_range,
+                        full_range=self.enable_full_range,
                         quantile=ratio,
                     )
                     loss = 0
@@ -426,7 +426,7 @@ class ActAwareWeightQuant:
             scheme=self.scheme,
             weight_config=self.weight_config,
             return_int=return_int,
-            sym_full_range=self.sym_full_range,
+            enable_full_range=self.enable_full_range,
         )
         logger.info("AWQ quantization is done.")
 

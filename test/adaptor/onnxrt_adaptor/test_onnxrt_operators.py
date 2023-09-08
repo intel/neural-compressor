@@ -1936,6 +1936,55 @@ class TestCastONNXRT(unittest.TestCase):
             session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=["DnnlExecutionProvider"])
             outputs = session.run(None, input_data)
 
+    def test_fp16_with_repeated_init(self):
+        input_tensor = helper.make_tensor_value_info("input", TensorProto.FLOAT, [])
+        repeated_init = helper.make_tensor("repeated_init", TensorProto.FLOAT, [], [0])
+
+        less_node = onnx.helper.make_node("Less", ["input", "repeated_init"], ["less_output"], name="Less")
+        cast_node = onnx.helper.make_node("Cast", ["less_output"], ["cast_output"], name="Cast", to=TensorProto.FLOAT)
+        clip_output = helper.make_tensor_value_info("clip_output", TensorProto.FLOAT, [])
+        clip_node = onnx.helper.make_node("Clip", ["cast_output", "repeated_init"], ["clip_output"], name="Clip")
+
+        initializers = [repeated_init]
+        graph = helper.make_graph(
+            [less_node, cast_node, clip_node],
+            "test_fp16_with_repeated_init_model",
+            [input_tensor],
+            [clip_output],
+            initializer=initializers,
+        )
+        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
+        model.ir_version = 7
+
+        from neural_compressor import MixedPrecisionConfig
+        from neural_compressor.mix_precision import fit
+
+        config = MixedPrecisionConfig(
+            backend="onnxrt_cuda_ep",
+            device="gpu",
+            precision="fp16",
+            op_type_dict={"Clip": {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}}},
+        )
+        converted_model = fit(model, config)
+        less_init = converted_model.get_node("Less").input[1]
+        clip_1_init = converted_model.get_node("Clip").input[1]
+        self.assertEqual(clip_1_init + "_init_cast", less_init)
+        self.assertTrue("Cast" in set([i.op_type for i in converted_model.nodes()]))
+        self.assertTrue(10 in set([i.attribute[0].i for i in converted_model.nodes() if i.op_type == "Cast"]))
+
+        config = MixedPrecisionConfig(
+            backend="onnxrt_cuda_ep",
+            device="gpu",
+            precision="fp16",
+        )
+        converted_model = fit(model, config)
+        less_init = converted_model.get_node("Less").input[1]
+        clip_1_init = converted_model.get_node("Clip").input[1]
+        self.assertTrue(less_init.endswith("_init_cast"))
+        self.assertTrue(clip_1_init.endswith("_init_cast"))
+        self.assertTrue("Cast" in set([i.op_type for i in converted_model.nodes()]))
+        self.assertTrue(10 in set([i.attribute[0].i for i in converted_model.nodes() if i.op_type == "Cast"]))
+
 
 if __name__ == "__main__":
     unittest.main()
