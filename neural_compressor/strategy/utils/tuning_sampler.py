@@ -23,7 +23,7 @@ from itertools import product
 from typing import Any, Dict, List, Tuple, Union
 
 from ...utils import logger
-from .tuning_space import TuningSpace, pattern_to_internal, pattern_to_path, quant_mode_from_pattern
+from .tuning_space import TuningSpace, pattern_to_internal, quant_mode_from_pattern
 from .tuning_structs import OpTuningConfig
 from .utility import ClassRegister
 

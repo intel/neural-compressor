@@ -17,8 +17,7 @@
 """MSE tuning strategy."""
 from collections import OrderedDict
 from copy import deepcopy
-from time import time
-from typing import Any, Dict, List
+from typing import List
 
 import numpy as np
 

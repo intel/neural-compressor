@@ -15,12 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The MSE_V2 tuning strategy."""
-import copy
-from collections import OrderedDict
 from time import time
-from typing import Any, Dict, List
-
-import numpy as np
 
 from ..utils import logger
 from .strategy import TuneStrategy, strategy_registry

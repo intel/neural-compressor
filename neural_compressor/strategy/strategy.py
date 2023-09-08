@@ -614,7 +614,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
 
         It should be implemented by the sub-class. Currently, it is only implemented in the BasicTuneStrategy.
         """
-        pass
 
     def meet_acc_req(self, eval_res):
         """Compare the result of last tuning with baseline to check whether the result meet requirements.
@@ -1888,21 +1887,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                     if history and equal_dicts(history["tune_cfg"], tune_cfg, ignore_keys=["trial_number"]):
                         return tuning_history
 
-        return None
-
-    def _find_history(self, tune_cfg):
-        """Check if the specified tune_cfg is evaluated or not on same config.
-
-        Returns:
-            history or None: The history containing evaluated tune_cfg.
-        """
-        for tuning_history in self.tuning_history:
-            # only check if a tune_cfg is evaluated under same config, excluding
-            # some fields in tuning section of config, such as tensorboard, snapshot, resume.
-            if self._same_conf(tuning_history["cfg"], self.conf):
-                for history in tuning_history["history"]:
-                    if history and history["tune_cfg"] == tune_cfg:
-                        return history
         return None
 
     def _find_self_tuning_history(self):

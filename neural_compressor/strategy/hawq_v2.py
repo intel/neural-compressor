@@ -20,9 +20,7 @@ from copy import deepcopy
 
 from ..utils import logger
 from .strategy import TuneStrategy, strategy_registry
-from .utils.constant import TUNING_ITEMS_LST
-from .utils.tuning_sampler import FallbackTuningSampler, ModelWiseTuningSampler, OpTypeWiseTuningSampler
-from .utils.tuning_structs import OpTuningConfig
+from .utils.tuning_sampler import FallbackTuningSampler, OpTypeWiseTuningSampler
 
 
 @strategy_registry
