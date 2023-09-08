@@ -486,8 +486,8 @@ def main():
         elif model_args.model_name_or_path == 'distilbert-base-uncased-distilled-squad':
             fp32_op_names = ['/distilbert/transformer/layer.[1-5]/ffn/lin[1-2]/MatMul']
         elif model_args.model_name_or_path == 'deepset/roberta-large-squad2':
-            fp32_op_names = ['/roberta/encoder/layer.[0-23]/intermediate/dense/MatMul',
-                             '/roberta/encoder/layer.[0-23]/output/dense/MatMul']
+            fp32_op_names = ['/roberta/encoder/layer.\d+/intermediate/dense/MatMul',
+                             '/roberta/encoder/layer.\d+/output/dense/MatMul']
         config = PostTrainingQuantConfig(approach='static',
                                          quant_format=model_args.quant_format,
                                          op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
