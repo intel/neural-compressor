@@ -150,7 +150,7 @@ class TestBasicTuningStrategy(unittest.TestCase):
         from neural_compressor.quantization import fit
 
         for backend in ["default"]:
-            model_name = "/home/st_liu/workspace/projects/inc/examples/onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_static/bert-base-uncased"
+            model_name = "bert-base-uncased"
             model = BertModel.from_pretrained(model_name)
             model.eval()
 
