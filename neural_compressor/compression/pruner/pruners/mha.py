@@ -54,14 +54,14 @@ class PythonMultiheadAttentionPruner(PytorchBasePruner):
             linear_layers length should be 4x of mha_compression because one mha_compression hooks 4 linear layers:
             query, key, value and subsequent ffn layer.
         head_masks: A dict. {key: MHA module name; value: torch.Tensor(1, mha_head_size)}
-            Similar to Huggingface build-in head_mask attribute.
+            Similar to Huggingface built-in head_mask attribute.
         mha_scores: A dict. {key: MHA module name; value: torch.Tensor(1, mha_head_size)}
             Store scores for different heads.
     """
 
     def __init__(self, config, mha_modules):
         """Initialize."""
-        # use pattern search techique to obtain multihead attention modules
+        # use pattern search technique to obtain multihead attention modules
         # modules is a dict that fits the mha auto slim process
         # -----------------------------------------
         self.config = config

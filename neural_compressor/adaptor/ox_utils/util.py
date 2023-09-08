@@ -112,7 +112,7 @@ def make_dquant_node(name, inputs, outputs, axis=None):
 
 
 def is_B_transposed(node):
-    """Wheter inuput B is transposed."""
+    """Whether inuput B is transposed."""
     transB = [attr for attr in node.attribute if attr.name == "transB"]
     if len(transB):
         return 0 < helper.get_attribute_value(transB[0])
@@ -324,7 +324,7 @@ def quantize_data(data, quantize_range, qType, scheme):
         - when data type == uint8 mode, from [rmin, rmax] -> [0, 2^{b-1}] and
         - when data type == int8, from [-m , m] -> [-(2^{b-1}-1), 2^{b-1}-1] where
             m = max(abs(rmin), abs(rmax))
-    and add necessary intermediate nodes to trasnform quantized weight to full weight
+    and add necessary intermediate nodes to transform quantized weight to full weight
     using the equation r = S(q-z), where
         r: real original value
         q: quantized value
@@ -408,7 +408,7 @@ class ValueInfo:  # pragma: no cover
 
 
 class QuantizedValue:
-    """Represents a linearly quantized value (input/output/intializer)."""
+    """Represents a linearly quantized value (input/output/initializer)."""
 
     def __init__(
         self,
@@ -543,7 +543,7 @@ def find_by_name(name, item_list):
     """Helper function to find item by name in a list."""
     items = []
     for item in item_list:
-        assert hasattr(item, "name"), "{} should have a 'name' atrribute defined".format(item)  # pragma: no cover
+        assert hasattr(item, "name"), "{} should have a 'name' attribute defined".format(item)  # pragma: no cover
         if item.name == name:
             items.append(item)
     if len(items) > 0:

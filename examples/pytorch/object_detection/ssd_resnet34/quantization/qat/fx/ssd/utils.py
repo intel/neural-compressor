@@ -620,7 +620,7 @@ class VOCDetection(data.Dataset):
 
     def __init__(self, img_folder, annotate_folder, file_filter, transform=None,
                  label_map={}, difficult=True):
-        # print("Reading data informations")
+        # print("Reading data information")
 
         self.img_folder = img_folder
         self.annotate_folder = annotate_folder

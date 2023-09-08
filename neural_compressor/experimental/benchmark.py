@@ -189,7 +189,7 @@ class Benchmark(object):
         assert cfg.evaluation is not None, "benchmark evaluation filed should not be None..."
         assert sys.platform in ["linux", "win32"], "only support platform windows and linux..."
         set_all_env_var(deep_get(cfg, "evaluation.{}.configs".format(mode)))
-        # disable multi-instance for accuracy mode or running bechmark on GPU device
+        # disable multi-instance for accuracy mode or running benchmark on GPU device
         if mode == "accuracy" or cfg.device == "gpu":
             set_env_var("NC_ENV_CONF", True, overwrite_existing=True)
 

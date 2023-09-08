@@ -331,7 +331,7 @@ class TargetSpace(object):
         return data.ravel()
 
     def max(self):
-        """Get maximum target value found and corresponding parametes."""
+        """Get maximum target value found and corresponding parameters."""
         try:
             res = {"target": self.target.max(), "params": dict(zip(self.keys, self.params[self.target.argmax()]))}
         except ValueError:
@@ -339,7 +339,7 @@ class TargetSpace(object):
         return res
 
     def res(self):
-        """Get all target values found and corresponding parametes."""
+        """Get all target values found and corresponding parameters."""
         params = [dict(zip(self.keys, p)) for p in self.params]
 
         return [{"target": target, "params": param} for target, param in zip(self.target, params)]

@@ -60,7 +60,7 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         model1 = rtn_quantize(fp32_model, num_bits=3, group_size=-1)
         self.assertTrue(isinstance(model1.fc1, torch.nn.Linear))
         weight_config = {
-            # 'op_name': (bit, group_size, sheme)
+            # 'op_name': (bit, group_size, scheme)
             "fc1": {"bits": 8, "group_size": -1, "scheme": "sym"},
             "fc2": {
                 "bits": 4,
@@ -208,7 +208,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         model = copy.deepcopy(self.gptj)
 
         weight_config = {
-            # 'op_name': (bit, group_size, sheme)
+            # 'op_name': (bit, group_size, scheme)
             "transformer.h.0.mlp.fc_in": {"bits": 8, "group_size": -1, "scheme": "sym"},
             "transformer.h.0.mlp.fc_out": {"bits": 4, "group_size": 32, "scheme": "asym"},
         }

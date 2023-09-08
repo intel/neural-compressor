@@ -106,7 +106,7 @@ class BasePruner:
     def mask_weights(self):
         """Apply masks to corresponding modules' weights.
 
-        Weights are multipled with masks. This is the formal pruning process.
+        Weights are multiplied with masks. This is the formal pruning process.
         """
         pass
 
@@ -211,7 +211,7 @@ class PytorchBasePruner(BasePruner):
     def mask_weights(self):
         """Apply masks to corresponding modules' weights.
 
-        Weights are multipled with masks. This is the formal pruning process.
+        Weights are multiplied with masks. This is the formal pruning process.
         """
         with torch.no_grad():
             for key in self.modules.keys():
@@ -256,7 +256,7 @@ class KerasBasePruner(BasePruner):
     def mask_weights(self):
         """Apply masks to corresponding modules' weights.
 
-        Weights are multipled with masks. This is the formal pruning process.
+        Weights are multiplied with masks. This is the formal pruning process.
         """
         for key in self.modules.keys():
             module = self.modules[key]

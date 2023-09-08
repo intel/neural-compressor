@@ -59,7 +59,7 @@ class PreOptimization:
     """Pre optimization for the FP32 models."""
 
     def __init__(self, model, new_api, device):
-        """Initilization."""
+        """Initialization."""
         self.model = model
         if version1_gte_version2(tf.version.VERSION, "2.1.0") or version1_eq_version2(tf.version.VERSION, "1.15.0-up3"):
             self.optimization = {
@@ -102,7 +102,7 @@ class PreOptimization:
 
     @dump_elapsed_time("Pass Pre Optimization")
     def get_optimized_model(self, itex_mode=False):
-        """Executed the non-precision dependant graph optimization.
+        """Executed the non-precision dependent graph optimization.
 
         The input graph will be optimized with following passes:
         1. Remove the training nodes like Identity Op.
@@ -275,7 +275,7 @@ class PreOptimization:
         return origin_model
 
     def get_matched_nodes(self, patterns):
-        """Searche the matched nodes with the specified patterns.
+        """Search the matched nodes with the specified patterns.
 
         Args:
             patterns ([string list]): The patterns should be illustrated as below.

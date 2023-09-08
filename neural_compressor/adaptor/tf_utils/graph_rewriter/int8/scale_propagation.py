@@ -42,7 +42,7 @@ class ScaleProPagationTransformer(GraphRewriterBase):
     ]
 
     def __init__(self, model, direction="Up"):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.direction = direction if direction not in ("Up", "Down") else "Up"
         self.cur_graph = GraphAnalyzer()

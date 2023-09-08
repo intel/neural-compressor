@@ -349,7 +349,7 @@ class TpeTuneStrategy(TuneStrategy):
         return first_run_cfg
 
     def object_evaluation(self, tune_cfg, model):
-        """Check if config was alredy evaluated."""
+        """Check if config was already evaluated."""
         for k, v in self.op_configs.items():
             tune_cfg.update({k: tune_cfg.pop(k[0])})
         op_cfgs = self._tune_cfg_converter(tune_cfg)

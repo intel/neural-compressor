@@ -58,7 +58,7 @@ def get_pruner(modules, config):
     Returns:
         A Pruner object.
 
-    Raises: AssertionError: Cuurently only support pruners which have been registered in PRUNERS.
+    Raises: AssertionError: Currently only support pruners which have been registered in PRUNERS.
     """
     name = config["prune_type"]
     if name not in PRUNERS.keys():
@@ -132,7 +132,7 @@ class Pruner:
     def mask_weights(self):
         """Functions called when masks are applied on corresponding modules' weights.
 
-        Weights are multipled with masks. This is the formal pruning process.
+        Weights are multiplied with masks. This is the formal pruning process.
         """
         with torch.no_grad():
             for key in self.modules.keys():

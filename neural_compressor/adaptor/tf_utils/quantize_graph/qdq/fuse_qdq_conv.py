@@ -32,7 +32,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
     exclude_conv_nodes = []
 
     def __init__(self, **kwargs):
-        """Initilization."""
+        """Initialization."""
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns, key=lambda i: len(i), reverse=True)
         if self.new_api:
@@ -1871,7 +1871,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def get_longest_fuse(self):
-        """Get the longest fusion patter."""
+        """Get the longest fusion pattern."""
         self._get_op_list()
 
         matched_rule, matched_node_name = self._is_match_conv(self.sorted_patterns)

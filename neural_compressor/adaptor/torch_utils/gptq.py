@@ -81,7 +81,7 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList]):
 
     Returns:
         gptq_related_blocks = {
-            "embeddings": {}, # Dict embedding layers before transfromer stack module,
+            "embeddings": {}, # Dict embedding layers before transformer stack module,
             "transformers_pre": {}, # TODO
             "transformers_name": string. LLMs' transformer stack module name ,
             "transformers": torch.nn.ModuleList. LLMs' transformer stack module,
@@ -229,7 +229,7 @@ class GPTQuantizer(object):
     def prepare_dataloader(self):
         if self.use_max_length:
             # (Recommend) only take sequence whose length exceeds self.pad_max_length,
-            # which perserves calibration's tokens are all valid
+            # which preserves calibration's tokens are all valid
             # This is GPTQ official dataloader implementation
             self.obtain_first_n_samples_fulllength()
         else:
@@ -358,7 +358,7 @@ class GPTQuantizer(object):
         return ".".join([transformer_name, str(block_idx), sub_layer_name])
 
     def check_layer_config(self):
-        """Copy arguments from weight_config to build-in attributes."""
+        """Copy arguments from weight_config to built-in attributes."""
         if "wbits" in self.weight_config:
             tmp_weight_config = {}
             for name, module in self.model.named_modules():
@@ -489,7 +489,7 @@ class GPTQuantizer(object):
                     sub_layers_to_quant[layer_name] = layer_obj
             del sub_layers
             sub_layers = sub_layers_to_quant
-            # Step 2.2: Initailize GPTQ quantizers for collected layers.
+            # Step 2.2: Initialize GPTQ quantizers for collected layers.
             gptq_for_this_block = {}
             # initialize gptq quantizer for every layer in a transformer block
             for layer_name in sub_layers:
