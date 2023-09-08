@@ -52,7 +52,6 @@ def make_matmul_weight_only_node(node, weight_shape, num_bits, group_size, k_blo
         matmul_weight_only_node: MatMulWithQuantWeight node
         new_inits: initializers of the MatMulWithQuantWeight node
     """
-
     blob_size = group_size // 2
     packed = np.zeros((q_weight.shape[0], blob_size), dtype="uint8")
     for i in range(k_blocks):
@@ -169,6 +168,16 @@ def qdq_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", rati
 
 
 def pad_tensor(weight, group_size, k_blocks):
+    """Pad tensor rowi so that it can be is divisible by group_size.
+
+    Args:
+        weight (array): weight
+        group_size (int): how many elements share one scale/zp
+        k_blocks (int): the number of block
+
+    Returns:
+        weight: paded weight
+    """
     if group_size == -1:
         return weight
 
@@ -221,7 +230,6 @@ def rtn_quantize(
             node.op_type in ["MatMul"]
             and model.get_initializer(node.input[1]) is not None
             and weight_config.get(node.name, {}) != "fp32"
-            and weight_config.get(node.name, {}).get("algorithm", "RTN") == "RTN"
         ):
             weight_tensor = model.get_initializer(node.input[1])
             weight = numpy_helper.to_array(weight_tensor, base_dir=os.path.dirname(model.model_path)).copy()
@@ -317,7 +325,6 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 group_size = weight_config[node.name]["group_size"]
                 scheme = weight_config[node.name]["scheme"]
                 break
-        group_size = group_size if group_size != -1 else org_w_shape[0]
 
         # search scale
         best_error = float("inf")
@@ -338,16 +345,20 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
 
                 org_out = np.matmul(inp, weight)
                 org_w_shape = weight.shape
+                group_size = group_size if group_size != -1 else org_w_shape[0]
 
                 w_scale = get_weight_scale(weight.T, weight.shape[0])
                 scales = np.clip(np.power(inp_scale, ratio) / np.power(w_scale, (1 - ratio)), 1e-4, None)
                 scales = scales / np.sqrt(np.max(scales) * np.min(scales))
+                weight = weight.T * scales
+                weight = pad_tensor(weight, group_size, (org_w_shape[0] + group_size - 1) // group_size).T
 
                 if num_bits == 4 and group_size == 32:
-                    q_weight = qdq_tensor(weight.T * scales, num_bits, weight.shape[0], scheme, "uint") / scales
+                    q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint") / scales
                 else:
-                    q_weight = qdq_tensor(weight.T * scales, num_bits, weight.shape[0], scheme, "int") / scales
+                    q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "int") / scales
 
+                q_weight = np.reshape(q_weight, (org_w_shape[1], -1))[:, :org_w_shape[0]]
                 out = np.matmul(inp, q_weight.T)
                 loss += np.mean(np.power((org_out - out), 2))
 
@@ -475,10 +486,13 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
                 num_bits = weight_config[node.name]["bits"]
                 group_size = weight_config[node.name]["group_size"]
                 scheme = weight_config[node.name]["scheme"]
-                weight_config[node.name].pop("algorithm")
 
-            org_weight = numpy_helper.to_array(
-                model.get_initializer(node.input[1]), base_dir=os.path.dirname(model.model_path)
+            org_weight = (
+                numpy_helper.to_array(model.get_initializer(node.input[1]), base_dir=os.path.dirname(model.model_path))
+                if model.get_initializer(node.input[1]) is not None
+                else numpy_helper.to_array(
+                    model.get_initializer(node.input[1].split("_Q")[0]), base_dir=os.path.dirname(model.model_path)
+                )
             )
             org_w_shape = org_weight.shape  # ic, oc
             group_size = group_size if group_size != -1 else org_w_shape[0]
@@ -685,7 +699,7 @@ def awq_quantize(
 
         model.remove_tensors_from_outputs(output_names)
         model.model.graph.output.MergeFrom(org_output)
-        model = rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio)
+    model = rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio)
     return model
 
 
