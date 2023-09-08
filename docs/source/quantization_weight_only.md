@@ -50,22 +50,22 @@ Notes:
 **RTN arguments**:
 |  rtn_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
-| enable_full_range |      False     |   Whether use -2**(bits-1) in sym scheme, for example,    |
-|  enable_mse_search |      False     | Whether search for the best clip range from range [0.805, 1.0, 0.005] |
-|  return_int |      False     | Whether return compressed model with int data type |
+|  enable_full_range |      False     |   Whether to use -2**(bits-1) in sym scheme  |
+|  enable_mse_search |      False     | Whether to search for the best clip range from range [0.805, 1.0, 0.005] |
+|  return_int |      False     | Whether to return compressed model with torch.int32 data type |
 |  group_dim  |       1       |   0 means splitting output channel, 1 means splitting input channel   |
 
 **AWQ arguments**:
 |  awq_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
-| enable_auto_scale |      True     | Whether search for best scales based on activation distribution   |
-|  enable_mse_search |      True     | Whether search for the best clip range from range [0.91, 1.0, 0.01] |
+|  enable_auto_scale |      True     | Whether to search for best scales based on activation distribution   |
+|  enable_mse_search |      True     | Whether to search for the best clip range from range [0.91, 1.0, 0.01] |
 |  folding   |      False    | False will allow insert mul before linear when the scale cannot be absorbed by last layer, else won't |
 
 **GPTQ arguments**:
 |  gptq_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
-| actorder | False |   Whether to sort Hessian's diagonal values to rearrange channel-wise quantization order|
+|  actorder | False |   Whether to sort Hessian's diagonal values to rearrange channel-wise quantization order|
 |  percdamp | 0.01 | Percentage of Hessian's diagonal values' average, which will be added to Hessian's diagonal to increase numerical stability|
 |  nsamples  | 128 |  Calibration samples' size |
 |  pad_max_length  | 2048 | Whether to align calibration data to a fixed length. This value should not exceed model's acceptable sequence length. Please refer to  model's config json to find out this value.|
