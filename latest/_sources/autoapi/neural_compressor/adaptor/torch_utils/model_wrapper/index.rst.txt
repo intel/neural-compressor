@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   Torch.nn.Module Class Defination.
+   Torch.nn.Module Class Definition.
 
 
 

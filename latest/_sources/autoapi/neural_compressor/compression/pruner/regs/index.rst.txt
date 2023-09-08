@@ -91,6 +91,6 @@ Functions
 
    .. attribute:: alpha
 
-      A float representing the coeffient related to group lasso.
+      A float representing the coefficient related to group lasso.
 
 

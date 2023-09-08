@@ -62,7 +62,7 @@ Classes
    .. attribute:: head_masks
 
       A dict. {key: MHA module name; value: torch.Tensor(1, mha_head_size)}
-      Similar to Huggingface build-in head_mask attribute.
+      Similar to Huggingface built-in head_mask attribute.
 
    .. attribute:: mha_scores
 

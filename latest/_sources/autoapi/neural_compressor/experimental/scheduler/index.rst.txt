@@ -29,13 +29,13 @@ Classes
 
    Scheduler for neural_compressor component pipeline execution.
 
-   Neural Compressor supports serveral seperate components: Quantization, Pruning, Benchmarking.
+   Neural Compressor supports several separate components: Quantization, Pruning, Benchmarking.
    This scheduler will sequentially execute specified components by the order of
-   appending. This interface provids an unique entry to pipeline execute all supported
+   appending. This interface provides an unique entry to pipeline execute all supported
    components.
 
    There are two typical usages:
-   1) if all informations are set in user configuration yaml files by using neural_compressor built-in
+   1) if all information are set in user configuration yaml files by using neural_compressor built-in
       dataloaders/datasets/metrics, the code usage is like below:
 
       prune = Pruning('/path/to/pruning.yaml')

@@ -57,7 +57,7 @@ Functions
 
    :param val: A dict directly read from a config file.
 
-   :returns: A dict whose contents which are regularized for a Pruning obejct.
+   :returns: A dict whose contents which are regularized for a Pruning object.
 
 
 .. py:function:: process_config(config)

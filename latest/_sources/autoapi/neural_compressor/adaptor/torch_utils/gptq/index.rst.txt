@@ -53,7 +53,7 @@ Functions
    :returns:
 
              gptq_related_blocks = {
-                 "embeddings": {}, # Dict embedding layers before transfromer stack module,
+                 "embeddings": {}, # Dict embedding layers before transformer stack module,
                  "transformers_pre": {}, # TODO
                  "transformers_name": string. LLMs' transformer stack module name ,
                  "transformers": torch.nn.ModuleList. LLMs' transformer stack module,

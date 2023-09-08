@@ -71,6 +71,6 @@ Functions
 
    :returns: A pruning object.
 
-   Raises: AssertionError: Cuurently only support prunings that have been registered in PRUNINGS.
+   Raises: AssertionError: Currently only support prunings that have been registered in PRUNINGS.
 
 

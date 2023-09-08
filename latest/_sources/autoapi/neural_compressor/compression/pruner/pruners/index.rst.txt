@@ -54,6 +54,6 @@ Functions
 
    :returns: A Pruner object.
 
-   Raises: AssertionError: Cuurently only support pruners that have been registered in PRUNERS.
+   Raises: AssertionError: Currently only support pruners that have been registered in PRUNERS.
 
 

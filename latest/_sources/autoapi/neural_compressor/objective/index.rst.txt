@@ -76,14 +76,14 @@ Functions
    In special cases, users can also register their own objective classes.
 
 
-
-
 .. py:class:: Accuracy
 
 
 
 
-   Configuration Accuracy class. Evaluate the accuracy.
+   Configuration Accuracy class.
+
+   Evaluate the accuracy.
 
 
 .. py:class:: Performance
@@ -91,7 +91,9 @@ Functions
 
 
 
-   Configuration Performance class. Evaluate the inference time.
+   Configuration Performance class.
+
+   Evaluate the inference time.
 
 
 .. py:class:: Footprint
@@ -109,7 +111,9 @@ Functions
 
 
 
-   Configuration ModelSize class. Evaluate the model size.
+   Configuration ModelSize class.
+
+   Evaluate the model size.
 
 
 .. py:class:: MultiObjective(objectives, accuracy_criterion, metric_criterion=[True], metric_weight=None, obj_criterion=None, obj_weight=None, is_measure=False)

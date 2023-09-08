@@ -37,9 +37,9 @@ Functions
    Using factory pattern to get the actual used class.
 
    :param bound: A tuple or list that limit the max and min number of search space.
-   :param interval: Only for descrete search space. Intervals in discrete space.
-   :param value: Only for descrete search space. A list that store all the number for search.
-   :param type: descrete or continues.
+   :param interval: Only for discrete search space. Intervals in discrete space.
+   :param value: Only for discrete search space. A list that store all the number for search.
+   :param type: discrete or continues.
 
    .. rubric:: Example
 

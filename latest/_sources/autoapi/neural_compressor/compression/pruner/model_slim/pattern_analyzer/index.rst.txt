@@ -78,7 +78,7 @@ Functions
 
    :param model: The PyTorch model for searching.
    :type model: torch.nn.Module
-   :param recipe: A dict containing infomation of the searching pattern.
+   :param recipe: A dict containing information of the searching pattern.
    :type recipe: dict
 
    .. attribute:: model
@@ -87,7 +87,7 @@ Functions
 
    .. attribute:: recipe
 
-      A dict containing infomation of the searching pattern.
+      A dict containing information of the searching pattern.
 
    .. attribute:: targets
 

@@ -35,7 +35,7 @@ Functions
 .. py:class:: CompressionManager(model: Callable, confs: Union[Callable, List], **kwargs)
 
 
-   CompressionManager is uesd in train loop for what user want to deal with additional.
+   CompressionManager is used in train loop for what user want to deal with additional.
 
    :param model: A model to be compressed.
    :param confs: The instance of QuantizationAwareTrainingConfig, PruningConfig and distillationConfig, or a list of
@@ -98,7 +98,7 @@ Functions
                            The label should be able to take as input of
                            supported metrics. If this parameter is
                            not None, user needs to specify pre-defined
-                           evaluation metrics object and should set "eval_func" paramter as None.
+                           evaluation metrics object and should set "eval_func" parameter as None.
                            Tuner will combine model, eval_dataloader
                            and pre-defined metrics to run evaluation
                            process.

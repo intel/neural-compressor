@@ -61,7 +61,7 @@ Functions
 
    :returns: A Pruner object.
 
-   Raises: AssertionError: Cuurently only support pruners which have been registered in PRUNERS.
+   Raises: AssertionError: Currently only support pruners which have been registered in PRUNERS.
 
 
 .. py:class:: Pruner(modules, config)

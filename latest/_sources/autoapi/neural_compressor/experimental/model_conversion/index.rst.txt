@@ -39,7 +39,7 @@ Classes
         q_model = conversion()
 
    :param conf_fname_or_obj: Optional. The path to the YAML configuration file or
-                             Conf class containing model conversion and evaluation setting if not specifed by code.
+                             Conf class containing model conversion and evaluation setting if not specified by code.
    :type conf_fname_or_obj: string or obj
 
 

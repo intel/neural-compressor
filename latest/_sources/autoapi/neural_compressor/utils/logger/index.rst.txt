@@ -76,6 +76,6 @@ Functions
 
 .. py:function:: warning(msg, *args, **kwargs)
 
-   Output log with the warining level (Alias of the method warn).
+   Output log with the warning level (Alias of the method warn).
 
 

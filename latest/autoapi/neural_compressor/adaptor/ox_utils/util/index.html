@@ -102,7 +102,7 @@
 <td><p>Represents a casted tensor info.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.QuantizedValue" title="neural_compressor.adaptor.ox_utils.util.QuantizedValue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizedValue</span></code></a></p></td>
-<td><p>Represents a linearly quantized value (input/output/intializer).</p></td>
+<td><p>Represents a linearly quantized value (input/output/initializer).</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.QuantizedInitializer" title="neural_compressor.adaptor.ox_utils.util.QuantizedInitializer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizedInitializer</span></code></a></p></td>
 <td><p>Represents a linearly quantized weight input from ONNX operators.</p></td>
@@ -133,7 +133,7 @@
 <td><p>Make a DequantizeLinear node.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.is_B_transposed" title="neural_compressor.adaptor.ox_utils.util.is_B_transposed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_B_transposed</span></code></a>(node)</p></td>
-<td><p>Wheter inuput B is transposed.</p></td>
+<td><p>Whether inuput B is transposed.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.split_shared_bias" title="neural_compressor.adaptor.ox_utils.util.split_shared_bias"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_shared_bias</span></code></a>(model)</p></td>
 <td><p>Split shared tensor.</p></td>
@@ -215,7 +215,7 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.is_B_transposed">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">is_B_transposed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.is_B_transposed" title="Permalink to this definition"></a></dt>
-<dd><p>Wheter inuput B is transposed.</p>
+<dd><p>Whether inuput B is transposed.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -312,7 +312,7 @@
 </ul>
 </dd>
 </dl>
-<p>and add necessary intermediate nodes to trasnform quantized weight to full weight
+<p>and add necessary intermediate nodes to transform quantized weight to full weight
 using the equation r = S(q-z), where</p>
 <blockquote>
 <div><p>r: real original value
@@ -359,7 +359,7 @@ z: zero point</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.QuantizedValue">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">QuantizedValue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_quantized_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_point_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantized_value_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">QuantType.QUInt8</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.QuantizedValue" title="Permalink to this definition"></a></dt>
-<dd><p>Represents a linearly quantized value (input/output/intializer).</p>
+<dd><p>Represents a linearly quantized value (input/output/initializer).</p>
 </dd></dl>
 
 <dl class="py class">
@@ -434,7 +434,7 @@ z: zero point</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7ff497b2bd00> 
+   <jinja2.runtime.BlockReference object at 0x7f3713612560> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

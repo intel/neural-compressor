@@ -164,7 +164,7 @@ Functions
 
 .. py:function:: collate_tf_preds(results)
 
-   Collate tbe prediction results.
+   Collate the prediction results.
 
 
 .. py:function:: get_input_output_node_names(graph_def)
@@ -197,7 +197,7 @@ Functions
 
 .. py:function:: get_model_input_shape(model)
 
-   Get the inout shape of the input model.
+   Get the input shape of the input model.
 
 
 .. py:function:: get_tensor_val_from_graph_node(graph_node_name_mapping, node_name)

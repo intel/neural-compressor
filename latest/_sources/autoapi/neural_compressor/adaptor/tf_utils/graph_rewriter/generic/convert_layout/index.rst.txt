@@ -27,7 +27,7 @@ Classes
 
 
 
-   The layout convertion optimizer, convert NCHW to NHWC format.
+   The layout conversion optimizer, convert NCHW to NHWC format.
 
    It is executed only when NCHW node exists and tensorflow version is 2.4.0 and above.
 

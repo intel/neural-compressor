@@ -115,7 +115,7 @@ Functions
    :param config: A config dict object that contains the pruner information.
    :param model: The model that need to be pruned.
    :param dataloader: Processed datasets, which is necessary for sparseGPT pruning.
-   :param device: avilable device of pruning.
+   :param device: available device of pruning.
 
 
 .. py:class:: RetrainFreePruning(config, model, dataloader=None, loss_func=None, framework='pytorch')

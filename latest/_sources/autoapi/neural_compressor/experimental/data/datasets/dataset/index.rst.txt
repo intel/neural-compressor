@@ -195,7 +195,7 @@ Attributes
    An iterable Dataset.
 
    Subclass iterable dataset should also implement a method:
-   `__iter__` for interating over the samples of the dataset.
+   `__iter__` for iterating over the samples of the dataset.
 
 
 .. py:function:: download_url(url, root, filename=None, md5=None)

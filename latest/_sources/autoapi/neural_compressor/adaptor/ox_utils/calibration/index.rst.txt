@@ -25,6 +25,6 @@ Classes
 .. py:class:: ONNXRTAugment(model_wrapper, dataloader, dump_op_types, black_nodes=[], white_nodes=[], iterations=[], backend='CPUExecutionProvider', reduce_range=False)
 
 
-   augment input model to dump tensor or for calibration.
+   Augment input model to dump tensor or for calibration.
 
 

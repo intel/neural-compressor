@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   Featch Weight from Reshape Graph Rewriter.
+   Fetch Weight from Reshape Graph Rewriter.
 
 
 

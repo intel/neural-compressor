@@ -5,7 +5,7 @@
 
 .. autoapi-nested-parse::
 
-   Fuse samll ops to LayerNorm Graph Rewriter.
+   Fuse small ops to LayerNorm Graph Rewriter.
 
 
 

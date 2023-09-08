@@ -332,7 +332,7 @@ Functions
    }
    ```
 
-   :param q_config: quantization configue
+   :param q_config: quantization configure
    :type q_config: _type_
 
 
@@ -383,7 +383,7 @@ Functions
 
 .. py:function:: get_block_prefix(model)
 
-   Get prefix and number of blockes.
+   Get prefix and number of blocks.
 
    :param model: input model
    :type model: torch.nn.Module
