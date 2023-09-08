@@ -167,20 +167,20 @@ class PytorchRetrainFreePruner(PytorchBasePruner):
                 # self.criterion.collected_grads[key] = [] # clear grads after each pruning step
                 grads = grads.permute(1, 0).contiguous()
                 grads_sq = grads.pow(2).sum(dim=1)
-                _, indicies = grads_sq.sort(descending=False)
-                indicies = indicies.tolist()
-                masked_indicies = indicies[:num_pruned]
-                for index in indicies[num_pruned:]:
-                    masked_indicies.append(index)
-                    grad_vectors = grads[masked_indicies]
+                _, indices = grads_sq.sort(descending=False)
+                indices = indices.tolist()
+                masked_indices = indices[:num_pruned]
+                for index in indices[num_pruned:]:
+                    masked_indices.append(index)
+                    grad_vectors = grads[masked_indices]
                     grad_sum = grad_vectors.sum(dim=0)
                     complement = grad_sum - grad_vectors
                     grad_sum_length = complement.pow(2).sum(dim=1)
                     removed = grad_sum_length.argmin()
-                    del masked_indicies[removed]
+                    del masked_indices[removed]
 
-                new_mask = torch.ones(len(indicies)).to(block_mask.device)
-                new_mask[masked_indicies] = 0
+                new_mask = torch.ones(len(indices)).to(block_mask.device)
+                new_mask[masked_indices] = 0
                 new_mask = new_mask * torch.ones_like(block_mask, device=block_mask.device, dtype=block_mask.dtype)
                 block_mask.data = new_mask.data
         return masks

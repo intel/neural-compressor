@@ -243,11 +243,11 @@ class GraphAnalyzer:
                     ]
         """
 
-        def _validate_input(data, creteria):
-            if isinstance(creteria, str) and data == creteria:
+        def _validate_input(data, criteria):
+            if isinstance(criteria, str) and data == criteria:
                 return True
 
-            if isinstance(creteria, (list, tuple)) and data in creteria:
+            if isinstance(criteria, (list, tuple)) and data in criteria:
                 return True
 
             return False

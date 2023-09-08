@@ -456,13 +456,12 @@ class Quantizer:
                     # if origin initializer is no more used, remove it
                     self.model.update()
                     input_name_to_nodes = self.model.input_name_to_nodes
-                    if initializer.name not in input_name_to_nodes or \
-                        len(input_name_to_nodes[initializer.name]) == 0:
+                    if initializer.name not in input_name_to_nodes or len(input_name_to_nodes[initializer.name]) == 0:
                         self.model.remove_initializer(initializer)
 
-                    self.new_value_info[do_cast_new_tensor.name] = ValueInfo(do_cast_new_tensor.name,
-                                                                             TensorProto.FLOAT,
-                                                                             dtype_mapping[cfg])
+                    self.new_value_info[do_cast_new_tensor.name] = ValueInfo(
+                        do_cast_new_tensor.name, TensorProto.FLOAT, dtype_mapping[cfg]
+                    )
             else:
                 if (
                     tensor_name in self.value_infos

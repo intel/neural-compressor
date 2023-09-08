@@ -795,7 +795,7 @@ class KerasAdaptor(Adaptor):
         """
         model.save(path)
 
-    def convert(self, model, source, destinatin):
+    def convert(self, model, source, destination):
         """The function is used to convert a source model format to another.
 
         Args:

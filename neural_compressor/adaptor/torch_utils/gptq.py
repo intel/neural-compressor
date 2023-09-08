@@ -229,7 +229,7 @@ class GPTQuantizer(object):
     def prepare_dataloader(self):
         if self.use_max_length:
             # (Recommend) only take sequence whose length exceeds self.pad_max_length,
-            # which perserves calibration's tokens are all valid
+            # which preserves calibration's tokens are all valid
             # This is GPTQ official dataloader implementation
             self.obtain_first_n_samples_fulllength()
         else:

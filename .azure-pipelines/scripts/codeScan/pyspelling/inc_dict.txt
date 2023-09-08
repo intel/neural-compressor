@@ -1401,6 +1401,7 @@ datafile
 dataloader
 dataloaders
 datapoints
+datas
 dataset
 datasets
 datatype
@@ -1840,6 +1841,7 @@ labextension
 labextensions
 lang
 latencies
+lates
 layernorm
 layoutlm
 layoutlmft
