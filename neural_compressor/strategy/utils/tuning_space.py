@@ -225,7 +225,6 @@ class TuningSpace:
         Returns:
             Return the merged capability.
         """
-
         fw_op_cap = deepcopy(fw_op_cap)
         new_op_cap = deepcopy(cur_op_cap)
         op_user_cfg = preprocess_user_cfg(op_user_cfg)
