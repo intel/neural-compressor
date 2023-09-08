@@ -87,14 +87,11 @@ class MSE_V2TuneStrategy(TuneStrategy):
             else:
                 logger.info("No op support both dynamic and static")
 
-            def dynamic_op_tuning_cfg_from_static(op_tuning_cfg: OpTuningConfig):
-                new_op_tuning_cfg = deepcopy(op_tuning_cfg)
-                new_op_tuning_cfg.op_quant_mode = "dynamic"
-                return new_op_tuning_cfg
-
             new_op_tuning_cfg = deepcopy(self.cur_best_tuning_cfg)
             for item in static_dynamic_items:
-                new_op_tuning_cfg[item.name] = dynamic_op_tuning_cfg_from_static(new_op_tuning_cfg[item.name])
+                new_op_tuning_cfg[item.name] = self.initial_dynamic_cfg_based_on_static_cfg(
+                    new_op_tuning_cfg[item.name]
+                )
             new_op_tuning_cfg["calib_sampling_size"] = calib_sampling_size
             yield new_op_tuning_cfg
 

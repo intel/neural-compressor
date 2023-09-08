@@ -55,7 +55,7 @@ from ..utils.utility import (
 )
 from ..utils.weights_details import WeightsDetails
 from ..version import __version__
-from .utils.constant import FALLBACK_RECIPES_SET
+from .utils.constant import FALLBACK_RECIPES_SET, TUNING_ITEMS_LST
 from .utils.tuning_sampler import tuning_sampler_dict
 from .utils.tuning_space import TuningSpace
 from .utils.tuning_structs import OpTuningConfig
@@ -1152,6 +1152,41 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         sq_sampler = tuning_sampler_dict.get_class("smooth_quant")(tuning_space, [], tuning_cfg, sq_alpha_list)
         for tune_cfg in sq_sampler:
             yield tune_cfg
+
+    def initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg: OpTuningConfig):
+        """Init the dynamic tuning config according to the static config.
+
+        Args:
+            op_static_cfg: the static tuning config
+
+        Returns:
+            the dynamic tuning config
+        """
+        op_state = op_static_cfg.get_state()
+        op_name = op_static_cfg.op_name
+        op_type = op_static_cfg.op_type
+        op_name_type = (op_name, op_type)
+        op_quant_mode = "dynamic"
+        tuning_space = self.tuning_space
+        dynamic_state = {}
+        for att in ["weight", "activation"]:
+            if att not in op_state:
+                continue
+            # Add dtype
+            full_path = self.tuning_space.get_op_default_path_by_pattern(op_name_type, op_quant_mode)
+            dynamic_state[att + "_dtype"] = self.tuning_space.ops_data_type[op_name_type][full_path[att]]
+            for method_name, method_val in op_state[att].items():
+                att_and_method_name = (att, method_name)
+                if att_and_method_name not in TUNING_ITEMS_LST:
+                    continue
+                if tuning_space.query_item_option(op_name_type, full_path[att], att_and_method_name, method_val):
+                    dynamic_state[att_and_method_name] = method_val
+                else:
+                    quant_mode_item = tuning_space.get_item_by_path((op_name_type, *full_path[att]))
+                    if quant_mode_item and quant_mode_item.get_option_by_name(att_and_method_name):
+                        tuning_item = quant_mode_item.get_option_by_name(att_and_method_name)
+                        dynamic_state[att_and_method_name] = tuning_item.options[0] if tuning_item else None
+        return OpTuningConfig(op_name, op_type, op_quant_mode, tuning_space, kwargs=dynamic_state)
 
     def initial_tuning_cfg(self):
         """Init the tuning config.
