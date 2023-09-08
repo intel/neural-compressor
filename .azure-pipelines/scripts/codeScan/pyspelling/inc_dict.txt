@@ -375,6 +375,7 @@ Hanwen
 HasAns
 HdQ
 Hein
+Hellaswag
 HelloWorld
 Hippocampus
 HistogramObserver
@@ -706,6 +707,7 @@ PerChannelMinMaxObserver
 PhYUmn
 Piero
 Pierric
+Piqa
 Piyush
 PolyNet
 Ponte
@@ -1006,6 +1008,7 @@ WARMUPS
 WIDERFACE
 WIP
 WLYDCRB
+WOQ
 Wallach
 Wasserblat
 WeChat
@@ -1021,6 +1024,7 @@ WideResNet
 Wightman
 WikiText
 WilsonCity
+Winogrande
 WnD
 Wnxu
 WordPiece
@@ -1189,6 +1193,7 @@ bbox
 bboxes
 bc
 bcb
+bcc
 bccf
 bce
 bd
@@ -1221,6 +1226,7 @@ bleu
 blocktime
 blockwise
 blogpost
+bloomz
 bmm
 bn
 bnb
@@ -1378,15 +1384,18 @@ cv
 cwad
 cwd
 cxxopt
+cy
 cypw
 cython
 dNative
 dXY
 da
 dae
+daf
 dailymail
 darknet
 dataLoader
+databricks
 datadir
 datafile
 dataloader
@@ -1498,6 +1507,7 @@ ecotrust
 edgetpu
 edu
 ee
+eec
 eer
 ef
 efb
@@ -1596,6 +1606,7 @@ fmtstr
 fn
 fname
 fns
+folj
 foregound
 fp
 fpic
@@ -1673,6 +1684,7 @@ gui
 gz
 gzY
 haibinlin
+haiz
 hangzhang
 hardcoding
 hardswish
@@ -1720,6 +1732,7 @@ idx
 ie
 ieee
 ieeexplore
+iire
 ilsvrc
 im
 imagecocodataset
@@ -1974,9 +1987,11 @@ modellogits
 modelmean
 modelsize
 modelstd
+mosaicml
 mose
 mpi
 mpirun
+mpt
 mrcnn
 mrm
 mrpc
@@ -2015,6 +2030,7 @@ nda
 ndarray
 nderlu
 ndhwc
+neo
 neox
 nepoch
 ner
@@ -2108,6 +2124,7 @@ onnx
 onnxrt
 onnxrtadaptor
 onnxruntime
+oo
 oob
 openaccess
 openai
@@ -2332,6 +2349,7 @@ rougeL
 rougeLsum
 rowanz
 rowspan
+rq
 rst
 rtd
 rtn
@@ -2436,6 +2454,7 @@ stds
 stefan
 stemblock
 stepsize
+storywriter
 str
 strided
 struct
@@ -2505,6 +2524,7 @@ thepath
 thp
 thres
 thrs
+tiiuae
 timeline
 timestamps
 tl
@@ -2605,6 +2625,7 @@ voxel
 voxels
 vram
 vscode
+vxga
 wWLes
 waleedka
 wangg
@@ -2627,6 +2648,7 @@ wip
 wmt
 wnd
 wnli
+woq
 workdir
 workflow
 workflows

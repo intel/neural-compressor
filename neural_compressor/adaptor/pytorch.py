@@ -917,12 +917,13 @@ class TemplateAdaptor(Adaptor):
                     dataloader.batch(1)
                     self.calib_func(q_model, dataloader, calib_sampling_size, conf)
             else:  # pragma: no cover
-                if hasattr(dataloader, "batch_size") and calib_sampling_size % dataloader.batch_size != 0:
+                dataloader_batch_size = getattr(dataloader, "batch_size") or getattr(dataloader, "total_batch_size")
+                if hasattr(dataloader, "batch_size") and calib_sampling_size % dataloader_batch_size != 0:
                     logger.warning(
                         "Please note that calibration sampling size {} "
                         "isn't divisible exactly by batch size {}. "
                         "So the real sampling size is {}.".format(
-                            calib_sampling_size, dataloader.batch_size, dataloader.batch_size * iterations
+                            calib_sampling_size, dataloader_batch_size, dataloader_batch_size * iterations
                         )
                     )
 
@@ -1398,6 +1399,8 @@ class TemplateAdaptor(Adaptor):
                     if isinstance(observer_dict[key], torch.nn.modules.linear.Identity):
                         continue
                     op_name = key.replace(".activation_post_process", "")
+                    if len(observer_dict[key].get_tensor_value()) == 0:
+                        continue
                     value = observer_dict[key].get_tensor_value()[i]
                     if op_name in op_list:
                         if type(value) is list:
@@ -4594,9 +4597,15 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 }
         nsamples = self.recipes["gptq_args"].get("nsamples", 128)
         use_max_length = self.recipes["gptq_args"].get("use_max_length", False)
+        pad_max_length = self.recipes["gptq_args"].get("pad_max_length", 2048)
+        if use_max_length and "pad_max_length" not in self.recipes["gptq_args"]:
+            logger.warning(
+                "You choose to use unified sequence length for calibration, \
+            but you have not set length value. Default sequence length is 2048 and this might cause inference error!"
+            )
         # tune_cfg => weight_config
         model, quantization_perm = gptq_quantize(
-            model, weight_config, dataloader, nsamples, use_max_length, self.device
+            model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, self.device
         )
         return model, quantization_perm
 

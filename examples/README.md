@@ -6,6 +6,8 @@ Intel® Neural Compressor validated examples with multiple compression technique
 # Quick Get Started Notebook Examples
 * [Quick Get Started Notebook of Intel® Neural Compressor for ONNXRuntime](/examples/notebook/onnxruntime/Quick_Started_Notebook_of_INC_for_ONNXRuntime.ipynb)
 
+* [Quick Get Started Notebook of Intel® Neural Compressor for Tensorflow](examples/notebook/tensorflow/resnet/resnet_quantization.ipynb)
+
 # Helloworld Examples
 
 * [tf_example1](/examples/helloworld/tf_example1): quantize with built-in dataloader and metric.
@@ -481,6 +483,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/object_detection/yolo_v3/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>Mask R-CNN</td>
+    <td>Object Detection</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/object_detection/maskrcnn/quantization/ptq/fx">fx</a></td>
   </tr>
   <tr>
     <td>DLRM</td>
