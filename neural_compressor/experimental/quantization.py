@@ -295,7 +295,7 @@ class Quantization(Component):
                                     a 'real' calib_dataloader will be created,
                                     the reason is we have to know the framework info
                                     and only after the Quantization object created then
-                                    framework infomation can be known.
+                                    framework information can be known.
                                     Future we will support creating iterable dataloader
                                     from neural_compressor.experimental.common.DataLoader
         """

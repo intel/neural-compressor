@@ -954,7 +954,7 @@ class TorchSmoothQuant:
         else:
             self.insert_mul, self.allow_absorb = True, False
         if isinstance(alpha, float) and (alpha < 0 or alpha > 1):
-            logger.warning("reset alpah to in range [0.0, 1.0]")
+            logger.warning("reset alpha to in range [0.0, 1.0]")
             import numpy
 
             alpha = numpy.clip(alpha, 0.0, 1.0)
@@ -1177,7 +1177,7 @@ class GraphTrace:
         }
 
         ##TODO potential bug, need to check only have one bug
-        ##TODO, must statisfy af(x)=f(ax),current skip layer may be incomplete
+        ##TODO, must satisfy af(x)=f(ax),current skip layer may be incomplete
         self.skip_ops_to_find_absorb = ["aten::to", "aten::relu", "aten::leaky_relu", "aten::hardtanh"]
 
         self.could_absorb_layers = [
@@ -1188,7 +1188,7 @@ class GraphTrace:
             "aten::group_norm",
             "aten::instance_norm",
             "aten::mul",
-        ]  ##TODO,suppport more norm
+        ]  ##TODO,support more norm
 
     def trace(self, model, dummy_input):
         traced_model = None

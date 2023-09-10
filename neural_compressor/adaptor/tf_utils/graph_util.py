@@ -43,7 +43,7 @@ class GraphAnalyzer:
     node_details = namedtuple("node_details", ["node", "outputs"])
 
     def __init__(self, extend_engine=None):
-        """Intialization.
+        """Initialization.
 
         Args:
             extend_engine: extended engine, for future extension API。
@@ -115,7 +115,7 @@ class GraphAnalyzer:
             node_name (string): node name
 
         Returns:
-            bool: retrun True if the node has the positive input data,
+            bool: return True if the node has the positive input data,
                 return False if the node has the negative input data.
         """
         return self._has_positive_input(self.node_name_details[node_name].node)
@@ -243,11 +243,11 @@ class GraphAnalyzer:
                     ]
         """
 
-        def _validate_input(data, creteria):
-            if isinstance(creteria, str) and data == creteria:
+        def _validate_input(data, criteria):
+            if isinstance(criteria, str) and data == criteria:
                 return True
 
-            if isinstance(creteria, (list, tuple)) and data in creteria:
+            if isinstance(criteria, (list, tuple)) and data in criteria:
                 return True
 
             return False

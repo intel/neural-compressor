@@ -25,7 +25,7 @@ class StripUnusedNodesOptimizer(GraphRewriterBase):
     """Remove the unused nodes in the graph."""
 
     def __init__(self, model, input_node_names, output_node_names):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.input_node_names = input_node_names
         self.output_node_names = output_node_names

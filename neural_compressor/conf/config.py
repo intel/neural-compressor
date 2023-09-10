@@ -86,7 +86,7 @@ class Pruner():
 
 @constructor_register
 class PrunerV2:
-    """Similiar to torch optimizer's interface."""
+    """Similar to torch optimizer's interface."""
 
     def __init__(self,
                  target_sparsity=None, pruning_type=None, pattern=None, op_names=None,

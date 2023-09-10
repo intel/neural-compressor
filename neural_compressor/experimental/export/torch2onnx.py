@@ -38,7 +38,7 @@ def _prepare_inputs(pt_model, input_names, example_inputs):
         input_names = input_names or list(example_inputs.keys())
         if isinstance(example_inputs, UserDict):
             example_inputs = dict(example_inputs)
-    # match input_names with inspected input_order, especailly for bert in hugginface.
+    # match input_names with inspected input_order, especially for bert in hugginface.
     elif input_names and len(input_names) > 1:
         import inspect
 
@@ -195,7 +195,7 @@ def dynamic_quant_export(
     if REDUCE_RANGE:
         logger.info("Reduce range is {}".format(str(REDUCE_RANGE)))
 
-    logger.info("Quantization format is not avalible when executing dynamic quantization.")
+    logger.info("Quantization format is not available when executing dynamic quantization.")
 
     if weight_type.upper() == "S8":
         weight_type = ortq.QuantType.QInt8

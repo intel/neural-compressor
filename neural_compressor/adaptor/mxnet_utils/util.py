@@ -689,10 +689,10 @@ def distribute_calib_tensors(calib_tensors, calib_cfg, tensor_to_node):
         kl_tensors & minmax_tensors
     )
 
-    # `rest` are the nodes that require callibration because of some node being excluded
+    # `rest` are the nodes that require calibration because of some node being excluded
     # for example: input -> quantize -> conv_1 -> pooling -> conv_2
-    # when conv_1 is quantized, pooling output does not require callibration
-    # when conv_1 is excluded, pooling output requires callibration (as it is input of a quantized
+    # when conv_1 is quantized, pooling output does not require calibration
+    # when conv_1 is excluded, pooling output requires calibration (as it is input of a quantized
     # node): input -> conv_1 -> pooling -> quantize -> conv_2
     rest = calib_tensors - (kl_tensors | minmax_tensors)
     minmax_tensors |= rest  # assign them to the minmax algorithm by default

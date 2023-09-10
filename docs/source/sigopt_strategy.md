@@ -38,7 +38,7 @@ SigOpt has two concepts: [project](https://app.sigopt.com/projects) and [experim
 - Evaluate your metrics;
 - Report an Observation to SigOpt;
 
-In our build-in sigopt strategy, the metrics add accuracy as a constraint and optimize for latency.
+In our built-in sigopt strategy, the metrics add accuracy as a constraint and optimize for latency.
 
 ### Neural Compressor Configuration
 

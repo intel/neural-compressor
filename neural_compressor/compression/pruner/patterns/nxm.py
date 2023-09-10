@@ -55,7 +55,7 @@ class PytorchPatternNxM(PytorchBasePattern):
         self.check_layer_validity()
 
     def get_block_size_dict(self):
-        """Calulate the zero elements' ration in pre_masks.
+        """Calculate the zero elements' ration in pre_masks.
 
         Args:
             data: Dict{"layer_name": Tensor} that stores weights or scores.
@@ -149,7 +149,7 @@ class PytorchPatternNxM(PytorchBasePattern):
         Args:
             data: Input.
 
-        Returnn:
+        Return:
             Reshaped data.
         """
         # TODO: need to verify whether it's ok for transposed conv
@@ -570,7 +570,7 @@ class KerasPatternNxM(KerasBasePattern):
         self.check_layer_validity()
 
     def get_block_size_dict(self):
-        """Calulate the zero elements' ration in pre_masks.
+        """Calculate the zero elements' ration in pre_masks.
 
         Args:
             data: Dict{"layer_name": Tensor} that stores weights or scores.

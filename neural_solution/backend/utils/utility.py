@@ -25,7 +25,7 @@ def serialize(request: dict) -> bytes:
 
 
 def deserialize(request: bytes) -> dict:
-    """Deserialize the recived bytes to a dict object."""
+    """Deserialize the received bytes to a dict object."""
     return json.loads(request)
 
 

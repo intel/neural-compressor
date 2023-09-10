@@ -112,7 +112,7 @@ def process_and_check_config(val):
         val: A dict directly read from a config file.
 
     Returns:
-        A dict whose contents which are regularized for a Pruning obejct.
+        A dict whose contents which are regularized for a Pruning object.
     """
     val = val["pruning"]["approach"]["weight_compression_pytorch"]
     start_step = reset_non_value_to_default(val, "start_step", 0)

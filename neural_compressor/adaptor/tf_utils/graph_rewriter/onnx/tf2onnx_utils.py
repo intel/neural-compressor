@@ -367,7 +367,7 @@ def infer_onnx_shape_dtype(node, opset_version, input_shapes, input_dtypes, init
             dtypes[output.name] = tensor_type.elem_type
         else:
             dtypes[output.name] = TensorProto.UNDEFINED
-        # Missing dim_value in shapes of onnx means unknown which is -1 in our convertor
+        # Missing dim_value in shapes of onnx means unknown which is -1 in our converter
         if tensor_type.HasField("shape"):
             shapes[output.name] = [dim.dim_value if dim.HasField("dim_value") else -1 for dim in tensor_type.shape.dim]
         else:

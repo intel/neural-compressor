@@ -32,7 +32,7 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
     """Fuse QuantizedMatMul + Requantize + Dequantize into QuantizedMatMulWithBiasAndDequantize."""
 
     def __init__(self, model, device="cpu"):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
@@ -206,7 +206,7 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
     """Fuse Quantized MatMul Op with the successor Requantize Op."""
 
     def __init__(self, model, device="cpu"):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
@@ -348,7 +348,7 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
                 )
 
                 new_node.attr["Toutput"].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
-                # TODO enabled below commit once the graph refactor pre_optimize commmitted.
+                # TODO enabled below commit once the graph refactor pre_optimize committed.
                 if quantized_node_op.find("Relu") == -1:
                     deq_node_name = self.graph_info[requantize_node_name].outputs[0]
                     deq_node = self.graph_info[deq_node_name].node
@@ -376,7 +376,7 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):  # pra
     """Fuse _QuantizedMatMul + Requantize + Dequantize into _QuantizedMatMul."""
 
     def __init__(self, model, device="cpu"):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
@@ -614,7 +614,7 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
     """Fuse newAPI Quantized MatMul Op with the successor Requantize Op."""
 
     def __init__(self, model, device="cpu"):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()

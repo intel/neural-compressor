@@ -107,7 +107,7 @@ class GroupLasso(BaseReg):
 
     Attributes:
         reg_terms: A dict {"module_name": Tensor} of regularization terms.
-        alpha: A float representing the coeffient related to group lasso.
+        alpha: A float representing the coefficient related to group lasso.
     """
 
     def __init__(self, config: dict, modules: dict, pattern: PytorchBasePattern, coeff):

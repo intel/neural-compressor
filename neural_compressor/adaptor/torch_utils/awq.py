@@ -218,7 +218,7 @@ class ActAwareWeightQuant:
         scale_info = {}
         logger.info("Searching best scales with AWQ algorithm")
         for module_tuple in module_list:
-            # Step 1: Initailize quantization configuration.
+            # Step 1: Initialize quantization configuration.
             if module_tuple[0] in self.weight_config:
                 cur_dtype = self.weight_config[module_tuple[0]]["dtype"]
                 cur_bits = self.weight_config[module_tuple[0]]["bits"]
@@ -345,7 +345,7 @@ class ActAwareWeightQuant:
             input_val = input_values[module_tuple[0].split(block_name + ".")[1]]["input"]
             # process linear modules one by one
             for module_name in module_tuple:
-                # Step 1: Initailize quantization configuration.
+                # Step 1: Initialize quantization configuration.
                 if module_name in self.weight_config:
                     cur_dtype = self.weight_config[module_name]["dtype"]
                     cur_bits = self.weight_config[module_name]["bits"]

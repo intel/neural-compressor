@@ -1021,7 +1021,7 @@ def collect_weight_info(model, q_config):
     ```
 
     Args:
-        q_config (_type_): quantization configue
+        q_config (_type_): quantization configure
     """
     weight_info = {}
     from neural_compressor.utils.logger import DEBUG, level
@@ -1169,7 +1169,7 @@ def get_absorb_layers(model, example_inputs, supported_layers=["Linear"], foldin
 
 
 def get_block_prefix(model):
-    """Get prefix and number of blockes.
+    """Get prefix and number of blocks.
 
     Args:
         model (torch.nn.Module): input model
@@ -1185,7 +1185,7 @@ def get_block_prefix(model):
             block_num = len(m)
             logger.debug(f"block_prefix: {block_prefix}, block_num: {block_num} ")
             break
-    assert block_num > 0, "block num should't be zero!"
+    assert block_num > 0, "block num shouldn't be zero!"
     return block_prefix, block_num
 
 

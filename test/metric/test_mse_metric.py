@@ -176,7 +176,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         self.assertTrue(bool(q_model))
 
 
-@unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
+@unittest.skipIf(not FX_MODE, "Unsupported Fx Mode with PyTorch Version Below 1.8")
 class TestPytorchFXAdaptor(unittest.TestCase):
     framework_specific_info = {
         "device": "cpu",

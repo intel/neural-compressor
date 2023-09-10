@@ -268,7 +268,7 @@ class MxNetAdaptor(Adaptor):
             dict: modelwise and opwise config.
         """
         sym_model, self.qdataloader = prepare_model_data(nc_model, self.ctx, self.qdataloader)
-        # (TODO) to allign with other fw, set pre_optimized_model here
+        # (TODO) to align with other fw, set pre_optimized_model here
         self.pre_optimized_model = sym_model
 
         self.quantizable_nodes, self._tensor_to_node, all_op_nodes = query_quantizable_nodes(

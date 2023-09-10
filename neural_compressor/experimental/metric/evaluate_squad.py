@@ -89,7 +89,7 @@ def evaluate(dataset, predictions):
     Args:
         dataset: The dataset to evaluate the prediction. A list instance of articles.
           An article contains a list of paragraphs, a paragraph contains a list of
-          question-and-answers (qas), and a question-and-answer cantains an id, a question,
+          question-and-answers (qas), and a question-and-answer contains an id, a question,
           and a list of correct answers. For example:
         predictions: The result of predictions to be evaluated. A dict mapping the id of
           a question to the predicted answer of the question.

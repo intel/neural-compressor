@@ -59,7 +59,7 @@ class InsertLogging(GraphTransformBase):
         message="",
         dump_fp32=False,
     ):
-        """Initilization."""
+        """Initialization."""
         super(InsertLogging, self).__init__(input_pb)
 
         self.parse_input_pb()

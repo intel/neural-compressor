@@ -35,7 +35,7 @@ class FuseDecomposedBNOptimizer:
     """Fuse decomposed small ops to BatchNormalization."""
 
     def __init__(self, input_graph_def):
-        """Initilization."""
+        """Initialization."""
         self.input_graph_def = input_graph_def
 
     @dump_elapsed_time("Pass FuseDecomposedBNOptimizer")

@@ -267,7 +267,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             except:
                 logging.warning(
                     "Fail to upgrade model opset_import to >= 15, "
-                    "please upgrate it manually to run with bf16 data type"
+                    "please upgrade it manually to run with bf16 data type"
                 )
                 exit(0)
 
@@ -1087,7 +1087,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         ffn_matmul = []
         attention_matmul_optype = [node.op_type for node in attention_matmul]
-        # find matmul ops in feed forward network (FFN) structure whitch mainly in transfomers based NLP models
+        # find matmul ops in feed forward network (FFN) structure which mainly in transfomers based NLP models
         if len(attention_matmul) > 0 and "Attention" in attention_matmul_optype:
             # model is optimized and Attention is fused,
             # index of Attention is used as split to find FFN MatMul
@@ -1283,12 +1283,12 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         Args:
             input_graph      : onnx model for evaluation
             dataloader       : dataloader for evaluation. neural_compressor.data.dataloader.ONNXDataLoader
-            postprocess      : post-process for evalution. neural_compressor.data.transform.ONNXTransforms
+            postprocess      : post-process for evaluation. neural_compressor.data.transform.ONNXTransforms
             metrics:         : metrics for evaluation. neural_compressor.metric.ONNXMetrics
             measurer         : neural_compressor.objective.Measurer
             iteration(int)   : max iterations of evaluaton.
-            tensorboard(bool): whether to use tensorboard for visualizaton
-            fp32_baseline (boolen, optional): only for compare_label=False pipeline
+            tensorboard(bool): whether to use tensorboard for visualization
+            fp32_baseline (boolean, optional): only for compare_label=False pipeline
 
         Returns:
             (float) evaluation results. acc, f1 e.g.
@@ -1462,7 +1462,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         model.save(os.path.join(path, "best_model.onnx"))
 
     def get_output_op_names(self, qmodel):
-        """Get the ouput ops' names."""
+        """Get the output ops' names."""
         outputs = qmodel.output()
         output_op_names = []
         for output in outputs:
@@ -1948,7 +1948,7 @@ class ONNXRTQuery(QueryBackendCapability):
         return config
 
     def get_version(self):  # pragma: no cover
-        """Get the current backend version infomation.
+        """Get the current backend version information.
 
         Returns:
             [string]: version string.

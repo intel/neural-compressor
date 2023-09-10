@@ -364,7 +364,7 @@ class ONNXModel(BaseModel):
             return None, None
 
         def _searcher(tensor_name):
-            """Search scale and zero point tensor recursivly."""
+            """Search scale and zero point tensor recursively."""
             node = self._input_name_to_nodes[tensor_name][0]
             parent = self._output_name_to_node[tensor_name] if tensor_name in self._output_name_to_node else None
             direct_int8 = ["Reshape", "Transpose", "Squeeze", "Unsqueeze", "MaxPool", "Pad", "Split"]

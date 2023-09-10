@@ -28,7 +28,7 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase):  # pragma: no cover
     """Freeze fake_quant op to the following Quantize op and prioring Dequantize op."""
 
     def __init__(self, model):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
 
         self.graph_analyzer = GraphAnalyzer()

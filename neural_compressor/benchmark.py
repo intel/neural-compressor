@@ -455,10 +455,10 @@ def profile(model, conf, b_dataloader) -> None:
 
 
 def benchmark_with_raw_cmd(raw_cmd, conf=None):
-    """Benchmark the model performance with the raw commend.
+    """Benchmark the model performance with the raw command.
 
     Args:
-        raw_cmd (string):           The commend to be benchmarked.
+        raw_cmd (string):           The command to be benchmarked.
         conf (BenchmarkConfig): The configuration for benchmark containing accuracy goal,
                                   tuning objective and preferred calibration & quantization
                                   tuning space etc.

@@ -278,7 +278,7 @@ class IterableDataset(object):
     """An iterable Dataset.
 
     Subclass iterable dataset should also implement a method:
-    `__iter__` for interating over the samples of the dataset.
+    `__iter__` for iterating over the samples of the dataset.
     """
 
     @abstractmethod

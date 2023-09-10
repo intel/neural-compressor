@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Fuse samll ops to LayerNorm Graph Rewriter."""
+"""Fuse small ops to LayerNorm Graph Rewriter."""
 
 import re
 
@@ -37,7 +37,7 @@ class FuseLayerNormOptimizer:  # pragma: no cover
 
     @dump_elapsed_time("Pass FuseLayerNormOptimizer")
     def do_transformation(self):
-        """The following pattern will be searched in the graph with additional contraints.
+        """The following pattern will be searched in the graph with additional constraints.
 
         Here * means any type of op.
         Subgraph:
