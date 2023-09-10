@@ -182,8 +182,8 @@ class TestTuningSpaceV2(unittest.TestCase):
         conf = DotDict(conf)
         # test space construction
         tuning_space = TuningSpace(deepcopy(self.capability), deepcopy(conf))
-        # test tuning item basic functionallity
-        print(tuning_space.root_item)
+        # test tuning item basic functionality
+        logger.debug(str(tuning_space.root_item))
         logger.debug(tuning_space.root_item.get_options_name())
         tuning_space.root_item.remove("fake_options")
         logger.debug(tuning_space.root_item.get_details())
