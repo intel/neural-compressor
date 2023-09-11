@@ -392,6 +392,7 @@ class PyTorchModel(PyTorchBaseModel):
                 input_names=conf.input_names,
                 output_names=conf.output_names,
                 quant_format=conf.quant_format,
+                weight_type=conf.kwargs.get("weight_type", "S8"),
                 verbose=True,
             )
         elif conf.dtype == "fp32":
