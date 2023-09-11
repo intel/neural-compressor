@@ -17,7 +17,7 @@
 """The auto-mixed precision strategy."""
 
 import copy
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from itertools import groupby
 
 from neural_compressor.adaptor.torch_utils.mixed_precision import ipex_mixed_precision
