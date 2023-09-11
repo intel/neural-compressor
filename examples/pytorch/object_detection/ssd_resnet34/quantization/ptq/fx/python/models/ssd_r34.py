@@ -11,7 +11,7 @@ import torch.fx
 
 class Encoder(object):
     """
-        Transform between (bboxes, lables) <-> SSD output
+        Transform between (bboxes, labels) <-> SSD output
         
         dboxes: default boxes in size 8732 x 4, 
             encoder: input ltrb format, output xywh format
@@ -247,7 +247,7 @@ class SSD_R34(nn.Module):
         self._build_additional_features(self.out_chan)
         self.extract_shapes=extract_shapes
         # after l2norm, conv7, conv8_2, conv9_2, conv10_2, conv11_2
-        # classifer 1, 2, 3, 4, 5 ,6
+        # classifier 1, 2, 3, 4, 5 ,6
 
         self.num_defaults = [4, 6, 6, 6, 4, 4]
         self.loc = []

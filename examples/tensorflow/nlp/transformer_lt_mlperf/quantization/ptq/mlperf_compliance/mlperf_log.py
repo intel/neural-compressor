@@ -86,8 +86,8 @@ def _mlperf_print(key, value=None, benchmark=None, stack_offset=0,
   value: The value which contains no newlines.
   benchmark: The short code for the benchmark being run, see the MLPerf log spec.
   stack_offset: Increase the value to go deeper into the stack to find the callsite. For example, if this
-                is being called by a wraper/helper you may want to set stack_offset=1 to use the callsite
-                of the wraper/helper itself.
+                is being called by a wrapper/helper you may want to set stack_offset=1 to use the callsite
+                of the wrapper/helper itself.
   tag_set: The set of tags in which key must belong.
   deferred: The value is not presently known. In that case, a unique ID will
             be assigned as the value of this call and will be returned. The

@@ -966,13 +966,6 @@
       "main_script": "tf_benchmark.py",
       "batch_size": 1
     },
-    "GraphSage": {
-      "model_src_dir": "oob_models/quantization/ptq",
-      "dataset_location": "",
-      "input_model": "/tf_dataset/tensorflow/tf_oob_models/mlp/GraphSage/GraphSage.pb",
-      "main_script": "tf_benchmark.py",
-      "batch_size": 1
-    },
     "WGAN": {
       "model_src_dir": "oob_models/quantization/ptq",
       "dataset_location": "",

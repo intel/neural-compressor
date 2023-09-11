@@ -9,8 +9,7 @@ exclude: |
       neural_insights/test.+|
       neural_solution/frontend/gRPC/proto/neural_solution_pb2.py|
       neural_coder/extensions/.+|
-      neural_coder/examples/.+|
-      examples/.+
+      neural_coder/examples/.+
   )$
 
 repos:
@@ -19,6 +18,10 @@ repos:
     hooks:
       - id: end-of-file-fixer
         files: (.*\.(py|md|rst|yaml|yml))$
+        exclude: |
+          (?x)^(
+              examples/.+
+          )$
       - id: check-json
       - id: check-yaml
         exclude: |
@@ -37,8 +40,16 @@ repos:
           )$
         args: [--unique]
       - id: requirements-txt-fixer
+        exclude: |
+          (?x)^(
+              examples/.+
+          )$
       - id: trailing-whitespace
         files: (.*\.(py|rst|cmake|yaml|yml))$
+        exclude: |
+          (?x)^(
+              examples/.+
+          )$
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.4
@@ -72,6 +83,10 @@ repos:
     rev: 5.12.0
     hooks:
       - id: isort
+        exclude: |
+          (?x)^(
+              examples/.+
+          )$
 
   - repo: https://github.com/PyCQA/docformatter
     rev: v1.7.5
@@ -84,6 +99,10 @@ repos:
             --black,
             --style=google,
           ]
+        exclude: |
+          (?x)^(
+              examples/.+
+          )$
 
   - repo: https://github.com/psf/black.git
     rev: 23.7.0
@@ -93,7 +112,8 @@ repos:
         exclude: |
           (?x)^(
               neural_compressor/conf/config.py|
-              neural_compressor/conf/pythonic_config.py
+              neural_compressor/conf/pythonic_config.py|
+              examples/.+
           )$
 
   - repo: https://github.com/asottile/blacken-docs
@@ -101,7 +121,11 @@ repos:
     hooks:
       - id: blacken-docs
         args: [--line-length=120, --skip-errors]
-        exclude: docs/source-app
+        exclude: |
+          (?x)^(
+              examples/.+|
+              docs/source-app
+          )$
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.4
@@ -109,9 +133,18 @@ repos:
       - id: codespell
         additional_dependencies:
           - tomli
+        exclude: |
+          (?x)^(
+              examples/.*(txt|patch)|
+              examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static/prompt.json
+          )$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.0.286
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --no-cache]
+        exclude: |
+          (?x)^(
+              examples/.+
+          )$

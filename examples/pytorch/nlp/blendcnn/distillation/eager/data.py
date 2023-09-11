@@ -113,7 +113,7 @@ class AGNews(PreprocessedTextDataset):
 ### Pipeline Classes for preprocessing ###
 
 class RemoveSymbols(Pipeline):
-    """ Remove unnecesary symbols """
+    """ Remove unnecessary symbols """
     def __init__(self, symbols):
         super().__init__()
         self.symbols = symbols
