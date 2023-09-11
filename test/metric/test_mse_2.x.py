@@ -89,9 +89,7 @@ class TestMetric(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         os.remove("mb_v2.onnx")
-        os.remove("fake_yaml4.yaml")
-        os.remove("fake_yaml3.yaml")
-
+        shutil.rmtree("nc_workspace", ignore_errors=True)
         shutil.rmtree("saved", ignore_errors=True)
 
     def _test_tf_model_helper(self, config, eval_func):
