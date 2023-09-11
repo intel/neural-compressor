@@ -248,7 +248,7 @@ class TestPytorch2ONNX(unittest.TestCase):
             )
             q_model.export("int8-nlp-qlinear-model.onnx", int8_onnx_config)
             self.assertTrue(check_NLP_onnx("int8-nlp-qlinear-model.onnx", self.nlp_input))
-    
+
     def test_dynamic_ptq_weight_type(self):
         fake_yaml = "dynamic"
         model = copy.deepcopy(self.cv_model)
@@ -268,7 +268,7 @@ class TestPytorch2ONNX(unittest.TestCase):
             input_names=["input"],
             output_names=["output"],
             dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
-            weight_type="U8"
+            weight_type="U8",
         )
         q_model.export("int8-cv-qdq-model.onnx", int8_onnx_config)
         self.assertTrue(check_CV_onnx("int8-cv-qdq-model.onnx", self.cv_dataloader))
@@ -282,12 +282,14 @@ class TestPytorch2ONNX(unittest.TestCase):
             input_names=["input"],
             output_names=["output"],
             dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
-            weight_type="test_weight"
+            weight_type="test_weight",
         )
         with self.assertRaises(AssertionError) as context:
             q_model.export("int8-cv-qdq-model.onnx", int8_onnx_config)
-        self.assertEqual(str(context.exception), "Right now, we don't support weight type: test_weight, please use S8/U8.")
-    
+        self.assertEqual(
+            str(context.exception), "Right now, we don't support weight type: test_weight, please use S8/U8."
+        )
+
     def test_static_ptq_except(self):
         symbolic_names = {0: "batch_size", 1: "max_seq_len"}
         dynamic_axes = {k: symbolic_names for k in self.nlp_input.keys()}
@@ -302,8 +304,8 @@ class TestPytorch2ONNX(unittest.TestCase):
                 "weight": {"dtype": ["fp32"]},
             }
         }
-        
-        # test TypeError except 
+
+        # test TypeError except
         quant_conf = PostTrainingQuantConfig(
             approach="static",
             op_name_dict=fallback_op,
@@ -355,6 +357,7 @@ class TestPytorch2ONNX(unittest.TestCase):
         with self.assertRaises(IndexError) as context:
             q_model.export("int8-nlp-qdq-model.onnx", int8_onnx_config)
         self.assertEqual(str(context.exception), "tuple index out of range")
+
 
 if __name__ == "__main__":
     unittest.main()

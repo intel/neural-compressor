@@ -104,7 +104,7 @@ def get_node_mapping(
                 data = numpy_helper.to_array(initializer_data[node.input[0]])
             elif node.op_type in ["Gemm"]:
                 data = numpy_helper.to_array(initializer_data[node.input[1]])
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 continue
             pt_name = check_data(node.op_type, data, module_dict)
             if pt_name:
@@ -281,7 +281,6 @@ def static_quant_export(
             raise TypeError("Export failed with TypeError.")
         except Exception as e:
             raise e
-            
 
     if quant_format != "QDQ":
         sess_options = ort.SessionOptions()

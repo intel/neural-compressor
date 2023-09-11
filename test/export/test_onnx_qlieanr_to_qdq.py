@@ -55,6 +55,7 @@ def build_model():
     model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
     return model
 
+
 class TestAdaptorONNXRT(unittest.TestCase):
     qlinear_backend = QuantizationMode.QLinearOps
     qdq_backend = "qdqops"
@@ -169,8 +170,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model.export("./test.onnx", self.config)
         self.assertEqual(Counter([node.op_type for node in q_model.graph().node])["DequantizeLinear"], 3)
         self.assertEqual(Counter([node.op_type for node in q_model.graph().node])["QuantizeLinear"], 2)
-
-
 
     def test_gemm(self):
         input_name = "input"
@@ -395,7 +394,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model.export("./test.onnx", self.config)
         self.assertEqual(Counter([node.op_type for node in q_model.graph().node])["DequantizeLinear"], 7)
         self.assertEqual(Counter([node.op_type for node in q_model.graph().node])["QuantizeLinear"], 4)
-        
 
         quantize_params = {
             "input": [np.uint8(10.0), np.float32(0)],
@@ -427,9 +425,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         A = helper.make_tensor_value_info("A", TensorProto.FLOAT, [1, 5, 5, 1])
         B = helper.make_tensor_value_info("B", TensorProto.FLOAT, [1, 3, 3, 1])
         C = helper.make_tensor_value_info("C", TensorProto.FLOAT, [1, 1, 5, 1])
-        conv_node = onnx.helper.make_node(
-            op, ["A", "B"], ["C"], name=op, kernel_shape=[3, 3], pads=[1, 1, 1, 1]
-        )
+        conv_node = onnx.helper.make_node(op, ["A", "B"], ["C"], name=op, kernel_shape=[3, 3], pads=[1, 1, 1, 1])
         graph = helper.make_graph([conv_node], "test_graph_1", [A, B], [C])
         model = helper.make_model(graph, opset_imports=[OPSET])
         q_config = {op: self.static_q_config}
@@ -509,14 +505,17 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
         gather_indices = helper.make_tensor("gather_indices", TensorProto.INT32, [2], [0, 0])
         gather_output = helper.make_tensor_value_info("gather_output", TensorProto.FLOAT, [2, 2])
-        gather_node = onnx.helper.make_node("Gather", ["matmul_output", "gather_indices"], ["gather_output"], name="Gather")
+        gather_node = onnx.helper.make_node(
+            "Gather", ["matmul_output", "gather_indices"], ["gather_output"], name="Gather"
+        )
 
         graph = helper.make_graph(
-            [matmul_node, gather_node], 
-            "test_graph", 
-            [input_tensor], 
+            [matmul_node, gather_node],
+            "test_graph",
+            [input_tensor],
             [gather_output],
-            initializer=[matmul_weight, gather_indices])
+            initializer=[matmul_weight, gather_indices],
+        )
         model = helper.make_model(graph, opset_imports=[OPSET])
 
         q_config = {"Gather": self.static_q_config, "MatMul": self.static_q_config}
@@ -548,15 +547,18 @@ class TestAdaptorONNXRT(unittest.TestCase):
             op_node = onnx.helper.make_node(op, ["matmul_output", op + "_weight"], [op + "_output"], name=op)
 
             graph = helper.make_graph(
-                [matmul_node, op_node], 
-                "test_graph", 
-                [input_tensor], 
+                [matmul_node, op_node],
+                "test_graph",
+                [input_tensor],
                 [op_output],
-                initializer=[matmul_weight, op_weight])
+                initializer=[matmul_weight, op_weight],
+            )
             model = helper.make_model(graph, opset_imports=[OPSET])
 
-            q_config = {op: self.static_q_config, 
-                        "Matmul": self.static_q_config,}
+            q_config = {
+                op: self.static_q_config,
+                "Matmul": self.static_q_config,
+            }
             quantize_params = {
                 "input": [np.uint8(10.0), np.float32(0)],
                 "matmul_weight": [np.uint8(10.0), np.float32(0)],
@@ -569,7 +571,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
             q_model.export("./test.onnx", self.config)
             self.assertEqual(Counter([node.op_type for node in q_model.graph().node])["DequantizeLinear"], 5)
             self.assertEqual(Counter([node.op_type for node in q_model.graph().node])["QuantizeLinear"], 3)
-
 
     def test_activation(self):
         config = {
