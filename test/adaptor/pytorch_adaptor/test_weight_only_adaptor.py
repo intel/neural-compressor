@@ -239,11 +239,10 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(isinstance(inc_model.model.fc1, WeightOnlyLinear))
         self.assertTrue(model_size1 / model_size2 > 2)
 
-    def test_RTN_fp4_quant(self):
-        for dtype in ["nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"]:
-            input = torch.randn(3, 30)
-            model = Model()
-            out1 = model(input)
+    def test_RTN_4bit_quant(self):
+        for dtype in ["int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"]:
+            model = copy.deepcopy(self.gptj)
+            out1 = model(self.lm_input)
             conf = PostTrainingQuantConfig(
                 approach="weight_only",
                 op_type_dict={
@@ -251,19 +250,19 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                         "weight": {
                             "dtype": dtype,  # select from int, nf4, or fp4
                             # nf4/fp4 have fixed bits and scheme.
-                            "group_size": 32,  # -1 (per-channel)
+                            "group_size": 64,  # -1 (per-channel)
                             "algorithm": "RTN",
                         },
                     },
                 },
             )
             q_model = quantization.fit(model, conf)
-            out2 = q_model(input)
-            self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
-            self.assertFalse(torch.all(out1 == out2))
+            out2 = q_model(self.lm_input)
+            self.assertTrue(torch.all(torch.isclose(out1[0], out2[0], atol=1e-1)))
+            self.assertFalse(torch.all(out1[0] == out2[0]))
             compressed_model = q_model.export_compressed_model()
-            out3 = compressed_model(input)
-            self.assertTrue(torch.all(out3 == out2))
+            out3 = compressed_model(self.lm_input)
+            self.assertTrue(torch.all(out3[0] == out2[0]))
 
     def test_AWQ_quant(self):
         conf = PostTrainingQuantConfig(
