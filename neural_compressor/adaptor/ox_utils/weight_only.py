@@ -44,9 +44,9 @@ def check_op_support_status():
     output_tensor = helper.make_tensor_value_info("output", 1, [1, 64])
     initializers = []
     # weight shape (32, 64)
-    packed_weight = np.random.randint(0, high=16, size=(128, 1, 16), dtype="uint8")
+    packed_weight = np.random.randint(0, high=16, size=(64, 1, 16), dtype="uint8")
     initializers.append(onnx.helper.make_tensor("weight", 2, packed_weight.shape, packed_weight.flatten().tolist()))
-    scale = np.random.random((128, 1)).astype("float32")
+    scale = np.random.random((64, 1)).astype("float32")
     initializers.append(onnx.helper.make_tensor("scale", 1, scale.shape, scale.flatten().tolist()))
 
     kwargs = {}
