@@ -50,9 +50,9 @@ class TestPruning(unittest.TestCase):
         dummy_dataset = datasets["dummy"](shape=(10, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
-        pruning = prepare_pruning(config, self.model, dataloader=dummy_dataloader, loss_func=criterion)
+        pruning = prepare_pruning(self.model, config, dataloader=dummy_dataloader, loss_func=criterion)
 
-        # pruning = prepare_pruning(config, self.model)
+        # pruning = prepare_pruning(self.model, config)
         for epoch in range(2):
             self.model.train()
             local_step = 0

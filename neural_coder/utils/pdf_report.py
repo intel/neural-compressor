@@ -283,7 +283,7 @@
 #         self.elements.append(spacer)
 
 #         d = []
-#         textData = ["Category", "Num Intances",
+#         textData = ["Category", "Num Instances",
 #                     "Num Cores Per Instance", "BS", "Performance (sample/sec)"]
 
 #         fontSize = 8

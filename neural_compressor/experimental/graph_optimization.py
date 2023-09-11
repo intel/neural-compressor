@@ -279,7 +279,7 @@ class Graph_Optimization:
                                     a 'real' eval_dataloader will be created,
                                     the reason is we have to know the framework info
                                     and only after the Quantization object created then
-                                    framework infomation can be known. Future we will support
+                                    framework information can be known. Future we will support
                                     creating iterable dataloader from neural_compressor.common.DataLoader
         """
         from .common import _generate_common_dataloader

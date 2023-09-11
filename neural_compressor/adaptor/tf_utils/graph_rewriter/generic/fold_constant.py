@@ -33,7 +33,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
     supported_op_type = ["Add", "AddV2", "Const", "Mul", "Rsqrt", "Sub"]
 
     def __init__(self, model=None):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.graph_analyzer = GraphAnalyzer()
         self.graph_analyzer.graph = self.model

@@ -124,7 +124,7 @@ class Harness(object):
                                 trainer_def_line_indent_level = get_line_indent_level(line)
                                 trainer_def_line_idx = i
 
-                    # serach model definition line and its end line index
+                    # search model definition line and its end line index
                     # (only has 1 model definition line, because it's in loop of globals.list_model_def_instance)
                     for i in range(len(lines)):
                         line = lines[i]

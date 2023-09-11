@@ -159,7 +159,7 @@ class Pattern:
         return masks
 
     def get_sparsity_ratio(self, pre_masks):
-        """Calulate the zero elements' ration in pre_masks.
+        """Calculate the zero elements' ration in pre_masks.
 
         Args:
             pre_masks: Dict{"layer_name": Tensor}. The masks generated after the last pruning step.
@@ -224,7 +224,7 @@ class PatternNxM(Pattern):
             self.block_size = [int(pattern.split("x")[0]), int(pattern.split("x")[1])]
 
     def get_block_size_dict(self, data):
-        """Calulate the zero elements' ration in pre_masks.
+        """Calculate the zero elements' ration in pre_masks.
 
         Args:
             data: Dict{"layer_name": Tensor}. Store weights or scores.
@@ -252,7 +252,7 @@ class PatternNxM(Pattern):
         return block_sizes_dict
 
     def get_sparsity_ratio(self, pre_masks):
-        """Calulate the zero elements' ration in pre_masks.
+        """Calculate the zero elements' ration in pre_masks.
 
         Args:
             pre_masks: Dict{"layer_name": Tensor}. The masks generated after the last pruning step.
@@ -334,7 +334,7 @@ class PatternNxM(Pattern):
                 mask = mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
                 if torch.sum(mask) / mask.numel() < 1.0 - max_sparsity_ratio_per_layer:
                     ##to prevent some layer not be purned too much
-                    ##this is differnt with our original implementation
+                    ##this is different with our original implementation
                     masks[key] = self.get_mask_single(new_scores[key], max_sparsity_ratio_per_layer)
                     masks[key] = masks[key].repeat_interleave(block_size[0], 0).repeat_interleave(block_size[1], -1)
                     # if pre_masks != {}:##when use one shot, this is not right
@@ -428,7 +428,7 @@ class PatternNInM(Pattern):
         self.M = int(pattern.split(":")[1])  ##m is bigger
 
     def get_sparsity_ratio(self, pre_masks):
-        """Calulate the zero elements' ration in pre_masks.
+        """Calculate the zero elements' ration in pre_masks.
 
         Args:
             pre_masks: Dict{"layer_name": Tensor}. The masks generated after the last pruning step.

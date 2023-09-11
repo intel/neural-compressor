@@ -19,7 +19,7 @@ class TestPruning(unittest.TestCase):
                 "target_sparsity": 0.6,
                 "pattern": "8x2",
                 "pruning_type": "magnitude_progressive",
-                "false_key": "this is to test unsupport keys",
+                "false_key": "this is to test unsupported keys",
             },
             {
                 "op_names": ["layer2.*"],
@@ -38,7 +38,7 @@ class TestPruning(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         from neural_compressor.compression.pruner import prepare_pruning
 
-        pruning = prepare_pruning(config, self.model, optimizer)
+        pruning = prepare_pruning(self.model, config, optimizer)
 
         for epoch in range(4):
             self.model.train()

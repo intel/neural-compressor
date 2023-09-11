@@ -367,7 +367,7 @@ class T5LayerNorm(nn.Module):
 
     def forward(self, hidden_states):
         # T5 uses a layer_norm which only scales and doesn't shift, which is also known as Root Mean
-        # Square Layer Normalization https://arxiv.org/abs/1910.07467 thus varience is calculated
+        # Square Layer Normalization https://arxiv.org/abs/1910.07467 thus variance is calculated
         # w/o mean and there is no bias. Additionally we want to make sure that the accumulation for
         # half-precision inputs is done in fp32
 
@@ -398,8 +398,18 @@ class TestSqListInput(unittest.TestCase):
             def __iter__(self):
                 yield (torch.rand((1, 3)))
 
+        class ListTupleDataLoader:
+            def __init__(self):
+                pass
+
+            def __iter__(self):
+                input1 = torch.rand((1, 3))
+                input2 = torch.rand((1, 3))
+                yield [input1, ((input2, input1)), input2]
+
         self.list_dl = ListDataloader()
         self.tuple_dl = TupleDataloader()
+        self.list_tuple_dl = ListTupleDataLoader()
 
     @classmethod
     def test_sq_linear_LlamaRMSNorm(self):
@@ -446,6 +456,42 @@ class TestSqListInput(unittest.TestCase):
         sq = TorchSmoothQuant(model, self.tuple_dl)
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
+
+    @classmethod
+    def test_sq_linear_LlamaRMSNorm_list_tuple(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1_1 = torch.nn.Linear(3, 4)
+                self.fc1_2 = torch.nn.Linear(3, 4)
+                self.fc1_3 = torch.nn.Linear(4, 4)
+                self.fc2 = torch.nn.Linear(4, 4)
+                self.norm = LlamaRMSNorm(4)
+                self.fc3 = torch.nn.Linear(4, 3)
+
+            def forward(self, x1, x_tuple, x4):
+                x2, x3 = x_tuple
+                out1 = self.fc1_1(x1 + x4)
+                out2 = self.fc1_2(x2 + x3)
+                out = out1 + out2
+                out = self.fc1_3(out)
+                out = self.fc2(out)
+                out = self.norm(out)
+                out = self.fc3(out)
+                return out
+
+        model = Model()
+        sq = TorchSmoothQuant(model, self.list_tuple_dl)
+        sq.transform(alpha=0.5, calib_iter=1, folding=True)
+        assert len(sq.absorb_to_layer) == 2
+
+    def test_device(self):
+        input1 = torch.rand((1, 3))
+        input2 = torch.rand((1, 3))
+        example_input = {"k": [input1, ((input2, input1)), input2]}
+        from neural_compressor.adaptor.torch_utils.smooth_quant import move_input_to_device
+
+        move_input_to_device(example_input)
 
 
 class TestAlphaAutoLinear(unittest.TestCase):
@@ -654,6 +700,29 @@ class TestSqLinearOpFuse(unittest.TestCase):
 
         model = Model()
 
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha=0.5, calib_iter=1)  # By default, folding=False
+        assert isinstance(sq.model.fc1, SQLinearWrapper)
+
+    def test_sq_trace_failure(self):
+        class Output:
+            out = None
+
+        class Model(torch.nn.Module):
+            device = torch.device("cpu")
+
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.fc2(out)
+                Output.out = out
+                return Output
+
+        model = Model()
         sq = TorchSmoothQuant(model, self.linear_dl)
         sq.transform(alpha=0.5, calib_iter=1)  # By default, folding=False
         assert isinstance(sq.model.fc1, SQLinearWrapper)

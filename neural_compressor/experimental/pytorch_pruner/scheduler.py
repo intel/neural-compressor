@@ -134,14 +134,14 @@ class IterativeScheduler(Scheduler):
             total_prune_steps: A integer. The total steps included in the pruning progress.
             masks: A dict{"module_name": Tensor}. The masks for modules' weights.
 
-        Returns：
+        Returns:
             A float. the target sparsity ratio the model will reach after the next pruning step.
         """
         aggressive_ratio = target_ratio
         # if self.config.prune_domain == "global":
         #     aggressive_ratio += 0.02
 
-        aggressive_ratio = min(self.config.max_sparsity_ratio_per_layer, aggressive_ratio)  ##lagacy issue
+        aggressive_ratio = min(self.config.max_sparsity_ratio_per_layer, aggressive_ratio)  # legacy issue
 
         decay_type = self.config.sparsity_decay_type
         if decay_type == "cos":

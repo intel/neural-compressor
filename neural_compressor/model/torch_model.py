@@ -58,7 +58,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
 
     def __repr__(self):
         """Describe a PyTorchBaseModel as a string."""
-        # rewirte this func to avoid printing fp32_model
+        # rewrite this func to avoid printing fp32_model
         from torch.nn.modules.module import _addindent
 
         # We treat the extra repr like the sub-module, one item per line
@@ -407,12 +407,12 @@ class PyTorchModel(PyTorchBaseModel):
                 verbose=True,
             )
         else:  # pragma: no cover
-            assert False, "Not allowed dtype: {}, pleas use 'fp32' or 'int8'.".format(conf.dtype)
+            assert False, "Not allowed dtype: {}, please use 'fp32' or 'int8'.".format(conf.dtype)
 
     def export_compressed_model(
         self,
         qweight_config_path=None,
-        sym_full_range=False,
+        enable_full_range=False,
         compression_dtype=torch.int32,
         compression_dim=1,
         scale_dtype=torch.float32,
@@ -423,7 +423,7 @@ class PyTorchModel(PyTorchBaseModel):
 
         Args:
             qweight_config_path (str, optional): Path of qconfig.json. Defaults to None.
-            sym_full_range (bool, optional): Whether to leverage the full compression range
+            enable_full_range (bool, optional): Whether to leverage the full compression range
                                              under symmetric quantization. Defaults to False.
             compression_dtype (torch.Tensor, optional): The target dtype after comoression.
                                                         Defaults to torch.int32.
@@ -467,7 +467,7 @@ class PyTorchModel(PyTorchBaseModel):
                         scheme,
                         data_type=dtype,
                         return_int=True,
-                        sym_full_range=sym_full_range,
+                        enable_full_range=enable_full_range,
                         compression_dtype=compression_dtype,
                         compression_dim=compression_dim,
                         scale_dtype=scale_dtype,
@@ -519,7 +519,7 @@ class PyTorchModel(PyTorchBaseModel):
                     scheme,
                     data_type=dtype,
                     return_int=True,
-                    sym_full_range=sym_full_range,
+                    enable_full_range=enable_full_range,
                     compression_dtype=compression_dtype,
                     compression_dim=compression_dim,
                     scale_dtype=scale_dtype,

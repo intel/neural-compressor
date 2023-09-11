@@ -31,7 +31,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
     """Quantize Conv2D/DepthwiseConv2dNative to int8 op."""
 
     def __init__(self, **kwargs):
-        """Initilization."""
+        """Initialization."""
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns, key=lambda i: len(i), reverse=True)
         self.exclude_conv_name = []

@@ -123,7 +123,7 @@ class CPUinfo:
     def numa_aware_check(self, core_list):
         """Check whether all cores in core_list are in the same NUMA node.
 
-        cross NUMA will reduce perforamnce.
+        cross NUMA will reduce performance.
         We strongly advice to not use cores on different nodes.
         """
         cores_numa_map = self.logical_core_node_map
@@ -187,7 +187,7 @@ class Launcher:
         """Enable TCMalloc/JeMalloc with LD_PRELOAD and set configuration for JeMalloc.
 
         By default, PTMalloc will be used for PyTorch, but TCMalloc and JeMalloc can get better
-        memory resue and reduce page fault to improve performance.
+        memory reuse and reduce page fault to improve performance.
         """
         if enable_tcmalloc and enable_jemalloc:
             logger.error("Unable to enable TCMalloc and JEMalloc at the same time")
@@ -283,7 +283,7 @@ class Launcher:
 
         By default, GNU openMP and PTMalloc are used in PyTorch.
         but Intel openMP and TCMalloc/JeMalloc are better alternatives
-        to get performance benifit.
+        to get performance benefit.
         """
         self.set_memory_allocator(enable_tcmalloc, enable_jemalloc, use_default_allocator)
         self.set_env("OMP_NUM_THREADS", str(ncore_per_instance))
@@ -705,7 +705,7 @@ def add_multi_instance_params(parser):
         "--latency_mode",
         action="store_true",
         default=False,
-        help="By detault 4 core per instance and use all physical cores",
+        help="By default 4 core per instance and use all physical cores",
     )
     group.add_argument(
         "--throughput_mode",

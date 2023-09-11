@@ -54,10 +54,12 @@ class DyNAS(NASBase):
             seed=self.seed,
             population=self.population,
             batch_size=self.batch_size,
+            eval_batch_size=self.eval_batch_size,
             search_algo=self.search_algo,
             supernet_ckpt_path=self.supernet_ckpt_path,
             dataloader_workers=self.num_workers,
             distributed=self.distributed,
+            test_fraction=self.test_fraction,
         )
 
     def search(self):
@@ -99,7 +101,9 @@ class DyNAS(NASBase):
         self.dataset_path = dynas_config.dataset_path
         self.supernet_ckpt_path = dynas_config.supernet_ckpt_path
         self.batch_size = dynas_config.batch_size
+        self.eval_batch_size = dynas_config.eval_batch_size
         self.num_workers = dynas_config.num_workers
+        self.test_fraction = dynas_config.test_fraction
         if dynas_config.population < 10:  # pragma: no cover
             raise NotImplementedError("Please specify a population size >= 10")
         else:

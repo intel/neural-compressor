@@ -150,7 +150,7 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
     def mask_weights(self):
         """Apply block masks to corresponding modules' weights.
 
-        Weights are multipled with masks. This is the formal pruning process.
+        Weights are multiplied with masks. This is the formal pruning process.
         """
         with torch.no_grad():
             self.pattern.mask_block_weights(self.masks)

@@ -196,6 +196,7 @@ CropResize
 CropToBoundingBox
 CrossEntropyLoss
 Curran
+CustomDataset
 CustomObj
 CvAClvFfyA
 DBMDZ
@@ -374,6 +375,7 @@ Hanwen
 HasAns
 HdQ
 Hein
+Hellaswag
 HelloWorld
 Hippocampus
 HistogramObserver
@@ -485,7 +487,6 @@ Leibler
 LessEqual
 LiTS
 LibriSpeech
-Limitting
 LinkedIn
 ListDataset
 Liu
@@ -706,6 +707,7 @@ PerChannelMinMaxObserver
 PhYUmn
 Piero
 Pierric
+Piqa
 Piyush
 PolyNet
 Ponte
@@ -909,7 +911,6 @@ SummaryWriter
 SuperBench
 Supernet
 SupportMatrix
-Supprted
 Sutskever
 Suyue
 Suárez
@@ -1007,6 +1008,7 @@ WARMUPS
 WIDERFACE
 WIP
 WLYDCRB
+WOQ
 Wallach
 Wasserblat
 WeChat
@@ -1022,6 +1024,7 @@ WideResNet
 Wightman
 WikiText
 WilsonCity
+Winogrande
 WnD
 Wnxu
 WordPiece
@@ -1097,7 +1100,6 @@ adaptor
 adaptor's
 addr
 ade
-adresses
 ae
 aea
 af
@@ -1134,7 +1136,6 @@ ap
 apache
 api
 apis
-approch
 arXiv
 arange
 arcface
@@ -1192,6 +1193,7 @@ bbox
 bboxes
 bc
 bcb
+bcc
 bccf
 bce
 bd
@@ -1224,6 +1226,7 @@ bleu
 blocktime
 blockwise
 blogpost
+bloomz
 bmm
 bn
 bnb
@@ -1345,10 +1348,8 @@ connectSSH
 const
 constexpr
 constfold
-contaning
 contrib
 conv
-convertion
 convolutional
 cooldown
 copt
@@ -1379,31 +1380,33 @@ cudatoolkit
 cudnn
 curr
 customised
-custormer
 cv
 cwad
 cwd
 cxxopt
+cy
 cypw
 cython
 dNative
 dXY
 da
 dae
+daf
 dailymail
 darknet
 dataLoader
+databricks
 datadir
 datafile
 dataloader
 dataloaders
 datapoints
+datas
 dataset
 datasets
 datatype
 datatypes
 dathath
-datset
 dbaeumer
 dbmdz
 dbox
@@ -1505,6 +1508,7 @@ ecotrust
 edgetpu
 edu
 ee
+eec
 eer
 ef
 efb
@@ -1551,9 +1555,7 @@ evaluator
 evel
 exdb
 exemplarily
-exising
 existing
-exmaple
 expanduser
 extensibility
 extmanager
@@ -1605,12 +1607,12 @@ fmtstr
 fn
 fname
 fns
+folj
 foregound
 fp
 fpic
 fpn
 frac
-frequence
 frontend
 fstack
 ftfy
@@ -1661,7 +1663,6 @@ googleapis
 googleblog
 googlenet
 googlesource
-governer
 gpb
 gpg
 gpt
@@ -1671,6 +1672,7 @@ gpus
 grafftti
 graphDef
 graphdef
+graphsage
 grappler
 grey
 groupnorm
@@ -1683,6 +1685,7 @@ gui
 gz
 gzY
 haibinlin
+haiz
 hangzhang
 hardcoding
 hardswish
@@ -1730,6 +1733,7 @@ idx
 ie
 ieee
 ieeexplore
+iire
 ilsvrc
 im
 imagecocodataset
@@ -1837,6 +1841,7 @@ labextension
 labextensions
 lang
 latencies
+lates
 layernorm
 layoutlm
 layoutlmft
@@ -1912,6 +1917,7 @@ mailto
 mainpage
 manylinux
 marianmt
+masia
 maskrcnn
 maskrnn
 massa
@@ -1951,7 +1957,6 @@ minmax
 mins
 misalignments
 miscs
-missmatches
 mixedprecision
 mixnet
 mixup
@@ -1984,9 +1989,11 @@ modellogits
 modelmean
 modelsize
 modelstd
+mosaicml
 mose
 mpi
 mpirun
+mpt
 mrcnn
 mrm
 mrpc
@@ -2025,6 +2032,7 @@ nda
 ndarray
 nderlu
 ndhwc
+neo
 neox
 nepoch
 ner
@@ -2118,6 +2126,7 @@ onnx
 onnxrt
 onnxrtadaptor
 onnxruntime
+oo
 oob
 openaccess
 openai
@@ -2139,6 +2148,7 @@ optypewise
 opwise
 os
 osJJ
+ot
 oup
 outPut
 outdir
@@ -2193,11 +2203,11 @@ pnasnet
 png
 polynet
 pos
-postprocesing
 postprocess
 postprocessed
 postprocessing
 powersave
+ppi
 pplm
 ppn
 pragma
@@ -2207,7 +2217,6 @@ prebuilt
 precisions
 pred
 preds
-preformance
 preload
 preprint
 preprocess
@@ -2304,14 +2313,12 @@ regex
 registerCommand
 rehm
 reinstall
-relase
 releaser
 relu
 repo
 repo's
 repos
 repo’s
-representating
 requantize
 resampled
 resampling
@@ -2322,7 +2329,6 @@ resnest
 resnet
 resnetv
 resnext
-ressource
 ressources
 ret
 retinaNet
@@ -2345,6 +2351,7 @@ rougeL
 rougeLsum
 rowanz
 rowspan
+rq
 rst
 rtd
 rtn
@@ -2440,6 +2447,7 @@ ssd
 sshleifer
 sst
 stackoverflow
+stanford
 startswith
 startup
 stderr
@@ -2448,6 +2456,7 @@ stds
 stefan
 stemblock
 stepsize
+storywriter
 str
 strided
 struct
@@ -2469,7 +2478,6 @@ summarization
 superbench
 supernet
 superseeds
-suported
 sut
 sv
 svg
@@ -2487,6 +2495,7 @@ tb
 tbe
 tbody
 td
+te
 techdecoded
 tencent
 tensor's
@@ -2517,6 +2526,7 @@ thepath
 thp
 thres
 thrs
+tiiuae
 timeline
 timestamps
 tl
@@ -2617,6 +2627,7 @@ voxel
 voxels
 vram
 vscode
+vxga
 wWLes
 waleedka
 wangg
@@ -2639,6 +2650,7 @@ wip
 wmt
 wnd
 wnli
+woq
 workdir
 workflow
 workflows

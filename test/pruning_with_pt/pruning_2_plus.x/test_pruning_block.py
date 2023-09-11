@@ -41,7 +41,7 @@ class TestPruning(unittest.TestCase):
         datasets = Datasets("pytorch")
         dummy_dataset = datasets["dummy"](shape=(20, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        pruning = prepare_pruning(config, self.model, optimizer)
+        pruning = prepare_pruning(self.model, config, optimizer)
 
         for epoch in range(2):
             self.model.train()

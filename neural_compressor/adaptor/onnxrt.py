@@ -84,6 +84,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 if "format" in framework_specific_info and framework_specific_info["format"].lower() == "qdq":
                     logger.warning("Dynamic approach doesn't support QDQ format.")
 
+        # do not load TensorRT if backend is not TensorrtExecutionProvider
+        if self.backend != "TensorrtExecutionProvider":
+            os.environ["ORT_TENSORRT_UNAVAILABLE"] = "1"
+
         # get quantization config file according to backend
         config_file = None
         if self.backend == "CPUExecutionProvider":
@@ -263,7 +267,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             except:
                 logging.warning(
                     "Fail to upgrade model opset_import to >= 15, "
-                    "please upgrate it manually to run with bf16 data type"
+                    "please upgrade it manually to run with bf16 data type"
                 )
                 exit(0)
 
@@ -700,9 +704,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         # typically, NLP models have multiple inputs,
         # and the dimension of each input is usually 2 (batch_size, max_seq_len)
         if not model.is_large_model:
-            sess = ort.InferenceSession(model.model.SerializeToString(), providers=ort.get_available_providers())
+            sess = ort.InferenceSession(model.model.SerializeToString(), providers=["CPUExecutionProvider"])
         elif model.model_path is not None:  # pragma: no cover
-            sess = ort.InferenceSession(model.model_path, providers=ort.get_available_providers())
+            sess = ort.InferenceSession(model.model_path, providers=["CPUExecutionProvider"])
         else:  # pragma: no cover
             assert False, "Please use model path instead of onnx model object to quantize."
         input_shape_lens = [len(input.shape) for input in sess.get_inputs()]
@@ -1083,26 +1087,30 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         ffn_matmul = []
         attention_matmul_optype = [node.op_type for node in attention_matmul]
-        # find matmul ops in feed forward network (FFN) structure whitch mainly in transfomers based NLP models
+        # find matmul ops in feed forward network (FFN) structure which mainly in transfomers based NLP models
         if len(attention_matmul) > 0 and "Attention" in attention_matmul_optype:
             # model is optimized and Attention is fused,
             # index of Attention is used as split to find FFN MatMul
             first_attention_index = attention_matmul_optype.index("Attention")
             attention_matmul_optype = attention_matmul_optype[first_attention_index:]
-            attention_matmul = attention_matmul[first_attention_index:]
             attention_index = list(np.where(np.array(attention_matmul_optype) == "Attention")[0])
             block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
-            for idx in range(len(attention_index)):
-                if idx != len(attention_index) - 1:
-                    index = attention_index[idx + 1]
-                    if index - 2 >= 0 and index - 1 >= 0:
-                        ffn_matmul.append([attention_matmul[index - 2], attention_matmul[index - 1]])
-                else:
-                    index = attention_index[idx]
-                    if index + block_len - 2 < len(attention_matmul) and index + block_len - 1 < len(attention_matmul):
-                        ffn_matmul.append(
-                            [attention_matmul[index + block_len - 2], attention_matmul[index + block_len - 1]]
-                        )
+            ffn_matmul = self.pre_optimized_model.find_ffn_matmul(
+                attention_index, attention_matmul[first_attention_index:], block_len
+            )
+
+            # in case there are unfused Attentions
+            qkv = self.pre_optimized_model.find_qkv_in_attention(find_all=True)
+            if len(qkv) != 0:
+                attention_starts = [nodes[0] for nodes in qkv]
+                attention_index = [
+                    np.where(np.array([n.name for n in attention_matmul]) == attention_start)[0].tolist()[0]
+                    for attention_start in attention_starts
+                ]
+                block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
+                for matmul in self.pre_optimized_model.find_ffn_matmul(attention_index, attention_matmul, block_len):
+                    if matmul not in ffn_matmul:
+                        ffn_matmul.append(matmul)
         else:
             # model is not optimized or Attention isn't fused,
             # query MatMul, key MatMul and value MatMul are used as split to find FFN MatMul
@@ -1114,19 +1122,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     for attention_start in attention_starts
                 ]
                 block_len = attention_index[1] - attention_index[0] if len(attention_index) > 2 else 4
-                for idx in range(len(attention_index)):
-                    if idx != len(attention_index) - 1:
-                        index = attention_index[idx + 1]
-                        if index - 2 >= 0 and index - 1 >= 0:
-                            ffn_matmul.append([attention_matmul[index - 2], attention_matmul[index - 1]])
-                    else:
-                        index = attention_index[idx]
-                        if index + block_len - 2 < len(attention_matmul) and index + block_len - 1 < len(
-                            attention_matmul
-                        ):
-                            ffn_matmul.append(
-                                [attention_matmul[index + block_len - 2], attention_matmul[index + block_len - 1]]
-                            )
+                ffn_matmul = self.pre_optimized_model.find_ffn_matmul(attention_index, attention_matmul, block_len)
 
         block_wise = []
         for block in reversed(ffn_matmul):
@@ -1287,12 +1283,12 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         Args:
             input_graph      : onnx model for evaluation
             dataloader       : dataloader for evaluation. neural_compressor.data.dataloader.ONNXDataLoader
-            postprocess      : post-process for evalution. neural_compressor.data.transform.ONNXTransforms
+            postprocess      : post-process for evaluation. neural_compressor.data.transform.ONNXTransforms
             metrics:         : metrics for evaluation. neural_compressor.metric.ONNXMetrics
             measurer         : neural_compressor.objective.Measurer
             iteration(int)   : max iterations of evaluaton.
-            tensorboard(bool): whether to use tensorboard for visualizaton
-            fp32_baseline (boolen, optional): only for compare_label=False pipeline
+            tensorboard(bool): whether to use tensorboard for visualization
+            fp32_baseline (boolean, optional): only for compare_label=False pipeline
 
         Returns:
             (float) evaluation results. acc, f1 e.g.
@@ -1466,7 +1462,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         model.save(os.path.join(path, "best_model.onnx"))
 
     def get_output_op_names(self, qmodel):
-        """Get the ouput ops' names."""
+        """Get the output ops' names."""
         outputs = qmodel.output()
         output_op_names = []
         for output in outputs:
@@ -1656,11 +1652,13 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         if "AWQ" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
 
-            auto_scale = self.recipes.get("awq_args", {}).get("auto_scale", True)
-            mse_range = self.recipes.get("awq_args", {}).get("mse_range", True)
+            enable_auto_scale = self.recipes.get("awq_args", {}).get("enable_auto_scale", True)
+            enable_mse_search = self.recipes.get("awq_args", {}).get("enable_mse_search", True)
             n_blocks = self.recipes.get("awq_args", {}).get("n_blocks", 5)
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
-            model = awq_quantize(model, quant_config, data_loader, calib_sampling_size, auto_scale, mse_range, n_blocks)
+            model = awq_quantize(
+                model, quant_config, data_loader, calib_sampling_size, enable_auto_scale, enable_mse_search, n_blocks
+            )
         elif "RTN" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
 
@@ -1950,7 +1948,7 @@ class ONNXRTQuery(QueryBackendCapability):
         return config
 
     def get_version(self):  # pragma: no cover
-        """Get the current backend version infomation.
+        """Get the current backend version information.
 
         Returns:
             [string]: version string.

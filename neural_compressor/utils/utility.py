@@ -449,7 +449,7 @@ class CaptureOutputToFile(object):
         self.tmp_file = open(tmp_file_path, "w")
 
     def __enter__(self):
-        """Duplicate the file desciptor to the stream."""
+        """Duplicate the file descriptor to the stream."""
         self.orig_stream_dup = os.dup(self.orig_stream_fileno)
         os.dup2(self.tmp_file.fileno(), self.orig_stream_fileno)
 

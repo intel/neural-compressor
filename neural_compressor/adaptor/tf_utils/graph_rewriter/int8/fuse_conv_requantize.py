@@ -65,7 +65,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
     ]
 
     def __init__(self, model, device="cpu", new_api=False):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()

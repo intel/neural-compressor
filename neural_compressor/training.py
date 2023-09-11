@@ -27,6 +27,7 @@ from neural_compressor.strategy.strategy import STRATEGIES
 
 from .adaptor import FRAMEWORKS
 from .compression.callbacks import DistillationCallbacks, PruningCallbacks, QuantizationAwareTrainingCallbacks
+from .compression.pruner import prepare_pruning
 from .config import _Config, options
 from .metric import register_customer_metric
 from .model.model import Model
@@ -35,7 +36,7 @@ from .utils.utility import time_limit
 
 
 class CompressionManager:
-    """CompressionManager is uesd in train loop for what user want to deal with additional.
+    """CompressionManager is used in train loop for what user want to deal with additional.
 
     Arguments:
         model: A model to be compressed.
@@ -223,7 +224,7 @@ def fit(compression_manager, train_func, eval_func=None, eval_dataloader=None, e
                                               The label should be able to take as input of
                                               supported metrics. If this parameter is
                                               not None, user needs to specify pre-defined
-                                              evaluation metrics object and should set "eval_func" paramter as None.
+                                              evaluation metrics object and should set "eval_func" parameter as None.
                                               Tuner will combine model, eval_dataloader
                                               and pre-defined metrics to run evaluation
                                               process.

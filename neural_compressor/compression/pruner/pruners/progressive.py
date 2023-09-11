@@ -52,7 +52,7 @@ class PytorchProgressivePruner(PytorchBasePruner):
         self.scheduler = get_scheduler(self.config)
         self.criterion = get_criterion(self.config, self.modules, self.pattern)
         self.reg = get_reg(self.config, self.modules, self.pattern)
-        # progressive pruning set up, including check up paramters.
+        # progressive pruning set up, including check up parameters.
         self.use_progressive = self.config["progressive"]
         # progressive parameters
         # dict passed to Pattern's functions
@@ -207,6 +207,11 @@ class PytorchProgressivePruner(PytorchBasePruner):
                 current_target_sparsity_ratio,
                 self.masks,
             )
+        self.masks = self.pattern.get_masks(
+            self.criterion.scores,
+            current_target_sparsity_ratio,
+            self.masks,
+        )
         self.progressive_masks = self.pattern.update_progressive_masks(
             self.pre_masks, self.masks, self.criterion.scores, 1, self.progressive_configs
         )
@@ -251,7 +256,7 @@ class PytorchProgressivePruner(PytorchBasePruner):
     def mask_weights_general(self, input_masks):
         """Apply input masks to corresponding modules' weights.
 
-        Weights are multipled with input_masks.
+        Weights are multiplied with input_masks.
 
         Args:
             input_masks: A dict {"module_name": Tensor} that stores the masks for modules' weights.

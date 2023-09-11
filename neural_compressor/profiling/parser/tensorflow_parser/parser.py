@@ -39,7 +39,7 @@ class TensorFlowProfilingParser(ProfilingParser):
         search = re.search(r"(\d+(\.\d+)?)\s*(\w+)", string_value)
 
         if not search:
-            raise Exception(f"Coud not parse {string_value}")
+            raise Exception(f"Could not parse {string_value}")
         value = round(float(search.group(1)), ROUND_PRECISION)
         unit = search.group(3)
 

@@ -30,7 +30,7 @@ class FuseDecomposedINOptimizer:  # pragma: no cover
     """Fuse decomposed small ops into InstanceNorm."""
 
     def __init__(self, input_graph_def):
-        """Initilization."""
+        """Initialization."""
         self.input_graph_def = input_graph_def
 
     @dump_elapsed_time("Pass FuseDecomposedINOptimizer")
@@ -48,7 +48,7 @@ class FuseDecomposedINOptimizer:  # pragma: no cover
         is only attempted if the input graph is in NHWC format or has no format set.
 
         The following pattern will be searched in the graph with additional
-        contraints. Here * means any type of op.
+        constraints. Here * means any type of op.
         clang-format off
                      Subgraph for fusion
                      -------------------

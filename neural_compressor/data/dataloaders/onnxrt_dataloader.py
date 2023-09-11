@@ -29,7 +29,7 @@ torch = LazyImport("torch")
 
 
 class ONNXRTBertDataLoader(DefaultDataLoader):  # pragma: no cover
-    """Built-in dataloader for onnx bert model and its varients."""
+    """Built-in dataloader for onnx bert model and its variants."""
 
     def _generate_dataloader(
         self,

@@ -112,7 +112,7 @@ def make_dquant_node(name, inputs, outputs, axis=None):
 
 
 def is_B_transposed(node):
-    """Wheter inuput B is transposed."""
+    """Whether inuput B is transposed."""
     transB = [attr for attr in node.attribute if attr.name == "transB"]
     if len(transB):
         return 0 < helper.get_attribute_value(transB[0])
@@ -178,16 +178,18 @@ def float_to_bfloat16(tensor):
     return tensor
 
 
-def cast_tensor(tensor, dtype):  # pragma: no cover
+def cast_tensor(tensor, dtype, is_large_model=False):  # pragma: no cover
     """Convert tensor float to target dtype.
 
     Args:
         tensor (TensorProto): TensorProto object
         dtype (int): target data type
+        is_large_model (bool): if is large model, make tensor with raw=True
     """
     if not isinstance(tensor, onnx_proto.TensorProto):
         raise ValueError("Expected input type is an ONNX TensorProto but got %s" % type(tensor))
 
+    new_tensor = None
     if tensor.data_type == onnx_proto.TensorProto.FLOAT:
         val = numpy_helper.to_array(tensor).copy()
         if dtype == "fp16":
@@ -196,21 +198,23 @@ def cast_tensor(tensor, dtype):  # pragma: no cover
             new_val = float_to_bfloat16(val)
         else:
             raise ValueError("Expect fp16 or bf16 but get {}.".format(dtype))
-        try:
+
+        if not is_large_model:
             new_tensor = helper.make_tensor(
-                name=tensor.name,
+                name=tensor.name + "_init_cast",
                 data_type=dtype_mapping[dtype],
                 dims=numpy_helper.to_array(tensor).shape if len(numpy_helper.to_array(tensor).shape) != 0 else [],
-                vals=new_val if len(numpy_helper.to_array(tensor)) != 0 else [numpy_helper.to_array(tensor)],
+                vals=new_val if len(numpy_helper.to_array(tensor).shape) != 0 else [numpy_helper.to_array(tensor)],
             )
-            tensor.CopyFrom(new_tensor)
-        except:
-            tensor.float_data[:] = []
-            tensor.int32_data[:] = []
-            tensor.raw_data = new_val.tostring()
-            tensor.data_type = dtype_mapping[dtype]
-        return True
-    return False
+        else:
+            new_tensor = helper.make_tensor(
+                name=tensor.name + "_init_cast",
+                data_type=dtype_mapping[dtype],
+                dims=numpy_helper.to_array(tensor).shape if len(numpy_helper.to_array(tensor).shape) != 0 else [],
+                vals=new_val.tostring(),
+                raw=True,
+            )
+    return new_tensor
 
 
 def remove_init_from_model_input(model):
@@ -320,7 +324,7 @@ def quantize_data(data, quantize_range, qType, scheme):
         - when data type == uint8 mode, from [rmin, rmax] -> [0, 2^{b-1}] and
         - when data type == int8, from [-m , m] -> [-(2^{b-1}-1), 2^{b-1}-1] where
             m = max(abs(rmin), abs(rmax))
-    and add necessary intermediate nodes to trasnform quantized weight to full weight
+    and add necessary intermediate nodes to transform quantized weight to full weight
     using the equation r = S(q-z), where
         r: real original value
         q: quantized value
@@ -404,7 +408,7 @@ class ValueInfo:  # pragma: no cover
 
 
 class QuantizedValue:
-    """Represents a linearly quantized value (input/output/intializer)."""
+    """Represents a linearly quantized value (input/output/initializer)."""
 
     def __init__(
         self,
@@ -539,7 +543,7 @@ def find_by_name(name, item_list):
     """Helper function to find item by name in a list."""
     items = []
     for item in item_list:
-        assert hasattr(item, "name"), "{} should have a 'name' atrribute defined".format(item)  # pragma: no cover
+        assert hasattr(item, "name"), "{} should have a 'name' attribute defined".format(item)  # pragma: no cover
         if item.name == name:
             items.append(item)
     if len(items) > 0:

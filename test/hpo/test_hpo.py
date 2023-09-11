@@ -49,9 +49,12 @@ class TestHPO(unittest.TestCase):
             searcher.suggest()
         hpo_config = HPOConfig(self.search_space, "bo")
         searcher = prepare_hpo(hpo_config)
-        for _ in range(10):
+        for _ in range(5):
             searcher.suggest()
             searcher.get_feedback(np.random.random())
+        for _ in range(5):
+            param = searcher.suggest()
+            searcher.feedback(param, np.random.random())
         hpo_config = HPOConfig(self.search_space, "xgb", higher_is_better=True, min_train_samples=3)
         searcher = prepare_hpo(hpo_config)
         for _ in range(5):
@@ -83,9 +86,10 @@ class TestHPO(unittest.TestCase):
 
         points = np.random.randn(5, 6)
         optimizer = SimulatedAnnealingOptimizer(T0=100, Tf=0, alpha=0.9, higher_is_better=True)
-        optimizer.gen_next_params(f, points)
+        result = optimizer.gen_next_params(f, points)
         optimizer = SimulatedAnnealingOptimizer(T0=1, Tf=0.01, alpha=None, higher_is_better=False)
-        optimizer.gen_next_params(f, points)
+        result2 = optimizer.gen_next_params(f, points)
+        self.assertTrue(len(result) == len(result2))
 
 
 if __name__ == "__main__":

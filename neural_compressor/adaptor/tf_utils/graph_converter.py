@@ -244,7 +244,12 @@ class GraphConverter:
                     # we should check and pair them
                     def check_shape(tensor, data):
                         # scalar or 1 dim default True
-                        if tensor.shape is None or len(tensor.shape.dims) == 1 or not hasattr(data, "shape"):
+                        if (
+                            tensor.shape is None
+                            or tensor.shape == tf.TensorShape(None)
+                            or len(tensor.shape.dims) == 1
+                            or not hasattr(data, "shape")
+                        ):
                             return True
                         tensor_shape = tuple(tensor.shape)
                         data_shape = tuple(data.shape)
@@ -377,7 +382,7 @@ class GraphConverter:
             self._tmp_model.input_tensor_names = self.input_tensor_names
 
     def convert(self):
-        """Do convertion.
+        """Do conversion.
 
         Including:
             1) optimize fp32_frozen_graph,
@@ -530,7 +535,7 @@ class GraphConverter:
                 output_tensor_names = copy.deepcopy(self.model.output_tensor_names)
                 sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
 
-                # TODO: this is a workaround to make Min/Max node be completly eliminated in int8 graph
+                # TODO: this is a workaround to make Min/Max node be completely eliminated in int8 graph
                 # after enabling pad+conv2d in new API.
                 non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
                 sampling_graph_def = FusePadWithFP32Conv2DOptimizer(
@@ -822,7 +827,7 @@ class GraphConverter:
         # Calibration using sampling model
         output_tensor_names = copy.deepcopy(self.model.output_tensor_names)
         sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
-        # TODO: this is a workaround to make Min/Max node be completly eliminated in int8 graph
+        # TODO: this is a workaround to make Min/Max node be completely eliminated in int8 graph
         # after enabling pad+conv2d in new API.
         non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
         sampling_graph_def = FusePadWithFP32Conv2DOptimizer(

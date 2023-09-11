@@ -50,7 +50,7 @@ except:
     from .schema_check import PrunerV2
 
     class WeightPruningConfig:
-        """Similiar to torch optimizer's interface."""
+        """Similar to torch optimizer's interface."""
 
         def __init__(
             self,
@@ -339,7 +339,7 @@ def process_weight_config(global_config, local_configs, default_config):
         check_config(default_all)
         pruner_info = DotDict(default_all)
         pruners_info.append(pruner_info)
-    else:  ##TODO need update, in this mode, we ingore the global op names
+    else:  ##TODO need update, in this mode, we ignore the global op names
         for pruner_info in local_configs:
             for key in default_config.keys():
                 ##pruner_info[key] = reset_none_to_default(pruner_info, key, global_config[key])
@@ -373,7 +373,7 @@ def process_yaml_config(global_config, local_configs, default_config):
         pruner_info = DotDict(default_all)
         pruners_info.append(pruner_info)
 
-    else:  ##TODO need update, in this mode, we ingore the global op names
+    else:  ##TODO need update, in this mode, we ignore the global op names
         for pruner in local_configs:
             for key in default_config.keys():
                 pruner_info = pruner.pruner_config

@@ -82,11 +82,11 @@ class DummyDataset(Dataset):
         if len(shape) == 0:
             logger.info("No data in the dummy dataset.")
         elif isinstance(shape, list):
-            # list tensor should same first demension n
+            # list tensor should same first dimension n
             n = shape[0][0]
             assert all(
                 isinstance(elem, tuple) and elem[0] == n for elem in shape
-            ), "each tensor shape should be tuple and same fisrt demension"
+            ), "each tensor shape should be tuple and same first dimension"
 
             if isinstance(low, list):
                 assert len(low) == len(shape) and all(

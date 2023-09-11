@@ -208,7 +208,7 @@ Training code and pretrained models are released at our [Detectron2 Fork](https:
   </tr>
 </table>
 
-All of results are reported on COCO-2017 validation dataset. The values with * demonstrate the mutli-scale testing performance on the test-dev2019.
+All of results are reported on COCO-2017 validation dataset. The values with * demonstrate the multi-scale testing performance on the test-dev2019.
 
 ## Panoptic Segmentation
 <table class="tg">

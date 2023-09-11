@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Client of gRPC frontend."""
 
 import argparse
@@ -113,7 +112,7 @@ def run_query_task_status(args):
 
 
 if __name__ == "__main__":
-    logger.info(f"Try to start gRPC server.")
+    logger.info("Try to start gRPC server.")
     """Parse the command line options."""
     parser = argparse.ArgumentParser(description="gRPC Client")
     subparsers = parser.add_subparsers(help="Action", dest="action")
@@ -127,7 +126,14 @@ if __name__ == "__main__":
     query_action_parser.set_defaults(func=run_query_task_result)
     query_action_parser.add_argument("--task_id", type=str, default=None, help="Query task by task id.")
 
+    parser.add_argument("--grpc_api_port", type=str, default=None, help="grpc server port.")
+    parser.add_argument("--result_monitor_port", type=str, default=None, help="result monitor port.")
+    parser.add_argument("--task_monitor_port", type=str, default=None, help="task monitor port.")
+
     args = parser.parse_args()
+    config.grpc_api_port = args.grpc_api_port
+    config.result_monitor_port = args.result_monitor_port
+    config.task_monitor_port = args.task_monitor_port
     args.func(args)
 
 # for test:

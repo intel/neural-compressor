@@ -171,7 +171,7 @@ class TestAugment(unittest.TestCase):
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
         added_node_names = ["Conv", "Clip", "MatMul"]
         added_outputs = ["A", "B", "C", "D", "E", "F"]
-        # Original 3 nodes (exlude graph input/output)
+        # Original 3 nodes (exclude graph input/output)
         self.assertEqual(len(augmented_model_node_names), 3)
         # Original 1 graph output + 5 intermediate outputs
         self.assertEqual(len(augmented_model_outputs), 6)

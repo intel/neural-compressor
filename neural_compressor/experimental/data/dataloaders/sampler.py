@@ -41,9 +41,9 @@ class Sampler(object):
 
 
 class IterableSampler(Sampler):
-    """Interally samples elements.
+    """Internally samples elements.
 
-    Used for datasets retrieved element by interator. Yield None to act as a placeholder for each iteration.
+    Used for datasets retrieved element by iterator. Yield None to act as a placeholder for each iteration.
     """
 
     def __init__(self, dataset):
