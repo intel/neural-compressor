@@ -24,6 +24,7 @@ class PyTorchModel(Model):
     """PyTorch Script Model class."""
 
     def get_model_graph(self) -> Graph:
+        """Get model summary."""
         graph_reader = PyTorchReader(self)
         return graph_reader.read()
 

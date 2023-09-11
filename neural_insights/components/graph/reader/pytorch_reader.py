@@ -30,6 +30,5 @@ class PyTorchReader:
 
     def read(self) -> Graph:
         """Read a graph."""
-
         graph = Graph()
         return graph
