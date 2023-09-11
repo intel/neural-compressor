@@ -56,7 +56,7 @@ def check_op_support_status():
     kwargs["block_size"] = 32
     node = onnx.helper.make_node(
         "MatMulWithQuantWeight",
-        inputs=["weight", "scale"],
+        inputs=["input", "weight", "scale"],
         outputs=["output"],
         name="test",
         domain="com.microsoft",
