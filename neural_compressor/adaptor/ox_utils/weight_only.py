@@ -39,19 +39,15 @@ WEIGHT_ONLY_OP_SUPPORTED = False
 
 
 def check_op_support_status():
-    """Check whether weight-only op is supported. """
+    """Check whether weight-only op is supported."""
     input_tensor = helper.make_tensor_value_info("input", 1, [1, 32])
     output_tensor = helper.make_tensor_value_info("output", 1, [1, 64])
     initializers = []
     # weight shape (32, 64)
     packed_weight = np.random.randint(0, high=16, size=(128, 1, 16), dtype="uint8")
-    initializers.append(
-        onnx.helper.make_tensor("weight", 2, packed_weight.shape, packed_weight.flatten().tolist())
-    )
-    scale = np.random.random((128, 1)).astype('float32')
-    initializers.append(
-        onnx.helper.make_tensor("scale", 1, scale.shape, scale.flatten().tolist())
-    )
+    initializers.append(onnx.helper.make_tensor("weight", 2, packed_weight.shape, packed_weight.flatten().tolist()))
+    scale = np.random.random((128, 1)).astype("float32")
+    initializers.append(onnx.helper.make_tensor("scale", 1, scale.shape, scale.flatten().tolist()))
 
     kwargs = {}
     kwargs["K"] = 32
@@ -75,6 +71,7 @@ def check_op_support_status():
         WEIGHT_ONLY_OP_SUPPORTED = True
     except:
         WEIGHT_ONLY_OP_SUPPORTED = False
+
 
 def make_matmul_weight_only_node(node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point):
     """Build MatMulWithQuantWeight node.
@@ -169,9 +166,7 @@ def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ra
             [float(i) / (maxq - minq) for i in (max_range[max_range > 0] * 2.0).flatten().tolist()], dtype="float32"
         )
         zero_point = (
-            np.zeros(scale.shape)
-            if dtype == "int"
-            else np.ones(rmax.shape, dtype="uint8") * (1 << (num_bits - 1))
+            np.zeros(scale.shape) if dtype == "int" else np.ones(rmax.shape, dtype="uint8") * (1 << (num_bits - 1))
         )
     else:
         scale = np.ones(rmax.shape, dtype="float32")
@@ -394,11 +389,13 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 weight = pad_tensor(weight, group_size, (org_w_shape[0] + group_size - 1) // group_size).T
 
                 if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:
-                    q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint") / np.expand_dims(scales, axis=-1)
+                    q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint") / np.expand_dims(
+                        scales, axis=-1
+                    )
                 else:
                     q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "int") / np.expand_dims(scales, axis=-1)
 
-                q_weight = np.reshape(q_weight, (org_w_shape[1], -1))[:, :org_w_shape[0]]
+                q_weight = np.reshape(q_weight, (org_w_shape[1], -1))[:, : org_w_shape[0]]
                 out = np.matmul(inp, q_weight.T)
                 loss += np.mean(np.power((org_out - out), 2))
 
