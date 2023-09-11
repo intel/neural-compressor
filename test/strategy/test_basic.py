@@ -154,6 +154,12 @@ class TestBasicTuningStrategy(unittest.TestCase):
             model = BertModel.from_pretrained(model_name)
             model.eval()
 
+            acc_res_lst = [1.0] + [0.9] * 7 + [1.1] * 3
+
+            def fake_eval(model):
+                res = acc_res_lst.pop(0)
+                return res
+
             # dataset and dataloader
             class DummyNLPDataloader(object):
                 def __init__(self, model_name):
@@ -172,7 +178,7 @@ class TestBasicTuningStrategy(unittest.TestCase):
             dataloader = DummyNLPDataloader(model_name)
             # tuning and accuracy criterion
             conf = PostTrainingQuantConfig(backend=backend)
-            q_model = fit(model=model, conf=conf, calib_dataloader=dataloader, eval_func=lambda model: 1)
+            q_model = fit(model=model, conf=conf, calib_dataloader=dataloader, eval_func=fake_eval)
             assert q_model is not None
 
 

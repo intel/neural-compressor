@@ -140,7 +140,6 @@ class BayesianTuneStrategy(TuneStrategy):
                 self.bayes_opt._space.register(params, self.last_tune_result[0])
             except KeyError:
                 logger.debug("Find registered params, skip it.")
-                pass
 
 
 # Util part
