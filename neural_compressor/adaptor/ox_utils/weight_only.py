@@ -35,6 +35,47 @@ ort = LazyImport("onnxruntime")
 logger = logging.getLogger("neural_compressor")
 
 
+WEIGHT_ONLY_OP_SUPPORTED = False
+
+
+def check_op_support_status():
+    """Check whether weight-only op is supported. """
+    input_tensor = helper.make_tensor_value_info("input", 1, [1, 32])
+    output_tensor = helper.make_tensor_value_info("output", 1, [1, 64])
+    initializers = []
+    # weight shape (32, 64)
+    packed_weight = np.random.randint(0, high=16, size=(128, 1, 16), dtype="uint8")
+    initializers.append(
+        onnx.helper.make_tensor("weight", 2, packed_weight.shape, packed_weight.flatten().tolist())
+    )
+    scale = np.random.random((128, 1)).astype('float32')
+    initializers.append(
+        onnx.helper.make_tensor("scale", 1, scale.shape, scale.flatten().tolist())
+    )
+
+    kwargs = {}
+    kwargs["K"] = 32
+    kwargs["N"] = 64
+    kwargs["bits"] = 4
+    kwargs["block_size"] = 32
+    node = onnx.helper.make_node(
+        "MatMulWithQuantWeight",
+        inputs=["weight", "scale"],
+        outputs=["output"],
+        name="test",
+        domain="com.microsoft",
+        **kwargs,
+    )
+
+    global WEIGHT_ONLY_OP_SUPPORTED
+    graph = helper.make_graph([node], "test", [input_tensor], [output_tensor], initializer=initializers)
+    model = helper.make_model(graph)
+    try:
+        ort.InferenceSession(model.SerializeToString(), providers=ort.get_all_providers())
+        WEIGHT_ONLY_OP_SUPPORTED = True
+    except:
+        WEIGHT_ONLY_OP_SUPPORTED = False
+
 def make_matmul_weight_only_node(node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point):
     """Build MatMulWithQuantWeight node.
 
@@ -54,11 +95,9 @@ def make_matmul_weight_only_node(node, weight_shape, num_bits, group_size, k_blo
     """
     blob_size = group_size // 2
     packed = np.zeros((q_weight.shape[0], blob_size), dtype="uint8")
-    for i in range(k_blocks):
-        for j in range(group_size):
-            idx = i * k_blocks + j
-            for k in range(0, group_size, 2):
-                packed[idx][k // 2] = q_weight[idx][k] | q_weight[idx][k + 1] << 4
+    for i in range(q_weight.shape[0]):
+        for k in range(0, group_size, 2):
+            packed[i][k // 2] = q_weight[i][k] | q_weight[i][k + 1] << 4
 
     packed = np.reshape(packed, (-1, k_blocks, blob_size))
     scale = np.reshape(scale, (-1, k_blocks)).astype("float32")
@@ -132,7 +171,7 @@ def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ra
         zero_point = (
             np.zeros(scale.shape)
             if dtype == "int"
-            else (np.ones(rmax.shape, dtype="uint8") * ((maxq - minq) / 2)).round()
+            else np.ones(rmax.shape, dtype="uint8") * (1 << (num_bits - 1))
         )
     else:
         scale = np.ones(rmax.shape, dtype="float32")
@@ -222,6 +261,7 @@ def rtn_quantize(
     Returns:
         model: fake quantized ONNXModel
     """
+    check_op_support_status()
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
     new_nodes = []
     remove_nodes = []
@@ -251,7 +291,7 @@ def rtn_quantize(
 
             weight = pad_tensor(weight, group_size, k_blocks)
 
-            if num_bits == 4 and group_size == 32:
+            if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:
                 # currently MatMulWithQuantWeights only support 4 bits and 32 group_size
                 q_weight, scale, zp = quant_tensor(
                     weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
@@ -353,10 +393,10 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 weight = weight.T * scales
                 weight = pad_tensor(weight, group_size, (org_w_shape[0] + group_size - 1) // group_size).T
 
-                if num_bits == 4 and group_size == 32:
-                    q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint") / scales
+                if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:
+                    q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint") / np.expand_dims(scales, axis=-1)
                 else:
-                    q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "int") / scales
+                    q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "int") / np.expand_dims(scales, axis=-1)
 
                 q_weight = np.reshape(q_weight, (org_w_shape[1], -1))[:, :org_w_shape[0]]
                 out = np.matmul(inp, q_weight.T)
@@ -384,16 +424,14 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             tensor = tensor.T * best_scale
             tensor = (tensor.T).astype("float32")
 
-            if init_share_num > 1:
-                new_tensor = onnx.helper.make_tensor(
-                    node.input[1] + "_with_scale", 1, tensor.shape, tensor.tostring(), raw=True
-                )
-                model.add_initializer(new_tensor)
-                node.input[1] = new_tensor.name
-            else:
-                model.set_initializer(node.input[1], tensor.astype("float32"), raw=True)
-                weight_tensor.name = weight_tensor.name + "_Q" + str(num_bits)
-                node.input[1] = weight_tensor.name
+            new_tensor = onnx.helper.make_tensor(
+                node.input[1] + "_Q" + str(num_bits), 1, tensor.shape, tensor.tostring(), raw=True
+            )
+            model.add_initializer(new_tensor)
+            node.input[1] = new_tensor.name
+
+            if init_share_num == 1:
+                model.remove_initializer(weight_tensor)
 
         parent = model.get_node(parent)
         if parent.name in updated_nodes:
@@ -508,7 +546,7 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
             for i_s in range(10):
                 ratio = 1 - i_s / 100
                 weight = copy.deepcopy(org_weight)
-                if num_bits == 4 and group_size == 32:
+                if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:
                     # currently MatMulWithQuantWeights only support 4 bits and 32 group_size
                     weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1))
                 else:
@@ -617,8 +655,10 @@ def awq_quantize(
     Returns:
         model: fake quantized ONNXModel
     """
+    check_op_support_status()
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
     output_dicts = {}
+    full_ratio = {}
 
     if enable_mse_search or enable_mse_search:
         absorb_pairs = model.get_absorb_pairs(["MatMul"])
@@ -656,7 +696,6 @@ def awq_quantize(
             else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=ort.get_available_providers())
         )
 
-        full_ratio = {}
         for idx, parent in enumerate(absorb_pairs):
             if (idx + 1) % num_block == 0 or (idx + 1) == len(absorb_pairs):
                 dump_pairs[parent] = absorb_pairs[parent]
@@ -830,7 +869,7 @@ def gptq(
             q = (scale * (np.clip(np.round(np.expand_dims(w, axis=1) / scale) + zp, 0, maxq) - zp)).flatten()
             Q1[i, :] = (
                 q
-                if not (num_bits == 4 and group_size == 32)
+                if not (check_op_support_status and num_bits == 4 and group_size == 32)
                 else np.clip(np.round(np.expand_dims(w, axis=1) / scale) + zp, 0, maxq).flatten()
             )
             Losses1[i, :] = (w - q) ** 2 / d**2
@@ -900,6 +939,7 @@ def gptq_quantize(
     Returns:
         model: fake quantized ONNXModel
     """
+    check_op_support_status()
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
     output_dicts = {}
     absorb_pairs = model.get_absorb_pairs(["MatMul"])
@@ -988,12 +1028,12 @@ def gptq_quantize(
                 percdamp=percdamp,
                 actorder=actorder,
                 mse=mse,
-                perchannel=False,
+                perchannel=perchannel,
             )
 
             weight_tensor = model.get_initializer(node.input[1])
             init_share_num = model.get_initializer_share_num(node.input[1])
-            if num_bits == 4 and group_size == 32 and perchannel == False:
+            if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32 and perchannel == False:
                 # currently MatMulWithQuantWeights only support 4 bits and 32 group_size
                 org_shape = weight.shape
                 k_blocks = (org_shape[0] + group_size - 1) // group_size
