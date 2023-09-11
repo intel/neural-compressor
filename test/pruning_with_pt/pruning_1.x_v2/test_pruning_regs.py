@@ -64,8 +64,8 @@ class TestPruningRegs(unittest.TestCase):
         prune.model = self.model
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
-        datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
+        datasets = Datasets("pytorch")
+        dummy_dataset = datasets["dummy"](shape=(10, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune.on_train_begin()
         prune.update_config(pruning_frequency=1)
@@ -84,16 +84,19 @@ class TestPruningRegs(unittest.TestCase):
                 prune.on_after_optimizer_step()
                 prune.on_step_end()
                 local_step += 1
-        
+
             prune.on_epoch_end()
-        elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv \
-            = prune.get_sparsity_ratio()
+        (
+            elementwise_over_matmul_gemm_conv,
+            elementwise_over_all,
+            blockwise_over_matmul_gemm_conv,
+        ) = prune.get_sparsity_ratio()
         prune.on_train_end()
         prune.on_before_eval()
         prune.on_after_eval()
 
         # assert sparsity ratio
-        self.assertAlmostEqual(elementwise_over_matmul_gemm_conv , 0.02244, delta=0.0001)
+        self.assertAlmostEqual(elementwise_over_matmul_gemm_conv, 0.02244, delta=0.0001)
         self.assertAlmostEqual(elementwise_over_all, 0.02242, delta=0.0001)
         self.assertAlmostEqual(blockwise_over_matmul_gemm_conv, 0.02244, delta=0.0001)
 
