@@ -58,9 +58,10 @@
     flex-direction: column;
     max-height: 90vh;
   }
-
+  
   .workloads-flex {
     display: flex;
+    flex-direction: column;
     overflow: auto;
   }
 
