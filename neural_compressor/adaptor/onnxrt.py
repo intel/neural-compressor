@@ -1642,7 +1642,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 model,
                 data_loader,
                 quant_config,
-                calib_sampling_size,
+                n_samples=calib_sampling_size,
                 percdamp=percdamp,
                 blocksize=blocksize,
                 actorder=actorder,
