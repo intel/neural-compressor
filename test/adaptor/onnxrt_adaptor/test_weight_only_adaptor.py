@@ -19,7 +19,7 @@ def Inference(model, data):
 
 class DummyNLPDataloader(object):
     def __init__(self, model_name):
-        self.tokenizer = AutoTokenizer.from_pretrained("gptj")
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.sequence_a = "intel-extension-for-transformers is based in SH"
         self.sequence_b = "Where is intel-extension-for-transformers based? NYC or SH"
         self.encoded_dict = self.tokenizer(self.sequence_a, self.sequence_b, return_tensors="pt")
