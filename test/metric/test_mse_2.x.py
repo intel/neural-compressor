@@ -5,6 +5,8 @@ import unittest
 
 import numpy as np
 
+from neural_solution.utils import logger
+
 
 def build_fake_model():
     import tensorflow as tf
@@ -39,6 +41,7 @@ def build_fake_model():
         graph_def.ParseFromString(constant_graph.SerializeToString())
         with graph.as_default():
             tf.import_graph_def(graph_def, name="")
+    logger.info("Created model graph.")
     return graph
 
 
@@ -63,6 +66,7 @@ def build_ox_model():
         output_names=["output"],
         dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
     )
+    logger.info("Created onnx model.")
 
 
 class dataset:
@@ -83,8 +87,9 @@ class dataset:
 class TestMetric(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        self.constant_graph = build_fake_model()
         build_ox_model()
+        self.constant_graph = None
+        pass
 
     @classmethod
     def tearDownClass(self):
@@ -92,7 +97,11 @@ class TestMetric(unittest.TestCase):
         shutil.rmtree("nc_workspace", ignore_errors=True)
         shutil.rmtree("saved", ignore_errors=True)
 
-    def _test_tf_model_helper(self, config, eval_func):
+    def _get_tf_model(self):
+        self.constant_graph = self.constant_graph or build_fake_model()
+        return self.constant_graph
+
+    def _test_tf_model_helper(self, config, eval_func=None, eval_metric=None, eval_dataloader=None):
         from neural_compressor.data import DATALOADERS, Datasets
         from neural_compressor.quantization import fit
 
@@ -100,7 +109,14 @@ class TestMetric(unittest.TestCase):
         dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS["tensorflow"](dataset)
 
-        q_model = fit(model=self.constant_graph, conf=config, calib_dataloader=dataloader, eval_func=eval_func)
+        q_model = fit(
+            model=self._get_tf_model(),
+            conf=config,
+            calib_dataloader=dataloader,
+            eval_func=eval_func,
+            eval_dataloader=eval_dataloader,
+            eval_metric=eval_metric,
+        )
         return q_model
 
     def test_run_mse_one_trial(self):
@@ -108,7 +124,7 @@ class TestMetric(unittest.TestCase):
 
         tuning_criterion = TuningCriterion(strategy="mse")
         config = PostTrainingQuantConfig(tuning_criterion=tuning_criterion)
-        q_model = self._test_tf_model_helper(config, lambda mode: 1)
+        q_model = self._test_tf_model_helper(config, eval_func=lambda mode: 1)
         self.assertIsNotNone(q_model)
 
     def test_run_mse_max_trials(self):
@@ -117,7 +133,7 @@ class TestMetric(unittest.TestCase):
         tuning_criterion = TuningCriterion(strategy="mse", max_trials=5)
         accuracy_criterion = AccuracyCriterion(tolerable_loss=-0.01)
         config = PostTrainingQuantConfig(tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion)
-        q_model = self._test_tf_model_helper(config, lambda mode: 1)
+        q_model = self._test_tf_model_helper(config, eval_func=lambda mode: 1)
         self.assertIsNone(q_model)
 
     def test_run_rmse_metric(self):
@@ -126,17 +142,16 @@ class TestMetric(unittest.TestCase):
         from neural_compressor.metric import METRICS
         from neural_compressor.quantization import fit
 
+        tuning_criterion = TuningCriterion(strategy="mse", max_trials=5)
+        accuracy_criterion = AccuracyCriterion(tolerable_loss=-0.9)
+        config = PostTrainingQuantConfig(tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion)
+        metric = {"topk": 1, "MSE": {"compare_label": False}}
+
         # dataset and dataloader
         dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS["tensorflow"](dataset)
-        metrics = METRICS("tensorflow")
-        rmse = metrics["RMSE"]()
 
-        tuning_criterion = TuningCriterion(strategy="mse", max_trials=5)
-        accuracy_criterion = AccuracyCriterion(tolerable_loss=-1)
-        config = PostTrainingQuantConfig(tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion)
-
-        q_model = fit(model=self.constant_graph, conf=config, calib_dataloader=dataloader, eval_metric=rmse)
+        q_model = self._test_tf_model_helper(config, eval_dataloader=dataloader, eval_metric=metric)
         self.assertIsNone(q_model)
 
     def _test_ort_model_helper(self, config, eval_func):
