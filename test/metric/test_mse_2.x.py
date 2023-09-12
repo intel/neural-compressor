@@ -89,7 +89,6 @@ class TestMetric(unittest.TestCase):
     def setUpClass(self):
         build_ox_model()
         self.constant_graph = None
-        pass
 
     @classmethod
     def tearDownClass(self):
