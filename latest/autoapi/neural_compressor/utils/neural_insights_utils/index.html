@@ -104,11 +104,14 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.neural_insights_utils.update_neural_insights_workload_accuracy_data" title="neural_compressor.utils.neural_insights_utils.update_neural_insights_workload_accuracy_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_neural_insights_workload_accuracy_data</span></code></a>(→ None)</p></td>
 <td><p>Update accuracy data of specific workload.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.neural_insights_utils.get_model_path" title="neural_compressor.utils.neural_insights_utils.get_model_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_model_path</span></code></a>(→ Any)</p></td>
+<td><p>Get model path.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.utils.neural_insights_utils.register_neural_insights_workload">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.neural_insights_utils.</span></span><span class="sig-name descname"><span class="pre">register_neural_insights_workload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workload_location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workload_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/neural_insights_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.neural_insights_utils.register_neural_insights_workload" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.neural_insights_utils.</span></span><span class="sig-name descname"><span class="pre">register_neural_insights_workload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workload_location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workload_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workload_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/neural_insights_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.neural_insights_utils.register_neural_insights_workload" title="Permalink to this definition"></a></dt>
 <dd><p>Register workload to Neural Insights.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -116,6 +119,7 @@
 <li><p><strong>workload_location</strong> – path to workload directory</p></li>
 <li><p><strong>model</strong> – Neural Compressor’s model instance to be registered</p></li>
 <li><p><strong>workload_mode</strong> – workload mode</p></li>
+<li><p><strong>workload_name</strong> – Name of the workload</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -159,6 +163,12 @@
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.neural_insights_utils.get_model_path">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.neural_insights_utils.</span></span><span class="sig-name descname"><span class="pre">get_model_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workload_location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/neural_insights_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.neural_insights_utils.get_model_path" title="Permalink to this definition"></a></dt>
+<dd><p>Get model path.</p>
+</dd></dl>
+
 </section>
 </section>
 </section>
@@ -177,7 +187,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fb740be2560> 
+   <jinja2.runtime.BlockReference object at 0x7eff95905cf0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

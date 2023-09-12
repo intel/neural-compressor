@@ -21,16 +21,18 @@ Functions
    neural_compressor.utils.neural_insights_utils.register_neural_insights_workload
    neural_compressor.utils.neural_insights_utils.update_neural_insights_workload
    neural_compressor.utils.neural_insights_utils.update_neural_insights_workload_accuracy_data
+   neural_compressor.utils.neural_insights_utils.get_model_path
 
 
 
-.. py:function:: register_neural_insights_workload(workload_location: str, model: Any, workload_mode: str) -> Optional[str]
+.. py:function:: register_neural_insights_workload(workload_location: str, model: Any, workload_mode: str, workload_name: str) -> Optional[str]
 
    Register workload to Neural Insights.
 
    :param workload_location: path to workload directory
    :param model: Neural Compressor's model instance to be registered
    :param workload_mode: workload mode
+   :param workload_name: Name of the workload
 
    :returns: String with Neural Insight workload UUID if registered else None
 
@@ -54,5 +56,10 @@ Functions
    :param optimized_accuracy: accuracy of optimized model
 
    :returns: None
+
+
+.. py:function:: get_model_path(model: Any, workload_location: str) -> Any
+
+   Get model path.
 
 
