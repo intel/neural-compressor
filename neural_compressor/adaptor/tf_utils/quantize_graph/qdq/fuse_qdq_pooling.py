@@ -20,24 +20,27 @@ import tensorflow as tf
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
-from ..quantize_graph_base import QuantizeNodeBase
 from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
-from neural_compressor.adaptor.tf_utils.util import version1_gt_version2, version1_lt_version2, version1_eq_version2
+from neural_compressor.adaptor.tf_utils.util import version1_eq_version2, version1_gt_version2, version1_lt_version2
+
+from ..quantize_graph_base import QuantizeNodeBase
+
 
 class FuseNodeStartWithPooling(QuantizeNodeBase):
     """Quantize the AvgPool and MaxPool."""
 
     def __init__(self, **kwargs):
-        """Initilization."""
+        """Initialization."""
         super().__init__(**kwargs)
-        self.sorted_patterns = sorted(self.patterns,
-                                      key=lambda i: len(i),
-                                      reverse=True)
+        self.sorted_patterns = sorted(self.patterns, key=lambda i: len(i), reverse=True)
 
     def _add_pool_function(self, original_node, quantized_op_node):
         """Set quantized pooling node attributes."""
-        pooling_type = dtypes.quint8 if version1_lt_version2(tf.version.VERSION, '2.6.0') or \
-            self._find_relu_node(original_node) else dtypes.qint8
+        pooling_type = (
+            dtypes.quint8
+            if version1_lt_version2(tf.version.VERSION, "2.6.0") or self._find_relu_node(original_node)
+            else dtypes.qint8
+        )
         helper.set_attr_dtype(quantized_op_node, "T", pooling_type)
         helper.copy_attr(quantized_op_node, "ksize", original_node.attr["ksize"])
         helper.copy_attr(quantized_op_node, "strides", original_node.attr["strides"])
@@ -74,7 +77,8 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
                 self.add_output_graph_node(quantized_pool_node)
                 deq_type = dtypes.quint8 if self._find_relu_node(node) else dtypes.qint8
                 self._intel_cpu_add_dequantize_result_node(
-                    quantized_op_name, node.name, dtype=deq_type, performance_only=self.performance_only)
+                    quantized_op_name, node.name, dtype=deq_type, performance_only=self.performance_only
+                )
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -87,8 +91,7 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
 
         for k, v in enumerate(self.op_list):
             if v in set(fusion[1] for fusion in self.sorted_patterns):
-                cur_node = self.node_name_mapping[list(
-                    self.node_name_mapping.keys())[k]].node
+                cur_node = self.node_name_mapping[list(self.node_name_mapping.keys())[k]].node
 
                 if cur_node.name != self.start_node_name:
                     continue
@@ -110,12 +113,14 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
         self._get_op_list()
         matched_rule, matched_node_name = self.get_longest_fuse()
         if matched_node_name:
-            fusion_name = ''.join(matched_rule)
-            if fusion_name == "DequantizeMaxPoolQuantizeV2" or \
-               fusion_name == "DequantizeMaxPool3DQuantizeV2" or \
-               fusion_name == "DequantizeAvgPoolQuantizeV2":
+            fusion_name = "".join(matched_rule)
+            if (
+                fusion_name == "DequantizeMaxPoolQuantizeV2"
+                or fusion_name == "DequantizeMaxPool3DQuantizeV2"
+                or fusion_name == "DequantizeAvgPoolQuantizeV2"
+            ):
                 self._apply_pool_quantization(matched_node_name)
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 self.logger.info("Unknown fusion pattern {}.".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)

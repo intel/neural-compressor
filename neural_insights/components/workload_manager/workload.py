@@ -16,10 +16,10 @@
 
 import os
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 from uuid import uuid4
 
-from neural_insights.utils.consts import WorkloadModes, Frameworks, WorkloadStatus
+from neural_insights.utils.consts import Frameworks, WorkloadModes, WorkloadStatus
 from neural_insights.utils.exceptions import InternalException
 from neural_insights.utils.json_serializer import JsonSerializer
 from neural_insights.utils.utils import get_framework_from_path
@@ -38,6 +38,7 @@ class Workload(JsonSerializer):
         self.workload_location: str = data.get("workload_location", None)
 
         mode = data.get("mode")
+        self.workload_name = data.get("workload_name", mode)
         if not isinstance(mode, WorkloadModes) and isinstance(mode, str):
             mode = WorkloadModes(mode)
         self.mode: WorkloadModes = mode
@@ -57,6 +58,8 @@ class Workload(JsonSerializer):
                 framework = Frameworks(framework)
         self.framework: Optional[Frameworks] = framework
 
+        self.model_summary_file = data.get("model_summary_file", None)
+
     @property
     def model_path(self) -> str:
         """Get model_path."""
@@ -73,10 +76,12 @@ class Workload(JsonSerializer):
         """Serialize Workload class."""
         return {
             "uuid": self.uuid,
+            "workload_name": self.workload_name,
             "framework": self.framework.value,
             "workload_location": self.workload_location,
             "mode": self.mode.value,
             "model_path": self.model_path,
+            "model_summary_file": self.model_summary_file,
             "status": self.status.value,
             "creation_time": self.creation_time,
         }

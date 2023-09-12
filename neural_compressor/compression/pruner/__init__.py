@@ -1,4 +1,4 @@
-"""pruning init."""
+"""Pruning init."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -23,11 +23,9 @@ from .pruning import PRUNINGS
 from .utils import process_config, torch, logger
 from typing import Optional, Union
 
-FRAMEWORK = {
-    'pytorch': 'pt',
-    'keras': 'keras'
-}
-        
+FRAMEWORK = {"pytorch": "pt", "keras": "keras"}
+
+
 def _register_on_step_begin(model):
     """Mount on_step_begin to the model.
 
@@ -42,6 +40,7 @@ def _register_on_step_begin(model):
     hook_handle = model.register_forward_pre_hook(hook)
     return hook_handle
 
+
 # def _register_on_step_end(model: torch.nn.Module):
 #     """Mount on_step_end to the model.
 
@@ -53,7 +52,8 @@ def _register_on_step_begin(model):
 #             pruning.on_step_end()
 #     hook_handle = model.register_backward_hook(hook)
 #     return hook_handle
-    
+
+
 def _rewrite_optimizer_step(opt):
     """Mount on_before/after_optimizer_step to optimizer.
 
@@ -74,23 +74,19 @@ def _rewrite_optimizer_step(opt):
             for pruning in self.prunings:
                 pruning.on_after_optimizer_step()
         return res
-    
+
     if not isinstance(opt, torch.optim.Optimizer):
         logger.error("User optimizer should be a torch.optim.Optimizer object")
-        
+
     opt.orig_step = opt.step
     import types
+
     opt.step = types.MethodType(new_step, opt)
-        
+
     return opt
 
-def save(
-        obj: object,
-        f,
-        pickle_module=None,
-        pickle_protocol=None,
-        _use_new_zipfile_serialization=None
-):
+
+def save(obj: object, f, pickle_module=None, pickle_protocol=None, _use_new_zipfile_serialization=None):
     """A rewrite function for torch save.
 
     :param obj:
@@ -101,12 +97,12 @@ def save(
     :return:
     """
     params = {}
-    if pickle_module != None:
-        params['pickle_module'] = pickle_module
-    if pickle_protocol != None:
-        params['pickle_protocol'] = pickle_protocol
-    if _use_new_zipfile_serialization != None:
-        params['_use_new_zipfile_serialization'] = _use_new_zipfile_serialization
+    if pickle_module is not None:
+        params["pickle_module"] = pickle_module
+    if pickle_protocol is not None:
+        params["pickle_protocol"] = pickle_protocol
+    if _use_new_zipfile_serialization is not None:
+        params["_use_new_zipfile_serialization"] = _use_new_zipfile_serialization
 
     if isinstance(obj, torch.nn.Module) and hasattr(obj, "prunings"):
         prunings = obj.prunings
@@ -143,6 +139,7 @@ def save(
     else:
         torch.orig_save(obj, f)
 
+
 def _prepare_hooks(model, pruning_list, opt=None):
     """Wrapper the model and optimizer to support all the pruning functionality.
 
@@ -154,14 +151,15 @@ def _prepare_hooks(model, pruning_list, opt=None):
     if opt is not None:
         opt.prunings = pruning_list
         _rewrite_optimizer_step(opt)
-    
+
     # Register automated hooks
     inc_hook_handle = _register_on_step_begin(model)
     model.inc_hook_handle = inc_hook_handle
     # Rewrite torch save
     torch.orig_save = torch.save
-    setattr(torch, 'save', save)
-    
+    setattr(torch, "save", save)
+
+
 # def complete_pruning(model: torch.nn.Module, opt: torch.optim):
 #     """UnWrapper the model and optimizer
 #     :param model: the modified model
@@ -181,8 +179,10 @@ def _prepare_hooks(model, pruning_list, opt=None):
 #     delattr(opt, "orig_step")
 #     return model, opt
 
-def prepare_pruning(config, model, optimizer=None, dataloader=None,
-                    loss_func=None, framework='pytorch', device: str=None):
+
+def prepare_pruning(
+    model, config, optimizer=None, dataloader=None, loss_func=None, framework="pytorch", device: str = None
+):
     """Get registered pruning class, wrapper the model and optimizer to support all the pruning functionality.
 
     Get a pruning object from PRUNINGS.
@@ -194,44 +194,41 @@ def prepare_pruning(config, model, optimizer=None, dataloader=None,
     Returns:
         A pruning object.
 
-    Raises: AssertionError: Cuurently only support prunings that have been registered in PRUNINGS.
+    Raises: AssertionError: Currently only support prunings that have been registered in PRUNINGS.
     """
 
     # assert framework in FRAMEWORK.keys(), \
     #         f"does not support {framework}, currently only support framework: {FRAMEWORK.keys()}"
-    assert framework=='pytorch', f"The Automation API currently only supports the 'pytorch' framework, " \
-                f"but the framework given is: {framework}"
+    assert framework == "pytorch", (
+        f"The Automation API currently only supports the 'pytorch' framework, "
+        f"but the framework given is: {framework}"
+    )
     pruning_list = []
     pruning_conf = process_config(config)
     if optimizer is not None:
         basic_conf = []
         for pruner_info in pruning_conf:
-            if 'gpt' in pruner_info["pruning_type"] or 'retrain' in pruner_info["pruning_type"]:
+            if "gpt" in pruner_info["pruning_type"] or "retrain" in pruner_info["pruning_type"]:
                 continue
             basic_conf.append(pruner_info)
-        pruning_list.append(PRUNINGS['basic_pruning'](basic_conf, model, optimizer))
+        pruning_list.append(PRUNINGS["basic_pruning"](basic_conf, model, optimizer))
         _prepare_hooks(model, pruning_list, opt=optimizer)
     if dataloader is not None:
         # The pruning will be done at initialization time, without inserting any hooks.
         sparse_gpt_conf = []
         retrain_free_conf = []
         for pruner_info in pruning_conf:
-            if 'gpt' in pruner_info["pruning_type"]:
+            if "gpt" in pruner_info["pruning_type"]:
                 sparse_gpt_conf.append(pruner_info)
-            elif 'retrain' in pruner_info["pruning_type"]:
+            elif "retrain" in pruner_info["pruning_type"]:
                 retrain_free_conf.append(pruner_info)
         if len(sparse_gpt_conf) > 0:
-            pruning_list.append(PRUNINGS['sparse_gpt_pruning'](sparse_gpt_conf, model,
-                                                               dataloader, loss_func, device))
+            pruning_list.append(PRUNINGS["sparse_gpt_pruning"](sparse_gpt_conf, model, dataloader, loss_func, device))
         if len(retrain_free_conf) > 0:
-            pruning_list.append(PRUNINGS['retrain_free_pruning'](retrain_free_conf,
-                                                                 model, dataloader, loss_func))
-    
-    assert len(pruning_list) >= 1, f"The pruning config is not standardized and cannot be initialized properly."
+            pruning_list.append(PRUNINGS["retrain_free_pruning"](retrain_free_conf, model, dataloader, loss_func))
+
+    assert len(pruning_list) >= 1, "The pruning config is not standardized and cannot be initialized properly."
     if len(pruning_list) > 1:
-        logger.info(f"Note that more than two pruning algorithms are currently used.")
+        logger.info("Note that more than two pruning algorithms are currently used.")
         return pruning_list
     return pruning_list[0]
-    
-    
-

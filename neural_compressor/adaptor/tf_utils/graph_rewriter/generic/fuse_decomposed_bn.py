@@ -21,24 +21,21 @@ import math
 import re
 
 import numpy as np
-
-from tensorflow.core.framework import attr_value_pb2
-from tensorflow.core.framework import graph_pb2
-from tensorflow.core.framework import node_def_pb2
-from tensorflow.python.framework import dtypes
 from tensorflow.compat.v1 import graph_util
-from tensorflow.python.framework import tensor_util
+from tensorflow.core.framework import attr_value_pb2, graph_pb2, node_def_pb2
+from tensorflow.python.framework import dtypes, tensor_util
 from tensorflow.python.platform import flags as flags_lib
 from tensorflow.python.platform import tf_logging
 from tensorflow.python.tools import strip_unused_lib
 
 from neural_compressor.utils.utility import dump_elapsed_time
 
-class FuseDecomposedBNOptimizer():
+
+class FuseDecomposedBNOptimizer:
     """Fuse decomposed small ops to BatchNormalization."""
 
     def __init__(self, input_graph_def):
-        """Initilization."""
+        """Initialization."""
         self.input_graph_def = input_graph_def
 
     @dump_elapsed_time("Pass FuseDecomposedBNOptimizer")
@@ -149,8 +146,7 @@ class FuseDecomposedBNOptimizer():
             if "data_format" in node.attr.keys():
                 data_format = node.attr["data_format"]
             if data_format is not None and data_format.s != b"NHWC":
-                tf_logging.warn("%s in %s format, not candidate for batchnorm fusion."
-                            % (node.name, data_format.s))
+                tf_logging.warn("%s in %s format, not candidate for batchnorm fusion." % (node.name, data_format.s))
                 return self.input_graph_def
             else:
                 continue
@@ -177,21 +173,21 @@ class FuseDecomposedBNOptimizer():
             # Mul (input, Mul)
             input_data_op = node_from_map(input_node_map, data_scale_mul_op.input[0])
             # Workaround for model ava-person-vehicle-detection-stage2-2_0_0
-            # FusedBatchNorm requires a 4D Tensor for input data, 
+            # FusedBatchNorm requires a 4D Tensor for input data,
             # but the MatMul before FusedBatchNorm only support 2D output.
             # Don't fuse the small ops to FusedBatchNorm when the upstream has MatMul.
-            if input_data_op.op == 'MatMul':
+            if input_data_op.op == "MatMul":
                 continue
-            
+
             # Workaround for DIEN_Deep-Interest-Evolution-Network
-            if input_data_op.op == 'ConcatV2' and input_data_op.name == 'concat_8':
+            if input_data_op.op == "ConcatV2" and input_data_op.name == "concat_8":
                 continue
-            
+
             if input_data_op.input:
                 ancestor_input_data_op = node_from_map(input_node_map, input_data_op.input[0])
                 if ancestor_input_data_op.op == "MatMul":
                     continue
-            
+
             scale_op = node_from_map(input_node_map, data_scale_mul_op.input[1])
 
             if scale_op.op == "Rsqrt":
@@ -201,8 +197,7 @@ class FuseDecomposedBNOptimizer():
             elif scale_op.op == "Mul":
                 # Mul (Rsqrt, Constant_gamma)
                 rsqrt_op = node_from_map(input_node_map, scale_op.input[0])
-                gamma_op, gamma_reshape_op = bypass_reshape(input_node_map,
-                                                            scale_op.input[1])
+                gamma_op, gamma_reshape_op = bypass_reshape(input_node_map, scale_op.input[1])
                 if rsqrt_op.op != "Rsqrt":
                     continue
                 if gamma_op.op != "Const" or get_const_dim_count(gamma_op) != 1:
@@ -211,21 +206,18 @@ class FuseDecomposedBNOptimizer():
                 continue
 
             # Sub (Constant_beta, Mul)
-            beta_op, beta_reshape_op = bypass_reshape(input_node_map,
-                                                    bias_mean_sub_op.input[0])
+            beta_op, beta_reshape_op = bypass_reshape(input_node_map, bias_mean_sub_op.input[0])
             mean_scale_mul_op = node_from_map(input_node_map, bias_mean_sub_op.input[1])
             if mean_scale_mul_op.op != "Mul":
                 continue
             if beta_op.op != "Const" or get_const_dim_count(beta_op) != 1:
                 continue
 
-        # Common scale applies to both input and running mean
-            if scale_op != node_from_map(input_node_map,
-                                        mean_scale_mul_op.input[1]):
+            # Common scale applies to both input and running mean
+            if scale_op != node_from_map(input_node_map, mean_scale_mul_op.input[1]):
                 continue
 
-            mean_op, mean_reshape_op = bypass_reshape(input_node_map,
-                                                    mean_scale_mul_op.input[0])
+            mean_op, mean_reshape_op = bypass_reshape(input_node_map, mean_scale_mul_op.input[0])
             if mean_op.op != "Const" or get_const_dim_count(mean_op) != 1:
                 continue
 
@@ -234,10 +226,8 @@ class FuseDecomposedBNOptimizer():
             if variance_epsilon_add_op.op != "Add":
                 continue
 
-            variance_op, variance_reshape_op = bypass_reshape(
-                input_node_map, variance_epsilon_add_op.input[0])
-            epsilon_op = node_from_map(input_node_map,
-                                    variance_epsilon_add_op.input[1])
+            variance_op, variance_reshape_op = bypass_reshape(input_node_map, variance_epsilon_add_op.input[0])
+            epsilon_op = node_from_map(input_node_map, variance_epsilon_add_op.input[1])
             if epsilon_op.op != "Const" or get_const_dim_count(epsilon_op) != 0:
                 continue
             if variance_op.op != "Const" or get_const_dim_count(variance_op) != 1:
@@ -274,24 +264,25 @@ class FuseDecomposedBNOptimizer():
                 gamma_op.attr["dtype"].CopyFrom(beta_op.attr["dtype"])
                 beta_value = values_from_const(beta_op)
                 gamma_op.attr["value"].CopyFrom(
-                    attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
-                    1, beta_value.dtype.type, beta_value.shape,
-                    allow_broadcast=True)))
+                    attr_value_pb2.AttrValue(
+                        tensor=tensor_util.make_tensor_proto(
+                            1, beta_value.dtype.type, beta_value.shape, allow_broadcast=True
+                        )
+                    )
+                )
                 new_ops.append(gamma_op)
 
             new_fused_batchnorm_op = node_def_pb2.NodeDef()
             new_fused_batchnorm_op.op = "FusedBatchNorm"
             new_fused_batchnorm_op.name = node.name
             new_fused_batchnorm_op.attr["T"].CopyFrom(node.attr["T"])
-            new_fused_batchnorm_op.attr["is_training"].CopyFrom(
-                attr_value_pb2.AttrValue(b=False))
-            new_fused_batchnorm_op.attr["epsilon"].CopyFrom(
-                attr_value_pb2.AttrValue(f=epsilon.tolist()))
+            new_fused_batchnorm_op.attr["is_training"].CopyFrom(attr_value_pb2.AttrValue(b=False))
+            new_fused_batchnorm_op.attr["epsilon"].CopyFrom(attr_value_pb2.AttrValue(f=epsilon.tolist()))
             if data_format is not None:
                 new_fused_batchnorm_op.attr["data_format"].CopyFrom(data_format)
-            new_fused_batchnorm_op.input.extend([input_data_op.name, gamma_op.name,
-                                                beta_op.name, mean_op.name,
-                                                variance_op.name])
+            new_fused_batchnorm_op.input.extend(
+                [input_data_op.name, gamma_op.name, beta_op.name, mean_op.name, variance_op.name]
+            )
 
             new_ops.append(new_fused_batchnorm_op)
 
@@ -312,6 +303,7 @@ class FuseDecomposedBNOptimizer():
         result_graph_def.versions.CopyFrom(self.input_graph_def.versions)
         return result_graph_def
 
+
 def node_name_from_input(node_name):
     """Strips off ports and other decorations to get the underlying node name."""
     if node_name.startswith("^"):
@@ -320,6 +312,7 @@ def node_name_from_input(node_name):
     if m:
         node_name = m.group(1)
     return node_name
+
 
 def node_from_map(node_map, name):
     """Pulls a node def from a dictionary for a given name.
@@ -339,6 +332,7 @@ def node_from_map(node_map, name):
         raise ValueError("No node named '%s' found in map." % name)
     return node_map[stripped_name]
 
+
 def values_from_const(node_def):
     """Extracts the values from a const NodeDef as a numpy ndarray.
 
@@ -352,30 +346,28 @@ def values_from_const(node_def):
         ValueError: If the node isn't a Const.
     """
     if node_def.op != "Const":
-        raise ValueError(
-            "Can not extract constant value from a node that is not Const. Got:\n"
-            f"{node_def}")
+        raise ValueError("Can not extract constant value from a node that is not Const. Got:\n" f"{node_def}")
     input_tensor = node_def.attr["value"].tensor
     tensor_value = tensor_util.MakeNdarray(input_tensor)
     return tensor_value
 
+
 def valid_reshape_inputs(reshape_in0_ndef, reshape_in1_ndef):
     """Check if the inputs of the Reshape are valid."""
-    if reshape_in0_ndef.op != "Const" or reshape_in1_ndef.op != "Const" \
-    or get_const_dim_count(reshape_in0_ndef) != 1:
+    if reshape_in0_ndef.op != "Const" or reshape_in1_ndef.op != "Const" or get_const_dim_count(reshape_in0_ndef) != 1:
         return False
     input0_vec_size = values_from_const(reshape_in0_ndef).shape[0]
     const_value = values_from_const(reshape_in1_ndef)
     shape_ndims = const_value.ndim
     if shape_ndims != 1:
-        raise ValueError("Num of dims of the shape must be 1, got {}.".format(
-            shape_ndims))
+        raise ValueError("Num of dims of the shape must be 1, got {}.".format(shape_ndims))
     for value in const_value.tolist()[:-1]:
         if value != 1:
             return False
-    if (const_value.tolist()[-1] != input0_vec_size):
+    if const_value.tolist()[-1] != input0_vec_size:
         return False
     return True
+
 
 def bypass_reshape(input_node_map, input_name):
     """Get Reshape input nodes."""
@@ -383,15 +375,17 @@ def bypass_reshape(input_node_map, input_name):
     maybe_reshape_ndef = node_from_map(input_node_map, input_name)
     input_ndef = maybe_reshape_ndef
     if maybe_reshape_ndef.op == "Reshape":
-        reshpae_input0_ndef = node_from_map(input_node_map,
-                                            maybe_reshape_ndef.input[0])
-        reshpae_input1_ndef = node_from_map(input_node_map,
-                                            maybe_reshape_ndef.input[1])
-        if reshpae_input0_ndef.op == "Const" and reshpae_input1_ndef.op == "Const" \
-            and valid_reshape_inputs(reshpae_input0_ndef, reshpae_input1_ndef):
+        reshpae_input0_ndef = node_from_map(input_node_map, maybe_reshape_ndef.input[0])
+        reshpae_input1_ndef = node_from_map(input_node_map, maybe_reshape_ndef.input[1])
+        if (
+            reshpae_input0_ndef.op == "Const"
+            and reshpae_input1_ndef.op == "Const"
+            and valid_reshape_inputs(reshpae_input0_ndef, reshpae_input1_ndef)
+        ):
             input_ndef = reshpae_input0_ndef
             reshape_ndef = maybe_reshape_ndef
     return input_ndef, reshape_ndef
+
 
 def get_const_dim_count(node_def):
     """Get the number of dimensions for a Const node.

@@ -83,7 +83,7 @@ train_loop:
             compression_manager.on_step_end()
         compression_manager.on_epoch_end()
     compression_manager.on_train_end()
-    
+
 model.save('./path/to/save')
 
 ```

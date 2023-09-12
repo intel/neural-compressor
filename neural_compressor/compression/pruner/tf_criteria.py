@@ -1,4 +1,4 @@
-"""tensorflow pruning criterion."""
+"""Tensorflow pruning criterion."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -51,7 +51,7 @@ class PruningCriterion:
     """
 
     def __init__(self, modules, config):
-        """Initiliaze a pruning criterion."""
+        """Initialize a pruning criterion."""
         self.scores = {}
         self.modules = modules
         self.config = config
@@ -69,7 +69,7 @@ class PruningCriterion:
         pass
 
 
-@register_criterion('magnitude')
+@register_criterion("magnitude")
 class MagnitudeCriterion(PruningCriterion):
     """Pruning criterion.
 
@@ -85,7 +85,7 @@ class MagnitudeCriterion(PruningCriterion):
     """
 
     def __init__(self, modules, config):
-        """Initiliaze a magnitude pruning criterion."""
+        """Initialize a magnitude pruning criterion."""
         super(MagnitudeCriterion, self).__init__(modules, config)
 
     def on_step_begin(self):
@@ -94,5 +94,3 @@ class MagnitudeCriterion(PruningCriterion):
         for key in self.modules.keys():
             p = self.modules[key].get_weights()[0]
             self.scores[key] = np.abs(p)
-
-

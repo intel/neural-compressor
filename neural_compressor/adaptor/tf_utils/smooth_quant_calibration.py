@@ -16,17 +16,20 @@
 # limitations under the License.
 """Tensorflow model calibration process for Smooth Quantization."""
 
-import os
 import logging
-import numpy as np
+import os
 from collections import OrderedDict, UserDict
+
+import numpy as np
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import tensor_util
+
 from .quantize_graph_common import QuantizeGraphHelper
 from .util import iterator_sess_run
 
 logger = logging.getLogger("neural_compressor")
 debug = bool(logger.level == logging.DEBUG)
+
 
 class SmoothQuantCalibration:
     """A class for performing smooth quantization calibration on a Tensorflow model.
@@ -39,6 +42,7 @@ class SmoothQuantCalibration:
         percentile (float): The percentile of calibration to remove outliers.
         black_nodes (List[str]): A list of node names to be ignored during calibration.
     """
+
     def __init__(self, model, dataloader, iterations, op_types, percentile, black_nodes):
         """Initializes a SmoothQuantCalibration object."""
         self.model = model
@@ -50,7 +54,7 @@ class SmoothQuantCalibration:
         self.black_nodes = black_nodes
         self._sq_input_node_names = []
         self._sq_output_tensor_dict = {}
-        self._sq_weight_node_names = {} # mapping from its weight node name to the concrete output node name
+        self._sq_weight_node_names = {}  # mapping from its weight node name to the concrete output node name
 
     def _inference_for_calibration(self, model):
         """Run the calibration on the input graph.
@@ -65,25 +69,28 @@ class SmoothQuantCalibration:
         sess = model.sess
         iter_op = model.iter_op
         input_tensor = model.input_tensor
-        output_tensor = [item + ':0' for item in self._sq_input_node_names]
+        output_tensor = [item + ":0" for item in self._sq_input_node_names]
         # TF table initialization: https://github.com/tensorflow/tensorflow/issues/8665
         node_names = [node.name for node in sess.graph.as_graph_def().node]
-        if 'init_all_tables' in node_names: # pragma: no cover
-            init_table_op = sess.graph.get_operation_by_name('init_all_tables')
+        if "init_all_tables" in node_names:  # pragma: no cover
+            init_table_op = sess.graph.get_operation_by_name("init_all_tables")
             sess.run(init_table_op)
 
         logger.info("Start sampling on calibration dataset for Smooth Quantization.")
         if hasattr(self.dataloader, "__len__") and len(self.dataloader) == 0:  # pragma: no cover
             feed_dict = {}
-            for output_idx, output in enumerate(sess.run(output_tensor, feed_dict) if iter_op==[] \
-            else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, self.iterations)):
-                self._sq_output_tensor_dict.setdefault(
-                    self._sq_input_node_names[output_idx], []).append(output)
+            for output_idx, output in enumerate(
+                sess.run(output_tensor, feed_dict)
+                if iter_op == []
+                else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, self.iterations)
+            ):
+                self._sq_output_tensor_dict.setdefault(self._sq_input_node_names[output_idx], []).append(output)
         for idx, (inputs, labels) in enumerate(self.dataloader):
             if len(input_tensor) == 1:
                 feed_dict = {}
-                if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \
-                  or isinstance(inputs, UserDict):  # pragma: no cover
+                if (
+                    isinstance(inputs, dict) or isinstance(inputs, OrderedDict) or isinstance(inputs, UserDict)
+                ):  # pragma: no cover
                     for name in inputs:
                         for tensor in input_tensor:
                             pos = tensor.name.rfind(":")
@@ -93,12 +100,10 @@ class SmoothQuantCalibration:
                                 break
                 else:
                     feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
-            else:   # pragma: no cover
-                assert len(input_tensor) == len(inputs), \
-                    'inputs len must equal with input_tensor'
+            else:  # pragma: no cover
+                assert len(input_tensor) == len(inputs), "inputs len must equal with input_tensor"
                 feed_dict = {}
-                if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \
-                  or isinstance(inputs, UserDict):
+                if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) or isinstance(inputs, UserDict):
                     for name in inputs:
                         for tensor in input_tensor:
                             pos = tensor.name.rfind(":")
@@ -111,9 +116,12 @@ class SmoothQuantCalibration:
                     # we should check and pair them
                     def check_shape(tensor, data):
                         # scalar or 1 dim default True
-                        if tensor.shape == None or \
-                           len(tensor.shape.dims) == 1 or \
-                           not hasattr(data, 'shape'):
+                        if (
+                            tensor.shape is None
+                            or tensor.shape.dims is None
+                            or len(tensor.shape.dims) == 1
+                            or not hasattr(data, "shape")
+                        ):
                             return True
                         tensor_shape = tuple(tensor.shape)
                         data_shape = tuple(data.shape)
@@ -125,7 +133,7 @@ class SmoothQuantCalibration:
                     disorder_tensors = []
                     disorder_inputs = []
                     for idx, sort_tensor in enumerate(input_tensor):
-                        sort_input = inputs[idx] 
+                        sort_input = inputs[idx]
                         if check_shape(sort_tensor, sort_input):
                             feed_dict.update({sort_tensor: sort_input})
                         else:
@@ -136,10 +144,12 @@ class SmoothQuantCalibration:
                             if check_shape(dis_tensor, dis_input):
                                 feed_dict.update({dis_tensor: dis_input})
                                 break
-            for output_idx, output in enumerate(sess.run(output_tensor, feed_dict) if iter_op==[] \
-            else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, self.iterations)):
-                self._sq_output_tensor_dict.setdefault(
-                    self._sq_input_node_names[output_idx], []).append(output)
+            for output_idx, output in enumerate(
+                sess.run(output_tensor, feed_dict)
+                if iter_op == []
+                else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, self.iterations)
+            ):
+                self._sq_output_tensor_dict.setdefault(self._sq_input_node_names[output_idx], []).append(output)
             if idx + 1 == self.iterations:
                 break
         os.environ["ITEX_REMAPPER"] = "1"
@@ -147,15 +157,14 @@ class SmoothQuantCalibration:
     def _generate_calibration_data(self):
         """Generate the calibration data."""
         sorted_graph = QuantizeGraphHelper().get_sorted_graph(
-            self.model.graph_def,
-            self.model.input_node_names,
-            self.model.output_node_names)
+            self.model.graph_def, self.model.input_node_names, self.model.output_node_names
+        )
 
         for node in sorted_graph.node:
             if node.op not in self.op_types or node.name in self.black_nodes:
                 continue
             # Fix retval already been set issue
-            if 'while' in node.input[0]: # pragma: no cover
+            if "while" in node.input[0]:  # pragma: no cover
                 continue
             self._sq_input_node_names.append(node.input[0])
             self._sq_weight_node_names[node.input[1]] = node.name
@@ -173,19 +182,19 @@ class SmoothQuantCalibration:
             The max values per input channel
         """
         permute_datas = []
-        for data in tensor_data:    # iteration_num * (N, H, W, C)
+        for data in tensor_data:  # iteration_num * (N, H, W, C)
             if len(data.shape) == 3:  # pragma: no cover
                 # TODO  matmul batchsize*seq*inchannel
                 tensor = np.abs(np.reshape(data, (-1, data.shape[-1])))
                 permute_datas.append(tensor)
-            elif len(data.shape) == 4: # already NHWC
+            elif len(data.shape) == 4:  # already NHWC
                 # tensor = np.transpose(data, [0, 3, 1, 2])
                 tensor = data
                 tensor = np.abs(np.reshape(tensor, (-1, tensor.shape[-1])))
                 permute_datas.append(tensor)
             elif len(data.shape) == 2:  # (?, ic)
                 permute_datas.append(np.abs(data))
-            else:   # pragma: no cover
+            else:  # pragma: no cover
                 assert False, "not supported"
         permute_datas = np.concatenate(permute_datas, axis=0)
         permute_datas = permute_datas.reshape(-1, permute_datas.shape[-1])
@@ -210,7 +219,7 @@ class SmoothQuantCalibration:
         max_vals_per_channel = {}
         for key in self._sq_output_tensor_dict.keys():
             max_val_per_channel = self._get_maxval_per_channel(
-                self._sq_output_tensor_dict[key], percentile=self.percentile)
+                self._sq_output_tensor_dict[key], percentile=self.percentile
+            )
             max_vals_per_channel[key] = max_val_per_channel
         return max_vals_per_channel, self._sq_weight_node_names
-

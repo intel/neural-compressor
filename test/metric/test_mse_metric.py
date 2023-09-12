@@ -1,16 +1,17 @@
+import copy
+import os
+import shutil
+import unittest
 
+import numpy as np
 import torch
 import torchvision
-import unittest
-import os
-from neural_compressor.adaptor import FRAMEWORKS
-from neural_compressor.model import MODELS
-import neural_compressor.adaptor.pytorch as nc_torch
-from neural_compressor.experimental import Quantization, common
 from packaging.version import Version
-import shutil
-import copy
-import numpy as np
+
+import neural_compressor.adaptor.pytorch as nc_torch
+from neural_compressor.adaptor import FRAMEWORKS
+from neural_compressor.experimental import Quantization, common
+from neural_compressor.model import MODELS
 
 try:
     try:
@@ -29,7 +30,7 @@ else:
 
 torch.manual_seed(1)
 
-fake_ptq_yaml = '''
+fake_ptq_yaml = """
     model:
       name: imagenet
       framework: pytorch
@@ -52,9 +53,9 @@ fake_ptq_yaml = '''
       random_seed: 9527
       workspace:
         path: saved
-    '''
+    """
 
-fake_dynamic_yaml = '''
+fake_dynamic_yaml = """
     model:
       name: imagenet
       framework: pytorch
@@ -79,33 +80,33 @@ fake_dynamic_yaml = '''
       random_seed: 9527
       workspace:
         path: saved
-    '''
+    """
 
 
 def build_ptq_yaml():
-    with open('ptq_yaml.yaml', 'w', encoding="utf-8") as f:
+    with open("ptq_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_ptq_yaml)
 
 
 def build_dynamic_yaml():
-    with open('dynamic_yaml.yaml', 'w', encoding="utf-8") as f:
+    with open("dynamic_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_dynamic_yaml)
 
 
 def build_fx_ptq_yaml():
-    fake_fx_ptq_yaml = fake_ptq_yaml.replace('pytorch', 'pytorch_fx')
-    with open('fx_ptq_yaml.yaml', 'w', encoding="utf-8") as f:
+    fake_fx_ptq_yaml = fake_ptq_yaml.replace("pytorch", "pytorch_fx")
+    with open("fx_ptq_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_fx_ptq_yaml)
 
 
 def build_fx_dynamic_yaml():
-    fake_fx_dynamic_yaml = fake_dynamic_yaml.replace('pytorch', 'pytorch_fx')
-    with open('fx_dynamic_yaml.yaml', 'w', encoding="utf-8") as f:
+    fake_fx_dynamic_yaml = fake_dynamic_yaml.replace("pytorch", "pytorch_fx")
+    with open("fx_dynamic_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_fx_dynamic_yaml)
 
 
 def build_ipex_yaml():
-    fake_yaml = '''
+    fake_yaml = """
         model:
           name: imagenet
           framework: pytorch_ipex
@@ -127,22 +128,24 @@ def build_ipex_yaml():
           random_seed: 9527
           workspace:
             path: saved
-        '''
-    with open('ipex_yaml.yaml', 'w', encoding="utf-8") as f:
+        """
+    with open("ipex_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
 
 @unittest.skipIf(TEST_IPEX, "TODO: Please wait to IPEX + PyTorch1.7 release")
 class TestPytorchAdaptor(unittest.TestCase):
-    framework_specific_info = {"device": "cpu",
-                               "approach": "post_training_static_quant",
-                               "random_seed": 1234,
-                               "q_dataloader": None,
-                               "workspace_path": './'}
+    framework_specific_info = {
+        "device": "cpu",
+        "approach": "post_training_static_quant",
+        "random_seed": 1234,
+        "q_dataloader": None,
+        "workspace_path": "./",
+    }
     framework = "pytorch"
     adaptor = FRAMEWORKS[framework](framework_specific_info)
     model = torchvision.models.quantization.resnet18()
-    nc_model = MODELS['pytorch'](model)
+    nc_model = MODELS["pytorch"](model)
 
     @classmethod
     def setUpClass(self):
@@ -151,21 +154,21 @@ class TestPytorchAdaptor(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        os.remove('ptq_yaml.yaml')
-        os.remove('dynamic_yaml.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
+        os.remove("ptq_yaml.yaml")
+        os.remove("dynamic_yaml.yaml")
+        shutil.rmtree("./saved", ignore_errors=True)
+        shutil.rmtree("runs", ignore_errors=True)
 
     def test_quantization_saved(self):
-        for fake_yaml in ['dynamic_yaml.yaml', 'ptq_yaml.yaml']:
-            if fake_yaml in ['dynamic_yaml.yaml']:
+        for fake_yaml in ["dynamic_yaml.yaml", "ptq_yaml.yaml"]:
+            if fake_yaml in ["dynamic_yaml.yaml"]:
                 model = torchvision.models.quantization.resnet18()
             else:
                 model = copy.deepcopy(self.model)
-            if fake_yaml in ['ptq_yaml.yaml']:
+            if fake_yaml in ["ptq_yaml.yaml"]:
                 model.eval().fuse_model()
             quantizer = Quantization(fake_yaml)
-            dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+            dataset = quantizer.dataset("dummy", (100, 3, 256, 256), label=True)
             quantizer.model = model
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -173,17 +176,19 @@ class TestPytorchAdaptor(unittest.TestCase):
         self.assertTrue(bool(q_model))
 
 
-@unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
+@unittest.skipIf(not FX_MODE, "Unsupported Fx Mode with PyTorch Version Below 1.8")
 class TestPytorchFXAdaptor(unittest.TestCase):
-    framework_specific_info = {"device": "cpu",
-                               "approach": "post_training_static_quant",
-                               "random_seed": 1234,
-                               "q_dataloader": None,
-                               "workspace_path": './'}
+    framework_specific_info = {
+        "device": "cpu",
+        "approach": "post_training_static_quant",
+        "random_seed": 1234,
+        "q_dataloader": None,
+        "workspace_path": "./",
+    }
     framework = "pytorch_fx"
     adaptor = FRAMEWORKS[framework](framework_specific_info)
     model = torchvision.models.quantization.resnet18()
-    nc_model = MODELS['pytorch_fx'](model)
+    nc_model = MODELS["pytorch_fx"](model)
 
     @classmethod
     def setUpClass(self):
@@ -192,35 +197,38 @@ class TestPytorchFXAdaptor(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        os.remove('fx_ptq_yaml.yaml')
-        os.remove('fx_dynamic_yaml.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
+        os.remove("fx_ptq_yaml.yaml")
+        os.remove("fx_dynamic_yaml.yaml")
+        shutil.rmtree("./saved", ignore_errors=True)
+        shutil.rmtree("runs", ignore_errors=True)
 
     def test_fx_static_quantization_saved(self):
-        fake_yaml = 'fx_ptq_yaml.yaml'
+        fake_yaml = "fx_ptq_yaml.yaml"
         model = copy.deepcopy(self.model)
         model.eval().fuse_model()
         quantizer = Quantization(fake_yaml)
-        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+        dataset = quantizer.dataset("dummy", (100, 3, 256, 256), label=True)
         quantizer.model = model
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         q_model = quantizer.fit()
         self.assertTrue(bool(q_model))
-    
-    @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"),
-      "Please use PyTroch 1.9 or higher version for dynamic quantization with pytorch_fx backend")
+
+    @unittest.skipIf(
+        PT_VERSION < Version("1.9.0-rc1"),
+        "Please use PyTroch 1.9 or higher version for dynamic quantization with pytorch_fx backend",
+    )
     def test_fx_dynamic_quantization_saved(self):
-        fake_yaml = 'fx_dynamic_yaml.yaml'
+        fake_yaml = "fx_dynamic_yaml.yaml"
         model = torchvision.models.resnet18()
         quantizer = Quantization(fake_yaml)
         quantizer.model = model
-        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+        dataset = quantizer.dataset("dummy", (100, 3, 256, 256), label=True)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         q_model = quantizer.fit()
         self.assertTrue(bool(q_model))
+
 
 if __name__ == "__main__":
     unittest.main()

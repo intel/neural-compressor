@@ -41,7 +41,7 @@ pruning:                                             # mandatory only for prunin
         ToTensor:
         Normalize:
           mean: [0.485, 0.456, 0.406]
-          std: [0.229, 0.224, 0.225] 
+          std: [0.229, 0.224, 0.225]
     criterion:
       CrossEntropyLoss:
         reduction: None
@@ -66,7 +66,7 @@ pruning:                                             # mandatory only for prunin
             end_epoch: 2
             update_frequency: 0.1
 
-evaluation:                                          # optional. used to config evaluation process. 
+evaluation:                                          # optional. used to config evaluation process.
   accuracy:                                          # optional. used to evaluate accuracy of passing model.
     metric:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Pruning.
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
@@ -112,4 +112,3 @@ tuning:
   workspace:
     path: /path/to/saving/directory                  # optional. default workspace is ./nc_workspace/current_time_stamp, saving tuning history and deploy yaml.
     resume: /path/to/a/specified/snapshot/file       # optional. if specified, resume from tuning history.
-

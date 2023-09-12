@@ -14,57 +14,62 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tuning utility."""
+import enum
 from collections import OrderedDict
 from copy import deepcopy
-import enum
 from typing import Dict
+
 
 class QuantType(enum.IntEnum):
     """Quantization type."""
+
     DYNAMIC = 0
     STATIC = 1
     QAT = 2
     WEIGHT_ONLY = 3
     AUTO = 4
 
+
 class QuantOptions:
     """Option Class for Quantization.
 
-    This class is used for configuring global variable related to quantization. 
+    This class is used for configuring global variable related to quantization.
     The global variable quant_options is created with this class.
 
     Args:
         quant_type(int): Quantization type. Default value is 1.
     """
+
     def __init__(self, quant_type=1):
         """Init an QuantOptions object."""
         self._quant_type = quant_type
-    
+
     @property
     def quant_type(self):
         """Get quant type."""
         return self._quant_type
-    
+
     @quant_type.setter
     def quant_type(self, quant_type):
         """Set quant type.
-        
+
         Args:
             quant_type(int): Quantization type. Default value is 1.
         """
         self._quant_type = quant_type
 
+
 quant_options = QuantOptions()
+
 
 def preprocess_user_cfg(op_user_cfg: Dict):
     """Preprocess the op user config for weight only.
 
     Args:
-        op_user_cfg: The original user config. 
+        op_user_cfg: The original user config.
 
-    Example: 
+    Example:
         op_user_cfg = {'activation': {'bits': [4]}}
         op_user_cfg_modified = {'activation': {'bits': [4], 'group_size': [32]}}
 
@@ -74,11 +79,12 @@ def preprocess_user_cfg(op_user_cfg: Dict):
     op_user_cfg_modified = deepcopy(op_user_cfg)
     if quant_options.quant_type == QuantType.WEIGHT_ONLY:
         for att, att_cfg in op_user_cfg.items():
-            if 'bits' not in att_cfg:
-                op_user_cfg_modified[att]['bits'] = [4]
-            if 'group_size' not in att_cfg:
-                op_user_cfg_modified[att]['group_size'] = [32]
+            if "bits" not in att_cfg:
+                op_user_cfg_modified[att]["bits"] = [4]
+            if "group_size" not in att_cfg:
+                op_user_cfg_modified[att]["group_size"] = [32]
     return op_user_cfg_modified
+
 
 class OrderedDefaultDict(OrderedDict):
     """Ordered default dict."""
@@ -98,12 +104,12 @@ def extract_data_type(data_type: str) -> str:
     Returns:
         (signed or unsigned, data type without signed)
     """
-    return ('signed', data_type) if data_type[0] != 'u' else ('unsigned', data_type[1:])
+    return ("signed", data_type) if data_type[0] != "u" else ("unsigned", data_type[1:])
 
 
 def reverted_data_type(signed_flag: str, data_type: str) -> str:
     """Revert the data type."""
-    return data_type if signed_flag == 'signed' else 'u' + data_type
+    return data_type if signed_flag == "signed" else "u" + data_type
 
 
 def get_adaptor_name(adaptor):
@@ -113,7 +119,7 @@ def get_adaptor_name(adaptor):
         adaptor: adaptor instance.
     """
     adaptor_name = type(adaptor).__name__.lower()
-    adaptor_name_lst = ['onnx', 'tensorflow', 'pytorch']
+    adaptor_name_lst = ["onnx", "tensorflow", "pytorch"]
     for name in adaptor_name_lst:
         if adaptor_name.startswith(name):
             return name
@@ -127,8 +133,8 @@ def build_slave_faker_model():
         object:  a class object where all properties and methods are virtual.
     """
     from ...utils import logger
-    class FakerModel:
 
+    class FakerModel:
         def __call__(self, *args, **kwargs):
             logger.warning("Slave node has no quantized model, please handle it yourself.")
 
@@ -141,18 +147,21 @@ def build_slave_faker_model():
 
     return FakerModel()
 
+
 class ClassRegister:
     """Class register."""
-    
+
     def __init__(self):
         """Init class register."""
         self.register = {}
 
     def __call__(self, name):
         """Call the class register."""
+
         def decorator(func):
             self.register[name] = func
             return func
+
         return decorator
 
     def get_class(self, name):

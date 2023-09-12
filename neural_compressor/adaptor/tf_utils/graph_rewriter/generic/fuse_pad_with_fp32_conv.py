@@ -17,20 +17,20 @@
 """Fuse Pad into Conv Graph Rewriter."""
 
 import tensorflow as tf
-
 from tensorflow.python.framework import tensor_util
 
-from ..graph_base import GraphRewriterBase
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
+
+from ..graph_base import GraphRewriterBase
 
 
 class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
     """Fuse Pad op into Conv."""
 
     def __init__(self, model, excluded_op_names, inputs, cfg, new_api, itex_qdq_mode=False):
-        """Iinitilization."""
+        """Initialization."""
         super().__init__(model)
         self.excluded_conv = excluded_op_names
         self.inputs = inputs
@@ -46,7 +46,8 @@ class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
         graph_info = cur_graph.parse_graph()
 
         target_nodes = cur_graph.query_fusion_pattern_nodes(
-            [["Pad"], ["Conv2D", "DepthwiseConv2dNative"], ('BiasAdd', 'Add', 'AddV2')])
+            [["Pad"], ["Conv2D", "DepthwiseConv2dNative"], ("BiasAdd", "Add", "AddV2")]
+        )
 
         padding_tensor_dict = {}
         for node_combination in target_nodes:
@@ -62,11 +63,11 @@ class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
             # Line 55 to line 65 should be removed once the TFDO enabling the single quantized
             # conv2D supporting.
             if len(pattern) == 2:
-                #TODO we need to enable single quantizedconv2d with s8 input.
+                # TODO we need to enable single quantizedconv2d with s8 input.
                 if not is_perchannel and not cur_graph.has_positive_input(conv_name):
                     continue
-            # TFDO has the limitation that the single QuantizedConv2DPerchannel doesn't
-            # support padding_list filed.
+                # TFDO has the limitation that the single QuantizedConv2DPerchannel doesn't
+                # support padding_list filed.
                 if is_perchannel:
                     continue
 
@@ -77,35 +78,36 @@ class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
             pad_node = None
             if node_combination[0] not in padding_tensor_dict:
                 pad_node = graph_info[node_combination[0]].node
-                if graph_info[pad_node.input[1]].node.op != 'Const':
+                if graph_info[pad_node.input[1]].node.op != "Const":
                     input_node = graph_info[pad_node.input[1]].node
-                    if input_node.op == 'DataFormatVecPermute':
+                    if input_node.op == "DataFormatVecPermute":
                         parent_input_node = graph_info[input_node.input[0]].node
-                        if parent_input_node.op == 'Const':
-                            padding_tensor = tensor_util.MakeNdarray( \
-                                parent_input_node.attr["value"].tensor).flatten()
+                        if parent_input_node.op == "Const":
+                            padding_tensor = tensor_util.MakeNdarray(parent_input_node.attr["value"].tensor).flatten()
                         else:
                             continue
                     else:
                         continue
                 else:
                     padding_tensor = tensor_util.MakeNdarray(
-                        graph_info[pad_node.input[1]].node.attr["value"].tensor).flatten()
+                        graph_info[pad_node.input[1]].node.attr["value"].tensor
+                    ).flatten()
                 padding_tensor_dict[node_combination[0]] = padding_tensor
             else:
                 padding_tensor = padding_tensor_dict[node_combination[0]]
 
             if self.itex_qdq_mode:
-                enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or \
-                                                version1_gt_version2(tf.version.VERSION, '2.7'))
+                enabled_pad_conv2d = bool(
+                    tf.version.VERSION == "1.15.0-up3" or version1_gt_version2(tf.version.VERSION, "2.7")
+                )
             else:
-                enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or self.new_api)
+                enabled_pad_conv2d = bool(tf.version.VERSION == "1.15.0-up3" or self.new_api)
 
-            if any(padding_tensor) and not enabled_pad_conv2d: # pragma: no cover
+            if any(padding_tensor) and not enabled_pad_conv2d:  # pragma: no cover
                 continue
 
             if pad_node:
-                if graph_info[pad_node.input[1]].node.op != 'Const':
+                if graph_info[pad_node.input[1]].node.op != "Const":
                     cur_graph.node_name_details[pad_node.name].node.input.remove(pad_node.input[1])
                     cur_graph.remove_node_with_single_input_output(pad_node.name)
                 else:
@@ -116,12 +118,12 @@ class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
             # only when padding attr is explicit, the explicit_paddings is not empty
 
             if self.itex_qdq_mode:
-                if any(padding_tensor) and enabled_pad_conv2d: # pragma: no cover
-                    Helper.set_attr_string(conv_node, 'padding', b'EXPLICIT')
+                if any(padding_tensor) and enabled_pad_conv2d:  # pragma: no cover
+                    Helper.set_attr_string(conv_node, "padding", b"EXPLICIT")
                     Helper.set_attr_int_list(conv_node, "explicit_paddings", padding_tensor)
             else:
-                if any(padding_tensor) and enabled_pad_conv2d: # pragma: no cover
-                    Helper.set_attr_string(conv_node, 'padding', b'EXPLICIT')
+                if any(padding_tensor) and enabled_pad_conv2d:  # pragma: no cover
+                    Helper.set_attr_string(conv_node, "padding", b"EXPLICIT")
                     Helper.set_attr_int_list(conv_node, "explicit_paddings", padding_tensor)
 
         return cur_graph.dump_graph()

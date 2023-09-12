@@ -96,7 +96,7 @@ optional arguments:
 - Query the task status and result according to the `task_id`.
 
 ``` shell
-[user@server hf_models_grpc]$ python client.py query --task_id="d3e10a49326449fb9d0d62f2bfc1cb43"
+[user@server hf_models_grpc]$ python client.py --task_monitor_port=22222 --result_monitor_port=33333 --grpc_api_port=8001 query --task_id="d3e10a49326449fb9d0d62f2bfc1cb43"
 
 
 ```

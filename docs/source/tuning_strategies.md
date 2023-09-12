@@ -67,11 +67,11 @@ User can control the tuning process by setting the exit policy by specifying the
 ```python
 from neural_compressor.config import TuningCriterion
 
-tuning_criterion=TuningCriterion(
-    timeout=0, # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
-    max_trials=100, # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
-    strategy="basic", # optional. name of the tuning strategy. 
-    strategy_kwargs=None, # optional. see concrete tuning strategy for available settings.
+tuning_criterion = TuningCriterion(
+    timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+    max_trials=100,  # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
+    strategy="basic",  # optional. name of the tuning strategy.
+    strategy_kwargs=None,  # optional. see concrete tuning strategy for available settings.
 )
 ```
 
@@ -83,8 +83,8 @@ User can set the accuracy criteria by specifying the `higher_is_better`, `criter
 from neural_compressor.config import AccuracyCriterion
 
 accuracy_criterion = AccuracyCriterion(
-    higher_is_better=True,  # optional. 
-    criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
+    higher_is_better=True,  # optional.
+    criterion="relative",  # optional. Available values are 'relative' and 'absolute'.
     tolerable_loss=0.01,  # optional.
 )
 ```
@@ -228,11 +228,8 @@ from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
     quant_level=1,
-    tuning_criterion=TuningCriterion(
-        strategy="basic"  # optional. name of tuning strategy. 
-    ),
+    tuning_criterion=TuningCriterion(strategy="basic"),  # optional. name of tuning strategy.
 )
-
 ```
 
 ### MSE
@@ -255,11 +252,8 @@ from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
     quant_level=1,
-    tuning_criterion=TuningCriterion(
-        strategy="mse" 
-    ),
+    tuning_criterion=TuningCriterion(strategy="mse"),
 )
-
 ```
 
 ### MSE_V2
@@ -278,7 +272,7 @@ conf = PostTrainingQuantConfig(
     quant_level=1,
     tuning_criterion=TuningCriterion(
         strategy="mse_v2",
-        strategy_kwargs={"confidence_batches": 2}  # optional. the number of batches to score the op impact.
+        strategy_kwargs={"confidence_batches": 2},  # optional. the number of batches to score the op impact.
     ),
 )
 ```
@@ -303,7 +297,7 @@ conf = PostTrainingQuantConfig(
     quant_level=1,
     tuning_criterion=TuningCriterion(
         strategy="hawq_v2",
-        strategy_kwargs={"hawq_v2_loss": model_loss}  # required. the loss function for calculating the hessian trace.
+        strategy_kwargs={"hawq_v2_loss": model_loss},  # required. the loss function for calculating the hessian trace.
     ),
 )
 ```
@@ -337,10 +331,9 @@ conf = PostTrainingQuantConfig(
     tuning_criterion=TuningCriterion(
         timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
         max_trials=100,  # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
-        strategy="bayesian"
+        strategy="bayesian",
     ),
 )
-
 ```
 
 ### Exhaustive
@@ -471,9 +464,7 @@ from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
 conf = PostTrainingQuantConfig(
     quant_level=1,
-    tuning_criterion=TuningCriterion(
-        strategy="tpe"
-    )
+    tuning_criterion=TuningCriterion(strategy="tpe"),
 )
 ```
 
@@ -514,17 +505,15 @@ For example, user can implement an `Abc` strategy like below:
 ```python
 @strategy_registry
 class AbcTuneStrategy(TuneStrategy):
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None):
+    def __init__(self, model, conf, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
         ...
 
     def next_tune_cfg(self):
         # generate the next tuning config
         ...
-    
+
     def traverse(self):
         for tune_cfg in self.next_tune_cfg():
             # do quantization
             ...
-
 ```

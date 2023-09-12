@@ -24,16 +24,13 @@ from .base import PATTERNS
 modules = glob.glob(join(dirname(__file__), "*.py"))
 
 for f in modules:
-    if isfile(f) and not f.startswith('__') and not f.endswith('__init__.py'):
+    if isfile(f) and not f.startswith("__") and not f.endswith("__init__.py"):
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
-FRAMEWORK = {
-    'pytorch': 'pt',
-    'keras': 'keras'
-}
+FRAMEWORK = {"pytorch": "pt", "keras": "keras"}
 
 
-def get_pattern(config, modules, framework='pytorch'):
+def get_pattern(config, modules, framework="pytorch"):
     """Get registered pattern class.
 
     Get a Pattern object from PATTERNS.
@@ -51,7 +48,7 @@ def get_pattern(config, modules, framework='pytorch'):
     assert framework in FRAMEWORK.keys(), f"does not support {framework}, currently only support {FRAMEWORK.keys()}"
 
     name = config.pattern
-    name = name.split('_')[-1]
+    name = name.split("_")[-1]
     pattern = FRAMEWORK[framework]
     if "x" in name:
         pattern += "NxM"

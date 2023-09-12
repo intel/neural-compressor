@@ -17,12 +17,10 @@ from typing import Optional
 
 from neural_compressor.experimental.data.dataloaders.base_dataloader import BaseDataLoader
 from neural_compressor.model import BaseModel
+from neural_compressor.profiling.profiler.onnxrt_profiler.factory import ProfilerFactory as OnnxrtProfilerFactory
 from neural_compressor.profiling.profiler.profiler import Profiler
 from neural_compressor.profiling.profiler.tensorflow_profiler.factory import (
-    ProfilerFactory as TensorflowProfilerFactory
-)
-from neural_compressor.profiling.profiler.onnxrt_profiler.factory import (
-    ProfilerFactory as OnnxrtProfilerFactory
+    ProfilerFactory as TensorflowProfilerFactory,
 )
 
 
@@ -31,9 +29,9 @@ class ProfilerFactory:
 
     @staticmethod
     def get_profiler(
-            model: BaseModel,
-            dataloader: BaseDataLoader,
-            log_file: Optional[str] = None,
+        model: BaseModel,
+        dataloader: BaseDataLoader,
+        log_file: Optional[str] = None,
     ) -> Optional[Profiler]:
         """Get profiling for specified framework.
 

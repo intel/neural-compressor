@@ -14,21 +14,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Helps convert one model format to another."""
 
-import tempfile
 import datetime
+import tempfile
+
 import yaml
+
 from neural_compressor.adaptor import FRAMEWORKS
+
 from ..conf.config import Conf
-from ..conf.dotdict import deep_get, deep_set, DotDict
+from ..conf.dotdict import DotDict, deep_get, deep_set
+from ..model import BaseModel
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader, create_eval_func
 from .common import Model as NCModel
-from ..model import BaseModel
 
-class ModelConversion(): # pragma: no cover
+
+class ModelConversion:  # pragma: no cover
     """ModelConversion class is used to convert one model format to another.
 
        Currently Neural Compressor only supports Quantization-aware training TensorFlow model to Default
@@ -44,8 +47,7 @@ class ModelConversion(): # pragma: no cover
 
     Args:
         conf_fname_or_obj (string or obj): Optional. The path to the YAML configuration file or
-            Conf class containing model conversion and evaluation setting if not specifed by code.
-
+            Conf class containing model conversion and evaluation setting if not specified by code.
     """
 
     def __init__(self, conf_fname_or_obj=None):
@@ -53,11 +55,11 @@ class ModelConversion(): # pragma: no cover
 
         Args:
             conf_fname_or_obj (string or obj): Optional. The path to the YAML configuration file or
-                Conf class containing model conversion and evaluation setting if not specifed by code.
+                Conf class containing model conversion and evaluation setting if not specified by code.
         """
         self.conf_name = conf_fname_or_obj
         self._model = None
-        self.framework = 'tensorflow'
+        self.framework = "tensorflow"
 
         self._eval_dataloader = None
         self._eval_func = None
@@ -73,8 +75,9 @@ class ModelConversion(): # pragma: no cover
             elif isinstance(conf_fname_or_obj, Conf):
                 self.conf = conf_fname_or_obj
             else:  # pragma: no cover
-                assert False, \
-                    "Please pass a YAML configuration file path or \
+                assert (
+                    False
+                ), "Please pass a YAML configuration file path or \
                     Conf class to model_conversion"
         else:
             self.conf = None
@@ -95,41 +98,41 @@ class ModelConversion(): # pragma: no cover
         framework_specific_info = {}
         cfg = self.conf.usr_cfg
         framework_specific_info.update(
-            {'name': cfg.model.name,
-             'backend': 'default',
-             'format': 'default',
-             'device': cfg.device,
-             'fake_quant': True,
-             'inputs': cfg.model.inputs,
-             'outputs': cfg.model.outputs,
-             'workspace_path': cfg.tuning.workspace.path})
+            {
+                "name": cfg.model.name,
+                "backend": "default",
+                "format": "default",
+                "device": cfg.device,
+                "fake_quant": True,
+                "inputs": cfg.model.inputs,
+                "outputs": cfg.model.outputs,
+                "workspace_path": cfg.tuning.workspace.path,
+            }
+        )
 
         self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
         q_model = self.adaptor.convert(self._model, self._source, self._destination)
 
         # when eval_func is None but metric or _eval_dataloader is set by yaml or code,
         # it means Neural Compressor will create the eval_func from these info.
-        metric_cfg = [self._metric] if self._metric else \
-            deep_get(cfg, 'evaluation.accuracy.metric')
-        postprocess_cfg = deep_get(cfg, 'evaluation.accuracy.postprocess')
+        metric_cfg = [self._metric] if self._metric else deep_get(cfg, "evaluation.accuracy.metric")
+        postprocess_cfg = deep_get(cfg, "evaluation.accuracy.postprocess")
         if self._eval_func is None and metric_cfg:
-            eval_dataloader_cfg = deep_get(cfg, 'evaluation.accuracy.dataloader')
+            eval_dataloader_cfg = deep_get(cfg, "evaluation.accuracy.dataloader")
             if self._eval_dataloader is None and eval_dataloader_cfg:
                 self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
-            assert self._eval_dataloader, 'either "eval_dataloader" property or evaluation' \
-                    '.accuracy.dataloader field in yaml should be set when metric is set'
+            assert self._eval_dataloader, (
+                'either "eval_dataloader" property or evaluation'
+                ".accuracy.dataloader field in yaml should be set when metric is set"
+            )
 
-            self._eval_func = create_eval_func(self.framework, \
-                                            self.eval_dataloader, \
-                                            self.adaptor, \
-                                            metric_cfg, \
-                                            postprocess_cfg, \
-                                            fp32_baseline = True)
+            self._eval_func = create_eval_func(
+                self.framework, self.eval_dataloader, self.adaptor, metric_cfg, postprocess_cfg, fp32_baseline=True
+            )
         if self._eval_func:
             baseline_score = self._eval_func(self._model)
             qmodel_score = self._eval_func(q_model)
-            logger.info("The score of Quantization-Aware Training model is {}.".
-                        format(str(baseline_score)))
+            logger.info("The score of Quantization-Aware Training model is {}.".format(str(baseline_score)))
             logger.info("Converted model score is {}.".format(str(qmodel_score)))
 
         return q_model
@@ -137,13 +140,15 @@ class ModelConversion(): # pragma: no cover
     fit = __call__
 
     def _gen_yaml(self):
-        random_name = '{}'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
-        default_yaml_template = {'model': {'framework': self.framework, 'name': random_name},
-                                 'device': 'cpu',
-                                 'model_conversion': {'source': 'QAT', 'destination': 'default'}}
+        random_name = "{}".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+        default_yaml_template = {
+            "model": {"framework": self.framework, "name": random_name},
+            "device": "cpu",
+            "model_conversion": {"source": "QAT", "destination": "default"},
+        }
 
-        temp_yaml_path = tempfile.mkstemp(suffix='.yaml')[1]
-        with open(temp_yaml_path, 'w', encoding='utf-8') as f:
+        temp_yaml_path = tempfile.mkstemp(suffix=".yaml")[1]
+        with open(temp_yaml_path, "w", encoding="utf-8") as f:
             yaml.dump(default_yaml_template, f)
         self.conf = Conf(temp_yaml_path)
 
@@ -157,6 +162,7 @@ class ModelConversion(): # pragma: no cover
             class: dataset class
         """
         from .data import Datasets
+
         return Datasets(self.framework)[dataset_type](*args, **kwargs)
 
     @property
@@ -167,8 +173,9 @@ class ModelConversion(): # pragma: no cover
     @source.setter
     def source(self, _source):
         """Set source."""
-        assert _source.lower() == 'qat', 'Model conversion now only supports TensorFlow ' \
-                                         'QAT model to default quantized model'
+        assert _source.lower() == "qat", (
+            "Model conversion now only supports TensorFlow " "QAT model to default quantized model"
+        )
         self._source = _source.lower()
 
     @property
@@ -179,8 +186,9 @@ class ModelConversion(): # pragma: no cover
     @destination.setter
     def destination(self, _destination):
         """Set destination."""
-        assert _destination.lower() == 'default', 'Model conversion now only supports ' \
-                                       'TensorFlow QAT model to default quantized model'
+        assert _destination.lower() == "default", (
+            "Model conversion now only supports " "TensorFlow QAT model to default quantized model"
+        )
         self._destination = _destination.lower()
 
     @property
@@ -192,9 +200,9 @@ class ModelConversion(): # pragma: no cover
     def eval_dataloader(self, dataloader):
         """Set Data loader for evaluation.
 
-        It is iterable and the batched data should consists of a tuple like (input, label), 
-        when eval_dataloader is set, user should configure postprocess(optional) and metric 
-        in yaml file or set postprocess and metric cls. Notice evaluation dataloader will be 
+        It is iterable and the batched data should consists of a tuple like (input, label),
+        when eval_dataloader is set, user should configure postprocess(optional) and metric
+        in yaml file or set postprocess and metric cls. Notice evaluation dataloader will be
         used to generate data for model inference, make sure the input data can be feed to model.
 
         Args:
@@ -209,13 +217,12 @@ class ModelConversion(): # pragma: no cover
                                     a 'real' eval_dataloader will be created,
                                     the reason is we have to know the framework info
                                     and only after the Quantization object created then
-                                    framework infomation can be known. Future we will support
+                                    framework information can be known. Future we will support
                                     creating iterable dataloader from neural_compressor.common.DataLoader
-
         """
         from .common import _generate_common_dataloader
-        self._eval_dataloader = _generate_common_dataloader(
-            dataloader, self.framework)
+
+        self._eval_dataloader = _generate_common_dataloader(dataloader, self.framework)
 
     @property
     def model(self):
@@ -235,7 +242,6 @@ class ModelConversion(): # pragma: no cover
                        set them manually in config yaml file. Another corner case is slim model
                        of tensorflow, be careful of the name of model configured in yaml file,
                        make sure the name is in supported slim model list.
-
         """
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
@@ -243,21 +249,20 @@ class ModelConversion(): # pragma: no cover
         else:
             self._model = user_model
 
-        assert self.framework == 'tensorflow', \
-            'Model conversion only supports Tensorflow at current stage.'
+        assert self.framework == "tensorflow", "Model conversion only supports Tensorflow at current stage."
 
         if not self.conf:
             self._gen_yaml()
 
         cfg = self.conf.usr_cfg
-        if self.framework == 'tensorflow':
+        if self.framework == "tensorflow":
             self._model.name = cfg.model.name
             self._model.workspace_path = cfg.tuning.workspace.path
 
     @property
     def metric(self):
         """Return metric."""
-        assert False, 'Should not try to get the value of `metric` attribute.'
+        assert False, "Should not try to get the value of `metric` attribute."
         return None
 
     @metric.setter
@@ -277,30 +282,32 @@ class ModelConversion(): # pragma: no cover
                                              neural_compressor.common.Metric, in this method the
                                              user_metric.metric_cls will be registered to
                                              specific frameworks and initialized.
-
         """
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
-            logger.warning("Override the value of `metric` field defined in yaml file" \
-                           " as user defines the value of `metric` attribute by code.")
- 
+            logger.warning(
+                "Override the value of `metric` field defined in yaml file"
+                " as user defines the value of `metric` attribute by code."
+            )
+
         from .common import Metric as NCMetric
+
         if isinstance(user_metric, NCMetric):
-            metric_cfg = {user_metric.name : {**user_metric.kwargs}}
+            metric_cfg = {user_metric.name: {**user_metric.kwargs}}
             deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
             self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
             from .metric import METRICS
+
             metrics = METRICS(self.framework)
             metrics.register(user_metric.name, user_metric.metric_cls)
         else:
-            for i in ['reset', 'update', 'result']:
-                assert hasattr(user_metric, i), 'Please realise {} function' \
-                                                'in user defined metric'.format(i)
+            for i in ["reset", "update", "result"]:
+                assert hasattr(user_metric, i), "Please realise {} function" "in user defined metric".format(i)
             self._metric = user_metric
 
     @property
     def postprocess(self):
         """Check postprocess."""
-        assert False, 'Should not try to get the value of `postprocess` attribute.'
+        assert False, "Should not try to get the value of `postprocess` attribute."
         return None
 
     @postprocess.setter
@@ -312,28 +319,32 @@ class ModelConversion(): # pragma: no cover
         user_postprocess.postprocess_cls should be sub_class of neural_compressor.data.BaseTransform.
 
         Args:
-            user_postprocess(neural_compressor.common.Postprocess):user_postprocess should be 
+            user_postprocess(neural_compressor.common.Postprocess):user_postprocess should be
                             object initialized from neural_compressor.common.Postprocess,
                             in this method the user_postprocess.postprocess_cls will be
                             registered to specific frameworks and initialized.
-
         """
         from .common import Postprocess as NCPostprocess
-        assert isinstance(user_postprocess, NCPostprocess), \
-            'please initialize a neural_compressor.common.Postprocess and set....'
-        postprocess_cfg = {user_postprocess.name : {**user_postprocess.kwargs}}
+
+        assert isinstance(
+            user_postprocess, NCPostprocess
+        ), "please initialize a neural_compressor.common.Postprocess and set...."
+        postprocess_cfg = {user_postprocess.name: {**user_postprocess.kwargs}}
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.postprocess"):
-            logger.warning("Override the value of `postprocess` field defined in yaml file" \
-                           " as user defines the value of `postprocess` attribute by code.")
+            logger.warning(
+                "Override the value of `postprocess` field defined in yaml file"
+                " as user defines the value of `postprocess` attribute by code."
+            )
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
         from .data import TRANSFORMS
-        postprocesses = TRANSFORMS(self.framework, 'postprocess')
+
+        postprocesses = TRANSFORMS(self.framework, "postprocess")
         postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
 
     @property
     def eval_func(self):
         """Return eval_func."""
-        assert False, 'Should not try to get the value of `eval_func` attribute.'
+        assert False, "Should not try to get the value of `eval_func` attribute."
         return None
 
     @eval_func.setter
@@ -351,4 +362,4 @@ class ModelConversion(): # pragma: no cover
 
     def __repr__(self):
         """Return representation."""
-        return 'ModelConversion'
+        return "ModelConversion"

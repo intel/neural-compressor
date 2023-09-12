@@ -19,31 +19,33 @@ import numpy as np
 import xgboost as xgb
 
 from neural_compressor.strategy.bayesian import BayesianOptimization
-from ...config import HPOConfig
 
-from .search_space import BaseSearchSpace, DiscreteSearchSpace, ContinuousSearchSpace
+from ...config import HPOConfig
 from .sa_optimizer import SimulatedAnnealingOptimizer
+from .search_space import BaseSearchSpace, ContinuousSearchSpace, DiscreteSearchSpace
 
 try:
     from neural_compressor.utils import logger
-except:
+except:  # pragma: no cover
     import logging
+
     logger = logging.getLogger(__name__)
 
 
 SEARCHERS = {}
 
 
-
 def prepare_hpo(config):
-    assert isinstance(config, HPOConfig), f'config should be {HPOConfig.__name__}'
+    assert isinstance(config, HPOConfig), f"config should be {HPOConfig.__name__}"
     assert config.searcher in SEARCHERS.keys(), f"current only support search algorithms: {SEARCHERS.keys()}"
-    if config.searcher == 'xgb':
-        return SEARCHERS[config.searcher](config.search_space,
-                                          higher_is_better=config.higher_is_better,
-                                          loss_type=config.loss_type,
-                                          min_train_samples=config.min_train_samples,
-                                          seed=config.seed)
+    if config.searcher == "xgb":
+        return SEARCHERS[config.searcher](
+            config.search_space,
+            higher_is_better=config.higher_is_better,
+            loss_type=config.loss_type,
+            min_train_samples=config.min_train_samples,
+            seed=config.seed,
+        )
     else:
         return SEARCHERS[config.searcher](config.search_space)
 
@@ -61,9 +63,11 @@ def register_searcher(name):
     Returns:
         cls: The class of register.
     """
+
     def register(searcher):
         SEARCHERS[name] = searcher
         return searcher
+
     return register
 
 
@@ -73,17 +77,20 @@ class Searcher(object):
     Args:
         search_space (dict): A dictionary for defining the search space.
     """
+
     def __init__(self, search_space):
-        assert isinstance(search_space, dict) and search_space, \
-            "Expect search_space to be a dict."
+        assert isinstance(search_space, dict) and search_space, "Expect search_space to be a dict."
         self.search_space = search_space
         self.search_space_keys = sorted(search_space.keys())
         self.search_space_pool = self._create_search_space_pool()
         self.best = None
         for k in self.search_space_keys:
-            assert isinstance(self.search_space[k], (list, tuple, BaseSearchSpace)), \
-                "Value of key \'{}\' must be a list, tuple,\
-                      CountinuousSearchSpace or DiscreteSearchSpace to specify choices".format(k)
+            assert isinstance(
+                self.search_space[k], (list, tuple, BaseSearchSpace)
+            ), "Value of key '{}' must be a list, tuple,\
+                      CountinuousSearchSpace or DiscreteSearchSpace to specify choices".format(
+                k
+            )
 
     def _create_search_space_pool(self):
         """Build the search space pool."""
@@ -91,15 +98,14 @@ class Searcher(object):
         for key in self.search_space_keys:
             if isinstance(self.search_space[key], (list, tuple)):
                 space = DiscreteSearchSpace(value=self.search_space[key])
-            else:
+            else:  # pragma: no cover
                 space = self.search_space[key]
             search_space_pool.append(space)
         return search_space_pool
 
     def suggest(self):
         """Suggest the model hyperparameter."""
-        raise NotImplementedError(
-            'Depends on specific search algorithm.')  # pragma: no cover
+        raise NotImplementedError("Depends on specific search algorithm.")  # pragma: no cover
 
     def get_feedback(self, metric):
         """Get metric feedback for the search algorithm."""
@@ -113,8 +119,9 @@ class Searcher(object):
         Returns:
             Parameters dictionary defining the model hyperparameter.
         """
-        assert len(para_vec) == len(self.search_space_keys), \
-            "Length of para_vec and search_space_keys should be the same."
+        assert len(para_vec) == len(
+            self.search_space_keys
+        ), "Length of para_vec and search_space_keys should be the same."
         return {k: para_vec[i] for i, k in enumerate(self.search_space_keys)}
 
 
@@ -127,15 +134,14 @@ class GridSearcher(Searcher):
     Args:
         search_space (dict): A dictionary for defining the search space.
     """
+
     def __init__(self, search_space):
         """Initialize the attributes."""
         super().__init__(search_space)
 
         for space in self.search_space_pool:
-            if space.type == 'continuous':
-                raise TypeError(
-                    "GridSearcher not support continuous datatype, please use other algorithm."
-                )
+            if space.type == "continuous":
+                raise TypeError("GridSearcher not support continuous datatype, please use other algorithm.")
 
         self.idx = [0] * len(self.search_space_pool)
 
@@ -163,8 +169,8 @@ class GridSearcher(Searcher):
         param = []
         for i in range(len(self.idx)):
             param.append(self.search_space_pool[i].get_value(self.idx[i]))
-        if not self._add_idx():
-            logger.warning('run out of search space pool, rebuild...')
+        if not self._add_idx():  # pragma: no cover
+            logger.warning("run out of search space pool, rebuild...")
             self.idx = [0] * len(self.search_space_pool)
         return self.params_vec2params_dict(param)
 
@@ -178,6 +184,7 @@ class RandomSearcher(Searcher):
     Args:
         search_space (dict): A dictionary for defining the search space.
     """
+
     def __init__(self, search_space):
         """Initialize the attributes."""
         super().__init__(search_space)
@@ -201,6 +208,7 @@ class BayesianOptimizationSearcher(Searcher):
     Args:
         search_space (dict): A dictionary for defining the search space.
     """
+
     def __init__(self, search_space, seed=42):
         """Initialize the attributes."""
         super().__init__(search_space)
@@ -210,8 +218,7 @@ class BayesianOptimizationSearcher(Searcher):
                 idx_search_space[key] = tuple(space.bound)
             else:
                 idx_search_space[key] = (0, space.total_num - 1)
-        self.bo_agent = BayesianOptimization(idx_search_space,
-                                             random_seed=seed)
+        self.bo_agent = BayesianOptimization(idx_search_space, random_seed=seed)
 
     def suggest(self):
         """Suggest the model hyperparameter.
@@ -221,21 +228,20 @@ class BayesianOptimizationSearcher(Searcher):
         """
         param_indices = self.bo_agent.gen_next_params()
         self.last_param_indices = param_indices
-        return self.params_vec2params_dict(
-            self.indices2params_vec(param_indices))
+        return self.params_vec2params_dict(self.indices2params_vec(param_indices))
 
     def get_feedback(self, metric):
         """Get metric feedback and register this metric."""
-        assert self.last_param_indices is not None, "Need run suggest first " + \
-            "to get parameters and the input metric is corresponding to this parameters."
+        assert self.last_param_indices is not None, (
+            "Need run suggest first " + "to get parameters and the input metric is corresponding to this parameters."
+        )
         try:
             self.bo_agent._space.register(self.last_param_indices, metric)
         except KeyError:  # pragma: no cover
             logger.debug("Find registered params, skip it.")
             pass
         if self.best is None or self.best[1] < metric:
-            param = self.params_vec2params_dict(
-                self.indices2params_vec(self.last_param_indices))
+            param = self.params_vec2params_dict(self.indices2params_vec(self.last_param_indices))
             self.best = (param, metric)
         self.last_param_indices = None
 
@@ -267,12 +273,8 @@ class XgbSearcher(Searcher):
     Args:
         search_space (dict): A dictionary for defining the search space.
     """
-    def __init__(self,
-                 search_space,
-                 higher_is_better=True,
-                 loss_type='reg',
-                 min_train_samples=10,
-                 seed=42):
+
+    def __init__(self, search_space, higher_is_better=True, loss_type="reg", min_train_samples=10, seed=42):
         """Initialize the attributes."""
         super().__init__(search_space)
 
@@ -286,35 +288,34 @@ class XgbSearcher(Searcher):
         self._x = []
         self._y = []
         if loss_type == "reg":
-            self.model = xgb.XGBRegressor(max_depth=3,
-                                          n_estimators=100,
-                                          gamma=0.0001,
-                                          min_child_weight=1,
-                                          subsample=1.0,
-                                          eta=0.3,
-                                          reg_lambda=1.00,
-                                          reg_alpha=0,
-                                          objective='reg:squarederror')
-        elif loss_type == "rank":
-            self.model = xgb.XGBRanker(max_depth=3,
-                                       n_estimators=100,
-                                       gamma=0.0001,
-                                       min_child_weight=1,
-                                       subsample=1.0,
-                                       eta=0.3,
-                                       reg_lambda=1.00,
-                                       reg_alpha=0,
-                                       objective='rank:pairwise')
+            self.model = xgb.XGBRegressor(
+                max_depth=3,
+                n_estimators=100,
+                gamma=0.0001,
+                min_child_weight=1,
+                subsample=1.0,
+                eta=0.3,
+                reg_lambda=1.00,
+                reg_alpha=0,
+                objective="reg:squarederror",
+            )
+        elif loss_type == "rank":  # pragma: no cover
+            self.model = xgb.XGBRanker(
+                max_depth=3,
+                n_estimators=100,
+                gamma=0.0001,
+                min_child_weight=1,
+                subsample=1.0,
+                eta=0.3,
+                reg_lambda=1.00,
+                reg_alpha=0,
+                objective="rank:pairwise",
+            )
         else:  # pragma: no cover
-            raise RuntimeError(
-                "Invalid loss type: {}, only surport reg and rank".format(
-                    loss_type))
+            raise RuntimeError("Invalid loss type: {}, only support reg and rank".format(loss_type))
         self.optimizer = SimulatedAnnealingOptimizer(
-            generate_func=self._generate_new_points,
-            T0=100,
-            Tf=0,
-            alpha=0.9,
-            higher_is_better=self.higher_is_better)
+            generate_func=self._generate_new_points, T0=100, Tf=0, alpha=0.9, higher_is_better=self.higher_is_better
+        )
 
     def _generate_new_points(self, points):
         new_points = []
@@ -334,21 +335,21 @@ class XgbSearcher(Searcher):
             x_train, y_train = np.array(self._x), np.array(self._y)
 
             self.model.fit(x_train, y_train)
-            params = self.optimizer.gen_next_params(self.model.predict,
-                                                    self._x)
+            params = self.optimizer.gen_next_params(self.model.predict, self._x)
 
         self.last_params = params
         return self.params_vec2params_dict(params)
 
     def get_feedback(self, metric):
         """Get metric feedback and register this metric."""
-        assert self.last_params is not None, "Need run suggest first " + \
-            "to get parameters and the input metric is corresponding to this parameters."
+        assert self.last_params is not None, (
+            "Need run suggest first " + "to get parameters and the input metric is corresponding to this parameters."
+        )
         if self.best is None or self.best[1] < metric:
             self.best = (self.params_vec2params_dict(self.last_params), metric)
         self._x.append(self.last_params)
         self._y.append(metric)
-        params_key = '_'.join([str(x) for x in self.last_params])
+        params_key = "_".join([str(x) for x in self.last_params])
         self.log[params_key] = metric
         self.last_params = None
 
@@ -360,5 +361,5 @@ class XgbSearcher(Searcher):
             self.best = (param, metric)
         self._x.append(param_list)
         self._y.append(metric)
-        params_key = '_'.join([str(x) for x in param])
+        params_key = "_".join([str(x) for x in param])
         self.log[params_key] = metric

@@ -17,19 +17,21 @@
 """Quantization Add Layer Class."""
 
 import logging
+
 from .quantize_layer_base import QuantizeLayerBase
 
 logger = logging.getLogger("neural_compressor")
 
-class QuantizeLayerAdd(QuantizeLayerBase): # pragma: no cover
+
+class QuantizeLayerAdd(QuantizeLayerBase):  # pragma: no cover
     """The class for quantization of Add."""
 
     def __init__(self):
         """Initialize QuantizeLayerAdd class."""
         self.quantize_patterns = [
-            ['Conv', 'BatchNorm', 'Add'],
-            ['Conv', 'BatchNorm', 'Activation', 'Add'],
-            ['Conv', 'BatchNorm', 'Activation', 'Dropout', 'Add']
+            ["Conv", "BatchNorm", "Add"],
+            ["Conv", "BatchNorm", "Activation", "Add"],
+            ["Conv", "BatchNorm", "Activation", "Dropout", "Add"],
         ]
 
         super().__init__()
@@ -45,8 +47,10 @@ class QuantizeLayerAdd(QuantizeLayerBase): # pragma: no cover
         """
         input_layer = self._find_input_layers(self.layer)
         if len(input_layer) == 1:
-            logger.warning("The layer 'Add' should have more than one input. "
-            "You input a model with layer {} which has only one input".format(self.layer.name))
+            logger.warning(
+                "The layer 'Add' should have more than one input. "
+                "You input a model with layer {} which has only one input".format(self.layer.name)
+            )
             return False
 
         return True
@@ -55,11 +59,11 @@ class QuantizeLayerAdd(QuantizeLayerBase): # pragma: no cover
         """The main logic of QuantizeLayerAdd.
 
         Neural Compressor will enumerate all layers of the input model to check
-        if there are any layer meeting the criteria. The choosen ones will be marked
+        if there are any layer meeting the criteria. The chosen ones will be marked
         as quantizable by QuantizeConfig.
 
         Args:
-            layer (tf.keras.layers.Layer): The keras layer to be estimated. 
+            layer (tf.keras.layers.Layer): The keras layer to be estimated.
         """
         self.layer = layer
         if self._quantizable_add():
@@ -67,9 +71,8 @@ class QuantizeLayerAdd(QuantizeLayerBase): # pragma: no cover
             fused_conv_index = None
             for i, input_layer in enumerate(input_layers):
                 # Check that the input is a Conv pattern
-                if 'Conv' in input_layer.__class__.__name__ or self._find_patterns(input_layer):
-                    if hasattr(input_layer, 'outbound_nodes') and \
-                        len(getattr(input_layer, 'outbound_nodes')) == 1:
+                if "Conv" in input_layer.__class__.__name__ or self._find_patterns(input_layer):
+                    if hasattr(input_layer, "outbound_nodes") and len(getattr(input_layer, "outbound_nodes")) == 1:
                         fused_conv_index = i
                         break
 
@@ -77,5 +80,4 @@ class QuantizeLayerAdd(QuantizeLayerBase): # pragma: no cover
             if fused_conv_index:
                 del input_indexes[fused_conv_index]
 
-            self.quantize_config.add_quantize_recipe({self.layer.name: {'quantize': True,
-                                                            'index': input_indexes}})
+            self.quantize_config.add_quantize_recipe({self.layer.name: {"quantize": True, "index": input_indexes}})

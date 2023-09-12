@@ -756,6 +756,27 @@
       "main_script": "main.py",
       "batch_size": 1
     },
+    "llama-7b-rtn": {
+      "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/llama-7b",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "llama-7b-awq": {
+      "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/llama-7b",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "llama-7b-gptq": {
+      "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/llama-7b",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
     "hf_roberta-large": {
       "model_src_dir": "nlp/huggingface_model/question_answering/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/squad",
@@ -845,6 +866,13 @@
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/hf_deberta/deberta-v3-base-mrpc.onnx",
       "main_script": "main.py",
+      "batch_size": 1
+    },
+    "table_transformer": {
+      "model_src_dir": "object_detection/table_transformer/quantization/ptq_static",
+      "dataset_location": "/tf_dataset/dataset/PubTables-1M-Structure",
+      "input_model": "/tf_dataset2/models/onnx/table-transformer/model.onnx",
+      "main_script": "table-transformer/src/main.py",
       "batch_size": 1
     },
     "hf_codebert": {

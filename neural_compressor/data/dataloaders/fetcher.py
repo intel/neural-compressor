@@ -19,14 +19,15 @@
 
 from abc import abstractmethod
 
-class Fetcher(object):    # pragma: no cover
+
+class Fetcher(object):  # pragma: no cover
     """Base class for different fetchers."""
 
     def __init__(self, dataset, collate_fn, drop_last):
         """Initialize Fetcher.
 
         Args:
-            dataset (object): dataset object from which to get data 
+            dataset (object): dataset object from which to get data
             collate_fn (callable): merge data with outer dimension batch size
             drop_last (bool): whether to drop the last batch if it is incomplete
         """
@@ -40,11 +41,11 @@ class Fetcher(object):    # pragma: no cover
 
         Args:
             batched_indices (list): fetch data according to batched_indices
-
         """
         raise NotImplementedError
 
-class IterableFetcher(Fetcher):    # pragma: no cover
+
+class IterableFetcher(Fetcher):  # pragma: no cover
     """Iterate to get next batch-size samples as a batch."""
 
     def __init__(self, dataset, collate_fn, drop_last, distributed):
@@ -55,38 +56,39 @@ class IterableFetcher(Fetcher):    # pragma: no cover
             collate_fn (callable): merge data with outer dimension batch size
             drop_last (bool): whether to drop the last batch if it is incomplete
             distributed (bool): whether the dataloader is distributed
-
         """
         super(IterableFetcher, self).__init__(dataset, collate_fn, drop_last)
         self.dataset_iter = iter(dataset)
         self.index_whole = 0
-        self.process_rank = 0 # The default rank is 0, which represents the main process
-        self.process_size = 1 # By default, process_size=1, only the main process is running
+        self.process_rank = 0  # The default rank is 0, which represents the main process
+        self.process_size = 1  # By default, process_size=1, only the main process is running
         if distributed:
             import horovod.tensorflow as hvd
+
             hvd.init()
             self.process_rank = hvd.rank()
             self.process_size = hvd.size()
             if self.process_size < 2:
-                raise EnvironmentError("The program is now trying to traverse" \
-                    " the distributed TensorFlow DefaultDataLoader in only one process." \
-                    " If you do not want to use distributed DataLoader, please set" \
-                    " 'distributed: False'. Or If you want to use distributed DataLoader," \
-                    " please set 'distributed: True' and launch multiple processes.")
+                raise EnvironmentError(
+                    "The program is now trying to traverse"
+                    " the distributed TensorFlow DefaultDataLoader in only one process."
+                    " If you do not want to use distributed DataLoader, please set"
+                    " 'distributed: False'. Or If you want to use distributed DataLoader,"
+                    " please set 'distributed: True' and launch multiple processes."
+                )
 
     def __call__(self, batched_indices):
         """Fetch data.
 
         Args:
             batched_indices (list): fetch data according to batched_indices
-
         """
         batch_data = []
         batch_size = len(batched_indices)
         while True:
             try:
                 iter_data = next(self.dataset_iter)
-                if (self.index_whole-self.process_rank)%self.process_size == 0:
+                if (self.index_whole - self.process_rank) % self.process_size == 0:
                     batch_data.append(iter_data)
                 self.index_whole += 1
                 if len(batch_data) == batch_size:
@@ -97,7 +99,8 @@ class IterableFetcher(Fetcher):    # pragma: no cover
             raise StopIteration
         return self.collate_fn(batch_data)
 
-class IndexFetcher(Fetcher):    # pragma: no cover
+
+class IndexFetcher(Fetcher):  # pragma: no cover
     """Take single index or a batch of indices to fetch samples as a batch."""
 
     def __init__(self, dataset, collate_fn, drop_last, distributed):
@@ -116,9 +119,12 @@ class IndexFetcher(Fetcher):    # pragma: no cover
 
         Args:
             batched_indices (list): fetch data according to batched_indices
-
         """
         data = [self.dataset[idx] for idx in batched_indices]
         return self.collate_fn(data)
 
-FETCHERS = {"index": IndexFetcher, "iter": IterableFetcher, }
+
+FETCHERS = {
+    "index": IndexFetcher,
+    "iter": IterableFetcher,
+}

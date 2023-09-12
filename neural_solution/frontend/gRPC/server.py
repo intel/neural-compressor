@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Server of gRPC frontend."""
 
 import argparse
@@ -54,7 +53,7 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
         Returns:
             Response: service status
         """
-        print(f"Ping grpc serve.")
+        logger.info("Ping grpc serve.")
         port_lst = [config.result_monitor_port]
         result = check_service_status(port_lst, service_address=config.service_address)
         response = neural_solution_pb2.ResponsePingMessage(**result)  # pylint: disable=no-member
@@ -76,9 +75,9 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
             json: status , id of task and messages.
         """
         # Process the task
-        print(f"Submit task to task db")
+        logger.info("Submit task to task db")
         db_path = get_db_path(config.workspace)
-        print(db_path)
+        logger.info(db_path)
         result = submit_task_to_db(task=task, task_submitter=task_submitter, db_path=get_db_path(config.workspace))
         # Return a response
         response = neural_solution_pb2.TaskResponse(**result)  # pylint: disable=no-member
@@ -95,7 +94,7 @@ class TaskSubmitterServicer(neural_solution_pb2_grpc.TaskServiceServicer):
         """
         db_path = get_db_path(config.workspace)
         result = query_task_status(task_id.task_id, db_path)
-        print(f"query result : result")
+        logger.info("query result : result")
         response = neural_solution_pb2.TaskStatus(**result)  # pylint: disable=no-member
         return response
 
@@ -123,7 +122,7 @@ def serve():
     neural_solution_pb2_grpc.add_TaskServiceServicer_to_server(TaskSubmitterServicer(), server)
     server.add_insecure_port("[::]:" + port)
     server.start()
-    print("Server started, listening on " + port)
+    logger.info("Server started, listening on " + port)
     server.wait_for_termination()
 
 
@@ -140,10 +139,15 @@ def parse_arguments():
 
 
 if __name__ == "__main__":
-    logger.info(f"Try to start gRPC server.")
+    logger.info("Try to start gRPC server.")
     logging.basicConfig()
     args = parse_arguments()
-    print(args.workspace)
+    logger.info(args.workspace)
     config.workspace = args.workspace
     config.grpc_api_port = args.grpc_api_port
+    config.result_monitor_port = args.result_monitor_port
+    config.task_monitor_port = args.task_monitor_port
+    # initialize the task submitter
+    task_submitter.task_monitor_port = config.task_monitor_portq
+    task_submitter.result_monitor_port = config.result_monitor_port
     serve()

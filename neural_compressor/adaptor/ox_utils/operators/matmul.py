@@ -17,9 +17,11 @@
 """MatMul Operator."""
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
-from neural_compressor.adaptor.ox_utils.util import find_by_name, attribute_to_kwarg
 from onnx import onnx_pb as onnx_proto
+
+from neural_compressor.adaptor.ox_utils.operators.ops import Operator, QOperator, op_registry, qop_registry
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, find_by_name
+
 
 @op_registry(op_types="MatMul")
 class MatMulOperator(Operator):
@@ -44,8 +46,7 @@ class MatMulOperator(Operator):
         node = self.node
         self.quantizer.quantize_inputs(node, [0])
         if self.per_channel and find_by_name(node.input[1], self.quantizer.model.initializer()):
-            self.quantizer.quantize_weights_per_channel(node, [1],
-                                    self.weight_dtype, self.weight_scheme, 1)
+            self.quantizer.quantize_weights_per_channel(node, [1], self.weight_dtype, self.weight_scheme, 1)
         else:
             self.quantizer.quantize_inputs(node, [1])
 
@@ -56,9 +57,11 @@ class MatMulOperator(Operator):
     def convert_check(self, convert_format):
         """Check if conversion can be done."""
         node = self.node
-        assert convert_format in ['dynamic', 'static'], \
-            "convert format for {} should be in ['dynamic', 'static']".format(node.op_type)
-        if not node.name.endswith('_quant'):
+        assert convert_format in [
+            "dynamic",
+            "static",
+        ], "convert format for {} should be in ['dynamic', 'static']".format(node.op_type)
+        if not node.name.endswith("_quant"):
             return False
         return True
 
@@ -66,7 +69,7 @@ class MatMulOperator(Operator):
         """Convert to QOperator format."""
         node = self.node
 
-        if convert_format == 'dynamic':
+        if convert_format == "dynamic":
             parents = self.quantizer.model.get_parents(node)
 
             inputs = []
@@ -74,11 +77,11 @@ class MatMulOperator(Operator):
             scale = []
             zp = []
             for parent in parents:
-                if parent.op_type == 'DequantizeLinear':
+                if parent.op_type == "DequantizeLinear":
                     quantized_name.append(parent.input[0])
                 else:
                     quantized_name.append(parent.output[0])
-                if parent.op_type == 'DynamicQuantizeLinear':
+                if parent.op_type == "DynamicQuantizeLinear":
                     scale.append(parent.output[1])
                     zp.append(parent.output[2])
                 else:
@@ -87,16 +90,18 @@ class MatMulOperator(Operator):
             inputs.extend(quantized_name)
             inputs.extend(zp)
             matmul_integer_output = node.output[0] + "_output_quantized"
-            matmul_integer_node = onnx.helper.make_node("MatMulInteger",
-                                                        inputs,
-                                                        [matmul_integer_output], node.name)
+            matmul_integer_node = onnx.helper.make_node("MatMulInteger", inputs, [matmul_integer_output], node.name)
             self.quantizer.new_nodes.append(matmul_integer_node)
 
             # Add cast operation to cast matmulInteger output to float.
             cast_op_output = matmul_integer_output + "_cast_output"
-            cast_node = onnx.helper.make_node("Cast", [matmul_integer_output], [cast_op_output],
-                                            matmul_integer_output + "_cast",
-                                            to=onnx_proto.TensorProto.FLOAT)
+            cast_node = onnx.helper.make_node(
+                "Cast",
+                [matmul_integer_output],
+                [cast_op_output],
+                matmul_integer_output + "_cast",
+                to=onnx_proto.TensorProto.FLOAT,
+            )
             self.quantizer.new_nodes.append(cast_node)
 
             # Add mul operation to multiply scales of two inputs.
@@ -104,8 +109,9 @@ class MatMulOperator(Operator):
 
             scales_mul_node = find_by_name(scales_mul_op, self.quantizer.new_nodes)
             if scales_mul_node is None:
-                scales_mul_node = onnx.helper.make_node("Mul", [scale[0], scale[1]],  
-                    [scales_mul_op + ":0"], scales_mul_op)
+                scales_mul_node = onnx.helper.make_node(
+                    "Mul", [scale[0], scale[1]], [scales_mul_op + ":0"], scales_mul_op
+                )
                 self.quantizer.new_nodes.append(scales_mul_node)
 
             scales_mul_op_output = scales_mul_node.output[0]
@@ -114,41 +120,42 @@ class MatMulOperator(Operator):
             # and make the output of this node the same as output of original matmul node.
             output_scale_mul_op = node.name + "_output_scale_mul"
             self.quantizer.new_nodes.append(
-                onnx.helper.make_node("Mul", [cast_op_output, scales_mul_op_output],
-                                [node.output[0]], output_scale_mul_op))
-            if parents[1].op_type == 'DequantizeLinear':
+                onnx.helper.make_node(
+                    "Mul", [cast_op_output, scales_mul_op_output], [node.output[0]], output_scale_mul_op
+                )
+            )
+            if parents[1].op_type == "DequantizeLinear":
                 self.quantizer.remove_nodes.append(parents[1])
             self.quantizer.remove_nodes.append(node)
-        elif convert_format == 'static':
+        elif convert_format == "static":
             parents = self.quantizer.model.get_parents(node)
-            if len(self.quantizer.model.get_children(node)) == 0 or \
-                not node.name.endswith('_quant'): # pragma: no cover
+            if len(self.quantizer.model.get_children(node)) == 0 or not node.name.endswith(
+                "_quant"
+            ):  # pragma: no cover
                 return
 
             qlinear_matmul_inputs = []
             if self.disable_qdq_for_node_output:
                 for i in range(len(parents[0].input)):
                     qlinear_matmul_inputs.extend([parent.input[i] for parent in parents])
-                qlinear_matmul_node = onnx.helper.make_node("MatMulIntegerToFloat",
-                                                            qlinear_matmul_inputs,
-                                                            node.output,
-                                                            node.name,
-                                                            domain='com.microsoft')
+                qlinear_matmul_node = onnx.helper.make_node(
+                    "MatMulIntegerToFloat", qlinear_matmul_inputs, node.output, node.name, domain="com.microsoft"
+                )
             else:
                 child = self.quantizer.model.get_children(node)[0]
                 qlinear_matmul_output = child.output[0]
                 for parent in parents:
                     qlinear_matmul_inputs.extend(parent.input)
                 qlinear_matmul_inputs.extend(child.input[1:])
-                qlinear_matmul_node = onnx.helper.make_node("QLinearMatMul",
-                                                            qlinear_matmul_inputs,
-                                                            [qlinear_matmul_output],
-                                                            node.name)
+                qlinear_matmul_node = onnx.helper.make_node(
+                    "QLinearMatMul", qlinear_matmul_inputs, [qlinear_matmul_output], node.name
+                )
                 self.quantizer.remove_nodes.append(child)
             self.quantizer.new_nodes.append(qlinear_matmul_node)
             self.quantizer.remove_nodes.extend(parents)
             self.quantizer.remove_nodes.append(node)
-            
+
+
 @qop_registry(op_types="QLinearMatMul")
 class QMatMulOperator(QOperator):
     """QLinearMatMul Operator."""
@@ -164,37 +171,30 @@ class QMatMulOperator(QOperator):
         inits = []
         # input dq
         in_dq1 = onnx.helper.make_node(
-            'DequantizeLinear',
-            node.input[:3],
-            [node.name + '_in_dequant1'],
-            node.name + '_in_dequant1')
+            "DequantizeLinear", node.input[:3], [node.name + "_in_dequant1"], node.name + "_in_dequant1"
+        )
 
         in_dq2 = onnx.helper.make_node(
-            'DequantizeLinear',
-            node.input[3:6],
-            [node.name + '_in_dequant2'],
-            node.name + '_in_dequant2')
-        inputs = [node.name + '_in_dequant1', node.name + '_in_dequant2']
-        
+            "DequantizeLinear", node.input[3:6], [node.name + "_in_dequant2"], node.name + "_in_dequant2"
+        )
+        inputs = [node.name + "_in_dequant1", node.name + "_in_dequant2"]
+
         add_nodes.extend([in_dq1, in_dq2])
         # output q
         out_q = onnx.helper.make_node(
-            'QuantizeLinear',
-            [node.name + '_out', node.input[6], node.input[7]],
-            node.output,
-            node.name + '_out_quant')
-        outputs = [node.name + '_out']
+            "QuantizeLinear", [node.name + "_out", node.input[6], node.input[7]], node.output, node.name + "_out_quant"
+        )
+        outputs = [node.name + "_out"]
         add_nodes.append(out_q)
 
         kwargs = {}
-        for attribute in node.attribute: # pragma: no cover
+        for attribute in node.attribute:  # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
 
-        matmul_node = onnx.helper.make_node(
-            'MatMul', inputs,
-            outputs, node.name + '_convert', **kwargs)
+        matmul_node = onnx.helper.make_node("MatMul", inputs, outputs, node.name + "_convert", **kwargs)
         add_nodes.append(matmul_node)
         return True, add_nodes, inits
+
 
 @op_registry(op_types="FusedMatMul")
 class FusedMatMulOperator(Operator):

@@ -17,7 +17,8 @@
 # limitations under the License.
 
 import numpy as np
-from ..utils import torch, F, tf
+
+from ..utils import F, tf, torch
 
 PRUNERS = {}
 
@@ -70,7 +71,7 @@ class BasePruner:
         max_sparsity_ratio_per_op: A float showing the maximum sparsity ratio for every module.
     """
 
-    def __init__(self, config, modules, framework='pytorch'):
+    def __init__(self, config, modules, framework="pytorch"):
         """Initialize."""
         self.modules = modules
         self.config = config
@@ -78,22 +79,21 @@ class BasePruner:
         self.masks = {}
         self.global_step = 0
         self.handled_global_step = -1
-        self.start_step = self.config['start_step']
-        self.end_step = self.config['end_step']
-        self.pruning_frequency = self.config['pruning_frequency']
+        self.start_step = self.config["start_step"]
+        self.end_step = self.config["end_step"]
+        self.pruning_frequency = self.config["pruning_frequency"]
         # this is different with original code
-        self.total_prune_cnt = (self.end_step - self.start_step + self.pruning_frequency) \
-            // self.pruning_frequency
+        self.total_prune_cnt = (self.end_step - self.start_step + self.pruning_frequency) // self.pruning_frequency
         self.completed_pruned_cnt = 0
         self.total_prune_cnt -= 1  # not pruning at step 0
         if self.total_prune_cnt == 0:
             self.total_prune_cnt = 1
             self.completed_pruned_cnt = 1
 
-        self.target_sparsity_ratio = self.config['target_sparsity']
+        self.target_sparsity_ratio = self.config["target_sparsity"]
         self.current_sparsity_ratio = 0.0
         self.init_sparsity_ratio = 0.0
-        self.low_memory_usage = self.config['low_memory_usage']
+        self.low_memory_usage = self.config["low_memory_usage"]
 
     def _init(self):
         """Auxiliary function for initializing."""
@@ -106,7 +106,7 @@ class BasePruner:
     def mask_weights(self):
         """Apply masks to corresponding modules' weights.
 
-        Weights are multipled with masks. This is the formal pruning process.
+        Weights are multiplied with masks. This is the formal pruning process.
         """
         pass
 
@@ -199,6 +199,7 @@ class PytorchBasePruner(BasePruner):
         target_sparsity_ratio: A float showing the final sparsity after pruning.
         max_sparsity_ratio_per_op: A float showing the maximum sparsity ratio for every module.
     """
+
     def __init__(self, config, modules):
         super().__init__(config, modules)
         for key in self.modules.keys():
@@ -210,7 +211,7 @@ class PytorchBasePruner(BasePruner):
     def mask_weights(self):
         """Apply masks to corresponding modules' weights.
 
-        Weights are multipled with masks. This is the formal pruning process.
+        Weights are multiplied with masks. This is the formal pruning process.
         """
         with torch.no_grad():
             for key in self.modules.keys():
@@ -244,6 +245,7 @@ class KerasBasePruner(BasePruner):
         target_sparsity_ratio: A float showing the final sparsity after pruning.
         max_sparsity_ratio_per_op: A float showing the maximum sparsity ratio for every module.
     """
+
     def __init__(self, config, modules):
         super().__init__(config, modules)
         for key in self.modules.keys():
@@ -254,9 +256,8 @@ class KerasBasePruner(BasePruner):
     def mask_weights(self):
         """Apply masks to corresponding modules' weights.
 
-        Weights are multipled with masks. This is the formal pruning process.
+        Weights are multiplied with masks. This is the formal pruning process.
         """
         for key in self.modules.keys():
             module = self.modules[key]
             module.set_weights([module.get_weights()[0] * self.masks[key]] + module.get_weights()[1:])
-

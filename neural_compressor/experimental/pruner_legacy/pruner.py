@@ -14,12 +14,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Pattern lock pruner."""
 
 from neural_compressor.experimental.pruning_recipes.patterns import patterns
 
 PRUNERS = {}
+
 
 def pruner_registry(cls):
     """The class decorator used to register all Pruners subclasses.
@@ -30,13 +30,12 @@ def pruner_registry(cls):
     Returns:
         cls: The class of register.
     """
-    assert cls.__name__.endswith(
-        'Pruner'
-    ), "The name of subclass of Pruner should end with \'Pruner\' substring."
-    if cls.__name__[:-len('Pruner')].lower() in PRUNERS:
-        raise ValueError('Cannot have two pruner with the same name')
-    PRUNERS[cls.__name__[:-len('Pruner')]] = cls
+    assert cls.__name__.endswith("Pruner"), "The name of subclass of Pruner should end with 'Pruner' substring."
+    if cls.__name__[: -len("Pruner")].lower() in PRUNERS:
+        raise ValueError("Cannot have two pruner with the same name")
+    PRUNERS[cls.__name__[: -len("Pruner")]] = cls
     return cls
+
 
 class Pruner:
     """The base clase of Pruner.
@@ -50,7 +49,7 @@ class Pruner:
     def __init__(self, model, local_config, global_config):
         """Initialize the attributes."""
         self.model = model
-        #2 for linear weight, 4 for conv weight
+        # 2 for linear weight, 4 for conv weight
         self.tensor_dims = [2, 4]
 
         if local_config.method is not None:
@@ -86,10 +85,10 @@ class Pruner:
         self.is_last_epoch = False
 
         # TBD, add pattern in config
-        if hasattr(local_config, 'pattern'):
+        if hasattr(local_config, "pattern"):
             self.pattern = patterns[local_config.pattern]()
         else:
-            self.pattern = patterns['tile_pattern_1x1']()
+            self.pattern = patterns["tile_pattern_1x1"]()
         self.masks = {}
 
     def on_epoch_begin(self, epoch):
@@ -134,5 +133,5 @@ class Pruner:
         if self.start_epoch == self.end_epoch or epoch > self.end_epoch:
             return self.target_sparsity
         return self.initial_sparsity + (self.target_sparsity - self.initial_sparsity) * (
-            (epoch - self.start_epoch + 1) // self.freq) * self.freq / \
-            (self.end_epoch - self.start_epoch + 1)
+            (epoch - self.start_epoch + 1) // self.freq
+        ) * self.freq / (self.end_epoch - self.start_epoch + 1)

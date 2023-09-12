@@ -1,4 +1,4 @@
-"""block mask pruner."""
+"""Block mask pruner."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -17,16 +17,16 @@
 # limitations under the License.
 
 from functools import partial
-from .base import (register_pruner,
-                   PytorchBasePruner)
-from ..schedulers import get_scheduler
-from ..patterns import get_pattern
+
 from ..criteria import get_criterion
+from ..patterns import get_pattern
 from ..regs import get_reg
-from ..utils import logger, torch, F
+from ..schedulers import get_scheduler
+from ..utils import F, logger, torch
+from .base import PytorchBasePruner, register_pruner
 
 
-@register_pruner('pt_block_mask')
+@register_pruner("pt_block_mask")
 class PytorchBlockMaskPruner(PytorchBasePruner):
     """Pruning Pruner.
 
@@ -62,15 +62,17 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
 
         if "channel" not in self.pattern.pattern:
             logger.info("Enabling channel-wise pattern would be a better choice.")
-        
+
     def _rewrite_forward(self, pruner_masks):
         def forward(self, input):
             block_mask = pruner_masks[0][self.mask_name]
-            block_mask.requires_grad_(True) # Makesure that the gradient of block mask is always avilible
-            block_size = [self.weight.shape[0] // block_mask.shape[0],
-                          self.weight.shape[1] // block_mask.shape[1]]
-            mask = block_mask.repeat_interleave(block_size[0], dim=0).repeat_interleave(
-                block_size[1], dim=-1).to(self.weight.device)
+            block_mask.requires_grad_(True)  # Makesure that the gradient of block mask is always avilible
+            block_size = [self.weight.shape[0] // block_mask.shape[0], self.weight.shape[1] // block_mask.shape[1]]
+            mask = (
+                block_mask.repeat_interleave(block_size[0], dim=0)
+                .repeat_interleave(block_size[1], dim=-1)
+                .to(self.weight.device)
+            )
             return F.linear(input, self.weight * mask, self.bias)
 
         for key in self.masks.keys():
@@ -82,10 +84,10 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
         with torch.no_grad():
             for key in self.masks.keys():
                 module = self.modules[key]
-                delattr(module, 'mask_name')
+                delattr(module, "mask_name")
                 self.masks[key].requires_grad_(False)
                 module.forward = partial(torch.nn.Linear.forward, module)
-    
+
     # def on_step_begin(self, local_step):
     #     """Implement at the start of each step.
 
@@ -96,7 +98,7 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
     def update_masks(self, local_step):
         """Update the masks at a given local step."""
         if self.global_step == self.start_step:
-            if self.config['lock_init_sparsity']:
+            if self.config["lock_init_sparsity"]:
                 self.init_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
                 self.current_sparsity_ratio = self.init_sparsity_ratio
 
@@ -107,10 +109,13 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
             return
 
         self.criterion.on_step_begin()
-        current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(self.target_sparsity_ratio,
-                                                                             self.completed_pruned_cnt,
-                                                                             self.total_prune_cnt, self.masks,
-                                                                             self.init_sparsity_ratio)
+        current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(
+            self.target_sparsity_ratio,
+            self.completed_pruned_cnt,
+            self.total_prune_cnt,
+            self.masks,
+            self.init_sparsity_ratio,
+        )
         logger.info(f"current target ratio is {current_target_sparsity_ratio}")
 
         self.completed_pruned_cnt += 1
@@ -118,7 +123,7 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
             return
         self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
         self.pruner_masks[0] = self.masks
-        
+
         self.mask_weights()
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
@@ -145,7 +150,7 @@ class PytorchBlockMaskPruner(PytorchBasePruner):
     def mask_weights(self):
         """Apply block masks to corresponding modules' weights.
 
-        Weights are multipled with masks. This is the formal pruning process.
+        Weights are multiplied with masks. This is the formal pruning process.
         """
         with torch.no_grad():
             self.pattern.mask_block_weights(self.masks)

@@ -25,9 +25,9 @@ class SearchSpace:
 
     Args:
         bound: A tuple or list that limit the max and min number of search space.
-        interval: Only for descrete search space. Intervals in discrete space.
-        value: Only for descrete search space. A list that store all the number for search.
-        type: descrete or continues.
+        interval: Only for discrete search space. Intervals in discrete space.
+        value: Only for discrete search space. A list that store all the number for search.
+        type: discrete or continues.
 
     Example:
         from neural_compressor.compression.hpo import SearchSpace
@@ -37,13 +37,8 @@ class SearchSpace:
         'weight_decay': SearchSpace((0.0001, 0.001), type='continuous')
         }
     """
-    def __new__(
-            cls,
-            bound=None,
-            interval=None,
-            value=None,
-            type=None
-            ):
+
+    def __new__(cls, bound=None, interval=None, value=None, type=None):
         if type is None:
             if interval is not None or value is not None:
                 type = "discrete"
@@ -63,6 +58,7 @@ def register_searchspace(name):
     Returns:
         cls: The class of register.
     """
+
     def register(search_space):
         SEARCHSPACE[name] = search_space
         return search_space
@@ -72,19 +68,14 @@ def register_searchspace(name):
 
 class BaseSearchSpace(object):
     """Base class for Search Space."""
-    def __init__(
-            self,
-            bound=None,
-            interval=None,
-            value=None,
-            type=None
-            ):
+
+    def __init__(self, bound=None, interval=None, value=None, type=None):
         """Initialize."""
         if bound:
             if not isinstance(bound, (list, tuple)):  # pragma: no cover
-                raise TypeError("bound sould be list or tuple, not {}".format(type(bound)))
+                raise TypeError("bound should be list or tuple, not {}".format(type(bound)))
             if len(bound) != 2:  # pragma: no cover
-                raise ValueError("bound sould only contain two elements, [start, end)")
+                raise ValueError("bound should only contain two elements, [start, end)")
             if bound[1] <= bound[0]:  # pragma: no cover
                 raise ValueError("empty range for [{}, {})".format(bound[0], bound[1]))
         assert value or bound, "must set value or bound to initialize the search space"
@@ -93,7 +84,7 @@ class BaseSearchSpace(object):
         self.interval = interval
         self.value = value
         self.type = type
-        if type == 'discrete':
+        if type == "discrete":
             if value:
                 self.total_num = len(value)
             else:
@@ -102,23 +93,21 @@ class BaseSearchSpace(object):
             self.total_num = float("inf")
 
     def get_value(self):
-        """get one value from the search space."""
+        """Get one value from the search space."""
         pass
 
 
 @register_searchspace("discrete")
 class DiscreteSearchSpace(BaseSearchSpace):
     """Discrete Search Space."""
+
     def __init__(self, bound=None, interval=None, value=None, type=None):
         if bound and interval is None:
             if isinstance(bound[0], int) and isinstance(bound[1], int):
                 interval = 1
             else:
                 interval = 0.01
-        super().__init__(bound=bound,
-                         interval=interval,
-                         value=value,
-                         type='discrete')
+        super().__init__(bound=bound, interval=interval, value=value, type="discrete")
 
     def get_random_value(self):
         """Get a random value from search space."""
@@ -137,7 +126,10 @@ class DiscreteSearchSpace(BaseSearchSpace):
         return [self.get_nth_value(i) for i in range(self.total_num)]
 
     def get_value(self, idx=None):
-        """Get number n value from search space if idx is given. Otherwise, get a random value."""
+        """Get number n value from search space if idx is given.
+
+        Otherwise, get a random value.
+        """
         if idx is not None:
             if not isinstance(idx, int):
                 raise TypeError("The type of idx should be int, not {}".format(type(idx)))
@@ -147,18 +139,19 @@ class DiscreteSearchSpace(BaseSearchSpace):
         else:
             value = self.get_random_value()
         return value
-    
+
     def index(self, value):
         """Return the index of the value."""
         if self.value:
             return self.value.index(value)
         else:
             return int((value - self.bound[0]) / self.interval)
-    
+
 
 @register_searchspace("continuous")
 class ContinuousSearchSpace(BaseSearchSpace):
     """Continuous Search Space."""
+
     def __init__(self, bound, interval=None, value=None, type=None):
         super().__init__(bound, interval, value, "continuous")
 

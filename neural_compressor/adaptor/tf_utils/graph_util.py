@@ -17,33 +17,33 @@
 """Tensorflow Graph Utils Helper Classes."""
 
 import copy
-
-import re
 import logging
+import re
 from collections import namedtuple
-import numpy as np
 
-from tensorflow.core.framework import graph_pb2
-from tensorflow.core.framework import attr_value_pb2
-from tensorflow.core.framework import node_def_pb2
+import numpy as np
+from tensorflow.core.framework import attr_value_pb2, graph_pb2, node_def_pb2
 from tensorflow.python.framework import tensor_util
+
 from neural_compressor.utils.utility import singleton
 
 logger = logging.getLogger("neural_compressor")
 
+
 @singleton
-class GraphAnalyzer():
+class GraphAnalyzer:
     """Tensorflow Graph Analyzer class which implemented under singleton mode.
 
     This class provides the following API:
     * Analyze the graph
     * Analyze the input/output node names of the specified graph
     """
+
     # TODO add the positive input flag
-    node_details = namedtuple('node_details', ['node', 'outputs'])
+    node_details = namedtuple("node_details", ["node", "outputs"])
 
     def __init__(self, extend_engine=None):
-        """Intialization.
+        """Initialization.
 
         Args:
             extend_engine: extended engine, for future extension API。
@@ -79,16 +79,32 @@ class GraphAnalyzer():
         elif op_type in ("Concat", "Add", "AddV2", "AddN"):
             for each_input in start_node.input:
                 has_relu = self._has_positive_input(
-                    self.node_name_details[GraphRewriterHelper.node_name_from_input(each_input)].node)
+                    self.node_name_details[GraphRewriterHelper.node_name_from_input(each_input)].node
+                )
                 if not has_relu:
                     return False
             return True
-        elif op_type in ("Conv3D", "Conv2D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
-                         "MaxPool", "MaxPool3D", "Requantize", "AvgPool", "Pad", "CropAndResize", "Dequantize",
-                         "Mean", "MatMul", "FusedBatchNormV3", "_MklFusedInstanceNorm"):
+        elif op_type in (
+            "Conv3D",
+            "Conv2D",
+            "DepthwiseConv2D",
+            "QuantizeV2",
+            "DepthwiseConv2dNative",
+            "MaxPool",
+            "MaxPool3D",
+            "Requantize",
+            "AvgPool",
+            "Pad",
+            "CropAndResize",
+            "Dequantize",
+            "Mean",
+            "MatMul",
+            "FusedBatchNormV3",
+            "_MklFusedInstanceNorm",
+        ):
             return self._has_positive_input(
-                self.node_name_details[GraphRewriterHelper.node_name_from_input(
-                    start_node.input[0])].node)
+                self.node_name_details[GraphRewriterHelper.node_name_from_input(start_node.input[0])].node
+            )
         else:
             return False
 
@@ -99,7 +115,7 @@ class GraphAnalyzer():
             node_name (string): node name
 
         Returns:
-            bool: retrun True if the node has the positive input data,
+            bool: return True if the node has the positive input data,
                 return False if the node has the negative input data.
         """
         return self._has_positive_input(self.node_name_details[node_name].node)
@@ -116,11 +132,30 @@ class GraphAnalyzer():
         """
         input_node_names = []
         output_node_names = []
-        unlikely_output_types = ['Const', 'HostConst', 'Assign', 'NoOp', 'Parameter', 'Assert', 'save',
-                                 'global_step', 'read', 'switch', 'cond', 'train',
-                                 'init_ops', '[A-Za-z]+Dataset']
-        unlikely_input_types = ['FIFOQueueV2', 'QueueDequeueV2', 'QueueDequeueUpToV2',
-                                'OneShotIterator', 'IteratorGetNext', 'IteratorV2']
+        unlikely_output_types = [
+            "Const",
+            "HostConst",
+            "Assign",
+            "NoOp",
+            "Parameter",
+            "Assert",
+            "save",
+            "global_step",
+            "read",
+            "switch",
+            "cond",
+            "train",
+            "init_ops",
+            "[A-Za-z]+Dataset",
+        ]
+        unlikely_input_types = [
+            "FIFOQueueV2",
+            "QueueDequeueV2",
+            "QueueDequeueUpToV2",
+            "OneShotIterator",
+            "IteratorGetNext",
+            "IteratorV2",
+        ]
         exclude_input_names = []
         extra_input_names = []
 
@@ -131,19 +166,22 @@ class GraphAnalyzer():
                         exclude_input_names += i.outputs
                     else:
                         extra_input_names.append(i.node.name)
-            if i.node.op in ['Const', 'HostConst', 'Variable', 'VariableV2']:
+            if i.node.op in ["Const", "HostConst", "Variable", "VariableV2"]:
                 continue
             if not i.node.input and not i.outputs:
                 logger.debug("Skip isolated node {}.".format(i.node.name))
-            elif i.node.op == 'Placeholder':
+            elif i.node.op == "Placeholder":
                 input_node_names.append(i.node.name)
             elif not i.node.input:
                 if i.node.op not in unlikely_input_types:
                     input_node_names.append(i.node.name)
                 else:
                     exclude_input_names += i.outputs
-            elif not i.outputs and i.node.op not in unlikely_output_types \
-                    and not re.match(unlikely_output_types[-1], i.node.op):
+            elif (
+                not i.outputs
+                and i.node.op not in unlikely_output_types
+                and not re.match(unlikely_output_types[-1], i.node.op)
+            ):
                 output_node_names.append(i.node.name)
             else:
                 pass
@@ -152,8 +190,9 @@ class GraphAnalyzer():
             for extra_input_name in extra_input_names:
                 input_node_names.append(extra_input_name)
 
-        logger.warning("Found possible input node names: {}, output node names: {}.".format(
-            input_node_names, output_node_names))
+        logger.warning(
+            "Found possible input node names: {}, output node names: {}.".format(input_node_names, output_node_names)
+        )
 
         return (input_node_names, output_node_names)
 
@@ -167,7 +206,7 @@ class GraphAnalyzer():
             [string list]: The matched node names which saved as the string list.
         """
         if self.extend_engine:
-            #Todo keep this for future extension API
+            # Todo keep this for future extension API
             pass
         else:
             return self._search_patterns(patterns)
@@ -203,11 +242,12 @@ class GraphAnalyzer():
                         ['Conv2D', 'BiasAdd', 'AddN', 'Relu6']]
                     ]
         """
-        def _validate_input(data, creteria):
-            if isinstance(creteria, str) and data == creteria:
+
+        def _validate_input(data, criteria):
+            if isinstance(criteria, str) and data == criteria:
                 return True
 
-            if isinstance(creteria, (list, tuple)) and data in creteria:
+            if isinstance(criteria, (list, tuple)) and data in criteria:
                 return True
 
             return False
@@ -302,13 +342,11 @@ class GraphAnalyzer():
 
         useless_match_list = []
         for index, value in enumerate(sorted_output):
-
             if index == len(sorted_output) - 1:
                 break
 
             next_matched_op_names = sorted_output[index + 1][:-1]
-            if len(value[:-1]) < len(next_matched_op_names) and \
-                    _compare_list(value[:-1], next_matched_op_names):
+            if len(value[:-1]) < len(next_matched_op_names) and _compare_list(value[:-1], next_matched_op_names):
                 useless_match_list.append(value)
 
         for i in useless_match_list:
@@ -345,25 +383,24 @@ class GraphAnalyzer():
             logger.debug("The {} is not a valid node name.".format(node_name))
             return False
 
-        non_const_node_count = len([
-            GraphRewriterHelper.node_name_from_input(i)
-            for i in self.node_name_details[node_name].node.input if self.node_name_details[
-                GraphRewriterHelper.node_name_from_input(i)].node.op != "Const"
-        ])
+        non_const_node_count = len(
+            [
+                GraphRewriterHelper.node_name_from_input(i)
+                for i in self.node_name_details[node_name].node.input
+                if self.node_name_details[GraphRewriterHelper.node_name_from_input(i)].node.op != "Const"
+            ]
+        )
 
         if non_const_node_count > 1:
             logger.debug("The target node {} has more than one input.".format(node_name))
             return False
 
         try:
-
-            top_node_name = GraphRewriterHelper.node_name_from_input(
-                self.node_name_details[node_name].node.input[0])
+            top_node_name = GraphRewriterHelper.node_name_from_input(self.node_name_details[node_name].node.input[0])
 
             for bottom_node_name in self.node_name_details[node_name].outputs:
                 update_output_name = [
-                    bottom_node_name if i == node_name else i
-                    for i in self.node_name_details[top_node_name].outputs
+                    bottom_node_name if i == node_name else i for i in self.node_name_details[top_node_name].outputs
                 ]
                 self.node_name_details[top_node_name]._replace(outputs=update_output_name)
 
@@ -373,7 +410,7 @@ class GraphAnalyzer():
                 ]
 
                 if self.node_name_details[bottom_node_name].node.input:
-                    self.node_name_details[bottom_node_name].node.ClearField('input')
+                    self.node_name_details[bottom_node_name].node.ClearField("input")
                     self.node_name_details[bottom_node_name].node.input.extend(update_input_name)
 
         except Exception as e:
@@ -404,11 +441,7 @@ class GraphAnalyzer():
             logger.debug("{} has been removed.".format(node_name))
             return True
 
-    def replace_const_node(self,
-                           new_const_node,
-                           target_node,
-                           old_constant_node_name,
-                           replace_all=True):
+    def replace_const_node(self, new_const_node, target_node, old_constant_node_name, replace_all=True):
         """Replace the specified const node with another one.
 
         Args:
@@ -417,23 +450,22 @@ class GraphAnalyzer():
                                 need to be replaced const node.
             old_constant_node_name (string): the outdated const node name.
             replace_all (bool): replace the specified node name once or not.
-
         """
         new_const_node_name = new_const_node.name
 
-        self.node_name_details[new_const_node_name] = self.node_details(node=new_const_node,
-                                                                        outputs=target_node)
+        self.node_name_details[new_const_node_name] = self.node_details(node=new_const_node, outputs=target_node)
 
         for sub_node in target_node:
-            if not sub_node in self.node_name_details:
+            if sub_node not in self.node_name_details:
                 continue
             for index, each_node_name in enumerate(self.node_name_details[sub_node].node.input):
-                if each_node_name + ':0' == old_constant_node_name \
-                        or each_node_name == old_constant_node_name:
-                    new_input_name = self.node_name_details[sub_node].node.input[:index] + [
-                        new_const_node_name
-                    ] + self.node_name_details[sub_node].node.input[index + 1:]
-                    self.node_name_details[sub_node].node.ClearField('input')
+                if each_node_name + ":0" == old_constant_node_name or each_node_name == old_constant_node_name:
+                    new_input_name = (
+                        self.node_name_details[sub_node].node.input[:index]
+                        + [new_const_node_name]
+                        + self.node_name_details[sub_node].node.input[index + 1 :]
+                    )
+                    self.node_name_details[sub_node].node.ClearField("input")
                     self.node_name_details[sub_node].node.input.extend(new_input_name)
                     if old_constant_node_name in self.node_name_details:
                         self.node_name_details[old_constant_node_name].outputs.remove(sub_node)
@@ -469,15 +501,16 @@ class GraphAnalyzer():
                     self.node_name_details.pop(input_name)
             output_node_name = self.node_name_details[old_end_node_name].outputs
             self.replace_node(new_node, old_end_node_name, output_node_name)
-            self.node_name_details[new_node_name].node.ClearField('input')
+            self.node_name_details[new_node_name].node.ClearField("input")
         except Exception as e:
             logger.info("Fail to replace {} due to {}.".format(old_end_node_name, str(e)))
             return False
         else:
             return True
 
-    def replace_single_node(self, new_node, old_output_node_names, old_output_name,
-                            old_input_node_names, old_input_name):
+    def replace_single_node(
+        self, new_node, old_output_node_names, old_output_name, old_input_node_names, old_input_name
+    ):
         """Insert one node into the graph.
 
         Args:
@@ -495,19 +528,17 @@ class GraphAnalyzer():
                 self.node_name_details[i].outputs.remove(old_output_name)
             self.node_name_details[i].outputs.append(new_node_name)
 
-        self.node_name_details[new_node_name] = self.node_details(node=new_node,
-                                                                  outputs=old_input_node_names)
+        self.node_name_details[new_node_name] = self.node_details(node=new_node, outputs=old_input_node_names)
 
         for each_input_node_name in old_input_node_names:
-            for index, each_node_name in enumerate(
-                    self.node_name_details[each_input_node_name].node.input):
-                if self.node_name_details[each_input_node_name].node.input and (
-                        each_node_name) == old_input_name:
-                    new_input_name = self.node_name_details[
-                        each_input_node_name].node.input[:index] + [
-                            new_node_name
-                    ] + self.node_name_details[each_input_node_name].node.input[index + 1:]
-                    self.node_name_details[each_input_node_name].node.ClearField('input')
+            for index, each_node_name in enumerate(self.node_name_details[each_input_node_name].node.input):
+                if self.node_name_details[each_input_node_name].node.input and (each_node_name) == old_input_name:
+                    new_input_name = (
+                        self.node_name_details[each_input_node_name].node.input[:index]
+                        + [new_node_name]
+                        + self.node_name_details[each_input_node_name].node.input[index + 1 :]
+                    )
+                    self.node_name_details[each_input_node_name].node.ClearField("input")
                     self.node_name_details[each_input_node_name].node.input.extend(new_input_name)
 
     def replace_node(self, new_node, old_node_name, output_nodes_name):
@@ -519,8 +550,7 @@ class GraphAnalyzer():
             output_nodes_name (string list): output node names list
         """
         new_node_name = new_node.name
-        self.node_name_details[new_node_name] = self.node_details(node=new_node,
-                                                                  outputs=output_nodes_name)
+        self.node_name_details[new_node_name] = self.node_details(node=new_node, outputs=output_nodes_name)
         old_node = self.node_name_details[old_node_name].node
         for input_node_name in old_node.input:
             if input_node_name in self.node_name_details:
@@ -529,13 +559,16 @@ class GraphAnalyzer():
 
         for node_name in output_nodes_name:
             for index, each_node_name in enumerate(self.node_name_details[node_name].node.input):
-                if self.node_name_details[
-                        node_name].node.input and GraphRewriterHelper.node_name_from_input(
-                            each_node_name) == old_node_name:
-                    new_input_name = self.node_name_details[node_name].node.input[:index] + [
-                        new_node_name
-                    ] + self.node_name_details[node_name].node.input[index + 1:]
-                    self.node_name_details[node_name].node.ClearField('input')
+                if (
+                    self.node_name_details[node_name].node.input
+                    and GraphRewriterHelper.node_name_from_input(each_node_name) == old_node_name
+                ):
+                    new_input_name = (
+                        self.node_name_details[node_name].node.input[:index]
+                        + [new_node_name]
+                        + self.node_name_details[node_name].node.input[index + 1 :]
+                    )
+                    self.node_name_details[node_name].node.ClearField("input")
                     self.node_name_details[node_name].node.input.extend(new_input_name)
         self.remove_node(old_node_name)
 
@@ -550,36 +583,40 @@ class GraphAnalyzer():
         new_node_name = new_node.name
 
         if new_node_name in self.node_name_details:
-            logger.debug("Remove the existed node {} from internal data structure.".format(
-                (new_node_name)))
+            logger.debug("Remove the existed node {} from internal data structure.".format((new_node_name)))
             self.node_name_details.pop(new_node_name)
 
-        self.node_name_details[new_node_name] = self.node_details(node=new_node,
-                                                                  outputs=end_node_names)
+        self.node_name_details[new_node_name] = self.node_details(node=new_node, outputs=end_node_names)
 
         for end_node_name in end_node_names:
             # Update start node's output info
             if end_node_name not in self.node_name_details:
                 continue
-            if start_node_name and end_node_name in self.node_name_details[GraphRewriterHelper. \
-                node_name_from_input(start_node_name)].outputs:
-                self.node_name_details[GraphRewriterHelper.node_name_from_input(
-                    start_node_name)].outputs.remove(end_node_name)
+            if (
+                start_node_name
+                and end_node_name
+                in self.node_name_details[GraphRewriterHelper.node_name_from_input(start_node_name)].outputs
+            ):
+                self.node_name_details[GraphRewriterHelper.node_name_from_input(start_node_name)].outputs.remove(
+                    end_node_name
+                )
 
             # reset output node's input
-            for index, each_node_name in enumerate(
-                    self.node_name_details[end_node_name].node.input):
+            for index, each_node_name in enumerate(self.node_name_details[end_node_name].node.input):
                 if each_node_name == start_node_name:
-                    new_input_name = self.node_name_details[end_node_name].node.input[:index] + [
-                        new_node_name
-                    ] + self.node_name_details[end_node_name].node.input[index + 1:]
-                    self.node_name_details[end_node_name].node.ClearField('input')
+                    new_input_name = (
+                        self.node_name_details[end_node_name].node.input[:index]
+                        + [new_node_name]
+                        + self.node_name_details[end_node_name].node.input[index + 1 :]
+                    )
+                    self.node_name_details[end_node_name].node.ClearField("input")
                     self.node_name_details[end_node_name].node.input.extend(new_input_name)
 
         # add the inserted node into the start node's output.
         if start_node_name:
-            self.node_name_details[GraphRewriterHelper.node_name_from_input(
-                start_node_name)].outputs.append(new_node_name)
+            self.node_name_details[GraphRewriterHelper.node_name_from_input(start_node_name)].outputs.append(
+                new_node_name
+            )
 
     def dump_graph(self):
         """Dump the current model's graphdef.
@@ -600,6 +637,7 @@ class GraphAnalyzer():
             [parent_frame_details]: OrderedDict frame info of the graph nodes.
         """
         from collections import OrderedDict
+
         self.parent_frame_details = OrderedDict()
         input_node_names, _ = self.get_graph_input_output()
 
@@ -619,16 +657,20 @@ class GraphAnalyzer():
                 inputs = node_details.node.input
                 if not inputs:
                     self.parent_frame_details[node_details.node.name] = None
-                if self.node_name_details[output].node.op == 'Enter':
+                if self.node_name_details[output].node.op == "Enter":
                     self.parent_frame_details[output] = self.node_name_details[output].node
-                elif self.node_name_details[output].node.op == 'Exit':
+                elif self.node_name_details[output].node.op == "Exit":
                     self.parent_frame_details[output] = None
                 else:
                     if output in self.parent_frame_details and self.parent_frame_details[output]:
-                        if node_details.node.name in self.parent_frame_details and \
-                           self.parent_frame_details[node_details.node.name]:
-                            assert self.parent_frame_details[output].attr['frame_name'] == \
-                            self.parent_frame_details[node_details.node.name].attr['frame_name']
+                        if (
+                            node_details.node.name in self.parent_frame_details
+                            and self.parent_frame_details[node_details.node.name]
+                        ):
+                            assert (
+                                self.parent_frame_details[output].attr["frame_name"]
+                                == self.parent_frame_details[node_details.node.name].attr["frame_name"]
+                            )
                     else:
                         if node_details.node.name in self.parent_frame_details:
                             self.parent_frame_details[output] = self.parent_frame_details[node_details.node.name]
@@ -661,14 +703,14 @@ class GraphAnalyzer():
         for node_name, node_details in self.node_name_details.items():
             # update the upper node's output information.
             for each_input in node_details.node.input:
-                self.node_name_details[GraphRewriterHelper.node_name_from_input(
-                    each_input)].outputs.append(node_name)
+                self.node_name_details[GraphRewriterHelper.node_name_from_input(each_input)].outputs.append(node_name)
 
         return self.node_name_details
 
 
-class GraphRewriterHelper():
+class GraphRewriterHelper:
     """Encapsulates the graph operation into one class."""
+
     node_name_cache = {}
     node_name_port_cache = {}
 
@@ -727,7 +769,7 @@ class GraphRewriterHelper():
         return new_node
 
     @staticmethod
-    def create_constant_node(name, value, dtype, shape=None, device='cpu'):
+    def create_constant_node(name, value, dtype, shape=None, device="cpu"):
         """Create constant node.
 
         Args:
@@ -741,8 +783,7 @@ class GraphRewriterHelper():
         Returns:
             [type]: [description]
         """
-        node = GraphRewriterHelper.create_node("Const" if device == 'cpu' else "HostConst", name,
-                                               [])
+        node = GraphRewriterHelper.create_node("Const" if device == "cpu" else "HostConst", name, [])
         GraphRewriterHelper.set_attr_dtype(node, "dtype", dtype)
         GraphRewriterHelper.set_attr_tensor(node, "value", value, dtype, shape)
         return node
@@ -764,8 +805,8 @@ class GraphRewriterHelper():
             shape (int list, optional): the input tensor's shape. Defaults to None.
         """
         node.attr[key].CopyFrom(
-            attr_value_pb2.AttrValue(
-                tensor=tensor_util.make_tensor_proto(value, dtype=dtype, shape=shape)))
+            attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(value, dtype=dtype, shape=shape))
+        )
 
     @staticmethod
     def set_attr_type_list(node, key, value):
@@ -827,7 +868,6 @@ class GraphRewriterHelper():
 
         return GraphRewriterHelper.node_name_cache[node_name]
 
-
     @staticmethod
     def values_from_const(node_def):
         """Extracts the values from a const NodeDef as a numpy ndarray.
@@ -841,17 +881,23 @@ class GraphRewriterHelper():
         Raises:
           ValueError: If the node isn't a Const.
         """
-        assert node_def.op == 'Const', "Node named '%s' should be a Const op." % node_def.name
+        assert node_def.op == "Const", "Node named '%s' should be a Const op." % node_def.name
 
         input_tensor = node_def.attr["value"].tensor
         tensor_value = tensor_util.MakeNdarray(input_tensor)
         return tensor_value
 
     @staticmethod
-    def generate_int32_bias_for_conv(bias_tensor, channel_size,
-                                     max_input, min_input,
-                                     max_filter_tensor, min_filter_tensor,
-                                     activation_range, weights_range=127.0):
+    def generate_int32_bias_for_conv(
+        bias_tensor,
+        channel_size,
+        max_input,
+        min_input,
+        max_filter_tensor,
+        min_filter_tensor,
+        activation_range,
+        weights_range=127.0,
+    ):
         """Static method that generate int32 bias for conv op.
 
         Args:
@@ -871,14 +917,18 @@ class GraphRewriterHelper():
         scales = []
         if len(max_filter_tensor) > 1:
             for i in range(channel_size):
-                scales.append(activation_range * weights_range /
-                            (max(abs(max_input), abs(min_input)) *
-                            max(abs(max_filter_tensor[i]), abs(min_filter_tensor[i]))))
+                scales.append(
+                    activation_range
+                    * weights_range
+                    / (max(abs(max_input), abs(min_input)) * max(abs(max_filter_tensor[i]), abs(min_filter_tensor[i])))
+                )
         else:
             for i in range(channel_size):
-                scales.append(activation_range * weights_range /
-                            (max(abs(max_input), abs(min_input)) *
-                            max(abs(max_filter_tensor[0]), abs(min_filter_tensor[0]))))
+                scales.append(
+                    activation_range
+                    * weights_range
+                    / (max(abs(max_input), abs(min_input)) * max(abs(max_filter_tensor[0]), abs(min_filter_tensor[0])))
+                )
         int32_bias = []
         if channel_size > 1:
             for i in range(bias_length):
@@ -890,10 +940,15 @@ class GraphRewriterHelper():
         return int32_bias
 
     @staticmethod
-    def generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
-                                     input_range, max_input, min_input,
-                                     max_filter_value, min_filter_value,
-                                     ):
+    def generate_int32_bias_for_matmul(
+        bias_tensor,
+        weights_tensor,
+        input_range,
+        max_input,
+        min_input,
+        max_filter_value,
+        min_filter_value,
+    ):
         """Static method that generate int32 bias for matmul op.
 
         Args:
@@ -908,25 +963,25 @@ class GraphRewriterHelper():
         Returns:
             int32_bias: int32 bias
         """
-        bias_scale = 255.0 * 127.0 / (
-                input_range * max(abs(max_filter_value), abs(min_filter_value)))
+        bias_scale = 255.0 * 127.0 / (input_range * max(abs(max_filter_value), abs(min_filter_value)))
         relative_scale = 255 * min_input / (max_input - min_input)
         int32_bias = []
-        for bias_index, value in enumerate(
-                np.sum(np.array(weights_tensor, dtype=np.int32),
-                        axis=0,
-                        dtype=np.int32)):
+        for bias_index, value in enumerate(np.sum(np.array(weights_tensor, dtype=np.int32), axis=0, dtype=np.int32)):
             if bias_index >= bias_tensor.size:
                 continue
-            int32_bias.append(int(np.around(bias_tensor[bias_index] *
-                                    bias_scale + value * relative_scale)))
+            int32_bias.append(int(np.around(bias_tensor[bias_index] * bias_scale + value * relative_scale)))
 
         return int32_bias
 
     @staticmethod
-    def generate_int32_bias_for_matmul_per_channel(bias_tensor, weights_tensor, max_input, min_input,
-                                     max_filter_tensor, min_filter_tensor,
-                                     ): # pragma: no cover
+    def generate_int32_bias_for_matmul_per_channel(
+        bias_tensor,
+        weights_tensor,
+        max_input,
+        min_input,
+        max_filter_tensor,
+        min_filter_tensor,
+    ):  # pragma: no cover
         """Static method that generate per-channel int32 bias for matmul op.
 
         Args:
@@ -946,12 +1001,14 @@ class GraphRewriterHelper():
         scales = []
         relative_scale = 255 * min_input / (max_input - min_input)
         for i in range(channel_size):
-            scales.append(activation_range * weights_range /
-                        ((max_input - min_input) *
-                        max(abs(max_filter_tensor[i]), abs(min_filter_tensor[i]))))
+            scales.append(
+                activation_range
+                * weights_range
+                / ((max_input - min_input) * max(abs(max_filter_tensor[i]), abs(min_filter_tensor[i])))
+            )
         int32_bias = []
         for i in range(channel_size):
-            value = np.sum(np.array(weights_tensor),axis=0,dtype=np.int32)[i]
+            value = np.sum(np.array(weights_tensor), axis=0, dtype=np.int32)[i]
             int32_bias.append((int)(np.around(value * relative_scale + bias_tensor[i] * scales[i])))
 
         return int32_bias
@@ -966,6 +1023,7 @@ class GraphRewriterHelper():
         Returns:
           the sampling min max value.
         """
+
         def gen_per_iter(data):
             res = []
             requant_tmp = []
@@ -978,18 +1036,18 @@ class GraphRewriterHelper():
             odd_list = sorted_requant[::2]
             even_list = sorted_requant[1::2]
             for index, value in enumerate(even_list):
-                min_value = min(0, float(value.split(':')[1][1:-1]))
-                max_value = float(odd_list[index].split(':')[1][1:-1])
+                min_value = min(0, float(value.split(":")[1][1:-1]))
+                max_value = float(odd_list[index].split(":")[1][1:-1])
                 max_value = max_value if max_value > min_value else min_value + 1e-05
-                mixed_str = value.split(':')[0] + '_max:[' + \
-                    str(min_value) + '][' + str(max_value) + ']'
+                mixed_str = value.split(":")[0] + "_max:[" + str(min_value) + "][" + str(max_value) + "]"
 
                 res.append(mixed_str)
             return res
-        with open(log_path) as f:
-            valid_data = [i.strip() for i in f.readlines() if i.startswith(';')]
 
-        first_line = valid_data[0].rsplit(':')[0]
+        with open(log_path) as f:
+            valid_data = [i.strip() for i in f.readlines() if i.startswith(";")]
+
+        first_line = valid_data[0].rsplit(":")[0]
 
         iterations = 0
         for i in valid_data:
@@ -1004,9 +1062,9 @@ class GraphRewriterHelper():
         final_res = []
 
         for i in range(iterations):
-            final_res.extend(gen_per_iter(valid_data[int(i*step): int(step*( i+ 1))]))
-            if i + 1 == iterations and int(step*( i+ 1)) < len(valid_data):
-                final_res.extend(gen_per_iter(valid_data[int(step*( i+ 1)): len(valid_data)]))
+            final_res.extend(gen_per_iter(valid_data[int(i * step) : int(step * (i + 1))]))
+            if i + 1 == iterations and int(step * (i + 1)) < len(valid_data):
+                final_res.extend(gen_per_iter(valid_data[int(step * (i + 1)) : len(valid_data)]))
 
         return final_res
 
@@ -1016,18 +1074,17 @@ class GraphRewriterHelper():
         g = GraphAnalyzer()
         g.graph = graph_def
         graph_info = g.parse_graph()
-        rnn_pattern = [['TensorArrayV3'], ['Enter'], ['TensorArrayReadV3'], \
-            ['MatMul'], ['BiasAdd']]
+        rnn_pattern = [["TensorArrayV3"], ["Enter"], ["TensorArrayReadV3"], ["MatMul"], ["BiasAdd"]]
         target_nodes = g.query_fusion_pattern_nodes(rnn_pattern)
         res = {}
         for i in target_nodes:
             if i[-3] not in bf16_ops and i[-3] not in fp32_ops:
-                res[(i[-3], i[-2])] = graph_info[i[1]].node.attr['frame_name'].s.decode()
+                res[(i[-3], i[-2])] = graph_info[i[1]].node.attr["frame_name"].s.decode()
 
-        dynamic_rnn_pattern = [['Enter'], ['MatMul'], ['BiasAdd']]
+        dynamic_rnn_pattern = [["Enter"], ["MatMul"], ["BiasAdd"]]
         target_nodes = g.query_fusion_pattern_nodes(dynamic_rnn_pattern)
         for i in target_nodes:
             if i[-3] not in bf16_ops and i[-3] not in fp32_ops:
-                res[(i[1], i[2])] = graph_info[i[0]].node.attr['frame_name'].s.decode()
+                res[(i[1], i[2])] = graph_info[i[0]].node.attr["frame_name"].s.decode()
 
         return res

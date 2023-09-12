@@ -529,7 +529,7 @@ def main():
     # compression_manager = prepare_compression(model=model, confs=configs)
     # compression_manager.callbacks.on_train_begin()
     from neural_compressor.compression.pruner import prepare_pruning
-    prepare_pruning(configs, model, optimizer)
+    prepare_pruning(model, configs, optimizer)
 
     for epoch in range(args.num_train_epochs):
         model.train()
