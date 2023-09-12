@@ -67,13 +67,15 @@ def check_op_support_status():
     graph = helper.make_graph([node], "test", [input_tensor], [output_tensor], initializer=initializers)
     model = helper.make_model(graph)
     try:
-        ort.InferenceSession(model.SerializeToString(), providers=ort.get_all_providers())
+        ort.InferenceSession(model.SerializeToString(), providers=["CPUExecutionProvider"])
         WEIGHT_ONLY_OP_SUPPORTED = True
     except:
         WEIGHT_ONLY_OP_SUPPORTED = False
 
 
-def make_matmul_weight_only_node(node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point):
+def make_matmul_weight_only_node(
+    node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point
+):  # pragma: no cover
     """Build MatMulWithQuantWeight node.
 
     Args:
@@ -286,7 +288,7 @@ def rtn_quantize(
 
             weight = pad_tensor(weight, group_size, k_blocks)
 
-            if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:
+            if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:  # pragma: no cover
                 # currently MatMulWithQuantWeights only support 4 bits and 32 group_size
                 q_weight, scale, zp = quant_tensor(
                     weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
@@ -302,8 +304,6 @@ def rtn_quantize(
                     zero_point=zp if scheme == "asym" else None,
                 )
 
-                if init_share_num == 1:
-                    model.remove_initializer(weight_tensor)
                 model.add_initializers(new_inits)
                 remove_nodes.append(node)
                 new_nodes.append(q_matmul_node)
@@ -317,8 +317,8 @@ def rtn_quantize(
                 )
                 model.add_initializer(q_weight_tensor)
                 node.input[1] = q_weight_tensor.name
-                if init_share_num == 1:
-                    model.remove_initializer(weight_tensor)
+            if init_share_num == 1:
+                model.remove_initializer(weight_tensor)
 
     model.add_nodes(new_nodes)
     model.remove_nodes(remove_nodes)
@@ -388,7 +388,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 weight = weight.T * scales
                 weight = pad_tensor(weight, group_size, (org_w_shape[0] + group_size - 1) // group_size).T
 
-                if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:
+                if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:  # pragma: no cover
                     q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint") / np.expand_dims(
                         scales, axis=-1
                     )
@@ -422,7 +422,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             tensor = (tensor.T).astype("float32")
 
             new_tensor = onnx.helper.make_tensor(
-                node.input[1] + "_Q" + str(num_bits), 1, tensor.shape, tensor.tostring(), raw=True
+                node.input[1] + "_scaled", 1, tensor.shape, tensor.tostring(), raw=True
             )
             model.add_initializer(new_tensor)
             node.input[1] = new_tensor.name
@@ -436,7 +436,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
 
         if parent.op_type in ["LayerNormalization", "BatchNormalization", "InstanceNormalization"] and all(
             [weight_config.get(node.name, {}) != "fp32" for node in nodes]
-        ):  # pragma: no cover
+        ):
             for idx in [1, 2]:
                 tensor = numpy_helper.to_array(
                     model.get_initializer(parent.input[idx]), os.path.dirname(model.model_path)
@@ -450,7 +450,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             parent.op_type in ["SimplifiedLayerNormalization", "MatMul", "Gemm", "Mul"]
             and not all([model.get_initializer(inp) is None for inp in parent.input])
             and all([weight_config.get(node.name, {}) != "fp32" for node in nodes])
-        ):
+        ):  # pragma: no cover
             for inp in parent.input:
                 if model.get_initializer(inp) is not None:
                     tensor = numpy_helper.to_array(model.get_initializer(inp), os.path.dirname(model.model_path))
@@ -543,7 +543,7 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
             for i_s in range(10):
                 ratio = 1 - i_s / 100
                 weight = copy.deepcopy(org_weight)
-                if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:
+                if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:  # pragma: no cover
                     # currently MatMulWithQuantWeights only support 4 bits and 32 group_size
                     weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1))
                 else:
@@ -590,9 +590,9 @@ def prepare_inputs(model, n_samples, dataloader):
         )
 
     session = (
-        ort.InferenceSession(model.model.SerializeToString(), so, providers=ort.get_available_providers())
+        ort.InferenceSession(model.model.SerializeToString(), so, providers=["CPUExecutionProvider"])
         if not model.is_large_model
-        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=ort.get_available_providers())
+        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=["CPUExecutionProvider"])
     )
     inputs_names = [i.name for i in session.get_inputs()]
     del session
@@ -688,9 +688,9 @@ def awq_quantize(
             )
 
         session = (
-            ort.InferenceSession(model.model.SerializeToString(), so, providers=ort.get_available_providers())
+            ort.InferenceSession(model.model.SerializeToString(), so, providers=["CPUExecutionProvider"])
             if not model.is_large_model
-            else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=ort.get_available_providers())
+            else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=["CPUExecutionProvider"])
         )
 
         for idx, parent in enumerate(absorb_pairs):
@@ -860,8 +860,8 @@ def gptq(
             if group_size != -1:
                 if (i1 + i) % group_size == 0:
                     scale, zp = find_params(W[(i1 + i) : (i1 + i + group_size), :])
-                    scales.append(scale[0][0])
-                    zps.append(zp[0][0])
+                    scales.append(scale)
+                    zps.append(zp)
 
             q = (scale * (np.clip(np.round(np.expand_dims(w, axis=1) / scale) + zp, 0, maxq) - zp)).flatten()
             Q1[i, :] = (
@@ -881,8 +881,8 @@ def gptq(
         W[i2:, :] -= np.matmul(Hinv[i2:, i1:i2], Err1)
 
     if len(scales) == 0:
-        scales.append(scale[0][0])
-        zps.append(zp[0][0])
+        scales.append(scale)
+        zps.append(zp)
 
     if actorder:
         invperm = np.argsort(perm)
@@ -890,7 +890,7 @@ def gptq(
 
     Q = np.reshape(Q, W.shape).astype(dtype)
     del W
-    return Q, scales, zps
+    return Q, np.concatenate(scales), np.concatenate(zps)
 
 
 def gptq_quantize(
@@ -964,9 +964,9 @@ def gptq_quantize(
         )
 
     session = (
-        ort.InferenceSession(model.model.SerializeToString(), so, providers=ort.get_available_providers())
+        ort.InferenceSession(model.model.SerializeToString(), so, providers=["CPUExecutionProvider"])
         if not model.is_large_model
-        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=ort.get_available_providers())
+        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=["CPUExecutionProvider"])
     )
 
     new_nodes = []
@@ -1030,12 +1030,13 @@ def gptq_quantize(
 
             weight_tensor = model.get_initializer(node.input[1])
             init_share_num = model.get_initializer_share_num(node.input[1])
-            if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32 and perchannel == False:
+            if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:  # pragma: no cover
                 # currently MatMulWithQuantWeights only support 4 bits and 32 group_size
                 org_shape = weight.shape
                 k_blocks = (org_shape[0] + group_size - 1) // group_size
                 q_weight = pad_tensor(q_weight, group_size, k_blocks)
                 q_weight = np.reshape(q_weight.T, (-1, group_size))
+                q_weight = np.clip((q_weight / scales + zps).round(), 0, 1 << num_bits - 1)
                 q_matmul_node, new_inits = make_matmul_weight_only_node(
                     node=node,
                     weight_shape=org_shape,
@@ -1047,8 +1048,6 @@ def gptq_quantize(
                     zero_point=zps if scheme == "asym" else None,
                 )
 
-                if init_share_num == 1:
-                    model.remove_initializer(weight_tensor)
                 model.add_initializers(new_inits)
                 model.remove_node(node)
                 model.add_node(q_matmul_node)
@@ -1058,8 +1057,8 @@ def gptq_quantize(
                 )
                 model.add_initializer(q_weight_tensor)
                 node.input[1] = q_weight_tensor.name
-                if init_share_num == 1:
-                    model.remove_initializer(weight_tensor)
+            if init_share_num == 1:
+                model.remove_initializer(weight_tensor)
 
     model.remove_tensors_from_outputs(output_names)
     model.model.graph.output.MergeFrom(org_output)
