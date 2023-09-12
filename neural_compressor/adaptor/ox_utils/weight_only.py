@@ -864,11 +864,7 @@ def gptq(
                     zps.append(zp)
 
             q = (scale * (np.clip(np.round(np.expand_dims(w, axis=1) / scale) + zp, 0, maxq) - zp)).flatten()
-            Q1[i, :] = (
-                q
-                if not (check_op_support_status and num_bits == 4 and group_size == 32)
-                else np.clip(np.round(np.expand_dims(w, axis=1) / scale) + zp, 0, maxq).flatten()
-            )
+            Q1[i, :] = q
             Losses1[i, :] = (w - q) ** 2 / d**2
 
             err1 = (w - q) / d
