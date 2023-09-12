@@ -220,7 +220,7 @@ class ONNXModel(BaseModel):
         return None
 
     def get_initializer_share_num(self, name):
-        """Get the number of shares of initializer"""
+        """Get the number of shares of initializer."""
         num = 0
         if self.get_initializer(name) is None:
             return num
