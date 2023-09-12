@@ -886,7 +886,7 @@ def gptq(
 
     Q = np.reshape(Q, W.shape).astype(dtype)
     del W
-    return Q, np.concatenate(scales), np.concatenate(zps)
+    return Q, np.concatenate(scales, axis=1).reshape((-1, 1)), np.concatenate(zps, axis=1).reshape((-1, 1))
 
 
 def gptq_quantize(
@@ -1032,7 +1032,7 @@ def gptq_quantize(
                 k_blocks = (org_shape[0] + group_size - 1) // group_size
                 q_weight = pad_tensor(q_weight, group_size, k_blocks)
                 q_weight = np.reshape(q_weight.T, (-1, group_size))
-                q_weight = np.clip((q_weight / scales + zps).round(), 0, 1 << num_bits - 1)
+                q_weight = np.clip((q_weight / scales + zps).round(), 0, (1 << num_bits) - 1)
                 q_matmul_node, new_inits = make_matmul_weight_only_node(
                     node=node,
                     weight_shape=org_shape,
