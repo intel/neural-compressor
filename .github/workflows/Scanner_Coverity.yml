@@ -1,0 +1,20 @@
+name: Scanner Coverity
+
+on:
+  #push:
+  workflow_dispatch:
+
+jobs:
+  coverity_job:
+    uses: intel-innersource/frameworks.ai.infrastructure.code-scan-tools/.github/workflows/Scanner_Coverity.yml@one-ci-cd
+    with:
+      repos: ${{ github.event.repository.name }}
+      refs: ${{ github.ref_name }}
+      projectType: python
+      url: 'https://coverityent.devtools.intel.com/prod5'
+      stream: 'inc_coverity'
+      runners: "['self-hosted']"
+    secrets:
+      token: ${{ secrets.ACTION_TOKEN }}
+      USER: ${{secrets.USER }}
+      PASSWORD : ${{secrets.PASSWORD }}

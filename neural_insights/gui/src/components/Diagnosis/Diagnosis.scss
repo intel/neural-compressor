@@ -15,9 +15,6 @@
 @import './../../variables.scss';
 
 .Diagnosis {
-  * {
-    font-family: IntelClearRg;
-  }
 
   .property-table {
     border-collapse: collapse;
@@ -48,6 +45,13 @@
     margin-bottom: 6px;
   }
 
+  .data-panel-top {
+    background-color: white;
+    padding: 10px;
+    border-radius: 0.5rem;
+    margin-top: 6px;
+  }
+
   .flexbox {
     display: flex;
     max-height: 99vh;
@@ -60,7 +64,11 @@
     display: flex;
     flex-direction: column;
     max-height: 90vh;
-    width: 300px;
+  }
+
+  .workloads-flex {
+    display: flex;
+    overflow: auto;
   }
 
   .overflow-table {
@@ -73,7 +81,7 @@
   .flex-item {
     padding: 3px;
     width: 98%;
-    max-width: calc(100vw - 320px);
+    max-width: calc(100vw - 370px);
   }
 
   .flex-bigger {
@@ -124,6 +132,7 @@
   .spinner-container {
     width: 50px;
     margin: auto;
+    padding: 20px;
   }
 
   .spinner {

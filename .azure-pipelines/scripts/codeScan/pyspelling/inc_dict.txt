@@ -204,6 +204,7 @@ DCMAKE
 DDP
 DDR
 DENABLE
+DETR
 DFS
 DFabiansResUNet
 DGAN
@@ -729,6 +730,7 @@ Protobuf
 PrunePolicy
 Pruning's
 PruningConf
+PubTables
 PyObject
 PyPI
 PyPi
@@ -1242,6 +1244,7 @@ brgemm
 brighly
 broadcasted
 bs
+bsmock
 bsnone
 bugfix
 buildin
@@ -1438,6 +1441,7 @@ dest
 destructor
 detections
 detectron
+detr
 dev
 devcloud
 devel
@@ -2244,6 +2248,7 @@ pth
 ptq
 ptr
 publis
+pubtables
 pudae
 pw
 pwd
@@ -2491,6 +2496,7 @@ synset
 sys
 tLoss
 tanh
+tatr
 tb
 tbe
 tbody
