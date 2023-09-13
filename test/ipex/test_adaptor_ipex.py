@@ -85,46 +85,6 @@ class Dataloader:
     def __iter__(self):
         yield torch.randn(1, 3, 224, 224)
 
-
-@unittest.skipIf(
-    PT_VERSION >= Version("1.12.0").release or PT_VERSION < Version("1.10.0").release,
-    "Please use Intel extension for Pytorch version 1.10 or 1.11",
-)
-class TestPytorchIPEX_1_10_Adaptor(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        config.quantization.backend = "ipex"
-        config.quantization.approach = "post_training_static_quant"
-        config.quantization.use_bf16 = False
-        set_workspace("./saved")
-
-    @classmethod
-    def tearDownClass(self):
-        shutil.rmtree("./saved", ignore_errors=True)
-        shutil.rmtree("runs", ignore_errors=True)
-
-    def test_tuning_ipex(self):
-        from neural_compressor.experimental import Quantization
-
-        model = M()
-        quantizer = Quantization(config)
-        quantizer.model = model
-        quantizer.conf.usr_cfg.tuning.exit_policy["performance_only"] = True
-        dataset = quantizer.dataset("dummy", (100, 3, 224, 224), label=True)
-        dataloader = torch.utils.data.DataLoader(dataset)
-        quantizer.calib_dataloader = dataloader
-        quantizer.eval_dataloader = dataloader
-        nc_model = quantizer.fit()
-        nc_model.save("./saved")
-        q_model = load("./saved", model, dataloader=dataloader)
-        from neural_compressor.experimental import Benchmark
-
-        evaluator = Benchmark(config)
-        evaluator.model = q_model
-        evaluator.b_dataloader = dataloader
-        evaluator.fit("accuracy")
-
-
 @unittest.skipIf(
     PT_VERSION < Version("1.12.0").release, "Please use Intel extension for Pytorch version higher or equal to 1.12"
 )
