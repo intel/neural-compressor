@@ -764,7 +764,7 @@ def gptq(
         perchannel (bool, optional): whether quantize weight per-channel.
 
     Returns:
-        Qs: fake quantized weights
+        Q: fake quantized weight
     """
     Qs = []
     maxq = 2**num_bits - 1
