@@ -141,7 +141,6 @@ def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ra
         data : input weight
         num_bits (int, optional): num_bits. Defaults to 4.
         group_size (int, optional): how many elements share one scale/zp. Defaults to 4.
-        w many elements share one scale/zp.
         scheme (str, optional): quantization scheme. Defaults to "asym".
         dtype (str, optional): data type. Defaults to "int".
         ratio (float, optional): percentile of clip. Defaults to 1.0.
@@ -190,7 +189,6 @@ def qdq_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", rati
         data : input weight
         num_bits (int, optional): num_bits. Defaults to 4.
         group_size (int, optional): how many elements share one scale/zp. Defaults to 4.
-        w many elements share one scale/zp.
         scheme (str, optional): quantization scheme. Defaults to "asym".
         dtype (str, optional): data type. Defaults to "int".
         ratio (float, optional): percentile of clip. Defaults to 1.0.
@@ -751,11 +749,11 @@ def gptq(
     mse=False,
     perchannel=True,
 ):
-    """Quant the model with Activation-aware Weight quantization(AWQ) method.
+    """Quant the weight with GPTQ method.
 
     Args:
-        Ws (list): list of weight.
-        Hs (list): list of Hessian matrix.
+        W (array): weight.
+        H (array): Hessian matrix.
         num_bits (int, optional): num_bits. Default is 4.
         group_size (int, optional): how many elements share one scale/zp. Default is 32.
         scheme (str, optional): sym or asym. Defaults to "asym".
@@ -860,8 +858,6 @@ def gptq(
             if group_size != -1:
                 if (i1 + i) % group_size == 0:
                     scale, zp = find_params(W[(i1 + i) : (i1 + i + group_size), :])
-                    scales.append(scale)
-                    zps.append(zp)
 
             q = (scale * (np.clip(np.round(np.expand_dims(w, axis=1) / scale) + zp, 0, maxq) - zp)).flatten()
             Q1[i, :] = q
@@ -876,17 +872,13 @@ def gptq(
 
         W[i2:, :] -= np.matmul(Hinv[i2:, i1:i2], Err1)
 
-    if len(scales) == 0:
-        scales.append(scale)
-        zps.append(zp)
-
     if actorder:
         invperm = np.argsort(perm)
         Q = Q[invperm, :]
 
     Q = np.reshape(Q, W.shape).astype(dtype)
     del W
-    return Q, np.concatenate(scales, axis=1).reshape((-1, 1)), np.concatenate(zps, axis=1).reshape((-1, 1))
+    return Q
 
 
 def gptq_quantize(
@@ -903,7 +895,7 @@ def gptq_quantize(
     mse=False,
     perchannel=True,
 ):
-    """Quant the model with Activation-aware Weight quantization(AWQ) method.
+    """Quant the model with GPTQ method.
 
     Args:
         model (ModelProto or ONNXModel): onnx model
@@ -1011,7 +1003,7 @@ def gptq_quantize(
                 group_size = weight_config[node.name]["group_size"]
                 scheme = weight_config[node.name]["scheme"]
 
-            q_weight, scales, zps = gptq(
+            q_weight = gptq(
                 weight,
                 H,
                 num_bits=num_bits,
@@ -1031,8 +1023,9 @@ def gptq_quantize(
                 org_shape = weight.shape
                 k_blocks = (org_shape[0] + group_size - 1) // group_size
                 q_weight = pad_tensor(q_weight, group_size, k_blocks)
-                q_weight = np.reshape(q_weight.T, (-1, group_size))
-                q_weight = np.clip((q_weight / scales + zps).round(), 0, (1 << num_bits) - 1)
+                q_weight, scale, zp = quant_tensor(
+                    q_weight.T, num_bits, group_size, scheme, "uint"
+                )
                 q_matmul_node, new_inits = make_matmul_weight_only_node(
                     node=node,
                     weight_shape=org_shape,
@@ -1040,8 +1033,8 @@ def gptq_quantize(
                     group_size=group_size,
                     k_blocks=k_blocks,
                     q_weight=q_weight.astype("uint8"),
-                    scale=scales,
-                    zero_point=zps if scheme == "asym" else None,
+                    scale=scale,
+                    zero_point=zp if scheme == "asym" else None,
                 )
 
                 model.add_initializers(new_inits)
