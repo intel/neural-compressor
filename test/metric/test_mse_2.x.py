@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-from neural_solution.utils import logger
+from neural_compressor.utils import logger
 
 
 def build_fake_model():
