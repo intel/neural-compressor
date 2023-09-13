@@ -749,13 +749,13 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
     model_name_or_path = "distilbert-base-uncased-finetuned-sst-2-english"
     distilbert_model = AutoModelForSequenceClassification.from_pretrained(
-        model_name_or_path, config=AutoConfig.from_pretrained(model_name_or_path)
+       model_name_or_path, config=AutoConfig.from_pretrained(model_name_or_path)
     )
     distilbert_export_path = "distilbert.onnx"
 
     model_name_or_path = "Alireza1044/albert-base-v2-sst2"
     albert_model = AutoModelForSequenceClassification.from_pretrained(
-        model_name_or_path, config=AutoConfig.from_pretrained(model_name_or_path)
+       model_name_or_path, config=AutoConfig.from_pretrained(model_name_or_path)
     )
     albert_export_path = "albert.onnx"
 
@@ -791,7 +791,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         build_benchmark_yaml()
         build_recipe_yaml()
         build_recipe2_yaml()
-        export_onnx_cv_model(self.mb_v2_model, self.mb_v2_export_path)
+        export_onnx_cv_model(self.mb_v2_model, self.mb_v2_export_path, 13)
         self.mb_v2_model = onnx.load(self.mb_v2_export_path)
         export_onnx_cv_model(self.rn50_model, self.rn50_export_path, 12)
         export_onnx_cv_model(self.rn50_model, "rn50_9.onnx", 9)
@@ -870,14 +870,32 @@ class TestAdaptorONNXRT(unittest.TestCase):
         }
         framework = "onnxrt_qlinearops"
         adaptor = FRAMEWORKS[framework](framework_specific_info)
-        adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, inspect_type="activation")
+        op_list = [i.name for i in self.rn50_model.graph.node if i.op_type == "Conv"]
+
+        data = adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, inspect_type="activation", op_list=op_list)
+        self.assertNotEqual(len(data["activation"][0]), 0)
+        self.assertTrue("weight" not in data)
+
         adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, inspect_type="activation", save_to_disk=True)
-        adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, inspect_type="weight")
-        adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, inspect_type="all")
-        adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, ["Conv_0"], inspect_type="activation")
-        op_list = OrderedDict()
-        op_list[("Conv_0", "Conv")] = None
-        adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, op_list.keys(), inspect_type="activation")
+        self.assertTrue(os.path.isfile(framework_specific_info["workspace_path"] + "inspect_result.pkl"))
+
+        data = adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, inspect_type="weight", op_list=op_list)
+        self.assertNotEqual(len(data["weight"]), 0)
+        self.assertTrue("activation" not in data)
+
+        data = adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, inspect_type="all", op_list=op_list)
+        self.assertTrue("activation" in data)
+        self.assertTrue("weight" in data)
+        self.assertNotEqual(len(data["activation"][0]), 0)
+        self.assertNotEqual(len(data["weight"]), 0)
+
+        data = adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, [op_list[0]], inspect_type="activation")
+        self.assertEqual(len(data["activation"][0]), 1)
+
+        op = OrderedDict()
+        op[(op_list[0], "Conv")] = None
+        data = adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, op.keys(), inspect_type="activation")
+        self.assertEqual(len(data["activation"][0]), 1)
 
         for fake_yaml in ["qlinear.yaml", "qdq.yaml"]:
             quantizer = Quantization(fake_yaml)
@@ -887,7 +905,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
             q_model = quantizer.fit()
             self.assertNotEqual(q_model, None)
 
-            quantizer.strategy.adaptor.inspect_tensor
             adaptor._pre_optimize(common.Model(self.rn50_model))
             opt_model = quantizer.strategy.adaptor.pre_optimized_model
 
@@ -958,6 +975,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
                 self.assertTrue(sorted(fp32_tensor["weight"].keys()) == sorted(int8_tensor["weight"].keys()))
 
     def test_set_tensor(self):
+        from neural_compressor.adaptor.ox_utils.util import quantize_data_with_scale_zero
+
         config = PostTrainingQuantConfig(
             approach="static", recipes={"gemm_to_matmul": False, "graph_optimization_level": "ENABLE_EXTENDED"}
         )
@@ -987,32 +1006,65 @@ class TestAdaptorONNXRT(unittest.TestCase):
         ai_onnx_domain = [
             opset for opset in q_model.model.opset_import if not opset.domain or opset.domain == "ai.onnx"
         ]
+        weight_data = np.random.random([32, 3, 3, 3])
+        bias_data = np.random.random([32])
+        load_model = Model(onnx.load("best_model.onnx"))
         if version >= Version("1.7.0-rc1"):
-            if ai_onnx_domain[0].version > 12 or Version(ort.__version__) < Version("1.12.0"):
-                adaptor.set_tensor(
-                    onnx.load("best_model.onnx"),
-                    {self.mb_v2_model.graph.node[0].input[1]: np.random.random([32, 3, 3, 3])},
-                )
-                adaptor.set_tensor(q_model, {self.mb_v2_model.graph.node[0].input[2]: np.random.random([32])})
-            else:
-                adaptor.set_tensor(
-                    onnx.load("best_model.onnx"),
-                    {self.mb_v2_model.graph.node[0].input[1]: np.random.random([32, 3, 3, 3])},
-                )
-                adaptor.set_tensor(q_model, {self.mb_v2_model.graph.node[0].input[2]: np.random.random(1)})
+            tensor_name = self.mb_v2_model.graph.node[0].input[1] + "_quantized"
+            scale_tensor, zo_tensor = load_model.get_scale_zero(tensor_name)
+            new_tensor = quantize_data_with_scale_zero(
+                weight_data,
+                onnx_proto.TensorProto.INT8,
+                "sym",
+                np.expand_dims(numpy_helper.to_array(scale_tensor), axis=(1, 2, 3)),
+                np.expand_dims(numpy_helper.to_array(zo_tensor), axis=(1, 2, 3)),
+            )
+            adaptor.set_tensor(
+                load_model.model,
+                {tensor_name: weight_data},
+            )
+            self.assertTrue((new_tensor == numpy_helper.to_array(load_model.get_initializer(tensor_name))).all())
+
+            tensor_name = self.mb_v2_model.graph.node[0].input[2]
+            node = q_model.input_name_to_nodes[tensor_name + "_quantized"][0]
+            input_scale = numpy_helper.to_array(q_model.get_initializer(node.input[1]))
+            weight_scale = numpy_helper.to_array(q_model.get_initializer(node.input[4]))
+            new_tensor = (bias_data / (input_scale * weight_scale)).round().astype(np.int32)
+            adaptor.set_tensor(
+                q_model,
+                {tensor_name: bias_data},
+            )
+            self.assertTrue(
+                (new_tensor == numpy_helper.to_array(q_model.get_initializer(tensor_name + "_quantized"))).all()
+            )
         else:
-            if ai_onnx_domain[0].version > 12 or Version(ort.__version__) < Version("1.12.0"):
-                adaptor.set_tensor(
-                    onnx.load("best_model.onnx"),
-                    {"ConvBnFusion_W_features.0.0.weight": np.random.random([32, 3, 3, 3])},
-                )
-                adaptor.set_tensor(q_model, {"ConvBnFusion_BN_B_features.0.1.bias": np.random.random([32])})
-            else:
-                adaptor.set_tensor(
-                    onnx.load("best_model.onnx"),
-                    {"ConvBnFusion_W_features.0.0.weight": np.random.random([32, 3, 3, 3])},
-                )
-                adaptor.set_tensor(q_model, {"ConvBnFusion_BN_B_features.0.1.bias": np.random.random(1)})
+            tensor_name = "ConvBnFusion_W_features.0.0.weight" + "_quantized"
+            scale_tensor, zo_tensor = load_model.get_scale_zero(tensor_name)
+            new_tensor = quantize_data_with_scale_zero(
+                weight_data,
+                onnx_proto.TensorProto.INT8,
+                "sym",
+                np.expand_dims(numpy_helper.to_array(scale_tensor), axis=(1, 2, 3)),
+                np.expand_dims(numpy_helper.to_array(zo_tensor), axis=(1, 2, 3)),
+            )
+            adaptor.set_tensor(
+                load_model.model,
+                {tensor_name: weight_data},
+            )
+            self.assertTrue((new_tensor == numpy_helper.to_array(load_model.get_initializer(tensor_name))).all())
+
+            tensor_name = "ConvBnFusion_BN_B_features.0.1.bias"
+            node = q_model.input_name_to_nodes[tensor_name + "_quantized"][0]
+            input_scale = numpy_helper.to_array(q_model.get_initializer(node.input[1]))
+            weight_scale = numpy_helper.to_array(q_model.get_initializer(node.input[4]))
+            new_tensor = (bias_data / (input_scale * weight_scale)).round().astype(np.int32)
+            adaptor.set_tensor(
+                q_model,
+                {tensor_name: bias_data},
+            )
+            self.assertTrue(
+                (new_tensor == numpy_helper.to_array(q_model.get_initializer(tensor_name + "_quantized"))).all()
+            )
 
     def test_auto_quant(self):
         conf.model.framework = "onnxrt_qlinearops"
@@ -1071,6 +1123,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
     def test_adaptor(self):
         from neural_compressor.utils.constant import FP32, INT8_SYM_MINMAX_PERTENSOR, UINT8_ASYM_MINMAX_PERTENSOR
 
+        # check op_wise has higher priority than optype_wise
         conf.model.framework = "onnxrt_qlinearops"
         conf.quantization.approach = "post_training_static_quant"
         conf.quantization.calibration.sampling_size = 1
@@ -1087,6 +1140,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertTrue("add2" in [i.name for i in q_model.nodes()])
         self.assertTrue("add_quant" in [i.name for i in q_model.nodes()])
 
+        # check optype_wise has higher priority than model_wise
         conf.quantization.pop("op_wise")
         conf.quantization.model_wise = {"weight": INT8_SYM_MINMAX_PERTENSOR}
         conf.quantization.optype_wise = {"MatMul": {"weight": {"granularity": ["per_channel"]}}}
@@ -1100,6 +1154,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         conf.quantization.pop("optype_wise")
         conf.quantization.pop("model_wise")
 
+        # check rename renamed nodes function
         conf.model.framework = "onnxrt_integerops"
         conf.quantization.approach = "post_training_dynamic_quant"
         conf.quantization.calibration.sampling_size = 1
@@ -1110,7 +1165,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer.model = self.rename_model
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
+        self.assertEqual(len([i.name for i in q_model.nodes()]), len(set([i.name for i in q_model.nodes()])))
 
+        # check large model quantization
         conf.model.framework = "onnxrt_integerops"
         conf.quantization.approach = "post_training_dynamic_quant"
         conf.quantization.calibration.sampling_size = 1
@@ -1134,6 +1191,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
         import copy
 
+        # check opset version
         tmp_model = copy.deepcopy(self.rn50_model)
         tmp_model.opset_import[0].version = 10
         quantizer.model = tmp_model
@@ -1148,6 +1206,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 
+        # check query quantizable_ops function
         framework_specific_info = {
             "device": "cpu",
             "approach": "post_training_static_quant",
@@ -1181,6 +1240,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         adaptor.quantize(tune_cfg, common.Model(self.gather_model), self.gather_dataloader)
         self.assertTrue(len(adaptor.quantizable_ops), 2)
 
+        # check int8 + fp16 function
         framework_specific_info["device"] = "gpu"
         framework_specific_info["backend"] = "onnxrt_cuda_ep"
 
@@ -1241,37 +1301,31 @@ class TestAdaptorONNXRT(unittest.TestCase):
             q_model = quantizer.fit()
             self.assertNotEqual(q_model, None)
 
+            # check recover model function
             from neural_compressor.utils.utility import recover
 
             model = recover(self.mb_v2_model, "./nc_workspace/recover/history.snapshot", 0)
             self.assertTrue(model.model == q_model.model)
-
-        for mode in ["accuracy"]:
-            fake_yaml = "benchmark.yaml"
-            evaluator = Benchmark(fake_yaml)
-            evaluator.b_dataloader = self.cv_dataloader
-            evaluator.model = self.rn50_model
-            evaluator(mode)
 
     def test_qdq_settings(self):
         config = PostTrainingQuantConfig(
             approach="static", quant_format="QDQ", recipes={"add_qdq_pair_to_weight": True}
         )
         q_model = quantization.fit(self.ir3_model, config, calib_dataloader=self.ir3_dataloader)
-        self.assertNotEqual(q_model, None)
+        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == "QuantizeLinear"]), 3)
 
         q_model = quantization.fit(self.matmul_model, config, calib_dataloader=self.matmul_dataloader)
-        self.assertNotEqual(q_model, None)
+        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == "QuantizeLinear"]), 3)
 
         config = PostTrainingQuantConfig(approach="static", quant_format="QDQ", recipes={"dedicated_qdq_pair": True})
         q_model = quantization.fit(self.conv_model, config, calib_dataloader=self.cv_dataloader)
-        self.assertNotEqual(q_model, None)
+        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == "QuantizeLinear"]), 6)
 
         config = PostTrainingQuantConfig(
             approach="static", quant_format="QDQ", recipes={"optypes_to_exclude_output_quant": ["Conv"]}
         )
         q_model = quantization.fit(self.rn50_model, config, calib_dataloader=self.cv_dataloader)
-        self.assertNotEqual(q_model, None)
+        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == "QuantizeLinear"]), 53)
 
     def test_lower_is_better_case(self):
         import time
@@ -1592,6 +1646,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
     def test_dataloader_input(self):
         cv_dataloader = DataLoader(framework="onnxruntime", dataset=DummyCVDataset_list(shape=(3, 224, 224)))
+
         quantizer = Quantization("qlinear.yaml")
         quantizer.calib_dataloader = cv_dataloader
         quantizer.eval_dataloader = cv_dataloader

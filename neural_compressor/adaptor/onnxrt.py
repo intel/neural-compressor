@@ -660,8 +660,17 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 )
                 return model
             else:
+                axis = (
+                    tuple(range(1, len(tensor_value.shape)))
+                    if tensor_value.shape.index(scale_value.shape[0]) == 0
+                    else tuple(range(0, len(tensor_value.shape) - 1))
+                )
                 new_tensor_value = quantize_data_per_channel(
-                    tensor_value, q_type, self.quantize_config[node_name]["weight"]["scheme"], scale_value, zo_value
+                    tensor_value,
+                    q_type,
+                    self.quantize_config[node_name]["weight"]["scheme"],
+                    np.expand_dims(scale_value, axis=axis),
+                    np.expand_dims(zo_value, axis=axis),
                 )
             model.set_initializer(tensor_name, new_tensor_value)
         return model
