@@ -749,13 +749,13 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
     model_name_or_path = "distilbert-base-uncased-finetuned-sst-2-english"
     distilbert_model = AutoModelForSequenceClassification.from_pretrained(
-       model_name_or_path, config=AutoConfig.from_pretrained(model_name_or_path)
+        model_name_or_path, config=AutoConfig.from_pretrained(model_name_or_path)
     )
     distilbert_export_path = "distilbert.onnx"
 
     model_name_or_path = "Alireza1044/albert-base-v2-sst2"
     albert_model = AutoModelForSequenceClassification.from_pretrained(
-       model_name_or_path, config=AutoConfig.from_pretrained(model_name_or_path)
+        model_name_or_path, config=AutoConfig.from_pretrained(model_name_or_path)
     )
     albert_export_path = "albert.onnx"
 

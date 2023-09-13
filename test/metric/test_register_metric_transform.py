@@ -1,7 +1,7 @@
 """Tests for neural_compressor register metric and postprocess."""
 import os
-import re
 import platform
+import re
 import unittest
 
 import numpy as np
