@@ -665,7 +665,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     if tensor_value.shape.index(scale_value.shape[0]) == 0
                     else tuple(range(0, len(tensor_value.shape) - 1))
                 )
-                new_tensor_value = quantize_data_per_channel(
+                new_tensor_value = quantize_data_with_scale_zero(
                     tensor_value,
                     q_type,
                     self.quantize_config[node_name]["weight"]["scheme"],
