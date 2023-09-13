@@ -85,6 +85,7 @@ class Dataloader:
     def __iter__(self):
         yield torch.randn(1, 3, 224, 224)
 
+
 @unittest.skipIf(
     PT_VERSION < Version("1.12.0").release, "Please use Intel extension for Pytorch version higher or equal to 1.12"
 )
