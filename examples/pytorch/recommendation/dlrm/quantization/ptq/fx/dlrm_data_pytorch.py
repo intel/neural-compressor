@@ -266,7 +266,7 @@ class CriteoDataset(Dataset):
 
         if self.memory_map:
             if self.split == 'none' or self.split == 'train':
-                # check if need to swicth to next day and load data
+                # check if need to switch to next day and load data
                 if index == self.offset_per_file[self.day]:
                     # print("day_boundary switch", index)
                     self.day_boundary = self.offset_per_file[self.day]
@@ -519,7 +519,7 @@ def make_criteo_data_and_loaders(args):
     return train_data, train_loader, test_data, test_loader
 
 
-# uniform ditribution (input data)
+# uniform distribution (input data)
 class RandomDataset(Dataset):
 
     def __init__(
@@ -732,7 +732,7 @@ def generate_random_output_batch(n, num_targets, round_targets=False):
     return torch.tensor(P)
 
 
-# uniform ditribution (input data)
+# uniform distribution (input data)
 def generate_uniform_input_batch(
     m_den,
     ln_emb,

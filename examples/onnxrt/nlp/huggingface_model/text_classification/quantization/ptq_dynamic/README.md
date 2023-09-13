@@ -34,7 +34,7 @@ Supported model identifier from [huggingface.co](https://huggingface.co/):
 |             Intel/deberta-v3-base-mrpc          |
 
 ```bash
-python export.py --model_name_or_path=Intel/bert-base-uncased-mrpc \ # or other supported model identifier
+python prepare_model.py  --input_model=Intel/bert-base-uncased-mrpc  --output_model=bert-base-uncased-mrpc.onnx
 ```
 
 ## 3. Prepare Dataset

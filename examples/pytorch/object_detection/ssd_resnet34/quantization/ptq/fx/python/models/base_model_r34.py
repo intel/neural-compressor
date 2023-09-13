@@ -87,7 +87,7 @@ class L2Norm(nn.Module):
             nn.Parameter(torch.Tensor([scale]*chan_num).view(1, chan_num, 1, 1))
 
     def forward(self, data):
-        # normalize accross channel
+        # normalize across channel
         return self.scale*data*data.pow(2).sum(dim=1, keepdim=True).clamp(min=1e-12).rsqrt()
 
 
@@ -109,7 +109,7 @@ def tailor_module(src_model, src_dir, tgt_model, tgt_dir):
         state[k2] = src_state[k1]
     #diff_keys = state.keys() - target_model.state_dict().keys()
     #print("Different Keys:", diff_keys)
-    # Remove unecessary keys
+    # Remove unnecessary keys
     #for k in diff_keys:
     #    state.pop(k)
     tgt_model.load_state_dict(state)
@@ -136,7 +136,7 @@ def make_layers(cfg, batch_norm=False):
 
 class Loss(nn.Module):
     """
-        Implements the loss as the sum of the followings:
+        Implements the loss as the sum of the following:
         1. Confidence Loss: All labels, with hard negative mining
         2. Localization Loss: Only on positive labels
         Suppose input dboxes has the shape 8732x4
@@ -182,7 +182,7 @@ class Loss(nn.Module):
         # hard negative mining
         con = self.con_loss(plabel, glabel)
 
-        # postive mask will never selected
+        # positive mask will never selected
         con_neg = con.clone()
         con_neg[mask] = 0
         _, con_idx = con_neg.sort(dim=1, descending=True)

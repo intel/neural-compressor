@@ -96,7 +96,7 @@ def preprocess_setup(preprocessed_data_dir):
 
     # Preprocess images, returns filenames list
     # This runs in multiprocess
-    print("Acually preprocessing data...")
+    print("Actually preprocessing data...")
     
     preprocessed_files = preprocess_MLPerf(model_dir, checkpoint_name, fold, fp16, list_of_lists,
         validation_files, preprocessed_data_dir, num_threads_preprocessing)

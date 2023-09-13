@@ -276,7 +276,7 @@ if __name__ == '__main__':
     # )
     # q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader,)
 
-    # method 2: directly use INC build-in function, for some models like falcon, please use this function
+    # method 2: directly use INC built-in function, for some models like falcon, please use this function
     conf = {
         ".*":{
             'wbits': args.wbits, # 1-8 bits 
