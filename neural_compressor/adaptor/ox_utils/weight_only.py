@@ -1023,9 +1023,7 @@ def gptq_quantize(
                 org_shape = weight.shape
                 k_blocks = (org_shape[0] + group_size - 1) // group_size
                 q_weight = pad_tensor(q_weight, group_size, k_blocks)
-                q_weight, scale, zp = quant_tensor(
-                    q_weight.T, num_bits, group_size, scheme, "uint"
-                )
+                q_weight, scale, zp = quant_tensor(q_weight.T, num_bits, group_size, scheme, "uint")
                 q_matmul_node, new_inits = make_matmul_weight_only_node(
                     node=node,
                     weight_shape=org_shape,
