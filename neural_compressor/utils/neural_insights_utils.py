@@ -143,7 +143,7 @@ def get_model_path(model: Any, workload_location: str) -> Any:
         pass
 
     if isinstance(model.model_path, str):
-        return os.path.abspath(model.model_path)
+        return os.path.abspath(model.model_path), model_summary_file
     if onnx_installed:
         import onnx
 
