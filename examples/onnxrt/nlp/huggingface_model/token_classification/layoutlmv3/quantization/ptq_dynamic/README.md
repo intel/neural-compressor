@@ -16,7 +16,7 @@ pip install -r requirements.txt
 Export a model to ONNX with `optimum.exporters.onnx`.
 
 ```bash
-optimum-cli export onnx --model HYPJUDY/layoutlmv3-base-finetuned-funsd layoutlmv3-base-finetuned-funsd-onnx/ --task=token-classification
+python prepare_model.py  --input_model="HYPJUDY/layoutlmv3-base-finetuned-funsd" --output_model="layoutlmv3-base-finetuned-funsd-onnx/"
 ```
 
 # Run

@@ -812,7 +812,7 @@ schema = Schema({
         Optional('approach', default='post_training_static_quant'): And(
             str,
             # TODO check if framework support dynamic quantize
-            # Now only onnruntime and pytorch supoort
+            # Now only onnruntime and pytorch support
             lambda s: s in ['post_training_static_quant',
                             'post_training_dynamic_quant',
                             'post_training_auto_quant',

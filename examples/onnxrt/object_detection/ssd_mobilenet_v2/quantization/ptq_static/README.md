@@ -1,5 +1,4 @@
-Step-by-Step
-============
+# Step-by-Step
 
 This example load an object detection model converted from Tensorflow and confirm its accuracy and speed based on [MS COCO 2017 dataset](https://cocodataset.org/#download).
 
@@ -11,18 +10,13 @@ This example load an object detection model converted from Tensorflow and confir
 pip install neural-compressor
 pip install -r requirements.txt
 ```
+
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare Model
 
-Please refer to [Converting SSDMobilenet To ONNX Tutorial](https://github.com/onnx/tensorflow-onnx/blob/master/tutorials/ConvertingSSDMobilenetToONNX.ipynb) for detailed model converted. The following is a simple example command:
-
 ```shell
-export MODEL=ssd_mobilenet_v2_coco_2018_03_29
-wget http://download.tensorflow.org/models/object_detection/$MODEL.tar.gz
-tar -xvf $MODEL.tar.gz
-
-python -m tf2onnx.convert --graphdef $MODEL/frozen_inference_graph.pb --output ./$MODEL.onnx --fold_const --opset 11 --inputs image_tensor:0 --outputs num_detections:0,detection_boxes:0,detection_scores:0,detection_classes:0
+python prepare_model.py --output_model='ssd_mobilenet_v2_coco_2018_03_29.onnx'
 ```
 
 ## 3. Prepare Dataset
