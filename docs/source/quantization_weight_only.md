@@ -72,6 +72,7 @@ Notes:
 |  use_max_length  | False | Whether to align all calibration data to fixed length, which equals to pad_max_length. |
 |  block_size  | 128 | Execute GPTQ quantization per block, block shape = [$C_{out}$, block_size] |
 
+**Note:** Neural compressor provides `Unsigned integer for asym` and `Signed integer for sym`. Please follow the below section to compress the low bit data type for saving.
 
 ### **Export Compressed Model**
 To support low memory inference, Neural Compressor implemented WeightOnlyLinear, a torch.nn.Module, to compress the fake quantized fp32 model. Since torch does not provide flexible data type storage, WeightOnlyLinear combines low bits data into a long date type, such as torch.int8 and torch.int32. Low bits data includes weights and zero points. When using WeightOnlyLinear for inference, it will restore the compressed data to float32 and run torch linear function.
