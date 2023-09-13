@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Freeze estimator to frozen pb for bert full pipline tuning."""
+"""Freeze estimator to frozen pb for bert full pipeline tuning."""
 
 import os
 import modeling

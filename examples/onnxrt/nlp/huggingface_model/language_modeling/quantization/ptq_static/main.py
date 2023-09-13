@@ -61,7 +61,7 @@ class TextDataset(Dataset):
 
             for i in range(0, len(tokenized_text)-block_size+1, block_size): # Truncate in block of block_size
                 self.examples.append(tokenizer.build_inputs_with_special_tokens(tokenized_text[i:i+block_size]))
-            # Note that we are loosing the last truncated example here for the sake of simplicity (no padding)
+            # Note that we are losing the last truncated example here for the sake of simplicity (no padding)
             # If your dataset is small, first you should loook for a bigger one :-) and second you
             # can change this behavior by adding (model specific) padding.
 
@@ -166,7 +166,7 @@ def main():
     parser.add_argument("--model_name_or_path", type=str,
                         help="The model checkpoint for weights initialization.")
     parser.add_argument("--cache_dir", default="", type=str,
-                        help="Optional directory to store the pre-trained models downloaded from s3 (instread of the default one)")
+                        help="Optional directory to store the pre-trained models downloaded from s3 (instead of the default one)")
     parser.add_argument("--block_size", default=1024, type=int,
                         help="Optional input sequence length after tokenization."
                              "The training dataset will be truncated in block of this size for training."

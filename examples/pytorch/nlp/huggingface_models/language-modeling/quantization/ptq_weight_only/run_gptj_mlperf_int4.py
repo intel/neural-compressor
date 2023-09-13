@@ -31,7 +31,7 @@ def get_gptj(model):
     torch.nn.init.uniform_ = skip
     torch.nn.init.normal_ = skip
     from transformers import GPTJForCausalLM, AutoModelForCausalLM
-    model = GPTJForCausalLM.from_pretrained(model) # load the model with fp32 percision
+    model = GPTJForCausalLM.from_pretrained(model) # load the model with fp32 precision
     #model = AutoModelForCausalLM.from_pretrained(model, torch_dtype=torch.float16)
     return model
 
@@ -318,7 +318,7 @@ if __name__ == '__main__':
             },
         },
     )
-    import pdb;pdb.set_trace()
+
     q_model = quantization.fit(model, conf, calib_dataloader=dataloader,)
 
     q_model.save("./gptj-gptq-gs128-calib128-calibration-fp16/")
