@@ -438,7 +438,7 @@ class TestBF16Convert(unittest.TestCase):
         output_graph = quantizer.fit()
         cast_op_count = 0
         for node in output_graph.graph_def.node:
-            if node.op == 'Cast':
+            if node.op == "Cast":
                 cast_op_count += 1
         self.assertTrue(cast_op_count == 0)
 
