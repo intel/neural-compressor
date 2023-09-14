@@ -6,7 +6,7 @@ import subprocess
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_model", type=str, required=False, default="checkpoint-best-acc/")
-    parser.add_argument("--output_model", type=str, required=False, default="onnx_model/")
+    parser.add_argument("--output_model", type=str, required=False, default="codebert-exported-onnx/")
     return parser.parse_args()
 
 def prepare_model(input_model, output_model):
