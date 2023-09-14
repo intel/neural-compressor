@@ -76,7 +76,7 @@ class PytorchProgressivePruner(PytorchBasePruner):
             logger.info("Current progressive setting will degrading to non-progressive pruning.")
             self.use_progressive = False
             return
-        
+
         if self.pruning_frequency == 1:
             logger.info("Current progressive setting will degrading to non-progressive pruning.")
             self.use_progressive = False
@@ -276,15 +276,15 @@ class PytorchProgressivePruner(PytorchBasePruner):
     def print_progressive_sparsity(self):
         """Output the progressive sparsity."""
         cur_sp = self.pattern.get_sparsity_ratio_progressive(self.progressive_masks)
-        logger.info("Step: {} -> Current progressive sparsity: {}".format(self.global_step, cur_sp))   
-    
+        logger.info("Step: {} -> Current progressive sparsity: {}".format(self.global_step, cur_sp))
+
     def obtain_weight_sparsity(self, modules):
         total_numels = 0
         sparse_numels = 0
         for key in modules.keys():
             total_numels += modules[key].weight.data.numel()
             sparse_numels += torch.sum(torch.where(modules[key].weight.data == 0, 1, 0)).item()
-        return sparse_numels / total_numels 
+        return sparse_numels / total_numels
 
     def on_train_end(self):
         if not self.use_progressive:
