@@ -1628,7 +1628,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         self.quantizable_ops = self._query_quantizable_ops(model.model)
 
         quant_config = self._cfg_to_quantize_config(tune_cfg)
-        algos = set([item["weight"]["algorithm"] for key, item in quant_config.items() if isinstance(item, dict)])
+        algos = set([item["algorithm"] for key, item in quant_config.items() if isinstance(item, dict)])
         if "GPTQ" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import gptq_quantize
 
@@ -1640,9 +1640,9 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
             model = gptq_quantize(
                 model,
-                quant_config,
                 data_loader,
-                calib_sampling_size,
+                quant_config,
+                n_samples=calib_sampling_size,
                 percdamp=percdamp,
                 blocksize=blocksize,
                 actorder=actorder,
@@ -1657,7 +1657,13 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             n_blocks = self.recipes.get("awq_args", {}).get("n_blocks", 5)
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
             model = awq_quantize(
-                model, quant_config, data_loader, calib_sampling_size, enable_auto_scale, enable_mse_search, n_blocks
+                model,
+                data_loader,
+                quant_config,
+                n_samples=calib_sampling_size,
+                enable_auto_scale=enable_auto_scale,
+                enable_mse_search=enable_mse_search,
+                n_blocks=n_blocks,
             )
         elif "RTN" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
@@ -1719,7 +1725,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             if tune_cfg["op"][(op.name, op.op_type)]["weight"]["dtype"] in self.query_handler.get_fallback_list():
                 quantize_config[op.name] = tune_cfg["op"][(op.name, op.op_type)]["weight"]["dtype"]
             else:
-                quantize_config[op.name] = copy.deepcopy(tune_cfg["op"][(op.name, op.op_type)])
+                quantize_config[op.name] = copy.deepcopy(tune_cfg["op"][(op.name, op.op_type)]["weight"])
 
         return quantize_config
 
