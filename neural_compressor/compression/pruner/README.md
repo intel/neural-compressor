@@ -65,8 +65,8 @@ Pruning
 Neural network pruning is a promising model compression technique that removes the least important parameters/neurons in the network and achieves compact architectures of minimal accuracy drop and maximal inference acceleration. As state-of-the-art model sizes have grown at an unprecedented speed, pruning has become increasingly crucial to reducing the computational and memory footprint that huge neural networks require.
 
 <div align=center>
-<a target="_blank" href="https://github.com/intel/neural-compressor/blob/master/docs/source/imgs/pruning/pruning.png">
-    <img src="https://github.com/intel/neural-compressor/blob/master/docs/source/imgs/pruning/pruning.png" width=350 height=155 alt="pruning intro">
+<a target="_blank" href="../../../docs/source/imgs/pruning/pruning.png">
+    <img src="../../../docs/source/imgs//pruning/pruning.png" width=350 height=155 alt="pruning intro">
 </a>
 </div>
 
