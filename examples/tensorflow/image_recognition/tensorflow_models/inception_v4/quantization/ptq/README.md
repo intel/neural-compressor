@@ -21,9 +21,9 @@ pip install -r requirements.txt
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
-pip install --upgrade intel-extension-for-tensorflow[gpu]
+pip install --upgrade intel-extension-for-tensorflow[xpu]
 ```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_gpu.md#install-gpu-drivers)
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_xpu.md#install-gpu-drivers)
 
 #### Quantizing the model on Intel CPU(Optional to install ITEX)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
@@ -53,6 +53,11 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
   # convert train subset
   bash prepare_dataset.sh --output_dir=./inception_v4/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
   ```
+> **Note**: 
+> The ImageNet data set resides in JPEG files should located in the following directory structure.
+>         data_dir/n01440764/ILSVRC2012_val_00000293.JPEG
+>         data_dir/n01440764/ILSVRC2012_val_00000543.JPEG
+> where 'n01440764' is the unique synset label associated with these images.
 
 # Run
 
