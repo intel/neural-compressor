@@ -116,6 +116,7 @@ class TestPytorchIPEX_1_10_Adaptor(unittest.TestCase):
         quantizer.eval_dataloader = dataloader
         nc_model = quantizer.fit()
         nc_model.save("./saved")
+        self.assertTrue(isinstance(nc_model._model, torch.jit.ScriptModule))
         q_model = load("./saved", model, dataloader=dataloader)
         from neural_compressor.experimental import Benchmark
 
@@ -159,6 +160,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         sparsity = nc_model.report_sparsity()
         self.assertTrue(sparsity[-1] >= 0.0)
         nc_model.save("./saved")
+        self.assertTrue(isinstance(nc_model._model, torch.jit.ScriptModule))
         q_model = load("./saved", model, dataloader=dataloader)
         from neural_compressor.experimental import Benchmark
 
@@ -187,6 +189,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         quantizer.calib_dataloader = dataloader
         quantizer.eval_dataloader = dataloader
         nc_model = quantizer.fit()
+        self.assertTrue(isinstance(nc_model._model, torch.jit.ScriptModule))
 
     def test_copy_prepared_model(self):
         model = M()
@@ -220,6 +223,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         quantizer.calib_dataloader = dataloader
         quantizer.eval_dataloader = dataloader
         nc_model = quantizer.fit()
+        self.assertTrue(isinstance(nc_model._model, torch.jit.ScriptModule))
 
     def test_example_inputs(self):
         from neural_compressor.experimental import Quantization
@@ -233,6 +237,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         dataloader = torch.utils.data.DataLoader(dataset)
         quantizer.calib_dataloader = dataloader
         nc_model = quantizer.fit()
+        self.assertTrue(isinstance(nc_model._model, torch.jit.ScriptModule))
 
     def test_new_API(self):
         model = M()
@@ -267,6 +272,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
             calib_dataloader=calib_dataloader,
         )
         q_model.save("./saved")
+        self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
 
     def test_fallback_fused_op_type(self):
         class M(torch.nn.Module):
@@ -299,6 +305,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
             conf,
             calib_dataloader=calib_dataloader,
         )
+        self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
 
     def test_tune_add(self):
         class M(torch.nn.Module):
@@ -326,6 +333,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         conf = PostTrainingQuantConfig(backend="ipex", quant_level=0)
         calib_dataloader = Dataloader()
         q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader, eval_func=fake_eval)
+        self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
 
     def test_tune_add_with_recipe(self):
         class M(torch.nn.Module):
@@ -355,6 +363,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         )
         calib_dataloader = Dataloader()
         q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader, eval_func=fake_eval)
+        self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
 
     @unittest.skipIf(
         IPEX_VERSION.release < Version("2.1.0").release,
@@ -374,6 +383,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
             calib_dataloader=dummy_dataloader,
         )
         q_model.save("./saved")
+        self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
 
     @unittest.skipIf(
         IPEX_VERSION.release < Version("2.1.0").release,
@@ -394,6 +404,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
             calib_func=calib_func,
         )
         q_model.save("./saved")
+        self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
 
 
 class TestMixedPrecision(unittest.TestCase):
