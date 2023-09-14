@@ -16,7 +16,7 @@ pip install neural-compressor
 ```
 
 ### Install Requirements
-The Tensorflow and intel-extension-for-tensorflow is mandatory to be installed to run this QAT example.
+The Tensorflow and intel-extension-for-tensorflow is mandatory to be installed to run this example.
 The Intel Extension for Tensorflow for Intel CPUs is installed as default.
 ```shell
 pip install -r requirements.txt
@@ -27,7 +27,7 @@ pip install -r requirements.txt
 
 The pretrained model is provided by [Keras Applications](https://keras.io/api/applications/). prepare the model, Run as follow: 
  ```
-python prepare_model.py   --output_model=/path/to/model
+python prepare_model.py --output_model=/path/to/model
  ```
 `--output_model ` the model should be saved as SavedModel format or H5 format.
 
@@ -37,7 +37,7 @@ python prepare_model.py   --output_model=/path/to/model
   We also prepared related scripts in `imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
 
   ```shell
-  cd examples/tensorflow/image_recognition/keras_models/
+  cd examples/keras/image_recognition/
   # convert validation subset
   bash prepare_dataset.sh --output_dir=/resnet101/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
   # convert train subset
@@ -45,9 +45,9 @@ python prepare_model.py   --output_model=/path/to/model
   cd resnet101/quantization/ptq
   ```
 > **Note**: 
-> The raw ImageNet dataset resides in JPEG files should be in the following directory structure.<br>
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data_dir/n01440764/ILSVRC2012_val_00000293.JPEG<br>
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data_dir/n01440764/ILSVRC2012_val_00000543.JPEG<br>
+> The raw ImageNet dataset resides in JPEG files should be in the following directory structure. Taking validation set as an example:<br>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/PATH/TO/img_raw/val/n01440764/ILSVRC2012_val_00000293.JPEG<br>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/PATH/TO/img_raw/val/n01440764/ILSVRC2012_val_00000543.JPEG<br>
 > where 'n01440764' is the unique synset label associated with these images.
 
 # Run Command
