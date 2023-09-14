@@ -638,7 +638,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             quantizer.eval_func = eval_func
             q_model = quantizer.fit()
             self.assertTrue(isinstance(q_model.model.conv, torch.nn.Conv2d))
-            self.assertTrue('quantize' in str(q_model.model.conv2.__class__))
+            self.assertTrue("quantize" in str(q_model.model.conv2.__class__))
             q_model.save("./saved")
             saved_model = load("./saved", model, **non_quant_dict)
             eval_func(saved_model)
