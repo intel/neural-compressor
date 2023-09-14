@@ -470,15 +470,18 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = self.qlinear_test(
             model, q_config, quantize_params, quantizable_op_types, **{"dedicated_qdq_pair": True}
         )
-        self.assertEqual(len(q_model.model.graph.node), 9)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 1)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 1)
 
         q_model.export("test.onnx", ONNXQlinear2QDQConfig())
         export_model = onnx.load("test.onnx")
-        self.assertEqual(len(export_model.graph.node), 20)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 5)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 8)
         os.remove("test.onnx")
 
         q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types, **{"dedicated_qdq_pair": True})
-        self.assertEqual(len(q_model.model.graph.node), 23)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 7)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 9)
 
         q_config = {
             "Reshape": self.static_q_config,
@@ -488,9 +491,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
             "AveragePool": self.static_q_config,
         }
         q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.model.graph.node), 9)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 1)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 1)
+
         q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.model.graph.node), 12)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 2)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 3)
 
         q_config = {
             "Reshape": self.static_q_config,
@@ -500,9 +506,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
             "AveragePool": self.static_q_config,
         }
         q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.model.graph.node), 7)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 0)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
+
         q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.model.graph.node), 7)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 0)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
 
         q_config = {
             "Reshape": self.static_q_config,
@@ -512,9 +521,13 @@ class TestAdaptorONNXRT(unittest.TestCase):
             "AveragePool": "fp32",
         }
         q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.model.graph.node), 9)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 1)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 1)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["AveragePool"], 1)
+
         q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.model.graph.node), 17)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 4)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 6)
 
         quantize_params = {
             "input": [np.uint8(10.0), np.float32(0)],
@@ -537,9 +550,11 @@ class TestAdaptorONNXRT(unittest.TestCase):
             "AveragePool": self.static_q_config,
         }
         q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.model.graph.node), 9)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["Add"], 2)
+
         q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
-        self.assertEqual(len(q_model.model.graph.node), 21)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 6)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 8)
 
     def test_conv(self):
         for op in ["Conv", "FusedConv"]:
@@ -854,21 +869,14 @@ class TestAdaptorONNXRT(unittest.TestCase):
         node = onnx.helper.make_node("Pad", ["E", "B", "D"], ["C"], name="Pad", mode="constant")
         graph = helper.make_graph([node], "test_graph_1", [E, B, D], [C], [E_init, B_init, D_init])
         model = helper.make_model(graph)
-        q_config = {
-            "Pad": {
-                "activation": {
-                    "dtype": 2,
-                    "algorithm": "minmax",
-                    "scheme": "asym",
-                    "granularity": "per_tensor",
-                    "quant_mode": "static",
-                }
-            }
-        }
         quantize_params = {"C": [np.uint8(10.0), np.float32(0)], "E": [np.uint8(10.0), np.float32(0)]}
         quantizable_op_types = ["Pad"]
-        self.qlinear_test(model, pad_config, quantize_params, quantizable_op_types)
-        self.qdq_test(model, pad_config, quantize_params, quantizable_op_types)
+        q_config = {"Pad": pad_config}
+        q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 1)
+
+        q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 2)
 
     def test_binary(self):
         for op in ["Mul", "Add"]:
@@ -885,10 +893,17 @@ class TestAdaptorONNXRT(unittest.TestCase):
                 "C": [np.uint8(10.0), np.float32(0)],
             }
             quantizable_op_types = [op]
-            self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
-            self.qlinear_test(model, q_config, {}, quantizable_op_types)
-            self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
-            self.qdq_test(model, q_config, {}, quantizable_op_types)
+            q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
+
+            q_model = self.qlinear_test(model, q_config, {}, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
+
+            q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
+
+            q_model = self.qdq_test(model, q_config, {}, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
 
     def test_relu(self):
         A = helper.make_tensor_value_info("A", TensorProto.FLOAT, [1, 1, 5, 5])
@@ -974,7 +989,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 3)
 
     def test_activation(self):
-        for op in ["Relu", "LeakyRelu", "Sigmoid"]:
+        for op in ["LeakyRelu", "Sigmoid"]:
             B = helper.make_tensor_value_info("B", TensorProto.FLOAT, [1, 10])
             A = helper.make_tensor_value_info("A", TensorProto.FLOAT, [1, 10])
             node = onnx.helper.make_node(op, ["A"], ["B"], name=op)
@@ -983,17 +998,58 @@ class TestAdaptorONNXRT(unittest.TestCase):
             q_config = {op: self.static_q_config}
             quantize_params = {"A": [np.uint8(10.0), np.float32(0)], "B": [np.uint8(10.0), np.float32(0)]}
             quantizable_op_types = [op]
-            self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
-            self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+            q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 1)
+
+            q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 2)
 
             a_value = np.random.randn(1, 10).astype(np.float32)
             A_init = helper.make_tensor("A", TensorProto.FLOAT, [1, 10], a_value.reshape(10).tolist())
             graph = helper.make_graph([node], "test_graph_1", [A], [B], [A_init])
             model = helper.make_model(graph)
-            self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
-            self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
-            self.qlinear_test(model, q_config, {}, quantizable_op_types)
-            self.qdq_test(model, q_config, {}, quantizable_op_types)
+            q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 1)
+
+            q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 2)
+
+            q_model = self.qlinear_test(model, q_config, {}, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
+
+            q_model = self.qdq_test(model, q_config, {}, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
+
+        for op in ["Relu"]:
+            B = helper.make_tensor_value_info("B", TensorProto.FLOAT, [1, 10])
+            A = helper.make_tensor_value_info("A", TensorProto.FLOAT, [1, 10])
+            node = onnx.helper.make_node(op, ["A"], ["B"], name=op)
+            graph = helper.make_graph([node], "test_graph_1", [A], [B])
+            model = helper.make_model(graph)
+            q_config = {op: self.static_q_config}
+            quantize_params = {"A": [np.uint8(10.0), np.float32(0)], "B": [np.uint8(10.0), np.float32(0)]}
+            quantizable_op_types = [op]
+            q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
+
+            q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
+
+            a_value = np.random.randn(1, 10).astype(np.float32)
+            A_init = helper.make_tensor("A", TensorProto.FLOAT, [1, 10], a_value.reshape(10).tolist())
+            graph = helper.make_graph([node], "test_graph_1", [A], [B], [A_init])
+            model = helper.make_model(graph)
+            q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
+
+            q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
+
+            q_model = self.qlinear_test(model, q_config, {}, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
+
+            q_model = self.qdq_test(model, q_config, {}, quantizable_op_types)
+            self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 0)
 
     def test_pooling(self):
         op = "MaxPool"
@@ -1100,8 +1156,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
             "D": [np.uint8(10.0), np.float32(0)],
         }
         quantizable_op_types = ["Conv", "MaxPool"]
-        self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
-        self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+        q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+        q_model.save("int8.onnx")
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 2)
+
+        q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 3)
 
     def test_more_direct8bit_nodes(self):
         # test direct q8 nodes: MatMul-Flatten-Abs-Sign-ShrinK-MatMul
@@ -1494,11 +1554,13 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 1)
         self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 1)
         session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
+        self.assertIsNotNone(session)
 
         q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
         self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 6)
         self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 4)
         session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
+        self.assertIsNotNone(session)
 
 
 class TestCastONNXRT(unittest.TestCase):
@@ -1560,6 +1622,8 @@ class TestCastONNXRT(unittest.TestCase):
                 convert_model.model.SerializeToString(), providers=ort.get_available_providers()
             )
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["Equal", "Greater", "GreaterOrEqual", "Less", "LessOrEqual"]
         for optype in optypes:
@@ -1576,6 +1640,8 @@ class TestCastONNXRT(unittest.TestCase):
                 convert_model.model.SerializeToString(), providers=ort.get_available_providers()
             )
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["Abs", "Exp", "Log", "Round", "Sqrt", "Softmax", "Exp", "Tanh", "Sigmoid", "LeakyRelu", "Round"]
         for optype in optypes:
@@ -1591,6 +1657,8 @@ class TestCastONNXRT(unittest.TestCase):
                 convert_model.model.SerializeToString(), providers=ort.get_available_providers()
             )
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = [
             "ReduceMean",
@@ -1616,6 +1684,8 @@ class TestCastONNXRT(unittest.TestCase):
                 convert_model.model.SerializeToString(), providers=ort.get_available_providers()
             )
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["Gelu"]
         for optype in optypes:
@@ -1631,6 +1701,8 @@ class TestCastONNXRT(unittest.TestCase):
                 convert_model.model.SerializeToString(), providers=ort.get_available_providers()
             )
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["BiasGelu", "FastGelu"]
         for optype in optypes:
@@ -1647,6 +1719,8 @@ class TestCastONNXRT(unittest.TestCase):
                 convert_model.model.SerializeToString(), providers=ort.get_available_providers()
             )
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["MatMul"]
         for optype in optypes:
@@ -1663,6 +1737,8 @@ class TestCastONNXRT(unittest.TestCase):
                 convert_model.model.SerializeToString(), providers=ort.get_available_providers()
             )
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["FusedMatMul"]
         for optype in optypes:
@@ -1680,6 +1756,8 @@ class TestCastONNXRT(unittest.TestCase):
                 convert_model.model.SerializeToString(), providers=ort.get_available_providers()
             )
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["Gemm"]
         for optype in optypes:
@@ -1699,6 +1777,8 @@ class TestCastONNXRT(unittest.TestCase):
                 convert_model.model.SerializeToString(), providers=ort.get_available_providers()
             )
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["LayerNormalization"]
         for optype in optypes:
@@ -1722,6 +1802,8 @@ class TestCastONNXRT(unittest.TestCase):
                 convert_model.model.SerializeToString(), providers=ort.get_available_providers()
             )
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["BatchNormalization"]
         for optype in optypes:
@@ -1744,6 +1826,8 @@ class TestCastONNXRT(unittest.TestCase):
                 convert_model.model.SerializeToString(), providers=ort.get_available_providers()
             )
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
     def get_bf16_mixed_precision_model(self, model):
         from neural_compressor import MixedPrecisionConfig
@@ -1771,6 +1855,8 @@ class TestCastONNXRT(unittest.TestCase):
             self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == "Cast"]))
             session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=["DnnlExecutionProvider"])
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["Equal", "Greater", "GreaterOrEqual", "Less", "LessOrEqual"]
         for optype in optypes:
@@ -1785,6 +1871,8 @@ class TestCastONNXRT(unittest.TestCase):
             self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == "Cast"]))
             session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=["DnnlExecutionProvider"])
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["Abs", "Exp", "Log", "Round", "Sqrt", "Softmax", "Exp", "Tanh", "Sigmoid", "LeakyRelu", "Round"]
         for optype in optypes:
@@ -1798,6 +1886,8 @@ class TestCastONNXRT(unittest.TestCase):
             self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == "Cast"]))
             session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=["DnnlExecutionProvider"])
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = [
             "ReduceMean",
@@ -1821,6 +1911,8 @@ class TestCastONNXRT(unittest.TestCase):
             self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == "Cast"]))
             session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=["DnnlExecutionProvider"])
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["Gelu"]
         for optype in optypes:
@@ -1834,6 +1926,8 @@ class TestCastONNXRT(unittest.TestCase):
             self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == "Cast"]))
             session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=["DnnlExecutionProvider"])
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["BiasGelu", "FastGelu"]
         for optype in optypes:
@@ -1848,6 +1942,8 @@ class TestCastONNXRT(unittest.TestCase):
             self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == "Cast"]))
             session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=["DnnlExecutionProvider"])
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["MatMul"]
         for optype in optypes:
@@ -1862,6 +1958,8 @@ class TestCastONNXRT(unittest.TestCase):
             self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == "Cast"]))
             session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=["DnnlExecutionProvider"])
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["FusedMatMul"]
         for optype in optypes:
@@ -1877,6 +1975,8 @@ class TestCastONNXRT(unittest.TestCase):
             self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == "Cast"]))
             session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=["DnnlExecutionProvider"])
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["Gemm"]
         for optype in optypes:
@@ -1894,6 +1994,8 @@ class TestCastONNXRT(unittest.TestCase):
             self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == "Cast"]))
             session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=["DnnlExecutionProvider"])
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["LayerNormalization"]
         for optype in optypes:
@@ -1915,6 +2017,8 @@ class TestCastONNXRT(unittest.TestCase):
             self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == "Cast"]))
             session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=["DnnlExecutionProvider"])
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
         optypes = ["BatchNormalization"]
         for optype in optypes:
@@ -1935,6 +2039,8 @@ class TestCastONNXRT(unittest.TestCase):
             self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == "Cast"]))
             session = ort.InferenceSession(convert_model.model.SerializeToString(), providers=["DnnlExecutionProvider"])
             outputs = session.run(None, input_data)
+            self.assertIsNotNone(session)
+            self.assertIsNotNone(outputs)
 
     def test_fp16_with_repeated_init(self):
         input_tensor = helper.make_tensor_value_info("input", TensorProto.FLOAT, [])
