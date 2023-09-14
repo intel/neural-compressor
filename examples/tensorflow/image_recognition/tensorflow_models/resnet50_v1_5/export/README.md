@@ -47,6 +47,11 @@ wget https://zenodo.org/record/2535873/files/resnet50_v1.pb
   bash prepare_imagenet_dataset.sh --output_dir=/path/to/imagenet/ --raw_dir=/PATH/TO/img_raw/train/ --subset=train
   cd resnet50_v1.5/export
   ```
+> **Note**: 
+> The raw ImageNet data set resides in JPEG files should located in the following directory structure.<br>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data_dir/n01440764/ILSVRC2012_val_00000293.JPEG<br>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data_dir/n01440764/ILSVRC2012_val_00000543.JPEG<br>
+> where 'n01440764' is the unique synset label associated with these images.
 
 # Run Command
 Please note the dataset is TF records format for running quantization and benchmark.
