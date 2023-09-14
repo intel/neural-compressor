@@ -19,13 +19,15 @@
 
 import copy
 import logging
-import numpy as np
 
-from onnx import helper, numpy_helper, AttributeProto, TensorProto
-from .onnx_schema import get_schema
+import numpy as np
+from onnx import AttributeProto, TensorProto, helper, numpy_helper
+
 from . import tf2onnx_utils as utils
+from .onnx_schema import get_schema
 
 logger = logging.getLogger("neural_compressor")
+
 
 class OnnxNode:
     """A ONNX Node Wrapper used for graph manipulations."""
@@ -105,8 +107,9 @@ class OnnxNode:
         """Return onnx valid attributes."""
         schema = get_schema(self.type, self.graph.opset, self.domain)
         if schema is None and not (self.is_const() or self.is_graph_input()):
-            logger.debug("Node %s uses non-stardard onnx op <%s, %s>, skip attribute check",
-                         self.name, self.domain, self.type)
+            logger.debug(
+                "Node %s uses non-stardard onnx op <%s, %s>, skip attribute check", self.name, self.domain, self.type
+            )
         onnx_attrs = {}
         for a in self._attr.values():
             if a.name == "value":
@@ -153,7 +156,7 @@ class OnnxNode:
     def data_format(self):
         """Return data_format."""
         attr_str = self.get_attr_value("data_format")
-        return "unkown" if attr_str is None else attr_str.decode("utf-8")
+        return "unknown" if attr_str is None else attr_str.decode("utf-8")
 
     @data_format.setter
     def data_format(self, val):
@@ -162,8 +165,12 @@ class OnnxNode:
 
     def is_nhwc(self):
         """Return True if node is in NHWC format."""
-        utils.assert_error('D' not in self.data_format, "is_nhwc called on %s with spatial=2 but data_format=%s",
-                        self.name, self.data_format)
+        utils.assert_error(
+            "D" not in self.data_format,
+            "is_nhwc called on %s with spatial=2 but data_format=%s",
+            self.name,
+            self.data_format,
+        )
         return self.data_format == "NHWC"
 
     def is_const(self):
@@ -186,9 +193,7 @@ class OnnxNode:
 
     def is_graph_input_default_const(self):
         """Check if the node is the input of the graph and const."""
-        return self.is_const() and any(
-            out.is_graph_input() for out in self.graph.find_output_consumers(self.output[0])
-        )
+        return self.is_const() and any(out.is_graph_input() for out in self.graph.find_output_consumers(self.output[0]))
 
     def is_while(self):
         """Check if the node is while op."""
@@ -219,10 +224,10 @@ class OnnxNode:
 
         if self.output:
             for name in self.output:
-                lines.append("Outpus:")
+                lines.append("Outputs:")
                 lines.append("\t{}={}, {}".format(name, g.get_shape(name), g.get_dtype(name)))
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def get_attr(self, name, default=None):
         """Get raw attribute value."""
@@ -239,19 +244,13 @@ class OnnxNode:
     def get_attr_int(self, name):
         """Get attribute value as int."""
         attr_int = self.get_attr_value(name)
-        utils.assert_error(
-            attr_int is not None and isinstance(attr_int, int),
-            "attribute %s is None", name
-        )
+        utils.assert_error(attr_int is not None and isinstance(attr_int, int), "attribute %s is None", name)
         return attr_int
 
     def get_attr_str(self, name, encoding="utf-8"):
         """Get attribute value as string."""
         attr_str = self.get_attr_value(name)
-        utils.assert_error(
-            attr_str is not None and isinstance(attr_str, bytes),
-            "attribute %s is None", name
-        )
+        utils.assert_error(attr_str is not None and isinstance(attr_str, bytes), "attribute %s is None", name)
         return attr_str.decode(encoding)
 
     def set_attr(self, name, value):

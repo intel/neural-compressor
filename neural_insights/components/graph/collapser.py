@@ -74,9 +74,7 @@ class Collapser:
                 # skip edges inside collapsed node
                 continue
 
-            collapsed_edge_designation = (
-                f"collapsed edge between {source_node_id} ans {target_node_id}"
-            )
+            collapsed_edge_designation = f"collapsed edge between {source_node_id} and {target_node_id}"
             is_collapsed_already_added = collapsed_edges_repository.get(
                 collapsed_edge_designation,
                 False,
@@ -131,4 +129,4 @@ class Collapser:
         if not name.startswith(self.GROUP_NAME_PREFIX):
             return name
 
-        return name[len(self.GROUP_NAME_PREFIX):]
+        return name[len(self.GROUP_NAME_PREFIX) :]

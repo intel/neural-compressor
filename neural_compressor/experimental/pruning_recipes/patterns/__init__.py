@@ -1,4 +1,4 @@
-"""different patterns."""
+"""Different patterns."""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -23,7 +23,7 @@ from .pattern import PATTERNS
 modules = glob.glob(join(dirname(__file__), "*.py"))
 
 for f in modules:
-    if isfile(f) and not f.startswith('__') and not f.endswith('__init__.py'):
+    if isfile(f) and not f.startswith("__") and not f.endswith("__init__.py"):
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 patterns = PATTERNS()

@@ -91,7 +91,7 @@ def _post_eval_hook(self, model, **args):
         ......
         op_name = key.strip(".activation_post_process")
         summary[op_name + ".output"] = observer_dict[key].get_tensor_value()
-        
+
         for iter in summary[op_name + ".output"]:
             #Record output tensor, for fused op only record the parent op output 
             ......
@@ -113,7 +113,7 @@ def _post_eval_hook(self, model, **args):
                                      torch.dequantize(state_dict[key]))
             else:
                 writer.add_histogram(op + "/fp32", state_dict[key])
-      
+
 ```
  
 
@@ -179,7 +179,7 @@ See the [tensorflow.py](https://github.com/intel/neural-compressor/tree/master/n
 2. Run tuning:
 
    ```shell
-   bash run_tuning.sh --topology=inception_v3 --dataset_location=<imagenet> \
+   bash run_quant.sh --topology=inception_v3 --dataset_location=<imagenet> \
             --input_model=./inceptionv3_fp32_pretrained_model.pb --output_model=./nc_inceptionv3.pb  --config=./inceptionv3_dump_tensor.yaml 
    ```
 

@@ -14,29 +14,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Fuse samll ops to LayerNorm Graph Rewriter."""
+"""Fuse small ops to LayerNorm Graph Rewriter."""
 
 import re
-from tensorflow.core.framework import attr_value_pb2
-from tensorflow.core.framework import graph_pb2
-from tensorflow.core.framework import node_def_pb2
+
+from tensorflow.core.framework import attr_value_pb2, graph_pb2, node_def_pb2
 from tensorflow.python.framework import tensor_util
 
 from neural_compressor.utils.utility import dump_elapsed_time
 
-class FuseLayerNormOptimizer():  # pragma: no cover
+
+class FuseLayerNormOptimizer:  # pragma: no cover
     """Remap smaller ops into fused LayerNorm.
 
     Current fusion is only for the case, when LayerNormalization uses FusedBatcNormV3.
     And further restrict it to only 2D or 3D tensor inputs to keras LayerNormalization api.
     """
+
     def __init__(self, input_graph_def):
         """Constructor."""
         self.input_graph_def = input_graph_def
 
     @dump_elapsed_time("Pass FuseLayerNormOptimizer")
     def do_transformation(self):
-        """The following pattern will be searched in the graph with additional contraints.
+        """The following pattern will be searched in the graph with additional constraints.
 
         Here * means any type of op.
         Subgraph:
@@ -123,21 +124,21 @@ class FuseLayerNormOptimizer():  # pragma: no cover
 
             # FusedBatchNormV3(Reshape, Fill, Fill, Mean, Variance)
             pre_reshape_op = node_from_map(input_node_map, fused_batch_norm_op.input[0])
-            if pre_reshape_op.op != 'Reshape':
+            if pre_reshape_op.op != "Reshape":
                 continue
             fill_scale_op = node_from_map(input_node_map, fused_batch_norm_op.input[1])
-            if fill_scale_op.op != 'Fill':
+            if fill_scale_op.op != "Fill":
                 continue
             fill_offset_op = node_from_map(input_node_map, fused_batch_norm_op.input[2])
-            if fill_offset_op.op != 'Fill':
+            if fill_offset_op.op != "Fill":
                 continue
 
             # FusedBatchNorm node should have mean/variance as empty constant
             mean_op = node_from_map(input_node_map, fused_batch_norm_op.input[3])
-            if mean_op.op != 'Const':
+            if mean_op.op != "Const":
                 continue
             variance_op = node_from_map(input_node_map, fused_batch_norm_op.input[4])
-            if variance_op.op != 'Const':
+            if variance_op.op != "Const":
                 continue
             mean_value = values_from_const(mean_op)
             if mean_value.any():
@@ -153,13 +154,13 @@ class FuseLayerNormOptimizer():  # pragma: no cover
             # Fill Scale(*dims_fill_scale, unit_gamma)
             dims_fill_scale_op = node_from_map(input_node_map, fill_scale_op.input[0])
             unit_gamma_op = node_from_map(input_node_map, fill_scale_op.input[1])
-            if unit_gamma_op.op != 'Const':
+            if unit_gamma_op.op != "Const":
                 continue
 
             # Fill Offset(*dims_fill_scale, unit_gamma)
             dims_fill_offset_op = node_from_map(input_node_map, fill_offset_op.input[0])
             zero_beta_op = node_from_map(input_node_map, fill_offset_op.input[1])
-            if zero_beta_op.op != 'Const':
+            if zero_beta_op.op != "Const":
                 continue
 
             nodes_to_skip[node.name] = True
@@ -169,13 +170,11 @@ class FuseLayerNormOptimizer():  # pragma: no cover
             nodes_to_skip[fill_scale_op.name] = True
             nodes_to_skip[fill_offset_op.name] = True
 
-
             new_fused_layernorm_op = node_def_pb2.NodeDef()
             new_fused_layernorm_op.op = "_MklLayerNorm"
             new_fused_layernorm_op.name = node.name
             new_fused_layernorm_op.attr["T"].CopyFrom(node.attr["T"])
-            new_fused_layernorm_op.input.extend([input_op.name, gamma_op.name,
-                                                beta_op.name])
+            new_fused_layernorm_op.input.extend([input_op.name, gamma_op.name, beta_op.name])
 
             new_ops.append(new_fused_layernorm_op)
 
@@ -196,6 +195,7 @@ class FuseLayerNormOptimizer():  # pragma: no cover
         result_graph_def.versions.CopyFrom(self.input_graph_def.versions)
         return result_graph_def
 
+
 def node_name_from_input(node_name):  # pragma: no cover
     """Strips off ports and other decorations to get the underlying node name."""
     if node_name.startswith("^"):
@@ -204,6 +204,7 @@ def node_name_from_input(node_name):  # pragma: no cover
     if m:
         node_name = m.group(1)
     return node_name
+
 
 def node_from_map(node_map, name):  # pragma: no cover
     """Pulls a node def from a dictionary for a given name.
@@ -223,6 +224,7 @@ def node_from_map(node_map, name):  # pragma: no cover
         raise ValueError("No node named '%s' found in map." % name)
     return node_map[stripped_name]
 
+
 def values_from_const(node_def):  # pragma: no cover
     """Extracts the values from a const NodeDef as a numpy ndarray.
 
@@ -236,9 +238,7 @@ def values_from_const(node_def):  # pragma: no cover
         ValueError: If the node isn't a Const.
     """
     if node_def.op != "Const":
-        raise ValueError(
-            "Can not extract constant value from a node that is not Const. Got:\n"
-            f"{node_def}")
+        raise ValueError("Can not extract constant value from a node that is not Const. Got:\n" f"{node_def}")
     input_tensor = node_def.attr["value"].tensor
     tensor_value = tensor_util.MakeNdarray(input_tensor)
     return tensor_value

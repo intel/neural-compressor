@@ -36,7 +36,7 @@ BOOKS.TXT  CHAPTERS.TXT  dataset_infos.json  LICENSE.TXT  README.TXT  SPEAKERS.T
 
 ### 1. Wav2vec2.0
 ```bash
-bash run_tuning.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --input_model=wav2vec2 --output_model=./saved_results
+bash run_quant.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --input_model=wav2vec2 --output_model=./saved_results
 ```
 ```bash
 bash run_benchmark.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --input_model=wav2vec2 --output_model=./saved_results --mode=performance
@@ -44,7 +44,7 @@ bash run_benchmark.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/tes
 ### 2. Hubert
 
 ```bash
-bash run_tuning.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --input_model=hubert --output_model=./saved_results
+bash run_quant.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --input_model=hubert --output_model=./saved_results
 ```
 ```bash
 bash run_benchmark.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --input_model=hubert --output_model=./saved_results --mode=performance

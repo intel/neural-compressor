@@ -17,24 +17,26 @@
 """The configuration of the training loop."""
 import os
 import pickle
-import numpy as np
 import random
+from typing import Callable, List, Union
+
+import numpy as np
+
+from neural_compressor import DistillationConfig, QuantizationAwareTrainingConfig, WeightPruningConfig
+from neural_compressor.strategy.strategy import STRATEGIES
 
 from .adaptor import FRAMEWORKS
-from .compression.callbacks import QuantizationAwareTrainingCallbacks, DistillationCallbacks, PruningCallbacks
+from .compression.callbacks import DistillationCallbacks, PruningCallbacks, QuantizationAwareTrainingCallbacks
+from .compression.pruner import prepare_pruning
 from .config import _Config, options
 from .metric import register_customer_metric
 from .model.model import Model
 from .utils import logger
 from .utils.utility import time_limit
-from neural_compressor.strategy.strategy import STRATEGIES
-from neural_compressor import (DistillationConfig, QuantizationAwareTrainingConfig,
-                               WeightPruningConfig)
-from typing import Callable, List, Union
 
 
 class CompressionManager:
-    """CompressionManager is uesd in train loop for what user want to deal with additional.
+    """CompressionManager is used in train loop for what user want to deal with additional.
 
     Arguments:
         model: A model to be compressed.
@@ -64,6 +66,7 @@ class CompressionManager:
         compression_manager.callbacks.on_train_end()
         compression_manager.save("path_to_save")
     """
+
     def __init__(self, model: Callable, confs: Union[Callable, List], **kwargs):
         """Initialize the CompressionManager's parameters.
 
@@ -90,23 +93,21 @@ class CompressionManager:
                     q_conf = conf
 
                     framework_specific_info = {
-                        'device': conf.device,
-                        'random_seed': options.random_seed,
-                        'workspace_path': options.workspace,
-                        'q_dataloader': None,
-                        'backend': getattr(confs, "backend", 'default'),
-                        'format': getattr(confs, "quant_format", 'default'),
-                        'approach': conf.approach,
+                        "device": conf.device,
+                        "random_seed": options.random_seed,
+                        "workspace_path": options.workspace,
+                        "q_dataloader": None,
+                        "backend": getattr(confs, "backend", "default"),
+                        "format": getattr(confs, "quant_format", "default"),
+                        "approach": conf.approach,
                     }
-                    if 'tensorflow' in conf.framework:
-                        framework_specific_info.update(
-                            {"inputs": conf.inputs,
-                             "outputs": conf.outputs})
-                    
-                    # TODO: will be removed once 'op_type_dict' and 'op_name_dicts' 
+                    if "tensorflow" in conf.framework:
+                        framework_specific_info.update({"inputs": conf.inputs, "outputs": conf.outputs})
+
+                    # TODO: will be removed once 'op_type_dict' and 'op_name_dicts'
                     # for quant_aware_training can be handled in strategy
-                    framework_specific_info['qat_optype_wise'] = conf.op_type_dict
-                    framework_specific_info['qat_op_wise'] = conf.op_name_dict
+                    framework_specific_info["qat_optype_wise"] = conf.op_type_dict
+                    framework_specific_info["qat_op_wise"] = conf.op_name_dict
 
                     self.adaptor = FRAMEWORKS[conf.framework](framework_specific_info)
                     self.adaptor.model = self.model
@@ -127,23 +128,21 @@ class CompressionManager:
                 self.model = Model(model, conf=confs)
 
                 framework_specific_info = {
-                    'device': confs.device,
-                    'random_seed': options.random_seed,
-                    'workspace_path': options.workspace,
-                    'q_dataloader': None,
-                    'backend': getattr(confs, "backend", 'default'),
-                    'format': getattr(confs, "quant_format", 'default'),
-                    'approach': confs.approach,
+                    "device": confs.device,
+                    "random_seed": options.random_seed,
+                    "workspace_path": options.workspace,
+                    "q_dataloader": None,
+                    "backend": getattr(confs, "backend", "default"),
+                    "format": getattr(confs, "quant_format", "default"),
+                    "approach": confs.approach,
                 }
-                if 'tensorflow' in confs.framework:
-                    framework_specific_info.update(
-                        {"inputs": confs.inputs,
-                         "outputs": confs.outputs})
-                
-                # TODO: will be removed once 'op_type_dict' and 'op_name_dicts' 
+                if "tensorflow" in confs.framework:
+                    framework_specific_info.update({"inputs": confs.inputs, "outputs": confs.outputs})
+
+                # TODO: will be removed once 'op_type_dict' and 'op_name_dicts'
                 # for quant_aware_training can be handled in strategy
-                framework_specific_info['qat_optype_wise'] = confs.op_type_dict
-                framework_specific_info['qat_op_wise'] = confs.op_name_dict
+                framework_specific_info["qat_optype_wise"] = confs.op_type_dict
+                framework_specific_info["qat_op_wise"] = confs.op_name_dict
 
                 self.adaptor = FRAMEWORKS[confs.framework](framework_specific_info)
                 self.adaptor.model = self.model
@@ -195,12 +194,7 @@ class CompressionManager:
         self.model.export(save_path, conf)  # pylint: disable=no-member
 
 
-def fit(compression_manager,
-        train_func,
-        eval_func=None,
-        eval_dataloader=None,
-        eval_metric=None,
-        **kwargs):
+def fit(compression_manager, train_func, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs):
     """Compress the model with accuracy tuning for quantization.
 
     Args:
@@ -230,7 +224,7 @@ def fit(compression_manager,
                                               The label should be able to take as input of
                                               supported metrics. If this parameter is
                                               not None, user needs to specify pre-defined
-                                              evaluation metrics object and should set "eval_func" paramter as None.
+                                              evaluation metrics object and should set "eval_func" parameter as None.
                                               Tuner will combine model, eval_dataloader
                                               and pre-defined metrics to run evaluation
                                               process.
@@ -297,11 +291,14 @@ def fit(compression_manager,
         strategy_name = "conservative"
 
     if strategy_name == "mse_v2":
-        if not (compression_manager.conf.quantization.framework.startswith("tensorflow")
-                or compression_manager.conf.quantization.framework == 'pytorch_fx'):  # pragma: no cover
+        if not (
+            compression_manager.conf.quantization.framework.startswith("tensorflow")
+            or compression_manager.conf.quantization.framework == "pytorch_fx"
+        ):  # pragma: no cover
             strategy_name = "basic"
-            logger.warning(f"MSE_v2 does not support {compression_manager.conf.quantization.framework} now,"
-                           "use basic instead.")
+            logger.warning(
+                f"MSE_v2 does not support {compression_manager.conf.quantization.framework} now," "use basic instead."
+            )
             logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
     assert strategy_name in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy_name)
 
@@ -309,12 +306,12 @@ def fit(compression_manager,
     _resume = None
     # check if interrupted tuning procedure exists. if yes, it will resume the
     # whole auto tune process.
-    resume_file = os.path.abspath(os.path.expanduser(options.resume_from)) \
-        if options.workspace and options.resume_from else None
+    resume_file = (
+        os.path.abspath(os.path.expanduser(options.resume_from)) if options.workspace and options.resume_from else None
+    )
     if resume_file:
-        assert os.path.exists(resume_file), \
-            "The specified resume file {} doesn't exist!".format(resume_file)
-        with open(resume_file, 'rb') as f:
+        assert os.path.exists(resume_file), "The specified resume file {} doesn't exist!".format(resume_file)
+        with open(resume_file, "rb") as f:
             _resume = pickle.load(f).__dict__
 
     if eval_func is None and eval_dataloader is None:  # pragma: no cover
@@ -329,7 +326,7 @@ def fit(compression_manager,
         eval_dataloader=eval_dataloader,
         eval_metric=metric,
         resume=_resume,
-        q_hooks=None
+        q_hooks=None,
     )
     try:
         with time_limit(compression_manager.conf.quantization.tuning_criterion.timeout):
@@ -341,17 +338,19 @@ def fit(compression_manager,
     except Exception as e:
         logger.error("Unexpected exception {} happened during tuning.".format(repr(e)))
         import traceback
+
         traceback.print_exc()
     finally:
         if strategy.best_qmodel:
             logger.info(
-                "Specified timeout or max trials is reached! "
-                "Found a quantized model which meet accuracy goal. Exit.")
+                "Specified timeout or max trials is reached! " "Found a quantized model which meet accuracy goal. Exit."
+            )
             strategy.deploy_config()
         else:
             logger.error(
                 "Specified timeout or max trials is reached! "
-                "Not found any quantized model which meet accuracy goal. Exit.")
+                "Not found any quantized model which meet accuracy goal. Exit."
+            )
 
         compression_manager.model = strategy.best_qmodel
 
@@ -400,6 +399,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
 
 class CallBacks:
     """Define the basic command for the training loop."""
+
     def __init__(self, callbacks_list):
         """Callbacks list are used for execute the training procedure.
 

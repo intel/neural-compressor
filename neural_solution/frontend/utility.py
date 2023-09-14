@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Common utilities for all frontend components."""
 
 import json
@@ -23,6 +22,7 @@ import uuid
 
 import pandas as pd
 
+from neural_solution.utils import logger
 from neural_solution.utils.utility import dict_to_str, get_task_log_workspace
 
 
@@ -74,7 +74,7 @@ def query_task_result(task_id, db_path, workspace):
         res = cursor.fetchone()
         cursor.close()
         conn.close()
-    print(f"in query")
+    logger.info("in query")
     if not res:
         status = "Please check url."
     elif res[0] == "done":
@@ -241,7 +241,7 @@ def get_res_during_tuning(task_id: str, task_log_path):
             # break when the last result is matched
             break
 
-    print("Query results: {}".format(results))
+    logger.info("Query results: {}".format(results))
     return results if results else "Tune 1 running..."
 
 
@@ -265,7 +265,7 @@ def get_baseline_during_tuning(task_id: str, task_log_path):
             # break when the last result is matched
             break
 
-    print("FP32 baseline: {}".format(results))
+    logger.info("FP32 baseline: {}".format(results))
     return results if results else "Getting FP32 baseline..."
 
 

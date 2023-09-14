@@ -31,7 +31,9 @@ pip install torch==1.12.0 \
             onnxruntime_extensions \
             tf_slim \
             transformers \
-            flask==2.1.3
+            accelerate \
+            flask==2.1.3 \
+            xgboost
 
 if [ "${scan_module}" = "neural_solution" ]; then
     cd /neural-compressor
@@ -50,7 +52,7 @@ elif [ "${scan_module}" = "neural_insights" ]; then
 fi
 
 python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto \
---ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,fairseq,mxnet,onnx,onnxruntime,intel_extension_for_pytorch /neural-compressor/${scan_module} \
+--ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,fairseq,mxnet,onnx,onnxruntime,intel_extension_for_pytorch,intel_extension_for_tensorflow,torchinfo /neural-compressor/${scan_module} \
 >$log_dir/pylint.json
 
 exit_code=$?

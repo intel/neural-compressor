@@ -14,6 +14,7 @@
 
 import torch
 import torchvision.models as models
+
 model = models.resnet50(pretrained=True)
 model.eval()
 batch_size = 1

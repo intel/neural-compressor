@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Neural Solution utility."""
 
 import json
@@ -68,7 +67,7 @@ def get_serve_log_workspace(workspace="./"):
 
 
 def dict_to_str(d):
-    """Covert a dict object to a string object.
+    """Convert a dict object to a string object.
 
     Args:
         d (dict): a dict object

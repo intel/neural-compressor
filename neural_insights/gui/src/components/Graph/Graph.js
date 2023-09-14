@@ -17,6 +17,7 @@ import './Graph.scss';
 import { getLabel, customColor } from './../Diagnosis/Diagnosis';
 import Button from 'react-bootstrap/Button';
 import { api } from './../../App';
+import Spinner from 'react-bootstrap/Spinner';
 
 const cytoscape = require('cytoscape');
 const nodeHtmlLabel = require('cytoscape-node-html-label');
@@ -240,6 +241,11 @@ class CytoGraph extends React.Component {
       <div>
         <div className="graph-buttons">
           <GraphButtons parentCallback={this.handleCallback} />
+          {!this.props.graph &&
+            <div className="spinner-container">
+              <Spinner className="spinner" animation="border" />
+            </div>
+          }
           {this.props.groupNode.length > 0 &&
             <div className="nodes-table-container">
               <table className="nodes-table">
@@ -287,30 +293,32 @@ class GraphButtons extends React.Component {
 
 const getElements = (graph) => {
   const elements = [];
-  graph.nodes.forEach(node => {
-    elements.push({
-      data: {
-        id: node.id,
-        label: getLabel(node.label),
-        parent: node.parent,
-        attributes: node.attributes,
-        properties: node.properties,
-        node_type: node.node_type,
-        highlight: String(node.highlight),
-        border_color: node.node_type === 'group_node' ? '#5B69FF' : customColor[getHash(node.label)],
-        color: node.node_type === 'group_node' ? '#fff' : customColor[getHash(node.label)],
-      },
-      grabbable: false,
+  if (graph.nodes && graph.edges) {
+    graph.nodes.forEach(node => {
+      elements.push({
+        data: {
+          id: node.id,
+          label: getLabel(node.label),
+          parent: node.parent,
+          attributes: node.attributes,
+          properties: node.properties,
+          node_type: node.node_type,
+          highlight: String(node.highlight),
+          border_color: node.node_type === 'group_node' ? '#5B69FF' : customColor[getHash(node.label)],
+          color: node.node_type === 'group_node' ? '#fff' : customColor[getHash(node.label)],
+        },
+        grabbable: false,
+      });
     });
-  });
-  graph.edges.forEach(edge => {
-    elements.push({
-      data: {
-        source: edge.source,
-        target: edge.target,
-      }
+    graph.edges.forEach(edge => {
+      elements.push({
+        data: {
+          source: edge.source,
+          target: edge.target,
+        }
+      });
     });
-  });
+  }
   return elements;
 }
 

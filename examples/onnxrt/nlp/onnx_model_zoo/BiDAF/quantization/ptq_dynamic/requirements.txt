@@ -2,6 +2,6 @@ onnx
 onnxruntime
 coloredlogs
 sympy
-onnxruntime-extensions; python_version < '3.10'
+onnxruntime-extensions; python_version < '3.11'
 nltk
 tqdm

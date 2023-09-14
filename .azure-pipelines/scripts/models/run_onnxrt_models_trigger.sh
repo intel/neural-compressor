@@ -35,7 +35,7 @@ if [ "${model}" == "resnet50-v1-12" ]; then
     batch_size=1
     new_benchmark=true
     inc_new_api=true
-    tuning_cmd="bash run_tuning.sh --input_model=${input_model} --dataset_location=${dataset_location}"
+    tuning_cmd="bash run_quant.sh --input_model=${input_model} --dataset_location=${dataset_location}"
     benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance --dataset_location=${dataset_location}"
 fi
 

@@ -12,20 +12,7 @@ This example can run on Intel CPUs and GPUs.
 
 ### Installation
 Recommend python 3.7 or higher version.
-
 ```shell
-# Install Intel® Neural Compressor
-pip install neural-compressor
-```
-
-### Install Intel Tensorflow
-```shell
-pip install intel-tensorflow
-```
-
-### Installation Dependency packages
-```shell
-cd examples/tensorflow/object_detection/tensorflow_models/mixed_precision
 pip install -r requirements.txt
 ```
 
@@ -84,7 +71,7 @@ config = MixedPrecisionConfig(
 
   ```shell
   cd examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/mixed_precision
-  bash run_tuning.sh --input_model=/PATH/TO/resnet50_fp32_pretrained_model.pb \
+  bash run_mixed.sh --input_model=/PATH/TO/resnet50_fp32_pretrained_model.pb \
       --output_model=./nc_resnet50_v1.pb --dataset_location=/path/to/ImageNet/
   ```
 

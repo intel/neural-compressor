@@ -61,7 +61,7 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/2_10_0/dis
 ## Run Command
 ### Run Tuning:
 ```shell
-bash run_tuning.sh \
+bash run_quant.sh \
     --input_model=$INPUT_MODEL \
     --dataset_location=$DATASET_DIR \
     --output_model=$OUTPUT_MODEL \
@@ -115,7 +115,7 @@ Where (Default values are shown in the square brackets):
 
 #### Tuning
 ```shell
-bash run_tuning.sh \
+bash run_quant.sh \
     --input_model=$INPUT_MODEL \
     --dataset_location=$DATASET_DIR \
     --output_model=$OUTPUT_MODEL \

@@ -11,11 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The entry of Neural Solution."""
 import argparse
 import os
-import psutil
 import shlex
 import socket
 import sqlite3
@@ -23,9 +21,12 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from neural_solution.utils.utility import get_db_path
+
+import psutil
 from prettytable import PrettyTable
 
+from neural_solution.utils import logger
+from neural_solution.utils.utility import get_db_path
 
 
 def check_ports(args):
@@ -46,7 +47,7 @@ def check_port(port):
         port (int): port number.
     """
     if not str(port).isdigit() or int(port) < 0 or int(port) > 65535:
-        print(f"Error: Invalid port number: {port}")
+        logger.info(f"Error: Invalid port number: {port}")
         sys.exit(1)
 
 
@@ -85,7 +86,7 @@ def stop_service():
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     # Service End
-    print("Neural Solution Service Stopped!")
+    logger.info("Neural Solution Service Stopped!")
 
 
 def check_port_free(port):
@@ -114,10 +115,10 @@ def start_service(args):
     for port in [args.restful_api_port, args.task_monitor_port, args.result_monitor_port]:
         # Check if the port is occupied
         if not check_port_free(port):
-            print(f"Port {port} is in use!")
+            logger.info(f"Port {port} is in use!")
             ports_flag += 1
     if ports_flag > 0:
-        print("Please replace the occupied port!")
+        logger.info("Please replace the occupied port!")
         sys.exit(1)
     # Check completed
 
@@ -125,11 +126,11 @@ def start_service(args):
     if not args.conda_env:
         conda_env = os.environ.get("CONDA_DEFAULT_ENV")
         if not conda_env:
-            print("No environment specified or conda environment activated !!!")
+            logger.info("No environment specified or conda environment activated !!!")
             sys.exit(1)
         else:
-            print(
-                f"No environment specified, use environment activated:"
+            logger.info(
+                "No environment specified, use environment activated:"
                 + f" ({conda_env}) as the task runtime environment."
             )
             conda_env_name = conda_env
@@ -208,7 +209,7 @@ def start_service(args):
     ip_address = get_local_service_ip(80)
 
     # Check if the service is started
-    # Set the maximum waiting time to 3 senconds
+    # Set the maximum waiting time to 3 seconds
     timeout = 3
     # Start time
     start_time = time.time()
@@ -226,7 +227,7 @@ def start_service(args):
             elapsed_time = current_time - start_time
             if elapsed_time >= timeout:
                 # If timed out, break the loop
-                print("Timeout!")
+                logger.info("Timeout!")
                 break
 
         # Continue to wait for all ports to be in use
@@ -248,14 +249,15 @@ def start_service(args):
         fail_msg = f"{fail_msg}\nPlease check backend serve log!"
 
     if ports_flag < 3:
-        print(fail_msg)
+        logger.info(fail_msg)
         sys.exit(1)
     # Check completed
 
-    print("Neural Solution Service Started!")
-    print(f'Service log saving path is in "{os.path.abspath(serve_log_dir)}"')
-    print(f"To submit task at: {ip_address}:{args.restful_api_port}/task/submit/")
-    print("[For information] neural_solution -h")
+    logger.info("Neural Solution Service Started!")
+    logger.info(f'Service log saving path is in "{os.path.abspath(serve_log_dir)}"')
+    logger.info(f"To submit task at: {ip_address}:{args.restful_api_port}/task/submit/")
+    logger.info("[For information] neural_solution -h")
+
 
 def query_cluster(db_path: str):
     """Query cluster information from database.
@@ -276,7 +278,7 @@ def query_cluster(db_path: str):
         table.add_row(row)
 
     table.title = "Neural Solution Cluster Management System"
-    print(table)
+    logger.info(table)
     cursor.close()
     conn.close()
 
@@ -291,10 +293,12 @@ def create_node(line: str):
         Node: node object
     """
     from neural_solution.backend.cluster import Node
+
     hostname, num_sockets, num_cores_per_socket = line.strip().split(" ")
     num_sockets, num_cores_per_socket = int(num_sockets), int(num_cores_per_socket)
     node = Node(name=hostname, num_sockets=num_sockets, num_cores_per_socket=num_cores_per_socket)
     return node
+
 
 def join_node_to_cluster(db_path: str, args):
     """Append new node into cluster.
@@ -306,7 +310,7 @@ def join_node_to_cluster(db_path: str, args):
     node_lst = []
     if is_file:
         num_threads_per_process = 5
-        with open(args.join, 'r') as f:
+        with open(args.join, "r") as f:
             for line in f:
                 node_lst.append(create_node(line))
     else:
@@ -315,7 +319,7 @@ def join_node_to_cluster(db_path: str, args):
 
     # Insert node into cluster table.
     for count, node in enumerate(node_lst):
-        print(node)
+        logger.info(node)
         conn = sqlite3.connect(f"{db_path}")
         cursor = conn.cursor()
         if count == 0:
@@ -323,19 +327,19 @@ def join_node_to_cluster(db_path: str, args):
             result = cursor.fetchone()
             index = result[0] if result else 0
 
-        cursor.execute(r"insert into cluster(name, node_info, status, free_sockets, busy_sockets, total_sockets)" +
-                        "values ('{}', '{}', '{}', {}, {}, {})".format(node.name,
-                                                                repr(node).replace("Node", f"Node{index+1}"),
-                                                                "join",
-                                                                node.num_sockets,
-                                                                0,
-                                                                node.num_sockets))
+        cursor.execute(
+            r"insert into cluster(name, node_info, status, free_sockets, busy_sockets, total_sockets)"
+            + "values ('{}', '{}', '{}', {}, {}, {})".format(
+                node.name, repr(node).replace("Node", f"Node{index+1}"), "join", node.num_sockets, 0, node.num_sockets
+            )
+        )
         conn.commit()
         index += 1
-        print(f"Insert node-id: {index} successfully!")
+        logger.info(f"Insert node-id: {index} successfully!")
 
     cursor.close()
     conn.close()
+
 
 def remove_node_from_cluster(db_path: str, node_id: int):
     """Remove one node from cluster table. In the future, it will be deleted in the Cluster class.
@@ -351,20 +355,21 @@ def remove_node_from_cluster(db_path: str, node_id: int):
     results = cursor.fetchone()
 
     if results is None:
-        print(f"No node-id {node_id} in cluster table.")
+        logger.info(f"No node-id {node_id} in cluster table.")
         return
     elif results[1] == 0:
         sql = f"UPDATE cluster SET status = 'remove' WHERE id = {node_id}"
         cursor.execute(sql)
-        print(f"Remove node-id {node_id} successfully.")
+        logger.info(f"Remove node-id {node_id} successfully.")
     else:
         sql = f"UPDATE cluster SET status = 'remove' WHERE id = {node_id}"
         cursor.execute(sql)
-        print(f"Resource occupied, will be removed after resource release")
+        logger.info("Resource occupied, will be removed after resource release")
     conn.commit()
 
     cursor.close()
     conn.close()
+
 
 def manage_cluster(args):
     """Neural Solution resource management. query/join/remove node.
@@ -384,9 +389,7 @@ def manage_cluster(args):
 def main():
     """Implement the main function."""
     parser = argparse.ArgumentParser(description="Neural Solution")
-    parser.add_argument(
-        'action', choices=['start', 'stop', "cluster"], help='start/stop/management service'
-    )
+    parser.add_argument("action", choices=["start", "stop", "cluster"], help="start/stop/management service")
     parser.add_argument(
         "--hostfile", default=None, help="start backend serve host file which contains all available nodes"
     )
@@ -408,27 +411,15 @@ def main():
         default=2222,
         help="start serve for task monitor at {task_monitor_port}, default 2222",
     )
-    parser.add_argument(
-        "--api_type", default="all", help="start web serve with all/grpc/restful, default all"
-    )
+    parser.add_argument("--api_type", default="all", help="start web serve with all/grpc/restful, default all")
     parser.add_argument(
         "--workspace", default="./ns_workspace", help='neural solution workspace, default "./ns_workspace"'
     )
-    parser.add_argument(
-        "--conda_env", default=None, help="specify the running environment for the task"
-    )
-    parser.add_argument(
-        "--upload_path", default="examples", help="specify the file path for the tasks"
-    )
-    parser.add_argument(
-        "--query", action="store_true", help="[cluster parameter] query cluster information"
-    )
-    parser.add_argument(
-        "--join", help="[cluster parameter] add new node into cluster"
-    )
-    parser.add_argument(
-        "--remove", help="[cluster parameter] remove <node-id> from cluster"
-    )
+    parser.add_argument("--conda_env", default=None, help="specify the running environment for the task")
+    parser.add_argument("--upload_path", default="examples", help="specify the file path for the tasks")
+    parser.add_argument("--query", action="store_true", help="[cluster parameter] query cluster information")
+    parser.add_argument("--join", help="[cluster parameter] add new node into cluster")
+    parser.add_argument("--remove", help="[cluster parameter] remove <node-id> from cluster")
     args = parser.parse_args()
 
     # Check parameters ending in '_port'
@@ -440,6 +431,7 @@ def main():
         stop_service()
     elif args.action == "cluster":
         manage_cluster(args)
-        
+
+
 if __name__ == "__main__":
     main()

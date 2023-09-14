@@ -14,19 +14,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tuning utility."""
 
 
 from collections import OrderedDict
 
+
 class OrderedDefaultDict(OrderedDict):
     """Ordered default dict."""
-    
+
     def __missing__(self, key):
         """Initialize value for the missing key."""
         self[key] = value = OrderedDefaultDict()
         return value
+
 
 def extract_data_type(data_type: str) -> str:
     """Extract data type and signed from data type.
@@ -37,11 +38,13 @@ def extract_data_type(data_type: str) -> str:
     Returns:
         (signed or unsigned, data type without signed)
     """
-    return ('signed', data_type) if data_type[0] != 'u' else ('unsigned', data_type[1:])
+    return ("signed", data_type) if data_type[0] != "u" else ("unsigned", data_type[1:])
+
 
 def reverted_data_type(signed_flag: str, data_type: str) -> str:
     """Revert the data type."""
-    return data_type if signed_flag == 'signed' else 'u' + data_type
+    return data_type if signed_flag == "signed" else "u" + data_type
+
 
 def get_adaptor_name(adaptor):
     """Get adaptor name.
@@ -50,7 +53,7 @@ def get_adaptor_name(adaptor):
         adaptor: adaptor instance.
     """
     adaptor_name = type(adaptor).__name__.lower()
-    adaptor_name_lst = ['onnx', 'tensorflow', 'pytorch']
+    adaptor_name_lst = ["onnx", "tensorflow", "pytorch"]
     for name in adaptor_name_lst:
         if adaptor_name.startswith(name):
             return name

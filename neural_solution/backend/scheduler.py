@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Neural Solution scheduler."""
 import glob
 import json
@@ -89,7 +88,7 @@ class Scheduler:
         if requirement == [""]:
             return env_prefix
         # Construct the command to list all the conda environments
-        cmd = f"conda env list"
+        cmd = "conda env list"
         output = subprocess.getoutput(cmd)
         # Parse the output to get a list of conda environment names
         env_list = [line.strip().split()[0] for line in output.splitlines()[2:]]

@@ -16,9 +16,10 @@
 # limitations under the License.
 """QAT Quantize Helper Class."""
 
-from .quantize_wrapper import QuantizeWrapper
+from .quantize_config import QuantizeConfig, global_config, layer_wise_config
 from .quantize_layers.optimize_layer import config_quantizable_layers
-from .quantize_config import layer_wise_config, global_config, QuantizeConfig
+from .quantize_wrapper import QuantizeWrapper
+
 
 def init_quantize_config(model, quantize_recipe=None):
     """Initialize quantization config at the beginning of QAT process.
@@ -28,11 +29,12 @@ def init_quantize_config(model, quantize_recipe=None):
         quantize_recipe (dict): A dict that decide whether given layers should be quantized.
 
     Returns:
-        config (QuantizeConfig): QuantizeConfig instance used to decide whether a specific layer 
+        config (QuantizeConfig): QuantizeConfig instance used to decide whether a specific layer
                                  should be quantized.
     """
-    assert 'quantize_config' not in global_config, ("quantize_config has been unexpectedly "
-    "created. Please check your QAT workflow")
+    assert "quantize_config" not in global_config, (
+        "quantize_config has been unexpectedly " "created. Please check your QAT workflow"
+    )
 
     config = QuantizeConfig()
     config_quantizable_layers(model)
@@ -41,6 +43,7 @@ def init_quantize_config(model, quantize_recipe=None):
         config.add_quantize_recipe(quantize_recipe)
 
     return config
+
 
 def _is_quantizable_layer(layer):
     """Query if the input layer should be quantized.
@@ -54,21 +57,24 @@ def _is_quantizable_layer(layer):
     quantizable = True
     layer_class = layer.__class__.__name__
 
-    quantize_config = global_config['quantize_config']
+    quantize_config = global_config["quantize_config"]
     specific_layer_config = quantize_config.query_layer(layer.name)
     if specific_layer_config:
         # the layer is set to be unquantizable by QuantizeConfig
-        if not specific_layer_config['quantize']:
+        if not specific_layer_config["quantize"]:
             return False
         else:
-            if layer_class in layer_wise_config['quantize_layers'] or \
-                layer_class in layer_wise_config['possible_quantize_layers']:
-                return True 
+            if (
+                layer_class in layer_wise_config["quantize_layers"]
+                or layer_class in layer_wise_config["possible_quantize_layers"]
+            ):
+                return True
 
-    if layer_class not in layer_wise_config['quantize_layers']:
+    if layer_class not in layer_wise_config["quantize_layers"]:
         quantizable = False
 
     return quantizable
+
 
 def qat_clone_function(layer):
     """Wrap or leave given layer based on quantize config object parameters.
@@ -79,7 +85,7 @@ def qat_clone_function(layer):
     Returns:
         wrapped_layer (QuantizeWrapper): layer wrapped by QuantizeWrapper class.
     """
-    wrapped_layer= layer
+    wrapped_layer = layer
     if _is_quantizable_layer(layer):
         wrapped_layer = QuantizeWrapper(layer)
 

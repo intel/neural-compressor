@@ -336,6 +336,7 @@ def train(args, model, train_dataloader, lr_scheduler, optimizer, \
                 lr_scheduler.step()
                 optimizer.zero_grad()
                 completed_steps += 1
+                compression_manager.callbacks.on_after_optimizer_step()
             compression_manager.callbacks.on_step_end()
             if completed_steps >= args.max_train_steps:
                 break
@@ -543,7 +544,7 @@ def main():
                             'please provide .pt file'.format(args.resume))
 
     # Preprocessing the datasets.
-    # Preprocessing is slighlty different for training and evaluation.
+    # Preprocessing is slightly different for training and evaluation.
 
     column_names = raw_datasets["train"].column_names
 
@@ -640,7 +641,7 @@ def main():
         raise ValueError("--do_train requires a train dataset")
     train_dataset = raw_datasets["train"]
     if args.max_train_samples is not None:
-        # We will select sample from whole data if agument is specified
+        # We will select sample from whole data if argument is specified
         train_dataset = train_dataset.select(range(args.max_train_samples))
     # Create train feature from dataset
     train_dataset = train_dataset.map(
@@ -706,7 +707,7 @@ def main():
         eval_examples = eval_examples.select(range(args.max_eval_samples))
     
     # fx model must take input with predefined shape, evaluation of QA model 
-    # need lengthes of dataset and dataloader be the same, 
+    # need lengths of dataset and dataloader be the same, 
     # so here to make length of eval_examples to multiples of batch_size. 
     eval_examples = eval_examples.select(range((len(eval_examples) // args.batch_size) * args.batch_size))
 
@@ -724,7 +725,7 @@ def main():
         # During Feature creation dataset samples might increase, we will select required samples again
         eval_dataset = eval_dataset.select(range(args.max_eval_samples))
     # fx model must take input with predefined shape, evaluation of QA model 
-    # need lengthes of dataset and dataloader be the same, 
+    # need lengths of dataset and dataloader be the same, 
     # so here to make length of eval_dataset to multiples of batch_size. 
     eval_dataset = eval_dataset.select(range((len(eval_dataset) // args.batch_size) * args.batch_size))
 
@@ -737,7 +738,7 @@ def main():
             predict_examples = predict_examples.select(range(args.max_predict_samples))
 
         # fx model must take input with predefined shape, evaluation of QA model 
-        # need lengthes of dataset and dataloader be the same, 
+        # need lengths of dataset and dataloader be the same, 
         # so here to make length of predict_examples to multiples of batch_size. 
         predict_examples = predict_examples.select(range((len(predict_examples) // args.batch_size) * args.batch_size))
 
@@ -755,7 +756,7 @@ def main():
             predict_dataset = predict_dataset.select(range(args.max_predict_samples))
 
         # fx model must take input with predefined shape, evaluation of QA model 
-        # need lengthes of dataset and dataloader be the same, 
+        # need lengths of dataset and dataloader be the same, 
         # so here to make length of predict_dataset to multiples of batch_size. 
         predict_dataset = predict_dataset.select(range((len(predict_dataset) // args.batch_size) * args.batch_size))
 

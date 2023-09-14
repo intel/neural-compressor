@@ -21,11 +21,12 @@ from .. import globals
 def detect_device():
     try:
         import torch
+
         if torch.cuda.is_available():
             globals.device = "cuda"
             return
     except:
-        pass # cuda tf wip
+        pass  # cuda tf wip
 
     if check_has('clinfo | grep "Intel(R) Graphics"'):
         globals.device = "intel_gpu"
@@ -38,21 +39,17 @@ def detect_device():
     globals.device = "cpu_without_amx"
     return
 
+
 def check_has(s):
     cmd = s
     try:
-        sp = subprocess.Popen(
-            cmd,
-            env=os.environ,
-            shell=True,  # nosec
-            stdout=subprocess.PIPE
-        )  # nosec
+        sp = subprocess.Popen(cmd, env=os.environ, shell=True, stdout=subprocess.PIPE)  # nosec  # nosec
         sp.wait()
         sp, _ = sp.communicate()
         has = bool(len(sp.decode()) > 0)  # 0: no, >0: yes
     except:
         has = False
-        print('Checking failed.')
+        print("Checking failed.")
     return has
 
 
@@ -60,14 +57,15 @@ def detect_code_device_compatibility(code_path):
     # handle github py url
     if "github.com" in code_path and ".py" in code_path:
         import requests
-        code_path = code_path.replace("github.com", "raw.githubusercontent.com").replace("/blob","")
+
+        code_path = code_path.replace("github.com", "raw.githubusercontent.com").replace("/blob", "")
         r = requests.get(code_path)
         save_py_path = "./neural_coder_workspace/model_analyze_device.py"
         f = open(save_py_path, "wb")
         f.write(r.content)
         code_path = save_py_path
 
-    lines = open(code_path, 'r').read().split('\n')
+    lines = open(code_path, "r").read().split("\n")
     for line in lines:
         if "torch.cuda.is_available()" in line:
             globals.list_code_device_compatibility.append("cuda")
@@ -88,5 +86,4 @@ def detect_code_device_compatibility(code_path):
         if "args.gpu" in line:
             globals.list_code_device_compatibility.append("gpu")
 
-    globals.list_code_device_compatibility = \
-        list(set(globals.list_code_device_compatibility))
+    globals.list_code_device_compatibility = list(set(globals.list_code_device_compatibility))

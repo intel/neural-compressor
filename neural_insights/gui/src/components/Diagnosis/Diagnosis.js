@@ -19,6 +19,8 @@ import OpDetails from './../OpDetails/OpDetails';
 import OpList from './../OpList/OpList';
 import Histogram from './../Histogram/Histogram';
 import Workloads from './../Workloads/Workloads';
+import WorkloadDetails from './../WorkloadDetails/WorkloadDetails';
+import ModelSummary from './../ModelSummary/ModelSummary';
 import Profiling from './../Profiling/Profiling';
 import Warning from './../Warning/Warning';
 import Form from 'react-bootstrap/Form';
@@ -38,16 +40,14 @@ function Diagnosis() {
     <div className="Diagnosis">
       <Warning className="alert" warningText={warningText} setWarningText={setWarningText} />
       <div className="flexbox">
-        <div className="flex-item">
-          <div className="flexbox-inside">
-            <Workloads setSelectedWorkload={setSelectedWorkload} selectedWorkload={selectedWorkload} setWarningText={setWarningText} setSelectedOp={setSelectedOp} />
-            {/* {selectedWorkload?.mode === 'quantization' &&
-              <NodeSearch />
-            } */}
-            {selectedWorkload?.mode === 'quantization' &&
-              <NodeProperties selectedNode={selectedNode} />
-            }
+        <div className="flexbox-inside">
+          <div className="workloads-flex">
+            <Workloads setSelectedWorkload={setSelectedWorkload} selectedWorkload={selectedWorkload} setWarningText={setWarningText} setSelectedOp={setSelectedOp} setSelectedNode={setSelectedNode} />
           </div>
+          <WorkloadDetails setSelectedWorkload={setSelectedWorkload} selectedWorkload={selectedWorkload} setWarningText={setWarningText} setSelectedOp={setSelectedOp} />
+          {selectedWorkload?.mode === 'quantization' &&
+            <NodeProperties selectedNode={selectedNode} />
+          }
         </div>
         {selectedWorkload?.mode === 'benchmark' &&
           <div className="flex-item">
@@ -56,11 +56,16 @@ function Diagnosis() {
         }
         {selectedWorkload?.mode === 'quantization' &&
           <div className="flex-bigger">
-            <Graph setSelectedNode={setSelectedNode} selectedWorkload={selectedWorkload} selectedOp={selectedOp} selectedPattern={selectedPattern} setWarningText={setWarningText} />
+            {selectedWorkload.framework !== 'PyTorch' &&
+              <Graph setSelectedNode={setSelectedNode} selectedWorkload={selectedWorkload} selectedOp={selectedOp} selectedPattern={selectedPattern} setWarningText={setWarningText} />
+            }
+            {selectedWorkload.framework === 'PyTorch' &&
+              <ModelSummary selectedWorkload={selectedWorkload} setWarningText={setWarningText} />
+            }
           </div>
         }
         {selectedWorkload?.mode === 'quantization' &&
-          <div className="flex-smaller">
+          <div className="flex-item">
             <AccuracyResults selectedWorkload={selectedWorkload} />
             <OpList selectedWorkload={selectedWorkload} setSelectedOp={setSelectedOp} selectedOp={selectedOp} setWarningText={setWarningText} />
           </div>
@@ -86,7 +91,7 @@ function NodeProperties({ selectedNode }) {
       return (
         <tr key={key}>
           <td className="table-key">{key}</td>
-          <td className="table-value">{getLabel(value)}</td>
+          <td colSpan={2} className="table-value">{getLabel(value)}</td>
         </tr>
       )
     });
@@ -95,13 +100,19 @@ function NodeProperties({ selectedNode }) {
       return (
         <tr key={attribute.name}>
           <td className="table-key">{attribute.name}</td>
-          <td className="table-value">{attribute.value}</td>
+          <td className="table-value">{attribute.attribute_type}</td>
+          {attribute.attribute_type !== "float32" &&
+            <td className="table-value">{attribute.value?.toString()}</td>
+          }
+          {attribute.attribute_type === "float32" &&
+            <td className="table-value">{attribute.value.toExponential(2)}</td>
+          }
         </tr>
       )
     });
 
     return (
-      <div className='data-panel'>
+      <div className='data-panel-top'>
         <h3>Node details</h3>
         <table className="property-table">
           <tbody>
@@ -151,6 +162,29 @@ function AccuracyResults({ selectedWorkload }) {
         </p>
       }
       {selectedWorkload.status !== 'wip' &&
+        !selectedWorkload.accuracy_data.ratio &&
+        <table className='accuracy-table'>
+          <tbody>
+            <tr>
+              <td className="accuracy-title">Accuracy <br /> results</td>
+              <td>
+                <div className="accuracy-number">N/A</div>
+                <div className="accuracy-subtitle">FP32</div>
+              </td>
+              <td>
+                <div className="accuracy-number">N/A</div>
+                <div className="accuracy-subtitle">INT8</div>
+              </td>
+              <td>
+                <div className="accuracy-number">N/A</div>
+                <div className="accuracy-subtitle">Ratio</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      }
+      {selectedWorkload.status !== 'wip' &&
+        selectedWorkload.accuracy_data.ratio &&
         <table className='accuracy-table'>
           <tbody>
             <tr>

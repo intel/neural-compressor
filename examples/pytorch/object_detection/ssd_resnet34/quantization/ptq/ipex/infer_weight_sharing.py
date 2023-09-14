@@ -239,7 +239,7 @@ def coco_eval(model, val_dataloader, cocoGt, encoder, inv_map, args):
             model_decode.model.model = optimization.fuse(model_decode.model.model, inplace=False)
 
             if args.calibration:
-                print("runing int8 LLGA calibration step not support in throughput benchmark")
+                print("running int8 LLGA calibration step not support in throughput benchmark")
             else:
                 print("INT8 LLGA start trace")
                 # insert quant/dequant based on configure.json

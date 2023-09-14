@@ -129,7 +129,11 @@ def main():
                     break
 
         from neural_compressor import PostTrainingQuantConfig, quantization
-        conf = PostTrainingQuantConfig(approach="static")
+        for index, wave in enumerate(val_dataloader):
+            example_inputs = wave[0][0]
+            break
+        conf = PostTrainingQuantConfig(approach="static",
+                                       example_inputs=example_inputs)
         q_model = quantization.fit(model,
                                    conf=conf,
                                    eval_func=eval_func,

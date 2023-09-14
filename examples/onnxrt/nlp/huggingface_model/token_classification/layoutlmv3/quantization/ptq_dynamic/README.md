@@ -16,7 +16,7 @@ pip install -r requirements.txt
 Export a model to ONNX with `optimum.exporters.onnx`.
 
 ```bash
-optimum-cli export onnx --model HYPJUDY/layoutlmv3-base-finetuned-funsd layoutlmv3-base-finetuned-funsd-onnx/ --task=token-classification
+python prepare_model.py  --input_model="HYPJUDY/layoutlmv3-base-finetuned-funsd" --output_model="layoutlmv3-base-finetuned-funsd-onnx/"
 ```
 
 # Run
@@ -26,7 +26,7 @@ optimum-cli export onnx --model HYPJUDY/layoutlmv3-base-finetuned-funsd layoutlm
 Dynamic quantization:
 
 ```bash
-bash run_tuning.sh --input_model=./layoutlmv3-base-finetuned-funsd-onnx/model.onnx \ # model path as *.onnx
+bash run_quant.sh --input_model=./layoutlmv3-base-finetuned-funsd-onnx/model.onnx \ # model path as *.onnx
                    --output_model=/path/to/model_tune
 ```
 

@@ -173,7 +173,7 @@ class Dataloader:
     def preprocess(self, image):
         input_shape = (1, 1, 64, 64)
         img = Image.fromarray(image)
-        img = img.resize((64, 64), Image.ANTIALIAS)
+        img = img.resize((64, 64), Image.LANCZOS)
         img_data = np.array(img)
         img_data = np.resize(img_data, input_shape)
         return img_data.astype('float32')

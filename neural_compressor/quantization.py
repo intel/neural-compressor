@@ -20,25 +20,31 @@ import pickle
 import random
 
 import numpy as np
+
 from .config import _Config, options
 from .data import check_dataloader
 from .metric import register_customer_metric
 from .model import Model
 from .strategy import STRATEGIES
 from .utils import logger
-from .utils.neural_insights_utils import register_neural_insights_workload, \
-    update_neural_insights_workload, update_neural_insights_workload_accuracy_data
-from .utils.utility import time_limit, dump_class_attrs
+from .utils.neural_insights_utils import (
+    register_neural_insights_workload,
+    update_neural_insights_workload,
+    update_neural_insights_workload_accuracy_data,
+)
+from .utils.utility import dump_class_attrs, time_limit
 
 
-def fit(model,
-        conf,
-        calib_dataloader=None,
-        calib_func=None,
-        eval_func=None,
-        eval_dataloader=None,
-        eval_metric=None,
-        **kwargs):
+def fit(
+    model,
+    conf,
+    calib_dataloader=None,
+    calib_func=None,
+    eval_func=None,
+    eval_dataloader=None,
+    eval_metric=None,
+    **kwargs,
+):
     """Quantize the model with a given configure.
 
     Args:
@@ -95,7 +101,7 @@ def fit(model,
         eval_metric (dict or obj):            Set metric class or a dict of built-in metric configures,
                                               and neural_compressor will initialize this class when evaluation.
 
-            1. neural_compressor have many built-in metrics, 
+            1. neural_compressor have many built-in metrics,
                user can pass a metric configure dict to tell neural compressor what metric will be use.
                You also can set multi-metrics to evaluate the performance of a specific model.
                     Single metric:
@@ -164,8 +170,9 @@ def fit(model,
         strategy_name = "conservative"
 
     if strategy_name == "mse_v2":
-        if not (conf.framework.startswith("tensorflow")\
-                 or conf.framework in ['pytorch_fx', 'onnxruntime']): # pragma: no cover
+        if not (
+            conf.framework.startswith("tensorflow") or conf.framework in ["pytorch_fx", "onnxruntime"]
+        ):  # pragma: no cover
             strategy_name = "basic"
             logger.warning(f"MSE_v2 does not support {conf.framework} now, use basic instead.")
             logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
@@ -175,15 +182,15 @@ def fit(model,
     _resume = None
     # check if interrupted tuning procedure exists. if yes, it will resume the
     # whole auto tune process.
-    resume_file = os.path.abspath(os.path.expanduser(options.resume_from)) \
-                       if options.workspace and options.resume_from else None
+    resume_file = (
+        os.path.abspath(os.path.expanduser(options.resume_from)) if options.workspace and options.resume_from else None
+    )
     if resume_file:
-        assert os.path.exists(resume_file), \
-            "The specified resume file {} doesn't exist!".format(resume_file)
-        with open(resume_file, 'rb') as f:
+        assert os.path.exists(resume_file), "The specified resume file {} doesn't exist!".format(resume_file)
+        with open(resume_file, "rb") as f:
             _resume = pickle.load(f).__dict__
 
-    if eval_func is None and eval_dataloader is None: # pragma: no cover
+    if eval_func is None and eval_dataloader is None:  # pragma: no cover
         logger.info("Quantize model without tuning!")
 
     strategy = STRATEGIES[strategy_name](
@@ -195,7 +202,7 @@ def fit(model,
         eval_dataloader=eval_dataloader,
         eval_metric=metric,
         resume=_resume,
-        q_hooks=None
+        q_hooks=None,
     )
 
     try:
@@ -209,6 +216,7 @@ def fit(model,
                     workload_location=os.path.abspath(options.workspace),
                     model=wrapped_model,
                     workload_mode="quantization",
+                    workload_name=conf.ni_workload_name,
                 )
                 if ni_workload_id:
                     update_neural_insights_workload(ni_workload_id, "wip")
@@ -227,16 +235,18 @@ def fit(model,
         if ni_workload_id:
             update_neural_insights_workload(ni_workload_id, "failure")
         import traceback
+
         traceback.print_exc()
     finally:
         if strategy.best_qmodel:
             logger.info(
-                "Specified timeout or max trials is reached! "
-                "Found a quantized model which meet accuracy goal. Exit.")
+                "Specified timeout or max trials is reached! " "Found a quantized model which meet accuracy goal. Exit."
+            )
             strategy.deploy_config()
         else:
             logger.error(
                 "Specified timeout or max trials is reached! "
-                "Not found any quantized model which meet accuracy goal. Exit.")
+                "Not found any quantized model which meet accuracy goal. Exit."
+            )
 
         return strategy.best_qmodel

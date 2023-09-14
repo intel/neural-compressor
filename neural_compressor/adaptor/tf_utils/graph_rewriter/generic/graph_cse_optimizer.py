@@ -17,11 +17,12 @@
 """CSE Graph Rewriter."""
 
 from tensorflow.core.framework import graph_pb2
+
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
-from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 
 class GraphCseOptimizer(GraphRewriterBase):
@@ -67,12 +68,13 @@ class GraphCseOptimizer(GraphRewriterBase):
     Returns:
         [graphdef]: A optimized graphdef object.
     """
+
     computational_op_type = ("Conv2D", "Conv3D", "DepthwiseConv2dNative", "MatMul")
 
     @dump_elapsed_time("Pass GraphCseOptimizer")
     def do_transformation(self):
         """Optimize the graph contains multi output nodes.
-        
+
         If those nodes' type are identical, those nodes should be elimated.
         Currently, we supported memory bound ops only.
 
@@ -87,10 +89,11 @@ class GraphCseOptimizer(GraphRewriterBase):
         graph_info = GraphAnalyzer().parse_graph()
 
         need_to_update_node = []
-        #TODO Enhance below code snippet by using recursive method.
+        # TODO Enhance below code snippet by using recursive method.
         for _, i in graph_info.items():
             candidate_node = [
-                graph_info[child_name].node for child_name in i.outputs
+                graph_info[child_name].node
+                for child_name in i.outputs
                 if graph_info[child_name].node.op not in self.computational_op_type
             ]
             candidate_node_unique_type = set([i.op for i in candidate_node])
@@ -98,7 +101,7 @@ class GraphCseOptimizer(GraphRewriterBase):
                 # it means each sub node has their own type.
                 continue
             node_type_name_mapping = {}
-            #Created dict which key is op type and value is node has identical op type.
+            # Created dict which key is op type and value is node has identical op type.
             for each_node in candidate_node:
                 node_type = each_node.op
                 node_name = each_node.name
@@ -111,11 +114,10 @@ class GraphCseOptimizer(GraphRewriterBase):
                 # ignore unique op type and node with multi-outputs
                 if len(node_names) == 1 or len(graph_info[node_names[0]].outputs) > 1:
                     continue
-                #TODO Need to enhance below algorithm before golden.
+                # TODO Need to enhance below algorithm before golden.
                 filter_node = [node_names[0]]
                 for sub_node_name in node_names[1:]:
-                    if not Helper.compare_node_attr(graph_info[node_names[0]].node,
-                                                    graph_info[sub_node_name].node):
+                    if not Helper.compare_node_attr(graph_info[node_names[0]].node, graph_info[sub_node_name].node):
                         continue
                     filter_node.append(sub_node_name)
 
@@ -127,14 +129,12 @@ class GraphCseOptimizer(GraphRewriterBase):
                 for removeable_node_name in lower_node_name[1:]:
                     graph_info[upper_node_name].outputs.remove(removeable_node_name)
                     for grand_child_node_name in graph_info[removeable_node_name].outputs:
-
-                        filter_input_name = [Helper.node_name_from_input(
-                            i) for i in graph_info[grand_child_node_name].node.input]
+                        filter_input_name = [
+                            Helper.node_name_from_input(i) for i in graph_info[grand_child_node_name].node.input
+                        ]
                         replace_index = filter_input_name.index(removeable_node_name)
-                        graph_info[grand_child_node_name].node.input[
-                            replace_index] = keep_sub_node_name
-                        graph_info[grand_child_node_name].node.input[
-                            replace_index] = keep_sub_node_name
+                        graph_info[grand_child_node_name].node.input[replace_index] = keep_sub_node_name
+                        graph_info[grand_child_node_name].node.input[replace_index] = keep_sub_node_name
                     graph_info.pop(removeable_node_name)
 
         output_graph_def = graph_pb2.GraphDef()

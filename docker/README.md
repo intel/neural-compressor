@@ -1,7 +1,7 @@
 ## Build Intel Neural Compressor Containers:
 
 ### To build the `Pip` based deployment container:
-Please note that `INC_VER` must be set to a valid version published here:
+Please note that `INC_VER` must be set to a valid version published here:  
 https://pypi.org/project/neural-compressor/#history
 
 ```console
@@ -13,10 +13,10 @@ $ docker build --build-arg PYTHON=${PYTHON} --build-arg INC_VER=${INC_VER} -f Do
 ```
 
 ###  To build the `Pip` based development container:
-Please note that `INC_BRANCH` must be a set to a valid branch name otherwise, Docker build fails.
-If `${INC_BRANCH}-devel` does not meet Docker tagging requirements described here:
-https://docs.docker.com/engine/reference/commandline/tag/
-then please modify the tag so that the tagging requirement is met. For example replace `/` with `-`.
+Please note that `INC_BRANCH` must be a set to a valid branch name otherwise, Docker build fails.  
+If `${INC_BRANCH}-devel` does not meet Docker tagging requirements described here:  
+https://docs.docker.com/engine/reference/commandline/tag/  
+then please modify the tag so that the tagging requirement is met. For example replace `/` with `-`.  
 
 ```console
 $ PYTHON=python3.8

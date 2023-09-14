@@ -18,10 +18,9 @@ import Spinner from 'react-bootstrap/Spinner';
 import './Workloads.scss';
 import moment from 'moment';
 import { api } from './../../App';
-import { getLabel } from './../Diagnosis/Diagnosis';
 import { io } from 'socket.io-client';
 
-export default function Workloads({ setSelectedWorkload, selectedWorkload, setWarningText, setSelectedOp }) {
+export default function Workloads({ setSelectedWorkload, selectedWorkload, setWarningText, setSelectedOp, setSelectedNode }) {
   const [workloads, setWorkloads] = useState([]);
   const [spinner, setSpinner] = useState(true);
 
@@ -53,9 +52,10 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
 
   let workloadsList = workloads.map(workload => {
     return (
-      <div key={workload.uuid} onClick={e => { setSelectedWorkload(workload); setSelectedOp(null); }}>
+      <div key={workload.uuid} onClick={e => { setSelectedWorkload(workload); setSelectedOp(null); setSelectedNode(null) }}>
         <Button variant="secondary" className={workload.uuid === selectedWorkload.uuid ? 'active' : ''}>
-          {workload.mode}
+          {workload.workload_name}
+          <div className='date'>{workload.mode} [{workload.framework}]</div>
           <div className='date'>{moment(moment.unix(workload.creation_time)).fromNow()}</div>
         </Button>
       </div >
@@ -64,7 +64,6 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
 
   return (
     <div>
-      {spinner && <Spinner className="spinner" animation="border" />}
       {workloadsList.length > 0 &&
         <div className="data-panel workloads-list">
           <h3>Workloads</h3>
@@ -77,13 +76,12 @@ export default function Workloads({ setSelectedWorkload, selectedWorkload, setWa
           <p>Run diagnosis or profiling process to see workloads on this page.</p>
         </div>
       }
-      {selectedWorkload &&
-        <div className="data-panel">
-          <h3>Details</h3>
-          <p>Framework: {selectedWorkload?.framework}</p>
-          <p>Model path: {getLabel(selectedWorkload?.model_path)}</p>
+      {spinner &&
+        <div className="spinner-container">
+          <Spinner className="spinner" animation="border" />
         </div>
       }
     </div>
   )
+
 }

@@ -18,20 +18,21 @@
 
 from ..quantize_config import global_config
 
-class QuantizeLayerBase(): # pragma: no cover
+
+class QuantizeLayerBase:  # pragma: no cover
     """QuantizeLayer Base Class."""
+
     def __init__(self):
         """Initialize QuantizeLayerBase class."""
         self.quantize_patterns = []
-        assert 'quantize_config' in global_config, \
-            "QuantizeConfig is not correctly created."
-        self.quantize_config = global_config['quantize_config']
+        assert "quantize_config" in global_config, "QuantizeConfig is not correctly created."
+        self.quantize_config = global_config["quantize_config"]
 
     def _find_input_layers(self, layer):
         """Find all inputs of a specific layer.
 
         Args:
-            layer (tf.keras.layers.Layer): The target keras layer that this method 
+            layer (tf.keras.layers.Layer): The target keras layer that this method
                                            is to find its input layers.
 
         Returns:
@@ -51,7 +52,7 @@ class QuantizeLayerBase(): # pragma: no cover
         """Checks if the input layer can satisfy the patterns.
 
         Args:
-            layer (tf.keras.layers.Layer): The input keras layer that this method 
+            layer (tf.keras.layers.Layer): The input keras layer that this method
                                            is to find patterns.
 
         Returns:
@@ -63,7 +64,7 @@ class QuantizeLayerBase(): # pragma: no cover
         for quantize_pattern in self.quantize_patterns:
             index = len(quantize_pattern) - 2
             previous_layer = layer
-            while(index >= 0):
+            while index >= 0:
                 previous_layer = self._find_input_layers(previous_layer)
                 if quantize_pattern[index] not in previous_layer.__class__.__name__:
                     break
@@ -77,10 +78,10 @@ class QuantizeLayerBase(): # pragma: no cover
         """The main logic of QuantizeLayerBase.
 
         Neural Compressor will enumerate all layers of the input model to check
-        if there are any layer meeting the criteria. The choosen ones will be marked
+        if there are any layer meeting the criteria. The chosen ones will be marked
         as quantizable by QuantizeConfig.
 
         Args:
-            layer (tf.keras.layers.Layer): The keras layer to be estimated. 
+            layer (tf.keras.layers.Layer): The keras layer to be estimated.
         """
         raise NotImplementedError()

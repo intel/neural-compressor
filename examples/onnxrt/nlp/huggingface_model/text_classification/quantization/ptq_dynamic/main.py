@@ -409,11 +409,11 @@ if __name__ == "__main__":
 
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.utils.constant import FP32
-        fp32_op_names = None
+        specific_quant_config = {}
         if args.model_name_or_path == 'Alireza1044/albert-base-v2-sst2':
-            fp32_op_names = ['Gemm_1410_MatMul', 'MatMul_(259|168)']
+            specific_quant_config['recipes'] = {'first_conv_or_matmul_quantization': False}
         config = PostTrainingQuantConfig(approach='dynamic',
-                                         op_name_dict={op_name:FP32 for op_name in fp32_op_names} if fp32_op_names else None,)
+                                         **specific_quant_config)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func)

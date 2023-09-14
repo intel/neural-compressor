@@ -16,27 +16,27 @@
 # limitations under the License.
 """Tensorflow Grappler Graph Rewriter."""
 
+import tensorflow as tf
+from tensorflow.core.protobuf import config_pb2, meta_graph_pb2
+from tensorflow.python.grappler import tf_optimizer
+from tensorflow.python.training import saver
+
+from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
-from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 
-from tensorflow.python.training import saver
-from tensorflow.core.protobuf import config_pb2
-from tensorflow.python.grappler import tf_optimizer
-from tensorflow.core.protobuf import meta_graph_pb2
-import tensorflow as tf
 
 class GrapplerOptimizer(GraphRewriterBase):
     """A python wrapper that leverages the built-in tensorflow grappler API to optimize the graph."""
 
     def __init__(self, model, input_output_names, opt_cfg):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.input_output_names = input_output_names
         self.opt_cfg = opt_cfg
-        self.generic_optimizer = ('pruning', 'shape', 'dependency', 'debug_stripper', 'loop')
-        self.tf_2_optimizer = ('constfold', 'arithmetic', 'min_graph_nodes')
+        self.generic_optimizer = ("pruning", "shape", "dependency", "debug_stripper", "loop")
+        self.tf_2_optimizer = ("constfold", "arithmetic", "min_graph_nodes")
 
     @dump_elapsed_time("Pass GrapplerOptimizer")
     def do_transformation(self):
@@ -44,9 +44,8 @@ class GrapplerOptimizer(GraphRewriterBase):
         try:
             g = tf.Graph()
             with g.as_default():
-                g = tf.compat.v1.import_graph_def(self.model, name='')
-                meta_graph = saver.export_meta_graph(
-                    graph_def=self.model, graph=g, clear_devices=True)
+                g = tf.compat.v1.import_graph_def(self.model, name="")
+                meta_graph = saver.export_meta_graph(graph_def=self.model, graph=g, clear_devices=True)
                 fetch_collection = meta_graph_pb2.CollectionDef()
                 for fetch in self.input_output_names:
                     fetch_collection.node_list.value.append(fetch)
@@ -57,7 +56,7 @@ class GrapplerOptimizer(GraphRewriterBase):
                     if optimizer in self.opt_cfg and self.opt_cfg[optimizer]:
                         rewriter_config.optimizers.append(optimizer)
 
-                if version1_gt_version2(tf.version.VERSION,'2.2.0'):
+                if version1_gt_version2(tf.version.VERSION, "2.2.0"):
                     for optimizer in self.tf_2_optimizer:
                         if optimizer in self.opt_cfg and self.opt_cfg[optimizer]:
                             rewriter_config.optimizers.append(optimizer)

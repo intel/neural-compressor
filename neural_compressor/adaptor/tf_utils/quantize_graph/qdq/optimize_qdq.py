@@ -18,23 +18,36 @@
 
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
+
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..quantize_graph_base import QuantizeGraphBase
-from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper
-from .fuse_qdq_conv import FuseNodeStartWithConv2d
 from .fuse_qdq_bn import FuseNodeStartWithFusedBatchNormV3
-from .fuse_qdq_in import FuseNodeStartWithFusedInstanceNorm
 from .fuse_qdq_concatv2 import FuseNodeStartWithConcatV2
+from .fuse_qdq_conv import FuseNodeStartWithConv2d
+from .fuse_qdq_deconv import FuseNodeStartWithDeconv2d
+from .fuse_qdq_in import FuseNodeStartWithFusedInstanceNorm
 from .fuse_qdq_matmul import FuseNodeStartWithMatmul
 from .fuse_qdq_pooling import FuseNodeStartWithPooling
-from .fuse_qdq_deconv import FuseNodeStartWithDeconv2d
+
 
 class OptimizeQDQGraph(QuantizeGraphBase):
     """Apply the fusion DQ + OP + Q pattern."""
 
-    def __init__(self, input_graph, input_node_names, output_node_names, op_wise_config, op_wise_sequences, device, \
-                 fake_quant=False, new_api=False, performance_only=False, itex_mode=False):
+    def __init__(
+        self,
+        input_graph,
+        input_node_names,
+        output_node_names,
+        op_wise_config,
+        op_wise_sequences,
+        device,
+        fake_quant=False,
+        new_api=False,
+        performance_only=False,
+        itex_mode=False,
+    ):
         """Optimize QDQ Graph."""
         super().__init__(output_node_names)
         self.op_wise_config = op_wise_config
@@ -43,13 +56,14 @@ class OptimizeQDQGraph(QuantizeGraphBase):
             self.input_graph = input_graph
         else:
             self.input_graph = graph_pb2.GraphDef()
-            with gfile.Open(input_graph, 'rb') as f:
+            with gfile.Open(input_graph, "rb") as f:
                 self.input_graph.ParseFromString(f.read())
-                
+
         input_output_names = input_node_names + output_node_names
         self.input_graph = QuantizeGraphHelper().remove_training_nodes(
-            self.input_graph, protected_nodes=input_output_names)
-        
+            self.input_graph, protected_nodes=input_output_names
+        )
+
         self.op_wise_seq = op_wise_sequences
 
         self.device = device
@@ -87,22 +101,25 @@ class OptimizeQDQGraph(QuantizeGraphBase):
                 if count == all_node_length:
                     remove_redundant_quant_flag = True
                 _, quantizable_nodes = self.transformers[node.op](
-                     input_graph=self.input_graph,
-                     patterns=self.op_wise_seq[node.op],
-                     remove_redundant_quant_flag=remove_redundant_quant_flag,
-                     op_wise_config_name_list=op_wise_config_name_list,
-                     op_wise_cfg=self.op_wise_config[node.name],
-                     start_node_name=node.name, device=self.device,
-                     fake_quant=self.fake_quant, new_api=self.new_api,
-                     performance_only=self.performance_only,
-                     itex_mode=self.itex_mode).get_longest_fuse()
-                
+                    input_graph=self.input_graph,
+                    patterns=self.op_wise_seq[node.op],
+                    remove_redundant_quant_flag=remove_redundant_quant_flag,
+                    op_wise_config_name_list=op_wise_config_name_list,
+                    op_wise_cfg=self.op_wise_config[node.name],
+                    start_node_name=node.name,
+                    device=self.device,
+                    fake_quant=self.fake_quant,
+                    new_api=self.new_api,
+                    performance_only=self.performance_only,
+                    itex_mode=self.itex_mode,
+                ).get_longest_fuse()
+
                 if quantizable_nodes:
                     if quantizable_nodes[-1] == "QuantizeV2":
                         quantizable_nodes.pop()
                     if quantizable_nodes[0] == "Dequantize":
                         quantizable_nodes.pop(0)
-                    if node.op in ('ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool'):
+                    if node.op in ("ConcatV2", "MaxPool", "MaxPool3D", "AvgPool"):
                         self.all_quantizable_node.extend([[i] for i in quantizable_nodes])
                     else:
                         self.all_quantizable_node.append(quantizable_nodes)
@@ -116,8 +133,7 @@ class OptimizeQDQGraph(QuantizeGraphBase):
         op_wise_config_name_list = list(self.op_wise_config.keys())
         all_node_length = len(self.op_wise_config)
         for _, node in enumerate(self.input_graph.node):
-            if node in self.input_graph.node and node.op in self.transformers \
-                and node.name in self.op_wise_config:
+            if node in self.input_graph.node and node.op in self.transformers and node.name in self.op_wise_config:
                 count += 1
                 if count == all_node_length:
                     remove_redundant_quant_flag = True
@@ -128,14 +144,15 @@ class OptimizeQDQGraph(QuantizeGraphBase):
                     remove_redundant_quant_flag=remove_redundant_quant_flag,
                     op_wise_cfg=self.op_wise_config[node.name],
                     op_wise_config_name_list=op_wise_config_name_list,
-                    start_node_name=node.name, device=self.device,
+                    start_node_name=node.name,
+                    device=self.device,
                     fake_quant=self.fake_quant,
                     new_api=self.new_api,
                     performance_only=self.performance_only,
-                    itex_mode=self.itex_mode).apply_the_transform()
+                    itex_mode=self.itex_mode,
+                ).apply_the_transform()
 
                 if exclude_nodes:
                     self.exclude_node_list.extend(exclude_nodes)
-
 
         return self.remove_dead_nodes(self.input_graph, self.output_node_names), self.exclude_node_list
