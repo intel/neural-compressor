@@ -54,7 +54,7 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
   bash prepare_dataset.sh --output_dir=./mobilenet_v1/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
   ```
 > **Note**: 
-> The raw ImageNet data set resides in JPEG files should located in the following directory structure.<br>
+> The raw ImageNet dataset resides in JPEG files should be in the following directory structure.<br>
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data_dir/n01440764/ILSVRC2012_val_00000293.JPEG<br>
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data_dir/n01440764/ILSVRC2012_val_00000543.JPEG<br>
 > where 'n01440764' is the unique synset label associated with these images.
