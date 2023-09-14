@@ -28,8 +28,8 @@ bash run_fine_tuning.sh --train_dataset_location=./dataset/train.jsonl --dataset
 
 Export model to ONNX format. 
 ```bash
-# By default, the input model is `checkpoint-best-acc/`.
-python prepare_model.py --output_model="codebert-exported.onnx"
+# By default, the input model path is `checkpoint-best-acc/`.
+python prepare_model.py  --input_model=./checkpoint-best-acc  --output_model=./codebert-exported-onnx
 ```
 
 # Run
