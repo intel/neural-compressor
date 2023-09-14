@@ -31,7 +31,10 @@ from transformers.models.auto.auto_factory import _BaseAutoModelClass
 from ..model_wrapper import QDQLayer
 from ..util import logger
 from .torch_load import load
+from ....config import options
 
+
+LWQ_WORKSPACE = os.path.join(options.workspace, 'lwq_tmpdir')
 
 def get_module(model, key):
     """Get module from model by key name.
@@ -197,25 +200,40 @@ def _get_path(pretrained_model_name_or_path):
     return path
 
 
+def load_value(model, param_name, path):
+    if "lm_head" in param_name and getattr(model.config, "tie_word_embeddings", True):
+        input_embeddings = model.get_input_embeddings()
+        modules = get_named_children(model)
+        for name, module in modules:
+            if module == input_embeddings:
+                param_name = name + "." + param_name.split(".")[-1]
+    prefix = model.base_model_prefix
+    if "pytorch_model.bin.index.json" in os.listdir(path):
+        value = load_tensor_from_shard(path, param_name, prefix)
+    else:
+        value = load_tensor(os.path.join(path, "pytorch_model.bin"), param_name, prefix)
+    return value
+
+def load_module(model, module_name, path, device='cpu'):
+    module = get_module(model, module_name)
+    for n, p in module.named_parameters():
+        param_name = module_name + "." + n
+        value = load_value(model, param_name, path)
+        set_module_tensor_to_device(model, param_name, device, value)
+
+
 def register_weight_hooks(model, path, device="cpu", clean_weight=True):
     def forward_pre_hook(name):
-        def load_value(param_name):
-            if "lm_head" in param_name and getattr(model.config, "tie_word_embeddings", True):
-                input_embeddings = model.get_input_embeddings()
-                for name, module in modules:
-                    if module == input_embeddings:
-                        param_name = name + "." + param_name.split(".")[-1]
-            prefix = model.base_model_prefix
-            if "pytorch_model.bin.index.json" in os.listdir(path):
-                value = load_tensor_from_shard(path, param_name, prefix)
-            else:
-                value = load_tensor(os.path.join(path, "pytorch_model.bin"), param_name, prefix)
-            return value
-
         def hook(module, input):
+            state_dict = None
+            if os.path.exists(os.path.join(LWQ_WORKSPACE, f'{name}.pt')):
+                state_dict = torch.load(os.path.join(LWQ_WORKSPACE, f'{name}.pt'))
             for n, p in module.named_parameters():
                 param_name = name + "." + n
-                value = load_value(param_name)
+                if state_dict:
+                    value = state_dict[n]
+                else:
+                    value = load_value(model, param_name, path)
                 set_module_tensor_to_device(model, param_name, device, value)
 
         return hook

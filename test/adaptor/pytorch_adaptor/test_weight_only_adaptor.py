@@ -1,7 +1,8 @@
 import copy
 import sys
 
-sys.path.append("./")
+sys.path.insert(0, './')
+# sys.path.append("./")
 import os
 import shutil
 import unittest
