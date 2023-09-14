@@ -231,7 +231,7 @@ class PytorchProgressivePruner(PytorchBasePruner):
 
         Implement at the start of each step.
         """
-        if self.global_step > self.end_step and self.align_masks_flag == False:
+        if self.global_step > self.end_step and self.align_masks_flag is False:
             self.align_masks_after_pruning()
             self.align_masks_flag = True
 
