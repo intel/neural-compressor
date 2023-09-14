@@ -23,11 +23,14 @@ The dataset will be downloaded automatically from the datasets Hub.
 See more about loading [huggingface dataset](https://huggingface.co/docs/datasets/loading_datasets.html)
 
 
+
 # Run Examples
 
-Intel® Neural Compressor supports pruning and slimming operations for LLMs without retraining. Experimentally verified pruning at the MLP layers with channel-wise pattern, which can achieve 10%-20% sparsity and speed up inference while accuracy drops < 1% [Retrain-free Example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/run_clm_no_trainer.py).
-The 1x1 and N:M pruning formats are supported using the [SparseGPT Example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/run_clm_sparsegpt.py), with models up to 70B being able to be pruned in less than an hour and achieving 40%-50% sparsity in the MHA and MLP layers, while models of 7B and above may have a accuracy drop < 1%.
-There are pruning scripts for LLM sparse models (GPT-j, BLOOM, OPT, LLaMA etc). The sparse model can be obtained by modifying pruning parameters. [Pruning Scripts](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/scripts/).
+Intel® Neural Compressor provides pruning and slimming capabilities for Large Language Models(LLMs) without the need for retraining. 
+Through experimental verification, we have found that pruning MLP layers using channel-wise patterns can achieve a sparsity of 10%-20% without sacrificing accuracy, thereby significantly speeding up inference by <1%. [Retrain-free Example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/run_clm_no_trainer.py).
+
+The pruning patterns of 1x1, 2:4 and 4:8 are supported through the use of the [SparseGPT Example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/run_clm_sparsegpt.py), It is possible to prune models up to 70B in size within two hour, achieving a sparsity of 40%-50% in both the MHA and MLP layers. For models of 7B and above, the drop in accuracy is less than 1%.
+Pruning scripts are available for LLM sparse models such as GPT-j, BLOOM, OPT, LLaMA, and the sparse model can be obtained by modifying the pruning parameters. [Pruning Scripts](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/scripts/).
 
 
 ### Results
@@ -82,8 +85,11 @@ The last word acc of the 1x1 pattern sparse model using the sparseGPT algorithm 
 
 
 ## References
-* [A Fast Post-Training Pruning Framework for Transformers](https://arxiv.org/abs/2204.09656)
-* [SparseGPT: Massive Language Models Can be Accurately Pruned in One-shot](https://arxiv.org/abs/2301.00774)
+
+[1] Kwon, W., Kim, S., Mahoney, M.W., Hassoun, J., Keutzer, K. and Gholami, A., 2022. A fast post-training pruning framework for transformers. Advances in Neural Information Processing Systems, 35, pp.24101-24116.
+
+[2] Frantar, E. and Alistarh, D., Sparsegpt: Massive language models can be accurately pruned in one-shot, 2023. URL https://arxiv. org/abs/2301.00774.
+
 
 
 
