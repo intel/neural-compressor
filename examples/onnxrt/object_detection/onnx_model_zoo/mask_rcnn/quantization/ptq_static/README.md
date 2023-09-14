@@ -15,10 +15,8 @@ pip install -r requirements.txt
 
 ## 2. Prepare Model
 
-Download model from [ONNX Model Zoo](https://github.com/onnx/models)
-
 ```shell
-wget https://github.com/onnx/models/raw/main/vision/object_detection_segmentation/mask-rcnn/model/MaskRCNN-12.onnx
+python prepare_model.py --output_model='MaskRCNN-12.onnx'
 ```
 
 ## 3. Prepare Dataset
