@@ -21,8 +21,10 @@ from neural_compressor.training import fit, prepare_compression
 from neural_compressor.utils.pytorch import load
 from neural_compressor.utils.utility import LazyImport, recover
 
+
 # improve lazy import UT coverage
 resnet18 = LazyImport("torchvision.models.resnet18")
+
 
 PT_VERSION = nc_torch.get_torch_version().release
 if PT_VERSION >= Version("1.8.0").release:
