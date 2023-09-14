@@ -61,6 +61,7 @@ class PytorchProgressivePruner(PytorchBasePruner):
         self.progressive_type = self.progressive_configs["progressive_type"]
         self.use_global = self.progressive_configs["use_global"]
         self.progressive_logger = True
+        self.align_masks_flag = False
         self._init_for_progressive()
 
     def _init_for_progressive(self):
@@ -193,8 +194,6 @@ class PytorchProgressivePruner(PytorchBasePruner):
             return
 
         # case 3: a pruning step, generate new masks, progressive masks also update.
-        # if self.global_step > 2:
-        #     import pdb;pdb.set_trace()
         tmp_step = self.global_step
         self.structured_update_step = tmp_step
         current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(
@@ -232,6 +231,10 @@ class PytorchProgressivePruner(PytorchBasePruner):
 
         Implement at the start of each step.
         """
+        if self.global_step > self.end_step and self.align_masks_flag == False:
+            self.align_masks_after_pruning()
+            self.align_masks_flag = True
+
         if self.handled_global_step == self.global_step:
             return
 
@@ -286,7 +289,7 @@ class PytorchProgressivePruner(PytorchBasePruner):
             sparse_numels += torch.sum(torch.where(modules[key].weight.data == 0, 1, 0)).item()
         return sparse_numels / total_numels
 
-    def on_train_end(self):
+    def align_masks_after_pruning(self):
         if not self.use_progressive:
             return
         """Implement at the end of training phase."""
