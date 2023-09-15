@@ -667,7 +667,7 @@ This method requires the user to provide training function and evaluation functi
             <td align="left">cpu</td>
         </tr>
         <tr>
-            <td rowspan="4" align="left">ONNX Runtime</td>
+            <td rowspan="5" align="left">ONNX Runtime</td>
             <td align="left">CPUExecutionProvider</td>
             <td align="left">MLAS</td>
             <td align="left">"default"</td>
@@ -692,6 +692,12 @@ This method requires the user to provide training function and evaluation functi
             <td align="left">cpu</td>
         </tr>
         <tr>
+            <td align="left">DmlExecutionProvider*</td>
+            <td align="left">OneDNN</td>
+            <td align="left">"onnxrt_dml_ep"</td>
+            <td align="left">NA</td>
+        </tr>
+        <tr>
             <td rowspan="2" align="left">Tensorflow</td>
             <td align="left">Tensorflow</td>
             <td align="left">OneDNN</td>
@@ -714,7 +720,10 @@ This method requires the user to provide training function and evaluation functi
     </tbody>
 </table>
 <br>
-<br><p>Examples of configure:</p>
+<br><blockquote>
+<div><p>Note: DmlExecutionProvider support works as experimental, please expect exceptions.</p>
+</div></blockquote>
+<p>Examples of configure:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with PT FX on CPU</span>
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
 </pre></div>
@@ -753,7 +762,7 @@ This method requires the user to provide training function and evaluation functi
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f688680e1a0> 
+   <jinja2.runtime.BlockReference object at 0x7f1b7622de70> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

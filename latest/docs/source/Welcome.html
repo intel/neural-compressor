@@ -90,7 +90,7 @@
 <h1>Intel® Neural Compressor<a class="headerlink" href="#intel-neural-compressor" title="Permalink to this heading"></a></h1>
 <p><h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet)</h3></p>
 <p><a class="reference external" href="https://github.com/intel/neural-compressor"><img alt="python" src="https://img.shields.io/badge/python-3.7%2B-blue" /></a>
-<a class="reference external" href="https://github.com/intel/neural-compressor/releases"><img alt="version" src="https://img.shields.io/badge/release-2.2-green" /></a>
+<a class="reference external" href="https://github.com/intel/neural-compressor/releases"><img alt="version" src="https://img.shields.io/badge/release-2.3-green" /></a>
 <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/LICENSE"><img alt="license" src="https://img.shields.io/badge/license-Apache%202-blue" /></a>
 <a class="reference external" href="https://github.com/intel/neural-compressor"><img alt="coverage" src="https://img.shields.io/badge/coverage-85%25-green" /></a>
 <a class="reference external" href="https://pepy.tech/project/neural-compressor"><img alt="Downloads" src="https://static.pepy.tech/personalized-badge/neural-compressor?period=total&amp;units=international_system&amp;left_color=grey&amp;right_color=green&amp;left_text=downloads" /></a></p>
@@ -101,8 +101,8 @@ as well as Intel extensions such as <a class="reference external" href="https://
 In particular, the tool provides the key features, typical examples, and open collaborations as below:</p>
 <ul class="simple">
 <li><p>Support a wide range of Intel hardware such as <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html">Intel Xeon Scalable processor</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html">Intel Xeon CPU Max Series</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/flex-series.html">Intel Data Center GPU Flex Series</a>, and <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html">Intel Data Center GPU Max Series</a> with extensive testing; support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing</p></li>
-<li><p>Validate more than 10,000 models such as <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant">Bloom-176B</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant">OPT-6.7B</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/text-to-image/quantization">Stable Diffusion</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">GPT-J</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">BERT-Large</a>, and <a class="reference external" href="/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">ResNet50</a> from popular model hubs such as <a class="reference external" href="https://huggingface.co/">Hugging Face</a>, <a class="reference external" href="https://pytorch.org/vision/stable/index.html">Torch Vision</a>, and <a class="reference external" href="https://github.com/onnx/models#models">ONNX Model Zoo</a>, by leveraging zero-code optimization solution <a class="reference external" href="/neural_coder#what-do-we-offer">Neural Coder</a> and automatic [accuracy-driven]./design.html#workflow) quantization strategies</p></li>
-<li><p>Collaborate with cloud marketplace such as <a class="reference external" href="https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207">Google Cloud Platform</a>, <a class="reference external" href="https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support">Amazon Web Services</a>, and <a class="reference external" href="https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel">Azure</a>, software platforms such as <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html">Alibaba Cloud</a> and <a class="reference external" href="https://new.qq.com/rain/a/20221202A00B9S00">Tencent TACO</a>, and open AI ecosystem such as <a class="reference external" href="https://huggingface.co/blog/intel">Hugging Face</a>, <a class="reference external" href="https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html">PyTorch</a>, <a class="reference external" href="https://github.com/onnx/models#models">ONNX</a>, and <a class="reference external" href="https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst">Lightning AI</a></p></li>
+<li><p>Validate popular LLMs such as LLama2, <a class="reference external" href="examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static">LLama</a>, <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers/blob/main/examples/huggingface/pytorch/text-generation/quantization/README.html">MPT</a>, <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers/blob/main/examples/huggingface/pytorch/language-modeling/quantization/README.html">Falcon</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">GPT-J</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant">Bloom</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant">OPT</a>, and more than 10,000 broad models such as <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/text-to-image/quantization">Stable Diffusion</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">BERT-Large</a>, and <a class="reference external" href="/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">ResNet50</a> from popular model hubs such as <a class="reference external" href="https://huggingface.co/">Hugging Face</a>, <a class="reference external" href="https://pytorch.org/vision/stable/index.html">Torch Vision</a>, and <a class="reference external" href="https://github.com/onnx/models#models">ONNX Model Zoo</a>, by leveraging zero-code optimization solution <a class="reference external" href="/neural_coder#what-do-we-offer">Neural Coder</a> and automatic [accuracy-driven]./design.html#workflow) quantization strategies</p></li>
+<li><p>Collaborate with cloud marketplace such as <a class="reference external" href="https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207">Google Cloud Platform</a>, <a class="reference external" href="https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support">Amazon Web Services</a>, and <a class="reference external" href="https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel">Azure</a>, software platforms such as <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html">Alibaba Cloud</a>, <a class="reference external" href="https://new.qq.com/rain/a/20221202A00B9S00">Tencent TACO</a> and <a class="reference external" href="https://github.com/microsoft/Olive">Microsoft Olive</a>, and open AI ecosystem such as <a class="reference external" href="https://huggingface.co/blog/intel">Hugging Face</a>, <a class="reference external" href="https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html">PyTorch</a>, <a class="reference external" href="https://github.com/onnx/models#models">ONNX</a>, <a class="reference external" href="https://github.com/microsoft/onnxruntime">ONNX Runtime</a>, and <a class="reference external" href="https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst">Lightning AI</a></p></li>
 </ul>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
@@ -205,7 +205,7 @@ wget<span class="w"> </span>https://storage.googleapis.com/intel-optimized-tenso
           <td colspan="2" align="center"><a href="./smooth_quant.html">SmoothQuant</td>
       </tr>
       <tr>
-          <td colspan="8" align="center"><a href="./quantization_weight_only.html">Weight-Only Quantization</td>
+          <td colspan="8" align="center"><a href="./quantization_weight_only.html">Weight-Only Quantization (INT8/INT4/FP4/NF4) </td>
       </tr>
   </tbody>
   <thead>
@@ -226,10 +226,9 @@ wget<span class="w"> </span>https://storage.googleapis.com/intel-optimized-tenso
 <section id="selected-publications-events">
 <h2>Selected Publications/Events<a class="headerlink" href="#selected-publications-events" title="Permalink to this heading"></a></h2>
 <ul class="simple">
+<li><p>arXiv: <a class="reference external" href="https://arxiv.org/abs/2309.05516">Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs</a> (Sep 2023)</p></li>
 <li><p>Post on Social Media: <a class="reference external" href="https://www.youtube.com/watch?v=luYBWA1Q5pQ">ONNXCommunityMeetup2023: INT8 Quantization for Large Language Models with Intel Neural Compressor</a>  (July 2023)</p></li>
 <li><p>Blog by Intel: <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/news/llama2.html">Accelerate Llama 2 with Intel AI Hardware and Software Optimizations</a> (July 2023)</p></li>
-<li><p>Blog on Medium: <a class="reference external" href="https://medium.com/&#64;NeuralCompressor/quantization-accuracy-loss-diagnosis-with-neural-insights-5d73f4ca2601">Quantization Accuracy Loss Diagnosis with Neural Insights</a> (Aug 2023)</p></li>
-<li><p>Blog on Medium: <a class="reference external" href="https://medium.com/intel-analytics-software/faster-stable-diffusion-inference-with-intel-extension-for-transformers-on-intel-platforms-7e0f563186b0">Faster Stable Diffusion Inference with Intel Extension for Transformers</a> (July 2023)</p></li>
 <li><p>NeurIPS’2022: <a class="reference external" href="https://arxiv.org/abs/2211.07715">Fast Distilbert on CPUs</a> (Oct 2022)</p></li>
 <li><p>NeurIPS’2022: <a class="reference external" href="https://arxiv.org/abs/2210.17114">QuaLA-MiniLM: a Quantized Length Adaptive MiniLM</a> (Oct 2022)</p></li>
 </ul>
@@ -246,9 +245,13 @@ wget<span class="w"> </span>https://storage.googleapis.com/intel-optimized-tenso
 <li><p><a class="reference external" href="SECURITY.html">Security Policy</a></p></li>
 </ul>
 </section>
-<section id="research-collaborations">
-<h2>Research Collaborations<a class="headerlink" href="#research-collaborations" title="Permalink to this heading"></a></h2>
-<p>Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us (<a class="reference external" href="mailto:inc&#46;maintainers&#37;&#52;&#48;intel&#46;com">inc<span>&#46;</span>maintainers<span>&#64;</span>intel<span>&#46;</span>com</a>). Look forward to our collaborations on Intel Neural Compressor!</p>
+<section id="communication">
+<h2>Communication<a class="headerlink" href="#communication" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/intel/neural-compressor/issues">GitHub Issues</a>: mainly for bugs report, new feature request, question asking, etc.</p></li>
+<li><p><a class="reference external" href="mailto:inc&#46;maintainers&#37;&#52;&#48;intel&#46;com">Email</a>: welcome to raise any interesting research ideas on model compression techniques by email for collaborations.</p></li>
+<li><p>[WeChat group]./imgs/wechat_group.jpg): scan the QA code to join the technical discussion.</p></li>
+</ul>
 </section>
 </section>
 
@@ -266,7 +269,7 @@ wget<span class="w"> </span>https://storage.googleapis.com/intel-optimized-tenso
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6887414dc0> 
+   <jinja2.runtime.BlockReference object at 0x7f1b74e60ca0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

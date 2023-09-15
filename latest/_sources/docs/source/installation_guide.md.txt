@@ -145,21 +145,22 @@ The following prerequisites and requirements must be satisfied for a successful 
 <tbody>
   <tr align="center">
     <th>Version</th>
-    <td class="tg-7zrl"><a href=https://github.com/tensorflow/tensorflow/tree/v2.12.0>2.12.0</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.10.1>2.10.1</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.12.0>2.12.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.10.0>2.10.0</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v1.2.0>1.2.0</a><br>
+    <td class="tg-7zrl"> <a href=https://github.com/tensorflow/tensorflow/tree/v2.13.0>2.13.0</a><br>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.12.1>2.12.1</a><br>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.11.1>2.11.1</a><br></td>
+    <td class="tg-7zrl"> <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.13.0>2.13.0</a><br>
+    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.12.0>2.12.0</a><br>
+    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br></td>
+    <td class="tg-7zrl"> <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.13.0.0>v2.13.0.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v1.2.0>1.2.0</a><br>
     <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v1.1.0>1.1.0</a></td>
-    <td class="tg-7zrl"><a href=https://download.pytorch.org/whl/torch_stable.html>2.0.1+cpu</a><br>
-    <a href=https://download.pytorch.org/whl/torch_stable.html>1.13.1+cpu</a><br>
-    <a href=https://download.pytorch.org/whl/torch_stable.html>1.12.1+cpu</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/pytorch/pytorch/tree/v2.0.1>2.0.1+cpu</a><br>
+    <a href=https://github.com/pytorch/pytorch/tree/v1.13.1>1.13.1+cpu</a><br>
+    <a href=https://github.com/pytorch/pytorch/tree/v1.12.1>1.12.1+cpu</a><br></td>
     <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.0.100+cpu>2.0.1+cpu</a><br>
     <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.13.100+cpu>1.13.1+cpu</a><br>
     <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.12.100>1.12.1+cpu</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.15.0>1.15.0</a><br>
+    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.15.1>1.15.1</a><br>
     <a href=https://github.com/microsoft/onnxruntime/tree/v1.14.1>1.14.1</a><br>
     <a href=https://github.com/microsoft/onnxruntime/tree/v1.13.1>1.13.1</a><br></td>
     <td class="tg-7zrl"><a href=https://github.com/apache/incubator-mxnet/tree/1.9.1>1.9.1</a><br></td>
