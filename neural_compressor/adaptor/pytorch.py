@@ -4534,12 +4534,14 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         # for layer_wise quant mode
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
         if recipe_cfgs.get("layer_wise_quant", False):
-            from .torch_utils.layer_wise_quant.utils import load_module, _get_path
             from neural_compressor.config import options
-            lwq_workspace = os.path.join(options.workspace, 'lwq_tmpdir')
+
+            from .torch_utils.layer_wise_quant.utils import _get_path, load_module
+
+            lwq_workspace = os.path.join(options.workspace, "lwq_tmpdir")
             os.makedirs(lwq_workspace, exist_ok=True)
             model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
-            assert model_path, 'model_path should specify in layer_wise_quant_args.'
+            assert model_path, "model_path should specify in layer_wise_quant_args."
             model_path = _get_path(model_path)
 
         for key, config in tune_cfg["op"].items():
@@ -4574,12 +4576,14 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 if recipe_cfgs.get("layer_wise_quant", False):
                     # save and clean weight
                     from .torch_utils.layer_wise_quant.utils import clean_module_weight
-                    torch.save(m.state_dict(), os.path.join(lwq_workspace, f'{op_name}.pt'))
+
+                    torch.save(m.state_dict(), os.path.join(lwq_workspace, f"{op_name}.pt"))
                     clean_module_weight(m)
                 set_module(model, op_name, m)
         if recipe_cfgs.get("layer_wise_quant", False):
             # register hooks
             from .torch_utils.layer_wise_quant.utils import register_weight_hooks
+
             register_weight_hooks(model, model_path, device=self.device, clean_weight=True)
         return model
 

@@ -28,13 +28,13 @@ from accelerate.utils import set_module_tensor_to_device
 from transformers import AutoConfig
 from transformers.models.auto.auto_factory import _BaseAutoModelClass
 
+from ....config import options
 from ..model_wrapper import QDQLayer
 from ..util import logger
 from .torch_load import load
-from ....config import options
 
+LWQ_WORKSPACE = os.path.join(options.workspace, "lwq_tmpdir")
 
-LWQ_WORKSPACE = os.path.join(options.workspace, 'lwq_tmpdir')
 
 def get_module(model, key):
     """Get module from model by key name.
@@ -214,7 +214,8 @@ def load_value(model, param_name, path):
         value = load_tensor(os.path.join(path, "pytorch_model.bin"), param_name, prefix)
     return value
 
-def load_module(model, module_name, path, device='cpu'):
+
+def load_module(model, module_name, path, device="cpu"):
     module = get_module(model, module_name)
     for n, p in module.named_parameters():
         param_name = module_name + "." + n
@@ -226,8 +227,8 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True):
     def forward_pre_hook(name):
         def hook(module, input):
             state_dict = None
-            if os.path.exists(os.path.join(LWQ_WORKSPACE, f'{name}.pt')):
-                state_dict = torch.load(os.path.join(LWQ_WORKSPACE, f'{name}.pt'))
+            if os.path.exists(os.path.join(LWQ_WORKSPACE, f"{name}.pt")):
+                state_dict = torch.load(os.path.join(LWQ_WORKSPACE, f"{name}.pt"))
             for n, p in module.named_parameters():
                 param_name = name + "." + n
                 if state_dict:
