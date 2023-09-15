@@ -430,7 +430,6 @@ The following section exemplifies how to use hooks in user pass-in training func
       { #example pruner
         "pruning_type": "sparse_gpt",
         "op_names": [".*"], # Prunes all linear modules by default.
-        "pruning_op_types": ["Linear"],
         "excluded_op_names": ["lm_head", "embed_out"],  # A list of modules that would not be pruned.
         "target_sparsity": 0.5,  # Target sparsity ratio of modules.
         "pattern": "1x1",  # Default pruning pattern.
