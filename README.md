@@ -155,6 +155,8 @@ q_model = fit(
 * [Legal Information](./docs/source/legal_information.md)
 * [Security Policy](SECURITY.md)
 
-## Research Collaborations
-
-Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us ([inc.maintainers@intel.com](mailto:inc.maintainers@intel.com)). Look forward to our collaborations on Intel Neural Compressor!
+## Communication 
+- [GitHub Issues](https://github.com/intel/neural-compressor/issues): this channel is mainly for bugs report, new feature request, question asking, etc.
+- [Email](mailto:inc.maintainers@intel.com): welcome to raise any interesting research ideas on model compression techniques by email, look forward to our collaborations on Intel Neural Compressor. 
+- WeChat group: scan the QA code to join the technical discussion.   
+![QR code](/docs/source/imgs/wechat_group.jpg)
