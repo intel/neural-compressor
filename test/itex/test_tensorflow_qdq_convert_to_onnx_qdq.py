@@ -113,7 +113,8 @@ class TestConvertTensorflowQDQToOnnxQDQ(unittest.TestCase):
             it = iter(dataloader)
             input = next(it)
             input_dict = {"input:0": input[0]}
-            ort_session.run(None, input_dict)
+            outputs = ort_session.run(None, input_dict)
+            self.assertNotEqual(outputs, None)
 
     @disable_random()
     @unittest.skipIf(version1_lt_version2(tf.version.VERSION, "2.8.0"), "Only supports tf greater 2.7.0")
@@ -166,8 +167,8 @@ class TestConvertTensorflowQDQToOnnxQDQ(unittest.TestCase):
             it = iter(dataloader)
             input = next(it)
             input_dict = {"input:0": input[0]}
-            ort_session.run(None, input_dict)
-
+            outputs = ort_session.run(None, input_dict)
+            self.assertNotEqual(outputs, None)
 
 if __name__ == "__main__":
     unittest.main()
