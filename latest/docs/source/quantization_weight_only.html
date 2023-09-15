@@ -135,6 +135,18 @@
 </tr>
 </tbody>
 </table><p><strong>Note:</strong> To get the validated accuracy results on popular models, please refer to <a class="reference external" href="./validated_model_list.html/#pytorch-models-with-torch-201cpu-in-woq-mode">PyTorch Models with Torch 2.0.1+cpu in WOQ Mode</a></p>
+<blockquote>
+<div><p><strong>RTN:</strong> A quantification method that we can think of very intuitively. It does not require additional datasets and is a very fast quantization method. Generally speaking, RTN will convert the weight into a uniformly distributed integer data type, but some algorithms, such as Qlora, propose a non-uniform NF4 data type and prove its theoretical optimality.</p>
+</div></blockquote>
+<blockquote>
+<div><p><strong>GPTQ:</strong> A new one-shot weight quantization method based on approximate second-order information, that is both highly-accurate and highly efficient[4]. The weights of each column are updated based on the fixed-scale pseudo-quantization error and the inverse of the Hessian matrix calculated from the activations. The updated columns sharing the same scale may generate a new max/min value, so the scale needs to be saved for restoration.</p>
+</div></blockquote>
+<blockquote>
+<div><p><strong>AWQ:</strong> Proved that protecting only 1% of salient weights can greatly reduce quantization error. the salient weight channels are selected by observing the distribution of activation and weight per channel. The salient weights are also quantized after multiplying a big scale factor before quantization for preserving.</p>
+</div></blockquote>
+<blockquote>
+<div><p><strong>TEQ:</strong> A trainable equivalent transformation that preserves the FP32 precision in weight-only quantization. It is inspired by AWQ while providing a new solution to search for the optimal per-channel scaling factor between activations and weights.</p>
+</div></blockquote>
 </section>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
@@ -245,7 +257,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7ff6251f2e60> 
+   <jinja2.runtime.BlockReference object at 0x7f4ee12612d0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
