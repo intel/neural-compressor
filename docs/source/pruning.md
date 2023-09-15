@@ -407,17 +407,17 @@ The following section exemplifies how to use hooks in user pass-in training func
   The process itself is quite straightforward. By passing the prepared config and the calibration dataset, the pruning process can be automatically carried out with a simple API call.
 
   ```python
-    from neural_compressor.training import prepare_pruning, WeightPruningConfig
-    configs = WeightPruningConfig(
-        pruning_configs,
-        target_sparsity = args.target_sparsity, # global setting for all pruners(optional)
-        pattern = args.pruning_pattern,
-        start_step = pruning_start,
-        end_step = pruning_end,
-    )
-    config = WeightPruningConfig(pruning_configs)
-    
-    pruning = prepare_pruning(model, configs, dataloader=train_dataloader)  # modify the model and complete the pruning
+  from neural_compressor.training import prepare_pruning, WeightPruningConfig
+  configs = WeightPruningConfig(
+      pruning_configs,
+      target_sparsity = args.target_sparsity, # global setting for all pruners(optional)
+      pattern = args.pruning_pattern,
+      start_step = pruning_start,
+      end_step = pruning_end,
+  )
+  config = WeightPruningConfig(pruning_configs)
+  
+  pruning = prepare_pruning(model, configs, dataloader=train_dataloader)  # modify the model and complete the pruning
     ```
 
 
@@ -441,16 +441,16 @@ The following section exemplifies how to use hooks in user pass-in training func
   By providing the pruning config, calibration dataset, and specifying the desired device card number, the pruning process can be executed automatically with a simple API call.
   
   ```python
-    from neural_compressor.training import prepare_pruning, WeightPruningConfig
-    configs = WeightPruningConfig(
-        pruning_configs,
-        target_sparsity = args.target_sparsity, # global setting for all pruners
-        pattern = args.pruning_pattern, # e.g. 1x1 / 2:4
-    )
-    config = WeightPruningConfig(pruning_configs)
-    # for example: device = "cuda:1"
-    pruning = prepare_pruning(model, configs,  dataloader=train_dataloader, device=device)  # modify the model and complete the pruning
-    ```
+  from neural_compressor.training import prepare_pruning, WeightPruningConfig
+  configs = WeightPruningConfig(
+      pruning_configs,
+      target_sparsity = args.target_sparsity, # global setting for all pruners
+      pattern = args.pruning_pattern, # e.g. 1x1 / 2:4
+  )
+  config = WeightPruningConfig(pruning_configs)
+  # for example: device = "cuda:1"
+  pruning = prepare_pruning(model, configs,  dataloader=train_dataloader, device=device)  # modify the model and complete the pruning
+  ```
 
 
 
