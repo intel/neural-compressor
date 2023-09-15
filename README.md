@@ -156,7 +156,11 @@ q_model = fit(
 * [Security Policy](SECURITY.md)
 
 ## Communication 
-- [GitHub Issues](https://github.com/intel/neural-compressor/issues): this channel is mainly for bugs report, new feature request, question asking, etc.
-- [Email](mailto:inc.maintainers@intel.com): welcome to raise any interesting research ideas on model compression techniques by email, look forward to our collaborations on Intel Neural Compressor. 
-- WeChat group: scan the QA code to join the technical discussion.   
-![QR code](/docs/source/imgs/wechat_group.jpg)
+- [GitHub Issues](https://github.com/intel/neural-compressor/issues): mainly for bugs report, new feature request, question asking, etc.
+- [Email](mailto:inc.maintainers@intel.com): welcome to raise any interesting research ideas on model compression techniques by email for collaborations.  
+- WeChat group: scan the QA code to join the technical discussion.
+<div align=center>
+<a target="_blank" href="/docs/source/imgs/wechat_group.jpg">
+ <img src="/docs/source/imgs/wechat_group.jpg" width=200 height=200 alt="Pruning schedule">
+</a>
+</div>
