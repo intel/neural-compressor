@@ -619,7 +619,7 @@ class TestTensorflowBertDataLoader(unittest.TestCase):
         )
         dataloader = DATALOADERS["tensorflow"](dataset=eval_dataset, batch_size=batch_size, distributed=distributed)
         self.assertNotEqual(dataloader, None)
-        
+
     def test_tf_bert_dataloader_1(self):
         self.assertRaises(NotImplementedError, self.check_not_implement, 32, True)
 

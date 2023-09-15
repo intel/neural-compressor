@@ -170,5 +170,6 @@ class TestConvertTensorflowQDQToOnnxQDQ(unittest.TestCase):
             outputs = ort_session.run(None, input_dict)
             self.assertNotEqual(outputs, None)
 
+
 if __name__ == "__main__":
     unittest.main()
