@@ -11,6 +11,7 @@ def parse_arguments():
 
 def prepare_model(input_model, output_model):
     print("\nexport model...")
+    print(f"Try to export model from {input_model} to {output_model}")
     subprocess.run(
         ["pip", "install", "optimum"],
         stdout=subprocess.PIPE,
