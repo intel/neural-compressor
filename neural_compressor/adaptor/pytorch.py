@@ -4578,7 +4578,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     clean_module_weight(m)
                 set_module(model, op_name, m)
         if recipe_cfgs.get("layer_wise_quant", False):
-            # regist hooks
+            # register hooks
             from .torch_utils.layer_wise_quant.utils import register_weight_hooks
             register_weight_hooks(model, model_path, device=self.device, clean_weight=True)
         return model
