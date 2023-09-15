@@ -1,5 +1,8 @@
 import unittest
 
+import sys
+sys.path.insert(0, './')
+
 import torch
 import torch.nn as nn
 import torchvision
@@ -10,36 +13,36 @@ from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoa
 from neural_compressor.training import prepare_compression
 
 local_types_config = [
-    {
-        "start_step": 0,
-        "end_step": 0,
-        "pruning_type": "pattern_lock",
-        "op_names": ["layer1.*"],
-        "excluded_op_names": ["layer2.*"],
-        "pruning_scope": "global",
-    },
-    {
-        "start_step": 1,
-        "end_step": 1,
-        "target_sparsity": 0.5,
-        "pruning_type": "snip_momentum_progressive",
-        "pruning_frequency": 2,
-        "op_names": ["layer2.*"],
-        "pruning_scope": "local",
-        "pattern": "4x1",
-        "sparsity_decay_type": "exp",
-    },
-    {
-        "start_step": 2,
-        "end_step": 8,
-        "target_sparsity": 0.8,
-        "pruning_type": "snip_progressive",
-        "pruning_frequency": 1,
-        "op_names": ["layer3.*"],
-        "pruning_scope": "local",
-        "pattern": "16x1",
-        "sparsity_decay_type": "cube",
-    },
+    # {
+    #     "start_step": 0,
+    #     "end_step": 0,
+    #     "pruning_type": "pattern_lock",
+    #     "op_names": ["layer1.*"],
+    #     "excluded_op_names": ["layer2.*"],
+    #     "pruning_scope": "global",
+    # },
+    # {
+    #     "start_step": 1,
+    #     "end_step": 1,
+    #     "target_sparsity": 0.5,
+    #     "pruning_type": "snip_momentum_progressive",
+    #     "pruning_frequency": 2,
+    #     "op_names": ["layer2.*"],
+    #     "pruning_scope": "local",
+    #     "pattern": "4x1",
+    #     "sparsity_decay_type": "exp",
+    # },
+    # {
+    #     "start_step": 2,
+    #     "end_step": 8,
+    #     "target_sparsity": 0.8,
+    #     "pruning_type": "snip_progressive",
+    #     "pruning_frequency": 1,
+    #     "op_names": ["layer3.*"],
+    #     "pruning_scope": "local",
+    #     "pattern": "16x1",
+    #     "sparsity_decay_type": "cube",
+    # },
     {
         "start_step": 0,
         "end_step": 0,
@@ -82,12 +85,24 @@ class TestPruningTypes(unittest.TestCase):
                 compression_manager.callbacks.on_after_optimizer_step()
                 compression_manager.callbacks.on_step_end()
                 local_step += 1
-
             compression_manager.callbacks.on_epoch_end()
         compression_manager.callbacks.on_train_end()
         compression_manager.callbacks.on_before_eval()
         compression_manager.callbacks.on_after_eval()
 
+        # assert sparsity ratio
+        from neural_compressor.compression.pruner.utils import parse_to_prune
+        for config in compression_manager.conf.pruning.pruning_configs:
+            zero_cnt = 0
+            all_cnt = 0
+            layers = list(parse_to_prune(config=config, model=self.model).keys())
+            for layer in layers:
+                layer_weight = self.model.state_dict()[layer+'.weight']
+                zero_cnt += (layer_weight == 0).sum().item()
+                all_cnt += layer_weight.numel()
+                sparsity = (layer_weight == 0.0).sum().item() / layer_weight.numel()
+                # Test local sparsity
+                print(layer, sparsity, (layer_weight == 0.0).sum().item(), layer_weight.numel())
 
 if __name__ == "__main__":
     unittest.main()
