@@ -373,16 +373,16 @@ The following section exemplifies how to use hooks in user pass-in training func
 
   ```python
   pruning_configs = [
-      { # config of a single pruner
-        "pruning_type": "retrain_free",
-        "pruning_scope": "global",
-        "op_names": ['.fc', '.mlp'], # MLP layer_names
-        "start_step": 1,
-        "end_step": 300, # set end_step for Few shot pruning.
-        "excluded_op_names": ["lm_head"],  # A list of modules that would not be pruned.
-        "target_sparsity": 0.2,  # Target sparsity ratio of modules.
-        "pruning_frequency": 50,  # Frequency of applying pruning, 
-        "pattern": "channelx1",  # Default pruning pattern.
+      {  # config of a single pruner
+          "pruning_type": "retrain_free",
+          "pruning_scope": "global",
+          "op_names": [".fc", ".mlp"],  # MLP layer_names
+          "start_step": 1,
+          "end_step": 300,  # set end_step for Few shot pruning.
+          "excluded_op_names": ["lm_head"],  # A list of modules that would not be pruned.
+          "target_sparsity": 0.2,  # Target sparsity ratio of modules.
+          "pruning_frequency": 50,  # Frequency of applying pruning,
+          "pattern": "channelx1",  # Default pruning pattern.
       },
   ]
   ```
@@ -392,13 +392,14 @@ The following section exemplifies how to use hooks in user pass-in training func
   ```python
   # auto config
   from neural_compressor.compression.pruner import parse_auto_slim_config
+
   pruning_configs = []
   auto_configs = parse_auto_slim_config(
       model,
-      ffn2_sparsity = args.target_sparsity, #e.g. 0.2
-      mha_sparsity = 0,
-      pruning_scope = "global",
-      pruning_type = "retrain_free",
+      ffn2_sparsity=args.target_sparsity,  # e.g. 0.2
+      mha_sparsity=0,
+      pruning_scope="global",
+      pruning_type="retrain_free",
   )
   pruning_configs += auto_configs
   ```
@@ -409,15 +410,16 @@ The following section exemplifies how to use hooks in user pass-in training func
 
   ```python
   from neural_compressor.training import prepare_pruning, WeightPruningConfig
+
   configs = WeightPruningConfig(
       pruning_configs,
-      target_sparsity = args.target_sparsity, # global setting for all pruners(optional)
-      pattern = args.pruning_pattern,
-      start_step = pruning_start,
-      end_step = pruning_end,
+      target_sparsity=args.target_sparsity,  # global setting for all pruners(optional)
+      pattern=args.pruning_pattern,
+      start_step=pruning_start,
+      end_step=pruning_end,
   )
   config = WeightPruningConfig(pruning_configs)
-  
+
   pruning = prepare_pruning(model, configs, dataloader=train_dataloader)  # modify the model and complete the pruning
   ```
 
@@ -428,12 +430,12 @@ The following section exemplifies how to use hooks in user pass-in training func
 
   ```python
   pruning_configs = [
-      { #example pruner
-        "pruning_type": "sparse_gpt",
-        "op_names": [".*"], # Prunes all linear modules by default.
-        "excluded_op_names": ["lm_head", "embed_out"],  # A list of modules that would not be pruned.
-        "target_sparsity": 0.5,  # Target sparsity ratio of modules.
-        "pattern": "1x1",  # Default pruning pattern.
+      {  # example pruner
+          "pruning_type": "sparse_gpt",
+          "op_names": [".*"],  # Prunes all linear modules by default.
+          "excluded_op_names": ["lm_head", "embed_out"],  # A list of modules that would not be pruned.
+          "target_sparsity": 0.5,  # Target sparsity ratio of modules.
+          "pattern": "1x1",  # Default pruning pattern.
       }
   ]
   ```
@@ -443,14 +445,17 @@ The following section exemplifies how to use hooks in user pass-in training func
   
   ```python
   from neural_compressor.training import prepare_pruning, WeightPruningConfig
+
   configs = WeightPruningConfig(
       pruning_configs,
-      target_sparsity = args.target_sparsity, # global setting for all pruners
-      pattern = args.pruning_pattern, # e.g. 1x1 / 2:4
+      target_sparsity=args.target_sparsity,  # global setting for all pruners
+      pattern=args.pruning_pattern,  # e.g. 1x1 / 2:4
   )
   config = WeightPruningConfig(pruning_configs)
   # for example: device = "cuda:1"
-  pruning = prepare_pruning(model, configs,  dataloader=train_dataloader, device=device)  # modify the model and complete the pruning
+  pruning = prepare_pruning(
+      model, configs, dataloader=train_dataloader, device=device
+  )  # modify the model and complete the pruning
   ```
 
 
@@ -511,4 +516,3 @@ For more details, please refer to [HPO document](../../neural_compressor/compres
 [3] Kwon, W., Kim, S., Mahoney, M.W., Hassoun, J., Keutzer, K. and Gholami, A., 2022. A fast post-training pruning framework for transformers. Advances in Neural Information Processing Systems, 35, pp.24101-24116.
 
 [4] Frantar, E. and Alistarh, D., Sparsegpt: Massive language models can be accurately pruned in one-shot, 2023. URL https://arxiv. org/abs/2301.00774.
-
