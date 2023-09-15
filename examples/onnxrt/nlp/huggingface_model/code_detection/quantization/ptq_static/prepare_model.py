@@ -12,15 +12,19 @@ def parse_arguments():
 def prepare_model(input_model, output_model):
     print("\nexport model...")
     subprocess.run(
+        ["pip", "install", "optimum"],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    subprocess.run(
         [
             "optimum-cli",
             "export",
             "onnx",
             "--model",
             f"{input_model}",
-            "--task",
-            "text-classification",
             f"{output_model}",
+            "--task=text-classification",
         ],
         stdout=subprocess.PIPE,
         text=True,
