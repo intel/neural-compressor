@@ -22,7 +22,7 @@ pip install -r examples/pytorch/nlp/huggingface_models/language-modeling/pruning
 The dataset will be downloaded automatically from the datasets Hub.
 See more about loading [huggingface dataset](https://huggingface.co/docs/datasets/loading_datasets.html)
 
-
+<br />
 
 # Run Examples
 
@@ -34,10 +34,11 @@ The pruning patterns of 1x1 and N:M are supported through the use of the [Sparse
 
 Pruning scripts are available for LLM sparse models such as GPT-j, BLOOM, OPT, LLaMA, and the sparse model can be obtained by modifying the pruning parameters. [Pruning Scripts](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/scripts/).
 
+<br />
 
-### Results
+## Retrain-free Results
 
-The last token accuracy for channel pruning using the retrain-free algorithm is presented in the following table.
+The last token accuracy for channel pruning using [the retrain-free scripts](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/scripts/run_gptj_pruning.sh) is presented in the following table.
 | Model | Calibration dataset | Evaluation dataset | Sparsity pattern | Over MLP block sparsity |Element-wise/matmul, Gemm, conv ratio | Dense last token accuracy | Sparse last token accuracy | Relative drop |
 |  :----: | :----: | :----: | :----: | :----: | :----: |:----: |:----:| :----: |
 | EleutherAI/gpt-j-6b | lambada | lambada | channelx1  | 0.1999 | 0.1242 | 0.7917 | 0.8038 | +1.50% |
@@ -69,7 +70,9 @@ The last word acc of the channel-wise sparse model is shown in the following tab
 
 <br />
 
-The last word acc of the 1x1 pattern sparse model using the sparseGPT algorithm is shown in the following table.
+## SparseGPT Results
+
+The last word acc of the 1x1 pattern sparse model using [the sparseGPT script](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/scripts/run_llm_sparsegpt.sh) is shown in the following table.
 | Model | Task | Calibration dataset | Evaluation dataset | Sparsity | Precision | Dense last word accuracy | Sparse last word accuracy | Relative drop |
 |  :----: | :----: | :----: | :----: | :----: | :----: | :----: |:----: |:----:|
 | EleutherAI/gpt-j-6b | CLM | wikitext-2-raw-v1 | lambada_openai | 40% | FP32 | 0.6831 | 0.6911 | +1.17% |
