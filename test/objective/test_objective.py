@@ -294,7 +294,6 @@ class TestObjective(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertTrue(isinstance(q_model, tensorflow_model.TensorflowBaseModel))
 
-
         from neural_compressor.experimental import Benchmark, common
 
         benchmarker = Benchmark("fake_yaml.yaml")
@@ -361,7 +360,7 @@ class TestObjs(unittest.TestCase):
         quantize.eval_func = eval
         q_model = quantize()
         self.assertTrue(isinstance(q_model, onnx_model.ONNXModel))
-        self.assertTrue('quantize' in str(q_model.model.producer_name))
+        self.assertTrue("quantize" in str(q_model.model.producer_name))
 
     def test_tune_data(self):
         from neural_compressor.objective import MultiObjective
