@@ -306,7 +306,7 @@ class PytorchPatternNxM(PytorchBasePattern):
         k_blockwise = self.update_residual_cnt(masks, cur_target_sparsity_ratio)
         if k_blockwise <= 0:
             return masks
-        new_scores = scores # if self.block else self.reduce_scores(scores)
+        new_scores = scores  # if self.block else self.reduce_scores(scores)
         not_exceed_layers = []
         residual_k = k_blockwise
         if self.min_sparsity_ratio_per_op > 0:
