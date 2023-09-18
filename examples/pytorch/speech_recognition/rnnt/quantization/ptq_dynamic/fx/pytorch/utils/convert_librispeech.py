@@ -61,7 +61,7 @@ def build_input_arr(input_dir):
     return input_data
 
 
-print("[%s] Scaning input dir..." % args.output_json)
+print("[%s] Scanning input dir..." % args.output_json)
 dataset = build_input_arr(input_dir=args.input_dir)
 
 print("[%s] Converting audio files..." % args.output_json)

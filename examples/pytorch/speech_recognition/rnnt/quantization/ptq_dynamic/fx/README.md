@@ -46,7 +46,7 @@ Our example comes from MLPerf Inference Benchmark Suite.
 
   The changes made are as follows:
   1. pytorch_SUT.py:
-    Removed jit script convertion.
+    Removed jit script conversion.
   2. pytorch/decoders.py:
     Removed assertion of torch.jit.ScriptModule.
 

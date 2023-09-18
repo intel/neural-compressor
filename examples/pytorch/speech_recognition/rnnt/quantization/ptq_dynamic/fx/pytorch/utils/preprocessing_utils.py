@@ -27,7 +27,7 @@ def preprocess(data, input_dir, dest_dir, target_sr=None, speed=None,
                overwrite=True):
     speed = speed or []
     speed.append(1)
-    speed = list(set(speed))  # Make uniqe
+    speed = list(set(speed))  # Make unique
 
     input_fname = os.path.join(input_dir,
                                data['input_relpath'],

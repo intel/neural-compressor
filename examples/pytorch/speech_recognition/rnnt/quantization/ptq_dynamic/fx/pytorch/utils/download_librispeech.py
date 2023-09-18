@@ -56,7 +56,7 @@ if not args.skip_checksum:
         md5 = row['md5']
         fname = url.split('/')[-1]
         fpath = os.path.join(args.dest, fname)
-        print("Verifing %s: " % fname, end='')
+        print("Verifying %s: " % fname, end='')
         ret = md5_checksum(fpath=fpath, target_hash=md5)
         if not ret:
             raise ValueError(f"Checksum for {fname} failed!")

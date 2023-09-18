@@ -61,7 +61,7 @@ def extract(fpath, dest_folder):
     elif fpath.endswith('.tar'):
         mode = 'r:'
     else:
-        raise IOError('fpath has unknown extention: %s' % fpath)
+        raise IOError('fpath has unknown extension: %s' % fpath)
 
     with tarfile.open(fpath, mode) as tar:
         members = tar.getmembers()
