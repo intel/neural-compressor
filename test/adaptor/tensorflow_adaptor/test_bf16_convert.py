@@ -436,14 +436,11 @@ class TestBF16Convert(unittest.TestCase):
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.model = self.test_fp32_graph
         output_graph = quantizer.fit()
-        # TODO enable the below check after enable PR #1464 merged
-        # cast_op_count = 0
-        # for node in output_graph.graph_def.node:
-        #     if node.op == 'Cast':
-        #         cast_op_count += 1
-        #     if node.op == 'Log':
-        #         self.assertEqual(node.attr["T"].type, dtypes.bfloat16.as_datatype_enum)
-        # self.assertTrue(cast_op_count == 0)
+        cast_op_count = 0
+        for node in output_graph.graph_def.node:
+            if node.op == "Cast":
+                cast_op_count += 1
+        self.assertTrue(cast_op_count == 0)
 
     @unittest.skipIf(tf.version.VERSION.find("up") == -1, "Only supports tf 1.x")
     def test_bf16_rnn(self):
