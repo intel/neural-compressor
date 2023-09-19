@@ -823,39 +823,6 @@ class ONNXModel(BaseModel):
 
         return None
 
-    def get_absorb_pairs(self, target_optype):
-        """Find absorbable nodes based on parent op_type and their own input status.
-
-        Args:
-            target_optype (list): target absorbable optype.
-
-        Returns:
-            absorb_pairs (dict): a dict of absorb pairs {parent: list of absorbable children}.
-        """
-        absorbable_optypes = [
-            "LayerNormalization",
-            "BatchNormalization",
-            "InstanceNormalization",
-            "Conv",
-            "SimplifiedLayerNormalization",
-            "MatMul",
-            "Gemm",
-            "Mul",
-            "FusedConv",
-        ]
-        absorb_pairs = {}
-        for node in self.nodes():
-            if node.op_type in target_optype and self.get_initializer(node.input[1]) is not None:
-                parent = self.get_parent(node, 0)
-                if (
-                    parent is None
-                    or parent.op_type not in absorbable_optypes
-                    or self.get_initializer(parent.input[1]) is None
-                ):
-                    continue
-                absorb_pairs.setdefault(parent.name, []).append(node)
-        return absorb_pairs
-
     def match_parent_path(
         self,
         node,

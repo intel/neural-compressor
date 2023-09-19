@@ -1663,7 +1663,6 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
 
             enable_auto_scale = self.recipes.get("awq_args", {}).get("enable_auto_scale", True)
             enable_mse_search = self.recipes.get("awq_args", {}).get("enable_mse_search", True)
-            n_blocks = self.recipes.get("awq_args", {}).get("n_blocks", 5)
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
             model = awq_quantize(
                 model,
@@ -1672,7 +1671,6 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 n_samples=calib_sampling_size,
                 enable_auto_scale=enable_auto_scale,
                 enable_mse_search=enable_mse_search,
-                n_blocks=n_blocks,
             )
         elif "RTN" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
@@ -1684,33 +1682,44 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         return model
 
     def _dump_model_op_stats(self, model, tune_cfg):
-        res = {}
-        # collect all dtype info and build empty results with existing op_type
-        dtype_set = set()
-        for op, config in tune_cfg["op"].items():
-            op_type = op[1]
-            if not config["weight"]["dtype"] == "fp32":
-                num_bits = config["weight"]["bits"]
-                group_size = config["weight"]["group_size"]
-                dtype_str = "A32W{}G{}".format(num_bits, group_size)
-                dtype_set.add(dtype_str)
-        dtype_set.add("FP32")
-        dtype_list = list(dtype_set)
-        dtype_list.sort()
-        for op, config in tune_cfg["op"].items():
-            op_type = op[1]
-            if op_type not in res.keys():
-                res[op_type] = {dtype: 0 for dtype in dtype_list}
+        import re
 
-        # fill in results with op_type and dtype
+        fp32_op_list = self.query_handler.get_op_types_by_precision(precision="weight_only_integer")
+
+        res = {}
+        for optype in fp32_op_list:
+            res[optype] = {}
+
+        op_type = set()
         for op, config in tune_cfg["op"].items():
-            if config["weight"]["dtype"] == "fp32":
-                res[op_type]["FP32"] += 1
+            op_set.add(op[1])
+
+        dtype_set = set()
+        for node in model.nodes():
+            if re.fullmatch("^[A-Za-z0-9.]*_Q\d*G\d*", node.input[1]):
+                search_out = re.search("_Q\d*", node.input[1])
+                dtype = "A32W{}G{}".format(
+                    node.input[1][search_out.start() + 2, search_out.end()], node.input[1][search_out.end() + 1, :]
+                )
             else:
-                num_bits = config["weight"]["bits"]
-                group_size = config["weight"]["group_size"]
-                dtype_str = "A32W{}G{}".format(num_bits, group_size)
-                res[op_type][dtype_str] += 1
+                dtype = "FP32"
+            dtype_set.add(dtype)
+
+            if node.op_type == "MatMulWithQuantWeight":
+                optype = "MatMul"
+            else:
+                optype = node.op_type
+
+            if dtype in res[optype]:
+                res[optype][dtype] += 1
+            else:
+                res[optype][dtype] = 1
+
+        dtype_list = list(dtype_set)
+        for dtype in dtype_list:
+            for optype in res.keys():
+                if dtype not in res[optype]:
+                    res[optype][dtype] = 0
 
         # update stats format for dump.
         field_names = ["Op Type", "Total"]
