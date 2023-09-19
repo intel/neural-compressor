@@ -441,7 +441,5 @@ class TestOnnxModel(unittest.TestCase):
         model = ONNXModel(model)
         self.assertFalse(model.check_large_model())
 
-
-
 if __name__ == "__main__":
     unittest.main()
