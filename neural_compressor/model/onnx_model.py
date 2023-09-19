@@ -21,9 +21,9 @@ import os
 import sys
 from pathlib import Path
 
+from neural_compressor.adaptor.ox_utils.util import MAXIMUM_PROTOBUF
 from neural_compressor.model.base_model import BaseModel
 from neural_compressor.utils.utility import LazyImport
-from neural_compressor.adaptor.ox_utils.util import MAXIMUM_PROTOBUF
 
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
@@ -60,7 +60,7 @@ class ONNXModel(BaseModel):
         self._graph_info = {}
         self._get_graph_info()
         self._q_config = None
-    
+
     def check_large_model(self):
         """Check model > 2GB."""
         init_size = 0

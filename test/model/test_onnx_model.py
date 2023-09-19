@@ -412,6 +412,7 @@ class TestOnnxModel(unittest.TestCase):
         import onnx
         import torch
         import torch.nn as nn
+
         from neural_compressor.model.onnx_model import ONNXModel
 
         class Net(nn.Module):
@@ -422,12 +423,12 @@ class TestOnnxModel(unittest.TestCase):
             def forward(self, x):
                 x = self.fc(x)
                 return x
-        
+
         # model > 2GB
         model = Net(512, 1024 * 1024)
         input = torch.randn(512, requires_grad=True)
         with torch.no_grad():
-            torch.onnx.export(model, (input, ), 'model.onnx', do_constant_folding=True, opset_version=13)
+            torch.onnx.export(model, (input,), "model.onnx", do_constant_folding=True, opset_version=13)
         model = onnx.load("model.onnx")
         model = ONNXModel(model)
         self.assertTrue(model.check_large_model())
@@ -436,10 +437,11 @@ class TestOnnxModel(unittest.TestCase):
         model = Net(10, 10 * 10)
         input = torch.randn(10, requires_grad=True)
         with torch.no_grad():
-            torch.onnx.export(model, (input, ), 'model.onnx', do_constant_folding=True, opset_version=13)
+            torch.onnx.export(model, (input,), "model.onnx", do_constant_folding=True, opset_version=13)
         model = onnx.load("model.onnx")
         model = ONNXModel(model)
         self.assertFalse(model.check_large_model())
+
 
 if __name__ == "__main__":
     unittest.main()

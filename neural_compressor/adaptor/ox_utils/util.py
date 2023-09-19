@@ -87,6 +87,7 @@ ONNXRT_BACKENDS = {
 
 MAXIMUM_PROTOBUF = 2147483648
 
+
 def dtype_to_name(dtype_mapping, dtype):
     """Map data type and its string representation."""
     return list(dtype_mapping.keys())[list(dtype_mapping.values()).index(dtype)]
