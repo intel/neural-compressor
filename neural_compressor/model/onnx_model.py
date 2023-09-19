@@ -23,6 +23,7 @@ from pathlib import Path
 
 from neural_compressor.model.base_model import BaseModel
 from neural_compressor.utils.utility import LazyImport
+from neural_compressor.adaptor.ox_utils.util import MAXIMUM_PROTOBUF
 
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
@@ -65,7 +66,7 @@ class ONNXModel(BaseModel):
         init_size = 0
         for init in self._model.graph.initializer:
             init_size += sys.getsizeof(init.SerializeToString())
-            if init_size > 2147483648:
+            if init_size > MAXIMUM_PROTOBUF:
                 return True
         return False
 
