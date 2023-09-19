@@ -43,16 +43,13 @@ class ONNXModel(BaseModel):
         self._model_path = None if not isinstance(model, str) else model
         self._is_large_model = False
         try:
-            ort.InferenceSession(self._model.SerializeToString())
+            ort.InferenceSession(self._model.SerializeToString(), providers=["CPUExecutionProvider"])
         except Exception as e:  # pragma: no cover
-            if (
-                "maximum protobuf size of 2GB" in str(e)
-                or "string length exceeds max size" in str(e)
-                or "protobuf parsing failed" in str(e)
-            ):
+            if self._model_path is not None:
+                ort.InferenceSession(self._model_path, providers=["CPUExecutionProvider"])
                 self._is_large_model = True
-                if self._model_path is None:
-                    logger.warning("Please use model path instead of onnx model object to quantize")
+            else:
+                logger.warning("Please use model path instead of onnx model object to quantize")
 
         self._config = None
         if isinstance(model, str) and os.path.exists(Path(model).parent.joinpath("config.json").as_posix()):
@@ -221,6 +218,17 @@ class ONNXModel(BaseModel):
             if tensor.name == name:
                 return tensor
         return None
+
+    def get_initializer_share_num(self, name):
+        """Get the number of shares of initializer."""
+        num = 0
+        if self.get_initializer(name) is None:
+            return num
+
+        for node in self.nodes():
+            if name in node.input:
+                num += 1
+        return num
 
     def get_node(self, name):
         """Get a node by name."""

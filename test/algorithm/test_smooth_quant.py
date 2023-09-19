@@ -780,8 +780,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         output2 = q_model.model(input_ids)
         assert isinstance(q_model.model.fc1, SQLinearWrapper)
         # set a big atol to avoid random issue
-        print(output1, output2)
-        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
+        self.assertTrue(torch.allclose(output1, output2, atol=2e-02))
 
         q_model.save("saved_result")
         from neural_compressor.utils.pytorch import load

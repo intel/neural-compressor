@@ -285,13 +285,14 @@ class TestObjective(unittest.TestCase):
         dataset = Datasets("tensorflow")["dummy"]((100, 256, 256, 1), label=True)
 
         from neural_compressor.experimental import Quantization, common
-        from neural_compressor.utils.utility import get_size
+        from neural_compressor.model import tensorflow_model
 
         quantizer = Quantization("fake_yaml.yaml")
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
         q_model = quantizer.fit()
+        self.assertTrue(isinstance(q_model, tensorflow_model.TensorflowBaseModel))
 
         from neural_compressor.experimental import Benchmark, common
 
@@ -345,6 +346,7 @@ class TestObjs(unittest.TestCase):
 
         from neural_compressor.conf.config import conf
         from neural_compressor.experimental import Quantization
+        from neural_compressor.model import onnx_model
 
         conf.model.framework = "onnxrt_integerops"
         conf.quantization.approach = "post_training_dynamic_quant"
@@ -357,6 +359,8 @@ class TestObjs(unittest.TestCase):
         quantize.model = model
         quantize.eval_func = eval
         q_model = quantize()
+        self.assertTrue(isinstance(q_model, onnx_model.ONNXModel))
+        self.assertTrue("quantize" in str(q_model.model.producer_name))
 
     def test_tune_data(self):
         from neural_compressor.objective import MultiObjective

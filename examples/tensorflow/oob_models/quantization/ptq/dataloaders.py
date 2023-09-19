@@ -37,4 +37,3 @@ class WidedeepDataloader(DefaultDataLoader):
                 yield data
             except StopIteration:
                 return
-                

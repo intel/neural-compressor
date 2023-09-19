@@ -37,7 +37,7 @@ GLOBAL_BATCH_SIZE = "global_batch_size"
 BATCH_SIZE_TEST = "batch_size_test"
 
 
-# Pretrained classifer model
+# Pretrained classifier model
 BACKBONE = "backbone"
 
 # Anchor aspect ratio

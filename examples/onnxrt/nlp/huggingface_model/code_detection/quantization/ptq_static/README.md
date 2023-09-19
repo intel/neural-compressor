@@ -28,8 +28,8 @@ bash run_fine_tuning.sh --train_dataset_location=./dataset/train.jsonl --dataset
 
 Export model to ONNX format. 
 ```bash
-# TODO replace the model name after uploading the model to the hugging face
-optimum-cli export onnx --model Intel/TBD-MODEL-NAME --task text-classification onnx_model/
+# By default, the input model path is `checkpoint-best-acc/`.
+python prepare_model.py  --input_model=./checkpoint-best-acc  --output_model=./codebert-exported-onnx
 ```
 
 # Run

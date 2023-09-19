@@ -63,6 +63,7 @@ class Router:
             "workloads/delete": RealtimeRoutingDefinition(delete_workload),
             "profiling": RealtimeRoutingDefinition(get_profiling_details),
             "model/graph": RealtimeRoutingDefinition(get_model_graph),
+            "model/summary": RealtimeRoutingDefinition(get_model_summary),
             "model/graph/highlight_pattern": RealtimeRoutingDefinition(find_pattern_in_graph),
             "diagnosis/op_list": RealtimeRoutingDefinition(get_op_list),
             "diagnosis/op_details": RealtimeRoutingDefinition(get_op_details),
@@ -117,6 +118,20 @@ def get_model_graph(data: Dict[str, Any]) -> Graph:
         model_path=RequestDataProcessor.get_string_value(data, "path"),
         expanded_groups=data.get("group", []),
     )
+
+
+def get_model_summary(data: Dict[str, Any]) -> Dict:
+    """Get model graph."""
+    workload_id: Optional[str] = data.get("workload_id", None)
+    workload = WorkloadManager().get_workload(workload_id)
+
+    if workload.model_summary_file is None:
+        raise Exception("Model summary not found.")
+    with open(workload.model_summary_file, "r") as summary_file:
+        model_summary = "\n".join(summary_file.readlines())
+    return {
+        "summary": model_summary,
+    }
 
 
 def find_pattern_in_graph(data: Dict[str, Any]) -> dict:

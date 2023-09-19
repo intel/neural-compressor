@@ -65,18 +65,18 @@ def find_sublist(haystack, needle):
 def get_logger(name, log_path):
     "get logger"
     logger = logging.getLogger(name)
-    fomatter = logging.Formatter(
+    formatter = logging.Formatter(
         '[ %(levelname)s|%(filename)s:%(lineno)s] %(asctime)s > %(message)s')
 
     if not os.path.isfile(log_path):
         f = open(log_path, "w+")
 
     fileHandler = logging.FileHandler(log_path)
-    fileHandler.setFormatter(fomatter)
+    fileHandler.setFormatter(formatter)
     logger.addHandler(fileHandler)
 
     #streamHandler = logging.StreamHandler()
-    #streamHandler.setFormatter(fomatter)
+    #streamHandler.setFormatter(formatter)
     #logger.addHandler(streamHandler)
 
     logger.setLevel(logging.DEBUG)

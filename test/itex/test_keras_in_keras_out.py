@@ -147,6 +147,15 @@ class TestKerasInKerasOut(unittest.TestCase):
             eval_func=eval_func,
         )
         q_model.save("itex_qdq_keras_model")
+        self.assertEqual(q_model.framework(), "keras")
+
+        framework_config = {"framework": "keras", "approach": "post_training_static_quant"}
+        q_model.q_config = framework_config
+        self.assertEqual(q_model.q_config["framework"], "keras")
+        self.assertEqual(q_model.graph_info, None)
+        self.assertEqual(q_model.framework(), "keras")
+        self.assertEqual(isinstance(q_model.model, tf.keras.Model), True)
+
         model = keras.models.load_model("./itex_qdq_keras_model")
         model.summary()
         found_quantize = False
@@ -166,35 +175,6 @@ class TestKerasInKerasOut(unittest.TestCase):
         logger.info("=================Run BenchMark...")
         test_mode = "performance"
         fit(model, conf, b_func=eval_func)
-
-    def test_keras_model_interface(self):
-        logger.info("Run test_keras_model_interface case...")
-        global test_mode
-        test_mode = "accuracy"
-        build_model()
-
-        from neural_compressor import set_random_seed
-        from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.data.dataloaders.dataloader import DataLoader
-        from neural_compressor.quantization import fit
-
-        set_random_seed(9527)
-        config = PostTrainingQuantConfig(backend="itex")
-        q_model = fit(
-            keras.models.load_model("./baseline_model"),
-            conf=config,
-            calib_dataloader=DataLoader(framework="tensorflow", dataset=Dataset()),
-            eval_func=eval_func,
-        )
-        q_model.save("itex_qdq_keras_model")
-        self.assertEqual(q_model.framework(), "keras")
-
-        framework_config = {"framework": "keras", "approach": "post_training_static_quant"}
-        q_model.q_config = framework_config
-        self.assertEqual(q_model.q_config["framework"], "keras")
-        self.assertEqual(q_model.graph_info, None)
-        self.assertEqual(q_model.framework(), "keras")
-        self.assertEqual(isinstance(q_model.model, tf.keras.Model), True)
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ Theoretically, round-to-nearest (RTN) is the most straightforward way to quantiz
 
 There are many excellent works for weight only quantization to improve its accuracy performance, such as AWQ[3], GPTQ[4]. Neural compressor integrates these popular algorithms in time to help customers leverage them and deploy them to their own tasks.
 
+
 ## Supported Framework Model Matrix
 
 | Algorithms/Framework |   PyTorch  |    ONNX Runtime    |
@@ -32,6 +33,14 @@ There are many excellent works for weight only quantization to improve its accur
 |      TEQ      | &#10004; | stay tuned |
 
 **Note:** To get the validated accuracy results on popular models, please refer to [PyTorch Models with Torch 2.0.1+cpu in WOQ Mode](./validated_model_list.md/#pytorch-models-with-torch-201cpu-in-woq-mode)
+
+> **RTN:** A quantification method that we can think of very intuitively. It does not require additional datasets and is a very fast quantization method. Generally speaking, RTN will convert the weight into a uniformly distributed integer data type, but some algorithms, such as Qlora, propose a non-uniform NF4 data type and prove its theoretical optimality.
+
+> **GPTQ:** A new one-shot weight quantization method based on approximate second-order information, that is both highly-accurate and highly efficient[4]. The weights of each column are updated based on the fixed-scale pseudo-quantization error and the inverse of the Hessian matrix calculated from the activations. The updated columns sharing the same scale may generate a new max/min value, so the scale needs to be saved for restoration.
+
+> **AWQ:** Proved that protecting only 1% of salient weights can greatly reduce quantization error. the salient weight channels are selected by observing the distribution of activation and weight per channel. The salient weights are also quantized after multiplying a big scale factor before quantization for preserving. 
+
+> **TEQ:** A trainable equivalent transformation that preserves the FP32 precision in weight-only quantization. It is inspired by AWQ while providing a new solution to search for the optimal per-channel scaling factor between activations and weights.
 
 ## Examples
 ### **Quantization Capability**:
@@ -72,6 +81,7 @@ Notes:
 |  use_max_length  | False | Whether to align all calibration data to fixed length, which equals to pad_max_length. |
 |  block_size  | 128 | Execute GPTQ quantization per block, block shape = [$C_{out}$, block_size] |
 
+**Note:** Neural compressor provides `Unsigned integer for asymmetric quantization` and `Signed integer for symmetric quantization`. Please follow the below section to compress the low bit data type for saving.
 
 ### **Export Compressed Model**
 To support low memory inference, Neural Compressor implemented WeightOnlyLinear, a torch.nn.Module, to compress the fake quantized fp32 model. Since torch does not provide flexible data type storage, WeightOnlyLinear combines low bits data into a long date type, such as torch.int8 and torch.int32. Low bits data includes weights and zero points. When using WeightOnlyLinear for inference, it will restore the compressed data to float32 and run torch linear function.

@@ -14,11 +14,11 @@ pip install -r requirements.txt
 
 ## 2. Prepare Model
 
-Use `export.py` script for ONNX model conversion.
+Use `prepare_model.py` script for ONNX model conversion.
 Require transformers==3.2.0.
 
 ```shell
-python export.py
+python prepare_model.py
 ```
 
 ## 3. Prepare Dataset

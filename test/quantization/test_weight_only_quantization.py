@@ -1,6 +1,3 @@
-import sys
-
-sys.path.append("./")
 import copy
 import unittest
 
@@ -110,7 +107,6 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         # default awq_quantize is 4 bits, 32 group size, use big atol=1e-1
         qdq_model = awq_quantize(self.gptj, example_inputs=self.lm_input, calib_func=calib_func)
         out2 = qdq_model(example_inputs)
-        print(out1[0], out2[0])
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-1))
 
 
@@ -172,7 +168,6 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
             model, weight_config=weight_config, dataloader=dataloader, use_max_length=True, pad_max_length=512
         )
         self.assertTrue(isinstance(model, torch.nn.Module))
-        del model
 
         model = copy.deepcopy(self.gptj)
         weight_config = {"wbits": 4}
@@ -180,7 +175,6 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
             model, weight_config=weight_config, dataloader=dataloader, use_max_length=False, pad_max_length=512
         )
         self.assertTrue(isinstance(model, torch.nn.Module))
-        del model
 
 
 class TestTEQWeightOnlyQuant(unittest.TestCase):

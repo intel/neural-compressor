@@ -61,7 +61,8 @@ class PytorchProgressivePruner(PytorchBasicPruner):
         self.progressive_steps = self.progressive_configs["progressive_steps"]
         self.progressive_type = self.progressive_configs["progressive_type"]
         self.use_global = self.progressive_configs["use_global"]
-        self.progressive_logger = False
+        self.progressive_logger = True
+        self.align_masks_flag = False
         self._init_for_progressive()
 
     def _init_for_progressive(self):
@@ -74,6 +75,11 @@ class PytorchProgressivePruner(PytorchBasicPruner):
 
         # step 2: check if current set up will "degrade" into non-progressive
         if (self.end_step - self.start_step) <= self.progressive_steps or self.progressive_steps <= 1:
+            logger.info("Current progressive setting will degrading to non-progressive pruning.")
+            self.use_progressive = False
+            return
+
+        if self.pruning_frequency == 1:
             logger.info("Current progressive setting will degrading to non-progressive pruning.")
             self.use_progressive = False
             return
@@ -226,6 +232,10 @@ class PytorchProgressivePruner(PytorchBasicPruner):
 
         Implement at the start of each step.
         """
+        if self.global_step > self.end_step and self.align_masks_flag is False:
+            self.align_masks_after_pruning()
+            self.align_masks_flag = True
+
         if self.handled_global_step == self.global_step:
             return
 
@@ -271,3 +281,24 @@ class PytorchProgressivePruner(PytorchBasicPruner):
         """Output the progressive sparsity."""
         cur_sp = self.pattern.get_sparsity_ratio_progressive(self.progressive_masks)
         logger.info("Step: {} -> Current progressive sparsity: {}".format(self.global_step, cur_sp))
+
+    def obtain_weight_sparsity(self, modules):
+        total_numels = 0
+        sparse_numels = 0
+        for key in modules.keys():
+            total_numels += modules[key].weight.data.numel()
+            sparse_numels += torch.sum(torch.where(modules[key].weight.data == 0, 1, 0)).item()
+        return sparse_numels / total_numels
+
+    def align_masks_after_pruning(self):
+        if not self.use_progressive:
+            return
+        """Implement at the end of training phase."""
+        # If training ends while a progressive masks is applying, we have to use self.masks to align
+        # step 1 calculate sparsity under progressive masks
+        sparsity1 = self.obtain_weight_sparsity(self.modules)
+        # step 2 use block-wise masks to remask weights
+        self.mask_weights_general(self.masks)
+        # step 3 calculate sparsity under progressive masks
+        sparsity2 = self.obtain_weight_sparsity(self.modules)
+        logger.info(f"Replace progressive mask with complete masks: Sparsity Update: {sparsity1} => {sparsity2}")

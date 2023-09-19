@@ -78,7 +78,7 @@ def quantize_4bit(tensor, quantile=1.0, data_type="nf4", return_int=False):
     allow_data = FLOAT_MAPPING[data_type]
     allow_data_bit = INT_MAPPING[data_type]
     # get scale and update tensor
-    scale = tensor.max(1)[0] * quantile / max(allow_data)
+    scale = tensor.abs().max(1)[0] * quantile / max(allow_data)
     scale.unsqueeze_(dim=-1)
     tensor = tensor / scale
     mid_data = [(allow_data[i] + allow_data[i + 1]) / 2 for i in range(len(allow_data) - 1)]

@@ -1,4 +1,4 @@
-transformers==4.30.0
+transformers
 onnx>=1.7.0
 onnxruntime
 coloredlogs

@@ -20,7 +20,7 @@ from __future__ import division
 from __future__ import print_function
 
 
-# Pretrained classifer model
+# Pretrained classifier model
 BACKBONE = "backbone"
 
 FEATURE_SIZES = "feature_sizes"

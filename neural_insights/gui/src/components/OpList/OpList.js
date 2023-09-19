@@ -15,6 +15,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../App';
 import Table from 'react-bootstrap/Table';
+import Spinner from 'react-bootstrap/Spinner';
 
 export default function OpList({ selectedWorkload, setSelectedOp, selectedOp, setWarningText }) {
   const [opList, setOpList] = useState([]);
@@ -48,22 +49,35 @@ export default function OpList({ selectedWorkload, setSelectedOp, selectedOp, se
           }}>
           <td className="cell">{opData['OP name']}</td>
           <td className="cell right nowrap">{opData['MSE'].toExponential(3)}</td>
-          <td className="cell right">{opData['Activation Min'].toFixed(2)}</td>
-          <td className="cell right">{opData['Activation Max'].toFixed(2)}</td>
+          {typeof opList[0]['Activation Min'] !== 'undefined' &&
+            <td className="cell right">{opData['Activation Min'].toFixed(2)}</td>
+          }
+          {typeof opList[0]['Activation Max'] !== 'undefined' &&
+            <td className="cell right">{opData['Activation Max'].toFixed(2)}</td>
+          }
         </tr>
       )
     });
 
   return (
     <div className="overflow-table">
+      {opList.length === 0 &&
+        <div className="spinner-container">
+          <Spinner className="spinner" animation="border" />
+        </div>
+      }
       {opList.length > 0 &&
         <Table className="rounded" hover>
           <thead>
             <tr>
               <th className="header center">OP Name</th>
               <th className="header center">MSE</th>
-              <th className="header center">Activation Min</th>
-              <th className="header center">Activation Max</th>
+              {typeof opList[0]['Activation Min'] !== 'undefined' &&
+                <th className="header center">Activation Min</th>
+              }
+              {typeof opList[0]['Activation Max'] !== 'undefined' &&
+                <th className="header center">Activation Max</th>
+              }
             </tr>
           </thead>
           <tbody>
