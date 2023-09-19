@@ -712,13 +712,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         # 2. according to input
         # typically, NLP models have multiple inputs,
         # and the dimension of each input is usually 2 (batch_size, max_seq_len)
-        if not model.is_large_model:
-            sess = ort.InferenceSession(model.model.SerializeToString(), providers=["CPUExecutionProvider"])
-        elif model.model_path is not None:  # pragma: no cover
-            sess = ort.InferenceSession(model.model_path, providers=["CPUExecutionProvider"])
-        else:  # pragma: no cover
-            assert False, "Please use model path instead of onnx model object to quantize."
-        input_shape_lens = [len(input.shape) for input in sess.get_inputs()]
+        input_shape_lens = [len(inp.type.tensor_type.shape.dim) for inp in model.model.graph.input]
         if len(input_shape_lens) > 1 and all(shape_len == 2 for shape_len in input_shape_lens):
             is_nlp = True
 
@@ -747,7 +741,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             return self.pre_optimized_model
         from neural_compressor import options
         from neural_compressor.adaptor.ox_utils.util import remove_init_from_model_input, split_shared_bias
-
         remove_init_from_model_input(model)
         sess_options = ort.SessionOptions()
         optimization_levels = {
@@ -775,14 +768,15 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         sess_options.optimized_model_filepath = os.path.join(self.work_space, "Optimized_model.onnx")
         if sys.version_info < (3, 11) and find_spec("onnxruntime_extensions"):  # pragma: no cover
             from onnxruntime_extensions import get_library_path
-
             sess_options.register_custom_ops_library(get_library_path())
         if not model.is_large_model:
-            ort.InferenceSession(model.model.SerializeToString(), sess_options, providers=["CPUExecutionProvider"])
+            sess = ort.InferenceSession(model.model.SerializeToString(), sess_options, providers=["CPUExecutionProvider"])
         elif model.model_path is not None:  # pragma: no cover
-            ort.InferenceSession(model.model_path, sess_options, providers=["CPUExecutionProvider"])
+            model.model = onnx.ModelProto() # clean memory for large model
+            sess = ort.InferenceSession(model.model_path, sess_options, providers=["CPUExecutionProvider"])
         else:  # pragma: no cover
             logger.warning("Please use model path instead of onnx model object to quantize")
+        del sess
 
         tmp_model = onnx.load(sess_options.optimized_model_filepath, load_external_data=False)
 
