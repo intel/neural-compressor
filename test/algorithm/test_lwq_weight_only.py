@@ -34,7 +34,6 @@ class TestLayerWise(unittest.TestCase):
         conf = PostTrainingQuantConfig(
             approach="weight_only",
             recipes={
-                # By default, enable_full_range is False and 4 bit sym will only use range [-7,7].
                 "layer_wise_quant": True,
                 "layer_wise_quant_args": {
                     "model_path": "facebook/opt-125m",
@@ -51,6 +50,8 @@ class TestLayerWise(unittest.TestCase):
         )
         ouput_dir = "./saved_model"
         q_model.save(ouput_dir)
+        load_model = load(ouput_dir, fp32_model, weight_only=True)
+        self.assertNotEqual(load_model.lm_head.weight.device.type, 'meta')
         shutil.rmtree(ouput_dir)
 
 

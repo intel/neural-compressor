@@ -226,7 +226,16 @@ def load_weight_only(checkpoint_dir, model):
             module = util.fetch_module(model, op_name)
             new_module = MulLinear(module)
             util.set_module(model, op_name, new_module)
-    model.load_state_dict(torch.load(weights_file))
+    if str(model.device) == 'meta':
+        from ..adaptor.torch_utils.layer_wise_quant.utils import set_module_tensor_to_device, get_named_children
+        state_dict = torch.load(weights_file)
+        modules = get_named_children(model)
+        for name, module in modules:
+            for n, p in module.named_parameters():
+                param_name = name + '.' + n
+                set_module_tensor_to_device(model, param_name, 'cpu', state_dict[param_name])
+    else:
+        model.load_state_dict(torch.load(weights_file))
     logger.info("Load weight_only quantized model")
     return model
 
