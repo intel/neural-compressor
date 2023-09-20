@@ -1697,12 +1697,12 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             else:
                 optype = node.op_type
 
-            if optype not in res :
+            if optype not in res:
                 continue
             if re.fullmatch("^.*_Q\d*G\d*", node.input[1]):
                 search_out = re.search("_Q\d*", node.input[1])
                 dtype = "A32W{}G{}".format(
-                        node.input[1][search_out.start() + 2: search_out.end()], node.input[1][search_out.end() + 1:]
+                    node.input[1][search_out.start() + 2 : search_out.end()], node.input[1][search_out.end() + 1 :]
                 )
             else:
                 dtype = "FP32"
