@@ -65,7 +65,15 @@ class ONNXModel(BaseModel):
         """Check model > 2GB."""
         init_size = 0
         for init in self._model.graph.initializer:
-            init_size += sys.getsizeof(init.SerializeToString())
+            # if raise error of initializer size > 2GB, return True
+            try:
+                init_bytes = init.SerializeToString()
+                init_size += sys.getsizeof(init_bytes)
+            except Exception as e:
+                if "exceeds maximum protobuf size of 2GB" in str(e):
+                    return True
+                else:
+                    raise e
             if init_size > MAXIMUM_PROTOBUF:
                 return True
         return False
