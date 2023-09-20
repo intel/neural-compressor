@@ -657,7 +657,7 @@ def awq_quantize(
         model.remove_tensors_from_outputs([i.name for i in org_output])
 
         output_names = []
-        for node in mode.nodes():
+        for node in model.nodes():
             if (
                 node.op_type in ["MatMul"]
                 and weight_config.get(node.name, {}) != "fp32"
@@ -691,15 +691,15 @@ def awq_quantize(
                     and weight_config.get(node.name, {}) != "fp32"
                     and weight_config.get(node.name, {}).get("algorithm", "AWQ") == "AWQ"
                 ):
-                    dump_pairs[parent.name].append(node)
+                    dump_pairs[parent.name].append(model.get_node(node.name))
 
             if len(dump_pairs[parent.name]) == 0:
                 continue
 
             output_dicts = {}
             for inp in inputs:
-                for output_idx, output in enumerate(session.run(dump_tensor, inp)):
-                    output_dicts.setdefault(dump_tensor[output_idx], []).append(output)
+                output = session.run([input_name], inp)
+                output_dicts.setdefault(input_name, []).append(output)
 
             if enable_auto_scale:
                 model, output_dicts = apply_awq_scale(
@@ -965,25 +965,21 @@ def gptq_quantize(
                 and weight_config.get(node.name, {}).get("algorithm", "GPTQ") == "GPTQ"
             ):
                 weight = numpy_helper.to_array(
-                    model.get_initializer(node.input[1]), os.path.dirname(model.model_path)
+                    model.get_initializer(model.get_node(node.name).input[1]), os.path.dirname(model.model_path)
                 ).copy()
                 if len(weight.shape) != 2:
                     continue
 
                 weights.append(weight)
-                node_list.append(node)
+                node_list.append(model.get_node(node.name))
 
         if len(weights) == 0:
             continue
 
         Hs = [np.zeros((i.shape[0], i.shape[0])) for i in weights]
         nsamples = 0
-        for inp in inputs:
-            output_dicts = {}
-            for output_idx, output in enumerate(session.run(dump_tensor, inp)):
-                output_dicts.setdefault(dump_tensor[output_idx], []).append(output)
-
-            inp = output_dicts[dump_tensor[0]][0]
+        for data in inputs:
+            inp = session.run([input_name], data)[0]
             tmp = inp.shape[0]
             inp = np.reshape(inp, (-1, inp.shape[-1]))
             Hs = [i * (nsamples / (nsamples + tmp)) for i in Hs]
@@ -1000,6 +996,7 @@ def gptq_quantize(
                 num_bits = weight_config[node.name]["bits"]
                 group_size = weight_config[node.name]["group_size"]
                 scheme = weight_config[node.name]["scheme"]
+            group_size = group_size if group_size != -1 else weight.shape[0]
 
             q_weight = gptq(
                 weight,

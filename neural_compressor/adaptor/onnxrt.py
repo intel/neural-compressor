@@ -1690,25 +1690,23 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         for optype in fp32_op_list:
             res[optype] = {}
 
-        op_type = set()
-        for op, config in tune_cfg["op"].items():
-            op_set.add(op[1])
-
         dtype_set = set()
         for node in model.nodes():
-            if re.fullmatch("^[A-Za-z0-9.]*_Q\d*G\d*", node.input[1]):
-                search_out = re.search("_Q\d*", node.input[1])
-                dtype = "A32W{}G{}".format(
-                    node.input[1][search_out.start() + 2, search_out.end()], node.input[1][search_out.end() + 1, :]
-                )
-            else:
-                dtype = "FP32"
-            dtype_set.add(dtype)
-
             if node.op_type == "MatMulWithQuantWeight":
                 optype = "MatMul"
             else:
                 optype = node.op_type
+
+            if optype not in res :
+                continue
+            if re.fullmatch("^.*_Q\d*G\d*", node.input[1]):
+                search_out = re.search("_Q\d*", node.input[1])
+                dtype = "A32W{}G{}".format(
+                        node.input[1][search_out.start() + 2: search_out.end()], node.input[1][search_out.end() + 1:]
+                )
+            else:
+                dtype = "FP32"
+            dtype_set.add(dtype)
 
             if dtype in res[optype]:
                 res[optype][dtype] += 1
