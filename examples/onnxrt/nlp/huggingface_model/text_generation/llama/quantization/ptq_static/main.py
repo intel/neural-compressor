@@ -149,7 +149,7 @@ def benchmark(model):
     if input_tokens in prompt_pool:
         prompt = prompt_pool[input_tokens]
     else:
-        raise SystemExit('[ERROR] Plese use --prompt if want to use custom input.')
+        raise SystemExit('[ERROR] Please use --prompt if want to use custom input.')
 
     input_size = tokenizer(prompt, return_tensors="pt").input_ids.size(dim=1)
     print("---- Prompt size:", input_size)

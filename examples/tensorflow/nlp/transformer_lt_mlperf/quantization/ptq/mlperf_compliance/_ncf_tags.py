@@ -29,7 +29,7 @@ PREPROC_HP_NUM_EVAL = "preproc_hp_num_eval"
 PREPROC_HP_SAMPLE_EVAL_REPLACEMENT = "preproc_hp_sample_eval_replacement"
 
 
-# The number of false negatives per postive generated during training.
+# The number of false negatives per positive generated during training.
 INPUT_HP_NUM_NEG = "input_hp_num_neg"
 
 # Are training negatives sampled with replacement?

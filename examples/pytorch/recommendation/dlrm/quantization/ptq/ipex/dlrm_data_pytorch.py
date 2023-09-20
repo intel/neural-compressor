@@ -281,7 +281,7 @@ class CriteoDataset(Dataset):
 
         if self.memory_map:
             if self.split == 'none' or self.split == 'train':
-                # check if need to swicth to next day and load data
+                # check if need to switch to next day and load data
                 if index == self.offset_per_file[self.day]:
                     # print("day_boundary switch", index)
                     self.day_boundary = self.offset_per_file[self.day]

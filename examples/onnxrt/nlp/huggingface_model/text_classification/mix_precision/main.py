@@ -370,7 +370,7 @@ if __name__ == "__main__":
             onnx.save(new, args.output_model)
         except:
             logging.warning("Fail to upgrade opset_import to > 15, "
-                "please upgrate it manually to run with bf16 data type")
+                "please upgrade it manually to run with bf16 data type")
     else:
         converted_model.save(args.output_model)
 

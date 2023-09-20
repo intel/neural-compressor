@@ -134,7 +134,7 @@ def evaluate(model):
             start_time = time.time()
             node_outs_val = model.sess.run([output_tensor],feed_dict=feed_dict_val)
             time_consume = time.time() - start_time
-            val_preds.append(node_outs_val[0])
+            val_preds.append(node_outs_val[0].astype(float))
             labels.append(batch_labels)
             iter_num += 1
             total_time += time_consume

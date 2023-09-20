@@ -31,7 +31,7 @@ pip install -r requirements.txt
   The changes made are as the following:
   * edit run_glue.py:  
     - For quantization, We used neural_compressor in it.  
-    - For training, we enbaled early stop strategy.  
+    - For training, we enabled early stop strategy.  
 ## 2. To get tuned model and its accuracy: 
 ```shell
     bash run_quant.sh --input_model=./bert_model  --output_model=./saved_results

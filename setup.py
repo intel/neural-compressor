@@ -45,6 +45,7 @@ neural_insights_data = {
         "web/app/static/css/*",
         "web/app/static/js/*",
         "web/app/static/media/*",
+        "web/app/icons/*",
     ]
 }
 neural_solution_data = {
