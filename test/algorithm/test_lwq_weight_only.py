@@ -38,7 +38,7 @@ class TestLayerWise(unittest.TestCase):
                 "layer_wise_quant_args": {
                     "model_path": "facebook/opt-125m",
                 },
-                "rtn_args": {"enable_full_range": True}
+                "rtn_args": {"enable_full_range": True},
             },
         )
 
@@ -51,7 +51,7 @@ class TestLayerWise(unittest.TestCase):
         ouput_dir = "./saved_model"
         q_model.save(ouput_dir)
         load_model = load(ouput_dir, fp32_model, weight_only=True)
-        self.assertNotEqual(load_model.lm_head.weight.device.type, 'meta')
+        self.assertNotEqual(load_model.lm_head.weight.device.type, "meta")
         shutil.rmtree(ouput_dir)
 
 
