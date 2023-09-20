@@ -2,6 +2,7 @@ import sys
 sys.path.append("./")
 import math
 import time
+import re
 
 import torch
 import torch.nn as nn
@@ -9,7 +10,7 @@ from torch.utils.data import DataLoader
 from torch.nn.functional import pad
 
 import transformers
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoModel, AutoTokenizer
 import datasets
 from datasets import load_dataset
 
@@ -214,12 +215,14 @@ if __name__ == '__main__':
     torch.nn.init.normal_ = skip
 
     # model
-    model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, low_cpu_mem_usage=True, trust_remote_code=True)
-    model.seqlen = args.pad_max_length
-    model.eval()
+    if re.search("chatglm", args.model_name_or_path.lower()): # chatglm requires a different way to be loaded
+        tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, trust_remote_code=True)
+        model = AutoModel.from_pretrained(args.model_name_or_path, trust_remote_code=True)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
+        model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, low_cpu_mem_usage=True, trust_remote_code=True)
+    model = model.eval()
 
-    # dataset
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
     calib_dataset = load_dataset(args.dataset, split="train") # default
     # calib_dataset = datasets.load_from_disk('/your/local/pile-10k/') # use this if trouble with connecting to HF
     calib_dataset = calib_dataset.shuffle(seed=args.seed)
