@@ -27,9 +27,7 @@ from packaging.version import Version
 import intel_extension_for_pytorch as ipex
 
 
-model_names = sorted(name for name in models.__dict__
-    if name.islower() and not name.startswith("__")
-    and callable(models.__dict__[name]))
+model_names = models.list_models(module=models)
 
 torch.hub._validate_not_a_forked_repo=lambda a,b,c: True
 hub_model_names = torch.hub.list('facebookresearch/WSL-Images')
