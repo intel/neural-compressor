@@ -237,8 +237,8 @@ class GPTQuantizer(object):
             self.obtain_first_n_samples()
         try:
             self.inp = [torch.zeros(1) for _ in range(len(self.dataloader))]
-            self.cache = {"i": 0} # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
-            self.cache_positional_arguments = [] # a list of list, positional arguments ("rotary_pos_emb" in chatglm)
+            self.cache = {"i": 0}  # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
+            self.cache_positional_arguments = []  # a list of list, positional arguments ("rotary_pos_emb" in chatglm)
             self.out = [torch.zeros(1) for _ in range(len(self.dataloader))]
             self.is_ready = True
         except:
@@ -422,7 +422,7 @@ class GPTQuantizer(object):
             # Most models in HF has avoid this, but some models still use positional arguments other than
             # hidden_states, chatglm2-6b etc.
             for idx, item in enumerate(args):
-                if (idx+1) > len(self.cache_positional_arguments):
+                if (idx + 1) > len(self.cache_positional_arguments):
                     # initialize
                     self.cache_positional_arguments.append([])
                 self.cache_positional_arguments[idx].append(item)
@@ -473,7 +473,7 @@ class GPTQuantizer(object):
         for k, v in data_dict.items():
             single_batch[k] = data_dict[k][idx]
         return single_batch
-    
+
     def gather_single_batch_from_list(self, data_list, idx):
         # obtain a set of keyword input from cache
         single_batch = []
