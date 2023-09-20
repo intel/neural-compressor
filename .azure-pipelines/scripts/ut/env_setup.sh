@@ -53,6 +53,9 @@ if [[ "${ipex_version}" == "1.13.0+cpu" ]]; then
 elif [[ "${ipex_version}" == "2.0.0+cpu" ]]; then
     ipex_whl="https://intel-extension-for-pytorch.s3.amazonaws.com/ipex_stable/cpu/intel_extension_for_pytorch-2.0.0%2Bcpu-cp38-cp38-linux_x86_64.whl"
     pip install $ipex_whl
+elif [[ "${ipex_version}" == "2.0.1+cpu" ]]; then
+    ipex_whl="https://intel-extension-for-pytorch.s3.amazonaws.com/ipex_stable/cpu/intel_extension_for_pytorch-2.0.100%2Bcpu-cp38-cp38-linux_x86_64.whl"
+    pip install $ipex_whl
 elif [[ "${ipex_version}" == "2.1.0" ]]; then
     pip install /tf_dataset/pt_binary/ww32/torch-*.whl
     pip install /tf_dataset/pt_binary/ww32/torchvision-*.whl
