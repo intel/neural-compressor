@@ -23,11 +23,12 @@ from ..patterns import get_pattern
 from ..regs import get_reg
 from ..schedulers import get_scheduler
 from ..utils import logger, torch
-from .base import PytorchBasePruner, register_pruner
+from .base import register_pruner
+from .basic import PytorchBasicPruner
 
 
 @register_pruner("pt_progressive")
-class PytorchProgressivePruner(PytorchBasePruner):
+class PytorchProgressivePruner(PytorchBasicPruner):
     """Pruning Pruner.
 
     A Pruner class derived from BasicPruner. In this pruner, mask interpolation will be applied.
@@ -207,12 +208,12 @@ class PytorchProgressivePruner(PytorchBasePruner):
         for n in self.masks.keys():
             self.pre_masks[n] = self.masks[n].clone()
         # update new masks
-        if not self.use_progressive:
-            self.masks = self.pattern.get_masks(
-                self.criterion.scores,
-                current_target_sparsity_ratio,
-                self.masks,
-            )
+        # if not self.use_progressive:
+        #     self.masks = self.pattern.get_masks(
+        #         self.criterion.scores,
+        #         current_target_sparsity_ratio,
+        #         self.masks,
+        #     )
         self.masks = self.pattern.get_masks(
             self.criterion.scores,
             current_target_sparsity_ratio,
