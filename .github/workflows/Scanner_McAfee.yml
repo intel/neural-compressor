@@ -1,7 +1,7 @@
 name: Virus Scan
 
 on:
-  # push:
+  push:
   workflow_dispatch:
 
 jobs:
