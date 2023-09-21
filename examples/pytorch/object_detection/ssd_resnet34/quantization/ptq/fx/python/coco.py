@@ -202,7 +202,7 @@ class PostProcessCoco:
                 image_idx = int(detection[0])
                 if image_idx != self.content_ids[batch]:
                     # working with the coco index/id is error prone - extra check to make sure it is consistent
-                    log.error("image_idx missmatch, lg={} / result={}".format(image_idx, self.content_ids[batch]))
+                    log.error("image_idx mismatch, lg={} / result={}".format(image_idx, self.content_ids[batch]))
                 # map the index to the coco image id
                 detection[0] = ds.image_ids[image_idx]
                 height, width = ds.image_sizes[image_idx]

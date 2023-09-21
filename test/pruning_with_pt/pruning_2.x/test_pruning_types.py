@@ -1,7 +1,7 @@
+import sys
 import unittest
 
-import sys
-sys.path.insert(0, './')
+sys.path.insert(0, "./")
 
 import torch
 import torch.nn as nn
@@ -92,17 +92,19 @@ class TestPruningTypes(unittest.TestCase):
 
         # assert sparsity ratio
         from neural_compressor.compression.pruner.utils import parse_to_prune
+
         for config in compression_manager.conf.pruning.pruning_configs:
             zero_cnt = 0
             all_cnt = 0
             layers = list(parse_to_prune(config=config, model=self.model).keys())
             for layer in layers:
-                layer_weight = self.model.state_dict()[layer+'.weight']
+                layer_weight = self.model.state_dict()[layer + ".weight"]
                 zero_cnt += (layer_weight == 0).sum().item()
                 all_cnt += layer_weight.numel()
                 sparsity = (layer_weight == 0.0).sum().item() / layer_weight.numel()
                 # Test local sparsity
                 print(layer, sparsity, (layer_weight == 0.0).sum().item(), layer_weight.numel())
+
 
 if __name__ == "__main__":
     unittest.main()

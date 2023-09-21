@@ -25,16 +25,8 @@ bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
 
 ## 3. Prepare Model
 
-Please refer to [Bert-GLUE_OnnxRuntime_quantization guide](https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/notebooks/bert/Bert-GLUE_OnnxRuntime_quantization.ipynb) for detailed model export.
-
-Run the `prepare_model.sh` script
-
-
-Usage:
 ```shell
-bash prepare_model.sh --input_dir=./MRPC \
-                      --task_name=$TASK_NAME \
-                      --output_model=path/to/model # model path as *.onnx
+python prepare_model.py --input_model='MRPC.zip' --output_model='bert.onnx'
 ```
 
 # Run

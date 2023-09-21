@@ -98,6 +98,12 @@ class TestPruningGroupLasso(unittest.TestCase):
         prune.model = self.model
         _ = prune()
 
+        # assert sparsity ratio
+        conv1_weight = self.model.layer1[0].conv1.weight
+        conv2_weight = self.model.layer1[0].conv2.weight
+        self.assertAlmostEqual((conv1_weight == 0).sum().item() / conv1_weight.numel(), 0.97, delta=0.01)
+        self.assertAlmostEqual((conv2_weight == 0).sum().item() / conv2_weight.numel(), 0.48, delta=0.01)
+
 
 if __name__ == "__main__":
     unittest.main()

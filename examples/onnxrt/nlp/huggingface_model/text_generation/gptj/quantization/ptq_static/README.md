@@ -1,21 +1,22 @@
-Step-by-Step
-============
+# Step-by-Step
 
 This example load a gpt-j-6B model and confirm its accuracy and speed based on [lambada](https://huggingface.co/datasets/lambada).
 
 # Prerequisite
 
 ## 1. Environment
+
 ```shell
 pip install neural-compressor
 pip install -r requirements.txt
 ```
+
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare Model
 
 ```bash
-python -m transformers.onnx --model=EleutherAI/gpt-j-6B model/ --framework pt --opset 13 --feature=causal-lm-with-past
+python prepare_model.py  --input_model=EleutherAI/gpt-j-6B  --output_model=bert-base-uncased-mrpc.onnx
 ```
 
 # Run

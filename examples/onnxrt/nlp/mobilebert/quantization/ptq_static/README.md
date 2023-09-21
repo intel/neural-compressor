@@ -49,9 +49,7 @@ python ./run_glue.py \
 
 Run the `prepare_model.sh` script：
 ```shell
-bash prepare_model.sh --input_dir=$OUT_DIR \
-                      --task_name=$TASK_NAME \
-                      --output_model=path/to/model # model path as *.onnx
+python prepare_model.py --input_model='google/mobilebert-uncased' --output_model=bert.onnx 
 ```
 
 # Run

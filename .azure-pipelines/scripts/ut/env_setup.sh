@@ -65,7 +65,7 @@ fi
 
 if [[ "${onnxruntime_version}" != "" ]]; then
     pip install onnxruntime==${onnxruntime_version}
-    pip install onnxruntime-extensions
+    pip install onnxruntime-extensions==0.8.0
     pip install optimum
 fi
 

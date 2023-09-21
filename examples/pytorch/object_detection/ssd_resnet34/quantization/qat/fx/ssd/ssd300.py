@@ -27,7 +27,7 @@ class SSD300(nn.Module):
         self._build_additional_features(out_size, self.out_chan)
 
         # after l2norm, conv7, conv8_2, conv9_2, conv10_2, conv11_2
-        # classifer 1, 2, 3, 4, 5 ,6
+        # classifier 1, 2, 3, 4, 5 ,6
 
         self.num_defaults = [4, 6, 6, 6, 4, 4]
         self.loc = []
