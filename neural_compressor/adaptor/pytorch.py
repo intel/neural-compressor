@@ -4450,7 +4450,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             assert False, "Unsupported this device {}".format(self.device)
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(os.path.dirname(__file__), query_config_file))
 
-        self.white_list = [torch.nn.Linear, torch.nn.Conv2d]
+        self.white_list = [torch.nn.Linear]
         # Contains parameters for algorithms such as AWQ, GPTQ, etc.
         self.recipes = framework_specific_info["recipes"]
         self.optype_statistics = None
