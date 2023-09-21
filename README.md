@@ -120,7 +120,8 @@ q_model = fit(
           <td colspan="2" align="center"><a href="./docs/source/smooth_quant.md">SmoothQuant</td>
       </tr>
       <tr>
-          <td colspan="8" align="center"><a href="./docs/source/quantization_weight_only.md">Weight-Only Quantization (INT8/INT4/FP4/NF4) </td>
+          <td colspan="4" align="center"><a href="./docs/source/quantization_weight_only.md">Weight-Only Quantization (INT8/INT4/FP4/NF4) </td>
+          <td colspan="4" align="center"><a href="https://github.com/intel/neural-compressor/blob/fp8_adaptor/docs/source/fp8.md">FP8 Quantization </td>
       </tr>
   </tbody>
   <thead>
