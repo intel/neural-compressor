@@ -1,14 +1,24 @@
 name: Scanner BDBA
 
 on:
-  push:
   workflow_dispatch:
+    repos:
+      description: 'Enter Project repo for which you want to run coverity scan:'
+      required: true
+      type: string
+      default: frameworks.ai.lpot.intel-lpot
+    ref_name:
+      description: 'Enter Project branch, tag:'
+      required: true
+      type: string
+      default: master
 
 jobs:
   bdba_job:
+    name: BDBA Scan
     uses: intel-innersource/frameworks.ai.infrastructure.code-scan-tools/.github/workflows/Scanner_Bdba.yml@one-ci-cd
     with:
-      repos: ${{ github.event.repository.name }}
+      repos: ${{ github.repos }}
       refs: ${{ github.ref_name }}
       group: "22"
       runners: "['self-hosted']"
