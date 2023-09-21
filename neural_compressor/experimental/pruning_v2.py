@@ -62,7 +62,7 @@ class Pruning(Component):
     """
 
     def __init__(self, conf_fname_or_obj=None):
-        """Initiailize."""
+        """Initialize."""
         super(Pruning, self).__init__()
         # we support WeightPruningConfig object and yaml file as
         if isinstance(conf_fname_or_obj, Config):

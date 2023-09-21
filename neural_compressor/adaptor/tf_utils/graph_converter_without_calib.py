@@ -56,7 +56,7 @@ from .util import (
     version1_lte_version2,
 )
 
-TF_SUPPORTED_MAX_VERSION = "2.12.0"
+TF_SUPPORTED_MAX_VERSION = "2.13.0"
 TF_SUPPORTED_MIN_VERSION = "1.14.0"
 
 logger = logging.getLogger("neural_compressor")
@@ -72,7 +72,7 @@ class GraphConverterWithoutCalib:
         """Convert graph without calibration.
 
         :param model: input tensorflow model.
-        :param qt_config: quantization configs, including interation and op-wise quant config
+        :param qt_config: quantization configs, including interaction and op-wise quant config
         :param fp32_ops: fall back to fp32 dtype op list
         :param bf16_ops: fall back to bf16 dtype op list
         :param data_loader: for calibration phase used dataloader
@@ -194,7 +194,7 @@ class GraphConverterWithoutCalib:
         self._tmp_model.input_tensor_names = self.input_tensor_names
 
     def convert_without_calib(self):
-        """Do convertion without calibration."""
+        """Do conversion without calibration."""
         model = self._tmp_model
 
         if len(self.op_wise_config) > 0:

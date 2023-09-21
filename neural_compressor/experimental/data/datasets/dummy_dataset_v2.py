@@ -52,10 +52,10 @@ class DummyDataset(IterableDataset):
         Args:
             sample_size (int): Total size of the dummy samples.
             input_shape (list or tuple): Create single or multi input tensors,
-                tuple reperesent the sample shape of the dataset, e.g. an image size should be
+                tuple represent the sample shape of the dataset, e.g. an image size should be
                 represented as (224, 224, 3), list contains multiple tuple and represent multi input tensors.
             label_shape (list or tuple): Create single or multi label tensors,
-                tuple reperesent the label shape of the dataset, e.g. an label size should be
+                tuple represent the label shape of the dataset, e.g. an label size should be
                 represented as (1, ), list contains multiple tuple and represent multi label tensors.
             low (list or float, default=-128.): Low out the tensor value range from [0, 1]
                 to [0, low] or [low, 0] if low < 0. If float, will implement all tensors with same low value.
@@ -187,10 +187,10 @@ class SparseDummyDataset(IterableDataset):
 
         Args:
             sample_size (int): Total size of the dummy samples.
-            dense_shape (list or tuple): Create single or multi sparse tensors, tuple reperesent
+            dense_shape (list or tuple): Create single or multi sparse tensors, tuple represent
                 the sample shape of the dataset, e.g. an image size should be represented as (224, 224, 3),
                 list contains multiple tuple and represent multi input tensors.
-            label_shape (list or tuple): Create single or multi label tensors, tuple reperesent
+            label_shape (list or tuple): Create single or multi label tensors, tuple represent
                 the label shape of the dataset, e.g. an label size should be represented as (1, ),
                 list contains multiple tuple and represent multi label tensors.
             sparse_ratio (float, default=0.5): The ratio of sparsity, supports [0, 1].

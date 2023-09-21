@@ -32,7 +32,7 @@ class QuantizedRNNConverter(GraphRewriterBase):
     """Quantized RNN converter."""
 
     def __init__(self, model, calibration_data, rnn_details, new_api=False):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.calibration_data = calibration_data
         self.rnn_details = rnn_details
@@ -40,7 +40,7 @@ class QuantizedRNNConverter(GraphRewriterBase):
 
     @dump_elapsed_time("Pass QuantizedRNNConverter")
     def do_transformation(self):
-        """Apply the RNN convertion."""
+        """Apply the RNN conversion."""
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()

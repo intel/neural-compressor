@@ -410,7 +410,7 @@ class TuneStrategy(object):
                 acc_res_msg = "[ " + "| ".join(self.tuning_result_data[0]) + " ]"
                 performace_res_msg = "[ " + "| ".join(self.tuning_result_data[1]) + " ]"
             logger.debug(f"*** The accuracy of last tuning is: {acc_res_msg}")
-            logger.debug(f"*** The perfomance of last tuning is: {performace_res_msg}")
+            logger.debug(f"*** The performance of last tuning is: {performace_res_msg}")
             logger.debug(f"*** The last tuning time: {(now_time - tuning_start_time):.2f} s")
             logger.debug(f"*** The tuning process lasted time: {(now_time - traverse_start_time):.2f} s")
 
@@ -541,7 +541,7 @@ class TuneStrategy(object):
         assert fields is None or skip_fields is None
         assert optypes is None or skip_optypes is None
         if not isinstance(self.adaptor, TensorFlowAdaptor):
-            logger.debug("OpType statistics comparation is only available for TensorFlow adaptor.")
+            logger.debug("OpType statistics comparison is only available for TensorFlow adaptor.")
             return
 
         adaptor_statistics = self.adaptor.optype_statistics

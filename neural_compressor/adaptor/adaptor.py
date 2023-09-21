@@ -188,7 +188,7 @@ class Adaptor(object):
         raise NotImplementedError
 
     @abstractmethod
-    def convert(self, model, source, destinatin):
+    def convert(self, model, source, destination):
         """The function is used to convert a source model format to another.
 
         Args:

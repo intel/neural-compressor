@@ -283,7 +283,7 @@ def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1, mea
 
 
 def collate_tf_preds(results):
-    """Collate tbe prediction results."""
+    """Collate the prediction results."""
     batch = results[0]
     if isinstance(batch, list):
         results = zip(*results)
@@ -356,7 +356,7 @@ def strip_unused_nodes(graph_def, input_node_names, output_node_names):
         if node_name in not_found:
             not_found.remove(node_name)
             node = graph_info[node_name].node
-            # skip the convertion to Placeholder that with type list
+            # skip the conversion to Placeholder that with type list
             if "component_types" in node.attr:
                 continue
             original_output = graph_info[node_name].outputs
@@ -469,7 +469,7 @@ def get_graph_def(model, outputs=[], auto_input_output=False):
 
 
 def get_model_input_shape(model):
-    """Get the inout shape of the input model."""
+    """Get the input shape of the input model."""
     for node in model.graph_def.node:
         if node.op == "Placeholder":
             _shape = list(tf.compat.v1.TensorShape(node.attr["shape"].shape))

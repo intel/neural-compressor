@@ -750,7 +750,7 @@ class TensorflowBaseModel(BaseModel):
 
     @property
     def graph_def(self):
-        """Return graph defination."""
+        """Return graph definition."""
         return self.graph.as_graph_def()
 
     @property
@@ -775,7 +775,7 @@ class TensorflowBaseModel(BaseModel):
 
     @graph_def.setter
     def graph_def(self, graph_def):
-        """Set graph defination."""
+        """Set graph definition."""
         if self._sess is not None:
             self._sess.close()
         output_sess = SESSIONS["graph_def"](
@@ -924,7 +924,7 @@ class TensorflowBaseModel(BaseModel):
                     inputs_as_nchw=inputs_as_nchw,
                 )
             else:  # pragma: no cover
-                assert False, "Not allowed dtype: {}, pleas use 'fp32' or 'int8'.".format(conf.dtype)
+                assert False, "Not allowed dtype: {}, please use 'fp32' or 'int8'.".format(conf.dtype)
         else:
             logger.warning("Unsupported config for export, only TF2ONNXConfig is supported!")
             exit(0)
@@ -952,7 +952,7 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         pass
 
     def get_weight(self, tensor_name):
-        """Return model wight with a given tensor name.
+        """Return model weight with a given tensor name.
 
         Args:
             tensor_name (str): name of a tensor.
@@ -1140,7 +1140,7 @@ class TensorflowCheckpointModel(TensorflowBaseModel):
 
     @property
     def graph_def(self):
-        """Return graph defination."""
+        """Return graph definition."""
         if self.model_type == "graph_def":
             return self.sess.graph.as_graph_def()
         from tensorflow.compat.v1 import graph_util
@@ -1155,7 +1155,7 @@ class TensorflowCheckpointModel(TensorflowBaseModel):
 
     @graph_def.setter
     def graph_def(self, graph_def):
-        """Set graph defination."""
+        """Set graph definition."""
         if self._sess is not None:
             self._sess.close()
         output_sess = SESSIONS["graph_def"](

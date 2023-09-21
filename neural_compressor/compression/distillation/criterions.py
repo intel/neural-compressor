@@ -327,7 +327,7 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
             else:
                 raise NotImplementedError(
                     "Now we only support CrossEntropyLoss KL Divergence"
-                    " and MSELoss for loss of student model output with respect to teacher model ouput."
+                    " and MSELoss for loss of student model output with respect to teacher model output."
                 )
             logger.info("teacher_student_loss: {}, {}".format(self.loss_types[1], self.loss_weights[1]))
 
@@ -505,7 +505,7 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
             else:
                 raise NotImplementedError(
                     "Now we only support CrossEntropyLoss"
-                    " for loss of student model output with respect to teacher model ouput."
+                    " for loss of student model output with respect to teacher model output."
                 )
             logger.info("teacher_student_loss: {}, {}".format(self.loss_types[1], self.loss_weights[1]))
 
@@ -676,7 +676,7 @@ class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
             else:
                 raise NotImplementedError(
                     "Now we only support CrossEntropyLoss"
-                    " for loss of student model output with respect to teacher model ouput."
+                    " for loss of student model output with respect to teacher model output."
                 )
             logger.info("teacher_student_loss: {}, {}".format(self.loss_types[1], self.loss_weights[1]))
 

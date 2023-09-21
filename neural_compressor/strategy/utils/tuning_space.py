@@ -225,8 +225,6 @@ class TuningSpace:
         Returns:
             Return the merged capability.
         """
-        from .utility import extract_data_type, reverted_data_type
-
         fw_op_cap = deepcopy(fw_op_cap)
         new_op_cap = deepcopy(cur_op_cap)
         op_user_cfg = preprocess_user_cfg(op_user_cfg)

@@ -30,7 +30,7 @@ class GraphRewriterBase:
     """
 
     def __init__(self, model):
-        """Initilization."""
+        """Initialization."""
         self.model = model
         self.logger = logging.getLogger("neural_compressor")
 

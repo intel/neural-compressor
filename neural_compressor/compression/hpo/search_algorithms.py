@@ -312,7 +312,7 @@ class XgbSearcher(Searcher):
                 objective="rank:pairwise",
             )
         else:  # pragma: no cover
-            raise RuntimeError("Invalid loss type: {}, only surport reg and rank".format(loss_type))
+            raise RuntimeError("Invalid loss type: {}, only support reg and rank".format(loss_type))
         self.optimizer = SimulatedAnnealingOptimizer(
             generate_func=self._generate_new_points, T0=100, Tf=0, alpha=0.9, higher_is_better=self.higher_is_better
         )

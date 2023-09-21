@@ -78,7 +78,7 @@ def quantize_4bit(tensor, quantile=1.0, data_type="nf4", return_int=False):
     allow_data = FLOAT_MAPPING[data_type]
     allow_data_bit = INT_MAPPING[data_type]
     # get scale and update tensor
-    scale = tensor.max(1)[0] * quantile / max(allow_data)
+    scale = tensor.abs().max(1)[0] * quantile / max(allow_data)
     scale.unsqueeze_(dim=-1)
     tensor = tensor / scale
     mid_data = [(allow_data[i] + allow_data[i + 1]) / 2 for i in range(len(allow_data) - 1)]
@@ -469,13 +469,15 @@ def rtn_quantize(
     return model
 
 
-def gptq_quantize(model, weight_config={}, dataloader=None, nsamples=128, use_max_length=True, device=None):
+def gptq_quantize(
+    model, weight_config={}, dataloader=None, nsamples=128, use_max_length=True, pad_max_length=2048, device=None
+):
     """Run weight-only quantization with."""
     # TODO: unify weight_config keys, add docstring, and support default config
     assert isinstance(model, torch.nn.Module), "only support torch module"
     from .gptq import GPTQuantizer
 
-    gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, nsamples, use_max_length, device)
+    gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device)
     fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization()
     logger.info("GPTQ quantizing done.")
     return fp32_modified_model, gptq_config

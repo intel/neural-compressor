@@ -72,7 +72,7 @@ class Distillation(Component):
         self._train_cfg = None
 
     def _on_train_begin(self, dataloader=None):
-        """Operations called on the begining of the training.
+        """Operations called on the beginning of the training.
 
         Called before training, evaluate the teacher model and the student model.
         """

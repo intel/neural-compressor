@@ -77,7 +77,7 @@ RUN_START = "run_start"
 # This tag signals that a submission has reached the relevant stopping criteria,
 # and has completed all tasks which are performed in the reference. The wall
 # time for a submission will be computed as the difference between the time
-# when this tag is emitted and the time whe the RUN_START is emitted.
+# when this tag is emitted and the time when the RUN_START is emitted.
 RUN_STOP = "run_stop"
 
 # This tag should be emitted immediately before ending a run, and should be the

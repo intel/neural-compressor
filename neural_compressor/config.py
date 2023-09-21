@@ -302,6 +302,7 @@ class BenchmarkConfig:
         inter_num_of_threads=None,
         intra_num_of_threads=None,
         diagnosis=False,
+        ni_workload_name="profiling",
     ):
         """Init a BenchmarkConfig object."""
         self.inputs = inputs
@@ -316,6 +317,7 @@ class BenchmarkConfig:
         self.inter_num_of_threads = inter_num_of_threads
         self.intra_num_of_threads = intra_num_of_threads
         self.diagnosis = diagnosis
+        self.ni_workload_name = ni_workload_name
         self._framework = None
 
     def keys(self):
@@ -463,6 +465,17 @@ class BenchmarkConfig:
         """Set diagnosis property."""
         if _check_value("diagnosis", diagnosis, bool):
             self._diagnosis = diagnosis
+
+    @property
+    def ni_workload_name(self):
+        """Get Neural Insights workload name."""
+        return self._ni_workload_name
+
+    @ni_workload_name.setter
+    def ni_workload_name(self, ni_workload_name):
+        """Set Neural Insights workload name."""
+        if _check_value("ni_workload_name", ni_workload_name, str):
+            self._ni_workload_name = ni_workload_name
 
     @property
     def model_name(self):
@@ -739,9 +752,9 @@ class _BaseQuantizationConfig:
                  'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
                  'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
                  'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
-                 'add_qdq_pair_to_weight': whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
+                 'add_qdq_pair_to_weight': whether add QDQ pair for weights, only valid for onnxrt_trt_ep
                  'optypes_to_exclude_output_quant': don't quantize output of specified optypes
-                 'dedicated_qdq_pair': whether dedicate QDQ pair, only vaild for onnxrt_trt_ep
+                 'dedicated_qdq_pair': whether dedicate QDQ pair, only valid for onnxrt_trt_ep
         quant_format: Support 'default', 'QDQ' and 'QOperator', only required in ONNXRuntime.
         device: Support 'cpu' and 'gpu'.
         calibration_sampling_size: Number of calibration sample.
@@ -801,6 +814,7 @@ class _BaseQuantizationConfig:
         accuracy_criterion=accuracy_criterion,
         tuning_criterion=tuning_criterion,
         diagnosis=False,
+        ni_workload_name="quantization",
     ):
         """Initialize _BaseQuantizationConfig class."""
         self.inputs = inputs
@@ -822,6 +836,7 @@ class _BaseQuantizationConfig:
         self.quant_level = quant_level
         self._framework = None
         self.diagnosis = diagnosis
+        self.ni_workload_name = ni_workload_name
         self._example_inputs = example_inputs
 
     @property
@@ -1201,9 +1216,9 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
                  'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
                  'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
-                 'add_qdq_pair_to_weight': whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
+                 'add_qdq_pair_to_weight': whether add QDQ pair for weights, only valid for onnxrt_trt_ep
                  'optypes_to_exclude_output_quant': don't quantize output of specified optypes
-                 'dedicated_qdq_pair': whether dedicate QDQ pair, only vaild for onnxrt_trt_ep
+                 'dedicated_qdq_pair': whether dedicate QDQ pair, only valid for onnxrt_trt_ep
         quant_format: Support 'default', 'QDQ' and 'QOperator', only required in ONNXRuntime.
         inputs: Inputs of model, only required in tensorflow.
         outputs: Outputs of model, only required in tensorflow.
@@ -1259,6 +1274,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                             Please refer to docstring of AccuracyCriterion class.
         diagnosis(bool): This flag indicates whether to do diagnosis.
                            Default value is False.
+        ni_workload_name: Custom workload name for Neural Insights diagnosis workload.
+                           Default value is 'quantization'.
 
     Example::
 
@@ -1293,6 +1310,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         accuracy_criterion=accuracy_criterion,
         tuning_criterion=tuning_criterion,
         diagnosis=False,
+        ni_workload_name="quantization",
     ):
         """Init a PostTrainingQuantConfig object."""
         super().__init__(
@@ -1313,9 +1331,13 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
             accuracy_criterion=accuracy_criterion,
             tuning_criterion=tuning_criterion,
             diagnosis=diagnosis,
+            ni_workload_name=ni_workload_name,
         )
         self.approach = approach
         self.diagnosis = diagnosis
+        self.ni_workload_name = ni_workload_name
+        if self.diagnosis:
+            self.tuning_criterion.max_trials = 1
 
     @property
     def approach(self):
@@ -1342,6 +1364,17 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         """Set diagnosis."""
         if _check_value("diagnosis", diagnosis, bool):
             self._diagnosis = diagnosis
+
+    @property
+    def ni_workload_name(self):
+        """Get Neural Insights workload name."""
+        return self._ni_workload_name
+
+    @ni_workload_name.setter
+    def ni_workload_name(self, ni_workload_name):
+        """Set Neural Insights workload name."""
+        if _check_value("ni_workload_name", ni_workload_name, str):
+            self._ni_workload_name = ni_workload_name
 
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
@@ -1616,12 +1649,12 @@ class KnowledgeDistillationLossConfig:
         loss_types (list[str], optional): loss types, should be a list of length 2.
             First item is the loss type for student model output and groundtruth label,
             second item is the loss type for student model output and teacher model output.
-            Supported tpyes for first item are "CE", "MSE".
-            Supported tpyes for second item are "CE", "MSE", "KL".
+            Supported types for first item are "CE", "MSE".
+            Supported types for second item are "CE", "MSE", "KL".
             Defaults to ['CE', 'CE'].
         loss_weights (list[float], optional): loss weights, should be a list of length 2 and sum to 1.0.
-            First item is the weight multipled to the loss of student model output and groundtruth label,
-            second item is the weight multipled to the loss of student model output and teacher model output.
+            First item is the weight multiplied to the loss of student model output and groundtruth label,
+            second item is the weight multiplied to the loss of student model output and teacher model output.
             Defaults to [0.5, 0.5].
 
     Example::
@@ -1673,10 +1706,10 @@ class IntermediateLayersKnowledgeDistillationLossConfig:
               [('model.layer1.output', )].
         loss_types (list[str], optional): loss types, should be a list with the same length of
             layer_mappings. Each item is the loss type for each layer mapping specified in the
-            layer_mappings. Supported tpyes for each item are "MSE", "KL", "L1". Defaults to
+            layer_mappings. Supported types for each item are "MSE", "KL", "L1". Defaults to
             ["MSE", ]*len(layer_mappings).
         loss_weights (list[float], optional): loss weights, should be a list with the same length of
-            layer_mappings. Each item is the weight multipled to the loss of each layer mapping specified
+            layer_mappings. Each item is the weight multiplied to the loss of each layer mapping specified
             in the layer_mappings. Defaults to [1.0 / len(layer_mappings)] * len(layer_mappings).
         add_origin_loss (bool, optional): Whether to add origin loss of the student model. Defaults to False.
 
@@ -1721,7 +1754,7 @@ class SelfKnowledgeDistillationLossConfig:
         temperature (float, optional): use to calculate the soft label CE.
         loss_types (list, optional):  loss types, should be a list with the same length of
             layer_mappings. Each item is the loss type for each layer mapping specified in the
-            layer_mappings. Supported tpyes for each item are "CE", "KL", "L2". Defaults to
+            layer_mappings. Supported types for each item are "CE", "KL", "L2". Defaults to
             ["CE", ]*len(layer_mappings).
         loss_weights (list, optional): loss weights. Defaults to [1.0 / len(layer_mappings)] *
             len(layer_mappings).

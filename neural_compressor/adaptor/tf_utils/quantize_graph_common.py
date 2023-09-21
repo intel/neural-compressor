@@ -30,7 +30,7 @@ class QuantizeGraphHelper:
     node_name_port_cache = {}
 
     def __init__(self):
-        """Intialization."""
+        """Initialization."""
         pass
 
     def _recursive_graph_sorting(self, node_name):
@@ -90,7 +90,7 @@ class QuantizeGraphHelper:
         """Split shared inputs(like weights and bias) of the graph.
 
         :param in_graph: input graph file.
-        :return: path to ouput graph file.
+        :return: path to output graph file.
         """
         node_map = {}
         for node in input_graph_def.node:

@@ -38,7 +38,7 @@ def _prepare_inputs(pt_model, input_names, example_inputs):
         input_names = input_names or list(example_inputs.keys())
         if isinstance(example_inputs, UserDict):
             example_inputs = dict(example_inputs)
-    # match input_names with inspected input_order, especailly for bert in hugginface.
+    # match input_names with inspected input_order, especially for bert in hugginface.
     elif input_names and len(input_names) > 1:
         import inspect
 
@@ -78,13 +78,6 @@ def get_node_mapping(
                 if (value == data).all():
                     module_dict.pop(name)
                     return name
-                elif op_type == "Conv":
-                    # Convolution weight data have fluction and BN fusion will insert scale.
-                    # We use the weight scale of the first output channel to check.
-                    weight_scale = value[0] / data[0]
-                    if np.allclose(weight_scale - np.mean(weight_scale), 0, atol=1.0e-5):
-                        module_dict.pop(name)
-                        return name
         return None
 
     module_dict = {}
@@ -109,9 +102,9 @@ def get_node_mapping(
                 data = numpy_helper.to_array(initializer_data[node.input[1]]).T
             elif node.op_type == "Gather" and node.input[0] in initializer_data:
                 data = numpy_helper.to_array(initializer_data[node.input[0]])
-            elif node.op_type in ["Conv", "Gemm"]:
+            elif node.op_type in ["Gemm"]:
                 data = numpy_helper.to_array(initializer_data[node.input[1]])
-            else:
+            else:  # pragma: no cover
                 continue
             pt_name = check_data(node.op_type, data, module_dict)
             if pt_name:
@@ -195,7 +188,7 @@ def dynamic_quant_export(
     if REDUCE_RANGE:
         logger.info("Reduce range is {}".format(str(REDUCE_RANGE)))
 
-    logger.info("Quantization format is not avalible when executing dynamic quantization.")
+    logger.info("Quantization format is not available when executing dynamic quantization.")
 
     if weight_type.upper() == "S8":
         weight_type = ortq.QuantType.QInt8
@@ -285,10 +278,9 @@ def static_quant_export(
                 "Please fallback unsupported quantized ops by setting 'op_type_dict' or "
                 "'op_name_dict' in '{}' config. ".format(config_name)
             )
-            exit(0)
+            raise TypeError("Export failed with TypeError.")
         except Exception as e:
-            logger.error(e)
-            exit(0)
+            raise e
 
     if quant_format != "QDQ":
         sess_options = ort.SessionOptions()

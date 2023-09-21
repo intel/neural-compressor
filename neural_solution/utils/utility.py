@@ -67,7 +67,7 @@ def get_serve_log_workspace(workspace="./"):
 
 
 def dict_to_str(d):
-    """Covert a dict object to a string object.
+    """Convert a dict object to a string object.
 
     Args:
         d (dict): a dict object

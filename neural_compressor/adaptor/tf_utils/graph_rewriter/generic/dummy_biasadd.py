@@ -31,7 +31,7 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
     """Inject dummy BiasAdd for MatMul, Conv2D for pattern fusion."""
 
     def __init__(self, model, outputs):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.outputs = outputs
 

@@ -16,7 +16,7 @@ pip install neural-compressor
 ```
 
 ### Install Requirements
-The Tensorflow and intel-extension-for-tensorflow is mandatory to be installed to run this QAT example.
+The Tensorflow and intel-extension-for-tensorflow is mandatory to be installed to run this example.
 The Intel Extension for Tensorflow for Intel CPUs is installed as default.
 ```shell
 pip install -r requirements.txt

@@ -637,6 +637,8 @@ class TestPytorchAdaptor(unittest.TestCase):
                 quantizer.calib_func = eval_func
             quantizer.eval_func = eval_func
             q_model = quantizer.fit()
+            self.assertTrue(isinstance(q_model.model.conv, torch.nn.Conv2d))
+            self.assertTrue("quantize" in str(q_model.model.conv2.__class__))
             q_model.save("./saved")
             saved_model = load("./saved", model, **non_quant_dict)
             eval_func(saved_model)
@@ -766,7 +768,8 @@ class TestPytorchAdaptor(unittest.TestCase):
         quantizer.model = model
         quantizer.calib_dataloader = dataloader
         quantizer.eval_dataloader = dataloader
-        quantizer.fit()
+        model = quantizer.fit()
+        self.assertTrue(isinstance(model, torch.nn.Module))
 
     def test_floatfunctions_fallback(self):
         class ModelWithFunctionals(torch.nn.Module):
@@ -775,7 +778,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                 self.mycat = nnq.FloatFunctional()
                 self.myadd = nnq.FloatFunctional()
                 self.myadd_relu = nnq.FloatFunctional()
-                # Tracing doesnt work yet for c10 ops with scalar inputs
+                # Tracing doesn't work yet for c10 ops with scalar inputs
                 # https://github.com/pytorch/pytorch/issues/27097
                 self.my_scalar_add = nnq.FloatFunctional()
                 self.mymul = nnq.FloatFunctional()
@@ -788,7 +791,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                 y = self.mycat.cat([x, x, x])
                 z = self.myadd.add(y, y)
                 w = self.myadd_relu.add_relu(z, z)
-                # Tracing doesnt work yet for c10 ops with scalar inputs
+                # Tracing doesn't work yet for c10 ops with scalar inputs
                 # https://github.com/pytorch/pytorch/issues/27097
                 w = self.my_scalar_add.add_scalar(w, -0.5)
                 w = self.mymul.mul(w, w)
@@ -822,7 +825,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         self.assertTrue(np.allclose(y, qy, **tol))
 
 
-@unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
+@unittest.skipIf(not FX_MODE, "Unsupported Fx Mode with PyTorch Version Below 1.8")
 class TestPytorchFXAdaptor(unittest.TestCase):
     framework_specific_info = {
         "device": "cpu",

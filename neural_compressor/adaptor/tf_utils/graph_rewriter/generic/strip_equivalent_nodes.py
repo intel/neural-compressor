@@ -27,7 +27,7 @@ class StripEquivalentNodesOptimizer(GraphRewriterBase):
     """Remove the equivalent nodes which have the same inputs and attributes."""
 
     def __init__(self, model, output_node_names):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.output_node_names = output_node_names
 

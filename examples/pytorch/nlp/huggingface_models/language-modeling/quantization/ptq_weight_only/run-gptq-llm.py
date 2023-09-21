@@ -6,6 +6,7 @@ import time
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torch.nn.functional import pad
 
 import transformers
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -218,13 +219,6 @@ if __name__ == '__main__':
     model.eval()
 
     # dataset
-    # original method of loading data, only load the sequence whose length > model.seqlen
-    # ================================================
-    # dataloader, testloader = get_loaders(
-    #     args.dataset, nsamples=args.nsamples, seed=args.seed, model=args.model_name_or_path, seqlen=model.seqlen
-    # )
-    # dataloader = INCDataloader(dataloader)
-    # ================================================
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
     calib_dataset = load_dataset(args.dataset, split="train") # default
     # calib_dataset = datasets.load_from_disk('/your/local/pile-10k/') # use this if trouble with connecting to HF
@@ -244,7 +238,6 @@ if __name__ == '__main__':
     
     model = model.to(DEV)
 
-    print('Starting ...')
     if args.sym:
         sym_opt = "sym"
     else:
@@ -276,13 +269,14 @@ if __name__ == '__main__':
     #             'act_order':args.act_order, 
     #             'block_size': args.block_size, 
     #             'nsampeles': args.nsamples,
-    #             'use_max_length': args.use_max_length
+    #             'use_max_length': args.use_max_length,
+    #             'pad_max_length': args.pad_max_length
     #         },
     #     },
     # )
     # q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader,)
 
-    # method 2: directly use INC build-in function, for some models like falcon, please use this function
+    # method 2: directly use INC built-in function, for some models like falcon, please use this function
     conf = {
         ".*":{
             'wbits': args.wbits, # 1-8 bits 
@@ -296,7 +290,8 @@ if __name__ == '__main__':
         weight_config=conf, 
         dataloader=calib_dataloader, 
         nsamples = args.nsamples, 
-        use_max_length = args.use_max_length
+        use_max_length = args.use_max_length,
+        pad_max_length = args.pad_max_length
     )
 
     results = lm_evaluate(

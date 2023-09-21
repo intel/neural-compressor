@@ -267,7 +267,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             except:
                 logging.warning(
                     "Fail to upgrade model opset_import to >= 15, "
-                    "please upgrate it manually to run with bf16 data type"
+                    "please upgrade it manually to run with bf16 data type"
                 )
                 exit(0)
 
@@ -660,8 +660,17 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 )
                 return model
             else:
-                new_tensor_value = quantize_data_per_channel(
-                    tensor_value, q_type, self.quantize_config[node_name]["weight"]["scheme"], scale_value, zo_value
+                axis = (
+                    tuple(range(1, len(tensor_value.shape)))
+                    if tensor_value.shape.index(scale_value.shape[0]) == 0
+                    else tuple(range(0, len(tensor_value.shape) - 1))
+                )
+                new_tensor_value = quantize_data_with_scale_zero(
+                    tensor_value,
+                    q_type,
+                    self.quantize_config[node_name]["weight"]["scheme"],
+                    np.expand_dims(scale_value, axis=axis),
+                    np.expand_dims(zo_value, axis=axis),
                 )
             model.set_initializer(tensor_name, new_tensor_value)
         return model
@@ -1087,7 +1096,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         ffn_matmul = []
         attention_matmul_optype = [node.op_type for node in attention_matmul]
-        # find matmul ops in feed forward network (FFN) structure whitch mainly in transfomers based NLP models
+        # find matmul ops in feed forward network (FFN) structure which mainly in transfomers based NLP models
         if len(attention_matmul) > 0 and "Attention" in attention_matmul_optype:
             # model is optimized and Attention is fused,
             # index of Attention is used as split to find FFN MatMul
@@ -1283,12 +1292,12 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         Args:
             input_graph      : onnx model for evaluation
             dataloader       : dataloader for evaluation. neural_compressor.data.dataloader.ONNXDataLoader
-            postprocess      : post-process for evalution. neural_compressor.data.transform.ONNXTransforms
+            postprocess      : post-process for evaluation. neural_compressor.data.transform.ONNXTransforms
             metrics:         : metrics for evaluation. neural_compressor.metric.ONNXMetrics
             measurer         : neural_compressor.objective.Measurer
             iteration(int)   : max iterations of evaluaton.
-            tensorboard(bool): whether to use tensorboard for visualizaton
-            fp32_baseline (boolen, optional): only for compare_label=False pipeline
+            tensorboard(bool): whether to use tensorboard for visualization
+            fp32_baseline (boolean, optional): only for compare_label=False pipeline
 
         Returns:
             (float) evaluation results. acc, f1 e.g.
@@ -1462,7 +1471,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         model.save(os.path.join(path, "best_model.onnx"))
 
     def get_output_op_names(self, qmodel):
-        """Get the ouput ops' names."""
+        """Get the output ops' names."""
         outputs = qmodel.output()
         output_op_names = []
         for output in outputs:
@@ -1628,7 +1637,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         self.quantizable_ops = self._query_quantizable_ops(model.model)
 
         quant_config = self._cfg_to_quantize_config(tune_cfg)
-        algos = set([item["weight"]["algorithm"] for key, item in quant_config.items() if isinstance(item, dict)])
+        algos = set([item["algorithm"] for key, item in quant_config.items() if isinstance(item, dict)])
         if "GPTQ" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import gptq_quantize
 
@@ -1640,9 +1649,9 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
             model = gptq_quantize(
                 model,
-                quant_config,
                 data_loader,
-                calib_sampling_size,
+                quant_config,
+                n_samples=calib_sampling_size,
                 percdamp=percdamp,
                 blocksize=blocksize,
                 actorder=actorder,
@@ -1657,7 +1666,13 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             n_blocks = self.recipes.get("awq_args", {}).get("n_blocks", 5)
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
             model = awq_quantize(
-                model, quant_config, data_loader, calib_sampling_size, enable_auto_scale, enable_mse_search, n_blocks
+                model,
+                data_loader,
+                quant_config,
+                n_samples=calib_sampling_size,
+                enable_auto_scale=enable_auto_scale,
+                enable_mse_search=enable_mse_search,
+                n_blocks=n_blocks,
             )
         elif "RTN" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
@@ -1719,7 +1734,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             if tune_cfg["op"][(op.name, op.op_type)]["weight"]["dtype"] in self.query_handler.get_fallback_list():
                 quantize_config[op.name] = tune_cfg["op"][(op.name, op.op_type)]["weight"]["dtype"]
             else:
-                quantize_config[op.name] = copy.deepcopy(tune_cfg["op"][(op.name, op.op_type)])
+                quantize_config[op.name] = copy.deepcopy(tune_cfg["op"][(op.name, op.op_type)]["weight"])
 
         return quantize_config
 
@@ -1948,7 +1963,7 @@ class ONNXRTQuery(QueryBackendCapability):
         return config
 
     def get_version(self):  # pragma: no cover
-        """Get the current backend version infomation.
+        """Get the current backend version information.
 
         Returns:
             [string]: version string.

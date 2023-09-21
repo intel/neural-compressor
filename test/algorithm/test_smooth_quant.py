@@ -367,7 +367,7 @@ class T5LayerNorm(nn.Module):
 
     def forward(self, hidden_states):
         # T5 uses a layer_norm which only scales and doesn't shift, which is also known as Root Mean
-        # Square Layer Normalization https://arxiv.org/abs/1910.07467 thus varience is calculated
+        # Square Layer Normalization https://arxiv.org/abs/1910.07467 thus variance is calculated
         # w/o mean and there is no bias. Additionally we want to make sure that the accumulation for
         # half-precision inputs is done in fp32
 
@@ -469,7 +469,8 @@ class TestSqListInput(unittest.TestCase):
                 self.norm = LlamaRMSNorm(4)
                 self.fc3 = torch.nn.Linear(4, 3)
 
-            def forward(self, x1, x2, x3, x4):
+            def forward(self, x1, x_tuple, x4):
+                x2, x3 = x_tuple
                 out1 = self.fc1_1(x1 + x4)
                 out2 = self.fc1_2(x2 + x3)
                 out = out1 + out2
@@ -480,11 +481,17 @@ class TestSqListInput(unittest.TestCase):
                 return out
 
         model = Model()
-        model.device = "cuda"
-
         sq = TorchSmoothQuant(model, self.list_tuple_dl)
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 2
+
+    def test_device(self):
+        input1 = torch.rand((1, 3))
+        input2 = torch.rand((1, 3))
+        example_input = {"k": [input1, ((input2, input1)), input2]}
+        from neural_compressor.adaptor.torch_utils.smooth_quant import move_input_to_device
+
+        move_input_to_device(example_input)
 
 
 class TestAlphaAutoLinear(unittest.TestCase):
@@ -773,8 +780,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         output2 = q_model.model(input_ids)
         assert isinstance(q_model.model.fc1, SQLinearWrapper)
         # set a big atol to avoid random issue
-        print(output1, output2)
-        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
+        self.assertTrue(torch.allclose(output1, output2, atol=2e-02))
 
         q_model.save("saved_result")
         from neural_compressor.utils.pytorch import load

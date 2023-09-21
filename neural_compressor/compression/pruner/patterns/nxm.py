@@ -55,7 +55,7 @@ class PytorchPatternNxM(PytorchBasePattern):
         self.check_layer_validity()
 
     def get_block_size_dict(self):
-        """Calulate the zero elements' ration in pre_masks.
+        """Calculate the zero elements' ration in pre_masks.
 
         Args:
             data: Dict{"layer_name": Tensor} that stores weights or scores.
@@ -149,7 +149,7 @@ class PytorchPatternNxM(PytorchBasePattern):
         Args:
             data: Input.
 
-        Returnn:
+        Return:
             Reshaped data.
         """
         # TODO: need to verify whether it's ok for transposed conv
@@ -318,6 +318,8 @@ class PytorchPatternNxM(PytorchBasePattern):
                 break
             not_exceed_layers = new_not_exceed_layers
             global_scores = torch.cat([torch.flatten(new_scores[key]) for key in not_exceed_layers])
+            if residual_k < 1:  # pragma: no cover
+                break
             threshold, _ = torch.kthvalue(global_scores, residual_k)
 
             for key in not_exceed_layers:
@@ -351,7 +353,7 @@ class PytorchPatternNxM(PytorchBasePattern):
 
                 if not self.block:
                     masks[key] = masks[key].bool()
-            if not keep_exact_sparsity_ratio:
+            if not keep_exact_sparsity_ratio:  # pragma: no cover
                 break
 
         for key in masks.keys():
@@ -568,7 +570,7 @@ class KerasPatternNxM(KerasBasePattern):
         self.check_layer_validity()
 
     def get_block_size_dict(self):
-        """Calulate the zero elements' ration in pre_masks.
+        """Calculate the zero elements' ration in pre_masks.
 
         Args:
             data: Dict{"layer_name": Tensor} that stores weights or scores.

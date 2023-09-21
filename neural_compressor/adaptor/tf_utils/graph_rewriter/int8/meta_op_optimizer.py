@@ -32,7 +32,7 @@ class MetaInfoChangingMemOpOptimizer(GraphRewriterBase):
     """
 
     def __init__(self, model):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
 
         self.graph_analyzer = GraphAnalyzer()

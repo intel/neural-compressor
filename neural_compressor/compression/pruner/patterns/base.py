@@ -104,7 +104,7 @@ class ProgressivePatternUtils(object):
     def update_new_added_masks(pre_masks, cur_masks):
         """Obtain the new set-to-zero masks during a pruning procedure.
 
-        Pre_masks, cur_masks should have identical keys bacause they represent the same model.
+        Pre_masks, cur_masks should have identical keys because they represent the same model.
 
         Args:
             pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
@@ -114,7 +114,7 @@ class ProgressivePatternUtils(object):
             A dict {"layer_name": Tensor} that stores the added masks.
         """
         # obtain the new set-to-zero mask during a pruning procedure.
-        # pre_masks, cur_masks should have identical keys bacause they stands for one model.
+        # pre_masks, cur_masks should have identical keys because they stands for one model.
         new_added_masks = {}
         for key in pre_masks.keys():
             pre_mask = pre_masks[key]
@@ -536,12 +536,12 @@ class PytorchBasePattern(BasePattern):
         """
         flattern_score = torch.flatten(score)
         k = int(exact_sparsity_ratio * flattern_score.numel())
-        threshold, _ = torch.kthvalue(flattern_score, k)
         if not k < 1:
+            threshold, _ = torch.kthvalue(flattern_score, k)
             zero = torch.tensor([False]).to(score.device)
             one = torch.tensor([True]).to(score.device)
             mask = torch.where(score <= threshold, zero, one)
-        else:
+        else:  # pragma: no cover
             mask = torch.ones(score.shape, device=score.device)
         if self.block:
             mask = mask.float()

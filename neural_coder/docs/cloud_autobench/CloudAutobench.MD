@@ -84,7 +84,7 @@ chmod 755 bench.sh
 
 ### Input your task config information in the config.conf file
 You need to input the information of your task in the config.conf file
-You can choose the cloud vendor(AWS or Ali Yun), Instance number, type and other information with the comments as a referrence
+You can choose the cloud vendor(AWS or Ali Yun), Instance number, type and other information with the comments as a reference
 
 ### Launch the script
 ```

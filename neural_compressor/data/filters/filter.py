@@ -26,7 +26,7 @@ class TensorflowFilters(object):  # pragma: no cover
     """The base filter class for Tensorflow framework."""
 
     def __init__(self):
-        """Initialize the atrribute of the class."""
+        """Initialize the attribute of the class."""
         self.filters = {}
         self.filters.update(TENSORFLOW_FILTERS)
 
@@ -36,7 +36,7 @@ class ONNXRTQLFilters(object):  # pragma: no cover
     """The base filter class for ONNXRT framework QLinear mode."""
 
     def __init__(self):
-        """Initialize the atrribute of the class."""
+        """Initialize the attribute of the class."""
         self.filters = {}
         self.filters.update(ONNXRT_QL_FILTERS)
 
@@ -46,7 +46,7 @@ class ONNXRTITFilters(object):  # pragma: no cover
     """The base filter class for ONNXRT framework IT mode."""
 
     def __init__(self):
-        """Initialize the atrribute of the class."""
+        """Initialize the attribute of the class."""
         self.filters = {}
         self.filters.update(ONNXRT_IT_FILTERS)
 
@@ -56,7 +56,7 @@ class PyTorchFilters(object):  # pragma: no cover
     """The base filter class for PyTorch framework."""
 
     def __init__(self):
-        """Initialize the atrribute of the class."""
+        """Initialize the attribute of the class."""
         self.filters = {}
         self.filters.update(PYTORCH_FILTERS)
 
@@ -66,7 +66,7 @@ class MXNetFilters(object):  # pragma: no cover
     """The base filter class for MXNet framework."""
 
     def __init__(self):
-        """Initialize the atrribute of the class."""
+        """Initialize the attribute of the class."""
         self.filters = {}
         self.filters.update(MXNET_FILTERS)
 

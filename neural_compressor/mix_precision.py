@@ -41,7 +41,7 @@ def fit(model, conf, eval_func=None, eval_dataloader=None, eval_metric=None, **k
                                               to frozen pb, loaded graph_def object or
                                               a path to ckpt/savedmodel folder.
                                               For PyTorch model, it's torch.nn.model
-                                              instance. For onnx model, it chould be a path
+                                              instance. For onnx model, it should be a path
                                               to .onnx file or onnx.onnx_ml_pb2.ModelProto.
                                               For MXNet model, it's mxnet.symbol.Symbol
                                               or gluon.HybirdBlock instance.
@@ -62,7 +62,7 @@ def fit(model, conf, eval_func=None, eval_dataloader=None, eval_metric=None, **k
                                               supported metrics. If this parameter is
                                               not None, user needs to specify pre-defined
                                               evaluation metrics through configuration file
-                                              and should set "eval_func" paramter as None.
+                                              and should set "eval_func" parameter as None.
                                               Tuner will combine model, eval_dataloader
                                               and pre-defined metrics to run evaluation
                                               process.

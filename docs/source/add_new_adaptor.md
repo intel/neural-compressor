@@ -80,7 +80,7 @@ int8_conv_config = {
     },
 }
 ```
-The `optype_wise_ability` exmaple config is like below.
+The `optype_wise_ability` example config is like below.
 
 ```python
 optype_wise_ability = {

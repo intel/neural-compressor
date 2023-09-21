@@ -21,7 +21,7 @@ from copy import deepcopy
 
 from ..utils import logger
 from .strategy import TuneStrategy, strategy_registry
-from .utils.constant import LOWER_BIT_LIST, PRECISION_LIST, TUNING_ITEMS_LST
+from .utils.constant import LOWER_BIT_LIST, PRECISION_LIST
 from .utils.tuning_sampler import (
     BlockFallbackTuningSampler,
     FallbackTuningSampler,
@@ -115,7 +115,7 @@ class BasicTuneStrategy(TuneStrategy):
 
                 new_op_tuning_cfg = deepcopy(self.cur_best_tuning_cfg)
                 for item in static_dynamic_items:
-                    new_op_tuning_cfg[item.name] = self._initial_dynamic_cfg_based_on_static_cfg(
+                    new_op_tuning_cfg[item.name] = self.initial_dynamic_cfg_based_on_static_cfg(
                         new_op_tuning_cfg[item.name]
                     )
                 new_op_tuning_cfg["calib_sampling_size"] = calib_sampling_size
@@ -230,13 +230,11 @@ class BasicTuneStrategy(TuneStrategy):
         from copy import deepcopy
 
         op_block_lst = self.capability.get("block_wise", [])
-        if op_block_lst:
+        fallback_items_name_lst = [item.name for item in fallback_items_lst]
+        if op_block_lst and fallback_items_name_lst:
             # Fallback block by block
-            fallback_items_name_lst = [item.name for item in fallback_items_lst]
             op_block_fallback_lst = []
             for op_block_index, op_block in enumerate(op_block_lst):
-                if not fallback_items_name_lst:
-                    break
                 matches = [item for item in op_block if item in fallback_items_name_lst]
                 if matches:
                     op_block_fallback_lst.append(op_block)
@@ -366,7 +364,7 @@ class BasicTuneStrategy(TuneStrategy):
 
                 new_op_tuning_cfg = deepcopy(self.cur_best_tuning_cfg)
                 for item in static_dynamic_items:
-                    new_op_tuning_cfg[item.name] = self._initial_dynamic_cfg_based_on_static_cfg(
+                    new_op_tuning_cfg[item.name] = self.initial_dynamic_cfg_based_on_static_cfg(
                         new_op_tuning_cfg[item.name]
                     )
                 new_op_tuning_cfg["calib_sampling_size"] = calib_sampling_size
@@ -432,30 +430,3 @@ class BasicTuneStrategy(TuneStrategy):
                 "[Strategy] All tuning options for the current strategy have been tried.\
                 If the quantized model does not seem to work well, it might be worth considering other strategies."
             )
-
-    def _initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg: OpTuningConfig):
-        op_state = op_static_cfg.get_state()
-        op_name = op_static_cfg.op_name
-        op_type = op_static_cfg.op_type
-        op_name_type = (op_name, op_type)
-        op_quant_mode = "dynamic"
-        tuning_space = self.tuning_space
-        dynamic_state = {}
-        for att in ["weight", "activation"]:
-            if att not in op_state:
-                continue
-            # Add dtype
-            full_path = self.tuning_space.get_op_default_path_by_pattern(op_name_type, op_quant_mode)
-            dynamic_state[att + "_dtype"] = self.tuning_space.ops_data_type[op_name_type][full_path[att]]
-            for method_name, method_val in op_state[att].items():
-                att_and_method_name = (att, method_name)
-                if att_and_method_name not in TUNING_ITEMS_LST:
-                    continue
-                if tuning_space.query_item_option(op_name_type, full_path[att], att_and_method_name, method_val):
-                    dynamic_state[att_and_method_name] = method_val
-                else:
-                    quant_mode_item = tuning_space.get_item_by_path((op_name_type, *full_path[att]))
-                    if quant_mode_item and quant_mode_item.get_option_by_name(att_and_method_name):
-                        tuning_item = quant_mode_item.get_option_by_name(att_and_method_name)
-                        dynamic_state[att_and_method_name] = tuning_item.options[0] if tuning_item else None
-        return OpTuningConfig(op_name, op_type, op_quant_mode, tuning_space, kwargs=dynamic_state)

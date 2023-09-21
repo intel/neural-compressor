@@ -15,18 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The conservative tuning strategy for quantization level 0."""
-import copy
-import os
 from collections import OrderedDict as COrderedDict
-from collections import deque
 from copy import deepcopy
-from typing import Dict, List, OrderedDict, Tuple
+from typing import List, OrderedDict, Tuple
 
-import numpy as np
-
-from ..algorithm import AlgorithmScheduler
 from ..utils import logger
-from ..utils.utility import Statistics
 from .strategy import TuneStrategy, strategy_registry
 from .utils.tuning_space import TuningItem
 

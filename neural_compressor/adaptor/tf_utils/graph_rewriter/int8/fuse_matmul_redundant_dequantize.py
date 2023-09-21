@@ -31,7 +31,7 @@ class FuseMatMulRedundantDequantizeTransformer(GraphRewriterBase):
     fuse_patterns = [["_QuantizedMatMul", "_QuantizedBatchMatMul"], ["Dequantize", "Cast"]]
 
     def __init__(self, model, device="cpu"):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
@@ -120,7 +120,7 @@ class FuseMatMulRedundantDequantizeTransformer(GraphRewriterBase):
             if "fused_ops" in quantized_node.attr:
                 new_node.attr["fused_ops"].CopyFrom(quantized_node.attr["fused_ops"])
 
-            # update Tbias for single MatMul withou bias case, same as Tout.
+            # update Tbias for single MatMul without bias case, same as Tout.
             if dequantize_node.op == "Dequantize":
                 Helper.set_attr_type_list(new_node, "Thost_outputs", [dequantize_node.attr["dtype"].type])
                 new_node.attr["Tout"].CopyFrom(attr_value_pb2.AttrValue(type=dequantize_node.attr["dtype"].type))
