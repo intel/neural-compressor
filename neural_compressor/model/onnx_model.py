@@ -65,6 +65,9 @@ class ONNXModel(BaseModel):
         """Check model > 2GB."""
         init_size = 0
         for init in self._model.graph.initializer:
+            # if initializer has external data location, return True
+            if init.HasField("data_location") and init.data_location == onnx.TensorProto.EXTERNAL:
+                return True
             # if raise error of initializer size > 2GB, return True
             try:
                 init_bytes = init.SerializeToString()
@@ -72,7 +75,7 @@ class ONNXModel(BaseModel):
             except Exception as e:
                 if "exceeds maximum protobuf size of 2GB" in str(e):
                     return True
-                else:
+                else: # pragma: no cover
                     raise e
             if init_size > MAXIMUM_PROTOBUF:
                 return True
