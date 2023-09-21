@@ -237,7 +237,8 @@ class GPTQuantizer(object):
             self.obtain_first_n_samples()
         try:
             self.inp = [torch.zeros(1) for _ in range(len(self.dataloader))]
-            self.cache = {"i": 0}
+            self.cache = {"i": 0}  # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
+            self.cache_positional_arguments = []  # a list of list, positional arguments ("rotary_pos_emb" in chatglm)
             self.out = [torch.zeros(1) for _ in range(len(self.dataloader))]
             self.is_ready = True
         except:
@@ -405,7 +406,7 @@ class GPTQuantizer(object):
         """Prepare input calibration data and other attributes which are critical for gptq execution."""
 
         # critical: hooker function which collects inputs
-        def forward(layer, hidden_states, **kwargs):
+        def forward(layer, hidden_states, *args, **kwargs):
             # inputs[inputs_info['idx']] = input_ids # TODO solve the problem of batchsize!=1
             self.inp[self.cache["i"]] = hidden_states
             self.cache["i"] += 1
@@ -417,6 +418,14 @@ class GPTQuantizer(object):
                         self.cache[arg] = []
                     self.cache[arg].append(kwargs[arg])
                 continue
+            # copy positional arguments, positional arguments are sensitive for their order, be cautious!
+            # Most models in HF has avoid this, but some models still use positional arguments other than
+            # hidden_states, chatglm2-6b etc.
+            for idx, item in enumerate(args):
+                if (idx + 1) > len(self.cache_positional_arguments):
+                    # initialize
+                    self.cache_positional_arguments.append([])
+                self.cache_positional_arguments[idx].append(item)
             raise ValueError
 
         # Step1: fetch the embeddings and other layers before the transformer stack.
@@ -459,9 +468,17 @@ class GPTQuantizer(object):
         logger.info("GPTQ quantization prepared.")
 
     def gather_single_batch_from_dict(self, data_dict, idx):
+        # obtain a set of keyword input from cache
         single_batch = {}
         for k, v in data_dict.items():
             single_batch[k] = data_dict[k][idx]
+        return single_batch
+
+    def gather_single_batch_from_list(self, data_list, idx):
+        # obtain a set of keyword input from cache
+        single_batch = []
+        for data_item in data_list:
+            single_batch.append(data_item[idx])
         return single_batch
 
     @torch.no_grad()
@@ -520,7 +537,8 @@ class GPTQuantizer(object):
             for j in range(len(self.dataloader)):
                 # self.inp[j] shape: [1, seq_len, hidden_size] (batchsize is 1 by default)
                 cache_batch = self.gather_single_batch_from_dict(self.cache, j)
-                self.out[j] = transformer_block(self.inp[j], **cache_batch)[0]
+                cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
+                self.out[j] = transformer_block(self.inp[j], *cache_positional_batch, **cache_batch)[0]
             self.cache["i"] = idx
             for h in handles:
                 h.remove()
@@ -551,7 +569,8 @@ class GPTQuantizer(object):
             for j in range(len(self.dataloader)):
                 # self.inp[j] shape: [1, seq_len, hidden_size] (batchsize is 1 by default)
                 cache_batch = self.gather_single_batch_from_dict(self.cache, j)
-                self.out[j] = transformer_block(self.inp[j], **cache_batch)[0]
+                cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
+                self.out[j] = transformer_block(self.inp[j], *cache_positional_batch, **cache_batch)[0]
             self.cache["i"] = idx
             self.gptq_related_blocks["transformers"][block_idx] = transformer_block.cpu()
             del gptq_for_this_block

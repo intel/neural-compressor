@@ -368,8 +368,8 @@ class PytorchPatternNInM(PytorchBasePattern):
                 mask = torch.ones(orig_shape, device=weight.device)
                 pattern_lock_masks[key] = mask.bool()
                 continue
-            mask = self.get_least_ninm_mask_from_data(weight)
-            mask = self._reshape_2dims_to_orig(mask, orig_shape)
+            reduced_mask = self.get_reduced_masks_from_data(weight, key)
+            mask = self.reshape_reduced_to_orig(reduced_mask, key, orig_shape)
             pattern_lock_masks[key] = mask
         return pattern_lock_masks
 
