@@ -75,7 +75,7 @@ class ONNXModel(BaseModel):
             except Exception as e:
                 if "exceeds maximum protobuf size of 2GB" in str(e):
                     return True
-                else: # pragma: no cover
+                else:  # pragma: no cover
                     raise e
             if init_size > MAXIMUM_PROTOBUF:
                 return True
