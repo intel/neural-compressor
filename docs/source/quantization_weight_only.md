@@ -1,4 +1,4 @@
-Weight Only Quantization
+Weight Only Quantization (WOQ)
 =====
 
 1. [Introduction](#introduction)
@@ -18,9 +18,10 @@ Text generation:  The most famous application of LLMs is text generation, which 
 
 Besides, as mentioned in many papers[1][2], activation quantization is the main reason to cause the accuracy drop. So for text generation task,  weight only quantization is a preferred option in most cases.
 
-Theoretically, round-to-nearest (RTN) is the mose straightforward way to quantize weight using scale maps. However, when the number of bits is small (e.g. 3), the MSE loss is larger than expected. A group size is introduced to reduce elements using the same scale to improve accuracy.
+Theoretically, round-to-nearest (RTN) is the most straightforward way to quantize weight using scale maps. However, when the number of bits is small (e.g. 3), the MSE loss is larger than expected. A group size is introduced to reduce elements using the same scale to improve accuracy.
 
 There are many excellent works for weight only quantization to improve its accuracy performance, such as AWQ[3], GPTQ[4]. Neural compressor integrates these popular algorithms in time to help customers leverage them and deploy them to their own tasks.
+
 
 ## Supported Framework Model Matrix
 
@@ -31,13 +32,23 @@ There are many excellent works for weight only quantization to improve its accur
 |      GPTQ      | &#10004; | &#10004; |
 |      TEQ      | &#10004; | stay tuned |
 
+**Note:** To get the validated accuracy results on popular models, please refer to [PyTorch Models with Torch 2.0.1+cpu in WOQ Mode](./validated_model_list.md/#pytorch-models-with-torch-201cpu-in-woq-mode)
+
+> **RTN:** A quantification method that we can think of very intuitively. It does not require additional datasets and is a very fast quantization method. Generally speaking, RTN will convert the weight into a uniformly distributed integer data type, but some algorithms, such as Qlora, propose a non-uniform NF4 data type and prove its theoretical optimality.
+
+> **GPTQ:** A new one-shot weight quantization method based on approximate second-order information, that is both highly-accurate and highly efficient[4]. The weights of each column are updated based on the fixed-scale pseudo-quantization error and the inverse of the Hessian matrix calculated from the activations. The updated columns sharing the same scale may generate a new max/min value, so the scale needs to be saved for restoration.
+
+> **AWQ:** Proved that protecting only 1% of salient weights can greatly reduce quantization error. the salient weight channels are selected by observing the distribution of activation and weight per channel. The salient weights are also quantized after multiplying a big scale factor before quantization for preserving. 
+
+> **TEQ:** A trainable equivalent transformation that preserves the FP32 precision in weight-only quantization. It is inspired by AWQ while providing a new solution to search for the optimal per-channel scaling factor between activations and weights.
+
 ## Examples
 ### **Quantization Capability**:
 | Config | Capability |
 | :---: | :---:|
 | dtype | ['int', 'nf4', 'fp4'] |
-| bits | [1-8] |
-| group_size | [-1, 1-N] | 
+| bits | [1, ..., 8] |
+| group_size | [-1, 1, ..., $C_{in}$] | 
 | scheme | ['asym', 'sym'] |
 | algorithm | ['RTN', 'AWQ', 'GPTQ'] |
 
@@ -48,30 +59,29 @@ Notes:
 **RTN arguments**:
 |  rtn_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
-| enable_full_range |      False     |   Whether use -2**(bits-1) in sym scheme, for example,    |
-|  enable_mse_search |      False     | Whether search for the best clip range from range [0.805, 1.0, 0.005] |
-|  return_int |      False     | Whether return compressed model with int data type |
+|  enable_full_range |      False     |   Whether to use -2**(bits-1) in sym scheme  |
+|  enable_mse_search |      False     | Whether to search for the best clip range from range [0.805, 1.0, 0.005] |
+|  return_int |      False     | Whether to return compressed model with torch.int32 data type |
 |  group_dim  |       1       |   0 means splitting output channel, 1 means splitting input channel   |
 
 **AWQ arguments**:
 |  awq_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
-| enable_auto_scale |      True     | Whether search for best scales based on activation distribution   |
-|  enable_mse_search |      True     | Whether search for the best clip range from range [0.91, 1.0, 0.01] |
+|  enable_auto_scale |      True     | Whether to search for best scales based on activation distribution   |
+|  enable_mse_search |      True     | Whether to search for the best clip range from range [0.91, 1.0, 0.01] |
 |  folding   |      False    | False will allow insert mul before linear when the scale cannot be absorbed by last layer, else won't |
 
 **GPTQ arguments**:
 |  gptq_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
-| actorder | False |   Whether to sort Hessian's diagonal values to rearrange channel-wise quantization order|
+|  actorder | False |   Whether to sort Hessian's diagonal values to rearrange channel-wise quantization order|
 |  percdamp | 0.01 | Percentage of Hessian's diagonal values' average, which will be added to Hessian's diagonal to increase numerical stability|
 |  nsamples  | 128 |  Calibration samples' size |
 |  pad_max_length  | 2048 | Whether to align calibration data to a fixed length. This value should not exceed model's acceptable sequence length. Please refer to  model's config json to find out this value.|
 |  use_max_length  | False | Whether to align all calibration data to fixed length, which equals to pad_max_length. |
-|  block_size  | 128 | Channel number in one block to execute a GPTQ quantization iteration |
+|  block_size  | 128 | Execute GPTQ quantization per block, block shape = [$C_{out}$, block_size] |
 
-
-**Note**: `group_size=-1` indicates the per-channel quantization per output channel. `group_size=[1-N]` indicates splitting the input channel elements per group_size. Term **group_size** in GPTQ refers to number of channels which share the same quantization parameters. 
+**Note:** Neural compressor provides `Unsigned integer for asymmetric quantization` and `Signed integer for symmetric quantization`. Please follow the below section to compress the low bit data type for saving.
 
 ### **Export Compressed Model**
 To support low memory inference, Neural Compressor implemented WeightOnlyLinear, a torch.nn.Module, to compress the fake quantized fp32 model. Since torch does not provide flexible data type storage, WeightOnlyLinear combines low bits data into a long date type, such as torch.int8 and torch.int32. Low bits data includes weights and zero points. When using WeightOnlyLinear for inference, it will restore the compressed data to float32 and run torch linear function.
@@ -80,8 +90,8 @@ To support low memory inference, Neural Compressor implemented WeightOnlyLinear,
 | export args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
 | qweight_config_path |      None     |  If need to export model with fp32_model and json file, set the path of qconfig.json |
-|  enable_full_range |      False     | Whether to leverage the full compression range under symmetric quantization |
-|  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8|16|32|64]   |
+|  sym_full_range |      False     | Whether to leverage the full compression range under symmetric quantization |
+|  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8\|16\|32\|64]   |
 |  compression_dim  |       1       |   0 means output channel while 1 means input channel   |
 |  scale_dtype  |       torch.float32       |  Data type for scale and bias   |
 

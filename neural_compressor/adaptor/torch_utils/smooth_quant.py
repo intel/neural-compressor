@@ -35,39 +35,18 @@ from collections import UserDict, defaultdict
 
 def move_input_to_device(input, device=torch.device("cpu")):
     if isinstance(input, dict) or isinstance(input, UserDict):
-        for inp in input.keys():
-            input[inp] = input[inp].to(device) if isinstance(input[inp], torch.Tensor) else input[inp]
-
+        tmp_input = {}
+        for k, inp in input.items():
+            tmp_input[k] = move_input_to_device(inp, device)
+        input = tmp_input
     elif isinstance(input, list) or isinstance(input, tuple):
-        input_res, prev_size = [], None
+        tmp_input = []
         for inp in input:
-            if isinstance(inp, tuple):
-                input_res = get_tuple_input(inp, res=input_res, device=device)
-            elif prev_size:
-                if isinstance(inp, torch.Tensor):
-                    if inp.size() == prev_size:
-                        input_res.append(inp.to(device))
-                else:
-                    if torch.tensor(inp).size == prev_size:
-                        input_res.append(inp)
-            else:
-                input_res.append(inp.to(device) if isinstance(inp, torch.Tensor) else inp)
-
-            if isinstance(inp, torch.Tensor):
-                prev_size = inp.size()
-        input = input_res
-    else:
+            tmp_input.append(move_input_to_device(inp, device))
+        input = tmp_input
+    elif isinstance(input, torch.Tensor):
         input = input.to(device)  # pylint: disable=no-member
     return input
-
-
-def get_tuple_input(input, res=[], device=torch.device("cpu")):
-    for inp in input:
-        if isinstance(inp, (tuple, list)):
-            res = get_tuple_input(inp, res)
-        else:
-            res.append(inp.to(device))
-    return res
 
 
 ##TODO potential bug, data typeR
@@ -75,7 +54,8 @@ def forward_wrapper(model, input, device=torch.device("cpu")):
     try:
         model = model.to(device)
         input = move_input_to_device(input, device)
-    except:
+    except Exception as e:
+        logger.warning(e)
         logger.warning("Please check the input device if the error raised.")
     if isinstance(input, dict) or isinstance(input, UserDict):
         output = model(**input)
@@ -901,7 +881,7 @@ class TorchSmoothQuant:
             return best_alphas
 
         for idx, input in enumerate(self.dataloader):
-            if isinstance(input, tuple):
+            if isinstance(input, (tuple, list)):
                 input = input[0]
             best_alphas_per_module = best_alphas
             if isinstance(best_alphas, dict):
@@ -974,7 +954,7 @@ class TorchSmoothQuant:
         else:
             self.insert_mul, self.allow_absorb = True, False
         if isinstance(alpha, float) and (alpha < 0 or alpha > 1):
-            logger.warning("reset alpah to in range [0.0, 1.0]")
+            logger.warning("reset alpha to in range [0.0, 1.0]")
             import numpy
 
             alpha = numpy.clip(alpha, 0.0, 1.0)
@@ -1197,7 +1177,7 @@ class GraphTrace:
         }
 
         ##TODO potential bug, need to check only have one bug
-        ##TODO, must statisfy af(x)=f(ax),current skip layer may be incomplete
+        ##TODO, must satisfy af(x)=f(ax),current skip layer may be incomplete
         self.skip_ops_to_find_absorb = ["aten::to", "aten::relu", "aten::leaky_relu", "aten::hardtanh"]
 
         self.could_absorb_layers = [
@@ -1208,21 +1188,13 @@ class GraphTrace:
             "aten::group_norm",
             "aten::instance_norm",
             "aten::mul",
-        ]  ##TODO,suppport more norm
+        ]  ##TODO,support more norm
 
     def trace(self, model, dummy_input):
         traced_model = None
         optimize_numerics = False
-        if hasattr(model, "device"):
-            orig_device = model.device
-            if hasattr(model.device, "type"):
-                orig_device = model.device.type
-        else:
-            try:
-                orig_device = next(model.parameters()).device.type
-            except:
-                orig_device = "cpu"
-        if orig_device != "cpu" and orig_device != "meta":
+        orig_device = next(model.parameters()).device.type
+        if orig_device != "cpu" and orig_device != "meta":  # pragma: no cover
             model = model.to("cpu")
             dummy_input = move_input_to_device(dummy_input, "cpu")
         if isinstance(dummy_input, dict) or isinstance(dummy_input, UserDict):
@@ -1243,12 +1215,7 @@ class GraphTrace:
                 except Exception as e:
                     logger.warning(e)
                     logger.warning("Jit trace in GraphTrace failed, absorb layer detection is skipped")
-        if orig_device != "cpu":
-            if orig_device == "cuda":
-                if torch.cuda.is_available():
-                    model = model.to(orig_device)
-            else:
-                model = model.to(orig_device)
+        model = model.to(orig_device)
         return traced_model
 
     def get_nodes(self, traced_model, op_types=["Linear"]):

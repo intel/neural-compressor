@@ -53,7 +53,7 @@ class PruningCriterion:
     """
 
     def __init__(self, modules, config, pattern):
-        """Initiliaze a pruning criterion."""
+        """Initialize a pruning criterion."""
         self.scores = {}
         self.modules = modules
         self.config = config
@@ -89,7 +89,7 @@ class MagnitudeCriterion(PruningCriterion):
     """
 
     def __init__(self, modules, config, pattern):
-        """Initiliaze a magnitude pruning criterion."""
+        """Initialize a magnitude pruning criterion."""
         super(MagnitudeCriterion, self).__init__(modules, config, pattern)
 
     def on_step_begin(self):
@@ -119,7 +119,7 @@ class GradientCriterion(PruningCriterion):
     """
 
     def __init__(self, modules, config, pattern):
-        """Initiliaze a gradient pruning criterion."""
+        """Initialize a gradient pruning criterion."""
         super(GradientCriterion, self).__init__(modules, config, pattern)
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
 
@@ -153,7 +153,7 @@ class SnipCriterion(PruningCriterion):
     """
 
     def __init__(self, modules, config, pattern):
-        """Initiliaze a snip pruning criterion."""
+        """Initializes a snip pruning criterion."""
         super(SnipCriterion, self).__init__(modules, config, pattern)
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
 
@@ -187,7 +187,7 @@ class SnipMomentumCriterion(PruningCriterion):
     """
 
     def __init__(self, modules, config, pattern):
-        """Initiliaze a snip_momentum pruning criterion."""
+        """Initialize a snip_momentum pruning criterion."""
         super(SnipMomentumCriterion, self).__init__(modules, config, pattern)
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
         for key in modules.keys():
@@ -236,7 +236,7 @@ class BlockMaskCriterion(PruningCriterion):
     """
 
     def __init__(self, modules, config, pattern, masks, alpha=0.9, beta=1.0):
-        """Initiliaze a block_mask pruning criterion."""
+        """Initialize a block_mask pruning criterion."""
         super(BlockMaskCriterion, self).__init__(modules, config, pattern)
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
         for key in masks.keys():
@@ -277,7 +277,7 @@ class RetrainFreeCriterion(PruningCriterion):
     """
 
     def __init__(self, modules, config, pattern, masks):
-        """Initiliaze a block_mask pruning criterion."""
+        """Initialize a block_mask pruning criterion."""
         super(RetrainFreeCriterion, self).__init__(modules, config, pattern)
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
         self.collected_grads = {}

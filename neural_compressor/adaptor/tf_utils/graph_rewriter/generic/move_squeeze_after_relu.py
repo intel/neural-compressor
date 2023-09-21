@@ -28,7 +28,7 @@ class MoveSqueezeAfterReluOptimizer(GraphRewriterBase):
     """Move Squeeze op after Relu op for match fusion pattern."""
 
     def __init__(self, model):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.op_list = ["Relu", "Sigmoid", "Relu6", "LeakyRelu", "Elu"]
 

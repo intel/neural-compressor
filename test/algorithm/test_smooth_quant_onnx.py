@@ -30,7 +30,7 @@ def check_model_is_same(model_proto1, model_proto2):
         ):
             return False
 
-        # Check node attribure
+        # Check node attribute
         if len(node1.attribute) != len(node2.attribute):
             return False
 

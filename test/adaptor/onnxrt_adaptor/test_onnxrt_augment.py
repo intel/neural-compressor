@@ -116,28 +116,28 @@ class TestAugment(unittest.TestCase):
         model, dataloader = self.cv_session
         augment = ONNXRTAugment(ONNXModel(model), dataloader, [], iterations=[0, 1], white_nodes=["conv"])
         map_dumped_tensors = augment.dump_tensor()
-        assert "conv" in map_dumped_tensors["activation"][0]
-        assert "A" in map_dumped_tensors["activation"][0]["conv"]
-        assert "conv" in map_dumped_tensors["activation"][1]
-        assert "A" in map_dumped_tensors["activation"][1]["conv"]
+        self.assertTrue("conv" in map_dumped_tensors["activation"][0])
+        self.assertTrue("A" in map_dumped_tensors["activation"][0]["conv"])
+        self.assertTrue("conv" in map_dumped_tensors["activation"][1])
+        self.assertTrue("A" in map_dumped_tensors["activation"][1]["conv"])
 
         model, dataloader = self.cv_session
         augment = ONNXRTAugment(ONNXModel(model), dataloader, [], iterations=[0], white_nodes=["conv", "relu"])
         map_dumped_tensors = augment.dump_tensor(weight=True)
-        assert "conv" in map_dumped_tensors["activation"][0]
-        assert "relu" in map_dumped_tensors["activation"][0]
-        assert "conv" in map_dumped_tensors["weight"]
+        self.assertTrue("conv" in map_dumped_tensors["activation"][0])
+        self.assertTrue("relu" in map_dumped_tensors["activation"][0])
+        self.assertTrue("conv" in map_dumped_tensors["weight"])
 
         model, dataloader = self.nlp_session
         augment = ONNXRTAugment(ONNXModel(model), dataloader, [], iterations=[0], white_nodes=["gather"])
         map_dumped_tensors = augment.dump_tensor()
-        assert "gather" in map_dumped_tensors["activation"][0]
+        self.assertTrue("gather" in map_dumped_tensors["activation"][0])
 
     def test_dump_calibration(self):
         model, dataloader = self.cv_session
         augment = ONNXRTAugment(ONNXModel(model), dataloader, ["Conv", "Relu"], iterations=[0])
         calib_params = augment.dump_calibration({})
-        assert "A" in calib_params and "B" in calib_params and "D" in calib_params and "C" in calib_params
+        self.assertTrue("A" in calib_params and "B" in calib_params and "D" in calib_params and "C" in calib_params)
 
     def test_augment_graph(self):
         """TEST_CONFIG_1."""
@@ -171,7 +171,7 @@ class TestAugment(unittest.TestCase):
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
         added_node_names = ["Conv", "Clip", "MatMul"]
         added_outputs = ["A", "B", "C", "D", "E", "F"]
-        # Original 3 nodes (exlude graph input/output)
+        # Original 3 nodes (exclude graph input/output)
         self.assertEqual(len(augmented_model_node_names), 3)
         # Original 1 graph output + 5 intermediate outputs
         self.assertEqual(len(augmented_model_outputs), 6)

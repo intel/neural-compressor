@@ -216,6 +216,7 @@ def fit(
                     workload_location=os.path.abspath(options.workspace),
                     model=wrapped_model,
                     workload_mode="quantization",
+                    workload_name=conf.ni_workload_name,
                 )
                 if ni_workload_id:
                     update_neural_insights_workload(ni_workload_id, "wip")

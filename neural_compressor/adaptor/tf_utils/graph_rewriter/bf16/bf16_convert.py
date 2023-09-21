@@ -43,7 +43,7 @@ class BF16Convert(GraphRewriterBase):
     """BF16 node convert transformation."""
 
     def __init__(self, model, fp32_ops=[], bf16_ops=[]):
-        """Initilization.
+        """Initialization.
 
         Args: model: the model to be converted to BF16.
               fp32_ops: keep with fp32 op list
@@ -56,7 +56,7 @@ class BF16Convert(GraphRewriterBase):
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
         self.converted_ops = []
-        self.device = ["CPU", "DEFAULT"]  # TODO support differnt device types, such as GPU
+        self.device = ["CPU", "DEFAULT"]  # TODO support different device types, such as GPU
 
     def _dtype(self, node):
         """Get the dtype of the node."""
@@ -127,7 +127,7 @@ class BF16Convert(GraphRewriterBase):
         return allowed_dt_val
 
     def _bf16_convert(self, bf16_node_name):
-        """BF16 convertion for the model.
+        """BF16 conversion for the model.
 
         Args: bf16_node_name: nodes converted to BF16 op list
         """

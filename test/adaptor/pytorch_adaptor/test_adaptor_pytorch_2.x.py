@@ -24,6 +24,7 @@ from neural_compressor.utils.utility import LazyImport, recover
 # improve lazy import UT coverage
 resnet18 = LazyImport("torchvision.models.resnet18")
 
+
 PT_VERSION = nc_torch.get_torch_version().release
 if PT_VERSION >= Version("1.8.0").release:
     FX_MODE = True
@@ -203,7 +204,7 @@ def train_func(model):
     return model
 
 
-@unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
+@unittest.skipIf(not FX_MODE, "Unsupported Fx Mode with PyTorch Version Below 1.8")
 class TestPytorchFXAdaptor(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
@@ -430,7 +431,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         self.assertIsNotNone(op_to_traces)
 
 
-@unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
+@unittest.skipIf(not FX_MODE, "Unsupported Fx Mode with PyTorch Version Below 1.8")
 class TestPyTorchBlockDetector(unittest.TestCase):
     def test_block_detector(self):
         from transformers import BertModel

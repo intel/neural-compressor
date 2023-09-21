@@ -1,6 +1,3 @@
-import sys
-
-sys.path.append("./")
 import copy
 import unittest
 
@@ -60,7 +57,7 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         model1 = rtn_quantize(fp32_model, num_bits=3, group_size=-1)
         self.assertTrue(isinstance(model1.fc1, torch.nn.Linear))
         weight_config = {
-            # 'op_name': (bit, group_size, sheme)
+            # 'op_name': (bit, group_size, scheme)
             "fc1": {"bits": 8, "group_size": -1, "scheme": "sym"},
             "fc2": {
                 "bits": 4,
@@ -110,7 +107,6 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         # default awq_quantize is 4 bits, 32 group size, use big atol=1e-1
         qdq_model = awq_quantize(self.gptj, example_inputs=self.lm_input, calib_func=calib_func)
         out2 = qdq_model(example_inputs)
-        print(out1[0], out2[0])
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-1))
 
 
@@ -121,16 +117,18 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
             torchscript=True,
         )
-        self.gptj.seqlen = 512
 
     def test_gptq(self):
+        import random
+
         class GPTQLLMDataLoader:
             def __init__(self):
                 self.batch_size = 1
 
             def __iter__(self):
-                for i in range(2):
-                    yield torch.ones([1, 512], dtype=torch.long)
+                for i in range(20):
+                    length = random.randint(1, 1024)
+                    yield torch.ones([1, length], dtype=torch.long)
 
         dataloader = GPTQLLMDataLoader()
         model = copy.deepcopy(self.gptj)
@@ -167,18 +165,16 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
             },
         }
         quantizer = gptq_quantize(
-            model,
-            weight_config=weight_config,
-            dataloader=dataloader,
+            model, weight_config=weight_config, dataloader=dataloader, use_max_length=True, pad_max_length=512
         )
         self.assertTrue(isinstance(model, torch.nn.Module))
-        del model
 
         model = copy.deepcopy(self.gptj)
         weight_config = {"wbits": 4}
-        quantizer = gptq_quantize(model, weight_config=weight_config, dataloader=dataloader, use_max_length=False)
+        quantizer = gptq_quantize(
+            model, weight_config=weight_config, dataloader=dataloader, use_max_length=False, pad_max_length=512
+        )
         self.assertTrue(isinstance(model, torch.nn.Module))
-        del model
 
 
 class TestTEQWeightOnlyQuant(unittest.TestCase):
@@ -206,7 +202,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         model = copy.deepcopy(self.gptj)
 
         weight_config = {
-            # 'op_name': (bit, group_size, sheme)
+            # 'op_name': (bit, group_size, scheme)
             "transformer.h.0.mlp.fc_in": {"bits": 8, "group_size": -1, "scheme": "sym"},
             "transformer.h.0.mlp.fc_out": {"bits": 4, "group_size": 32, "scheme": "asym"},
         }

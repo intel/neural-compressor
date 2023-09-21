@@ -28,7 +28,7 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
     """Quantize FusedBatchNormV3 to int8 op _QuantizedFusedBatchNorm."""
 
     def __init__(self, **kwargs):
-        """Initilization."""
+        """Initialization."""
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns, key=lambda i: len(i), reverse=True)
         if self.new_api:

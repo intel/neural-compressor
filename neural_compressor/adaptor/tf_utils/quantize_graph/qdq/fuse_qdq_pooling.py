@@ -30,7 +30,7 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
     """Quantize the AvgPool and MaxPool."""
 
     def __init__(self, **kwargs):
-        """Initilization."""
+        """Initialization."""
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns, key=lambda i: len(i), reverse=True)
 

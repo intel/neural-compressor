@@ -25,9 +25,9 @@ class SearchSpace:
 
     Args:
         bound: A tuple or list that limit the max and min number of search space.
-        interval: Only for descrete search space. Intervals in discrete space.
-        value: Only for descrete search space. A list that store all the number for search.
-        type: descrete or continues.
+        interval: Only for discrete search space. Intervals in discrete space.
+        value: Only for discrete search space. A list that store all the number for search.
+        type: discrete or continues.
 
     Example:
         from neural_compressor.compression.hpo import SearchSpace
@@ -73,9 +73,9 @@ class BaseSearchSpace(object):
         """Initialize."""
         if bound:
             if not isinstance(bound, (list, tuple)):  # pragma: no cover
-                raise TypeError("bound sould be list or tuple, not {}".format(type(bound)))
+                raise TypeError("bound should be list or tuple, not {}".format(type(bound)))
             if len(bound) != 2:  # pragma: no cover
-                raise ValueError("bound sould only contain two elements, [start, end)")
+                raise ValueError("bound should only contain two elements, [start, end)")
             if bound[1] <= bound[0]:  # pragma: no cover
                 raise ValueError("empty range for [{}, {})".format(bound[0], bound[1]))
         assert value or bound, "must set value or bound to initialize the search space"

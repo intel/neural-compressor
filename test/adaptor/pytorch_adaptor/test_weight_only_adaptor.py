@@ -1,7 +1,4 @@
 import copy
-import sys
-
-sys.path.append("./")
 import os
 import shutil
 import unittest
@@ -68,7 +65,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.gptj_no_jit = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
         )
-        self.gptj.seqlen = 512
         self.llm_dataloader = LLMDataLoader()
         self.lm_input = torch.ones([1, 10], dtype=torch.long)
 
@@ -240,11 +236,10 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(isinstance(inc_model.model.fc1, WeightOnlyLinear))
         self.assertTrue(model_size1 / model_size2 > 2)
 
-    def test_RTN_fp4_quant(self):
-        for dtype in ["nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"]:
-            input = torch.randn(3, 30)
-            model = Model()
-            out1 = model(input)
+    def test_RTN_4bit_quant(self):
+        for dtype in ["int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"]:
+            model = copy.deepcopy(self.gptj)
+            out1 = model(self.lm_input)
             conf = PostTrainingQuantConfig(
                 approach="weight_only",
                 op_type_dict={
@@ -252,19 +247,19 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                         "weight": {
                             "dtype": dtype,  # select from int, nf4, or fp4
                             # nf4/fp4 have fixed bits and scheme.
-                            "group_size": 32,  # -1 (per-channel)
+                            "group_size": 64,  # -1 (per-channel)
                             "algorithm": "RTN",
                         },
                     },
                 },
             )
             q_model = quantization.fit(model, conf)
-            out2 = q_model(input)
-            self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
-            self.assertFalse(torch.all(out1 == out2))
+            out2 = q_model(self.lm_input)
+            self.assertTrue(torch.all(torch.isclose(out1[0], out2[0], atol=1e-1)))
+            self.assertFalse(torch.all(out1[0] == out2[0]))
             compressed_model = q_model.export_compressed_model()
-            out3 = compressed_model(input)
-            self.assertTrue(torch.all(out3 == out2))
+            out3 = compressed_model(self.lm_input)
+            self.assertTrue(torch.all(out3[0] == out2[0]))
 
     def test_AWQ_quant(self):
         conf = PostTrainingQuantConfig(
@@ -502,13 +497,14 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                "gptq_args": {"percdamp": 0.01, "act_order": False},
+                "gptq_args": {"percdamp": 0.01, "act_order": False, "use_max_length": True, "pad_max_length": 512},
             },
         )
 
         # case 1: tensor
         model_1 = copy.deepcopy(self.gptj)
         input = torch.ones([1, 512], dtype=torch.long)
+        out0 = model_1(input)
         q_model = quantization.fit(
             model_1,
             conf,
@@ -516,6 +512,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model.save("saved")
         out1 = q_model.model(input)
+        self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
@@ -608,13 +605,14 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                "gptq_args": {"percdamp": 0.01, "act_order": False, "use_max_length": True},
+                "gptq_args": {"percdamp": 0.01, "act_order": False, "use_max_length": False, "pad_max_length": 512},
             },
         )
 
         # case 1: tensor
         model_1 = copy.deepcopy(self.gptj)
         input = torch.ones([1, 512], dtype=torch.long)
+        out0 = model_1(input)
         q_model = quantization.fit(
             model_1,
             conf,
@@ -622,6 +620,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model.save("saved")
         out1 = q_model.model(input)
+        self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
@@ -657,7 +656,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
 
-        print("GPTQ with fixed length Done")
+        print("GPTQ with unfixed length Done")
 
     def test_TEQ_quant(self):
         class teq_inc_loader(object):
@@ -694,13 +693,18 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             },
         )
 
+        input = torch.ones([1, 512], dtype=torch.long)
         dataloader = teq_inc_loader()
-        model_1 = copy.deepcopy(self.gptj)
+        fp32_model = copy.deepcopy(self.gptj)
+        out1 = fp32_model(input)
         q_model = quantization.fit(
-            model_1,
+            fp32_model,
             conf,
             calib_dataloader=dataloader,
         )
+        out2 = q_model.model(input)
+        print(out1[0] - out2[0])
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
 
 
 if __name__ == "__main__":

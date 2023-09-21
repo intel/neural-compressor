@@ -72,7 +72,7 @@ class RerangeQuantizedConcat(GraphTransformBase):
     }
 
     def __init__(self, input_pb, device, performance_only=False):
-        """Initilization."""
+        """Initialization."""
         super().__init__(input_pb)
 
         self.parse_input_pb()

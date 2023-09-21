@@ -485,6 +485,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/object_detection/yolo_v3/quantization/ptq_static/fx">fx</a></td>
   </tr>
   <tr>
+    <td>Mask R-CNN</td>
+    <td>Object Detection</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/object_detection/maskrcnn/quantization/ptq/fx">fx</a></td>
+  </tr>
+  <tr>
     <td>DLRM</td>
     <td>Recommendation</td>
     <td>Post-Training Static Quantization</td>
@@ -501,6 +507,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Speech Recognition</td>
     <td>Post-Training Dynamic Quantization</td>
     <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>RNNT</td>
+    <td>Speech Recognition</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/speech_recognition/rnnt/quantization/ptq_dynamic/fx">fx</a></td>
   </tr>
   <tr>
     <td>BlendCNN</td>
@@ -1388,6 +1400,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/object_detection/ssd_mobilenet_v2/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/object_detection/ssd_mobilenet_v2/quantization/ptq_static">qdq</a></td>
+  </tr>
+  <tr>
+    <td>Table Transformer</td>
+    <td>Object Detection</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/object_detection/table_transformer/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
     <td>SSD MobileNet V1 (ONNX Model Zoo)</td>

@@ -5,7 +5,7 @@ This document is used to list steps of reproducing Prune Once For All examples r
 <br>
 These examples take the pre-trained sparse language model and fine tune it on several downstream tasks. This fine tune pipeline is two staged. For stage 1, the pattern lock pruning and the distillation are applied to fine-tune the pre-trained sparse language model. In stage 2, the pattern lock pruning, distillation and quantization aware training are performed simultaneously on the fine tuned model from stage 1 to obtain the quantized model with the same sparsity pattern as the pre-trained sparse language model.
 <br>
-For more informations of this algorithm, please refer to the paper [Prune Once For All: Sparse Pre-Trained Language Models](https://arxiv.org/abs/2111.05754)
+For more information of this algorithm, please refer to the paper [Prune Once For All: Sparse Pre-Trained Language Models](https://arxiv.org/abs/2111.05754)
 
 # Prerequisite
 
@@ -99,11 +99,11 @@ python run_glue_no_trainer_pruneOFA.py --task_name qnli \
       --resume /path/to/stage1_output_dir/best_model.pt --pad_to_max_length
 ```
 
-We supporte Distributed Data Parallel training on single node and multi nodes settings. To use Distributed Data Parallel to speedup training, the bash command needs a small adjustment.
+We supported Distributed Data Parallel training on single node and multi nodes settings. To use Distributed Data Parallel to speedup training, the bash command needs a small adjustment.
 <br>
 For example, bash command of stage 1 for SST2 task will look like the following, where *`<MASTER_ADDRESS>`* is the address of the master node, it won't be necessary for single node case, *`<NUM_PROCESSES_PER_NODE>`* is the desired processes to use in current node, for node with GPU, usually set to number of GPUs in this node, for node without GPU and use CPU for training, it's recommended set to 1, *`<NUM_NODES>`* is the number of nodes to use, *`<NODE_RANK>`* is the rank of the current node, rank starts from 0 to *`<NUM_NODES>`*`-1`.
 <br>
-Also please aware that using CPU for training in each node with multi nodes settings, argument `--no_cuda` is mandatory. In multi-nodes setting, the following command needs to be lanuched in each node, and all the commands should be the same except for *`<NODE_RANK>`*, which should be integer from 0 to *`<NUM_NODES>`*`-1` assigned to each node.
+Also please aware that using CPU for training in each node with multi nodes settings, argument `--no_cuda` is mandatory. In multi-nodes setting, the following command needs to be launched in each node, and all the commands should be the same except for *`<NODE_RANK>`*, which should be integer from 0 to *`<NUM_NODES>`*`-1` assigned to each node.
 
 ```bash
 python -m torch.distributed.launch --master_addr=<MASTER_ADDRESS> --nproc_per_node=<NUM_PROCESSES_PER_NODE> --nnodes=<NUM_NODES> --node_rank=<NODE_RANK> \

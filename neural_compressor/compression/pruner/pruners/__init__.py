@@ -52,7 +52,7 @@ def get_pruner(config, modules, framework="pytorch"):
     Returns:
         A Pruner object.
 
-    Raises: AssertionError: Cuurently only support pruners that have been registered in PRUNERS.
+    Raises: AssertionError: Currently only support pruners that have been registered in PRUNERS.
     """
     # do the ugly work here
     # check if it is doing self-multihead-attention pruning
@@ -61,7 +61,7 @@ def get_pruner(config, modules, framework="pytorch"):
     ), f"does not support {framework}, currently only support framework: {FRAMEWORK.keys()}"
 
     if "mha" in config["pattern"]:
-        assert framework == "pytorch", "cuurently mha only support pytorch framework."
+        assert framework == "pytorch", "Currently mha only support pytorch framework."
         return PRUNERS[f"{FRAMEWORK[framework]}_mha"](config, modules)
     # if enable progressive pruning or not.
     if "progressive" not in config["pruning_type"]:

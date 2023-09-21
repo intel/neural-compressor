@@ -25,7 +25,7 @@ class DataLoader(object):
     This class can't yield batched data and only in this Quantization/Benchmark
     object's setter method a 'real' calib_dataloader will be created, the reason
     is we have to know the framework info and only after the Quantization/Benchmark
-    object created then framework infomation can be known. Future we will support
+    object created then framework information can be known. Future we will support
     creating iterable dataloader from neural_compressor.experimental.common.DataLoader
     """
 

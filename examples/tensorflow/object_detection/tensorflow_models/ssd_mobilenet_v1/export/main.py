@@ -113,7 +113,7 @@ class eval_classifier_optimized_graph:
     """Evaluate image classifier with optimized TensorFlow graph."""
 
     def __init__(self):
-        """Initilization."""
+        """Initialization."""
         arg_parser = ArgumentParser(description='Parse args')
         arg_parser.add_argument('-g', "--input-graph",
                                 help='Specify the input graph for the transform tool',

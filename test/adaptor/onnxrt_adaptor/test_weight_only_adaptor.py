@@ -12,7 +12,7 @@ from neural_compressor import PostTrainingQuantConfig, quantization
 
 
 def Inference(model, data):
-    sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_all_providers())
+    sess = ort.InferenceSession(model.SerializeToString(), providers=["CPUExecutionProvider"])
     out = sess.run(None, data)
     return out
 
@@ -163,6 +163,49 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
                         "algorithm": "GPTQ",
                     },
                 },
+            },
+        )
+        q_model = quantization.fit(self.model, conf, calib_dataloader=self.dataloader)
+        for data, _ in self.dataloader:
+            q_out = Inference(q_model.model, data)
+            org_out = Inference(self.model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
+
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 32,  # -1 (per-channel)
+                        "scheme": "asym",
+                        "algorithm": "GPTQ",
+                    },
+                },
+            },
+        )
+        q_model = quantization.fit(self.model, conf, calib_dataloader=self.dataloader)
+        for data, _ in self.dataloader:
+            q_out = Inference(q_model.model, data)
+            org_out = Inference(self.model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.7).all())
+
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,  # 1-8 bits
+                        "group_size": -1,  # -1 (per-channel)
+                        "scheme": "sym",
+                        "algorithm": "GPTQ",
+                    },
+                },
+            },
+            recipes={
+                "gptq_args": {"actorder": True, "mse": True, "perchannel": False},
             },
         )
         q_model = quantization.fit(self.model, conf, calib_dataloader=self.dataloader)

@@ -28,7 +28,7 @@ from ..graph_base import GraphRewriterBase
 
 
 class ConvertLayoutOptimizer(GraphRewriterBase):
-    """The layout convertion optimizer, convert NCHW to NHWC format.
+    """The layout conversion optimizer, convert NCHW to NHWC format.
 
     It is executed only when NCHW node exists and tensorflow version is 2.4.0 and above.
 
@@ -39,7 +39,7 @@ class ConvertLayoutOptimizer(GraphRewriterBase):
     """
 
     def __init__(self, model, outputs):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.outputs = outputs
 

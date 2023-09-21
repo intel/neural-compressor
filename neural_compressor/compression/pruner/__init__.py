@@ -194,7 +194,7 @@ def prepare_pruning(
     Returns:
         A pruning object.
 
-    Raises: AssertionError: Cuurently only support prunings that have been registered in PRUNINGS.
+    Raises: AssertionError: Currently only support prunings that have been registered in PRUNINGS.
     """
 
     # assert framework in FRAMEWORK.keys(), \

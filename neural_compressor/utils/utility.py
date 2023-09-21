@@ -449,7 +449,7 @@ class CaptureOutputToFile(object):
         self.tmp_file = open(tmp_file_path, "w")
 
     def __enter__(self):
-        """Duplicate the file desciptor to the stream."""
+        """Duplicate the file descriptor to the stream."""
         self.orig_stream_dup = os.dup(self.orig_stream_fileno)
         os.dup2(self.tmp_file.fileno(), self.orig_stream_fileno)
 
@@ -961,6 +961,9 @@ def print_op_list(workload_location: str):
         None
     """
     minmax_file_path = os.path.join(workload_location, "inspect_saved", "activation_min_max.pkl")
+    if not os.path.exists(minmax_file_path):
+        logging.getLogger("neural_compressor").warning("Could not find activation min max data.")
+        return
     input_model_tensors = get_tensors_info(
         workload_location,
         model_type="input",

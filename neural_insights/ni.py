@@ -15,6 +15,7 @@
 # limitations under the License.
 """Neural Insights main class."""
 from os import PathLike
+from typing import Optional
 
 from neural_insights.components.workload_manager.quantization_workload import QuantizationWorkload
 from neural_insights.components.workload_manager.workload import Workload
@@ -31,15 +32,19 @@ class NeuralInsights:
         workload_location: str,
         model_path: str,
         workload_mode: WorkloadModes,
+        workload_name: str,
+        model_summary_file: Optional[str],
     ) -> str:
         """Add workload to Neural Insights."""
         if workload_mode == WorkloadModes.QUANTIZATION:
             workload = QuantizationWorkload()
         else:
             workload = Workload()
+        workload.workload_name = workload_name
         workload.workload_location = workload_location
         workload.mode = workload_mode
         workload.model_path = model_path
+        workload.model_summary_file = model_summary_file
 
         workload_manager = WorkloadManager(workdir_location=self.workdir_location)
         workload_manager.add_workload(workload)

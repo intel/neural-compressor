@@ -31,7 +31,7 @@ class GrapplerOptimizer(GraphRewriterBase):
     """A python wrapper that leverages the built-in tensorflow grappler API to optimize the graph."""
 
     def __init__(self, model, input_output_names, opt_cfg):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.input_output_names = input_output_names
         self.opt_cfg = opt_cfg
