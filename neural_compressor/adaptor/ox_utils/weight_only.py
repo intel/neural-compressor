@@ -105,11 +105,11 @@ def make_matmul_weight_only_node(
         name=node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size)),
         data_type=2,
         dims=packed.shape,
-        vals=packed.tostring(),
+        vals=packed.tobytes(),
         raw=True,
     )
     scale_tensor = onnx.helper.make_tensor(
-        name=node.input[1] + "_scale", data_type=1, dims=scale.shape, vals=scale.tostring(), raw=True
+        name=node.input[1] + "_scale", data_type=1, dims=scale.shape, vals=scale.tobytes(), raw=True
     )
     input_names = [node.input[0], q_weight_tensor.name, scale_tensor.name]
     new_inits = [q_weight_tensor, scale_tensor]
@@ -117,7 +117,7 @@ def make_matmul_weight_only_node(
     if zero_point is not None:
         zero_point = np.reshape(zero_point, (-1, k_blocks)).astype("uint8")
         zp_tensor = onnx.helper.make_tensor(
-            name=node.input[1] + "_zp", data_type=2, dims=zero_point.shape, vals=zero_point.tostring(), raw=True
+            name=node.input[1] + "_zp", data_type=2, dims=zero_point.shape, vals=zero_point.tobytes(), raw=True
         )
         input_names.append(zp_tensor.name)
         new_inits.append(zp_tensor)
@@ -318,7 +318,7 @@ def rtn_quantize(
                     name=node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size)),
                     data_type=1,
                     dims=weight.shape,
-                    vals=q_weight.tostring(),
+                    vals=q_weight.tobytes(),
                     raw=True,
                 )
                 model.add_initializer(q_weight_tensor)
@@ -424,7 +424,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             tensor = (tensor.T).astype("float32")
 
             new_tensor = onnx.helper.make_tensor(
-                node.input[1] + "_scaled", 1, tensor.shape, tensor.tostring(), raw=True
+                node.input[1] + "_scaled", 1, tensor.shape, tensor.tobytes(), raw=True
             )
             model.add_initializer(new_tensor)
             node.input[1] = new_tensor.name
@@ -602,6 +602,8 @@ def prepare_inputs(model, n_samples, dataloader):
 
         if isinstance(data[0], dict):
             inputs.append(dict([(name, to_numpy(inp_data)) for name, inp_data in data[0].items()]))
+        elif isinstance(data[0], np.ndarray):
+            inputs.append(dict([(name, inp) for name, inp in zip(inputs_names, [data[0]])]))
         else:
             inputs.append(dict([(name, to_numpy(inp)) for name, inp in zip(inputs_names, data[0])]))
     return inputs, so
@@ -1038,7 +1040,7 @@ def gptq_quantize(
                     name=node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size)),
                     data_type=1,
                     dims=q_weight.shape,
-                    vals=q_weight.tostring(),
+                    vals=q_weight.tobytes(),
                     raw=True,
                 )
                 model.add_initializer(q_weight_tensor)
