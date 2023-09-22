@@ -325,10 +325,6 @@ class TorchSmoothQuant:
         :return: A hook function."""
 
         def save_input_hook(module, inputs, outputs):
-            if name not in self.input_maxes.keys():
-                self.input_maxes[name] = []
-                self.input_mins[name] = []
-                self.input_maxes_abs[name] = []
             input = inputs[0]
             ##TODO check input channel is correct
             if len(module.weight.shape) == 4:  ##conv3d or conv1d not supported now, need better way
@@ -339,9 +335,13 @@ class TorchSmoothQuant:
             k_index = int(input.shape[0] * percentile / 100)
             res, _ = torch.kthvalue(torch.abs(input), k_index, dim=0)
             ##res = torch.max(torch.abs(input),dim=0)[0]
-            self.input_maxes_abs[name].append(res)
-            self.input_maxes[name].append(max_tensor)
-            self.input_mins[name].append(min_tensor)
+            if name not in self.input_maxes.keys():
+                self.input_mins[name], self.input_maxes[name] = min_tensor, max_tensor
+                self.input_maxes_abs[name] = res
+            else:
+                self.input_mins[name] = torch.min(self.input_mins[name], min_tensor)
+                self.input_maxes[name] = torch.max(self.maxes[name], max_tensor)
+                self.input_maxes_abs[name] = torch.max(self.input_maxes_abs[name], res)
 
         return save_input_hook
 
@@ -390,15 +390,6 @@ class TorchSmoothQuant:
         else:
             assert self.dataloader, "Please set dataloader for calibration."
             model_forward(self.model, self.dataloader, calib_iter, self.device)
-        ##stack
-        for key in self.input_maxes.keys():
-            max_val = self.input_maxes[key]
-            max_val = torch.stack(max_val, dim=0)
-            min_val = self.input_mins[key]
-            min_val = torch.stack(min_val, dim=0)
-            self.input_maxes[key] = torch.max(max_val, dim=0)[0]
-            self.input_mins[key] = torch.min(min_val, dim=0)[0]
-            self.input_maxes_abs[key] = torch.max(torch.stack(self.input_maxes_abs[key], dim=0), dim=0)[0]
 
     def _reshape_in_channel_to_last(self, layer_name):
         """Move the input channel to the last dim
