@@ -297,8 +297,6 @@ class TorchSmoothQuant:
         self.dataloader = dataloader
         self.example_inputs = example_inputs
         self.q_func = q_func
-        self.input_values = {}
-        self.output_values = {}
         self.input_maxes = {}
         self.input_mins = {}
         self.input_maxes_abs = {}
@@ -347,36 +345,6 @@ class TorchSmoothQuant:
 
         return save_input_hook
 
-    def _save_input_output_hook(self, name):
-        """
-        A forward hook to save input and output values of a module
-            param name: the module name
-            return: A hook function
-        """
-
-        def save_input_output_hook(module, inputs, outputs):
-            input = inputs[0]
-            cnt = 32
-            if name in self.input_values.keys() and len(self.input_values[name]) < cnt:
-                self.input_values[name].append(input)
-                self.output_values[name].append(outputs)
-            if name not in self.input_values.keys():
-                self.input_values[name] = [input]  ##TODO save more,like 8
-                self.output_values[name] = [outputs]  ##TODO do not save output
-
-        return save_input_output_hook
-
-    def _add_input_output_observer(self):
-        input_output_modules = {}
-        hook_layer_names = []
-        for key in self.absorb_to_layer:
-            hook_layer_names += self.absorb_to_layer[key]
-        for name in hook_layer_names:
-            input_output_modules[name] = get_module(self.model, name)
-        for key in input_output_modules.keys():
-            hook_func = self._save_input_output_hook(key)
-            hook_handle = input_output_modules[key].register_forward_hook(hook_func)
-            self.hook_handles.append(hook_handle)
 
     def _add_min_max_observer(self, modules, percentile=100):
         """
@@ -395,7 +363,7 @@ class TorchSmoothQuant:
         for hook_handle in self.hook_handles:
             hook_handle.remove()
 
-    def _calibrate(self, absorb_to_layer, calib_iter, percentile, save_input_output=False):
+    def _calibrate(self, absorb_to_layer, calib_iter, percentile):
         """
         :param absorb_to_layer: A dict,key is the absorb layer, val is a list of the to be smoothed layer
         :param calib_iter: Data size for calibration
@@ -408,8 +376,6 @@ class TorchSmoothQuant:
                 hook_modules[n] = module
 
         self._add_min_max_observer(hook_modules, percentile)
-        if save_input_output:
-            self._add_input_output_observer()
 
         self._dump_min_max(calib_iter=calib_iter)
         self._remove_observer()
@@ -997,11 +963,8 @@ class TorchSmoothQuant:
                         "you could set torchscript to True "
                     )
                     return self.model
-                save_input_output = False if alpha == "auto" else True
-                # if alpha == "auto":
-                #     save_input_output = True
 
-                input_maxes_abs = self._calibrate(self.absorb_to_layer, calib_iter, percentile, save_input_output)
+                input_maxes_abs = self._calibrate(self.absorb_to_layer, calib_iter, percentile)
 
                 # Check if input_maxes match self.absorb_to_layer
                 # (due to self._get_all_layer_names use layer tree instead of forward_path)
@@ -1044,7 +1007,6 @@ class TorchSmoothQuant:
             else:
                 logger.warning(" Could not get example input, equivelancy check is skipped")
 
-            self.input_values, self.output_values = {}, {}
             return self.model
 
     def output_is_equal(self, out1, out2, atol=1e-04):
