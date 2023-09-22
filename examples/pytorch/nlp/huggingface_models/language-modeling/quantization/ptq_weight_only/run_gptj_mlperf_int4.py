@@ -31,8 +31,9 @@ def get_gptj(model):
     torch.nn.init.uniform_ = skip
     torch.nn.init.normal_ = skip
     from transformers import GPTJForCausalLM, AutoModelForCausalLM
-    model = GPTJForCausalLM.from_pretrained(model) # load the model with fp32 precision
-    #model = AutoModelForCausalLM.from_pretrained(model, torch_dtype=torch.float16)
+    # model = GPTJForCausalLM.from_pretrained(model) # load the model with fp32 precision
+    # model = AutoModelForCausalLM.from_pretrained(model, torch_dtype=torch.float16)
+    model = GPTJForCausalLM.from_pretrained(model, torch_dtype=torch.bfloat16)
     return model
 
 def postprocess_text(preds, targets):
@@ -266,7 +267,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # method 1: directly import AutoModelForCausalLM
     model = get_gptj(args.model_name_or_path)
-    model.seqlen = args.pad_max_length
     model.eval()
 
     if args.use_gpu and torch.cuda.is_available():
@@ -288,15 +288,19 @@ if __name__ == '__main__':
 
     # # do the quantization
     print('Starting ...')
+    if args.sym:
+        sym_opt = 'sym'
+    else:
+        sym_opt = 'asym'
 
     conf = PostTrainingQuantConfig(
         approach='weight_only',
         op_type_dict={
             '.*':{ 	# re.match
                 "weight": {
-                    'bits': 4, # 1-8 bits 
-                    'group_size': 128,  # -1 (per-channel)
-                    'scheme': 'sym', 
+                    'bits': args.wbits, # 1-8 bits 
+                    'group_size': args.group_size,  # -1 (per-channel)
+                    'scheme': sym_opt, 
                     'algorithm': 'GPTQ', 
                 },
             },
@@ -314,10 +318,13 @@ if __name__ == '__main__':
                 'act_order':args.act_order,
                 'block_size': args.block_size, 
                 'nsampeles': args.nsamples,
-                'use_max_length': args.use_max_length
+                'use_max_length': args.use_max_length,
+                'pad_max_length': args.pad_max_length
             },
         },
     )
+
+    # import pdb;pdb.set_trace()
 
     q_model = quantization.fit(model, conf, calib_dataloader=dataloader,)
 

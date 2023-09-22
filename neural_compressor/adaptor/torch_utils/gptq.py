@@ -195,6 +195,7 @@ class GPTQuantizer(object):
             device: cpu or cuda
         """
         # model
+        # import pdb;pdb.set_trace()
         self.model = model
         self.use_cache = self.model.config.use_cache
         self.gptq_related_blocks = trace_gptq_target_blocks(self.model)  # get the transformer block list above
@@ -259,9 +260,14 @@ class GPTQuantizer(object):
                 if batch[0].shape[-1] > self.pad_max_length:
                     i = random.randint(0, batch[0].shape[-1] - self.pad_max_length - 1)
                     j = i + self.pad_max_length
-                    batch_final = batch[0][:, i:j]
+                    batch_final = []
+                    for item in batch:
+                        if isinstance(item, torch.Tensor):
+                            batch_final.append(item[:, i:j])
+                        else:
+                            batch_final.append(item)
                 else:
-                    batch_final = batch[0]
+                    batch_final = batch[:]
             # dict
             elif isinstance(batch, dict):
                 try:
@@ -302,18 +308,22 @@ class GPTQuantizer(object):
             if len(self.dataloader) == self.nsamples:
                 logger.info(f"Successfully collect {self.nsamples} calibration samples.")
                 break
-            # list & tuple
+            # list & tuple, gpt-j-6b mlperf, etc.
             if isinstance(batch, list) or isinstance(batch, tuple):
                 if batch[0].shape[-1] == unified_length:
-                    batch_final = batch[0]
+                    batch_final = batch[:]
                 elif batch[0].shape[-1] > unified_length:
                     i = random.randint(0, batch[0].shape[-1] - unified_length - 1)
                     j = i + unified_length
-                    batch_final = batch[0][:, i:j]
+                    batch_final = []
+                    for item in batch:
+                        if isinstance(item, torch.Tensor):
+                            batch_final.append(item[:, i:j])
+                        else:
+                            batch_final.append(item)
                 else:
                     # not match max length, not include in target dataset
                     continue
-                self.dataloader.append(batch_final)
             # dict
             elif isinstance(batch, dict):
                 try:
@@ -441,6 +451,7 @@ class GPTQuantizer(object):
 
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
+        # import pdb;pdb.set_trace()
         for batch in tqdm(self.dataloader):
             batch = move_input_to_device(batch, self.device)
             try:
@@ -485,8 +496,12 @@ class GPTQuantizer(object):
     def execute_quantization(self, means=None, stds=None):
         """Run quantization."""
         # Step1: prepare quantization (calibration datasets)
+        # import pdb;pdb.set_trace()
+
         logger.info("Begin ====>")
         self.pre_quantization()
+
+        # import pdb;pdb.set_trace()
         # Step2: run gptq quantization in a transformer block-wise manner.
         gptq_config = {}
         tblock_length = len(self.gptq_related_blocks["transformers"])
@@ -534,6 +549,7 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache.pop("i")
+            # import pdb;pdb.set_trace()
             for j in range(len(self.dataloader)):
                 # self.inp[j] shape: [1, seq_len, hidden_size] (batchsize is 1 by default)
                 cache_batch = self.gather_single_batch_from_dict(self.cache, j)
