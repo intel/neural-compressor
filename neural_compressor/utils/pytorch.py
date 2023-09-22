@@ -226,7 +226,7 @@ def load_weight_only(checkpoint_dir, model):
             module = util.fetch_module(model, op_name)
             new_module = MulLinear(module)
             util.set_module(model, op_name, new_module)
-    if str(model.device) == "meta":
+    if hasattr(model, 'device') and str(model.device) == "meta":
         from ..adaptor.torch_utils.layer_wise_quant.utils import get_named_children, set_module_tensor_to_device
 
         state_dict = torch.load(weights_file)
