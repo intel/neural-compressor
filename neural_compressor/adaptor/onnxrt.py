@@ -1767,7 +1767,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             precisions = query.get_precisions()
 
             for precision in precisions:
-                if precision != "weight_only_integer":
+                if precision not in ["weight_only_integer". "fp32"]:
                     continue
                 # get supported optype for target precision
                 optypes = (
@@ -1792,7 +1792,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                             continue
                     else:
                         op_capability = copy.deepcopy(configs[op])
-                    op_capability["activation"]["quant_mode"] = "weight_only"
+                        op_capability["activation"]["quant_mode"] = "weight_only"
                     if op not in optype_wise.keys():
                         optype_wise[op] = [op_capability]
                     elif op_capability not in optype_wise[op]:
