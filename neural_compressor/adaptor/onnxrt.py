@@ -1767,7 +1767,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             precisions = query.get_precisions()
 
             for precision in precisions:
-                if precision not in ["weight_only_integer". "fp32"]:
+                if precision not in ["weight_only_integer", "fp32"]:
                     continue
                 # get supported optype for target precision
                 optypes = (
