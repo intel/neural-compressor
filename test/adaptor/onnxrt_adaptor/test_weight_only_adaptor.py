@@ -74,7 +74,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
         )
-        q_model = quantization.fit(self.model, conf, calib_dataloader=self.dataloader)
+        q_model = quantization.fit(self.model, conf)
         for data, _ in self.dataloader:
             q_out = Inference(q_model.model, data)
             org_out = Inference(self.model, data)
@@ -104,7 +104,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             org_out = Inference(self.model, data)
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
-
+        
         conf = PostTrainingQuantConfig(
             approach="weight_only",
             op_type_dict={
@@ -150,6 +150,27 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             org_out = Inference(self.model, data)
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
+
+        awq_op_names = [i.name for i in q_model.nodes() if i.op_type == "MatMulWithQuantWeight"]
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 32,
+                        "scheme": "asym",
+                        "algorithm": "RTN",
+                    },
+                },
+            },
+            op_name_dict={
+                awq_op_names[0][:-3]: {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
+            },
+        )
+        q_model = quantization.fit(self.model, conf)
+        rtn_op_names = [i.name for i in q_model.nodes() if i.op_type == "MatMulWithQuantWeight"]
+        self.assertTrue(len(rtn_op_names) + 1, len(awq_op_names))
 
     def test_GPTQ_quant(self):
         conf = PostTrainingQuantConfig(
@@ -215,6 +236,26 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
 
+        gptq_op_names = [i.name for i in q_model.nodes() if i.op_type == "MatMulWithQuantWeight"]
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 32,
+                        "scheme": "asym",
+                        "algorithm": "RTN",
+                    },
+                },
+            },
+            op_name_dict={
+                gptq_op_names[0][:-3]: {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
+            },
+        )
+        q_model = quantization.fit(self.model, conf)
+        rtn_op_names = [i.name for i in q_model.nodes() if i.op_type == "MatMulWithQuantWeight"]
+        self.assertTrue(len(rtn_op_names) + 1, len(gptq_op_names))
 
 if __name__ == "__main__":
     unittest.main()
