@@ -423,9 +423,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             tensor = tensor.T * best_scale
             tensor = (tensor.T).astype("float32")
 
-            new_tensor = onnx.helper.make_tensor(
-                node.input[1] + "_scaled", 1, tensor.shape, tensor.tobytes(), raw=True
-            )
+            new_tensor = onnx.helper.make_tensor(node.input[1] + "_scaled", 1, tensor.shape, tensor.tobytes(), raw=True)
             model.add_initializer(new_tensor)
             node.input[1] = new_tensor.name
 
