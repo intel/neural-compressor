@@ -345,7 +345,6 @@ class TorchSmoothQuant:
 
         return save_input_hook
 
-
     def _add_min_max_observer(self, modules, percentile=100):
         """
         :param modules: the modules which the observer will insert to
