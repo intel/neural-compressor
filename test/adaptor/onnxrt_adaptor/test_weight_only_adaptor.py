@@ -104,7 +104,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             org_out = Inference(self.model, data)
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
-        
+
         conf = PostTrainingQuantConfig(
             approach="weight_only",
             op_type_dict={
@@ -256,6 +256,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         q_model = quantization.fit(self.model, conf)
         rtn_op_names = [i.name for i in q_model.nodes() if i.op_type == "MatMulWithQuantWeight"]
         self.assertTrue(len(rtn_op_names) + 1, len(gptq_op_names))
+
 
 if __name__ == "__main__":
     unittest.main()
