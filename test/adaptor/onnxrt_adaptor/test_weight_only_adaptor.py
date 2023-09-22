@@ -151,7 +151,9 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
 
-        awq_op_names = [i.name for i in q_model.nodes() if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q4G32")]
+        awq_op_names = [
+            i.name for i in q_model.nodes() if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q4G32")
+        ]
         conf = PostTrainingQuantConfig(
             approach="weight_only",
             op_type_dict={
@@ -169,7 +171,9 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             },
         )
         q_model = quantization.fit(self.model, conf)
-        rtn_op_names = [i.name for i in q_model.nodes() if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q4G32")]
+        rtn_op_names = [
+            i.name for i in q_model.nodes() if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q4G32")
+        ]
         self.assertTrue(len(rtn_op_names) + 1, len(awq_op_names))
 
     def test_GPTQ_quant(self):
@@ -236,7 +240,9 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
 
-        gptq_op_names = [i.name for i in q_model.nodes() if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q4G32")]
+        gptq_op_names = [
+            i.name for i in q_model.nodes() if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q4G32")
+        ]
         conf = PostTrainingQuantConfig(
             approach="weight_only",
             op_type_dict={
@@ -254,7 +260,9 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             },
         )
         q_model = quantization.fit(self.model, conf)
-        rtn_op_names = [i.name for i in q_model.nodes() if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q4G32")]
+        rtn_op_names = [
+            i.name for i in q_model.nodes() if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q4G32")
+        ]
         self.assertTrue(len(rtn_op_names) + 1, len(gptq_op_names))
 
 
