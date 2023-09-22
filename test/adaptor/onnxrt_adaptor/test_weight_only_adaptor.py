@@ -151,7 +151,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
 
-        awq_op_names = [i.name for i in q_model.nodes() if i.op_type == "MatMulWithQuantWeight"]
+        awq_op_names = [i.name for i in q_model.nodes() if i.input[1].endswith("_Q4G32")]
         conf = PostTrainingQuantConfig(
             approach="weight_only",
             op_type_dict={
@@ -165,11 +165,11 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             op_name_dict={
-                awq_op_names[0][:-3]: {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
+                awq_op_names[0]: {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
             },
         )
         q_model = quantization.fit(self.model, conf)
-        rtn_op_names = [i.name for i in q_model.nodes() if i.op_type == "MatMulWithQuantWeight"]
+        rtn_op_names = [i.name for i in q_model.nodes() if i.input[1].endswith("_Q4G32")]
         self.assertTrue(len(rtn_op_names) + 1, len(awq_op_names))
 
     def test_GPTQ_quant(self):
@@ -219,7 +219,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
                 ".*": {  # re.match
                     "weight": {
                         "bits": 4,  # 1-8 bits
-                        "group_size": -1,  # -1 (per-channel)
+                        "group_size": 32,
                         "scheme": "sym",
                         "algorithm": "GPTQ",
                     },
@@ -236,7 +236,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
 
-        gptq_op_names = [i.name for i in q_model.nodes() if i.op_type == "MatMulWithQuantWeight"]
+        gptq_op_names = [i.name for i in q_model.nodes() if i.input[1].endswith("_Q4G32")]
         conf = PostTrainingQuantConfig(
             approach="weight_only",
             op_type_dict={
@@ -250,11 +250,11 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             op_name_dict={
-                gptq_op_names[0][:-3]: {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
+                gptq_op_names[0]: {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
             },
         )
         q_model = quantization.fit(self.model, conf)
-        rtn_op_names = [i.name for i in q_model.nodes() if i.op_type == "MatMulWithQuantWeight"]
+        rtn_op_names = [i.name for i in q_model.nodes() if i.input[1].endswith("_Q4G32")]
         self.assertTrue(len(rtn_op_names) + 1, len(gptq_op_names))
 
 
