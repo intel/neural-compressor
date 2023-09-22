@@ -340,7 +340,7 @@ class TorchSmoothQuant:
                 self.input_maxes_abs[name] = res
             else:
                 self.input_mins[name] = torch.min(self.input_mins[name], min_tensor)
-                self.input_maxes[name] = torch.max(self.maxes[name], max_tensor)
+                self.input_maxes[name] = torch.max(self.input_maxes[name], max_tensor)
                 self.input_maxes_abs[name] = torch.max(self.input_maxes_abs[name], res)
 
         return save_input_hook
