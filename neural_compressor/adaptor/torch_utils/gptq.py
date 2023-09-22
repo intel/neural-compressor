@@ -195,7 +195,6 @@ class GPTQuantizer(object):
             device: cpu or cuda
         """
         # model
-        # import pdb;pdb.set_trace()
         self.model = model
         self.use_cache = self.model.config.use_cache
         self.gptq_related_blocks = trace_gptq_target_blocks(self.model)  # get the transformer block list above
@@ -451,7 +450,6 @@ class GPTQuantizer(object):
 
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
-        # import pdb;pdb.set_trace()
         for batch in tqdm(self.dataloader):
             batch = move_input_to_device(batch, self.device)
             try:
@@ -496,12 +494,10 @@ class GPTQuantizer(object):
     def execute_quantization(self, means=None, stds=None):
         """Run quantization."""
         # Step1: prepare quantization (calibration datasets)
-        # import pdb;pdb.set_trace()
 
         logger.info("Begin ====>")
         self.pre_quantization()
 
-        # import pdb;pdb.set_trace()
         # Step2: run gptq quantization in a transformer block-wise manner.
         gptq_config = {}
         tblock_length = len(self.gptq_related_blocks["transformers"])
@@ -549,7 +545,6 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache.pop("i")
-            # import pdb;pdb.set_trace()
             for j in range(len(self.dataloader)):
                 # self.inp[j] shape: [1, seq_len, hidden_size] (batchsize is 1 by default)
                 cache_batch = self.gather_single_batch_from_dict(self.cache, j)

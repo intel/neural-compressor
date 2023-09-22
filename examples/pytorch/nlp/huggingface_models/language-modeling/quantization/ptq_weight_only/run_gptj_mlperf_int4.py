@@ -91,7 +91,6 @@ def benchmark(model, benchmark_dataset, tokenizer, sources, targets, check=False
     predictions = []
     ground_truths = []
 
-    # import pdb;pdb.set_trace()
     with torch.no_grad(), torch.inference_mode():
         times = []
         #for i, (input_ids, labels) in enumerate(benchmark_dataset):# in range(input_ids.numel()):
@@ -323,8 +322,6 @@ if __name__ == '__main__':
             },
         },
     )
-
-    # import pdb;pdb.set_trace()
 
     q_model = quantization.fit(model, conf, calib_dataloader=dataloader,)
 

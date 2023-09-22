@@ -45,13 +45,13 @@ and [gpt-j-6B mlperf model](https://github.com/mlcommons/inference/tree/master/l
 Then run following command to do quantization (please refer to *run_gptj_mlperf_int4.sh*)
 ```shell
 python -u examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_weight_only/run_gptj_mlperf_int4.py \
-    --model_name_or_path ${MODEL_DIR} \
+    --model_name_or_path /your/gptj/model/ \
     --wbits 4 \
     --sym \
     --group_size -1 \
     --nsamples 128 \
-    --calib-data-path ${CALIBRATION_DATA} \
-    --val-data-path ${VALIDATION_DATA} \
+    --calib-data-path /your/data/calibration-data/cnn_dailymail_calibration.json \
+    --val-data-path /your/data/validation-data/cnn_dailymail_validation.json \
     --calib-iters 128 \
     --use_max_length \
     --pad_max_length 2048 \
