@@ -182,7 +182,7 @@ Functions
    :rtype: inputs
 
 
-.. py:function:: awq_quantize(model, dataloader, weight_config={}, num_bits=4, group_size=32, scheme='asym', n_samples=128, enable_auto_scale=True, enable_mse_search=True, n_blocks=5)
+.. py:function:: awq_quantize(model, dataloader, weight_config={}, num_bits=4, group_size=32, scheme='asym', n_samples=128, enable_auto_scale=True, enable_mse_search=True)
 
    Quant the model with Activation-aware Weight quantization(AWQ) method.
 
@@ -214,8 +214,6 @@ Functions
    :type enable_auto_scale: bool, optional
    :param enable_mse_search: whether enable clip for weight by checking mse. Defaults to True.
    :type enable_mse_search: bool, optional
-   :param n_blocks: split model into block number to avoid OOM.
-   :type n_blocks: int, optional
 
    :returns: fake quantized ONNXModel
    :rtype: model
