@@ -236,7 +236,9 @@ class GPTQuantizer(object):
             # general selection, no padding, not GPTQ original implementation.
             self.obtain_first_n_samples()
         try:
-            self.cache_key_arguments = {"i": 0}  # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
+            self.cache_key_arguments = {
+                "i": 0
+            }  # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
             # Note that the first elements in cache_positional_arguments is main input: hidden_states
             self.cache_positional_arguments = []  # a list of list, positional arguments ("rotary_pos_emb" in chatglm)
             self.is_ready = True
@@ -492,7 +494,7 @@ class GPTQuantizer(object):
         for data_item in data_list:
             single_batch.append(data_item[idx])
         return single_batch
-    
+
     def update_blockwise_hidden_states(self, outs):
         if "hidden_states" in self.cache_key_arguments:
             self.cache_key_arguments["hidden_states"] = outs[:]
