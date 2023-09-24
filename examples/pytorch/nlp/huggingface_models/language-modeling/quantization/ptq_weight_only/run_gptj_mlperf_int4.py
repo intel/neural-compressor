@@ -32,7 +32,6 @@ def get_gptj(model):
     torch.nn.init.normal_ = skip
     from transformers import GPTJForCausalLM, AutoModelForCausalLM
     # model = GPTJForCausalLM.from_pretrained(model) # load the model with fp32 precision
-    # model = AutoModelForCausalLM.from_pretrained(model, torch_dtype=torch.float16)
     model = GPTJForCausalLM.from_pretrained(model, torch_dtype=torch.bfloat16)
     return model
 

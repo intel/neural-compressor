@@ -236,10 +236,9 @@ class GPTQuantizer(object):
             # general selection, no padding, not GPTQ original implementation.
             self.obtain_first_n_samples()
         try:
-            self.inp = [torch.zeros(1) for _ in range(len(self.dataloader))]
-            self.cache = {"i": 0}  # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
+            self.cache_key_arguments = {"i": 0}  # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
+            # Note that the first elements in cache_positional_arguments is main input: hidden_states
             self.cache_positional_arguments = []  # a list of list, positional arguments ("rotary_pos_emb" in chatglm)
-            self.out = [torch.zeros(1) for _ in range(len(self.dataloader))]
             self.is_ready = True
         except:
             logger.warning("GPTQ Quantizer initialization failed!")
@@ -261,7 +260,7 @@ class GPTQuantizer(object):
                     j = i + self.pad_max_length
                     batch_final = []
                     for item in batch:
-                        if isinstance(item, torch.Tensor):
+                        if isinstance(item, torch.Tensor) and item.shape.__len__() == 2:
                             batch_final.append(item[:, i:j])
                         else:
                             batch_final.append(item)
@@ -316,7 +315,7 @@ class GPTQuantizer(object):
                     j = i + unified_length
                     batch_final = []
                     for item in batch:
-                        if isinstance(item, torch.Tensor):
+                        if isinstance(item, torch.Tensor) and item.shape.__len__() == 2:
                             batch_final.append(item[:, i:j])
                         else:
                             batch_final.append(item)
@@ -415,17 +414,16 @@ class GPTQuantizer(object):
         """Prepare input calibration data and other attributes which are critical for gptq execution."""
 
         # critical: hooker function which collects inputs
-        def forward(layer, hidden_states, *args, **kwargs):
+        def forward(layey, *args, **kwargs):
             # inputs[inputs_info['idx']] = input_ids # TODO solve the problem of batchsize!=1
-            self.inp[self.cache["i"]] = hidden_states
-            self.cache["i"] += 1
+            self.cache_key_arguments["i"] += 1
             for arg in kwargs:
                 # TODO: investigate include parameters
                 # each outputs can be different shape, hence also use list to store
                 if isinstance(kwargs[arg], torch.Tensor) or arg == "alibi":
-                    if self.cache.get(arg, None) is None:
-                        self.cache[arg] = []
-                    self.cache[arg].append(kwargs[arg])
+                    if self.cache_key_arguments.get(arg, None) is None:
+                        self.cache_key_arguments[arg] = []
+                    self.cache_key_arguments[arg].append(kwargs[arg])
                 continue
             # copy positional arguments, positional arguments are sensitive for their order, be cautious!
             # Most models in HF has avoid this, but some models still use positional arguments other than
@@ -450,6 +448,7 @@ class GPTQuantizer(object):
 
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
+        # import pdb;pdb.set_trace()
         for batch in tqdm(self.dataloader):
             batch = move_input_to_device(batch, self.device)
             try:
@@ -463,8 +462,12 @@ class GPTQuantizer(object):
                 pass
         # output inp data shape
         logger.info("All calibration data's shape =>")
-        for idx in range(len(self.dataloader)):
-            logger.info(self.inp[idx].shape)
+        # check all hidden_states shape
+        try:
+            for hidden_states in self.cache_positional_arguments[0]:
+                logger.info(hidden_states.shape)
+        except:
+            pass
         logger.info("Done.")
 
         # Step 4: restore original forward function, relocate layers back to cpu.
@@ -489,6 +492,12 @@ class GPTQuantizer(object):
         for data_item in data_list:
             single_batch.append(data_item[idx])
         return single_batch
+    
+    def update_blockwise_hidden_states(self, outs):
+        if "hidden_states" in self.cache_key_arguments:
+            self.cache_key_arguments["hidden_states"] = outs[:]
+        else:
+            self.cache_positional_arguments[0] = outs[:]
 
     @torch.no_grad()
     def execute_quantization(self, means=None, stds=None):
@@ -544,13 +553,13 @@ class GPTQuantizer(object):
             handles = []  # register handles which add inputs and outputs to gptq object
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
-            idx = self.cache.pop("i")
+            idx = self.cache_key_arguments.pop("i")
+            # import pdb;pdb.set_trace()
             for j in range(len(self.dataloader)):
-                # self.inp[j] shape: [1, seq_len, hidden_size] (batchsize is 1 by default)
-                cache_batch = self.gather_single_batch_from_dict(self.cache, j)
+                cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                self.out[j] = transformer_block(self.inp[j], *cache_positional_batch, **cache_batch)[0]
-            self.cache["i"] = idx
+                out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
+            self.cache_key_arguments["i"] = idx
             for h in handles:
                 h.remove()
             # Step 2.4: everything is prepared, so start quantization!
@@ -576,18 +585,19 @@ class GPTQuantizer(object):
                 gptq_for_this_block[layer_name].free()
 
             # Step 2.5: replace output data with quantized weights
-            idx = self.cache.pop("i")
+            outs = []
+            idx = self.cache_key_arguments.pop("i")
             for j in range(len(self.dataloader)):
-                # self.inp[j] shape: [1, seq_len, hidden_size] (batchsize is 1 by default)
-                cache_batch = self.gather_single_batch_from_dict(self.cache, j)
+                cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                self.out[j] = transformer_block(self.inp[j], *cache_positional_batch, **cache_batch)[0]
-            self.cache["i"] = idx
+                out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
+                outs.append(out)
+            self.cache_key_arguments["i"] = idx
             self.gptq_related_blocks["transformers"][block_idx] = transformer_block.cpu()
             del gptq_for_this_block
             torch.cuda.empty_cache()
             # iteratively replace the input with output, thus layerwise quantization can continue.
-            self.inp, self.out = self.out, self.inp
+            self.update_blockwise_hidden_states(outs)
             logger.info("------------------------------")
 
         logger.info("Quantization done")
