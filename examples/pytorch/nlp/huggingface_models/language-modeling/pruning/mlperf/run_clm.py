@@ -306,26 +306,6 @@ if __name__ == '__main__':
         collate_fn=calib_dataset.collate_batch
     )
 
-    # do pruning
-    if args.prune:
-        pruning_configs=[
-            {
-                "pruning_type": "sparse_gpt",
-                "op_names": [".attn", "_proj", ".fc", "key", "dense", "_h"],
-            }
-        ]
-        configs = WeightPruningConfig(
-            pruning_configs,
-            target_sparsity=args.target_sparsity,
-            pattern=args.pruning_pattern
-        )
-        from neural_compressor.training import prepare_pruning
-        use_cache = model.config.use_cache
-        model.config.use_cache = False
-        pruning = prepare_pruning(model, configs,  dataloader=dataloader, device=DEV)
-        model.config.use_cache = use_cache
-        model.save_pretrained('./gptj-sparsegpt-pruning')
-
     # # do the quantization
     if args.quant:
         print('Starting ...')
@@ -367,6 +347,27 @@ if __name__ == '__main__':
     # q_model.save("./gptj-gptq-gs128-calib128-calibration-fp32/")
     # benchmarking first 100 examples
     # if args.benchmark:
+
+    # do pruning
+    if args.prune:
+        pruning_configs=[
+            {
+                "pruning_type": "sparse_gpt",
+                "op_names": [".attn", "_proj", ".fc", "key", "dense", "_h"],
+            }
+        ]
+        configs = WeightPruningConfig(
+            pruning_configs,
+            target_sparsity=args.target_sparsity,
+            pattern=args.pruning_pattern
+        )
+        from neural_compressor.training import prepare_pruning
+        use_cache = model.config.use_cache
+        model.config.use_cache = False
+        pruning = prepare_pruning(model, configs,  dataloader=dataloader, device=DEV)
+        model.config.use_cache = use_cache
+        model.save_pretrained('./gptj-sparsegpt-pruning')
+
     if True:
         # use half to accerlerate inference
         model.half()
