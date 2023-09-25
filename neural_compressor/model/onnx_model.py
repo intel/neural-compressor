@@ -18,8 +18,10 @@
 
 import logging
 import os
+import sys
 from pathlib import Path
 
+from neural_compressor.adaptor.ox_utils.util import MAXIMUM_PROTOBUF
 from neural_compressor.model.base_model import BaseModel
 from neural_compressor.utils.utility import LazyImport
 
@@ -41,16 +43,9 @@ class ONNXModel(BaseModel):
         """
         self._model = model if not isinstance(model, str) else onnx.load(model)
         self._model_path = None if not isinstance(model, str) else model
-        self._is_large_model = False
-        try:
-            ort.InferenceSession(self._model.SerializeToString(), providers=["CPUExecutionProvider"])
-        except Exception as e:  # pragma: no cover
-            if self._model_path is not None:
-                ort.InferenceSession(self._model_path, providers=["CPUExecutionProvider"])
-                self._is_large_model = True
-            else:
-                logger.warning("Please use model path instead of onnx model object to quantize")
-
+        self._is_large_model = self.check_large_model()
+        if self._is_large_model and self._model_path is None:
+            logger.warning("Model size > 2GB. Please use model path instead of onnx model object to quantize")
         self._config = None
         if isinstance(model, str) and os.path.exists(Path(model).parent.joinpath("config.json").as_posix()):
             from transformers import PretrainedConfig
@@ -65,6 +60,26 @@ class ONNXModel(BaseModel):
         self._graph_info = {}
         self._get_graph_info()
         self._q_config = None
+
+    def check_large_model(self):
+        """Check model > 2GB."""
+        init_size = 0
+        for init in self._model.graph.initializer:
+            # if initializer has external data location, return True
+            if init.HasField("data_location") and init.data_location == onnx.TensorProto.EXTERNAL:
+                return True
+            # if raise error of initializer size > 2GB, return True
+            try:
+                init_bytes = init.SerializeToString()
+                init_size += sys.getsizeof(init_bytes)
+            except Exception as e:
+                if "exceeds maximum protobuf size of 2GB" in str(e):
+                    return True
+                else:  # pragma: no cover
+                    raise e
+            if init_size > MAXIMUM_PROTOBUF:
+                return True
+        return False
 
     @property
     def is_large_model(self):
