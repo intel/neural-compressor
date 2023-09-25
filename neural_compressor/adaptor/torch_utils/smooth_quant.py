@@ -203,8 +203,13 @@ def set_module(model, key, new_module):
     for name in name_list[:-1]:
         if hasattr(module, name):
             module = getattr(module, name)
+        elif hasattr(module, "sq_linear"):  # for peft models
+            module = getattr(module, "sq_linear")
+            module = getattr(module, name)
         else:
             module = module
+    if hasattr(module, "sq_linear"):  # for peft models
+        module = getattr(module, "sq_linear")
     setattr(module, name_list[-1], new_module)
 
 
