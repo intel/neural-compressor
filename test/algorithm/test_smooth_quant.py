@@ -1292,8 +1292,8 @@ class TestExamples(unittest.TestCase):
     def test_peft_model(self):
         import peft
 
-        model_id = "peft-internal-testing/tiny_T5ForSeq2SeqLM-lora"
-        model = peft.AutoPeftModelForSeq2SeqLM.from_pretrained(model_id)
+        model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id)
         example_input = torch.ones(1, 128, dtype=torch.long)
         out1 = model(example_input)
 
