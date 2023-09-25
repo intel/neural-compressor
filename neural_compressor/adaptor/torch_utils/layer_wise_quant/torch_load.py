@@ -21,6 +21,7 @@ import os
 import warnings
 from typing import IO, Any, BinaryIO, Callable, Dict, Optional, Union
 
+from packaging.version import Version
 from torch.serialization import (
     StorageType,
     _get_restore_location,
@@ -34,8 +35,6 @@ from torch.serialization import (
 from neural_compressor.adaptor.torch_utils.layer_wise_quant import modified_pickle as pickle
 
 from .utils import torch
-
-from packaging.version import Version
 
 torch_version = torch.__version__.split("+")[0]
 version = Version(torch_version)
