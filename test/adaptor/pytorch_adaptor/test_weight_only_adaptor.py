@@ -2,6 +2,8 @@ import copy
 import os
 import shutil
 import unittest
+import sys
+sys.path.insert(0, './')
 
 import torch
 import transformers
@@ -220,6 +222,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         q_model.save("saved")
         from neural_compressor.utils.pytorch import load
 
+        breakpoint()
         new_model = load("saved", model, weight_only=True)
         out1 = new_model(input)
         self.assertTrue(torch.all(out1 == out2))
