@@ -82,8 +82,9 @@ fi
 
 # install special test env requirements
 # common deps
+pip install --no-cache-dir horovod
 pip install transformers
-pip install horovod
+
 if [[ $(echo "${test_case}" | grep -c "others") != 0 ]];then
     pip install tf_slim xgboost accelerate==0.21.0
 elif [[ $(echo "${test_case}" | grep -c "nas") != 0 ]]; then
