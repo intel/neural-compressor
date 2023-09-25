@@ -60,7 +60,10 @@ def forward_wrapper(model, input, device=torch.device("cpu")):
     if isinstance(input, dict) or isinstance(input, UserDict):
         output = model(**input)
     elif isinstance(input, list) or isinstance(input, tuple):
-        output = model(*input)
+        try:
+            output = model(*input)
+        except:
+            output = model(input)
     else:
         output = model(input)
     return output
@@ -835,43 +838,76 @@ class TorchSmoothQuant:
         if not self.dataloader:
             self._qdq_model_unwrapper_for_auto()
             return best_alphas
+        try:
+            for input, label in self.dataloader:
+                best_alphas_per_module = best_alphas
+                if isinstance(best_alphas, dict):
+                    for key in self.absorb_to_layer.keys():
+                        layer_names = self.absorb_to_layer[key]
+                        for layer_name in layer_names:
+                            best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
-        for idx, input in enumerate(self.dataloader):
-            if isinstance(input, (tuple, list)):
-                input = input[0]
-            best_alphas_per_module = best_alphas
-            if isinstance(best_alphas, dict):
-                for key in self.absorb_to_layer.keys():
-                    layer_names = self.absorb_to_layer[key]
-                    for layer_name in layer_names:
-                        best_alphas_per_module[layer_name] = best_alphas_per_module[key]
+                loss_tmp = self._get_one_sample_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
+                if loss_alphas == {}:
+                    loss_alphas = loss_tmp
+                else:
+                    for key in loss_alphas.keys():
+                        cur_loss = loss_alphas[key]
+                        for alpha_key in cur_loss.keys():
+                            cur_loss[alpha_key] += loss_tmp[key][alpha_key]
+                if isinstance(input, list):
+                    input = move_input_to_device(input, self.device)
+                    for inp in input:
+                        cnt += inp.shape[0]
+                else:
+                    cnt += input.shape[0]
 
-            loss_tmp = self._get_one_sample_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
-            if loss_alphas == {}:
-                loss_alphas = loss_tmp
-            else:
-                for key in loss_alphas.keys():
-                    cur_loss = loss_alphas[key]
-                    for alpha_key in cur_loss.keys():
-                        cur_loss[alpha_key] += loss_tmp[key][alpha_key]
-            if isinstance(input, list):
-                input = move_input_to_device(input, self.device)
-                for inp in input:
-                    cnt += inp.shape[0]
-            else:
-                cnt += input.shape[0]
+                if cnt % multiply_factor == 0 and (auto_calib_iter - cnt) >= multiply_factor:
+                    best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, shared_criterion)
+                    for key in best_alphas.keys():
+                        logger.info(f"{cnt // multiply_factor},{key}:{best_alphas[key]}")
+                    absorb_input_scales, weight_scales = self._cal_scales(
+                        self.absorb_to_layer, input_maxes, best_alphas, tuning=True
+                    )
+                    self._update_scales_for_auto(absorb_input_scales, weight_scales)
+                    loss_alphas = {}  ##TODO check need to remove this one
+                if cnt >= auto_calib_iter:
+                    break
+        except:
+            for input in self.dataloader:
+                best_alphas_per_module = best_alphas
+                if isinstance(best_alphas, dict):
+                    for key in self.absorb_to_layer.keys():
+                        layer_names = self.absorb_to_layer[key]
+                        for layer_name in layer_names:
+                            best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
-            if cnt % multiply_factor == 0 and (auto_calib_iter - cnt) >= multiply_factor:
-                best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, shared_criterion)
-                for key in best_alphas.keys():
-                    logger.info(f"{cnt // multiply_factor},{key}:{best_alphas[key]}")
-                absorb_input_scales, weight_scales = self._cal_scales(
-                    self.absorb_to_layer, input_maxes, best_alphas, tuning=True
-                )
-                self._update_scales_for_auto(absorb_input_scales, weight_scales)
-                loss_alphas = {}  ##TODO check need to remove this one
-            if cnt >= auto_calib_iter:
-                break
+                loss_tmp = self._get_one_sample_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
+                if loss_alphas == {}:
+                    loss_alphas = loss_tmp
+                else:
+                    for key in loss_alphas.keys():
+                        cur_loss = loss_alphas[key]
+                        for alpha_key in cur_loss.keys():
+                            cur_loss[alpha_key] += loss_tmp[key][alpha_key]
+                if isinstance(input, list):
+                    input = move_input_to_device(input, self.device)
+                    for inp in input:
+                        cnt += inp.shape[0]
+                else:
+                    cnt += input.shape[0]
+
+                if cnt % multiply_factor == 0 and (auto_calib_iter - cnt) >= multiply_factor:
+                    best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, shared_criterion)
+                    for key in best_alphas.keys():
+                        logger.info(f"{cnt // multiply_factor},{key}:{best_alphas[key]}")
+                    absorb_input_scales, weight_scales = self._cal_scales(
+                        self.absorb_to_layer, input_maxes, best_alphas, tuning=True
+                    )
+                    self._update_scales_for_auto(absorb_input_scales, weight_scales)
+                    loss_alphas = {}  ##TODO check need to remove this one
+                if cnt >= auto_calib_iter:
+                    break
 
         best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, shared_criterion)
         for key in best_alphas.keys():
