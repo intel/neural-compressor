@@ -1294,7 +1294,7 @@ class TestExamples(unittest.TestCase):
 
         model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
         model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id)
-        example_input = torch.ones(1, 128, dtype=torch.long)
+        example_input = torch.ones(1, 12, dtype=torch.long)
         out1 = model(example_input)
 
         def calib_func(model):
