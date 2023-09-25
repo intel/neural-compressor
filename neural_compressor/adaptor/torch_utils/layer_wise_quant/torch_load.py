@@ -58,18 +58,14 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module, pickle_fil
 
         if version.release < Version("1.13.0").release:
             storage = zip_file.get_storage_from_record(name, numel, torch._UntypedStorage).storage()._untyped()
-            typed_storage = torch.storage._TypedStorage(
-                wrap_storage=restore_location(storage, location),
-                dtype=dtype)
+            typed_storage = torch.storage._TypedStorage(wrap_storage=restore_location(storage, location), dtype=dtype)
             loaded_storages[key] = typed_storage
         elif version.release < Version("2.0.0").release:  # pragma: no cover
             storage = zip_file.get_storage_from_record(name, numel, UntypedStorage).storage().untyped()
             typed_storage = torch.storage.TypedStorage(wrap_storage=restore_location(storage, location), dtype=dtype)
             loaded_storages[key] = typed_storage
         else:
-            storage = (
-                zip_file.get_storage_from_record(name, numel, UntypedStorage)._typed_storage()._untyped_storage
-            )
+            storage = zip_file.get_storage_from_record(name, numel, UntypedStorage)._typed_storage()._untyped_storage
             typed_storage = torch.storage.TypedStorage(
                 wrap_storage=restore_location(storage, location), dtype=dtype, _internal=True
             )

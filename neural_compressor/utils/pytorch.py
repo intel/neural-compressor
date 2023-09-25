@@ -234,7 +234,9 @@ def load_weight_only(checkpoint_dir, model, layer_wise=False):
         for name, module in modules:
             for n, p in module.named_parameters():
                 param_name = name + "." + n
-                value = torch.load(os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)), f"{param_name}.pt"))
+                value = torch.load(
+                    os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)), f"{param_name}.pt")
+                )
                 set_module_tensor_to_device(model, param_name, "cpu", value)
     else:
         model.load_state_dict(torch.load(weights_file))
