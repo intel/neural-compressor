@@ -620,7 +620,6 @@ def set_module(model, op_name, new_module):
         else:
             module = module
     setattr(module, name_list[-1], new_module)
-    return module
 
 
 def simple_inference(model, input):
