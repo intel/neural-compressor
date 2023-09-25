@@ -1,9 +1,10 @@
 import copy
 import os
 import shutil
-import unittest
 import sys
-sys.path.insert(0, './')
+import unittest
+
+sys.path.insert(0, "./")
 
 import torch
 import transformers
