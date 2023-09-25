@@ -1061,7 +1061,7 @@ class TorchSmoothQuant:
             self.weight_scale_info = {}  ##clear the data
             self.absorb_scales_info = {}
 
-    def _get_all_layer_names(self, op_types=["Linear"]):
+    def _get_all_layer_names(self, white_list=[torch.nn.Linear]):
         """Try the model to find the layers which can be smooth quantized.
 
         :param op_types: The op types to be smooth quantized
@@ -1070,19 +1070,8 @@ class TorchSmoothQuant:
         """
         self_absorb_layer = {}
         for name, module in self.model.named_modules():
-            for op_type in op_types:
-                if op_type == str(module.__class__.__name__):
-                    self_absorb_layer[name] = [name]
-        # remove duplicate Linear if Linear is wrapped by Linear
-        key_list = list(self_absorb_layer.keys())
-        key_list.sort()
-        duplicate_list = []
-        for i, k1 in enumerate(key_list):
-            for k2 in key_list[i + 1 :]:
-                if k1 in k2:
-                    duplicate_list.append(k1)
-        for i in duplicate_list:
-            self_absorb_layer.pop(i)
+            if isinstance(module, tuple(white_list)):
+                self_absorb_layer[name] = [name]
         return self_absorb_layer
 
     def _get_example_input(self):
