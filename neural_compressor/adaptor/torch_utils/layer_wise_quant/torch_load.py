@@ -43,6 +43,11 @@ version = Version(torch_version)
 FILE_LIKE = Union[str, os.PathLike, BinaryIO, IO[bytes]]
 MAP_LOCATION = Optional[Union[Callable[[torch.Tensor, str], torch.Tensor], torch.device, str, Dict[str, str]]]
 
+if version.release < Version("1.13.0").release:
+    UntypedStorage = torch._UntypedStorage
+else:
+    UntypedStorage = torch.UntypedStorage
+
 
 def _load(zip_file, tensor_name, prefix, map_location, pickle_module, pickle_file="data.pkl", **pickle_load_args):
     restore_location = _get_restore_location(map_location)
@@ -52,13 +57,19 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module, pickle_fil
     def load_tensor(dtype, numel, key, location):
         name = f"data/{key}"
 
-        if version.release < Version("2.0.0").release:  # pragma: no cover
-            storage = zip_file.get_storage_from_record(name, numel, torch.UntypedStorage).storage().untyped()
+        if version.release < Version("1.13.0").release:
+            storage = zip_file.get_storage_from_record(name, numel, torch._UntypedStorage).storage()._untyped()
+            typed_storage = torch.storage._TypedStorage(
+                wrap_storage=restore_location(storage, location),
+                dtype=dtype)
+            loaded_storages[key] = typed_storage
+        elif version.release < Version("2.0.0").release:  # pragma: no cover
+            storage = zip_file.get_storage_from_record(name, numel, UntypedStorage).storage().untyped()
             typed_storage = torch.storage.TypedStorage(wrap_storage=restore_location(storage, location), dtype=dtype)
             loaded_storages[key] = typed_storage
         else:
             storage = (
-                zip_file.get_storage_from_record(name, numel, torch.UntypedStorage)._typed_storage()._untyped_storage
+                zip_file.get_storage_from_record(name, numel, UntypedStorage)._typed_storage()._untyped_storage
             )
             typed_storage = torch.storage.TypedStorage(
                 wrap_storage=restore_location(storage, location), dtype=dtype, _internal=True
@@ -68,28 +79,6 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module, pickle_fil
                 loaded_storages[key] = typed_storage
 
         return typed_storage
-
-    # def persistent_load(saved_id):
-    #     print(saved_id)
-    #     assert isinstance(saved_id, tuple)
-    #     typename = _maybe_decode_ascii(saved_id[0])
-    #     data = saved_id[1:]
-
-    #     assert typename == 'storage', \
-    #         f"Unknown typename for persistent_load, expected 'storage' but got '{typename}'"
-    #     storage_type, key, location, numel = data
-    #     if storage_type is torch.UntypedStorage:
-    #         dtype = torch.uint8
-    #     else:
-    #         dtype = storage_type.dtype
-
-    #     if key in loaded_storages:
-    #         typed_storage = loaded_storages[key]
-    #     else:
-    #         nbytes = numel * torch._utils._element_size(dtype)
-    #         typed_storage = load_tensor(dtype, nbytes, key, _maybe_decode_ascii(location))
-
-    #     return typed_storage
 
     load_module_mapping: Dict[str, str] = {"torch.tensor": "torch._tensor"}
 
@@ -115,11 +104,6 @@ def _load(zip_file, tensor_name, prefix, map_location, pickle_module, pickle_fil
                 typename == "storage"
             ), f"Unknown typename for persistent_load, expected 'storage' but got '{typename}'"
             storage_type, key, location, numel = data
-            breakpoint()
-            if version.release < Version("1.13.0").release:
-                UntypedStorage = torch._UntypedStorage
-            else:
-                UntypedStorage = torch.UntypedStorage
 
             if storage_type is UntypedStorage:  # pragma: no cover
                 dtype = torch.uint8

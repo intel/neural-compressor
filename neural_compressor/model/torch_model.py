@@ -364,8 +364,10 @@ class PyTorchModel(PyTorchBaseModel):
                                     value = state_dict[n]
                                 else:
                                     value = load_value(self._model, param_name, model_path)
-                                set_module_tensor_to_device(self._model, param_name, "cpu", value)
-                        stat_dict = self._model.state_dict()
+                                # set_module_tensor_to_device(self._model, param_name, "cpu", value)
+                                torch.save(value, os.path.join(root, f"{param_name}.pt"))
+                        # stat_dict = self._model.state_dict()
+                        return
                 else:
                     stat_dict["best_configure"] = self.q_config
             torch.save(stat_dict, os.path.join(root, "best_model.pt"))
