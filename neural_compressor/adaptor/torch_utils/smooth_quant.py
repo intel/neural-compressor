@@ -372,7 +372,7 @@ class TorchSmoothQuant:
         ##hook all the module
         hook_modules = {}
         for n, module in self.model.named_modules():
-            if module.__class__.__name__.split(".")[-1] in self.op_types:
+            if isinstance(module, tuple(self.op_types)):
                 hook_modules[n] = module
 
         self._add_min_max_observer(hook_modules, percentile)
@@ -921,7 +921,7 @@ class TorchSmoothQuant:
         alpha=0.5,
         folding=False,
         percentile=100,
-        op_types=["Linear", "Conv2d"],
+        op_types=[torch.nn.Linear],
         scales_per_op=False,
         calib_iter=100,
         auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
@@ -953,12 +953,13 @@ class TorchSmoothQuant:
         self.recover()
         need_calibration = self._check_need_calibration(alpha, percentile, op_types, scales_per_op, calib_iter)
         with torch.no_grad():
+            str_op_types = [i.__name__ for i in op_types]
             input_maxes_abs = self.input_maxes_abs
             if need_calibration:  ##avoid multiple calibaration during tuning if the only difference is alpha
                 if self.insert_mul:
-                    self.self_absorb_layers = self._get_all_layer_names()  # TODO: only support linear now.
+                    self.self_absorb_layers = self._get_all_layer_names(op_types)  # TODO: only support linear now.
                     # fetch modules with the same input
-                    group_modules = self._trace(op_types, skip_unsupported_layers=False)
+                    group_modules = self._trace(str_op_types, skip_unsupported_layers=False)
                     if group_modules is not None:
                         # use one input for qkv
                         for k, v in group_modules.items():
@@ -969,7 +970,7 @@ class TorchSmoothQuant:
                         logger.debug(f"self_absorb_layers:{self.self_absorb_layers}")
                 if self.allow_absorb:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
-                        op_types
+                        str_op_types
                     )  ##TODO we need to insert mul layer for no_absorb_layers later
                     if self.absorb_to_layer is None and no_absorb_layers is None:
                         return self.model
@@ -1061,7 +1062,7 @@ class TorchSmoothQuant:
             self.weight_scale_info = {}  ##clear the data
             self.absorb_scales_info = {}
 
-    def _get_all_layer_names(self, white_list=[torch.nn.Linear]):
+    def _get_all_layer_names(self, op_types=[torch.nn.Linear]):
         """Try the model to find the layers which can be smooth quantized.
 
         :param op_types: The op types to be smooth quantized
@@ -1070,7 +1071,7 @@ class TorchSmoothQuant:
         """
         self_absorb_layer = {}
         for name, module in self.model.named_modules():
-            if isinstance(module, tuple(white_list)):
+            if isinstance(module, tuple(op_types)):
                 self_absorb_layer[name] = [name]
         return self_absorb_layer
 
