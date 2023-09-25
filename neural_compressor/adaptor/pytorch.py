@@ -1213,6 +1213,7 @@ class TemplateAdaptor(Adaptor):
             self.use_bf16
             and (CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1")
             and (self.version.release >= Version("1.11.0").release)
+            and self.approach != "post_training_weight_only"
         ):
             self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             bf16_ops = []
