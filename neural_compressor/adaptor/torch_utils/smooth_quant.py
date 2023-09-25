@@ -281,7 +281,7 @@ class TorchSmoothQuant:
     to recover the weights if needed
     """
 
-    def __init__(self, model, dataloader, example_inputs=None, q_func=None, traced_model=None):
+    def __init__(self, model, dataloader=None, example_inputs=None, q_func=None, traced_model=None):
         """
         :param model: Torch model :param dataloader: Calibration dataloader :param traced_model: A specific model
         shares the same architecture as the model and could be traced by torch.jit. If not supplied, we use model
