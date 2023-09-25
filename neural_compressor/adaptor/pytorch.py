@@ -1213,6 +1213,7 @@ class TemplateAdaptor(Adaptor):
             self.use_bf16
             and (CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1")
             and (self.version.release >= Version("1.11.0").release)
+            and self.approach != "post_training_weight_only"
         ):
             self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             bf16_ops = []
@@ -4817,7 +4818,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
 
         module_dict = dict(model.named_modules())
         for op_name, child in module_dict.items():
-            if type(child) in self.white_list:
+            if isinstance(child, tuple(self.white_list)):
                 quantizable_ops.append((op_name, str(child.__class__.__name__)))
 
     @dump_elapsed_time("Pass query framework capability")
