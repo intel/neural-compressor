@@ -80,8 +80,8 @@ def get_model_type(model):
         return "graph"
     elif isinstance(model, tf.compat.v1.GraphDef):
         return "graph_def"
-    elif isinstance(model, tf.compat.v1.estimator.Estimator):
-        return "estimator"
+    # elif isinstance(model, tf.compat.v1.estimator.Estimator):
+    #     return "estimator"
     elif isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
         if model.endswith(".pb") and os.path.isfile(model):
