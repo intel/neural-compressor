@@ -4817,7 +4817,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
 
         module_dict = dict(model.named_modules())
         for op_name, child in module_dict.items():
-            if type(child) in self.white_list:
+            if isinstance(child, tuple(self.white_list)):
                 quantizable_ops.append((op_name, str(child.__class__.__name__)))
 
     @dump_elapsed_time("Pass query framework capability")
