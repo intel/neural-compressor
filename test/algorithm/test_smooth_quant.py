@@ -1265,23 +1265,24 @@ class TestTextGeneration(unittest.TestCase):
         self.assertEqual(indices[2], torch.tensor([504]))
 
 
-
 class TestMemoryUsage(unittest.TestCase):
     def test_sq_auto_mem_usage(self):
         import psutil
+
         data = psutil.virtual_memory()
         cpu_process = psutil.Process()
         p = psutil.Process(cpu_process.pid)
-        mem_use0 = p.memory_info().rss / (1024 ** 3)
+        mem_use0 = p.memory_info().rss / (1024**3)
         model = transformers.AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
             torchscript=True,
         )
         sq = TorchSmoothQuant(model, LLMCalibDataloader())
         sq.transform(alpha="auto", calib_iter=0, folding=False)
-        mem_use1= p.memory_info().rss / (1024 ** 3)
+        mem_use1 = p.memory_info().rss / (1024**3)
         logger.info(f"The memory usage of this ut is {mem_use1 - mem_use0} GBs.")
         assert (mem_use1 - mem_use0) <= 2.0
+
 
 if __name__ == "__main__":
     unittest.main()
