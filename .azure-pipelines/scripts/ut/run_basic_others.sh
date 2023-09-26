@@ -26,9 +26,9 @@ sed -i '/ distillation\//d' run.sh
 sed -i '/ scheduler\//d' run.sh
 sed -i '/ nas\//d' run.sh
 
-echo "copy model for dynas..."
-mkdir -p .torch/ofa_nets || true
-cp -r /tf_dataset/ut-localfile/ofa_mbv3_d234_e346_k357_w1.2 .torch/ofa_nets || true
+#echo "copy model for dynas..."
+#mkdir -p .torch/ofa_nets || true
+#cp -r /tf_dataset/ut-localfile/ofa_mbv3_d234_e346_k357_w1.2 .torch/ofa_nets || true
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
