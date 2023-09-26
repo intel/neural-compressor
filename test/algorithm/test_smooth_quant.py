@@ -1288,7 +1288,7 @@ class TestMemoryUsage(unittest.TestCase):
         assert (mem_use1 - mem_use0) <= 2.0
 
 
-class TestExamples(unittest.TestCase):
+class TestPeftModel(unittest.TestCase):
     def test_peft_model_fixed_alpha(self):
         import peft
 
@@ -1319,13 +1319,14 @@ class TestExamples(unittest.TestCase):
         import peft
 
         model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
-        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id)
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id, torchscript=True)
         example_input = torch.ones(1, 12, dtype=torch.long)
         out1 = model(example_input)
 
         def calib_func(model):
             model(example_input)
 
+        # folding=False
         sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
         sq.transform(alpha="auto", folding=False)
         self.assertTrue(isinstance(
@@ -1341,6 +1342,68 @@ class TestExamples(unittest.TestCase):
             torch.nn.Linear
         ))  # Linear that is not called in calibration
 
+        # folding=True
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id, torchscript=True)
+        example_input = torch.ones(1, 12, dtype=torch.long)
+        out1 = model(example_input)
+
+        def calib_func(model):
+            model(example_input)
+
+        sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
+        sq.transform(alpha="auto", folding=True)
+        self.assertTrue(isinstance(
+            model.base_model.model.model.decoder.layers[0].self_attn.v_proj, 
+            torch.nn.Linear
+        ))
+        self.assertTrue(isinstance(
+            model.base_model.model.model.decoder.layers[0].self_attn.v_proj.lora_A.default, 
+            torch.nn.Linear
+        ))  # Linear in Linear
+
+    def test_peft_model_quantization(self):
+        import peft
+
+        model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id)
+        # model.base_model.model.model.decoder.layers[0].self_attn.v_proj.lora_B.default.weight is Zero
+        # peft model is needed to be trained first.
+        example_input = torch.ones(1, 12, dtype=torch.long)
+        out1 = model(example_input)
+
+        def calib_func(model):
+            model(example_input)
+
+        from neural_compressor import PostTrainingQuantConfig, quantization
+
+        recipes = {"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}}
+        conf = PostTrainingQuantConfig(
+            # backend="ipex", IPEX will got error now, will enhance it.
+            excluded_precisions=["bf16"],
+            recipes=recipes,
+            example_inputs=example_input,
+        )
+        q_model = quantization.fit(
+            model,
+            conf,
+            calib_func=calib_func,
+        )
+        self.assertTrue(isinstance(
+            q_model.model.base_model.model.model.decoder.layers[0].self_attn.v_proj, 
+            SQLinearWrapper
+        ))
+        self.assertTrue(isinstance(
+            q_model.model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default, 
+            SQLinearWrapper
+        ))  # Linear in Linear
+        self.assertTrue(isinstance(
+            q_model.model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_B.default, 
+            torch.nn.Linear
+        ))  # Linear that failed when smoothquant, because its weights are zeros
+        self.assertTrue(isinstance(
+            q_model.model.base_model.model.score.original_module, 
+            torch.nn.Linear
+        ))  # Linear that is not called in calibration
 
 
 if __name__ == "__main__":

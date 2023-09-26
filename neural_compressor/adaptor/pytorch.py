@@ -1858,11 +1858,12 @@ class TemplateAdaptor(Adaptor):
         """
         q_model = model._model
         from .torch_utils.model_wrapper import QDQLinear, SQLinearWrapper
-        from .torch_utils.util import fetch_module, set_module
+        from .torch_utils.smooth_quant import get_module, set_module
 
         smoothquant_scale_info = {}
         fallback_op_name_list = []
         stats_result = {}
+        stats_result["Linear(failed when SQ)"] = {"INT8(QDQ)": 0, "BF16": 0, "FP32": 0}
         for (op_name, op_type), qconfig in tune_cfg["op"].items():
             if op_type == "Linear" and qconfig["weight"]["dtype"] != "int8":
                 fallback_op_name_list.append(op_name)
@@ -1881,8 +1882,11 @@ class TemplateAdaptor(Adaptor):
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
+                if torch.isnan(scale).any() or torch.isinf(scale).any():
+                    stats_result["Linear(failed when SQ)"]["FP32"] += 1
+                    continue # for peft model,lora_B weights is 0.
                 for op_name in absorbed_layer:
-                    module = fetch_module(q_model, op_name)
+                    module = get_module(q_model, op_name)
                     new_module = SQLinearWrapper(module, 1.0 / scale, input_minmax, alpha)
                     set_module(q_model, op_name, new_module)
                     logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
@@ -3268,7 +3272,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         if sq_max_info:
             smoothquant_scale_info = {}
             from .torch_utils.model_wrapper import SQLinearWrapper
-            from .torch_utils.util import fetch_module
+            from .torch_utils.smooth_quant import get_module
 
             for _, info in sq_max_info.items():
                 alpha = info["alpha"]
@@ -3279,8 +3283,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
+                if torch.isnan(scale).any() or torch.isinf(scale).any():
+                    continue # for peft model,lora_B weights is 0.
                 for op_name in absorbed_layer:
-                    module = copy.deepcopy(fetch_module(q_model._model, op_name))
+                    module = copy.deepcopy(get_module(q_model._model, op_name))
                     new_module = SQLinearWrapper(module, 1.0 / scale, input_minmax, alpha)
                     weight_scale = new_module._get_weight_scale()
                     smoothquant_scale_info[op_name] = {
