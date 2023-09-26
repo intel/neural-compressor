@@ -1884,7 +1884,7 @@ class TemplateAdaptor(Adaptor):
                 scale = torch.clip(input_power / weight_power, min=1e-5)
                 if torch.isnan(scale).any() or torch.isinf(scale).any():
                     stats_result["Linear(failed when SQ)"]["FP32"] += 1
-                    continue # for peft model,lora_B weights is 0.
+                    continue  # for peft model,lora_B weights is 0.
                 for op_name in absorbed_layer:
                     module = get_module(q_model, op_name)
                     new_module = SQLinearWrapper(module, 1.0 / scale, input_minmax, alpha)
@@ -3284,7 +3284,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
                 if torch.isnan(scale).any() or torch.isinf(scale).any():
-                    continue # for peft model,lora_B weights is 0.
+                    continue  # for peft model,lora_B weights is 0.
                 for op_name in absorbed_layer:
                     module = copy.deepcopy(get_module(q_model._model, op_name))
                     new_module = SQLinearWrapper(module, 1.0 / scale, input_minmax, alpha)
