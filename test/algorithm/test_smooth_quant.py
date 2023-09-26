@@ -1289,7 +1289,33 @@ class TestMemoryUsage(unittest.TestCase):
 
 
 class TestExamples(unittest.TestCase):
-    def test_peft_model(self):
+    def test_peft_model_fixed_alpha(self):
+        import peft
+
+        model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id)
+        example_input = torch.ones(1, 12, dtype=torch.long)
+        out1 = model(example_input)
+
+        def calib_func(model):
+            model(example_input)
+
+        sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
+        sq.transform(alpha=0.5, folding=False)
+        self.assertTrue(isinstance(
+            model.base_model.model.model.decoder.layers[0].self_attn.v_proj, 
+            SQLinearWrapper
+        ))
+        self.assertTrue(isinstance(
+            model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default, 
+            SQLinearWrapper
+        ))  # Linear in Linear
+        self.assertTrue(isinstance(
+            model.base_model.model.model.score.original_module, 
+            torch.nn.Linear
+        ))  # Linear that is not called in calibration
+
+    def test_peft_model_auto_alpha(self):
         import peft
 
         model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
@@ -1302,6 +1328,19 @@ class TestExamples(unittest.TestCase):
 
         sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
         sq.transform(alpha="auto", folding=False)
+        self.assertTrue(isinstance(
+            model.base_model.model.model.decoder.layers[0].self_attn.v_proj, 
+            SQLinearWrapper
+        ))
+        self.assertTrue(isinstance(
+            model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default, 
+            SQLinearWrapper
+        ))  # Linear in Linear
+        self.assertTrue(isinstance(
+            model.base_model.model.score.original_module, 
+            torch.nn.Linear
+        ))  # Linear that is not called in calibration
+
 
 
 if __name__ == "__main__":

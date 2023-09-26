@@ -185,6 +185,9 @@ def get_module(model, key):
         elif hasattr(module, "sq_linear"):  # for peft models
             module = getattr(module, "sq_linear")
             module = getattr(module, name)
+        elif hasattr(module, "orig_layer"):  # for peft models and auto alpha
+            module = getattr(module, "orig_layer")
+            module = getattr(module, name)
         else:
             module = module
     return module
@@ -203,13 +206,18 @@ def set_module(model, key, new_module):
     for name in name_list[:-1]:
         if hasattr(module, name):
             module = getattr(module, name)
-        elif hasattr(module, "sq_linear"):  # for peft models
+        elif hasattr(module, ("sq_linear")):  # for peft models that Linears are contained in Linear
             module = getattr(module, "sq_linear")
+            module = getattr(module, name)
+        elif hasattr(module, ("orig_layer")):  # for peft models and auto alpha
+            module = getattr(module, "orig_layer")
             module = getattr(module, name)
         else:
             module = module
     if hasattr(module, "sq_linear"):  # for peft models
         module = getattr(module, "sq_linear")
+    if hasattr(module, "orig_layer"):  # for peft models and auto alpha
+        module = getattr(module, "orig_layer")
     setattr(module, name_list[-1], new_module)
 
 
@@ -230,7 +238,7 @@ def cal_scale(input_max, weights, alpha, scale_type="orig"):
 class WrapperLayer(torch.nn.Module):
     def __init__(self, layer, input_min, input_max, save_q_input=False):
         super(WrapperLayer, self).__init__()
-        self.orig_layer = layer
+        self.add_module("orig_layer", layer) # set orig_layer in get/set_module
         self.quant = False
         self.q_input = None
         self.fp32_output = None
@@ -680,7 +688,7 @@ class TorchSmoothQuant:
     def _get_all_hook_module_names(self):
         module_names = []
         for n, module in self.model.named_modules():
-            if module.__class__.__name__.split(".")[-1] in self.op_types:
+            if isinstance(module, tuple(self.op_types)):
                 module_names.append(n)
         return module_names
 
@@ -690,18 +698,23 @@ class TorchSmoothQuant:
         module_names = self._get_all_hook_module_names()
         self.to_unwrap_module_names = module_names
         for name in module_names:
+            if name not in self.input_mins:  # skip module if it's not used in calibration
+                continue
             module = get_module(self.model, name)
-            set_module(
-                self.model,
-                name,
-                WrapperLayer(module, self.input_mins[name], self.input_maxes[name], save_q_input=save_q_input),
+            new_module = WrapperLayer(
+                module, 
+                self.input_mins[name], 
+                self.input_maxes[name], 
+                save_q_input=save_q_input
             )
+            set_module(self.model, name, new_module)
 
     def _qdq_model_unwrapper_for_auto(self):
         module_names = self.to_unwrap_module_names
         for name in module_names:
             module = get_module(self.model, name)
-            # print(name, flush=True)
+            if not hasattr(module, 'orig_layer'):  # skip module if it's not used in calibration
+                continue
             set_module(self.model, name, module.orig_layer)
 
     def _change_qdq_for_auto(self, enable=True):
@@ -709,6 +722,8 @@ class TorchSmoothQuant:
         for name in module_names:
             name = name.split(".orig_layer")[0]
             module = get_module(self.model, name)
+            if not hasattr(module, 'orig_layer'):  # skip module if it's not used in calibration
+                continue
             if enable:
                 module.enable_quant()
             else:
