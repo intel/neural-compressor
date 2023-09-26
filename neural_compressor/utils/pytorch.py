@@ -197,7 +197,7 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, example_inputs, **kwarg
     return model
 
 
-def load_weight_only(checkpoint_dir, model):
+def load_weight_only(checkpoint_dir, model, layer_wise=False):
     """Load model in weight_only mode.
 
     Args:
@@ -226,12 +226,25 @@ def load_weight_only(checkpoint_dir, model):
             module = util.fetch_module(model, op_name)
             new_module = MulLinear(module)
             util.set_module(model, op_name, new_module)
-    model.load_state_dict(torch.load(weights_file))
+    if layer_wise or (hasattr(model, "device") and str(model.device)) == "meta":
+        from ..adaptor.torch_utils.layer_wise_quant.utils import get_named_children, set_module_tensor_to_device
+
+        # state_dict = torch.load(weights_file)
+        modules = get_named_children(model)
+        for name, module in modules:
+            for n, p in module.named_parameters():
+                param_name = name + "." + n
+                value = torch.load(
+                    os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)), f"{param_name}.pt")
+                )
+                set_module_tensor_to_device(model, param_name, "cpu", value)
+    else:
+        model.load_state_dict(torch.load(weights_file))
     logger.info("Load weight_only quantized model")
     return model
 
 
-def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
+def load(checkpoint_dir=None, model=None, layer_wise=False, history_cfg=None, **kwargs):
     """Execute the quantize process on the specified model.
 
     Args:
@@ -248,7 +261,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     """
     weigth_only = kwargs.get("weight_only", False)
     if weigth_only:
-        return load_weight_only(checkpoint_dir, model)
+        return load_weight_only(checkpoint_dir, model, layer_wise=layer_wise)
     if checkpoint_dir is not None:
         if isinstance(checkpoint_dir, dict):
             stat_dict = checkpoint_dir

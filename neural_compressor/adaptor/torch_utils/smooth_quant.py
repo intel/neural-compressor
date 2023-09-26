@@ -174,14 +174,13 @@ def get_module(model, key):
         model (torch.nn.Module): original model
         key (str): module name to be replaced
     """
-    attrs = key.split(".")
     module = model
-    for attr in attrs:
-        try:
-            attr = int(attr)
-            module = module[attr]
-        except:
-            module = getattr(module, attr)
+    name_list = key.split(".")
+    for name in name_list:
+        if hasattr(module, name):
+            module = getattr(module, name)
+        else:
+            module = module
     return module
 
 
@@ -193,15 +192,14 @@ def set_module(model, key, new_module):
         key (str): module name to be replaced
         new_module (torch.nn.Module): new module to be inserted
     """
-    attrs = key.split(".")
     module = model
-    for attr in attrs[:-1]:
-        try:
-            attr = int(attr)
-            module = module[attr]
-        except:
-            module = getattr(module, attr)
-    setattr(module, attrs[-1], new_module)
+    name_list = key.split(".")
+    for name in name_list[:-1]:
+        if hasattr(module, name):
+            module = getattr(module, name)
+        else:
+            module = module
+    setattr(module, name_list[-1], new_module)
 
 
 def cal_scale(input_max, weights, alpha, scale_type="orig"):

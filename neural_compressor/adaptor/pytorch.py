@@ -1213,6 +1213,7 @@ class TemplateAdaptor(Adaptor):
             self.use_bf16
             and (CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1")
             and (self.version.release >= Version("1.11.0").release)
+            and self.approach != "post_training_weight_only"
         ):
             self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             bf16_ops = []
@@ -4531,6 +4532,19 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         from .torch_utils.util import fetch_module, set_module
         from .torch_utils.weight_only import rtn_quantize
 
+        # for layer_wise quant mode
+        recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
+        if recipe_cfgs.get("layer_wise_quant", False):
+            from neural_compressor.config import options
+
+            from .torch_utils.layer_wise_quant.utils import _get_path, load_module
+
+            lwq_workspace = os.path.join(options.workspace, "lwq_tmpdir")
+            os.makedirs(lwq_workspace, exist_ok=True)
+            model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+            assert model_path, "model_path should specify in layer_wise_quant_args."
+            model_path = _get_path(model_path)
+
         for key, config in tune_cfg["op"].items():
             op_name, op_type = key
             if config["weight"]["dtype"] == "fp32":
@@ -4544,6 +4558,11 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 if algorithm != "RTN":
                     continue
                 m = fetch_module(model, op_name)
+                # load weight if use layer-wise quant mode
+                recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
+                if recipe_cfgs.get("layer_wise_quant", False):
+                    # load weight
+                    load_module(model, op_name, model_path, device=self.device)
                 m = rtn_quantize(
                     m,
                     num_bits,
@@ -4555,7 +4574,18 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     enable_mse_search=enable_mse_search,
                     group_dim=group_dim,
                 )
+                if recipe_cfgs.get("layer_wise_quant", False):
+                    # save and clean weight
+                    from .torch_utils.layer_wise_quant.utils import clean_module_weight
+
+                    torch.save(m.state_dict(), os.path.join(lwq_workspace, f"{op_name}.pt"))
+                    clean_module_weight(m)
                 set_module(model, op_name, m)
+        if recipe_cfgs.get("layer_wise_quant", False):
+            # register hooks
+            from .torch_utils.layer_wise_quant.utils import register_weight_hooks
+
+            register_weight_hooks(model, model_path, device=self.device, clean_weight=True)
         return model
 
     def gptq_quantize(self, model, tune_cfg, dataloader):
@@ -4817,7 +4847,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
 
         module_dict = dict(model.named_modules())
         for op_name, child in module_dict.items():
-            if type(child) in self.white_list:
+            if isinstance(child, tuple(self.white_list)):
                 quantizable_ops.append((op_name, str(child.__class__.__name__)))
 
     @dump_elapsed_time("Pass query framework capability")
