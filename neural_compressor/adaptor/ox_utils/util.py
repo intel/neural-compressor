@@ -85,6 +85,8 @@ ONNXRT_BACKENDS = {
     "DmlExecutionProvider": "onnxrt_dml_ep",
 }
 
+MAXIMUM_PROTOBUF = 2147483648
+
 
 def dtype_to_name(dtype_mapping, dtype):
     """Map data type and its string representation."""

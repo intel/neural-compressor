@@ -203,6 +203,7 @@ class TestOnnxModel(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree("./gptj", ignore_errors=True)
         shutil.rmtree("./hf_test", ignore_errors=True)
+        os.remove("model.onnx")
 
     def test_hf_model(self):
         from optimum.onnxruntime import ORTModelForCausalLM
@@ -406,6 +407,53 @@ class TestOnnxModel(unittest.TestCase):
         self.assertEqual(len(self.model.nodes()), 7)
         self.model.remove_unused_nodes()
         self.assertEqual(len(self.model.nodes()), 6)
+
+    def test_check_large_model(self):
+        import onnx
+        import torch
+        import torch.nn as nn
+
+        from neural_compressor.model.onnx_model import ONNXModel
+
+        class Net(nn.Module):
+            def __init__(self, in_features, out_features):
+                super(Net, self).__init__()
+                self.fc = nn.Linear(in_features, out_features)
+
+            def forward(self, x):
+                x = self.fc(x)
+                return x
+
+        # model > 2GB
+        model = Net(512, 1024 * 1024)
+        input = torch.randn(512, requires_grad=True)
+        with torch.no_grad():
+            torch.onnx.export(model, (input,), "model.onnx", do_constant_folding=True, opset_version=13)
+        model = onnx.load("model.onnx")
+        model = ONNXModel(model)  # pass ModelProto
+        self.assertTrue(model.check_large_model())
+
+        model = ONNXModel("model.onnx")  # pass string
+        self.assertTrue(model.check_large_model())
+
+        model = onnx.load("model.onnx", load_external_data=False)  # not load init
+        model = ONNXModel(model)
+        self.assertTrue(model.check_large_model())
+
+        # model < 2GB
+        model = Net(10, 10 * 10)
+        input = torch.randn(10, requires_grad=True)
+        with torch.no_grad():
+            torch.onnx.export(model, (input,), "model.onnx", do_constant_folding=True, opset_version=13)
+        model = onnx.load("model.onnx")
+        model = ONNXModel(model)  # pass ModelProto
+        self.assertFalse(model.check_large_model())
+
+        model = ONNXModel("model.onnx")  # pass string
+        self.assertFalse(model.check_large_model())
+
+        model = ONNXModel("model.onnx", load_external_data_for_model=False)  # not load init
+        self.assertFalse(model.check_large_model())
 
 
 if __name__ == "__main__":
