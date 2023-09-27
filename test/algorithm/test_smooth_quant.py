@@ -65,7 +65,7 @@ class TestSqDepthwiseConv(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3, 1, 1))
@@ -142,7 +142,7 @@ class TestSqConvOpFuseAuto(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3, 1, 1))
@@ -182,7 +182,7 @@ class TestSqConvOpFuse(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3, 1, 1))
@@ -387,21 +387,21 @@ class TestSqListInput(unittest.TestCase):
     def setUpClass(self):
         class ListDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield [torch.rand((1, 3))]
 
         class TupleDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield (torch.rand((1, 3)))
 
         class ListTupleDataLoader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 input1 = torch.rand((1, 3))
@@ -500,7 +500,7 @@ class TestAlphaAutoLinear(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3))
@@ -536,7 +536,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3))
@@ -995,7 +995,7 @@ class TestSqSkipOp_attn(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 4))
