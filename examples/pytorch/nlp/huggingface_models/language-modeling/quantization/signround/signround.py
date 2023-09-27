@@ -52,9 +52,9 @@ parser.add_argument("--device", default=0, type=str,
 
 parser.add_argument("--sym", action='store_true',
                     help=" sym quantization")
-#
-# parser.add_argument("--quant_lm_head", action='store_true',
-#                     help=" quant lm head")
+
+parser.add_argument("--quant_lm_head", action='store_true',
+                    help=" quant lm head")
 
 parser.add_argument("--iters", default=400, type=int,
                     help=" iters")
@@ -184,14 +184,6 @@ if args.eval_fp16:
     exit()
 
 
-# res = 0
-# cum = res
-# for i in range(50):
-#     res = res*0.5+0.01*i/50
-#     cum+=res
-#
-# print(cum)
-# exit()
 class FakeAffineTensorQuantFunction(Function):
     """Fake version of affine quantization
 
@@ -347,7 +339,6 @@ class SaveInputs:
             self.tmps.append(target_m[0] + "." + n)
         self.seq_len = seqlen
 
-
     @torch.no_grad()
     def get_forward_func(self, name):
 
@@ -450,7 +441,6 @@ class SaveInputs:
                 break
 
 
-
 model_name = args.model_name
 
 if model_name[-1] == "/":
@@ -540,7 +530,6 @@ if args.iters <= 0:
 
     exit()
 
-
 dataset_name = "NeelNanda/pile-10k"
 # calib_dataset = load_dataset(dataset_name, split="train")
 # # calib_dataset.save_to_disk("pile_10k")
@@ -549,7 +538,6 @@ if os.path.exists(dataset_name.split('/')[-1]):
 else:
     calib_dataset = load_dataset(dataset_name, split="train")
     calib_dataset.save_to_disk(dataset_name.split('/')[-1])
-
 
 if "opt" in model_name:
     seqlen = model.config.max_position_embeddings
@@ -604,7 +592,6 @@ calib_dataloader = DataLoader(
 
 model = model.eval()
 save_input_file = f"{(args.model_name).split('/')[-1]}_input_block.pt"
-
 
 import time
 
@@ -740,7 +727,6 @@ def get_lr(step, total_steps, lr=0.01, warmup_step=0, lr_type="linear"):
     else:
         raise NotImplemented
     return current_lr
-
 
 
 def quant_block(block, input_ids, input_others, output, num_bits, group_size, schema, q_input=None):
@@ -907,9 +893,9 @@ def quant_block(block, input_ids, input_others, output, num_bits, group_size, sc
             tmp_input = current_input[start_index:end_index, ...]
 
             current_input_other.pop('attention_mask', None)
-            attention_mask_tmp = attention_mask[start_index:end_index,...]
+            attention_mask_tmp = attention_mask[start_index:end_index, ...]
             if "bloom" in args.model_name:
-                alibi = current_input_other["alibi"][start_index:end_index,...]
+                alibi = current_input_other["alibi"][start_index:end_index, ...]
                 alibi_tmp = alibi.view(-1, alibi.shape[2], alibi.shape[3])
                 if args.amp:
                     with autocast(device_type="cuda"):
@@ -920,9 +906,9 @@ def quant_block(block, input_ids, input_others, output, num_bits, group_size, sc
 
                 if args.amp:
                     with autocast(device_type="cuda"):
-                        output_q = block.forward(tmp_input,attention_mask = attention_mask_tmp, **current_input_other)
+                        output_q = block.forward(tmp_input, attention_mask=attention_mask_tmp, **current_input_other)
                 else:
-                    output_q = block.forward(tmp_input, attention_mask = attention_mask_tmp, **current_input_other)
+                    output_q = block.forward(tmp_input, attention_mask=attention_mask_tmp, **current_input_other)
             if isinstance(output_q, list) or isinstance(output_q, tuple):
                 output_q = output_q[0]
             # gap = (current_output[start_index:end_index] - output_q)
