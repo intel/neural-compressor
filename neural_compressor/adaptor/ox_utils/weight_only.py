@@ -24,8 +24,10 @@ import sys
 
 import numpy as np
 import onnx
+import struct
 from onnx import helper, numpy_helper
 from onnx import onnx_pb as onnx_proto
+from packaging.version import Version
 
 from neural_compressor.model.model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
@@ -33,60 +35,7 @@ from neural_compressor.utils.utility import LazyImport
 
 ort = LazyImport("onnxruntime")
 logger = logging.getLogger("neural_compressor")
-
-
-WEIGHT_ONLY_OP_SUPPORTED = False
-
-
-def check_op_support_status():
-    """Check whether weight-only op is supported."""
-    input_tensor = helper.make_tensor_value_info("input", 1, [1, 32])
-    output_tensor = helper.make_tensor_value_info("output", 1, [1, 64])
-    initializers = []
-    # weight shape (32, 64)
-    q_weight = np.random.randint(0, high=16, size=(64, 32), dtype="uint8")
-    initializers.append(onnx.helper.make_tensor("shape", 1, [], [32, 64])
-
-    packed = np.zeros((q_weight.shape[0], 16), dtype="uint8")
-    for i in range(q_weight.shape[0]):
-        bf = struct.pack("f", scale[i])
-        packed[i][0] = bf[0]
-        packed[i][1] = bf[1]
-        packed[i][2] = bf[2]
-        packed[i][3] = bf[3]
-
-        packed[i][4:] = np.bitwise_or(q_weight[i][:16], np.left_shift(q_weight[i][16:], num_bits))
-
-    packed = packed.reshape(-1)
-    initializers.append(onnx.helper.make_tensor("weight", 2, packed.shape, packed.flatten().tolist()))
-
-    q_weight_tensor = onnx.helper.make_tensor(
-        name=node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size)),
-        data_type=2,
-        dims=packed.shape,
-        vals=packed.tobytes(),
-        raw=True,
-    )
- 
-    kwargs = {}
-    kwargs["blk_quant_type"] = 0
-    node = onnx.helper.make_node(
-        "MatMulFpQ4",
-        inputs=["input", "weight", "shape"],
-        outputs=["output"],
-        name="test",
-        domain="com.microsoft",
-        **kwargs,
-    )
-
-    global WEIGHT_ONLY_OP_SUPPORTED
-    graph = helper.make_graph([node], "test", [input_tensor], [output_tensor], initializer=initializers)
-    model = helper.make_model(graph)
-    try:
-        ort.InferenceSession(model.SerializeToString(), providers=["CPUExecutionProvider"])
-        WEIGHT_ONLY_OP_SUPPORTED = True
-    except:
-        WEIGHT_ONLY_OP_SUPPORTED = False
+ONNXRT116_VERSION = Version("1.16.0")
 
 
 def make_matmul_weight_only_node(
@@ -110,10 +59,10 @@ def make_matmul_weight_only_node(
     """
     if zero_point is not None:
         blob_size = group_size // 2 + 4 + 1
-        offset = 4
+        offset = 5
     else:
         blob_size = group_size // 2 + 4
-        offset = 5
+        offset = 4
 
     packed = np.zeros((q_weight.shape[0], blob_size), dtype="uint8")
     for i in range(q_weight.shape[0]):
@@ -137,7 +86,7 @@ def make_matmul_weight_only_node(
         raw=True,
     )
     shape_tensor = onnx.helper.make_tensor(
-        name=node.input[1] + "_shape", data_type=7, dims=[], vals=np.array(weight_shape, dtype="int64")
+        name=node.input[1] + "_shape", data_type=7, dims=(2,), vals=np.array(weight_shape, dtype="int64"))
     input_names = [node.input[0], q_weight_tensor.name, shape_tensor.name]
     new_inits = [q_weight_tensor, shape_tensor]
 
@@ -276,7 +225,6 @@ def rtn_quantize(
     Returns:
         model: fake quantized ONNXModel
     """
-    check_op_support_status()
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
     new_nodes = []
     remove_nodes = []
@@ -306,7 +254,7 @@ def rtn_quantize(
 
             weight = pad_tensor(weight, group_size, k_blocks)
 
-            if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:  # pragma: no cover
+            if Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32:  # pragma: no cover
                 # currently MatMulFpQ4 only support 4 bits and 32 group_size
                 q_weight, scale, zp = quant_tensor(
                     weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
@@ -410,7 +358,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 weight = weight.T * scales
                 weight = pad_tensor(weight, group_size, (org_w_shape[0] + group_size - 1) // group_size).T
 
-                if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:  # pragma: no cover
+                if Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32:  # pragma: no cover
                     q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint") / np.expand_dims(
                         scales, axis=-1
                     )
@@ -551,7 +499,7 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
             for i_s in range(10):
                 ratio = 1 - i_s / 100
                 weight = copy.deepcopy(org_weight)
-                if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:  # pragma: no cover
+                if Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32:  # pragma: no cover
                     # currently MatMulFpQ4 only support 4 bits and 32 group_size
                     weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1))
                 else:
@@ -660,7 +608,6 @@ def awq_quantize(
     Returns:
         model: fake quantized ONNXModel
     """
-    check_op_support_status()
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
     output_dicts = {}
     full_ratio = {}
@@ -934,7 +881,6 @@ def gptq_quantize(
     Returns:
         model: fake quantized ONNXModel
     """
-    check_op_support_status()
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
     output_dicts = {}
 
@@ -1029,7 +975,7 @@ def gptq_quantize(
 
             weight_tensor = model.get_initializer(node.input[1])
             init_share_num = model.get_initializer_share_num(node.input[1])
-            if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:  # pragma: no cover
+            if Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32:  # pragma: no cover
                 # currently MatMulFpQ4 only support 4 bits and 32 group_size
                 org_shape = weight.shape
                 k_blocks = (org_shape[0] + group_size - 1) // group_size

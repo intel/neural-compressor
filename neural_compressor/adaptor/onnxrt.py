@@ -1690,7 +1690,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
 
         dtype_set = set()
         for node in model.nodes():
-            if node.op_type == "MatMulWithQuantWeight":
+            if node.op_type == "MatMulFpQ4":
                 optype = "MatMul"
             else:
                 optype = node.op_type
