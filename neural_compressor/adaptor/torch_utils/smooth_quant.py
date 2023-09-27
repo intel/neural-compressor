@@ -214,9 +214,10 @@ def set_module(model, key, new_module):
             module = getattr(module, name)
         else:
             module = module
-    if hasattr(module, "sq_linear"):  # for peft models
+
+    if hasattr(module, "sq_linear") and name_list[-1] != "sq_linear":  # for peft models
         module = getattr(module, "sq_linear")
-    if hasattr(module, "orig_layer"):  # for peft models and auto alpha
+    if hasattr(module, "orig_layer") and name_list[-1] != "orig_layer":  # for peft models and auto alpha
         module = getattr(module, "orig_layer")
     setattr(module, name_list[-1], new_module)
 

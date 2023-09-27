@@ -1310,7 +1310,7 @@ class TestPeftModel(unittest.TestCase):
             )
         )  # Linear in Linear
         self.assertTrue(
-            isinstance(model.base_model.model.model.score.original_module, torch.nn.Linear)
+            isinstance(model.base_model.model.score.original_module, torch.nn.Linear)
         )  # Linear that is not called in calibration
 
     def test_peft_model_auto_alpha(self):
