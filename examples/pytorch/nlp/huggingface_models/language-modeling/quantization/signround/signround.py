@@ -105,11 +105,11 @@ parser.add_argument("--samples", default=512, type=int,
 parser.add_argument("--lr_wr", default=0.0, type=float,
                     help="lr warmup ratio")
 
-# parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
-#                     help=" fp32")
-
-parser.add_argument("--tasks", default=["lambada_openai"],
+parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
                     help=" fp32")
+#
+# parser.add_argument("--tasks", default=["lambada_openai"],
+#                     help=" fp32")
 
 args = parser.parse_args()
 set_seed(args.seed)
@@ -341,15 +341,30 @@ class SaveInputs:
 
 @torch.no_grad()
 def q_dq_weight(model: torch.nn.Module, num_bits=4, group_size=128, schema='asym'):
+    target_m = None
     for n, m in model.named_modules():
-        # if args.quant_lm_head:
-        #     if isinstance(m, torch.nn.Linear):
-        #         m.weight.data.copy_(
-        #             quant_weight(m.weight, num_bits=num_bits, group_size=group_size, schema=schema))
-        # else:
-        if isinstance(m, torch.nn.Linear) and "lm_head" not in n:
-            m.weight.data.copy_(
-                quant_weight(m.weight, num_bits=num_bits, group_size=group_size, schema=schema)[0])
+        if hasattr(type(m), "__name__") and 'ModuleList' in type(m).__name__:
+            target_m = (n, m)
+    block_names = []
+    for n, m in target_m[1].named_children():
+        block_names.append(target_m[0] + "." + n)
+    for name in block_names:
+        print(name, flush=True)
+        block = get_module(model, name)
+        for n, m in block.named_modules():
+            if isinstance(m, torch.nn.Linear):
+                m.weight.data.copy_(
+                    quant_weight(m.weight, num_bits=num_bits, group_size=group_size, schema=schema)[0])
+
+    # for n, m in model.named_modules():
+    #
+    #     self.block_names = []
+    #     for n, m in target_m[1].named_children():
+    #         self.block_names.append(target_m[0] + "." + n)
+    #
+    #     if isinstance(m, torch.nn.Linear) and "lm_head" not in n:
+    #         m.weight.data.copy_(
+    #             quant_weight(m.weight, num_bits=num_bits, group_size=group_size, schema=schema)[0])
 
 
 def tokenize_function(examples):
@@ -726,7 +741,6 @@ def quant_block(block, input_ids, input_others, output, num_bits, group_size, sc
             if isinstance(m, WrapperLinear):
                 m.update_grad(grad[n])
 
-
     unwrapper_block(block, num_bits, group_size, schema, best_grad)
     block.eval()
     if args.use_quant_input:
@@ -749,7 +763,6 @@ def quant_block(block, input_ids, input_others, output, num_bits, group_size, sc
     else:
         input = input.to("cpu")
         return None, output
-
 
 
 def q_dq_weight_round(model: torch.nn.Module, num_bits=4, group_size=128, schema='asym'):
