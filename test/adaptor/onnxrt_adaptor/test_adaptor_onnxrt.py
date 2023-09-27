@@ -1678,8 +1678,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 
-
-class TestAdaptorONNXRTSetting(unittest.TestCase):
     @patch("logging.Logger.warning")
     def test_backend(self, mock_warning):
         framework_specific_info = {
