@@ -737,6 +737,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=-1, folding=False)
         assert isinstance(sq.model.model.decoder.layers[0].self_attn.k_proj, SQLinearWrapper)
 
+
 class TestExample(unittest.TestCase):
     def test_sq_quant(self):
         from neural_compressor import PostTrainingQuantConfig, quantization
