@@ -938,7 +938,7 @@ class TestSqSkipOp(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 4))
