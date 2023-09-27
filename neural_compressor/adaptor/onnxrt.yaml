@@ -30,7 +30,6 @@
                     'dtype': ['fp32']
         }
     },
-    'Attention':    *cap_weight_only_matmul
   }
   int8: &ref_1_6 {
     'static': &ref_1_6_static {
