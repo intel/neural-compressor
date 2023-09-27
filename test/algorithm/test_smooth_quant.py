@@ -1381,9 +1381,7 @@ class TestPeftModel(unittest.TestCase):
             calib_func=calib_func,
         )
         decoder = q_model.model.base_model.model.model.decoder
-        self.assertTrue(
-            isinstance(decoder.layers[0].self_attn.v_proj, SQLinearWrapper)
-        )
+        self.assertTrue(isinstance(decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
         self.assertTrue(
             isinstance(
                 decoder.layers[0].self_attn.v_proj.sq_linear.module.lora_A.default,
