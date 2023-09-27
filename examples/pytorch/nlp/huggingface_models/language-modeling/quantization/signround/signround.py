@@ -21,6 +21,7 @@ from transformers import set_seed
 import json
 from functools import partial
 from torch.amp import autocast
+from eval import eval_model
 
 # torch.use_deterministic_algorithms(True)
 # os.environ['CURL_CA_BUNDLE'] = ''
@@ -86,8 +87,8 @@ parser.add_argument("--momentum", default=-1, type=float,
 parser.add_argument("--seed", default=42, type=int,
                     help="seed")
 
-parser.add_argument("--eval_fp16", action='store_true',
-                    help=" fp32")
+parser.add_argument("--eval_fp16_baseline", action='store_true',
+                    help="whether eval FP16 baseline")
 
 parser.add_argument("--amp", action='store_true',
                     help=" amp")
@@ -96,7 +97,7 @@ parser.add_argument("--with_attention", action='store_true',
                     help="opt llama with attention")
 
 parser.add_argument("--seq_len", default=512, type=int,
-                    help=" seqen lenght")
+                    help="sequence  length")
 
 parser.add_argument("--samples", default=512, type=int,
                     help="samples")
@@ -104,84 +105,14 @@ parser.add_argument("--samples", default=512, type=int,
 parser.add_argument("--lr_wr", default=0.0, type=float,
                     help="lr warmup ratio")
 
-parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
+# parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
+#                     help=" fp32")
+
+parser.add_argument("--tasks", default=["lambada_openai"],
                     help=" fp32")
 
 args = parser.parse_args()
-
-print(args.model_name, flush=True)
-tasks = args.tasks
 set_seed(args.seed)
-if args.device == "cpu":
-    device_str = "cpu"
-else:
-    device_str = f"cuda:{int(args.device)}"
-cuda_device = torch.device(device_str)
-
-if args.eval_fp16:
-    model_name = args.model_name
-
-    if model_name[-1] == "/":
-        model_name = model_name[:-1]
-
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name, low_cpu_mem_usage=True,
-    )
-    model.half()
-    model = model.to(cuda_device)
-    model_name = args.model_name
-    results = lm_evaluate(model="hf-causal",
-                          model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype=float16',
-                          user_model=model, tasks=tasks,
-                          device=device_str,
-                          batch_size=args.batch_size)
-    # datasets = ['wikitext2', 'ptb', 'c4']
-    datasets = ['wikitext2', 'ptb-new', 'c4-new']
-
-    from gptq_data_loader import get_loaders
-
-
-    @torch.no_grad()
-    def eval_same_with_gptq(model, testenc, dev):
-        print('Evaluating ...', flush=True)
-        # model.eval()
-        model.to(dev)
-
-        testenc = testenc.input_ids
-        nsamples = testenc.numel() // model.seqlen
-
-        use_cache = model.config.use_cache
-        model.config.use_cache = False
-
-        testenc = testenc.to(dev)
-        nlls = []
-        for i in range(nsamples):
-            batch = testenc[:, (i * model.seqlen):((i + 1) * model.seqlen)].to(dev)
-            lm_logits = model(batch).logits
-            shift_logits = lm_logits[:, :-1, :].contiguous()
-            shift_labels = testenc[
-                           :, (i * model.seqlen):((i + 1) * model.seqlen)
-                           ][:, 1:]
-            loss_fct = nn.CrossEntropyLoss()
-            loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-            neg_log_likelihood = loss.float() * model.seqlen
-            nlls.append(neg_log_likelihood)
-        ppl = torch.exp(torch.stack(nlls).sum() / (nsamples * model.seqlen))
-        print(ppl.item())
-
-        model.config.use_cache = use_cache
-        return ppl.item()
-
-
-    for dataset in datasets:
-        dataloader, testloader = get_loaders(
-            dataset, seed=0, model=args.model_name, seqlen=model.seqlen
-        )
-        print(dataset, flush=True)
-        ppl = eval_same_with_gptq(model, testloader, str(model.device))
-        results.update({dataset: ppl})
-
-    exit()
 
 
 class FakeAffineTensorQuantFunction(Function):
@@ -441,25 +372,6 @@ class SaveInputs:
                 break
 
 
-model_name = args.model_name
-
-if model_name[-1] == "/":
-    model_name = model_name[:-1]
-
-model = AutoModelForCausalLM.from_pretrained(
-    model_name, low_cpu_mem_usage=True,
-)
-model = model.to(cuda_device)
-if "llama" in model_name:
-    from transformers import LlamaTokenizer
-
-    tokenizer = LlamaTokenizer.from_pretrained(model_name)
-    if tokenizer.pad_token is None:
-        tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-else:
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-
 @torch.no_grad()
 def q_dq_weight(model: torch.nn.Module, num_bits=4, group_size=128, schema='asym'):
     for n, m in model.named_modules():
@@ -471,82 +383,6 @@ def q_dq_weight(model: torch.nn.Module, num_bits=4, group_size=128, schema='asym
         if isinstance(m, torch.nn.Linear) and "lm_head" not in n:
             m.weight.data.copy_(
                 quant_weight(m.weight, num_bits=num_bits, group_size=group_size, schema=schema)[0])
-
-
-if args.iters <= 0:
-    q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)
-    model.half()
-    model = model.to(cuda_device)
-    model_name = args.model_name
-    results = lm_evaluate(model="hf-causal",
-                          model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype=float16',
-                          user_model=model, tasks=tasks,
-                          device=device_str,
-                          batch_size=args.batch_size)
-    datasets = ['wikitext2', 'ptb-new', 'c4-new']
-
-    from gptq_data_loader import get_loaders
-
-
-    @torch.no_grad()
-    def eval_same_with_gptq(model, testenc, dev):
-        print('Evaluating ...', flush=True)
-        # model.eval()
-        model.to(dev)
-
-        testenc = testenc.input_ids
-        nsamples = testenc.numel() // model.seqlen
-
-        use_cache = model.config.use_cache
-        model.config.use_cache = False
-
-        testenc = testenc.to(dev)
-        nlls = []
-        for i in range(nsamples):
-            batch = testenc[:, (i * model.seqlen):((i + 1) * model.seqlen)].to(dev)
-            lm_logits = model(batch).logits
-            shift_logits = lm_logits[:, :-1, :].contiguous()
-            shift_labels = testenc[
-                           :, (i * model.seqlen):((i + 1) * model.seqlen)
-                           ][:, 1:]
-            loss_fct = nn.CrossEntropyLoss()
-            loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-            neg_log_likelihood = loss.float() * model.seqlen
-            nlls.append(neg_log_likelihood)
-        ppl = torch.exp(torch.stack(nlls).sum() / (nsamples * model.seqlen))
-        print(ppl.item())
-
-        model.config.use_cache = use_cache
-        return ppl.item()
-
-
-    for dataset in datasets:
-        dataloader, testloader = get_loaders(
-            dataset, seed=0, model=args.model_name, seqlen=model.seqlen
-        )
-        print(dataset, flush=True)
-        ppl = eval_same_with_gptq(model, testloader, str(model.device))
-        results.update({dataset: ppl})
-
-    exit()
-
-dataset_name = "NeelNanda/pile-10k"
-# calib_dataset = load_dataset(dataset_name, split="train")
-# # calib_dataset.save_to_disk("pile_10k")
-if os.path.exists(dataset_name.split('/')[-1]):
-    calib_dataset = load_from_disk(dataset_name.split('/')[-1])
-else:
-    calib_dataset = load_dataset(dataset_name, split="train")
-    calib_dataset.save_to_disk(dataset_name.split('/')[-1])
-
-if "opt" in model_name:
-    seqlen = model.config.max_position_embeddings
-    model.seqlen = model.config.max_position_embeddings
-else:
-    seqlen = 2048
-    model.seqlen = seqlen
-
-seqlen = args.seq_len
 
 
 def tokenize_function(examples):
@@ -575,37 +411,6 @@ def collate_batch(batch):
     res = {}
     res["input_ids"] = tmp
     return res
-
-
-calib_dataset = calib_dataset.shuffle(seed=args.seed)
-calib_dataset = calib_dataset.map(tokenize_function, batched=True)
-# calib_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask'])
-calib_dataset.set_format(type='torch', columns=['input_ids'])
-# if "llama" in args.model_name:
-#     args.batch_size =1
-calib_dataloader = DataLoader(
-    calib_dataset,
-    batch_size=args.batch_size,
-    shuffle=False,
-    collate_fn=collate_batch
-)
-
-model = model.eval()
-save_input_file = f"{(args.model_name).split('/')[-1]}_input_block.pt"
-
-import time
-
-if "opt" in model_name:
-    seqlen = model.config.max_position_embeddings
-    model.seqlen = model.config.max_position_embeddings
-else:
-    seqlen = 2048
-    model.seqlen = seqlen
-seqlen = args.seq_len
-start_time = time.time()
-save_input_actor = SaveInputs(model, calib_dataloader, seqlen)
-save_input_actor.get_input_outputs()
-input_info = save_input_actor.inputs
 
 
 def get_module(model, key):
@@ -646,15 +451,81 @@ def set_module(model, key, new_module):
     setattr(module, attrs[-1], new_module)
 
 
-#
-# def quant_weight_block(module, num_bits, group_size, schema, grads, block_name):
-#     for n, m in module.named_modules():
-#         if isinstance(m, torch.nn.Linear):
-#             grad = None
-#             if grads != None:
-#                 grad = grad[block_name + "." + n]
-#             qdq_weight, _ = quant_weight(m.weight, num_bits, group_size, schema, grad=grad)
-#             m.weight.data.copy_(q_dq_weight)
+model_name = args.model_name
+
+if model_name[-1] == "/":
+    model_name = model_name[:-1]
+
+print(model_name, flush=True)
+
+tasks = args.tasks
+
+if args.device == "cpu":
+    device_str = "cpu"
+else:
+    device_str = f"cuda:{int(args.device)}"
+cuda_device = torch.device(device_str)
+model = AutoModelForCausalLM.from_pretrained(
+    model_name, low_cpu_mem_usage=True,
+)
+model = model.to(cuda_device)
+
+if "opt" in model_name:
+    seqlen = model.config.max_position_embeddings
+    model.seqlen = model.config.max_position_embeddings
+else:
+    seqlen = 2048
+    model.seqlen = seqlen
+
+seqlen = args.seq_len
+
+if args.eval_fp16_baseline:
+    eval_model(model, model_name, tasks=tasks)
+    exit()
+
+if args.iters <= 0:
+    q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)  ##TODO sym not supported
+    model.half()
+    model = model.to(cuda_device)
+    eval_model(model, model_name, tasks=args.tasks)
+    exit()
+
+if "llama" in model_name:
+    from transformers import LlamaTokenizer
+
+    tokenizer = LlamaTokenizer.from_pretrained(model_name)
+    if tokenizer.pad_token is None:
+        tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+else:
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+dataset_name = "NeelNanda/pile-10k"
+if os.path.exists(dataset_name.split('/')[-1]):
+    calib_dataset = load_from_disk(dataset_name.split('/')[-1])
+else:
+    calib_dataset = load_dataset(dataset_name, split="train")
+    calib_dataset.save_to_disk(dataset_name.split('/')[-1])
+
+calib_dataset = calib_dataset.shuffle(seed=args.seed)
+calib_dataset = calib_dataset.map(tokenize_function, batched=True)
+# calib_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask'])
+calib_dataset.set_format(type='torch', columns=['input_ids'])
+calib_dataloader = DataLoader(
+    calib_dataset,
+    batch_size=args.batch_size,
+    shuffle=False,
+    collate_fn=collate_batch
+)
+
+model = model.eval()
+
+import time
+
+seqlen = args.seq_len
+start_time = time.time()
+save_input_actor = SaveInputs(model, calib_dataloader, seqlen)
+save_input_actor.get_input_outputs()
+input_info = save_input_actor.inputs
 
 
 class WrapperLinear(torch.nn.Module):
@@ -1016,7 +887,6 @@ def q_dq_weight_round(model: torch.nn.Module, num_bits=4, group_size=128, schema
     q_input = None
     torch.cuda.empty_cache()
     input_others = None
-    ##set_seed(args.seed)  ##to reduce randomness of script run
     for n in save_input_actor.tmps:
 
         if "lm_head" in n:
@@ -1048,79 +918,18 @@ def q_dq_weight_round(model: torch.nn.Module, num_bits=4, group_size=128, schema
 
 
 model.eval()
-if args.iters <= 0:
-    q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)
-else:
-    model = model.to("cpu")
 
-    q_dq_weight_round(model, num_bits=args.num_bits, group_size=args.group_size)
-    end_time = time.time()
-    print(end_time - start_time, flush=True)
-# q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)
+model = model.to("cpu")
+
+q_dq_weight_round(model, num_bits=args.num_bits, group_size=args.group_size)
+end_time = time.time()
+print(end_time - start_time, flush=True)
+
 torch.cuda.empty_cache()
-# # torch.save(model, model_name.split('/')[-1]+"_seq2048_mse_samplers512_iter400.pt")
-# output_dir =  model_name.split('/')[-1]+"_seq2048_mse_samplers512_calbs8_iter400"
-#
-# if output_dir is not None:
-#
-#     model.save_pretrained(output_dir)
-#
-#     tokenizer.save_pretrained(output_dir)
 
 model = model.half()
 
 model = model.to(cuda_device)
 
 model.eval()
-print(args.model_name, flush=True)
-results = lm_evaluate(model="hf-causal",
-                      model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype=float16',
-                      user_model=model, tasks=tasks,
-                      device=str(model.device),
-                      batch_size=32)
-
-# datasets = ['wikitext2', 'ptb', 'c4']
-datasets = ['wikitext2', 'ptb-new', 'c4-new']
-
-from gptq_data_loader import get_loaders
-
-
-@torch.no_grad()
-def eval_same_with_gptq(model, testenc, dev):
-    print('Evaluating ...', flush=True)
-    # model.eval()
-    model.to(dev)
-
-    testenc = testenc.input_ids
-    nsamples = testenc.numel() // model.seqlen
-
-    use_cache = model.config.use_cache
-    model.config.use_cache = False
-
-    testenc = testenc.to(dev)
-    nlls = []
-    for i in range(nsamples):
-        batch = testenc[:, (i * model.seqlen):((i + 1) * model.seqlen)].to(dev)
-        lm_logits = model(batch).logits
-        shift_logits = lm_logits[:, :-1, :].contiguous()
-        shift_labels = testenc[
-                       :, (i * model.seqlen):((i + 1) * model.seqlen)
-                       ][:, 1:]
-        loss_fct = nn.CrossEntropyLoss()
-        loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-        neg_log_likelihood = loss.float() * model.seqlen
-        nlls.append(neg_log_likelihood)
-    ppl = torch.exp(torch.stack(nlls).sum() / (nsamples * model.seqlen))
-    print(ppl.item())
-
-    model.config.use_cache = use_cache
-    return ppl.item()
-
-
-for dataset in datasets:
-    dataloader, testloader = get_loaders(
-        dataset, seed=0, model=args.model_name, seqlen=model.seqlen
-    )
-    print(dataset, flush=True)
-    ppl = eval_same_with_gptq(model, testloader, str(model.device))
-    results.update({dataset: ppl})
+eval_model(model, model_name, tasks=args.tasks)
