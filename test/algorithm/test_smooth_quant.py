@@ -53,10 +53,11 @@ class DemoCalibDataloader:
 
 class LLMCalibDataloader:
     def __init__(self):
-        self.batch_size = 1
+        self.batch_size = 3
 
     def __iter__(self):
-        yield torch.ones([1, 3], dtype=torch.long)
+        for i in range(4):
+            yield torch.ones([3, 3], dtype=torch.long)
 
 
 class TestSqDepthwiseConv(unittest.TestCase):
@@ -736,6 +737,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=-1, folding=False)
         assert isinstance(sq.model.model.decoder.layers[0].self_attn.k_proj, SQLinearWrapper)
 
+class TestExample(unittest.TestCase):
     def test_sq_quant(self):
         from neural_compressor import PostTrainingQuantConfig, quantization
 
@@ -763,10 +765,11 @@ class TestSqLinearOpFuse(unittest.TestCase):
 
         class CalibDataloader:
             def __init__(self):
-                self.batch_size = 1
+                self.batch_size = 3
 
             def __iter__(self):
-                yield input_ids
+                for i in range(4):
+                    yield input_ids
 
         def calib_func(model):
             for i in range(10):
