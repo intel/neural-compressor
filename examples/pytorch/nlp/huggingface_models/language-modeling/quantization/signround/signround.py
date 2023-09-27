@@ -51,8 +51,8 @@ parser.add_argument("--cal_grad_fw_bs", default=8, type=int,
 parser.add_argument("--device", default=0, type=str,
                     help="device gpu int number, or 'cpu' ")
 
-parser.add_argument("--sym", action='store_true',
-                    help=" sym quantization")
+# parser.add_argument("--sym", action='store_true',
+#                     help=" sym quantization") ##dont support currently
 
 parser.add_argument("--quant_lm_head", action='store_true',
                     help=" quant lm head")
@@ -177,9 +177,6 @@ def quant_weight_asym(weight, num_bits=4, grad=None):
     scale.unsqueeze_(dim=-1)
     zp.unsqueeze_(dim=-1)
     if grad != None:
-        # grad /= torch.abs(grad)
-        # grad *= 0.5
-        # grad = torch.clip(grad / scale, -0.5, 0.5)
         int_w = torch.round(weight / scale + grad)
         q = torch.clamp(int_w + zp, 0, maxq)
     else:
@@ -253,22 +250,19 @@ def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=None):
 
 
 class SaveInputs:
-    def __init__(self, model, dataloader, seqlen=256):
+    def __init__(self, model, dataloader, seq_len=256):
         self.model = model.eval()
         self.dataloader = dataloader
-        # self.op_types = ['Linear']
         self.inputs = {}
-        # self.outputs = {}
-        self.block_modules = []
         target_m = None
         for n, m in model.named_modules():
             if hasattr(type(m), "__name__") and 'ModuleList' in type(m).__name__:
                 target_m = (n, m)
 
-        self.tmps = []
+        self.block_names = []
         for n, m in target_m[1].named_children():
-            self.tmps.append(target_m[0] + "." + n)
-        self.seq_len = seqlen
+            self.block_names.append(target_m[0] + "." + n)
+        self.seq_len = seq_len
 
     @torch.no_grad()
     def get_forward_func(self, name):
@@ -284,8 +278,6 @@ class SaveInputs:
             if kwargs != None and len(kwargs) > 0:
                 if "position_ids" in kwargs.keys() and kwargs["position_ids"] != None:
                     self.inputs[name]["position_ids"] = kwargs["position_ids"].to("cpu")
-                # if "attention_mask" in kwargs.keys() and kwargs[
-                #     "attention_mask"] != None and "bloom" in args.model_name:
                 if "attention_mask" in kwargs.keys() and kwargs[
                     "attention_mask"] != None and (args.with_attention or "bloom" in args.model_name):
                     if "attention_mask" in self.inputs[name] and kwargs["attention_mask"] != None:
@@ -304,8 +296,6 @@ class SaveInputs:
                         self.inputs[name]["alibi"] = alibi.to("cpu")
             raise NotImplementedError
 
-            # return block.orig_forward(hidden_states, **kwargs)
-
         return forward
 
     @torch.no_grad()
@@ -313,26 +303,18 @@ class SaveInputs:
         if args.amp:
             self.model = self.model.half()
         total_cnt = 0
-        # handels = self._add_input_output_observer()
         self._replace_forward()
         for data in self.dataloader:
-            if data == None:
+            if data is None:
                 continue
 
             input_ids = data['input_ids'].to(self.model.device)
             if input_ids.shape[-1] < seqlen:
                 continue
-            # print(input_ids)
-            # attention_mask = data['attention_mask'].to(self.model.device)
-            # if args.amp:
-            #     with autocast(device_type="cuda"):
-            #         self.model(input_ids)
-            # else:
-            #     self.model(input_ids)
             if total_cnt + input_ids.shape[0] > n_samples:
                 input_ids = input_ids[:n_samples - total_cnt, ...]
             try:
-                self.model(input_ids)  ##no amp to ease the experiment
+                self.model(input_ids)
             except:
                 pass
             total_cnt += input_ids.shape[0]
@@ -342,31 +324,16 @@ class SaveInputs:
         if args.amp:
             self.model = self.model.to(torch.float)
 
-        # for handle in handels:
-        #     handle.remove()
-        # for key in self.inputs.keys():
-        #     data = self.inputs[key]
-        #     self.inputs[key] = torch.cat(data, dim=0)
-        # for key in self.outputs.keys():
-        #     data = self.outputs[key]
-        #     self.outputs[key] = torch.cat(data, dim=0)
-        # return self.inputs, self.outputs
-
     def _recover_forward(self):
         for n, m in self.model.named_modules():
-            if "lm_head" in n:
-                continue
-            if n == self.tmps[0]:
+            if n == self.block_names[0]:
                 m.forward = m.orig_forward
                 delattr(m, "orig_forward")
                 break
 
     def _replace_forward(self):
         for n, m in self.model.named_modules():
-            if "lm_head" in n:
-                continue
-            # if hasattr(type(m), "__name__") and 'ModuleList' in type(m).__name__:
-            if n == self.tmps[0]:
+            if n == self.block_names[0]:
                 m.orig_forward = m.forward
                 m.forward = partial(self.get_forward_func(n), m)
                 break
@@ -521,9 +488,9 @@ model = model.eval()
 
 import time
 
-seqlen = args.seq_len
+seq_len = args.seq_len
 start_time = time.time()
-save_input_actor = SaveInputs(model, calib_dataloader, seqlen)
+save_input_actor = SaveInputs(model, calib_dataloader, seq_len)
 save_input_actor.get_input_outputs()
 input_info = save_input_actor.inputs
 
@@ -571,13 +538,7 @@ def collect_grad_and_zero(block):
     grads = {}
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear):
-            grad = -m.orig_layer.weight.grad  ##FIXME
-            # mean_val = torch.mean(torch.abs(grad))
-            # std_val = torch.std(torch.abs(grad))
-            # threshold1 = mean_val/100
-            # threshold2 = mean_val-3*std_val
-            # print(threshold1, threshold2,flush=True)
-            # grad[torch.abs(grad) < mean_val/100] = 0##stable the tuning
+            grad = -m.orig_layer.weight.grad
             grads[n] = copy.deepcopy(grad)
             m.orig_layer.weight.grad.zero_()
     return grads
@@ -586,7 +547,6 @@ def collect_grad_and_zero(block):
 def get_lr(step, total_steps, lr=0.01, warmup_step=0, lr_type="linear"):
     if warmup_step > 0 and step < warmup_step:
         return (lr - 0.01 * lr) * float(step) / warmup_step + 0.01 * lr
-        ##return lr * float(step) / warmup_step
 
     if lr_type == "const":
         current_lr = args.lr
@@ -601,36 +561,13 @@ def get_lr(step, total_steps, lr=0.01, warmup_step=0, lr_type="linear"):
 
 
 def quant_block(block, input_ids, input_others, output, num_bits, group_size, schema, q_input=None):
-    # block.train()
     best_loss = torch.finfo(torch.float).max
     grad = None
     if args.momentum > 0:
         grad_m = None
-    # module_copy = copy.deepcopy(block)
-
-    # input = input.to(cuda_device)
-    ##output = output.to(cuda_device)
-    # input_ids = input['input_ids']
-    # input.pop('input_ids', None)
-    # input_others = input
     input = input_ids
     input = input.to(cuda_device)
-    # with torch.no_grad():
-    #     if "bloom" in args.model_name:
-    #         attention_mask = input_others["attention_mask"]
-    #         alibi = input_others["alibi"]
-    #         alibi_tmp = alibi.reshape(-1, alibi.shape[2], alibi.shape[3])
-    #         if args.amp:
-    #             with autocast(device_type="cuda"):
-    #                 output = block(input, attention_mask=attention_mask, alibi=alibi_tmp)[0] * 1000
-    #         else:
-    #             output = block(input, attention_mask=attention_mask, alibi=alibi_tmp)[0]
-    #     else:
-    #         if args.amp:
-    #             with autocast(device_type="cuda"):
-    #                 output = block(input, **input_others)[0]
-    #         else:
-    #             output = block(input, **input_others)[0]
+
     output = []
     with torch.no_grad():
         current_bs = args.cal_grad_fw_bs
@@ -641,16 +578,11 @@ def quant_block(block, input_ids, input_others, output, num_bits, group_size, sc
                 current_input_other["position_ids"] = input_others["position_ids"]
             if len(input.shape) == 3:
                 current_input = input[indices, :, :]
-                # current_output = output[indices, :, :]
             else:
                 n_samples = input.shape[0] // seqlen
                 current_input = input.view(n_samples, seqlen, -1)
-                # indices = torch.randperm(n_samples)[:pick_samples]
                 current_input = current_input[indices, :, :]
                 current_input = current_input.view(-1, input.shape[-1])
-                # current_output = output.view(n_samples, seqlen, -1)
-                # current_output = current_output[indices, :, :]
-                # current_output = current_output.view(-1, current_output.shape[-1])
             if "attention_mask" in input_others:
                 current_input_other["attention_mask"] = input_others["attention_mask"][indices, ...]
             if "bloom" in args.model_name:
@@ -674,26 +606,6 @@ def quant_block(block, input_ids, input_others, output, num_bits, group_size, sc
             output.append(tmp_output)
         output = torch.cat(output, dim=0)
 
-    # with torch.no_grad():
-    #     if "bloom" in args.model_name:
-    #         attention_mask = input_others["attention_mask"]
-    #         alibi = input_others["alibi"]
-    #         alibi_tmp = alibi.reshape(-1, alibi.shape[2], alibi.shape[3])
-    #         if args.amp:
-    #             with autocast(device_type="cuda"):
-    #                 output = block(input, attention_mask=attention_mask, alibi=alibi_tmp)[0]
-    #         else:
-    #             output = block(input, attention_mask=attention_mask, alibi=alibi_tmp)[0]
-    #     else:
-    #         if args.amp:
-    #             with autocast(device_type="cuda"):
-    #                 output = block(input, **input_others)[0]
-    #         else:
-    #             output = block(input, **input_others)[0]
-
-    # print("input.shape", input.shape)
-    # print("output.shape", output.shape)
-    # best_module = copy.deepcopy(block.cpu())
     if q_input != None:
         input = q_input.to(cuda_device)
 
@@ -734,24 +646,6 @@ def quant_block(block, input_ids, input_others, output, num_bits, group_size, sc
                 current_input_other["attention_mask"] = input_others["attention_mask"][indices, ...]
             if "bloom" in args.model_name:
                 current_input_other["alibi"] = input_others["alibi"][indices, ...]
-
-            # if len(input.shape) == 3:
-            #     n_samples = input.shape[0]
-            #     ##indices = torch.randperm(n_samples)[:pick_samples]
-            #     current_input = input[:pick_samples, :, :]
-            #     # current_output = output[indices, :, :]
-            # else:
-            #     n_samples = input.shape[0] // seqlen
-            #     current_input = current_input.view(n_samples, seqlen, -1)
-            #     ##indices = torch.randperm(n_samples)[:pick_samples]
-            #     current_input = current_input[:pick_samples, :, :]
-            #     current_input = current_input.view(-1, input.shape[-1])
-            #
-            #     # current_output = current_output.view(n_samples, seqlen, -1)
-            #     # current_output = current_output[indices, :, :]
-            #     # current_output = current_output.view(-1, current_output.shape[-1])
-
-        # quant_weight_block(block, num_bits, group_size, schema, grads=grad, block_name=block_name)
         start_index = 0
         step_size = args.cal_grad_fw_bs
         end_index = 0
@@ -782,7 +676,7 @@ def quant_block(block, input_ids, input_others, output, num_bits, group_size, sc
                     output_q = block.forward(tmp_input, attention_mask=attention_mask_tmp, **current_input_other)
             if isinstance(output_q, list) or isinstance(output_q, tuple):
                 output_q = output_q[0]
-            # gap = (current_output[start_index:end_index] - output_q)
+
             if args.amp:
                 with autocast(device_type="cuda"):
                     loss = mse_loss(output_q, current_output[start_index:end_index]) * 1000
@@ -794,7 +688,6 @@ def quant_block(block, input_ids, input_others, output, num_bits, group_size, sc
                 break
             start_index = end_index
 
-        # # if i != 0:
         if total_loss < best_loss:
             best_loss = total_loss
             if args.use_mse:
@@ -810,20 +703,9 @@ def quant_block(block, input_ids, input_others, output, num_bits, group_size, sc
 
         warmup_step = int(args.iters * args.lr_wr)
         current_lr = get_lr(i, args.iters, args.lr, warmup_step, args.lr_decay_type)
-        # if args.lr_decay_type == "const":
-        #     current_lr = args.lr
-        # elif args.lr_decay_type == "linear":
-        #     current_lr = args.lr - float(i) / args.iters * args.lr
-        # elif args.lr_decay_type == "cos":
-        #     import math
-        #     current_lr = math.cos(float(i) / args.iters*math.pi/2) * args.lr
-        # else:
-        #     raise NotImplemented
 
         for key in new_grad.keys():
             new_grad[key] = torch.sign(new_grad[key]) * current_lr
-
-            # new_grad[key] = torch.sign(new_grad[key]) * (args.lr)
 
         if grad == None:
             grad = new_grad
@@ -844,19 +726,7 @@ def quant_block(block, input_ids, input_others, output, num_bits, group_size, sc
             if isinstance(m, WrapperLinear):
                 m.update_grad(grad[n])
 
-    # for n, m in block.named_modules():
-    #     if isinstance(m, WrapperLinear):
-    #         for tmp in range(0, 101):
-    #             target = float(tmp) / 100-0.5
-    #             print(target, torch.sum(torch.abs(best_grad[n]- target)<1e-6) / best_grad[n].numel(), flush=True)
-    # for n, m in block.named_modules():
-    #     if isinstance(m, WrapperLinear):
-    #         for tmp in range(0, 11):
-    #             target = float(tmp) / 10-0.5
-    #             if best_grad[n]==None:
-    #                 print(n)
-    #                 continue
-    #             print(target, torch.sum(torch.abs(best_grad[n]- target)<0.1) / best_grad[n].numel(), flush=True)
+
     unwrapper_block(block, num_bits, group_size, schema, best_grad)
     block.eval()
     if args.use_quant_input:
@@ -879,15 +749,14 @@ def quant_block(block, input_ids, input_others, output, num_bits, group_size, sc
     else:
         input = input.to("cpu")
         return None, output
-    ##module.weight.copy_(best_q_dq_weight)
 
 
-# @torch.no_grad()
+
 def q_dq_weight_round(model: torch.nn.Module, num_bits=4, group_size=128, schema='asym'):
     q_input = None
     torch.cuda.empty_cache()
     input_others = None
-    for n in save_input_actor.tmps:
+    for n in save_input_actor.block_names:
 
         if "lm_head" in n:
             continue
@@ -909,7 +778,6 @@ def q_dq_weight_round(model: torch.nn.Module, num_bits=4, group_size=128, schema
         q_input, input_ids = quant_block(m, input_ids, input_others, None, num_bits=num_bits, group_size=group_size,
                                          schema=schema,
                                          q_input=q_input)
-        m.eval()
         m = m.to("cpu")
         torch.cuda.empty_cache()
     for key in input_others.keys():
