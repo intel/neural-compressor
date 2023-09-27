@@ -364,7 +364,7 @@ class BenchmarkConfig:
 
     @device.setter
     def device(self, device):
-        if _check_value("device", device, str, ["cpu", "gpu"]):
+        if _check_value("device", device, str, ["cpu", "gpu", "npu"]):
             self._device = device
 
     @property
@@ -756,7 +756,7 @@ class _BaseQuantizationConfig:
                  'optypes_to_exclude_output_quant': don't quantize output of specified optypes
                  'dedicated_qdq_pair': whether dedicate QDQ pair, only valid for onnxrt_trt_ep
         quant_format: Support 'default', 'QDQ' and 'QOperator', only required in ONNXRuntime.
-        device: Support 'cpu' and 'gpu'.
+        device: Support 'cpu', 'gpu' and 'npu'.
         calibration_sampling_size: Number of calibration sample.
         op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
                       User can specify the quantization config by op type:
@@ -1129,7 +1129,7 @@ class _BaseQuantizationConfig:
 
     @device.setter
     def device(self, device):
-        if _check_value("device", device, str, ["cpu", "gpu"]):
+        if _check_value("device", device, str, ["cpu", "gpu", "npu"]):
             self._device = device
 
     @property
@@ -1196,7 +1196,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
     """Config Class for Post Training Quantization.
 
     Args:
-        device: Support 'cpu' and 'gpu'.
+        device: Support 'cpu', 'gpu' and 'npu'.
         backend: Backend for model execution.
                  Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
                  'onnxrt_dml_ep'
@@ -1381,7 +1381,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     """Config Class for Quantization Aware Training.
 
     Args:
-        device: Support 'cpu' and 'gpu'.
+        device: Support 'cpu', 'gpu' and 'npu'.
         backend: Backend for model execution.
                  Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
                  'onnxrt_dml_ep'
@@ -1869,7 +1869,7 @@ class MixedPrecisionConfig(object):
 
     Args:
         device (str, optional): Device for execution.
-                                Support 'cpu' and 'gpu', default is 'cpu'.
+                                Support 'cpu', 'gpu' and 'npu', default is 'cpu'.
         backend (str, optional): Backend for model execution.
                                  Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
                                  'onnxrt_dml_ep'. Default is 'default'.
@@ -2023,7 +2023,7 @@ class MixedPrecisionConfig(object):
     @device.setter
     def device(self, device):
         """Set device."""
-        if _check_value("device", device, str, ["cpu", "gpu"]):
+        if _check_value("device", device, str, ["cpu", "gpu", "npu"]):
             self._device = device
 
     @property

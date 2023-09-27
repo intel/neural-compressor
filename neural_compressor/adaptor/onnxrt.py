@@ -350,6 +350,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             logger.warning("Backend `{}` requires a GPU device. Reset device to 'gpu'.".format(backend))
             self.device = "gpu"
 
+        if backend in ["onnxrt_dml_ep"] and self.device != "npu":
+            logger.warning("Backend `{}` requires a NPU device. Reset device to 'npu'.".format(backend))
+            self.device = "npu"
+
         ep = PROVIDERS[backend]
         if ep not in ort.get_available_providers():
             logger.warning(
