@@ -1380,18 +1380,19 @@ class TestPeftModel(unittest.TestCase):
             conf,
             calib_func=calib_func,
         )
+        decoder = q_model.model.base_model.model.model.decoder
         self.assertTrue(
-            isinstance(q_model.model.base_model.model.model.decoder.layers[0].self_attn.v_proj, SQLinearWrapper)
+            isinstance(decoder.layers[0].self_attn.v_proj, SQLinearWrapper)
         )
         self.assertTrue(
             isinstance(
-                q_model.model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
+                decoder.layers[0].self_attn.v_proj.sq_linear.module.lora_A.default,
                 SQLinearWrapper,
             )
         )  # Linear in Linear
         self.assertTrue(
             isinstance(
-                q_model.model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_B.default,
+                decoder.layers[0].self_attn.v_proj.sq_linear.module.lora_B.default,
                 torch.nn.Linear,
             )
         )  # Linear that failed when smoothquant, because its weights are zeros
