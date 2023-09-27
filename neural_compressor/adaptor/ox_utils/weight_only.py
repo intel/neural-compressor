@@ -44,19 +44,35 @@ def check_op_support_status():
     output_tensor = helper.make_tensor_value_info("output", 1, [1, 64])
     initializers = []
     # weight shape (32, 64)
-    packed_weight = np.random.randint(0, high=16, size=(64, 1, 16), dtype="uint8")
-    initializers.append(onnx.helper.make_tensor("weight", 2, packed_weight.shape, packed_weight.flatten().tolist()))
-    scale = np.random.random((64, 1)).astype("float32")
-    initializers.append(onnx.helper.make_tensor("scale", 1, scale.shape, scale.flatten().tolist()))
+    q_weight = np.random.randint(0, high=16, size=(64, 32), dtype="uint8")
+    initializers.append(onnx.helper.make_tensor("shape", 1, [], [32, 64])
 
+    packed = np.zeros((q_weight.shape[0], 16), dtype="uint8")
+    for i in range(q_weight.shape[0]):
+        bf = struct.pack("f", scale[i])
+        packed[i][0] = bf[0]
+        packed[i][1] = bf[1]
+        packed[i][2] = bf[2]
+        packed[i][3] = bf[3]
+
+        packed[i][4:] = np.bitwise_or(q_weight[i][:16], np.left_shift(q_weight[i][16:], num_bits))
+
+    packed = packed.reshape(-1)
+    initializers.append(onnx.helper.make_tensor("weight", 2, packed.shape, packed.flatten().tolist()))
+
+    q_weight_tensor = onnx.helper.make_tensor(
+        name=node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size)),
+        data_type=2,
+        dims=packed.shape,
+        vals=packed.tobytes(),
+        raw=True,
+    )
+ 
     kwargs = {}
-    kwargs["K"] = 32
-    kwargs["N"] = 64
-    kwargs["bits"] = 4
-    kwargs["block_size"] = 32
+    kwargs["blk_quant_type"] = 0
     node = onnx.helper.make_node(
-        "MatMulWithQuantWeight",
-        inputs=["input", "weight", "scale"],
+        "MatMulFpQ4",
+        inputs=["input", "weight", "shape"],
         outputs=["output"],
         name="test",
         domain="com.microsoft",
@@ -76,7 +92,7 @@ def check_op_support_status():
 def make_matmul_weight_only_node(
     node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point
 ):  # pragma: no cover
-    """Build MatMulWithQuantWeight node.
+    """Build MatMulFpQ4 node.
 
     Args:
         node: original matmul node
@@ -89,18 +105,30 @@ def make_matmul_weight_only_node(
         zero_point (array): zero point
 
     Returns:
-        matmul_weight_only_node: MatMulWithQuantWeight node
-        new_inits: initializers of the MatMulWithQuantWeight node
+        matmul_weight_only_node: MatMulFpQ4 node
+        new_inits: initializers of the MatMulFpQ4 node
     """
-    blob_size = group_size // 2
+    if zero_point is not None:
+        blob_size = group_size // 2 + 4 + 1
+        offset = 4
+    else:
+        blob_size = group_size // 2 + 4
+        offset = 5
+
     packed = np.zeros((q_weight.shape[0], blob_size), dtype="uint8")
     for i in range(q_weight.shape[0]):
-        for k in range(0, group_size, 2):
-            packed[i][k // 2] = q_weight[i][k] | q_weight[i][k + 1] << 4
+        bf = struct.pack("f", scale[i])
+        packed[i][0] = bf[0]
+        packed[i][1] = bf[1]
+        packed[i][2] = bf[2]
+        packed[i][3] = bf[3]
 
-    packed = np.reshape(packed, (-1, k_blocks, blob_size))
-    scale = np.reshape(scale, (-1, k_blocks)).astype("float32")
+        if zero_point is not None:
+            packed[i][4] = zero_point[i]
 
+        packed[i][offset:] = np.bitwise_or(q_weight[i][:group_size // 2], np.left_shift(q_weight[i][group_size // 2:], num_bits))
+
+    packed = packed.reshape(-1)
     q_weight_tensor = onnx.helper.make_tensor(
         name=node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size)),
         data_type=2,
@@ -108,27 +136,15 @@ def make_matmul_weight_only_node(
         vals=packed.tobytes(),
         raw=True,
     )
-    scale_tensor = onnx.helper.make_tensor(
-        name=node.input[1] + "_scale", data_type=1, dims=scale.shape, vals=scale.tobytes(), raw=True
-    )
-    input_names = [node.input[0], q_weight_tensor.name, scale_tensor.name]
-    new_inits = [q_weight_tensor, scale_tensor]
-
-    if zero_point is not None:
-        zero_point = np.reshape(zero_point, (-1, k_blocks)).astype("uint8")
-        zp_tensor = onnx.helper.make_tensor(
-            name=node.input[1] + "_zp", data_type=2, dims=zero_point.shape, vals=zero_point.tobytes(), raw=True
-        )
-        input_names.append(zp_tensor.name)
-        new_inits.append(zp_tensor)
+    shape_tensor = onnx.helper.make_tensor(
+        name=node.input[1] + "_shape", data_type=7, dims=[], vals=np.array(weight_shape, dtype="int64")
+    input_names = [node.input[0], q_weight_tensor.name, shape_tensor.name]
+    new_inits = [q_weight_tensor, shape_tensor]
 
     kwargs = {}
-    kwargs["K"] = weight_shape[0]
-    kwargs["N"] = weight_shape[1]
-    kwargs["bits"] = num_bits
-    kwargs["block_size"] = group_size
+    kwargs["blk_quant_type"] = 1 if zero_point is not None else 0
     matmul_weight_only_node = onnx.helper.make_node(
-        "MatMulWithQuantWeight",
+        "MatMulFpQ4",
         inputs=input_names,
         outputs=node.output,
         name=node.name + "_Q" + str(num_bits) if node.name else "_Q" + str(num_bits),
@@ -291,7 +307,7 @@ def rtn_quantize(
             weight = pad_tensor(weight, group_size, k_blocks)
 
             if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:  # pragma: no cover
-                # currently MatMulWithQuantWeights only support 4 bits and 32 group_size
+                # currently MatMulFpQ4 only support 4 bits and 32 group_size
                 q_weight, scale, zp = quant_tensor(
                     weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
                 )
@@ -536,7 +552,7 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
                 ratio = 1 - i_s / 100
                 weight = copy.deepcopy(org_weight)
                 if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:  # pragma: no cover
-                    # currently MatMulWithQuantWeights only support 4 bits and 32 group_size
+                    # currently MatMulFpQ4 only support 4 bits and 32 group_size
                     weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1))
                 else:
                     weight = qdq_tensor(weight, num_bits, group_size, scheme, "int", ratios.get(node.input[1], 1))
@@ -1014,7 +1030,7 @@ def gptq_quantize(
             weight_tensor = model.get_initializer(node.input[1])
             init_share_num = model.get_initializer_share_num(node.input[1])
             if WEIGHT_ONLY_OP_SUPPORTED and num_bits == 4 and group_size == 32:  # pragma: no cover
-                # currently MatMulWithQuantWeights only support 4 bits and 32 group_size
+                # currently MatMulFpQ4 only support 4 bits and 32 group_size
                 org_shape = weight.shape
                 k_blocks = (org_shape[0] + group_size - 1) // group_size
                 q_weight = pad_tensor(q_weight, group_size, k_blocks)
