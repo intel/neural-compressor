@@ -53,7 +53,7 @@ def evaluate(model):
         accuracy (float): evaluation result, the larger is better.
     """
     from neural_compressor.model import Model
-    from tensorflow.python.training.tracking.tracking import AutoTrackable  
+    from tensorflow.python.trackable.autotrackable import AutoTrackable
     warmup = 5      
     iteration = -1
     if args.benchmark and args.mode == 'performance':
