@@ -1346,7 +1346,7 @@ For more complete information about performance and benchmark results, visit www
     <th class="tg-im72">Accuracy</th>
     <th class="tg-im72">Accuracy</th>
     <th class="tg-im72">Accuracy</th>
-    <th class="tg-iire">Accuracy Ratio<br>[INT8/FP32]</th>
+    <th class="tg-iire">Accuracy Ratio<br>[INT4/FP32]</th>
     <th class="tg-haiz">Word_perplexity</th>
   </tr>
 </thead>
@@ -3178,7 +3178,7 @@ For more complete information about performance and benchmark results, visit www
     <th rowspan="2">Model name</th>
     <th rowspan="2">Configuration</th>
     <th colspan="2">Lambada_openai</th>
-    <th rowspan="2">Accuracy Ratio<br>[INT8/FP32]</th>
+    <th rowspan="2">Accuracy Ratio<br>[INT4/FP32]</th>
   </tr>
   <tr>
     <th>Accuracy</th>
