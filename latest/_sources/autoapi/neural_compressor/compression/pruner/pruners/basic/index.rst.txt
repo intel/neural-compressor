@@ -54,7 +54,7 @@ Classes
       A Reg object that defines regulization terms.
 
 
-.. py:class:: KerasBasicPruner
+.. py:class:: KerasBasicPruner(config, modules)
 
 
 
