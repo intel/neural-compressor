@@ -20,11 +20,11 @@ import copy
 import logging
 import math
 import os
+import struct
 import sys
 
 import numpy as np
 import onnx
-import struct
 from onnx import helper, numpy_helper
 from onnx import onnx_pb as onnx_proto
 from packaging.version import Version
@@ -75,7 +75,9 @@ def make_matmul_weight_only_node(
         if zero_point is not None:
             packed[i][4] = zero_point[i]
 
-        packed[i][offset:] = np.bitwise_or(q_weight[i][:group_size // 2], np.left_shift(q_weight[i][group_size // 2:], num_bits))
+        packed[i][offset:] = np.bitwise_or(
+            q_weight[i][: group_size // 2], np.left_shift(q_weight[i][group_size // 2 :], num_bits)
+        )
 
     packed = packed.reshape(-1)
     q_weight_tensor = onnx.helper.make_tensor(
@@ -86,7 +88,8 @@ def make_matmul_weight_only_node(
         raw=True,
     )
     shape_tensor = onnx.helper.make_tensor(
-        name=node.input[1] + "_shape", data_type=7, dims=(2,), vals=np.array(weight_shape, dtype="int64"))
+        name=node.input[1] + "_shape", data_type=7, dims=(2,), vals=np.array(weight_shape, dtype="int64")
+    )
     input_names = [node.input[0], q_weight_tensor.name, shape_tensor.name]
     new_inits = [q_weight_tensor, shape_tensor]
 
@@ -358,7 +361,9 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 weight = weight.T * scales
                 weight = pad_tensor(weight, group_size, (org_w_shape[0] + group_size - 1) // group_size).T
 
-                if Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32:  # pragma: no cover
+                if (
+                    Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
+                ):  # pragma: no cover
                     q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint") / np.expand_dims(
                         scales, axis=-1
                     )
@@ -499,7 +504,9 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
             for i_s in range(10):
                 ratio = 1 - i_s / 100
                 weight = copy.deepcopy(org_weight)
-                if Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32:  # pragma: no cover
+                if (
+                    Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
+                ):  # pragma: no cover
                     # currently MatMulFpQ4 only support 4 bits and 32 group_size
                     weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1))
                 else:
