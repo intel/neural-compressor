@@ -15,6 +15,8 @@ if [ "$test_mode" == "coverage" ]; then
     # import torch before import tensorflow
     cd /neural-compressor/test || exit 1
     find . -name "test*.py" | xargs sed -i 's/import tensorflow as tf/import torch; import tensorflow as tf/g'
+    find . -name "test*.py" | xargs sed -i 's/import tensorflow.compat.v1 as tf/import torch; import tensorflow.compat.v1 as tf/g'
+    find . -name "test*.py" | xargs sed -i 's/from tensorflow import keras/import torch; from tensorflow import keras/g'
 else
     export tensorflow_version='2.12.0'
     export pytorch_version='1.13.0+cpu'
