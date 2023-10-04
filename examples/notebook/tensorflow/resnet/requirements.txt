@@ -4,4 +4,5 @@ tensorflow
 datasets
 requests
 urllib3
+pyOpenSSL
 git+https://github.com/huggingface/huggingface_hub
