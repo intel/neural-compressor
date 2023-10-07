@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 class CPUinfo:
-    """Get CPU inforamation, such as cores list and NUMA information."""
+    """Get CPU information, such as cores list and NUMA information."""
 
     def __init__(self):
         self.cpuinfo = []
@@ -460,7 +460,7 @@ class MultiInstanceLauncher(Launcher):
 
 
 class DistributedTrainingLauncher(Launcher):
-    r"""Launcher for distributed traning with MPI launcher."""
+    r"""Launcher for distributed training with MPI launcher."""
 
     def get_mpi_pin_domain(self, nproc_per_node, ccl_worker_count, total_cores):
         """I_MPI_PIN_DOMAIN specify the cores used for every MPI process.

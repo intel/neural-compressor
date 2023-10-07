@@ -32,7 +32,7 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
     """InsertPrintMinMaxNode Pass for tensorflow sampling."""
 
     def __init__(self, model, pre_node_name, post_node_name, new_api):
-        """Intilization."""
+        """Initialization."""
         super().__init__(model)
         self.pre_node_name = pre_node_name
         self.post_node_name = post_node_name
