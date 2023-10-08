@@ -284,7 +284,7 @@ Our proposed method consists of 5 major steps:
 
 -    Hook input and output values of all layers using register_forward_hook.
 -    Generate a list of $\alpha$ values given user-defined $\alpha$ range and step_sizes.
--    Recalculate smoothing factor given an $\alpha$ value and a djust parameters(weights and activations).
+-    Recalculate smoothing factor given an $\alpha$ value and adjust parameters(weights and activations).
 -    Perform per-channel quantization_dequantization of weights and per-tensor quantization_dequantization of inputs to predict the layer-wise output corresponding to the given $\alpha$ value.
 -    Calculate the mean-squared loss with respect to the actual output value, recover the adjusted parameters and save the layer-wise optimal $\alpha$ values.
 
@@ -350,6 +350,7 @@ A list of models that achieved a <1% accuracy drop is shown below.
 | LLaMa-13b | 0.7627 | 0.7590 | alpha=0.7, Ipex 2.1 |
 | LLaMa-30b | 0.7759 | 0.7840 | alpha=0.7, Ipex 2.1 |
 | LLaMa-65b | 0.7908 | 0.7957 | alpha=0.9, Ipex 2.1 |
+| LLaMa-2-7b | 0.7369 | 0.7330 | alpha=Auto, Ipex 2.1 |
 | EleutherAI/gpt-j-6B | 0.6831 | 0.6821 | alpha=1.0, Ipex 2.1 |
 | MBZUAI/LaMini-GPT-124m | 0.3804 | 0.3887 | alpha=0.5, Ipex 2.1 |
 | MBZUAI/LaMini-GPT-774m | 0.5048 | 0.5057 | alpha=0.5, Ipex 2.1 |
