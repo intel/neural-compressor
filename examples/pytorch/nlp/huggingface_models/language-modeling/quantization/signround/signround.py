@@ -1,10 +1,10 @@
 import argparse
 import copy
+from abc import ABC
 
 parser = argparse.ArgumentParser()
 import torch
 
-import torch.nn as nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import load_dataset
 from torch.functional import F
@@ -14,11 +14,8 @@ from torch.autograd import Function
 from datasets import load_from_disk
 from torch.utils.data import DataLoader
 
-# import smooth_quant
-from evaluation import evaluate as lm_evaluate
 import os
 from transformers import set_seed
-import json
 from functools import partial
 from torch.amp import autocast
 from eval import eval_model
@@ -33,11 +30,11 @@ parser.add_argument(
     "--model_name", nargs="?", default="/models/opt-125m"
 )
 
-parser.add_argument("--group_size", default=128, type=int,
-                    help="weight_quantization config")
-
 parser.add_argument("--num_bits", default=4, type=int,
                     help="number of  bits")
+
+parser.add_argument("--group_size", default=128, type=int,
+                    help="weight_quantization config")
 
 parser.add_argument("--cal_grad_batch_size", default=8, type=int,
                     help="cal_grad_batch_size")
@@ -105,66 +102,27 @@ parser.add_argument("--samples", default=512, type=int,
 parser.add_argument("--lr_wr", default=0.0, type=float,
                     help="lr warmup ratio")
 
-parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
-                    help=" fp32")
-#
-# parser.add_argument("--tasks", default=["lambada_openai"],
+# parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
 #                     help=" fp32")
+#
+parser.add_argument("--tasks", default=["lambada_openai"],
+                    help=" fp32")
 
 args = parser.parse_args()
 set_seed(args.seed)
 
 
 class FakeAffineTensorQuantFunction(Function):
-    """Fake version of affine quantization
-
-    gemmlowp style scale+shift quantization. See more details in
-    https://github.com/google/gemmlowp/blob/master/doc/quantization.md.
-
-    We DO NOT recommend affine quantization on weights for performance reason. There might be value to affine quantize
-    activation as it can be cancelled by bias and comes with no performance penalty. This functionality is only added
-    for experimental purpose.
-    """
-
     @staticmethod
-    def forward(ctx, inputs, num_bits=4, group_size=128, schema="asym", grad=None):
-        """
-
-        As it will be only applied on activation with per tensor granularity, broadcast is not needed.
-
-        Args:
-            ctx: Pytorch convention.
-            inputs: A Tensor of type float32.
-            min_range: A float.
-            max_range: A float.
-            num_bits: An integer
-
-        Returns:
-            outputs: A Tensor of type output_dtype
-        """
-        ##ctx.save_for_backward(inputs, min_range, max_range)
-        return quant_weight(inputs, num_bits, group_size, schema, grad)[0]
+    def forward(ctx, inputs, num_bits=4, group_size=128, schema="asym", grad=0):
+        return quant_weight(inputs, num_bits, group_size, schema, grad)
 
     @staticmethod
     def backward(ctx, grad_outputs):
-        """
-        Args:
-            ctx: Pytorch convention.
-            grad_output: A tensor of gradient of outputs
-
-        Returns:
-            grad_inputs: A tensor of gradient
-        """
         return grad_outputs, None, None, None, None
-        # inputs, min_range, max_range = ctx.saved_tensors
-        # min_range = min_range.unsqueeze(dim=-1)
-        # max_range = max_range.unsqueeze(dim=-1)
-        # zero = grad_outputs.new_zeros(1)
-        # grad_inputs = torch.where((inputs <= max_range) * (inputs >= min_range), grad_outputs, zero)
-        # return grad_inputs, None, None, None
 
 
-def quant_weight_asym(weight, num_bits=4, grad=None):
+def quant_weight_asym(weight, num_bits=4, grad=0):
     maxq = torch.tensor(2 ** num_bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device)
     wmin = torch.minimum(weight.min(1)[0], zeros)
@@ -176,17 +134,12 @@ def quant_weight_asym(weight, num_bits=4, grad=None):
     zp = torch.round(-wmin / scale)
     scale.unsqueeze_(dim=-1)
     zp.unsqueeze_(dim=-1)
-    if grad != None:
-        int_w = torch.round(weight / scale + grad)
-        q = torch.clamp(int_w + zp, 0, maxq)
-    else:
-
-        q = torch.clamp(torch.round(weight / scale) + zp, 0, maxq)
-    return scale * (q - zp), grad
+    int_w = torch.round(weight / scale + grad)
+    q = torch.clamp(int_w + zp, 0, maxq)
+    return scale * (q - zp)
 
 
 def quant_weight_sym(weight, num_bits=4):
-    # assert num_bits > 1, "symmetric schema only supports num_bits > 1"
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-2 ** (num_bits - 1)).to(weight.device)
     if num_bits == 1:
@@ -210,43 +163,38 @@ def quant_weight_actor(weight, num_bits, schema, grad):
         return quant_weight_asym(weight, num_bits, grad)
 
 
-def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=None):
+def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0):
     if group_size == -1 or weight.shape[1] < group_size:
         return quant_weight_actor(weight, num_bits, schema=schema, grad=grad)
 
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
-        if grad != None:
+        if isinstance(grad, torch.Tensor):
             grad = grad.reshape(-1, group_size)
-        weight, grad = quant_weight_actor(weight, num_bits, schema=schema, grad=grad)
+        weight = quant_weight_actor(weight, num_bits, schema=schema, grad=grad)
 
         weight = weight.reshape(orig_shape)
-        if grad != None:
-            grad = grad.reshape(-1, group_size)
-        return weight, grad
+
+        return weight
     else:
         split_index = weight.shape[1] // group_size * group_size
         weight1 = weight[:, :split_index]
         weight1 = weight1.reshape(-1, group_size)
-        if grad != None:
+        if isinstance(grad, torch.Tensor):
             grad1 = grad[:, :split_index]
             grad1 = grad1.reshape(-1, group_size)
-        else:
-            grad1 = None
-        weight1, grad1 = quant_weight_actor(weight1, num_bits, schema=schema, grad=grad1)
-        weight1 = weight1.reshape(orig_shape[0], split_index)
-        if grad1 != None:
-            grad1 = grad1.reshape(orig_shape[0], split_index)
-
-        weight2 = weight[:, split_index:]
-        if grad != None:
             grad2 = grad[:, split_index:]
-        weight2, grad2 = quant_weight_actor(weight2, num_bits, schema=schema, grad=grad2)
+        else:
+            grad1 = 0
+            grad2 = 0
+        weight1 = quant_weight_actor(weight1, num_bits, schema=schema, grad=grad1)
+        weight1 = weight1.reshape(orig_shape[0], split_index)
+        weight2 = weight[:, split_index:]
+        weight2 = quant_weight_actor(weight2, num_bits, schema=schema, grad=grad2)
         weight = torch.cat([weight1, weight2], dim=1)
-        if grad != None:
-            grad = torch.cat([grad1, grad2], dim=1)
-        return weight, grad
+
+        return weight
 
 
 class SaveInputs:
@@ -267,7 +215,7 @@ class SaveInputs:
     @torch.no_grad()
     def get_forward_func(self, name):
 
-        def forward(block, hidden_states, **kwargs):
+        def forward(block, hidden_states, **kwargs):##This may have bug for other models
             if name in self.inputs:
                 data = torch.cat([self.inputs[name]['input_ids'], hidden_states.to("cpu")], dim=0)
                 self.inputs[name]['input_ids'] = data
@@ -278,9 +226,9 @@ class SaveInputs:
             if kwargs != None and len(kwargs) > 0:
                 if "position_ids" in kwargs.keys() and kwargs["position_ids"] != None:
                     self.inputs[name]["position_ids"] = kwargs["position_ids"].to("cpu")
-                if "attention_mask" in kwargs.keys() and kwargs[
-                    "attention_mask"] != None and (args.with_attention or "bloom" in args.model_name):
-                    if "attention_mask" in self.inputs[name] and kwargs["attention_mask"] != None:
+                if "attention_mask" in kwargs.keys() and kwargs["attention_mask"] != None and (
+                        args.with_attention or "bloom" in args.model_name):
+                    if "attention_mask" in self.inputs[name] and kwargs["attention_mask"] is not None:
                         self.inputs[name]["attention_mask"] = torch.cat(
                             [self.inputs[name]['attention_mask'], kwargs['attention_mask'].to("cpu")], dim=0)
                     else:
@@ -354,29 +302,16 @@ def q_dq_weight(model: torch.nn.Module, num_bits=4, group_size=128, schema='asym
         for n, m in block.named_modules():
             if isinstance(m, torch.nn.Linear):
                 m.weight.data.copy_(
-                    quant_weight(m.weight, num_bits=num_bits, group_size=group_size, schema=schema)[0])
-
-    # for n, m in model.named_modules():
-    #
-    #     self.block_names = []
-    #     for n, m in target_m[1].named_children():
-    #         self.block_names.append(target_m[0] + "." + n)
-    #
-    #     if isinstance(m, torch.nn.Linear) and "lm_head" not in n:
-    #         m.weight.data.copy_(
-    #             quant_weight(m.weight, num_bits=num_bits, group_size=group_size, schema=schema)[0])
+                    quant_weight(m.weight, num_bits=num_bits, group_size=group_size, schema=schema))
 
 
 def tokenize_function(examples):
     example = tokenizer(examples["text"], truncation=True, max_length=seqlen)
-    # example = tokenizer(examples["text"], return_tensors='pt', padding=True)
-    # example = tokenizer(examples["text"])
     return example
 
 
 @torch.no_grad()
 def collate_batch(batch):
-    from torch.nn.functional import pad
     input_ids_new = []
     for text in batch:
         input_ids = text["input_ids"]
@@ -402,7 +337,6 @@ def get_module(model, key):
         model (torch.nn.Module): original model
         key (str): module name to be replaced
     """
-    # print(key, flush=True)
     attrs = key.split('.')
     module = model
     for attr in attrs:
@@ -511,7 +445,7 @@ input_info = save_input_actor.inputs
 
 
 class WrapperLinear(torch.nn.Module):
-    def __init__(self, orig_layer, num_bits, group_size, schema, grad=None):
+    def __init__(self, orig_layer, num_bits, group_size, schema, grad=0):
         super(WrapperLinear, self).__init__()
         self.orig_layer = orig_layer
         self.tensor_quant = FakeAffineTensorQuantFunction().apply
@@ -541,10 +475,10 @@ def unwrapper_block(block, num_bits, group_size, schema, grads):
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear):
             orig_layer = m.orig_layer
-            grad = None
+            grad = 0
             if grads != None:
                 grad = grads[n]
-            q_dq_weight, _ = quant_weight(orig_layer.weight, num_bits, group_size, schema, grad)
+            q_dq_weight = quant_weight(orig_layer.weight, num_bits, group_size, schema, grad)
             orig_layer.weight.data.copy_(q_dq_weight)
             set_module(block, n, orig_layer)
 
