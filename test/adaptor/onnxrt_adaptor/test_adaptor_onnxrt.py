@@ -1712,6 +1712,21 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
         self.assertEqual(mock_warning.call_count, 2)
 
+        framework_specific_info = {
+            "device": "cpu",
+            "backend": "onnxrt_dml_ep",
+            "approach": "post_training_static_quant",
+            "workspace_path": "./nc_workspace",
+        }
+        framework = "onnxrt_qlinearops"
+        adaptor = FRAMEWORKS[framework](framework_specific_info)
+
+        call_args_list = mock_warning.call_args_list
+        first_warning_args = call_args_list[2][0]
+        self.assertEqual(first_warning_args[0], "Backend `onnxrt_dml_ep` requires a NPU device. Reset device to 'npu'.")
+        second_warning_args = call_args_list[3][0]
+        self.assertIn("not in available provider names. Fallback to available providers", second_warning_args[0])
+
     def test_cuda_ep_env_set(self):
         config = PostTrainingQuantConfig(approach="static", backend="onnxrt_cuda_ep", device="gpu", quant_level=1)
         quantization.fit(
