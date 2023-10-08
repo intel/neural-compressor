@@ -11,10 +11,10 @@ jobs:
       repos: ${{ github.event.repository.name }}
       refs: ${{ github.ref_name }}
       projectType: python
-      url: 'https://coverityent.devtools.intel.com/prod5'
-      stream: 'inc_coverity'
+      url: 'https://coverityent.devtools.intel.com/prod1'
+      stream: 'IntelNeuralCompressor-master'
       runners: "['self-hosted']"
     secrets:
       token: ${{ secrets.ACTION_TOKEN }}
-      USER: ${{secrets.USER }}
-      PASSWORD : ${{secrets.PASSWORD }}
+      USER: ${{secrets.COVERITY_USER }}
+      PASSWORD : ${{secrets.COVERITY_PASSWORD }}
