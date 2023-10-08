@@ -15,6 +15,6 @@ jobs:
       stream: 'IntelNeuralCompressor-master'
       runners: "['self-hosted']"
     secrets:
-      token: ${{ secrets.ACTION_TOKEN }}
+      token: ${{ secrets.GITHUB_TOKEN }}
       USER: ${{secrets.COVERITY_USER }}
       PASSWORD : ${{secrets.COVERITY_PASSWORD }}
