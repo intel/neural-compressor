@@ -363,7 +363,7 @@ def quantize_data_per_channel(data, axis, quantize_range, qType, scheme):
 
 
 def dequantize_data_with_scale_zero(tensor_value, scale_value, zo_value):  # pragma: no cover
-    """Dequantize tensor with sacale and zero point."""
+    """Dequantize tensor with scale and zero point."""
     return (tensor_value.astype(np.float32) - zo_value.astype(np.float32)) * scale_value
 
 
