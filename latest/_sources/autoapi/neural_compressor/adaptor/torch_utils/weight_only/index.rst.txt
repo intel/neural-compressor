@@ -166,7 +166,7 @@ Functions
    :type quantile: float, optional
    :param data_type: select from int, nf4, fp4. Defaults to int.
    :type data_type: str, optional
-   :param weight_config: specific layer wise configirations. Defaults to {}.
+   :param weight_config: specific layer wise configurations. Defaults to {}.
                          For example,
                              weight_config={
                                  'fc2':

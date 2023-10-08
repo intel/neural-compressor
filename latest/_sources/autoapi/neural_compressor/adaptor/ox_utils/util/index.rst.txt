@@ -179,7 +179,7 @@ Functions
 
 .. py:function:: dequantize_data_with_scale_zero(tensor_value, scale_value, zo_value)
 
-   Dequantize tensor with sacale and zero point.
+   Dequantize tensor with scale and zero point.
 
 
 .. py:function:: dequantize_data(tensor_value, scale_value, zo_value, axis=0)

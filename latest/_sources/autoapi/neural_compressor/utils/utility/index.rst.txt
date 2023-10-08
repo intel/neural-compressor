@@ -118,7 +118,7 @@ Functions
 
    Not displayed in API Docs.
 
-   Singleton decorater.
+   Singleton decorator.
 
 
 .. py:function:: time_limit(seconds)
