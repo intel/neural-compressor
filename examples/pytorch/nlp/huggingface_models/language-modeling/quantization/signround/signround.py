@@ -20,96 +20,10 @@ from functools import partial
 from torch.amp import autocast
 from eval import eval_model
 
-# torch.use_deterministic_algorithms(True)
-# os.environ['CURL_CA_BUNDLE'] = ''
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HF_HOME"] = "/models/huggingface"
 os.environ['TRANSFORMERS_OFFLINE'] = '0'
-
-parser.add_argument(
-    "--model_name", nargs="?", default="/models/opt-125m"
-)
-
-parser.add_argument("--num_bits", default=4, type=int,
-                    help="number of  bits")
-
-parser.add_argument("--group_size", default=128, type=int,
-                    help="weight_quantization config")
-
-parser.add_argument("--cal_grad_batch_size", default=8, type=int,
-                    help="cal_grad_batch_size")
-
-parser.add_argument("--batch_size", default=32, type=int,
-                    help="batch_size")
-
-parser.add_argument("--cal_grad_fw_bs", default=8, type=int,
-                    help="cal_grad_batch_size")
-
-parser.add_argument("--device", default=0, type=str,
-                    help="device gpu int number, or 'cpu' ")
-
-# parser.add_argument("--sym", action='store_true',
-#                     help=" sym quantization") ##dont support currently
-
-parser.add_argument("--quant_lm_head", action='store_true',
-                    help=" quant lm head")
-
-parser.add_argument("--iters", default=400, type=int,
-                    help=" iters")
-
-parser.add_argument("--dynamic_max_gap", default=0, type=int,
-                    help=" dynamic max gap")
-
-parser.add_argument("--use_mse", action='store_true',
-                    help=" use mse to get best qdq")
-
-parser.add_argument("--use_quant_input", action='store_true',
-                    help=" whether use quant_input")
-
-parser.add_argument("--sampler", default="rand", type=str,
-                    help="")
-
-parser.add_argument("--clip_val", default=0.5, type=float,
-                    help="clip value")
-
-parser.add_argument("--lr", default=0.0025, type=float,
-                    help="step size")
-
-parser.add_argument("--lr_decay_type", default="linear", type=str,
-                    help="lr decay type")
-
-parser.add_argument("--momentum", default=-1, type=float,
-                    help="momentum")
-
-parser.add_argument("--seed", default=42, type=int,
-                    help="seed")
-
-parser.add_argument("--eval_fp16_baseline", action='store_true',
-                    help="whether eval FP16 baseline")
-
-parser.add_argument("--amp", action='store_true',
-                    help=" amp")
-
-parser.add_argument("--with_attention", action='store_true',
-                    help="opt llama with attention")
-
-parser.add_argument("--seq_len", default=512, type=int,
-                    help="sequence  length")
-
-parser.add_argument("--samples", default=512, type=int,
-                    help="samples")
-
-parser.add_argument("--lr_wr", default=0.0, type=float,
-                    help="lr warmup ratio")
-
-# parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
-#                     help=" fp32")
-#
-parser.add_argument("--tasks", default=["lambada_openai"],
-                    help=" fp32")
-
-args = parser.parse_args()
-set_seed(args.seed)
 
 
 class FakeAffineTensorQuantFunction(Function):
@@ -198,7 +112,7 @@ def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0):
 
 
 class SaveInputs:
-    def __init__(self, model, dataloader, seq_len=256):
+    def __init__(self, model, dataloader, seqlen=256):
         self.model = model.eval()
         self.dataloader = dataloader
         self.inputs = {}
@@ -210,7 +124,7 @@ class SaveInputs:
         self.block_names = []
         for n, m in target_m[1].named_children():
             self.block_names.append(target_m[0] + "." + n)
-        self.seq_len = seq_len
+        self.seqlen = seqlen
 
     @torch.no_grad()
     def get_forward_func(self, name):
@@ -247,7 +161,7 @@ class SaveInputs:
         return forward
 
     @torch.no_grad()
-    def get_input_outputs(self, n_samples=args.samples):
+    def get_input_outputs(self, n_samples=512):
         if args.amp:
             self.model = self.model.half()
         total_cnt = 0
@@ -367,82 +281,6 @@ def set_module(model, key, new_module):
     setattr(module, attrs[-1], new_module)
 
 
-model_name = args.model_name
-
-if model_name[-1] == "/":
-    model_name = model_name[:-1]
-
-print(model_name, flush=True)
-
-tasks = args.tasks
-
-if args.device == "cpu":
-    device_str = "cpu"
-else:
-    device_str = f"cuda:{int(args.device)}"
-cuda_device = torch.device(device_str)
-model = AutoModelForCausalLM.from_pretrained(
-    model_name, low_cpu_mem_usage=True,
-)
-model = model.to(cuda_device)
-
-if "opt" in model_name:
-    seqlen = model.config.max_position_embeddings
-    model.seqlen = model.config.max_position_embeddings
-else:
-    seqlen = 2048
-    model.seqlen = seqlen
-
-seqlen = args.seq_len
-
-if args.eval_fp16_baseline:
-    eval_model(model, model_name, tasks=tasks)
-    exit()
-
-if args.iters <= 0:
-    q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)  ##TODO sym not supported
-    model.half()
-    model = model.to(cuda_device)
-    eval_model(model, model_name, tasks=args.tasks)
-    exit()
-
-if "llama" in model_name:
-    from transformers import LlamaTokenizer
-
-    tokenizer = LlamaTokenizer.from_pretrained(model_name)
-    if tokenizer.pad_token is None:
-        tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-else:
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-dataset_name = "NeelNanda/pile-10k"
-if os.path.exists(dataset_name.split('/')[-1]):
-    calib_dataset = load_from_disk(dataset_name.split('/')[-1])
-else:
-    calib_dataset = load_dataset(dataset_name, split="train")
-    calib_dataset.save_to_disk(dataset_name.split('/')[-1])
-
-calib_dataset = calib_dataset.shuffle(seed=args.seed)
-calib_dataset = calib_dataset.map(tokenize_function, batched=True)
-# calib_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask'])
-calib_dataset.set_format(type='torch', columns=['input_ids'])
-calib_dataloader = DataLoader(
-    calib_dataset,
-    batch_size=args.batch_size,
-    shuffle=False,
-    collate_fn=collate_batch
-)
-
-model = model.eval()
-
-import time
-
-seq_len = args.seq_len
-start_time = time.time()
-save_input_actor = SaveInputs(model, calib_dataloader, seq_len)
-save_input_actor.get_input_outputs()
-input_info = save_input_actor.inputs
-
 
 class WrapperLinear(torch.nn.Module):
     def __init__(self, orig_layer, num_bits, group_size, schema, grad=0):
@@ -509,7 +347,7 @@ def get_lr(step, total_steps, lr=0.01, warmup_step=0, lr_type="linear"):
     return current_lr
 
 
-def quant_block(block, input_ids, input_others, output, num_bits, group_size, schema, q_input=None):
+def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_input=None, args=None):
     best_loss = torch.finfo(torch.float).max
     grad = None
     if args.momentum > 0:
@@ -520,7 +358,7 @@ def quant_block(block, input_ids, input_others, output, num_bits, group_size, sc
     output = []
     with torch.no_grad():
         current_bs = args.cal_grad_fw_bs
-        for i in range(0, args.samples, current_bs):
+        for i in range(0, args.n_samples, current_bs):
             indices = torch.arange(i, i + current_bs).to(torch.long)
             current_input_other = {}
             if "position_ids" in input_others.keys():
@@ -704,7 +542,6 @@ def q_dq_weight_round(model: torch.nn.Module, num_bits=4, group_size=128, schema
     torch.cuda.empty_cache()
     input_others = None
     for n in save_input_actor.block_names:
-
         if "lm_head" in n:
             continue
         m = get_module(model, n)
@@ -713,7 +550,6 @@ def q_dq_weight_round(model: torch.nn.Module, num_bits=4, group_size=128, schema
         m = m.to(cuda_device)
         m.eval()
         input = None
-        q_input = None
         if n in input_info.keys():
             input = input_info[n]
             input_ids = input['input_ids']
@@ -722,9 +558,10 @@ def q_dq_weight_round(model: torch.nn.Module, num_bits=4, group_size=128, schema
             for key in input_others.keys():
                 input_others[key] = input_others[key].to(cuda_device)
 
-        q_input, input_ids = quant_block(m, input_ids, input_others, None, num_bits=num_bits, group_size=group_size,
+        q_input, input_ids = quant_block(m, input_ids, input_others, num_bits=num_bits, group_size=group_size,
                                          schema=schema,
-                                         q_input=q_input)
+                                         q_input=q_input,
+                                         args=args)
         m = m.to("cpu")
         torch.cuda.empty_cache()
     for key in input_others.keys():
@@ -732,19 +569,185 @@ def q_dq_weight_round(model: torch.nn.Module, num_bits=4, group_size=128, schema
     torch.cuda.empty_cache()
 
 
-model.eval()
 
-model = model.to("cpu")
 
-q_dq_weight_round(model, num_bits=args.num_bits, group_size=args.group_size)
-end_time = time.time()
-print(end_time - start_time, flush=True)
+if __name__ == '__main__':
 
-torch.cuda.empty_cache()
+    parser.add_argument(
+        "--model_name", nargs="?", default="/models/opt-125m"
+    )
 
-model = model.half()
+    parser.add_argument("--num_bits", default=4, type=int,
+                        help="number of  bits")
 
-model = model.to(cuda_device)
+    parser.add_argument("--group_size", default=128, type=int,
+                        help="weight_quantization config")
 
-model.eval()
-eval_model(model, model_name, tasks=args.tasks)
+    parser.add_argument("--cal_grad_batch_size", default=8, type=int,
+                        help="cal_grad_batch_size")
+
+    parser.add_argument("--batch_size", default=32, type=int,
+                        help="batch_size")
+
+    parser.add_argument("--cal_grad_fw_bs", default=8, type=int,
+                        help="cal_grad_batch_size")
+
+    parser.add_argument("--device", default=0, type=str,
+                        help="device gpu int number, or 'cpu' ")
+
+    # parser.add_argument("--sym", action='store_true',
+    #                     help=" sym quantization") ##dont support currently
+
+    parser.add_argument("--quant_lm_head", action='store_true',
+                        help=" quant lm head")
+
+    parser.add_argument("--iters", default=400, type=int,
+                        help=" iters")
+
+    parser.add_argument("--dynamic_max_gap", default=0, type=int,
+                        help=" dynamic max gap")
+
+    parser.add_argument("--use_mse", action='store_true',
+                        help=" use mse to get best qdq")
+
+    parser.add_argument("--use_quant_input", action='store_true',
+                        help=" whether use quant_input")
+
+    parser.add_argument("--sampler", default="rand", type=str,
+                        help="")
+
+    parser.add_argument("--clip_val", default=0.5, type=float,
+                        help="clip value")
+
+    parser.add_argument("--lr", default=0.0025, type=float,
+                        help="step size")
+
+    parser.add_argument("--lr_decay_type", default="linear", type=str,
+                        help="lr decay type")
+
+    parser.add_argument("--momentum", default=-1, type=float,
+                        help="momentum")
+
+    parser.add_argument("--seed", default=42, type=int,
+                        help="seed")
+
+    parser.add_argument("--eval_fp16_baseline", action='store_true',
+                        help="whether eval FP16 baseline")
+
+    parser.add_argument("--amp", action='store_true',
+                        help=" amp")
+
+    parser.add_argument("--with_attention", action='store_true',
+                        help="opt llama with attention")
+
+    parser.add_argument("--seqlen", default=512, type=int,
+                        help="sequence  length")
+
+    parser.add_argument("--n_samples", default=512, type=int,
+                        help="number of samples")
+
+    parser.add_argument("--lr_wr", default=0.0, type=float,
+                        help="lr warmup ratio")
+
+    # parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
+    #                     help=" fp32")
+    #
+    parser.add_argument("--tasks", default=["lambada_openai"],
+                        help=" fp32")
+
+    args = parser.parse_args()
+    set_seed(args.seed)
+
+    model_name = args.model_name
+
+    if model_name[-1] == "/":
+        model_name = model_name[:-1]
+
+    print(model_name, flush=True)
+
+    tasks = args.tasks
+
+    if args.device == "cpu":
+        device_str = "cpu"
+    else:
+        device_str = f"cuda:{int(args.device)}"
+    cuda_device = torch.device(device_str)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name, low_cpu_mem_usage=True,
+    )
+    model = model.to(cuda_device)
+
+    if "opt" in model_name:
+        seqlen = model.config.max_position_embeddings
+        model.seqlen = model.config.max_position_embeddings
+    else:
+        seqlen = 2048
+        model.seqlen = seqlen
+
+    seqlen = args.seqlen
+
+    if args.eval_fp16_baseline:
+        eval_model(model, model_name, tasks=tasks)
+        exit()
+
+    if args.iters <= 0:
+        q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)  ##TODO sym not supported
+        model.half()
+        model = model.to(cuda_device)
+        eval_model(model, model_name, tasks=args.tasks)
+        exit()
+
+    if "llama" in model_name:
+        from transformers import LlamaTokenizer
+
+        tokenizer = LlamaTokenizer.from_pretrained(model_name)
+        if tokenizer.pad_token is None:
+            tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    dataset_name = "NeelNanda/pile-10k"
+    if os.path.exists(dataset_name.split('/')[-1]):
+        calib_dataset = load_from_disk(dataset_name.split('/')[-1])
+    else:
+        calib_dataset = load_dataset(dataset_name, split="train")
+        calib_dataset.save_to_disk(dataset_name.split('/')[-1])
+
+    calib_dataset = calib_dataset.shuffle(seed=args.seed)
+    calib_dataset = calib_dataset.map(tokenize_function, batched=True)
+    # calib_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask'])
+    calib_dataset.set_format(type='torch', columns=['input_ids'])
+    calib_dataloader = DataLoader(
+        calib_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        collate_fn=collate_batch
+    )
+
+    model = model.eval()
+
+    import time
+
+    seqlen = args.seqlen
+    start_time = time.time()
+    save_input_actor = SaveInputs(model, calib_dataloader, seqlen)
+    save_input_actor.get_input_outputs(n_samples=args.n_samples)
+    input_info = save_input_actor.inputs
+
+    model.eval()
+
+    model = model.to("cpu")
+
+    q_dq_weight_round(model, num_bits=args.num_bits, group_size=args.group_size)
+    end_time = time.time()
+    print(end_time - start_time, flush=True)
+
+    torch.cuda.empty_cache()
+
+    model = model.half()
+
+    model = model.to(cuda_device)
+
+    model.eval()
+    eval_model(model, model_name, tasks=args.tasks)
+
