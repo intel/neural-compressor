@@ -312,7 +312,7 @@ def main(_):
       drop_remainder=False)
 
   from neural_compressor.adaptor.tf_utils.util import is_ckpt_format
-  assert is_ckpt_format(FLAGS.input_model), 'invalid chekpoint path....'
+  assert is_ckpt_format(FLAGS.input_model), 'invalid checkpoint path....'
   ckpt_model = [os.path.splitext(i)[0] for i in os.listdir(FLAGS.input_model) \
       if i.endswith('.meta')][0]
   model_fn = model_fn_builder(

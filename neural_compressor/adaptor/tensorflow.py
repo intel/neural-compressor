@@ -214,7 +214,7 @@ class TensorFlowAdaptor(Adaptor):
                     for i in range(len(list_len_dataloader) - 1):
                         if list_len_dataloader[i] != list_len_dataloader[i + 1]:
                             raise AttributeError(
-                                "The traning dataloader's iteration is"
+                                "The training dataloader's iteration is"
                                 "different between processes, please reset dataloader's batch_size."
                             )
 
@@ -373,7 +373,7 @@ class TensorFlowAdaptor(Adaptor):
                 import shutil
 
                 shutil.rmtree(temp_dir, ignore_errors=True)
-            # Create the writer using TF2.x APIs to handle eager excutions
+            # Create the writer using TF2.x APIs to handle eager executions
             writer = tf.summary.create_file_writer(temp_dir)  # pylint: disable=no-member
             with writer.as_default():
                 tf.summary.graph(model.graph)  # pylint: disable=no-member
