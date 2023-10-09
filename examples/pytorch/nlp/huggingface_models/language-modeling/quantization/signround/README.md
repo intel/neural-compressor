@@ -1,1 +1,1 @@
-python3 signround.py --amp  --with_attention  --use_mse --num_bits 4  --group_size -1
+python3 signround.py --amp   --num_bits 4  --group_size -1
