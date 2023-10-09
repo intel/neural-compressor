@@ -25,6 +25,17 @@ In particular, the tool provides the key features, typical examples, and open co
 
 * Collaborate with cloud marketplace such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html), [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00) and [Microsoft Olive](https://github.com/microsoft/Olive), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), [ONNX Runtime](https://github.com/microsoft/onnxruntime), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
 
+
+## INSTRUCTIONS-
+
+- Fork this Repository using the button at the top on right corner.
+- Clone your forked repository to your pc ( git clone "url from clone option.)
+- Create a new branch for your modifications (ie. `git branch new-user` and check it out `git checkout new-user` or simply do `git checkout -b new-user`)
+- Add your files (`git add -A`), commit (`git commit -m "added myself"`) and push (`git push origin new-user`)
+- Create a pull request
+- Star this repository
+
+
 ## Installation
 
 ### Install from pypi
