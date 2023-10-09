@@ -345,90 +345,230 @@ conv2d/linear-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanor
 <section id="validated-models">
 <h2>Validated Models<a class="headerlink" href="#validated-models" title="Permalink to this heading"></a></h2>
 <p>Neural Compressor: 2.1</p>
-<p>IPEX (Intel Extension for PyTorch): 2.0</p>
-<p>Dataset: lambada</p>
+<p>IPEX (Intel Extension for PyTorch): 2.0/2.1</p>
+<p>Dataset: lambada_openai</p>
 <p>Task: text-generation</p>
-<p>alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper</p>
+<p>alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper.</p>
+<p>A list of models that achieved a &lt;1% accuracy drop is shown below.</p>
 <table border="1" class="docutils">
 <thead>
 <tr>
-<th>Model\Last token accuracy</th>
-<th style="text-align: center;">FP32</th>
-<th style="text-align: center;">INT8 (w/o SmoothQuant)</th>
-<th>INT8 (w/ SmoothQuant)</th>
-<th>INT8 (w/ SmoothQuant auto tuning)</th>
+<th style="text-align: center;">Model/Last token accuracy</th>
+<th style="text-align: center;">FP32 Accuracy</th>
+<th style="text-align: center;">INT8 (w/ SmoothQuant)</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>bigscience/bloom-560m</td>
-<td style="text-align: center;">65.20%</td>
-<td style="text-align: center;">63.44%</td>
-<td>66.48% (alpha=0.5)</td>
-<td>64.76% (alpha: 95.9% over 0.6, 4.1% in [0.4, 0.6])</td>
+<td style="text-align: center;">bigscience/bloom-560m</td>
+<td style="text-align: center;">0.354</td>
+<td style="text-align: center;">0.3542</td>
+<td>alpha=0.5, Ipex 2.1</td>
 </tr>
 <tr>
-<td>bigscience/bloom-1b7</td>
-<td style="text-align: center;">71.43%</td>
-<td style="text-align: center;">67.78%</td>
-<td>72.56% (alpha=0.5)</td>
-<td>72.58% (alpha: 55.1% over 0.6, 30.6% in [0.4, 0.6], 14.3% under 0.4)</td>
+<td style="text-align: center;">bigscience/bloom-1b7</td>
+<td style="text-align: center;">0.4634</td>
+<td style="text-align: center;">0.4936</td>
+<td>alpha=0.5, Ipex 2.0</td>
 </tr>
 <tr>
-<td>bigscience/bloom-3b</td>
-<td style="text-align: center;">73.97%</td>
-<td style="text-align: center;">69.99%</td>
-<td>74.02% (alpha=0.5)</td>
-<td>74.16% (alpha: 100% over 0.6)</td>
+<td style="text-align: center;">bigscience/bloom-3b</td>
+<td style="text-align: center;">0.518</td>
+<td style="text-align: center;">0.5185</td>
+<td>alpha=0.8, Ipex 2.1</td>
 </tr>
 <tr>
-<td>bigscience/bloom-7b1</td>
-<td style="text-align: center;">77.44%</td>
-<td style="text-align: center;">75.46%</td>
-<td>77.02%(alpha=0.5)</td>
-<td>77.45% (alpha: 91.8% over 0.6, 4.9% in [0.4, 0.6], 3.3% under 0.4)</td>
+<td style="text-align: center;">bigscience/bloom-7b1</td>
+<td style="text-align: center;">0.5764</td>
+<td style="text-align: center;">0.5977</td>
+<td>alpha=0.5, Ipex 2.0</td>
 </tr>
 <tr>
-<td>bigscience/bloom-176b</td>
-<td style="text-align: center;">84.17%</td>
-<td style="text-align: center;">82.13%</td>
-<td>83.52% (alpha=0.6)</td>
-<td>-</td>
+<td style="text-align: center;">bigscience/bloomz-560m</td>
+<td style="text-align: center;">0.3947</td>
+<td style="text-align: center;">0.3930</td>
+<td>alpha=0.8, Ipex 2.1</td>
 </tr>
 <tr>
-<td>facebook/opt-125m</td>
-<td style="text-align: center;">63.89%</td>
-<td style="text-align: center;">63.48%</td>
-<td>63.44% (alpha=0.5)</td>
-<td>64.14% (alpha: 59.4% over 0.6, 8.1% in [0.4, 0.6], 32.4% under 0.4)</td>
+<td style="text-align: center;">bigscience/bloomz-1b7</td>
+<td style="text-align: center;">0.4828</td>
+<td style="text-align: center;">0.4906</td>
+<td>alpha=0.5, Ipex 2.1</td>
 </tr>
 <tr>
-<td>facebook/opt-1.3b</td>
-<td style="text-align: center;">75.41%</td>
-<td style="text-align: center;">73.59%</td>
-<td>70.94% (alpha=0.5)</td>
-<td>74.80% (alpha: 69.9% over 0.6, 24.7% in [0.4, 0.6], 5.5% under 0.4)</td>
+<td style="text-align: center;">bigscience/bloomz-3b</td>
+<td style="text-align: center;">0.5018</td>
+<td style="text-align: center;">0.4980</td>
+<td>alpha=0.5, Ipex 2.1</td>
 </tr>
 <tr>
-<td>facebook/opt-2.7b</td>
-<td style="text-align: center;">77.79%</td>
-<td style="text-align: center;">78.57%</td>
-<td>78.60%(alpha=0.5)</td>
-<td>78.25% (alpha: 73.2% over 0.6, 21.6% in [0.4, 0.6], 5.2% under 0.4)</td>
+<td style="text-align: center;">bigscience/bloomz-7b1</td>
+<td style="text-align: center;">0.5593</td>
+<td style="text-align: center;">0.5552</td>
+<td>alpha=0.5, Ipex 2.1</td>
 </tr>
 <tr>
-<td>facebook/opt-6.7b</td>
-<td style="text-align: center;">81.26%</td>
-<td style="text-align: center;">76.65%</td>
-<td>81.58%(alpha=0.5)</td>
-<td>81.39% (alpha: 68.0% over 0.6, 26.8% in [0.4, 0.6], 5.2% under 0.4)</td>
+<td style="text-align: center;">facebook/opt-125m</td>
+<td style="text-align: center;">0.379</td>
+<td style="text-align: center;">0.3757</td>
+<td>alpha=0.5, Ipex 2.1</td>
 </tr>
 <tr>
-<td>EleutherAI/gpt-j-6B</td>
-<td style="text-align: center;">79.17%</td>
-<td style="text-align: center;">78.82%</td>
-<td>78.84%(alpha=0.6)</td>
-<td>79.29% (alpha: 96.4% over 0.6, 3.6% in [0.4, 0.6])</td>
+<td style="text-align: center;">facebook/opt-350m</td>
+<td style="text-align: center;">0.4516</td>
+<td style="text-align: center;">0.4533</td>
+<td>alpha=0.8, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-1.3b</td>
+<td style="text-align: center;">0.5789</td>
+<td style="text-align: center;">0.5742</td>
+<td>alpha=0.8, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-2.7b</td>
+<td style="text-align: center;">0.6365</td>
+<td style="text-align: center;">0.6404</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-6.7b</td>
+<td style="text-align: center;">0.6769</td>
+<td style="text-align: center;">0.6804</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-13b</td>
+<td style="text-align: center;">0.6872</td>
+<td style="text-align: center;">0.6814</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-30b</td>
+<td style="text-align: center;">0.7149</td>
+<td style="text-align: center;">0.7128</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-66b</td>
+<td style="text-align: center;">0.7398</td>
+<td style="text-align: center;">0.7326</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">LLaMa-7b</td>
+<td style="text-align: center;">0.7361</td>
+<td style="text-align: center;">0.7357</td>
+<td>alpha=0.8, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">LLaMa-13b</td>
+<td style="text-align: center;">0.7627</td>
+<td style="text-align: center;">0.7590</td>
+<td>alpha=0.7, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">LLaMa-30b</td>
+<td style="text-align: center;">0.7759</td>
+<td style="text-align: center;">0.7840</td>
+<td>alpha=0.7, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">LLaMa-65b</td>
+<td style="text-align: center;">0.7908</td>
+<td style="text-align: center;">0.7957</td>
+<td>alpha=0.9, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">LLaMa-2-7b</td>
+<td style="text-align: center;">0.7369/0.7262</td>
+<td style="text-align: center;">0.7330</td>
+<td>alpha=Auto, Ipex 2.1/Pytorch</td>
+</tr>
+<tr>
+<td style="text-align: center;">EleutherAI/gpt-j-6B</td>
+<td style="text-align: center;">0.6831</td>
+<td style="text-align: center;">0.6821</td>
+<td>alpha=1.0, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">MBZUAI/LaMini-GPT-124m</td>
+<td style="text-align: center;">0.3804</td>
+<td style="text-align: center;">0.3887</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">MBZUAI/LaMini-GPT-774m</td>
+<td style="text-align: center;">0.5048</td>
+<td style="text-align: center;">0.5057</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">MBZUAI/LaMini-GPT-1.5b</td>
+<td style="text-align: center;">0.5443</td>
+<td style="text-align: center;">0.5436</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">mosaicml/mpt-7b-chat</td>
+<td style="text-align: center;">0.655</td>
+<td style="text-align: center;">0.6499</td>
+<td>alpha=0.7, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">stabilityai/stablelm-base-alpha-3b</td>
+<td style="text-align: center;">0.4172</td>
+<td style="text-align: center;">0.4149</td>
+<td>alpha=0.6, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">togethercomputer/RedPajama-INCITE-Base-3B-v1</td>
+<td style="text-align: center;">0.6542</td>
+<td style="text-align: center;">0.6735</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">togethercomputer/RedPajama-INCITE-Chat-3B-v1</td>
+<td style="text-align: center;">0.6718</td>
+<td style="text-align: center;">0.6740</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">togethercomputer/RedPajama-INCITE-Instruct-3B-v1</td>
+<td style="text-align: center;">0.6569</td>
+<td style="text-align: center;">0.6621</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">togethercomputer/RedPajama-INCITE-Base-7B-v0.1</td>
+<td style="text-align: center;">0.7143</td>
+<td style="text-align: center;">0.7221</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">togethercomputer/RedPajama-INCITE-Instruct-7B-v0.1</td>
+<td style="text-align: center;">0.6895</td>
+<td style="text-align: center;">0.6953</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">databricks/dolly-v1-6b</td>
+<td style="text-align: center;">0.6866</td>
+<td style="text-align: center;">0.6895</td>
+<td>alpha=0.8, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">databricks/dolly-v2-3b</td>
+<td style="text-align: center;">0.6297</td>
+<td style="text-align: center;">0.6247</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">tiiuae/falcon-7b-instruct</td>
+<td style="text-align: center;">0.6437</td>
+<td style="text-align: center;">0.6392</td>
+<td>alpha=0.7, Pytorch</td>
 </tr>
 </tbody>
 </table></section>
@@ -525,7 +665,7 @@ conf = PostTrainingQuantConfig(
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fbb46bf2ce0> 
+   <jinja2.runtime.BlockReference object at 0x7fcf3a2dd0f0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
