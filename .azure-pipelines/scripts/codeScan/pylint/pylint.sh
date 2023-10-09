@@ -53,14 +53,14 @@ elif [ "${scan_module}" = "neural_insights" ]; then
 fi
 
 python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto \
---ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,fairseq,mxnet,onnx,onnxruntime, \
-intel_extension_for_pytorch,intel_extension_for_tensorflow,torchinfo,horovod,transformers /neural-compressor/${scan_module} \
->$log_dir/pylint.json
+--ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,fairseq,mxnet,onnx,onnxruntime,intel_extension_for_pytorch,intel_extension_for_tensorflow,torchinfo,horovod,transformers \
+/neural-compressor/${scan_module} > $log_dir/pylint.json
 
 exit_code=$?
 
 $BOLD_YELLOW && echo " -----------------  Current pylint cmd start --------------------------" && $RESET
-echo "python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,fairseq,mxnet,onnx,onnxruntime,intel_extension_for_pytorch /neural-compressor/${scan_module} > $log_dir/pylint.json"
+echo "python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,fairseq,mxnet,onnx,onnxruntime,intel_extension_for_pytorch,intel_extension_for_tensorflow,torchinfo,horovod,transformers
+/neural-compressor/${scan_module}>$log_dir/pylint.json"
 $BOLD_YELLOW && echo " -----------------  Current pylint cmd end --------------------------" && $RESET
 
 $BOLD_YELLOW && echo " -----------------  Current log file output start --------------------------" && $RESET
