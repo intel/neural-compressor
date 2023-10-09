@@ -385,7 +385,7 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
     input_ids = input_ids.to(cuda_device)
     output = []
     with torch.no_grad():
-        current_bs = args.cal_grad_fw_bs
+        current_bs = args.train_bs
         for i in range(0, args.n_samples, current_bs):
             indices = torch.arange(i, i + current_bs).to(torch.long)
             tmp_input_ids, tmp_input_others = sampling_inputs(input_ids, input_others, indices, model_name)
@@ -399,7 +399,7 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
     wrapper_block(block, num_bits, group_size, schema)
     search_iters = args.iters
     best_grad = None
-    pick_samples = args.cal_grad_batch_size  ##TODO change to gradient_accumulate_steps
+    pick_samples = args.train_bs  ##TODO change to gradient_accumulate_steps
     if len(input_ids.shape) == 3:
         n_samples = input_ids.shape[0]
     else:
@@ -517,23 +517,23 @@ if __name__ == '__main__':
     parser.add_argument("--group_size", default=128, type=int,
                         help="weight_quantization config")
 
-    parser.add_argument("--cal_grad_batch_size", default=8, type=int,
-                        help="cal_grad_batch_size")
+    parser.add_argument("--train_bs", default=8, type=int,
+                        help="train batch size")
 
-    parser.add_argument("--batch_size", default=32, type=int,
-                        help="batch_size")
-
-    parser.add_argument("--cal_grad_fw_bs", default=8, type=int,
-                        help="cal_grad_batch_size")
+    parser.add_argument("--eval_bs", default=32, type=int,
+                        help="eval batch size")
+    #
+    # parser.add_argument("--cal_grad_fw_bs", default=8, type=int,
+    #                     help="cal_grad_batch_size")
 
     parser.add_argument("--device", default=0, type=str,
                         help="device gpu int number, or 'cpu' ")
 
-    # parser.add_argument("--sym", action='store_true',
+    # parser.add_argument("--sym", action='store_true',##TODO need to support later
     #                     help=" sym quantization") ##dont support currently
 
-    parser.add_argument("--quant_lm_head", action='store_true',
-                        help=" quant lm head")
+    # parser.add_argument("--quant_lm_head", action='store_true',
+    #                     help=" quant lm head")
 
     parser.add_argument("--iters", default=400, type=int,
                         help=" iters")
@@ -583,11 +583,11 @@ if __name__ == '__main__':
     parser.add_argument("--lr_wr", default=0.0, type=float,
                         help="lr warmup ratio")
 
-    parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
-                        help=" fp32")
+    # parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
+    #                     help=" fp32")
 
-    # parser.add_argument("--tasks", default=["lambada_openai"],
-    #                     help=" fp32") ##TODO revert the change
+    parser.add_argument("--tasks", default=["lambada_openai"],
+                        help=" fp32") ##TODO revert the change
 
     args = parser.parse_args()
     set_seed(args.seed)
@@ -605,7 +605,7 @@ if __name__ == '__main__':
         device_str = f"cuda:{int(args.device)}"
     cuda_device = torch.device(device_str)
     model = AutoModelForCausalLM.from_pretrained(
-        model_name, low_cpu_mem_usage=True##low_cpu_mem_usage has impact to acc, changed the random seed?
+        model_name, low_cpu_mem_usage=True ##low_cpu_mem_usage has impact to acc, changed the random seed?
     )
     model = model.eval()
     ##align wigh GPTQ to eval ppl
@@ -619,14 +619,14 @@ if __name__ == '__main__':
 
     if args.eval_fp16_baseline:
         model = model.to(cuda_device)
-        eval_model(model, model_name, tasks=tasks)
+        eval_model(model, model_name, tasks=tasks, eval_bs=args.eval_bs)
         exit()
 
     if args.iters <= 0:
         q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)
         model.half()
         model = model.to(cuda_device)
-        eval_model(model, model_name, tasks=args.tasks)
+        eval_model(model, model_name, tasks=args.tasks,eval_bs=args.eval_bs)
         exit()
 
     if "llama" in model_name:
@@ -650,7 +650,7 @@ if __name__ == '__main__':
     calib_dataset.set_format(type='torch', columns=['input_ids'])
     calib_dataloader = DataLoader(
         calib_dataset,
-        batch_size=args.batch_size,
+        batch_size=args.eval_bs,
         shuffle=False,
         collate_fn=collate_batch
     )
@@ -683,4 +683,4 @@ if __name__ == '__main__':
     model = model.half()
     model = model.to(cuda_device)
     model.eval()
-    eval_model(model, model_name, tasks=args.tasks)
+    eval_model(model, model_name, tasks=args.tasks,eval_bs=args.eval_bs)
