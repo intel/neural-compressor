@@ -352,7 +352,7 @@ def sampling_inputs(input_ids, input_others, indices, model_name):
         n_samples = input_ids.shape[0] // seqlen
         current_input_ids = input_ids.view(n_samples, seqlen, -1)
         current_input_ids = current_input_ids[indices, :, :]
-        current_input_ids = current_input_ids.view(-1, input.shape[-1])
+        current_input_ids = current_input_ids.reshape(-1, input.shape[-1])
 
     current_input_others = {}
     if "position_ids" in input_others.keys():
@@ -411,7 +411,7 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
     wrapper_block(block, num_bits, group_size, schema)
     search_iters = args.iters
     best_grad = None
-    pick_samples = args.cal_grad_batch_size
+    pick_samples = args.cal_grad_batch_size##TODO change to gradient_accumulate_steps
     if len(input.shape) == 3:
         n_samples = input.shape[0]
     else:
@@ -420,31 +420,17 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
         indices = torch.randperm(n_samples)[:pick_samples]
     last_best_iter = 0
     for i in range(search_iters):
-        current_input = input
-        current_output = output
-        current_input_other = copy.deepcopy(input_others)
+        if args.sampler == "rand":
+            indices = torch.randperm(n_samples)[:pick_samples]
+        current_input, current_input_other = sampling_inputs(input_ids, input_others, indices,
+                                                             model_name=args.model_name)
+        if len(input.shape) == 3:
+            current_output = output[indices, :, :]
+        else:
+            current_output = output.view(n_samples, seqlen, -1)
+            current_output = current_output[indices, :, :]
+            current_output = current_output.reshape(-1, current_output.shape[-1])
 
-        if args.cal_grad_batch_size > 0:
-            if args.sampler == "rand":
-                indices = torch.randperm(n_samples)[:pick_samples]
-
-            if len(input.shape) == 3:
-
-                current_input = input[indices, :, :]
-                current_output = output[indices, :, :]
-            else:
-                n_samples = input.shape[0] // seqlen
-                current_input = current_input.view(n_samples, seqlen, -1)
-                # indices = torch.randperm(n_samples)[:pick_samples]
-                current_input = current_input[indices, :, :]
-                current_input = current_input.view(-1, input.shape[-1])
-                current_output = current_output.view(n_samples, seqlen, -1)
-                current_output = current_output[indices, :, :]
-                current_output = current_output.view(-1, current_output.shape[-1])
-            if "attention_mask" in current_input_other:
-                current_input_other["attention_mask"] = input_others["attention_mask"][indices, ...]
-            if "bloom" in args.model_name:
-                current_input_other["alibi"] = input_others["alibi"][indices, ...]
         start_index = 0
         step_size = args.cal_grad_fw_bs
         end_index = 0
