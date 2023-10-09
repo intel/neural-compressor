@@ -52,7 +52,7 @@ def quant_weight_asym(weight, num_bits=4, grad=0):
     return scale * (q - zp)
 
 
-def quant_weight_sym(weight, num_bits=4):
+def quant_weight_sym(weight, num_bits=4, grad=0):
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-2 ** (num_bits - 1)).to(weight.device)
     if num_bits == 1:
@@ -64,7 +64,7 @@ def quant_weight_sym(weight, num_bits=4):
     wmax[tmp] = +1
     scale = wmax / ((maxq - minq) / 2)
     scale.unsqueeze_(dim=-1)
-    q = torch.clamp(torch.round(weight / scale), minq, maxq)
+    q = torch.clamp(torch.round(weight / scale+grad), minq, maxq)
     return scale * q
 
 
@@ -133,7 +133,7 @@ class SaveInputs:
                 if "position_ids" in kwargs.keys() and kwargs["position_ids"] is not None:
                     self.inputs[name]["position_ids"] = kwargs["position_ids"].to("cpu")
                 if "attention_mask" in kwargs.keys() and kwargs["attention_mask"] is not None and (
-                        args.with_attention or "bloom" in args.model_name):
+                        (not args.not_with_attention) or "bloom" in args.model_name):
                     if "attention_mask" in self.inputs[name] and kwargs["attention_mask"] is not None:
                         self.inputs[name]["attention_mask"] = torch.cat(
                             [self.inputs[name]['attention_mask'], kwargs['attention_mask'].to("cpu")], dim=0)
@@ -382,6 +382,7 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
     grad = None
     if args.momentum > 0:
         grad_m = None
+    block = block.to(cuda_device)
     input_ids = input_ids.to(cuda_device)
     output = []
     with torch.no_grad():
@@ -431,13 +432,13 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
 
         if total_loss < best_loss:
             best_loss = total_loss
-            if args.use_mse:
+            if not args.not_use_mse:
                 # print(f"get better result at iter {i}, the loss is {total_loss}", flush=True)
                 best_grad = copy.deepcopy(grad)
                 last_best_iter = i
-        if not args.use_mse:
+        if args.not_use_mse:
             best_grad = grad
-        if args.use_mse:
+        if not args.not_use_mse:
             if args.dynamic_max_gap > 0 and i - last_best_iter >= args.dynamic_max_gap:
                 break
         new_grad = collect_grad_and_zero(block)
@@ -470,7 +471,7 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
     unwrapper_block(block, num_bits, group_size, schema, best_grad)
     if args.use_quant_input:
         with torch.no_grad():
-            q_output = block_forward(block, input_ids, input_others, args.model_name, args.amp)
+            q_output = block_forward(block, input_ids, input_others, args.model_name, args.amp)##need to reduce memory
 
         return q_output, output
 
@@ -491,11 +492,12 @@ def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, g
         torch.cuda.empty_cache()
         m = get_module(model, n)
         print(n, flush=True)
-        m = m.to(cuda_device)
+
         q_input, input_ids = quant_block(m, input_ids, input_others, num_bits=num_bits, group_size=group_size,
                                          schema=schema,
                                          q_input=q_input,
                                          args=args)
+        m = m.to("cpu")
 
     del q_input
     del input_ids
@@ -522,18 +524,13 @@ if __name__ == '__main__':
 
     parser.add_argument("--eval_bs", default=32, type=int,
                         help="eval batch size")
-    #
-    # parser.add_argument("--cal_grad_fw_bs", default=8, type=int,
-    #                     help="cal_grad_batch_size")
 
     parser.add_argument("--device", default=0, type=str,
                         help="device gpu int number, or 'cpu' ")
 
-    # parser.add_argument("--sym", action='store_true',##TODO need to support later
-    #                     help=" sym quantization") ##dont support currently
+    parser.add_argument("--sym", action='store_true',##TODO need to support later
+                        help=" sym quantization") ##dont support currently
 
-    # parser.add_argument("--quant_lm_head", action='store_true',
-    #                     help=" quant lm head")
 
     parser.add_argument("--iters", default=400, type=int,
                         help=" iters")
@@ -541,7 +538,7 @@ if __name__ == '__main__':
     parser.add_argument("--dynamic_max_gap", default=0, type=int,
                         help="stop tuning if no best solution found within max_gap steps")
 
-    parser.add_argument("--use_mse", action='store_true',
+    parser.add_argument("--not_use_mse", action='store_true',
                         help=" whether use mse to get best grad")
 
     parser.add_argument("--use_quant_input", action='store_true',
@@ -571,7 +568,7 @@ if __name__ == '__main__':
     parser.add_argument("--amp", action='store_true',
                         help=" amp")
 
-    parser.add_argument("--with_attention", action='store_true',
+    parser.add_argument("--not_with_attention", action='store_true',
                         help="opt llama with attention")
 
     parser.add_argument("--seqlen", default=512, type=int,
@@ -672,9 +669,10 @@ if __name__ == '__main__':
     inputs = save_input_actor.get_inputs(n_samples=args.n_samples)
     del save_input_actor
     if args.amp:
-        model = model.to(torch.float)
+        model = model.to("cpu").to(torch.float)
 
     model = model.to("cpu")
+    torch.cuda.empty_cache()
     q_dq_weight_round(model, inputs, block_names, num_bits=args.num_bits, group_size=args.group_size)
     end_time = time.time()
     print(end_time - start_time, flush=True)
