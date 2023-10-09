@@ -53,6 +53,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 
   ```Shell
   # install stable basic version from from conda
+  conda install opencv-python-headless -c fastai
   conda install neural-compressor -c conda-forge -c intel
   ```
 
@@ -94,6 +95,7 @@ The following prerequisites and requirements must be satisfied for a successful 
   ```Shell
   # install stable basic version from from conda
   conda install pycocotools -c esri
+  conda install opencv-python-headless -c fastai
   conda install neural-compressor -c conda-forge -c intel
   ```
 
