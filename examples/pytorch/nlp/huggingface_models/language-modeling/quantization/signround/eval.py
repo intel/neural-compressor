@@ -1,4 +1,3 @@
-
 import torch
 
 import torch.nn as nn
@@ -6,14 +5,14 @@ import torch.nn as nn
 from evaluation import evaluate as lm_evaluate
 
 
-def eval_model(model, model_name, tasks=["lambada_openai", "hellaswag", "winogrande", "piqa"]):
+def eval_model(model, model_name, tasks=["lambada_openai", "hellaswag", "winogrande", "piqa"], eval_bs=32):
     model = model.half()
     model.eval()
     results = lm_evaluate(model="hf-causal",
                           model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype=float16',
                           user_model=model, tasks=tasks,
                           device=str(model.device),
-                          batch_size=32)
+                          batch_size=eval_bs)
 
     @torch.no_grad()
     def eval_same_with_gptq(model, testenc, dev):

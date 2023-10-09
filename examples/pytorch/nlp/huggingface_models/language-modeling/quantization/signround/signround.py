@@ -20,7 +20,6 @@ from functools import partial
 from torch.amp import autocast
 from eval import eval_model
 
-
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HF_HOME"] = "/models/huggingface"
 os.environ['TRANSFORMERS_OFFLINE'] = '0'
@@ -129,7 +128,7 @@ class SaveInputs:
     @torch.no_grad()
     def get_forward_func(self, name):
 
-        def forward(block, hidden_states, **kwargs):##This may have bug for other models
+        def forward(block, hidden_states, **kwargs):  ##This may have bug for other models
             if name in self.inputs:
                 data = torch.cat([self.inputs[name]['input_ids'], hidden_states.to("cpu")], dim=0)
                 self.inputs[name]['input_ids'] = data
@@ -281,7 +280,6 @@ def set_module(model, key, new_module):
     setattr(module, attrs[-1], new_module)
 
 
-
 class WrapperLinear(torch.nn.Module):
     def __init__(self, orig_layer, num_bits, group_size, schema, grad=0):
         super(WrapperLinear, self).__init__()
@@ -347,6 +345,48 @@ def get_lr(step, total_steps, lr=0.01, warmup_step=0, lr_type="linear"):
     return current_lr
 
 
+def sampling_inputs(input_ids, input_others, indices, model_name):
+    if len(input_ids.shape) == 3:
+        current_input_ids = input_ids[indices, :, :]
+    else:
+        n_samples = input_ids.shape[0] // seqlen
+        current_input_ids = input_ids.view(n_samples, seqlen, -1)
+        current_input_ids = current_input_ids[indices, :, :]
+        current_input_ids = current_input_ids.view(-1, input.shape[-1])
+
+    current_input_others = {}
+    if "position_ids" in input_others.keys():
+        current_input_others["position_ids"] = input_others["position_ids"]
+    if "attention_mask" in input_others.keys():
+        current_input_others["attention_mask"] = input_others["attention_mask"][indices, ...]
+    if "bloom" in model_name:
+        alibi = input_others["alibi"][indices, ...]
+        current_input_others["alibi"] = alibi
+
+    return current_input_ids, current_input_others
+
+
+def block_forward(block, input_ids, input_others, model_name, amp=False):
+    if "bloom" in model_name:
+        attention_mask = input_others["attention_mask"]
+        alibi = input_others["alibi"]
+        alibi = alibi.reshape(-1, alibi.shape[2], alibi.shape[3])
+        if amp:
+            with autocast(device_type="cuda"):
+                output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
+        else:
+            output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
+    else:
+        if amp:
+            with autocast(device_type="cuda"):
+                output = block.forward(input_ids, **input_others)
+        else:
+            output = block.forward(input_ids, **input_others)
+    if isinstance(output, list) or isinstance(output, tuple):
+        output = output[0]
+    return output
+
+
 def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_input=None, args=None):
     best_loss = torch.finfo(torch.float).max
     grad = None
@@ -354,42 +394,14 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
         grad_m = None
     input = input_ids
     input = input.to(cuda_device)
-
+    input_ids = input_ids.to(cuda_device)
     output = []
     with torch.no_grad():
         current_bs = args.cal_grad_fw_bs
         for i in range(0, args.n_samples, current_bs):
             indices = torch.arange(i, i + current_bs).to(torch.long)
-            current_input_other = {}
-            if "position_ids" in input_others.keys():
-                current_input_other["position_ids"] = input_others["position_ids"]
-            if len(input.shape) == 3:
-                current_input = input[indices, :, :]
-            else:
-                n_samples = input.shape[0] // seqlen
-                current_input = input.view(n_samples, seqlen, -1)
-                current_input = current_input[indices, :, :]
-                current_input = current_input.view(-1, input.shape[-1])
-            if "attention_mask" in input_others:
-                current_input_other["attention_mask"] = input_others["attention_mask"][indices, ...]
-            if "bloom" in args.model_name:
-                current_input_other["alibi"] = input_others["alibi"][indices, ...]
-
-            if "bloom" in args.model_name:
-                attention_mask = current_input_other["attention_mask"]
-                alibi = current_input_other["alibi"]
-                alibi_tmp = alibi.view(-1, alibi.shape[2], alibi.shape[3])
-                if args.amp:
-                    with autocast(device_type="cuda"):
-                        tmp_output = block(current_input, attention_mask=attention_mask, alibi=alibi_tmp)[0]
-                else:
-                    tmp_output = block(current_input, attention_mask=attention_mask, alibi=alibi_tmp)[0]
-            else:
-                if args.amp:
-                    with autocast(device_type="cuda"):
-                        tmp_output = block.forward(current_input, **current_input_other)[0]
-                else:
-                    tmp_output = block.forward(current_input, **current_input_other)[0]
+            tmp_input_ids, tmp_input_others = sampling_inputs(input_ids, input_others, indices, model_name)
+            tmp_output = block_forward(block, tmp_input_ids, tmp_input_others, model_name, args.amp)
             output.append(tmp_output)
         output = torch.cat(output, dim=0)
 
@@ -567,8 +579,6 @@ def q_dq_weight_round(model: torch.nn.Module, num_bits=4, group_size=128, schema
     for key in input_others.keys():
         input_others[key] = input_others[key].to("cpu")
     torch.cuda.empty_cache()
-
-
 
 
 if __name__ == '__main__':
@@ -750,4 +760,3 @@ if __name__ == '__main__':
 
     model.eval()
     eval_model(model, model_name, tasks=args.tasks)
-
