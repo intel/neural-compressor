@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG UBUNTU_VER=20.04
+ARG UBUNTU_VER=22.04
 FROM ubuntu:${UBUNTU_VER} as devel
 
 # See http://bugs.python.org/issue19846
