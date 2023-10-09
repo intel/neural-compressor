@@ -1,4 +1,4 @@
-# Step by step example how to dump weights tensors for PyTorch model with Neural Insights
+# Step by step example how to dump weights data for PyTorch model with Neural Insights
 1. [Introduction](#introduction)
 2. [Preparation](#preparation)
 3. [Running the quantization](#running-the-quantization)
