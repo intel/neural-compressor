@@ -1,0 +1,5 @@
+transformers==4.28.1
+torch==1.13.1
+datasets==2.12.0
+lm-eval==0.3.0
+

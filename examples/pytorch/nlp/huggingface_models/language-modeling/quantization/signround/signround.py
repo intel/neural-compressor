@@ -1,6 +1,5 @@
 import argparse
 import copy
-from abc import ABC
 
 parser = argparse.ArgumentParser()
 import torch
@@ -307,7 +306,7 @@ def unwrapper_block(block, num_bits, group_size, schema, grads):
                 grad = grads[n]
             q_dq_weight = quant_weight(orig_layer.weight, num_bits, group_size, schema, grad)
             orig_layer.weight.data.copy_(q_dq_weight)
-            orig_layer.weight.grad = None  ## clear grad
+            orig_layer.weight.grad = None  ##clear grad
             set_module(block, n, orig_layer)
 
 
@@ -422,6 +421,8 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
     torch.cuda.empty_cache()
     if q_input is not None:
         input_ids = q_input
+        if not args.low_gpu_mem_usage and input_ids.device != device:
+            input_ids = input_ids.to(device)
 
     wrapper_block(block, num_bits, group_size, schema)
     search_iters = args.iters
@@ -438,7 +439,6 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
             indices = torch.randperm(n_samples)[:pick_samples]
         current_input_ids, current_input_others = sampling_inputs(input_ids, input_others, indices,
                                                                   model_name=args.model_name)
-        # current_input_ids, current_input_others = move_to_device(current_input_ids, current_input_others, device)
         if len(input_ids.shape) == 3:
             current_output = output[indices, :, :]
         else:
@@ -497,18 +497,29 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
             if isinstance(m, WrapperLinear):
                 m.update_grad(grad[n])
 
-    # current_output = current_output.to("cpu")
     unwrapper_block(block, num_bits, group_size, schema, best_grad)
-
-    # _, grad = move_to_device(None, grad, "cpu")
-    # _, best_grad = move_to_device(None, best_grad, "cpu")
-
     if args.use_quant_input:
         with torch.no_grad():
-            q_output = block_forward(block, input_ids, input_others, args.model_name,
-                                     args.amp, device)  ## TODO need to reduce memory
+            current_bs = args.train_bs
+            start_index = 0
+            q_outputs = []
+            while 1:
+                end_index = start_index + current_bs
+                end_index = min(end_index, input_ids.shape[0])
+                indices = torch.arange(start_index, end_index)
+                current_input_ids, current_input_others = sampling_inputs(input_ids, input_others, indices,
+                                                                          model_name=args.model_name)
+                q_output = block_forward(block, current_input_ids, current_input_others, args.model_name,
+                                         args.amp, device)  ## TODO need to reduce memory
+                q_outputs.append(q_output.to("cpu"))
 
-        return q_output, output
+                if end_index >= input_ids.shape[0]:
+                    break
+                else:
+                    start_index = end_index
+            q_outputs = torch.cat(q_outputs, dim=0)
+
+        return q_outputs, output
 
     else:
         return None, output
