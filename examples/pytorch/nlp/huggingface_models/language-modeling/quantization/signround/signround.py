@@ -297,6 +297,7 @@ def wrapper_block(block, num_bits, group_size, schema):
             set_module(block, n, new_m)
 
 
+@torch.no_grad()
 def unwrapper_block(block, num_bits, group_size, schema, grads):
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear):
@@ -306,6 +307,7 @@ def unwrapper_block(block, num_bits, group_size, schema, grads):
                 grad = grads[n]
             q_dq_weight = quant_weight(orig_layer.weight, num_bits, group_size, schema, grad)
             orig_layer.weight.data.copy_(q_dq_weight)
+            orig_layer.weight.grad = None  ## clear grad
             set_module(block, n, orig_layer)
 
 
@@ -386,7 +388,8 @@ def block_forward(block, input_ids, input_others, model_name, amp=False, device=
 
 
 def move_to_device(input_ids, inputs_others=None, device=torch.device("cpu")):
-    input_ids = input_ids.to(device)
+    if input_ids != None:
+        input_ids = input_ids.to(device)
     if inputs_others is not None:
         for key in inputs_others.keys():
             inputs_others[key] = inputs_others[key].to(device)
@@ -416,13 +419,12 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
             output.append(tmp_output)
 
         output = torch.cat(output, dim=0)
-
+    torch.cuda.empty_cache()
     if q_input is not None:
         input_ids = q_input
 
     wrapper_block(block, num_bits, group_size, schema)
     search_iters = args.iters
-    best_grad = None
     pick_samples = args.train_bs  ##TODO change to gradient_accumulate_steps
     if len(input_ids.shape) == 3:
         n_samples = input_ids.shape[0]
@@ -492,7 +494,12 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
             if isinstance(m, WrapperLinear):
                 m.update_grad(grad[n])
 
+    # current_output = current_output.to("cpu")
     unwrapper_block(block, num_bits, group_size, schema, best_grad)
+
+    # _, grad = move_to_device(None, grad, "cpu")
+    # _, best_grad = move_to_device(None, best_grad, "cpu")
+
     if args.use_quant_input:
         with torch.no_grad():
             q_output = block_forward(block, input_ids, input_others, args.model_name,
@@ -511,17 +518,20 @@ def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, g
     input_ids = inputs["input_ids"]
     inputs.pop('input_ids', None)
     input_others = inputs
+    torch.cuda.empty_cache()
     for n in block_names:
-        torch.cuda.empty_cache()
         m = get_module(model, n)
         print(n, flush=True)
         m = m.to(device)
+
         q_input, input_ids = quant_block(m, input_ids, input_others, num_bits=num_bits, group_size=group_size,
                                          schema=schema,
                                          q_input=q_input,
                                          args=args,
                                          device=device)
-        del m
+        m.to("cpu")
+        # input_ids, input_others = move_to_device(input_ids, input_others, "cpu")
+        torch.cuda.empty_cache()
 
     del q_input
     del input_ids
@@ -534,7 +544,7 @@ def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, g
 if __name__ == '__main__':
 
     parser.add_argument(
-        "--model_name", nargs="?", default="/models/opt-125m"
+        "--model_name", default="/models/opt-125m"
     )
 
     parser.add_argument("--num_bits", default=4, type=int,
