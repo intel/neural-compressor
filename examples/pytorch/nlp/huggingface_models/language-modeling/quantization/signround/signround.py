@@ -448,8 +448,11 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
         current_output = move_to_device(current_output, None, device)
 
         output_q = block_forward(block, current_input_ids, current_input_others, model_name, args.amp, device)
-        if args.amp:
+        if args.amp and device != torch.device("cpu"):
             with autocast(device_type="cuda"):
+                loss = mse_loss(output_q, current_output) * 1000
+        elif args.amp:
+            with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
                 loss = mse_loss(output_q, current_output) * 1000
         else:
             loss = mse_loss(output_q, current_output)
