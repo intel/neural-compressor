@@ -1,7 +1,6 @@
 name: Scanner Coverity
 
 on:
-  #push:
   workflow_dispatch:
 
 jobs:
