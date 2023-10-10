@@ -363,14 +363,20 @@ def block_forward(block, input_ids, input_others, model_name, amp=False, device=
         attention_mask = input_others["attention_mask"]
         alibi = input_others["alibi"]
         alibi = alibi.reshape(-1, alibi.shape[2], alibi.shape[3])
-        if amp:
+        if amp and device != torch.device("cpu"):
             with autocast(device_type="cuda"):
+                output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
+        elif amp and device == torch.device("cpu"):
+            with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
                 output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
         else:
             output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
     else:
-        if amp:
+        if amp and device != torch.device("cpu"):
             with autocast(device_type="cuda"):
+                output = block.forward(input_ids, **input_others)
+        elif amp and device == torch.device("cpu"):
+            with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
                 output = block.forward(input_ids, **input_others)
         else:
             output = block.forward(input_ids, **input_others)
@@ -684,19 +690,22 @@ if __name__ == '__main__':
 
     seqlen = args.seqlen
     start_time = time.time()
-    if args.amp:
+    if args.amp and args.device != "cpu":
         model = model.half()
+    elif args.amp and args.device == "cpu":
+        model = model.to(torch.bfloat16)
     if not args.low_gpu_mem_usage:
         model = model.to(cuda_device)
     save_input_actor = SaveInputs(model, calib_dataloader, seqlen, block_names[0])
     inputs = save_input_actor.get_inputs(n_samples=args.n_samples)
     del save_input_actor
-    if args.amp:
+    if args.amp and args.device != "cpu":
         model = model.to("cpu").to(torch.float)
 
     model = model.to("cpu")
     torch.cuda.empty_cache()
-    q_dq_weight_round(model, inputs, block_names, num_bits=args.num_bits, group_size=args.group_size)
+    q_dq_weight_round(model, inputs, block_names, num_bits=args.num_bits, group_size=args.group_size,
+                      device=cuda_device)
     end_time = time.time()
     print(end_time - start_time, flush=True)
 
