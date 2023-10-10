@@ -64,7 +64,7 @@ def quant_weight_sym(weight, num_bits=4, grad=0):
     wmax[tmp] = +1
     scale = wmax / ((maxq - minq) / 2)
     scale.unsqueeze_(dim=-1)
-    q = torch.clamp(torch.round(weight / scale+grad), minq, maxq)
+    q = torch.clamp(torch.round(weight / scale + grad), minq, maxq)
     return scale * q
 
 
@@ -356,7 +356,9 @@ def sampling_inputs(input_ids, input_others, indices, model_name):
     return current_input_ids, current_input_others
 
 
-def block_forward(block, input_ids, input_others, model_name, amp=False):
+def block_forward(block, input_ids, input_others, model_name, amp=False, device=torch.device("cpu")):
+    if input_ids.device != device:
+        input_ids, input_others = move_to_device(input_ids, input_others, device)
     if "bloom" in model_name:
         attention_mask = input_others["attention_mask"]
         alibi = input_others["alibi"]
@@ -377,25 +379,40 @@ def block_forward(block, input_ids, input_others, model_name, amp=False):
     return output
 
 
-def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_input=None, args=None):
+def move_to_device(input_ids, inputs_others=None, device=torch.device("cpu")):
+    input_ids = input_ids.to(device)
+    if inputs_others is not None:
+        for key in inputs_others.keys():
+            inputs_others[key] = inputs_others[key].to(device)
+        return input_ids, inputs_others
+    return input_ids
+
+
+def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_input=None, args=None,
+                device=torch.device("cpu")):
     best_loss = torch.finfo(torch.float).max
+    mse_loss = torch.nn.MSELoss()
     grad = None
     if args.momentum > 0:
         grad_m = None
-    block = block.to(cuda_device)
-    input_ids = input_ids.to(cuda_device)
     output = []
+    if not args.low_gpu_mem_usage and input_ids.device != device:
+        input_ids, input_others = move_to_device(input_ids, input_others, device)
+
     with torch.no_grad():
         current_bs = args.train_bs
         for i in range(0, args.n_samples, current_bs):
             indices = torch.arange(i, i + current_bs).to(torch.long)
             tmp_input_ids, tmp_input_others = sampling_inputs(input_ids, input_others, indices, model_name)
-            tmp_output = block_forward(block, tmp_input_ids, tmp_input_others, model_name, args.amp)
+            tmp_output = block_forward(block, tmp_input_ids, tmp_input_others, model_name, args.amp, device)
+            if args.low_gpu_mem_usage:
+                tmp_output = tmp_output.to("cpu")
             output.append(tmp_output)
+
         output = torch.cat(output, dim=0)
 
     if q_input is not None:
-        input_ids = q_input.to(cuda_device)
+        input_ids = q_input
 
     wrapper_block(block, num_bits, group_size, schema)
     search_iters = args.iters
@@ -413,15 +430,16 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
             indices = torch.randperm(n_samples)[:pick_samples]
         current_input_ids, current_input_others = sampling_inputs(input_ids, input_others, indices,
                                                                   model_name=args.model_name)
+        # current_input_ids, current_input_others = move_to_device(current_input_ids, current_input_others, device)
         if len(input_ids.shape) == 3:
             current_output = output[indices, :, :]
         else:
             current_output = output.view(n_samples, seqlen, -1)
             current_output = current_output[indices, :, :]
             current_output = current_output.reshape(-1, current_output.shape[-1])
+        current_output = move_to_device(current_output, None, device)
 
-        mse_loss = torch.nn.MSELoss()
-        output_q = block_forward(block, current_input_ids, current_input_others, model_name, args.amp)
+        output_q = block_forward(block, current_input_ids, current_input_others, model_name, args.amp, device)
         if args.amp:
             with autocast(device_type="cuda"):
                 loss = mse_loss(output_q, current_output) * 1000
@@ -471,7 +489,8 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
     unwrapper_block(block, num_bits, group_size, schema, best_grad)
     if args.use_quant_input:
         with torch.no_grad():
-            q_output = block_forward(block, input_ids, input_others, args.model_name, args.amp)##need to reduce memory
+            q_output = block_forward(block, input_ids, input_others, args.model_name,
+                                     args.amp, device)  ## TODO need to reduce memory
 
         return q_output, output
 
@@ -479,25 +498,24 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
         return None, output
 
 
-def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, group_size=128, schema='asym'):
+def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, group_size=128, schema='asym',
+                      device=torch.device("cpu")):
     q_input = None
     torch.cuda.empty_cache()
     input_ids = inputs["input_ids"]
     inputs.pop('input_ids', None)
     input_others = inputs
-    for key in input_others.keys():
-        input_others[key] = input_others[key].to(cuda_device)
-
     for n in block_names:
         torch.cuda.empty_cache()
         m = get_module(model, n)
         print(n, flush=True)
-
+        m = m.to(device)
         q_input, input_ids = quant_block(m, input_ids, input_others, num_bits=num_bits, group_size=group_size,
                                          schema=schema,
                                          q_input=q_input,
-                                         args=args)
-        m = m.to("cpu")
+                                         args=args,
+                                         device=device)
+        del m
 
     del q_input
     del input_ids
@@ -528,9 +546,8 @@ if __name__ == '__main__':
     parser.add_argument("--device", default=0, type=str,
                         help="device gpu int number, or 'cpu' ")
 
-    parser.add_argument("--sym", action='store_true',##TODO need to support later
-                        help=" sym quantization") ##dont support currently
-
+    parser.add_argument("--sym", action='store_true',
+                        help=" sym quantization")
 
     parser.add_argument("--iters", default=400, type=int,
                         help=" iters")
@@ -580,11 +597,14 @@ if __name__ == '__main__':
     parser.add_argument("--lr_wr", default=0.0, type=float,
                         help="lr warmup ratio")
 
+    parser.add_argument("--low_gpu_mem_usage", action='store_true',
+                        help="low_gpu_mem_usage")
+
     # parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
     #                     help=" fp32")
 
     parser.add_argument("--tasks", default=["lambada_openai"],
-                        help=" fp32") ##TODO revert the change
+                        help=" fp32")  ##TODO revert the change
 
     args = parser.parse_args()
     set_seed(args.seed)
@@ -602,7 +622,7 @@ if __name__ == '__main__':
         device_str = f"cuda:{int(args.device)}"
     cuda_device = torch.device(device_str)
     model = AutoModelForCausalLM.from_pretrained(
-        model_name, low_cpu_mem_usage=True ##low_cpu_mem_usage has impact to acc, changed the random seed?
+        model_name, low_cpu_mem_usage=True  ##low_cpu_mem_usage has impact to acc, changed the random seed?
     )
     model = model.eval()
     ##align wigh GPTQ to eval ppl
@@ -623,7 +643,7 @@ if __name__ == '__main__':
         q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)
         model.half()
         model = model.to(cuda_device)
-        eval_model(model, model_name, tasks=args.tasks,eval_bs=args.eval_bs)
+        eval_model(model, model_name, tasks=args.tasks, eval_bs=args.eval_bs)
         exit()
 
     if "llama" in model_name:
@@ -661,10 +681,13 @@ if __name__ == '__main__':
         block_names.append(target_m[0] + "." + n)
 
     import time
+
     seqlen = args.seqlen
     start_time = time.time()
     if args.amp:
-        model = model.half().to(cuda_device)
+        model = model.half()
+    if not args.low_gpu_mem_usage:
+        model = model.to(cuda_device)
     save_input_actor = SaveInputs(model, calib_dataloader, seqlen, block_names[0])
     inputs = save_input_actor.get_inputs(n_samples=args.n_samples)
     del save_input_actor
@@ -681,4 +704,4 @@ if __name__ == '__main__':
     model = model.half()
     model = model.to(cuda_device)
     model.eval()
-    eval_model(model, model_name, tasks=args.tasks,eval_bs=args.eval_bs)
+    eval_model(model, model_name, tasks=args.tasks, eval_bs=args.eval_bs)

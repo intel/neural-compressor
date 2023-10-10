@@ -1,1 +1,1 @@
-python3 signround.py --amp   --num_bits 4  --group_size -1
+CUDA_VISIBLE_DEVICES=0  python3 signround.py --amp   --num_bits 4  --group_size -1
