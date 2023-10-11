@@ -1,28 +1,69 @@
-import torch
+import os.path
 
+import torch
 import torch.nn as nn
 
-from evaluation import evaluate as lm_evaluate
+def eval_model(model, model_name,tokenizer, tasks=["lambada_openai", "hellaswag", "winogrande", "piqa"], eval_bs=32):
+
+    try:
+        print("evaluation with itrex lm-eval", flush=True)
+        from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate as lm_evaluate
+        # ours
+        if str(model.device) == "cpu":
+            model = model.to(torch.bfloat16)
+            results = lm_evaluate(model="hf-causal",
+                                  model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype=bfloat16',
+                                  user_model=model,
+                                  tasks=tasks,
+                                  device=str(model.device),
+                                  batch_size=eval_bs)
+        else:
+            model = model.half()
+            model.eval()
+            results = lm_evaluate(model="hf-causal",
+                                  model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype=float16',
+                                  user_model=model,
+                                  tasks=tasks,
+                                  device=str(model.device),
+                                  batch_size=eval_bs)
+    except:
+        print("evaluation with official lm-eval", flush=True)
+        from lm_eval.evaluator import simple_evaluate
+        import json
+        import shutil
+
+        ##save model
+        output_dir = "./tmp_signround"
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        if output_dir is not None:
+            model.save_pretrained(output_dir)
+
+            tokenizer.save_pretrained(output_dir)
+
+        model_name = output_dir
+        if str(model.device) == "cpu":
+            results = simple_evaluate(model="hf-causal",
+                                      model_args=f'pretrained="{output_dir}",tokenizer="{output_dir}",dtype=bfloat16',
+                                      tasks=tasks,
+                                      device=str(model.device),
+                                      batch_size=eval_bs,
+                                      no_cache=False)
+        else:
+            results = simple_evaluate(model="hf-causal",
+                                      model_args=f'pretrained="{output_dir}",tokenizer="{output_dir}",dtype=float16',
+                                      tasks=tasks,
+                                      device=str(model.device),
+                                      batch_size=eval_bs,
+                                      no_cache=False)
+        dumped = json.dumps(results, indent=2)
+        print(dumped)
+
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
 
 
-def eval_model(model, model_name, tasks=["lambada_openai", "hellaswag", "winogrande", "piqa"], eval_bs=32):
-    if str(model.device) == "cpu":
-        print("eval on cpu")
-        model = model.to(torch.bfloat16)  ##TODO support BF16 evaluation
-        model.eval()
-        results = lm_evaluate(model="hf-causal",
-                              model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype=bfloat16',
-                              user_model=model, tasks=tasks,
-                              device=str(model.device),
-                              batch_size=eval_bs)
-    else:
-        model = model.half()  ##TODO support BF16 evaluation
-        model.eval()
-        results = lm_evaluate(model="hf-causal",
-                              model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype=float16',
-                              user_model=model, tasks=tasks,
-                              device=str(model.device),
-                              batch_size=eval_bs)
+
 
     @torch.no_grad()
     def eval_same_with_gptq(model, testenc, dev):

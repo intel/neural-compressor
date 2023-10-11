@@ -1,10 +1,39 @@
-"This is a sample code for SignRound, which currently only supports LlaMa, OPT, and BLOOM models. We will provide a unified API that will support a broader range of models in Intel Neural Compressor"
+This is a sample code for SignRound, which currently only supports LlaMa, OPT, and BLOOM models. We will provide a unified API that will support a broader range of models in Intel Neural Compressor.
 # Prerequisite
 python 3.9 or higher 
+
 pip install -r requirements.txt
 
 
 # Run
 cd to current folder
-CUDA_VISIBLE_DEVICES=0  python3 signround.py --model_name facebook/opt-125m --amp  --num_bits 4  --group_size -1 --seqlen 512
+
+```bash
+CUDA_VISIBLE_DEVICES=0  python3 signround.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1 --seqlen 512
+```
+
+To save GPU memory, enable low_gpu_mem_usage and reduce train_bs and increase gradient_accumulate_steps accordingly.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python3 signround.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1 --seqlen 512 --low_gpu_mem_usage --train_bs 1 --gradient_accumulate_steps 8
+```
+## Known issue
+To address the original lambada evaluation bug in the old version of lm-eval, we have incorporated the lm-eval from intel extension for transformers(ITREX). The key distinction between the official code and ITREX implementation lies in the use_cache parameter: we set use_cache=True, whereas the official lm-eval sets use_cache=False. This discrepancy can lead to certain variations.
+
+To reproduce our results in the paper, please install ITREX 
+
+```bash
+pip install intel-extension-for-transformers
+```
+## Reference
+If you find SignRound useful or relevant to your research, please kindly cite our paper
+
+```
+@article{cheng2023optimize,
+  title={Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs},
+  author={Cheng, Wenhua and Zhang, Weiwei and Shen, Haihao and Cai, Yiyang and He, Xin and Lv, Kaokao},
+  journal={arXiv preprint arXiv:2309.05516},
+  year={2023}
+}
+```
 

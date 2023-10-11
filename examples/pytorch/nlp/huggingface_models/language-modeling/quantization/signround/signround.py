@@ -20,8 +20,8 @@ from torch.amp import autocast
 from eval import eval_model
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["HF_HOME"] = "/models/huggingface"  ##TODO remove this later
-os.environ['TRANSFORMERS_OFFLINE'] = '0'  ##TODO remove this later
+# os.environ["HF_HOME"] = "/models/huggingface"
+# os.environ['TRANSFORMERS_OFFLINE'] = '0'
 
 
 class FakeAffineTensorQuantFunction(Function):
@@ -426,7 +426,7 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
 
     wrapper_block(block, num_bits, group_size, schema)
     search_iters = args.iters
-    pick_samples = args.train_bs  ##TODO change to gradient_accumulate_steps
+    pick_samples = args.train_bs
     if len(input_ids.shape) == 3:
         n_samples = input_ids.shape[0]
     else:
@@ -568,7 +568,6 @@ def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, g
 
 
         m = m.to(device)
-
         q_input, input_ids = quant_block(m, input_ids, input_others, num_bits=num_bits, group_size=group_size,
                                          schema=schema,
                                          q_input=q_input,
@@ -595,7 +594,7 @@ if __name__ == '__main__':
                         help="number of  bits")
 
     parser.add_argument("--group_size", default=128, type=int,
-                        help="weight_quantization config")
+                        help="group size")
 
     parser.add_argument("--train_bs", default=8, type=int,
                         help="train batch size")
@@ -619,10 +618,10 @@ if __name__ == '__main__':
                         help=" whether use mse to get best grad")
 
     parser.add_argument("--use_quant_input", action='store_true',
-                        help=" whether use quant_input")
+                        help="whether to use the output of quantized block to tune the next block")
 
     parser.add_argument("--sampler", default="rand", type=str,
-                        help="sampling type")
+                        help="sampling type, rand or fix")
 
     parser.add_argument("--clip_val", default=0.5, type=float,
                         help="clip value")
@@ -640,16 +639,16 @@ if __name__ == '__main__':
                         help="seed")
 
     parser.add_argument("--eval_fp16_baseline", action='store_true',
-                        help="whether eval FP16 baseline")
+                        help="whether to eval FP16 baseline")
 
     parser.add_argument("--amp", action='store_true',
-                        help=" amp")
+                        help="amp")
 
     parser.add_argument("--not_with_attention", action='store_true',
-                        help="opt llama with attention")
+                        help="tuning with attention_mask input")
 
     parser.add_argument("--seqlen", default=512, type=int,
-                        help="sequence  length")
+                        help="sequence length")
 
     parser.add_argument("--gradient_accumulate_steps", default=1, type=int, help="gradient accumulate steps")
 
@@ -664,11 +663,9 @@ if __name__ == '__main__':
     parser.add_argument("--low_gpu_mem_usage", action='store_true',
                         help="low_gpu_mem_usage")
 
-    # parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
-    #                     help=" fp32")
+    parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
+                        help="lm-eval tasks")
 
-    parser.add_argument("--tasks", default=["lambada_openai"],
-                        help=" fp32")  ##TODO revert the change
 
     args = parser.parse_args()
     set_seed(args.seed)
@@ -698,18 +695,6 @@ if __name__ == '__main__':
         model.seqlen = seqlen
     seqlen = args.seqlen
 
-    if args.eval_fp16_baseline:
-        model = model.to(cuda_device)
-        eval_model(model, model_name, tasks=tasks, eval_bs=args.eval_bs)
-        exit()
-
-    if args.iters <= 0:
-        q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)
-        model.half()
-        model = model.to(cuda_device)
-        eval_model(model, model_name, tasks=args.tasks, eval_bs=args.eval_bs)
-        exit()
-
     if "llama" in model_name:
         from transformers import LlamaTokenizer
 
@@ -718,6 +703,20 @@ if __name__ == '__main__':
             tokenizer.add_special_tokens({'pad_token': '[PAD]'})
     else:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    if args.eval_fp16_baseline:
+        model = model.to(cuda_device)
+        eval_model(model, model_name, tokenizer, tasks=tasks, eval_bs=args.eval_bs)
+        exit()
+
+    if args.iters <= 0:
+        q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)
+        model.half()
+        model = model.to(cuda_device)
+        eval_model(model, model_name, tokenizer, tasks=args.tasks, eval_bs=args.eval_bs)
+        exit()
+
+
 
     dataset_name = "NeelNanda/pile-10k"
     if os.path.exists(dataset_name.split('/')[-1]):
@@ -743,17 +742,16 @@ if __name__ == '__main__':
     block_names = []
     for n, m in target_m[1].named_children():
         block_names.append(target_m[0] + "." + n)
-
-    import time
-
     seqlen = args.seqlen
-    start_time = time.time()
     if args.amp and args.device != "cpu":
         model = model.half()
     elif args.amp and args.device == "cpu":
         model = model.to(torch.bfloat16)
     if not args.low_gpu_mem_usage:
         model = model.to(cuda_device)
+
+    import time
+    start_time = time.time()
     save_input_actor = SaveInputs(model, calib_dataloader, seqlen, block_names[0])
     inputs = save_input_actor.get_inputs(n_samples=args.n_samples)
     del save_input_actor
@@ -768,7 +766,7 @@ if __name__ == '__main__':
     print(end_time - start_time, flush=True)
 
     torch.cuda.empty_cache()
-    model = model.half()
-    model = model.to(cuda_device)
     model.eval()
-    eval_model(model, model_name, tasks=args.tasks, eval_bs=args.eval_bs)
+    model.to(cuda_device)
+    eval_model(model, model_name, tokenizer, tasks=args.tasks, eval_bs=args.eval_bs)
+
