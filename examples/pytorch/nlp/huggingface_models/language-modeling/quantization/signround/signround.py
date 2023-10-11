@@ -437,27 +437,30 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
     for i in range(search_iters):
         if args.sampler == "rand":
             indices = torch.randperm(n_samples)[:pick_samples]
-        current_input_ids, current_input_others = sampling_inputs(input_ids, input_others, indices,
-                                                                  model_name=args.model_name)
-        if len(input_ids.shape) == 3:
-            current_output = output[indices, :, :]
-        else:
-            current_output = output.view(n_samples, seqlen, -1)
-            current_output = current_output[indices, :, :]
-            current_output = current_output.reshape(-1, current_output.shape[-1])
-        current_output = move_to_device(current_output, None, device)
 
-        output_q = block_forward(block, current_input_ids, current_input_others, model_name, args.amp, device)
-        if args.amp and device != torch.device("cpu"):
-            with autocast(device_type="cuda"):
-                loss = mse_loss(output_q, current_output) * 1000
-        elif args.amp:
-            with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
-                loss = mse_loss(output_q, current_output) * 1000
-        else:
-            loss = mse_loss(output_q, current_output)
-        total_loss = loss.item()
-        loss.backward()
+        total_loss = 0
+        for _ in range(args.gradient_accumulate_steps):
+            current_input_ids, current_input_others = sampling_inputs(input_ids, input_others, indices,
+                                                                      model_name=args.model_name)
+            if len(input_ids.shape) == 3:
+                current_output = output[indices, :, :]
+            else:
+                current_output = output.view(n_samples, seqlen, -1)
+                current_output = current_output[indices, :, :]
+                current_output = current_output.reshape(-1, current_output.shape[-1])
+            current_output = move_to_device(current_output, None, device)
+
+            output_q = block_forward(block, current_input_ids, current_input_others, model_name, args.amp, device)
+            if args.amp and device != torch.device("cpu"):
+                with autocast(device_type="cuda"):
+                    loss = mse_loss(output_q, current_output) * 1000
+            elif args.amp:
+                with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+                    loss = mse_loss(output_q, current_output) * 1000
+            else:
+                loss = mse_loss(output_q, current_output)
+            total_loss += loss.item()
+            loss.backward()
 
         if total_loss < best_loss:
             best_loss = total_loss
@@ -510,7 +513,7 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
                 current_input_ids, current_input_others = sampling_inputs(input_ids, input_others, indices,
                                                                           model_name=args.model_name)
                 q_output = block_forward(block, current_input_ids, current_input_others, args.model_name,
-                                         args.amp, device)  ## TODO need to reduce memory
+                                         args.amp, device)
                 q_outputs.append(q_output.to("cpu"))
 
                 if end_index >= input_ids.shape[0]:
@@ -620,6 +623,8 @@ if __name__ == '__main__':
 
     parser.add_argument("--seqlen", default=512, type=int,
                         help="sequence  length")
+
+    parser.add_argument("--gradient_accumulate_steps", default=1, type=int, help="gradient accumulate steps")
 
     parser.add_argument("--n_samples", default=512, type=int,
                         help="number of samples")
