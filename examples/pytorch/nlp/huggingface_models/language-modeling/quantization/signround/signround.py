@@ -528,7 +528,26 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
         return None, output
 
 
+class WrapperMultiblock(torch.nn.Module):
+    def __init__(self, module_list):
+        super(WrapperMultiblock, self).__init__()
+        self.layers = torch.nn.ModuleList(module_list)
+
+    def forward(self, x, **kwargs):
+        hidden_states = x
+        for idx, decoder_layer in enumerate(self.layers):
+            layer_outputs = decoder_layer(
+                hidden_states,
+                **kwargs
+            )
+            hidden_states = layer_outputs
+            if isinstance(hidden_states, tuple) or isinstance(hidden_states, list):
+                hidden_states = layer_outputs[0]
+        return hidden_states
+
+
 def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, group_size=128, schema='asym',
+                      n_blocks=1,
                       device=torch.device("cpu")):
     q_input = None
     torch.cuda.empty_cache()
@@ -536,9 +555,18 @@ def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, g
     inputs.pop('input_ids', None)
     input_others = inputs
     torch.cuda.empty_cache()
-    for n in block_names:
-        m = get_module(model, n)
-        print(n, flush=True)
+    for i in range(0, len(block_names), n_blocks):
+        if n_blocks == 1:
+            n = block_names[i]
+            print(n, flush=True)
+            m = get_module(model, n)
+        else:
+            names = block_names[i: i + n_blocks]
+            print(names, flush=True)
+            modules = [get_module(model, n) for n in names]
+            m = WrapperMultiblock(modules)
+
+
         m = m.to(device)
 
         q_input, input_ids = quant_block(m, input_ids, input_others, num_bits=num_bits, group_size=group_size,
@@ -547,7 +575,6 @@ def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, g
                                          args=args,
                                          device=device)
         m.to("cpu")
-        # input_ids, input_others = move_to_device(input_ids, input_others, "cpu")
         torch.cuda.empty_cache()
 
     del q_input
@@ -625,6 +652,8 @@ if __name__ == '__main__':
                         help="sequence  length")
 
     parser.add_argument("--gradient_accumulate_steps", default=1, type=int, help="gradient accumulate steps")
+
+    parser.add_argument("--n_blocks", default=1, type=int, help="num of blocks to tune together")
 
     parser.add_argument("--n_samples", default=512, type=int,
                         help="number of samples")
@@ -734,7 +763,7 @@ if __name__ == '__main__':
     model = model.to("cpu")
     torch.cuda.empty_cache()
     q_dq_weight_round(model, inputs, block_names, num_bits=args.num_bits, group_size=args.group_size,
-                      device=cuda_device)
+                      n_blocks=args.n_blocks, device=cuda_device)
     end_time = time.time()
     print(end_time - start_time, flush=True)
 
