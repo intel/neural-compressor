@@ -350,6 +350,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             logger.warning("Backend `{}` requires a GPU device. Reset device to 'gpu'.".format(backend))
             self.device = "gpu"
 
+        if backend in ["onnxrt_dml_ep"] and self.device != "npu":
+            logger.warning("Backend `{}` requires a NPU device. Reset device to 'npu'.".format(backend))
+            self.device = "npu"
+
         ep = PROVIDERS[backend]
         if ep not in ort.get_available_providers():
             logger.warning(
@@ -712,13 +716,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         # 2. according to input
         # typically, NLP models have multiple inputs,
         # and the dimension of each input is usually 2 (batch_size, max_seq_len)
-        if not model.is_large_model:
-            sess = ort.InferenceSession(model.model.SerializeToString(), providers=["CPUExecutionProvider"])
-        elif model.model_path is not None:  # pragma: no cover
-            sess = ort.InferenceSession(model.model_path, providers=["CPUExecutionProvider"])
-        else:  # pragma: no cover
-            assert False, "Please use model path instead of onnx model object to quantize."
-        input_shape_lens = [len(input.shape) for input in sess.get_inputs()]
+        input_shape_lens = [len(inp.type.tensor_type.shape.dim) for inp in model.model.graph.input]
         if len(input_shape_lens) > 1 and all(shape_len == 2 for shape_len in input_shape_lens):
             is_nlp = True
 
@@ -778,11 +776,15 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
             sess_options.register_custom_ops_library(get_library_path())
         if not model.is_large_model:
-            ort.InferenceSession(model.model.SerializeToString(), sess_options, providers=["CPUExecutionProvider"])
+            sess = ort.InferenceSession(
+                model.model.SerializeToString(), sess_options, providers=["CPUExecutionProvider"]
+            )
         elif model.model_path is not None:  # pragma: no cover
-            ort.InferenceSession(model.model_path, sess_options, providers=["CPUExecutionProvider"])
+            model.model = onnx.ModelProto()  # clean memory for large model
+            sess = ort.InferenceSession(model.model_path, sess_options, providers=["CPUExecutionProvider"])
         else:  # pragma: no cover
             logger.warning("Please use model path instead of onnx model object to quantize")
+        del sess
 
         tmp_model = onnx.load(sess_options.optimized_model_filepath, load_external_data=False)
 
@@ -1096,7 +1098,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         ffn_matmul = []
         attention_matmul_optype = [node.op_type for node in attention_matmul]
-        # find matmul ops in feed forward network (FFN) structure which mainly in transfomers based NLP models
+        # find matmul ops in feed forward network (FFN) structure which mainly in transformers based NLP models
         if len(attention_matmul) > 0 and "Attention" in attention_matmul_optype:
             # model is optimized and Attention is fused,
             # index of Attention is used as split to find FFN MatMul

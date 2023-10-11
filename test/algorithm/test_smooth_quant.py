@@ -53,10 +53,11 @@ class DemoCalibDataloader:
 
 class LLMCalibDataloader:
     def __init__(self):
-        self.batch_size = 1
+        self.batch_size = 3
 
     def __iter__(self):
-        yield torch.ones([1, 3], dtype=torch.long)
+        for i in range(4):
+            yield torch.ones([3, 3], dtype=torch.long)
 
 
 class TestSqDepthwiseConv(unittest.TestCase):
@@ -64,7 +65,7 @@ class TestSqDepthwiseConv(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3, 1, 1))
@@ -141,7 +142,7 @@ class TestSqConvOpFuseAuto(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3, 1, 1))
@@ -181,7 +182,7 @@ class TestSqConvOpFuse(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3, 1, 1))
@@ -386,21 +387,21 @@ class TestSqListInput(unittest.TestCase):
     def setUpClass(self):
         class ListDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield [torch.rand((1, 3))]
 
         class TupleDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield (torch.rand((1, 3)))
 
         class ListTupleDataLoader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 input1 = torch.rand((1, 3))
@@ -499,7 +500,7 @@ class TestAlphaAutoLinear(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3))
@@ -535,7 +536,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3))
@@ -736,6 +737,8 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=-1, folding=False)
         assert isinstance(sq.model.model.decoder.layers[0].self_attn.k_proj, SQLinearWrapper)
 
+
+class TestExample(unittest.TestCase):
     def test_sq_quant(self):
         from neural_compressor import PostTrainingQuantConfig, quantization
 
@@ -763,10 +766,11 @@ class TestSqLinearOpFuse(unittest.TestCase):
 
         class CalibDataloader:
             def __init__(self):
-                self.batch_size = 1
+                self.batch_size = 3
 
             def __iter__(self):
-                yield input_ids
+                for i in range(4):
+                    yield input_ids
 
         def calib_func(model):
             for i in range(10):
@@ -935,7 +939,7 @@ class TestSqSkipOp(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 4))
@@ -992,7 +996,7 @@ class TestSqSkipOp_attn(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 4))
@@ -1263,6 +1267,25 @@ class TestTextGeneration(unittest.TestCase):
         self.assertEqual(indices[0], torch.tensor([887]))
         self.assertEqual(indices[1], torch.tensor([362]))
         self.assertEqual(indices[2], torch.tensor([504]))
+
+
+class TestMemoryUsage(unittest.TestCase):
+    def test_sq_auto_mem_usage(self):
+        import psutil
+
+        data = psutil.virtual_memory()
+        cpu_process = psutil.Process()
+        p = psutil.Process(cpu_process.pid)
+        mem_use0 = p.memory_info().rss / (1024**3)
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+        )
+        sq = TorchSmoothQuant(model, LLMCalibDataloader())
+        sq.transform(alpha="auto", calib_iter=0, folding=False)
+        mem_use1 = p.memory_info().rss / (1024**3)
+        logger.info(f"The memory usage of this ut is {mem_use1 - mem_use0} GBs.")
+        assert (mem_use1 - mem_use0) <= 2.0
 
 
 if __name__ == "__main__":

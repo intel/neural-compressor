@@ -340,6 +340,34 @@ class PyTorchModel(PyTorchBaseModel):
                         gptq_config_path = os.path.join(root, "gptq_config.json")
                         with open(gptq_config_path, "w") as f:
                             json.dump(self.gptq_config, f, indent=4)
+                    # for layer_wise quant mode
+                    if self.q_config["recipe_cfgs"].get("layer_wise_quant", False):
+                        from ..adaptor.torch_utils.layer_wise_quant.utils import (
+                            LWQ_WORKSPACE,
+                            _get_path,
+                            get_named_children,
+                            load_value,
+                            set_module_tensor_to_device,
+                        )
+
+                        modules = get_named_children(self._model)
+                        for name, module in modules:
+                            state_dict = None
+                            if os.path.exists(os.path.join(LWQ_WORKSPACE, f"{name}.pt")):
+                                state_dict = torch.load(os.path.join(LWQ_WORKSPACE, f"{name}.pt"))
+                            model_path = _get_path(
+                                self.q_config["recipe_cfgs"]["layer_wise_quant_args"].get("model_path")
+                            )
+                            for n, p in module.named_parameters():
+                                param_name = name + "." + n
+                                if state_dict:
+                                    value = state_dict[n]
+                                else:
+                                    value = load_value(self._model, param_name, model_path)
+                                # set_module_tensor_to_device(self._model, param_name, "cpu", value)
+                                torch.save(value, os.path.join(root, f"{param_name}.pt"))
+                        # stat_dict = self._model.state_dict()
+                        return
                 else:
                     stat_dict["best_configure"] = self.q_config
             torch.save(stat_dict, os.path.join(root, "best_model.pt"))

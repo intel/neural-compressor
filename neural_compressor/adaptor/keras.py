@@ -867,7 +867,7 @@ class KerasAdaptor(Adaptor):
                     for i in range(len(list_len_dataloader) - 1):
                         if list_len_dataloader[i] != list_len_dataloader[i + 1]:
                             raise AttributeError(
-                                "The traning dataloader's iteration is"
+                                "The training dataloader's iteration is"
                                 "different between processes, please reset dataloader's batch_size."
                             )
 

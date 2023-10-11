@@ -114,6 +114,9 @@ When the quantization is started, the workload should appear on the Neural Insig
 
 > Note that above example uses dummy data which is used to describe usage of Neural Insights. For diagnosis purposes you should use real dataset specific for your use case.
 
+## Tensor dump examples
+- [Step by step example how to dump weights data for PyTorch model with Neural Insights](docs/source/pytorch_nlp_cli_mode.md)
+
 ## Step by Step Diagnosis Example
 Refer to [Step by Step Diagnosis Example with TensorFlow](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/tf_accuracy_debug.md) and [Step by Step Diagnosis Example with ONNXRT](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/onnx_accuracy_debug.md) to get started with some basic quantization accuracy diagnostic skills.
 

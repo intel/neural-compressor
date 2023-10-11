@@ -25,9 +25,9 @@ parser = argparse.ArgumentParser(
 parser.add_argument('csv', type=str,
                     help='CSV file with urls and checksums to download.')
 parser.add_argument('dest', type=str,
-                    help='Download destnation folder.')
+                    help='Download destination folder.')
 parser.add_argument('-e', type=str, default=None,
-                    help='Extraction destnation folder. Defaults to download folder if not provided')
+                    help='Extraction destination folder. Defaults to download folder if not provided')
 parser.add_argument('--skip_download', action='store_true',
                     help='Skip downloading the files')
 parser.add_argument('--skip_checksum', action='store_true',

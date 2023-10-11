@@ -119,7 +119,7 @@ class LazyImport(object):
 def singleton(cls):
     """Not displayed in API Docs.
 
-    Singleton decorater.
+    Singleton decorator.
     """
     instances = {}
 
@@ -272,7 +272,7 @@ class CpuInfo(object):
         """Get number of sockets in platform."""
         cmd = "lscpu | grep 'Socket(s)' | cut -d ':' -f 2"
         if psutil.WINDOWS:
-            cmd = 'wmic cpu get DeviceID | find /c "CPU"'
+            cmd = r'wmic cpu get DeviceID | C:\Windows\System32\find.exe /C "CPU"'
 
         with subprocess.Popen(
             args=cmd,

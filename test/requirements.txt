@@ -1,6 +1,6 @@
 --find-links https://download.pytorch.org/whl/torch_stable.html
 accelerate==0.21.0
-dynast==1.5.1
+dynast==1.6.0rc1
 horovod
 intel-extension-for-pytorch
 intel-tensorflow>=2.12.0

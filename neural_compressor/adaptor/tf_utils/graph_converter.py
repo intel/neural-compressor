@@ -83,7 +83,7 @@ from .util import (
     version1_lte_version2,
 )
 
-TF_SUPPORTED_MAX_VERSION = "2.13.0"
+TF_SUPPORTED_MAX_VERSION = "2.14.0"
 TF_SUPPORTED_MIN_VERSION = "1.14.0"
 
 logger = logging.getLogger("neural_compressor")
