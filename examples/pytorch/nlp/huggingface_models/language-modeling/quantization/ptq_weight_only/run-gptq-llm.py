@@ -223,8 +223,7 @@ if __name__ == '__main__':
         model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, low_cpu_mem_usage=True, trust_remote_code=True)
     model = model.eval()
 
-    # calib_dataset = load_dataset(args.dataset, split="train") # default
-    calib_dataset = datasets.load_from_disk('/data4/cyy/gptq_inc/pile-10k/') # use this if trouble with connecting to HF
+    calib_dataset = load_dataset(args.dataset, split="train") # default
     # calib_dataset = datasets.load_from_disk('/your/local/pile-10k/') # use this if trouble with connecting to HF
     calib_dataset = calib_dataset.shuffle(seed=args.seed)
     calib_evaluator = Evaluator(calib_dataset, tokenizer, args.calib_size, is_calib=True)
