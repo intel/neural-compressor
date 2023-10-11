@@ -1,13 +1,11 @@
 import os.path
-
 import torch
 import torch.nn as nn
 
 def eval_model(model, model_name,tokenizer, tasks=["lambada_openai", "hellaswag", "winogrande", "piqa"], eval_bs=32):
-
     try:
-        print("evaluation with itrex lm-eval", flush=True)
         from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate as lm_evaluate
+        print("evaluation with itrex lm-eval", flush=True)
         # ours
         if str(model.device) == "cpu":
             model = model.to(torch.bfloat16)
