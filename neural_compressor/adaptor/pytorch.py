@@ -4176,7 +4176,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             model (dir): input model which is PyTorch model.
             prefix (string): prefix of op name
             is_qat (bool): whether it is a qat quantization
-            example_inputs (tensor / tupe of tensor): example inputs
+            example_inputs (tensor / tuple of tensor): example inputs
             custom_config (dict): custom non traceable module dict
 
         Returns:

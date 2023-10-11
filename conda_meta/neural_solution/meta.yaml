@@ -1,4 +1,4 @@
-{% set version = "2.3" %}
+{% set version = "2.4" %}
 {% set buildnumber = 0 %}
 package:
   name: neural-solution

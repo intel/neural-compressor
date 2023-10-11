@@ -350,6 +350,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             logger.warning("Backend `{}` requires a GPU device. Reset device to 'gpu'.".format(backend))
             self.device = "gpu"
 
+        if backend in ["onnxrt_dml_ep"] and self.device != "npu":
+            logger.warning("Backend `{}` requires a NPU device. Reset device to 'npu'.".format(backend))
+            self.device = "npu"
+
         ep = PROVIDERS[backend]
         if ep not in ort.get_available_providers():
             logger.warning(
@@ -1094,7 +1098,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         ffn_matmul = []
         attention_matmul_optype = [node.op_type for node in attention_matmul]
-        # find matmul ops in feed forward network (FFN) structure which mainly in transfomers based NLP models
+        # find matmul ops in feed forward network (FFN) structure which mainly in transformers based NLP models
         if len(attention_matmul) > 0 and "Attention" in attention_matmul_optype:
             # model is optimized and Attention is fused,
             # index of Attention is used as split to find FFN MatMul

@@ -62,7 +62,7 @@ def _rewrite_optimizer_step(opt):
     """
 
     def new_step(self, closure=None):
-        if hasattr(self, "prunings"):  ## in case user save the whole optimzer
+        if hasattr(self, "prunings"):  ## in case user save the whole optimizer
             for pruning in self.prunings:
                 pruning.on_before_optimizer_step()
 
