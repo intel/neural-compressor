@@ -6,14 +6,23 @@ from evaluation import evaluate as lm_evaluate
 
 
 def eval_model(model, model_name, tasks=["lambada_openai", "hellaswag", "winogrande", "piqa"], eval_bs=32):
-    model = model.half()##TODO support BF16 evaluation
-    model.eval()
-    results = lm_evaluate(model="hf-causal",
-                          model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype=float16',
-                          user_model=model, tasks=tasks,
-                          device=str(model.device),
-                          batch_size=eval_bs)
-
+    if str(model.device) == "cpu":
+        print("eval on cpu")
+        model = model.to(torch.bfloat16)  ##TODO support BF16 evaluation
+        model.eval()
+        results = lm_evaluate(model="hf-causal",
+                              model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype=bfloat16',
+                              user_model=model, tasks=tasks,
+                              device=str(model.device),
+                              batch_size=eval_bs)
+    else:
+        model = model.half()  ##TODO support BF16 evaluation
+        model.eval()
+        results = lm_evaluate(model="hf-causal",
+                              model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype=float16',
+                              user_model=model, tasks=tasks,
+                              device=str(model.device),
+                              batch_size=eval_bs)
 
     @torch.no_grad()
     def eval_same_with_gptq(model, testenc, dev):
