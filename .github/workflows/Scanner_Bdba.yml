@@ -1,11 +1,11 @@
 name: Scanner BDBA
 
 on:
-  # push:
   workflow_dispatch:
 
 jobs:
   bdba_job:
+    name: BDBA Scan
     uses: intel-innersource/frameworks.ai.infrastructure.code-scan-tools/.github/workflows/Scanner_Bdba.yml@one-ci-cd
     with:
       repos: ${{ github.event.repository.name }}

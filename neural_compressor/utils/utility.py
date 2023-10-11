@@ -119,7 +119,7 @@ class LazyImport(object):
 def singleton(cls):
     """Not displayed in API Docs.
 
-    Singleton decorater.
+    Singleton decorator.
     """
     instances = {}
 

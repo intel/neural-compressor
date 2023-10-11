@@ -529,7 +529,7 @@ class TorchSmoothQuant:
                 layer.bias *= scale
 
     def _cal_scales(self, absorb_to_layer, input_maxes, alpha=0.5, tuning=False):
-        """Cal the adjsut scales
+        """Cal the adjust scales
         :param absorb_to_layer: A dict mapping absorb layer to smooth quantized layer
         :param input_maxes: The channel-wise input max info for layers
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, a float of a dict
@@ -642,7 +642,9 @@ class TorchSmoothQuant:
         if len(output.shape) <= 2:
             max_value = torch.max(torch.abs(output))
         else:
-            max_value = torch.max(torch.abs(output.reshape(output.shape[0], -1)), dim=-1).values
+            output = output.reshape(output.shape[0], -1)
+            output_q = output_q.reshape(output_q.shape[0], -1)
+            max_value = torch.max(torch.abs(output), dim=-1).values.unsqueeze(-1)
             max_value = torch.clip(max_value, 1e-5)
         output = output / max_value  ##FIXME need copy not replace
         output_q = output_q / max_value
@@ -712,7 +714,7 @@ class TorchSmoothQuant:
                 weight_scale = self._reshape_scale_for_weight(layer, weight_scale)
                 layer.update_scale(input_scale, weight_scale)  ##FIXME
 
-    def _get_one_sample_auto_loss(self, input, alpha_space, orig_best_alpha, input_maxes):
+    def _get_one_batch_auto_loss(self, input, alpha_space, orig_best_alpha, input_maxes):
         self._change_qdq_for_auto(enable=False)
 
         forward_wrapper(self.model, input, self.device)  ##disable quant and get fp32 output
@@ -792,20 +794,20 @@ class TorchSmoothQuant:
                 raise NotImplementedError
         return best_alpha
 
-    def _auto_tune_alpha_new(
-        self, input_maxes, auto_calib_iter=32, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, shared_criterion="min"
+    def _auto_tune_alpha(
+        self, input_maxes, calib_sample_num=32, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, shared_criterion="min"
     ):
         """Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
 
         This function takes quantization of the former layers into consideration when qdq one layer
         Also, it reduces the memory usage at the cost of increasingtuning time
-        TODO may have compatibility issue when setting folding=True
-        :param input_maxes:
-        :param auto_calib_iter:
-        :param alpha_min:
-        :param alpha_max:
-        :param alpha_step:
-        :param shared_criterion:
+        TODO may have compatibility issue when setting folding=True, check whether having issues when bs!=1
+        :param input_maxes: calibration data, input max
+        :param calib_sample_num: sample count used to auto tuning alpha
+        :param alpha_min: the min value of alpha
+        :param alpha_max: the max value of alpha
+        :param alpha_step:  the alpha step in search space
+        :param shared_criterion: the criterion to choose alpha when multiple layers must share one same alpha
         :return:
         """
         logger.info("start sq auto tuning")
@@ -828,16 +830,21 @@ class TorchSmoothQuant:
             self.absorb_to_layer, input_maxes, default_alpha, tuning=True
         )
         self._update_scales_for_auto(absorb_input_scales, weight_scales)
-        loss_alphas = {}
-        cnt = 0
-        multiply_factor = auto_calib_iter // 4 if auto_calib_iter >= 4 else auto_calib_iter
+        total_cnt = 0
+        tmp_cnt = 0
+        alpha_update_iter = 0
+        # multiply_factor is used to combine samples to calib_sample_num // 4 before summarizing the best alpha
+        tune_cnt = 4
+        multiply_factor = calib_sample_num // tune_cnt if calib_sample_num >= tune_cnt else calib_sample_num
 
         best_alphas = default_alpha
         if not self.dataloader:
+            logger.info(f"Auto-tuning failed due to no dataloader, using {best_alphas} instead.")
             self._qdq_model_unwrapper_for_auto()
             return best_alphas
         try:
             for input, label in self.dataloader:
+                loss_alphas = {}
                 best_alphas_per_module = best_alphas
                 if isinstance(best_alphas, dict):
                     for key in self.absorb_to_layer.keys():
@@ -845,7 +852,7 @@ class TorchSmoothQuant:
                         for layer_name in layer_names:
                             best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
-                loss_tmp = self._get_one_sample_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
+                loss_tmp = self._get_one_batch_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
                 if loss_alphas == {}:
                     loss_alphas = loss_tmp
                 else:
@@ -853,26 +860,23 @@ class TorchSmoothQuant:
                         cur_loss = loss_alphas[key]
                         for alpha_key in cur_loss.keys():
                             cur_loss[alpha_key] += loss_tmp[key][alpha_key]
-                if isinstance(input, list):
-                    input = move_input_to_device(input, self.device)
-                    for inp in input:
-                        cnt += inp.shape[0]
-                else:
-                    cnt += input.shape[0]
-
-                if cnt % multiply_factor == 0 and (auto_calib_iter - cnt) >= multiply_factor:
+                total_cnt += self.dataloader.batch_size
+                tmp_cnt += self.dataloader.batch_size
+                if tmp_cnt // multiply_factor >= 1:
+                    alpha_update_iter += 1
+                    tmp_cnt = 0
                     best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, shared_criterion)
                     for key in best_alphas.keys():
-                        logger.info(f"{cnt // multiply_factor},{key}:{best_alphas[key]}")
+                        logger.info(f"Auto alpha update iter: {alpha_update_iter}, {key}: {best_alphas[key]}")
                     absorb_input_scales, weight_scales = self._cal_scales(
                         self.absorb_to_layer, input_maxes, best_alphas, tuning=True
                     )
                     self._update_scales_for_auto(absorb_input_scales, weight_scales)
-                    loss_alphas = {}  ##TODO check need to remove this one
-                if cnt >= auto_calib_iter:
+                if total_cnt >= calib_sample_num:
                     break
         except:
             for input in self.dataloader:
+                loss_alphas = {}
                 best_alphas_per_module = best_alphas
                 if isinstance(best_alphas, dict):
                     for key in self.absorb_to_layer.keys():
@@ -880,7 +884,7 @@ class TorchSmoothQuant:
                         for layer_name in layer_names:
                             best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
-                loss_tmp = self._get_one_sample_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
+                loss_tmp = self._get_one_batch_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
                 if loss_alphas == {}:
                     loss_alphas = loss_tmp
                 else:
@@ -888,28 +892,25 @@ class TorchSmoothQuant:
                         cur_loss = loss_alphas[key]
                         for alpha_key in cur_loss.keys():
                             cur_loss[alpha_key] += loss_tmp[key][alpha_key]
-                if isinstance(input, list):
-                    input = move_input_to_device(input, self.device)
-                    for inp in input:
-                        cnt += inp.shape[0]
-                else:
-                    cnt += input.shape[0]
+                total_cnt += self.dataloader.batch_size
+                tmp_cnt += self.dataloader.batch_size
+                if tmp_cnt // multiply_factor >= 1:
+                    alpha_update_iter += 1
+                    tmp_cnt = 0
 
-                if cnt % multiply_factor == 0 and (auto_calib_iter - cnt) >= multiply_factor:
                     best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, shared_criterion)
                     for key in best_alphas.keys():
-                        logger.info(f"{cnt // multiply_factor},{key}:{best_alphas[key]}")
+                        logger.info(f"Auto alpha update iter: {alpha_update_iter}, {key}: {best_alphas[key]}")
                     absorb_input_scales, weight_scales = self._cal_scales(
                         self.absorb_to_layer, input_maxes, best_alphas, tuning=True
                     )
                     self._update_scales_for_auto(absorb_input_scales, weight_scales)
-                    loss_alphas = {}  ##TODO check need to remove this one
-                if cnt >= auto_calib_iter:
+                if total_cnt >= calib_sample_num:
                     break
 
         best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, shared_criterion)
         for key in best_alphas.keys():
-            logger.info(f"final {key}:{best_alphas[key]}")
+            logger.info(f"Final alpha {key}:{best_alphas[key]}")
         self._qdq_model_unwrapper_for_auto()
         logger.info("auto tuning done")
         return best_alphas
@@ -938,7 +939,6 @@ class TorchSmoothQuant:
             logger.warning("smooth quant is ignored since the model is not a torch module")
             return self.model
 
-        logger.info("call new sq")  ##TODO need to remove later
         if folding:
             self.insert_mul, self.allow_absorb = False, True
         else:
@@ -998,8 +998,8 @@ class TorchSmoothQuant:
                         del self.absorb_to_layer[d]
 
                 if alpha == "auto":
-                    self.alpha_per_layer = self._auto_tune_alpha_new(
-                        input_maxes_abs, auto_calib_iter=32, **auto_alpha_args
+                    self.alpha_per_layer = self._auto_tune_alpha(
+                        input_maxes_abs, calib_sample_num=32, **auto_alpha_args
                     )  ##save the alpha
 
             if alpha == "auto":

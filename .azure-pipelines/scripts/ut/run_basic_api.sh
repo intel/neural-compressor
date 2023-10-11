@@ -1,6 +1,6 @@
 #!/bin/bash
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
-test_case="run basic quantization/benchmark/export/mixed_precision/distillation/scheduler"
+test_case="run basic quantization/benchmark/export/mixed_precision/distillation/scheduler/nas"
 echo "${test_case}"
 
 echo "specify fwk version..."
@@ -17,7 +17,7 @@ find ./export* -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_pat
 find ./mixed_precision* -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'>> run.sh
 find ./distillation -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'>> run.sh
 find ./scheduler -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'>> run.sh
-# find ./nas -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'>> run.sh
+find ./nas -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'>> run.sh
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}

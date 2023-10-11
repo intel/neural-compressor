@@ -1,6 +1,7 @@
-Full Publications/Events (76)
+Full Publications/Events (77)
 ==========
-## 2023 (22)
+## 2023 (23)
+* arXiv: [Efficient Post-training Quantization with FP8 Formats](https://arxiv.org/abs/2309.14592) (Sep 2023)
 * EMNLP'2023 (Under Review): [TEQ: Trainable Equivalent Transformation for Quantization of LLMs](https://openreview.net/forum?id=iaI8xEINAf&referrer=%5BAuthor%20Console%5D) (Sep 2023)
 * arXiv: [Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs](https://arxiv.org/abs/2309.05516) (Sep 2023)
 * Blog on Medium: [Quantization Accuracy Loss Diagnosis with Neural Insights](https://medium.com/@NeuralCompressor/quantization-accuracy-loss-diagnosis-with-neural-insights-5d73f4ca2601) (Aug 2023)

@@ -22,7 +22,7 @@ do
 done
 
 FRAMEWORK="tensorflow"
-FRAMEWORK_VERSION="2.12.0"
+FRAMEWORK_VERSION="2.13.0"
 
 inc_new_api=false
 # ======== set up config for tensorflow models ========

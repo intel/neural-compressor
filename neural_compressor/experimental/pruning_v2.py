@@ -167,7 +167,7 @@ class Pruning(Component):
             pruner.on_before_optimizer_step()
 
     def _on_after_optimizer_step(self):
-        """Functions called after optimzier step."""
+        """Functions called after optimizer step."""
         for pruner in self.pruners:
             pruner.on_after_optimizer_step()
 
