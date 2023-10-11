@@ -18,7 +18,7 @@ To save GPU memory, enable low_gpu_mem_usage and reduce train_bs and increase gr
 CUDA_VISIBLE_DEVICES=0 python3 signround.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1 --seqlen 512 --low_gpu_mem_usage --train_bs 1 --gradient_accumulate_steps 8
 ```
 ## Known issue
-To address the original lambada evaluation bug in the old version of lm-eval, we have incorporated the lm-eval from intel extension for transformers(ITREX). The key distinction between the official code and ITREX implementation lies in the use_cache parameter: we set use_cache=True, whereas the official lm-eval sets use_cache=False. This discrepancy can lead to certain variations.
+To address the original lambada evaluation bug in the old version of lm-eval, we have incorporated the lm-eval from intel extension for transformers(ITREX). This discrepancy may lead to certain variations.
 
 To reproduce our results in the paper, please install ITREX 
 

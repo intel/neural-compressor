@@ -36,24 +36,23 @@ def eval_model(model, model_name,tokenizer, tasks=["lambada_openai", "hellaswag"
             shutil.rmtree(output_dir)
         if output_dir is not None:
             model.save_pretrained(output_dir)
-
             tokenizer.save_pretrained(output_dir)
 
-        model_name = output_dir
+
         if str(model.device) == "cpu":
             results = simple_evaluate(model="hf-causal",
                                       model_args=f'pretrained="{output_dir}",tokenizer="{output_dir}",dtype=bfloat16',
                                       tasks=tasks,
                                       device=str(model.device),
                                       batch_size=eval_bs,
-                                      no_cache=False)
+                                      no_cache=True)
         else:
             results = simple_evaluate(model="hf-causal",
                                       model_args=f'pretrained="{output_dir}",tokenizer="{output_dir}",dtype=float16',
                                       tasks=tasks,
                                       device=str(model.device),
                                       batch_size=eval_bs,
-                                      no_cache=False)
+                                      no_cache=True)
         dumped = json.dumps(results, indent=2)
         print(dumped)
 

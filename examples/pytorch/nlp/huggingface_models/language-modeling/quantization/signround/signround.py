@@ -666,7 +666,8 @@ if __name__ == '__main__':
     parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
                         help="lm-eval tasks")
 
-
+    # parser.add_argument("--tasks", default=["lambada_openai"],
+    #                     help="lm-eval tasks")
     args = parser.parse_args()
     set_seed(args.seed)
 
