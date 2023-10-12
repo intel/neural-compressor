@@ -18,7 +18,6 @@ Functions
 
 .. autoapisummary::
 
-   neural_compressor.adaptor.ox_utils.weight_only.check_op_support_status
    neural_compressor.adaptor.ox_utils.weight_only.make_matmul_weight_only_node
    neural_compressor.adaptor.ox_utils.weight_only.quant_tensor
    neural_compressor.adaptor.ox_utils.weight_only.qdq_tensor
@@ -34,14 +33,9 @@ Functions
 
 
 
-.. py:function:: check_op_support_status()
-
-   Check whether weight-only op is supported.
-
-
 .. py:function:: make_matmul_weight_only_node(node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point)
 
-   Build MatMulWithQuantWeight node.
+   Build MatMulFpQ4 node.
 
    :param node: original matmul node
    :param weight_shape: original weight shape
@@ -58,8 +52,8 @@ Functions
    :param zero_point: zero point
    :type zero_point: array
 
-   :returns: MatMulWithQuantWeight node
-             new_inits: initializers of the MatMulWithQuantWeight node
+   :returns: MatMulFpQ4 node
+             new_inits: initializers of the MatMulFpQ4 node
    :rtype: matmul_weight_only_node
 
 

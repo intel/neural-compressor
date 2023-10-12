@@ -95,57 +95,48 @@
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.check_op_support_status" title="neural_compressor.adaptor.ox_utils.weight_only.check_op_support_status"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_op_support_status</span></code></a>()</p></td>
-<td><p>Check whether weight-only op is supported.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.make_matmul_weight_only_node" title="neural_compressor.adaptor.ox_utils.weight_only.make_matmul_weight_only_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_matmul_weight_only_node</span></code></a>(node, weight_shape, ...)</p></td>
+<td><p>Build MatMulFpQ4 node.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.make_matmul_weight_only_node" title="neural_compressor.adaptor.ox_utils.weight_only.make_matmul_weight_only_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_matmul_weight_only_node</span></code></a>(node, weight_shape, ...)</p></td>
-<td><p>Build MatMulWithQuantWeight node.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.quant_tensor" title="neural_compressor.adaptor.ox_utils.weight_only.quant_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_tensor</span></code></a>(data[, num_bits, group_size, scheme, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.quant_tensor" title="neural_compressor.adaptor.ox_utils.weight_only.quant_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_tensor</span></code></a>(data[, num_bits, group_size, scheme, ...])</p></td>
 <td><p>Quantize tensor per group.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.qdq_tensor" title="neural_compressor.adaptor.ox_utils.weight_only.qdq_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qdq_tensor</span></code></a>(data[, num_bits, group_size, scheme, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.qdq_tensor" title="neural_compressor.adaptor.ox_utils.weight_only.qdq_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qdq_tensor</span></code></a>(data[, num_bits, group_size, scheme, ...])</p></td>
 <td><p>Quant dequant tensor per group.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.pad_tensor" title="neural_compressor.adaptor.ox_utils.weight_only.pad_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pad_tensor</span></code></a>(weight, group_size, k_blocks)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.pad_tensor" title="neural_compressor.adaptor.ox_utils.weight_only.pad_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pad_tensor</span></code></a>(weight, group_size, k_blocks)</p></td>
 <td><p>Pad tensor rowi so that it can be is divisible by group_size.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.rtn_quantize" title="neural_compressor.adaptor.ox_utils.weight_only.rtn_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rtn_quantize</span></code></a>(model[, weight_config, num_bits, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.rtn_quantize" title="neural_compressor.adaptor.ox_utils.weight_only.rtn_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rtn_quantize</span></code></a>(model[, weight_config, num_bits, ...])</p></td>
 <td><p>Quant the model with round to nearst method.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.get_weight_scale" title="neural_compressor.adaptor.ox_utils.weight_only.get_weight_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_weight_scale</span></code></a>(weight, group_size)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.get_weight_scale" title="neural_compressor.adaptor.ox_utils.weight_only.get_weight_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_weight_scale</span></code></a>(weight, group_size)</p></td>
 <td><p>Get the scale of weight.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.apply_awq_scale" title="neural_compressor.adaptor.ox_utils.weight_only.apply_awq_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_awq_scale</span></code></a>(model, weight_config, absorb_pairs, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.apply_awq_scale" title="neural_compressor.adaptor.ox_utils.weight_only.apply_awq_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_awq_scale</span></code></a>(model, weight_config, absorb_pairs, ...)</p></td>
 <td><p>Apply scale for salient weight.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.apply_awq_clip" title="neural_compressor.adaptor.ox_utils.weight_only.apply_awq_clip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_awq_clip</span></code></a>(model, weight_config, absorb_pairs, ...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.apply_awq_clip" title="neural_compressor.adaptor.ox_utils.weight_only.apply_awq_clip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_awq_clip</span></code></a>(model, weight_config, absorb_pairs, ...)</p></td>
 <td><p>Apply clip for weight by checking mse.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.prepare_inputs" title="neural_compressor.adaptor.ox_utils.weight_only.prepare_inputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_inputs</span></code></a>(model, n_samples, dataloader)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.prepare_inputs" title="neural_compressor.adaptor.ox_utils.weight_only.prepare_inputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_inputs</span></code></a>(model, n_samples, dataloader)</p></td>
 <td><p>Prepare inputs for weight only quantization.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.awq_quantize" title="neural_compressor.adaptor.ox_utils.weight_only.awq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">awq_quantize</span></code></a>(model, dataloader[, weight_config, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.awq_quantize" title="neural_compressor.adaptor.ox_utils.weight_only.awq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">awq_quantize</span></code></a>(model, dataloader[, weight_config, ...])</p></td>
 <td><p>Quant the model with Activation-aware Weight quantization(AWQ) method.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.gptq" title="neural_compressor.adaptor.ox_utils.weight_only.gptq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gptq</span></code></a>(W, H[, num_bits, group_size, scheme, blocksize, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.gptq" title="neural_compressor.adaptor.ox_utils.weight_only.gptq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gptq</span></code></a>(W, H[, num_bits, group_size, scheme, blocksize, ...])</p></td>
 <td><p>Quant the weight with GPTQ method.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.gptq_quantize" title="neural_compressor.adaptor.ox_utils.weight_only.gptq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gptq_quantize</span></code></a>(model, dataloader[, weight_config, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.gptq_quantize" title="neural_compressor.adaptor.ox_utils.weight_only.gptq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gptq_quantize</span></code></a>(model, dataloader[, weight_config, ...])</p></td>
 <td><p>Quant the model with GPTQ method.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.check_op_support_status">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">check_op_support_status</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.check_op_support_status" title="Permalink to this definition"></a></dt>
-<dd><p>Check whether weight-only op is supported.</p>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.make_matmul_weight_only_node">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">make_matmul_weight_only_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_blocks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_point</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.make_matmul_weight_only_node" title="Permalink to this definition"></a></dt>
-<dd><p>Build MatMulWithQuantWeight node.</p>
+<dd><p>Build MatMulFpQ4 node.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -160,8 +151,8 @@
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>MatMulWithQuantWeight node
-new_inits: initializers of the MatMulWithQuantWeight node</p>
+<dd class="field-even"><p>MatMulFpQ4 node
+new_inits: initializers of the MatMulFpQ4 node</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>matmul_weight_only_node</p>
@@ -458,7 +449,7 @@ weight_config = {</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f184cc49840> 
+   <jinja2.runtime.BlockReference object at 0x7f2a0b989270> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
