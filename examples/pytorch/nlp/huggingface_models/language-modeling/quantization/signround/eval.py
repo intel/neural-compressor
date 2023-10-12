@@ -2,28 +2,26 @@ import os.path
 import torch
 import torch.nn as nn
 
-def eval_model(model, model_name,tokenizer, tasks=["lambada_openai", "hellaswag", "winogrande", "piqa"], eval_bs=32):
+
+def eval_model(model, model_name, tokenizer, tasks=["lambada_openai", "hellaswag", "winogrande", "piqa"], eval_bs=32):
     try:
         from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate as lm_evaluate
         print("evaluation with itrex lm-eval", flush=True)
-        # ours
+
         if str(model.device) == "cpu":
             model = model.to(torch.bfloat16)
-            results = lm_evaluate(model="hf-causal",
-                                  model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype=bfloat16',
-                                  user_model=model,
-                                  tasks=tasks,
-                                  device=str(model.device),
-                                  batch_size=eval_bs)
+            dtype = 'bfloat16'
         else:
             model = model.half()
-            model.eval()
-            results = lm_evaluate(model="hf-causal",
-                                  model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype=float16',
-                                  user_model=model,
-                                  tasks=tasks,
-                                  device=str(model.device),
-                                  batch_size=eval_bs)
+            dtype = 'float16'
+        model.eval()
+        results = lm_evaluate(model="hf-causal",
+                              model_args=f'pretrained="{model_name}",tokenizer="{model_name}",dtype={dtype}',
+                              user_model=model,
+                              tasks=tasks,
+                              device=str(model.device),
+                              batch_size=eval_bs)
+
     except:
         print("evaluation with official lm-eval", flush=True)
         from lm_eval.evaluator import simple_evaluate
@@ -37,30 +35,21 @@ def eval_model(model, model_name,tokenizer, tasks=["lambada_openai", "hellaswag"
         if output_dir is not None:
             model.save_pretrained(output_dir)
             tokenizer.save_pretrained(output_dir)
-
-
         if str(model.device) == "cpu":
-            results = simple_evaluate(model="hf-causal",
-                                      model_args=f'pretrained="{output_dir}",tokenizer="{output_dir}",dtype=bfloat16',
-                                      tasks=tasks,
-                                      device=str(model.device),
-                                      batch_size=eval_bs,
-                                      no_cache=True)
+            dtype = 'bfloat16'
         else:
-            results = simple_evaluate(model="hf-causal",
-                                      model_args=f'pretrained="{output_dir}",tokenizer="{output_dir}",dtype=float16',
-                                      tasks=tasks,
-                                      device=str(model.device),
-                                      batch_size=eval_bs,
-                                      no_cache=True)
+            dtype = 'float16'
+        results = simple_evaluate(model="hf-causal",
+                                  model_args=f'pretrained="{output_dir}",tokenizer="{output_dir}",dtype={dtype}',
+                                  tasks=tasks,
+                                  device=str(model.device),
+                                  batch_size=eval_bs,
+                                  no_cache=True)
         dumped = json.dumps(results, indent=2)
         print(dumped)
 
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir)
-
-
-
 
     @torch.no_grad()
     def eval_same_with_gptq(model, testenc, dev):

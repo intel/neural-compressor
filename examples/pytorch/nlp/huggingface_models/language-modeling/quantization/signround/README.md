@@ -1,4 +1,9 @@
-This is a sample code for SignRound, which currently only supports LlaMa, OPT, and BLOOM models. We will provide a unified API that will support a broader range of models in Intel Neural Compressor.
+This is a sample code for SignRound ([arxiv](https://arxiv.org/abs/2309.05516)), which currently only supports LlaMa, OPT, and BLOOM models. We will provide a unified API that will support a broader range of models in Intel Neural Compressor.
+
+![overview](./overview.png)
+
+
+
 # Prerequisite
 python 3.9 or higher 
 
@@ -6,13 +11,12 @@ pip install -r requirements.txt
 
 
 # Run
-cd to current folder
 
 ```bash
 CUDA_VISIBLE_DEVICES=0  python3 signround.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1 --seqlen 512
 ```
 
-To save GPU memory, enable low_gpu_mem_usage and reduce train_bs and increase gradient_accumulate_steps accordingly.
+To optimize GPU memory usage, you can enable the "low_gpu_mem_usage" option. Additionally, you can reduce the training batch size (train_bs) and increase the gradient_accumulate_steps accordingly.
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python3 signround.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1 --seqlen 512 --low_gpu_mem_usage --train_bs 1 --gradient_accumulate_steps 8

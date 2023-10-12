@@ -20,6 +20,8 @@ from torch.amp import autocast
 from eval import eval_model
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+
 # os.environ["HF_HOME"] = "/models/huggingface"
 # os.environ['TRANSFORMERS_OFFLINE'] = '0'
 
@@ -566,7 +568,6 @@ def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, g
             modules = [get_module(model, n) for n in names]
             m = WrapperMultiblock(modules)
 
-
         m = m.to(device)
         q_input, input_ids = quant_block(m, input_ids, input_others, num_bits=num_bits, group_size=group_size,
                                          schema=schema,
@@ -717,8 +718,6 @@ if __name__ == '__main__':
         eval_model(model, model_name, tokenizer, tasks=args.tasks, eval_bs=args.eval_bs)
         exit()
 
-
-
     dataset_name = "NeelNanda/pile-10k"
     if os.path.exists(dataset_name.split('/')[-1]):
         calib_dataset = load_from_disk(dataset_name.split('/')[-1])
@@ -752,6 +751,7 @@ if __name__ == '__main__':
         model = model.to(cuda_device)
 
     import time
+
     start_time = time.time()
     save_input_actor = SaveInputs(model, calib_dataloader, seqlen, block_names[0])
     inputs = save_input_actor.get_inputs(n_samples=args.n_samples)
@@ -770,4 +770,3 @@ if __name__ == '__main__':
     model.eval()
     model.to(cuda_device)
     eval_model(model, model_name, tokenizer, tasks=args.tasks, eval_bs=args.eval_bs)
-
