@@ -872,14 +872,14 @@
       "model_src_dir": "object_detection/table_transformer/quantization/ptq_static",
       "dataset_location": "/tf_dataset/dataset/PubTables-1M",
       "input_model": "/tf_dataset2/models/onnx/table-transformer/pubtables1m_structure_detr_r18.onnx",
-      "main_script": "table-transformer/src/main.py",
+      "main_script": "patch",
       "batch_size": 1
     },
     "table_transformer_detection": {
       "model_src_dir": "object_detection/table_transformer/quantization/ptq_static",
       "dataset_location": "/tf_dataset/dataset/PubTables-1M",
       "input_model": "/tf_dataset2/models/onnx/table-transformer/pubtables1m_detection_detr_r18.onnx",
-      "main_script": "table-transformer/src/main.py",
+      "main_script": "patch",
       "batch_size": 1
     },
     "hf_codebert": {
