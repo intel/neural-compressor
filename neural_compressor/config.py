@@ -1950,7 +1950,7 @@ class MixedPrecisionConfig(object):
         self.precisions = precisions
         self.use_bf16 = "bf16" in self.precisions
         self.model_name = model_name
-        self._framework = None
+        self._framework = "pytorch"
         self.op_name_dict = op_name_dict
         self.op_type_dict = op_type_dict
         self.example_inputs = example_inputs
