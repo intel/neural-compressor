@@ -39,7 +39,7 @@ python prepare_model.py  --input_model=detection_detr  --output_model=pubtables1
 Static quantization with QOperator format:
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model  \ # model path as *.onnx
                    --output_model=path/to/save \ # model path as *.onnx
                    --dataset_location=/path/to/pubtables-1m # dataset_folder should contains `PubTables-1M-Structure` and/or `PubTables-1M-Detection` folders
 ```
