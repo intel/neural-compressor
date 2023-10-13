@@ -31,6 +31,7 @@ In particular, the tool provides the key features, typical examples, and open co
 ```Shell
 pip install neural-compressor
 ```
+> [!NOTE]
 > More installation methods can be found at [Installation Guide](./docs/source/installation_guide.md). Please check out our [FAQ](./docs/source/faq.md) for more details.
 
 ## Getting Started
@@ -137,6 +138,7 @@ q_model = fit(
   </tbody>
 </table>
 
+> [!NOTE] 
 > More documentations can be found at [User Guide](./docs/source/user_guide.md).
 
 ## Selected Publications/Events
@@ -147,6 +149,7 @@ q_model = fit(
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 
+> [!NOTE]
 > View [Full Publication List](./docs/source/publication_list.md).
 
 ## Additional Content
