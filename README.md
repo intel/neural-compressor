@@ -140,11 +140,10 @@ q_model = fit(
 > More documentations can be found at [User Guide](./docs/source/user_guide.md).
 
 ## Selected Publications/Events
+* Blog by Intel: [Effective Weight-Only Quantization for Large Language Models with Intel® Neural Compressor](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Effective-Weight-Only-Quantization-for-Large-Language-Models/post/1529552) (Oct 2023)
 * EMNLP'2023 (Under Review): [TEQ: Trainable Equivalent Transformation for Quantization of LLMs](https://openreview.net/forum?id=iaI8xEINAf&referrer=%5BAuthor%20Console%5D) (Sep 2023)
 * arXiv: [Efficient Post-training Quantization with FP8 Formats](https://arxiv.org/abs/2309.14592) (Sep 2023)
 * arXiv: [Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs](https://arxiv.org/abs/2309.05516) (Sep 2023)
-* Post on Social Media: [ONNXCommunityMeetup2023: INT8 Quantization for Large Language Models with Intel Neural Compressor](https://www.youtube.com/watch?v=luYBWA1Q5pQ)  (July 2023)
-* Blog by Intel: [Accelerate Llama 2 with Intel AI Hardware and Software Optimizations](https://www.intel.com/content/www/us/en/developer/articles/news/llama2.html) (July 2023)
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 
