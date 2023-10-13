@@ -31,7 +31,7 @@ In particular, the tool provides the key features, typical examples, and open co
 ```Shell
 pip install neural-compressor
 ```
-> More installation methods can be found at [Installation Guide](/docs/source/installation_guide.md). Please check out our [FAQ](/docs/source/faq.md) for more details.
+> More installation methods can be found at [Installation Guide](./docs/source/installation_guide.md). Please check out our [FAQ](./docs/source/faq.md) for more details.
 
 ## Getting Started
 ### Quantization with Python API
@@ -137,7 +137,7 @@ q_model = fit(
   </tbody>
 </table>
 
-> More documentations can be found at [User Guide](/docs/source/user_guide.md).
+> More documentations can be found at [User Guide](./docs/source/user_guide.md).
 
 ## Selected Publications/Events
 * Blog by Intel: [Effective Weight-Only Quantization for Large Language Models with Intel® Neural Compressor](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Effective-Weight-Only-Quantization-for-Large-Language-Models/post/1529552) (Oct 2023)
@@ -147,13 +147,13 @@ q_model = fit(
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 
-> View [Full Publication List](/docs/source/publication_list.md).
+> View [Full Publication List](./docs/source/publication_list.md).
 
 ## Additional Content
 
-* [Release Information](/docs/source/releases_info.md)
-* [Contribution Guidelines](/docs/source/CONTRIBUTING.md)
-* [Legal Information](/docs/source/legal_information.md)
+* [Release Information](./docs/source/releases_info.md)
+* [Contribution Guidelines](./docs/source/CONTRIBUTING.md)
+* [Legal Information](./docs/source/legal_information.md)
 * [Security Policy](SECURITY.md)
 
 ## Communication 
