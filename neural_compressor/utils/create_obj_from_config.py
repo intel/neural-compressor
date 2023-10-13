@@ -171,6 +171,7 @@ def create_eval_func(
 
 def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None, callbacks=None):
     """The interface to create train function from config.
+
     Args:
         framework (str): The string of framework.
         dataloader (common.DataLoader): The object of common.DataLoader.
