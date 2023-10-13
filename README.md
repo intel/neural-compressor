@@ -159,4 +159,5 @@ q_model = fit(
 ## Communication 
 - [GitHub Issues](https://github.com/intel/neural-compressor/issues): mainly for bugs report, new feature request, question asking, etc.
 - [Email](mailto:inc.maintainers@intel.com): welcome to raise any interesting research ideas on model compression techniques by email for collaborations.  
+- [Discord Channel](https://discord.com/invite/Wxk3J3ZJkU): join the discord channel for more flexible technical discussion.
 - [WeChat group](/docs/source/imgs/wechat_group.jpg): scan the QA code to join the technical discussion.
