@@ -159,7 +159,7 @@ index e3a0565..d66b318 100644
 +    return pubmed_stats['coco_eval_bbox'][0]
 \ No newline at end of file
 diff --git a/src/main.py b/src/main.py
-index 74cd13c..83d6aeb 100644
+index 74cd13c..c30377d 100644
 --- a/src/main.py
 +++ b/src/main.py
 @@ -41,6 +41,7 @@ def get_args():
@@ -215,7 +215,7 @@ index 74cd13c..83d6aeb 100644
  
          dataset_test = PDFTablesDataset(os.path.join(args.data_root_dir,
                                                       "test"),
-@@ -169,6 +180,29 @@ def get_data(args):
+@@ -169,6 +180,28 @@ def get_data(args):
                                        num_workers=args.num_workers)
          return data_loader_test, dataset_test
  
@@ -241,11 +241,10 @@ index 74cd13c..83d6aeb 100644
 +                                      num_workers=args.num_workers)
 +        return OXDataloader(data_loader_test, args.batch_size), dataset_test
 +
-+
      elif args.mode == "grits" or args.mode == "grits-all":
          dataset_test = PDFTablesDataset(os.path.join(args.data_root_dir,
                                                       "test"),
-@@ -337,6 +371,20 @@ def train(args, model, criterion, postprocessors, device):
+@@ -337,6 +370,20 @@ def train(args, model, criterion, postprocessors, device):
  
      print('Total training time: ', datetime.now() - start_time)
  
@@ -266,7 +265,7 @@ index 74cd13c..83d6aeb 100644
  
  def main():
      cmd_args = get_args().__dict__
-@@ -350,7 +398,7 @@ def main():
+@@ -350,7 +397,7 @@ def main():
      print('-' * 100)
  
      # Check for debug mode
@@ -275,7 +274,7 @@ index 74cd13c..83d6aeb 100644
          print("Running evaluation/inference in DEBUG mode, processing will take longer. Saving output to: {}.".format(args.debug_save_dir))
          os.makedirs(args.debug_save_dir, exist_ok=True)
  
-@@ -366,10 +414,35 @@ def main():
+@@ -366,10 +413,35 @@ def main():
  
      if args.mode == "train":
          train(args, model, criterion, postprocessors, device)
