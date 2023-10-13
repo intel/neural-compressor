@@ -223,7 +223,10 @@ def load_module(model, module_name, path, device="cpu"):
         set_module_tensor_to_device(model, param_name, device, value)
 
 
-def register_weight_hooks(model, path, device="cpu", clean_weight=True):
+def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_path=None):
+    if saved_path:
+        os.makedirs(saved_path, exist_ok=True)
+
     def forward_pre_hook(name):
         def hook(module, input):
             state_dict = None
@@ -241,8 +244,10 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True):
 
     def forward_hook(name):
         def hook(module, input, output):
+            if saved_path:
+                file_path = os.path.join(saved_path, f"{name}.pt")
+                torch.save(module.state_dict(), file_path)
             clean_module_weight(module)
-
         return hook
 
     handle = {}

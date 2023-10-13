@@ -40,7 +40,7 @@ from .utils import (
     update_module,
 )
 
-TMP_DIR = os.path.join(default_workspace, "layer_wise_quant_tmp_dir")
+TMP_DIR = os.path.join(default_workspace, "lwq_tmpdir")
 
 
 def mk_tmp_dir():

@@ -13,9 +13,10 @@ from neural_compressor.utils.pytorch import load
 
 
 class TestLayerWise(unittest.TestCase):
-    def test_layer_wise(self):
-        model_name_or_path = "facebook/opt-125m"
-        fp32_model = load_shell(model_name_or_path, AutoModelForCausalLM, torchscript=True)
+    @classmethod
+    def setUpClass(self):
+        self.model_name_or_path = "facebook/opt-125m"
+        self.fp32_model = load_shell(self.model_name_or_path, AutoModelForCausalLM, torchscript=True)
 
         class TestDataset(Dataset):
             def __init__(self, size=5, shape=128):
@@ -29,8 +30,9 @@ class TestLayerWise(unittest.TestCase):
                 return self.len
 
         eval_dataset = TestDataset()
-        eval_dataloader = DataLoader(eval_dataset, batch_size=8)
+        self.eval_dataloader = DataLoader(eval_dataset, batch_size=8)
 
+    def test_rtn_lwq(self):
         conf = PostTrainingQuantConfig(
             approach="weight_only",
             recipes={
@@ -43,14 +45,46 @@ class TestLayerWise(unittest.TestCase):
         )
 
         q_model = quantization.fit(
-            fp32_model,
+            self.fp32_model,
             conf,
-            calib_dataloader=eval_dataloader,
+            calib_dataloader=self.eval_dataloader,
             eval_func=lambda x: 0.1,
         )
         ouput_dir = "./saved_model"
         q_model.save(ouput_dir)
-        load_model = load(ouput_dir, fp32_model, weight_only=True)
+        load_model = load(ouput_dir, self.fp32_model, weight_only=True)
+        self.assertNotEqual(load_model.lm_head.weight.device.type, "meta")
+        shutil.rmtree(ouput_dir)
+
+    def test_gptq_lwq(self):
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 32,
+                        "scheme": "sym",
+                        "algorithm": "GPTQ",
+                    },
+                },
+            },
+            recipes={
+                "gptq_args": {"actorder": True, "mse": True, "perchannel": False},
+                "layer_wise_quant": True,
+                "layer_wise_quant_args": {
+                    "model_path": "facebook/opt-125m",
+                }
+            },
+        )
+        q_model = quantization.fit(
+            self.fp32_model,
+            conf,
+            calib_dataloader=self.eval_dataloader
+        )
+        ouput_dir = "./saved_model"
+        q_model.save(ouput_dir)
+        load_model = load(ouput_dir, self.fp32_model, weight_only=True)
         self.assertNotEqual(load_model.lm_head.weight.device.type, "meta")
         shutil.rmtree(ouput_dir)
 
