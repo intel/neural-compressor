@@ -470,16 +470,26 @@ def rtn_quantize(
 
 
 def gptq_quantize(
-    model, weight_config={}, dataloader=None, nsamples=128, use_max_length=True, pad_max_length=2048, device=None, layer_wise=False, model_path=None
+    model,
+    weight_config={},
+    dataloader=None,
+    nsamples=128,
+    use_max_length=True,
+    pad_max_length=2048,
+    device=None,
+    layer_wise=False,
+    model_path=None,
 ):
     """Run weight-only quantization with."""
     # TODO: unify weight_config keys, add docstring, and support default config
     assert isinstance(model, torch.nn.Module), "only support torch module"
     if layer_wise:
-        assert model_path is not None, 'model_path should not be None when use layer_wise mode'
+        assert model_path is not None, "model_path should not be None when use layer_wise mode"
     from .gptq import GPTQuantizer
 
-    gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise)
+    gptq_quantizer = GPTQuantizer(
+        model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise
+    )
     fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
     logger.info("GPTQ quantizing done.")
     return fp32_modified_model, gptq_config

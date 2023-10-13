@@ -74,14 +74,10 @@ class TestLayerWise(unittest.TestCase):
                 "layer_wise_quant": True,
                 "layer_wise_quant_args": {
                     "model_path": "facebook/opt-125m",
-                }
+                },
             },
         )
-        q_model = quantization.fit(
-            self.fp32_model,
-            conf,
-            calib_dataloader=self.eval_dataloader
-        )
+        q_model = quantization.fit(self.fp32_model, conf, calib_dataloader=self.eval_dataloader)
         ouput_dir = "./saved_model"
         q_model.save(ouput_dir)
         load_model = load(ouput_dir, self.fp32_model, weight_only=True)

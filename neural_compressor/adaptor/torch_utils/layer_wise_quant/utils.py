@@ -248,6 +248,7 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
                 file_path = os.path.join(saved_path, f"{name}.pt")
                 torch.save(module.state_dict(), file_path)
             clean_module_weight(module)
+
         return hook
 
     handle = {}

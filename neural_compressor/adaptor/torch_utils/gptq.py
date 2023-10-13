@@ -175,7 +175,7 @@ class GPTQuantizer(object):
         use_max_length=True,
         pad_max_length=2048,
         device=None,
-        layer_wise=False
+        layer_wise=False,
     ):
         """
         Args:
@@ -228,7 +228,6 @@ class GPTQuantizer(object):
         self.dataloader = []
         self.nsamples = nsamples
         self.prepare_dataloader()
-
 
     def prepare_dataloader(self):
         if self.use_max_length:
@@ -499,7 +498,7 @@ class GPTQuantizer(object):
         tblock_length = len(self.gptq_related_blocks["transformers"])
         for block_idx in range(tblock_length):
             logger.info(f"Quantizing layer {block_idx + 1} / {tblock_length}..")
-            transformer_block = self.gptq_related_blocks["transformers"][block_idx]#.to(self.device)
+            transformer_block = self.gptq_related_blocks["transformers"][block_idx]  # .to(self.device)
             # Step2.1: obtain all layers (Linear, Conv2d, etc) in the block which can be quantized.
             sub_layers = find_layers(transformer_block)
             sub_layers_to_quant = {}
@@ -524,10 +523,11 @@ class GPTQuantizer(object):
                 weight_config_this_layer = self.get_layer_config(full_layer_name)
                 if self.layer_wise:
                     from ..torch_utils.layer_wise_quant.utils import load_value
-                    W = load_value(self.model, full_layer_name + '.weight', model_path)
+
+                    W = load_value(self.model, full_layer_name + ".weight", model_path)
                 else:
                     W = sub_layers[layer_name].weight.data.clone()
-                    
+
                 gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name], W, self.device)
                 # gptq_for_this_block[layer_name].quantizer = Quantizer()
                 gptq_for_this_block[layer_name].quantizer.configure(
@@ -565,8 +565,9 @@ class GPTQuantizer(object):
                 logger.info(f"Quantizing layer {layer_name}")
                 if self.layer_wise:
                     from ..torch_utils.layer_wise_quant.utils import load_value
+
                     full_layer_name = self.get_full_layer_name(layer_name, block_idx)
-                    W = load_value(self.model, full_layer_name + '.weight', model_path)
+                    W = load_value(self.model, full_layer_name + ".weight", model_path)
                 else:
                     W = sub_layers[layer_name].weight.data.clone()
                 scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(
@@ -577,15 +578,21 @@ class GPTQuantizer(object):
                     act_order=weight_config_this_layer["act_order"],
                 )
                 if self.layer_wise:
-                    from ..torch_utils.layer_wise_quant.utils import LWQ_WORKSPACE, load_value, set_module_tensor_to_device, clean_module_weight
+                    from ..torch_utils.layer_wise_quant.utils import (
+                        LWQ_WORKSPACE,
+                        clean_module_weight,
+                        load_value,
+                        set_module_tensor_to_device,
+                    )
+
                     sub_layer = sub_layers[layer_name]
                     full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                     for n, p in sub_layer.named_parameters():
-                        param_name = full_layer_name + '.' + n
+                        param_name = full_layer_name + "." + n
                         value = load_value(self.model, param_name, model_path)
                         set_module_tensor_to_device(self.model, param_name, self.device, value)
                     sub_layer.weight.data = Q
-                    torch.save(sub_layer.state_dict(), LWQ_WORKSPACE + f'/{full_layer_name}.pt')
+                    torch.save(sub_layer.state_dict(), LWQ_WORKSPACE + f"/{full_layer_name}.pt")
                     clean_module_weight(sub_layer)
                 else:
                     sub_layers[layer_name].weight.data = Q
@@ -632,7 +639,7 @@ class GPTQ:
     GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers (https://arxiv.org/abs/2210.17323)
     """
 
-    def __init__(self, layer, W, device='cpu'):
+    def __init__(self, layer, W, device="cpu"):
         self.layer = layer
         self.device = device
         # W = layer.weight.data.clone()

@@ -4535,7 +4535,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         # for layer_wise quant mode
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
         if recipe_cfgs.get("layer_wise_quant", False):
-            from .torch_utils.layer_wise_quant.utils import _get_path, load_module, LWQ_WORKSPACE
+            from .torch_utils.layer_wise_quant.utils import LWQ_WORKSPACE, _get_path, load_module
 
             os.makedirs(LWQ_WORKSPACE, exist_ok=True)
             model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
@@ -4616,12 +4616,15 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         layer_wise = False
         if recipe_cfgs.get("layer_wise_quant", False):
             layer_wise = True
-            from .torch_utils.layer_wise_quant.utils import _get_path, LWQ_WORKSPACE, register_weight_hooks
+            from .torch_utils.layer_wise_quant.utils import LWQ_WORKSPACE, _get_path, register_weight_hooks
+
             os.makedirs(LWQ_WORKSPACE, exist_ok=True)
             model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
             assert model_path, "model_path should specify in layer_wise_quant_args."
             model_path = _get_path(model_path)
-            lwq_handles = register_weight_hooks(model, model_path, device=self.device, clean_weight=True, saved_path=LWQ_WORKSPACE)
+            lwq_handles = register_weight_hooks(
+                model, model_path, device=self.device, clean_weight=True, saved_path=LWQ_WORKSPACE
+            )
 
         weight_config = {}
         for key, config in tune_cfg["op"].items():
@@ -4647,7 +4650,15 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             )
         # tune_cfg => weight_config
         model, quantization_perm = gptq_quantize(
-            model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, self.device, layer_wise, model_path
+            model,
+            weight_config,
+            dataloader,
+            nsamples,
+            use_max_length,
+            pad_max_length,
+            self.device,
+            layer_wise,
+            model_path,
         )
         return model, quantization_perm
 
