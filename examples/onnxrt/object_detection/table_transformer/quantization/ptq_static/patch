@@ -110,7 +110,7 @@ index 73ae39e..2049449 100644
          i = torch.arange(w, device=x.device)
          j = torch.arange(h, device=x.device)
 diff --git a/src/eval.py b/src/eval.py
-index e3a0565..5514db5 100644
+index e3a0565..d66b318 100644
 --- a/src/eval.py
 +++ b/src/eval.py
 @@ -4,6 +4,7 @@ Copyright (C) 2021 Microsoft Corporation
@@ -152,8 +152,14 @@ index e3a0565..5514db5 100644
  
          if args.debug:
              for target, pred_logits, pred_boxes in zip(targets, outputs['pred_logits'], outputs['pred_boxes']):
+@@ -696,3 +703,4 @@ def eval_coco(args, model, criterion, postprocessors, data_loader_test, dataset_
+     print("COCO metrics summary: AP50: {:.3f}, AP75: {:.3f}, AP: {:.3f}, AR: {:.3f}".format(
+         pubmed_stats['coco_eval_bbox'][1], pubmed_stats['coco_eval_bbox'][2],
+         pubmed_stats['coco_eval_bbox'][0], pubmed_stats['coco_eval_bbox'][8]))
++    return pubmed_stats['coco_eval_bbox'][0]
+\ No newline at end of file
 diff --git a/src/main.py b/src/main.py
-index 74cd13c..1e5e5e9 100644
+index 74cd13c..83d6aeb 100644
 --- a/src/main.py
 +++ b/src/main.py
 @@ -41,6 +41,7 @@ def get_args():
@@ -269,7 +275,7 @@ index 74cd13c..1e5e5e9 100644
          print("Running evaluation/inference in DEBUG mode, processing will take longer. Saving output to: {}.".format(args.debug_save_dir))
          os.makedirs(args.debug_save_dir, exist_ok=True)
  
-@@ -366,10 +414,33 @@ def main():
+@@ -366,10 +414,35 @@ def main():
  
      if args.mode == "train":
          train(args, model, criterion, postprocessors, device)
@@ -278,7 +284,9 @@ index 74cd13c..1e5e5e9 100644
          data_loader_test, dataset_test = get_data(args)
 -        eval_coco(args, model, criterion, postprocessors, data_loader_test, dataset_test, device)
 -
-+        eval_coco(args, args.input_onnx_model, criterion, postprocessors, data_loader_test, dataset_test, device)
++        ap_result = eval_coco(args, args.input_onnx_model, criterion, postprocessors, data_loader_test, dataset_test, device)
++        print("Batch size = %d" % args.batch_size)
++        print("Accuracy: %.5f" % ap_result)
 +    elif args.mode == "export":
 +        data_loader_test, dataset_test = get_data(args)
 +        export(args, model, data_loader_test, device)
@@ -303,6 +311,6 @@ index 74cd13c..1e5e5e9 100644
 +        from neural_compressor.config import BenchmarkConfig
 +        config = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1)
 +        fit(args.input_onnx_model, config, b_dataloader=data_loader_test)
-
+ 
  if __name__ == "__main__":
      main()
