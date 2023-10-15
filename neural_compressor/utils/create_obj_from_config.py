@@ -179,6 +179,7 @@ def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None, cal
         hooks (dict): The dict of training hooks, supported keys are:
                       on_epoch_begin, on_epoch_end, on_step_begin, on_step_end.
                       Their values are functions to be executed in adaptor layer.
+
     Returns:
         The constructed train function
     """

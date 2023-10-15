@@ -190,7 +190,7 @@ class TensorFlowAdaptor(Adaptor):
         callbacks = kwargs["kwargs"].get("callbacks", None)
         execution_mode = kwargs["kwargs"].get("execution_mode", None)
         distributed = getattr(dataloader, "distributed", False)
-        from neural_compressor.compression.distillation import TensorflowKnowledgeDistillationLoss
+        from neural_compressor.compression.distillation.criterions import TensorflowKnowledgeDistillationLoss
 
         if isinstance(criterion, TensorflowKnowledgeDistillationLoss):
             input_model = model._model

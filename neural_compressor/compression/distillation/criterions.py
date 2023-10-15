@@ -916,7 +916,7 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(IntermediateLayersKnowl
         Raises:
             AttributeError: AttributeError
         """
-        from neural_compressor.compression.distillation.utility import get_activation
+        from neural_compressor.compression.distillation import utility
 
         def register_model_forward_hook(model, path, output_process="", student=False):
             module = model
@@ -927,7 +927,7 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(IntermediateLayersKnowl
                         module = module.__getattr__(node)
                     except:
                         raise AttributeError("There is no path {} in the model.".format(path))
-            return module.register_forward_hook(get_activation(path, output_process, student))
+            return module.register_forward_hook(utility.get_activation(path, output_process, student))
 
         assert isinstance(self.student_model, torch.nn.Module) and isinstance(self.teacher_model, torch.nn.Module), (
             "Expect student_model and teacher_model to be an torch.nn.Module object, "
@@ -939,8 +939,8 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(IntermediateLayersKnowl
             student_output_process, teacher_output_process = self.layer_output_process[idx]
             st_handle = register_model_forward_hook(self.student_model, student_layer, student_output_process, True)
             te_handle = register_model_forward_hook(self.teacher_model, teacher_layer, teacher_output_process)
-            torch_utils.STUDENT_FEATURES = self.student_features
-            torch_utils.TEACHER_FEATURES = self.teacher_features
+            utility.STUDENT_FEATURES = self.student_features
+            utility.TEACHER_FEATURES = self.teacher_features
             self.hook_handles.extend([st_handle, te_handle])
 
     def remove_all_hooks(self):
