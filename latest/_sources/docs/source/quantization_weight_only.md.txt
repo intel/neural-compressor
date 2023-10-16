@@ -7,6 +7,8 @@ Weight Only Quantization (WOQ)
 
 3. [Examples](#examples)
 
+4. [Layer Wise Quantization](#layer-wise-quantization)
+
 
 ## Introduction
 
@@ -43,7 +45,7 @@ There are many excellent works for weight only quantization to improve its accur
 > **TEQ:** A trainable equivalent transformation that preserves the FP32 precision in weight-only quantization. It is inspired by AWQ while providing a new solution to search for the optimal per-channel scaling factor between activations and weights.
 
 ## Examples
-### **Quantization Capability**:
+### **Quantization Capability**
 | Config | Capability |
 | :---: | :---:|
 | dtype | ['int', 'nf4', 'fp4'] |
@@ -56,7 +58,7 @@ Notes:
 - *group_size = -1* refers to **per output channel quantization**. Taking a linear layer (input channel = $C_{in}$, output channel = $C_{out}$) for instance, when *group size = -1*, quantization will calculate total $C_{out}$ quantization parameters. Otherwise, when *group_size = gs* quantization parameters are calculate with every $gs$ elements along with the input channel, leading to total $C_{out} \times (C_{in} / gs)$ quantization parameters. 
 - 4-bit NormalFloat(NF4) is proposed in QLoRA[5]. 'fp4' includes [fp4_e2m1](../../neural_compressor/adaptor/torch_utils/weight_only.py#L37) and [fp4_e2m1_bnb](https://github.com/TimDettmers/bitsandbytes/blob/18e827d666fa2b70a12d539ccedc17aa51b2c97c/bitsandbytes/functional.py#L735). By default, fp4 refers to fp4_e2m1_bnb.
 
-**RTN arguments**:
+**RTN arguments**
 |  rtn_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
 |  enable_full_range |      False     |   Whether to use -2**(bits-1) in sym scheme  |
@@ -64,14 +66,14 @@ Notes:
 |  return_int |      False     | Whether to return compressed model with torch.int32 data type |
 |  group_dim  |       1       |   0 means splitting output channel, 1 means splitting input channel   |
 
-**AWQ arguments**:
+**AWQ arguments**
 |  awq_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
 |  enable_auto_scale |      True     | Whether to search for best scales based on activation distribution   |
 |  enable_mse_search |      True     | Whether to search for the best clip range from range [0.91, 1.0, 0.01] |
 |  folding   |      False    | False will allow insert mul before linear when the scale cannot be absorbed by last layer, else won't |
 
-**GPTQ arguments**:
+**GPTQ arguments**
 |  gptq_args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
 |  actorder | False |   Whether to sort Hessian's diagonal values to rearrange channel-wise quantization order|
@@ -86,7 +88,7 @@ Notes:
 ### **Export Compressed Model**
 To support low memory inference, Neural Compressor implemented WeightOnlyLinear, a torch.nn.Module, to compress the fake quantized fp32 model. Since torch does not provide flexible data type storage, WeightOnlyLinear combines low bits data into a long date type, such as torch.int8 and torch.int32. Low bits data includes weights and zero points. When using WeightOnlyLinear for inference, it will restore the compressed data to float32 and run torch linear function.
 
-**Export arguments**:
+**Export arguments**
 | export args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
 | qweight_config_path |      None     |  If need to export model with fp32_model and json file, set the path of qconfig.json |
@@ -95,7 +97,7 @@ To support low memory inference, Neural Compressor implemented WeightOnlyLinear,
 |  compression_dim  |       1       |   0 means output channel while 1 means input channel   |
 |  scale_dtype  |       torch.float32       |  Data type for scale and bias   |
 
-### **User code**:
+### **User Code Example**
 ```python
 conf = PostTrainingQuantConfig(
     approach="weight_only",
@@ -126,6 +128,50 @@ torch.save(compressed_model.state_dict(), "compressed_model.pt")
 ```
 
 The saved_results folder contains two files: `best_model.pt` and `qconfig.json`, and the generated q_model is a fake quantized model.
+
+## Layer Wise Quantization
+
+Large language models (LLMs) have shown exceptional performance across various tasks, meanwhile, the substantial parameter size poses significant challenges for deployment. Layer-wise quantization(LWQ) can greatly reduce the memory footprint of LLMs, usually 80-90% reduction, which means that users can quantize LLMs even on single node using GPU or CPU.  We can quantize the model under memory-constrained devices, therefore making the huge-sized LLM quantization possible.
+
+<img src="./imgs/lwq.png">
+
+*Figure 1: The process of layer-wise quantization. The color grey means empty parameters and the color blue represents parameters need to be quantized. Every rectangle inside model represents one layer.*
+
+### Supported Matrix
+
+| Algorithms/Framework |   PyTorch  |
+|:--------------:|:----------:|
+|       RTN      |  &#10004;  | 
+|       AWQ      |  &#10005;  |
+|      GPTQ      | &#10005; | 
+|      TEQ      | &#10005; |
+
+### Example
+```python
+from neural_compressor import PostTrainingQuantConfig, quantization
+from neural_compressor.adaptor.torch_utils.layer_wise_quant import load_shell
+
+fp32_model = load_shell(model_name_or_path, AutoModelForCausalLM, torchscript=True)
+conf = PostTrainingQuantConfig(
+    approach="weight_only",
+    recipes={
+        "layer_wise_quant": True,
+        "layer_wise_quant_args": {
+            "model_path": "facebook/opt-125m",
+        },
+        "rtn_args": {"enable_full_range": True},
+    },
+)
+
+q_model = quantization.fit(
+    fp32_model,
+    conf,
+    calib_dataloader=eval_dataloader,
+    eval_func=lambda x: 0.1,
+)
+ouput_dir = "./saved_model"
+q_model.save(ouput_dir)
+```
 
 ## Reference
 
