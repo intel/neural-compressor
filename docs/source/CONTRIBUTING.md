@@ -4,7 +4,7 @@ Contribution Guidelines
 2. [Pull Request Checklist](#pull-request-checklist)
 3. [Pull Request Template](#distillation-support-matrix)
 4. [Pull Request Acceptance Criteria](#pull-request-acceptance-criteria)
-5. [Pull Request status checks overview](#pull-request-status-checks-overview)
+5. [Pull Request Status Checks Overview](#pull-request-status-checks-overview)
 6. [Support](#support)
 7. [Contributor Covenant Code of Conduct](#contributor-covenant-code-of-conduct)
 
@@ -43,15 +43,15 @@ See [PR template](/.github/pull_request_template.md)
 
 - Third-party dependency license Compatible
 
-## Pull Request status checks overview
+## Pull Request Status Checks Overview
 Intel® Neural Compressor use [Azure DevOps](https://learn.microsoft.com/en-us/azure/devops/pipelines/?view=azure-devops) for CI test.
 Generally We use [Azure Cloud Instance](https://azure.microsoft.com/en-us/pricing/purchase-options/pay-as-you-go) to deploy pipelines, e.g. Standard E16s v5.
 |     Test Name                 |     Test Scope                                |     Test Pass Criteria    |
 |-------------------------------|-----------------------------------------------|---------------------------|
 |     Code Scan                 |     Pylint/Bandit/CopyRight/DocStyle/SpellCheck       |     PASS          |
 |     [DCO](https://github.com/apps/dco/)     |     Use `git commit -s` to sign off     |     PASS          |
-|     Unit Test                 |     Pytest all scripts under [neural-compressor/test](/test)              |      PASS (No failure, No core dump, No segmentation fault, No coverage drop)      |
-|     Model Test                |     Pytorch + TensorFlow + ONNX Runtime + MXNet         |      PASS(Functionality pass, FP32/INT8 No performance regression)       |
+|     Unit Test                 |     Pytest scripts under [test](/test)                |      PASS (No failure, No core dump, No segmentation fault, No coverage drop)      |
+|     Model Test                |     Pytorch + TensorFlow + ONNX Runtime + MXNet         |      PASS (Functionality pass, FP32/INT8 No performance regression)       |
 
 ## Support
 
