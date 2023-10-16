@@ -763,7 +763,7 @@ class GPTQ:
             #     logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
             #     logger.info(f"{torch.sum(Losses)}")
 
-        if str(self.device).startswith('cuda'):
+        if str(self.device).startswith("cuda"):
             torch.cuda.synchronize()
         logger.info(f"time {(time.time() - tick)}")
         logger.info(f"error {torch.sum(Losses).item()}")
