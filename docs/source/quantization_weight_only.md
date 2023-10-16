@@ -137,6 +137,15 @@ Large language models (LLMs) have shown exceptional performance across various t
 
 *Figure 1: The process of layer-wise quantization. The color grey means empty parameters and the color blue represents parameters need to be quantized. Every rectangle inside model represents one layer.*
 
+### Supported Matrix
+
+| Algorithms/Framework |   PyTorch  |
+|:--------------:|:----------:|
+|       RTN      |  &#10004;  | 
+|       AWQ      |  &#10005;  |
+|      GPTQ      | &#10005; | 
+|      TEQ      | &#10005; |
+
 ### Example
 ```python
 from neural_compressor import PostTrainingQuantConfig, quantization
