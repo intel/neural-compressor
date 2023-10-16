@@ -4,8 +4,9 @@ Contribution Guidelines
 2. [Pull Request Checklist](#pull-request-checklist)
 3. [Pull Request Template](#distillation-support-matrix)
 4. [Pull Request Acceptance Criteria](#pull-request-acceptance-criteria)
-5. [Support](#support)
-6. [Contributor Covenant Code of Conduct](#contributor-covenant-code-of-conduct)
+5. [Pull Request status checks overview](#pull-request-status-checks-overview)
+6. [Support](#support)
+7. [Contributor Covenant Code of Conduct](#contributor-covenant-code-of-conduct)
 
 ## Create Pull Request
 If you have improvements to Intel® Neural Compressor, send your pull requests for
