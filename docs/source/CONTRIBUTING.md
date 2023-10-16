@@ -13,13 +13,13 @@ If you have improvements to Intel® Neural Compressor, send your pull requests f
 [review](https://github.com/intel/neural-compressor/pulls). 
 If you are new to GitHub, view the pull request [How To](https://help.github.com/articles/using-pull-requests/).  
 ### Step-by-Step guidelines
-- Star this repository. 
+- Star this repository using the button `Star` in the top right corner. 
 - Fork this Repository using the button `Fork` in the top right corner.
 - Clone your forked repository to your pc.   
 `git clone "url to your repo"`
 - Create a new branch for your modifications.    
-`git checkout -b new-user`  
-- Add your files with `git add -A`, commit `git commit -s -m "added myself"` and push `git push origin new-user`. 
+`git checkout -b new-branch`  
+- Add your files with `git add -A`, commit `git commit -s -m "This is my commit message"` and push `git push origin new-branch`. 
 - Create a [pull request](https://github.com/intel/neural-compressor/pulls).
 
 ## Pull Request Checklist
@@ -37,15 +37,15 @@ See [PR template](/.github/pull_request_template.md)
 ## Pull Request Acceptance Criteria
 - At least two approvals from reviewers
 
-- ALL detected status checks pass
+- All detected status checks pass
 
-- ALL conversations solved
+- All conversations solved
 
-- Third-party dependency license Compatible
+- Third-party dependency license compatible
 
 ## Pull Request Status Checks Overview
 Intel® Neural Compressor use [Azure DevOps](https://learn.microsoft.com/en-us/azure/devops/pipelines/?view=azure-devops) for CI test.
-Generally We use [Azure Cloud Instance](https://azure.microsoft.com/en-us/pricing/purchase-options/pay-as-you-go) to deploy pipelines, e.g. Standard E16s v5.
+And generally use [Azure Cloud Instance](https://azure.microsoft.com/en-us/pricing/purchase-options/pay-as-you-go) to deploy pipelines, e.g. Standard E16s v5.
 |     Test Name                 |     Test Scope                                |     Test Pass Criteria    |
 |-------------------------------|-----------------------------------------------|---------------------------|
 |     Code Scan                 |     Pylint/Bandit/CopyRight/DocStyle/SpellCheck       |     PASS          |
