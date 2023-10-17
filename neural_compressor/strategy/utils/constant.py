@@ -65,7 +65,7 @@ class WoqTuningParams(Enum):
 
     Args:
         Enum (Enum): base enumeration class
-    
+
     Attributes:
         RTN (int): Represents the RTN algorithm, which is a type of WOQ algorithm.
         GPTQ (int): Represents the GPTQ algorithm, which is a type of WOQ algorithm.
