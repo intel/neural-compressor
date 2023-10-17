@@ -16,6 +16,8 @@
 # limitations under the License.
 """Strategy constant."""
 
+from enum import Enum
+
 PRECISION_LIST = ["bf16", "fp16", "fp32"]
 QUANT_MODE_SET = {"static", "dynamic"}
 LOWER_BIT_LIST = ["int4"]
@@ -56,3 +58,11 @@ FALLBACK_RECIPES_SET = {
     "last_conv_or_matmul_quantization",
     "pre_post_process_quantization",
 }
+
+class WoqTuningParams(Enum):
+    RTN = 1
+    GPTQ = 2
+    GPTQ_DISABLE_LAST_MATMUL = 3
+    GPTQ_GROUP_SIZE_32 = 4
+    GPTQ_GROUP_SIZE_128 = 5
+    AWQ = 6
