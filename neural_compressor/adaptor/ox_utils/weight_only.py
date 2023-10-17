@@ -95,6 +95,7 @@ def make_matmul_weight_only_node(
         scale_tensor = onnx.helper.make_tensor(
             name=node.input[1] + "_scale", data_type=1, dims=scale.shape, vals=scale.tobytes(), raw=True
         )
+        input_names.append(scale_tensor.name)
         new_inits.append(scale_tensor)
 
         # build zero_point tensor
