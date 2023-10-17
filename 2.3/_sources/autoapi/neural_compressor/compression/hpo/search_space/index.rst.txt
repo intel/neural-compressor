@@ -1,0 +1,89 @@
+:orphan:
+
+:py:mod:`neural_compressor.compression.hpo.search_space`
+========================================================
+
+.. py:module:: neural_compressor.compression.hpo.search_space
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.hpo.search_space.SearchSpace
+   neural_compressor.compression.hpo.search_space.BaseSearchSpace
+   neural_compressor.compression.hpo.search_space.DiscreteSearchSpace
+   neural_compressor.compression.hpo.search_space.ContinuousSearchSpace
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.hpo.search_space.register_searchspace
+
+
+
+.. py:class:: SearchSpace
+
+
+   Abstract class, the main entrance for search space.
+   Using factory pattern to get the actual used class.
+
+   :param bound: A tuple or list that limit the max and min number of search space.
+   :param interval: Only for discrete search space. Intervals in discrete space.
+   :param value: Only for discrete search space. A list that store all the number for search.
+   :param type: discrete or continues.
+
+   .. rubric:: Example
+
+   from neural_compressor.compression.hpo import SearchSpace
+    search_space = {
+   'learning_rate': SearchSpace((0.0001, 0.001)),
+   'num_train_epochs': SearchSpace(bound=(20, 100), interval=1),
+   'weight_decay': SearchSpace((0.0001, 0.001), type='continuous')
+   }
+
+
+.. py:function:: register_searchspace(name)
+
+   Class decorator to register a SearchSpace subclass to the registry.
+
+   :param cls: The subclass of register.
+   :type cls: class
+   :param name: A string. Define the pruner type.
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: BaseSearchSpace(bound=None, interval=None, value=None, type=None)
+
+
+
+
+   Base class for Search Space.
+
+
+.. py:class:: DiscreteSearchSpace(bound=None, interval=None, value=None, type=None)
+
+
+
+
+   Discrete Search Space.
+
+
+.. py:class:: ContinuousSearchSpace(bound, interval=None, value=None, type=None)
+
+
+
+
+   Continuous Search Space.
+
+

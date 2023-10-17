@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.data.filters.coco_filter`
+====================================================
+
+.. py:module:: neural_compressor.data.filters.coco_filter
+
+.. autoapi-nested-parse::
+
+   Built-in COCO filter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.filters.coco_filter.LabelBalanceCOCORecordFilter
+   neural_compressor.data.filters.coco_filter.LabelBalanceCOCORawFilter
+
+
+
+
+.. py:class:: LabelBalanceCOCORecordFilter(size=1)
+
+
+
+
+   The label balance filter for COCO Record.
+
+
+.. py:class:: LabelBalanceCOCORawFilter(size=1)
+
+
+
+
+   The label balance filter for COCO raw data.
+
+

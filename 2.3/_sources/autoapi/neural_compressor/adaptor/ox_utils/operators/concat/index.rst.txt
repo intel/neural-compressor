@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.concat`
+=============================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.concat
+
+.. autoapi-nested-parse::
+
+   Concat Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.concat.ConcatOperator
+   neural_compressor.adaptor.ox_utils.operators.concat.QConcatOperator
+
+
+
+
+.. py:class:: ConcatOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Concat Operator.
+
+
+.. py:class:: QConcatOperator(onnx_node, children, initializers)
+
+
+
+
+   QConcat Operator.
+
+

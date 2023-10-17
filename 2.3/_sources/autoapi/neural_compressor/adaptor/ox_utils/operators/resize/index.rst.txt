@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.resize`
+=============================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.resize
+
+.. autoapi-nested-parse::
+
+   Resize Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.resize.ResizeOperator
+   neural_compressor.adaptor.ox_utils.operators.resize.QResizeOperator
+
+
+
+
+.. py:class:: ResizeOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Resize Operator.
+
+
+.. py:class:: QResizeOperator(onnx_node, children, initializers)
+
+
+
+
+   QResize Operator.
+
+

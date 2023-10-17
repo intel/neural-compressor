@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph`
+===========================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph
+
+.. autoapi-nested-parse::
+
+   Tensorflow Graph Quantizers.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   qat/index.rst
+   qdq/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   quantize_graph_base/index.rst
+   quantize_graph_bn/index.rst
+   quantize_graph_concatv2/index.rst
+   quantize_graph_conv/index.rst
+   quantize_graph_for_intel_cpu/index.rst
+   quantize_graph_matmul/index.rst
+   quantize_graph_pooling/index.rst
+
+

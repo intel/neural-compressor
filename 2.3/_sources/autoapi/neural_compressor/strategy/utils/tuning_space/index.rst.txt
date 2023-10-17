@@ -1,0 +1,91 @@
+:py:mod:`neural_compressor.strategy.utils.tuning_space`
+=======================================================
+
+.. py:module:: neural_compressor.strategy.utils.tuning_space
+
+.. autoapi-nested-parse::
+
+   Tuning space.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.utils.tuning_space.TuningItem
+   neural_compressor.strategy.utils.tuning_space.TuningSpace
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.utils.tuning_space.pattern_to_internal
+   neural_compressor.strategy.utils.tuning_space.pattern_to_path
+   neural_compressor.strategy.utils.tuning_space.quant_mode_from_pattern
+   neural_compressor.strategy.utils.tuning_space.initial_tuning_cfg_with_quant_mode
+
+
+
+.. py:class:: TuningItem(name, options=[], item_type=None)
+
+
+   Not displayed in API Docs.
+
+
+.. py:class:: TuningSpace(capability, conf, framework=None)
+
+
+   Not displayed in API Docs.
+
+   1) capability -> internal format -> merge -> tuning space (tree)
+
+
+.. py:function:: pattern_to_internal(pattern, default_dtype='int8')
+
+   Convert pattern to internal format.
+
+   'static' -> ('static', (('int8'),('int8')))
+   'dynamic' -> ('dynamic', (('int8'),('int8')))
+   'fp32' -> ('precision', (('fp32'), ('fp32')))
+   'bf16' -> ('precision', (('bf16'), ('bf16')))
+   ('static', 'int8') -> ('static', (('int8'),('int8')))
+   ('dynamic', 'int8') -> ('dynamic', (('int8'),('int8')))
+   ('precision', 'fp32') -> ('precision', (('fp32'), ('fp32')))) # (('fp32'), ('fp32')) or ('fp32', 'fp32')
+   #TODO to add the support for mixed data type of weight and activation
+
+
+.. py:function:: pattern_to_path(pattern)
+
+   Convert pattern to path.
+
+
+.. py:function:: quant_mode_from_pattern(internal_pattern)
+
+   Get quant mode from internal pattern.
+
+
+.. py:function:: initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space: TuningSpace) -> neural_compressor.strategy.utils.tuning_structs.OpTuningConfig
+
+   Initialize the tuning cfg.
+
+   :param op_name_type: (op name, op type)
+   :param quant_mode: dynamic/static/fp32/bf16/fp16
+   :param tuning_space: tuning space.
+
+   step1, convert the quant_mode into internal format.
+   step2, complete the path based.
+   step3, get the mode item.
+   step4, use the first option as value for method.
+   step5, create the op tuning config.
+
+   :returns: The initial tuning config.
+
+

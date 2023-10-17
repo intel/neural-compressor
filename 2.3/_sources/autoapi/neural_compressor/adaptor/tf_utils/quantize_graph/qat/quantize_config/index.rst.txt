@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config`
+===============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config
+
+.. autoapi-nested-parse::
+
+   QAT Quantize Config Class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig
+
+
+
+
+.. py:class:: QuantizeConfig
+
+
+   Class for building custom quantize config.
+
+   There should be only one QuantizeConfig instance for global setting.
+
+

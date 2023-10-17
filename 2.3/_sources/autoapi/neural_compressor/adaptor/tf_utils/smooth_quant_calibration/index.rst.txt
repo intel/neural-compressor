@@ -1,0 +1,43 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.smooth_quant_calibration`
+=====================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.smooth_quant_calibration
+
+.. autoapi-nested-parse::
+
+   Tensorflow model calibration process for Smooth Quantization.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.smooth_quant_calibration.SmoothQuantCalibration
+
+
+
+
+.. py:class:: SmoothQuantCalibration(model, dataloader, iterations, op_types, percentile, black_nodes)
+
+
+   A class for performing smooth quantization calibration on a Tensorflow model.
+
+   :param model: The Tensorflow wrapper model to be calibrated.
+   :type model: Model
+   :param dataloader: The data loader for the calibration dataset.
+   :type dataloader: DataLoader
+   :param iterations: The number of iterations to run the calibration process.
+   :type iterations: int
+   :param op_types: The types of operations to be quantized.
+   :type op_types: List[str]
+   :param percentile: The percentile of calibration to remove outliers.
+   :type percentile: float
+   :param black_nodes: A list of node names to be ignored during calibration.
+   :type black_nodes: List[str]
+
+

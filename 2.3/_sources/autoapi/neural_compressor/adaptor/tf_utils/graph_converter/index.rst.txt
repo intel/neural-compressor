@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_converter`
+============================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_converter
+
+.. autoapi-nested-parse::
+
+   Graph Converter Class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_converter.GraphConverter
+
+
+
+
+.. py:class:: GraphConverter(model, qt_config={}, recipes={}, int8_sequences={}, fp32_ops=[], bf16_ops=[], data_loader=None, fake_quant=False, itex_mode=False, qdq_enabled=False, new_api=False, performance_only=False, use_bf16=False)
+
+
+   Graph Converter Class is used to generate the quantization graph.
+
+

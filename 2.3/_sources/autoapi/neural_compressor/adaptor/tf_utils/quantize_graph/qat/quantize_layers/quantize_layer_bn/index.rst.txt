@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.quantize_layer_bn`
+=================================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.quantize_layer_bn
+
+.. autoapi-nested-parse::
+
+   Quantize Layer BatchNormalization Class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.quantize_layer_bn.QuantizeLayerBatchNormalization
+
+
+
+
+.. py:class:: QuantizeLayerBatchNormalization
+
+
+
+
+   The class for quantization of BatchNormalization.
+
+

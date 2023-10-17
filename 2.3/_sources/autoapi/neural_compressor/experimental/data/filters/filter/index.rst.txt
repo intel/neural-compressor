@@ -1,0 +1,117 @@
+:py:mod:`neural_compressor.experimental.data.filters.filter`
+============================================================
+
+.. py:module:: neural_compressor.experimental.data.filters.filter
+
+.. autoapi-nested-parse::
+
+   The base filter class for all frameworks.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.filters.filter.TensorflowFilters
+   neural_compressor.experimental.data.filters.filter.ONNXRTQLFilters
+   neural_compressor.experimental.data.filters.filter.ONNXRTITFilters
+   neural_compressor.experimental.data.filters.filter.PyTorchFilters
+   neural_compressor.experimental.data.filters.filter.MXNetFilters
+   neural_compressor.experimental.data.filters.filter.FILTERS
+   neural_compressor.experimental.data.filters.filter.Filter
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.filters.filter.filter_registry
+
+
+
+.. py:class:: TensorflowFilters
+
+
+
+
+   The base filter class for Tensorflow framework.
+
+
+.. py:class:: ONNXRTQLFilters
+
+
+
+
+   The base filter class for ONNXRT framework QLinear mode.
+
+
+.. py:class:: ONNXRTITFilters
+
+
+
+
+   The base filter class for ONNXRT framework IT mode.
+
+
+.. py:class:: PyTorchFilters
+
+
+
+
+   The base filter class for PyTorch framework.
+
+
+.. py:class:: MXNetFilters
+
+
+
+
+   The base filter class for MXNet framework.
+
+
+.. py:class:: FILTERS(framework)
+
+
+
+
+   The filter register for all frameworks.
+
+   :param framework: frameworks in ["tensorflow", "tensorflow_itex", "mxnet",
+                     "onnxrt_qdq", "pytorch", "pytorch_ipex",
+                     "pytorch_fx", "onnxrt_integerops", "keras"
+                     "onnxrt_qlinearops", "onnxruntime"].
+   :type framework: str
+
+
+.. py:function:: filter_registry(filter_type, framework)
+
+   Register all transform subclasses.
+
+   :param filter_type: fILTER registration name.
+   :type filter_type: str
+   :param framework: support 4 framework including 'tensorflow', 'pytorch', 'mxnet', 'onnxrt'.
+   :type framework: str
+   :param cls: The class of register.
+   :type cls: class
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: Filter
+
+
+
+
+   The base class for transform.
+
+   __call__ method is needed when write user specific transform.
+
+

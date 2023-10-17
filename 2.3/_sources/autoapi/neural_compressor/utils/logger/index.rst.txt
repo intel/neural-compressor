@@ -1,0 +1,81 @@
+:py:mod:`neural_compressor.utils.logger`
+========================================
+
+.. py:module:: neural_compressor.utils.logger
+
+.. autoapi-nested-parse::
+
+   Logger: handles logging functionalities.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.logger.Logger
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.logger.log
+   neural_compressor.utils.logger.debug
+   neural_compressor.utils.logger.error
+   neural_compressor.utils.logger.fatal
+   neural_compressor.utils.logger.info
+   neural_compressor.utils.logger.warn
+   neural_compressor.utils.logger.warning
+
+
+
+.. py:class:: Logger
+
+
+
+
+   Logger class.
+
+
+.. py:function:: log(level, msg, *args, **kwargs)
+
+   Output log with the level as a parameter.
+
+
+.. py:function:: debug(msg, *args, **kwargs)
+
+   Output log with the debug level.
+
+
+.. py:function:: error(msg, *args, **kwargs)
+
+   Output log with the error level.
+
+
+.. py:function:: fatal(msg, *args, **kwargs)
+
+   Output log with the fatal level.
+
+
+.. py:function:: info(msg, *args, **kwargs)
+
+   Output log with the info level.
+
+
+.. py:function:: warn(msg, *args, **kwargs)
+
+   Output log with the warning level.
+
+
+.. py:function:: warning(msg, *args, **kwargs)
+
+   Output log with the warning level (Alias of the method warn).
+
+

@@ -1,0 +1,22 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.qdq`
+===============================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.qdq
+
+.. autoapi-nested-parse::
+
+   Tensorflow QDQ Graph Rewriters.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   insert_qdq_pattern/index.rst
+   merge_duplicated_qdq/index.rst
+   share_qdq_y_pattern/index.rst
+
+

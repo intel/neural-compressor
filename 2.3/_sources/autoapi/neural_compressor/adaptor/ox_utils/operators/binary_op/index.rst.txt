@@ -1,0 +1,59 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.binary_op`
+================================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.binary_op
+
+.. autoapi-nested-parse::
+
+   Binary operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.binary_op.BinaryOperator
+   neural_compressor.adaptor.ox_utils.operators.binary_op.BinaryDirect8BitOperator
+   neural_compressor.adaptor.ox_utils.operators.binary_op.QBinaryOperator
+   neural_compressor.adaptor.ox_utils.operators.binary_op.Float16BinaryOperator
+
+
+
+
+.. py:class:: BinaryOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Binary operator.
+
+
+.. py:class:: BinaryDirect8BitOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Binary operator.
+
+
+.. py:class:: QBinaryOperator(onnx_node, children, initializers)
+
+
+
+
+   QBinary Operator.
+
+
+.. py:class:: Float16BinaryOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Float16 Binary operator.
+
+

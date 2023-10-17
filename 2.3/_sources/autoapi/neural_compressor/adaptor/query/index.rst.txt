@@ -1,0 +1,29 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.query`
+=========================================
+
+.. py:module:: neural_compressor.adaptor.query
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.query.QueryBackendCapability
+
+
+
+
+.. py:class:: QueryBackendCapability
+
+
+   Base class that defines Query Interface.
+
+   Each adaption layer should implement the inherited class for specific backend on their own.
+
+

@@ -1,0 +1,24 @@
+:py:mod:`neural_compressor.experimental.nas`
+============================================
+
+.. py:module:: neural_compressor.experimental.nas
+
+.. autoapi-nested-parse::
+
+   NAS module.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   basic_nas/index.rst
+   dynas/index.rst
+   nas/index.rst
+   nas_utils/index.rst
+   search_algorithms/index.rst
+
+

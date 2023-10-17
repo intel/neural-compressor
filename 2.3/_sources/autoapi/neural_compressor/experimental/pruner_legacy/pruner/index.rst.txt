@@ -1,0 +1,56 @@
+:py:mod:`neural_compressor.experimental.pruner_legacy.pruner`
+=============================================================
+
+.. py:module:: neural_compressor.experimental.pruner_legacy.pruner
+
+.. autoapi-nested-parse::
+
+   Pattern lock pruner.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pruner_legacy.pruner.Pruner
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pruner_legacy.pruner.pruner_registry
+
+
+
+.. py:function:: pruner_registry(cls)
+
+   The class decorator used to register all Pruners subclasses.
+
+   :param cls: The class of register.
+   :type cls: class
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: Pruner(model, local_config, global_config)
+
+
+   The base clase of Pruner.
+
+   :param model: The original model (currently PyTorchModel instance).
+   :type model: object
+   :param local_config: configs specific for this pruning instance.
+   :type local_config: Conf
+   :param global_config: global configs which may be overwritten by local_config.
+   :type global_config: Conf
+
+

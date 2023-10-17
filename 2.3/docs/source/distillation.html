@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Distillation &mdash; Intel® Neural Compressor 2.3 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.3▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Distillation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/distillation.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="distillation">
+<h1>Distillation<a class="headerlink" href="#distillation" title="Permalink to this heading"></a></h1>
+<ol>
+<li><p><a class="reference external" href="#introduction">Introduction</a></p>
+<p>1.1. <a class="reference external" href="#knowledge-distillation">Knowledge Distillation</a></p>
+<p>1.2. <a class="reference external" href="#intermediate-layer-knowledge-distillation">Intermediate Layer Knowledge Distillation</a></p>
+<p>1.3. <a class="reference external" href="#self-distillation">Self Distillation</a></p>
+</li>
+<li><p><a class="reference external" href="#distillation-support-matrix">Distillation Support Matrix</a></p></li>
+<li><p><a class="reference external" href="#get-started-with-distillation-api">Get Started with Distillation API </a></p></li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>Distillation is one of popular approaches of network compression, which transfers knowledge from a large model to a smaller one without loss of validity. As smaller models are less expensive to evaluate, they can be deployed on less powerful hardware (such as a mobile device). Graph shown below is the workflow of the distillation, the teacher model will take the same input that feed into the student model to produce the output that contains knowledge of the teacher model to instruct the student model.
+<br></p>
+<img src="./imgs/Distillation_workflow.png" alt="Architecture" width=700 height=300><p>Intel® Neural Compressor supports Knowledge Distillation, Intermediate Layer Knowledge Distillation and Self Distillation algorithms.</p>
+<section id="knowledge-distillation">
+<h3>Knowledge Distillation<a class="headerlink" href="#knowledge-distillation" title="Permalink to this heading"></a></h3>
+<p>Knowledge distillation is proposed in <a class="reference external" href="https://arxiv.org/abs/1503.02531">Distilling the Knowledge in a Neural Network</a>. It leverages the logits (the input of softmax in the classification tasks) of teacher and student model to minimize the the difference between their predicted class distributions, this can be done by minimizing the below loss function.</p>
+<p>$$L_{KD} = D(z_t, z_s)$$</p>
+<p>Where $D$ is a distance measurement, e.g. Euclidean distance and Kullback–Leibler divergence, $z_t$ and $z_s$ are the logits of teacher and student model, or predicted distributions from softmax of the logits in case the distance is measured in terms of distribution.</p>
+</section>
+<section id="intermediate-layer-knowledge-distillation">
+<h3>Intermediate Layer Knowledge Distillation<a class="headerlink" href="#intermediate-layer-knowledge-distillation" title="Permalink to this heading"></a></h3>
+<p>There are more information contained in the teacher model beside its logits, for example, the output features of the teacher model’s intermediate layers often been used to guide the student model, as in <a class="reference external" href="https://arxiv.org/pdf/1908.09355">Patient Knowledge Distillation for BERT Model Compression</a> and <a class="reference external" href="https://arxiv.org/abs/2004.02984">MobileBERT: a Compact Task-Agnostic BERT for Resource-Limited Devices</a>. The general loss function for this approach can be summarized as follow.</p>
+<p>$$L_{KD} = \sum\limits_i D(T_t^{n_i}(F_t^{n_i}), T_s^{m_i}(F_s^{m_i}))$$</p>
+<p>Where $D$ is a distance measurement as before, $F_t^{n_i}$ the output feature of the $n_i$’s layer of the teacher model, $F_s^{m_i}$ the output feature of the $m_i$’s layer of the student model. Since the dimensions of $F_t^{n_i}$ and $F_s^{m_i}$ are usually different, the transformations $T_t^{n_i}$ and $T_s^{m_i}$ are needed to match dimensions of the two features. Specifically, the transformation can take the forms like identity, linear transformation, 1X1 convolution etc.</p>
+</section>
+<section id="self-distillation">
+<h3>Self Distillation<a class="headerlink" href="#self-distillation" title="Permalink to this heading"></a></h3>
+<p>Self-distillation ia a one-stage training method where the teacher model and student models can be trained together. It attaches several attention modules and shallow classifiers at different depths of neural networks and distills knowledge from the deepest classifier to the shallower classifiers. Different from the conventional knowledge distillation methods where the knowledge of the teacher model is transferred to another student model, self-distillation can be considered as knowledge transfer in the same model, from the deeper layers to the shallower layers.<br />The additional classifiers in self-distillation allow the neural network to work in a dynamic manner, which leads to a much higher acceleration.<br /><br></p>
+<img src="./imgs/self-distillation.png" alt="Architecture" width=800 height=350><p>Architecture from paper <a class="reference external" href="https://ieeexplore.ieee.org/document/9381661">Self-Distillation: Towards Efficient and Compact Neural Networks</a></p>
+</section>
+</section>
+<section id="distillation-support-matrix">
+<h2>Distillation Support Matrix<a class="headerlink" href="#distillation-support-matrix" title="Permalink to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Distillation Algorithm</th>
+<th style="text-align: center;">PyTorch</th>
+<th style="text-align: center;">TensorFlow</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Knowledge Distillation</td>
+<td style="text-align: center;">&#10004;</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>Intermediate Layer Knowledge Distillation</td>
+<td style="text-align: center;">&#10004;</td>
+<td style="text-align: center;">Will be supported</td>
+</tr>
+<tr>
+<td>Self Distillation</td>
+<td style="text-align: center;">&#10004;</td>
+<td style="text-align: center;">&#10006;</td>
+</tr>
+</tbody>
+</table></section>
+<section id="get-started-with-distillation-api">
+<h2>Get Started with Distillation API<a class="headerlink" href="#get-started-with-distillation-api" title="Permalink to this heading"></a></h2>
+<p>User can pass the customized training/evaluation functions to <code class="docutils literal notranslate"><span class="pre">Distillation</span></code> for flexible scenarios. In this case, distillation process can be done by pre-defined hooks in Neural Compressor. User needs to put those hooks inside the training function.</p>
+<p>Neural Compressor defines several hooks for user pass</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">on_train_begin</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">before</span> <span class="n">training</span> <span class="n">begins</span>
+<span class="n">on_after_compute_loss</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">student_output</span><span class="p">,</span> <span class="n">student_loss</span><span class="p">)</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">after</span> <span class="n">each</span> <span class="n">batch</span> <span class="n">inference</span> <span class="n">of</span> <span class="n">student</span> <span class="n">model</span>
+<span class="n">on_epoch_end</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">epoch</span> <span class="n">end</span>
+</pre></div>
+</div>
+<p>Following section shows how to use hooks in user pass-in training function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">training_func_for_nc</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataloader</span><span class="p">):</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_begin</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="o">......</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="o">......</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_after_compute_loss</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_before_optimizer_step</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">()</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">()</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
+
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>In this case, the launcher code for Knowledge Distillation is like the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">KnowledgeDistillationLossConfig</span>
+
+<span class="n">distil_loss_conf</span> <span class="o">=</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">()</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">teacher_model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">distil_loss_conf</span><span class="p">)</span>
+<span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">)</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">training_func_for_nc</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">eval_func</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For Intermediate Layer Knowledge Distillation or Self Distillation, the only difference to above launcher code is that <code class="docutils literal notranslate"><span class="pre">distil_loss_conf</span></code> should be set accordingly as shown below. More detailed settings can be found in this <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/distillation_for_quantization/fx/run_glue_no_trainer.py#L510">example</a> for Intermediate Layer Knowledge Distillation and this <a class="reference external" href="../../examples/pytorch/image_recognition/torchvision_models/self_distillation/eager/main.py#L344">example</a> for Self Distillation.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">IntermediateLayersKnowledgeDistillationLossConfig</span><span class="p">,</span>
+    <span class="n">SelfKnowledgeDistillationLossConfig</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># for Intermediate Layer Knowledge Distillation</span>
+<span class="n">distil_loss_conf</span> <span class="o">=</span> <span class="n">IntermediateLayersKnowledgeDistillationLossConfig</span><span class="p">(</span><span class="n">layer_mappings</span><span class="o">=</span><span class="n">layer_mappings</span><span class="p">)</span>
+
+<span class="c1"># for Self Distillation</span>
+<span class="n">distil_loss_conf</span> <span class="o">=</span> <span class="n">SelfKnowledgeDistillationLossConfig</span><span class="p">(</span><span class="n">layer_mappings</span><span class="o">=</span><span class="n">layer_mappings</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<p><a class="reference external" href="../../examples/README.html#distillation-1">Distillation PyTorch Examples</a>
+<br>
+<a class="reference external" href="../../examples/README.html#distillation">Distillation TensorFlow Examples</a>
+<br>
+<a class="reference external" href="./validated_model_list.html#validated-knowledge-distillation-examples">Distillation Examples Results</a></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fe66499c940> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_gelu`
+=============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_gelu
+
+.. autoapi-nested-parse::
+
+   Fuse small ops to Gelu Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_gelu.FuseGeluOptimizer
+
+
+
+
+.. py:class:: FuseGeluOptimizer(model)
+
+
+
+
+   Fuse Sqrt + RealDiv + Erf + AddV2 + Mul + Mul into Gelu op.
+
+

@@ -1,0 +1,43 @@
+:py:mod:`neural_compressor.compression.pruner.pruners.progressive`
+==================================================================
+
+.. py:module:: neural_compressor.compression.pruner.pruners.progressive
+
+.. autoapi-nested-parse::
+
+   Progressive pruner.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.pruners.progressive.PytorchProgressivePruner
+
+
+
+
+.. py:class:: PytorchProgressivePruner(config, modules)
+
+
+
+
+   Pruning Pruner.
+
+   A Pruner class derived from BasicPruner. In this pruner, mask interpolation will be applied.
+   Mask interpolation is a fine-grained improvement for NxM structured pruning by adding interval
+       masks between masks of two pruning steps.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: Inherit from parent class Pruner.
+
+      
+
+

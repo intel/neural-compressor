@@ -1,0 +1,81 @@
+:py:mod:`neural_compressor.experimental.pytorch_pruner.prune_utils`
+===================================================================
+
+.. py:module:: neural_compressor.experimental.pytorch_pruner.prune_utils
+
+.. autoapi-nested-parse::
+
+   Prune utils.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pytorch_pruner.prune_utils.check_config
+   neural_compressor.experimental.pytorch_pruner.prune_utils.reset_non_value_to_default
+   neural_compressor.experimental.pytorch_pruner.prune_utils.process_and_check_config
+   neural_compressor.experimental.pytorch_pruner.prune_utils.process_config
+   neural_compressor.experimental.pytorch_pruner.prune_utils.parse_to_prune
+   neural_compressor.experimental.pytorch_pruner.prune_utils.parse_not_to_prune
+
+
+
+.. py:function:: check_config(prune_config)
+
+   Functions that check key-value is valid to run Pruning object.
+
+   :param prune_config: A config dict object. Contains Pruning parameters and configurations.
+
+   :returns: None if everything is correct.
+
+   :raises AssertionError.:
+
+
+.. py:function:: reset_non_value_to_default(obj, key, default)
+
+   Functions that add up undefined configurations.
+
+   If some configurations are not defined in the configuration, set it to a default value.
+
+   :param obj: A dict{key: value}
+   :param key: A string. Key in obj.
+   :param default: When the key is not in obj, Add key: default item in original obj.
+
+
+.. py:function:: process_and_check_config(val)
+
+   Functions which converts a initial configuration object to a Pruning configuration.
+
+   Copy parameters and add some non-define parameters to a new Pruning configuration object.
+
+   :param val: A dict directly read from a config file.
+
+   :returns: A dict whose contents which are regularized for a Pruning object.
+
+
+.. py:function:: process_config(config)
+
+   Obtain a config dict object from a config file.
+
+   :param config: A string. The path to configuration file.
+
+   :returns: A config dict object.
+
+
+.. py:function:: parse_to_prune(model, config)
+
+   Keep target pruned layers.
+
+
+.. py:function:: parse_not_to_prune(modules, config)
+
+   Drop non pruned layers.
+
+

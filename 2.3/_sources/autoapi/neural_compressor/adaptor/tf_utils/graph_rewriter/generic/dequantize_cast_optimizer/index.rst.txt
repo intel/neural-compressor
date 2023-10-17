@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer`
+=============================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer
+
+.. autoapi-nested-parse::
+
+   Dequantize Cast Graph Rerewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer.DequantizeCastOptimizer
+
+
+
+
+.. py:class:: DequantizeCastOptimizer(model)
+
+
+
+
+   Remove the Cast OP and set Dequantize output to B16 if the Cast OP output is BF16.
+
+

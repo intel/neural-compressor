@@ -1,0 +1,61 @@
+:py:mod:`neural_compressor.compression.pruner.pruners.retrain_free`
+===================================================================
+
+.. py:module:: neural_compressor.compression.pruner.pruners.retrain_free
+
+.. autoapi-nested-parse::
+
+   Retrain free pruner.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.pruners.retrain_free.PytorchRetrainFreePruner
+
+
+
+
+.. py:class:: PytorchRetrainFreePruner(config, modules)
+
+
+
+
+   Pruning Pruner.
+   The retrain_free pruner_class is derived from BasePruner.
+   This pruner references the mask search and mask rearrangement strategies in fast retraining free.
+   RetrainFreePruner supports one-shot pruning (same effect as fast retraining free) and iterative pruning.
+   Please refer to A Fast Post-Training Pruning Framework for Transformers
+       (https://arxiv.org/abs/2204.09656)
+
+   1. Defines pruning functions called at step begin/end, before/after optimize and epoch begin/end.
+   2. Defines the pruning criterion and fixed weight parameters.
+   3. Obtain block masks and its grads.
+   4. Rearrange block masks.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: pattern
+
+      A Pattern object that defines pruning weights' arrangements within space.
+
+   .. attribute:: criterion
+
+      A Criterion Object that defines which weights are to be pruned
+
+   .. attribute:: scheduler
+
+      A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
+
+   .. attribute:: reg
+
+      A Reg object that defines regulization terms.
+
+

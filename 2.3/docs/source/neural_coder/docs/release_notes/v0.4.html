@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>v0.4 &mdash; Intel® Neural Compressor 2.3 documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.3▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">v0.4</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/docs/source/neural_coder/docs/release_notes/v0.4.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="v0-4">
+<h1>v0.4<a class="headerlink" href="#v0-4" title="Permalink to this heading"></a></h1>
+<section id="highlights">
+<h2>Highlights<a class="headerlink" href="#highlights" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Visual Studio Code extension</strong>: We are delighted to announce the release of Neural Coder’s <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=IntelNeuralCompressor.neural-coder-ext-vscode">Visual Studio Code extension</a>. VS Code programmers can enjoy one-click automatic enabling of Deep Learning optimization API and accelerate their Deep Learning models without manual coding.</p></li>
+<li><p><strong>HuggingFace Transformers</strong>:</p>
+<ul>
+<li><p>We supported <strong>all</strong> HuggingFace Transformers <a class="reference external" href="https://github.com/huggingface/transformers/tree/main/examples/pytorch">examples</a> that calls <code class="docutils literal notranslate"><span class="pre">Trainer</span></code> class, and validated over <strong>500</strong> models from HuggingFace Transformers <a class="reference external" href="https://huggingface.co/models">model hub</a>. The models are able to be accelerated automatically with Neural Coder with minimum loss of prediction accuracy.</p></li>
+<li><p>We enabled the support of <a class="reference external" href="https://huggingface.co/docs/optimum/intel/index">HuggingFace Optimum-Intel</a>. User scripts of HuggingFace Transformers models will by default be optimized with Optimum-Intel API to enjoy performance speed-up brought by INT8 quantization.</p></li>
+<li><p>We enabled the support of <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers">Intel® Extension for Transformers</a>, an innovative toolkit to accelerate Transformer-based models on Intel platforms. For more details, please refer to the updated <a class="reference external" href="../SupportMatrix.html">support matrix</a>.</p></li>
+</ul>
+</li>
+<li><p><strong>Support of BigDL Nano</strong>: We are delighted to announce the collaboration between Neural Coder and <a class="reference external" href="https://bigdl.readthedocs.io/en/latest/doc/Nano/index.html">BigDL Nano</a>. Users can now one-click enable BigDL Nano optimizations for PyTorch in Neural Coder. For detailed support matrix for BigDL Nano features, please refer to this <a class="reference external" href="../BigDLNanoSupport.html">guide</a>.</p></li>
+<li><p><strong>Amazon AWS SageMaker</strong>: We provided a user <a class="reference external" href="../AWSSageMakerSupport.html">tutorial</a> for installing Neural Coder’s JupyterLab extension in AWS SageMaker platform. Users are able to one-click install the extension in Amazon AWS SageMaker with Jupyter 3 and enjoy Neural Coder’s functionalities.</p></li>
+<li><p><strong>Python Launcher</strong>: We added the implementation of <a class="reference external" href="../PythonLauncher.html">Python Launcher</a> usage for Neural Coder, which will be one of the recommended user interfaces in the future as a replacement of Python API. Users can run the Python model code as it is with automatic enabling of Deep Learning optimizations by using Neural Coder’s inline Python Launcher design: <code class="docutils literal notranslate"><span class="pre">-m</span> <span class="pre">neural_coder</span></code>.</p></li>
+<li><p><strong>Device Detection</strong>: We enabled the capability of detecting running device and its ISA automatically and adjusting applied optimization features accordingly. For instance, when running Neural Coder on Intel GPU instead of Intel CPU, the PyTorch Mixed Precision optimization feature will adapt <code class="docutils literal notranslate"><span class="pre">xpu</span></code> instead of <code class="docutils literal notranslate"><span class="pre">cpu</span></code>, and <code class="docutils literal notranslate"><span class="pre">torch.half</span></code> instead of <code class="docutils literal notranslate"><span class="pre">torch.bfloat16</span></code>.</p></li>
+</ul>
+</section>
+<section id="others">
+<h2>Others<a class="headerlink" href="#others" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>INT8 Accuracy Evaluation</strong>: We enabled accuracy evaluation for INT8 quantizations in Neural Coder. Users are able to view the accuracy delta for each quantization optimization in Neural Coder’s auto-benchmark output log. The calculation is <code class="docutils literal notranslate"><span class="pre">acc_delta</span> <span class="pre">=</span> <span class="pre">(int8_acc</span> <span class="pre">-</span> <span class="pre">fp32_acc)/(fp32_acc)</span></code>.</p></li>
+<li><p><strong>Auto-quantize TensorFlow/Keras scripts</strong>: We enabled the support of auto-quantizing TensorFlow/Keras script-based models with Intel® Neural Compressor. The default quantization scheme will be applied. For more details, please refer to the updated <a class="reference external" href="../SupportMatrix.html">support matrix</a>.</p></li>
+<li><p><strong>Auto-quantize ONNX Runtime scripts</strong>: We enabled the support of auto-quantizing ONNX Runtime script-based models with Intel® Neural Compressor. We support <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/onnxrt#dynamic-quantization">dynamic quantization</a>, static quantization (<a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/onnxrt#tensor-oriented-qdq-format">QDQ</a>), and static quantization (<a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/onnxrt#operator-oriented-with-qlinearops">QLinearOps</a>). For more details, please refer to the updated <a class="reference external" href="../SupportMatrix.html">support matrix</a>.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fe667161520> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

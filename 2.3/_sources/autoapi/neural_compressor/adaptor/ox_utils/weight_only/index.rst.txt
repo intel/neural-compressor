@@ -1,0 +1,295 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.weight_only`
+========================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.weight_only
+
+.. autoapi-nested-parse::
+
+   WeightOnly for onnxrt adaptor.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.weight_only.check_op_support_status
+   neural_compressor.adaptor.ox_utils.weight_only.make_matmul_weight_only_node
+   neural_compressor.adaptor.ox_utils.weight_only.quant_tensor
+   neural_compressor.adaptor.ox_utils.weight_only.qdq_tensor
+   neural_compressor.adaptor.ox_utils.weight_only.pad_tensor
+   neural_compressor.adaptor.ox_utils.weight_only.rtn_quantize
+   neural_compressor.adaptor.ox_utils.weight_only.get_weight_scale
+   neural_compressor.adaptor.ox_utils.weight_only.apply_awq_scale
+   neural_compressor.adaptor.ox_utils.weight_only.apply_awq_clip
+   neural_compressor.adaptor.ox_utils.weight_only.prepare_inputs
+   neural_compressor.adaptor.ox_utils.weight_only.awq_quantize
+   neural_compressor.adaptor.ox_utils.weight_only.gptq
+   neural_compressor.adaptor.ox_utils.weight_only.gptq_quantize
+
+
+
+.. py:function:: check_op_support_status()
+
+   Check whether weight-only op is supported.
+
+
+.. py:function:: make_matmul_weight_only_node(node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point)
+
+   Build MatMulWithQuantWeight node.
+
+   :param node: original matmul node
+   :param weight_shape: original weight shape
+   :param num_bits: num_bits
+   :type num_bits: int
+   :param group_size: how many elements share one scale/zp
+   :type group_size: int
+   :param k_blocks: block number
+   :type k_blocks: int
+   :param q_weight: quantized weight
+   :type q_weight: array
+   :param scale: scale
+   :type scale: array
+   :param zero_point: zero point
+   :type zero_point: array
+
+   :returns: MatMulWithQuantWeight node
+             new_inits: initializers of the MatMulWithQuantWeight node
+   :rtype: matmul_weight_only_node
+
+
+.. py:function:: quant_tensor(data, num_bits=4, group_size=32, scheme='asym', dtype='int', ratio=1.0)
+
+   Quantize tensor per group.
+
+   :param data: input weight
+   :param num_bits: num_bits. Defaults to 4.
+   :type num_bits: int, optional
+   :param group_size: how many elements share one scale/zp. Defaults to 4.
+   :type group_size: int, optional
+   :param scheme: quantization scheme. Defaults to "asym".
+   :type scheme: str, optional
+   :param dtype: data type. Defaults to "int".
+   :type dtype: str, optional
+   :param ratio: percentile of clip. Defaults to 1.0.
+   :type ratio: float, optional
+
+   :returns: quantized weight
+             scale: scale
+             zero_point: zero point
+   :rtype: output
+
+
+.. py:function:: qdq_tensor(data, num_bits=4, group_size=32, scheme='asym', dtype='int', ratio=1.0)
+
+   Quant dequant tensor per group.
+
+   :param data: input weight
+   :param num_bits: num_bits. Defaults to 4.
+   :type num_bits: int, optional
+   :param group_size: how many elements share one scale/zp. Defaults to 4.
+   :type group_size: int, optional
+   :param scheme: quantization scheme. Defaults to "asym".
+   :type scheme: str, optional
+   :param dtype: data type. Defaults to "int".
+   :type dtype: str, optional
+   :param ratio: percentile of clip. Defaults to 1.0.
+   :type ratio: float, optional
+
+   :returns: quant-dequant weight
+   :rtype: output
+
+
+.. py:function:: pad_tensor(weight, group_size, k_blocks)
+
+   Pad tensor rowi so that it can be is divisible by group_size.
+
+   :param weight: weight
+   :type weight: array
+   :param group_size: how many elements share one scale/zp
+   :type group_size: int
+   :param k_blocks: the number of block
+   :type k_blocks: int
+
+   :returns: paded weight
+   :rtype: weight
+
+
+.. py:function:: rtn_quantize(model, weight_config={}, num_bits=4, group_size=32, scheme='asym', ratios={})
+
+   Quant the model with round to nearst method.
+
+   :param model: onnx model
+   :type model: ModelProto or ONNXModel
+   :param weight_config: quantization config
+                         For example,
+                         weight_config = {
+                             'fc2':
+                                 {
+                                     'bits': 4,
+                                     'group_size': 32,
+                                     'scheme': 'sym',
+                                     'algorithm': 'RTN'
+                                 }
+                         }
+   :type weight_config: dict
+   :param num_bits: num_bits. Default is 4.
+   :type num_bits: int, optional
+   :param group_size: how many elements share one scale/zp. Default is 32.
+   :type group_size: int, optional
+   :param scheme: sym or asym. Defaults to "asym".
+   :type scheme: str, optional
+   :param ratios: percentile of clip. Defaults to {}.
+   :type ratios: dict, optional
+
+   :returns: fake quantized ONNXModel
+   :rtype: model
+
+
+.. py:function:: get_weight_scale(weight, group_size)
+
+   Get the scale of weight.
+
+
+.. py:function:: apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, group_size, scheme)
+
+   Apply scale for salient weight.
+
+
+.. py:function:: apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, group_size, scheme)
+
+   Apply clip for weight by checking mse.
+
+
+.. py:function:: prepare_inputs(model, n_samples, dataloader)
+
+   Prepare inputs for weight only quantization.
+
+   :param model: onnx model
+   :type model: ModelProto or ONNXModel
+   :param n_samples: calibration sample number. -1 means all samples.
+   :type n_samples: int, optional
+   :param dataloader: dataloader for calibration.
+   :type dataloader: object
+
+   :returns: prepared inputs.
+             so: session options
+   :rtype: inputs
+
+
+.. py:function:: awq_quantize(model, dataloader, weight_config={}, num_bits=4, group_size=32, scheme='asym', n_samples=128, enable_auto_scale=True, enable_mse_search=True, n_blocks=5)
+
+   Quant the model with Activation-aware Weight quantization(AWQ) method.
+
+   :param model: onnx model
+   :type model: ModelProto or ONNXModel
+   :param dataloader: dataloader for calibration.
+   :type dataloader: object
+   :param weight_config: quantization config
+                         For example,
+                         weight_config = {
+                             'fc2':
+                                 {
+                                     'bits': 4,
+                                     'group_size': 32,
+                                     'scheme': 'sym',
+                                     'algorithm': 'AWQ'
+                                 }
+                         }
+   :type weight_config: dict
+   :param num_bits: num_bits. Default is 4.
+   :type num_bits: int, optional
+   :param group_size: how many elements share one scale/zp. Default is 32.
+   :type group_size: int, optional
+   :param scheme: sym or asym. Defaults to "asym".
+   :type scheme: str, optional
+   :param n_samples: calibration sample number.
+   :type n_samples: int, optional
+   :param enable_auto_scale: whether enable scale for salient weight. Defaults to True.
+   :type enable_auto_scale: bool, optional
+   :param enable_mse_search: whether enable clip for weight by checking mse. Defaults to True.
+   :type enable_mse_search: bool, optional
+   :param n_blocks: split model into block number to avoid OOM.
+   :type n_blocks: int, optional
+
+   :returns: fake quantized ONNXModel
+   :rtype: model
+
+
+.. py:function:: gptq(W, H, num_bits=4, group_size=32, scheme='asym', blocksize=128, percdamp=0.01, actorder=False, mse=False, perchannel=True)
+
+   Quant the weight with GPTQ method.
+
+   :param W: weight.
+   :type W: array
+   :param H: Hessian matrix.
+   :type H: array
+   :param num_bits: num_bits. Default is 4.
+   :type num_bits: int, optional
+   :param group_size: how many elements share one scale/zp. Default is 32.
+   :type group_size: int, optional
+   :param scheme: sym or asym. Defaults to "asym".
+   :type scheme: str, optional
+   :param blocksize: blocksize to quantize weight.
+   :type blocksize: int, optional
+   :param percdamp: percent of the average Hessian diagonal to use for dampening.
+   :type percdamp: float, optional
+   :param actorder: whether rearrange Hessian matrix considering the diag's value.
+   :type actorder: bool, optional
+   :param mse: whether get scale and zero point with mse error.
+   :type mse: bool, optional
+   :param perchannel: whether quantize weight per-channel.
+   :type perchannel: bool, optional
+
+   :returns: fake quantized weight
+   :rtype: Q
+
+
+.. py:function:: gptq_quantize(model, dataloader, weight_config={}, num_bits=4, group_size=32, scheme='asym', n_samples=128, percdamp=0.01, blocksize=128, actorder=False, mse=False, perchannel=True)
+
+   Quant the model with GPTQ method.
+
+   :param model: onnx model
+   :type model: ModelProto or ONNXModel
+   :param dataloader: dataloader for calibration.
+   :type dataloader: object
+   :param weight_config: quantization config
+                         For example,
+                         weight_config = {
+                             'fc2':
+                                 {
+                                     'bits': 4,
+                                     'group_size': 32,
+                                     'scheme': 'sym',
+                                     'algorithm': 'GPTQ'
+                                 }
+                         }
+   :type weight_config: dict
+   :param num_bits: num_bits. Default is 4.
+   :type num_bits: int, optional
+   :param group_size: how many elements share one scale/zp. Default is 32.
+   :type group_size: int, optional
+   :param scheme: sym or asym. Defaults to "asym".
+   :type scheme: str, optional
+   :param n_samples: calibration sample number.
+   :type n_samples: int, optional
+   :param percdamp: percent of the average Hessian diagonal to use for dampening.
+   :type percdamp: float, optional
+   :param blocksize: blocksize to quantize weight.
+   :type blocksize: int, optional
+   :param actorder: whether rearrange Hessian matrix considering the diag's value.
+   :type actorder: bool, optional
+   :param mse: whether get scale and zero point with mse error.
+   :type mse: bool, optional
+   :param perchannel: whether quantize weight per-channel.
+   :type perchannel: bool, optional
+
+   :returns: fake quantized ONNXModel
+   :rtype: model
+
+

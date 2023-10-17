@@ -1,0 +1,32 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.mxnet`
+=========================================
+
+.. py:module:: neural_compressor.adaptor.mxnet
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.mxnet.MxNetAdaptor
+
+
+
+
+.. py:class:: MxNetAdaptor(framework_specific_info)
+
+
+
+
+   The MXNet adaptor layer, do MXNet quantization, calibration, inspect layer tensors.
+
+   :param framework_specific_info: framework specific configuration for quantization.
+   :type framework_specific_info: dict
+
+

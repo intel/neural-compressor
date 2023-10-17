@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.direct_q8`
+================================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.direct_q8
+
+.. autoapi-nested-parse::
+
+   Direct8Bit Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.direct_q8.Direct8BitOperator
+   neural_compressor.adaptor.ox_utils.operators.direct_q8.QDirectOperator
+
+
+
+
+.. py:class:: Direct8BitOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Direct8Bit Operator.
+
+
+.. py:class:: QDirectOperator(onnx_node, children, initializers)
+
+
+
+
+   QDirect Operator.
+
+

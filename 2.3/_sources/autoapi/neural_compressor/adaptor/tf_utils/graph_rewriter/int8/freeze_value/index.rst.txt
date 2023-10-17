@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value`
+=============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value
+
+.. autoapi-nested-parse::
+
+   Freeze value with calibration Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value.FreezeValueTransformer
+
+
+
+
+.. py:class:: FreezeValueTransformer(model, max_min_data, postfix, tensor_data=None, th=1, device='gpu', itex_mode=False)
+
+
+
+
+   Freeze Value with calibration.
+
+

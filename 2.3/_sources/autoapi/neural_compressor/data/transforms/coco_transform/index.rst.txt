@@ -1,0 +1,29 @@
+:orphan:
+
+:py:mod:`neural_compressor.data.transforms.coco_transform`
+==========================================================
+
+.. py:module:: neural_compressor.data.transforms.coco_transform
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.transforms.coco_transform.ParseDecodeCocoTransform
+
+
+
+
+.. py:class:: ParseDecodeCocoTransform
+
+
+
+
+   Coco decoding will be performed automatically from Neural Compressor v1.4.
+
+

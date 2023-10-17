@@ -1,0 +1,77 @@
+:py:mod:`neural_compressor.experimental.pruning_recipes.patterns.tile_pattern`
+==============================================================================
+
+.. py:module:: neural_compressor.experimental.pruning_recipes.patterns.tile_pattern
+
+.. autoapi-nested-parse::
+
+   Tile pattern classes.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pruning_recipes.patterns.tile_pattern.TilePatternBase
+   neural_compressor.experimental.pruning_recipes.patterns.tile_pattern.TilePattern_1x1
+   neural_compressor.experimental.pruning_recipes.patterns.tile_pattern.TilePattern_2x2
+   neural_compressor.experimental.pruning_recipes.patterns.tile_pattern.TilePattern_1x16
+   neural_compressor.experimental.pruning_recipes.patterns.tile_pattern.TilePattern_4x1
+   neural_compressor.experimental.pruning_recipes.patterns.tile_pattern.TilePattern_1x2
+
+
+
+
+.. py:class:: TilePatternBase(mask_shape)
+
+
+
+
+   Parent class for all NxM tile patterns.
+
+
+.. py:class:: TilePattern_1x1
+
+
+
+
+   1x1 tile pattern (unstructured).
+
+
+.. py:class:: TilePattern_2x2
+
+
+
+
+   2x2 tile pattern (unstructured).
+
+
+.. py:class:: TilePattern_1x16
+
+
+
+
+   1x16 tile pattern (unstructured).
+
+
+.. py:class:: TilePattern_4x1
+
+
+
+
+   4x1 tile pattern (unstructured).
+
+
+.. py:class:: TilePattern_1x2
+
+
+
+
+   1x2 tile pattern (unstructured).
+
+

@@ -1,0 +1,73 @@
+:orphan:
+
+:py:mod:`neural_compressor.conf.dotdict`
+========================================
+
+.. py:module:: neural_compressor.conf.dotdict
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.conf.dotdict.DotDict
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.conf.dotdict.deep_get
+   neural_compressor.conf.dotdict.deep_set
+
+
+
+.. py:function:: deep_get(dictionary, keys, default=None)
+
+   Get the dot key's item in nested dict
+      eg person = {'person':{'name':{'first':'John'}}}
+      deep_get(person, "person.name.first") will output 'John'.
+
+   :param dictionary: The dict object to get keys
+   :type dictionary: dict
+   :param keys: The deep keys
+   :type keys: dict
+   :param default: The return item if key not exists
+   :type default: object
+
+   :returns: the item of the deep dot keys
+   :rtype: item
+
+
+.. py:function:: deep_set(dictionary, keys, value)
+
+   Set the dot key's item in nested dict
+      eg person = {'person':{'name':{'first':'John'}}}
+      deep_set(person, "person.sex", 'male') will output
+      {'person': {'name': {'first': 'John'}, 'sex': 'male'}}
+
+   :param dictionary: The dict object to get keys
+   :type dictionary: dict
+   :param keys: The deep keys
+   :type keys: dict
+   :param value: The value of the setting key
+   :type value: object
+
+
+.. py:class:: DotDict(value=None)
+
+
+
+
+   Access yaml using attributes instead of using the dictionary notation.
+
+   :param value: The dict object to access.
+   :type value: dict
+
+

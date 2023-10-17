@@ -1,0 +1,39 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base`
+===============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base
+
+.. autoapi-nested-parse::
+
+   QuantizeGraph Base Class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase
+   neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase
+
+
+
+
+.. py:class:: QuantizeGraphBase(output_node_names)
+
+
+   This is the base class for quantize graph.
+
+
+.. py:class:: QuantizeNodeBase(**kwargs)
+
+
+   This is the base class for nodes fusion.
+
+   :param object {[type]} -- [description]:
+
+

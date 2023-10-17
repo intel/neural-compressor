@@ -1,0 +1,59 @@
+:py:mod:`neural_compressor.model.torch_model`
+=============================================
+
+.. py:module:: neural_compressor.model.torch_model
+
+.. autoapi-nested-parse::
+
+   Class for PyTorch model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.model.torch_model.PyTorchBaseModel
+   neural_compressor.model.torch_model.PyTorchModel
+   neural_compressor.model.torch_model.PyTorchFXModel
+   neural_compressor.model.torch_model.IPEXModel
+
+
+
+
+.. py:class:: PyTorchBaseModel(model, **kwargs)
+
+
+
+
+   Build PyTorch base model.
+
+
+.. py:class:: PyTorchModel(model, **kwargs)
+
+
+
+
+   Build PyTorchModel object.
+
+
+.. py:class:: PyTorchFXModel(model, **kwargs)
+
+
+
+
+   Build PyTorchFXModel object.
+
+
+.. py:class:: IPEXModel(model, **kwargs)
+
+
+
+
+   Build IPEXModel object.
+
+

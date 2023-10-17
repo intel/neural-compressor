@@ -1,0 +1,19 @@
+:orphan:
+
+:py:mod:`neural_compressor.profiling.parser`
+============================================
+
+.. py:module:: neural_compressor.profiling.parser
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   factory/index.rst
+   parser/index.rst
+   result/index.rst
+
+

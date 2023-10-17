@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul`
+=================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul
+
+.. autoapi-nested-parse::
+
+   Quantize MatMul.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul
+
+
+
+
+.. py:class:: FuseNodeStartWithMatmul(**kwargs)
+
+
+
+
+   Quantize MatMul and apply the fusion.
+
+

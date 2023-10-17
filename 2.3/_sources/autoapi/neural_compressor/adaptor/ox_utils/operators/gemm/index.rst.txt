@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.gemm`
+===========================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.gemm
+
+.. autoapi-nested-parse::
+
+   Gemm Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.gemm.GemmOperator
+   neural_compressor.adaptor.ox_utils.operators.gemm.QGemmOperator
+
+
+
+
+.. py:class:: GemmOperator(onnx_quantizer, onnx_node)
+
+
+
+
+   Gemm Operator.
+
+
+.. py:class:: QGemmOperator(onnx_node, children, initializers)
+
+
+
+
+   QGemm Operator.
+
+

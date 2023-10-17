@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.experimental.strategy.utils.tuning_structs`
+======================================================================
+
+.. py:module:: neural_compressor.experimental.strategy.utils.tuning_structs
+
+.. autoapi-nested-parse::
+
+   Tuning structure.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.strategy.utils.tuning_structs.OpTuningConfig
+
+
+
+
+.. py:class:: OpTuningConfig(op_name, op_type, op_quant_mode, tuning_space, kwargs={})
+
+
+   Op tuning config.
+
+

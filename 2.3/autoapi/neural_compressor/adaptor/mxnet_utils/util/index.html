@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.adaptor.mxnet_utils.util &mdash; Intel® Neural Compressor 2.3 documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.3▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.mxnet_utils.util</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/adaptor/mxnet_utils/util/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.adaptor.mxnet_utils.util">
+<span id="neural-compressor-adaptor-mxnet-utils-util"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.mxnet_utils.util" title="neural_compressor.adaptor.mxnet_utils.util"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.mxnet_utils.util</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.mxnet_utils.util" title="Permalink to this heading"></a></h1>
+<p>Mxnet util module.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.OpType" title="neural_compressor.adaptor.mxnet_utils.util.OpType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OpType</span></code></a></p></td>
+<td><p>Enum op types.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.DataLoaderWrap" title="neural_compressor.adaptor.mxnet_utils.util.DataLoaderWrap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DataLoaderWrap</span></code></a></p></td>
+<td><p>DataLoader Wrap.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.DataIterLoader" title="neural_compressor.adaptor.mxnet_utils.util.DataIterLoader"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DataIterLoader</span></code></a></p></td>
+<td><p>DataIterLoader.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase" title="neural_compressor.adaptor.mxnet_utils.util.CollectorBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CollectorBase</span></code></a></p></td>
+<td><p>Collector Base class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.CalibCollector" title="neural_compressor.adaptor.mxnet_utils.util.CalibCollector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CalibCollector</span></code></a></p></td>
+<td><p>Collect the calibration thresholds depending on the algorithm set.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.TensorCollector" title="neural_compressor.adaptor.mxnet_utils.util.TensorCollector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorCollector</span></code></a></p></td>
+<td><p>Tensors collector.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.NameCollector" title="neural_compressor.adaptor.mxnet_utils.util.NameCollector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NameCollector</span></code></a></p></td>
+<td><p>Name collector.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.CalibData" title="neural_compressor.adaptor.mxnet_utils.util.CalibData"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CalibData</span></code></a></p></td>
+<td><p>Calibration data class.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.isiterable" title="neural_compressor.adaptor.mxnet_utils.util.isiterable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isiterable</span></code></a>(→ bool)</p></td>
+<td><p>Checks whether object is iterable.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.ensure_list" title="neural_compressor.adaptor.mxnet_utils.util.ensure_list"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ensure_list</span></code></a>(x)</p></td>
+<td><p>Ensures that object is a list.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.check_mx_version" title="neural_compressor.adaptor.mxnet_utils.util.check_mx_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_mx_version</span></code></a>(version)</p></td>
+<td><p>Checks MXNet version.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.combine_capabilities" title="neural_compressor.adaptor.mxnet_utils.util.combine_capabilities"><code class="xref py py-obj docutils literal notranslate"><span class="pre">combine_capabilities</span></code></a>(current, new)</p></td>
+<td><p>Combine capabilities.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.make_nc_model" title="neural_compressor.adaptor.mxnet_utils.util.make_nc_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_nc_model</span></code></a>(target, sym_model, ctx, input_desc)</p></td>
+<td><p>Converts a symbolic model to an Neural Compressor model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.fuse" title="neural_compressor.adaptor.mxnet_utils.util.fuse"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fuse</span></code></a>(sym_model, ctx)</p></td>
+<td><p>Fuse the supplied model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.get_framework_name" title="neural_compressor.adaptor.mxnet_utils.util.get_framework_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_framework_name</span></code></a>(ctx)</p></td>
+<td><p>Get the framework name by version.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.prepare_model_data" title="neural_compressor.adaptor.mxnet_utils.util.prepare_model_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_model_data</span></code></a>(nc_model, ctx, data_x)</p></td>
+<td><p>Prepares sym_model and dataloader needed for quantization, calibration or running.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.prepare_model" title="neural_compressor.adaptor.mxnet_utils.util.prepare_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_model</span></code></a>(nc_model, ctx, input_desc)</p></td>
+<td><p>Prepare model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.create_data_example" title="neural_compressor.adaptor.mxnet_utils.util.create_data_example"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_data_example</span></code></a>(ctx, input_desc)</p></td>
+<td><p>Create data example by mxnet input description and ctx.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.prepare_dataloader" title="neural_compressor.adaptor.mxnet_utils.util.prepare_dataloader"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_dataloader</span></code></a>(nc_model, ctx, data_x)</p></td>
+<td><p>Prepare dataloader.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.ndarray_to_device" title="neural_compressor.adaptor.mxnet_utils.util.ndarray_to_device"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ndarray_to_device</span></code></a>(ndarray, device)</p></td>
+<td><p>Ndarray to device.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.is_model_quantized" title="neural_compressor.adaptor.mxnet_utils.util.is_model_quantized"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_model_quantized</span></code></a>(sym_model)</p></td>
+<td><p>Checks whether the model is quantized.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.query_quantizable_nodes" title="neural_compressor.adaptor.mxnet_utils.util.query_quantizable_nodes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">query_quantizable_nodes</span></code></a>(sym_model, ctx, dataloader)</p></td>
+<td><p>Query quantizable nodes of the given model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.quantize_sym_model" title="neural_compressor.adaptor.mxnet_utils.util.quantize_sym_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_sym_model</span></code></a>(sym_model, ctx, qconfig)</p></td>
+<td><p>Quantizes the symbolic model according to the configuration.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.run_forward" title="neural_compressor.adaptor.mxnet_utils.util.run_forward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_forward</span></code></a>(sym_model, ctx, dataloader, b_filter[, ...])</p></td>
+<td><p>Run forward propagation on the model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.make_symbol_block" title="neural_compressor.adaptor.mxnet_utils.util.make_symbol_block"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_symbol_block</span></code></a>(sym_model, ctx, input_desc)</p></td>
+<td><p>Convert a symbol model to gluon SymbolBlock.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.make_module" title="neural_compressor.adaptor.mxnet_utils.util.make_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_module</span></code></a>(sym_model, ctx, input_desc)</p></td>
+<td><p>Convert a symbol model to Module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.parse_tune_config" title="neural_compressor.adaptor.mxnet_utils.util.parse_tune_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_tune_config</span></code></a>(tune_cfg, quantizable_nodes)</p></td>
+<td><p>Convert the strategy config to MXNet quantization config.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.distribute_calib_tensors" title="neural_compressor.adaptor.mxnet_utils.util.distribute_calib_tensors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distribute_calib_tensors</span></code></a>(calib_tensors, calib_cfg, ...)</p></td>
+<td><p>Distributes the tensors for calibration, depending on the algorithm set in the configuration of their nodes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.calib_model" title="neural_compressor.adaptor.mxnet_utils.util.calib_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calib_model</span></code></a>(qsym_model, calib_data, calib_cfg)</p></td>
+<td><p>Calibrate the quantized symbol model using data gathered by the collector.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.amp_convert" title="neural_compressor.adaptor.mxnet_utils.util.amp_convert"><code class="xref py py-obj docutils literal notranslate"><span class="pre">amp_convert</span></code></a>(sym_model, input_desc, amp_cfg)</p></td>
+<td><p>Convert model to support amp.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.OpType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">OpType</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.OpType" title="Permalink to this definition"></a></dt>
+<dd><p>Enum op types.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.isiterable">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">isiterable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.isiterable" title="Permalink to this definition"></a></dt>
+<dd><p>Checks whether object is iterable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> – object to check.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if object is iterable, else False.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>boolean</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.ensure_list">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">ensure_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.ensure_list" title="Permalink to this definition"></a></dt>
+<dd><p>Ensures that object is a list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> – input.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>x if x is list, else [x].</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.check_mx_version">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">check_mx_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.check_mx_version" title="Permalink to this definition"></a></dt>
+<dd><p>Checks MXNet version.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>version</strong> (<em>str</em>) – version to check.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if mx.__version__ &gt;= version, else False.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>boolean</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.combine_capabilities">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">combine_capabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.combine_capabilities" title="Permalink to this definition"></a></dt>
+<dd><p>Combine capabilities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>current</strong> (<em>dict</em>) – current capabilities.</p></li>
+<li><p><strong>new</strong> (<em>dict</em>) – new capabilities.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>contains all capabilities.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.make_nc_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">make_nc_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sym_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_desc</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.make_nc_model" title="Permalink to this definition"></a></dt>
+<dd><p>Converts a symbolic model to an Neural Compressor model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target</strong> (<em>object</em>) – target model type to return.</p></li>
+<li><p><strong>sym_model</strong> (<em>tuple</em>) – symbol model (symnet, args, auxs).</p></li>
+<li><p><strong>input_desc</strong> (<em>list</em>) – model input data description.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>converted neural_compressor model</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>NCModel</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.fuse">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">fuse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sym_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.fuse" title="Permalink to this definition"></a></dt>
+<dd><p>Fuse the supplied model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sym_model</strong> (<em>tuple</em>) – symbol model (symnet, args, auxs).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>fused symbol model (symnet, args, auxs).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.get_framework_name">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_framework_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.get_framework_name" title="Permalink to this definition"></a></dt>
+<dd><p>Get the framework name by version.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>object</em>) – mxnet context object.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>framework name.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.prepare_model_data">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">prepare_model_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nc_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_x</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.prepare_model_data" title="Permalink to this definition"></a></dt>
+<dd><p>Prepares sym_model and dataloader needed for quantization, calibration or running.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nc_model</strong> (<em>object</em>) – model to prepare.</p></li>
+<li><p><strong>data_x</strong> (<em>object</em>) – data iterator/loader to prepare.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>symbol model (symnet, args, auxs) and DataLoaderWrap.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.prepare_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">prepare_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nc_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_desc</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.prepare_model" title="Permalink to this definition"></a></dt>
+<dd><p>Prepare model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nc_model</strong> (<em>object</em>) – model to prepare.</p></li>
+<li><p><strong>ctx</strong> (<em>object</em>) – mxnet context object.</p></li>
+<li><p><strong>input_desc</strong> (<em>list</em>) – input list of mxnet data types.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>mxnet model (symnet, args, auxs).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.create_data_example">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">create_data_example</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_desc</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.create_data_example" title="Permalink to this definition"></a></dt>
+<dd><p>Create data example by mxnet input description and ctx.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>object</em>) – mxnet context object.</p></li>
+<li><p><strong>input_desc</strong> (<em>list</em>) – input list of mxnet data types.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>data example.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.prepare_dataloader">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">prepare_dataloader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nc_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_x</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.prepare_dataloader" title="Permalink to this definition"></a></dt>
+<dd><p>Prepare dataloader.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nc_model</strong> (<em>object</em>) – model to prepare.</p></li>
+<li><p><strong>ctx</strong> (<em>object</em>) – mxnet context object.</p></li>
+<li><p><strong>data_x</strong> (<em>object</em>) – mxnet io iterable object or dataloader object.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>dataloader.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.ndarray_to_device">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">ndarray_to_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.ndarray_to_device" title="Permalink to this definition"></a></dt>
+<dd><p>Ndarray to device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ndarray</strong> (<em>ndarray</em>) – model to prepare.</p></li>
+<li><p><strong>device</strong> (<em>object</em>) – mxnet device object.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>ndarray on the device.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.is_model_quantized">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">is_model_quantized</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sym_model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.is_model_quantized" title="Permalink to this definition"></a></dt>
+<dd><p>Checks whether the model is quantized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sym_model</strong> (<em>tuple</em>) – symbol model (symnet, args, auxs).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if model is quantized, else False.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>boolean</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.query_quantizable_nodes">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">query_quantizable_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sym_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.query_quantizable_nodes" title="Permalink to this definition"></a></dt>
+<dd><p>Query quantizable nodes of the given model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sym_model</strong> (<em>tuple</em>) – symbol model (symnet, args, auxs) to query.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>quantizable nodes of the given model.
+dict: tensor to node mapping.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.quantize_sym_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">quantize_sym_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sym_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qconfig</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.quantize_sym_model" title="Permalink to this definition"></a></dt>
+<dd><p>Quantizes the symbolic model according to the configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sym_model</strong> (<em>tuple</em>) – symbol model (symnet, args, auxs).</p></li>
+<li><p><strong>qconfig</strong> (<em>dict</em>) – quantization configuration.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Symbol model (symnet, args, auxs) and list of tensors for calibration.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.run_forward">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">run_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sym_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_batch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_batch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.run_forward" title="Permalink to this definition"></a></dt>
+<dd><p>Run forward propagation on the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sym_model</strong> (<em>tuple</em>) – symbol model (symnet, args, auxs).</p></li>
+<li><p><strong>dataloader</strong> (<a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.DataLoaderWrap" title="neural_compressor.adaptor.mxnet_utils.util.DataLoaderWrap"><em>DataLoaderWrap</em></a>) – data loader.</p></li>
+<li><p><strong>b_filter</strong> (<em>generator</em>) – filter on which batches to run inference on.</p></li>
+<li><p><strong>collector</strong> (<em>object</em>) – collects information during inference.</p></li>
+<li><p><strong>pre_batch</strong> – function to call prior to batch inference.</p></li>
+<li><p><strong>post_batch</strong> – function to call after batch inference.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>batch count.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.make_symbol_block">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">make_symbol_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sym_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_desc</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.make_symbol_block" title="Permalink to this definition"></a></dt>
+<dd><p>Convert a symbol model to gluon SymbolBlock.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sym_model</strong> (<em>tuple</em>) – symbol model (symnet, args, auxs).</p></li>
+<li><p><strong>input_desc</strong> (<em>list</em>) – model input data description.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>SymbolBlock model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>mx.gluon.SymbolBlock</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.make_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">make_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sym_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_desc</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.make_module" title="Permalink to this definition"></a></dt>
+<dd><p>Convert a symbol model to Module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sym_model</strong> (<em>tuple</em>) – symbol model (symnet, args, auxs).</p></li>
+<li><p><strong>input_desc</strong> (<em>list</em>) – model input data description.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Module model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>mx.module.Module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.parse_tune_config">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">parse_tune_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantizable_nodes</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.parse_tune_config" title="Permalink to this definition"></a></dt>
+<dd><p>Convert the strategy config to MXNet quantization config.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tune_cfg</strong> (<em>dict</em>) – tune config from neural_compressor strategy.</p></li>
+<li><p><strong>quantizable_nodes</strong> (<em>list</em>) – quantizable nodes in the model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>quantization configuration.
+dict: calibration configuration.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.distribute_calib_tensors">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">distribute_calib_tensors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calib_tensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_to_node</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.distribute_calib_tensors" title="Permalink to this definition"></a></dt>
+<dd><p>Distributes the tensors for calibration, depending on the algorithm set in the configuration of their nodes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>calib_tensors</strong> – tensors to distribute.</p></li>
+<li><p><strong>calib_cfg</strong> (<em>dict</em>) – calibration configuration.</p></li>
+<li><p><strong>tensor_to_node</strong> (<em>dict</em>) – tensor to node mapping.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>kl tensors and minmax tensors.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.calib_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">calib_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qsym_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_cfg</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.calib_model" title="Permalink to this definition"></a></dt>
+<dd><p>Calibrate the quantized symbol model using data gathered by the collector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qsym_model</strong> (<em>tuple</em>) – quantized symbol model (symnet, args, auxs).</p></li>
+<li><p><strong>calib_data</strong> (<a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.CalibData" title="neural_compressor.adaptor.mxnet_utils.util.CalibData"><em>CalibData</em></a>) – data needed for calibration (thresholds).</p></li>
+<li><p><strong>calib_cfg</strong> (<em>dict</em>) – calibration configuration.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>quantized calibrated symbol model (symnet, args, auxs).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.amp_convert">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">amp_convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sym_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_desc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_cfg</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.amp_convert" title="Permalink to this definition"></a></dt>
+<dd><p>Convert model to support amp.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.DataLoaderWrap">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">DataLoaderWrap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_desc</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.DataLoaderWrap" title="Permalink to this definition"></a></dt>
+<dd><p>DataLoader Wrap.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.DataIterLoader">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">DataIterLoader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_iter</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.DataIterLoader" title="Permalink to this definition"></a></dt>
+<dd><p>DataIterLoader.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CollectorBase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">CollectorBase</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase" title="Permalink to this definition"></a></dt>
+<dd><p>Collector Base class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CalibCollector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">CalibCollector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_tensors_kl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_tensors_minmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8001</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CalibCollector" title="Permalink to this definition"></a></dt>
+<dd><p>Collect the calibration thresholds depending on the algorithm set.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.TensorCollector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">TensorCollector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qtensor_to_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_to_node</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.TensorCollector" title="Permalink to this definition"></a></dt>
+<dd><p>Tensors collector.</p>
+<p>Builds up qtensor_to_tensor mapping.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.NameCollector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">NameCollector</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.NameCollector" title="Permalink to this definition"></a></dt>
+<dd><p>Name collector.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CalibData">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">CalibData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_kl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_minmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensors_kl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensors_minmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/mxnet_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CalibData" title="Permalink to this definition"></a></dt>
+<dd><p>Calibration data class.</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fe6606382e0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

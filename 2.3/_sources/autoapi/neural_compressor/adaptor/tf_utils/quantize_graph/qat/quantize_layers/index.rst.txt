@@ -1,0 +1,23 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers`
+===============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers
+
+.. autoapi-nested-parse::
+
+   Tensorflow QAT Graph Quantize Layers.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   optimize_layer/index.rst
+   quantize_layer_add/index.rst
+   quantize_layer_base/index.rst
+   quantize_layer_bn/index.rst
+
+

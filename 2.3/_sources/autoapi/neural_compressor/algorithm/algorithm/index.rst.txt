@@ -1,0 +1,73 @@
+:py:mod:`neural_compressor.algorithm.algorithm`
+===============================================
+
+.. py:module:: neural_compressor.algorithm.algorithm
+
+.. autoapi-nested-parse::
+
+   Register algorithms.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.algorithm.algorithm.ALGORITHMS
+   neural_compressor.algorithm.algorithm.AlgorithmScheduler
+   neural_compressor.algorithm.algorithm.Algorithm
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.algorithm.algorithm.algorithm_registry
+
+
+
+.. py:function:: algorithm_registry(algorithm_type, location)
+
+   Decorate and register all Algorithm subclasses.
+
+   :param cls: The class of register.
+   :type cls: class
+   :param algorithm_type: The algorithm registration name
+   :type algorithm_type: str
+   :param location: The location to call algorithms
+   :type location: str
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: ALGORITHMS
+
+
+
+
+   Build a dict for registered algorithms.
+
+
+.. py:class:: AlgorithmScheduler(conf)
+
+
+
+
+   Control the Algorithm in different phase.
+
+
+.. py:class:: Algorithm
+
+
+
+
+   The base class of algorithm.
+
+

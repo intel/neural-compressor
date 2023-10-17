@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.strategy.random`
+===========================================
+
+.. py:module:: neural_compressor.strategy.random
+
+.. autoapi-nested-parse::
+
+   The random tuning strategy.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.random.RandomTuneStrategy
+
+
+
+
+.. py:class:: RandomTuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, resume=None, q_hooks=None)
+
+
+
+
+   The random tuning strategy.
+
+

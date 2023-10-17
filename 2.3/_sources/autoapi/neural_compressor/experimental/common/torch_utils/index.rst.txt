@@ -1,0 +1,37 @@
+:py:mod:`neural_compressor.experimental.common.torch_utils`
+===========================================================
+
+.. py:module:: neural_compressor.experimental.common.torch_utils
+
+.. autoapi-nested-parse::
+
+   This is an utility file for PyTorch distillation.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.common.torch_utils.record_output
+   neural_compressor.experimental.common.torch_utils.get_activation
+
+
+
+.. py:function:: record_output(output, name, output_process, student=False)
+
+   Record layers output.
+
+   It is a help function.
+
+
+.. py:function:: get_activation(name, output_process='', student=False)
+
+   Get a hook for getting activation.
+
+

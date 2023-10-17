@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.quantization &mdash; Intel® Neural Compressor 2.3 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../versions.html">2.3▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.quantization</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/autoapi/neural_compressor/quantization/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.quantization">
+<span id="neural-compressor-quantization"></span><h1><a class="reference internal" href="#module-neural_compressor.quantization" title="neural_compressor.quantization"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.quantization</span></code></a><a class="headerlink" href="#module-neural_compressor.quantization" title="Permalink to this heading"></a></h1>
+<p>Neural Compressor Quantization API.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.quantization.fit" title="neural_compressor.quantization.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(model, conf[, calib_dataloader, calib_func, ...])</p></td>
+<td><p>Quantize the model with a given configure.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.quantization.fit">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.quantization.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/quantization.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.quantization.fit" title="Permalink to this definition"></a></dt>
+<dd><p>Quantize the model with a given configure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – For Tensorflow model, it could be a path
+to frozen pb,loaded graph_def object or
+a path to ckpt/savedmodel folder.
+For PyTorch model, it’s torch.nn.model
+instance.
+For MXNet model, it’s mxnet.symbol.Symbol
+or gluon.HybirdBlock instance.</p></li>
+<li><p><strong>conf</strong> (<a class="reference internal" href="../config/index.html#neural_compressor.config.PostTrainingQuantConfig" title="neural_compressor.config.PostTrainingQuantConfig"><em>PostTrainingQuantConfig</em></a>) – The class of PostTrainingQuantConfig containing accuracy goal,
+tuning objective and preferred calibration &amp;
+quantization tuning space etc.</p></li>
+<li><p><strong>calib_dataloader</strong> (<em>generator</em>) – Data loader for calibration, mandatory for
+post-training quantization. It is iterable
+and should yield a tuple (input, label) for
+calibration dataset containing label,
+or yield (input, _) for label-free calibration
+dataset. The input could be a object, list,
+tuple or dict, depending on user implementation,
+as well as it can be taken as model input.</p></li>
+<li><p><strong>calib_func</strong> (<em>function</em><em>, </em><em>optional</em>) – Calibration function for post-training static
+quantization. It is optional.
+This function takes “model” as input parameter
+and executes entire inference process.</p></li>
+<li><p><strong>eval_func</strong> (<em>function</em><em>, </em><em>optional</em>) – <p>The evaluation function provided by user.
+This function takes model as parameter,
+and evaluation dataset and metrics should be
+encapsulated in this function implementation
+and outputs a higher-is-better accuracy scalar
+value.
+The pseudo code should be something like:
+def eval_func(model):</p>
+<blockquote>
+<div><p>input, label = dataloader()
+output = model(input)
+accuracy = metric(output, label)
+return accuracy.</p>
+</div></blockquote>
+<p>The user only needs to set eval_func or
+eval_dataloader and eval_metric which is an alternative option
+to tune the model accuracy.</p>
+</p></li>
+<li><p><strong>eval_dataloader</strong> (<em>generator</em><em>, </em><em>optional</em>) – Data loader for evaluation. It is iterable
+and should yield a tuple of (input, label).
+The input could be a object, list, tuple or
+dict, depending on user implementation,
+as well as it can be taken as model input.
+The label should be able to take as input of
+supported metrics. If this parameter is
+not None, user needs to specify pre-defined
+evaluation metrics through configuration file
+and should set “eval_func” parameter as None.
+Tuner will combine model, eval_dataloader
+and pre-defined metrics to run evaluation
+process.</p></li>
+<li><p><strong>eval_metric</strong> (<em>dict</em><em> or </em><em>obj</em>) – <dl class="simple">
+<dt>Set metric class or a dict of built-in metric configures,</dt><dd><p>and neural_compressor will initialize this class when evaluation.</p>
+</dd>
+</dl>
+<ol class="arabic">
+<li><p>neural_compressor have many built-in metrics,
+user can pass a metric configure dict to tell neural compressor what metric will be use.
+You also can set multi-metrics to evaluate the performance of a specific model.</p>
+<blockquote>
+<div><dl>
+<dt>Single metric:</dt><dd><p>{topk: 1}</p>
+</dd>
+<dt>Multi-metrics:</dt><dd><dl class="simple">
+<dt>{topk: 1,</dt><dd><p>MSE: {compare_label: False},
+weight: [0.5, 0.5],
+higher_is_better: [True, False]</p>
+</dd>
+</dl>
+<p>}</p>
+</dd>
+</dl>
+</div></blockquote>
+</li>
+</ol>
+</p></li>
+<li><p><strong>metrics</strong> (<em>For the built-in</em>) – </p></li>
+<li><p><strong>link</strong> (<em>please refer to below</em>) – </p></li>
+<li><p><strong>https</strong> – <p>//github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix.</p>
+<ol class="arabic simple" start="2">
+<li><dl class="simple">
+<dt>User also can get the built-in metrics by neural_compressor.Metric:</dt><dd><p>Metric(name=”topk”, k=1)</p>
+</dd>
+</dl>
+</li>
+<li><p>User also can set specific metric through this api. The metric class should take the outputs of
+the model or postprocess(if have) as inputs, neural_compressor built-in metric always
+take (predictions, labels) as inputs for update, and user_metric.metric_cls should be
+sub_class of neural_compressor.metric.BaseMetric.</p></li>
+</ol>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code for PTQ</span>
+<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span>
+<span class="k">def</span> <span class="nf">eval_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="k">for</span> <span class="nb">input</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">dataloader</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+        <span class="n">metric</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
+    <span class="n">accuracy</span> <span class="o">=</span> <span class="n">metric</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">accuracy</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model_origin</span><span class="p">,</span>
+                           <span class="n">conf</span><span class="p">,</span>
+                           <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+                           <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
+
+<span class="c1"># Saved quantized model in ./saved folder</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./saved&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fe6627b4af0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+:orphan:
+
+:py:mod:`neural_compressor.profiling.profiler.tensorflow_profiler`
+==================================================================
+
+.. py:module:: neural_compressor.profiling.profiler.tensorflow_profiler
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   factory/index.rst
+   profiler/index.rst
+   utils/index.rst
+
+

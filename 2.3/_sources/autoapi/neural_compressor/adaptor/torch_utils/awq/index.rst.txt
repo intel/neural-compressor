@@ -1,0 +1,27 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.torch_utils.awq`
+===================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.awq
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.awq.ActAwareWeightQuant
+
+
+
+
+.. py:class:: ActAwareWeightQuant(model, example_inputs=None, calib_func=None, dataloader=None, n_samples=128, data_type='int', bits=4, group_size=32, scheme='asym', enable_full_range=False, weight_config={})
+
+
+   Implementation of Activation-aware Weight quantization (AWQ) algo.
+
+

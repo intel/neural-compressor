@@ -1,0 +1,63 @@
+:py:mod:`neural_compressor.metric`
+==================================
+
+.. py:module:: neural_compressor.metric
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor Metric.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   bleu/index.rst
+   bleu_util/index.rst
+   coco_label_map/index.rst
+   coco_tools/index.rst
+   evaluate_squad/index.rst
+   f1/index.rst
+   metric/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.metric.METRICS
+   neural_compressor.metric.Metric
+   neural_compressor.metric.BaseMetric
+   neural_compressor.metric.TensorflowTopK
+   neural_compressor.metric.COCOmAPv2
+   neural_compressor.metric.SquadF1
+   neural_compressor.metric.GeneralTopK
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.metric.metric_registry
+   neural_compressor.metric.register_customer_metric
+
+
+
+
+
+
+
+
+
+
+
+

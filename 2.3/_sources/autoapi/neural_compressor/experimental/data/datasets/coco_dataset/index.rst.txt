@@ -1,0 +1,97 @@
+:py:mod:`neural_compressor.experimental.data.datasets.coco_dataset`
+===================================================================
+
+.. py:module:: neural_compressor.experimental.data.datasets.coco_dataset
+
+.. autoapi-nested-parse::
+
+   Built-in COCO datasets class for multiple framework backends.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.datasets.coco_dataset.ParseDecodeCoco
+   neural_compressor.experimental.data.datasets.coco_dataset.COCORecordDataset
+   neural_compressor.experimental.data.datasets.coco_dataset.COCORaw
+   neural_compressor.experimental.data.datasets.coco_dataset.COCONpy
+
+
+
+
+.. py:class:: ParseDecodeCoco
+
+
+   Helper function for TensorflowModelZooBertDataset.
+
+   Parse the features from sample.
+
+
+.. py:class:: COCORecordDataset
+
+
+
+
+   Tensorflow COCO dataset in tf record format.
+
+   Root is a full path to tfrecord file, which contains the file name.
+   Please use Resize transform when batch_size > 1
+
+   Args: root (str): Root directory of dataset.
+         num_cores (int, default=28):The number of input Datasets to interleave from in parallel.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according
+                                                to specific conditions.
+
+
+.. py:class:: COCORaw(root, img_dir='val2017', anno_dir='annotations/instances_val2017.json', transform=None, filter=filter)
+
+
+
+
+   Coco raw dataset.
+
+   Please arrange data in this way:
+       /root/img_dir/1.jpg
+       /root/img_dir/2.jpg
+       ...
+       /root/img_dir/n.jpg
+       /root/anno_dir
+   Please use Resize transform when batch_size > 1
+
+   Args: root (str): Root directory of dataset.
+         img_dir (str, default='val2017'): image file directory.
+         anno_dir (str, default='annotations/instances_val2017.json'): annotation file directory.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according
+                                                to specific conditions.
+
+
+.. py:class:: COCONpy(root, npy_dir='val2017', anno_dir='annotations/instances_val2017.json', transform=None, filter=None)
+
+
+
+
+   COCO npy dataset.
+
+   Please arrange data in this way:
+       /root/npy_dir/1.jpg.npy
+       /root/npy_dir/2.jpg.npy
+       ...
+       /root/npy_dir/n.jpg.npy
+       /root/anno_dir
+
+   Args: root (str): Root directory of dataset.
+         npy_dir (str, default='val2017'): npy file directory.
+         anno_dir (str, default='annotations/instances_val2017.json'): annotation file directory.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according
+                                                to specific conditions.
+
+

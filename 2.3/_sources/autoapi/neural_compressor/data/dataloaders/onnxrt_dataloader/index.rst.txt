@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.data.dataloaders.onnxrt_dataloader`
+==============================================================
+
+.. py:module:: neural_compressor.data.dataloaders.onnxrt_dataloader
+
+.. autoapi-nested-parse::
+
+   Built-in dataloaders for onnxruntime framework backends.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.dataloaders.onnxrt_dataloader.ONNXRTBertDataLoader
+   neural_compressor.data.dataloaders.onnxrt_dataloader.ONNXRTDataLoader
+
+
+
+
+.. py:class:: ONNXRTBertDataLoader
+
+
+
+
+   Built-in dataloader for onnx bert model and its variants.
+
+
+.. py:class:: ONNXRTDataLoader
+
+
+
+
+   Built-in dataloader for onnxruntime framework backends.
+
+

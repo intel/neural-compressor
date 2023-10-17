@@ -1,0 +1,180 @@
+:py:mod:`neural_compressor.benchmark`
+=====================================
+
+.. py:module:: neural_compressor.benchmark
+
+.. autoapi-nested-parse::
+
+   Benchmark is used for evaluating the model performance.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.benchmark.set_env_var
+   neural_compressor.benchmark.set_all_env_var
+   neural_compressor.benchmark.get_architecture
+   neural_compressor.benchmark.get_threads_per_core
+   neural_compressor.benchmark.get_threads
+   neural_compressor.benchmark.get_physical_ids
+   neural_compressor.benchmark.get_core_ids
+   neural_compressor.benchmark.get_bounded_threads
+   neural_compressor.benchmark.run_instance
+   neural_compressor.benchmark.generate_prefix
+   neural_compressor.benchmark.call_one
+   neural_compressor.benchmark.config_instance
+   neural_compressor.benchmark.summary_benchmark
+   neural_compressor.benchmark.profile
+   neural_compressor.benchmark.benchmark_with_raw_cmd
+   neural_compressor.benchmark.fit
+
+
+
+.. py:function:: set_env_var(env_var, value, overwrite_existing=False)
+
+   Set the specified environment variable.
+
+   Only set new env in two cases:
+   1. env not exists
+   2. env already exists but overwrite_existing params set True
+
+
+.. py:function:: set_all_env_var(conf, overwrite_existing=False)
+
+   Set all the environment variables with the configuration dict.
+
+   Neural Compressor only uses physical cores
+
+
+.. py:function:: get_architecture()
+
+   Get the architecture name of the system.
+
+
+.. py:function:: get_threads_per_core()
+
+   Get the threads per core.
+
+
+.. py:function:: get_threads()
+
+   Get the list of threads.
+
+
+.. py:function:: get_physical_ids()
+
+   Get the list of sockets.
+
+
+.. py:function:: get_core_ids()
+
+   Get the ids list of the cores.
+
+
+.. py:function:: get_bounded_threads(core_ids, threads, sockets)
+
+   Return the threads id list that we will bind instances to.
+
+
+.. py:function:: run_instance(model, conf, b_dataloader=None, b_func=None)
+
+   Run the instance with the configuration.
+
+   :param model: The model to be benchmarked.
+   :type model: object
+   :param conf: The configuration for benchmark containing accuracy goal,
+                tuning objective and preferred calibration & quantization
+                tuning space etc.
+   :type conf: BenchmarkConfig
+   :param b_dataloader: The dataloader for frameworks.
+   :param b_func: Customized benchmark function. If user passes the dataloader,
+                  then b_func is not needed.
+
+
+.. py:function:: generate_prefix(core_list)
+
+   Generate the command prefix with numactl.
+
+   :param core_list: a list of core indexes bound with specific instances
+
+
+.. py:function:: call_one(cmd, log_file)
+
+   Execute one command for one instance in one thread and dump the log (for Windows).
+
+
+.. py:function:: config_instance(raw_cmd)
+
+   Configure the multi-instance commands and trigger benchmark with sub process.
+
+   :param raw_cmd: raw command used for benchmark
+
+
+.. py:function:: summary_benchmark()
+
+   Get the summary of the benchmark.
+
+
+.. py:function:: profile(model, conf, b_dataloader) -> None
+
+   Execute profiling for benchmark configuration.
+
+   :param model: The model to be profiled.
+   :param conf: The configuration for benchmark containing accuracy goal,
+                tuning objective and preferred calibration & quantization
+                tuning space etc.
+   :param b_dataloader: The dataloader for frameworks.
+
+   :returns: None
+
+
+.. py:function:: benchmark_with_raw_cmd(raw_cmd, conf=None)
+
+   Benchmark the model performance with the raw command.
+
+   :param raw_cmd: The command to be benchmarked.
+   :type raw_cmd: string
+   :param conf: The configuration for benchmark containing accuracy goal,
+                tuning objective and preferred calibration & quantization
+                tuning space etc.
+   :type conf: BenchmarkConfig
+
+   Example::
+
+       # Run benchmark according to config
+       from neural_compressor.benchmark import fit_with_raw_cmd
+
+       conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+       fit_with_raw_cmd("test.py", conf)
+
+
+.. py:function:: fit(model, conf, b_dataloader=None, b_func=None)
+
+   Benchmark the model performance with the configure.
+
+   :param model: The model to be benchmarked.
+   :type model: object
+   :param conf: The configuration for benchmark containing accuracy goal,
+                tuning objective and preferred calibration & quantization
+                tuning space etc.
+   :type conf: BenchmarkConfig
+   :param b_dataloader: The dataloader for frameworks.
+   :param b_func: Customized benchmark function. If user passes the dataloader,
+                  then b_func is not needed.
+
+   Example::
+
+       # Run benchmark according to config
+       from neural_compressor.benchmark import fit
+
+       conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+       fit(model='./int8.pb', conf=conf, b_dataloader=eval_dataloader)
+
+

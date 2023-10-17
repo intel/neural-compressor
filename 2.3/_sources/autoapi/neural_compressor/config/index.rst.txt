@@ -1,0 +1,849 @@
+:py:mod:`neural_compressor.config`
+==================================
+
+.. py:module:: neural_compressor.config
+
+.. autoapi-nested-parse::
+
+   Configs for Neural Compressor 2.x.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.config.DotDict
+   neural_compressor.config.Options
+   neural_compressor.config.BenchmarkConfig
+   neural_compressor.config.AccuracyCriterion
+   neural_compressor.config.TuningCriterion
+   neural_compressor.config.PostTrainingQuantConfig
+   neural_compressor.config.QuantizationAwareTrainingConfig
+   neural_compressor.config.WeightPruningConfig
+   neural_compressor.config.HPOConfig
+   neural_compressor.config.KnowledgeDistillationLossConfig
+   neural_compressor.config.IntermediateLayersKnowledgeDistillationLossConfig
+   neural_compressor.config.SelfKnowledgeDistillationLossConfig
+   neural_compressor.config.DistillationConfig
+   neural_compressor.config.MixedPrecisionConfig
+   neural_compressor.config.ExportConfig
+   neural_compressor.config.ONNXQlinear2QDQConfig
+   neural_compressor.config.Torch2ONNXConfig
+   neural_compressor.config.TF2ONNXConfig
+   neural_compressor.config.NASConfig
+   neural_compressor.config.MXNet
+   neural_compressor.config.ONNX
+   neural_compressor.config.TensorFlow
+   neural_compressor.config.Keras
+   neural_compressor.config.PyTorch
+
+
+
+
+.. py:class:: DotDict(value=None)
+
+
+
+
+   Access yaml using attributes instead of using the dictionary notation.
+
+   :param value: The dict object to access.
+   :type value: dict
+
+
+.. py:class:: Options(random_seed=1978, workspace=default_workspace, resume_from=None, tensorboard=False)
+
+
+   Option Class for configs.
+
+   This class is used for configuring global variables. The global variable options is created with this class.
+   If you want to change global variables, you should use functions from utils.utility.py:
+       set_random_seed(seed: int)
+       set_workspace(workspace: str)
+       set_resume_from(resume_from: str)
+       set_tensorboard(tensorboard: bool)
+
+   :param random_seed: Random seed used in neural compressor.
+                       Default value is 1978.
+   :type random_seed: int
+   :param workspace: The directory where intermediate files and tuning history file are stored.
+                     Default value is:
+                         './nc_workspace/{}/'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')).
+   :type workspace: str
+   :param resume_from: The directory you want to resume tuning history file from.
+                       The tuning history was automatically saved in the workspace directory
+                            during the last tune process.
+                       Default value is None.
+   :type resume_from: str
+   :param tensorboard:
+                       This flag indicates whether to save the weights of the model and the inputs of each layer
+                           for visual display.
+                       Default value is False.
+   :type tensorboard: bool
+
+   Example::
+
+       from neural_compressor import set_random_seed, set_workspace, set_resume_from, set_tensorboard
+       set_random_seed(2022)
+       set_workspace("workspace_path")
+       set_resume_from("workspace_path")
+       set_tensorboard(True)
+
+
+.. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', device='cpu', warmup=5, iteration=-1, model_name='', cores_per_instance=None, num_of_instance=1, inter_num_of_threads=None, intra_num_of_threads=None, diagnosis=False, ni_workload_name='profiling')
+
+
+   Config Class for Benchmark.
+
+   :param inputs: A list of strings containing the inputs of model. Default is an empty list.
+   :type inputs: list, optional
+   :param outputs: A list of strings containing the outputs of model. Default is an empty list.
+   :type outputs: list, optional
+   :param backend: Backend name for model execution. Supported values include: 'default', 'itex',
+                   'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep', 'onnxrt_dml_ep'.
+                   Default value is 'default'.
+   :type backend: str, optional
+   :param warmup: The number of iterations to perform warmup before running performance tests.
+                  Default value is 5.
+   :type warmup: int, optional
+   :param iteration: The number of iterations to run performance tests. Default is -1.
+   :type iteration: int, optional
+   :param model_name: The name of the model. Default value is empty.
+   :type model_name: str, optional
+   :param cores_per_instance: The number of CPU cores to use per instance. Default value is None.
+   :type cores_per_instance: int, optional
+   :param num_of_instance: The number of instances to use for performance testing.
+                           Default value is 1.
+   :type num_of_instance: int, optional
+   :param inter_num_of_threads: The number of threads to use for inter-thread operations.
+                                Default value is None.
+   :type inter_num_of_threads: int, optional
+   :param intra_num_of_threads: The number of threads to use for intra-thread operations.
+                                Default value is None.
+   :type intra_num_of_threads: int, optional
+
+   Example::
+
+       # Run benchmark according to config
+       from neural_compressor.benchmark import fit
+
+       conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+       fit(model='./int8.pb', conf=conf, b_dataloader=eval_dataloader)
+
+
+.. py:class:: AccuracyCriterion(higher_is_better=True, criterion='relative', tolerable_loss=0.01)
+
+
+   Class of Accuracy Criterion.
+
+   :param higher_is_better: This flag indicates whether the metric higher is the better.
+                            Default value is True.
+   :type higher_is_better: bool, optional
+   :param criterion: (str, optional): This flag indicates whether the metric loss is 'relative' or 'absolute'.
+                     Default value is 'relative'.
+   :param tolerable_loss: This float indicates how much metric loss we can accept.
+                          Default value is 0.01.
+   :type tolerable_loss: float, optional
+
+   Example::
+
+       from neural_compressor.config import AccuracyCriterion
+
+       accuracy_criterion = AccuracyCriterion(
+           higher_is_better=True,  # optional.
+           criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
+           tolerable_loss=0.01,  # optional.
+       )
+
+
+.. py:class:: TuningCriterion(strategy='basic', strategy_kwargs=None, timeout=0, max_trials=100, objective='performance')
+
+
+   Class for Tuning Criterion.
+
+   :param strategy: Strategy name used in tuning. Please refer to docs/source/tuning_strategies.md.
+   :param strategy_kwargs: Parameters for strategy. Please refer to docs/source/tuning_strategies.md.
+   :param objective: String or dict. Objective with accuracy constraint guaranteed. String value supports
+                     'performance', 'modelsize', 'footprint'. Default value is 'performance'.
+                      Please refer to docs/source/objective.md.
+   :param timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
+   :param max_trials: Max tune times. Default value is 100. Combine with timeout field to decide when to exit.
+
+   Example::
+       from neural_compressor.config import TuningCriterion
+
+       tuning_criterion=TuningCriterion(
+           timeout=0,
+           max_trials=100,
+           strategy="basic",
+           strategy_kwargs=None,
+       )
+
+
+.. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', domain='auto', recipes={}, quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_dict=None, op_name_dict=None, reduce_range=None, example_inputs=None, excluded_precisions=[], quant_level='auto', accuracy_criterion=accuracy_criterion, tuning_criterion=tuning_criterion, diagnosis=False, ni_workload_name='quantization')
+
+
+
+
+   Config Class for Post Training Quantization.
+
+   :param device: Support 'cpu' and 'gpu'.
+   :param backend: Backend for model execution.
+                   Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
+                   'onnxrt_dml_ep'
+   :param domain: Model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
+                  Adaptor will use specific quantization settings for different domains automatically, and
+                  explicitly specified quantization settings will override the automatic setting.
+                  If users set domain as auto, automatic detection for domain will be executed.
+   :param recipes: Recipes for quantiztaion, support list is as below.
+                   'smooth_quant': whether do smooth quant
+                   'smooth_quant_args': parameters for smooth_quant
+                   'layer_wise_quant': whether to use layer wise quant
+                   'fast_bias_correction': whether do fast bias correction
+                   'weight_correction': whether do weight correction
+                   'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
+                   'graph_optimization_level': support 'DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'
+                                             only valid for onnx models
+                   'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
+                   'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
+                   'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
+                   'add_qdq_pair_to_weight': whether add QDQ pair for weights, only valid for onnxrt_trt_ep
+                   'optypes_to_exclude_output_quant': don't quantize output of specified optypes
+                   'dedicated_qdq_pair': whether dedicate QDQ pair, only valid for onnxrt_trt_ep
+   :param quant_format: Support 'default', 'QDQ' and 'QOperator', only required in ONNXRuntime.
+   :param inputs: Inputs of model, only required in tensorflow.
+   :param outputs: Outputs of model, only required in tensorflow.
+   :param approach:
+                    Post-Training Quantization method. Neural compressor support 'static', 'dynamic',
+                        'weight_only' and 'auto' method.
+                    Default value is 'static'.
+                    For strategy 'basic', 'auto' method means neural compressor will quantize all OPs support PTQ static
+                        or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic,
+                        PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise
+                        tuning configs meet the accuracy loss criteria.
+                    For strategy 'bayesian', 'mse', 'mse_v2' and 'HAWQ_V2', 'exhaustive', and 'random',
+                        'auto' means neural compressor will quantize all OPs support PTQ static or PTQ dynamic.
+                        if OPs supporting both PTQ static and PTQ dynamic, PTQ static will be tried, else PTQ dynamic
+                        will be tried.
+   :param calibration_sampling_size: Number of calibration sample.
+   :param op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
+                        User can specify the quantization config by op type:
+                        example:
+                        {
+                            'Conv': {
+                                'weight': {
+                                    'dtype': ['fp32']
+                                },
+                                'activation': {
+                                    'dtype': ['fp32']
+                                }
+                            }
+                        }
+   :param op_name_dict: Tuning constraints on op-wise for advance user to reduce tuning space.
+                        User can specify the quantization config by op name:
+                        example:
+                        {
+                            "layer1.0.conv1": {
+                                "activation": {
+                                    "dtype": ["fp32"]
+                                },
+                                "weight": {
+                                    "dtype": ["fp32"]
+                                }
+                            },
+                        }
+   :param reduce_range: Whether use 7 bits to quantization.
+   :param excluded_precisions: Precisions to be excluded, Default value is empty list.
+                               Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
+                               If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
+   :param quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
+                       strategy, auto (default) is the combination of 0 and 1.
+   :param tuning_criterion:
+                            Instance of TuningCriterion class. In this class you can set strategy, strategy_kwargs,
+                                timeout, max_trials and objective.
+                            Please refer to docstring of TuningCriterion class.
+   :param accuracy_criterion:
+                              Instance of AccuracyCriterion class. In this class you can set higher_is_better,
+                                  criterion and tolerable_loss.
+                              Please refer to docstring of AccuracyCriterion class.
+   :param diagnosis: This flag indicates whether to do diagnosis.
+                     Default value is False.
+   :type diagnosis: bool
+   :param ni_workload_name: Custom workload name for Neural Insights diagnosis workload.
+                            Default value is 'quantization'.
+
+   Example::
+
+       from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
+
+       conf = PostTrainingQuantConfig(
+           quant_level="auto",
+           tuning_criterion=TuningCriterion(
+               timeout=0,
+               max_trials=100,
+           ),
+       )
+
+
+.. py:class:: QuantizationAwareTrainingConfig(device='cpu', backend='default', inputs=[], outputs=[], op_type_dict=None, op_name_dict=None, reduce_range=None, model_name='', quant_format='default', excluded_precisions=[], quant_level='auto', accuracy_criterion=accuracy_criterion, tuning_criterion=tuning_criterion)
+
+
+
+
+   Config Class for Quantization Aware Training.
+
+   :param device: Support 'cpu' and 'gpu'.
+   :param backend: Backend for model execution.
+                   Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
+                   'onnxrt_dml_ep'
+   :param inputs: Inputs of model, only required in tensorflow.
+   :param outputs: Outputs of model, only required in tensorflow.
+   :param op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
+                        User can specify the quantization config by op type:
+                        example:
+                        {
+                            'Conv': {
+                                'weight': {
+                                    'dtype': ['fp32']
+                                },
+                                'activation': {
+                                    'dtype': ['fp32']
+                                }
+                            }
+                        }
+   :param op_name_dict: Tuning constraints on op-wise for advance user to reduce tuning space.
+                        User can specify the quantization config by op name:
+                        example:
+                        {
+                            "layer1.0.conv1": {
+                                "activation": {
+                                    "dtype": ["fp32"]
+                                },
+                                "weight": {
+                                    "dtype": ["fp32"]
+                                }
+                            },
+                        }
+   :param reduce_range: Whether use 7 bits to quantization.
+   :param model_name: The name of the model. Default value is empty.
+   :param excluded_precisions: Precisions to be excluded, Default value is empty list.
+                               Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
+                               If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
+   :param quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
+                       strategy, auto (default) is the combination of 0 and 1.
+   :param tuning_criterion:
+                            Instance of TuningCriterion class. In this class you can set strategy, strategy_kwargs,
+                                timeout, max_trials and objective.
+                            Please refer to docstring of TuningCriterion class.
+                            This parameter only required by Quantization Aware Training with tuning.
+   :param accuracy_criterion:
+                              Instance of AccuracyCriterion class. In this class you can set higher_is_better,
+                                  criterion and tolerable_loss.
+                              Please refer to docstring of AccuracyCriterion class.
+                              This parameter only required by Quantization Aware Training with tuning.
+
+   Example::
+
+       from neural_compressor.config import QuantizationAwareTrainingConfig
+
+       if approach == "qat":
+           model = copy.deepcopy(model_origin)
+           conf = QuantizationAwareTrainingConfig(
+               op_name_dict=qat_op_name_dict
+           )
+           compression_manager = prepare_compression(model, conf)
+
+
+.. py:class:: WeightPruningConfig(pruning_configs=[{}], target_sparsity=0.9, pruning_type='snip_momentum', pattern='4x1', op_names=[], excluded_op_names=[], backend=None, start_step=0, end_step=0, pruning_scope='global', pruning_frequency=1, min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98, sparsity_decay_type='exp', pruning_op_types=['Conv', 'Linear'], low_memory_usage=False, **kwargs)
+
+
+   Config Class for Pruning. Define a single or a sequence of pruning configs.
+
+   :param pruning_configs: Local pruning configs only valid to linked layers.
+                           Parameters defined out of pruning_configs are valid for all layers.
+                           By defining dicts in pruning_config, users can set different pruning strategies for corresponding layers.
+                           Defaults to [{}].
+   :type pruning_configs: list of dicts, optional
+   :param target_sparsity: Sparsity ratio the model can reach after pruning.
+                           Supports a float between 0 and 1.
+                           Default to 0.90.
+   :type target_sparsity: float, optional
+   :param pruning_type: A string define the criteria for pruning.
+                        Supports "magnitude", "snip", "snip_momentum",
+                                 "magnitude_progressive", "snip_progressive", "snip_momentum_progressive", "pattern_lock"
+                        Default to "snip_momentum", which is the most feasible pruning criteria under most situations.
+   :type pruning_type: str, optional
+   :param pattern: Sparsity's structure (or unstructure) types.
+                   Supports "NxM" (e.g "4x1", "8x1"), "channelx1" & "1xchannel"(channel-wise), "N:M" (e.g "2:4").
+                   Default to "4x1", which can be directly processed by our kernels in ITREX.
+   :type pattern: str, optional
+   :param op_names: Layers contains some specific names to be included for pruning.
+                    Defaults to [].
+   :type op_names: list of str, optional
+   :param excluded_op_names: Layers contains some specific names to be excluded for pruning.
+                             Defaults to [].
+   :param start_step: The step to start pruning.
+                      Supports an integer.
+                      Default to 0.
+   :type start_step: int, optional
+   :param end_step: (int, optional): The step to end pruning.
+                    Supports an integer.
+                    Default to 0.
+   :param pruning_scope: Determine layers' scores should be gather together to sort
+                         Supports "global" and "local".
+                         Default: "global", since this leads to less accuracy loss.
+   :type pruning_scope: str, optional
+   :param pruning_frequency: the frequency of pruning operation.
+                             Supports an integer.
+                             Default to 1.
+   :param min_sparsity_ratio_per_op: Minimum restriction for every layer's sparsity.
+                                     Supports a float between 0 and 1.
+                                     Default to 0.0.
+   :type min_sparsity_ratio_per_op: float, optional
+   :param max_sparsity_ratio_per_op: Maximum restriction for every layer's sparsity.
+                                     Supports a float between 0 and 1.
+                                     Default to 0.98.
+   :type max_sparsity_ratio_per_op: float, optional
+   :param sparsity_decay_type: how to schedule the sparsity increasing methods.
+                               Supports "exp", "cube", "cube", "linear".
+                               Default to "exp".
+   :type sparsity_decay_type: str, optional
+   :param pruning_op_types: Operator types currently support for pruning.
+                            Supports ['Conv', 'Linear'].
+                            Default to ['Conv', 'Linear'].
+   :type pruning_op_types: list of str
+
+   .. rubric:: Example
+
+   from neural_compressor.config import WeightPruningConfig
+   local_configs = [
+       {
+           "pruning_scope": "local",
+           "target_sparsity": 0.6,
+           "op_names": ["query", "key", "value"],
+           "pattern": "channelx1",
+       },
+       {
+           "pruning_type": "snip_momentum_progressive",
+           "target_sparsity": 0.5,
+           "op_names": ["self.attention.dense"],
+       }
+   ]
+   config = WeightPruningConfig(
+       pruning_configs = local_configs,
+       target_sparsity=0.8
+   )
+   prune = Pruning(config)
+   prune.update_config(start_step=1, end_step=10)
+   prune.model = self.model
+
+
+.. py:class:: HPOConfig(search_space, searcher='xgb', higher_is_better=True, loss_type='reg', min_train_samples=10, seed=42)
+
+
+   Config class for hyperparameter optimization.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+   :param searcher: The name of search algorithms, currently support: grid, random, bo and xgb.
+   :type searcher: str
+   :param higher_is_better: This flag indicates whether the metric higher is the better.
+   :type higher_is_better: bool, optional
+   :param min_train_sample: The min number of samples to start training the search model.
+   :type min_train_sample: int, optional
+   :param seed: Random seed.
+   :type seed: int, optional
+
+
+.. py:class:: KnowledgeDistillationLossConfig(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5])
+
+
+   Config Class for Knowledge Distillation Loss.
+
+   :param temperature: Hyperparameters that control the entropy
+                       of probability distributions. Defaults to 1.0.
+   :type temperature: float, optional
+   :param loss_types: loss types, should be a list of length 2.
+                      First item is the loss type for student model output and groundtruth label,
+                      second item is the loss type for student model output and teacher model output.
+                      Supported types for first item are "CE", "MSE".
+                      Supported types for second item are "CE", "MSE", "KL".
+                      Defaults to ['CE', 'CE'].
+   :type loss_types: list[str], optional
+   :param loss_weights: loss weights, should be a list of length 2 and sum to 1.0.
+                        First item is the weight multiplied to the loss of student model output and groundtruth label,
+                        second item is the weight multiplied to the loss of student model output and teacher model output.
+                        Defaults to [0.5, 0.5].
+   :type loss_weights: list[float], optional
+
+   Example::
+
+       from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
+       from neural_compressor.training import prepare_compression
+
+       criterion_conf = KnowledgeDistillationLossConfig()
+       d_conf = DistillationConfig(teacher_model=teacher_model, criterion=criterion_conf)
+       compression_manager = prepare_compression(model, d_conf)
+       model = compression_manager.model
+
+
+.. py:class:: IntermediateLayersKnowledgeDistillationLossConfig(layer_mappings=[], loss_types=[], loss_weights=[], add_origin_loss=False)
+
+
+   Config Class for Intermediate Layers Knowledge Distillation Loss.
+
+   :param layer_mappings: A list for specifying the layer mappings relationship between
+                          the student model and the teacher model. Each item in layer_mappings should be a
+                          list with the format [(student_layer_name, student_layer_output_process),
+                          (teacher_layer_name, teacher_layer_output_process)], where the student_layer_name
+                          and the teacher_layer_name are the layer names of the student and the teacher models,
+                          e.g. 'bert.layer1.attention'. The student_layer_output_process and teacher_layer_output_process
+                          are output process method to get the desired output from the layer specified in the layer
+                          name, its value can be either a function or a string, in function case, the function
+                          takes output of the specified layer as input, in string case, when output of the
+                          specified layer is a dict, this string will serve as key to get corresponding value,
+                          when output of the specified layer is a list or tuple, the string should be numeric and
+                          will serve as the index to get corresponding value.
+                          When output process is not needed, the item in layer_mappings can be abbreviated to
+                          [(student_layer_name, ), (teacher_layer_name, )], if student_layer_name and teacher_layer_name
+                          are the same, it can be abbreviated further to [(layer_name, )].
+                          Some examples of the item in layer_mappings are listed below:
+                            [('student_model.layer1.attention', '1'), ('teacher_model.layer1.attention', '1')]
+                            [('student_model.layer1.output', ), ('teacher_model.layer1.output', )].
+                            [('model.layer1.output', )].
+   :type layer_mappings: list
+   :param loss_types: loss types, should be a list with the same length of
+                      layer_mappings. Each item is the loss type for each layer mapping specified in the
+                      layer_mappings. Supported types for each item are "MSE", "KL", "L1". Defaults to
+                      ["MSE", ]*len(layer_mappings).
+   :type loss_types: list[str], optional
+   :param loss_weights: loss weights, should be a list with the same length of
+                        layer_mappings. Each item is the weight multiplied to the loss of each layer mapping specified
+                        in the layer_mappings. Defaults to [1.0 / len(layer_mappings)] * len(layer_mappings).
+   :type loss_weights: list[float], optional
+   :param add_origin_loss: Whether to add origin loss of the student model. Defaults to False.
+   :type add_origin_loss: bool, optional
+
+   Example::
+
+       from neural_compressor.config import DistillationConfig, IntermediateLayersKnowledgeDistillationLossConfig
+       from neural_compressor.training import prepare_compression
+
+       criterion_conf = IntermediateLayersKnowledgeDistillationLossConfig(
+           layer_mappings=[['layer1.0', ],
+                           [['layer1.1.conv1', ], ['layer1.1.conv1', '0']],],
+           loss_types=['MSE']*len(layer_mappings),
+           loss_weights=[1.0 / len(layer_mappings)]*len(layer_mappings),
+           add_origin_loss=True
+       )
+       d_conf = DistillationConfig(teacher_model=teacher_model, criterion=criterion_conf)
+       compression_manager = prepare_compression(model, d_conf)
+       model = compression_manager.model
+
+
+.. py:class:: SelfKnowledgeDistillationLossConfig(layer_mappings=[], temperature=1.0, loss_types=[], loss_weights=[], add_origin_loss=False)
+
+
+   Config Class for Self Knowledge Distillation Loss.
+
+   :param layer_mappings: layers of distillation. Format like
+                          [[[student1_layer_name1, teacher_layer_name1],[student2_layer_name1, teacher_layer_name1]],
+                          [[student1_layer_name2, teacher_layer_name2],[student2_layer_name2, teacher_layer_name2]]]
+   :type layer_mappings: list
+   :param temperature: use to calculate the soft label CE.
+   :type temperature: float, optional
+   :param loss_types: loss types, should be a list with the same length of
+                      layer_mappings. Each item is the loss type for each layer mapping specified in the
+                      layer_mappings. Supported types for each item are "CE", "KL", "L2". Defaults to
+                      ["CE", ]*len(layer_mappings).
+   :type loss_types: list, optional
+   :param loss_weights: loss weights. Defaults to [1.0 / len(layer_mappings)] *
+                        len(layer_mappings).
+   :type loss_weights: list, optional
+   :param add_origin_loss: whether to add origin loss for hard label loss.
+   :type add_origin_loss: bool, optional
+
+   Example::
+
+       from neural_compressor.training import prepare_compression
+       from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
+
+       criterion_conf = SelfKnowledgeDistillationLossConfig(
+           layer_mappings=[
+               [['resblock.1.feature.output', 'resblock.deepst.feature.output'],
+               ['resblock.2.feature.output','resblock.deepst.feature.output']],
+               [['resblock.2.fc','resblock.deepst.fc'],
+               ['resblock.3.fc','resblock.deepst.fc']],
+               [['resblock.1.fc','resblock.deepst.fc'],
+               ['resblock.2.fc','resblock.deepst.fc'],
+               ['resblock.3.fc','resblock.deepst.fc']]
+           ],
+           temperature=3.0,
+           loss_types=['L2', 'KL', 'CE'],
+           loss_weights=[0.5, 0.05, 0.02],
+           add_origin_loss=True,)
+       conf = DistillationConfig(teacher_model=model, criterion=criterion_conf)
+       criterion = nn.CrossEntropyLoss()
+       optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+       compression_manager = prepare_compression(model, conf)
+       model = compression_manager.model
+
+
+.. py:class:: DistillationConfig(teacher_model=None, criterion=criterion, optimizer={'SGD': {'learning_rate': 0.0001}})
+
+
+   Config of distillation.
+
+   :param teacher_model: Teacher model for distillation. Defaults to None.
+   :type teacher_model: Callable
+   :param features: Teacher features for distillation, features and teacher_model are alternative.
+                    Defaults to None.
+   :type features: optional
+   :param criterion: Distillation loss configure.
+   :type criterion: Callable, optional
+   :param optimizer: Optimizer configure.
+   :type optimizer: dictionary, optional
+
+   Example::
+
+       from neural_compressor.training import prepare_compression
+       from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
+
+       distil_loss = KnowledgeDistillationLossConfig()
+       conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+       criterion = nn.CrossEntropyLoss()
+       optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+       compression_manager = prepare_compression(model, conf)
+       model = compression_manager.model
+
+
+.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', precisions='bf16', model_name='', inputs=[], outputs=[], quant_level='auto', tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[], op_name_dict={}, op_type_dict={}, example_inputs=None)
+
+
+
+
+   Config Class for MixedPrecision.
+
+   :param device: Device for execution.
+                  Support 'cpu' and 'gpu', default is 'cpu'.
+   :type device: str, optional
+   :param backend: Backend for model execution.
+                   Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
+                   'onnxrt_dml_ep'. Default is 'default'.
+   :type backend: str, optional
+   :param precisions: Target precision for mix precision conversion.
+                      Support 'bf16' and 'fp16', default is 'bf16'.
+   :type precisions: [str, list], optional
+   :param model_name: The name of the model. Default value is empty.
+   :type model_name: str, optional
+   :param inputs: Inputs of model, default is [].
+   :type inputs: list, optional
+   :param outputs: Outputs of model, default is [].
+   :type outputs: list, optional
+   :param quant_level: Support auto, 0 and 1, 0 is conservative(fallback in op type wise),
+                       1(fallback in op wise), auto (default) is the combination of 0 and 1.
+   :param tuning_criterion: Accuracy tuning settings,
+                            it won't work if there is no accuracy tuning process.
+   :type tuning_criterion: TuningCriterion object, optional
+   :param accuracy_criterion: Accuracy constraint settings,
+                              it won't work if there is no accuracy tuning process.
+   :type accuracy_criterion: AccuracyCriterion object, optional
+   :param excluded_precisions: Precisions to be excluded during mix precision conversion, default is [].
+   :type excluded_precisions: list, optional
+   :param op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
+                        User can specify the quantization config by op type:
+                        example:
+                        {
+                            'Conv': {
+                                'weight': {
+                                    'dtype': ['fp32']
+                                },
+                                'activation': {
+                                    'dtype': ['fp32']
+                                }
+                            }
+                        }
+   :type op_type_dict: dict, optional
+   :param op_name_dict: Tuning constraints on op-wise for advance user to reduce tuning space.
+                        User can specify the quantization config by op name:
+                        example:
+                        {
+                            "layer1.0.conv1": {
+                                "activation": {
+                                    "dtype": ["fp32"]
+                                },
+                                "weight": {
+                                    "dtype": ["fp32"]
+                                }
+                            },
+                        }
+   :type op_name_dict: dict, optional
+   :param example_inputs: Example inputs used for tracing model. Defaults to None.
+   :type example_inputs: tensor|list|tuple|dict, optional
+
+   .. rubric:: Example
+
+   from neural_compressor import mix_precision
+   from neural_compressor.config import MixedPrecisionConfig
+
+   conf = MixedPrecisionConfig()
+   converted_model = mix_precision.fit(model, conf=conf)
+
+
+.. py:class:: ExportConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None)
+
+
+   Common Base Config for Export.
+
+   :param dtype: The data type of the exported model, select from ["fp32", "int8"].
+                 Defaults to "int8".
+   :type dtype: str, optional
+   :param opset_version: The ONNX opset version used for export. Defaults to 14.
+   :type opset_version: int, optional
+   :param quant_format: The quantization format of the exported int8 onnx model,
+                        select from ["QDQ", "QLinear"]. Defaults to "QDQ".
+   :type quant_format: str, optional
+   :param example_inputs: Example inputs used for tracing model. Defaults to None.
+   :type example_inputs: tensor|list|tuple|dict, optional
+   :param input_names: A list of model input names. Defaults to None.
+   :type input_names: list, optional
+   :param output_names: A list of model output names. Defaults to None.
+   :type output_names: list, optional
+   :param dynamic_axes: A dictionary of dynamic axes information. Defaults to None.
+   :type dynamic_axes: dict, optional
+
+
+.. py:class:: ONNXQlinear2QDQConfig
+
+
+   Config Class for ONNXQlinear2QDQ.
+
+
+.. py:class:: Torch2ONNXConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None, **kwargs)
+
+
+
+
+   Config Class for Torch2ONNX.
+
+   :param dtype: The data type of the exported model, select from ["fp32", "int8"].
+                 Defaults to "int8".
+   :type dtype: str, optional
+   :param opset_version: The ONNX opset version used for export. Defaults to 14.
+   :type opset_version: int, optional
+   :param quant_format: The quantization format of the exported int8 onnx model,
+                        select from ["QDQ", "QLinear"]. Defaults to "QDQ".
+   :type quant_format: str, optional
+   :param example_inputs: Example inputs used for tracing model. Defaults to None.
+   :type example_inputs: tensor|list|tuple|dict, required
+   :param input_names: A list of model input names. Defaults to None.
+   :type input_names: list, optional
+   :param output_names: A list of model output names. Defaults to None.
+   :type output_names: list, optional
+   :param dynamic_axes: A dictionary of dynamic axes information. Defaults to None.
+   :type dynamic_axes: dict, optional
+   :param recipe: A string to select recipes used for Linear -> Matmul + Add, select from
+                  ["QDQ_OP_FP32_BIAS", "QDQ_OP_INT32_BIAS", "QDQ_OP_FP32_BIAS_QDQ"].
+                  Defaults to 'QDQ_OP_FP32_BIAS'.
+   :type recipe: str, optional
+
+   .. rubric:: Example
+
+   # resnet50
+   from neural_compressor.config import Torch2ONNXConfig
+   int8_onnx_config = Torch2ONNXConfig(
+       dtype="int8",
+       opset_version=14,
+       quant_format="QDQ", # or QLinear
+       example_inputs=torch.randn(1, 3, 224, 224),
+       input_names=['input'],
+       output_names=['output'],
+       dynamic_axes={"input": {0: "batch_size"},
+                       "output": {0: "batch_size"}},
+   )
+   q_model.export('int8-model.onnx', int8_onnx_config)
+
+
+.. py:class:: TF2ONNXConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None, **kwargs)
+
+
+
+
+   Config Class for TF2ONNX.
+
+   :param dtype: The data type of export target model. Supports 'fp32' and 'int8'.
+                 Defaults to 'int8'.
+   :type dtype: str, optional
+   :param opset_version: The version of the ONNX operator set to use. Defaults to 14.
+   :type opset_version: int, optional
+   :param quant_format: The quantization format for the export target model.
+                        Supports 'default', 'QDQ' and 'QOperator'. Defaults to 'QDQ'.
+   :type quant_format: str, optional
+   :param example_inputs: A list example inputs to use for tracing the model.
+                          Defaults to None.
+   :type example_inputs: list, optional
+   :param input_names: A list of model input names. Defaults to None.
+   :type input_names: list, optional
+   :param output_names: A list of model output names. Defaults to None.
+   :type output_names: list, optional
+   :param dynamic_axes: A dictionary of dynamic axis information. Defaults to None.
+   :type dynamic_axes: dict, optional
+   :param \*\*kwargs: Additional keyword arguments.
+
+   Examples::
+
+       # tensorflow QDQ int8 model 'q_model' export to ONNX int8 model
+       from neural_compressor.config import TF2ONNXConfig
+       config = TF2ONNXConfig()
+       q_model.export(output_graph, config)
+
+
+.. py:class:: NASConfig(approach=None, search_space=None, search_algorithm=None, metrics=[], higher_is_better=[], max_trials=3, seed=42, dynas=None)
+
+
+   Config class for NAS approaches.
+
+
+.. py:class:: MXNet(precisions=None)
+
+
+   Base config class for MXNet.
+
+
+.. py:class:: ONNX(graph_optimization_level=None, precisions=None)
+
+
+
+
+   Config class for ONNX.
+
+
+.. py:class:: TensorFlow(precisions=None)
+
+
+
+
+   Config class for TensorFlow.
+
+
+.. py:class:: Keras(precisions=None)
+
+
+
+
+   Config class for Keras.
+
+
+.. py:class:: PyTorch(precisions=None)
+
+
+
+
+   Config class for PyTorch.
+
+

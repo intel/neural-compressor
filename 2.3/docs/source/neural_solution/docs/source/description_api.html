@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neural Solution API &mdash; Intel® Neural Compressor 2.3 documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.3▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Neural Solution API</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/docs/source/neural_solution/docs/source/description_api.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="neural-solution-api">
+<h1>Neural Solution API<a class="headerlink" href="#neural-solution-api" title="Permalink to this heading"></a></h1>
+<p>Welcome to Neural Solution OaaS API documentation. This API documentation provides a detailed description of all the endpoints available in Neural Solution OaaS API.</p>
+<section id="base-url">
+<h2>Base URL<a class="headerlink" href="#base-url" title="Permalink to this heading"></a></h2>
+<p>The base URL for Neural Solution OaaS API is <code class="docutils literal notranslate"><span class="pre">{host_ip}:port</span></code></p>
+</section>
+<section id="endpoints">
+<h2>Endpoints<a class="headerlink" href="#endpoints" title="Permalink to this heading"></a></h2>
+<section id="get">
+<h3>GET /<a class="headerlink" href="#get" title="Permalink to this heading"></a></h3>
+<section id="description">
+<h4>Description<a class="headerlink" href="#description" title="Permalink to this heading"></a></h4>
+<p>This is the welcome interface for Neural Solution OaaS.</p>
+</section>
+<section id="usage">
+<h4>Usage<a class="headerlink" href="#usage" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="o">{</span>host_ip<span class="o">}</span>:port/description
+</pre></div>
+</div>
+</section>
+<section id="responses">
+<h4>Responses<a class="headerlink" href="#responses" title="Permalink to this heading"></a></h4>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Status Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>Welcome to Neural Solution OaaS!</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="post-task-submit">
+<h3>POST /task/submit<a class="headerlink" href="#post-task-submit" title="Permalink to this heading"></a></h3>
+<section id="id1">
+<h4>Description<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h4>
+<p>Submit a new task to Neural Solution OaaS.</p>
+</section>
+<section id="parameters">
+<h4>Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<p>Refer to <a class="reference external" href="./template/task_request_description.html">task_request_description.html</a>.</p>
+</section>
+<section id="id2">
+<h4>Usage<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span>-d<span class="w"> </span>@task_request.json<span class="w"> </span><span class="o">{</span>host_ip<span class="o">}</span>:port/task/submit
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h4>Responses<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h4>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Status Code</th>
+<th>Description</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>Submitted successfully.</td>
+<td><code>status</code>: "Successfully.", <code>task_id</code>: Hashed key, <code>msg</code> : "Task submitted successfully"</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Submitted failed.</td>
+<td><code>status</code>: "Failed."</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="get-task-status-task-id">
+<h3>GET /task/status/{task_id}<a class="headerlink" href="#get-task-status-task-id" title="Permalink to this heading"></a></h3>
+<section id="id4">
+<h4>Description<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h4>
+<p>Get the status of a submitted task.</p>
+</section>
+<section id="id5">
+<h4>Parameters<a class="headerlink" href="#id5" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">task_id</span></code> - The hashed key of the submitted task.</p></li>
+</ul>
+</section>
+<section id="id6">
+<h4>Usage<a class="headerlink" href="#id6" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="o">{</span>host_ip<span class="o">}</span>:port/task/status/<span class="o">{</span>task_id<span class="o">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id7">
+<h4>Responses<a class="headerlink" href="#id7" title="Permalink to this heading"></a></h4>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Status Code</th>
+<th>Description</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>The status of task .</td>
+<td><code>status</code>: "running"/"done"/"pending"/"failed"</br> <code>tuning_info</code>: tuning information</br> <code>optimization_result</code>: optimization time, Accuracy, Duration, result_path</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="get-task-log-task-id">
+<h3>GET /task/log/{task_id}<a class="headerlink" href="#get-task-log-task-id" title="Permalink to this heading"></a></h3>
+<section id="id8">
+<h4>Description<a class="headerlink" href="#id8" title="Permalink to this heading"></a></h4>
+<p>Get the log of a submitted task.</p>
+</section>
+<section id="id9">
+<h4>Usage<a class="headerlink" href="#id9" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="o">{</span>host_ip<span class="o">}</span>:port/task/log/<span class="o">{</span>task_id<span class="o">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id10">
+<h4>Parameters<a class="headerlink" href="#id10" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">task_id</span></code> - The hashed key of the submitted task.</p></li>
+</ul>
+</section>
+<section id="id11">
+<h4>Responses<a class="headerlink" href="#id11" title="Permalink to this heading"></a></h4>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Status Code</th>
+<th>Description</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>Task log.</td>
+<td>Task log.</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="websocket-task-screen-task-id">
+<h3>WebSocket /task/screen/{task_id}<a class="headerlink" href="#websocket-task-screen-task-id" title="Permalink to this heading"></a></h3>
+<section id="id12">
+<h4>Description<a class="headerlink" href="#id12" title="Permalink to this heading"></a></h4>
+<p>Get real-time log of a submitted task.</p>
+</section>
+<section id="id13">
+<h4>Parameters<a class="headerlink" href="#id13" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">task_id</span></code> - The hashed key of the submitted task.</p></li>
+</ul>
+</section>
+<section id="id14">
+<h4>Responses<a class="headerlink" href="#id14" title="Permalink to this heading"></a></h4>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Status Code</th>
+<th>Description</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>101</td>
+<td>Get real-time task log.</td>
+<td>Real-time task log.</td>
+</tr>
+<tr>
+<td>1000</td>
+<td>Normal Closure.</td>
+<td>Connection was closed successfully.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Task not found.</td>
+<td><code>status</code>: "Failed."</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="get-ping">
+<h3>GET /ping<a class="headerlink" href="#get-ping" title="Permalink to this heading"></a></h3>
+<section id="id15">
+<h4>Description<a class="headerlink" href="#id15" title="Permalink to this heading"></a></h4>
+<p>Check the health status of Neural Solution.</p>
+</section>
+<section id="id16">
+<h4>Usage<a class="headerlink" href="#id16" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="o">{</span>host_ip<span class="o">}</span>:port/task/log/<span class="o">{</span>task_id<span class="o">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id17">
+<h4>Responses<a class="headerlink" href="#id17" title="Permalink to this heading"></a></h4>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Status Code</th>
+<th>Description</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>The health status.</td>
+<td><code>status</code>: "Healthy", <code>msg</code>: "Neural Solution is running."</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Ping fail! &amp; error message.</td>
+<td><code>status</code>: "Failed.", <code>msg</code>: Error message.</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="get-cluster">
+<h3>GET /cluster<a class="headerlink" href="#get-cluster" title="Permalink to this heading"></a></h3>
+<section id="id18">
+<h4>Description<a class="headerlink" href="#id18" title="Permalink to this heading"></a></h4>
+<p>Get the running status of Neural Solution cluster.</p>
+</section>
+<section id="id19">
+<h4>Usage<a class="headerlink" href="#id19" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="o">{</span>host_ip<span class="o">}</span>:port/cluster
+</pre></div>
+</div>
+</section>
+<section id="id20">
+<h4>Responses<a class="headerlink" href="#id20" title="Permalink to this heading"></a></h4>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Status Code</th>
+<th>Description</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>Cluster information.</td>
+<td><code>msg</code>: "Cluster information."</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="get-download-task-id">
+<h3>GET /download/{task_id}<a class="headerlink" href="#get-download-task-id" title="Permalink to this heading"></a></h3>
+<section id="id21">
+<h4>Description<a class="headerlink" href="#id21" title="Permalink to this heading"></a></h4>
+<p>Download optimized result locally.</p>
+</section>
+<section id="id22">
+<h4>Usage<a class="headerlink" href="#id22" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="o">{</span>host_ip<span class="o">}</span>:port/download/<span class="o">{</span>task_id<span class="o">}</span><span class="w"> </span>--output<span class="w"> </span>quantized_model.zip
+</pre></div>
+</div>
+</section>
+<section id="id23">
+<h4>Responses<a class="headerlink" href="#id23" title="Permalink to this heading"></a></h4>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Status Code</th>
+<th>Description</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>Download optimized model.</td>
+<td>zip file</td>
+</tr>
+<tr>
+<td>400</td>
+<td>No quantized model when task failed.</td>
+<td><code>msg</code>: "Please check URL."</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Download optimized model.</td>
+<td><code>msg</code>: "Task failed, file not found"</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="get-description">
+<h3>GET /description<a class="headerlink" href="#get-description" title="Permalink to this heading"></a></h3>
+<section id="id24">
+<h4>Description<a class="headerlink" href="#id24" title="Permalink to this heading"></a></h4>
+<p>Get user-facing API.</p>
+</section>
+<section id="id25">
+<h4>Usage<a class="headerlink" href="#id25" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="o">{</span>host_ip<span class="o">}</span>:port/description
+</pre></div>
+</div>
+</section>
+<section id="id26">
+<h4>Responses<a class="headerlink" href="#id26" title="Permalink to this heading"></a></h4>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Status Code</th>
+<th>Description</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>User-facing API.</td>
+<td><code>msg</code>: The user-facing API.</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fe667686070> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

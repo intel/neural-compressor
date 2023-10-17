@@ -1,0 +1,38 @@
+:py:mod:`neural_compressor.experimental.component`
+==================================================
+
+.. py:module:: neural_compressor.experimental.component
+
+.. autoapi-nested-parse::
+
+   This is a module for Component class.
+
+   The Component class will be inherited by the class 'Quantization', 'Pruning' and 'Distillation'.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.component.Component
+
+
+
+
+.. py:class:: Component(conf_fname_or_obj=None, combination=None)
+
+
+
+
+   This is base class of Neural Compressor Component.
+
+   This class will be inherited by the class 'Quantization', 'Pruning' and 'Distillation'.
+   This design is mainly for one-shot optimization for pruning/distillation/quantization-aware training.
+   In this class will apply all hooks for 'Quantization', 'Pruning' and 'Distillation'.
+
+

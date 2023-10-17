@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node`
+=====================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node
+
+.. autoapi-nested-parse::
+
+   Insert print node Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node.InsertPrintMinMaxNode
+
+
+
+
+.. py:class:: InsertPrintMinMaxNode(model, pre_node_name, post_node_name, new_api)
+
+
+
+
+   InsertPrintMinMaxNode Pass for tensorflow sampling.
+
+

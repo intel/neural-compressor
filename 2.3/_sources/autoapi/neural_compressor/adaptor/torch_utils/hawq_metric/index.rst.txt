@@ -1,0 +1,88 @@
+:py:mod:`neural_compressor.adaptor.torch_utils.hawq_metric`
+===========================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.hawq_metric
+
+.. autoapi-nested-parse::
+
+   Torch Utils for Hessian Aware Weighted Quantization.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.hawq_metric.Node_collector
+   neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.hawq_metric.compare_weights
+   neural_compressor.adaptor.torch_utils.hawq_metric.hawq_top
+
+
+
+.. py:class:: Node_collector(m)
+
+
+   Define Collector based on hook, which is used to record the intermediate result.
+
+
+.. py:class:: HessianTrace(model, dataloader, q_model, criterion=None)
+
+
+   HessianTrace Class.
+
+   Please refer to Yao, Zhewei, et al. "Pyhessian: Neural networks through the lens of the hessian."
+   2020 IEEE international conference on big data (Big data). IEEE, 2020.
+   Dong, Zhen, et al. "Hawq-v2: Hessian aware trace-weighted quantization of neural networks."
+   Advances in neural information processing systems 33 (2020): 18518-18529.
+   https://github.com/openvinotoolkit/nncf/blob/develop/nncf/torch/quantization/hessian_trace.py
+
+
+.. py:function:: compare_weights(float_dict: Dict[str, Any], quantized_dict: Dict[str, Any]) -> Dict[str, Dict[str, torch.Tensor]]
+
+   Compare the weights of the float module with its corresponding quantized module.
+
+   Returns a dict with key corresponding to module names and each entry being
+   a dictionary with two keys 'float' and 'quantized', containing the float and
+   quantized weights. This dict can be used to compare and compute the quantization
+   error of the weights of float and quantized models.
+
+   Example::
+
+       wt_compare_dict = compare_weights(
+           float_model.state_dict(), qmodel.state_dict())
+       for key in wt_compare_dict:
+           print(
+               key,
+               compute_error(
+                   wt_compare_dict[key]['float'],
+                   wt_compare_dict[key]['quantized'].dequantize()
+               )
+           )
+
+   :param float_dict: state dict of the float model.
+   :param quantized_dict: state dict of the quantized model.
+
+   :returns: dict with key corresponding to module names and each entry being
+             a dictionary with two keys 'float' and 'quantized', containing the float and
+             quantized weights.
+   :rtype: weight_dict
+
+
+.. py:function:: hawq_top(fp32_model, q_model, dataloader, criterion, enable_act)
+
+   Enable hawq on an HessianTrace object and returns op list.
+
+

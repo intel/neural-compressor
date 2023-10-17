@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.data.datasets.style_transfer_dataset`
+================================================================
+
+.. py:module:: neural_compressor.data.datasets.style_transfer_dataset
+
+.. autoapi-nested-parse::
+
+   Dataset used for style transfer task on multiple framework backends.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.datasets.style_transfer_dataset.StyleTransferDataset
+
+
+
+
+.. py:class:: StyleTransferDataset(content_folder, style_folder, crop_ratio=0.1, resize_shape=(256, 256), image_format='jpg', transform=None, filter=None)
+
+
+
+
+   Dataset used for style transfer task on tensorflow/inteltensorflow/tensorflow_itex backend.
+
+   This Dataset is to construct a dataset from two specific image holders representing
+       content image folder and style image folder.
+
+

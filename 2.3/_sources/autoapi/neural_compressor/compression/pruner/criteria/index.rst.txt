@@ -1,0 +1,177 @@
+:py:mod:`neural_compressor.compression.pruner.criteria`
+=======================================================
+
+.. py:module:: neural_compressor.compression.pruner.criteria
+
+.. autoapi-nested-parse::
+
+   Pruning criterion.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.criteria.PruningCriterion
+   neural_compressor.compression.pruner.criteria.MagnitudeCriterion
+   neural_compressor.compression.pruner.criteria.GradientCriterion
+   neural_compressor.compression.pruner.criteria.SnipCriterion
+   neural_compressor.compression.pruner.criteria.SnipMomentumCriterion
+   neural_compressor.compression.pruner.criteria.BlockMaskCriterion
+   neural_compressor.compression.pruner.criteria.RetrainFreeCriterion
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.criteria.register_criterion
+   neural_compressor.compression.pruner.criteria.get_criterion
+
+
+
+.. py:function:: register_criterion(name)
+
+   Register a criterion to the registry.
+
+
+.. py:function:: get_criterion(config, modules, pattern, masks=None)
+
+   Get registered criterion class.
+
+
+.. py:class:: PruningCriterion(modules, config, pattern)
+
+
+   Pruning base criterion.
+
+   :param config: A config dict object that includes information about pruner and pruning criterion.
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+
+   .. attribute:: scores
+
+      A dict {"module_name": Tensor} that stores the scores of pruning modules.
+
+
+.. py:class:: MagnitudeCriterion(modules, config, pattern)
+
+
+
+
+   Pruning criterion.
+
+   The magnitude criterion_class is derived from PruningCriterion.
+   The magnitude value is used to score and determine if a weight is to be pruned.
+
+   :param config: A config dict object that includes information about pruner and pruning criterion.
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+
+   .. attribute:: scores
+
+      A dict {"module_name": Tensor} that stores the scores of pruning modules.
+
+
+.. py:class:: GradientCriterion(modules, config, pattern)
+
+
+
+
+   Pruning criterion.
+
+   The gradient criterion_class is derived from PruningCriterion.
+   The absolute value of gradient is used to score and determine if a weight is to be pruned.
+
+   :param config: A config dict object that includes information about pruner and pruning criterion.
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+
+   .. attribute:: scores
+
+      A dict {"module_name": Tensor} that stores the scores of pruning modules.
+
+
+.. py:class:: SnipCriterion(modules, config, pattern)
+
+
+
+
+   Pruning criterion.
+
+   The snip criterion_class is derived from PruningCriterion.
+   The product of magnitude and gradient is used to score and determine if a weight is to be pruned.
+   Please refer to SNIP: Single-shot Network Pruning based on Connection Sensitivity.
+   (https://arxiv.org/abs/1810.02340)
+
+   :param config: A config dict object that includes information about pruner and pruning criterion.
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+
+   .. attribute:: scores
+
+      A dict {"module_name": Tensor} that stores the scores of pruning modules.
+
+
+.. py:class:: SnipMomentumCriterion(modules, config, pattern)
+
+
+
+
+   Pruning criterion.
+
+   The snip_momentum criterion_class is derived from PruningCriterion.
+   A momentum mechanism is used to calculate snip score, which determines if a weight is to be pruned.
+
+   :param config: A config dict object that includes information about pruner and pruning criterion.
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param alpha: A parameter that determines how much of the snip score is preserved from last pruning step.
+   :param beta: A parameter that determines how much of the snip score is updated at the current step.
+
+   .. attribute:: scores
+
+      A dict {"module_name": Tensor} that stores the scores of pruning modules.
+
+
+.. py:class:: BlockMaskCriterion(modules, config, pattern, masks, alpha=0.9, beta=1.0)
+
+
+
+
+   Pruning criterion.
+
+   The block_mask criterion_class is derived from PruningCriterion.
+   A momentum mechanism is used to calculate snip score, which determines if a block of weights is to be pruned.
+
+   :param config: A config dict object that includes information about pruner and pruning criterion.
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param alpha: A parameter that determines how much of the snip score is preserved from last pruning step.
+   :param beta: A parameter that determines how much of the snip score is updated at the current step.
+
+   .. attribute:: scores
+
+      A dict {"module_name": Tensor} that stores the scores of pruning modules.
+
+
+.. py:class:: RetrainFreeCriterion(modules, config, pattern, masks)
+
+
+
+
+   Pruning criterion.
+
+   The retrain_free criterion_class is derived from PruningCriterion.
+
+   :param config: A config dict object that includes information about pruner and pruning criterion.
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param alpha: A parameter that determines how much of the snip score is preserved from last pruning step.
+   :param beta: A parameter that determines how much of the snip score is updated at the current step.
+
+   .. attribute:: scores
+
+      A dict {"module_name": Tensor} that stores the scores of pruning modules.
+
+

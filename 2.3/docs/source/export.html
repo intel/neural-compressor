@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Export &mdash; Intel® Neural Compressor 2.3 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.3▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Export</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/export.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="export">
+<h1>Export<a class="headerlink" href="#export" title="Permalink to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#supported-framework-model-matrix">Supported Framework Model Matrix</a></p></li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+<li><p><a class="reference external" href="#appendix">Appendix</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>Open Neural Network Exchange (ONNX) is an open standard format for representing machine learning models. Exporting FP32 PyTorch/Tensorflow models has become popular and easy to use. For Intel Neural Compressor, we hope to export the INT8 model into the ONNX format to achieve higher applicability in multiple frameworks.</p>
+<p>Here is the workflow of our export API for PyTorch/Tensorflow FP32/INT8 model.
+<a target="_blank" href="./imgs/export.png" text-align:center>
+<center>
+<img src="./imgs/export.png" alt="Architecture" width=700 height=200>
+</center>
+</a></p>
+</section>
+<section id="supported-framework-model-matrix">
+<h2>Supported Framework Model Matrix<a class="headerlink" href="#supported-framework-model-matrix" title="Permalink to this heading"></a></h2>
+<table>
+<thead>
+  <tr>
+    <th>Framework</th>
+    <th>model type</th>
+    <th>exported ONNX model type</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td rowspan="4">PyTorch</td>
+    <td>FP32</td>
+    <td>FP32</td>
+  </tr>
+  <tr>
+    <td>Post-Training Static Quantized INT8</td>
+    <td>QOperator/QDQ INT8</td>
+  </tr>
+  <tr>
+    <td>Post-Training Dynamic Quantized INT8</td>
+    <td>QOperator INT8</td>
+  </tr>
+  <tr>
+    <td>Quantization-aware Training INT8</td>
+    <td>QOperator/QDQ INT8</td>
+  </tr>
+  <tr>
+    <td rowspan="3">TensorFlow</td>
+    <td>FP32</td>
+    <td>FP32</td>
+  </tr>
+  <tr>
+    <td>Post-Training Static Quantized INT8</td>
+    <td>QDQ INT8</td>
+  </tr>
+  <tr>
+    <td>Quantization-aware Training INT8</td>
+    <td>QDQ INT8</td>
+  </tr>
+</tbody>
+</table></section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<section id="pytorch-model">
+<h3>PyTorch Model<a class="headerlink" href="#pytorch-model" title="Permalink to this heading"></a></h3>
+<section id="fp32-model-export">
+<h4>FP32 Model Export<a class="headerlink" href="#fp32-model-export" title="Permalink to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental.common</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">Torch2ONNXConfig</span>
+
+<span class="n">inc_model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">fp32_onnx_config</span> <span class="o">=</span> <span class="n">Torch2ONNXConfig</span><span class="p">(</span>
+    <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;fp32&quot;</span><span class="p">,</span>
+    <span class="n">example_inputs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">),</span>
+    <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">],</span>
+    <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">],</span>
+    <span class="n">dynamic_axes</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">&quot;batch_size&quot;</span><span class="p">},</span>
+        <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">&quot;batch_size&quot;</span><span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+<span class="n">inc_model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;fp32-model.onnx&quot;</span><span class="p">,</span> <span class="n">fp32_onnx_config</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="int8-model-export">
+<h4>INT8 Model Export<a class="headerlink" href="#int8-model-export" title="Permalink to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># q_model is a Neural Compressor model after performing quantization.</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">Torch2ONNXConfig</span>
+
+<span class="n">int8_onnx_config</span> <span class="o">=</span> <span class="n">Torch2ONNXConfig</span><span class="p">(</span>
+    <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+    <span class="n">opset_version</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
+    <span class="n">quant_format</span><span class="o">=</span><span class="s2">&quot;QOperator&quot;</span><span class="p">,</span>  <span class="c1"># or QDQ</span>
+    <span class="n">example_inputs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">),</span>
+    <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">],</span>
+    <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">],</span>
+    <span class="n">dynamic_axes</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">&quot;batch_size&quot;</span><span class="p">},</span> <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">&quot;batch_size&quot;</span><span class="p">}},</span>
+<span class="p">)</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;int8-model.onnx&quot;</span><span class="p">,</span> <span class="n">int8_onnx_config</span><span class="p">)</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>: Two export examples covering computer vision and natural language processing tasks exist in examples. Users can leverage them to verify the accuracy and performance of the exported ONNX model.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><a class="reference external" href="/examples/pytorch/image_recognition/torchvision_models/export/fx/">Image recognition</a></p></li>
+<li><p><a class="reference external" href="/examples/pytorch/nlp/huggingface_models/text-classification/export/fx/">Text classification</a></p></li>
+</ul>
+</section>
+</section>
+<section id="tensorflow-model">
+<h3>Tensorflow Model<a class="headerlink" href="#tensorflow-model" title="Permalink to this heading"></a></h3>
+<section id="id1">
+<h4>FP32 Model Export<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental.common</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">TF2ONNXConfig</span>
+
+<span class="n">inc_model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">TF2ONNXConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;fp32&quot;</span><span class="p">)</span>
+<span class="n">inc_model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;fp32-model.onnx&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id2">
+<h3>INT8 Model Export<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># q_model is a Neural Compressor model after performing quantization.</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">TF2ONNXConfig</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">TF2ONNXConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int8&quot;</span><span class="p">)</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;int8-model.onnx&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>: Some export examples of computer vision task exist in examples. Users can leverage them to verify the accuracy and performance of the exported ONNX model.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><a class="reference external" href="/examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1_5/export">resnet50_v1_5</a></p></li>
+<li><p><a class="reference external" href="/examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/export">resnet50_v1</a></p></li>
+<li><p><a class="reference external" href="/examples/tensorflow/image_recognition/tensorflow_models/vgg16/export">vgg16</a></p></li>
+<li><p><a class="reference external" href="/examples/tensorflow/object_detection/tensorflow_models/ssd_mobilenet_v1/export">ssd_mobilenet_v1</a></p></li>
+<li><p><a class="reference external" href="/examples/tensorflow/image_recognition/tensorflow_models/mobilenet_v2/export">mobilenet_v2</a></p></li>
+<li><p><a class="reference external" href="examples/tensorflow/object_detection/tensorflow_models/faster_rcnn_resnet50/export">faster_rcnn_resnet50</a></p></li>
+</ul>
+</section>
+</section>
+<section id="appendix">
+<h2>Appendix<a class="headerlink" href="#appendix" title="Permalink to this heading"></a></h2>
+<section id="supported-quantized-ops">
+<h3>Supported quantized ops<a class="headerlink" href="#supported-quantized-ops" title="Permalink to this heading"></a></h3>
+<p>This table lists the TorchScript operators that are supported by ONNX export with torch v2.0. Refer to this <a class="reference external" href="https://pytorch.org/docs/stable/onnx_supported_aten_ops.html">link</a> for more supported/unsupported ops.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Operator</th>
+<th>opset_version(s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quantized::add</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::add_relu</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::cat</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::conv1d_relu</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::conv2d</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::conv2d_relu</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::group_norm</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::hardswish</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::instance_norm</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::layer_norm</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::leaky_relu</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::linear</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::mul</code></td>
+<td>Since opset 10</td>
+</tr>
+<tr>
+<td><code>quantized::sigmoid</code></td>
+<td>Since opset 10</td>
+</tr>
+</tbody>
+</table><blockquote>
+<div><p><strong>Note</strong>: The export function may fail due to unsupported operations. Please fallback unsupported quantized ops by setting ‘op_type_dict’ or ‘op_name_dict’ in ‘QuantizationAwareTrainingConfig’ or ‘PostTrainingQuantConfig’ config. Fallback examples please refer to <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/text-classification/export/fx/">Text classification</a></p>
+</div></blockquote>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fe6668f9eb0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

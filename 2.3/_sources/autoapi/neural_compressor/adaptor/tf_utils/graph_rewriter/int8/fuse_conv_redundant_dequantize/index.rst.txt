@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize`
+===============================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize
+
+.. autoapi-nested-parse::
+
+   Fuse QuantizedConv QuantizedDeConv with redundant Dequantize Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize.FuseConvRedundantDequantizeTransformer
+
+
+
+
+.. py:class:: FuseConvRedundantDequantizeTransformer(model, device='cpu')
+
+
+
+
+   Fuse _QuantizedConv/_QuantizedDeConv with the successor Dequantize Op.
+
+

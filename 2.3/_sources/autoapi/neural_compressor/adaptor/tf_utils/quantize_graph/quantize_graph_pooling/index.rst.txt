@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_pooling`
+==================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_pooling
+
+.. autoapi-nested-parse::
+
+   Quantize the AvgPool/MaxPool.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_pooling.FuseNodeStartWithPooling
+
+
+
+
+.. py:class:: FuseNodeStartWithPooling
+
+
+
+
+   Quantize the AvgPool and MaxPool.
+
+

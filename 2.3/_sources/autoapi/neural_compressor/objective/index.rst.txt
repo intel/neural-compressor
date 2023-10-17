@@ -1,0 +1,133 @@
+:py:mod:`neural_compressor.objective`
+=====================================
+
+.. py:module:: neural_compressor.objective
+
+.. autoapi-nested-parse::
+
+   The objectives supported by neural_compressor, which is driven by accuracy.
+
+   To support new objective, developers just need implement a new subclass in this file.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.objective.Objective
+   neural_compressor.objective.Accuracy
+   neural_compressor.objective.Performance
+   neural_compressor.objective.Footprint
+   neural_compressor.objective.ModelSize
+   neural_compressor.objective.MultiObjective
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.objective.objective_registry
+   neural_compressor.objective.objective_custom_registry
+
+
+
+.. py:function:: objective_registry(cls)
+
+   The class decorator used to register all Objective subclasses.
+
+   :param cls: The class of register.
+   :type cls: object
+
+   :returns: The class of register.
+   :rtype: cls (object)
+
+
+.. py:function:: objective_custom_registry(name, obj_cls)
+
+   Register a customized objective.
+
+   Example::
+
+       from eural_compressor.objective import objective_custom_registry
+
+       objective_cls = type(user_objective)
+       name = user_objective.__class__.__name__
+       objective_cfg = name if deep_get(self.conf.usr_cfg, "tuning.objective") else [name]
+       deep_set(self.conf.usr_cfg, user_obj_cfg, objective_cfg)
+       self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
+       objective_custom_registry(name, objective_cls)
+
+
+.. py:class:: Objective
+
+
+
+
+   The base class for precise benchmark supported by neural_compressor.
+
+   With built-in objectives, users can compress models with different objectives easily.
+   In special cases, users can also register their own objective classes.
+
+
+.. py:class:: Accuracy
+
+
+
+
+   Configuration Accuracy class.
+
+   Evaluate the accuracy.
+
+
+.. py:class:: Performance
+
+
+
+
+   Configuration Performance class.
+
+   Evaluate the inference time.
+
+
+.. py:class:: Footprint
+
+
+
+
+   Configuration Footprint class.
+
+   Evaluate the peak size of memory blocks during inference.
+
+
+.. py:class:: ModelSize
+
+
+
+
+   Configuration ModelSize class.
+
+   Evaluate the model size.
+
+
+.. py:class:: MultiObjective(objectives, accuracy_criterion, metric_criterion=[True], metric_weight=None, obj_criterion=None, obj_weight=None, is_measure=False)
+
+
+   The base class for multiple benchmarks supported by neural_compressor.
+
+   Example::
+
+       from neural_compressor.objective import MultiObjective
+       obj = MultiObjective(
+           objectives=['accuracy', 'modelsize', 'performance'],
+           accuracy_criterion={'relative': 0.1},
+           obj_criterion=[True, False, False],
+           obj_weight=[0.7, 0.2, 0.1])
+
+

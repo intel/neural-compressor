@@ -1,0 +1,80 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.onnxrt`
+==========================================
+
+.. py:module:: neural_compressor.adaptor.onnxrt
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.onnxrt.ONNXRUNTIMEAdaptor
+   neural_compressor.adaptor.onnxrt.ONNXRT_WeightOnlyAdaptor
+   neural_compressor.adaptor.onnxrt.ONNXRT_QLinearOpsAdaptor
+   neural_compressor.adaptor.onnxrt.ONNXRT_IntegerOpsAdaptor
+   neural_compressor.adaptor.onnxrt.ONNXRT_QDQAdaptor
+
+
+
+
+.. py:class:: ONNXRUNTIMEAdaptor(framework_specific_info)
+
+
+
+
+   The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+   :param framework_specific_info: framework specific configuration for quantization.
+   :type framework_specific_info: dict
+
+
+.. py:class:: ONNXRT_WeightOnlyAdaptor(framework_specific_info)
+
+
+
+
+   The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+   :param framework_specific_info: framework specific configuration for quantization.
+   :type framework_specific_info: dict
+
+
+.. py:class:: ONNXRT_QLinearOpsAdaptor(framework_specific_info)
+
+
+
+
+   The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+   :param framework_specific_info: framework specific configuration for quantization.
+   :type framework_specific_info: dict
+
+
+.. py:class:: ONNXRT_IntegerOpsAdaptor(framework_specific_info)
+
+
+
+
+   The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+   :param framework_specific_info: framework specific configuration for quantization.
+   :type framework_specific_info: dict
+
+
+.. py:class:: ONNXRT_QDQAdaptor(framework_specific_info)
+
+
+
+
+   The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+   :param framework_specific_info: framework specific configuration for quantization.
+   :type framework_specific_info: dict
+
+

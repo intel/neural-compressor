@@ -1,0 +1,90 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn`
+======================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn
+
+.. autoapi-nested-parse::
+
+   Fuse Decomposed BatchNorm Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.FuseDecomposedBNOptimizer
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.node_name_from_input
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.node_from_map
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.values_from_const
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.valid_reshape_inputs
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.bypass_reshape
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.get_const_dim_count
+
+
+
+.. py:class:: FuseDecomposedBNOptimizer(input_graph_def)
+
+
+   Fuse decomposed small ops to BatchNormalization.
+
+
+.. py:function:: node_name_from_input(node_name)
+
+   Strips off ports and other decorations to get the underlying node name.
+
+
+.. py:function:: node_from_map(node_map, name)
+
+   Pulls a node def from a dictionary for a given name.
+
+   :param node_map: Dictionary containing an entry indexed by name for every node.
+   :param name: Identifies the node we want to find.
+
+   :returns: NodeDef of the node with the given name.
+
+   :raises ValueError: If the node isn't present in the dictionary.
+
+
+.. py:function:: values_from_const(node_def)
+
+   Extracts the values from a const NodeDef as a numpy ndarray.
+
+   :param node_def: Const NodeDef that has the values we want to access.
+
+   :returns: Numpy ndarray containing the values.
+
+   :raises ValueError: If the node isn't a Const.
+
+
+.. py:function:: valid_reshape_inputs(reshape_in0_ndef, reshape_in1_ndef)
+
+   Check if the inputs of the Reshape are valid.
+
+
+.. py:function:: bypass_reshape(input_node_map, input_name)
+
+   Get Reshape input nodes.
+
+
+.. py:function:: get_const_dim_count(node_def)
+
+   Get the number of dimensions for a Const node.
+
+   :param node_def: Const NodeDef.
+
+   :returns: Number of dimensions for the Const node.
+
+

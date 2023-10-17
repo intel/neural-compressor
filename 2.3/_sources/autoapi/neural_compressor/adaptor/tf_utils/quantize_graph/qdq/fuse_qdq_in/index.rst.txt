@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in`
+===========================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in
+
+.. autoapi-nested-parse::
+
+   Quantize FusedInstanceNorm.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in.FuseNodeStartWithFusedInstanceNorm
+
+
+
+
+.. py:class:: FuseNodeStartWithFusedInstanceNorm(**kwargs)
+
+
+
+
+   Quantize FusedInstanceNorm and apply the fusion.
+
+

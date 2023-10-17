@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.adaptor.torch_utils.gptq &mdash; Intel® Neural Compressor 2.3 documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.3▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.torch_utils.gptq</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/adaptor/torch_utils/gptq/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.adaptor.torch_utils.gptq">
+<span id="neural-compressor-adaptor-torch-utils-gptq"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.torch_utils.gptq" title="neural_compressor.adaptor.torch_utils.gptq"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.torch_utils.gptq</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.torch_utils.gptq" title="Permalink to this heading"></a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.gptq.GPTQuantizer" title="neural_compressor.adaptor.torch_utils.gptq.GPTQuantizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GPTQuantizer</span></code></a></p></td>
+<td><p>Main API for GPTQ algorithm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.gptq.GPTQ" title="neural_compressor.adaptor.torch_utils.gptq.GPTQ"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GPTQ</span></code></a></p></td>
+<td><p>Please refer to:</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.gptq.is_leaf" title="neural_compressor.adaptor.torch_utils.gptq.is_leaf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_leaf</span></code></a>(module)</p></td>
+<td><p>Judge whether a module has no child-modules.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.gptq.trace_gptq_target_blocks" title="neural_compressor.adaptor.torch_utils.gptq.trace_gptq_target_blocks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">trace_gptq_target_blocks</span></code></a>(module[, module_types])</p></td>
+<td><p>Search transformer stacked structures, which is critical in LLMs and GPTQ execution.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.gptq.find_layers" title="neural_compressor.adaptor.torch_utils.gptq.find_layers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_layers</span></code></a>(module[, layers, name])</p></td>
+<td><p>Get all layers with target types.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.gptq.find_layers_name" title="neural_compressor.adaptor.torch_utils.gptq.find_layers_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_layers_name</span></code></a>(module[, layers, name])</p></td>
+<td><p>Get all layers with target types.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.gptq.log_quantizable_layers_per_transformer" title="neural_compressor.adaptor.torch_utils.gptq.log_quantizable_layers_per_transformer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_quantizable_layers_per_transformer</span></code></a>(transformer_blocks)</p></td>
+<td><p>Print all layers which will be quantized in GPTQ algorithm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.gptq.quantize" title="neural_compressor.adaptor.torch_utils.gptq.quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize</span></code></a>(x, scale, zero, maxq)</p></td>
+<td><p>Do quantization.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.gptq.is_leaf">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.gptq.</span></span><span class="sig-name descname"><span class="pre">is_leaf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/torch_utils/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.gptq.is_leaf" title="Permalink to this definition"></a></dt>
+<dd><p>Judge whether a module has no child-modules.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>module</strong> – torch.nn.Module</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>whether a module has no child-modules.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>a bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.gptq.trace_gptq_target_blocks">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.gptq.</span></span><span class="sig-name descname"><span class="pre">trace_gptq_target_blocks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[torch.nn.ModuleList]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/torch_utils/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.gptq.trace_gptq_target_blocks" title="Permalink to this definition"></a></dt>
+<dd><p>Search transformer stacked structures, which is critical in LLMs and GPTQ execution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> – torch.nn.Module</p></li>
+<li><p><strong>module_types</strong> – List of torch.nn.Module.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>gptq_related_blocks = {</dt><dd><p>“embeddings”: {}, # Dict embedding layers before transformer stack module,
+“transformers_pre”: {}, # TODO
+“transformers_name”: string. LLMs’ transformer stack module name ,
+“transformers”: torch.nn.ModuleList. LLMs’ transformer stack module,
+“transformers”: {}, Dict# TODO</p>
+</dd>
+</dl>
+<p>}</p>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.gptq.find_layers">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.gptq.</span></span><span class="sig-name descname"><span class="pre">find_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[nn.Conv2d,</span> <span class="pre">nn.Conv1d,</span> <span class="pre">nn.Linear,</span> <span class="pre">transformers.Conv1D]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/torch_utils/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.gptq.find_layers" title="Permalink to this definition"></a></dt>
+<dd><p>Get all layers with target types.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.gptq.find_layers_name">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.gptq.</span></span><span class="sig-name descname"><span class="pre">find_layers_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[nn.Conv2d,</span> <span class="pre">nn.Conv1d,</span> <span class="pre">nn.Linear,</span> <span class="pre">transformers.Conv1D]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/torch_utils/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.gptq.find_layers_name" title="Permalink to this definition"></a></dt>
+<dd><p>Get all layers with target types.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.gptq.log_quantizable_layers_per_transformer">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.gptq.</span></span><span class="sig-name descname"><span class="pre">log_quantizable_layers_per_transformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transformer_blocks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[nn.Conv2d,</span> <span class="pre">nn.Conv1d,</span> <span class="pre">nn.Linear,</span> <span class="pre">transformers.Conv1D]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/torch_utils/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.gptq.log_quantizable_layers_per_transformer" title="Permalink to this definition"></a></dt>
+<dd><p>Print all layers which will be quantized in GPTQ algorithm.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.gptq.quantize">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.gptq.</span></span><span class="sig-name descname"><span class="pre">quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxq</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/torch_utils/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.gptq.quantize" title="Permalink to this definition"></a></dt>
+<dd><p>Do quantization.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.gptq.GPTQuantizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.gptq.</span></span><span class="sig-name descname"><span class="pre">GPTQuantizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nsamples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_max_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad_max_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/torch_utils/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.gptq.GPTQuantizer" title="Permalink to this definition"></a></dt>
+<dd><p>Main API for GPTQ algorithm.</p>
+<p>Please refer to:
+GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers
+url: <a class="reference external" href="https://arxiv.org/abs/2210.17323">https://arxiv.org/abs/2210.17323</a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.gptq.GPTQ">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.gptq.</span></span><span class="sig-name descname"><span class="pre">GPTQ</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/adaptor/torch_utils/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.gptq.GPTQ" title="Permalink to this definition"></a></dt>
+<dd><p>Please refer to:
+GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers (<a class="reference external" href="https://arxiv.org/abs/2210.17323">https://arxiv.org/abs/2210.17323</a>)</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fe6605d7250> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

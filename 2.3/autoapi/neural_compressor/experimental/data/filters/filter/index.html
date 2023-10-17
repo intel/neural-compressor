@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.experimental.data.filters.filter &mdash; Intel® Neural Compressor 2.3 documentation</title>
+      <link rel="stylesheet" href="../../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../../_static/custom.css" type="text/css" />
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">2.3▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.filters.filter</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/experimental/data/filters/filter/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.experimental.data.filters.filter">
+<span id="neural-compressor-experimental-data-filters-filter"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.data.filters.filter" title="neural_compressor.experimental.data.filters.filter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.filters.filter</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.data.filters.filter" title="Permalink to this heading"></a></h1>
+<p>The base filter class for all frameworks.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.filters.filter.TensorflowFilters" title="neural_compressor.experimental.data.filters.filter.TensorflowFilters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowFilters</span></code></a></p></td>
+<td><p>The base filter class for Tensorflow framework.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.filters.filter.ONNXRTQLFilters" title="neural_compressor.experimental.data.filters.filter.ONNXRTQLFilters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXRTQLFilters</span></code></a></p></td>
+<td><p>The base filter class for ONNXRT framework QLinear mode.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.filters.filter.ONNXRTITFilters" title="neural_compressor.experimental.data.filters.filter.ONNXRTITFilters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXRTITFilters</span></code></a></p></td>
+<td><p>The base filter class for ONNXRT framework IT mode.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.filters.filter.PyTorchFilters" title="neural_compressor.experimental.data.filters.filter.PyTorchFilters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchFilters</span></code></a></p></td>
+<td><p>The base filter class for PyTorch framework.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.filters.filter.MXNetFilters" title="neural_compressor.experimental.data.filters.filter.MXNetFilters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetFilters</span></code></a></p></td>
+<td><p>The base filter class for MXNet framework.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.filters.filter.FILTERS" title="neural_compressor.experimental.data.filters.filter.FILTERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FILTERS</span></code></a></p></td>
+<td><p>The filter register for all frameworks.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.filters.filter.Filter" title="neural_compressor.experimental.data.filters.filter.Filter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Filter</span></code></a></p></td>
+<td><p>The base class for transform.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.filters.filter.filter_registry" title="neural_compressor.experimental.data.filters.filter.filter_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_registry</span></code></a>(filter_type, framework)</p></td>
+<td><p>Register all transform subclasses.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.filters.filter.TensorflowFilters">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.filters.filter.</span></span><span class="sig-name descname"><span class="pre">TensorflowFilters</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/filters/filter.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.filters.filter.TensorflowFilters" title="Permalink to this definition"></a></dt>
+<dd><p>The base filter class for Tensorflow framework.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.filters.filter.ONNXRTQLFilters">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.filters.filter.</span></span><span class="sig-name descname"><span class="pre">ONNXRTQLFilters</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/filters/filter.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.filters.filter.ONNXRTQLFilters" title="Permalink to this definition"></a></dt>
+<dd><p>The base filter class for ONNXRT framework QLinear mode.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.filters.filter.ONNXRTITFilters">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.filters.filter.</span></span><span class="sig-name descname"><span class="pre">ONNXRTITFilters</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/filters/filter.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.filters.filter.ONNXRTITFilters" title="Permalink to this definition"></a></dt>
+<dd><p>The base filter class for ONNXRT framework IT mode.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.filters.filter.PyTorchFilters">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.filters.filter.</span></span><span class="sig-name descname"><span class="pre">PyTorchFilters</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/filters/filter.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.filters.filter.PyTorchFilters" title="Permalink to this definition"></a></dt>
+<dd><p>The base filter class for PyTorch framework.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.filters.filter.MXNetFilters">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.filters.filter.</span></span><span class="sig-name descname"><span class="pre">MXNetFilters</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/filters/filter.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.filters.filter.MXNetFilters" title="Permalink to this definition"></a></dt>
+<dd><p>The base filter class for MXNet framework.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.filters.filter.FILTERS">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.filters.filter.</span></span><span class="sig-name descname"><span class="pre">FILTERS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/filters/filter.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.filters.filter.FILTERS" title="Permalink to this definition"></a></dt>
+<dd><p>The filter register for all frameworks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>framework</strong> (<em>str</em>) – frameworks in [“tensorflow”, “tensorflow_itex”, “mxnet”,
+“onnxrt_qdq”, “pytorch”, “pytorch_ipex”,
+“pytorch_fx”, “onnxrt_integerops”, “keras”
+“onnxrt_qlinearops”, “onnxruntime”].</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.filters.filter.filter_registry">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.filters.filter.</span></span><span class="sig-name descname"><span class="pre">filter_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/filters/filter.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.filters.filter.filter_registry" title="Permalink to this definition"></a></dt>
+<dd><p>Register all transform subclasses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter_type</strong> (<em>str</em>) – fILTER registration name.</p></li>
+<li><p><strong>framework</strong> (<em>str</em>) – support 4 framework including ‘tensorflow’, ‘pytorch’, ‘mxnet’, ‘onnxrt’.</p></li>
+<li><p><strong>cls</strong> (<em>class</em>) – The class of register.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The class of register.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>cls</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.filters.filter.Filter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.filters.filter.</span></span><span class="sig-name descname"><span class="pre">Filter</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/filters/filter.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.filters.filter.Filter" title="Permalink to this definition"></a></dt>
+<dd><p>The base class for transform.</p>
+<p>__call__ method is needed when write user specific transform.</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fe6642829a0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

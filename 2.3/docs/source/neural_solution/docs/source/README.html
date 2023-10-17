@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Get started &mdash; Intel® Neural Compressor 2.3 documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.3▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Get started</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/docs/source/neural_solution/docs/source/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="get-started">
+<h1>Get started<a class="headerlink" href="#get-started" title="Permalink to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference external" href="#get-started">Get started</a></p>
+<ul>
+<li><p><a class="reference external" href="#install-neural-solution">Install Neural Solution</a></p>
+<ul>
+<li><p><a class="reference external" href="#prerequisites">Prerequisites</a></p></li>
+<li><p><a class="reference external" href="#method-1-using-pip">Method 1. Using pip</a></p></li>
+<li><p><a class="reference external" href="#method-2-building-from-source">Method 2. Building from source</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#start-service">Start service</a></p></li>
+<li><p><a class="reference external" href="#submit-task">Submit task</a></p></li>
+<li><p><a class="reference external" href="#query-task-status">Query task status</a></p></li>
+<li><p><a class="reference external" href="#stop-service">Stop service</a></p></li>
+<li><p><a class="reference external" href="#inspect-logs">Inspect logs</a></p></li>
+<li><p><a class="reference external" href="#manage-resource">Manage resource</a></p>
+<ul>
+<li><p><a class="reference external" href="#node-states">Node States</a></p></li>
+<li><p><a class="reference external" href="#query-cluster">Query cluster</a></p></li>
+<li><p><a class="reference external" href="#add-node">Add node</a></p></li>
+<li><p><a class="reference external" href="#remove-node">Remove node</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<section id="install-neural-solution">
+<h2>Install Neural Solution<a class="headerlink" href="#install-neural-solution" title="Permalink to this heading"></a></h2>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p>Install <a class="reference external" href="https://docs.anaconda.com/free/anaconda/install/">Anaconda</a></p></li>
+<li><p>Install <a class="reference external" href="https://www.open-mpi.org/faq/?category=building#easy-build">Open MPI</a></p></li>
+<li><p>Python 3.8 or later</p></li>
+</ul>
+<p>There are two ways to install the neural solution:</p>
+</section>
+<section id="method-1-using-pip">
+<h3>Method 1. Using pip<a class="headerlink" href="#method-1-using-pip" title="Permalink to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">neural</span><span class="o">-</span><span class="n">solution</span>
+</pre></div>
+</div>
+</section>
+<section id="method-2-building-from-source">
+<h3>Method 2. Building from source<a class="headerlink" href="#method-2-building-from-source" title="Permalink to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># get source code</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/intel/neural-compressor
+<span class="nb">cd</span><span class="w"> </span>neural-compressor
+
+<span class="c1"># install neural compressor</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+python<span class="w"> </span>setup.py<span class="w"> </span>install
+
+<span class="c1"># install neural solution</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>neural_solution/requirements.txt
+python<span class="w"> </span>setup.py<span class="w"> </span>neural_solution<span class="w"> </span>install
+</pre></div>
+</div>
+</section>
+</section>
+<section id="start-service">
+<h2>Start service<a class="headerlink" href="#start-service" title="Permalink to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Start neural solution service with custom configuration</span>
+neural_solution<span class="w"> </span>start<span class="w"> </span>--task_monitor_port<span class="o">=</span><span class="m">22222</span><span class="w"> </span>--result_monitor_port<span class="o">=</span><span class="m">33333</span><span class="w"> </span>--restful_api_port<span class="o">=</span><span class="m">8001</span>
+
+<span class="c1"># Help Manual</span>
+neural_solution<span class="w"> </span>-h
+<span class="c1"># Help output</span>
+
+usage:<span class="w"> </span>neural_solution<span class="w"> </span><span class="o">{</span>start,stop<span class="o">}</span><span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>--hostfile<span class="w"> </span>HOSTFILE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--restful_api_port<span class="w"> </span>RESTFUL_API_PORT<span class="o">]</span><span class="w"> </span><span class="o">[</span>--grpc_api_port<span class="w"> </span>GRPC_API_PORT<span class="o">]</span>
+<span class="w">                   </span><span class="o">[</span>--result_monitor_port<span class="w"> </span>RESULT_MONITOR_PORT<span class="o">]</span><span class="w"> </span><span class="o">[</span>--task_monitor_port<span class="w"> </span>TASK_MONITOR_PORT<span class="o">]</span><span class="w"> </span><span class="o">[</span>--api_type<span class="w"> </span>API_TYPE<span class="o">]</span>
+<span class="w">                   </span><span class="o">[</span>--workspace<span class="w"> </span>WORKSPACE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--conda_env<span class="w"> </span>CONDA_ENV<span class="o">]</span><span class="w"> </span><span class="o">[</span>--upload_path<span class="w"> </span>UPLOAD_PATH<span class="o">]</span>
+
+Neural<span class="w"> </span>Solution
+
+positional<span class="w"> </span>arguments:
+<span class="w">  </span><span class="o">{</span>start,stop<span class="o">}</span><span class="w">          </span>start/stop<span class="w"> </span>service
+
+optional<span class="w"> </span>arguments:
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">            </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<span class="w">  </span>--hostfile<span class="w"> </span>HOSTFILE<span class="w">   </span>start<span class="w"> </span>backend<span class="w"> </span>serve<span class="w"> </span>host<span class="w"> </span>file<span class="w"> </span>which<span class="w"> </span>contains<span class="w"> </span>all<span class="w"> </span>available<span class="w"> </span>nodes
+<span class="w">  </span>--restful_api_port<span class="w"> </span>RESTFUL_API_PORT
+<span class="w">                        </span>start<span class="w"> </span>restful<span class="w"> </span>serve<span class="w"> </span>with<span class="w"> </span><span class="o">{</span>restful_api_port<span class="o">}</span>,<span class="w"> </span>default<span class="w"> </span><span class="m">8000</span>
+<span class="w">  </span>--grpc_api_port<span class="w"> </span>GRPC_API_PORT
+<span class="w">                        </span>start<span class="w"> </span>gRPC<span class="w"> </span>with<span class="w"> </span><span class="o">{</span>restful_api_port<span class="o">}</span>,<span class="w"> </span>default<span class="w"> </span><span class="m">8000</span>
+<span class="w">  </span>--result_monitor_port<span class="w"> </span>RESULT_MONITOR_PORT
+<span class="w">                        </span>start<span class="w"> </span>serve<span class="w"> </span><span class="k">for</span><span class="w"> </span>result<span class="w"> </span>monitor<span class="w"> </span>at<span class="w"> </span><span class="o">{</span>result_monitor_port<span class="o">}</span>,<span class="w"> </span>default<span class="w"> </span><span class="m">3333</span>
+<span class="w">  </span>--task_monitor_port<span class="w"> </span>TASK_MONITOR_PORT
+<span class="w">                        </span>start<span class="w"> </span>serve<span class="w"> </span><span class="k">for</span><span class="w"> </span>task<span class="w"> </span>monitor<span class="w"> </span>at<span class="w"> </span><span class="o">{</span>task_monitor_port<span class="o">}</span>,<span class="w"> </span>default<span class="w"> </span><span class="m">2222</span>
+<span class="w">  </span>--api_type<span class="w"> </span>API_TYPE<span class="w">   </span>start<span class="w"> </span>web<span class="w"> </span>serve<span class="w"> </span>with<span class="w"> </span>all/grpc/restful,<span class="w"> </span>default<span class="w"> </span>all
+<span class="w">  </span>--workspace<span class="w"> </span>WORKSPACE
+<span class="w">                        </span>neural<span class="w"> </span>solution<span class="w"> </span>workspace,<span class="w"> </span>default<span class="w"> </span><span class="s2">&quot;./ns_workspace&quot;</span>
+<span class="w">  </span>--conda_env<span class="w"> </span>CONDA_ENV
+<span class="w">                        </span>specify<span class="w"> </span>the<span class="w"> </span>running<span class="w"> </span>environment<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>task
+<span class="w">  </span>--upload_path<span class="w"> </span>UPLOAD_PATH
+<span class="w">                        </span>specify<span class="w"> </span>the<span class="w"> </span>file<span class="w"> </span>path<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>tasks
+</pre></div>
+</div>
+</section>
+<section id="submit-task">
+<h2>Submit task<a class="headerlink" href="#submit-task" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>For RESTful API: <code class="docutils literal notranslate"><span class="pre">[user&#64;server</span> <span class="pre">hf_model]$</span> <span class="pre">curl</span> <span class="pre">-H</span> <span class="pre">&quot;Content-Type:</span> <span class="pre">application/json&quot;</span> <span class="pre">--data</span> <span class="pre">&#64;./task.json</span>&#160; <span class="pre">http://localhost:8000/task/submit/</span></code></p></li>
+<li><p>For gRPC API: <code class="docutils literal notranslate"><span class="pre">python</span>&#160; <span class="pre">-m</span> <span class="pre">neural_solution.frontend.gRPC.client</span> <span class="pre">submit</span> <span class="pre">--request=&quot;test.json&quot;</span></code></p></li>
+</ul>
+<blockquote>
+<div><p>For more details, please reference the <a class="reference external" href="./description_api.html">API description</a> and <a class="reference external" href="../../examples/README.html">examples</a>.</p>
+</div></blockquote>
+</section>
+<section id="query-task-status">
+<h2>Query task status<a class="headerlink" href="#query-task-status" title="Permalink to this heading"></a></h2>
+<p>Query the task status and result according to the <code class="docutils literal notranslate"><span class="pre">task_id</span></code>.</p>
+<ul class="simple">
+<li><p>For RESTful API: <code class="docutils literal notranslate"><span class="pre">[user&#64;server</span> <span class="pre">hf_model]$</span> <span class="pre">curl</span>&#160; <span class="pre">-X</span> <span class="pre">GET</span>&#160; <span class="pre">http://localhost:8000/task/status/{task_id}</span></code></p></li>
+<li><p>For gRPC API: <code class="docutils literal notranslate"><span class="pre">python</span>&#160; <span class="pre">-m</span> <span class="pre">neural_solution.frontend.gRPC.client</span> <span class="pre">query</span> <span class="pre">--task_id={task_id}</span></code></p></li>
+</ul>
+<blockquote>
+<div><p>For more details, please reference the <a class="reference external" href="./description_api.html">API description</a> and <a class="reference external" href="../../examples/README.html">examples</a>.</p>
+</div></blockquote>
+</section>
+<section id="stop-service">
+<h2>Stop service<a class="headerlink" href="#stop-service" title="Permalink to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Stop neural solution service with default configuration</span>
+neural_solution<span class="w"> </span>stop
+</pre></div>
+</div>
+</section>
+<section id="inspect-logs">
+<h2>Inspect logs<a class="headerlink" href="#inspect-logs" title="Permalink to this heading"></a></h2>
+<p>The default logs locate in <code class="docutils literal notranslate"><span class="pre">./ns_workspace/</span></code>. Users can specify a custom workspace by using <code class="docutils literal notranslate"><span class="pre">neural_solution</span> <span class="pre">---workspace=/path/to/custom/workspace</span></code>.</p>
+<p>There are several logs under workspace:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>ns<span class="o">)</span><span class="w"> </span><span class="o">[</span>username@servers<span class="w"> </span>ns_workspace<span class="o">]</span>$<span class="w"> </span>tree
+.
+├──<span class="w"> </span>db
+│<span class="w">   </span>└──<span class="w"> </span>task.db<span class="w"> </span><span class="c1"># database to save the task-related information</span>
+├──<span class="w"> </span>serve_log<span class="w"> </span><span class="c1"># service running log</span>
+│<span class="w">   </span>├──<span class="w"> </span>backend.log<span class="w"> </span><span class="c1"># backend log </span>
+│<span class="w">   </span>├──<span class="w"> </span>frontend_grpc.log<span class="w"> </span><span class="c1"># grpc frontend log</span>
+│<span class="w">   </span>└──<span class="w"> </span>frontend.log<span class="w"> </span><span class="c1"># HTTP/RESTful frontend log</span>
+├──<span class="w"> </span>task_log<span class="w"> </span><span class="c1"># overall log for each task</span>
+│<span class="w">   </span>├──<span class="w"> </span>task_bdf0bd1b2cc14bc19bce12d4f9b333c7.txt<span class="w"> </span><span class="c1"># task log</span>
+│<span class="w">   </span>└──<span class="w"> </span>...
+└──<span class="w"> </span>task_workspace<span class="w"> </span><span class="c1"># the log for each task</span>
+<span class="w">    </span>...
+<span class="w">    </span>├──<span class="w"> </span>bdf0bd1b2cc14bc19bce12d4f9b333c7<span class="w"> </span><span class="c1"># task_id</span>
+<span class="w">    </span>...
+</pre></div>
+</div>
+</section>
+<section id="manage-resource">
+<h2>Manage resource<a class="headerlink" href="#manage-resource" title="Permalink to this heading"></a></h2>
+<p>Neural Solution supports cluster management for service maintainers, providing several command-line tools for efficient resource management.</p>
+<section id="node-states">
+<h3>Node States<a class="headerlink" href="#node-states" title="Permalink to this heading"></a></h3>
+<p>Each node in the cluster can have three different states:</p>
+<ul class="simple">
+<li><p>Alive: Represents a node that is functioning properly and available to handle requests.</p></li>
+<li><p>Join: Indicates that a node is in the process of being added to the cluster but has not fully joined yet.</p></li>
+<li><p>Remove: Indicates that a node is scheduled to be removed from the cluster.</p></li>
+</ul>
+<p>Below are some commonly used commands and their usage:</p>
+</section>
+<section id="query-cluster">
+<h3>Query cluster<a class="headerlink" href="#query-cluster" title="Permalink to this heading"></a></h3>
+<p>This command is used to query the current status of the cluster. No additional parameters are required, simply enter the following command:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>neural_solution<span class="w"> </span>cluster<span class="w"> </span>--query
+</pre></div>
+</div>
+</section>
+<section id="add-node">
+<h3>Add node<a class="headerlink" href="#add-node" title="Permalink to this heading"></a></h3>
+<p>This command is used to add nodes to the cluster. You can either specify a host file or provide a list of nodes separated by “;”. The node format consists of three parts: hostname, number_of_sockets, and cores_per_socket. Here’s a breakdown of each part:</p>
+<ul class="simple">
+<li><p>hostname: This refers to the name or IP address of the node that you want to add to the cluster. It identifies the specific machine or server that will be part of the cluster.</p></li>
+<li><p>number_of_sockets: This indicates the number of physical CPU sockets available on the node. A socket is a physical component that houses one or more CPU cores. It represents a physical processor unit.</p></li>
+<li><p>cores_per_socket: This specifies the number of CPU cores present in each socket. A core is an individual processing unit within a CPU.</p></li>
+</ul>
+<p>For example:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>neural_solution<span class="w"> </span>cluster<span class="w"> </span>--join<span class="w"> </span><span class="s2">&quot;host1 2 20; host2 4 20&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="remove-node">
+<h3>Remove node<a class="headerlink" href="#remove-node" title="Permalink to this heading"></a></h3>
+<p>This command is used to remove nodes from the cluster based on the IDs obtained from the query. The IDs can be passed as a parameter to the command. For example:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>neural_solution<span class="w"> </span>cluster<span class="w"> </span>--remove<span class="w"> </span>&lt;query_id&gt;
+</pre></div>
+</div>
+<p>Please note that the above commands are just examples and may require additional parameters or configurations based on your specific setup.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fe66729d5b0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

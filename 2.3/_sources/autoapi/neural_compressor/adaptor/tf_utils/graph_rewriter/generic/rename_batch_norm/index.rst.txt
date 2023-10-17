@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.rename_batch_norm`
+=====================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.rename_batch_norm
+
+.. autoapi-nested-parse::
+
+   Rename FusedBatchNorm op to FusedBatchNormV2 Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.rename_batch_norm.RenameBatchNormOptimizer
+
+
+
+
+.. py:class:: RenameBatchNormOptimizer(model)
+
+
+
+
+   Rename FusedBatchNorm op to FusedBatchNormV2.
+
+

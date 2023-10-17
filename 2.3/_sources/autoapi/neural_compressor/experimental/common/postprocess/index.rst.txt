@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.experimental.common.postprocess`
+===========================================================
+
+.. py:module:: neural_compressor.experimental.common.postprocess
+
+.. autoapi-nested-parse::
+
+   Common Postprocess.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.common.postprocess.Postprocess
+
+
+
+
+.. py:class:: Postprocess(postprocess_cls, name='user_postprocess', **kwargs)
+
+
+
+
+   Just collect the infos to construct a Postprocess.
+
+

@@ -1,0 +1,73 @@
+:py:mod:`neural_compressor.utils.pytorch`
+=========================================
+
+.. py:module:: neural_compressor.utils.pytorch
+
+.. autoapi-nested-parse::
+
+   Pytorch utilities.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.pytorch.is_int8_model
+   neural_compressor.utils.pytorch.load_weight_only
+   neural_compressor.utils.pytorch.load
+
+
+
+.. py:function:: is_int8_model(model)
+
+   Check whether the input model is a int8 model.
+
+   :param model: input model
+   :type model: torch.nn.Module
+
+   :returns: Return True if the input model is a int8 model.
+   :rtype: result(bool)
+
+
+.. py:function:: load_weight_only(checkpoint_dir, model)
+
+   Load model in weight_only mode.
+
+   :param checkpoint_dir: The folder of checkpoint. 'qconfig.json' and
+                          'best_model.pt' are needed in This directory.
+                          'checkpoint' dir is under workspace folder and
+                          workspace folder is define in configure yaml file.
+   :type checkpoint_dir: dir/file/dict
+   :param model: fp32 model need to do quantization.
+   :type model: object
+
+   :returns: quantized model
+   :rtype: (object)
+
+
+.. py:function:: load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs)
+
+   Execute the quantize process on the specified model.
+
+   :param checkpoint_dir: The folder of checkpoint. 'best_configure.yaml' and
+                          'best_model_weights.pt' are needed in This directory.
+                          'checkpoint' dir is under workspace folder and
+                          workspace folder is define in configure yaml file.
+   :type checkpoint_dir: dir/file/dict
+   :param model: fp32 model need to do quantization.
+   :type model: object
+   :param history_cfg: configurations from history.snapshot file.
+   :type history_cfg: object
+   :param \*\*kwargs: contains customer config dict and etc.
+   :type \*\*kwargs: dict
+
+   :returns: quantized model
+   :rtype: (object)
+
+

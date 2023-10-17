@@ -1,0 +1,111 @@
+:orphan:
+
+:py:mod:`neural_compressor.compression.hpo.search_algorithms`
+=============================================================
+
+.. py:module:: neural_compressor.compression.hpo.search_algorithms
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.hpo.search_algorithms.Searcher
+   neural_compressor.compression.hpo.search_algorithms.GridSearcher
+   neural_compressor.compression.hpo.search_algorithms.RandomSearcher
+   neural_compressor.compression.hpo.search_algorithms.BayesianOptimizationSearcher
+   neural_compressor.compression.hpo.search_algorithms.XgbSearcher
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.hpo.search_algorithms.register_searcher
+
+
+
+.. py:function:: register_searcher(name)
+
+   Class decorator to register a Searcher subclass to the registry.
+
+   Decorator function used before a Pattern subclass.
+   Make sure that the Searcher class decorated by this function can be registered in SEARCHERS.
+
+   :param cls: The subclass of register.
+   :type cls: class
+   :param name: A string. Define the searcher type.
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: Searcher(search_space)
+
+
+
+
+   Base class for defining the common methods of different search algorithms.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+
+
+.. py:class:: GridSearcher(search_space)
+
+
+
+
+   Grid search.
+
+   Search the whole search space exhaustively.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+
+
+.. py:class:: RandomSearcher(search_space)
+
+
+
+
+   Random search.
+
+   Search the whole search space randomly.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+
+
+.. py:class:: BayesianOptimizationSearcher(search_space, seed=42)
+
+
+
+
+   Bayesian Optimization.
+
+   Search the search space with Bayesian Optimization.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+
+
+.. py:class:: XgbSearcher(search_space, higher_is_better=True, loss_type='reg', min_train_samples=10, seed=42)
+
+
+
+
+   XGBoost searcher.
+
+   Search the search space with XGBoost model.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+
+

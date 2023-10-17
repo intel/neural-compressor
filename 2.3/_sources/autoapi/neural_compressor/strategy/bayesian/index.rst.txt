@@ -1,0 +1,77 @@
+:py:mod:`neural_compressor.strategy.bayesian`
+=============================================
+
+.. py:module:: neural_compressor.strategy.bayesian
+
+.. autoapi-nested-parse::
+
+   The Bayesian tuning strategy.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.bayesian.BayesianTuneStrategy
+   neural_compressor.strategy.bayesian.TargetSpace
+   neural_compressor.strategy.bayesian.BayesianOptimization
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.bayesian.acq_max
+
+
+
+.. py:class:: BayesianTuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, resume=None, q_hooks=None)
+
+
+
+
+   The Bayesian tuning strategy.
+
+
+.. py:function:: acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10)
+
+   Find the maximum of the acquisition function parameters.
+
+   :param ac: The acquisition function object that return its point-wise value.
+   :param gp: A gaussian process fitted to the relevant data.
+   :param y_max: The current maximum known value of the target function.
+   :param bounds: The variables bounds to limit the search of the acq max.
+   :param random_seed: instance of np.RandomState random number generator
+   :param n_warmup: number of times to randomly sample the acquisition function
+   :param n_iter: number of times to run scipy.minimize
+
+   :returns: The arg max of the acquisition function.
+   :rtype: x_max
+
+
+.. py:class:: TargetSpace(pbounds, random_seed=9527)
+
+
+
+
+   Holds the param-space coordinates (X) and target values (Y).
+
+   Allows for constant-time appends while ensuring no duplicates are added.
+
+
+.. py:class:: BayesianOptimization(pbounds, random_seed=9527, verbose=2)
+
+
+   The class for bayesian optimization.
+
+   This class takes the parameters bounds in order to find which values for
+   the parameters yield the maximum value using bayesian optimization.
+
+

@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.experimental.data.transforms.transform &mdash; Intel® Neural Compressor 2.3 documentation</title>
+      <link rel="stylesheet" href="../../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../../_static/custom.css" type="text/css" />
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">2.3▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.transform</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/experimental/data/transforms/transform/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.experimental.data.transforms.transform">
+<span id="neural-compressor-experimental-data-transforms-transform"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.data.transforms.transform" title="neural_compressor.experimental.data.transforms.transform"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.transform</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.data.transforms.transform" title="Permalink to this heading"></a></h1>
+<p>Neural Compressor built-in Transforms on multiple framework backends.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.Transforms" title="neural_compressor.experimental.data.transforms.transform.Transforms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Transforms</span></code></a></p></td>
+<td><p>INC supports built-in preprocessing, postprocessing and general methods on different framework backends.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.TensorflowTransforms" title="neural_compressor.experimental.data.transforms.transform.TensorflowTransforms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowTransforms</span></code></a></p></td>
+<td><p>Tensorflow Transforms subclass.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.MXNetTransforms" title="neural_compressor.experimental.data.transforms.transform.MXNetTransforms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetTransforms</span></code></a></p></td>
+<td><p>Mxnet Transforms subclass.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.PyTorchTransforms" title="neural_compressor.experimental.data.transforms.transform.PyTorchTransforms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchTransforms</span></code></a></p></td>
+<td><p>Pytorch Transforms subclass.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.ONNXRTQLTransforms" title="neural_compressor.experimental.data.transforms.transform.ONNXRTQLTransforms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXRTQLTransforms</span></code></a></p></td>
+<td><p>Onnxrt_qlinearops Transforms subclass.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.ONNXRTITTransforms" title="neural_compressor.experimental.data.transforms.transform.ONNXRTITTransforms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXRTITTransforms</span></code></a></p></td>
+<td><p>Onnxrt_integerops Transforms subclass.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.TRANSFORMS" title="neural_compressor.experimental.data.transforms.transform.TRANSFORMS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TRANSFORMS</span></code></a></p></td>
+<td><p>Transforms collection class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.BaseTransform" title="neural_compressor.experimental.data.transforms.transform.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseTransform</span></code></a></p></td>
+<td><p>The base class for transform.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.TensorflowWrapFunction" title="neural_compressor.experimental.data.transforms.transform.TensorflowWrapFunction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowWrapFunction</span></code></a></p></td>
+<td><p>Tensorflow wrapper function class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.TensorflowTransform" title="neural_compressor.experimental.data.transforms.transform.TensorflowTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowTransform</span></code></a></p></td>
+<td><p>Tensorflow transform class, the subclass of BaseTransform.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.PytorchMxnetWrapFunction" title="neural_compressor.experimental.data.transforms.transform.PytorchMxnetWrapFunction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PytorchMxnetWrapFunction</span></code></a></p></td>
+<td><p>Pytorch and MXNet wrapper function class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.PytorchMxnetTransform" title="neural_compressor.experimental.data.transforms.transform.PytorchMxnetTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PytorchMxnetTransform</span></code></a></p></td>
+<td><p>Pytorch and Mxnet transform class, the subclass of BaseTransform.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.ComposeTransform" title="neural_compressor.experimental.data.transforms.transform.ComposeTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ComposeTransform</span></code></a></p></td>
+<td><p>Composes several transforms together.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.CropToBoundingBox" title="neural_compressor.experimental.data.transforms.transform.CropToBoundingBox"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CropToBoundingBox</span></code></a></p></td>
+<td><p>Crops an image to a specified bounding box.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.MXNetCropToBoundingBox" title="neural_compressor.experimental.data.transforms.transform.MXNetCropToBoundingBox"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetCropToBoundingBox</span></code></a></p></td>
+<td><p>Crops an image to a specified bounding box.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.ONNXRTCropToBoundingBox" title="neural_compressor.experimental.data.transforms.transform.ONNXRTCropToBoundingBox"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXRTCropToBoundingBox</span></code></a></p></td>
+<td><p>Crops an image to a specified bounding box.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.TensorflowCropToBoundingBox" title="neural_compressor.experimental.data.transforms.transform.TensorflowCropToBoundingBox"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowCropToBoundingBox</span></code></a></p></td>
+<td><p>Crops an image to a specified bounding box.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.ResizeWithRatio" title="neural_compressor.experimental.data.transforms.transform.ResizeWithRatio"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ResizeWithRatio</span></code></a></p></td>
+<td><p>Resize image with aspect ratio and pad it to max shape(optional).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.TensorflowResizeWithRatio" title="neural_compressor.experimental.data.transforms.transform.TensorflowResizeWithRatio"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowResizeWithRatio</span></code></a></p></td>
+<td><p>Resize image with aspect ratio and pad it to max shape(optional).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.Transpose" title="neural_compressor.experimental.data.transforms.transform.Transpose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Transpose</span></code></a></p></td>
+<td><p>Transpose image according to perm.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.TensorflowTranspose" title="neural_compressor.experimental.data.transforms.transform.TensorflowTranspose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowTranspose</span></code></a></p></td>
+<td><p>Transpose image according to perm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.MXNetTranspose" title="neural_compressor.experimental.data.transforms.transform.MXNetTranspose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetTranspose</span></code></a></p></td>
+<td><p>Transpose image according to perm.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.PyTorchTranspose" title="neural_compressor.experimental.data.transforms.transform.PyTorchTranspose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchTranspose</span></code></a></p></td>
+<td><p>Transpose image according to perm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.RandomVerticalFlip" title="neural_compressor.experimental.data.transforms.transform.RandomVerticalFlip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RandomVerticalFlip</span></code></a></p></td>
+<td><p>Vertically flip the given image randomly.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.TensorflowRandomVerticalFlip" title="neural_compressor.experimental.data.transforms.transform.TensorflowRandomVerticalFlip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowRandomVerticalFlip</span></code></a></p></td>
+<td><p>Vertically flip the given image randomly.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.RandomHorizontalFlip" title="neural_compressor.experimental.data.transforms.transform.RandomHorizontalFlip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RandomHorizontalFlip</span></code></a></p></td>
+<td><p>Horizontally flip the given image randomly.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.TensorflowRandomHorizontalFlip" title="neural_compressor.experimental.data.transforms.transform.TensorflowRandomHorizontalFlip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowRandomHorizontalFlip</span></code></a></p></td>
+<td><p>Horizontally flip the given image randomly.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.ToArray" title="neural_compressor.experimental.data.transforms.transform.ToArray"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ToArray</span></code></a></p></td>
+<td><p>Convert PIL Image or NDArray to numpy array.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.CastTFTransform" title="neural_compressor.experimental.data.transforms.transform.CastTFTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CastTFTransform</span></code></a></p></td>
+<td><p>Convert image to given dtype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.CastONNXTransform" title="neural_compressor.experimental.data.transforms.transform.CastONNXTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CastONNXTransform</span></code></a></p></td>
+<td><p>Convert image to given dtype.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.CastPyTorchTransform" title="neural_compressor.experimental.data.transforms.transform.CastPyTorchTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CastPyTorchTransform</span></code></a></p></td>
+<td><p>Convert image to given dtype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.CenterCropTFTransform" title="neural_compressor.experimental.data.transforms.transform.CenterCropTFTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CenterCropTFTransform</span></code></a></p></td>
+<td><p>Crops the given image at the center to the given size.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.PaddedCenterCropTransform" title="neural_compressor.experimental.data.transforms.transform.PaddedCenterCropTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PaddedCenterCropTransform</span></code></a></p></td>
+<td><p>Crops the given image at the center to the given size with padding.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.ResizeTFTransform" title="neural_compressor.experimental.data.transforms.transform.ResizeTFTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ResizeTFTransform</span></code></a></p></td>
+<td><p>Resize the input image to the given size.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.ResizePytorchTransform" title="neural_compressor.experimental.data.transforms.transform.ResizePytorchTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ResizePytorchTransform</span></code></a></p></td>
+<td><p>Resize the input image to the given size.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.RandomCropTFTransform" title="neural_compressor.experimental.data.transforms.transform.RandomCropTFTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RandomCropTFTransform</span></code></a></p></td>
+<td><p>Crop the image at a random location to the given size.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.RandomResizedCropPytorchTransform" title="neural_compressor.experimental.data.transforms.transform.RandomResizedCropPytorchTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RandomResizedCropPytorchTransform</span></code></a></p></td>
+<td><p>Crop the given image to random size and aspect ratio.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.RandomResizedCropMXNetTransform" title="neural_compressor.experimental.data.transforms.transform.RandomResizedCropMXNetTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RandomResizedCropMXNetTransform</span></code></a></p></td>
+<td><p>Crop the given image to random size and aspect ratio.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.RandomResizedCropTFTransform" title="neural_compressor.experimental.data.transforms.transform.RandomResizedCropTFTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RandomResizedCropTFTransform</span></code></a></p></td>
+<td><p>Crop the given image to random size and aspect ratio.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.NormalizeTFTransform" title="neural_compressor.experimental.data.transforms.transform.NormalizeTFTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NormalizeTFTransform</span></code></a></p></td>
+<td><p>Normalize a image with mean and standard deviation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.RescaleKerasPretrainTransform" title="neural_compressor.experimental.data.transforms.transform.RescaleKerasPretrainTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RescaleKerasPretrainTransform</span></code></a></p></td>
+<td><p>Scale the values of image to [0,1].</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.RescaleTFTransform" title="neural_compressor.experimental.data.transforms.transform.RescaleTFTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RescaleTFTransform</span></code></a></p></td>
+<td><p>Scale the values of image to [0,1].</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.RescaleTransform" title="neural_compressor.experimental.data.transforms.transform.RescaleTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RescaleTransform</span></code></a></p></td>
+<td><p>Scale the values of image to [0,1].</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.AlignImageChannelTransform" title="neural_compressor.experimental.data.transforms.transform.AlignImageChannelTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AlignImageChannelTransform</span></code></a></p></td>
+<td><p>Align image channel, now just support [H,W]-&gt;[H,W,dim], [H,W,4]-&gt;[H,W,3] and [H,W,3]-&gt;[H,W].</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.PyTorchAlignImageChannel" title="neural_compressor.experimental.data.transforms.transform.PyTorchAlignImageChannel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchAlignImageChannel</span></code></a></p></td>
+<td><p>Align image channel, now just support [H,W,4]-&gt;[H,W,3] and [H,W,3]-&gt;[H,W].</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.ToNDArrayTransform" title="neural_compressor.experimental.data.transforms.transform.ToNDArrayTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ToNDArrayTransform</span></code></a></p></td>
+<td><p>Convert np.array to NDArray.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.ResizeMXNetTransform" title="neural_compressor.experimental.data.transforms.transform.ResizeMXNetTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ResizeMXNetTransform</span></code></a></p></td>
+<td><p>Resize the input image to the given size.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.ResizeTransform" title="neural_compressor.experimental.data.transforms.transform.ResizeTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ResizeTransform</span></code></a></p></td>
+<td><p>Resize the input image to the given size.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.CropResizeTFTransform" title="neural_compressor.experimental.data.transforms.transform.CropResizeTFTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CropResizeTFTransform</span></code></a></p></td>
+<td><p>Crop the input image with given location and resize it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.PyTorchCropResizeTransform" title="neural_compressor.experimental.data.transforms.transform.PyTorchCropResizeTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchCropResizeTransform</span></code></a></p></td>
+<td><p>Crop the input image with given location and resize it.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.MXNetCropResizeTransform" title="neural_compressor.experimental.data.transforms.transform.MXNetCropResizeTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetCropResizeTransform</span></code></a></p></td>
+<td><p>Crop the input image with given location and resize it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.CropResizeTransform" title="neural_compressor.experimental.data.transforms.transform.CropResizeTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CropResizeTransform</span></code></a></p></td>
+<td><p>Crop the input image with given location and resize it.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.CenterCropTransform" title="neural_compressor.experimental.data.transforms.transform.CenterCropTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CenterCropTransform</span></code></a></p></td>
+<td><p>Crops the given image at the center to the given size.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.MXNetNormalizeTransform" title="neural_compressor.experimental.data.transforms.transform.MXNetNormalizeTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetNormalizeTransform</span></code></a></p></td>
+<td><p>Normalize a image with mean and standard deviation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.PyTorchNormalizeTransform" title="neural_compressor.experimental.data.transforms.transform.PyTorchNormalizeTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchNormalizeTransform</span></code></a></p></td>
+<td><p>Normalize a image with mean and standard deviation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.NormalizeTransform" title="neural_compressor.experimental.data.transforms.transform.NormalizeTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NormalizeTransform</span></code></a></p></td>
+<td><p>Normalize a image with mean and standard deviation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.RandomCropTransform" title="neural_compressor.experimental.data.transforms.transform.RandomCropTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RandomCropTransform</span></code></a></p></td>
+<td><p>Crop the image at a random location to the given size.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.RandomResizedCropTransform" title="neural_compressor.experimental.data.transforms.transform.RandomResizedCropTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RandomResizedCropTransform</span></code></a></p></td>
+<td><p>Crop the given image to random size and aspect ratio.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.SquadExample" title="neural_compressor.experimental.data.transforms.transform.SquadExample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SquadExample</span></code></a></p></td>
+<td><p>A single training/test example for simple sequence classification.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.InputFeatures" title="neural_compressor.experimental.data.transforms.transform.InputFeatures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">InputFeatures</span></code></a></p></td>
+<td><p>A single set of features of data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.CollectTransform" title="neural_compressor.experimental.data.transforms.transform.CollectTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CollectTransform</span></code></a></p></td>
+<td><p>Postprocess the predictions, collect data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.TFSquadV1PostTransform" title="neural_compressor.experimental.data.transforms.transform.TFSquadV1PostTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TFSquadV1PostTransform</span></code></a></p></td>
+<td><p>Postprocess the predictions of bert on SQuAD.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.TFModelZooCollectTransform" title="neural_compressor.experimental.data.transforms.transform.TFModelZooCollectTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TFModelZooCollectTransform</span></code></a></p></td>
+<td><p>Postprocess the predictions of model zoo, collect data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.TFSquadV1ModelZooPostTransform" title="neural_compressor.experimental.data.transforms.transform.TFSquadV1ModelZooPostTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TFSquadV1ModelZooPostTransform</span></code></a></p></td>
+<td><p>Postprocess the predictions of bert on SQuADV1.1.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.ParseDecodeVocTransform" title="neural_compressor.experimental.data.transforms.transform.ParseDecodeVocTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParseDecodeVocTransform</span></code></a></p></td>
+<td><p>Parse features in Example proto.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.transform_registry" title="neural_compressor.experimental.data.transforms.transform.transform_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform_registry</span></code></a>(transform_type, process, framework)</p></td>
+<td><p>Class decorator used to register all transform subclasses.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.get_torchvision_map" title="neural_compressor.experimental.data.transforms.transform.get_torchvision_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_torchvision_map</span></code></a>(interpolation)</p></td>
+<td><p>Get torchvision interpolation map.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.get_final_text" title="neural_compressor.experimental.data.transforms.transform.get_final_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_final_text</span></code></a>(pred_text, orig_text, do_lower_case)</p></td>
+<td><p>Project the tokenized prediction back to the original text.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.read_squad_examples" title="neural_compressor.experimental.data.transforms.transform.read_squad_examples"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_squad_examples</span></code></a>(input_file)</p></td>
+<td><p>Read a SQuAD json file into a list of SquadExample.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.transform.convert_examples_to_features" title="neural_compressor.experimental.data.transforms.transform.convert_examples_to_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_examples_to_features</span></code></a>(examples, tokenizer, ...)</p></td>
+<td><p>Load a data file into a list of <a href="#id1"><span class="problematic" id="id2">`</span></a>InputBatch`s.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.Transforms">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">Transforms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">process</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concat_general</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.Transforms" title="Permalink to this definition"></a></dt>
+<dd><p>INC supports built-in preprocessing, postprocessing and general methods on different framework backends.</p>
+<p>Transforms base class provides the abstract methods.
+Users can also register their own Transforms classes by inheriting this base class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.TensorflowTransforms">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">TensorflowTransforms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">process</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concat_general</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.TensorflowTransforms" title="Permalink to this definition"></a></dt>
+<dd><p>Tensorflow Transforms subclass.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.MXNetTransforms">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">MXNetTransforms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">process</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concat_general</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.MXNetTransforms" title="Permalink to this definition"></a></dt>
+<dd><p>Mxnet Transforms subclass.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.PyTorchTransforms">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">PyTorchTransforms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">process</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concat_general</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.PyTorchTransforms" title="Permalink to this definition"></a></dt>
+<dd><p>Pytorch Transforms subclass.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.ONNXRTQLTransforms">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">ONNXRTQLTransforms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">process</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concat_general</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.ONNXRTQLTransforms" title="Permalink to this definition"></a></dt>
+<dd><p>Onnxrt_qlinearops Transforms subclass.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.ONNXRTITTransforms">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">ONNXRTITTransforms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">process</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concat_general</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.ONNXRTITTransforms" title="Permalink to this definition"></a></dt>
+<dd><p>Onnxrt_integerops Transforms subclass.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.TRANSFORMS">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">TRANSFORMS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.TRANSFORMS" title="Permalink to this definition"></a></dt>
+<dd><p>Transforms collection class.</p>
+<p>Provide register method to register new Transforms
+and provide __getitem__ method to get Transforms according to Transforms type.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.transform_registry">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">transform_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.transform_registry" title="Permalink to this definition"></a></dt>
+<dd><p>Class decorator used to register all transform subclasses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>transform_type</strong> (<em>str</em>) – Transform registration name</p></li>
+<li><p><strong>process</strong> (<em>str</em>) – support 3 process including ‘preprocess’, ‘postprocess’, ‘general’</p></li>
+<li><p><strong>framework</strong> (<em>str</em>) – support 4 framework including ‘tensorflow’, ‘pytorch’, ‘mxnet’, ‘onnxrt’</p></li>
+<li><p><strong>cls</strong> (<em>class</em>) – The class of register.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The class of register.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>cls</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.BaseTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">BaseTransform</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.BaseTransform" title="Permalink to this definition"></a></dt>
+<dd><p>The base class for transform.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.TensorflowWrapFunction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">TensorflowWrapFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform_func</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.TensorflowWrapFunction" title="Permalink to this definition"></a></dt>
+<dd><p>Tensorflow wrapper function class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.TensorflowTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">TensorflowTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform_func</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.TensorflowTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Tensorflow transform class, the subclass of BaseTransform.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.PytorchMxnetWrapFunction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">PytorchMxnetWrapFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform_func</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.PytorchMxnetWrapFunction" title="Permalink to this definition"></a></dt>
+<dd><p>Pytorch and MXNet wrapper function class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.PytorchMxnetTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">PytorchMxnetTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform_func</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.PytorchMxnetTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Pytorch and Mxnet transform class, the subclass of BaseTransform.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.get_torchvision_map">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">get_torchvision_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interpolation</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.get_torchvision_map" title="Permalink to this definition"></a></dt>
+<dd><p>Get torchvision interpolation map.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.ComposeTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">ComposeTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform_list</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.ComposeTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Composes several transforms together.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>transform_list</strong> (<em>list</em><em> of </em><em>Transform objects</em>) – list of transforms to compose</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>sample (tuple)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.CropToBoundingBox">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">CropToBoundingBox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">offset_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_width</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.CropToBoundingBox" title="Permalink to this definition"></a></dt>
+<dd><p>Crops an image to a specified bounding box.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>offset_height</strong> (<em>int</em>) – Vertical coordinate of the top-left corner of the result in the input</p></li>
+<li><p><strong>offset_width</strong> (<em>int</em>) – Horizontal coordinate of the top-left corner of the result in the input</p></li>
+<li><p><strong>target_height</strong> (<em>int</em>) – Height of the result</p></li>
+<li><p><strong>target_width</strong> (<em>int</em>) – Width of the result</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.MXNetCropToBoundingBox">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">MXNetCropToBoundingBox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">offset_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_width</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.MXNetCropToBoundingBox" title="Permalink to this definition"></a></dt>
+<dd><p>Crops an image to a specified bounding box.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>offset_height</strong> (<em>int</em>) – Vertical coordinate of the top-left corner of the result in the input</p></li>
+<li><p><strong>offset_width</strong> (<em>int</em>) – Horizontal coordinate of the top-left corner of the result in the input</p></li>
+<li><p><strong>target_height</strong> (<em>int</em>) – Height of the result</p></li>
+<li><p><strong>target_width</strong> (<em>int</em>) – Width of the result</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.ONNXRTCropToBoundingBox">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">ONNXRTCropToBoundingBox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">offset_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_width</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.ONNXRTCropToBoundingBox" title="Permalink to this definition"></a></dt>
+<dd><p>Crops an image to a specified bounding box.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>offset_height</strong> (<em>int</em>) – Vertical coordinate of the top-left corner of the result in the input</p></li>
+<li><p><strong>offset_width</strong> (<em>int</em>) – Horizontal coordinate of the top-left corner of the result in the input</p></li>
+<li><p><strong>target_height</strong> (<em>int</em>) – Height of the result</p></li>
+<li><p><strong>target_width</strong> (<em>int</em>) – Width of the result</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.TensorflowCropToBoundingBox">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">TensorflowCropToBoundingBox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">offset_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_width</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.TensorflowCropToBoundingBox" title="Permalink to this definition"></a></dt>
+<dd><p>Crops an image to a specified bounding box.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>offset_height</strong> (<em>int</em>) – Vertical coordinate of the top-left corner of the result in the input</p></li>
+<li><p><strong>offset_width</strong> (<em>int</em>) – Horizontal coordinate of the top-left corner of the result in the input</p></li>
+<li><p><strong>target_height</strong> (<em>int</em>) – Height of the result</p></li>
+<li><p><strong>target_width</strong> (<em>int</em>) – Width of the result</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.ResizeWithRatio">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">ResizeWithRatio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">800</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1365</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.ResizeWithRatio" title="Permalink to this definition"></a></dt>
+<dd><p>Resize image with aspect ratio and pad it to max shape(optional).</p>
+<p>If the image is padded, the label will be processed at the same time.
+The input image should be np.array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>min_dim</strong> (<em>int</em><em>, </em><em>default=800</em>) – Resizes the image such that its smaller dimension == min_dim</p></li>
+<li><p><strong>max_dim</strong> (<em>int</em><em>, </em><em>default=1365</em>) – Ensures that the image longest side doesn’t exceed this value</p></li>
+<li><p><strong>padding</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If true, pads image with zeros so its size is max_dim x max_dim</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.TensorflowResizeWithRatio">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">TensorflowResizeWithRatio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">800</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1365</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.TensorflowResizeWithRatio" title="Permalink to this definition"></a></dt>
+<dd><p>Resize image with aspect ratio and pad it to max shape(optional).</p>
+<p>If the image is padded, the label will be processed at the same time.
+The input image should be np.array or tf.Tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>min_dim</strong> (<em>int</em><em>, </em><em>default=800</em>) – Resizes the image such that its smaller dimension == min_dim</p></li>
+<li><p><strong>max_dim</strong> (<em>int</em><em>, </em><em>default=1365</em>) – Ensures that the image longest side doesn’t exceed this value</p></li>
+<li><p><strong>padding</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If true, pads image with zeros so its size is max_dim x max_dim</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.Transpose">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">Transpose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perm</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.Transpose" title="Permalink to this definition"></a></dt>
+<dd><p>Transpose image according to perm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>perm</strong> (<em>list</em>) – A permutation of the dimensions of input image</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.TensorflowTranspose">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">TensorflowTranspose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perm</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.TensorflowTranspose" title="Permalink to this definition"></a></dt>
+<dd><p>Transpose image according to perm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>perm</strong> (<em>list</em>) – A permutation of the dimensions of input image</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.MXNetTranspose">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">MXNetTranspose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perm</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.MXNetTranspose" title="Permalink to this definition"></a></dt>
+<dd><p>Transpose image according to perm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>perm</strong> (<em>list</em>) – A permutation of the dimensions of input image</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.PyTorchTranspose">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">PyTorchTranspose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perm</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.PyTorchTranspose" title="Permalink to this definition"></a></dt>
+<dd><p>Transpose image according to perm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>perm</strong> (<em>list</em>) – A permutation of the dimensions of input image</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.RandomVerticalFlip">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">RandomVerticalFlip</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.RandomVerticalFlip" title="Permalink to this definition"></a></dt>
+<dd><p>Vertically flip the given image randomly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.TensorflowRandomVerticalFlip">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">TensorflowRandomVerticalFlip</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.TensorflowRandomVerticalFlip" title="Permalink to this definition"></a></dt>
+<dd><p>Vertically flip the given image randomly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.RandomHorizontalFlip">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">RandomHorizontalFlip</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.RandomHorizontalFlip" title="Permalink to this definition"></a></dt>
+<dd><p>Horizontally flip the given image randomly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.TensorflowRandomHorizontalFlip">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">TensorflowRandomHorizontalFlip</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.TensorflowRandomHorizontalFlip" title="Permalink to this definition"></a></dt>
+<dd><p>Horizontally flip the given image randomly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.ToArray">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">ToArray</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.ToArray" title="Permalink to this definition"></a></dt>
+<dd><p>Convert PIL Image or NDArray to numpy array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.CastTFTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">CastTFTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'float32'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.CastTFTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Convert image to given dtype.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dtype</strong> (<em>str</em><em>, </em><em>default='float32'</em>) – A dtype to convert image to</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.CastONNXTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">CastONNXTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'float32'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.CastONNXTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Convert image to given dtype.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dtype</strong> (<em>str</em><em>, </em><em>default='float32'</em>) – A dtype to convert image to</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.CastPyTorchTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">CastPyTorchTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'float32'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.CastPyTorchTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Convert image to given dtype.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dtype</strong> (<em>str</em><em>, </em><em>default='float32'</em>) – A dtype to convert image to</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.CenterCropTFTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">CenterCropTFTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.CenterCropTFTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Crops the given image at the center to the given size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – Size of the result</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.PaddedCenterCropTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">PaddedCenterCropTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop_padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.PaddedCenterCropTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Crops the given image at the center to the given size with padding.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – Size of the result</p></li>
+<li><p><strong>crop_padding</strong> (<em>int</em>) – crop padding number</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.ResizeTFTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">ResizeTFTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.ResizeTFTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Resize the input image to the given size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – Size of the result</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em><em>, </em><em>default='bilinear'</em>) – Desired interpolation type,
+support ‘bilinear’, ‘nearest’, ‘bicubic’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.ResizePytorchTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">ResizePytorchTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.ResizePytorchTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Resize the input image to the given size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – Size of the result</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em><em>, </em><em>default='bilinear'</em>) – Desired interpolation type,
+support ‘bilinear’, ‘nearest’, ‘bicubic’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.RandomCropTFTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">RandomCropTFTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.RandomCropTFTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Crop the image at a random location to the given size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>size</strong> (<em>list</em><em> or </em><em>tuple</em><em> or </em><em>int</em>) – Size of the result</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.RandomResizedCropPytorchTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">RandomResizedCropPytorchTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.08,</span> <span class="pre">1.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(3.0</span> <span class="pre">/</span> <span class="pre">4.0,</span> <span class="pre">4.0</span> <span class="pre">/</span> <span class="pre">3.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.RandomResizedCropPytorchTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Crop the given image to random size and aspect ratio.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – Size of the result</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em><em> or </em><em>list</em><em>, </em><em>default=</em><em>(</em><em>0.08</em><em>, </em><em>1.0</em><em>)</em>) – range of size of the origin size cropped</p></li>
+<li><p><strong>ratio</strong> (<em>tuple</em><em> or </em><em>list</em><em>, </em><em>default=</em><em>(</em><em>3. / 4.</em><em>, </em><em>4. / 3.</em><em>)</em>) – range of aspect ratio of the origin aspect ratio cropped</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em><em>, </em><em>default='bilinear'</em>) – Desired interpolation type, support ‘bilinear’, ‘nearest’, ‘bicubic’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.RandomResizedCropMXNetTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">RandomResizedCropMXNetTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.08,</span> <span class="pre">1.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(3.0</span> <span class="pre">/</span> <span class="pre">4.0,</span> <span class="pre">4.0</span> <span class="pre">/</span> <span class="pre">3.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.RandomResizedCropMXNetTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Crop the given image to random size and aspect ratio.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – Size of the result</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em><em> or </em><em>list</em><em>, </em><em>default=</em><em>(</em><em>0.08</em><em>, </em><em>1.0</em><em>)</em>) – range of size of the origin size cropped</p></li>
+<li><p><strong>ratio</strong> (<em>tuple</em><em> or </em><em>list</em><em>, </em><em>default=</em><em>(</em><em>3. / 4.</em><em>, </em><em>4. / 3.</em><em>)</em>) – range of aspect ratio of the origin aspect ratio cropped</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em><em>, </em><em>default='bilinear'</em>) – Desired interpolation type, support ‘bilinear’, ‘nearest’, ‘bicubic’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.RandomResizedCropTFTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">RandomResizedCropTFTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.08,</span> <span class="pre">1.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(3.0</span> <span class="pre">/</span> <span class="pre">4.0,</span> <span class="pre">4.0</span> <span class="pre">/</span> <span class="pre">3.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.RandomResizedCropTFTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Crop the given image to random size and aspect ratio.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – Size of the result</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em><em> or </em><em>list</em><em>, </em><em>default=</em><em>(</em><em>0.08</em><em>, </em><em>1.0</em><em>)</em>) – range of size of the origin size cropped</p></li>
+<li><p><strong>ratio</strong> (<em>tuple</em><em> or </em><em>list</em><em>, </em><em>default=</em><em>(</em><em>3. / 4.</em><em>, </em><em>4. / 3.</em><em>)</em>) – range of aspect ratio of the origin aspect ratio cropped</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em><em>, </em><em>default='bilinear'</em>) – Desired interpolation type, support ‘bilinear’, ‘nearest’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.NormalizeTFTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">NormalizeTFTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rescale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.NormalizeTFTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Normalize a image with mean and standard deviation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mean</strong> (<em>list</em><em>, </em><em>default=</em><em>[</em><em>0.0</em><em>]</em>) – means for each channel, if len(mean)=1, mean will be broadcasted to each channel,
+otherwise its length should be same with the length of image shape</p></li>
+<li><p><strong>std</strong> (<em>list</em><em>, </em><em>default=</em><em>[</em><em>1.0</em><em>]</em>) – stds for each channel, if len(std)=1, std will be broadcasted to each channel,
+otherwise its length should be same with the length of image shape</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.RescaleKerasPretrainTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">RescaleKerasPretrainTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rescale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.RescaleKerasPretrainTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Scale the values of image to [0,1].</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.RescaleTFTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">RescaleTFTransform</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.RescaleTFTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Scale the values of image to [0,1].</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.RescaleTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">RescaleTransform</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.RescaleTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Scale the values of image to [0,1].</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.AlignImageChannelTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">AlignImageChannelTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.AlignImageChannelTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Align image channel, now just support [H,W]-&gt;[H,W,dim], [H,W,4]-&gt;[H,W,3] and [H,W,3]-&gt;[H,W].</p>
+<p>Input image must be np.ndarray.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.PyTorchAlignImageChannel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">PyTorchAlignImageChannel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.PyTorchAlignImageChannel" title="Permalink to this definition"></a></dt>
+<dd><p>Align image channel, now just support [H,W,4]-&gt;[H,W,3] and [H,W,3]-&gt;[H,W].</p>
+<p>Input image must be PIL Image.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.ToNDArrayTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">ToNDArrayTransform</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.ToNDArrayTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Convert np.array to NDArray.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.ResizeMXNetTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">ResizeMXNetTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.ResizeMXNetTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Resize the input image to the given size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – Size of the result</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em><em>, </em><em>default='bilinear'</em>) – Desired interpolation type,
+support ‘bilinear’, ‘nearest’, ‘bicubic’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.ResizeTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">ResizeTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.ResizeTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Resize the input image to the given size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – Size of the result</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em><em>, </em><em>default='bilinear'</em>) – Desired interpolation type,</p></li>
+<li><p><strong>'bilinear'</strong> (<em>support</em>) – </p></li>
+<li><p><strong>'nearest'</strong> – </p></li>
+<li><p><strong>'bicubic'.</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.CropResizeTFTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">CropResizeTFTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.CropResizeTFTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Crop the input image with given location and resize it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>int</em>) – Left boundary of the cropping area</p></li>
+<li><p><strong>y</strong> (<em>int</em>) – Top boundary of the cropping area</p></li>
+<li><p><strong>width</strong> (<em>int</em>) – Width of the cropping area</p></li>
+<li><p><strong>height</strong> (<em>int</em>) – Height of the cropping area</p></li>
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – resize to new size after cropping</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em><em>, </em><em>default='bilinear'</em>) – Desired interpolation type,
+support ‘bilinear’, ‘nearest’, ‘bicubic’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.PyTorchCropResizeTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">PyTorchCropResizeTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.PyTorchCropResizeTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Crop the input image with given location and resize it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>int</em>) – Left boundary of the cropping area</p></li>
+<li><p><strong>y</strong> (<em>int</em>) – Top boundary of the cropping area</p></li>
+<li><p><strong>width</strong> (<em>int</em>) – Width of the cropping area</p></li>
+<li><p><strong>height</strong> (<em>int</em>) – Height of the cropping area</p></li>
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – resize to new size after cropping</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em><em>, </em><em>default='bilinear'</em>) – Desired interpolation type,
+support ‘bilinear’, ‘nearest’, ‘bicubic’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.MXNetCropResizeTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">MXNetCropResizeTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.MXNetCropResizeTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Crop the input image with given location and resize it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>int</em>) – Left boundary of the cropping area</p></li>
+<li><p><strong>y</strong> (<em>int</em>) – Top boundary of the cropping area</p></li>
+<li><p><strong>width</strong> (<em>int</em>) – Width of the cropping area</p></li>
+<li><p><strong>height</strong> (<em>int</em>) – Height of the cropping area</p></li>
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – resize to new size after cropping</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em><em>, </em><em>default='bilinear'</em>) – Desired interpolation type,
+support ‘bilinear’, ‘nearest’, ‘bicubic’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.CropResizeTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">CropResizeTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.CropResizeTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Crop the input image with given location and resize it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>int</em>) – Left boundary of the cropping area</p></li>
+<li><p><strong>y</strong> (<em>int</em>) – Top boundary of the cropping area</p></li>
+<li><p><strong>width</strong> (<em>int</em>) – Width of the cropping area</p></li>
+<li><p><strong>height</strong> (<em>int</em>) – Height of the cropping area</p></li>
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – resize to new size after cropping</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em><em>, </em><em>default='bilinear'</em>) – Desired interpolation type,
+support ‘bilinear’, ‘nearest’, ‘bicubic’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.CenterCropTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">CenterCropTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.CenterCropTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Crops the given image at the center to the given size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – Size of the result</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.MXNetNormalizeTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">MXNetNormalizeTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1.0]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.MXNetNormalizeTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Normalize a image with mean and standard deviation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mean</strong> (<em>list</em><em>, </em><em>default=</em><em>[</em><em>0.0</em><em>]</em>) – means for each channel, if len(mean)=1, mean will be broadcasted to each channel,
+otherwise its length should be same with the length of image shape</p></li>
+<li><p><strong>std</strong> (<em>list</em><em>, </em><em>default=</em><em>[</em><em>1.0</em><em>]</em>) – stds for each channel, if len(std)=1, std will be broadcasted to each channel,
+otherwise its length should be same with the length of image shape</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.PyTorchNormalizeTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">PyTorchNormalizeTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1.0]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.PyTorchNormalizeTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Normalize a image with mean and standard deviation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mean</strong> (<em>list</em><em>, </em><em>default=</em><em>[</em><em>0.0</em><em>]</em>) – means for each channel, if len(mean)=1, mean will be broadcasted to each channel,
+otherwise its length should be same with the length of image shape</p></li>
+<li><p><strong>std</strong> (<em>list</em><em>, </em><em>default=</em><em>[</em><em>1.0</em><em>]</em>) – stds for each channel, if len(std)=1, std will be broadcasted to each channel,
+otherwise its length should be same with the length of image shape</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.NormalizeTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">NormalizeTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1.0]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.NormalizeTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Normalize a image with mean and standard deviation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mean</strong> (<em>list</em><em>, </em><em>default=</em><em>[</em><em>0.0</em><em>]</em>) – means for each channel, if len(mean)=1, mean will be broadcasted to each channel,
+otherwise its length should be same with the length of image shape</p></li>
+<li><p><strong>std</strong> (<em>list</em><em>, </em><em>default=</em><em>[</em><em>1.0</em><em>]</em>) – stds for each channel, if len(std)=1, std will be broadcasted to each channel,
+otherwise its length should be same with the length of image shape</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.RandomCropTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">RandomCropTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.RandomCropTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Crop the image at a random location to the given size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>size</strong> (<em>list</em><em> or </em><em>tuple</em><em> or </em><em>int</em>) – Size of the result</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.RandomResizedCropTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">RandomResizedCropTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.08,</span> <span class="pre">1.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(3.0</span> <span class="pre">/</span> <span class="pre">4.0,</span> <span class="pre">4.0</span> <span class="pre">/</span> <span class="pre">3.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.RandomResizedCropTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Crop the given image to random size and aspect ratio.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – Size of the result</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em><em> or </em><em>list</em><em>, </em><em>default=</em><em>(</em><em>0.08</em><em>, </em><em>1.0</em><em>)</em>) – range of size of the origin size cropped</p></li>
+<li><p><strong>ratio</strong> (<em>tuple</em><em> or </em><em>list</em><em>, </em><em>default=</em><em>(</em><em>3. / 4.</em><em>, </em><em>4. / 3.</em><em>)</em>) – range of aspect ratio of the origin aspect ratio cropped</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em><em>, </em><em>default='bilinear'</em>) – Desired interpolation type, support ‘bilinear’, ‘nearest’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.get_final_text">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">get_final_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pred_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orig_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_lower_case</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.get_final_text" title="Permalink to this definition"></a></dt>
+<dd><p>Project the tokenized prediction back to the original text.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.SquadExample">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">SquadExample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qas_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">doc_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orig_answer_text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_position</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_position</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_impossible</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.SquadExample" title="Permalink to this definition"></a></dt>
+<dd><p>A single training/test example for simple sequence classification.</p>
+<p>For examples without an answer, the start and end position are -1.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.InputFeatures">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">InputFeatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unique_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">doc_span_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_to_orig_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_is_max_context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segment_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_position</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_position</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_impossible</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.InputFeatures" title="Permalink to this definition"></a></dt>
+<dd><p>A single set of features of data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.read_squad_examples">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">read_squad_examples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.read_squad_examples" title="Permalink to this definition"></a></dt>
+<dd><p>Read a SQuAD json file into a list of SquadExample.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.convert_examples_to_features">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">convert_examples_to_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">examples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_seq_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">doc_stride</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_query_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_fn</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.convert_examples_to_features" title="Permalink to this definition"></a></dt>
+<dd><p>Load a data file into a list of <a href="#id3"><span class="problematic" id="id4">`</span></a>InputBatch`s.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.CollectTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">CollectTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10833</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.CollectTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Postprocess the predictions, collect data.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.TFSquadV1PostTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">TFSquadV1PostTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocab_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_best_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_seq_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">384</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_query_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_answer_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_lower_case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">doc_stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.TFSquadV1PostTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Postprocess the predictions of bert on SQuAD.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label_file</strong> (<em>str</em>) – path of label file</p></li>
+<li><p><strong>vocab_file</strong> (<em>str</em>) – path of vocabulary file</p></li>
+<li><p><strong>n_best_size</strong> (<em>int</em><em>, </em><em>default=20</em>) – The total number of n-best predictions to generate in nbest_predictions.json</p></li>
+<li><p><strong>max_seq_length</strong> (<em>int</em><em>, </em><em>default=384</em>) – The maximum total input sequence length after WordPiece tokenization.
+Sequences longer than this will be truncated, shorter than this will be padded</p></li>
+<li><p><strong>max_query_length</strong> (<em>int</em><em>, </em><em>default=64</em>) – The maximum number of tokens for the question.
+Questions longer than this will be truncated to this length</p></li>
+<li><p><strong>max_answer_length</strong> (<em>int</em><em>, </em><em>default=30</em>) – The maximum length of an answer that can be generated. This is needed because
+the start and end predictions are not conditioned on one another</p></li>
+<li><p><strong>do_lower_case</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Whether to lower case the input text.
+Should be True for uncased models and False for cased models</p></li>
+<li><p><strong>doc_stride</strong> (<em>int</em><em>, </em><em>default=128</em>) – When splitting up a long document into chunks,
+how much stride to take between chunks</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed prediction and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.TFModelZooCollectTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">TFModelZooCollectTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10833</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.TFModelZooCollectTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Postprocess the predictions of model zoo, collect data.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.TFSquadV1ModelZooPostTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">TFSquadV1ModelZooPostTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocab_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_best_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_seq_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">384</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_query_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_answer_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_lower_case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">doc_stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.TFSquadV1ModelZooPostTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Postprocess the predictions of bert on SQuADV1.1.</p>
+<p>See class TFSquadV1PostTransform for more details</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.transform.ParseDecodeVocTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.transform.</span></span><span class="sig-name descname"><span class="pre">ParseDecodeVocTransform</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.3/neural_compressor/experimental/data/transforms/transform.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.data.transforms.transform.ParseDecodeVocTransform" title="Permalink to this definition"></a></dt>
+<dd><p>Parse features in Example proto.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of parsed image and labels</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fe6611f4d00> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

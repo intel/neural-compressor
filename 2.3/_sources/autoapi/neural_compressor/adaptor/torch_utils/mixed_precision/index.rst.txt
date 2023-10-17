@@ -1,0 +1,26 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.torch_utils.mixed_precision`
+===============================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.mixed_precision
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.mixed_precision.ipex_mixed_precision
+
+
+
+.. py:function:: ipex_mixed_precision(model, example_inputs=None)
+
+   The function is used for ipex mixed precision quantization.
+
+

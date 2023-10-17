@@ -1,0 +1,87 @@
+:py:mod:`neural_compressor.compression.pruner.pruners.basic`
+============================================================
+
+.. py:module:: neural_compressor.compression.pruner.pruners.basic
+
+.. autoapi-nested-parse::
+
+   Basic pruner.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.pruners.basic.PytorchBasicPruner
+   neural_compressor.compression.pruner.pruners.basic.KerasBasicPruner
+
+
+
+
+.. py:class:: PytorchBasicPruner(config, modules)
+
+
+
+
+   Pruning Pruner.
+
+   The class which executes pruning process.
+   1. Defines pruning functions called at step begin/end, epoch begin/end.
+   2. Defines the pruning criterion.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: pattern
+
+      A Pattern object that defines pruning weights' arrangements within space.
+
+   .. attribute:: criterion
+
+      A Criterion Object that defines which weights are to be pruned
+
+   .. attribute:: scheduler
+
+      A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
+
+   .. attribute:: reg
+
+      A Reg object that defines regulization terms.
+
+
+.. py:class:: KerasBasicPruner
+
+
+
+
+   Pruning Pruner.
+
+   The class which executes pruning process.
+   1. Defines pruning functions called at step begin/end, epoch begin/end.
+   2. Defines the pruning criterion.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: pattern
+
+      A Pattern object that defines pruning weights' arrangements within space.
+
+   .. attribute:: criterion
+
+      A Criterion Object that defines which weights are to be pruned
+
+   .. attribute:: scheduler
+
+      A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
+
+   .. attribute:: reg
+
+      A Reg object that defines regulization terms.
+
+

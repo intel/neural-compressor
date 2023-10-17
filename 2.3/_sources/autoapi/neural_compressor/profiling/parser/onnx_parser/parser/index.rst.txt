@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.profiling.parser.onnx_parser.parser`
+===============================================================
+
+.. py:module:: neural_compressor.profiling.parser.onnx_parser.parser
+
+.. autoapi-nested-parse::
+
+   Parsers for log files.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.profiling.parser.onnx_parser.parser.OnnxProfilingParser
+
+
+
+
+.. py:class:: OnnxProfilingParser(logs: list)
+
+
+
+
+   Parser class is responsible for parsing profiling log files.
+
+

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.experimental.data &mdash; Intel® Neural Compressor 2.3 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../versions.html">2.3▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/neural_compressor/experimental/data/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.experimental.data">
+<span id="neural-compressor-experimental-data"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.data" title="neural_compressor.experimental.data"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.data" title="Permalink to this heading"></a></h1>
+<p>Built-in dataloaders, datasets, transforms, filters for multiple framework backends.</p>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dataloaders/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.dataloaders</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dataloaders/base_dataloader/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.dataloaders.base_dataloader</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataloaders/dataloader/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.dataloaders.dataloader</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataloaders/default_dataloader/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.dataloaders.default_dataloader</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataloaders/fetcher/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.dataloaders.fetcher</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataloaders/mxnet_dataloader/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.dataloaders.mxnet_dataloader</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataloaders/onnxrt_dataloader/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.dataloaders.onnxrt_dataloader</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataloaders/pytorch_dataloader/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.dataloaders.pytorch_dataloader</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataloaders/sampler/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.dataloaders.sampler</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataloaders/tensorflow_dataloader/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.dataloaders.tensorflow_dataloader</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="datasets/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.datasets</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="datasets/bert_dataset/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.datasets.bert_dataset</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/coco_dataset/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.datasets.coco_dataset</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/dataset/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.datasets.dataset</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/dummy_dataset/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.datasets.dummy_dataset</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/dummy_dataset_v2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.datasets.dummy_dataset_v2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/imagenet_dataset/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.datasets.imagenet_dataset</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/style_transfer_dataset/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.datasets.style_transfer_dataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="filters/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.filters</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="filters/coco_filter/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.filters.coco_filter</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="filters/filter/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.filters.filter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="transforms/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="transforms/imagenet_transform/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transforms/tokenization/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.tokenization</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="transforms/transform/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.transform</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="package-contents">
+<h2>Package Contents<a class="headerlink" href="#package-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Datasets</span></code></p></td>
+<td><p>A base class for all framework datasets.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Dataset</span></code></p></td>
+<td><p>The base class of dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">IterableDataset</span></code></p></td>
+<td><p>An iterable Dataset.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">TRANSFORMS</span></code></p></td>
+<td><p>Transforms collection class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseTransform</span></code></p></td>
+<td><p>The base class for transform.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">FILTERS</span></code></p></td>
+<td><p>The filter register for all frameworks.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Filter</span></code></p></td>
+<td><p>The base class for transform.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dataset_registry</span></code>(dataset_type, framework[, dataset_format])</p></td>
+<td><p>Register dataset subclasses.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform_registry</span></code>(transform_type, process, framework)</p></td>
+<td><p>Class decorator used to register all transform subclasses.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_registry</span></code>(filter_type, framework)</p></td>
+<td><p>Register all transform subclasses.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="attributes">
+<h3>Attributes<a class="headerlink" href="#attributes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">DATALOADERS</span></code></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fe661038640> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

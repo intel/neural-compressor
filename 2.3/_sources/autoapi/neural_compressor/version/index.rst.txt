@@ -1,0 +1,11 @@
+:py:mod:`neural_compressor.version`
+===================================
+
+.. py:module:: neural_compressor.version
+
+.. autoapi-nested-parse::
+
+   Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques.
+
+
+
