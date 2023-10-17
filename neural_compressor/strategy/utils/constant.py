@@ -60,6 +60,28 @@ FALLBACK_RECIPES_SET = {
 }
 
 class WoqTuningParams(Enum):
+    """This enumeration class represents the different tuning parameters for the weight only quant (WOQ) algorithm.
+
+    Args:
+        Enum (Enum): base enumeration class
+    
+    Attributes:
+        RTN (int): Represents the RTN algorithm, which is a type of WOQ algorithm.
+        GPTQ (int): Represents the GPTQ algorithm, which is a type of WOQ algorithm.
+        GPTQ_DISABLE_LAST_MATMUL (int): Represents the GPTQ algorithm with the last matrix multiplication disabled.
+        GPTQ_GROUP_SIZE_32 (int): Represents the GPTQ algorithm with a group size of 32.
+        GPTQ_GROUP_SIZE_128 (int): Represents the GPTQ algorithm with a group size of 128.
+        AWQ (int): Represents the AWQ algorithm, which is a type of WOQ algorithm.
+    """
+    
+
+Attributes:
+    RTN (int): Represents the RTN algorithm, which is a type of WOQ algorithm.
+    GPTQ (int): Represents the GPTQ algorithm, which is a type of WOQ algorithm.
+    GPTQ_DISABLE_LAST_MATMUL (int): Represents the GPTQ algorithm with the last matrix multiplication disabled.
+    GPTQ_GROUP_SIZE_32 (int): Represents the GPTQ algorithm with a group size of 32.
+    GPTQ_GROUP_SIZE_128 (int): Represents the GPTQ algorithm with a group size of 128.
+    AWQ (int): Represents the AWQ algorithm, which is a type of WOQ algorithm.
     RTN = 1
     GPTQ = 2
     GPTQ_DISABLE_LAST_MATMUL = 3
