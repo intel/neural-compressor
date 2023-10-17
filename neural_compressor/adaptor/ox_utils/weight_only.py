@@ -38,6 +38,7 @@ logger = logging.getLogger("neural_compressor")
 ONNXRT116_VERSION = Version("1.16.0")
 ONNXRT1161_VERSION = Version("1.16.1")
 
+
 def get_blob_size(group_size, has_zp):
     """Get blob_size.
 
@@ -52,6 +53,7 @@ def get_blob_size(group_size, has_zp):
     else:
         blob_size = group_size // 2 + 4
     return blob_size
+
 
 def make_matmul_weight_only_node(
     node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point
@@ -81,7 +83,7 @@ def make_matmul_weight_only_node(
 
     if Version(ort.__version__) > ONNXRT1161_VERSION:
         op_type = "MatMulNBits"
-        
+
         # pack quantized weight
         for i in range(q_weight.shape[0]):
             for k in range(0, group_size, 2):
@@ -109,7 +111,7 @@ def make_matmul_weight_only_node(
         kwargs["N"] = weight_shape[1]
         kwargs["bits"] = num_bits
         kwargs["block_size"] = group_size
-    
+
     else:
         offset = 5 if zero_point is not None else 4
         op_type = "MatMulFpQ4"
