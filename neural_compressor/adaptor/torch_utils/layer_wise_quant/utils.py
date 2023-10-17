@@ -25,7 +25,7 @@ from neural_compressor.utils.utility import LazyImport
 torch = LazyImport("torch")
 from accelerate import init_empty_weights
 from accelerate.utils import set_module_tensor_to_device
-from transformers import AutoConfig
+from transformers import AutoConfig, AutoModelForCausalLM
 from transformers.models.auto.auto_factory import _BaseAutoModelClass
 
 from ....config import options
@@ -107,7 +107,7 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
         return file_path
 
 
-def load_shell(pretrained_model_name_or_path, cls, **kwargs):
+def load_shell(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs):
     """Load a empty model."""
     is_local = os.path.isdir(pretrained_model_name_or_path)
     if is_local:  # pragma: no cover
@@ -124,6 +124,7 @@ def load_shell(pretrained_model_name_or_path, cls, **kwargs):
             model = cls(config)
     model.tie_weights()
     model.eval()
+    model.path = pretrained_model_name_or_path
     return model
 
 

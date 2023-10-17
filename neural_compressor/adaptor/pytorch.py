@@ -3496,13 +3496,15 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         ):
             from .torch_utils.layer_wise_quant import LayerWiseQuant
 
-            model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+            # model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+            model_path = model._model.path
             smooth_quant = recipe_cfgs["layer_wise_quant_args"].get("smooth_quant", False)
             alpha = recipe_cfgs["layer_wise_quant_args"].get("smooth_quant_alpha", 0.5)
+            # device = recipe_cfgs["layer_wise_quant_args"].get("decvice", "cpu")
             assert (
                 model_path is not None
-            ), "the layer_wise_quant_args should have args model_path to load the weight of model."
-            device = recipe_cfgs["layer_wise_quant_args"].get("decvice", "cpu")
+            ), "The model_path should not be None."
+            device = self.device
             lw_quant = LayerWiseQuant(
                 q_model._model,
                 model_path,
@@ -4538,8 +4540,9 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             from .torch_utils.layer_wise_quant.utils import LWQ_WORKSPACE, _get_path, load_module
 
             os.makedirs(LWQ_WORKSPACE, exist_ok=True)
-            model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
-            assert model_path, "model_path should specify in layer_wise_quant_args."
+            # model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+            model_path = model.path
+            assert model_path, "model_path should not be None."
             model_path = _get_path(model_path)
 
         for key, config in tune_cfg["op"].items():
@@ -4619,8 +4622,9 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             from .torch_utils.layer_wise_quant.utils import LWQ_WORKSPACE, _get_path, register_weight_hooks
 
             os.makedirs(LWQ_WORKSPACE, exist_ok=True)
-            model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
-            assert model_path, "model_path should specify in layer_wise_quant_args."
+            # model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+            model_path = model.path
+            assert model_path, "model_path should not be None."
             model_path = _get_path(model_path)
             lwq_handles = register_weight_hooks(
                 model, model_path, device=self.device, clean_weight=True, saved_path=LWQ_WORKSPACE
