@@ -89,33 +89,63 @@
   <section id="contribution-guidelines">
 <h1>Contribution Guidelines<a class="headerlink" href="#contribution-guidelines" title="Permalink to this heading"></a></h1>
 <ol class="simple">
+<li><p><a class="reference external" href="#create-pull-request">Create Pull Request</a></p></li>
 <li><p><a class="reference external" href="#pull-request-checklist">Pull Request Checklist</a></p></li>
 <li><p><a class="reference external" href="#distillation-support-matrix">Pull Request Template</a></p></li>
+<li><p><a class="reference external" href="#pull-request-acceptance-criteria">Pull Request Acceptance Criteria</a></p></li>
+<li><p><a class="reference external" href="#pull-request-status-checks-overview">Pull Request Status Checks Overview</a></p></li>
 <li><p><a class="reference external" href="#support">Support</a></p></li>
 <li><p><a class="reference external" href="#contributor-covenant-code-of-conduct">Contributor Covenant Code of Conduct</a></p></li>
 </ol>
+<section id="create-pull-request">
+<h2>Create Pull Request<a class="headerlink" href="#create-pull-request" title="Permalink to this heading"></a></h2>
 <p>If you have improvements to Intel® Neural Compressor, send your pull requests for
-<a class="reference external" href="https://github.com/intel/neural-compressor/pulls">review</a>. If you are new to Github, view the pull request <a class="reference external" href="https://help.github.com/articles/using-pull-requests/">How To</a>.</p>
+<a class="reference external" href="https://github.com/intel/neural-compressor/pulls">review</a>.
+If you are new to GitHub, view the pull request <a class="reference external" href="https://help.github.com/articles/using-pull-requests/">How To</a>.</p>
+<section id="step-by-step-guidelines">
+<h3>Step-by-Step guidelines<a class="headerlink" href="#step-by-step-guidelines" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p>Star this repository using the button <code class="docutils literal notranslate"><span class="pre">Star</span></code> in the top right corner.</p></li>
+<li><p>Fork this Repository using the button <code class="docutils literal notranslate"><span class="pre">Fork</span></code> in the top right corner.</p></li>
+<li><p>Clone your forked repository to your pc.<br /><code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">&quot;url</span> <span class="pre">to</span> <span class="pre">your</span> <span class="pre">repo&quot;</span></code></p></li>
+<li><p>Create a new branch for your modifications.<br /><code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">-b</span> <span class="pre">new-branch</span></code></p></li>
+<li><p>Add your files with <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">add</span> <span class="pre">-A</span></code>, commit <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">-s</span> <span class="pre">-m</span> <span class="pre">&quot;This</span> <span class="pre">is</span> <span class="pre">my</span> <span class="pre">commit</span> <span class="pre">message&quot;</span></code> and push <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">origin</span> <span class="pre">new-branch</span></code>.</p></li>
+<li><p>Create a <a class="reference external" href="https://github.com/intel/neural-compressor/pulls">pull request</a>.</p></li>
+</ul>
+</section>
+</section>
 <section id="pull-request-checklist">
 <h2>Pull Request Checklist<a class="headerlink" href="#pull-request-checklist" title="Permalink to this heading"></a></h2>
 <p>Before sending your pull requests, follow the information below:</p>
 <ul class="simple">
 <li><p>Changes are consistent with the Python <a class="reference external" href="https://github.com/google/styleguide/blob/gh-pages/pyguide.html">Coding Style</a>.</p></li>
-<li><p>Use pylint to check your Python code.</p></li>
-<li><p>Use flake8 and autopep8 to make Python code clean.</p></li>
 <li><p>Add unit tests in <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/test">Unit Tests</a> to cover the code you would like to contribute.</p></li>
-<li><p>Run <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/test">Unit Tests</a>.</p></li>
-<li><p>Intel® Neural Compressor has adopted the <a class="reference external" href="https://en.wikipedia.org/wiki/Developer_Certificate_of_Origin">Developer Certificate of Origin</a>, you must agree to the terms of Developer Certificate of Origin by signing off each of your commits.<code class="docutils literal notranslate"><span class="pre">Signed-off-by:</span> <span class="pre">Random</span> <span class="pre">J</span> <span class="pre">Developer</span> <span class="pre">&lt;random&#64;developer.example.org&gt;</span></code></p></li>
+<li><p>Intel® Neural Compressor has adopted the <a class="reference external" href="https://en.wikipedia.org/wiki/Developer_Certificate_of_Origin">Developer Certificate of Origin</a>, you must agree to the terms of Developer Certificate of Origin by signing off each of your commits with <code class="docutils literal notranslate"><span class="pre">-s</span></code>, e.g. <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">-s</span> <span class="pre">-m</span> <span class="pre">'This</span> <span class="pre">is</span> <span class="pre">my</span> <span class="pre">commit</span> <span class="pre">message'</span></code>.</p></li>
 </ul>
 </section>
 <section id="pull-request-template">
 <h2>Pull Request Template<a class="headerlink" href="#pull-request-template" title="Permalink to this heading"></a></h2>
-<p><strong>Type of Change</strong><br />feature or bug fix or documentation or validation or others
-API changed or not</p>
-<p><strong>Description</strong><br />detail description<br />JIRA ticket: xxx</p>
-<p><strong>Expected Behavior &amp; Potential Risk</strong><br />the expected behavior that triggered by this PR</p>
-<p><strong>How has this PR been tested?</strong><br />how to reproduce the test (including hardware information)</p>
-<p><strong>Dependency Change?</strong><br />any library dependency introduced or removed</p>
+<p>See <a class="reference external" href="/.github/pull_request_template.html">PR template</a></p>
+</section>
+<section id="pull-request-acceptance-criteria">
+<h2>Pull Request Acceptance Criteria<a class="headerlink" href="#pull-request-acceptance-criteria" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>At least two approvals from reviewers</p></li>
+<li><p>All detected status checks pass</p></li>
+<li><p>All conversations solved</p></li>
+<li><p>Third-party dependency license compatible</p></li>
+</ul>
+</section>
+<section id="pull-request-status-checks-overview">
+<h2>Pull Request Status Checks Overview<a class="headerlink" href="#pull-request-status-checks-overview" title="Permalink to this heading"></a></h2>
+<p>Intel® Neural Compressor use <a class="reference external" href="https://learn.microsoft.com/en-us/azure/devops/pipelines/?view=azure-devops">Azure DevOps</a> for CI test.
+And generally use <a class="reference external" href="https://azure.microsoft.com/en-us/pricing/purchase-options/pay-as-you-go">Azure Cloud Instance</a> to deploy pipelines, e.g. Standard E16s v5.
+|     Test Name                 |     Test Scope                                |     Test Pass Criteria    |
+|——————————-|———————————————–|—————————|
+|     Code Scan                 |     Pylint/Bandit/CopyRight/DocStyle/SpellCheck       |     PASS          |
+|     <a class="reference external" href="https://github.com/apps/dco/">DCO</a>     |     Use <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">-s</span></code> to sign off     |     PASS          |
+|     Unit Test                 |     Pytest scripts under <a class="reference external" href="/test">test</a>                |      PASS (No failure, No core dump, No segmentation fault, No coverage drop)      |
+|     Model Test                |     Pytorch + TensorFlow + ONNX Runtime + MXNet         |      PASS (Functionality pass, FP32/INT8 No performance regression)       |</p>
 </section>
 <section id="support">
 <h2>Support<a class="headerlink" href="#support" title="Permalink to this heading"></a></h2>
@@ -142,7 +172,7 @@ API changed or not</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f1f8757ef50> 
+   <jinja2.runtime.BlockReference object at 0x7f58768656c0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
