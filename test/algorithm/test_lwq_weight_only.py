@@ -57,7 +57,7 @@ class TestLayerWise(unittest.TestCase):
         )
         ouput_dir = "./saved_model"
         q_model.save(ouput_dir)
-        load_model = load(ouput_dir, deepcopy(self.empty_model), weight_only=True)
+        load_model = load(ouput_dir, deepcopy(self.fp32_model), weight_only=True)
         self.assertNotEqual(load_model.lm_head.weight.device.type, "meta")
 
     def test_gptq_lwq(self):
