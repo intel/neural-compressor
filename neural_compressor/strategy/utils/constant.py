@@ -59,6 +59,7 @@ FALLBACK_RECIPES_SET = {
     "pre_post_process_quantization",
 }
 
+
 class WoqTuningParams(Enum):
     RTN = 1
     GPTQ = 2
