@@ -168,7 +168,7 @@ q_model = quantization.fit(
 )
 ouput_dir = "./saved_model"
 q_model.save(ouput_dir)
-q_model = load(ouput_dir, deepcopy(self.empty_model), weight_only=True, layer_wise=True)
+q_model = load(ouput_dir, fp32_model, weight_only=True, layer_wise=True)
 ```
 
 ## Reference
