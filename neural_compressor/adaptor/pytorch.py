@@ -3501,9 +3501,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             smooth_quant = recipe_cfgs["layer_wise_quant_args"].get("smooth_quant", False)
             alpha = recipe_cfgs["layer_wise_quant_args"].get("smooth_quant_alpha", 0.5)
             # device = recipe_cfgs["layer_wise_quant_args"].get("decvice", "cpu")
-            assert (
-                model_path is not None
-            ), "The model_path should not be None."
+            assert model_path is not None, "The model_path should not be None."
             device = self.device
             lw_quant = LayerWiseQuant(
                 q_model._model,
