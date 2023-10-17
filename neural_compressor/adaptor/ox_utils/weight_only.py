@@ -36,7 +36,22 @@ from neural_compressor.utils.utility import LazyImport
 ort = LazyImport("onnxruntime")
 logger = logging.getLogger("neural_compressor")
 ONNXRT116_VERSION = Version("1.16.0")
+ONNXRT1161_VERSION = Version("1.16.1")
 
+def get_blob_size(group_size, has_zp):
+    """Get blob_size.
+
+    Args:
+        group_size (int): how many elements share one scale/zp
+        has_zp (bool): whether zero_point is None
+    """
+    if Version(ort.__version__) > ONNXRT1161_VERSION:
+        blob_size = group_size // 2
+    elif has_zp:
+        blob_size = group_size // 2 + 4 + 1
+    else:
+        blob_size = group_size // 2 + 4
+    return blob_size
 
 def make_matmul_weight_only_node(
     node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point
@@ -57,46 +72,85 @@ def make_matmul_weight_only_node(
         matmul_weight_only_node: MatMulFpQ4 node
         new_inits: initializers of the MatMulFpQ4 node
     """
-    if zero_point is not None:
-        blob_size = group_size // 2 + 4 + 1
-        offset = 5
-    else:
-        blob_size = group_size // 2 + 4
-        offset = 4
-
+    blob_size = get_blob_size(group_size, zero_point is not None)
     packed = np.zeros((q_weight.shape[0], blob_size), dtype="uint8")
-    for i in range(q_weight.shape[0]):
-        bf = struct.pack("f", scale[i])
-        packed[i][0] = bf[0]
-        packed[i][1] = bf[1]
-        packed[i][2] = bf[2]
-        packed[i][3] = bf[3]
+    q_weight_name = node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size))
+    input_names = [node.input[0], q_weight_name]
+    new_inits = []
+    kwargs = {}
 
-        if zero_point is not None:
-            packed[i][4] = zero_point[i]
+    if Version(ort.__version__) > ONNXRT1161_VERSION:
+        op_type = "MatMulNBits"
+        
+        # pack quantized weight
+        for i in range(q_weight.shape[0]):
+            for k in range(0, group_size, 2):
+                packed[i][k // 2] = q_weight[i][k] | q_weight[i][k + 1] << 4
+        packed = np.reshape(packed, (-1, k_blocks, blob_size))
 
-        packed[i][offset:] = np.bitwise_or(
-            q_weight[i][: group_size // 2], np.left_shift(q_weight[i][group_size // 2 :], num_bits)
+        # build scale tensor
+        scale = np.reshape(scale, (-1, k_blocks)).astype("float32")
+        scale_tensor = onnx.helper.make_tensor(
+            name=node.input[1] + "_scale", data_type=1, dims=scale.shape, vals=scale.tobytes(), raw=True
         )
+        new_inits.append(scale_tensor)
 
-    packed = packed.reshape(-1)
+        # build zero_point tensor
+        if zero_point is not None:
+            zero_point = np.reshape(zero_point, (-1, k_blocks)).astype("uint8")
+            zp_tensor = onnx.helper.make_tensor(
+                name=node.input[1] + "_zp", data_type=2, dims=zero_point.shape, vals=zero_point.tobytes(), raw=True
+            )
+            input_names.append(zp_tensor.name)
+            new_inits.append(zp_tensor)
+
+        # set kwargs
+        kwargs["K"] = weight_shape[0]
+        kwargs["N"] = weight_shape[1]
+        kwargs["bits"] = num_bits
+        kwargs["block_size"] = group_size
+    
+    else:
+        offset = 5 if zero_point is not None else 4
+        op_type = "MatMulFpQ4"
+
+        # pack quantized weight
+        for i in range(q_weight.shape[0]):
+            bf = struct.pack("f", scale[i])
+            packed[i][0] = bf[0]
+            packed[i][1] = bf[1]
+            packed[i][2] = bf[2]
+            packed[i][3] = bf[3]
+
+            if zero_point is not None:
+                packed[i][4] = zero_point[i]
+
+            packed[i][offset:] = np.bitwise_or(
+                q_weight[i][: group_size // 2], np.left_shift(q_weight[i][group_size // 2 :], num_bits)
+            )
+        packed = packed.reshape(-1)
+
+        # build shape tensor
+        shape_tensor = onnx.helper.make_tensor(
+            name=node.input[1] + "_shape", data_type=7, dims=(2,), vals=np.array(weight_shape, dtype="int64")
+        )
+        new_inits.append(shape_tensor)
+        input_names.append(shape_tensor.name)
+
+        # set kwargs
+        kwargs["blk_quant_type"] = 1 if zero_point is not None else 0
+
     q_weight_tensor = onnx.helper.make_tensor(
-        name=node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size)),
+        name=q_weight_name,
         data_type=2,
         dims=packed.shape,
         vals=packed.tobytes(),
         raw=True,
     )
-    shape_tensor = onnx.helper.make_tensor(
-        name=node.input[1] + "_shape", data_type=7, dims=(2,), vals=np.array(weight_shape, dtype="int64")
-    )
-    input_names = [node.input[0], q_weight_tensor.name, shape_tensor.name]
-    new_inits = [q_weight_tensor, shape_tensor]
+    new_inits.append(q_weight_tensor)
 
-    kwargs = {}
-    kwargs["blk_quant_type"] = 1 if zero_point is not None else 0
     matmul_weight_only_node = onnx.helper.make_node(
-        "MatMulFpQ4",
+        op_type,
         inputs=input_names,
         outputs=node.output,
         name=node.name + "_Q" + str(num_bits) if node.name else "_Q" + str(num_bits),
