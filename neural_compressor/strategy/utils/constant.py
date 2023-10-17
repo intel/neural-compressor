@@ -59,6 +59,7 @@ FALLBACK_RECIPES_SET = {
     "pre_post_process_quantization",
 }
 
+
 class WoqTuningParams(Enum):
     """This enumeration class represents the different tuning parameters for the weight only quant (WOQ) algorithm.
 
