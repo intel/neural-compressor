@@ -416,7 +416,7 @@ class GPTQuantizer(object):
         """Prepare input calibration data and other attributes which are critical for gptq execution."""
 
         # critical: hooker function which collects inputs
-        def forward(layey, *args, **kwargs):
+        def forward(layer, *args, **kwargs):
             # inputs[inputs_info['idx']] = input_ids # TODO solve the problem of batchsize!=1
             self.cache_key_arguments["i"] += 1
             for arg in kwargs:
@@ -450,7 +450,6 @@ class GPTQuantizer(object):
 
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
-        # import pdb;pdb.set_trace()
         for batch in tqdm(self.dataloader):
             batch = move_input_to_device(batch, self.device)
             try:
