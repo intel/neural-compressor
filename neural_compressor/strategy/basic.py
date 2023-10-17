@@ -322,8 +322,10 @@ class BasicTuneStrategy(TuneStrategy):
             )
             for tune_cfg in woq_tuning_sampler:
                 yield tune_cfg
-            logger.info("[Strategy] The best tuning config with WeightOnlyQuant is" \
-                f"{self.cur_best_tuning_cfg['woq_tuning_cfg']}.")
+            logger.info(
+                "[Strategy] The best tuning config with WeightOnlyQuant is"
+                f"{self.cur_best_tuning_cfg['woq_tuning_cfg']}."
+            )
 
             # try to tune sq alpha
             if self._should_tuning_sq_alpha(self.config.recipes):

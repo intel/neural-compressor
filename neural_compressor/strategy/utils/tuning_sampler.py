@@ -23,10 +23,10 @@ from itertools import product
 from typing import Any, Dict, List, Tuple, Union
 
 from ...utils import logger
+from ..utils.constant import WoqTuningParams
 from .tuning_space import TuningSpace, pattern_to_internal, quant_mode_from_pattern
 from .tuning_structs import OpTuningConfig
 from .utility import ClassRegister
-from ..utils.constant import WoqTuningParams
 
 TUNING_ITEM_PRIORITY = [
     ("activation", "scheme"),
@@ -611,6 +611,7 @@ class SmoothQuantSampler(TuningSampler):
             logger.debug(f"[STRATEGY] set smooth quant alpha with: {alpha:.4f}")
             yield new_tune_cfg
 
+
 class WeightOnlyQuantSampler(TuningSampler):
     """Not displayed in API Docs."""
 
@@ -637,5 +638,5 @@ class WeightOnlyQuantSampler(TuningSampler):
         """
         new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
         for algo in WoqTuningParams:
-            new_tune_cfg['woq_tuning_cfg'] = algo
+            new_tune_cfg["woq_tuning_cfg"] = algo
             yield new_tune_cfg
