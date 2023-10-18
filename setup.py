@@ -23,8 +23,7 @@ PKG_INSTALL_CFG = {
             include=["neural_compressor", "neural_compressor.*", "neural_coder", "neural_coder.*"],
             exclude=["neural_compressor.template", "neural_compressor.common", "neural_compressor.common.*",
                      "neural_compressor.torch", "neural_compressor.torch.*",
-                     "neural_compressor.tensorflow", "neural_compressor.tensorflow.*",
-                     ],
+                     "neural_compressor.tensorflow", "neural_compressor.tensorflow.*"],
         ),
         "package_data": {"": ["*.yaml"]},
         "install_requires": fetch_requirements("requirements.txt"),
@@ -36,7 +35,7 @@ PKG_INSTALL_CFG = {
     "neural_compressor_3x_pt": {
         "project_name": "neural_compressor_3x_pt",
         "include_packages": find_packages(
-            include=["neural_compressor.common", "neural_compressor.common.*", "neural_compressor.version.py"
+            include=["neural_compressor.common", "neural_compressor.common.*", "neural_compressor.version.py",
                      "neural_compressor.torch", "neural_compressor.torch.*"],
         ),
         "install_requires": fetch_requirements("requirements_pt.txt"),
@@ -45,7 +44,7 @@ PKG_INSTALL_CFG = {
     "neural_compressor_3x_tf": {
         "project_name": "neural_compressor_3x_tf",
         "include_packages": find_packages(
-            include=["neural_compressor.common", "neural_compressor.common.*", "neural_compressor.version.py"
+            include=["neural_compressor.common", "neural_compressor.common.*", "neural_compressor.version.py",
                      "neural_compressor.tensorflow", "neural_compressor.tensorflow.*"],
         ),
         "install_requires": fetch_requirements("requirements_tf.txt"),
@@ -102,11 +101,11 @@ if __name__ == "__main__":
         cfg_key = "neural_compressor_3x_tf"
 
     project_name = PKG_INSTALL_CFG[cfg_key].get("project_name")
-    include_packages = PKG_INSTALL_CFG[cfg_key].get("include_packages")
-    package_data = PKG_INSTALL_CFG[cfg_key].get("package_data")
-    install_requires = PKG_INSTALL_CFG[cfg_key].get("install_requires")
-    entry_points = PKG_INSTALL_CFG[cfg_key].get("entry_points")
-    extras_require = PKG_INSTALL_CFG[cfg_key].get("extras_require")
+    include_packages = PKG_INSTALL_CFG[cfg_key].get("include_packages") or {}
+    package_data = PKG_INSTALL_CFG[cfg_key].get("package_data") or {}
+    install_requires = PKG_INSTALL_CFG[cfg_key].get("install_requires") or {}
+    entry_points = PKG_INSTALL_CFG[cfg_key].get("entry_points") or {}
+    extras_require = PKG_INSTALL_CFG[cfg_key].get("extras_require") or {}
 
     setup(
         name=project_name,
