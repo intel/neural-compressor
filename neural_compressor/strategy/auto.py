@@ -123,10 +123,8 @@ class AutoTuneStrategy(TuneStrategy):
 
         # try to tune a WeightOnlyQuant algorithm
         if self._should_tuning_woq_algo():
-                for tune_cfg in self.tuning_woq_algo(
-                    tuning_space, deepcopy(self.cur_best_tuning_cfg)
-                ):
-                    yield tune_cfg
+            for tune_cfg in self.tuning_woq_algo(tuning_space, deepcopy(self.cur_best_tuning_cfg)):
+                yield tune_cfg
 
         # try to tune sq alpha
         if self._should_tuning_sq_alpha(self.config.recipes):

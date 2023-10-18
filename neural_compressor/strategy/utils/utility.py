@@ -125,6 +125,7 @@ def get_adaptor_name(adaptor):
             return name
     return ""
 
+
 def check_key_exist(data, key):
     if isinstance(data, dict):
         if key in data:
@@ -137,6 +138,7 @@ def check_key_exist(data, key):
             if check_key_exist(item, key):
                 return True
     return False
+
 
 def build_slave_faker_model():
     """Slave does not have a model, so construct a fake model.

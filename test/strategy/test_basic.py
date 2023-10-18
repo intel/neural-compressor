@@ -181,5 +181,6 @@ class TestBasicTuningStrategy(unittest.TestCase):
             q_model = fit(model=model, conf=conf, calib_dataloader=dataloader, eval_func=fake_eval)
             assert q_model is not None
 
+
 if __name__ == "__main__":
     unittest.main()
