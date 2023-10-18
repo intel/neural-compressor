@@ -59,7 +59,7 @@ from .utils.constant import FALLBACK_RECIPES_SET, TUNING_ITEMS_LST
 from .utils.tuning_sampler import tuning_sampler_dict
 from .utils.tuning_space import TuningSpace
 from .utils.tuning_structs import OpTuningConfig
-from .utils.utility import build_slave_faker_model, quant_options, check_key_exist
+from .utils.utility import build_slave_faker_model, check_key_exist, quant_options
 
 STRATEGIES = {}
 
@@ -1155,14 +1155,18 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
 
     def _should_tuning_woq_algo(self):
         """Currently, it's only available for the ORT backend with approach is weight_only.
-        It will be triggered when 
-            a) quant_level is auto or quant_level is 1 && strategy is basic 
+
+        It will be triggered when
+            a) quant_level is auto or quant_level is 1 && strategy is basic
             b) and the "algorithm" is not set in op_type_dict
             c) and woq will only trigger once
         """
-        return "onnx" in self.framework.lower() and "weight_only" in self.config.approach and \
-            not check_key_exist(self.config.op_type_dict, "algorithm") and \
-            not check_key_exist(self.tuning_history, "woq_tuning_cfg")
+        return (
+            "onnx" in self.framework.lower()
+            and "weight_only" in self.config.approach
+            and not check_key_exist(self.config.op_type_dict, "algorithm")
+            and not check_key_exist(self.tuning_history, "woq_tuning_cfg")
+        )
 
     def tuning_woq_algo(self, tuning_space, tuning_cfg):
         """Tuning smooth quant's alpha.
@@ -1181,9 +1185,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             yield tune_cfg
 
         logger.info(
-                "[Strategy] The best tuning config with WeightOnlyQuant is"
-                f"{self.cur_best_tuning_cfg['woq_tuning_cfg']}."
-            )
+            "[Strategy] The best tuning config with WeightOnlyQuant is" f"{self.cur_best_tuning_cfg['woq_tuning_cfg']}."
+        )
 
     def initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg: OpTuningConfig):
         """Init the dynamic tuning config according to the static config.
