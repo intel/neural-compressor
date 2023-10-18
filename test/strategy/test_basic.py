@@ -181,30 +181,5 @@ class TestBasicTuningStrategy(unittest.TestCase):
             q_model = fit(model=model, conf=conf, calib_dataloader=dataloader, eval_func=fake_eval)
             assert q_model is not None
 
-    def test_WeightOnlyQuant_tuning(self):
-        from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.data import DATALOADERS, Datasets
-        from neural_compressor.quantization import fit
-
-        # dataset and dataloader
-        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
-        dataloader = DATALOADERS["tensorflow"](dataset)
-
-        from neural_compressor.strategy.utils.constant import WoqTuningParams
-
-        acc_res_lst = [1.0] * len(WoqTuningParams)
-        acc_res_lst[2] = 1.2
-        acc_res_lst = [1.3] + acc_res_lst + [1.2, 1.3]
-
-        def fake_eval(model):
-            acc = acc_res_lst.pop(0)
-            return acc
-
-        # tuning and accuracy criterion
-        conf = PostTrainingQuantConfig()
-        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader=dataloader, eval_func=fake_eval)
-        self.assertIsNotNone(q_model)
-
-
 if __name__ == "__main__":
     unittest.main()

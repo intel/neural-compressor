@@ -59,7 +59,7 @@ from .utils.constant import FALLBACK_RECIPES_SET, TUNING_ITEMS_LST
 from .utils.tuning_sampler import tuning_sampler_dict
 from .utils.tuning_space import TuningSpace
 from .utils.tuning_structs import OpTuningConfig
-from .utils.utility import build_slave_faker_model, quant_options
+from .utils.utility import build_slave_faker_model, quant_options, check_key_exist
 
 STRATEGIES = {}
 
@@ -1153,6 +1153,38 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         for tune_cfg in sq_sampler:
             yield tune_cfg
 
+    def _should_tuning_woq_algo(self):
+        """Currently, it's only available for the ORT backend with approach is weight_only.
+        It will be triggered when 
+            a) quant_level is auto or quant_level is 1 && strategy is basic 
+            b) and the "algorithm" is not set in op_type_dict
+            c) and woq will only trigger once
+        """
+        return "onnx" in self.framework.lower() and "weight_only" in self.config.approach and \
+            not check_key_exist(self.config.op_type_dict, "algorithm") and \
+            not check_key_exist(self.tuning_history, "woq_tuning_cfg")
+
+    def tuning_woq_algo(self, tuning_space, tuning_cfg):
+        """Tuning smooth quant's alpha.
+
+        Args:
+            tuning_space: tuning space
+            tuning_cfg: the initial tuning config
+            recipes: recipes specified by user
+
+        Yields:
+            tuning config
+        """
+        logger.info("[STRATEGY] Start tuning Weight Only Quant' algo.")
+        woq_sampler = tuning_sampler_dict.get_class("woq_algorithm")(tuning_space, [], tuning_cfg)
+        for tune_cfg in woq_sampler:
+            yield tune_cfg
+
+        logger.info(
+                "[Strategy] The best tuning config with WeightOnlyQuant is"
+                f"{self.cur_best_tuning_cfg['woq_tuning_cfg']}."
+            )
+
     def initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg: OpTuningConfig):
         """Init the dynamic tuning config according to the static config.
 
@@ -1322,6 +1354,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         # For not tuning recipe, tune cfg use it directly
         tune_cfg["recipe_cfgs"].update(self._not_tuning_recipes_values)
         tune_cfg["trial_number"] = deepcopy(self.trials_count)
+        tune_cfg.setdefault("woq_tuning_cfg", op_tuning_cfg.get("woq_tuning_cfg"))
         # The sq-related args comes from user config, current best tuning config
         # TODO simplify the logic for transforming the arguments
         # update the sq-related args from self.cur_best_tuning_cfg

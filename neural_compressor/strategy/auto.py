@@ -120,6 +120,14 @@ class AutoTuneStrategy(TuneStrategy):
         op_tuning_cfg["calib_sampling_size"] = calib_sampling_size_lst[0]
         if not self.cur_best_tuning_cfg:
             self.cur_best_tuning_cfg = deepcopy(op_tuning_cfg)
+
+        # try to tune a WeightOnlyQuant algorithm
+        if self._should_tuning_woq_algo():
+                for tune_cfg in self.tuning_woq_algo(
+                    tuning_space, deepcopy(self.cur_best_tuning_cfg)
+                ):
+                    yield tune_cfg
+
         # try to tune sq alpha
         if self._should_tuning_sq_alpha(self.config.recipes):
             for tune_cfg in self.tuning_sq_alpha(tuning_space, deepcopy(self.cur_best_tuning_cfg), self.config.recipes):

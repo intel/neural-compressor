@@ -611,7 +611,7 @@ class SmoothQuantSampler(TuningSampler):
             logger.debug(f"[STRATEGY] set smooth quant alpha with: {alpha:.4f}")
             yield new_tune_cfg
 
-
+@tuning_sampler_dict("woq_algorithm")
 class WeightOnlyQuantSampler(TuningSampler):
     """Not displayed in API Docs."""
 
