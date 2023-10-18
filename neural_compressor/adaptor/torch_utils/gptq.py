@@ -217,6 +217,8 @@ class GPTQuantizer(object):
 
         # device
         self.device = device
+        if str(self.model.device).startswith("cuda"):
+            self.device = self.model.device
         self.is_ready = False
 
         self.layer_wise = layer_wise
@@ -456,7 +458,8 @@ class GPTQuantizer(object):
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
         for batch in tqdm(self.dataloader):
-            batch = move_input_to_device(batch, self.device)
+            if not self.layer_wise:
+                batch = move_input_to_device(batch, self.device)
             try:
                 if isinstance(batch, tuple) or isinstance(batch, list):
                     self.model(batch[0])
@@ -519,7 +522,11 @@ class GPTQuantizer(object):
         tblock_length = len(self.gptq_related_blocks["transformers"])
         for block_idx in range(tblock_length):
             logger.info(f"Quantizing layer {block_idx + 1} / {tblock_length}..")
-            transformer_block = self.gptq_related_blocks["transformers"][block_idx]  # .to(self.device)
+            if not self.layer_wise:
+                # if we do not apply layer-wise feature, we still place the entire block on the GPU
+                transformer_block = self.gptq_related_blocks["transformers"][block_idx].to(self.device)
+            else:
+                transformer_block = self.gptq_related_blocks["transformers"][block_idx]  # .to(self.device)
             # Step2.1: obtain all layers (Linear, Conv2d, etc) in the block which can be quantized.
             sub_layers = find_layers(transformer_block)
             sub_layers_to_quant = {}
@@ -569,7 +576,6 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache_key_arguments.pop("i")
-            # import pdb;pdb.set_trace()
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)

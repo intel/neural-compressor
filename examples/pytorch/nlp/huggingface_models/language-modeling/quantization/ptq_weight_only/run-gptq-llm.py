@@ -219,12 +219,12 @@ if __name__ == '__main__':
         tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, trust_remote_code=True)
         model = AutoModel.from_pretrained(args.model_name_or_path, trust_remote_code=True)
     else:
-        tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
+        tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True, trust_remote_code=True)
         model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, low_cpu_mem_usage=True, trust_remote_code=True)
     model = model.eval()
 
-    calib_dataset = load_dataset(args.dataset, split="train") # default
-    # calib_dataset = datasets.load_from_disk('/your/local/pile-10k/') # use this if trouble with connecting to HF
+    # calib_dataset = load_dataset(args.dataset, split="train") # default
+    calib_dataset = datasets.load_from_disk('/data4/cyy/gptq_inc/pile-10k/') # use this if trouble with connecting to HF
     calib_dataset = calib_dataset.shuffle(seed=args.seed)
     calib_evaluator = Evaluator(calib_dataset, tokenizer, args.calib_size, is_calib=True)
     calib_dataloader = DataLoader(
@@ -294,7 +294,8 @@ if __name__ == '__main__':
         dataloader=calib_dataloader, 
         nsamples = args.nsamples, 
         use_max_length = args.use_max_length,
-        pad_max_length = args.pad_max_length
+        pad_max_length = args.pad_max_length,
+        device = DEV,
     )
 
     results = lm_evaluate(
