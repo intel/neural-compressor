@@ -35,16 +35,30 @@ function run_tuning {
 	      bash prepare.sh
     fi
 
+    if [[ "${input_model}" =~ "structure" ]]; then
+        task_data_dir="PubTables-1M-Structure"
+        data_type="structure"
+        config_file="structure_config.json"
+    fi
+    if [[ "${input_model}" =~ "detection" ]]; then
+        task_data_dir="PubTables-1M-Detection"
+        data_type="detection"
+        config_file="detection_config.json"
+    fi
+
+    input_model=$(realpath "$input_model")
+    output_model=$(realpath "$output_model")
+
     cd table-transformer/src
     python main.py \
             --input_onnx_model ${input_model} \
             --output_model ${output_model} \
-            --data_root_dir ${dataset_location} \
-            --table_words_dir ${dataset_location}/words \
+            --data_root_dir "${dataset_location}/${task_data_dir}" \
+            --table_words_dir "${dataset_location}/${task_data_dir}/words" \
             --mode quantize \
-            --data_type structure \
+            --data_type ${data_type} \
             --device cpu \
-            --config_file structure_config.json
+            --config_file ${config_file}
 }
 
 main "$@"
