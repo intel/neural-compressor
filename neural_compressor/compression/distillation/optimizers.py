@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -165,6 +165,38 @@ class TensorFlowAdamW(object):
     def __call__(self, **kwargs):
         """Call `TensorFlowAdamW` object."""
         return tfa.optimizers.AdamW, self._mapping(**kwargs)
+
+
+@optimizer_registry("Adam", "tensorflow")
+class TensorFlowAdam(object):
+    """Tensorflow Adam optimizer.
+
+    Args:
+        param_dict (dict): The dict of parameters setting by user for Adam optimizer
+    """
+
+    def __init__(self, param_dict):
+        """Initialize `TensorFlowAdam` class."""
+        assert isinstance(param_dict, dict), "This optimizer constructor parameter must be a dict"
+        self._param_dict = param_dict
+
+    def _mapping(self):
+        _param_map = {
+            "learning_rate": "learning_rate",
+            "beta_1": "beta_1",
+            "beta_2": "beta_2",
+            "epsilon": "epsilon",
+            "amsgrad": "amsgrad",
+        }
+        _dict = {}
+        for key in self._param_dict:
+            if key in _param_map:
+                _dict.update({_param_map[key]: self._param_dict[key]})
+        return _dict
+
+    def __call__(self, **kwargs):
+        """Call `TensorFlowAdam` object."""
+        return tf.keras.optimizers.Adam, self._mapping(**kwargs)
 
 
 @optimizer_registry("SGD", "pytorch")
