@@ -112,7 +112,7 @@ if __name__ == "__main__":
     project_name = PKG_INSTALL_CFG[cfg_key].get("project_name")
     include_packages = PKG_INSTALL_CFG[cfg_key].get("include_packages") or {}
     package_data = PKG_INSTALL_CFG[cfg_key].get("package_data") or {}
-    install_requires = PKG_INSTALL_CFG[cfg_key].get("install_requires") or {}
+    install_requires = PKG_INSTALL_CFG[cfg_key].get("install_requires") or []
     entry_points = PKG_INSTALL_CFG[cfg_key].get("entry_points") or {}
     extras_require = PKG_INSTALL_CFG[cfg_key].get("extras_require") or {}
 
