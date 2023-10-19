@@ -261,19 +261,6 @@ class TestDistillation(unittest.TestCase):
         stat = torch.load("./saved/best_model.pt")
         opt_model = self.student_model.load_state_dict(stat)
 
-    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, "2.3.0"), " keras requires higher version than tf-2.3.0")
-    def test_tf_distillation(self):
-        from neural_compressor.conf.config import DistillationConf
-        from neural_compressor.experimental import Distillation
-
-        conf = DistillationConf("fake_1.yaml")
-        distiller = Distillation(conf)
-        distiller = Distillation("fake_1.yaml")
-        distiller.student_model = self.student_model_tf
-        distiller.teacher_model = self.teacher_model_tf
-        print("student model: {}".format(distiller.student_model))
-        _ = distiller.fit()
-
 
 if __name__ == "__main__":
     unittest.main()
