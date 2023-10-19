@@ -82,7 +82,7 @@ if __name__ == '__main__':
         '--benchmark',
         action='store_true', \
         default=False,
-        help="whether bechmark the model"
+        help="whether benchmark the model"
     )
     parser.add_argument(
         '--tune',
@@ -136,10 +136,9 @@ if __name__ == '__main__':
                                          recipes={'optypes_to_exclude_output_quant': ['MatMul']},
                                         )
         q_model = quantization.fit(model, 
-                                    config, 
-                                    calib_dataloader=val_data_loader, 
-                                    eval_func=eval
-                                    )
+                                   config, 
+                                   calib_dataloader=val_data_loader, 
+                                   eval_func=eval)
         q_model.save(args.output_model)
 
     if args.benchmark:
