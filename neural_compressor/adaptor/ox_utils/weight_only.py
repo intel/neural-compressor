@@ -108,7 +108,11 @@ def make_matmul_weight_only_node(
                     for j in range(k_blocks):
                         idx = i * k_blocks + j
                         zp = zero_point[idx]
-                        packed_zp[idx // 2] = ((packed_zp[idx // 2] & 0x0F) | (zp << 4)) if (idx & 1) else ((packed_zp[idx // 2] & 0xF0) | zp)
+                        packed_zp[idx // 2] = (
+                            ((packed_zp[idx // 2] & 0x0F) | (zp << 4))
+                            if (idx & 1)
+                            else ((packed_zp[idx // 2] & 0xF0) | zp)
+                        )
 
             zp_tensor = onnx.helper.make_tensor(
                 name=node.input[1] + "_zp", data_type=2, dims=packed_zp.shape, vals=packed_zp.tobytes(), raw=True
