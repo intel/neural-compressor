@@ -1653,8 +1653,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         if "GPTQ" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import gptq_quantize
 
-            assert data_loader is not None, \
-                "GPTQ WOQ algorithm needs to pass 'calib_dataloader' to quantization.fit()"
+            assert data_loader is not None, "GPTQ WOQ algorithm needs to pass 'calib_dataloader' to quantization.fit()"
             percdamp = self.recipes.get("gptq_args", {}).get("percdamp", 0.01)
             blocksize = self.recipes.get("gptq_args", {}).get("blocksize", 128)
             actorder = self.recipes.get("gptq_args", {}).get("actorder", False)
@@ -1675,8 +1674,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         if "AWQ" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
 
-            assert data_loader is not None, \
-                "AWQ WOQ algorithm needs to pass 'calib_dataloader' to quantization.fit()"
+            assert data_loader is not None, "AWQ WOQ algorithm needs to pass 'calib_dataloader' to quantization.fit()"
             enable_auto_scale = self.recipes.get("awq_args", {}).get("enable_auto_scale", True)
             enable_mse_search = self.recipes.get("awq_args", {}).get("enable_mse_search", True)
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
