@@ -46,13 +46,13 @@ from ..utils.utility import (
     DotDict,
     LazyImport,
     Statistics,
+    check_key_exist,
     dump_table,
     equal_dicts,
     fault_tolerant_file,
     get_weights_details,
     print_op_list,
     print_table,
-    check_key_exist
 )
 from ..utils.weights_details import WeightsDetails
 from ..version import __version__

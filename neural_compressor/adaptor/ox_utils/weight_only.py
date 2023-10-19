@@ -243,7 +243,7 @@ def rtn_quantize(
                 continue
 
             dtype = weight.dtype
-            
+
             if node.name in weight_config:
                 num_bits = weight_config[node.name]["bits"]
                 group_size = weight_config[node.name]["group_size"]

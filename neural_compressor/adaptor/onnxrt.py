@@ -1640,7 +1640,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             except Exception as e:  # pragma: no cover
                 logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(repr(e)))
                 tmp_model = model
-        
+
         assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
         for precision in self.query_handler.get_precisions():
             if precision == "weight_only_integer":
@@ -1756,25 +1756,26 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 quantize_config[op.name] = copy.deepcopy(tune_cfg["op"][(op.name, op.op_type)]["weight"])
 
         return quantize_config
-    
+
     def _update_tune_cfg(self, tune_cfg, model):
-        """update tune cfg according to woq_tuning_cfg"""
+        """Update tune cfg according to woq_tuning_cfg."""
         if tune_cfg.get("woq_tuning_cfg") is None:
             return tune_cfg
-        
+
         from neural_compressor.strategy.utils.constant import WOQ_TUNING_ALGOS
+
         woq_tuning_cfg = tune_cfg.get("woq_tuning_cfg")
         new_woq_cfg = WOQ_TUNING_ALGOS.get(woq_tuning_cfg)
 
         for node_cfg in tune_cfg["op"].values():
-            node_cfg["weight"].update({cfg_name: cfg_value \
-                for cfg_name, cfg_value in new_woq_cfg.items() if cfg_name in node_cfg["weight"]})
-            
+            node_cfg["weight"].update(
+                {cfg_name: cfg_value for cfg_name, cfg_value in new_woq_cfg.items() if cfg_name in node_cfg["weight"]}
+            )
+
         # find last matmul and set to fp32
         if "DISABLE_LAST_MATMUL" in woq_tuning_cfg:
             last_matmul = None
-            fp32_op_cfg = {"weight": {"dtype": "fp32"}, 
-                           "activation": {"dtype": "fp32", "quant_mode": "fp32"}}
+            fp32_op_cfg = {"weight": {"dtype": "fp32"}, "activation": {"dtype": "fp32", "quant_mode": "fp32"}}
             for node in model.graph.node:
                 if node.op_type in ["MatMul"]:
                     last_matmul = (node.name, node.op_type)
