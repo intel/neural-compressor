@@ -28,8 +28,9 @@ PKG_INSTALL_CFG = {
         "package_data": {"": ["*.yaml"]},
         "install_requires": fetch_requirements("requirements.txt"),
         "extras_require": {
-            "3x_pt": [f'neural_compressor_3x_pt=={__version__}'],
-            "3x_tf": [f'neural_compressor_3x_tf=={__version__}'],
+            "pt": [f'neural_compressor_3x_pt=={__version__}'],
+            "tf": [f'neural_compressor_3x_tf=={__version__}'],
+            "ort": [f'neural_compressor_3x_ort=={__version__}'],
         }
     },
     "neural_compressor_3x_pt": {
@@ -38,16 +39,20 @@ PKG_INSTALL_CFG = {
             include=["neural_compressor.common", "neural_compressor.common.*", "neural_compressor.version.py",
                      "neural_compressor.torch", "neural_compressor.torch.*"],
         ),
-        "install_requires": fetch_requirements("requirements_pt.txt"),
     },
-
     "neural_compressor_3x_tf": {
         "project_name": "neural_compressor_3x_tf",
         "include_packages": find_packages(
             include=["neural_compressor.common", "neural_compressor.common.*", "neural_compressor.version.py",
                      "neural_compressor.tensorflow", "neural_compressor.tensorflow.*"],
         ),
-        "install_requires": fetch_requirements("requirements_tf.txt"),
+    },
+    "neural_compressor_3x_ort": {
+        "project_name": "neural_compressor_3x_ort",
+        "include_packages": find_packages(
+            include=["neural_compressor.common", "neural_compressor.common.*", "neural_compressor.version.py",
+                     "neural_compressor.onnxrt", "neural_compressor.onnxrt.*"],
+        ),
     },
     "neural_insights": {
         "project_name": "neural_insights",
@@ -92,13 +97,17 @@ if __name__ == "__main__":
         sys.argv.remove("neural_solution")
         cfg_key = "neural_solution"
 
-    if "3x_pt" in sys.argv:
-        sys.argv.remove("3x_pt")
+    if "pt" in sys.argv:
+        sys.argv.remove("pt")
         cfg_key = "neural_compressor_3x_pt"
 
-    if "3x_tf" in sys.argv:
-        sys.argv.remove("3x_tf")
+    if "tf" in sys.argv:
+        sys.argv.remove("tf")
         cfg_key = "neural_compressor_3x_tf"
+
+    if "ort" in sys.argv:
+        sys.argv.remove("ort")
+        cfg_key = "neural_compressor_3x_ort"
 
     project_name = PKG_INSTALL_CFG[cfg_key].get("project_name")
     include_packages = PKG_INSTALL_CFG[cfg_key].get("include_packages") or {}
