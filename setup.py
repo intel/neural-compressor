@@ -1,6 +1,7 @@
 import re
 import sys
 from io import open
+
 from setuptools import find_packages, setup
 
 
@@ -21,37 +22,58 @@ PKG_INSTALL_CFG = {
         "project_name": "neural_compressor",
         "include_packages": find_packages(
             include=["neural_compressor", "neural_compressor.*", "neural_coder", "neural_coder.*"],
-            exclude=["neural_compressor.template", "neural_compressor.common", "neural_compressor.common.*",
-                     "neural_compressor.torch", "neural_compressor.torch.*",
-                     "neural_compressor.tensorflow", "neural_compressor.tensorflow.*"],
+            exclude=[
+                "neural_compressor.template",
+                "neural_compressor.common",
+                "neural_compressor.common.*",
+                "neural_compressor.torch",
+                "neural_compressor.torch.*",
+                "neural_compressor.tensorflow",
+                "neural_compressor.tensorflow.*",
+            ],
         ),
         "package_data": {"": ["*.yaml"]},
         "install_requires": fetch_requirements("requirements.txt"),
         "extras_require": {
-            "pt": [f'neural_compressor_3x_pt=={__version__}'],
-            "tf": [f'neural_compressor_3x_tf=={__version__}'],
-            "ort": [f'neural_compressor_3x_ort=={__version__}'],
-        }
+            "pt": [f"neural_compressor_3x_pt=={__version__}"],
+            "tf": [f"neural_compressor_3x_tf=={__version__}"],
+            "ort": [f"neural_compressor_3x_ort=={__version__}"],
+        },
     },
     "neural_compressor_3x_pt": {
         "project_name": "neural_compressor_3x_pt",
         "include_packages": find_packages(
-            include=["neural_compressor.common", "neural_compressor.common.*", "neural_compressor.version.py",
-                     "neural_compressor.torch", "neural_compressor.torch.*"],
+            include=[
+                "neural_compressor.common",
+                "neural_compressor.common.*",
+                "neural_compressor.version.py",
+                "neural_compressor.torch",
+                "neural_compressor.torch.*",
+            ],
         ),
     },
     "neural_compressor_3x_tf": {
         "project_name": "neural_compressor_3x_tf",
         "include_packages": find_packages(
-            include=["neural_compressor.common", "neural_compressor.common.*", "neural_compressor.version.py",
-                     "neural_compressor.tensorflow", "neural_compressor.tensorflow.*"],
+            include=[
+                "neural_compressor.common",
+                "neural_compressor.common.*",
+                "neural_compressor.version.py",
+                "neural_compressor.tensorflow",
+                "neural_compressor.tensorflow.*",
+            ],
         ),
     },
     "neural_compressor_3x_ort": {
         "project_name": "neural_compressor_3x_ort",
         "include_packages": find_packages(
-            include=["neural_compressor.common", "neural_compressor.common.*", "neural_compressor.version.py",
-                     "neural_compressor.onnxrt", "neural_compressor.onnxrt.*"],
+            include=[
+                "neural_compressor.common",
+                "neural_compressor.common.*",
+                "neural_compressor.version.py",
+                "neural_compressor.onnxrt",
+                "neural_compressor.onnxrt.*",
+            ],
         ),
     },
     "neural_insights": {
@@ -81,13 +103,12 @@ PKG_INSTALL_CFG = {
             ]
         },
         "install_requires": fetch_requirements("neural_solution/requirements.txt"),
-        "entry_points": {"console_scripts": ["neural_solution = neural_solution.bin.neural_solution:exec"]}
-    }
+        "entry_points": {"console_scripts": ["neural_solution = neural_solution.bin.neural_solution:exec"]},
+    },
 }
 
 
 if __name__ == "__main__":
-
     cfg_key = "neural_compressor_2x"
     if "neural_insights" in sys.argv:
         sys.argv.remove("neural_insights")
@@ -125,7 +146,7 @@ if __name__ == "__main__":
         long_description=open("README.md", "r", encoding="utf-8").read(),
         long_description_content_type="text/markdown",
         keywords="quantization,auto-tuning,post-training static quantization,"
-                 "post-training dynamic quantization,quantization-aware training",
+        "post-training dynamic quantization,quantization-aware training",
         license="Apache 2.0",
         url="https://github.com/intel/neural-compressor",
         packages=include_packages,
@@ -142,4 +163,3 @@ if __name__ == "__main__":
             "License :: OSI Approved :: Apache Software License",
         ],
     )
-
