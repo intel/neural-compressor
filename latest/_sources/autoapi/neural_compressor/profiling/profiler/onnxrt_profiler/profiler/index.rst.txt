@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: Profiler(model: neural_compressor.model.onnx_model.ONNXModel, dataloader: neural_compressor.experimental.data.dataloaders.onnxrt_dataloader.ONNXRTDataLoader, log_file: Optional[str] = None)
+.. py:class:: Profiler(model: neural_compressor.model.onnx_model.ONNXModel, dataloader: neural_compressor.data.dataloaders.onnxrt_dataloader.ONNXRTDataLoader, log_file: Optional[str] = None)
 
 
 

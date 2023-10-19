@@ -8,6 +8,8 @@
    Initialize critetion classes.
 
    Classes includes:
+       TensorFlowCrossEntropyLoss, PyTorchCrossEntropyLoss,
+       TensorFlowSparseCategoricalCrossentropy,
        TensorflowKnowledgeDistillationLoss, PyTorchKnowledgeDistillationLoss,
        PyTorchIntermediateLayersKnowledgeDistillationLoss.
 
@@ -24,6 +26,9 @@ Classes
    neural_compressor.compression.distillation.criterions.TensorflowCriterions
    neural_compressor.compression.distillation.criterions.PyTorchCriterions
    neural_compressor.compression.distillation.criterions.Criterions
+   neural_compressor.compression.distillation.criterions.TensorFlowCrossEntropyLoss
+   neural_compressor.compression.distillation.criterions.TensorFlowSparseCategoricalCrossentropy
+   neural_compressor.compression.distillation.criterions.PyTorchCrossEntropyLoss
    neural_compressor.compression.distillation.criterions.KnowledgeDistillationFramework
    neural_compressor.compression.distillation.criterions.KnowledgeDistillationLoss
    neural_compressor.compression.distillation.criterions.PyTorchKnowledgeDistillationLoss
@@ -84,6 +89,30 @@ Functions
 
    :returns: The class of register.
    :rtype: cls
+
+
+.. py:class:: TensorFlowCrossEntropyLoss(param_dict)
+
+
+
+
+   TensorFlow CrossEntropyLoss criterion.
+
+
+.. py:class:: TensorFlowSparseCategoricalCrossentropy(param_dict)
+
+
+
+
+   TensorFlow SparseCategoricalCrossentropyLoss criterion.
+
+
+.. py:class:: PyTorchCrossEntropyLoss(param_dict)
+
+
+
+
+   PyTorch CrossEntropyLoss criterion.
 
 
 .. py:class:: KnowledgeDistillationFramework(student_model=None, teacher_model=None)

@@ -16,5 +16,7 @@ Submodules
    :maxdepth: 1
 
    criterions/index.rst
+   optimizers/index.rst
+   utility/index.rst
 
 

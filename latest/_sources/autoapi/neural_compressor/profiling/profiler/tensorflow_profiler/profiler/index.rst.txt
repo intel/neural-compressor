@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: Profiler(model: neural_compressor.model.tensorflow_model.TensorflowBaseModel, dataloader: neural_compressor.experimental.data.dataloaders.tensorflow_dataloader.TensorflowDataLoader, log_file: Optional[str] = None)
+.. py:class:: Profiler(model: neural_compressor.model.tensorflow_model.TensorflowBaseModel, dataloader: neural_compressor.data.dataloaders.tensorflow_dataloader.TensorflowDataLoader, log_file: Optional[str] = None)
 
 
 

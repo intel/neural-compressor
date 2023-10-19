@@ -90,7 +90,9 @@
 <span id="neural-compressor-compression-distillation-criterions"></span><h1><a class="reference internal" href="#module-neural_compressor.compression.distillation.criterions" title="neural_compressor.compression.distillation.criterions"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.compression.distillation.criterions</span></code></a><a class="headerlink" href="#module-neural_compressor.compression.distillation.criterions" title="Permalink to this heading"></a></h1>
 <p>Initialize critetion classes.</p>
 <dl class="simple">
-<dt>Classes includes:</dt><dd><p>TensorflowKnowledgeDistillationLoss, PyTorchKnowledgeDistillationLoss,
+<dt>Classes includes:</dt><dd><p>TensorFlowCrossEntropyLoss, PyTorchCrossEntropyLoss,
+TensorFlowSparseCategoricalCrossentropy,
+TensorflowKnowledgeDistillationLoss, PyTorchKnowledgeDistillationLoss,
 PyTorchIntermediateLayersKnowledgeDistillationLoss.</p>
 </dd>
 </dl>
@@ -109,43 +111,52 @@ PyTorchIntermediateLayersKnowledgeDistillationLoss.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.Criterions" title="neural_compressor.compression.distillation.criterions.Criterions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Criterions</span></code></a></p></td>
 <td><p>Integrate criterions of different framework.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.KnowledgeDistillationFramework" title="neural_compressor.compression.distillation.criterions.KnowledgeDistillationFramework"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KnowledgeDistillationFramework</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.TensorFlowCrossEntropyLoss" title="neural_compressor.compression.distillation.criterions.TensorFlowCrossEntropyLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorFlowCrossEntropyLoss</span></code></a></p></td>
+<td><p>TensorFlow CrossEntropyLoss criterion.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.TensorFlowSparseCategoricalCrossentropy" title="neural_compressor.compression.distillation.criterions.TensorFlowSparseCategoricalCrossentropy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorFlowSparseCategoricalCrossentropy</span></code></a></p></td>
+<td><p>TensorFlow SparseCategoricalCrossentropyLoss criterion.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.PyTorchCrossEntropyLoss" title="neural_compressor.compression.distillation.criterions.PyTorchCrossEntropyLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchCrossEntropyLoss</span></code></a></p></td>
+<td><p>PyTorch CrossEntropyLoss criterion.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.KnowledgeDistillationFramework" title="neural_compressor.compression.distillation.criterions.KnowledgeDistillationFramework"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KnowledgeDistillationFramework</span></code></a></p></td>
 <td><p>Knowledge Distillation Framework.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.KnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.KnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KnowledgeDistillationLoss</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.KnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.KnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KnowledgeDistillationLoss</span></code></a></p></td>
 <td><p>Initialize the KnowledgeDistillationLoss class.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.PyTorchKnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.PyTorchKnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchKnowledgeDistillationLoss</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.PyTorchKnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.PyTorchKnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchKnowledgeDistillationLoss</span></code></a></p></td>
 <td><p>The PyTorchKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.PyTorchKnowledgeDistillationLossWrapper" title="neural_compressor.compression.distillation.criterions.PyTorchKnowledgeDistillationLossWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchKnowledgeDistillationLossWrapper</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.PyTorchKnowledgeDistillationLossWrapper" title="neural_compressor.compression.distillation.criterions.PyTorchKnowledgeDistillationLossWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchKnowledgeDistillationLossWrapper</span></code></a></p></td>
 <td><p>PyTorchKnowledgeDistillationLossWrapper wraps PyTorchKnowledgeDistillationLoss.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowKnowledgeDistillationLoss</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowKnowledgeDistillationLoss</span></code></a></p></td>
 <td><p>The TensorflowKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLossWrapper" title="neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLossWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowKnowledgeDistillationLossWrapper</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLossWrapper" title="neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLossWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowKnowledgeDistillationLossWrapper</span></code></a></p></td>
 <td><p>TensorflowKnowledgeDistillationLossWrapper wraps TensorflowKnowledgeDistillationLoss.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLossExternal" title="neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLossExternal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowKnowledgeDistillationLossExternal</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLossExternal" title="neural_compressor.compression.distillation.criterions.TensorflowKnowledgeDistillationLossExternal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowKnowledgeDistillationLossExternal</span></code></a></p></td>
 <td><p>TensorflowKnowledgeDistillationLossExternal inherits from KnowledgeDistillationLoss.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.IntermediateLayersKnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.IntermediateLayersKnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IntermediateLayersKnowledgeDistillationLoss</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.IntermediateLayersKnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.IntermediateLayersKnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IntermediateLayersKnowledgeDistillationLoss</span></code></a></p></td>
 <td><p>The IntermediateLayersKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.PyTorchIntermediateLayersKnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.PyTorchIntermediateLayersKnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchIntermediateLayersKnowledgeDistillationLoss</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.PyTorchIntermediateLayersKnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.PyTorchIntermediateLayersKnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchIntermediateLayersKnowledgeDistillationLoss</span></code></a></p></td>
 <td><p>PyTorch Intermediate Layers Knowledge Distillation Loss.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.PyTorchIntermediateLayersKnowledgeDistillationLossWrapper" title="neural_compressor.compression.distillation.criterions.PyTorchIntermediateLayersKnowledgeDistillationLossWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchIntermediateLayersKnowledgeDistillationLossWrapper</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.PyTorchIntermediateLayersKnowledgeDistillationLossWrapper" title="neural_compressor.compression.distillation.criterions.PyTorchIntermediateLayersKnowledgeDistillationLossWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchIntermediateLayersKnowledgeDistillationLossWrapper</span></code></a></p></td>
 <td><p>PyTorch Intermediate Layers Knowledge Distillation Loss Wrapper.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.SelfKnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.SelfKnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SelfKnowledgeDistillationLoss</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.SelfKnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.SelfKnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SelfKnowledgeDistillationLoss</span></code></a></p></td>
 <td><p>SelfKnowledge Distillation Loss.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.PyTorchSelfKnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.PyTorchSelfKnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchSelfKnowledgeDistillationLoss</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.PyTorchSelfKnowledgeDistillationLoss" title="neural_compressor.compression.distillation.criterions.PyTorchSelfKnowledgeDistillationLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchSelfKnowledgeDistillationLoss</span></code></a></p></td>
 <td><p>PyTorch SelfKnowledge Distillation Loss.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.PyTorchSelfKnowledgeDistillationLossWrapper" title="neural_compressor.compression.distillation.criterions.PyTorchSelfKnowledgeDistillationLossWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchSelfKnowledgeDistillationLossWrapper</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.distillation.criterions.PyTorchSelfKnowledgeDistillationLossWrapper" title="neural_compressor.compression.distillation.criterions.PyTorchSelfKnowledgeDistillationLossWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchSelfKnowledgeDistillationLossWrapper</span></code></a></p></td>
 <td><p>PyTorch SelfKnowledge Distillation Loss Wrapper.</p></td>
 </tr>
 </tbody>
@@ -196,6 +207,24 @@ PyTorchIntermediateLayersKnowledgeDistillationLoss.</p>
 <dd class="field-odd"><p>cls</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.distillation.criterions.TensorFlowCrossEntropyLoss">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.distillation.criterions.</span></span><span class="sig-name descname"><span class="pre">TensorFlowCrossEntropyLoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param_dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/distillation/criterions.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.distillation.criterions.TensorFlowCrossEntropyLoss" title="Permalink to this definition"></a></dt>
+<dd><p>TensorFlow CrossEntropyLoss criterion.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.distillation.criterions.TensorFlowSparseCategoricalCrossentropy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.distillation.criterions.</span></span><span class="sig-name descname"><span class="pre">TensorFlowSparseCategoricalCrossentropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param_dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/distillation/criterions.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.distillation.criterions.TensorFlowSparseCategoricalCrossentropy" title="Permalink to this definition"></a></dt>
+<dd><p>TensorFlow SparseCategoricalCrossentropyLoss criterion.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.distillation.criterions.PyTorchCrossEntropyLoss">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.distillation.criterions.</span></span><span class="sig-name descname"><span class="pre">PyTorchCrossEntropyLoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param_dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/compression/distillation/criterions.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.distillation.criterions.PyTorchCrossEntropyLoss" title="Permalink to this definition"></a></dt>
+<dd><p>PyTorch CrossEntropyLoss criterion.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -294,7 +323,7 @@ PyTorchIntermediateLayersKnowledgeDistillationLoss.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f629d975390> 
+   <jinja2.runtime.BlockReference object at 0x7f2d32d30c10> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

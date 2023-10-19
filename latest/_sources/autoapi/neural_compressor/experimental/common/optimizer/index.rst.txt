@@ -22,7 +22,6 @@ Classes
    neural_compressor.experimental.common.optimizer.Optimizers
    neural_compressor.experimental.common.optimizer.TensorFlowSGD
    neural_compressor.experimental.common.optimizer.TensorFlowAdamW
-   neural_compressor.experimental.common.optimizer.TensorFlowAdam
    neural_compressor.experimental.common.optimizer.PyTorchSGD
 
 
@@ -94,17 +93,6 @@ Functions
    tensorflow_addons AdamW optimizer.
 
    :param param_dict: The dict of parameters setting by user for AdamW optimizer
-   :type param_dict: dict
-
-
-.. py:class:: TensorFlowAdam(param_dict)
-
-
-
-
-   Tensorflow Adam optimizer.
-
-   :param param_dict: The dict of parameters setting by user for Adam optimizer
    :type param_dict: dict
 
 
