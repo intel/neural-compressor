@@ -23,7 +23,7 @@ from itertools import product
 from typing import Any, Dict, List, Tuple, Union
 
 from ...utils import logger
-from ..utils.constant import WoqTuningParams
+from ..utils.constant import WOQ_TUNING_ALGOS
 from .tuning_space import TuningSpace, pattern_to_internal, quant_mode_from_pattern
 from .tuning_structs import OpTuningConfig
 from .utility import ClassRegister
@@ -638,6 +638,6 @@ class WeightOnlyQuantSampler(TuningSampler):
             The next tuning config.
         """
         new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
-        for algo in WoqTuningParams:
+        for algo in WOQ_TUNING_ALGOS.keys():
             new_tune_cfg["woq_tuning_cfg"] = algo
             yield new_tune_cfg

@@ -16,7 +16,6 @@
 # limitations under the License.
 """Strategy constant."""
 
-from enum import Enum
 
 PRECISION_LIST = ["bf16", "fp16", "fp32"]
 QUANT_MODE_SET = {"static", "dynamic"}
@@ -60,24 +59,10 @@ FALLBACK_RECIPES_SET = {
 }
 
 
-class WoqTuningParams(Enum):
-    """This enumeration class represents the different tuning parameters for the weight only quant (WOQ) algorithm.
-
-    Args:
-        Enum (Enum): base enumeration class
-
-    Attributes:
-        RTN (int): Represents the RTN algorithm, which is a type of WOQ algorithm.
-        GPTQ (int): Represents the GPTQ algorithm, which is a type of WOQ algorithm.
-        GPTQ_DISABLE_LAST_MATMUL (int): Represents the GPTQ algorithm with the last matrix multiplication disabled.
-        GPTQ_GROUP_SIZE_32 (int): Represents the GPTQ algorithm with a group size of 32.
-        GPTQ_GROUP_SIZE_128 (int): Represents the GPTQ algorithm with a group size of 128.
-        AWQ (int): Represents the AWQ algorithm, which is a type of WOQ algorithm.
-    """
-
-    RTN = 1
-    GPTQ = 2
-    GPTQ_DISABLE_LAST_MATMUL = 3
-    GPTQ_GROUP_SIZE_32 = 4
-    GPTQ_GROUP_SIZE_128 = 5
-    AWQ = 6
+WOQ_TUNING_ALGOS = {
+    "RTN_G32ASYM": {"algorithm": "RTN", "group_size": 32, "scheme": "asym"},
+    "GPTQ_G32ASYM": {"algorithm": "GPTQ", "group_size": 32, "scheme": "asym"},
+    "GPTQ_G32ASYM_DISABLE_LAST_MATMUL": {"algorithm": "GPTQ", "group_size": 32, "scheme": "asym"},
+    "GPTQ_G128ASYM": {"algorithm": "GPTQ", "group_size": 128, "scheme": "asym"},
+    "AWQ_G32ASYM": {"algorithm": "AWQ", "group_size": 32, "scheme": "asym"},
+}

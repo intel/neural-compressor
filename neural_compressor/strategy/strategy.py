@@ -52,6 +52,7 @@ from ..utils.utility import (
     get_weights_details,
     print_op_list,
     print_table,
+    check_key_exist
 )
 from ..utils.weights_details import WeightsDetails
 from ..version import __version__
@@ -59,7 +60,7 @@ from .utils.constant import FALLBACK_RECIPES_SET, TUNING_ITEMS_LST
 from .utils.tuning_sampler import tuning_sampler_dict
 from .utils.tuning_space import TuningSpace
 from .utils.tuning_structs import OpTuningConfig
-from .utils.utility import build_slave_faker_model, check_key_exist, quant_options
+from .utils.utility import build_slave_faker_model, quant_options
 
 STRATEGIES = {}
 
@@ -1169,7 +1170,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         )
 
     def tuning_woq_algo(self, tuning_space, tuning_cfg):
-        """Tuning smooth quant's alpha.
+        """Tuning weight only algorithm.
 
         Args:
             tuning_space: tuning space

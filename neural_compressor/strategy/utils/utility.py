@@ -126,37 +126,6 @@ def get_adaptor_name(adaptor):
     return ""
 
 
-def check_key_exist(data, key):
-    """Recursively checks if a key exists in a dictionary or list.
-
-    Args:
-        data (dict or list): The dictionary or list to search.
-        key (any): The key to search for.
-
-    Returns:
-        bool: True if the key exists in the data structure, False otherwise.
-
-    Examples:
-        >>> check_key_exist({'a': 1, 'b': {'c': 2}}, 'c')
-        True
-        >>> check_key_exist([{'a': 1}, {'b': 2}], 'b')
-        True
-        >>> check_key_exist({'a': 1, 'b': [1, 2, 3]}, 'c')
-        False
-    """
-    if isinstance(data, dict):
-        if key in data:
-            return True
-        for value in data.values():
-            if check_key_exist(value, key):
-                return True
-    elif isinstance(data, list):
-        for item in data:
-            if check_key_exist(item, key):
-                return True
-    return False
-
-
 def build_slave_faker_model():
     """Slave does not have a model, so construct a fake model.
 

@@ -243,8 +243,8 @@ def rtn_quantize(
                 continue
 
             dtype = weight.dtype
-
-            if node.name in weight_config and "group_size" in weight_config[node.name]:
+            
+            if node.name in weight_config:
                 num_bits = weight_config[node.name]["bits"]
                 group_size = weight_config[node.name]["group_size"]
                 scheme = weight_config[node.name]["scheme"]
@@ -328,11 +328,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
         weight = []
         org_out = []
         for node in nodes:
-            if (
-                node.name in weight_config
-                and weight_config.get(node.name, "fp32") != "fp32"
-                and "group_size" in weight_config[node.name]
-            ):
+            if node.name in weight_config and weight_config.get(node.name, "fp32") != "fp32":
                 num_bits = weight_config[node.name]["bits"]
                 group_size = weight_config[node.name]["group_size"]
                 scheme = weight_config[node.name]["scheme"]
