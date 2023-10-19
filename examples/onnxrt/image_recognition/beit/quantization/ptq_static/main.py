@@ -131,10 +131,15 @@ if __name__ == '__main__':
         from neural_compressor.utils.constant import FP32
 
         config = PostTrainingQuantConfig(approach="static",
-                                         op_type_dict={'^((?!(MatMul|Conv)).)*$': FP32},
-                                        quant_level=1,
+                                         op_type_dict={'Conv': FP32},
+                                         op_name_dict={'/blocks.*/mlp/fc2/MatMul': FP32},
+                                         recipes={'optypes_to_exclude_output_quant': ['MatMul']},
                                         )
-        q_model = quantization.fit(model, config, calib_dataloader=val_data_loader, eval_func=eval)
+        q_model = quantization.fit(model, 
+                                    config, 
+                                    calib_dataloader=val_data_loader, 
+                                    eval_func=eval
+                                    )
         q_model.save(args.output_model)
 
     if args.benchmark:
