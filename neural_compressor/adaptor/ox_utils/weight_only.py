@@ -100,9 +100,18 @@ def make_matmul_weight_only_node(
 
         # build zero_point tensor
         if zero_point is not None:
-            zero_point = np.reshape(zero_point, (-1, k_blocks)).astype("uint8")
+            if num_bits > 4:
+                packed_zp = np.reshape(zero_point, (1, -1)).astype("uint8")
+            else:
+                packed_zp = np.full((zero_point.shape[0] + 1) // 2, 136, dtype="uint8")
+                for i in range(zero_point.shape[0] // k_blocks):
+                    for j in range(k_blocks):
+                        idx = i * k_blocks + j
+                        zp = zero_point[idx]
+                        packed_zp[idx // 2] = ((packed_zp[idx // 2] & 0x0F) | (zp << 4)) if (idx & 1) else ((packed_zp[idx // 2] & 0xF0) | zp)
+
             zp_tensor = onnx.helper.make_tensor(
-                name=node.input[1] + "_zp", data_type=2, dims=zero_point.shape, vals=zero_point.tobytes(), raw=True
+                name=node.input[1] + "_zp", data_type=2, dims=packed_zp.shape, vals=packed_zp.tobytes(), raw=True
             )
             input_names.append(zp_tensor.name)
             new_inits.append(zp_tensor)
