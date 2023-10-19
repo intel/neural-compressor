@@ -327,7 +327,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             partial_fake_eval = partial(fake_eval, eval_result_lst=[1, 0.8, 0.8, 0.8, 0.8, 1.1])
             woq_model_5 = self._test_woq_tune_common(partial_fake_eval, quant_level)
             self.assertEqual(self._count_woq_matmul(woq_model_5), 31)
-        
+
         # test WOQ tuning with fallback
         partial_fake_eval = partial(fake_eval, eval_result_lst=[1, 1.1])
         woq_model = self._test_woq_tune_common(
