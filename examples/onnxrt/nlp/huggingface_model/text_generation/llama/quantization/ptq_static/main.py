@@ -25,7 +25,7 @@ from datasets import load_dataset
 import onnxruntime as ort
 from torch.nn.functional import pad
 from torch.utils.data import DataLoader
-from intel_extension_for_transformers.evaluation.lm_eval import evaluate
+from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
 from optimum.onnxruntime import ORTModelForCausalLM
 from transformers import LlamaConfig, LlamaTokenizer
 
