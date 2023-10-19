@@ -107,7 +107,7 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
         return file_path
 
 
-def load_shell(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs):
+def load_empty_model(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs):
     """Load a empty model."""
     is_local = os.path.isdir(pretrained_model_name_or_path)
     if is_local:  # pragma: no cover

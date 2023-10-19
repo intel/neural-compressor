@@ -149,9 +149,9 @@ Large language models (LLMs) have shown exceptional performance across various t
 ### Example
 ```python
 from neural_compressor import PostTrainingQuantConfig, quantization
-from neural_compressor.adaptor.torch_utils.layer_wise_quant import load_shell
+from neural_compressor.adaptor.torch_utils.layer_wise_quant import load_empty_model
 
-fp32_model = load_shell(model_name_or_path, torchscript=True)
+fp32_model = load_empty_model(model_name_or_path, torchscript=True)
 conf = PostTrainingQuantConfig(
     approach="weight_only",
     recipes={

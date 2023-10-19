@@ -92,7 +92,7 @@ class LayerWiseQuant:
         alpha=0.5,
     ):
         """Init LayerWiseQuant."""
-        # self.q_model = load_shell(pretrained_model_name_or_path, cls)
+        # self.q_model = load_empty_model(pretrained_model_name_or_path, cls)
         self.q_model = q_model
         self.fp32_model = deepcopy(self.q_model)
         self.path = _get_path(pretrained_model_name_or_path)
