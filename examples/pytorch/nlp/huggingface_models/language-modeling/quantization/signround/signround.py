@@ -236,7 +236,6 @@ def collate_batch(batch):
 
 def get_module(model, key):
     """Get module from model by key name
-
     Args:
         model (torch.nn.Module): original model
         key (str): module name to be replaced
@@ -254,7 +253,6 @@ def get_module(model, key):
 
 def set_module(model, key, new_module):
     """Set new module into model by key name
-
     Args:
         model (torch.nn.Module): original model
         key (str): module name to be replaced
@@ -666,6 +664,9 @@ if __name__ == '__main__':
 
     parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
                         help="lm-eval tasks")
+    
+    parser.add_argument("--output_dir", default="./tmp_signround", type=str,
+                    help="Where to store the final model.")
 
     # parser.add_argument("--tasks", default=["lambada_openai"],
     #                     help="lm-eval tasks")
@@ -707,15 +708,17 @@ if __name__ == '__main__':
         tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     if args.eval_fp16_baseline:
-        model = model.to(cuda_device)
-        eval_model(model, model_name, tokenizer, tasks=tasks, eval_bs=args.eval_bs)
+        if not args.low_gpu_mem_usage:
+            model = model.to(cuda_device)
+        eval_model(model, model_name, tokenizer, tasks=tasks, eval_bs=args.eval_bs, use_accelerate=args.low_gpu_mem_usage, device=cuda_device)
         exit()
 
     if args.iters <= 0:
         q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)
         model.half()
-        model = model.to(cuda_device)
-        eval_model(model, model_name, tokenizer, tasks=args.tasks, eval_bs=args.eval_bs)
+        if not args.low_gpu_mem_usage:
+            model = model.to(cuda_device)
+        eval_model(model, model_name, tokenizer, tasks=args.tasks, eval_bs=args.eval_bs, use_accelerate=args.low_gpu_mem_usage, device=cuda_device)
         exit()
 
     dataset_name = "NeelNanda/pile-10k"
@@ -768,5 +771,11 @@ if __name__ == '__main__':
 
     torch.cuda.empty_cache()
     model.eval()
-    model.to(cuda_device)
-    eval_model(model, model_name, tokenizer, tasks=args.tasks, eval_bs=args.eval_bs)
+    if not args.low_gpu_mem_usage:
+        model.to(cuda_device)
+        eval_model(model, model_name, tokenizer, tasks=args.tasks, eval_bs=args.eval_bs)
+    else:
+        output_dir = args.output_dir
+        model.save_pretrained(output_dir)
+        tokenizer.save_pretrained(output_dir)
+        eval_model(model, output_dir, tokenizer, tasks=args.tasks, eval_bs=args.eval_bs, use_accelerate=True, device=cuda_device)
