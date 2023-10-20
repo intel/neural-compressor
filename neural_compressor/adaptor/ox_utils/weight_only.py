@@ -71,8 +71,8 @@ def make_matmul_weight_only_node(
         zero_point (array): zero point
 
     Returns:
-        matmul_weight_only_node: MatMulFpQ4 node
-        new_inits: initializers of the MatMulFpQ4 node
+        matmul_weight_only_node: MatMulFpQ4 or MatMulNBits node
+        new_inits: initializers of the new node
     """
     blob_size = get_blob_size(group_size, zero_point is not None)
     packed = np.zeros((q_weight.shape[0], blob_size), dtype="uint8")
@@ -434,9 +434,11 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 weight = weight.T * scales
                 weight = pad_tensor(weight, group_size, (org_w_shape[0] + group_size - 1) // group_size).T
 
-                if (
+                if (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (
                     Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
                 ):  # pragma: no cover
+                    # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 verisons
+                    # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1
                     q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint") / np.expand_dims(
                         scales, axis=-1
                     )
@@ -577,10 +579,11 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
             for i_s in range(10):
                 ratio = 1 - i_s / 100
                 weight = copy.deepcopy(org_weight)
-                if (
+                if (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (
                     Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
                 ):  # pragma: no cover
-                    # currently MatMulFpQ4 only support 4 bits and 32 group_size
+                    # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 verisons
+                    # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1
                     weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1))
                 else:
                     weight = qdq_tensor(weight, num_bits, group_size, scheme, "int", ratios.get(node.input[1], 1))
@@ -1055,7 +1058,7 @@ def gptq_quantize(
 
             weight_tensor = model.get_initializer(node.input[1])
             init_share_num = model.get_initializer_share_num(node.input[1])
-            if (Version(ort.__version__) >= ONNXRT1161_VERSION and num_bits == 4) or (
+            if (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (
                 Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
             ):  # pragma: no cover
                 # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 verisons
