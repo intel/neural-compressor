@@ -17,6 +17,7 @@
 # limitations under the License.
 
 from typing import Optional
+import gc
 
 from neural_compressor.compression.pruner.pruners import get_pruner
 from neural_compressor.compression.pruner.utils import (
@@ -188,6 +189,12 @@ class SparseGPTPruning(BasePruning):
         self._do_pruning()
         self._model = self._model.to(self.model_dev)
         # TODO add get_sparsity_ratio() for sparseGPT
+        
+    def gather_single_batch_from_dict(self, data_dict, idx):
+        single_batch = {}
+        for k, v in data_dict.items():
+            single_batch[k] = data_dict[k][idx]
+        return single_batch
 
     def _do_pruning(self):
         from tqdm.auto import tqdm
@@ -195,10 +202,8 @@ class SparseGPTPruning(BasePruning):
         layers = self._layers
         self._model = self._model.cpu()
         inputs, inp_dict = collect_layer_inputs(
-            model=self._model, layers=layers, layer_idx=0, layer_inputs=self._dataloader, device=self.dev
-        )
-        if "cuda" in self.dev.type:
-            torch.cuda.empty_cache()
+            model=self._model, layers=layers, layer_idx=0, layer_inputs=self._dataloader, device=self.dev)
+        
         with torch.no_grad():
             for i in tqdm(range(len(layers))):
                 layer = layers[i].to(self.dev)
@@ -208,7 +213,8 @@ class SparseGPTPruning(BasePruning):
                     layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
                     handles_list.append(pruner.register_gpt_hook(layer_op_names))
                 for j in range(len(inputs)):
-                    layer(inputs[j], **inp_dict)[0]
+                    input_infos = self.gather_single_batch_from_dict(inp_dict, j)
+                    layer(inputs[j], **input_infos)[0]
                 for handles in handles_list:
                     for h in handles:
                         h.remove()
@@ -217,10 +223,17 @@ class SparseGPTPruning(BasePruning):
                     pruner.fasterprune(layer_op_names)
                 for j in range(len(inputs)):
                     # the weights of current layer have been pruned, get the latest outputs as the inputs for next layer
-                    inputs[j] = layer(inputs[j], **inp_dict)[0]
+                    input_infos = self.gather_single_batch_from_dict(inp_dict, j)
+                    inputs[j] = layer(inputs[j], **input_infos)[0]
                 layers[i] = layer.cpu()
                 if "cuda" in self.dev.type:
                     torch.cuda.empty_cache()
+            del inp_dict
+            del inputs
+            gc.collect()
+        if "cuda" in self.dev.type:
+            torch.cuda.empty_cache()
+            
 
     def on_train_begin(self, dataloader):  # pragma: no cover
         if self._dataloader is not None:
@@ -284,3 +297,4 @@ class RetrainFreePruning(BasePruning):
     #                      "when initializing or calling on_train_begin()")
     #     self._dataloader = dataloader
     #     self._prepare_pruners()
+
