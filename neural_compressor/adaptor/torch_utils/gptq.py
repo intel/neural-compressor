@@ -617,7 +617,7 @@ class GPTQuantizer(object):
                     full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                     for n, p in sub_layer.named_parameters():
                         param_name = full_layer_name + "." + n
-                        if n == 'weight':
+                        if n == "weight":
                             set_module_tensor_to_device(self.model, param_name, self.device, Q)
                         else:
                             value = load_value(self.model, param_name, model_path)
