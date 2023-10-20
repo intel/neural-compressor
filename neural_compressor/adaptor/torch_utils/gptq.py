@@ -555,11 +555,14 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache_key_arguments.pop("i")
-            # import pdb;pdb.set_trace()
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
+                if hasattr(self.model.config, "_name_or_path") and "chatglm-6b" in self.model.config._name_or_path:
+                    with torch.autocast("cuda"):
+                        out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
+                else:
+                    out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
             self.cache_key_arguments["i"] = idx
             for h in handles:
                 h.remove()
@@ -591,7 +594,11 @@ class GPTQuantizer(object):
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
+                if hasattr(self.model.config, "_name_or_path") and "chatglm-6b" in self.model.config._name_or_path:
+                    with torch.autocast("cuda"):
+                        out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
+                else:
+                    out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
                 outs.append(out)
             self.cache_key_arguments["i"] = idx
             self.gptq_related_blocks["transformers"][block_idx] = transformer_block.cpu()

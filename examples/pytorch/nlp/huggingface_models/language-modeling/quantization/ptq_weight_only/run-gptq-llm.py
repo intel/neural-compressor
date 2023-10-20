@@ -58,6 +58,13 @@ class INCDataloader(object):
     def __iter__(self):
         pass
 
+def filter_chatglmv1(seq):
+    bos_token_id = 130004
+    # eos_token_id = 130005
+    gmask_token_id = 130001
+    # return (bos_token_id in seq and eos_token_id in seq and mask_token_id in seq and gmask_token_id in seq)
+    return (len(seq) < 2048 and bos_token_id in seq and gmask_token_id in seq)
+
 # INC original dataloader example
 class Evaluator:
     def __init__(self, dataset, tokenizer, batch_size=8, pad_val=1, pad_max=196, is_calib=False):
@@ -227,12 +234,20 @@ if __name__ == '__main__':
     # calib_dataset = datasets.load_from_disk('/your/local/pile-10k/') # use this if trouble with connecting to HF
     calib_dataset = calib_dataset.shuffle(seed=args.seed)
     calib_evaluator = Evaluator(calib_dataset, tokenizer, args.calib_size, is_calib=True)
-    calib_dataloader = DataLoader(
-        calib_evaluator.dataset,
-        batch_size=args.calib_size,
-        shuffle=False,
-        collate_fn=calib_evaluator.collate_batch,
-    )
+    if hasattr(model.config, "_name_or_path") and "chatglm-6b" in model.config._name_or_path:
+        calib_dataloader = DataLoader(
+            calib_evaluator.dataset.filter(lambda example: filter_chatglmv1(example['input_ids'])),
+            batch_size=args.calib_size,
+            shuffle=False,
+            collate_fn=calib_evaluator.collate_batch,
+        )
+    else:
+        calib_dataloader = DataLoader(
+            calib_evaluator.dataset,
+            batch_size=args.calib_size,
+            shuffle=False,
+            collate_fn=calib_evaluator.collate_batch,
+        )
 
     if args.gpu and torch.cuda.is_available():
         DEV = torch.device('cuda:0')
