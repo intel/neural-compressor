@@ -1175,7 +1175,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         Args:
             tuning_space: tuning space
             tuning_cfg: the initial tuning config
-            recipes: recipes specified by user
 
         Yields:
             tuning config
