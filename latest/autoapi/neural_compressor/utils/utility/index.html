@@ -250,6 +250,9 @@ options.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.mse_metric_gap" title="neural_compressor.utils.utility.mse_metric_gap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mse_metric_gap</span></code></a>(→ float)</p></td>
 <td><p>Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.check_key_exist" title="neural_compressor.utils.utility.check_key_exist"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_key_exist</span></code></a>(data, key)</p></td>
+<td><p>Recursively checks if a key exists in a dictionary or list.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -736,6 +739,35 @@ options.</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.utility.check_key_exist">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">check_key_exist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.check_key_exist" title="Permalink to this definition"></a></dt>
+<dd><p>Recursively checks if a key exists in a dictionary or list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>dict</em><em> or </em><em>list</em>) – The dictionary or list to search.</p></li>
+<li><p><strong>key</strong> (<em>any</em>) – The key to search for.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the key exists in the data structure, False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">check_key_exist</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}},</span> <span class="s1">&#39;c&#39;</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">check_key_exist</span><span class="p">([{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}],</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">check_key_exist</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]},</span> <span class="s1">&#39;c&#39;</span><span class="p">)</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+</dd></dl>
+
 </section>
 </section>
 </section>
@@ -754,7 +786,7 @@ options.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fae129503d0> 
+   <jinja2.runtime.BlockReference object at 0x7ff4d0d77c40> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

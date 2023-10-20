@@ -26,6 +26,7 @@ Classes
    neural_compressor.strategy.utils.tuning_sampler.LowerBitsSampler
    neural_compressor.strategy.utils.tuning_sampler.BlockFallbackTuningSampler
    neural_compressor.strategy.utils.tuning_sampler.SmoothQuantSampler
+   neural_compressor.strategy.utils.tuning_sampler.WeightOnlyQuantSampler
 
 
 
@@ -93,6 +94,14 @@ Classes
 
 
 .. py:class:: SmoothQuantSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict, alpha_list: List[float], kwargs: Dict = {})
+
+
+
+
+   Not displayed in API Docs.
+
+
+.. py:class:: WeightOnlyQuantSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict)
 
 
 

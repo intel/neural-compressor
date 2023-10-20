@@ -78,6 +78,7 @@ Functions
    neural_compressor.utils.utility.get_op_list
    neural_compressor.utils.utility.calculate_mse
    neural_compressor.utils.utility.mse_metric_gap
+   neural_compressor.utils.utility.check_key_exist
 
 
 
@@ -451,5 +452,27 @@ Functions
    :type dequantize_tensor: tensor
 
    :returns: MSE value
+
+
+.. py:function:: check_key_exist(data, key)
+
+   Recursively checks if a key exists in a dictionary or list.
+
+   :param data: The dictionary or list to search.
+   :type data: dict or list
+   :param key: The key to search for.
+   :type key: any
+
+   :returns: True if the key exists in the data structure, False otherwise.
+   :rtype: bool
+
+   .. rubric:: Examples
+
+   >>> check_key_exist({'a': 1, 'b': {'c': 2}}, 'c')
+   True
+   >>> check_key_exist([{'a': 1}, {'b': 2}], 'b')
+   True
+   >>> check_key_exist({'a': 1, 'b': [1, 2, 3]}, 'c')
+   False
 
 
