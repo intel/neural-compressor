@@ -16,6 +16,7 @@
 # limitations under the License.
 """Strategy constant."""
 
+
 PRECISION_LIST = ["bf16", "fp16", "fp32"]
 QUANT_MODE_SET = {"static", "dynamic"}
 LOWER_BIT_LIST = ["int4"]
@@ -55,4 +56,13 @@ FALLBACK_RECIPES_SET = {
     "first_conv_or_matmul_quantization",
     "last_conv_or_matmul_quantization",
     "pre_post_process_quantization",
+}
+
+
+WOQ_TUNING_ALGOS = {
+    "RTN_G32ASYM": {"algorithm": "RTN", "group_size": 32, "scheme": "asym"},
+    "GPTQ_G32ASYM": {"algorithm": "GPTQ", "group_size": 32, "scheme": "asym"},
+    "GPTQ_G32ASYM_DISABLE_LAST_MATMUL": {"algorithm": "GPTQ", "group_size": 32, "scheme": "asym"},
+    "GPTQ_G128ASYM": {"algorithm": "GPTQ", "group_size": 128, "scheme": "asym"},
+    "AWQ_G32ASYM": {"algorithm": "AWQ", "group_size": 32, "scheme": "asym"},
 }
