@@ -41,7 +41,8 @@ Quantize model with QLinearOps:
 ```bash
 bash run_quant.sh --input_model=/path/to/model \  # model path as *.onnx
                    --dataset_location=/path/to/imagenet \
-                   --output_model=/path/to/save
+                   --output_model=/path/to/save \
+                   --quant_format="QOperator"
 ```
 
 ## 2. Benchmark

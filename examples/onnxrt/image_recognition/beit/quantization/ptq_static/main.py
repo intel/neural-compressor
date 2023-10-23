@@ -96,6 +96,13 @@ if __name__ == '__main__':
         help="output model path"
     )
     parser.add_argument(
+        '--quant_format',
+        type=str,
+        default='default', 
+        choices=['default', 'QDQ', 'QOperator'],
+        help="quantization format"
+    )
+    parser.add_argument(
         '--mode',
         type=str,
         help="benchmark mode of performance or accuracy"
@@ -131,6 +138,7 @@ if __name__ == '__main__':
         from neural_compressor.utils.constant import FP32
 
         config = PostTrainingQuantConfig(approach="static",
+                                         quant_format=args.quant_format,
                                          op_type_dict={'Conv': FP32},
                                          op_name_dict={'/blocks.*/mlp/fc2/MatMul': FP32},
                                          recipes={'optypes_to_exclude_output_quant': ['MatMul']},
