@@ -39,7 +39,7 @@ ONNXRT116_VERSION = Version("1.16.0")
 ONNXRT1161_VERSION = Version("1.16.1")
 
 
-def get_blob_size(group_size, has_zp): # pragma: no cover 
+def get_blob_size(group_size, has_zp):  # pragma: no cover
     """Get blob_size.
 
     Args:
@@ -647,9 +647,9 @@ def prepare_inputs(model, n_samples, dataloader):
 
         if isinstance(data[0], dict):
             inputs.append(dict([(name, to_numpy(inp_data)) for name, inp_data in data[0].items()]))
-        elif isinstance(data[0], np.ndarray): # pragma: no cover
+        elif isinstance(data[0], np.ndarray):  # pragma: no cover
             inputs.append(dict([(name, inp) for name, inp in zip(inputs_names, [data[0]])]))
-        else: # pragma: no cover
+        else:  # pragma: no cover
             inputs.append(dict([(name, to_numpy(inp)) for name, inp in zip(inputs_names, data[0])]))
     return inputs, so
 
