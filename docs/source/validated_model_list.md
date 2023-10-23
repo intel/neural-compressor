@@ -15,7 +15,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
     1.5. [PyTorch Models with Torch 2.0.1+cpu in WOQ Mode](#pytorch-models-with-torch-201cpu-in-woq-mode)
 
-    1.6. [ONNX Models with ONNX Runtime 1.15.1](#onnx-models-with-onnx-runtime-1150)
+    1.6. [ONNX Models with ONNX Runtime 1.15.1](#onnx-models-with-onnx-runtime-1151)
 
     1.7. [ONNX Models with ONNX Runtime 1.15.0 in WOQ Mode](#onnx-models-with-onnx-runtime-1150-in-woq-mode)
 
@@ -478,7 +478,6 @@ For more complete information about performance and benchmark results, visit www
     <th>Performance Ratio<br>[INT8/FP32]</th>
   </tr>
 </thead>
-<table>
 <tbody>
   <tr>
     <td>ResNet18</td>
@@ -812,7 +811,7 @@ For more complete information about performance and benchmark results, visit www
   </tr>
   <tr>
     <td>T5 Small </td>
-    <td></td>
+    <td>dynamic</td>
     <td>2.65</td>
     <td>3.16</td>
     <td>-16.25%</td>
@@ -2443,7 +2442,7 @@ For more complete information about performance and benchmark results, visit www
     <td>2.27x</td>
   </tr>
   <tr>
-    <td>MiniLM L12 H384 uncased MRPC&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>MiniLM L12 H384 uncased MRPC (HuggingFace)</td>
     <td>qlinearops</td>
     <td>90.13%</td>
     <td>90.97%</td>
@@ -2453,7 +2452,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.80x</td>
   </tr>
   <tr>
-    <td>MiniLM L12 H384 uncased MRPC&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>MiniLM L12 H384 uncased MRPC (HuggingFace)</td>
     <td>integerops</td>
     <td>91.07%</td>
     <td>90.97%</td>
@@ -2463,7 +2462,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.82x</td>
   </tr>
   <tr>
-    <td>DistilBERT base uncased SST-2&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>DistilBERT base uncased SST-2 (HuggingFace)</td>
     <td>qlinearops</td>
     <td>90.71%</td>
     <td>91.06%</td>
@@ -2473,7 +2472,7 @@ For more complete information about performance and benchmark results, visit www
     <td>2.23x</td>
   </tr>
   <tr>
-    <td>DistilBERT base uncased SST-2&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>DistilBERT base uncased SST-2 (HuggingFace)</td>
     <td>integerops</td>
     <td>90.25%</td>
     <td>91.06%</td>
@@ -2503,7 +2502,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.25x</td>
   </tr>
   <tr>
-    <td>MiniLM L6 H384 uncased SST-2&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>MiniLM L6 H384 uncased SST-2 (HuggingFace)</td>
     <td>qlinearops</td>
     <td>89.45%</td>
     <td>90.14%</td>
@@ -2513,7 +2512,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.73x</td>
   </tr>
   <tr>
-    <td>MiniLM L6 H384 uncased SST-2&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>MiniLM L6 H384 uncased SST-2 (HuggingFace)</td>
     <td>integerops</td>
     <td>89.91%</td>
     <td>90.14%</td>
@@ -2523,7 +2522,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.79x</td>
   </tr>
   <tr>
-    <td>MiniLM L6 H384 uncased SST-2&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>MiniLM L6 H384 uncased SST-2 (HuggingFace)</td>
     <td>qlinearops</td>
     <td>87.70%</td>
     <td>88.29%</td>
@@ -2533,7 +2532,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.87x</td>
   </tr>
   <tr>
-    <td>MiniLM L6 H384 uncased SST-2&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>MiniLM L6 H384 uncased SST-2 (HuggingFace)</td>
     <td>integerops</td>
     <td>88.19%</td>
     <td>88.29%</td>
@@ -2543,7 +2542,7 @@ For more complete information about performance and benchmark results, visit www
     <td>2.30x</td>
   </tr>
   <tr>
-    <td>Electra small discriminator MRPC&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>Electra small discriminator MRPC (HuggingFace)</td>
     <td>qlinearops</td>
     <td>89.92%</td>
     <td>89.83%</td>
@@ -2553,7 +2552,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.67x</td>
   </tr>
   <tr>
-    <td>Electra small discriminator MRPC&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>Electra small discriminator MRPC (HuggingFace)</td>
     <td>integerops</td>
     <td>89.27%</td>
     <td>89.83%</td>
@@ -2663,7 +2662,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.87x</td>
   </tr>
   <tr>
-    <td>Bert base multilingual cased SQuAD&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>Bert base multilingual cased SQuAD (HuggingFace)</td>
     <td>qlinearops</td>
     <td>88.42</td>
     <td>89.13</td>
@@ -2673,7 +2672,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.65x</td>
   </tr>
   <tr>
-    <td>Bert base multilingual cased SQuAD&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>Bert base multilingual cased SQuAD (HuggingFace)</td>
     <td>integerops</td>
     <td>88.70</td>
     <td>89.13</td>
@@ -2683,7 +2682,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.87x</td>
   </tr>
   <tr>
-    <td>DistilBert base uncased SQuAD&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>DistilBert base uncased SQuAD (HuggingFace)</td>
     <td>qlinearops</td>
     <td>86.33</td>
     <td>86.86</td>
@@ -2693,7 +2692,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.67x</td>
   </tr>
   <tr>
-    <td>DistilBert base uncased SQuAD&nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>DistilBert base uncased SQuAD (HuggingFace)</td>
     <td>integerops</td>
     <td>86.05</td>
     <td>86.86</td>
@@ -2703,7 +2702,7 @@ For more complete information about performance and benchmark results, visit www
     <td>2.35x</td>
   </tr>
   <tr>
-    <td>BERT large uncased whole word masking&nbsp;&nbsp;&nbsp;SQuAD (HuggingFace)</td>
+    <td>BERT large uncased whole word masking SQuAD (HuggingFace)</td>
     <td>qlinearops</td>
     <td>92.34</td>
     <td>93.16</td>
@@ -2713,7 +2712,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.93x</td>
   </tr>
   <tr>
-    <td>BERT large uncased whole word masking&nbsp;&nbsp;&nbsp;SQuAD (HuggingFace)</td>
+    <td>BERT large uncased whole word masking SQuAD (HuggingFace)</td>
     <td>integerops</td>
     <td>92.99</td>
     <td>93.16</td>
@@ -2843,7 +2842,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.26x</td>
   </tr>
   <tr>
-    <td>CodeBert &nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>CodeBert  (HuggingFace)</td>
     <td>qlinearops</td>
     <td>64.97%</td>
     <td>65.41%</td>
@@ -2853,7 +2852,7 @@ For more complete information about performance and benchmark results, visit www
     <td>1.47x</td>
   </tr>
   <tr>
-    <td>CodeBert &nbsp;&nbsp;&nbsp;(HuggingFace)</td>
+    <td>CodeBert  (HuggingFace)</td>
     <td>integerops</td>
     <td>64.93%</td>
     <td>65.41%</td>
