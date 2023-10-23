@@ -282,11 +282,13 @@ SmoothQuant method aims to split the quantization difficulty of weight and activ
 
 Our proposed method consists of 5 major steps:
 
--    Hook input and output values of all layers using register_forward_hook.
--    Generate a list of $\alpha$ values given user-defined $\alpha$ range and step_sizes.
--    Recalculate smoothing factor given an $\alpha$ value and adjust parameters(weights and activations).
--    Perform per-channel quantization_dequantization of weights and per-tensor quantization_dequantization of inputs to predict the layer-wise output corresponding to the given $\alpha$ value.
--    Calculate the mean-squared loss with respect to the actual output value, recover the adjusted parameters and save the layer-wise optimal $\alpha$ values.
+-    Hook input minimum and maximum values of layers to be smoothed using register_forward_hook.
+-    Generate a list of $\alpha$ values of a user-defined range and set a default $\alpha$ value.
+-    Calculate smoothing factor using default $\alpha$ value, adjust parameters accordingly and forward the adjusted model given an input sample.
+-    Perform per-channel quantization_dequantization of weights and per-tensor quantization_dequantization of activations to predict output.
+-    Calculate the layer-wise loss with respect to FP32 output, iterate the previous two steps given each $\alpha$ value and save the layer-wise loss per alpha.
+-    Apply criterion on input LayerNorm op and obtain the layer-wise optimal alpha values of a single input sample.
+-    Iterate the previous three steps over a number of input samples and save the layer-wise optimal $\alpha$ values.
 
 
 
