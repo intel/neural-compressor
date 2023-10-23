@@ -23,6 +23,7 @@ from itertools import product
 from typing import Any, Dict, List, Tuple, Union
 
 from ...utils import logger
+from ..utils.constant import WOQ_TUNING_ALGOS
 from .tuning_space import TuningSpace, pattern_to_internal, quant_mode_from_pattern
 from .tuning_structs import OpTuningConfig
 from .utility import ClassRegister
@@ -608,4 +609,35 @@ class SmoothQuantSampler(TuningSampler):
             recipe_cfgs["smooth_quant"] = True
             recipe_cfgs["smooth_quant_args"] = {"alpha": alpha}
             logger.debug(f"[STRATEGY] set smooth quant alpha with: {alpha:.4f}")
+            yield new_tune_cfg
+
+
+@tuning_sampler_dict("woq_algorithm")
+class WeightOnlyQuantSampler(TuningSampler):
+    """Not displayed in API Docs."""
+
+    def __init__(
+        self,
+        tuning_space: TuningSpace,
+        tuning_order_lst: List[TuningOrder],
+        initial_op_tuning_cfg: Dict,
+    ):
+        """Init tuning sampler.
+
+        Args:
+            tuning_space: The tuning space.
+            tuning_order_lst: The traverse orders.
+            initial_op_tuning_cfg: The initialized tuning config.
+        """
+        super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg)
+
+    def __iter__(self):
+        """Yield the next tuning config.
+
+        Yields:
+            The next tuning config.
+        """
+        new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
+        for algo in WOQ_TUNING_ALGOS.keys():
+            new_tune_cfg["woq_tuning_cfg"] = algo
             yield new_tune_cfg

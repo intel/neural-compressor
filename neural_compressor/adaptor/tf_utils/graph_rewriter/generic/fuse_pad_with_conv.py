@@ -30,7 +30,7 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
     """Fuse Pad op into Conv2D/DepthwiseConv2dNative/Conv3D."""
 
     def __init__(self, model, excluded_op_names, inputs, cfg, new_api, itex_qdq_mode=False):
-        """Intilization."""
+        """Initialization."""
         super().__init__(model)
         self.excluded_conv = excluded_op_names
         self.inputs = inputs

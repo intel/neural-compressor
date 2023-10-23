@@ -17,7 +17,7 @@ from collections import OrderedDict, UserDict
 from pathlib import Path
 from typing import Optional
 
-from neural_compressor.experimental.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
+from neural_compressor.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
 from neural_compressor.model.tensorflow_model import TensorflowBaseModel
 from neural_compressor.profiling.profiler.profiler import Profiler as Parent
 

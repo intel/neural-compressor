@@ -366,7 +366,7 @@ def rtn_quantize(
         scheme (str, optional): sym or asym. Defaults to "asym".
         quantile (float, optional): percentile of clip. Defaults to 1.0.
         data_type (str, optional): select from int, nf4, fp4. Defaults to int.
-        weight_config (dict, optional): specific layer wise configirations. Defaults to {}.
+        weight_config (dict, optional): specific layer wise configurations. Defaults to {}.
             For example,
                 weight_config={
                     'fc2':

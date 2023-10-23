@@ -15,7 +15,7 @@
 """Profiling class factory."""
 from typing import Optional
 
-from neural_compressor.experimental.data.dataloaders.base_dataloader import BaseDataLoader
+from neural_compressor.data.dataloaders.base_dataloader import BaseDataLoader
 from neural_compressor.model import BaseModel
 from neural_compressor.profiling.profiler.onnxrt_profiler.factory import ProfilerFactory as OnnxrtProfilerFactory
 from neural_compressor.profiling.profiler.profiler import Profiler

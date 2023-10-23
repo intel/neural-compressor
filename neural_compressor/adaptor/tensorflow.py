@@ -190,7 +190,7 @@ class TensorFlowAdaptor(Adaptor):
         callbacks = kwargs["kwargs"].get("callbacks", None)
         execution_mode = kwargs["kwargs"].get("execution_mode", None)
         distributed = getattr(dataloader, "distributed", False)
-        from neural_compressor.experimental.common.criterion import TensorflowKnowledgeDistillationLoss
+        from neural_compressor.compression.distillation.criterions import TensorflowKnowledgeDistillationLoss
 
         if isinstance(criterion, TensorflowKnowledgeDistillationLoss):
             input_model = model._model
@@ -214,7 +214,7 @@ class TensorFlowAdaptor(Adaptor):
                     for i in range(len(list_len_dataloader) - 1):
                         if list_len_dataloader[i] != list_len_dataloader[i + 1]:
                             raise AttributeError(
-                                "The traning dataloader's iteration is"
+                                "The training dataloader's iteration is"
                                 "different between processes, please reset dataloader's batch_size."
                             )
 
@@ -373,7 +373,7 @@ class TensorFlowAdaptor(Adaptor):
                 import shutil
 
                 shutil.rmtree(temp_dir, ignore_errors=True)
-            # Create the writer using TF2.x APIs to handle eager excutions
+            # Create the writer using TF2.x APIs to handle eager executions
             writer = tf.summary.create_file_writer(temp_dir)  # pylint: disable=no-member
             with writer.as_default():
                 tf.summary.graph(model.graph)  # pylint: disable=no-member
@@ -1757,8 +1757,8 @@ class TensorFlowAdaptor(Adaptor):
 
     def _partial_dataset_of(self, dataloader, confidence_batches):
         """Partial dataset."""
+        from neural_compressor.data.datasets.dummy_dataset import DummyDataset
         from neural_compressor.data.datasets.dummy_dataset import DummyDataset as DummyDataset_v2_x
-        from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
 
         if isinstance(dataloader.dataset, DummyDataset) or isinstance(dataloader.dataset, DummyDataset_v2_x):
             assert isinstance(confidence_batches, int)

@@ -1404,7 +1404,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/object_detection/ssd_mobilenet_v2/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/object_detection/ssd_mobilenet_v2/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
-    <td>Table Transformer</td>
+    <td>Table Transformer Structure Recognition</td>
+    <td>Object Detection</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/object_detection/table_transformer/quantization/ptq_static">qlinearops</a></td>
+  </tr>
+  <tr>
+    <td>Table Transformer Detection</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/object_detection/table_transformer/quantization/ptq_static">qlinearops</a></td>

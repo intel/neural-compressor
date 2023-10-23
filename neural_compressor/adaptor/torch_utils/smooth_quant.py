@@ -529,7 +529,7 @@ class TorchSmoothQuant:
                 layer.bias *= scale
 
     def _cal_scales(self, absorb_to_layer, input_maxes, alpha=0.5, tuning=False):
-        """Cal the adjsut scales
+        """Cal the adjust scales
         :param absorb_to_layer: A dict mapping absorb layer to smooth quantized layer
         :param input_maxes: The channel-wise input max info for layers
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, a float of a dict
