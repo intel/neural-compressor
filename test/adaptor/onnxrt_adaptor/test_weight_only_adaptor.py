@@ -52,7 +52,6 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
         )  # nosec
         p.communicate()
-        import pdb;pdb.set_trace()
 
         self.llama_model = "tiny-llama/decoder_model.onnx"
         self.llama_dataloader = DummyNLPDataloader("PY007/TinyLlama-1.1B-Chat-v0.3")
