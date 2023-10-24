@@ -845,4 +845,3 @@ class KerasPatternNxM(KerasBasePattern):
             layer_ratio = np.sum(masks[key] == 0.0) / masks[key].size
             logger.info(f"{key} sparsity is {layer_ratio}")
         return masks
-

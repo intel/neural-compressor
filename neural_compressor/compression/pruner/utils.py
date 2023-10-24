@@ -17,10 +17,10 @@
 # limitations under the License.
 
 import re
+from collections import UserDict, defaultdict
 
 import numpy as np
 import yaml
-from collections import UserDict, defaultdict
 
 from ...config import WeightPruningConfig as WeightPruningConf
 
@@ -720,7 +720,7 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"
                 # TODO solve the problem of batchsize!=1
                 inputs.append(hidden_states.to(device))
                 for key in kwargs.keys():
-                    if isinstance(kwargs[key], torch.Tensor) or (key == 'alibi'):
+                    if isinstance(kwargs[key], torch.Tensor) or (key == "alibi"):
                         if key not in inputs_info.keys():
                             inputs_info[key] = []
                         if isinstance(kwargs[key], torch.Tensor):
@@ -746,7 +746,7 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"
                 except ValueError:
                     pass
             layer.forward = forward_cache
-                    
+
         else:
             prev_layer = layers[layer_idx - 1]
 
@@ -756,4 +756,3 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"
                 inputs.append(batch)
 
     return inputs, inputs_info
-

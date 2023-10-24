@@ -16,8 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
 import gc
+from typing import Optional
 
 from neural_compressor.compression.pruner.pruners import get_pruner
 from neural_compressor.compression.pruner.utils import (
@@ -180,7 +180,7 @@ class SparseGPTPruning(BasePruning):
         else:
             assert isinstance(device, torch.device), "Only 'str' and 'torch.device' are supported."
             self.dev = device
-            
+
         self._layers = []
         self._dataloader = dataloader
         if dataloader is not None:
@@ -193,7 +193,7 @@ class SparseGPTPruning(BasePruning):
         self._do_pruning()
         self._model = self._model.to(self.model_dev)
         # TODO add get_sparsity_ratio() for sparseGPT
-        
+
     def gather_single_batch_from_dict(self, data_dict, idx):
         single_batch = {}
         for k, v in data_dict.items():
@@ -206,8 +206,9 @@ class SparseGPTPruning(BasePruning):
         layers = self._layers
         self._model = self._model.cpu()
         inputs, inp_dict = collect_layer_inputs(
-            model=self._model, layers=layers, layer_idx=0, layer_inputs=self._dataloader, device=self.dev)
-        
+            model=self._model, layers=layers, layer_idx=0, layer_inputs=self._dataloader, device=self.dev
+        )
+
         with torch.no_grad():
             for i in tqdm(range(len(layers))):
                 layer = layers[i].to(self.dev)
@@ -237,7 +238,6 @@ class SparseGPTPruning(BasePruning):
             gc.collect()
         if "cuda" in self.dev.type:
             torch.cuda.empty_cache()
-            
 
     def on_train_begin(self, dataloader):  # pragma: no cover
         if self._dataloader is not None:
@@ -301,4 +301,3 @@ class RetrainFreePruning(BasePruning):
     #                      "when initializing or calling on_train_begin()")
     #     self._dataloader = dataloader
     #     self._prepare_pruners()
-
