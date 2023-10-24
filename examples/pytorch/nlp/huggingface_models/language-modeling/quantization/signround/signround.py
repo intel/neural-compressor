@@ -28,28 +28,35 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 class FakeAffineTensorQuantFunction(Function):
     @staticmethod
-    def forward(ctx, inputs, num_bits=4, group_size=128, schema="asym", grad=0):
-        return quant_weight(inputs, num_bits, group_size, schema, grad)
+    def forward(ctx, inputs, num_bits=4, group_size=128, schema="asym", grad=0, min_scale=1, max_scale=1):
+        return quant_weight(inputs, num_bits, group_size, schema, grad, min_scale, max_scale)
 
     @staticmethod
     def backward(ctx, grad_outputs):
-        return grad_outputs, None, None, None, None
+        return grad_outputs, None, None, None, None, None, None
 
 
-def quant_weight_asym(weight, num_bits=4, grad=0):
+def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
     maxq = torch.tensor(2 ** num_bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device)
     wmin = torch.minimum(weight.min(1)[0], zeros)
     wmax = torch.maximum(weight.max(1)[0], zeros)
+
+    # wmin *= torch.sigmoid((0.5 + min_scale)*8)##8 hard code
+    # wmax *= torch.sigmoid((0.5 + max_scale)*8)
+    wmin *= (1.0 + min_scale)
+    wmax *= (1.0 + max_scale)
     tmp = (wmin == 0) & (wmax == 0)
     wmin[tmp] = -1
     wmax[tmp] = +1
+
     scale = (wmax - wmin) / maxq
+    scale = torch.clip(scale, 0)
     zp = torch.round(-wmin / scale)
-    scale.unsqueeze_(dim=-1)
-    zp.unsqueeze_(dim=-1)
+    scale = scale.unsqueeze(dim=-1)
+    zp = zp.unsqueeze(dim=-1) ##TODO zp could also be tuned
     int_w = torch.round(weight / scale + grad)
-    q = torch.clamp(int_w + zp, 0, maxq)
+    q = torch.clamp(int_w + zp , 0, maxq)
     return scale * (q - zp)
 
 
@@ -69,24 +76,34 @@ def quant_weight_sym(weight, num_bits=4, grad=0):
     return scale * q
 
 
-def quant_weight_actor(weight, num_bits, schema, grad):
+def quant_weight_actor(weight, num_bits, schema, grad, min_scale, max_scale):
     assert num_bits > 0, "num_bits should be larger than 0"
     if schema == "sym":
-        return quant_weight_sym(weight, num_bits, grad)
+        return quant_weight_sym(weight, num_bits, grad, min_scale, max_scale)
     else:
-        return quant_weight_asym(weight, num_bits, grad)
+        return quant_weight_asym(weight, num_bits, grad, min_scale, max_scale)
 
 
-def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0):
+def get_scale_shape(weight, group_size):
     if group_size == -1 or weight.shape[1] < group_size:
-        return quant_weight_actor(weight, num_bits, schema=schema, grad=grad)
+        shape = (weight.shape[0])
+    else:
+        shape = (weight.shape[0] * ((weight.shape[1] + group_size - 1) // group_size))
 
+    return shape
+
+
+def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0, min_scale=0, max_scale=0):
+    if group_size == -1 or weight.shape[1] < group_size:
+        return quant_weight_actor(weight, num_bits, schema=schema, grad=grad, min_scale=min_scale, max_scale=max_scale)
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
         if isinstance(grad, torch.Tensor):
             grad = grad.reshape(-1, group_size)
-        weight = quant_weight_actor(weight, num_bits, schema=schema, grad=grad)
+
+        weight = quant_weight_actor(weight, num_bits, schema=schema, grad=grad, min_scale=min_scale,
+                                    max_scale=max_scale)
 
         weight = weight.reshape(orig_shape)
 
@@ -102,10 +119,23 @@ def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0):
         else:
             grad1 = 0
             grad2 = 0
-        weight1 = quant_weight_actor(weight1, num_bits, schema=schema, grad=grad1)
+        if isinstance(min_scale, torch.Tensor):
+            min_scale_1 = min_scale[:, :weight.shape[1] // group_size]
+            min_scale_2 = min_scale[:, weight.shape[1] // group_size:]
+            max_scale_1 = max_scale[:, :weight.shape[1] // group_size]
+            max_scale_2 = max_scale[:, weight.shape[1] // group_size:]
+        else:
+            min_scale_1 = min_scale
+            min_scale_2 = min_scale
+            max_scale_1 = max_scale
+            max_scale_2 = max_scale
+
+        weight1 = quant_weight_actor(weight1, num_bits, schema=schema, grad=grad1, min_scale=min_scale_1,
+                                     max_scale=max_scale_1)
         weight1 = weight1.reshape(orig_shape[0], split_index)
         weight2 = weight[:, split_index:]
-        weight2 = quant_weight_actor(weight2, num_bits, schema=schema, grad=grad2)
+        weight2 = quant_weight_actor(weight2, num_bits, schema=schema, grad=grad2, min_scale=min_scale_2,
+                                     max_scale=max_scale_2)
         weight = torch.cat([weight1, weight2], dim=1)
 
         return weight
@@ -229,8 +259,7 @@ def collate_batch(batch):
     if len(input_ids_new) == 0:
         return None
     tmp = torch.vstack(input_ids_new)
-    res = {}
-    res["input_ids"] = tmp
+    res = {"input_ids": tmp}
     return res
 
 
@@ -272,22 +301,38 @@ def set_module(model, key, new_module):
 
 
 class WrapperLinear(torch.nn.Module):
-    def __init__(self, orig_layer, num_bits, group_size, schema, grad=0):
+    def __init__(self, orig_layer, num_bits, group_size, schema, grad=0, tuning_min_max=True):
         super(WrapperLinear, self).__init__()
         self.orig_layer = orig_layer
-        self.tensor_quant = FakeAffineTensorQuantFunction().apply
         self.num_bits = num_bits
         self.group_size = group_size
         self.schema = schema
         self.grad = grad
+        shape = get_scale_shape(self.orig_layer.weight, group_size)
+        if tuning_min_max:
+
+            self.min_scale = torch.nn.Parameter(torch.zeros(shape, device=self.orig_layer.weight.device),
+                                                requires_grad=True)
+            self.max_scale = torch.nn.Parameter(torch.zeros(shape, device=self.orig_layer.weight.device),
+                                                requires_grad=True)
+        else:
+            self.min_scale = 0
+            self.max_scale = 0
+
+    @torch.no_grad()
+    def update_minmax_scale(self, min_scale, max_scale):
+        self.min_scale.copy_(min_scale)
+        self.max_scale.copy_(max_scale)
 
     def update_grad(self, grad):
         self.grad = grad
 
     def forward(self, x):
         weight = self.orig_layer.weight
-        weight_q = FakeAffineTensorQuantFunction().apply(weight, self.num_bits, self.group_size, self.schema,
-                                                         self.grad)
+        # weight_q = FakeAffineTensorQuantFunction().apply(weight, self.num_bits, self.group_size, self.schema,
+        #                                                  self.grad)
+        weight_q = quant_weight(weight, self.num_bits, self.group_size, self.schema,
+                                self.grad, self.min_scale, self.max_scale)
         return F.linear(x, weight_q, self.orig_layer.bias)
 
 
@@ -299,14 +344,19 @@ def wrapper_block(block, num_bits, group_size, schema):
 
 
 @torch.no_grad()
-def unwrapper_block(block, num_bits, group_size, schema, grads):
+def unwrapper_block(block, num_bits, group_size, schema, grads, min_scale_grads, max_scale_grads):
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear):
             orig_layer = m.orig_layer
             grad = 0
+            min_scale_grad = 0
+            max_scale_grad = 0
             if grads is not None:
                 grad = grads[n]
-            q_dq_weight = quant_weight(orig_layer.weight, num_bits, group_size, schema, grad)
+                min_scale_grad = min_scale_grads[n]
+                max_scale_grad = max_scale_grads[n]
+            q_dq_weight = quant_weight(orig_layer.weight, num_bits, group_size, schema, grad, min_scale_grad,
+                                       max_scale_grad)
             orig_layer.weight.data.copy_(q_dq_weight)
             orig_layer.weight.grad = None  ##clear grad
             set_module(block, n, orig_layer)
@@ -314,12 +364,18 @@ def unwrapper_block(block, num_bits, group_size, schema, grads):
 
 def collect_grad_and_zero(block):
     grads = {}
+    grad_min_scale = {}
+    grad_max_scale = {}
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear):
             grad = -m.orig_layer.weight.grad
             grads[n] = copy.deepcopy(grad)
+            grad_min_scale[n] = copy.deepcopy(-m.min_scale.grad)
+            grad_max_scale[n] = copy.deepcopy(-m.max_scale.grad)
+            m.min_scale.grad.zero_()
+            m.max_scale.grad.zero_()
             m.orig_layer.weight.grad.zero_()
-    return grads
+    return grads, grad_min_scale, grad_max_scale
 
 
 def get_lr(step, total_steps, lr=0.01, warmup_step=0, lr_type="linear"):
@@ -327,9 +383,9 @@ def get_lr(step, total_steps, lr=0.01, warmup_step=0, lr_type="linear"):
         return (lr - 0.01 * lr) * float(step) / warmup_step + 0.01 * lr
 
     if lr_type == "const":
-        current_lr = args.lr
+        current_lr = lr
     elif lr_type == "linear":
-        current_lr = args.lr - float(step - warmup_step) / (total_steps - warmup_step) * lr
+        current_lr = lr - float(step - warmup_step) / (total_steps - warmup_step) * lr
     elif lr_type == "cos":
         import math
         current_lr = math.cos(float(step - warmup_step) / (total_steps - warmup_step) * math.pi / 2) * lr
@@ -389,7 +445,7 @@ def block_forward(block, input_ids, input_others, model_name, amp=False, device=
 
 
 def move_to_device(input_ids, inputs_others=None, device=torch.device("cpu")):
-    if input_ids != None:
+    if input_ids is not None:
         input_ids = input_ids.to(device)
     if inputs_others is not None:
         for key in inputs_others.keys():
@@ -403,6 +459,8 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
     best_loss = torch.finfo(torch.float).max
     mse_loss = torch.nn.MSELoss()
     grad = None
+    min_scale_grad = None
+    max_scale_grad = None
     if args.momentum > 0:
         grad_m = None
     output = []
@@ -467,25 +525,34 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
         if total_loss < best_loss:
             best_loss = total_loss
             if not args.not_use_mse:
-                # print(f"get better result at iter {i}, the loss is {total_loss}", flush=True)
+                print(f"get better result at iter {i}, the loss is {total_loss}", flush=True)
                 best_grad = copy.deepcopy(grad)
+                best_min_scale = copy.deepcopy(min_scale_grad)
+                best_max_scale = copy.deepcopy(max_scale_grad)
+
                 last_best_iter = i
         if args.not_use_mse:
             best_grad = grad
         if not args.not_use_mse:
             if args.dynamic_max_gap > 0 and i - last_best_iter >= args.dynamic_max_gap:
                 break
-        new_grad = collect_grad_and_zero(block)
+        new_grad, new_min_scale_grad, new_max_scale_grad = collect_grad_and_zero(block)
 
         warmup_step = int(args.iters * args.lr_wr)
         current_lr = get_lr(i, args.iters, args.lr, warmup_step, args.lr_decay_type)
+        current_min_max_lr = get_lr(i, args.iters, args.min_max_lr, warmup_step, args.lr_decay_type)
 
         for key in new_grad.keys():
             new_grad[key] = torch.sign(new_grad[key]) * current_lr
+            new_min_scale_grad[key] = torch.sign(new_min_scale_grad[key]) * current_min_max_lr
+            new_max_scale_grad[key] = torch.sign(new_max_scale_grad[key]) * current_min_max_lr
 
         if grad is None:
             grad = new_grad
+            min_scale_grad = new_min_scale_grad
+            max_scale_grad = new_max_scale_grad
             grad_m = new_grad
+
         else:
             for key in new_grad.keys():
                 if args.momentum > 0:
@@ -493,16 +560,27 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
                     grad[key] += grad_m[key]
                 else:
                     grad[key] += new_grad[key]
+                    min_scale_grad[key] += new_min_scale_grad[key]
+                    max_scale_grad[key] += new_max_scale_grad[key]
 
         clip_value = args.clip_val
 
         for key in grad.keys():
             grad[key] = torch.clip(grad[key], -clip_value, clip_value)
+            min_scale_grad[key] = torch.clip(min_scale_grad[key], -1, 1)  ##TODO -1, 0 hard coded now
+            max_scale_grad[key] = torch.clip(max_scale_grad[key], -1, 1)
+
         for n, m in block.named_modules():
             if isinstance(m, WrapperLinear):
                 m.update_grad(grad[n])
+                m.update_minmax_scale(min_scale_grad[n], max_scale_grad[n])
+    for key in new_grad.keys():
+        if best_min_scale is not None:
+            print(f"min_scale, {torch.min(best_min_scale[key])}, {torch.max(best_min_scale[key])}")
+            print(f"max_scale, {torch.min(best_max_scale[key])}, {torch.max(best_max_scale[key])}")
 
-    unwrapper_block(block, num_bits, group_size, schema, best_grad)
+    unwrapper_block(block, num_bits, group_size, schema, best_grad, best_min_scale,
+                    best_max_scale)  ##save min sale, max_scale
     if args.use_quant_input:
         with torch.no_grad():
             current_bs = args.train_bs
@@ -628,7 +706,13 @@ if __name__ == '__main__':
                         help="clip value")
 
     parser.add_argument("--lr", default=0.0025, type=float,
-                        help="step size")
+                        help="learning rate")
+
+    parser.add_argument("--min_max_lr", default=0.0025, type=float,
+                        help="learning rate for min max tuning")
+
+    # parser.add_argument("--clip_val_min_max", default=[0,1], type=list,
+    #                     help="learning rate for min max tuning")
 
     parser.add_argument("--lr_decay_type", default="linear", type=str,
                         help="lr decay type")
