@@ -169,14 +169,18 @@ class SparseGPTPruning(BasePruning):
         device: available device of pruning.
     """
 
-    def __init__(self, config, model, dataloader, framework="pytorch", device: str = None):
+    def __init__(self, config, model, dataloader, framework="pytorch", device=None):
         """Initialize."""
         super().__init__(config, model)
         if device is None:
             self.dev = model.device
-        else:
-            assert "cpu" in device or "cuda" in device, "Only cpu and cuda are supported."
+        elif isinstance(device, str):
+            assert "cpu" in device or "cuda" in device, "Only 'cpu' and 'cuda' are supported."
             self.dev = torch.device(device)
+        else:
+            assert isinstance(device, torch.device), "Only 'str' and 'torch.device' are supported."
+            self.dev = device
+            
         self._layers = []
         self._dataloader = dataloader
         if dataloader is not None:

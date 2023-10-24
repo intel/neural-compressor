@@ -506,8 +506,15 @@ class PytorchPatternNxM(PytorchBasePattern):
             Hinv1 = Hinv[i1:i2, i1:i2]
 
             tmp = W1**2 / (torch.diag(Hinv1).reshape((1, -1))) ** 2
-            thresh = torch.sort(tmp.flatten())[0][int(tmp.numel() * sparsity)]
-            mask1 = tmp <= thresh
+            if "channel" in self.pattern:
+                mask1 = torch.zeros_like(tmp, dtype=torch.bool)
+                for i in range(count):
+                    c_tmp = tmp[:, i]
+                    c_thresh = torch.sort(c_tmp.flatten())[0][int(c_tmp.numel() * sparsity)]
+                    mask1[:, i] = c_tmp <= c_thresh
+            else:
+                thresh = torch.sort(tmp.flatten())[0][int(tmp.numel() * sparsity)]
+                mask1 = tmp <= thresh
 
             for i in range(count):
                 w = W1[:, i]
@@ -838,3 +845,4 @@ class KerasPatternNxM(KerasBasePattern):
             layer_ratio = np.sum(masks[key] == 0.0) / masks[key].size
             logger.info(f"{key} sparsity is {layer_ratio}")
         return masks
+

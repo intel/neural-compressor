@@ -377,11 +377,6 @@ def parse_args():
         type=int, default=-1,
         help="Automatic DDP Multi-GPU argument, do not modify")
     
-    # parser.add_argument(
-    #     "--cuda_eval",
-    #     type=int, default=-1,
-    #     help="Automatic DDP Multi-GPU argument, do not modify")
-    
     parser.add_argument("--eval_fp16", action='store_true',
                     help=" fp16")
 
@@ -496,7 +491,7 @@ def main():
         if is_llama:
             tokenizer = transformers.LlamaTokenizer.from_pretrained(args.model_name_or_path)
         else :
-            tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=not args.use_slow_tokenizer)
+            tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=not args.use_slow_tokenizer, trust_remote_code=True)
     else:
         raise ValueError(
             "You are instantiating a new tokenizer from scratch. This is not supported by this script."

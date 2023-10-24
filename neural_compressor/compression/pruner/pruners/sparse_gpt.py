@@ -55,9 +55,9 @@ class SparseGPTPruner(PytorchBasePruner):
         gc.collect()
         self.gpts = {}
         logger.warning("sparse_gpt pruner fixed the weights, Please DO NOT train or update gradients.")
-        assert (
-            "1x1" in self.pattern.pattern or ":" in self.pattern.pattern
-        ), "sparse_gpt pruner type only supports 1x1 and N:M patterns."
+        
+        if "channel" in self.pattern.pattern:
+            logger.warning("In sparseGPT, the 'channel-wise' pattern refers to a 1x1 pruning method that preserves uniform sparsity across all channels.")
 
     class SparseGPT:
         def __init__(self, module):
@@ -112,3 +112,4 @@ class SparseGPTPruner(PytorchBasePruner):
                 logger.info(f"module: {name}\t target ratio: {self.target_sparsity_ratio}")
                 module = self.modules[name]
                 self.pattern.fasterprune(self.gpts[name])  # is there necessary to add a hyperparameter of blocksize
+
