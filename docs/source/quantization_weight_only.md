@@ -143,7 +143,7 @@ Large language models (LLMs) have shown exceptional performance across various t
 |:--------------:|:----------:|
 |       RTN      |  &#10004;  | 
 |       AWQ      |  &#10005;  |
-|      GPTQ      | &#10005; | 
+|      GPTQ      | &#10004; | 
 |      TEQ      | &#10005; |
 
 ### Example
