@@ -26,6 +26,7 @@ from collections import OrderedDict
 from collections.abc import KeysView
 from importlib.util import find_spec
 from typing import Dict
+from pathlib import Path
 
 import numpy as np
 import yaml
@@ -337,6 +338,41 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.quantize_config = quantize_config  # update so other methods can know current configs
         self._dump_model_op_stats(tmp_model)
         tmp_model.topological_sort()
+
+        # if the model is large and acc tuning is required, save it to workspace
+        if not self.performance_only and tmp_model.is_large_model: # pragma: no cover
+            from onnx.external_data_helper import convert_model_to_external_data, load_external_data_for_model
+
+            model_name = os.path.split(tmp_model.model_path)[-1]
+            model_path = os.path.join(self.work_space, model_name)
+            data_name = model_name + "_quantized_data"
+            data_path = os.path.join(self.work_space, data_name)
+
+            load_external_data_for_model(tmp_model.model, os.path.dirname(tmp_model.model_path))
+
+            if os.path.isfile(model_path):
+                os.remove(model_path)
+            if os.path.isfile(data_path):
+                os.remove(data_path)
+
+            # if the model is Tranformer-based, save hf config to workspace
+            if tmp_model.hf_config is not None:
+                model_type = "" if not hasattr(tmp_model.hf_config, "model_type") \
+                        else getattr(tmp_model.hf_config, "model_type")
+                setattr(tmp_model.hf_config.__class__, "model_type", model_type)
+                output_config_file = Path(self.work_space).joinpath("config.json").as_posix()
+                if not os.path.exists(output_config_file):
+                    tmp_model.hf_config.to_json_file(output_config_file, use_diff=False)
+
+            # save model and external data
+            convert_model_to_external_data(
+                tmp_model.model,
+                all_tensors_to_one_file=True,
+                location=data_name,
+                size_threshold=1024,
+                convert_attribute=False)
+            onnx.save_model(tmp_model.model, model_path)
+
         return tmp_model
 
     def _check_backend_available(self, backend):
@@ -792,7 +828,41 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             from onnx.external_data_helper import load_external_data_for_model
 
             load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
-        model.model_path = sess_options.optimized_model_filepath
+            # save the large model to workspace if acc tuning is required
+            if not self.performance_only:
+                from onnx.external_data_helper import convert_model_to_external_data
+
+                # if optimized model exists, remove it
+                if os.path.isfile(sess_options.optimized_model_filepath):
+                    os.remove(sess_options.optimized_model_filepath)
+
+                # if the model if Tranformer-based, save hf config to workspace
+                if model.hf_config is not None:
+                    model_type = "" if not hasattr(model.hf_config, "model_type") \
+                            else getattr(model.hf_config, "model_type")
+                    setattr(model.hf_config.__class__, "model_type", model_type)
+                    output_config_file = Path(self.work_space).joinpath("config.json").as_posix()
+                    if not os.path.exists(output_config_file):
+                        model.hf_config.to_json_file(output_config_file, use_diff=False)
+
+                # save model and external data
+                model_name = os.path.split(model.model_path)[-1]
+                model_path = os.path.join(self.work_space, model_name)
+                data_name = model_name + '_data'
+
+                convert_model_to_external_data(
+                    tmp_model,
+                    all_tensors_to_one_file=True,
+                    location=data_name,
+                    size_threshold=1024,
+                    convert_attribute=False)
+                onnx.save_model(tmp_model, model_path)
+                model.model_path = model_path
+            else:
+                model.model_path = sess_options.optimized_model_filepath
+        else:
+            model.model_path = sess_options.optimized_model_filepath
+       
         model.model = (
             self._replace_gemm_with_matmul(tmp_model).model
             if options.onnxrt.graph_optimization.gemm2matmul and self.recipes.get("gemm_to_matmul", True)
@@ -1693,6 +1763,41 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         tmp_model.q_config = copy.deepcopy(quant_config)
         self._dump_model_op_stats(tmp_model, tune_cfg)
         tmp_model.topological_sort()
+
+        # if the model is large and acc tuning is required, save it to workspace
+        if not self.performance_only and tmp_model.is_large_model:
+            from onnx.external_data_helper import convert_model_to_external_data, load_external_data_for_model
+
+            model_name = os.path.split(tmp_model.model_path)[-1]
+            model_path = os.path.join(self.work_space, model_name)
+            data_name = model_name + "_quantized_data"
+            data_path = os.path.join(self.work_space, data_name)
+
+            load_external_data_for_model(tmp_model.model, os.path.dirname(tmp_model.model_path))
+
+            if os.path.isfile(model_path):
+                os.remove(model_path)
+            if os.path.isfile(data_path):
+                os.remove(data_path)
+
+            # if the model is Tranformer-based, save hf config to workspace
+            if tmp_model.hf_config is not None:
+                model_type = "" if not hasattr(tmp_model.hf_config, "model_type") \
+                        else getattr(tmp_model.hf_config, "model_type")
+                setattr(tmp_model.hf_config.__class__, "model_type", model_type)
+                output_config_file = Path(self.work_space).joinpath("config.json").as_posix()
+                if not os.path.exists(output_config_file): # pragma: no cover
+                    tmp_model.hf_config.to_json_file(output_config_file, use_diff=False)
+
+            # save model and external data
+            convert_model_to_external_data(
+                tmp_model.model,
+                all_tensors_to_one_file=True,
+                location=data_name,
+                size_threshold=1024,
+                convert_attribute=False)
+            onnx.save_model(tmp_model.model, model_path)
+
         return tmp_model
 
     def _dump_model_op_stats(self, model, tune_cfg):

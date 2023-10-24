@@ -62,7 +62,8 @@ function run_tuning {
             --output_model ${output_model} \
             --batch_size ${batch_size-1} \
             --dataset ${dataset-NeelNanda/pile-10k} \
-            --algorithm ${algorithm-RTN} \
+	    --algorithm ${algorithm-WOQ_TUNE} \
+	    --tasks ${tasks-lambada_openai} \
             --tune
 }
 

@@ -24,13 +24,15 @@ optimum-cli export onnx --model decapoda-research/llama-7b-hf --task text-genera
 
 ## 1. Quantization
 
+Set `algorithm=WOQ_TUNE` to tune weight-only quantization algorithm or specify algorithm to `RTN` or `GPTQ` or `AWQ`.
+
 ```bash
 bash run_quant.sh --input_model=/path/to/model \ # folder path of onnx model
                   --output_model=/path/to/model_tune \ # folder path to save onnx model
                   --batch_size=batch_size # optional \
                   --dataset=NeelNanda/pile-10k \
                   --tokenizer=decapoda-research/llama-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
-                  --algorithm=RTN # support RTN, AWQ, GPTQ
+                  --algorithm=WOQ_TUNE # support WOQ_TUNE, RTN, AWQ, GPTQ
 ```
 
 ## 2. Benchmark
