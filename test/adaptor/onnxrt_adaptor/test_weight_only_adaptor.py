@@ -315,45 +315,61 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         for quant_level in quant_levels:
             # Expect tuning ends with WOQ algorithm 'RTN_G32ASYM'
             partial_fake_eval = partial(fake_eval, eval_result_lst=[1, 1.1])
-            woq_model_1 = self._test_woq_tune_common(self.gptj_model, self.gptj_dataloader, partial_fake_eval, quant_level)
+            woq_model_1 = self._test_woq_tune_common(
+                self.gptj_model, self.gptj_dataloader, partial_fake_eval, quant_level
+            )
             self.assertEqual(self._count_woq_matmul(woq_model_1), 31)
 
             # Expect tuning ends with WOQ algorithm 'GPTQ_G32ASYM'
             partial_fake_eval = partial(fake_eval, eval_result_lst=[1, 0.8, 1.1])
-            woq_model_2 = self._test_woq_tune_common(self.gptj_model, self.gptj_dataloader, partial_fake_eval, quant_level)
+            woq_model_2 = self._test_woq_tune_common(
+                self.gptj_model, self.gptj_dataloader, partial_fake_eval, quant_level
+            )
             self.assertEqual(self._count_woq_matmul(woq_model_2), 31)
 
             # Expect tuning ends with WOQ algorithm 'GPTQ_G32ASYM_DISABLE_LAST_MATMUL'
             partial_fake_eval = partial(fake_eval, eval_result_lst=[1, 0.8, 0.8, 1.1])
-            woq_model_3 = self._test_woq_tune_common(self.gptj_model, self.gptj_dataloader, partial_fake_eval, quant_level)
+            woq_model_3 = self._test_woq_tune_common(
+                self.gptj_model, self.gptj_dataloader, partial_fake_eval, quant_level
+            )
             self.assertEqual(self._count_woq_matmul(woq_model_3), 30)
 
             # Expect tuning ends with WOQ algorithm 'GPTQ_G128ASYM'
             partial_fake_eval = partial(fake_eval, eval_result_lst=[1, 0.8, 0.8, 0.8, 1.1])
-            woq_model_4 = self._test_woq_tune_common(self.gptj_model, self.gptj_dataloader, partial_fake_eval, quant_level)
+            woq_model_4 = self._test_woq_tune_common(
+                self.gptj_model, self.gptj_dataloader, partial_fake_eval, quant_level
+            )
             self.assertEqual(self._count_woq_matmul(woq_model_4, group_size=128), 31)
 
             # Expect tuning ends with WOQ algorithm 'AWQ_G32ASYM'
             partial_fake_eval = partial(fake_eval, eval_result_lst=[1, 0.8, 0.8, 0.8, 0.8, 1.1])
-            woq_model_5 = self._test_woq_tune_common(self.gptj_model, self.gptj_dataloader, partial_fake_eval, quant_level)
+            woq_model_5 = self._test_woq_tune_common(
+                self.gptj_model, self.gptj_dataloader, partial_fake_eval, quant_level
+            )
             self.assertEqual(self._count_woq_matmul(woq_model_5), 31)
-        
+
         # test WOQ tuning with fallback
         partial_fake_eval = partial(fake_eval, eval_result_lst=[1, 1.1])
         woq_model = self._test_woq_tune_common(
-            self.gptj_model, 
+            self.gptj_model,
             self.gptj_dataloader,
-            partial_fake_eval, 
-            "auto", 
-            op_name_dict={"/transformer/h.*/attn/k_proj/MatMul": FP32}
+            partial_fake_eval,
+            "auto",
+            op_name_dict={"/transformer/h.*/attn/k_proj/MatMul": FP32},
         )
         self.assertEqual(self._count_woq_matmul(woq_model), 26)
 
         # test 8 bits WOQ
         partial_fake_eval = partial(fake_eval, eval_result_lst=[1, 1.1])
-        woq_model = self._test_woq_tune_common(self.gptj_model, self.gptj_dataloader, partial_fake_eval, "auto", op_type_dict={".*": {"weight": {"bits": 8}}})
+        woq_model = self._test_woq_tune_common(
+            self.gptj_model,
+            self.gptj_dataloader,
+            partial_fake_eval,
+            "auto",
+            op_type_dict={".*": {"weight": {"bits": 8}}},
+        )
         self.assertEqual(self._count_woq_matmul(woq_model, bits=8), 31)
-    
+
     def test_woq_tune_with_large_model(self):
         from functools import partial
 
@@ -365,6 +381,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         partial_fake_eval = partial(fake_eval, eval_result_lst=[1, 1.1])
         woq_model = self._test_woq_tune_common(self.llama_model, self.llama_dataloader, partial_fake_eval)
         self.assertEqual(self._count_woq_matmul(woq_model), 155)
+
 
 if __name__ == "__main__":
     unittest.main()

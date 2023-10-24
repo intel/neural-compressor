@@ -25,8 +25,8 @@ import sys
 from collections import OrderedDict
 from collections.abc import KeysView
 from importlib.util import find_spec
-from typing import Dict
 from pathlib import Path
+from typing import Dict
 
 import numpy as np
 import yaml
@@ -340,7 +340,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         tmp_model.topological_sort()
 
         # if the model is large and acc tuning is required, save it to workspace
-        if not self.performance_only and tmp_model.is_large_model: # pragma: no cover
+        if not self.performance_only and tmp_model.is_large_model:  # pragma: no cover
             from onnx.external_data_helper import convert_model_to_external_data, load_external_data_for_model
 
             model_name = os.path.split(tmp_model.model_path)[-1]
@@ -357,8 +357,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
             # if the model is Tranformer-based, save hf config to workspace
             if tmp_model.hf_config is not None:
-                model_type = "" if not hasattr(tmp_model.hf_config, "model_type") \
-                        else getattr(tmp_model.hf_config, "model_type")
+                model_type = (
+                    "" if not hasattr(tmp_model.hf_config, "model_type") else getattr(tmp_model.hf_config, "model_type")
+                )
                 setattr(tmp_model.hf_config.__class__, "model_type", model_type)
                 output_config_file = Path(self.work_space).joinpath("config.json").as_posix()
                 if not os.path.exists(output_config_file):
@@ -370,7 +371,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 all_tensors_to_one_file=True,
                 location=data_name,
                 size_threshold=1024,
-                convert_attribute=False)
+                convert_attribute=False,
+            )
             onnx.save_model(tmp_model.model, model_path)
 
         return tmp_model
@@ -838,8 +840,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
                 # if the model if Tranformer-based, save hf config to workspace
                 if model.hf_config is not None:
-                    model_type = "" if not hasattr(model.hf_config, "model_type") \
-                            else getattr(model.hf_config, "model_type")
+                    model_type = (
+                        "" if not hasattr(model.hf_config, "model_type") else getattr(model.hf_config, "model_type")
+                    )
                     setattr(model.hf_config.__class__, "model_type", model_type)
                     output_config_file = Path(self.work_space).joinpath("config.json").as_posix()
                     if not os.path.exists(output_config_file):
@@ -848,21 +851,22 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 # save model and external data
                 model_name = os.path.split(model.model_path)[-1]
                 model_path = os.path.join(self.work_space, model_name)
-                data_name = model_name + '_data'
+                data_name = model_name + "_data"
 
                 convert_model_to_external_data(
                     tmp_model,
                     all_tensors_to_one_file=True,
                     location=data_name,
                     size_threshold=1024,
-                    convert_attribute=False)
+                    convert_attribute=False,
+                )
                 onnx.save_model(tmp_model, model_path)
                 model.model_path = model_path
             else:
                 model.model_path = sess_options.optimized_model_filepath
         else:
             model.model_path = sess_options.optimized_model_filepath
-       
+
         model.model = (
             self._replace_gemm_with_matmul(tmp_model).model
             if options.onnxrt.graph_optimization.gemm2matmul and self.recipes.get("gemm_to_matmul", True)
@@ -1782,11 +1786,12 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
 
             # if the model is Tranformer-based, save hf config to workspace
             if tmp_model.hf_config is not None:
-                model_type = "" if not hasattr(tmp_model.hf_config, "model_type") \
-                        else getattr(tmp_model.hf_config, "model_type")
+                model_type = (
+                    "" if not hasattr(tmp_model.hf_config, "model_type") else getattr(tmp_model.hf_config, "model_type")
+                )
                 setattr(tmp_model.hf_config.__class__, "model_type", model_type)
                 output_config_file = Path(self.work_space).joinpath("config.json").as_posix()
-                if not os.path.exists(output_config_file): # pragma: no cover
+                if not os.path.exists(output_config_file):  # pragma: no cover
                     tmp_model.hf_config.to_json_file(output_config_file, use_diff=False)
 
             # save model and external data
@@ -1795,7 +1800,8 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 all_tensors_to_one_file=True,
                 location=data_name,
                 size_threshold=1024,
-                convert_attribute=False)
+                convert_attribute=False,
+            )
             onnx.save_model(tmp_model.model, model_path)
 
         return tmp_model

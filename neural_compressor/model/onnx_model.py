@@ -112,7 +112,7 @@ class ONNXModel(BaseModel):
 
     @property
     def hf_config(self):
-        """Return huggingface config if model is Transformer-based"""
+        """Return huggingface config if model is Transformer-based."""
         return self._config
 
     @property
