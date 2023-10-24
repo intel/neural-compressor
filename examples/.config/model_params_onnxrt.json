@@ -777,7 +777,7 @@
       "main_script": "main.py",
       "batch_size": 1
     },
-    "llama-7b-woq-tune": {
+    "llama-7b-woq_tune": {
       "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
       "dataset_location": "",
       "input_model": "/tf_dataset2/models/onnx/llama-7b",
