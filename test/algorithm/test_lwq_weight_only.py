@@ -6,7 +6,6 @@ from copy import deepcopy
 sys.path.insert(0, "./")
 import torch
 from torch.utils.data import DataLoader, Dataset
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from neural_compressor import PostTrainingQuantConfig, quantization
 from neural_compressor.adaptor.torch_utils.layer_wise_quant import load_empty_model

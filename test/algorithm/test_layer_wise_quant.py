@@ -15,7 +15,7 @@ from neural_compressor.utils.pytorch import load
 class TestLayerWise(unittest.TestCase):
     def test_layer_wise(self):
         model_name_or_path = "facebook/opt-125m"
-        fp32_model = load_empty_model(model_name_or_path, AutoModelForCausalLM, torchscript=True)
+        fp32_model = load_empty_model(model_name_or_path, torchscript=True)
 
         class TestDataset(Dataset):
             def __init__(self, size=5, shape=128):
@@ -65,7 +65,7 @@ class TestLayerWise(unittest.TestCase):
         )
 
         model_name_or_path = "facebook/opt-125m"
-        model = load_empty_model(model_name_or_path, AutoModelForCausalLM, torchscript=True)
+        model = load_empty_model(model_name_or_path, torchscript=True)
         children = get_children(model)
         named_children = get_named_children(model)
         self.assertEqual(children, [v for k, v in named_children])
