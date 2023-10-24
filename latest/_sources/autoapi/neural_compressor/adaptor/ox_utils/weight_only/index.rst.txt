@@ -18,6 +18,7 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.adaptor.ox_utils.weight_only.get_blob_size
    neural_compressor.adaptor.ox_utils.weight_only.make_matmul_weight_only_node
    neural_compressor.adaptor.ox_utils.weight_only.quant_tensor
    neural_compressor.adaptor.ox_utils.weight_only.qdq_tensor
@@ -31,6 +32,16 @@ Functions
    neural_compressor.adaptor.ox_utils.weight_only.gptq
    neural_compressor.adaptor.ox_utils.weight_only.gptq_quantize
 
+
+
+.. py:function:: get_blob_size(group_size, has_zp)
+
+   Get blob_size.
+
+   :param group_size: how many elements share one scale/zp
+   :type group_size: int
+   :param has_zp: whether zero_point is None
+   :type has_zp: bool
 
 
 .. py:function:: make_matmul_weight_only_node(node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point)
@@ -52,8 +63,8 @@ Functions
    :param zero_point: zero point
    :type zero_point: array
 
-   :returns: MatMulFpQ4 node
-             new_inits: initializers of the MatMulFpQ4 node
+   :returns: MatMulFpQ4 or MatMulNBits node
+             new_inits: initializers of the new node
    :rtype: matmul_weight_only_node
 
 
