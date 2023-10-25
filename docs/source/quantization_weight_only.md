@@ -129,6 +129,22 @@ torch.save(compressed_model.state_dict(), "compressed_model.pt")
 
 The saved_results folder contains two files: `best_model.pt` and `qconfig.json`, and the generated q_model is a fake quantized model.
 
+To find the best algorithm, users can omit specifying a particular algorithm. In comparison to setting a specific algorithm, this tuning process will traverse through all implemented algorithms and identify the optimal algorithm configuration with the best result. To utilize this feature, users need to set the tuning `strategy` to either `auto` or `basic`. Here is an example:
+# config example
+```python
+# auto
+conf = PostTrainingQuantConfig(
+    approach="weight_only",
+    quant_level="auto",
+)
+
+# basic
+conf = PostTrainingQuantConfig(
+    approach="weight_only",
+    quant_level=1,
+    tuning_criterion=TuningCriterion(strategy="basic"),
+)
+```
 ## Layer Wise Quantization
 
 Large language models (LLMs) have shown exceptional performance across various tasks, meanwhile, the substantial parameter size poses significant challenges for deployment. Layer-wise quantization(LWQ) can greatly reduce the memory footprint of LLMs, usually 80-90% reduction, which means that users can quantize LLMs even on single node using GPU or CPU.  We can quantize the model under memory-constrained devices, therefore making the huge-sized LLM quantization possible.
