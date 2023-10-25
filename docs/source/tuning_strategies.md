@@ -181,7 +181,7 @@ flowchart TD
 
 > For [smooth quantization](./smooth_quant.md), users can tune the smooth quantization alpha by providing a list of scalars for the `alpha` item. The tuning process will take place at the **start stage** of the tuning procedure. For details usage, please refer to the [smooth quantization example](./smooth_quant.md#Example).
 
-> For [weight only quantization](./quantization_weight_only.md), users can tune the weight only algorithm from the avaliable [algorithms](../../neural_compressor/strategy/utils/constant.py#L62). The tuning process will take place at the **start stage** of the tuning procedure, and it will precede the smooth quantization alpha tuning. For details usage, please refer to the [weight only quantization example](./quantization_weight_only.md#Examples).
+> For [weight only quantization](./quantization_weight_only.md), users can tune the weight only algorithm from the available [algorithms](../../neural_compressor/strategy/utils/constant.py#L62). The tuning process will take place at the **start stage** of the tuning procedure, preceding the smooth quantization alpha tuning. For details usage, please refer to the [weight only quantization example](./quantization_weight_only.md#Examples).
 
 
 **1.** Default quantization
