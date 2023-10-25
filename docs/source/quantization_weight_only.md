@@ -145,6 +145,7 @@ conf = PostTrainingQuantConfig(
     tuning_criterion=TuningCriterion(strategy="basic"),
 )
 ```
+By setting the tuning strategy to `auto` or `basic`, the algorithm tuning process will automatically explore and evaluate different algorithm configurations to determine the best approach. *Please note that this behavior is specific to the `ONNX Runtime` backend.* For details usage, please refer to the [tuning strategy](./tuning_strategies.md#Basic).
 ## Layer Wise Quantization
 
 Large language models (LLMs) have shown exceptional performance across various tasks, meanwhile, the substantial parameter size poses significant challenges for deployment. Layer-wise quantization(LWQ) can greatly reduce the memory footprint of LLMs, usually 80-90% reduction, which means that users can quantize LLMs even on single node using GPU or CPU.  We can quantize the model under memory-constrained devices, therefore making the huge-sized LLM quantization possible.
