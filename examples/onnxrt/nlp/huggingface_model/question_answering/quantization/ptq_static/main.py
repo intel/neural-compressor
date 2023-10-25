@@ -483,6 +483,8 @@ def main():
         if model_args.model_name_or_path == 'mrm8488/spanbert-finetuned-squadv1':
             fp32_op_names = ['/bert/embeddings/word_embeddings/Gather', 
                              '/bert/encoder/layer.[5-7|9]/output/dense/MatMul']
+        elif model_args.model_name_or_path == 'salti/bert-base-multilingual-cased-finetuned-squad':
+            fp32_op_names = ['/bert/encoder/layer.[4-5]/output/dense/MatMul']
         elif model_args.model_name_or_path == 'distilbert-base-uncased-distilled-squad':
             fp32_op_names = ['/distilbert/transformer/layer.[1-5]/ffn/lin[1-2]/MatMul']
         elif model_args.model_name_or_path == 'deepset/roberta-large-squad2':
