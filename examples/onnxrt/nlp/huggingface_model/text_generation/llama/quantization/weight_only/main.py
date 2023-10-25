@@ -17,6 +17,7 @@
 # pylint:disable=redefined-outer-name,logging-format-interpolation
 import os
 import onnx
+import json
 import random
 import torch
 import logging
@@ -116,17 +117,30 @@ def tokenize_function(examples):
     example = tokenizer(examples["text"])
     return example
 
+def replace_architectures(json_path):
+    # replace 'LLaMATokenizer' to lowercase 'LlamaTokenizer'
+    # to avoid bug 'Tokenizer class LLaMATokenizer does not exist or is not currently imported.'
+    # refer to https://github.com/huggingface/transformers/issues/22222#issuecomment-1477171703
+    with open(json_path, "r") as file:
+        data = json.load(file)
+        data["architectures"] = ["LlamaForCausalLM"]
+        
+    with open(json_path, 'w') as file:
+        json.dump(data, file, indent=4)
+
 def eval_func(model):
     model_dir = model
     if isinstance(model, str) and model.endswith(".onnx"):
         model_dir = os.path.dirname(model)
+
+    replace_architectures(os.path.join(model_dir, "config.json"))
 
     results = evaluate(
         model="hf-causal",
         model_args="pretrained=" + model_dir + ",tokenizer="+ args.tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
-        model_format="onnx"
+        model_format="onnx",
     )
 
     eval_acc = 0
