@@ -32,7 +32,7 @@ torch = LazyImport("torch")
 
 
 def move_input_device(input, device="cpu"):
-    """auto mapping input to device for all kinds of format
+    """Auto mapping input to device for all kinds of format.
 
     Args:
         input (torch.tensor): input data
@@ -59,7 +59,7 @@ def move_input_device(input, device="cpu"):
 
 
 def forward_wrapper(model, input):
-    """model forward with device auto mapping
+    """Model forward with device auto mapping.
 
     Args:
         model (torch.nn.Module): input model

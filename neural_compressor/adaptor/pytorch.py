@@ -78,11 +78,19 @@ def get_torch_white_list(approach):
     return white_list
 
 
-def pytorch_forward_wrapper(model, input, conf=None, backend="default", running_mode="inference",):
+def pytorch_forward_wrapper(
+    model,
+    input,
+    conf=None,
+    backend="default",
+    running_mode="inference",
+):
     version = get_torch_version()
     from .torch_utils.util import forward_wrapper
-    if version.release < Version("1.12.0").release and \
-      backend == "ipex" and running_mode == "calibration":  # pragma: no cover
+
+    if (
+        version.release < Version("1.12.0").release and backend == "ipex" and running_mode == "calibration"
+    ):  # pragma: no cover
         with ipex.quantization.calibrate(conf, default_recipe=True):  # pylint: disable=E1101
             output = forward_wrapper(model, input)
     else:
@@ -93,6 +101,7 @@ def pytorch_forward_wrapper(model, input, conf=None, backend="default", running_
 def get_example_inputs(model, dataloader):
     version = get_torch_version()
     from .torch_utils.util import move_input_device
+
     # Suggest set dataloader like calib_dataloader
     if dataloader is None:
         return None
@@ -2574,8 +2583,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         self.version = get_torch_version()
         query_config_file = "pytorch_ipex.yaml"
         self.query_handler = PyTorchQuery(
-            device = self.device,
-            local_config_file=os.path.join(os.path.dirname(__file__), query_config_file)
+            device=self.device, local_config_file=os.path.join(os.path.dirname(__file__), query_config_file)
         )
         self.cfgs = None
         self.fuse_ops = None
@@ -2658,14 +2666,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             # Sometimes the prepared model from get_op_capablitiy loss this attribute
             if not hasattr(model._model, "save_qconf_summary") or not hasattr(model._model, "load_qconf_summary"):
                 from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+
                 if self.device == "xpu":
                     static_qconfig = QConfig(
-                        activation=MinMaxObserver.with_args(
-                            qscheme=torch.per_tensor_affine, dtype=torch.quint8
-                        ),
-                        weight=MinMaxObserver.with_args(
-                            dtype=torch.qint8, qscheme=torch.per_tensor_symmetric
-                        )
+                        activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                        weight=MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric),
                     )
                 elif self.version.release >= Version("2.1").release:
                     static_qconfig = ipex.quantization.default_static_qconfig_mapping
@@ -3045,14 +3050,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         self.q_dataloader is not None or self.example_inputs is not None
                     ), "IPEX need q_dataloader or example_inputs to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+
                     if self.device == "xpu":
                         static_qconfig = QConfig(
-                            activation=MinMaxObserver.with_args(
-                                qscheme=torch.per_tensor_affine, dtype=torch.quint8
-                            ),
-                            weight=MinMaxObserver.with_args(
-                                dtype=torch.qint8, qscheme=torch.per_tensor_symmetric
-                            )
+                            activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                            weight=MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric),
                         )
                     elif self.version.release >= Version("2.1").release:
                         # HistogramObserver will cause a performance issue.
