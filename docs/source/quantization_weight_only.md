@@ -151,13 +151,13 @@ To find the best algorithm, users can omit specifying a particular algorithm. In
 ```python
 conf = PostTrainingQuantConfig(
     approach="weight_only",
-    quant_level="auto",  # quant_level suuports "auto" or 1 for woq config tuning
+    quant_level="auto",  # quant_level supports "auto" or 1 for woq config tuning
 )
 q_model = quantization.fit(model, conf, eval_func=eval_func, calib_dataloader=dataloader)
 q_model.save("saved_results")
 ```
 
-Refer to this [link](../examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only) for an example of WOQ algorithms tuning on ONNX Llama models.
+Refer to this [link](../../examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only) for an example of WOQ algorithms tuning on ONNX Llama models.
 
 ## Layer Wise Quantization
 
