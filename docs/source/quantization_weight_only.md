@@ -151,7 +151,7 @@ To find the best algorithm, users can omit specifying a particular algorithm. In
 ```python
 conf = PostTrainingQuantConfig(
     approach="weight_only",
-    quant_level="auto", # quant_level suuports "auto" or 1 for woq config tuning
+    quant_level="auto",  # quant_level suuports "auto" or 1 for woq config tuning
 )
 q_model = quantization.fit(model, conf, eval_func=eval_func, calib_dataloader=dataloader)
 q_model.save("saved_results")
