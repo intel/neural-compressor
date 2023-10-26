@@ -88,7 +88,7 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn
             "transformers": {}, Dict# TODO
         }
     """
-    if type(module).__name__ == 'MixFormerSequentialForCausalLM': # pragma: no cover
+    if type(module).__name__ == "MixFormerSequentialForCausalLM":  # pragma: no cover
         gptq_related_blocks = {
             "embeddings": {},
             "transformers_pre": {},  # todo
@@ -585,7 +585,9 @@ class GPTQuantizer(object):
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                if hasattr(self.model.config, "_name_or_path") and "chatglm-6b" in self.model.config._name_or_path: # pragma: no cover
+                if (
+                    hasattr(self.model.config, "_name_or_path") and "chatglm-6b" in self.model.config._name_or_path
+                ):  # pragma: no cover
                     # for chatglm-6b only
                     with torch.autocast("cuda"):
                         out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
@@ -623,7 +625,9 @@ class GPTQuantizer(object):
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                if hasattr(self.model.config, "_name_or_path") and "chatglm-6b" in self.model.config._name_or_path: # pragma: no cover
+                if (
+                    hasattr(self.model.config, "_name_or_path") and "chatglm-6b" in self.model.config._name_or_path
+                ):  # pragma: no cover
                     # for chatglm-6b only
                     with torch.autocast("cuda"):
                         out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
