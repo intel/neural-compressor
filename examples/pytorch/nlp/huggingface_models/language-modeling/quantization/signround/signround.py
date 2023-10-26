@@ -35,6 +35,7 @@ class FakeAffineTensorQuantFunction(Function):
     def backward(ctx, grad_outputs):
         return grad_outputs, None, None, None, None
 
+
 def round_ste(x: torch.Tensor):
     """
     cp from https://github.com/OpenGVLab/OmniQuant/blob/main/quantize/quantizer.py
@@ -43,11 +44,14 @@ def round_ste(x: torch.Tensor):
     return (x.round() - x).detach() + x
 
 
-def quant_weight_asym(weight, num_bits=4, grad=0):
+def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
     maxq = torch.tensor(2 ** num_bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device)
     wmin = torch.minimum(weight.min(1)[0], zeros)
     wmax = torch.maximum(weight.max(1)[0], zeros)
+    wmin *= (1.0 + min_scale)
+    wmax *= (1.0 + max_scale)
+    wmax = torch.maximum(wmax, wmin)
     tmp = (wmin == 0) & (wmax == 0)
     wmin[tmp] = -1
     wmax[tmp] = +1
@@ -60,7 +64,7 @@ def quant_weight_asym(weight, num_bits=4, grad=0):
     return scale * (q - zp)
 
 
-def quant_weight_sym(weight, num_bits=4, grad=0):
+def quant_weight_sym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-2 ** (num_bits - 1)).to(weight.device)
     if num_bits == 1:
@@ -68,32 +72,34 @@ def quant_weight_sym(weight, num_bits=4, grad=0):
         minq = torch.tensor(2 ** (num_bits - 1) - 1)
 
     wmax = torch.abs(weight).max(1)[0]
+    wmax *= (1 + max_scale)
     tmp = (wmax == 0)
     wmax[tmp] = +1
     scale = wmax / ((maxq - minq) / 2)
     scale.unsqueeze_(dim=-1)
-    q = torch.clamp(torch.round(weight / scale + grad), minq, maxq)
+    q = torch.clamp(round_ste(weight / scale + grad), minq, maxq)
     return scale * q
 
 
-def quant_weight_actor(weight, num_bits, schema, grad):
+def quant_weight_actor(weight, num_bits, schema, grad, min_scale, max_scale):
     assert num_bits > 0, "num_bits should be larger than 0"
     if schema == "sym":
-        return quant_weight_sym(weight, num_bits, grad)
+        return quant_weight_sym(weight, num_bits, grad, min_scale, max_scale)
     else:
-        return quant_weight_asym(weight, num_bits, grad)
+        return quant_weight_asym(weight, num_bits, grad, min_scale, max_scale)
 
 
-def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0):
+def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0, min_scale=0, max_scale=0):
     if group_size == -1 or weight.shape[1] < group_size:
-        return quant_weight_actor(weight, num_bits, schema=schema, grad=grad)
-
+        return quant_weight_actor(weight, num_bits, schema=schema, grad=grad, min_scale=min_scale, max_scale=max_scale)
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
         if isinstance(grad, torch.Tensor):
             grad = grad.reshape(-1, group_size)
-        weight = quant_weight_actor(weight, num_bits, schema=schema, grad=grad)
+
+        weight = quant_weight_actor(weight, num_bits, schema=schema, grad=grad, min_scale=min_scale,
+                                    max_scale=max_scale)
 
         weight = weight.reshape(orig_shape)
 
@@ -109,10 +115,23 @@ def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0):
         else:
             grad1 = 0
             grad2 = 0
-        weight1 = quant_weight_actor(weight1, num_bits, schema=schema, grad=grad1)
+        if isinstance(min_scale, torch.Tensor):
+            min_scale_1 = min_scale[:, :weight.shape[1] // group_size]
+            min_scale_2 = min_scale[:, weight.shape[1] // group_size:]
+            max_scale_1 = max_scale[:, :weight.shape[1] // group_size]
+            max_scale_2 = max_scale[:, weight.shape[1] // group_size:]
+        else:
+            min_scale_1 = min_scale
+            min_scale_2 = min_scale
+            max_scale_1 = max_scale
+            max_scale_2 = max_scale
+
+        weight1 = quant_weight_actor(weight1, num_bits, schema=schema, grad=grad1, min_scale=min_scale_1,
+                                     max_scale=max_scale_1)
         weight1 = weight1.reshape(orig_shape[0], split_index)
         weight2 = weight[:, split_index:]
-        weight2 = quant_weight_actor(weight2, num_bits, schema=schema, grad=grad2)
+        weight2 = quant_weight_actor(weight2, num_bits, schema=schema, grad=grad2, min_scale=min_scale_2,
+                                     max_scale=max_scale_2)
         weight = torch.cat([weight1, weight2], dim=1)
 
         return weight
@@ -278,8 +297,17 @@ def set_module(model, key, new_module):
     setattr(module, attrs[-1], new_module)
 
 
+def get_scale_shape(weight, group_size):
+    if group_size == -1 or weight.shape[1] < group_size:
+        shape = (weight.shape[0])
+    else:
+        shape = (weight.shape[0] * ((weight.shape[1] + group_size - 1) // group_size))
+
+    return shape
+
+
 class WrapperLinear(torch.nn.Module):
-    def __init__(self, orig_layer, num_bits, group_size, schema, grad=0):
+    def __init__(self, orig_layer, num_bits, group_size, schema, grad=0, enable_minmax_tuning=False):
         super(WrapperLinear, self).__init__()
         self.orig_layer = orig_layer
         self.orig_layer.weight.requires_grad_(True)
@@ -287,14 +315,29 @@ class WrapperLinear(torch.nn.Module):
         self.group_size = group_size
         self.schema = schema
         self.grad = grad
+        self.enable_minmax_tuning = enable_minmax_tuning
+        shape = get_scale_shape(self.orig_layer.weight, group_size)
+        if self.enable_minmax_tuning:
+            self.min_scale = torch.nn.Parameter(torch.zeros(shape, device=self.orig_layer.weight.device),
+                                                requires_grad=True)
+            self.max_scale = torch.nn.Parameter(torch.zeros(shape, device=self.orig_layer.weight.device),
+                                                requires_grad=True)
+        else:
+            self.min_scale = 0
+            self.max_scale = 0
 
     def update_grad(self, grad):
         self.grad = grad
 
     def forward(self, x):
         weight = self.orig_layer.weight
-        weight_q = FakeAffineTensorQuantFunction().apply(weight, self.num_bits, self.group_size, self.schema,
-                                                         self.grad)
+        if self.enable_minmax_tuning:
+            weight_q = quant_weight(weight, self.num_bits, self.group_size, self.schema,
+                                    self.grad)
+
+        else:
+            weight_q = FakeAffineTensorQuantFunction().apply(weight, self.num_bits, self.group_size, self.schema,
+                                                             self.grad)  ##mainly for reproducing the data of paper
         return F.linear(x, weight_q, self.orig_layer.bias)
 
 
@@ -404,14 +447,54 @@ def move_to_device(input_ids, inputs_others=None, device=torch.device("cpu")):
         return input_ids, inputs_others
     return input_ids
 
+def collect_round_grad_and_zero(block):
+    grads = {}
+    for n, m in block.named_modules():
+        if isinstance(m, WrapperLinear):
+            grad = -m.orig_layer.weight.grad
+            grads[n] = copy.deepcopy(grad)
+            m.orig_layer.weight.grad.zero_()
+    return grads
+
+
+def update_round_grad(block, i, start_step, grad, grad_m, args):
+    if i < start_step - 1:
+        return
+    if i == start_step - 1:
+        collect_round_grad_and_zero(block)  ##mainly for zero
+        return
+
+    new_grad = collect_round_grad_and_zero(block)
+    total_step = args.iters - start_step
+    warmup_step = int(total_step * args.lr_wr)
+    current_step = i - start_step
+    current_lr = get_lr(current_step, total_step, args.lr, warmup_step, args.lr_decay_type)
+
+    for key in new_grad.keys():
+        new_grad[key] = torch.sign(new_grad[key]) * current_lr
+
+    if grad is None:
+        grad = new_grad
+        grad_m = new_grad
+    else:
+        for key in new_grad.keys():
+            if args.momentum > 0:
+                grad_m[key] = args.momentum * grad_m[key] + new_grad[key]
+                grad[key] += grad_m[key]
+            else:
+                grad[key] += new_grad[key]
+    clip_value = args.clip_val
+    for key in grad.keys():
+        grad[key] = torch.clip(grad[key], -clip_value, clip_value)
+
+    return grad, grad_m
 
 def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_input=None, args=None,
                 device=torch.device("cpu")):
     best_loss = torch.finfo(torch.float).max
     mse_loss = torch.nn.MSELoss()
     grad = None
-    if args.momentum > 0:
-        grad_m = None
+    grad_m = None
     output = []
     if not args.low_gpu_mem_usage and input_ids.device != device:
         input_ids, input_others = move_to_device(input_ids, input_others, device)
@@ -482,29 +565,7 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
         if not args.not_use_mse:
             if args.dynamic_max_gap > 0 and i - last_best_iter >= args.dynamic_max_gap:
                 break
-        new_grad = collect_grad_and_zero(block)
-
-        warmup_step = int(args.iters * args.lr_wr)
-        current_lr = get_lr(i, args.iters, args.lr, warmup_step, args.lr_decay_type)
-
-        for key in new_grad.keys():
-            new_grad[key] = torch.sign(new_grad[key]) * current_lr
-
-        if grad is None:
-            grad = new_grad
-            grad_m = new_grad
-        else:
-            for key in new_grad.keys():
-                if args.momentum > 0:
-                    grad_m[key] = args.momentum * grad_m[key] + new_grad[key]
-                    grad[key] += grad_m[key]
-                else:
-                    grad[key] += new_grad[key]
-
-        clip_value = args.clip_val
-
-        for key in grad.keys():
-            grad[key] = torch.clip(grad[key], -clip_value, clip_value)
+        grad, grad_m = update_round_grad(block, i, 0, grad, grad_m, args)
         for n, m in block.named_modules():
             if isinstance(m, WrapperLinear):
                 m.update_grad(grad[n])
@@ -560,7 +621,7 @@ def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, g
                       device=torch.device("cpu")):
     q_input = None
     torch.cuda.empty_cache()
-    for n,m in model.named_parameters():
+    for n, m in model.named_parameters():
         m.requires_grad_(False)
     input_ids = inputs["input_ids"]
     inputs.pop('input_ids', None)
@@ -673,11 +734,11 @@ if __name__ == '__main__':
     parser.add_argument("--low_gpu_mem_usage", action='store_true',
                         help="low_gpu_mem_usage")
 
+    # parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
+    #                     help="lm-eval tasks")
+
     parser.add_argument("--tasks", default=["lambada_openai"],
                         help="lm-eval tasks")
-
-    # parser.add_argument("--tasks", default=["lambada_openai"],
-    #                     help="lm-eval tasks")
     args = parser.parse_args()
     set_seed(args.seed)
 
