@@ -217,7 +217,6 @@ class GPTQuantizer(object):
         # model
         self.model = model
         # self.use_cache = self.model.config.use_cache
-        # import pdb;pdb.set_trace()
         self.gptq_related_blocks = trace_gptq_target_blocks(self.model)  # get the transformer block list above
         self.dtype = next(iter(self.model.parameters())).dtype
         log_quantizable_layers_per_transformer(self.gptq_related_blocks)
@@ -621,7 +620,6 @@ class GPTQuantizer(object):
             # Step 2.5: replace output data with quantized weights
             outs = []
             idx = self.cache_key_arguments.pop("i")
-            # import pdb;pdb.set_trace()
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
@@ -639,7 +637,6 @@ class GPTQuantizer(object):
             self.gptq_related_blocks["transformers"][block_idx] = transformer_block.cpu()
             del gptq_for_this_block
             torch.cuda.empty_cache()
-            # import pdb;pdb.set_trace()
             # iteratively replace the input with output, thus layerwise quantization can continue.
             self.update_blockwise_hidden_states(outs)
             logger.info("------------------------------")
