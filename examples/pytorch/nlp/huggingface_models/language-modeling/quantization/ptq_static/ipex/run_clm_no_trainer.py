@@ -34,6 +34,9 @@ parser.add_argument("--approach", type=str, default='static',
 parser.add_argument("--int8", action="store_true")
 parser.add_argument("--ipex", action="store_true", help="Use intel extension for pytorch.")
 parser.add_argument("--accuracy", action="store_true")
+parser.add_argument("--performance", action="store_true")
+parser.add_argument("--iters", default=100, type=int,
+                    help="For accuracy measurement only.")
 parser.add_argument("--batch_size", default=1, type=int,
                     help="For accuracy measurement only.")
 parser.add_argument("--save_accuracy_path", default=None,
@@ -347,6 +350,33 @@ if args.accuracy:
             f.write(dumped)
     for task_name in args.tasks:
         if task_name == "wikitext":
-            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["word_perplexity"]))
+            acc = results["results"][task_name]["word_perplexity"]
         else:
-            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["acc"]))
+            acc = results["results"][task_name]["acc"]
+    print("Accuracy: %.5f" % acc)
+    print('Batch size = %d' % args.batch_size)
+
+if args.performance:
+    user_model.eval()
+    from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
+    import time
+    samples = args.iters * args.batch_size
+    start = time.time()
+    results = evaluate(
+        model="hf-causal",
+        model_args='pretrained='+args.model+',tokenizer='+args.model+',dtype=float32',
+        user_model=user_model,
+        batch_size=args.batch_size,
+        tasks=args.tasks,
+        limit=samples,
+    )
+    end = time.time()
+    for task_name in args.tasks:
+        if task_name == "wikitext":
+            acc = results["results"][task_name]["word_perplexity"]
+        else:
+            acc = results["results"][task_name]["acc"]
+    print("Accuracy: %.5f" % acc)
+    print('Throughput: %.3f samples/sec' % (samples / (end - start)))
+    print('Latency: %.3f ms' % ((end - start) / samples / 1000))
+    print('Batch size = %d' % args.batch_size)

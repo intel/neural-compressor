@@ -8,5 +8,6 @@ pytest
 wandb
 einops
 neural-compressor
+intel-extension-for-transformers
 git+https://github.com/EleutherAI/lm-evaluation-harness.git@83dbfbf6070324f3e5872f63e49d49ff7ef4c9b3
 git+https://github.com/huggingface/peft.git@6c44096c7b8d55a2ecf24be9bc68393467e1584a

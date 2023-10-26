@@ -464,6 +464,62 @@
       "main_script": "run_clm.py",
       "batch_size": 8
     },
+    "opt_125m_woq_awq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 8
+    },
+    "opt_125m_woq_gptq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 8
+    },
+    "opt_125m_woq_teq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 8
+    },
+    "opt_125m":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 8
+    },
+    "opt_125m_sq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 8
+    },
+    "llama_7b_sq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 8
+    },
+    "gpt_j_sq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 8
+    },
+    "falcon_7b_sq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 8
+    },
     "xlm-roberta-base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "",

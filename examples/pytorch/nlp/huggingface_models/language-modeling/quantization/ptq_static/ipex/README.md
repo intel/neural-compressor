@@ -8,10 +8,7 @@ The script `run_clm_no_trainer.py` supports `GPTJ`, `OPT`, `LLaMA`, `BLOOM`, `MP
 ## 1. Create Environment
 ```
 # Installation
-git clone https://github.com/intel/intel-extension-for-transformers.git itrex
-cd itrex
 pip install -r requirements.txt
-SKIP_RUNTIME=True pip install -e .
 ```
 
 # Run
