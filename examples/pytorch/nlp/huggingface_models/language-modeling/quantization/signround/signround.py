@@ -47,11 +47,12 @@ def round_ste(x: torch.Tensor):
 def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
     maxq = torch.tensor(2 ** num_bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device)
-    wmin = torch.minimum(weight.min(1)[0], zeros)
-    wmax = torch.maximum(weight.max(1)[0], zeros)
-    wmin *= (1.0 + min_scale)
-    wmax *= (1.0 + max_scale)
-    wmax = torch.maximum(wmax, wmin)
+    wmin_tmp = torch.minimum(weight.min(1)[0], zeros)
+    wmax_tmp = torch.maximum(weight.max(1)[0], zeros)
+    wmin_tmp *= (1.0 + min_scale)
+    wmax_tmp *= (1.0 + max_scale)
+    wmax = torch.maximum(wmax_tmp, wmin_tmp)
+    wmin = torch.minimum(wmax_tmp, wmin_tmp)
     tmp = (wmin == 0) & (wmax == 0)
     wmin[tmp] = -1
     wmax[tmp] = +1
@@ -307,7 +308,7 @@ def get_scale_shape(weight, group_size):
 
 
 class WrapperLinear(torch.nn.Module):
-    def __init__(self, orig_layer, num_bits, group_size, schema, grad=0, enable_minmax_tuning=False):
+    def __init__(self, orig_layer, num_bits, group_size, schema, grad=0, enable_minmax_tuning=True):
         super(WrapperLinear, self).__init__()
         self.orig_layer = orig_layer
         self.orig_layer.weight.requires_grad_(True)
@@ -326,14 +327,20 @@ class WrapperLinear(torch.nn.Module):
             self.min_scale = 0
             self.max_scale = 0
 
+    @torch.no_grad()
     def update_grad(self, grad):
         self.grad = grad
+
+    @torch.no_grad()
+    def update_minmax_grad(self, min_scale, max_scale):
+        self.min_scale.copy_(min_scale)
+        self.max_scale.copy_(max_scale)
 
     def forward(self, x):
         weight = self.orig_layer.weight
         if self.enable_minmax_tuning:
             weight_q = quant_weight(weight, self.num_bits, self.group_size, self.schema,
-                                    self.grad)
+                                    self.grad,self.min_scale, self.max_scale)
 
         else:
             weight_q = FakeAffineTensorQuantFunction().apply(weight, self.num_bits, self.group_size, self.schema,
@@ -349,14 +356,21 @@ def wrapper_block(block, num_bits, group_size, schema):
 
 
 @torch.no_grad()
-def unwrapper_block(block, num_bits, group_size, schema, grads):
+def unwrapper_block(block, num_bits, group_size, schema, grads, min_scale_grads, max_scale_grads):
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear):
             orig_layer = m.orig_layer
             grad = 0
-            if grads is not None:
+            min_scale_grad = 0
+            max_scale_grad = 0
+            if isinstance(grads, dict):
                 grad = grads[n]
-            q_dq_weight = quant_weight(orig_layer.weight, num_bits, group_size, schema, grad)
+            if isinstance(min_scale_grads, dict):
+                min_scale_grad = min_scale_grads[n]
+            if isinstance(max_scale_grads, dict):
+                max_scale_grad = max_scale_grads[n]
+            q_dq_weight = quant_weight(orig_layer.weight, num_bits, group_size, schema, grad, min_scale_grad,
+                                       max_scale_grad)
             orig_layer.weight.data.copy_(q_dq_weight)
             orig_layer.weight.grad = None  ##clear grad
             set_module(block, n, orig_layer)
@@ -447,6 +461,50 @@ def move_to_device(input_ids, inputs_others=None, device=torch.device("cpu")):
         return input_ids, inputs_others
     return input_ids
 
+
+def collect_minmax_grad_and_zero(block):
+    grad_min_scale = {}
+    grad_max_scale = {}
+    for n, m in block.named_modules():
+        if isinstance(m, WrapperLinear):
+            grad_min_scale[n] = copy.deepcopy(-m.min_scale.grad)
+            grad_max_scale[n] = copy.deepcopy(-m.max_scale.grad)
+            m.min_scale.grad.zero_()
+            m.max_scale.grad.zero_()
+    return grad_min_scale, grad_max_scale
+
+
+def update_min_max_round_grad(block, i, start_step, min_scale_grad, max_scale_grad, args):
+    if i < start_step - 1:
+        return None, None
+    if i == start_step - 1:
+        collect_minmax_grad_and_zero(block)  ##mainly for zero
+        return None, None
+
+    new_min_scale_grad, new_max_scale_grad = collect_minmax_grad_and_zero(block)
+    total_step = args.iters - start_step
+    warmup_step = int(total_step * args.lr_wr)
+    current_step = i - start_step
+    current_lr = get_lr(current_step, total_step, args.lr, warmup_step, args.lr_decay_type)
+
+    for key in new_min_scale_grad.keys():
+        new_min_scale_grad[key] = torch.sign(new_min_scale_grad[key]) * current_lr
+        new_max_scale_grad[key] = torch.sign(new_max_scale_grad[key]) * current_lr
+    if not isinstance(min_scale_grad, dict):
+        min_scale_grad = new_min_scale_grad
+        max_scale_grad = new_max_scale_grad
+    else:
+        for key in min_scale_grad.keys():
+            min_scale_grad[key] += new_min_scale_grad[key]
+            max_scale_grad[key] += new_max_scale_grad[key]
+    clip_value = args.clip_val
+    for key in min_scale_grad.keys():
+        min_scale_grad[key] = torch.clip(min_scale_grad[key], -1, 0)  ##TODO clip val hard coded
+        max_scale_grad[key] = torch.clip(max_scale_grad[key], -1, 0)
+
+    return min_scale_grad, max_scale_grad
+
+
 def collect_round_grad_and_zero(block):
     grads = {}
     for n, m in block.named_modules():
@@ -489,12 +547,15 @@ def update_round_grad(block, i, start_step, grad, grad_m, args):
 
     return grad, grad_m
 
+
 def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_input=None, args=None,
                 device=torch.device("cpu")):
     best_loss = torch.finfo(torch.float).max
     mse_loss = torch.nn.MSELoss()
     grad = None
     grad_m = None
+    min_scale_grad = None
+    max_scale_grad = None
     output = []
     if not args.low_gpu_mem_usage and input_ids.device != device:
         input_ids, input_others = move_to_device(input_ids, input_others, device)
@@ -559,18 +620,26 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
             if not args.not_use_mse:
                 # print(f"get better result at iter {i}, the loss is {total_loss}", flush=True)
                 best_grad = copy.deepcopy(grad)
+                best_min_scale_grad = copy.deepcopy(min_scale_grad)
+                best_max_scale_grad = copy.deepcopy(max_scale_grad)
                 last_best_iter = i
         if args.not_use_mse:
             best_grad = grad
+            best_min_scale_grad = min_scale_grad
+            best_max_scale_grad = max_scale_grad
+
         if not args.not_use_mse:
             if args.dynamic_max_gap > 0 and i - last_best_iter >= args.dynamic_max_gap:
                 break
         grad, grad_m = update_round_grad(block, i, 0, grad, grad_m, args)
+        min_scale_grad, max_scale_grad = update_min_max_round_grad(block, i, 0, min_scale_grad, max_scale_grad,
+                                                                   args)
         for n, m in block.named_modules():
             if isinstance(m, WrapperLinear):
                 m.update_grad(grad[n])
+                m.update_minmax_grad(min_scale_grad[n], max_scale_grad[n])
 
-    unwrapper_block(block, num_bits, group_size, schema, best_grad)
+    unwrapper_block(block, num_bits, group_size, schema, best_grad, best_min_scale_grad, best_max_scale_grad)
     if args.use_quant_input:
         with torch.no_grad():
             current_bs = args.train_bs
@@ -639,11 +708,12 @@ def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, g
             m = WrapperMultiblock(modules)
 
         m = m.to(device)
-        q_input, input_ids = quant_block(m, input_ids, input_others, num_bits=num_bits, group_size=group_size,
-                                         schema=schema,
-                                         q_input=q_input,
-                                         args=args,
-                                         device=device)
+        with torch.autograd.set_detect_anomaly(True):
+            q_input, input_ids = quant_block(m, input_ids, input_others, num_bits=num_bits, group_size=group_size,
+                                             schema=schema,
+                                             q_input=q_input,
+                                             args=args,
+                                             device=device)
         m.to("cpu")
         torch.cuda.empty_cache()
 
