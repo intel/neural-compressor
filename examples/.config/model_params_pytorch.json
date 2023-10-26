@@ -485,28 +485,28 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 8
     },
-    "opt_125m":{
+    "opt_125m_ipex":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex",
       "dataset_location": "",
       "input_model": "",
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 8
     },
-    "opt_125m_sq":{
+    "opt_125m_ipex_sq":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex",
       "dataset_location": "",
       "input_model": "",
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 8
     },
-    "llama_7b_sq":{
+    "llama_7b_ipex_sq":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex",
       "dataset_location": "",
       "input_model": "",
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 8
     },
-    "gpt_j_sq":{
+    "gpt_j_ipex_sq":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex",
       "dataset_location": "",
       "input_model": "",
