@@ -189,7 +189,8 @@ def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None, cal
     assert dataloader, "dataloader should NOT be empty when train_func is None"
     assert adaptor, "adaptor should NOT be empty"
 
-    from neural_compressor.experimental.common import Criterions, Optimizers
+    from neural_compressor.compression.distillation.criterions import Criterions
+    from neural_compressor.compression.distillation.optimizers import Optimizers
 
     postprocess_cfg = train_cfg.postprocess
     if postprocess_cfg is not None:
