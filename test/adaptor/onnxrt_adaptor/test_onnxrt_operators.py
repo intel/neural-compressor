@@ -1561,7 +1561,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 4)
         session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
         self.assertIsNotNone(session)
-    
+
     def test_tile(self):
         # test Tile nodes: MatMul-Tile-MatMul
         input_tensor = helper.make_tensor_value_info("input", TensorProto.FLOAT, [2, 3, 4, 1])
@@ -1621,7 +1621,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 4)
         session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
         self.assertIsNotNone(session)
-  
+
     def test_centercroppad(self):
         # test CenterCropPad nodes: MatMul-CenterCropPad-MatMul
         input_tensor = helper.make_tensor_value_info("input", TensorProto.FLOAT, [20, 10, 1])
@@ -1660,7 +1660,11 @@ class TestAdaptorONNXRT(unittest.TestCase):
         model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 18)])
         model.ir_version = 8
 
-        q_config = {"Matmul_0": self.static_q_config, "Centercroppad_1": self.static_q_config, "Matmul_2": self.static_q_config}
+        q_config = {
+            "Matmul_0": self.static_q_config,
+            "Centercroppad_1": self.static_q_config,
+            "Matmul_2": self.static_q_config,
+        }
         quantize_params = {
             "input": [np.uint8(10.0), np.float32(0)],
             "matmul1_weight": [np.uint8(10.0), np.float32(0)],
@@ -1720,10 +1724,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
         model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
         model.ir_version = 7
 
-        q_config = {"Matmul_0": self.static_q_config, 
-                    "Matmul_2": self.static_q_config,
-                    "Gathernd_1": self.static_q_config,}
-        
+        q_config = {
+            "Matmul_0": self.static_q_config,
+            "Matmul_2": self.static_q_config,
+            "Gathernd_1": self.static_q_config,
+        }
+
         quantize_params = {
             "input": [np.uint8(10.0), np.float32(0)],
             "matmul1_weight": [np.uint8(10.0), np.float32(0)],
@@ -1783,10 +1789,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
         model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
         model.ir_version = 7
 
-        q_config = {"Matmul_0": self.static_q_config, 
-                    "Matmul_2": self.static_q_config,
-                    "Gatherelements_1": self.static_q_config,}
-        
+        q_config = {
+            "Matmul_0": self.static_q_config,
+            "Matmul_2": self.static_q_config,
+            "Gatherelements_1": self.static_q_config,
+        }
+
         quantize_params = {
             "input": [np.uint8(10.0), np.float32(0)],
             "matmul1_weight": [np.uint8(10.0), np.float32(0)],
@@ -1807,6 +1815,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 4)
         session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
         self.assertIsNotNone(session)
+
 
 class TestCastONNXRT(unittest.TestCase):
     @classmethod
