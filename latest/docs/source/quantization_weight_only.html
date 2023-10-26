@@ -233,6 +233,53 @@
 </div>
 <p>The saved_results folder contains two files: <code class="docutils literal notranslate"><span class="pre">best_model.pt</span></code> and <code class="docutils literal notranslate"><span class="pre">qconfig.json</span></code>, and the generated q_model is a fake quantized model.</p>
 </section>
+<section id="woq-algorithms-tuning">
+<h3><strong>WOQ algorithms tuning</strong><a class="headerlink" href="#woq-algorithms-tuning" title="Permalink to this heading"></a></h3>
+<p>To find the best algorithm, users can omit specifying a particular algorithm. In comparison to setting a specific algorithm, this tuning process will traverse through a set of pre-defined WOQ configurations and identify the optimal one with the best result. For details usage, please refer to the <a class="reference external" href="./tuning_strategies.html#Basic">tuning strategy</a>.</p>
+<blockquote>
+<div><p><strong>Note:</strong> Currently, this behavior is specific to the <code class="docutils literal notranslate"><span class="pre">ONNX</span> <span class="pre">Runtime</span></code> backend.</p>
+</div></blockquote>
+<p><strong>Pre-defined configurations</strong></p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: center;">WOQ configurations</th>
+<th style="text-align: center;">setting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">RTN_G32ASYM</td>
+<td style="text-align: center;">{"algorithm": "RTN", "group_size": 32, "scheme": "asym"}</td>
+</tr>
+<tr>
+<td style="text-align: center;">GPTQ_G32ASYM</td>
+<td style="text-align: center;">{"algorithm": "GPTQ", "group_size": 32, "scheme": "asym"}</td>
+</tr>
+<tr>
+<td style="text-align: center;">GPTQ_G32ASYM_DISABLE_LAST_MATMUL</td>
+<td style="text-align: center;">{"algorithm": "GPTQ", "group_size": 32, "scheme": "asym"} <br> &amp; disable last MatMul</td>
+</tr>
+<tr>
+<td style="text-align: center;">GPTQ_G128ASYM</td>
+<td style="text-align: center;">{"algorithm": "GPTQ", "group_size": 128, "scheme": "asym"}</td>
+</tr>
+<tr>
+<td style="text-align: center;">AWQ_G32ASYM</td>
+<td style="text-align: center;">{"algorithm": "AWQ", "group_size": 32, "scheme": "asym"}</td>
+</tr>
+</tbody>
+</table><p><strong>User code example</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">approach</span><span class="o">=</span><span class="s2">&quot;weight_only&quot;</span><span class="p">,</span>
+    <span class="n">quant_level</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>  <span class="c1"># quant_level supports &quot;auto&quot; or 1 for woq config tuning</span>
+<span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">)</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;saved_results&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Refer to this <a class="reference external" href="../../examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only">link</a> for an example of WOQ algorithms tuning on ONNX Llama models.</p>
+</section>
 </section>
 <section id="layer-wise-quantization">
 <h2>Layer Wise Quantization<a class="headerlink" href="#layer-wise-quantization" title="Permalink to this heading"></a></h2>
@@ -319,7 +366,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6e15311ed0> 
+   <jinja2.runtime.BlockReference object at 0x7f53ec9bb130> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
