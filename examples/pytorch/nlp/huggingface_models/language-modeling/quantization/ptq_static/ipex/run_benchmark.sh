@@ -12,7 +12,9 @@ function main {
 function init_params {
   iters=100
   batch_size=16
+  approach=static
   tuned_checkpoint=saved_results
+  task=lambada_openai
   echo ${max_eval_samples}
   for var in "$@"
   do
@@ -64,11 +66,10 @@ function run_benchmark {
         exit 1
     fi
 
-    extra_cmd=''
-    batch_size=8
-    approach='static'
-    DATASET_NAME="NeelNanda/pile-10k"
-    tuned_checkpoint="saved_results"
+    if [[ ${int8} == "true" ]]; then
+        extra_cmd=$extra_cmd" --int8"
+    fi
+    echo $extra_cmd
 
     if [ "${topology}" = "opt_125m_woq_awq" ]; then
         model_name_or_path="facebook/opt-125m"
@@ -100,12 +101,11 @@ function run_benchmark {
     fi
 
     python -u run_clm_no_trainer.py \
-        --model_name_or_path ${input_model} \
-        --dataset ${DATASET_NAME} \
+        --model ${model_name_or_path} \
         --approach ${approach} \
         --output_dir ${tuned_checkpoint} \
-        --quantize \
-        ${extra_cmd}
+        --task ${task} \
+        ${extra_cmd} ${mode_cmd}
 }
 
 main "$@"

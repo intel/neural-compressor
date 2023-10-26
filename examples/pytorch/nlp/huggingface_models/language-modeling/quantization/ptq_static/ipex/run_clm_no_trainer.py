@@ -156,7 +156,7 @@ class Evaluator:
 def get_user_model():
     from transformers import AutoModelForCausalLM, AutoModel, AutoTokenizer
     torchscript = False
-    if args.sq or args.woq_algo in ['AWQ', 'TEQ']:
+    if args.sq or args.ipex or args.woq_algo in ['AWQ', 'TEQ']:
         torchscript = True
     if re.search("llama", args.model.lower()):
         import transformers
@@ -378,5 +378,5 @@ if args.performance:
             acc = results["results"][task_name]["acc"]
     print("Accuracy: %.5f" % acc)
     print('Throughput: %.3f samples/sec' % (samples / (end - start)))
-    print('Latency: %.3f ms' % ((end - start) / samples / 1000))
+    print('Latency: %.3f ms' % ((end - start)*1000 / samples))
     print('Batch size = %d' % args.batch_size)

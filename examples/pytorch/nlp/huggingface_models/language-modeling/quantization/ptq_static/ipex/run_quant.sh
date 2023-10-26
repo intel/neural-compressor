@@ -72,7 +72,7 @@ function run_tuning {
     fi
 
     python -u run_clm_no_trainer.py \
-        --model_name_or_path ${model_name_or_path} \
+        --model ${model_name_or_path} \
         --dataset ${DATASET_NAME} \
         --approach ${approach} \
         --output_dir ${tuned_checkpoint} \
