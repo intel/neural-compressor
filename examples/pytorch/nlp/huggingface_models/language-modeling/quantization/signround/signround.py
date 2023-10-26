@@ -35,6 +35,13 @@ class FakeAffineTensorQuantFunction(Function):
     def backward(ctx, grad_outputs):
         return grad_outputs, None, None, None, None
 
+def round_ste(x: torch.Tensor):
+    """
+    cp from https://github.com/OpenGVLab/OmniQuant/blob/main/quantize/quantizer.py
+    Implement Straight-Through Estimator for rounding operation.
+    """
+    return (x.round() - x).detach() + x
+
 
 def quant_weight_asym(weight, num_bits=4, grad=0):
     maxq = torch.tensor(2 ** num_bits - 1)
@@ -45,10 +52,10 @@ def quant_weight_asym(weight, num_bits=4, grad=0):
     wmin[tmp] = -1
     wmax[tmp] = +1
     scale = (wmax - wmin) / maxq
-    zp = torch.round(-wmin / scale)
-    scale.unsqueeze_(dim=-1)
-    zp.unsqueeze_(dim=-1)
-    int_w = torch.round(weight / scale + grad)
+    zp = round_ste(-wmin / scale)
+    scale = scale.unsqueeze(dim=-1)
+    zp = zp.unsqueeze(dim=-1)
+    int_w = round_ste(weight / scale + grad)
     q = torch.clamp(int_w + zp, 0, maxq)
     return scale * (q - zp)
 
