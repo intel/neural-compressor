@@ -35,11 +35,8 @@ def ipex_mixed_precision(model, example_inputs=None):
                 mp_model = torch.jit.trace(mp_model, example_kwarg_inputs=example_inputs)
             except:
                 mp_model = torch.jit.trace(
-                        mp_model,
-                        example_kwarg_inputs=example_inputs,
-                        strict=False,
-                        check_trace=False
-                        )
+                    mp_model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False
+                )
         else:
             try:
                 mp_model = torch.jit.trace(mp_model, example_inputs)
