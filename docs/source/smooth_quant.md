@@ -280,13 +280,15 @@ For most of the models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced 
 
 SmoothQuant method aims to split the quantization difficulty of weight and activation by using a fixed-value $\alpha$ for an entire model. However, as the distributions of activation outliers vary not only across different models but also across different layers within a model, we hereby propose a method to obtain layer-wise optimal $\alpha$ values with the ability to tune automatically.
 
-Our proposed method consists of 5 major steps:
+Our proposed method consists of 7 major steps:
 
--    Hook input and output values of all layers using register_forward_hook.
--    Generate a list of $\alpha$ values given user-defined $\alpha$ range and step_sizes.
--    Recalculate smoothing factor given an $\alpha$ value and adjust parameters(weights and activations).
--    Perform per-channel quantization_dequantization of weights and per-tensor quantization_dequantization of inputs to predict the layer-wise output corresponding to the given $\alpha$ value.
--    Calculate the mean-squared loss with respect to the actual output value, recover the adjusted parameters and save the layer-wise optimal $\alpha$ values.
+-    Hook input minimum and maximum values of layers to be smoothed using register_forward_hook.
+-    Generate a list of $\alpha$ values of a user-defined range and set a default $\alpha$ value.
+-    Calculate smoothing factor using default $\alpha$ value, adjust parameters accordingly and forward the adjusted model given an input sample.
+-    Perform per-channel quantization_dequantization of weights and per-tensor quantization_dequantization of activations to predict output.
+-    Calculate the layer-wise loss with respect to FP32 output, iterate the previous two steps given each $\alpha$ value and save the layer-wise loss per alpha.
+-    Apply criterion on input LayerNorm op and obtain the layer-wise optimal alpha values of a single input sample.
+-    Iterate the previous three steps over a number of input samples and save the layer-wise optimal $\alpha$ values.
 
 
 
@@ -318,28 +320,56 @@ conv2d/linear->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/g
 ## Validated Models
 Neural Compressor: 2.1
 
-IPEX (Intel Extension for PyTorch): 2.0
+IPEX (Intel Extension for PyTorch): 2.0/2.1
 
-Dataset: lambada
+Dataset: lambada_openai
 
 Task: text-generation
 
-alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper
+alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper.
 
-| Model\Last token accuracy |  FP32  | INT8 (w/o SmoothQuant) | INT8 (w/ SmoothQuant) | INT8 (w/ SmoothQuant auto tuning) |
-|---------------------|:------:|:----------------------:|-----------------------|-----------------------------------|
-| bigscience/bloom-560m | 65.20% |         63.44%         | 66.48% (alpha=0.5)    | 64.76% (alpha: 95.9% over 0.6, 4.1% in [0.4, 0.6])                           |
-| bigscience/bloom-1b7 | 71.43% |         67.78%         | 72.56% (alpha=0.5)    | 72.58% (alpha: 55.1% over 0.6, 30.6% in [0.4, 0.6], 14.3% under 0.4)                            |
-| bigscience/bloom-3b | 73.97% |         69.99%         | 74.02% (alpha=0.5)    | 74.16% (alpha: 100% over 0.6)                            |
-| bigscience/bloom-7b1 | 77.44% |         75.46%         | 77.02%(alpha=0.5)     | 77.45% (alpha: 91.8% over 0.6, 4.9% in [0.4, 0.6], 3.3% under 0.4)                           |
-| bigscience/bloom-176b | 84.17% |         82.13%         | 83.52% (alpha=0.6)    | -                                 |
-| facebook/opt-125m   | 63.89% |         63.48%         | 63.44% (alpha=0.5)    | 64.14% (alpha: 59.4% over 0.6, 8.1% in [0.4, 0.6], 32.4% under 0.4)                           |
-| facebook/opt-1.3b   | 75.41% |         73.59%         | 70.94% (alpha=0.5)    | 74.80% (alpha: 69.9% over 0.6, 24.7% in [0.4, 0.6], 5.5% under 0.4)                            |
-| facebook/opt-2.7b   | 77.79% |         78.57%         | 78.60%(alpha=0.5)     | 78.25% (alpha: 73.2% over 0.6, 21.6% in [0.4, 0.6], 5.2% under 0.4)                           |
-| facebook/opt-6.7b   | 81.26% |         76.65%         | 81.58%(alpha=0.5)     | 81.39% (alpha: 68.0% over 0.6, 26.8% in [0.4, 0.6], 5.2% under 0.4)                           |
-| EleutherAI/gpt-j-6B | 79.17% |         78.82%         | 78.84%(alpha=0.6)     | 79.29% (alpha: 96.4% over 0.6, 3.6% in [0.4, 0.6])                                            |
+A list of models that achieved a <1% accuracy drop is shown below.
 
+| Model/Last token accuracy |  FP32 Accuracy   | INT8 (w/ SmoothQuant) | Notes |
+|:----------:|:------:|:------:|-----------------------------------|
+| bigscience/bloom-560m | 0.354 | 0.3542 | alpha=0.5, Ipex 2.1 |
+| bigscience/bloom-1b7  | 0.4634 | 0.4936 | alpha=0.5, Ipex 2.0 |
+| bigscience/bloom-3b   | 0.518 | 0.5185 | alpha=0.8, Ipex 2.1 | 
+| bigscience/bloom-7b1  | 0.5764 | 0.5977 | alpha=0.5, Ipex 2.0 |
+| bigscience/bloomz-560m  | 0.3947 | 0.3930 | alpha=0.8, Ipex 2.1 |
+| bigscience/bloomz-1b7  | 0.4828 | 0.4906 | alpha=0.5, Ipex 2.1 |
+| bigscience/bloomz-3b   | 0.5018 | 0.4980 | alpha=0.5, Ipex 2.1 | 
+| bigscience/bloomz-7b1  | 0.5593 | 0.5552 | alpha=0.5, Ipex 2.1 |
+| facebook/opt-125m   | 0.379 | 0.3757 | alpha=0.5, Ipex 2.1 |
+| facebook/opt-350m   | 0.4516 | 0.4533 | alpha=0.8, Ipex 2.1 |
+| facebook/opt-1.3b   | 0.5789 | 0.5742 | alpha=0.8, Ipex 2.0 |
+| facebook/opt-2.7b   | 0.6365 | 0.6404 | alpha=0.5, Ipex 2.0 |
+| facebook/opt-6.7b   | 0.6769 | 0.6804 | alpha=0.5, Ipex 2.0 |
+| facebook/opt-13b   | 0.6872 | 0.6814 | alpha=0.5, Ipex 2.1 |
+| facebook/opt-30b   | 0.7149 | 0.7128 | alpha=0.5, Ipex 2.1 |
+| facebook/opt-66b   | 0.7398 | 0.7326 | alpha=0.5, Ipex 2.1 |       
+| LLaMa-7b | 0.7361 | 0.7357 | alpha=0.8, Ipex 2.1 |
+| LLaMa-13b | 0.7627 | 0.7590 | alpha=0.7, Ipex 2.1 |
+| LLaMa-30b | 0.7759 | 0.7840 | alpha=0.7, Ipex 2.1 |
+| LLaMa-65b | 0.7908 | 0.7957 | alpha=0.9, Ipex 2.1 |
+| LLaMa-2-7b-hf* | 0.7392 | 0.7335  | alpha=Auto, Ipex 2.1 |
+| LLaMa-2-7b-Chat* | 0.7058 | 0.6994 | alpha=Auto, Ipex 2.1 |
+| EleutherAI/gpt-j-6B* | 0.6831 | 0.6821 | alpha=1.0, Ipex 2.1 |
+| MBZUAI/LaMini-GPT-124m | 0.3804 | 0.3887 | alpha=0.5, Ipex 2.1 |
+| MBZUAI/LaMini-GPT-774m | 0.5048 | 0.5057 | alpha=0.5, Ipex 2.1 |
+| MBZUAI/LaMini-GPT-1.5b | 0.5443 | 0.5436 | alpha=0.5, Ipex 2.1 |
+| mosaicml/mpt-7b-chat | 0.655 | 0.6499 | alpha=0.7, Ipex 2.1 |
+| stabilityai/stablelm-base-alpha-3b | 0.4172 | 0.4149 | alpha=0.6, Ipex 2.1 |
+| togethercomputer/RedPajama-INCITE-Base-3B-v1 | 0.6542 | 0.6735 | alpha=0.5, Ipex 2.1 |
+| togethercomputer/RedPajama-INCITE-Chat-3B-v1* | 0.6718 | 0.6740 | alpha=0.5, Ipex 2.0 |
+| togethercomputer/RedPajama-INCITE-Instruct-3B-v1* | 0.6569 | 0.6621 | alpha=0.5, Ipex 2.0 |
+| togethercomputer/RedPajama-INCITE-Base-7B-v0.1* | 0.7143 | 0.7221 | alpha=0.5, Ipex 2.0 |
+| togethercomputer/RedPajama-INCITE-Instruct-7B-v0.1* | 0.6895 | 0.6953 | alpha=0.5, Ipex 2.0 |
+| databricks/dolly-v1-6b* | 0.6866 | 0.6895 | alpha=0.8, Ipex 2.1 |
+| databricks/dolly-v2-3b* | 0.6297 | 0.6247 | alpha=0.5, Ipex 2.1 |
+| tiiuae/falcon-7b-instruct | 0.6437 | 0.6392 | alpha=0.7, Pytorch |
 
+Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.
 ## Example
 
 User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant/README.md) on how to use smooth quant.

@@ -22,8 +22,8 @@ do
 done
 
 FRAMEWORK="pytorch"
-FRAMEWORK_VERSION="2.0.0+cpu"
-TORCH_VISION_VERSION="0.15.1+cpu"
+FRAMEWORK_VERSION="2.0.1+cpu"
+TORCH_VISION_VERSION="0.15.2+cpu"
 
 inc_new_api=false
 # ======== set up config for pytorch models ========
