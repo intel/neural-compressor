@@ -275,7 +275,7 @@ class WrapperLinear(torch.nn.Module):
     def __init__(self, orig_layer, num_bits, group_size, schema, grad=0):
         super(WrapperLinear, self).__init__()
         self.orig_layer = orig_layer
-        # self.orig_layer.weight.requires_grad_(True)
+        self.orig_layer.weight.requires_grad_(True)
         self.num_bits = num_bits
         self.group_size = group_size
         self.schema = schema
@@ -553,8 +553,8 @@ def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, g
                       device=torch.device("cpu")):
     q_input = None
     torch.cuda.empty_cache()
-    # for n,m in model.named_parameters():
-    #     m.requires_grad_(False)
+    for n,m in model.named_parameters():
+        m.requires_grad_(False)
     input_ids = inputs["input_ids"]
     inputs.pop('input_ids', None)
     input_others = inputs
