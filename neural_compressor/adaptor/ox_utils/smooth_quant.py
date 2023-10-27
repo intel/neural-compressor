@@ -29,6 +29,8 @@ from neural_compressor.adaptor.ox_utils.util import _get_qrange_for_qType, is_B_
 from neural_compressor.model.model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
 
+from typing import Optional, List
+
 logger = logging.getLogger("neural_compressor")
 
 dtype_map = {
@@ -145,6 +147,7 @@ class ORTSmoothQuant:
         calib_iter=100,
         quantize_config=None,
         auto_alpha_args={"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
+        nodes_to_exclude: Optional[List[str]] =None,
     ):
         """The main entry of smooth quant.
 
@@ -157,6 +160,8 @@ class ORTSmoothQuant:
                                   False, ops with the same input will share a scale, mainly for performance
             calib_iter (int): iteration num for calibration
             quantize_config (dict): quantize config
+            nodes_to_exclude (`Optional[List[str]]`, defaults to `None`):
+                Specific ONNX nodes to exclude from performing SmoothQuant on. The list of nodes in a model can be found loading the ONNX model through onnx.load, or through visual inspection with [netron](https://github.com/lutzroeder/netron).
 
         Returns:
             A FP32 model with the same architecture as the orig model but with different weight which will be
@@ -174,7 +179,7 @@ class ORTSmoothQuant:
 
         need_calibration = self._check_need_calibration(alpha, percentile, op_types, scales_per_op, calib_iter)
         if need_calibration:
-            self._dump_op_info(percentile, op_types, calib_iter, quantize_config)
+            self._dump_op_info(percentile, op_types, calib_iter, quantize_config=quantize_config, nodes_to_exclude=nodes_to_exclude)
 
         if self.record_max_info:
             return self.model
@@ -330,6 +335,37 @@ class ORTSmoothQuant:
                 )
             return True
 
+        def mul_add(node, scale):  # pragma: no cover
+            node_parent = self.model.get_parent(node, 0)
+            if not len(self.model.get_parents(node)) == 1 or node_parent.op_type != "Mul":
+                # We can only fuse MatMul into Add if Add has itself a MatMul before.
+                return False
+            if len(self.model.get_children(node_parent)) != 1:
+                # The MatMul output goes elsewhere than the Add. We can not fuse in this case.
+                return False
+            if all([self.model.get_initializer(inp) is None for inp in node_parent.input]):
+                # The MatMul node does not have an initializer we can edit.
+                return False
+
+            # Rescale both the Add and MatMul nodes
+            for _node in [node, node_parent]:
+                for inp in _node.input:
+                    if self.model.get_initializer(inp) is not None:
+                        key = _node.input[0].split("_smooth_output")[0]
+                        tensor = self.model.get_initializer(inp)
+                        new_tensor = (
+                            numpy_helper.to_array(tensor, os.path.dirname(self.model.model_path)) * scale
+                            if self.model.model_path is not None
+                            else numpy_helper.to_array(tensor) * scale
+                        )
+                        self.model.set_initializer(inp, new_tensor)
+                        self.tensor_scales_info[key] = (
+                            1.0 / scale
+                            if key not in self.tensor_scales_info
+                            else 1.0 / scale * self.tensor_scales_info[key]
+                        )
+            return True
+
         self.could_absorb_optype = {
             "LayerNormalization": norm,
             "BatchNormalization": norm,
@@ -340,6 +376,7 @@ class ORTSmoothQuant:
             "Conv": conv,
             "FusedConv": conv,
             "Mul": mul,
+            "Add": mul_add,
         }
 
     def _fold_scale(self, scales):
@@ -367,7 +404,7 @@ class ORTSmoothQuant:
                                         child.input[idx] = node.input[0]
         self.model.remove_nodes(remove_nodes)
 
-    def _dump_op_info(self, percentile, op_types, iterations, quantize_config=None):
+    def _dump_op_info(self, percentile, op_types, iterations, nodes_to_exclude=None, quantize_config=None):
         """Dump op info for smooth quant.
 
         Args:
@@ -387,7 +424,7 @@ class ORTSmoothQuant:
             reduce_range=self.reduce_range,
         )
         self.max_vals_per_channel, self.shape_info, self.tensors_to_node = augment.calib_smooth(
-            percentile, op_types, None
+            percentile, op_types, None, nodes_to_exclude
         )
         for node in self.model.nodes():
             for out in node.output:

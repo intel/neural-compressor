@@ -35,6 +35,8 @@ import onnxruntime
 from onnx import TensorProto, helper, shape_inference
 from packaging.version import Version
 
+from typing import Optional, List
+
 from neural_compressor.adaptor.ox_utils.calibrator import CALIBRATOR
 from neural_compressor.adaptor.ox_utils.util import (
     _get_qrange_for_qType,
@@ -659,14 +661,14 @@ class ONNXRTAugment:
                     return True
         return False
 
-    def _get_input_tensor_of_ops(self, op_types=["MatMul", "Gemm", "Conv", "FusedConv"]):
+    def _get_input_tensor_of_ops(self, op_types=["MatMul", "Gemm", "Conv", "FusedConv"], nodes_to_exclude: Optional[List[str]] = None):
         """Traverse the graph and get all the data tensors flowing into layers of {op_types}.
 
         Group conv is excluded.
-        TODO the tensors could be set/filtered in configuration.
 
         Args:
             op_types: The op types whose input tensor will be dumped
+            nodes_to_exclude: List of ONNX node names to exclude from being smoothed.
 
         Returns:
             A dict of dumped tensor: node info
@@ -676,6 +678,9 @@ class ONNXRTAugment:
         initializers = {i.name: i for i in model.graph.initializer}
 
         for node in model.graph.node:
+            if node.name in nodes_to_exclude:
+                continue
+
             if len(op_types) == 0 or node.op_type in op_types:
                 if node.op_type in ["Conv", "FusedConv"] and self._check_is_group_conv(node, model):
                     continue
@@ -713,7 +718,7 @@ class ONNXRTAugment:
         max_per_channels = max_per_channels.astype(np.single)
         return max_per_channels
 
-    def calib_smooth(self, percentile, op_types, q_config):
+    def calib_smooth(self, percentile, op_types, q_config, nodes_to_exclude):
         """Smooth model calibration.
 
         Mainly get the max info per channel of input tensors.
@@ -727,7 +732,7 @@ class ONNXRTAugment:
             shape_infos: The shape information of input tensors
         """
         # add the input tensors of {op_types} to outputs of the model
-        tensors_to_node = self._get_input_tensor_of_ops(op_types)
+        tensors_to_node = self._get_input_tensor_of_ops(op_types, nodes_to_exclude)
         self.model_wrapper.add_tensors_to_outputs(tensors_to_node.keys())
         self.augmented_model = self.model_wrapper.model
         if self.model_wrapper.is_large_model:  # pragma: no cover
