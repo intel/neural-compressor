@@ -32,7 +32,7 @@ In particular, the tool provides the key features, typical examples, and open co
 pip install neural-compressor
 ```
 > [!NOTE]
-> More installation methods can be found at [Installation Guide](./docs/source/installation_guide.md). Please check out our [FAQ](./docs/source/faq.md) for more details.
+> More installation methods can be found at [Installation Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/installation_guide.md). Please check out our [FAQ](https://github.com/intel/neural-compressor/blob/master/docs/source/faq.md) for more details.
 
 ## Getting Started
 ### Quantization with Python API
