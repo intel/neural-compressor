@@ -27,6 +27,7 @@ import logging
 import os
 import sys
 from importlib.util import find_spec
+from typing import List, Optional
 
 import numpy as np
 import onnx
@@ -34,8 +35,6 @@ import onnx.numpy_helper as numpy_helper
 import onnxruntime
 from onnx import TensorProto, helper, shape_inference
 from packaging.version import Version
-
-from typing import Optional, List
 
 from neural_compressor.adaptor.ox_utils.calibrator import CALIBRATOR
 from neural_compressor.adaptor.ox_utils.util import (
@@ -661,7 +660,9 @@ class ONNXRTAugment:
                     return True
         return False
 
-    def _get_input_tensor_of_ops(self, op_types=["MatMul", "Gemm", "Conv", "FusedConv"], nodes_to_exclude: Optional[List[str]] = None):
+    def _get_input_tensor_of_ops(
+        self, op_types=["MatMul", "Gemm", "Conv", "FusedConv"], nodes_to_exclude: Optional[List[str]] = None
+    ):
         """Traverse the graph and get all the data tensors flowing into layers of {op_types}.
 
         Group conv is excluded.

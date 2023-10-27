@@ -19,6 +19,7 @@
 import copy
 import logging
 import os
+from typing import List, Optional
 
 import numpy as np
 import onnx
@@ -28,8 +29,6 @@ from onnx import onnx_pb as onnx_proto
 from neural_compressor.adaptor.ox_utils.util import _get_qrange_for_qType, is_B_transposed, quantize_data, to_numpy
 from neural_compressor.model.model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
-
-from typing import Optional, List
 
 logger = logging.getLogger("neural_compressor")
 
@@ -147,7 +146,7 @@ class ORTSmoothQuant:
         calib_iter=100,
         quantize_config=None,
         auto_alpha_args={"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
-        nodes_to_exclude: Optional[List[str]] =None,
+        nodes_to_exclude: Optional[List[str]] = None,
     ):
         """The main entry of smooth quant.
 
@@ -179,7 +178,9 @@ class ORTSmoothQuant:
 
         need_calibration = self._check_need_calibration(alpha, percentile, op_types, scales_per_op, calib_iter)
         if need_calibration:
-            self._dump_op_info(percentile, op_types, calib_iter, quantize_config=quantize_config, nodes_to_exclude=nodes_to_exclude)
+            self._dump_op_info(
+                percentile, op_types, calib_iter, quantize_config=quantize_config, nodes_to_exclude=nodes_to_exclude
+            )
 
         if self.record_max_info:
             return self.model
