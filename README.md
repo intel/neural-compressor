@@ -41,23 +41,25 @@ pip install neural-compressor
 # Install Intel Neural Compressor and TensorFlow
 pip install neural-compressor
 pip install tensorflow
-# Prepare fp32 model
+
+# Prepare the FP32 model by downloading it
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
-```
-```python
+
+# Import necessary libraries
 from neural_compressor.data import DataLoader, Datasets
 from neural_compressor.config import PostTrainingQuantConfig
 
+# Define the calibration dataset and create a data loader for it
 dataset = Datasets("tensorflow")["dummy"](shape=(1, 224, 224, 3))
 dataloader = DataLoader(framework="tensorflow", dataset=dataset)
 
-from neural_compressor.quantization import fit
-
+# Perform post-training quantization on the FP32 model
 q_model = fit(
-    model="./mobilenet_v1_1.0_224_frozen.pb",
-    conf=PostTrainingQuantConfig(),
-    calib_dataloader=dataloader,
+    model="./mobilenet_v1_1.0_224_frozen.pb",  # Path to the FP32 model
+    conf=PostTrainingQuantConfig(),            # Quantization configuration
+    calib_dataloader=dataloader,               # Calibration data loader
 )
+
 ```
 
 ## Documentation
