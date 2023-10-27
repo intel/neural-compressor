@@ -188,7 +188,7 @@ def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_q
         "quant_min": 0,
         "quant_max": 255,
         "alpha": 0.5,
-        "act_observer": kl_activation_observer, 
+        "act_observer": kl_activation_observer,
         "act_ic_observer": {
             "name": "PerChannelMinMaxObserver",
             "ch_axis": -1,
@@ -244,8 +244,9 @@ def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_q
             return minmax_activation_observer
 
 
-def check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name, 
-                          smooth_quant=False):  # pragma: no cover
+def check_cfg_and_qconfig(
+    tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name, smooth_quant=False
+):  # pragma: no cover
     """Check configs and quantization configs.
 
     Args:
@@ -275,13 +276,16 @@ def check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
                         inc_scheme = inc_op_cfg["activation"]["scheme"]
                         inc_algorithm = inc_op_cfg["activation"]["algorithm"]
                         ipex_op_cfg["input_tensor_infos"] = input_tensor_infos
-                        if "op_type" in ipex_op_cfg and ipex_op_cfg['op_type'] \
-                          == "<class 'torch.nn.modules.linear.Linear'>":
+                        if (
+                            "op_type" in ipex_op_cfg
+                            and ipex_op_cfg["op_type"] == "<class 'torch.nn.modules.linear.Linear'>"
+                        ):
                             smooth_quant_enable = True
                         else:
                             smooth_quant_enable = False
                         activation_observer = generate_activation_observer(
-                                    inc_scheme, inc_algorithm, smooth_quant, smooth_quant_enable)
+                            inc_scheme, inc_algorithm, smooth_quant, smooth_quant_enable
+                        )
                         if inc_scheme == "sym":
                             input_tensor_infos[index]["force_dtype"] = "torch.qint8"
                         if inc_scheme == "asym":
@@ -470,7 +474,7 @@ def update_sq_scale(ipex_config_path, smoothquant_scale_info):
         json.dump(ipex_config, f1, indent=4)
         f1.close()
     print(ipex_config_path)
-    #exit(0)
+    # exit(0)
 
 
 def auto_copy(module):  # pragma: no cover

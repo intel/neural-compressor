@@ -1414,7 +1414,7 @@ class TestPeftModel(unittest.TestCase):
 
         recipes = {"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}}
         conf = PostTrainingQuantConfig(
-            backend="ipex", #IPEX will got error now, will enhance it.
+            backend="ipex",  # IPEX will got error now, will enhance it.
             excluded_precisions=["bf16"],
             recipes=recipes,
             example_inputs=example_input,
