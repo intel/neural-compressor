@@ -20,7 +20,8 @@ from neural_compressor.adaptor.ox_utils.operators.ops import Operator, QOperator
 
 
 @op_registry(
-    op_types="Reshape, Transpose, Squeeze, Unsqueeze, Flatten, Expand, Slice, SpaceToDepth, DepthToSpace, Upsample, Tile, CenterCropPad"
+    op_types="Reshape, Transpose, Squeeze, Unsqueeze, Flatten, Expand, Slice, " \
+        "SpaceToDepth, DepthToSpace, Upsample, Tile, CenterCropPad"
 )
 class Direct8BitOperator(Operator):
     """Direct8Bit Operator."""
