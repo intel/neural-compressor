@@ -524,7 +524,7 @@
       'CenterCropPad': *default_static_qlinear_qdq_minmax,
     },
     'dynamic': *ref_1_9_dynamic
-  }      
+  }
   weight_only_integer: *cap_weight_only
   recipes:
     <<: *default_optimization
