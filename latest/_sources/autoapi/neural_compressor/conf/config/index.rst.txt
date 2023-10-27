@@ -23,6 +23,7 @@ Classes
    neural_compressor.conf.config.Benchmark_Conf
    neural_compressor.conf.config.Distillation_Conf
    neural_compressor.conf.config.NASConfig
+   neural_compressor.conf.config.DefaultConf
 
 
 
@@ -113,5 +114,16 @@ Classes
 
    :param approach: The approach of the NAS.
    :param search_algorithm: The search algorithm for NAS procedure.
+
+
+.. py:class:: DefaultConf(value=None)
+
+
+
+
+   Access yaml using attributes instead of using the dictionary notation.
+
+   :param value: The dict object to access.
+   :type value: dict
 
 
