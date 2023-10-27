@@ -139,7 +139,7 @@ q_model = fit(
 </table>
 
 > [!NOTE] 
-> More documentations can be found at [User Guide](./docs/source/user_guide.md).
+> More documentations can be found at [User Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/user_guide.md).
 
 ## Selected Publications/Events
 * Blog by Intel: [Effective Weight-Only Quantization for Large Language Models with Intel® Neural Compressor](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Effective-Weight-Only-Quantization-for-Large-Language-Models/post/1529552) (Oct 2023)
@@ -150,7 +150,7 @@ q_model = fit(
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 
 > [!NOTE]
-> View [Full Publication List](./docs/source/publication_list.md).
+> View [Full Publication List](https://github.com/intel/neural-compressor/blob/master/docs/source/publication_list.md).
 
 ## Additional Content
 
