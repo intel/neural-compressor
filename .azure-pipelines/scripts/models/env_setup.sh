@@ -78,7 +78,7 @@ if [[ "${inc_new_api}" == "false" ]]; then
 fi
 
 cd ${model_src_dir}
-pip install ruamel_yaml
+pip install ruamel.yaml==0.17.40
 pip install psutil
 pip install protobuf==4.23.4
 if [[ "${framework}" == "tensorflow" ]]; then
