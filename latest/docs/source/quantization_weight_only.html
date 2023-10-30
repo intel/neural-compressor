@@ -305,7 +305,7 @@
 </tr>
 <tr>
 <td style="text-align: center;">GPTQ</td>
-<td style="text-align: center;">&#10005;</td>
+<td style="text-align: center;">&#10004;</td>
 </tr>
 <tr>
 <td style="text-align: center;">TEQ</td>
@@ -316,16 +316,13 @@
 <section id="example">
 <h3>Example<a class="headerlink" href="#example" title="Permalink to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">quantization</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.adaptor.torch_utils.layer_wise_quant</span> <span class="kn">import</span> <span class="n">load_shell</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.adaptor.torch_utils.layer_wise_quant</span> <span class="kn">import</span> <span class="n">load_empty_model</span>
 
-<span class="n">fp32_model</span> <span class="o">=</span> <span class="n">load_shell</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">,</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">torchscript</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">fp32_model</span> <span class="o">=</span> <span class="n">load_empty_model</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">,</span> <span class="n">torchscript</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
     <span class="n">approach</span><span class="o">=</span><span class="s2">&quot;weight_only&quot;</span><span class="p">,</span>
     <span class="n">recipes</span><span class="o">=</span><span class="p">{</span>
         <span class="s2">&quot;layer_wise_quant&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="s2">&quot;layer_wise_quant_args&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;model_path&quot;</span><span class="p">:</span> <span class="s2">&quot;facebook/opt-125m&quot;</span><span class="p">,</span>
-        <span class="p">},</span>
         <span class="s2">&quot;rtn_args&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;enable_full_range&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
     <span class="p">},</span>
 <span class="p">)</span>
@@ -338,6 +335,7 @@
 <span class="p">)</span>
 <span class="n">ouput_dir</span> <span class="o">=</span> <span class="s2">&quot;./saved_model&quot;</span>
 <span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">ouput_dir</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="n">ouput_dir</span><span class="p">,</span> <span class="n">fp32_model</span><span class="p">,</span> <span class="n">weight_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">layer_wise</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -366,7 +364,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fddb269c280> 
+   <jinja2.runtime.BlockReference object at 0x7f3f6cfe7340> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

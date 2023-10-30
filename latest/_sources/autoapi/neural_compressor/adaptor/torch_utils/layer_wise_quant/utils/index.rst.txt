@@ -22,7 +22,7 @@ Functions
    neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.get_children
    neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.get_named_children
    neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.dowload_hf_model
-   neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.load_shell
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.load_empty_model
    neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.get_super_module_by_name
    neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.update_module
    neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.load_layer_wise_quantized_model
@@ -56,7 +56,7 @@ Functions
    Download hugging face model from hf hub.
 
 
-.. py:function:: load_shell(pretrained_model_name_or_path, cls, **kwargs)
+.. py:function:: load_empty_model(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs)
 
    Load a empty model.
 
