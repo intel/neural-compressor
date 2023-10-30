@@ -224,7 +224,7 @@ if __name__ == '__main__':
     # model
     if re.search("chatglm", args.model_name_or_path.lower()): # chatglm requires a different way to be loaded
         tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, trust_remote_code=True)
-        model = AutoModel.from_pretrained(args.model_name_or_path, trust_remote_code=True)
+        model = AutoModel.from_pretrained(args.model_name_or_path, trust_remote_code=True).float().cpu()
     else:
         tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True, trust_remote_code=True)
         model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, low_cpu_mem_usage=True, trust_remote_code=True)

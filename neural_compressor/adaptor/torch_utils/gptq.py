@@ -584,14 +584,8 @@ class GPTQuantizer(object):
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                if (
-                    hasattr(self.model.config, "_name_or_path") and "chatglm-6b" in self.model.config._name_or_path
-                ):  # pragma: no cover
-                    # for chatglm-6b only
-                    with torch.autocast("cuda"):
-                        out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
-                else:
-                    out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
+                out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
+                out = self.track_hidden_states(out)
             self.cache_key_arguments["i"] = idx
             for h in handles:
                 h.remove()
@@ -623,14 +617,7 @@ class GPTQuantizer(object):
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                if (
-                    hasattr(self.model.config, "_name_or_path") and "chatglm-6b" in self.model.config._name_or_path
-                ):  # pragma: no cover
-                    # for chatglm-6b only
-                    with torch.autocast("cuda"):
-                        out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
-                else:
-                    out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
+                out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                 out = self.track_hidden_states(out)
                 outs.append(out)
             self.cache_key_arguments["i"] = idx
