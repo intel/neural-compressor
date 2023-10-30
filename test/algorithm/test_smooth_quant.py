@@ -1416,6 +1416,7 @@ class TestPeftModel(unittest.TestCase):
         conf = PostTrainingQuantConfig(
             backend="ipex",  # IPEX will got error now, will enhance it.
             excluded_precisions=["bf16"],
+            op_name_dict={".*": {"activation": {"algorithm": "minmax"}}},
             recipes=recipes,
             example_inputs=example_input,
         )

@@ -270,7 +270,6 @@ def check_cfg_and_qconfig(
                 if (
                     input_tensor_info["force_dtype"] == "torch.qint8"
                     or input_tensor_info["force_dtype"] == "torch.quint8"
-                    or smooth_quant  # for fused add in smoothquant
                 ):
                     # int8 -> int8
                     if inc_op_cfg["weight"]["dtype"] == "int8":
