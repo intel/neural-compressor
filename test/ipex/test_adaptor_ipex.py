@@ -379,17 +379,17 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         example_input = torch.tensor([[torch.finfo(torch.float32).max, -torch.finfo(torch.float32).max]])
         model = M()
         model.linear.weight = torch.nn.Parameter(torch.tensor([[0.0, 1.0], [1.0, 0.0]]))
+
         def calib_func(model):
             model(example_input)
 
         from neural_compressor import PostTrainingQuantConfig, quantization
+
         conf = PostTrainingQuantConfig(
             backend="ipex",
             example_inputs=example_input,
             quant_level=0,
-            op_name_dict={
-                '.*':{'activation':{'algorithm': 'minmax'}}
-            },
+            op_name_dict={".*": {"activation": {"algorithm": "minmax"}}},
             recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}},
         )
         q_model = quantization.fit(model, conf, calib_func=calib_func)

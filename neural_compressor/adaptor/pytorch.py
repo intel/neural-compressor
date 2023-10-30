@@ -2622,7 +2622,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         self.op_infos_from_cfgs = None
         self.output_tensor_id_op_name = None
         self.ipex_config_path = os.path.join(self.workspace_path, "ipex_config_tmp.json")
-        self.sq_minmax_init = True if framework_specific_info.pop('model_init_algo') == 'minmax' else False
+        self.sq_minmax_init = True if framework_specific_info.pop("model_init_algo") == "minmax" else False
 
         try:
             os.remove(self.ipex_config_path)
@@ -3114,6 +3114,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         if not folding:
                             if self.sq_minmax_init:
                                 from torch.ao.quantization.observer import MinMaxObserver
+
                                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
                                     alpha=0.5, act_observer=MinMaxObserver()
                                 )
@@ -3297,6 +3298,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         if not hasattr(model._model, "save_qconf_summary") or not hasattr(model._model, "load_qconf_summary"):
             if self.sq_minmax_init:
                 from torch.ao.quantization.observer import MinMaxObserver
+
                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
                     alpha=0.5, act_observer=MinMaxObserver()
                 )
