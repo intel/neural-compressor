@@ -232,7 +232,7 @@ def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_q
         kl_activation_observer["dtype"] = "torch.qint8"
         kl_activation_observer["quant_min"] = -128
         kl_activation_observer["quant_max"] = 127
-    if smooth_quant:
+    if smooth_quant and smooth_quant_enable:
         if algorithm == "kl":
             return smoothquant_kl_activation_observer
         if algorithm == "minmax":
@@ -270,6 +270,7 @@ def check_cfg_and_qconfig(
                 if (
                     input_tensor_info["force_dtype"] == "torch.qint8"
                     or input_tensor_info["force_dtype"] == "torch.quint8"
+                    or smooth_quant # for fused add in smoothquant
                 ):
                     # int8 -> int8
                     if inc_op_cfg["weight"]["dtype"] == "int8":
@@ -284,12 +285,12 @@ def check_cfg_and_qconfig(
                         else:
                             smooth_quant_enable = False
                         activation_observer = generate_activation_observer(
-                            inc_scheme, inc_algorithm, smooth_quant, smooth_quant_enable
-                        )
-                        if inc_scheme == "sym":
-                            input_tensor_infos[index]["force_dtype"] = "torch.qint8"
-                        if inc_scheme == "asym":
-                            input_tensor_infos[index]["force_dtype"] = "torch.quint8"
+                            inc_scheme, inc_algorithm, smooth_quant, smooth_quant_enable)
+                        if not smooth_quant:
+                            if inc_scheme == "sym":
+                                input_tensor_infos[index]["force_dtype"] = "torch.qint8"
+                            if inc_scheme == "asym":
+                                input_tensor_infos[index]["force_dtype"] = "torch.quint8"
                         ipex_op_cfg["activation_observer"] = activation_observer
                     # int8 -> fp32
                     else:
