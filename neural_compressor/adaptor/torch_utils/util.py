@@ -68,7 +68,11 @@ def forward_wrapper(model, input):
     Returns:
         output: output data
     """
-    device = next(model.parameters()).device
+    try:
+        device = next(model.parameters()).device
+    except:
+        # for RecursiveScriptModule
+        device = "cpu"
     input = move_input_device(input, device)
     if isinstance(input, dict) or isinstance(input, UserDict):
         output = model(**input)

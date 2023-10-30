@@ -1869,7 +1869,7 @@ class MixedPrecisionConfig(object):
 
     Args:
         device (str, optional): Device for execution.
-                                Support 'cpu', 'gpu' and 'npu', default is 'cpu'.
+                                Support 'cpu', 'gpu' and 'xpu', default is 'cpu'.
         backend (str, optional): Backend for model execution.
                                  Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
                                  'onnxrt_dml_ep'. Default is 'default'.
@@ -2023,7 +2023,7 @@ class MixedPrecisionConfig(object):
     @device.setter
     def device(self, device):
         """Set device."""
-        if _check_value("device", device, str, ["cpu", "gpu", "npu"]):
+        if _check_value("device", device, str, ["cpu", "gpu", "xpu"]):
             self._device = device
 
     @property
