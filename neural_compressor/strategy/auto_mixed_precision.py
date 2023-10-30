@@ -216,7 +216,11 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
     def traverse(self):
         """Traverse the tuning space according to auto-mixed precision strategy."""
         if self.config.backend == "ipex":
-            self.best_qmodel = ipex_mixed_precision(self.model, self.config.example_inputs)
+            self.best_qmodel = ipex_mixed_precision(
+                self.model, 
+                self.config.example_inputs, 
+                self.config.device
+            )
             if self.eval_dataloader or self.eval_func:
                 self._evaluate(self.best_qmodel)
             return

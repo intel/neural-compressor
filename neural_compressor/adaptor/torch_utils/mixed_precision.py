@@ -21,15 +21,19 @@ ipex = LazyImport("intel_extension_for_pytorch")
 torch = LazyImport("torch")
 
 
-def ipex_mixed_precision(model, example_inputs=None):
+def ipex_mixed_precision(model, example_inputs=None, device="cpu"):
     """The function is used for ipex mixed precision quantization."""
     model.eval()
+    if device == "xpu":
+        autocast = torch.xpu.amp.autocast
+    else:
+        autocast = torch.cpu.amp.autocast
     mp_model = model._model
     if example_inputs is None:
         assert False, "please provide the correct example_inputs for torchscript mode"
     mp_model = ipex.optimize(mp_model, dtype=torch.bfloat16)
 
-    with torch.no_grad(), torch.cpu.amp.autocast():
+    with torch.no_grad(), autocast():
         if isinstance(example_inputs, dict):
             try:
                 mp_model = torch.jit.trace(mp_model, example_kwarg_inputs=example_inputs)

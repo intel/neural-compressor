@@ -619,7 +619,11 @@ class TestMixedPrecisionXPU(unittest.TestCase):
         def eval(model):
             return 0.5
 
-        conf = MixedPrecisionConfig(backend="ipex", device="xpu", example_inputs=torch.randn(1, 3, 224, 224))
+        conf = MixedPrecisionConfig(
+            backend="ipex", 
+            device="xpu", 
+            example_inputs=torch.randn(1, 3, 224, 224).to("xpu"),
+        )
         output_model = mix_precision.fit(
             self.pt_model,
             conf,
