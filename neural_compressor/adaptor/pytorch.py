@@ -4884,6 +4884,8 @@ class PyTorchQuery(QueryBackendCapability):
                 )
         if self.device == "xpu":
             self.cur_config = self.cur_config[self.device]
+        elif "cpu" in self.cur_config:
+            self.cur_config = self.cur_config["cpu"]
         self._update_cfg_with_usr_definition()
 
     def _update_cfg_with_usr_definition(self):
