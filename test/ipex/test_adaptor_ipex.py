@@ -30,7 +30,7 @@ except:
     TEST_IPEX = False
 
 try:
-    torch.randn(1).to('xpu')
+    torch.randn(1).to("xpu")
     TEST_XPU = True
 except:
     TEST_XPU = False
@@ -42,7 +42,7 @@ PT_VERSION = nc_torch.get_torch_version().release
 
 
 class DummyDataloader(data.DataLoader):
-    def __init__(self, device='cpu'):
+    def __init__(self, device="cpu"):
         self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
         self.sequence_a = "intel-extension-for-transformers is based in SH"
         self.sequence_b = "Where is intel-extension-for-transformers based? NYC or SH"
@@ -87,7 +87,7 @@ def calib_func(model):
 
 
 class Dataloader:
-    def __init__(self, device='cpu') -> None:
+    def __init__(self, device="cpu") -> None:
         self.batch_size = 1
         self.device = device
 
@@ -417,8 +417,8 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
 
 
 @unittest.skipIf(
-    PT_VERSION < Version("1.12.0").release or not TEST_XPU, 
-        "Please use Intel extension for Pytorch version higher or equal to 1.12"
+    PT_VERSION < Version("1.12.0").release or not TEST_XPU,
+    "Please use Intel extension for Pytorch version higher or equal to 1.12",
 )
 class TestPytorchIPEX_XPU_1_12_Adaptor(unittest.TestCase):
     @classmethod
@@ -431,7 +431,7 @@ class TestPytorchIPEX_XPU_1_12_Adaptor(unittest.TestCase):
         shutil.rmtree("runs", ignore_errors=True)
 
     def test_new_API(self):
-        model = M().to('xpu')
+        model = M().to("xpu")
         from neural_compressor import PostTrainingQuantConfig, quantization
 
         op_type_dict = {
@@ -454,10 +454,10 @@ class TestPytorchIPEX_XPU_1_12_Adaptor(unittest.TestCase):
 
         conf = PostTrainingQuantConfig(
             backend="ipex",
-            device='xpu',
+            device="xpu",
             op_type_dict=op_type_dict,
         )
-        calib_dataloader = Dataloader(device='xpu')
+        calib_dataloader = Dataloader(device="xpu")
         q_model = quantization.fit(
             model,
             conf,
@@ -480,7 +480,7 @@ class TestPytorchIPEX_XPU_1_12_Adaptor(unittest.TestCase):
                 x = self.linear(x)
                 return x
 
-        model = M().to('xpu')
+        model = M().to("xpu")
         from neural_compressor import PostTrainingQuantConfig, quantization
 
         op_type_dict = {
@@ -489,10 +489,10 @@ class TestPytorchIPEX_XPU_1_12_Adaptor(unittest.TestCase):
 
         conf = PostTrainingQuantConfig(
             backend="ipex",
-            device='xpu',
+            device="xpu",
             op_type_dict=op_type_dict,
         )
-        calib_dataloader = Dataloader(device='xpu')
+        calib_dataloader = Dataloader(device="xpu")
         q_model = quantization.fit(
             model,
             conf,
@@ -514,7 +514,7 @@ class TestPytorchIPEX_XPU_1_12_Adaptor(unittest.TestCase):
                 x = self.linear(x)
                 return x
 
-        model = M().to('xpu')
+        model = M().to("xpu")
         from neural_compressor import PostTrainingQuantConfig, quantization
 
         acc_lst = [1, 0.8, 1.1, 1.2]
@@ -523,8 +523,8 @@ class TestPytorchIPEX_XPU_1_12_Adaptor(unittest.TestCase):
             res = acc_lst.pop(0)
             return res
 
-        conf = PostTrainingQuantConfig(backend="ipex", device='xpu', quant_level=0)
-        calib_dataloader = Dataloader(device='xpu')
+        conf = PostTrainingQuantConfig(backend="ipex", device="xpu", quant_level=0)
+        calib_dataloader = Dataloader(device="xpu")
         q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader, eval_func=fake_eval)
         self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
 
@@ -542,7 +542,7 @@ class TestPytorchIPEX_XPU_1_12_Adaptor(unittest.TestCase):
                 x = self.linear(x)
                 return x
 
-        model = M().to('xpu')
+        model = M().to("xpu")
         from neural_compressor import PostTrainingQuantConfig, quantization
 
         acc_lst = [1, 0.8, 1.1, 1.2]
@@ -552,10 +552,12 @@ class TestPytorchIPEX_XPU_1_12_Adaptor(unittest.TestCase):
             return res
 
         conf = PostTrainingQuantConfig(
-            backend="ipex", device='xpu', quant_level=0, 
-            recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}}
+            backend="ipex",
+            device="xpu",
+            quant_level=0,
+            recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}},
         )
-        calib_dataloader = Dataloader(device='xpu')
+        calib_dataloader = Dataloader(device="xpu")
         q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader, eval_func=fake_eval)
         self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
 
@@ -592,15 +594,15 @@ class TestMixedPrecision(unittest.TestCase):
 
 
 @unittest.skipIf(
-    PT_VERSION < Version("1.12.0").release or not TEST_XPU, 
-        "Please use Intel extension for Pytorch version higher or equal to 1.12"
+    PT_VERSION < Version("1.12.0").release or not TEST_XPU,
+    "Please use Intel extension for Pytorch version higher or equal to 1.12",
 )
 class TestMixedPrecisionXPU(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         os.environ["FORCE_FP16"] = "1"
         os.environ["FORCE_BF16"] = "1"
-        self.pt_model = M().to('xpu')
+        self.pt_model = M().to("xpu")
 
     @classmethod
     def tearDownClass(self):
@@ -617,13 +619,14 @@ class TestMixedPrecisionXPU(unittest.TestCase):
         def eval(model):
             return 0.5
 
-        conf = MixedPrecisionConfig(backend="ipex", device='xpu', example_inputs=torch.randn(1, 3, 224, 224))
+        conf = MixedPrecisionConfig(backend="ipex", device="xpu", example_inputs=torch.randn(1, 3, 224, 224))
         output_model = mix_precision.fit(
             self.pt_model,
             conf,
             eval_func=eval,
         )
         self.assertTrue(isinstance(output_model._model, torch.jit.ScriptModule))
+
 
 if __name__ == "__main__":
     unittest.main()
