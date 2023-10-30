@@ -2765,14 +2765,20 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     q_model._model = ipex.quantization.convert(model._model, inplace=inplace)
                     try:
                         if isinstance(self.example_inputs, dict):
-                            q_model._model = torch.jit.trace(q_model._model, example_kwarg_inputs=self.example_inputs)
+                            q_model._model = torch.jit.trace(
+                                q_model._model,
+                                example_kwarg_inputs=self.example_inputs,
+                            )
                         else:
                             q_model._model = torch.jit.trace(q_model._model, self.example_inputs)
                         q_model._model = torch.jit.freeze(q_model._model.eval())
                     except:
                         if isinstance(self.example_inputs, dict):
                             q_model._model = torch.jit.trace(
-                                q_model._model, example_kwarg_inputs=self.example_inputs, strict=False
+                                q_model._model,
+                                example_kwarg_inputs=self.example_inputs,
+                                strict=False,
+                                check_trace=False,
                             )
                         else:
                             q_model._model = torch.jit.trace(q_model._model, self.example_inputs, strict=False)
@@ -2789,7 +2795,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 except:
                     if isinstance(self.example_inputs, dict):
                         q_model._model = torch.jit.trace(
-                            q_model._model, example_kwarg_inputs=self.example_inputs, strict=False
+                            q_model._model, example_kwarg_inputs=self.example_inputs, strict=False, check_trace=False
                         )
                     else:
                         q_model._model = torch.jit.trace(q_model._model, self.example_inputs, strict=False)
