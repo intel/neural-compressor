@@ -339,13 +339,11 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         class M(torch.nn.Module):
             def __init__(self):
                 super().__init__()
-                self.conv = torch.nn.Conv2d(3, 1, 1)
-                self.linear = torch.nn.Linear(224 * 224, 5)
+                self.linear = torch.nn.Linear(224 * 224 * 3, 5)
 
-            def forward(self, a):
-                x = self.conv(a)
-                x = x.view(1, -1)
+            def forward(self, x):
                 x += x
+                x = x.view(1, -1)
                 x = self.linear(x)
                 return x
 
@@ -388,7 +386,6 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         conf = PostTrainingQuantConfig(
             backend="ipex",
             example_inputs=example_input,
-            quant_level=0,
             op_name_dict={".*": {"activation": {"algorithm": "minmax"}}},
             recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}},
         )
