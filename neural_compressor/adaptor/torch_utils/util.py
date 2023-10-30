@@ -270,7 +270,7 @@ def check_cfg_and_qconfig(
                 if (
                     input_tensor_info["force_dtype"] == "torch.qint8"
                     or input_tensor_info["force_dtype"] == "torch.quint8"
-                    or smooth_quant # for fused add in smoothquant
+                    or smooth_quant  # for fused add in smoothquant
                 ):
                     # int8 -> int8
                     if inc_op_cfg["weight"]["dtype"] == "int8":
@@ -285,7 +285,8 @@ def check_cfg_and_qconfig(
                         else:
                             smooth_quant_enable = False
                         activation_observer = generate_activation_observer(
-                            inc_scheme, inc_algorithm, smooth_quant, smooth_quant_enable)
+                            inc_scheme, inc_algorithm, smooth_quant, smooth_quant_enable
+                        )
                         if not smooth_quant:
                             if inc_scheme == "sym":
                                 input_tensor_infos[index]["force_dtype"] = "torch.qint8"
