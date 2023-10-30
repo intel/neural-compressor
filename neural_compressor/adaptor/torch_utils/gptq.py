@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import gc
 import math
 import random
 import re
@@ -175,6 +176,7 @@ class GPTQuantizer(object):
         use_max_length=True,
         pad_max_length=2048,
         device=None,
+        layer_wise=False,
     ):
         """
         Args:
@@ -215,8 +217,12 @@ class GPTQuantizer(object):
         self.check_layer_config()
 
         # device
-        self.device = model.device
+        self.device = device
+        if str(self.model.device).startswith("cuda"):
+            self.device = self.model.device
         self.is_ready = False
+
+        self.layer_wise = layer_wise
 
         # dataloader
         self.use_max_length = use_max_length
@@ -438,11 +444,13 @@ class GPTQuantizer(object):
             raise ValueError
 
         # Step1: fetch the embeddings and other layers before the transformer stack.
-        for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
-            embedding_layer = embedding_layer.to(self.device)
+        if not self.layer_wise:
+            for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
+                embedding_layer = embedding_layer.to(self.device)
 
         # Step2: modify the first transformer block's forward function to obtain inputs for calibration
-        self.gptq_related_blocks["transformers"][0] = self.gptq_related_blocks["transformers"][0].to(self.device)
+        if not self.layer_wise:
+            self.gptq_related_blocks["transformers"][0] = self.gptq_related_blocks["transformers"][0].to(self.device)
         forward_cache = self.gptq_related_blocks["transformers"][0].forward
         self.gptq_related_blocks["transformers"][0].forward = partial(
             forward, self.gptq_related_blocks["transformers"][0]
@@ -451,7 +459,8 @@ class GPTQuantizer(object):
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
         for batch in tqdm(self.dataloader):
-            batch = move_input_to_device(batch, self.device)
+            if not self.layer_wise:
+                batch = move_input_to_device(batch, self.device)
             try:
                 if isinstance(batch, tuple) or isinstance(batch, list):
                     self.model(batch[0])
@@ -473,9 +482,10 @@ class GPTQuantizer(object):
 
         # Step 4: restore original forward function, relocate layers back to cpu.
         self.gptq_related_blocks["transformers"][0].forward = forward_cache
-        self.gptq_related_blocks["transformers"][0] = self.gptq_related_blocks["transformers"][0].cpu()
-        for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
-            embedding_layer.to(self.device)
+        if not self.layer_wise:
+            self.gptq_related_blocks["transformers"][0] = self.gptq_related_blocks["transformers"][0].cpu()
+            for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
+                embedding_layer.to(self.device)
         torch.cuda.empty_cache()
         # end
         logger.info("GPTQ quantization prepared.")
@@ -501,7 +511,7 @@ class GPTQuantizer(object):
             self.cache_positional_arguments[0] = outs[:]
 
     @torch.no_grad()
-    def execute_quantization(self, means=None, stds=None):
+    def execute_quantization(self, means=None, stds=None, model_path=None):
         """Run quantization."""
         # Step1: prepare quantization (calibration datasets)
 
@@ -513,7 +523,11 @@ class GPTQuantizer(object):
         tblock_length = len(self.gptq_related_blocks["transformers"])
         for block_idx in range(tblock_length):
             logger.info(f"Quantizing layer {block_idx + 1} / {tblock_length}..")
-            transformer_block = self.gptq_related_blocks["transformers"][block_idx].to(self.device)
+            if not self.layer_wise:
+                # if we do not apply layer-wise feature, we still place the entire block on the GPU
+                transformer_block = self.gptq_related_blocks["transformers"][block_idx].to(self.device)
+            else:
+                transformer_block = self.gptq_related_blocks["transformers"][block_idx]  # .to(self.device)
             # Step2.1: obtain all layers (Linear, Conv2d, etc) in the block which can be quantized.
             sub_layers = find_layers(transformer_block)
             sub_layers_to_quant = {}
@@ -534,8 +548,16 @@ class GPTQuantizer(object):
                 # weight_config_this_layer = self.weight_config.get(
                 #     self.get_full_layer_name(layer_name, block_idx), None
                 # )
-                weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
-                gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name])
+                full_layer_name = self.get_full_layer_name(layer_name, block_idx)
+                weight_config_this_layer = self.get_layer_config(full_layer_name)
+                if self.layer_wise:
+                    from ..torch_utils.layer_wise_quant.utils import load_value
+
+                    W = load_value(self.model, full_layer_name + ".weight", model_path)
+                else:
+                    W = sub_layers[layer_name].weight.data.clone()
+
+                gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name], W, self.device)
                 # gptq_for_this_block[layer_name].quantizer = Quantizer()
                 gptq_for_this_block[layer_name].quantizer.configure(
                     weight_config_this_layer["wbits"],
@@ -555,7 +577,6 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache_key_arguments.pop("i")
-            # import pdb;pdb.set_trace()
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
@@ -570,12 +591,44 @@ class GPTQuantizer(object):
                 # )
                 weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
                 logger.info(f"Quantizing layer {layer_name}")
-                scale, zp = gptq_for_this_block[layer_name].fasterquant(
+                if self.layer_wise:
+                    from ..torch_utils.layer_wise_quant.utils import load_value
+
+                    full_layer_name = self.get_full_layer_name(layer_name, block_idx)
+                    W = load_value(self.model, full_layer_name + ".weight", model_path)
+                else:
+                    W = sub_layers[layer_name].weight.data.clone()
+                scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(
+                    W,
                     blocksize=weight_config_this_layer["block_size"],
                     percdamp=weight_config_this_layer["percdamp"],
                     groupsize=weight_config_this_layer["group_size"],
                     act_order=weight_config_this_layer["act_order"],
                 )
+                if self.layer_wise:
+                    from ..torch_utils.layer_wise_quant.utils import (
+                        LWQ_WORKSPACE,
+                        clean_module_weight,
+                        load_value,
+                        set_module_tensor_to_device,
+                    )
+
+                    sub_layer = sub_layers[layer_name]
+                    full_layer_name = self.get_full_layer_name(layer_name, block_idx)
+                    for n, p in sub_layer.named_parameters():
+                        param_name = full_layer_name + "." + n
+                        if n == "weight":
+                            set_module_tensor_to_device(self.model, param_name, self.device, Q)
+                        else:
+                            value = load_value(self.model, param_name, model_path)
+                            set_module_tensor_to_device(self.model, param_name, self.device, value)
+                    # sub_layer.weight.data = Q
+                    torch.save(sub_layer.state_dict(), LWQ_WORKSPACE + f"/{full_layer_name}.pt")
+                    clean_module_weight(sub_layer)
+                    del Q
+                    gc.collect()
+                else:
+                    sub_layers[layer_name].weight.data = Q
                 gptq_config[self.get_full_layer_name(layer_name, block_idx)] = {"scale": scale}
                 if not weight_config_this_layer["sym"]:
                     gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"] = zp
@@ -594,7 +647,10 @@ class GPTQuantizer(object):
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
                 outs.append(out)
             self.cache_key_arguments["i"] = idx
-            self.gptq_related_blocks["transformers"][block_idx] = transformer_block.cpu()
+            if self.layer_wise:
+                self.gptq_related_blocks["transformers"][block_idx] = transformer_block
+            else:
+                self.gptq_related_blocks["transformers"][block_idx] = transformer_block.cpu()
             del gptq_for_this_block
             torch.cuda.empty_cache()
             # iteratively replace the input with output, thus layerwise quantization can continue.
@@ -617,10 +673,10 @@ class GPTQ:
     GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers (https://arxiv.org/abs/2210.17323)
     """
 
-    def __init__(self, layer):
+    def __init__(self, layer, W, device="cpu"):
         self.layer = layer
-        self.device = self.layer.weight.device
-        W = layer.weight.data.clone()
+        self.device = device
+        # W = layer.weight.data.clone()
         if isinstance(self.layer, nn.Conv2d) or isinstance(self.layer, nn.Conv1d):
             W = W.flatten(1)
         if isinstance(self.layer, transformers.Conv1D):
@@ -661,8 +717,9 @@ class GPTQ:
         # self.H += 2 / self.nsamples * inp.matmul(inp.t())
         self.H += inp.matmul(inp.t())  # H = X*X, which should be a sysm matrix
 
-    def fasterquant(self, blocksize=128, percdamp=0.01, groupsize=-1, act_order=False):
-        W = self.layer.weight.data.clone()
+    def fasterquant(self, W, blocksize=128, percdamp=0.01, groupsize=-1, act_order=False):
+        # W = self.layer.weight.data.clone()
+        weight_shape, weight_dtype = W.shape, W.data.dtype
         if isinstance(self.layer, nn.Conv2d):
             W = W.flatten(1)
         if isinstance(self.layer, transformers.Conv1D):
@@ -740,7 +797,7 @@ class GPTQ:
             #     logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
             #     logger.info(f"{torch.sum(Losses)}")
 
-        if self.device != torch.device("cpu"):
+        if str(self.device).startswith("cuda"):
             torch.cuda.synchronize()
         logger.info(f"time {(time.time() - tick)}")
         logger.info(f"error {torch.sum(Losses).item()}")
@@ -751,7 +808,8 @@ class GPTQ:
 
         if isinstance(self.layer, transformers.Conv1D):
             Q = Q.t()
-        self.layer.weight.data = Q.reshape(self.layer.weight.shape).to(self.layer.weight.data.dtype)
+        # self.layer.weight.data = Q.reshape(self.layer.weight.shape).to(self.layer.weight.data.dtype)
+        Q = Q.reshape(weight_shape).to(weight_dtype)
         if DEBUG:
             logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
 
@@ -760,7 +818,7 @@ class GPTQ:
             zero.append(self.quantizer.zero)
         scale = torch.cat(scale, dim=1)
         zero = torch.cat(zero, dim=1)
-        return scale, zero
+        return scale, zero, Q
 
     def free(self):
         if DEBUG:

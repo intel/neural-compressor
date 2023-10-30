@@ -1186,7 +1186,9 @@ class GraphTrace:
             dummy_input = move_input_to_device(dummy_input, "cpu")
         if isinstance(dummy_input, dict) or isinstance(dummy_input, UserDict):
             try:
-                traced_model = torch.jit.trace(model, example_kwarg_inputs=dict(dummy_input), strict=False)
+                traced_model = torch.jit.trace(
+                    model, example_kwarg_inputs=dict(dummy_input), strict=False, check_trace=False
+                )
                 traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
             except Exception as e:
                 logger.warning(e)

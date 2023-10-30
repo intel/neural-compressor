@@ -356,7 +356,8 @@ class PyTorchModel(PyTorchBaseModel):
                             if os.path.exists(os.path.join(LWQ_WORKSPACE, f"{name}.pt")):
                                 state_dict = torch.load(os.path.join(LWQ_WORKSPACE, f"{name}.pt"))
                             model_path = _get_path(
-                                self.q_config["recipe_cfgs"]["layer_wise_quant_args"].get("model_path")
+                                # self.q_config["recipe_cfgs"]["layer_wise_quant_args"].get("model_path")
+                                self._model.path
                             )
                             for n, p in module.named_parameters():
                                 param_name = name + "." + n
