@@ -365,6 +365,36 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader, eval_func=fake_eval)
         self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
 
+    def test_tune_minmax_obs(self):
+        class M(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.linear = torch.nn.Linear(2, 2, False)
+
+            def forward(self, x):
+                x = self.linear(x)
+                x = x + x
+                return x
+
+        example_input = torch.tensor([[torch.finfo(torch.float32).max, -torch.finfo(torch.float32).max]])
+        model = M()
+        model.linear.weight = torch.nn.Parameter(torch.tensor([[0.0, 1.0], [1.0, 0.0]]))
+        def calib_func(model):
+            model(example_input)
+
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        conf = PostTrainingQuantConfig(
+            backend="ipex",
+            example_inputs=example_input,
+            quant_level=0,
+            op_name_dict={
+                '.*':{'activation':{'algorithm': 'minmax'}}
+            },
+            recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}},
+        )
+        q_model = quantization.fit(model, conf, calib_func=calib_func)
+        self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
+
     @unittest.skipIf(
         IPEX_VERSION.release < Version("2.1.0").release,
         "Please use Intel extension for Pytorch version higher or equal to 2.1.0",

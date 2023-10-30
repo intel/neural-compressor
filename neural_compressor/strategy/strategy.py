@@ -1509,6 +1509,12 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         if framework == "pytorch_ipex" or framework == "pytorch" or framework == "pytorch_fx":
             if self.config.backend == "ipex":
                 framework = "pytorch_ipex"
+                if self.config.recipes.get("smooth_quant", None) and \
+                    (self.config.op_name_dict or self.config.op_type_dict):
+                    model_dict = self.config.op_type_dict if self.config.op_type_dict else self.config.op_name_dict
+                    model_algo = model_dict.get('.*', {}).get('activation', {}).get('algorithm', {})
+                    if model_algo == 'minmax' or 'minmax' in model_algo:
+                         framework_specific_info.update({"model_init_algo": 'minmax'})
             elif self.config.backend == "default":
                 framework = "pytorch_fx"
             if self.mixed_precision_mode:

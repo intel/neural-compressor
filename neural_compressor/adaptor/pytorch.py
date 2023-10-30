@@ -2622,6 +2622,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         self.op_infos_from_cfgs = None
         self.output_tensor_id_op_name = None
         self.ipex_config_path = os.path.join(self.workspace_path, "ipex_config_tmp.json")
+        self.sq_minmax_init = True if framework_specific_info.pop('model_init_algo') == 'minmax' else False
 
         try:
             os.remove(self.ipex_config_path)
@@ -3111,11 +3112,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         smooth_quant_args = self.recipes.get("smooth_quant_args", {})
                         folding = smooth_quant_args.get("folding", False)
                         if not folding:
-                            from torch.ao.quantization.observer import MinMaxObserver
-
-                            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                                alpha=0.5, act_observer=MinMaxObserver()
-                            )
+                            if self.sq_minmax_init:
+                                from torch.ao.quantization.observer import MinMaxObserver
+                                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                                    alpha=0.5, act_observer=MinMaxObserver()
+                                )
+                            else:
+                                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
                     if self.example_inputs is None:
                         self.example_inputs = get_example_inputs(model, self.q_dataloader)
                     if isinstance(self.example_inputs, dict):
@@ -3292,7 +3295,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         # Check save_qconf_summary part is a workaround for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
         if not hasattr(model._model, "save_qconf_summary") or not hasattr(model._model, "load_qconf_summary"):
-            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+            if self.sq_minmax_init:
+                from torch.ao.quantization.observer import MinMaxObserver
+                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                    alpha=0.5, act_observer=MinMaxObserver()
+                )
+            else:
+                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
             if isinstance(self.example_inputs, dict):
                 model._model = ipex.quantization.prepare(
                     model._model, static_qconfig, example_kwarg_inputs=self.example_inputs, inplace=inplace
