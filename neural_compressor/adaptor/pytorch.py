@@ -2622,7 +2622,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         self.op_infos_from_cfgs = None
         self.output_tensor_id_op_name = None
         self.ipex_config_path = os.path.join(self.workspace_path, "ipex_config_tmp.json")
-        self.sq_minmax_init = True if framework_specific_info.pop("model_init_algo") == "minmax" else False
+        self.sq_minmax_init = True if framework_specific_info.get("model_init_algo", "kl") == "minmax" else False
 
         try:
             os.remove(self.ipex_config_path)
