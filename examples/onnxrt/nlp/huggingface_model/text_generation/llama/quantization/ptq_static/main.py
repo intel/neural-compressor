@@ -72,7 +72,7 @@ parser.add_argument(
     '--tokenizer',
     type=str,
     help="pretrained model name or path of tokenizer files",
-    default="decapoda-research/llama-7b-hf"
+    default="meta-llama/Llama-2-7b-hf"
 )
 parser.add_argument(
     '--workspace',
