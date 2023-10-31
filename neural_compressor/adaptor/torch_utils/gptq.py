@@ -73,7 +73,7 @@ def is_leaf(module):
     return True if children_cnt == 0 else False
 
 
-def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList]):
+def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn.Sequential]):
     """Search transformer stacked structures, which is critical in LLMs and GPTQ execution.
 
     Args:
@@ -89,21 +89,41 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList]):
             "transformers": {}, Dict# TODO
         }
     """
-    gptq_related_blocks = {
-        "embeddings": {},
-        "transformers_pre": {},  # todo
-        "transformers_name": "",  # None
-        "transformers": [],  # None
-        "transformers_post": {},  # todo
-    }
-    for n, m in module.named_modules():
-        if type(m) in module_types:
-            gptq_related_blocks["transformers_name"] = n
-            gptq_related_blocks["transformers"] = m
-            return gptq_related_blocks
-        else:
+    if type(module).__name__ == "MixFormerSequentialForCausalLM":  # pragma: no cover
+        gptq_related_blocks = {
+            "embeddings": {},
+            "transformers_pre": {},  # todo
+            "transformers_name": "",  # None
+            "transformers": [],  # None
+            "transformers_post": {},  # todo
+        }
+        for n, m in module.named_modules():
+            if type(m) in module_types:
+                gptq_related_blocks["transformers_name"] = n
+                gptq_related_blocks["transformers"] = m
+                break
+            else:
+                continue
+        for n, m in gptq_related_blocks["transformers"][0].named_modules():
             if is_leaf(m):
                 gptq_related_blocks["embeddings"][n] = m
+        gptq_related_blocks["transformers"] = gptq_related_blocks["transformers"][1:-1]
+    else:
+        gptq_related_blocks = {
+            "embeddings": {},
+            "transformers_pre": {},  # todo
+            "transformers_name": "",  # None
+            "transformers": [],  # None
+            "transformers_post": {},  # todo
+        }
+        for n, m in module.named_modules():
+            if type(m) in module_types:
+                gptq_related_blocks["transformers_name"] = n
+                gptq_related_blocks["transformers"] = m
+                return gptq_related_blocks
+            else:
+                if is_leaf(m):
+                    gptq_related_blocks["embeddings"][n] = m
     return gptq_related_blocks
 
 
@@ -198,7 +218,7 @@ class GPTQuantizer(object):
         """
         # model
         self.model = model
-        self.use_cache = self.model.config.use_cache
+        # self.use_cache = self.model.config.use_cache
         self.gptq_related_blocks = trace_gptq_target_blocks(self.model)  # get the transformer block list above
         self.dtype = next(iter(self.model.parameters())).dtype
         log_quantizable_layers_per_transformer(self.gptq_related_blocks)
@@ -417,6 +437,12 @@ class GPTQuantizer(object):
                     pass
         return config
 
+    def track_hidden_states(self, data):
+        if isinstance(data, torch.Tensor):
+            return data
+        elif isinstance(data, tuple) or isinstance(data, list):
+            return data[0]
+
     @torch.no_grad()
     def pre_quantization(self):
         """Prepare input calibration data and other attributes which are critical for gptq execution."""
@@ -580,7 +606,8 @@ class GPTQuantizer(object):
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
+                out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
+                out = self.track_hidden_states(out)
             self.cache_key_arguments["i"] = idx
             for h in handles:
                 h.remove()
@@ -644,7 +671,8 @@ class GPTQuantizer(object):
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                out = transformer_block(*cache_positional_batch, **cache_keyword_batch)[0]
+                out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
+                out = self.track_hidden_states(out)
                 outs.append(out)
             self.cache_key_arguments["i"] = idx
             if self.layer_wise:
@@ -658,7 +686,7 @@ class GPTQuantizer(object):
             logger.info("------------------------------")
 
         logger.info("Quantization done")
-        self.model.config.use_cache = self.use_cache
+        # self.model.config.use_cache = self.use_cache
 
         # obtain model (all weight only quantization API function should return)
         for k, v in gptq_config.items():
