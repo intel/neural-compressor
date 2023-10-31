@@ -354,6 +354,7 @@ A list of models that achieved a <1% accuracy drop is shown below.
 | LLaMa-65b | 0.7908 | 0.7957 | alpha=0.9, Ipex 2.1 |
 | LLaMa-2-7b-hf* | 0.7392 | 0.7335  | alpha=Auto, Ipex 2.1 |
 | LLaMa-2-7b-Chat* | 0.7058 | 0.6994 | alpha=Auto, Ipex 2.1 |
+| LLaMa-2-13b-hf* | 0.7677 | 0.7614  | alpha=Auto, Ipex 2.1 |
 | EleutherAI/gpt-j-6B* | 0.6831 | 0.6821 | alpha=1.0, Ipex 2.1 |
 | MBZUAI/LaMini-GPT-124m | 0.3804 | 0.3887 | alpha=0.5, Ipex 2.1 |
 | MBZUAI/LaMini-GPT-774m | 0.5048 | 0.5057 | alpha=0.5, Ipex 2.1 |
