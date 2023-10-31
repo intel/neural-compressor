@@ -322,6 +322,13 @@
       "main_script": "main.py",
       "batch_size": 1
     },
+    "beit": {
+      "model_src_dir": "image_recognition/beit/quantization/ptq_static",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "/tf_dataset2/models/onnx/beit/beit_base_patch16_224_pt22k_ft22kto1k.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
     "mobilebert_squad_mlperf_qdq": {
       "model_src_dir": "nlp/onnx_model_zoo/mobilebert/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/squad",

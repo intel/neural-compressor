@@ -1562,6 +1562,260 @@ class TestAdaptorONNXRT(unittest.TestCase):
         session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
         self.assertIsNotNone(session)
 
+    def test_tile(self):
+        # test Tile nodes: MatMul-Tile-MatMul
+        input_tensor = helper.make_tensor_value_info("input", TensorProto.FLOAT, [2, 3, 4, 1])
+
+        matmul1_weight = helper.make_tensor(
+            "matmul1_weight", TensorProto.FLOAT, [1, 5], np.random.random((1, 5)).reshape(5).tolist()
+        )
+        matmul1_output = helper.make_tensor_value_info("matmul1_output", TensorProto.FLOAT, [2, 3, 4, 5])
+        matmul1_node = onnx.helper.make_node("MatMul", ["input", "matmul1_weight"], ["matmul1_output"], name="Matmul_0")
+
+        repeats = helper.make_tensor("repeats", TensorProto.INT64, [4], [2, 2, 2, 2])
+        tile_output = helper.make_tensor_value_info("tile_output", TensorProto.FLOAT, [4, 6, 8, 10])
+        tile_node = onnx.helper.make_node(
+            "Tile",
+            ["matmul1_output", "repeats"],
+            ["tile_output"],
+            name="Tile_1",
+        )
+
+        matmul2_weight = helper.make_tensor(
+            "matmul2_weight", TensorProto.FLOAT, [10, 1], np.random.random((10, 1)).reshape(10).tolist()
+        )
+        matmul2_output = helper.make_tensor_value_info("matmul2_output", TensorProto.FLOAT, [4, 6, 8, 1])
+        matmul2_node = onnx.helper.make_node(
+            "MatMul", ["tile_output", "matmul2_weight"], ["matmul2_output"], name="Matmul_2"
+        )
+
+        initializers = [matmul1_weight, matmul2_weight, repeats]
+        graph = helper.make_graph(
+            [matmul1_node, tile_node, matmul2_node],
+            "TestTile_test_model",
+            [input_tensor],
+            [matmul2_output],
+            initializer=initializers,
+        )
+        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
+        model.ir_version = 7
+
+        q_config = {"Matmul_0": self.static_q_config, "Tile_1": self.static_q_config, "Matmul_2": self.static_q_config}
+        quantize_params = {
+            "input": [np.uint8(10.0), np.float32(0)],
+            "matmul1_weight": [np.uint8(10.0), np.float32(0)],
+            "matmul1_output": [np.uint8(10.0), np.float32(0)],
+            "matmul2_weight": [np.uint8(10.0), np.float32(0)],
+            "matmul2_output": [np.uint8(10.0), np.float32(0)],
+            "tile_output": [np.uint8(10.0), np.float32(0)],
+        }
+        quantizable_op_types = ["MatMul", "Tile"]
+        q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 1)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 1)
+        session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
+        self.assertIsNotNone(session)
+
+        q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 6)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 4)
+        session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
+        self.assertIsNotNone(session)
+
+    def test_centercroppad(self):
+        # test CenterCropPad nodes: MatMul-CenterCropPad-MatMul
+        input_tensor = helper.make_tensor_value_info("input", TensorProto.FLOAT, [20, 10, 1])
+
+        matmul1_weight = helper.make_tensor(
+            "matmul1_weight", TensorProto.FLOAT, [1, 3], np.random.random((1, 3)).reshape(3).tolist()
+        )
+        matmul1_output = helper.make_tensor_value_info("matmul1_output", TensorProto.FLOAT, [20, 10, 3])
+        matmul1_node = onnx.helper.make_node("MatMul", ["input", "matmul1_weight"], ["matmul1_output"], name="Matmul_0")
+
+        centercroppad_output = helper.make_tensor_value_info("centercroppad_output", TensorProto.FLOAT, [10, 7, 3])
+        shape = helper.make_tensor("shape", TensorProto.INT64, [3], [10, 7, 3])
+        centercroppad_node = onnx.helper.make_node(
+            "CenterCropPad",
+            ["matmul1_output", "shape"],
+            ["centercroppad_output"],
+            name="Centercroppad_1",
+        )
+
+        matmul2_weight = helper.make_tensor(
+            "matmul2_weight", TensorProto.FLOAT, [3, 1], np.random.random((3, 1)).reshape(3).tolist()
+        )
+        matmul2_output = helper.make_tensor_value_info("matmul2_output", TensorProto.FLOAT, [10, 7, 1])
+        matmul2_node = onnx.helper.make_node(
+            "MatMul", ["centercroppad_output", "matmul2_weight"], ["matmul2_output"], name="Matmul_2"
+        )
+
+        initializers = [matmul1_weight, shape, matmul2_weight]
+        graph = helper.make_graph(
+            [matmul1_node, centercroppad_node, matmul2_node],
+            "TestCenterCropPad_test_model",
+            [input_tensor],
+            [matmul2_output],
+            initializer=initializers,
+        )
+        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 18)])
+        model.ir_version = 8
+
+        q_config = {
+            "Matmul_0": self.static_q_config,
+            "Centercroppad_1": self.static_q_config,
+            "Matmul_2": self.static_q_config,
+        }
+        quantize_params = {
+            "input": [np.uint8(10.0), np.float32(0)],
+            "matmul1_weight": [np.uint8(10.0), np.float32(0)],
+            "matmul1_output": [np.uint8(10.0), np.float32(0)],
+            "matmul2_weight": [np.uint8(10.0), np.float32(0)],
+            "matmul2_output": [np.uint8(10.0), np.float32(0)],
+            "centercroppad_output": [np.uint8(10.0), np.float32(0)],
+        }
+        quantizable_op_types = ["MatMul", "CenterCropPad"]
+        q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 1)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 1)
+        session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
+        self.assertIsNotNone(session)
+
+        q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 6)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 4)
+        session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
+        self.assertIsNotNone(session)
+
+    def test_gathernd(self):
+        # test GatherND nodes: MatMul-GatherND-MatMul
+        input_tensor = helper.make_tensor_value_info("input", TensorProto.FLOAT, [2, 2, 1])
+
+        matmul1_weight = helper.make_tensor(
+            "matmul1_weight", TensorProto.FLOAT, [1, 2], np.random.random((1, 2)).reshape(2).tolist()
+        )
+        matmul1_output = helper.make_tensor_value_info("matmul1_output", TensorProto.FLOAT, [2, 2, 2])
+        matmul1_node = onnx.helper.make_node("MatMul", ["input", "matmul1_weight"], ["matmul1_output"], name="Matmul_0")
+
+        gathernd_output = helper.make_tensor_value_info("gathernd_output", TensorProto.FLOAT, [2, 1, 2])
+        indices = helper.make_tensor("indices", TensorProto.INT64, [2, 1, 2], [0, 1, 1, 0])
+        gathernd_node = onnx.helper.make_node(
+            "GatherND",
+            ["matmul1_output", "indices"],
+            ["gathernd_output"],
+            name="Gathernd_1",
+        )
+
+        matmul2_weight = helper.make_tensor(
+            "matmul2_weight", TensorProto.FLOAT, [2, 1], np.random.random((2, 1)).reshape(2).tolist()
+        )
+        matmul2_output = helper.make_tensor_value_info("matmul2_output", TensorProto.FLOAT, [2, 1, 1])
+        matmul2_node = onnx.helper.make_node(
+            "MatMul", ["gathernd_output", "matmul2_weight"], ["matmul2_output"], name="Matmul_2"
+        )
+
+        initializers = [matmul1_weight, indices, matmul2_weight]
+        graph = helper.make_graph(
+            [matmul1_node, gathernd_node, matmul2_node],
+            "TestGatherND_test_model",
+            [input_tensor],
+            [matmul2_output],
+            initializer=initializers,
+        )
+        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
+        model.ir_version = 7
+
+        q_config = {
+            "Matmul_0": self.static_q_config,
+            "Matmul_2": self.static_q_config,
+            "Gathernd_1": self.static_q_config,
+        }
+
+        quantize_params = {
+            "input": [np.uint8(10.0), np.float32(0)],
+            "matmul1_weight": [np.uint8(10.0), np.float32(0)],
+            "matmul1_output": [np.uint8(10.0), np.float32(0)],
+            "matmul2_weight": [np.uint8(10.0), np.float32(0)],
+            "matmul2_output": [np.uint8(10.0), np.float32(0)],
+            "gathernd_output": [np.uint8(10.0), np.float32(0)],
+        }
+        quantizable_op_types = ["MatMul", "GatherND"]
+        q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 1)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 1)
+        session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
+        self.assertIsNotNone(session)
+
+        q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 6)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 4)
+        session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
+        self.assertIsNotNone(session)
+
+    def test_gatherelements(self):
+        # test GatherElements nodes: MatMul-GatherElements-MatMul
+        input_tensor = helper.make_tensor_value_info("input", TensorProto.FLOAT, [3, 1])
+
+        matmul1_weight = helper.make_tensor(
+            "matmul1_weight", TensorProto.FLOAT, [1, 3], np.random.random((1, 3)).reshape(3).tolist()
+        )
+        matmul1_output = helper.make_tensor_value_info("matmul1_output", TensorProto.FLOAT, [3, 3])
+        matmul1_node = onnx.helper.make_node("MatMul", ["input", "matmul1_weight"], ["matmul1_output"], name="Matmul_0")
+
+        gatherelements_output = helper.make_tensor_value_info("gatherelements_output", TensorProto.FLOAT, [2, 3])
+        indices = helper.make_tensor("indices", TensorProto.INT64, [2, 3], [-1, -2, 0, -2, 0, 0])
+        gathernd_node = onnx.helper.make_node(
+            "GatherElements",
+            ["matmul1_output", "indices"],
+            ["gatherelements_output"],
+            name="Gatherelements_1",
+        )
+
+        matmul2_weight = helper.make_tensor(
+            "matmul2_weight", TensorProto.FLOAT, [3, 1], np.random.random((3, 1)).reshape(3).tolist()
+        )
+        matmul2_output = helper.make_tensor_value_info("matmul2_output", TensorProto.FLOAT, [2, 1])
+        matmul2_node = onnx.helper.make_node(
+            "MatMul", ["gatherelements_output", "matmul2_weight"], ["matmul2_output"], name="Matmul_2"
+        )
+
+        initializers = [matmul1_weight, indices, matmul2_weight]
+        graph = helper.make_graph(
+            [matmul1_node, gathernd_node, matmul2_node],
+            "TestGatherElements_test_model",
+            [input_tensor],
+            [matmul2_output],
+            initializer=initializers,
+        )
+        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
+        model.ir_version = 7
+
+        q_config = {
+            "Matmul_0": self.static_q_config,
+            "Matmul_2": self.static_q_config,
+            "Gatherelements_1": self.static_q_config,
+        }
+
+        quantize_params = {
+            "input": [np.uint8(10.0), np.float32(0)],
+            "matmul1_weight": [np.uint8(10.0), np.float32(0)],
+            "matmul1_output": [np.uint8(10.0), np.float32(0)],
+            "matmul2_weight": [np.uint8(10.0), np.float32(0)],
+            "matmul2_output": [np.uint8(10.0), np.float32(0)],
+            "gatherelements_output": [np.uint8(10.0), np.float32(0)],
+        }
+        quantizable_op_types = ["MatMul", "GatherElements"]
+        q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 1)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 1)
+        session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
+        self.assertIsNotNone(session)
+
+        q_model = self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["DequantizeLinear"], 6)
+        self.assertEqual(Counter([node.op_type for node in q_model.model.graph.node])["QuantizeLinear"], 4)
+        session = ort.InferenceSession(q_model.model.SerializeToString(), providers=["CPUExecutionProvider"])
+        self.assertIsNotNone(session)
+
 
 class TestCastONNXRT(unittest.TestCase):
     @classmethod
