@@ -19,8 +19,8 @@
 
 import copy
 
-from neural_compressor.experimental.common import Optimizers
 from neural_compressor.compression.distillation.criterions import Criterions
+from neural_compressor.experimental.common import Optimizers
 
 from ..adaptor import FRAMEWORKS
 from ..conf.config import DistillationConf
