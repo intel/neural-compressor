@@ -43,7 +43,7 @@ Functions
    :rtype: a bool
 
 
-.. py:function:: trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList])
+.. py:function:: trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn.Sequential])
 
    Search transformer stacked structures, which is critical in LLMs and GPTQ execution.
 
