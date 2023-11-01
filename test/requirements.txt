@@ -18,3 +18,4 @@ torch
 torchvision
 transformers>=4.30.2
 xgboost
+peft
