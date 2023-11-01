@@ -21,8 +21,9 @@ from eval import eval_model
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+os.environ["HF_HOME"] = "/models/huggingface"
 
-# os.environ["HF_HOME"] = "/models/huggingface"
+
 # os.environ['TRANSFORMERS_OFFLINE'] = '0'
 
 
@@ -340,7 +341,7 @@ class WrapperLinear(torch.nn.Module):
         weight = self.orig_layer.weight
         if self.enable_minmax_tuning:
             weight_q = quant_weight(weight, self.num_bits, self.group_size, self.schema,
-                                    self.grad,self.min_scale, self.max_scale)
+                                    self.grad, self.min_scale, self.max_scale)
 
         else:
             weight_q = FakeAffineTensorQuantFunction().apply(weight, self.num_bits, self.group_size, self.schema,
@@ -348,10 +349,10 @@ class WrapperLinear(torch.nn.Module):
         return F.linear(x, weight_q, self.orig_layer.bias)
 
 
-def wrapper_block(block, num_bits, group_size, schema):
+def wrapper_block(block, num_bits, group_size, schema, enable_minmax_tuning):
     for n, m in block.named_modules():
         if isinstance(m, torch.nn.Linear):
-            new_m = WrapperLinear(m, num_bits, group_size, schema)
+            new_m = WrapperLinear(m, num_bits, group_size, schema, enable_minmax_tuning)
             set_module(block, n, new_m)
 
 
@@ -391,9 +392,9 @@ def get_lr(step, total_steps, lr=0.01, warmup_step=0, lr_type="linear"):
         return (lr - 0.01 * lr) * float(step) / warmup_step + 0.01 * lr
 
     if lr_type == "const":
-        current_lr = args.lr
+        current_lr = lr
     elif lr_type == "linear":
-        current_lr = args.lr - float(step - warmup_step) / (total_steps - warmup_step) * lr
+        current_lr = lr - float(step - warmup_step) / (total_steps - warmup_step) * lr
     elif lr_type == "cos":
         import math
         current_lr = math.cos(float(step - warmup_step) / (total_steps - warmup_step) * math.pi / 2) * lr
@@ -577,7 +578,7 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
         if not args.low_gpu_mem_usage and input_ids.device != device:
             input_ids = input_ids.to(device)
 
-    wrapper_block(block, num_bits, group_size, schema)
+    wrapper_block(block, num_bits, group_size, schema, args.enable_minmax_tuning)
     search_iters = args.iters
     pick_samples = args.train_bs
     if len(input_ids.shape) == 3:
@@ -632,12 +633,14 @@ def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_
             if args.dynamic_max_gap > 0 and i - last_best_iter >= args.dynamic_max_gap:
                 break
         grad, grad_m = update_round_grad(block, i, 0, grad, grad_m, args)
-        min_scale_grad, max_scale_grad = update_min_max_round_grad(block, i, 0, min_scale_grad, max_scale_grad,
-                                                                   args)
+        if args.enable_minmax_tuning:
+            min_scale_grad, max_scale_grad = update_min_max_round_grad(block, i, 0, min_scale_grad, max_scale_grad,
+                                                                       args)
         for n, m in block.named_modules():
             if isinstance(m, WrapperLinear):
                 m.update_grad(grad[n])
-                m.update_minmax_grad(min_scale_grad[n], max_scale_grad[n])
+                if args.enable_minmax_tuning:
+                    m.update_minmax_grad(min_scale_grad[n], max_scale_grad[n])
 
     unwrapper_block(block, num_bits, group_size, schema, best_grad, best_min_scale_grad, best_max_scale_grad)
     if args.use_quant_input:
@@ -708,12 +711,12 @@ def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, g
             m = WrapperMultiblock(modules)
 
         m = m.to(device)
-        with torch.autograd.set_detect_anomaly(True):
-            q_input, input_ids = quant_block(m, input_ids, input_others, num_bits=num_bits, group_size=group_size,
-                                             schema=schema,
-                                             q_input=q_input,
-                                             args=args,
-                                             device=device)
+
+        q_input, input_ids = quant_block(m, input_ids, input_others, num_bits=num_bits, group_size=group_size,
+                                         schema=schema,
+                                         q_input=q_input,
+                                         args=args,
+                                         device=device)
         m.to("cpu")
         torch.cuda.empty_cache()
 
@@ -770,6 +773,9 @@ if __name__ == '__main__':
     parser.add_argument("--lr", default=0.0025, type=float,
                         help="step size")
 
+    parser.add_argument("--min_max_lr", default=0.0025, type=float,
+                        help="step size")
+
     parser.add_argument("--lr_decay_type", default="linear", type=str,
                         help="lr decay type")
 
@@ -804,11 +810,15 @@ if __name__ == '__main__':
     parser.add_argument("--low_gpu_mem_usage", action='store_true',
                         help="low_gpu_mem_usage")
 
+    parser.add_argument("--enable_minmax_tuning", action='store_true',
+                        help="enable_tuning_minmax")
+
     # parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
     #                     help="lm-eval tasks")
 
     parser.add_argument("--tasks", default=["lambada_openai"],
-                        help="lm-eval tasks")
+                        help="lm-eval tasks")##TODO change back
+
     args = parser.parse_args()
     set_seed(args.seed)
 
