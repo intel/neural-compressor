@@ -129,6 +129,8 @@ torch.save(compressed_model.state_dict(), "compressed_model.pt")
 
 The saved_results folder contains two files: `best_model.pt` and `qconfig.json`, and the generated q_model is a fake quantized model.
 
+To seek the performance of weight-only quantized models, Please go to [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization#1-performance) to quantize and deploy the model.
+
 
 ### **WOQ algorithms tuning**
 
