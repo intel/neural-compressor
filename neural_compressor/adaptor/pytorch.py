@@ -779,7 +779,7 @@ class TemplateAdaptor(Adaptor):
         self.bf16_ops = []
         self.use_bf16 = framework_specific_info.get("use_bf16", True)
         self.device = framework_specific_info["device"]
-        self.backend = framework_specific_info["backend"]
+        self.backend = framework_specific_info.get("backend", "default")
         self.q_dataloader = framework_specific_info["q_dataloader"]
         self.q_func = framework_specific_info.get("q_func", None)
         self.benchmark = GLOBAL_STATE.STATE == MODE.BENCHMARK
