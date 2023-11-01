@@ -27,6 +27,7 @@ try:
     import intel_extension_for_pytorch as ipex
 
     TEST_IPEX = True
+    IPEX_VERSION = Version(ipex.__version__)
 except:
     TEST_IPEX = False
 
@@ -1397,6 +1398,10 @@ class TestPeftModel(unittest.TestCase):
             isinstance(q_model.model.base_model.model.score.original_module, torch.nn.Linear)
         )  # Linear that is not called in calibration
 
+    @unittest.skipIf(
+        IPEX_VERSION.release <= Version("2.1.0").release and ipex.__version__ != "2.1.0+cpu",
+        "Please use Intel extension for Pytorch version higher or equal to 2.1.0",
+    )
     def test_peft_model_quantization_ipex(self):
         import peft
 
@@ -1426,7 +1431,6 @@ class TestPeftModel(unittest.TestCase):
             calib_func=calib_func,
         )
         out2 = q_model.model(example_input)[0]
-        print(out1, out2)
 
 
 if __name__ == "__main__":
