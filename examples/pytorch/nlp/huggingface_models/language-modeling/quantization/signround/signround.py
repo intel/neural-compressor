@@ -353,7 +353,7 @@ class WrapperLinear(torch.nn.Module):
 def wrapper_block(block, num_bits, group_size, schema, enable_minmax_tuning):
     for n, m in block.named_modules():
         if isinstance(m, torch.nn.Linear):
-            new_m = WrapperLinear(m, num_bits, group_size, schema, enable_minmax_tuning)
+            new_m = WrapperLinear(m, num_bits, group_size, schema, enable_minmax_tuning=enable_minmax_tuning)
             set_module(block, n, new_m)
 
 
