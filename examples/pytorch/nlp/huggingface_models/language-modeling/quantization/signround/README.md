@@ -29,6 +29,17 @@ To reproduce our results in the paper, please install ITREX
 ```bash
 pip install intel-extension-for-transformers
 ```
+
+| lm-avg/c4ppl       | LLaMA7B | LLaMA13B | LLaMA7BV2 | LLaMA13BV2 | OPT6.7B | OPT13B | BLOOM7B1 |
+|--------------------|---------|----------|-----------|------------|-------------|--------|----------|
+| FP16               |         |          |           |            |             |        |          |
+| RTN                |         |          |           |            |             |        |          |
+| GPTQ               |         |          |           |            |             |        |          |
+| Default-seq512     |         |          |           |            |             |        |          |
+| minmax-seq512      |         |          |           |            |             |        |          |
+| Default-seq2048    |         |          |           |            |             |        |          | 
+| minmax-seq512-2048 |         |          |           |            |             |        |          |
+
 ## Reference
 If you find SignRound useful or relevant to your research, please kindly cite our paper
 

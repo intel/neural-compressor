@@ -91,6 +91,7 @@ def quant_weight_actor(weight, num_bits, schema, grad, min_scale, max_scale):
         return quant_weight_asym(weight, num_bits, grad, min_scale, max_scale)
 
 
+
 def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0, min_scale=0, max_scale=0):
     if group_size == -1 or weight.shape[1] < group_size:
         return quant_weight_actor(weight, num_bits, schema=schema, grad=grad, min_scale=min_scale, max_scale=max_scale)
@@ -813,11 +814,10 @@ if __name__ == '__main__':
     parser.add_argument("--enable_minmax_tuning", action='store_true',
                         help="enable_tuning_minmax")
 
-    # parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
-    #                     help="lm-eval tasks")
+    parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
+                        help="lm-eval tasks")
 
-    parser.add_argument("--tasks", default=["lambada_openai"],
-                        help="lm-eval tasks")##TODO change back
+
 
     args = parser.parse_args()
     set_seed(args.seed)
