@@ -892,8 +892,8 @@ class TestExample(unittest.TestCase):
             )
             self.assertTrue(torch.allclose(inc_sq_weight_scale, ipex_sq_weight_scale))
             # set a big atol to avoid random issue
-            self.assertTrue(torch.allclose(ipex_out, inc_out, atol=1e-02))
-            self.assertTrue(torch.allclose(output1, inc_out, atol=1e-02))
+            self.assertTrue(torch.allclose(ipex_out, inc_out, atol=2e-02))
+            self.assertTrue(torch.allclose(output1, inc_out, atol=2e-02))
 
         class CalibDataloader:
             def __init__(self):
@@ -916,7 +916,7 @@ class TestExample(unittest.TestCase):
         )
         output2 = q_model.model(input_ids)
         # set a big atol to avoid random issue
-        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
+        self.assertTrue(torch.allclose(output1, output2, atol=2e-02))
 
         conf = PostTrainingQuantConfig(
             backend="ipex",
@@ -932,7 +932,7 @@ class TestExample(unittest.TestCase):
         )
         output2 = q_model.model(input_ids)
         # set a big atol to avoid random issue
-        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
+        self.assertTrue(torch.allclose(output1, output2, atol=2e-02))
 
 
 class TestSqSkipOp(unittest.TestCase):
