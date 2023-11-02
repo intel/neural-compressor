@@ -300,7 +300,10 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.tune:
         from neural_compressor import PostTrainingQuantConfig
         from neural_compressor import quantization
-        conf = PostTrainingQuantConfig(backend='ipex', device="xpu")
+        if args.xpu:
+            conf = PostTrainingQuantConfig(backend='ipex', device="xpu")
+        else:
+            conf = PostTrainingQuantConfig(backend='ipex')
         q_model = quantization.fit(model,
                                     conf,
                                     calib_dataloader=val_loader,
