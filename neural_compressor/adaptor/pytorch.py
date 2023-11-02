@@ -1833,7 +1833,7 @@ class TemplateAdaptor(Adaptor):
                 absorb_layer = op_name
                 absorbed_layer = info["absorbed_layer"]
                 input_minmax = info["input_minmax"]
-                weight_max = info["weight_max"]
+                weight_max = info["weight_max"].clamp(min=1e-5)
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
@@ -1877,7 +1877,7 @@ class TemplateAdaptor(Adaptor):
                 alpha = info["alpha"]
                 absorbed_layer = info["absorbed_layer"]
                 input_minmax = info["input_minmax"]
-                weight_max = info["weight_max"]
+                weight_max = info["weight_max"].clamp(min=1e-5)
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
@@ -3279,8 +3279,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 absorbed_layer = info["absorbed_layer"]
                 input_minmax = info["input_minmax"]
                 # for peft model,lora_B weights is 0.
-                eps = torch.finfo(torch.float32).eps
-                weight_max = torch.max(info["weight_max"], info["weight_max"] + eps)
+                weight_max = info["weight_max"].clamp(min=1e-5)
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)

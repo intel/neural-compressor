@@ -1389,12 +1389,6 @@ class TestPeftModel(unittest.TestCase):
             )
         )  # Linear in Linear
         self.assertTrue(
-            isinstance(
-                decoder.layers[0].self_attn.v_proj.sq_linear.module.lora_B.default,
-                torch.nn.Linear,
-            )
-        )  # Linear that failed when smoothquant, because its weights are zeros
-        self.assertTrue(
             isinstance(q_model.model.base_model.model.score.original_module, torch.nn.Linear)
         )  # Linear that is not called in calibration
 
