@@ -1644,6 +1644,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             actorder = self.recipes.get("gptq_args", {}).get("actorder", False)
             mse = self.recipes.get("gptq_args", {}).get("mse", False)
             perchannel = self.recipes.get("gptq_args", {}).get("perchannel", True)
+            compute_type = self.recipes.get("gptq_args", {}).get("compute_type", -1)
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
             model = gptq_quantize(
                 model,
@@ -1655,12 +1656,14 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 actorder=actorder,
                 mse=mse,
                 perchannel=perchannel,
+                compute_type=compute_type,
             )
         if "AWQ" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
 
             enable_auto_scale = self.recipes.get("awq_args", {}).get("enable_auto_scale", True)
             enable_mse_search = self.recipes.get("awq_args", {}).get("enable_mse_search", True)
+            compute_type = self.recipes.get("awq_args", {}).get("compute_type", -1)
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
             model = awq_quantize(
                 model,
@@ -1669,15 +1672,21 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 n_samples=calib_sampling_size,
                 enable_auto_scale=enable_auto_scale,
                 enable_mse_search=enable_mse_search,
+                compute_type=compute_type,
             )
         elif "RTN" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
 
-            model = rtn_quantize(model, quant_config)
-        model.q_config = copy.deepcopy(quant_config)
-        self._dump_model_op_stats(model, tune_cfg)
-        model.topological_sort()
-        return model
+            compute_type = self.recipes.get("rtn_args", {}).get("compute_type", -1)
+            tmp_model = rtn_quantize(
+                tmp_model,
+                quant_config,
+                compute_type=compute_type,
+            )
+        tmp_model.q_config = copy.deepcopy(quant_config)
+        self._dump_model_op_stats(tmp_model, tune_cfg)
+        tmp_model.topological_sort()
+        return tmp_model
 
     def _dump_model_op_stats(self, model, tune_cfg):
         import re
