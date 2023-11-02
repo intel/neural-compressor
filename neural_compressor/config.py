@@ -364,7 +364,7 @@ class BenchmarkConfig:
 
     @device.setter
     def device(self, device):
-        if _check_value("device", device, str, ["cpu", "gpu", "xpu"]):
+        if _check_value("device", device, str, ["cpu", "gpu", "npu", "xpu"]):
             self._device = device
 
     @property
@@ -1129,7 +1129,7 @@ class _BaseQuantizationConfig:
 
     @device.setter
     def device(self, device):
-        if _check_value("device", device, str, ["cpu", "gpu", "xpu"]):
+        if _check_value("device", device, str, ["cpu", "gpu", "npu", "xpu"]):
             self._device = device
 
     @property
@@ -2023,7 +2023,7 @@ class MixedPrecisionConfig(object):
     @device.setter
     def device(self, device):
         """Set device."""
-        if _check_value("device", device, str, ["cpu", "gpu", "xpu"]):
+        if _check_value("device", device, str, ["cpu", "gpu", "npu", "xpu"]):
             self._device = device
 
     @property
