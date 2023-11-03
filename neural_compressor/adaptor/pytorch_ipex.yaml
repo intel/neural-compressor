@@ -33,7 +33,7 @@
                         'dtype': ['uint8'],
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
-                        'algorithm': ['kl', 'minmax']
+                        'algorithm': ['minmax', 'kl']
                         },
                     },
           'Conv1d': *cap_s8_1_12_Conv2d,
@@ -50,7 +50,7 @@
                         'dtype': ['uint8'],
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
-                        'algorithm': ['kl', 'minmax']
+                        'algorithm': ['minmax', 'kl']
                         }
                     },
           },
