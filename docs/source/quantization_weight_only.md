@@ -129,6 +129,8 @@ torch.save(compressed_model.state_dict(), "compressed_model.pt")
 
 The saved_results folder contains two files: `best_model.pt` and `qconfig.json`, and the generated q_model is a fake quantized model.
 
+To seek the performance of weight-only quantized models, Please go to [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization#1-performance) to quantize and deploy the model.
+
 
 ### **WOQ algorithms tuning**
 
@@ -173,22 +175,19 @@ Large language models (LLMs) have shown exceptional performance across various t
 |:--------------:|:----------:|
 |       RTN      |  &#10004;  | 
 |       AWQ      |  &#10005;  |
-|      GPTQ      | &#10005; | 
+|      GPTQ      | &#10004; | 
 |      TEQ      | &#10005; |
 
 ### Example
 ```python
 from neural_compressor import PostTrainingQuantConfig, quantization
-from neural_compressor.adaptor.torch_utils.layer_wise_quant import load_shell
+from neural_compressor.adaptor.torch_utils.layer_wise_quant import load_empty_model
 
-fp32_model = load_shell(model_name_or_path, AutoModelForCausalLM, torchscript=True)
+fp32_model = load_empty_model(model_name_or_path, torchscript=True)
 conf = PostTrainingQuantConfig(
     approach="weight_only",
     recipes={
         "layer_wise_quant": True,
-        "layer_wise_quant_args": {
-            "model_path": "facebook/opt-125m",
-        },
         "rtn_args": {"enable_full_range": True},
     },
 )
@@ -201,6 +200,7 @@ q_model = quantization.fit(
 )
 ouput_dir = "./saved_model"
 q_model.save(ouput_dir)
+q_model = load(ouput_dir, fp32_model, weight_only=True, layer_wise=True)
 ```
 
 ## Reference

@@ -15,5 +15,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Torch layer-wise quantization module."""
-from .utils import load_shell
+from .utils import load_empty_model
 from .quantize import LayerWiseQuant

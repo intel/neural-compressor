@@ -3522,13 +3522,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         ):
             from .torch_utils.layer_wise_quant import LayerWiseQuant
 
-            model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+            # model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+            model_path = model._model.path
             smooth_quant = recipe_cfgs["layer_wise_quant_args"].get("smooth_quant", False)
             alpha = recipe_cfgs["layer_wise_quant_args"].get("smooth_quant_alpha", 0.5)
-            assert (
-                model_path is not None
-            ), "the layer_wise_quant_args should have args model_path to load the weight of model."
-            device = recipe_cfgs["layer_wise_quant_args"].get("decvice", "cpu")
+            # device = recipe_cfgs["layer_wise_quant_args"].get("decvice", "cpu")
+            assert model_path is not None, "The model_path should not be None."
+            device = self.device
             lw_quant = LayerWiseQuant(
                 q_model._model,
                 model_path,
@@ -4561,14 +4561,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         # for layer_wise quant mode
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
         if recipe_cfgs.get("layer_wise_quant", False):
-            from neural_compressor.config import options
+            from .torch_utils.layer_wise_quant.utils import LWQ_WORKSPACE, _get_path, load_module
 
-            from .torch_utils.layer_wise_quant.utils import _get_path, load_module
-
-            lwq_workspace = os.path.join(options.workspace, "lwq_tmpdir")
-            os.makedirs(lwq_workspace, exist_ok=True)
-            model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
-            assert model_path, "model_path should specify in layer_wise_quant_args."
+            os.makedirs(LWQ_WORKSPACE, exist_ok=True)
+            # model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+            model_path = model.path
+            assert model_path, "model_path should not be None."
             model_path = _get_path(model_path)
 
         for key, config in tune_cfg["op"].items():
@@ -4604,7 +4602,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     # save and clean weight
                     from .torch_utils.layer_wise_quant.utils import clean_module_weight
 
-                    torch.save(m.state_dict(), os.path.join(lwq_workspace, f"{op_name}.pt"))
+                    torch.save(m.state_dict(), os.path.join(LWQ_WORKSPACE, f"{op_name}.pt"))
                     clean_module_weight(m)
                 set_module(model, op_name, m)
         if recipe_cfgs.get("layer_wise_quant", False):
@@ -4639,6 +4637,23 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             ...
         }
         """
+        # for layer_wise quant mode
+        recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
+        model_path = None
+        layer_wise = False
+        if recipe_cfgs.get("layer_wise_quant", False):
+            layer_wise = True
+            from .torch_utils.layer_wise_quant.utils import LWQ_WORKSPACE, _get_path, register_weight_hooks
+
+            os.makedirs(LWQ_WORKSPACE, exist_ok=True)
+            # model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+            model_path = model.path
+            assert model_path, "model_path should not be None."
+            model_path = _get_path(model_path)
+            lwq_handles = register_weight_hooks(
+                model, model_path, device=self.device, clean_weight=True, saved_path=LWQ_WORKSPACE
+            )
+
         weight_config = {}
         for key, config in tune_cfg["op"].items():
             op_name, op_type = key
@@ -4663,7 +4678,15 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             )
         # tune_cfg => weight_config
         model, quantization_perm = gptq_quantize(
-            model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, self.device
+            model,
+            weight_config,
+            dataloader,
+            nsamples,
+            use_max_length,
+            pad_max_length,
+            self.device,
+            layer_wise,
+            model_path,
         )
         return model, quantization_perm
 
