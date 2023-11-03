@@ -3116,7 +3116,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         smooth_quant_args = self.recipes.get("smooth_quant_args", {})
                         folding = smooth_quant_args.get("folding", False)
                         if not folding:
-                            if self.sq_minmax_init:
+                            if self.sq_minmax_init or self.version.release >= Version("2.2").release:
                                 from torch.ao.quantization.observer import MinMaxObserver
 
                                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
@@ -3301,7 +3301,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         # Check save_qconf_summary part is a workaround for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
         if not hasattr(model._model, "save_qconf_summary") or not hasattr(model._model, "load_qconf_summary"):
-            if self.sq_minmax_init:
+            if self.sq_minmax_init or self.version.release >= Version("2.2").release:
                 from torch.ao.quantization.observer import MinMaxObserver
 
                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
@@ -3318,11 +3318,17 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     model._model, static_qconfig, example_inputs=self.example_inputs, inplace=inplace
                 )
 
-        # TODO: update_sq_scale is used to update observer, should fuse in _cfg_to_qconfig
+        # The IPEX SmoothQuant observer can only use save/load_qconf_summary once.
+        # The save_qconf_summary API will freeze the scale used in model and calibration won't work anymore.
+        # The load_qconf_summary will overwrite the scales used in model but only work in the first call.
+        # Here, we use INC collected scale for Linear and set normal observer instead of SQObserver \
+        # to make sure calibration works for other ops, like add, bmm.
         from .torch_utils.util import update_sq_scale
 
         self._cfg_to_qconfig(tune_cfg, smooth_quant=True)
+        update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
         model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
+
         # real calibration for other operators
         try:
             # IPEX may raise an error on the second iteration.
@@ -3340,10 +3346,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 + "using scale info from SmoothQuant for Linear and "
                 + "one iter calibration for other ops."
             )
-            # update ipex_config.json with smoothquant_scale_info
-            model._model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-            update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
-            model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
 
         self._ipex_post_quant_process(model, q_model, dataloader, inplace=inplace)
 
