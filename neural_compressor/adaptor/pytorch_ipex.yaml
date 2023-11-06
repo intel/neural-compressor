@@ -48,9 +48,9 @@
                         },
             'activation': {
                         'dtype': ['uint8'],
-                        'scheme': ['asym'],
+                        'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
-                        'algorithm': ['minmax']
+                        'algorithm': ['minmax', 'kl']
                         }
                     },
           },

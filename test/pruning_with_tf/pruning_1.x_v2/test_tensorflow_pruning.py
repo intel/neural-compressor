@@ -353,9 +353,11 @@ class TestTensorflowPruning(unittest.TestCase):
     def setUpClass(cls):
         build_fake_yaml()
         if system().lower() == "windows":
-            shutil.copytree("C:\\tmp\\.neural_compressor\\inc_ut\\resnet_v2\\", os.getcwd(), dirs_exist_ok=True)
+            src_path = "C:\\tmp\\.neural_compressor\\inc_ut\\resnet_v2\\"
         elif system().lower() == "linux":
-            shutil.copytree("/tmp/.neural_compressor/inc_ut/resnet_v2/", os.getcwd(), dirs_exist_ok=True)
+            src_path = "/tmp/.neural_compressor/inc_ut/resnet_v2/"
+        if os.path.exists(src_path):
+            shutil.copytree(src_path, os.getcwd(), dirs_exist_ok=True)
         if not os.path.exists(cls.dst_path):
             logger.warning("resnet_v2 baseline_model doesn't exist.")
             return unittest.skip("resnet_v2 baseline_model doesn't exist")(TestTensorflowPruning)
