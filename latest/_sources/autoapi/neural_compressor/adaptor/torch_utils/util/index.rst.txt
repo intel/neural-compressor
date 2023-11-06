@@ -107,7 +107,7 @@ Functions
    :rtype: fx_model (dir)
 
 
-.. py:function:: generate_activation_observer(scheme, algorithm)
+.. py:function:: generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False)
 
    This is a helper method to generate an activation observer.
 
@@ -119,7 +119,7 @@ Functions
    :returns: An observer.
 
 
-.. py:function:: check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name)
+.. py:function:: check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name, smooth_quant=False)
 
    Check configs and quantization configs.
 
