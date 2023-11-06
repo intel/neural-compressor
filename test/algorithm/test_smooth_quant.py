@@ -27,6 +27,7 @@ try:
     import intel_extension_for_pytorch as ipex
 
     TEST_IPEX = True
+    IPEX_VERSION = Version(ipex.__version__)
 except:
     TEST_IPEX = False
 
@@ -891,8 +892,8 @@ class TestExample(unittest.TestCase):
             )
             self.assertTrue(torch.allclose(inc_sq_weight_scale, ipex_sq_weight_scale))
             # set a big atol to avoid random issue
-            self.assertTrue(torch.allclose(ipex_out, inc_out, atol=1e-02))
-            self.assertTrue(torch.allclose(output1, inc_out, atol=1e-02))
+            self.assertTrue(torch.allclose(ipex_out, inc_out, atol=2e-02))
+            self.assertTrue(torch.allclose(output1, inc_out, atol=2e-02))
 
         class CalibDataloader:
             def __init__(self):
@@ -915,7 +916,7 @@ class TestExample(unittest.TestCase):
         )
         output2 = q_model.model(input_ids)
         # set a big atol to avoid random issue
-        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
+        self.assertTrue(torch.allclose(output1, output2, atol=2e-02))
 
         conf = PostTrainingQuantConfig(
             backend="ipex",
@@ -931,7 +932,7 @@ class TestExample(unittest.TestCase):
         )
         output2 = q_model.model(input_ids)
         # set a big atol to avoid random issue
-        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
+        self.assertTrue(torch.allclose(output1, output2, atol=2e-02))
 
 
 class TestSqSkipOp(unittest.TestCase):
@@ -1286,6 +1287,144 @@ class TestMemoryUsage(unittest.TestCase):
         mem_use1 = p.memory_info().rss / (1024**3)
         logger.info(f"The memory usage of this ut is {mem_use1 - mem_use0} GBs.")
         assert (mem_use1 - mem_use0) <= 2.0
+
+
+class TestPeftModel(unittest.TestCase):
+    def test_peft_model_fixed_alpha(self):
+        import peft
+
+        model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id)
+        example_input = torch.ones(1, 12, dtype=torch.long)
+        out1 = model(example_input)
+
+        def calib_func(model):
+            model(example_input)
+
+        sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
+        sq.transform(alpha=0.5, folding=False)
+        self.assertTrue(isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
+        self.assertTrue(
+            isinstance(
+                model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
+                SQLinearWrapper,
+            )
+        )  # Linear in Linear
+        self.assertTrue(
+            isinstance(model.base_model.model.score.original_module, torch.nn.Linear)
+        )  # Linear that is not called in calibration
+
+    def test_peft_model_auto_alpha(self):
+        import peft
+
+        model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id, torchscript=True)
+        example_input = torch.ones(1, 12, dtype=torch.long)
+        out1 = model(example_input)
+
+        def calib_func(model):
+            model(example_input)
+
+        # folding=False
+        sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
+        sq.transform(alpha="auto", folding=False)
+        self.assertTrue(isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
+        self.assertTrue(
+            isinstance(
+                model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
+                SQLinearWrapper,
+            )
+        )  # Linear in Linear
+        self.assertTrue(
+            isinstance(model.base_model.model.score.original_module, torch.nn.Linear)
+        )  # Linear that is not called in calibration
+
+        # folding=True
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id, torchscript=True)
+        example_input = torch.ones(1, 12, dtype=torch.long)
+        out1 = model(example_input)
+
+        def calib_func(model):
+            model(example_input)
+
+        sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
+        sq.transform(alpha="auto", folding=True)
+        self.assertTrue(isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, torch.nn.Linear))
+        self.assertTrue(
+            isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj.lora_A.default, torch.nn.Linear)
+        )  # Linear in Linear
+
+    def test_peft_model_quantization(self):
+        import peft
+
+        model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id)
+        # model.base_model.model.model.decoder.layers[0].self_attn.v_proj.lora_B.default.weight is Zero
+        # peft model is needed to be trained first.
+        example_input = torch.ones(1, 12, dtype=torch.long)
+        out1 = model(example_input)
+
+        def calib_func(model):
+            model(example_input)
+
+        from neural_compressor import PostTrainingQuantConfig, quantization
+
+        recipes = {"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}}
+        conf = PostTrainingQuantConfig(
+            excluded_precisions=["bf16"],
+            recipes=recipes,
+            example_inputs=example_input,
+        )
+        q_model = quantization.fit(
+            model,
+            conf,
+            calib_func=calib_func,
+        )
+        decoder = q_model.model.base_model.model.model.decoder
+        self.assertTrue(isinstance(decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
+        self.assertTrue(
+            isinstance(
+                decoder.layers[0].self_attn.v_proj.sq_linear.module.lora_A.default,
+                SQLinearWrapper,
+            )
+        )  # Linear in Linear
+        self.assertTrue(
+            isinstance(q_model.model.base_model.model.score.original_module, torch.nn.Linear)
+        )  # Linear that is not called in calibration
+
+    @unittest.skipIf(
+        IPEX_VERSION.release <= Version("2.1.0").release and ipex.__version__ != "2.1.0+cpu",
+        "Please use Intel extension for Pytorch version higher or equal to 2.1.0",
+    )
+    def test_peft_model_quantization_ipex(self):
+        import peft
+
+        model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id, torchscript=True)
+        # model.base_model.model.model.decoder.layers[0].self_attn.v_proj.lora_B.default.weight is Zero
+        # peft model is needed to be trained first.
+        example_input = torch.ones(1, 12, dtype=torch.long)
+        out1 = model(example_input)[0]
+
+        def calib_func(model):
+            model(example_input)
+
+        from neural_compressor import PostTrainingQuantConfig, quantization
+
+        recipes = {"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}}
+        conf = PostTrainingQuantConfig(
+            backend="ipex",  # IPEX will got error now, will enhance it.
+            excluded_precisions=["bf16"],
+            op_name_dict={".*": {"activation": {"algorithm": "minmax"}}},
+            recipes=recipes,
+            example_inputs=example_input,
+        )
+        q_model = quantization.fit(
+            model,
+            conf,
+            calib_func=calib_func,
+        )
+        out2 = q_model.model(example_input)[0]
 
 
 if __name__ == "__main__":

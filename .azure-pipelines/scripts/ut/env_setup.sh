@@ -92,7 +92,7 @@ pip install horovod
 pip install transformers
 
 if [[ $(echo "${test_case}" | grep -c "others") != 0 ]];then
-    pip install tf_slim xgboost accelerate==0.21.0
+    pip install tf_slim xgboost accelerate==0.21.0 peft
 elif [[ $(echo "${test_case}" | grep -c "nas") != 0 ]]; then
     pip install dynast==1.6.0rc1
 elif [[ $(echo "${test_case}" | grep -c "tf pruning") != 0 ]]; then
