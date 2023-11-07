@@ -53,3 +53,29 @@ print(torch_configs)
 print_with_note("parse from dict")
 config = {"rtn_weight_only_quant": qconfig_dict}
 q_model = quantize(UserMolde(), config)
+
+
+print_with_note("new test")
+quant_config = {
+    "rtn_weight_only_quant": {
+        "global": {
+            "weight_dtype": "nf4",
+            "weight_bits": 4,
+            "weight_group_size": 32,
+        },
+        "operator_type": {
+            "Linear": {
+                "weight_dtype": "nf4",
+                "weight_bits": 6,
+            }
+        },
+        "operator_name": {
+            "model.linear1": {
+                "weight_dtype": "int8",
+                "weight_bits": 4,
+            }
+        },
+    }
+}
+
+q_model = quantize(UserMolde(), quant_config)

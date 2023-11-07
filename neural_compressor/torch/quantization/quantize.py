@@ -22,6 +22,7 @@ def quantize(model, quant_config):
         qconfig = parse_config_from_dict(quant_config)
         print("parsed qconfig from dict: ")
         print_nested_dict(qconfig.to_dict())
+        qconfig.to_json_file("parsed_from_dict.json")
     else:
         assert isinstance(
             quant_config, BaseConfig
