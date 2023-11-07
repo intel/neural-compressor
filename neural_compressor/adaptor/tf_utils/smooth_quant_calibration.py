@@ -16,16 +16,21 @@
 # limitations under the License.
 """Tensorflow model calibration process for Smooth Quantization."""
 
-import logging
 import os
+import copy
+import logging
+import tempfile
+import numpy as np
 from collections import OrderedDict, UserDict
 
-import numpy as np
-from tensorflow.core.framework import graph_pb2
-from tensorflow.python.framework import tensor_util
-
+from tensorflow.python.framework import tensor_util, dtypes
+from tensorflow.python.saved_model import load, tag_constants
+from tensorflow.core.framework import graph_pb2, attr_value_pb2
+from .graph_util import GraphAnalyzer
+from .graph_util import GraphRewriterHelper as Helper
 from .quantize_graph_common import QuantizeGraphHelper
-from .util import iterator_sess_run
+from neural_compressor.utils.utility import CaptureOutputToFile
+from .util import iterator_sess_run, parse_saved_model, reconstruct_saved_model
 
 logger = logging.getLogger("neural_compressor")
 debug = bool(logger.level == logging.DEBUG)
@@ -213,7 +218,7 @@ class SmoothQuantCalibration:
 
         Returns:
             max_vals_per_channel (dict): A dictionary containing the maximum values per channel.
-            shape_infos (dict): A dictionary containing the shape information.
+            sq_weight_node_names (dict): A dictionary mapping from weight names to target node names.
         """
         self._generate_calibration_data()
         max_vals_per_channel = {}
@@ -223,3 +228,220 @@ class SmoothQuantCalibration:
             )
             max_vals_per_channel[key] = max_val_per_channel
         return max_vals_per_channel, self._sq_weight_node_names
+
+class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
+    """A class for performing smooth quantization calibration on a Tensorflow LLM model.
+
+    Args:
+        model (str): A path to the origianl Tensorflow model.
+        iterations (int): The number of iterations to run the calibration process.
+        op_types (List[str]): The types of operations to be quantized.
+        percentile (float): The percentile of calibration to remove outliers.
+        black_nodes (List[str]): A list of node names to be ignored during calibration.
+        eval_func (function):  The function to inference the model.
+        temp_path (str): The temporary path to store median model.
+        weight_name_mapping (): A function that convert weight tensor name in autotrackable to node name in graph_def
+    """
+    def __init__(self, model_path, iterations, op_types, percentile, 
+                    black_nodes, eval_func, temp_path, weight_name_mapping):
+        """Initializes a SmoothQuantCalibrationLLM object."""
+        self.func = None
+        self.graph_def = None
+        self.frozen_func = None
+        self._saved_model = None
+        self.model = model_path
+        self.op_types = op_types
+        self.eval_func = eval_func
+        self.percentile = percentile
+        self.iterations = iterations
+        self.black_nodes = black_nodes
+        self.temp_path = temp_path
+        self.weight_name_mapping = weight_name_mapping
+        self.print_node_list = []
+        self._sq_input_node_names = []
+        self._sq_target_node_names = {}
+        self._sq_output_tensor_dict = {}
+        self._sq_weight_tensor_dict = {}
+
+    def _parse_calibration_logs(self, tmp_dump_file):
+        """Parse calibration logs for llm saved_model."""
+        valid_data = []
+        with open(tmp_dump_file) as file:
+            for i in file.readlines():
+                if i.startswith(';'):
+                    valid_data.append(i.strip())
+
+        for activation in valid_data:
+            activation = activation.split(' ')
+            data = []
+            activation_name = ''
+            per_channel = []
+            for idx, s in enumerate(activation):
+                if idx == 0:
+                    per_channel.append(float(s.rsplit(':')[-1].strip('[')))
+                    activation_name = s.rsplit(':')[0][1:-9]
+                elif s.find('][') != -1:
+                    pairs = [float(i) for i in s.split('][')]
+                    per_channel.append(pairs[0])
+                    data.append(per_channel)
+                    per_channel = [pairs[1]]
+                elif s.find(']]') != -1:
+                    per_channel.append(float(s.strip(']')))
+                    data.append(per_channel)
+                else:
+                    per_channel.append(float(s))
+
+            if activation_name not in self._sq_output_tensor_dict:
+                self._sq_output_tensor_dict[activation_name] = [np.array(data)]
+            else:
+                self._sq_output_tensor_dict[activation_name].append(np.array(data))
+
+    def _insert_print_for_activation(self, graph_def):
+        """Insert print node in the graph to do the calibration for llm saved_model."""
+        cur_graph = GraphAnalyzer()
+        cur_graph.graph = graph_def
+
+        graph_info = cur_graph.parse_graph()
+        for cur_list in self.print_node_list:
+            pre_node_name = cur_list[0]
+            post_node_name = cur_list[-1]
+            insert_node_pairs = []
+            top_node = graph_info[pre_node_name].node
+            if top_node.op == 'ConcatV2':
+                for i in range(top_node.attr['N'].i):
+                    insert_node_pairs.append([top_node.input[i], post_node_name])
+            elif top_node.op in ('BatchMatMul', 'BatchMatMulV2'):
+                insert_node_pairs.append([top_node.input[0], post_node_name])
+                if graph_info[top_node.input[1]].node.op != 'Const':
+                    insert_node_pairs.append([top_node.input[1], post_node_name])
+            elif top_node.op in ('Conv2DBackpropInput', 'Conv3DBackpropInputV2'):
+                insert_node_pairs.append([top_node.input[2], post_node_name])
+            else:
+                refresh_pre_node_name = graph_info[pre_node_name].node.input[0]
+                # Check the Conv2D could be fused with previous Pad or not.
+                # If so, we need to update the pre-node name correspondingly.
+                refresh_pre_node = graph_info[Helper.node_name_from_input(refresh_pre_node_name)].node
+                if refresh_pre_node.op == 'Pad' and top_node.op in ('Conv2D', 'Conv3D'):                
+                    insert_node_pairs.append([refresh_pre_node_name, post_node_name])
+                    refresh_pre_node_name = refresh_pre_node.input[0]
+
+                insert_node_pairs.append([refresh_pre_node_name, post_node_name])
+
+            output_names = []
+            for node_pair_names in insert_node_pairs:
+                for index, each_node_name in enumerate(node_pair_names):
+                    name_with_sig = each_node_name
+                    node_name_prefix = name_with_sig.replace(":", "__port__").replace("^", "__hat__")
+                    print_node = Helper.create_node(
+                        "Print", node_name_prefix + "_print__{}".format(index),
+                        [each_node_name + ':0', each_node_name+':0'])
+
+                    if index == 0:
+                        msg = ';{}__print__:'.format(each_node_name)
+                        # workround for swish_f32, attribute T is not in the op definition
+                        if 'swish_f32' in graph_info[pre_node_name].node.name:
+                            src_dt=attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
+                        else:
+                            src_dt = graph_info[pre_node_name].node.attr["T"]
+                    else:
+                        break
+
+                    print_node.attr["T"].CopyFrom(src_dt)
+
+                    print_node.attr["message"].s = msg.encode()
+                    print_node.attr["first_n"].i = -1
+                    print_node.attr["summarize"].i = 102400000
+
+                    attr_u = [dtypes.as_dtype(src_dt.type).as_datatype_enum]
+                    print_node.attr["U"].list.CopyFrom(
+                        attr_value_pb2.AttrValue.ListValue(type=attr_u))
+                    post_node_names = graph_info[Helper.node_name_from_input(each_node_name)].outputs
+                    if post_node_names:
+                        for post_node_name in post_node_names:
+                            post_node = graph_info[post_node_name].node
+                            if each_node_name not in post_node.input:
+                                continue
+                            if post_node.op == 'FusedBatchNormV3' and "_print_identity" not in \
+                            graph_info[Helper.node_name_from_input(post_node.name)].node.input[0]:
+                                identity_node = Helper.create_node("Identity", post_node.name+'_print_identity',
+                                    [graph_info[Helper.node_name_from_input(post_node.name)].node.input[0]])
+                                identity_node.attr["T"].CopyFrom(src_dt)
+                                cur_graph.add_node(identity_node,
+                                                graph_info[Helper.node_name_from_input(post_node.name)].node.input[0],
+                                                [post_node.name])
+                                identity_node.input.append("^" + print_node.name)
+                            else:
+                                post_node.input.append("^" + print_node.name)
+                        
+                        cur_graph.add_node(print_node, each_node_name, [])
+                    else:
+                        identity_node1 = Helper.create_node(
+                            "Identity", print_node.name+'_identity', [print_node.name])
+                        identity_node1.attr["T"].CopyFrom(src_dt)
+                        cur_graph.add_node(print_node, each_node_name, [identity_node1.name])
+                        cur_graph.add_node(identity_node1, print_node.name, [])
+                        output_names.append(identity_node1.name)
+                        
+        return cur_graph.dump_graph()
+
+    def _inference(self, sampling_graph_def):
+        logger.info("Start sampling on calibration dataset for Smooth Quantization.")
+        # reconstruct graph_def that inserted print node to saved_model
+        reconstruct_saved_model(sampling_graph_def, self.func, self.frozen_func, self._saved_model, self.temp_path)
+        _, _ = self.eval_func(self.temp_path, self.iterations)
+
+    def _inference_for_calibration(self, model):
+        """Run the calibration on the input graph."""
+        sampling_graph_def = self._insert_print_for_activation(model)
+        tmp_dump_file = tempfile.mkstemp(suffix='.log')[1]
+        with CaptureOutputToFile(tmp_dump_file):
+            self._inference(sampling_graph_def)
+        self._parse_calibration_logs(tmp_dump_file)
+        del sampling_graph_def
+
+    def _get_weight_tensors(self):
+        model = load.load(self.model, [tag_constants.SERVING])
+        for weight_tensor in model.variables:
+            parsed_name = self.weight_name_mapping(weight_tensor.name)
+            if parsed_name in self._sq_target_node_names:
+                self._sq_weight_tensor_dict[parsed_name] = weight_tensor.numpy()
+
+        assert len(self._sq_weight_tensor_dict) == len(self._sq_target_node_names), \
+            'Failed to get weights for some nodes, please check variables'
+
+    def _generate_calibration_data(self):
+        """Generate the calibration data."""
+        sorted_graph = QuantizeGraphHelper().get_sorted_graph(
+            self.graph_def,
+            ['attention_mask', 'input_ids'],
+            ['Identity', 'Identity_1'],)
+
+        for node in sorted_graph.node:
+            if node.op not in self.op_types or node.name in self.black_nodes:
+                continue
+            # Fix retval already been set issue
+            if 'while' in node.input[0]: # pragma: no cover
+                continue
+            self._sq_input_node_names.append(node.input[0])
+            self.print_node_list.append([node.name])
+            self._sq_target_node_names[node.input[1]] = node.name
+        self._get_weight_tensors()
+        sampling_graph_def = copy.deepcopy(self.graph_def)
+        self._inference_for_calibration(sampling_graph_def)
+
+    def __call__(self):
+        """Generates calibration data and calculate the maximum values per channel.
+
+        Returns:
+            max_vals_per_channel (dict): A dictionary containing the maximum values per channel.
+            sq_target_node_names (dict): A dictionary mapping from weight names to target node names.
+            sq_weight_tensor_dict (dict): A dictionary containing tensor of weights.
+        """
+        self.graph_def, self._saved_model, self.func, self.frozen_func, _, _ = parse_saved_model(self.model)
+        self._generate_calibration_data()
+        max_vals_per_channel = {}
+        for activation_name, output_tensor in self._sq_output_tensor_dict.items():
+            max_val_per_channel = self._get_maxval_per_channel(
+                output_tensor, percentile=self.percentile)
+            max_vals_per_channel[activation_name] = max_val_per_channel
+        return max_vals_per_channel, self._sq_target_node_names, self._sq_weight_tensor_dict, self.graph_def

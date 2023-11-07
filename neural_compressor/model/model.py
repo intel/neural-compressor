@@ -31,6 +31,7 @@ from neural_compressor.model.tensorflow_model import (
     TensorflowModel,
     TensorflowQATModel,
     get_model_type,
+    TensorflowLLMSavedModelModel,
 )
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
@@ -235,6 +236,8 @@ class Model(object):
                             model_type = kwargs["modelType"]
                         else:
                             model_type = get_model_type(root)
+                        if model_type == 'llm_saved_model':
+                            return TensorflowLLMSavedModelModel(root, **kwargs)
                         if hasattr(conf, "backend") and conf.backend == "itex":
                             if model_type == "keras":
                                 conf.framework = "keras"

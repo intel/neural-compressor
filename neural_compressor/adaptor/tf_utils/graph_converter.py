@@ -102,6 +102,7 @@ class GraphConverter:
         fp32_ops=[],
         bf16_ops=[],
         data_loader=None,
+        calib_func=None,
         fake_quant=False,
         itex_mode=False,
         qdq_enabled=False,
@@ -116,6 +117,7 @@ class GraphConverter:
         :param fp32_ops: fall back to fp32 dtype op list
         :param bf16_ops: fall back to bf16 dtype op list
         :param data_loader: for calibration phase used dataloader
+        :param calib_func: for calibration phase used function
         :param fake_quant: for quantization-aware training model conversion to default model
         """
         self.model = model
@@ -139,6 +141,7 @@ class GraphConverter:
         self._calibration_data = []
         self._fp32_print_data = []
         self.data_loader = data_loader
+        self.calib_func = calib_func
         self._check_tf_version()
         self._check_args()
 
@@ -157,6 +160,7 @@ class GraphConverter:
         self._gen_tmp_filenames()
         self._kl_op_dict = {}
         self._kl_keys = []
+        self._llm_weight_minmax = {}
         self._print_node_mapping = {}
         self._enable_kl_op_names = [k for k in self.op_wise_config if self.op_wise_config[k][1] == "kl"]
         self.scale_info = {}
@@ -193,6 +197,9 @@ class GraphConverter:
         Args:
             model(TensorflowBaseModel): input TensorflowBaseModel
         """
+        if self.calib_func:
+            self.calib_func(model.model)
+            return
         # ITEX optimization has broken INC calibration process.
         # INC needs turn off ITEX optimization pass in calibration stage.
         # TODO ITEX will provide API to replace setting environment variable.
@@ -842,12 +849,18 @@ class GraphConverter:
 
         if self.quantized_node_info:
             sampling_graph_def.library.CopyFrom(self.model.graph_def.library)
-            self._sampling_model.graph_def = sampling_graph_def
+            if self._sampling_model.model_type == 'llm_saved_model':
+                self._sampling_model.adjust_weight(sampling_graph_def)
+            else:
+                self._sampling_model.graph_def = sampling_graph_def
             self._sampling_model.output_tensor_names = output_tensor_names
             tmp_dump_file = tempfile.mkstemp(suffix=".log")[1]
             with CaptureOutputToFile(tmp_dump_file):
                 self._inference(self._sampling_model)
             self._calibration_data = Helper.gen_valid_sampling_log(tmp_dump_file)
+
+        if hasattr(self._sampling_model, '_weight_tensor_minmax_dict'):
+            self._llm_weight_minmax = self._sampling_model.weight_tensor_minmax_dict
 
         del sampling_graph_def
         del output_tensor_names
@@ -868,6 +881,7 @@ class GraphConverter:
             self.device,
             self.performance_only,
             self.itex_mode,
+            self._llm_weight_minmax,
         ).do_transformation()
 
     def _convert_qdq(self):

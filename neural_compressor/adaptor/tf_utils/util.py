@@ -17,6 +17,7 @@
 #
 """Tensorflow Utils Helper functions."""
 
+import os
 import numpy as np
 import tensorflow as tf
 from pkg_resources import parse_version
@@ -28,6 +29,7 @@ from tensorflow.python.training import saver
 from tensorflow.python.platform import gfile
 from tensorflow.python.grappler import tf_optimizer
 from tensorflow.python.eager import context, wrap_function
+from tensorflow.python.framework import convert_to_constants
 from tensorflow.core.protobuf import config_pb2, meta_graph_pb2
 from tensorflow.core.framework import graph_pb2, variable_pb2, node_def_pb2, attr_value_pb2
 from tensorflow.python.saved_model import save, load, tag_constants, signature_constants
@@ -517,8 +519,6 @@ def int8_node_name_reverse(node):
 
 def tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path):
     """Tensorflow diagnosis helper function."""
-    import tensorflow as tf
-
     from ...utils.utility import dump_data_to_local
 
     fp32_node_mapping = {}

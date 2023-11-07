@@ -46,6 +46,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         device,
         performance_only,
         itex_mode,
+        llm_weight_minmax,
     ):
         """Initialization."""
         super().__init__(model)
@@ -58,6 +59,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.device = device
         self.performance_only = performance_only
         self.itex_mode = itex_mode
+        self.llm_weight_minmax = llm_weight_minmax
         self.node_details = namedtuple("node_details", ["node", "output"])
         self.node_name_mapping = {}
         self.check_op_list = {
@@ -548,6 +550,24 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 # qint8_tensor = np.clip(qint8_tensor, -127, 127).astype(np.int8)
                 min_value = -range_value
                 max_value = range_value
+        elif weight_node.op == 'ReadVariableOp':
+            min_value = self.llm_weight_minmax[weight_node.name][0]
+            max_value = self.llm_weight_minmax[weight_node.name][1]
+            min_value *= range_coefficent
+            max_value *= range_coefficent
+            min_value = min(min_value, 0.0)
+            if min_value == max_value:
+                if abs(min_value) < 0.000001:
+                    max_value = min_value + 1.0
+                elif min_value > 0:
+                    max_value = 2 * min_value
+                else:
+                    max_value = min_value / 2.0
+            range_value = np.max(np.abs([min_value, max_value]))
+            # qint8_tensor = (np.around(float_tensor * 127.0 / range_value)).astype(np.int8)
+            # qint8_tensor = np.clip(qint8_tensor, -127, 127).astype(np.int8)
+            min_value = -range_value
+            max_value = range_value
         elif host_op_type == "DepthwiseConv2dNative":
             float_tensor = tensor_util.MakeNdarray(weight_node.attr["value"].tensor)
             # get the max values based on dim 0 and 1 for depthwise conv
