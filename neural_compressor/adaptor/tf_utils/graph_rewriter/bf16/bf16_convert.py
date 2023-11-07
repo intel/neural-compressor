@@ -31,7 +31,7 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.adaptor.tf_utils.util import TF_SPR_BASE_VERSIONS
 
-from ..generic.dequantize_cast_optimizer import DequantizeCastOptimizer
+from .dequantize_cast_optimizer import DequantizeCastOptimizer
 from ..generic.graph_cse_optimizer import GraphCseOptimizer
 from ..graph_base import GraphRewriterBase
 

@@ -31,7 +31,7 @@ from neural_compressor.utils import logger
 
 from .graph_util import GraphAnalyzer, GraphRewriterHelper
 
-TF_SPR_BASE_VERSIONS = ("2.11.0202242", "2.11.0202250", "2.11.0202317", "2.11.0202323")
+TF_SPR_BASE_VERSIONS = ("2.11.0202242", "2.11.0202250", "2.11.0202317", "2.11.0202323", "2.14.0202335", "2.14.dev202335", "2.15.0202341")
 
 
 def version1_lt_version2(version1, version2):
