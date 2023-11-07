@@ -17,29 +17,19 @@
 
 from __future__ import annotations
 
-"""
-#TODO
-- [ ] support configs add, like RTNWeightOnlyQuantConfig() + GPTQWeightOnlyQuantConfig()
-- [ ]
-"""
-
-
-import json
-from abc import ABC, abstractclassmethod
 from enum import Enum
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union
 
-import torch
+from neural_compressor.common.config import (
+    GLOBAL,
+    OPERATOR_NAME,
+    OPERATOR_TYPE,
+    BaseConfig,
+    register_config,
+    registered_configs,
+)
 
-registered_configs = {}
-
-
-def register_config(name=None):
-    def decorator(config_cls):
-        registered_configs[name] = config_cls
-        return config_cls
-
-    return decorator
+FRAMEWORK_NAME = "torch"
 
 
 class Backend(Enum):
@@ -47,141 +37,70 @@ class Backend(Enum):
     IPEX = "ipex"
 
 
-class BaseConfig(ABC):
-    """from_dict
-    to_dict
-    from_json_file
-    to_json_file
-    __repr__"""
+import torch
 
-    def __init__(self) -> None:
-        self.global_config: Optional[BaseConfig] = None
-        self.operator_type_config: Dict[Union[str, Callable], Optional[BaseConfig]] = {}
-        self.operator_name_config: Dict[str, Optional[BaseConfig]] = {}
-        # operator_type is the collective name for PyTorch's module type and operator type
+operator2str = {torch.nn.Linear: "Linear", torch.nn.functional.linear: "linear"}
+str2operator = {"Linear": torch.nn.Linear, "linear": torch.nn.functional.linear}
 
-    def set_global(self, config: BaseConfig):
-        self.global_config = config
 
-    def set_operator_type(self, operator_type: Union[str, Callable], config: BaseConfig) -> BaseConfig:
-        self.operator_type_config[operator_type] = config
-        return self
+@register_config(framework_name=FRAMEWORK_NAME, algo_name="rtn_weight_only_quant")
+class RTNWeightQuantConfig(BaseConfig):
+    supported_configs: List[OperatorConfig] = []
+    params_list = ["weight_dtype", "weight_bits", "weight_group_size", "weight_sym", "act_dtype"]
 
-    def set_operator_name(self, operator_name: str, config: BaseConfig) -> BaseConfig:
-        self.operator_name_config[operator_name] = config
-        return self
+    def __init__(
+        self,
+        weight_dtype: str = "int",
+        weight_bits: int = 4,
+        weight_group_size: int = 32,
+        weight_sym: bool = True,
+        act_dtype: str = "fp32",
+        **kwargs,
+    ):
+        super().__init__()
+        self.weight_bits = weight_bits
+        self.weight_dtype = weight_dtype
+        self.weight_group_size = weight_group_size
+        self.weight_sym = weight_sym
+        self.act_dtype = act_dtype
+        self.kwargs = kwargs
 
-    def __repr__(self) -> str:
-        return f"{self.to_dict()}"
+    def to_dict(self, depth=0):
+        return super().to_dict(params_list=self.params_list, operator2str=operator2str, depth=depth)
 
     @classmethod
     def from_dict(cls, config_dict):
-        return cls(**config_dict)
-
-    def to_dict(self):
-        raise NotImplementedError
-
-    @classmethod
-    def from_json_file(cls, filename):
-        with open(filename, "r") as file:
-            config_dict = json.load(file)
-        return cls(**config_dict)
-
-    def to_json_file(self, filename):
-        config_dict = self.to_dict()
-        with open(filename, "w") as file:
-            json.dump(config_dict, file, indent=4)
-
-
-OperatorPatternType = List[Callable]
+        return super(RTNWeightQuantConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
 
 
 class OperatorConfig(NamedTuple):
     config: BaseConfig
-    operators: List[OperatorPatternType]
+    operators: List[Union[str, Callable]]
     backend: List[Backend]
-    valid_func_lst: List[Callable] = []
+    valid_func_list: List[Callable] = []
 
 
-@register_config(name="rtn_weight_only_quantization")
-class RTNWeightQuantConfig(BaseConfig):
-    supported_config_and_operators: List[OperatorConfig] = []
-
-    def __init__(
-        self,
-        bits: int = 4,
-        dtype: str = "nf4",
-        group_size: int = 32,
-        group_dim: int = -1,
-        sym: bool = True,
-        sym_full_range: bool = True,
-        **kwargs,
-    ):
-        super().__init__()
-        self.bits = bits
-        self.dtype = dtype
-        self.group_size = group_size
-        self.group_dim = group_dim
-        self.sym = sym
-        self.sym_full_range = sym_full_range
-        self.kwargs = kwargs
-
-    def to_dict(self):
-        # TODO(Yi)
-        return {
-            "bits": self.bits,
-            "dtype": self.dtype,
-            "group_size": self.group_size,
-            "group_dim": self.group_dim,
-            "sym": self.sym,
-            "sym_full_range": self.sym_full_range,
-            **self.kwargs,
-        }
-
-
-# fwk developer
-def _get_supported_config_and_operators(cls) -> List[OperatorConfig]:
-    supported_config_and_operators = []
+def _register_supported_configs(cls) -> List[OperatorConfig]:
+    supported_configs = []
     linear_rtn_config = RTNWeightQuantConfig(
-        bits=[4, 1, 2, 3, 5, 6, 7, 8], group_size=[32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024], sym=[True, False]
+        weight_dtype=["int", "int8", "int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"],
+        weight_bits=[4, 1, 2, 3, 5, 6, 7, 8],
+        weight_group_size=[32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024],
+        weight_sym=[True, False],
+        act_dtype=["fp32"],
     )
-    operators = [[torch.nn.Linear], [torch.nn.functional.linear]]
-    supported_config_and_operators.append(
-        OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT, valid_func_lst=[])
-    )
-    cls.supported_config_and_operators = supported_config_and_operators
+    operators = [torch.nn.Linear, torch.nn.functional.linear]
+    supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT))
+    cls.supported_configs = supported_configs
 
 
-_get_supported_config_and_operators(RTNWeightQuantConfig)
-
-print(len(RTNWeightQuantConfig.supported_config_and_operators))
-
-for cfg in RTNWeightQuantConfig.supported_config_and_operators:
-    print(cfg.config)
-    print(cfg.operators)
-    print(cfg.backend)
-    print(cfg.valid_func_lst)
-    print("............")
+_register_supported_configs(RTNWeightQuantConfig)
 
 
-print("==============")
-
-## End-user
-from neural_compressor.torch.quantization.config import BaseConfig, RTNWeightQuantConfig
-
-global_config = RTNWeightQuantConfig(bits=4, dtype="nf4")
-qconfig = BaseConfig()
-qconfig.set_global(global_config)
-conv_config = RTNWeightQuantConfig(bits=6, dtype="nf4")
-qconfig.set_operator_type(torch.nn.Conv2d, conv_config)
-conv1_config = RTNWeightQuantConfig(bits=4, dtype="int8")
-qconfig.set_operator_name("model.conv1", conv1_config)
-
-from neural_compressor.torch.quantization.quantize import quantize
+def get_all_register_configs():
+    return registered_configs.get(FRAMEWORK_NAME, {})
 
 
-class UserMolde(torch.nn.Module):
-    pass
-
-
-q_model = quantize(UserMolde(), qconfig)
+def parse_config_from_dict(config_dict):
+    # TODO(Yi) implement it
+    return None
