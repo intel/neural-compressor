@@ -138,6 +138,7 @@ class BaseConfig(ABC):
             config_dict = self.to_dict()
         return json.dumps(config_dict, indent=2, sort_keys=True) + "\n"
 
-    def validate(self, config: BaseConfig):
-        # TODO(Yi) verify the config
+    @classmethod
+    def validate(self, user_config: BaseConfig):
+        # TODO(Yi) validate the user config
         pass

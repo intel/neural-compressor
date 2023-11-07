@@ -42,9 +42,14 @@ print("new config from dict", new_config_from_dict)
 q_model = quantize(UserMolde(), qconfig)
 
 
-print_with_note("")
+print_with_note("get_all_registered_configs")
 
-from neural_compressor.torch.quantization.config import get_all_register_configs
+from neural_compressor.torch.quantization.config import get_all_registered_configs
 
-torch_configs = get_all_register_configs()
+torch_configs = get_all_registered_configs()
 print(torch_configs)
+
+
+print_with_note("parse from dict")
+config = {"rtn_weight_only_quant": qconfig_dict}
+q_model = quantize(UserMolde(), config)

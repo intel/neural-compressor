@@ -97,10 +97,14 @@ def _register_supported_configs(cls) -> List[OperatorConfig]:
 _register_supported_configs(RTNWeightQuantConfig)
 
 
-def get_all_register_configs():
+def get_all_registered_configs() -> Dict[str, BaseConfig]:
     return registered_configs.get(FRAMEWORK_NAME, {})
 
 
-def parse_config_from_dict(config_dict):
-    # TODO(Yi) implement it
-    return None
+def parse_config_from_dict(config_dict: Dict) -> BaseConfig:
+    torch_registered_configs = get_all_registered_configs()
+    for key, val in config_dict.items():
+        if key in torch_registered_configs:
+            config = torch_registered_configs[key].from_dict(val)
+            return config
+        # TODO(Yi) parse multiple configs after support configs add

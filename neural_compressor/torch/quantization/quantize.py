@@ -13,12 +13,15 @@
 # limitations under the License.
 
 from neural_compressor.common.config import BaseConfig
+from neural_compressor.common.utility import print_nested_dict
 from neural_compressor.torch.quantization.config import parse_config_from_dict
 
 
 def quantize(model, quant_config):
     if isinstance(quant_config, dict):
         qconfig = parse_config_from_dict(quant_config)
+        print("parsed qconfig from dict: ")
+        print_nested_dict(qconfig.to_dict())
     else:
         assert isinstance(
             quant_config, BaseConfig
