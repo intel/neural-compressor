@@ -459,6 +459,7 @@ class PyTorchModel(PyTorchBaseModel):
         scale_dtype=torch.float32,
         gptq_config_path=None,
         device="cpu",
+        use_HF_format=False,
     ):
         """Convert Linear to WeightOnlyLinear for low memory inference.
 
@@ -474,6 +475,10 @@ class PyTorchModel(PyTorchBaseModel):
                                                     Defaults to torch.float32.
             gptq_config_path (str, optional): Path of gptq_config.json. Defaults to None.
             device (str, optional): choose device for compression. Defaults to cpu.
+            use_HF_format (bool, optional): use the popular huggingface compression format.
+                1: compression_dim: weight = 1, zeros = 0 and both are transposed.
+                2: zeros -= 1 before compression. Why we need it?
+                3: g_idx: use same number for one group instead of recording the channel order.
         """
         from ..adaptor.torch_utils.model_wrapper import WeightOnlyLinear
         from ..adaptor.torch_utils.util import collect_weight_info, fetch_module, set_module
@@ -513,6 +518,7 @@ class PyTorchModel(PyTorchBaseModel):
                         compression_dim=compression_dim,
                         scale_dtype=scale_dtype,
                         device=device,
+                        use_HF_format=use_HF_format,
                     )
                     set_module(self.model, k, new_module)
                     continue
@@ -539,6 +545,7 @@ class PyTorchModel(PyTorchBaseModel):
                     compression_dim=compression_dim,
                     scale_dtype=scale_dtype,
                     device=device,
+                    use_HF_format=use_HF_format,
                 )
                 new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
                 set_module(self.model, k, new_module)
@@ -565,6 +572,7 @@ class PyTorchModel(PyTorchBaseModel):
                     compression_dim=compression_dim,
                     scale_dtype=scale_dtype,
                     device=device,
+                    use_HF_format=use_HF_format,
                 )
                 set_module(self.model, k, mod)
         return self.model

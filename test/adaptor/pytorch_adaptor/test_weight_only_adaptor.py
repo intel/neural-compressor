@@ -8,6 +8,8 @@ import transformers
 
 from neural_compressor import PostTrainingQuantConfig, quantization
 from neural_compressor.adaptor.torch_utils.model_wrapper import MulLinear, WeightOnlyLinear
+from neural_compressor.model import Model as INCModel
+from neural_compressor.utils.pytorch import load
 
 
 class Model(torch.nn.Module):
@@ -81,12 +83,26 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             approach="weight_only",
         )
         q_model = quantization.fit(model, conf)
+        q_model.save("saved")
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
         compressed_model = q_model.export_compressed_model()
         out3 = compressed_model(input)
+        self.assertTrue("fc1.packed_weight" in compressed_model.state_dict().keys())
+        q_weight1 = compressed_model.state_dict()["fc1.packed_weight"]
         self.assertTrue(torch.all(out3 == out2))
+
+        # test huggingface popular int4 format
+        model = Model()
+        new_model = load("saved", model, weight_only=True)
+        inc_model = INCModel(new_model)
+        inc_model.export_compressed_model(qweight_config_path="saved/qconfig.json", use_HF_format=True)
+        out4 = inc_model.model(input)
+        self.assertTrue("fc1.qweight" in inc_model.model.state_dict().keys())
+        q_weight2 = inc_model.model.state_dict()["fc1.qweight"]
+        self.assertTrue(torch.all(q_weight1.T == q_weight2))
+        self.assertTrue(torch.all(out3 == out4))
 
         model = Model()
         out1 = model(input)
@@ -218,7 +234,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
         q_model.save("saved")
-        from neural_compressor.utils.pytorch import load
 
         new_model = load("saved", model, weight_only=True)
         out1 = new_model(input)
@@ -226,8 +241,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
 
         model_size1 = os.path.getsize("saved/best_model.pt") / 1024
         print("FP32 Model size:{:.3f}M".format(model_size1))
-        from neural_compressor.model import Model as INCModel
-
         inc_model = INCModel(new_model)
         inc_model.export_compressed_model(qweight_config_path="saved/qconfig.json")
         torch.save(inc_model.state_dict(), "saved/tmp.pt")
@@ -528,7 +541,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model.save("saved")
         out1 = q_model.model(input)
-        compressed_model = q_model.export_compressed_model()
+        compressed_model = q_model.export_compressed_model(use_HF_format=True)
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
