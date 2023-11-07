@@ -662,9 +662,11 @@ if __name__ == '__main__':
     parser.add_argument("--low_gpu_mem_usage", action='store_true',
                         help="low_gpu_mem_usage")
 
-    parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa", "truthfulqa_mc",\
-                                            "truthfulqa_gen", "openbookqa", "boolq", "rte", "arc_easy", "arc_challenge"],
-                        help="lm-eval tasks")  # , "coqa", "hendryksTest-*"
+    parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "coqa", "winogrande", "piqa", "truthfulqa_mc",\
+                        "openbookqa", "boolq", "rte", "arc_easy", "arc_challenge", "hendrycksTest-*"],
+                        help="lm-eval tasks") # "truthfulqa_gen"
+    
+    
     
     parser.add_argument("--output_dir", default="./tmp_signround", type=str,
                     help="Where to store the final model.")
