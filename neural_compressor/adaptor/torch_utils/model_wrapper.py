@@ -339,6 +339,8 @@ class WeightOnlyLinear(torch.nn.Module):
         if gptq_perm is not None:
             assert hasattr(self, "gptq_perm"), "gptq_perm is not set when initializing."
             self.gptq_perm = gptq_perm.type(torch.int32).to(self.device)
+            if self.use_HF_format:
+                self.gptq_perm = self.gptq_perm // self.groupsize
         assert scale.shape == self.scale.shape, "Scale shape is mismatched."
         self.scale = scale.type(self.float_type).to(self.device)
         if not self.use_HF_format and self.compression_dim == 0:
