@@ -465,7 +465,7 @@ class WeightOnlyLinear(torch.nn.Module):
         else:
             # recover fp32 weight with int_weight, scale
             for idx in range(self.in_features):
-                fp32_weight[:, idx] = weight[:, idx] * self.scales[:, self.gptq_perm[idx]]
+                fp32_weight[:, idx] = weight[:, idx] * self.scale[:, self.gptq_perm[idx]]
         return fp32_weight
 
     def forward(self, input):
