@@ -733,3 +733,95 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"
                 inputs.append(batch)
 
     return inputs, inputs_info
+
+
+########################################################
+## Utility for integrate DeepSpeed
+########################################################
+
+
+class Model(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = torch.nn.Conv1d(4, 4, 2)
+        self.act = torch.nn.ReLU()
+        self.conv2 = torch.nn.Conv1d(4, 4, 2)
+        self.linear = torch.nn.Linear(32, 3)
+
+    def forward(self, x):
+        out = self.conv1(x)
+        out = self.act(out)
+        out = self.conv2(out)
+        out = out.view(1, -1)
+        out = self.linear(out)
+        return out
+
+
+model = Model()
+
+from enum import Enum, auto
+from typing import Callable
+
+from torch import Tensor
+from torch.nn.parameter import Parameter
+
+
+class Mode(Enum):
+    STOCK_PYTORCH = auto()
+    DeepSpeed = auto()
+
+
+class ParamHandle:
+    """
+    mode = Mode.DeepSpeed  # set the mode by a global variable.
+    if mode == Mode.STOCK_PYTORCH:
+        param.shape = param.shape
+    else:
+        param.shape = ds_prama.ds_shape
+
+    # access and assign used in pruner
+    param: Parameter = model.conv1.weight
+    # get data
+    param_data: Tensor = param.data
+    param_grad: Tensor = param.grad
+    # get attributes
+    param_shape: torch.Size = param.shape
+    param_requires_grad: bool  = param.requires_grad
+    param_device = param.device
+    param_numel: Callable = param.numel
+    # num_of_elements = param.numel()
+    # assign
+    new_tensor = torch.Tensor()
+    param.data: Tensor = new_tensor
+    """
+
+    # The main purpose of ParamHandle is to unify the `access` and `assign` for stock PyTorch's Parameter and DeepSpeed's overridden parameters.
+    """
+    # Copied from DS param
+    def _convert_to_deepspeed_param(self, param):
+
+        # Partitioned, Normal, Remote
+        param.ds_param_type = ZeroParamType.PARTITIONED
+
+        # Replicated vs Partitioned vs Inflight
+        param.ds_status = ZeroParamStatus.AVAILABLE
+
+        # Stores the shape of the original tensor
+        param.ds_shape = param.shape
+
+        # Stores the number of elements in the original parameter without padding
+        param.ds_numel = param.numel()
+
+        # Stores the partitioned copy of the tensor
+        param.ds_tensor = None
+
+    """
+
+    def __init__(self, param) -> None:
+        pass
+
+    # def safe_assign(self):
+    #     pass
+
+    # def safe_get(self):
+    #     pass
