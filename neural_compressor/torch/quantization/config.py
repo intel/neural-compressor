@@ -39,8 +39,9 @@ class Backend(Enum):
 
 import torch
 
-operator2str = {torch.nn.Linear: "Linear", torch.nn.functional.linear: "linear"}
-str2operator = {"Linear": torch.nn.Linear, "linear": torch.nn.functional.linear}
+operator2str = {torch.nn.Linear: "Linear", torch.nn.functional.linear: "linear", torch.nn.Conv2d: "Conv2d"}
+
+str2operator = {"Linear": torch.nn.Linear, "linear": torch.nn.functional.linear, "Conv2d": torch.nn.Conv2d}
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name="rtn_weight_only_quant")

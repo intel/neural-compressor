@@ -82,7 +82,7 @@ class BaseConfig(ABC):
                 result[GLOBAL] = global_config
             else:
                 return global_config
-        if not_empty_dict(self.operator_type_config) > 0:
+        if not_empty_dict(self.operator_type_config):
             result[OPERATOR_TYPE] = {}
             for op_type, config in self.operator_type_config.items():
                 _op_type = operator2str[op_type] if operator2str else op_type
@@ -128,7 +128,7 @@ class BaseConfig(ABC):
 
         Args:
             use_diff (`bool`, *optional*, defaults to `True`):
-                If set to `True`, only the difference between the config instance and the default `PretrainedConfig()`
+                If set to `True`, only the difference between the config instance and the default `BaseConfig()`
                 is serialized to JSON string.
 
         Returns:
