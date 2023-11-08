@@ -1098,4 +1098,11 @@ def gptq_quantize(
     model.model.graph.output.MergeFrom(org_output)
 
     model.topological_sort()
+
+    # reload external data to prevent external data file path errors
+    if model.is_large_model:
+        from onnx.external_data_helper import load_external_data_for_model
+
+        load_external_data_for_model(model.model, os.path.split(model.model_path)[0])
+
     return model
