@@ -47,7 +47,17 @@ str2operator = {"Linear": torch.nn.Linear, "linear": torch.nn.functional.linear,
 @register_config(framework_name=FRAMEWORK_NAME, algo_name="rtn_weight_only_quant")
 class RTNWeightQuantConfig(BaseConfig):
     supported_configs: List[OperatorConfig] = []
-    params_list = ["weight_dtype", "weight_bits", "weight_group_size", "weight_sym", "act_dtype"]
+    params_list = [
+        "weight_dtype",
+        "weight_bits",
+        "weight_group_size",
+        "weight_sym",
+        "act_dtype",
+        "enable_full_range",
+        "enable_mse_search",
+        "group_dim",
+    ]
+    name = "rtn_weight_only_quant"
 
     def __init__(
         self,
@@ -56,6 +66,9 @@ class RTNWeightQuantConfig(BaseConfig):
         weight_group_size: int = 32,
         weight_sym: bool = True,
         act_dtype: str = "fp32",
+        enable_full_range: bool = False,
+        enable_mse_search: bool = False,
+        group_dim: int = 1,
     ):
         super().__init__()
         self.weight_bits = weight_bits
@@ -63,6 +76,9 @@ class RTNWeightQuantConfig(BaseConfig):
         self.weight_group_size = weight_group_size
         self.weight_sym = weight_sym
         self.act_dtype = act_dtype
+        self.enable_full_range = enable_full_range
+        self.enable_mse_search = enable_mse_search
+        self.group_dim = group_dim
 
     def to_dict(self, depth=0):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str, depth=depth)

@@ -49,6 +49,8 @@ OPERATOR_NAME = "operator_name"
 
 
 class BaseConfig(ABC):
+    name = "base"
+
     def __init__(self) -> None:
         self.global_config: Optional[BaseConfig] = None
         # For PyTorch, operator_type is the collective name for module type and functional operation type,

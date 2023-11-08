@@ -7,18 +7,15 @@ import torch
 def build_simple_torch_model():
     class Model(torch.nn.Module):
         def __init__(self):
-            super().__init__()
-            self.conv1 = torch.nn.Conv1d(4, 4, 2)
-            self.act = torch.nn.ReLU()
-            self.conv2 = torch.nn.Conv1d(4, 4, 2)
-            self.linear = torch.nn.Conv2d(32, 3)
+            super(Model, self).__init__()
+            self.fc1 = torch.nn.Linear(30, 50)
+            self.fc2 = torch.nn.Linear(50, 30)
+            self.fc3 = torch.nn.Linear(30, 5)
 
         def forward(self, x):
-            out = self.conv1(x)
-            out = self.act(out)
-            out = self.conv2(out)
-            out = out.view(1, -1)
-            out = self.linear(out)
+            out = self.fc1(x)
+            out = self.fc2(out)
+            out = self.fc3(out)
             return out
 
     model = Model()
@@ -69,13 +66,13 @@ class TestQuantizationConfig(unittest.TestCase):
                     "weight_group_size": 32,
                 },
                 "operator_type": {
-                    "Conv2d": {
+                    "Linear": {
                         "weight_dtype": "nf4",
                         "weight_bits": 6,
                     }
                 },
                 "operator_name": {
-                    "model.conv1": {
+                    "fc1": {
                         "weight_dtype": "int8",
                         "weight_bits": 4,
                     }
@@ -94,11 +91,11 @@ class TestQuantizationConfig(unittest.TestCase):
         global_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4")
         quant_config.set_global(global_config)
         # set operator type
-        conv_config = RTNWeightQuantConfig(weight_bits=6, weight_dtype="nf4")
-        quant_config.set_operator_type(torch.nn.Conv2d, conv_config)
+        linear_config = RTNWeightQuantConfig(weight_bits=6, weight_dtype="nf4")
+        quant_config.set_operator_type(torch.nn.Conv2d, linear_config)
         # set operator instance
-        conv1_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="int8")
-        quant_config.set_operator_name("model.conv1", conv1_config)
+        fc1_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="int8")
+        quant_config.set_operator_name("model.fc1", fc1_config)
 
         # get model and quantize
         fp32_model = build_simple_torch_model()
