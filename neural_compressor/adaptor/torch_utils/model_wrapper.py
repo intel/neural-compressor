@@ -459,7 +459,9 @@ class WeightOnlyLinear(torch.nn.Module):
             if self.use_HF_format or self.compression_dim == 0:
                 zp = zp.T
             if self.use_HF_format:
+                # zp -= 1 may cause zp == -1, after recover it becomes 2**self.bits - 1
                 zp += 1
+                zp = torch.where(zp > (2**self.bits - 1), 0, zp)
             # recover fp32 weight with int_weight, scale, and zero_point
             for idx in range(self.in_features):
                 fp32_weight[:, idx] = (weight[:, idx] - zp[:, self.gptq_perm[idx]]) * self.scale[:, self.gptq_perm[idx]]

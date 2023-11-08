@@ -496,6 +496,7 @@ class PyTorchModel(PyTorchBaseModel):
             gptq_config = self.gptq_config if hasattr(self, "gptq_config") else {}
         if gptq_config:
             for k, v in weight_config.items():
+                print(k)
                 logger.debug(f"Compressing {k} on device {device}")
                 if v["dtype"] == "fp32":
                     continue
@@ -529,8 +530,8 @@ class PyTorchModel(PyTorchBaseModel):
                 else:
                     fp32_weight = m.weight.data
                     gptq_perm = None
-                gptq_scale = torch.tensor(gptq_conf["scale"])
-                gptq_zp = None if scheme == "sym" else torch.tensor(gptq_conf["zero"])
+                gptq_scale = torch.tensor(gptq_conf["scale"], dtype=torch.float32)
+                gptq_zp = None if scheme == "sym" else torch.tensor(gptq_conf["zero"], dtype=torch.int32)
                 int_weight = quant_weight_w_scale(fp32_weight, gptq_scale, gptq_zp, group_size)
                 if "perm" in gptq_conf:
                     invperm = torch.argsort(gptq_perm)
