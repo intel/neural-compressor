@@ -389,8 +389,7 @@ class WeightOnlyLinear(torch.nn.Module):
             self.scales = self.scale.T
             self.qweight = self.packed_weight.T
             self.g_idx = self.gptq_perm
-            if zp is not None:
-                self.qzeros = self.packed_zp.T
+            self.qzeros = self.packed_zp.T
 
     def recover(self):
         logger.debug(f"Recovering {self} weight")
@@ -399,9 +398,12 @@ class WeightOnlyLinear(torch.nn.Module):
             self.scale = self.scales.T
             self.packed_weight = self.qweight.T
             self.gptq_perm = self.g_idx
-            if hasattr(self, "qzeros"):
-                self.packed_zp = self.qzeros.T
+            self.packed_zp = self.qzeros.T
         device = self.scale.device
+        fp32_weight = torch.zeros(self.out_features, self.in_features, dtype=self.float_type).to(device)
+        if self.gptq_perm is None:
+            # used for recovering fp32_weight
+            self.gptq_perm = torch.tensor([i // self.groupsize for i in range(self.in_features)], dtype=torch.int32)
         mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype).to(device)
         if hasattr(self, "packed_zp"):
             weight_dtype = torch.uint8
@@ -458,42 +460,12 @@ class WeightOnlyLinear(torch.nn.Module):
             if self.use_HF_format:
                 zp += 1
             # recover fp32 weight with int_weight, scale, and zero_point
-            left_element = self.in_features % self.groupsize
-            if left_element != 0:
-                split_index = self.in_features // self.groupsize * self.groupsize
-                weight1 = weight[:, :-split_index].reshape(-1, self.groupsize)
-                scale1 = self.scale[:, :-1].reshape(-1, 1)
-                zp1 = zp[:, :-1].reshape(-1, 1)
-                weight1 = ((weight1 - zp1) * scale1).reshape(self.out_features, -1)
-                weight2 = weight[:, -split_index:]
-                scale2 = self.scale[:, -1:]
-                zp2 = zp[:, -1].reshape(-1, 1)
-                weight2 = (weight2 - zp2) * scale2
-                fp32_weight = torch.cat((weight1, weight2), dim=1)
-            else:
-                weight = weight.reshape(-1, self.groupsize)
-                scale = self.scale.reshape(-1, 1)
-                zp = zp.reshape(-1, 1)
-                fp32_weight = ((weight - zp) * scale).reshape(self.out_features, -1)
+            for idx in range(self.in_features):
+                fp32_weight[:, idx] = weight[:, idx] * self.scale[:, self.gptq_perm[idx]] - zp[:, self.gptq_perm[idx]]
         else:
             # recover fp32 weight with int_weight, scale
-            left_element = self.in_features % self.groupsize
-            if left_element != 0:
-                split_index = self.in_features // self.groupsize * self.groupsize
-                weight1 = weight[:, :split_index].reshape(-1, self.groupsize)
-                scale1 = self.scale[:, :-1].reshape(-1, 1)
-                weight1 = (weight1 * scale1).reshape(self.out_features, -1)
-                weight2 = weight[:, split_index:]
-                scale2 = self.scale[:, -1:]
-                weight2 = weight2 * scale2
-                fp32_weight = torch.cat((weight1, weight2), dim=1)
-            else:
-                weight = weight.reshape(-1, self.groupsize)
-                scale = self.scale.reshape(-1, 1)
-                fp32_weight = (weight * scale).reshape(self.out_features, -1)
-        if self.gptq_perm is not None:
-            invperm = torch.argsort(self.gptq_perm)
-            fp32_weight = fp32_weight[:, invperm]
+            for idx in range(self.in_features):
+                fp32_weight[:, idx] = weight[:, idx] * self.scales[:, self.gptq_perm[idx]]
         return fp32_weight
 
     def forward(self, input):

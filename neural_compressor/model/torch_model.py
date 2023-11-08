@@ -532,6 +532,9 @@ class PyTorchModel(PyTorchBaseModel):
                 gptq_scale = torch.tensor(gptq_conf["scale"])
                 gptq_zp = None if scheme == "sym" else torch.tensor(gptq_conf["zero"])
                 int_weight = quant_weight_w_scale(fp32_weight, gptq_scale, gptq_zp, group_size)
+                if "perm" in gptq_conf:
+                    invperm = torch.argsort(gptq_perm)
+                    int_weight = int_weight[:, invperm]
                 new_module = WeightOnlyLinear(
                     m.in_features,
                     m.out_features,
