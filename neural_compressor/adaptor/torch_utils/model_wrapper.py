@@ -255,11 +255,11 @@ class WeightOnlyLinear(torch.nn.Module):
             self.register_buffer(
                 "scales",
                 torch.zeros(
-                    (out_features, math.ceil(in_features / self.groupsize)),
+                    (math.ceil(in_features / self.groupsize), out_features),
                     dtype=self.float_type,
                 ).to(device),
             )
-            self.scale = self.scales
+            self.scale = self.scales.T
             self.register_buffer(
                 "qweight",
                 torch.zeros(
@@ -382,9 +382,22 @@ class WeightOnlyLinear(torch.nn.Module):
                     self.packed_zp[:, j] |= tmp[:, e]
             if self.use_HF_format or self.compression_dim == 0:
                 self.packed_zp = self.packed_zp.T
+        if self.use_HF_format:
+            self.scales = self.scale.T
+            self.qweight = self.packed_weight.T
+            self.g_idx = self.gptq_perm
+            if zp is not None:
+                self.qzeros = self.packed_zp.T
 
     def recover(self):
         logger.debug(f"Recovering {self} weight")
+        if self.use_HF_format:
+            # Prevent broken id links of self.scale and self.scales
+            self.scale = self.scales.T
+            self.packed_weight = self.qweight.T
+            self.gptq_perm = self.g_idx
+            if hasattr(self, "qzeros"):
+                self.packed_zp = self.qzeros.T
         device = self.scale.device
         mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype).to(device)
         if hasattr(self, "packed_zp"):
