@@ -18,18 +18,3 @@
 
 def not_empty_dict(data):
     return (data is not None) and (len(data) > 0)
-
-
-def print_with_note(msg, note="*" * 20):
-    print(note)
-    print(msg)
-    print("-" * 20)
-
-
-def print_nested_dict(d, indent=0):
-    for key, value in d.items():
-        if isinstance(value, dict):
-            print(" " * indent + f"{key}:")
-            print_nested_dict(value, indent + 4)
-        else:
-            print(" " * indent + f"{key}: {value}")
