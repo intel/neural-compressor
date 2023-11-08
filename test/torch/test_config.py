@@ -1,81 +1,110 @@
-##########################
-## End-user
-##########################
+import unittest
+from copy import deepcopy
+
 import torch
 
-from neural_compressor.common.utility import print_nested_dict, print_with_note
-from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
 
-qconfig = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4")
-print(qconfig)
-qconfig_dict = qconfig.to_dict()
-new_config_from_dict = RTNWeightQuantConfig.from_dict(qconfig_dict)
-print("new config from dict", new_config_from_dict)
-# import pdb; pdb.set_trace()
-print_with_note("the fist")
-print_nested_dict(qconfig.to_dict())
-## For advanced user
-global_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4")
-qconfig.set_global(global_config)
-conv_config = RTNWeightQuantConfig(weight_bits=6, weight_dtype="nf4")
-qconfig.set_operator_type(torch.nn.Linear, conv_config)
-conv1_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="int8")
-qconfig.set_operator_name("model.linear1", conv1_config)
-# import pdb; pdb.set_trace()
-print_with_note("the second")
-print_nested_dict(qconfig.to_dict())
-qconfig.to_json_file("final_q_config.json")
-## quantize model with specific config
-from neural_compressor.torch.quantization.quantize import quantize
+def build_simple_torch_model():
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.conv1 = torch.nn.Conv1d(4, 4, 2)
+            self.act = torch.nn.ReLU()
+            self.conv2 = torch.nn.Conv1d(4, 4, 2)
+            self.linear = torch.nn.Linear(32, 3)
+
+        def forward(self, x):
+            out = self.conv1(x)
+            out = self.act(out)
+            out = self.conv2(out)
+            out = out.view(1, -1)
+            out = self.linear(out)
+            return out
+
+    model = Model()
+    return model
 
 
-class UserMolde(torch.nn.Module):
-    pass
+class TestQuantizationConfig(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        self.fp32_model = build_simple_torch_model()
 
+    @classmethod
+    def tearDownClass(self):
+        pass
 
-print_with_note("the end")
-print(qconfig)
+    def test_quantize_rtn_from_dict_beginner(self):
+        from neural_compressor.torch.quantization import quantize
 
-qconfig_dict = qconfig.to_dict()
-new_config_from_dict = RTNWeightQuantConfig.from_dict(qconfig_dict)
-print("new config from dict", new_config_from_dict)
-q_model = quantize(UserMolde(), qconfig)
-
-
-print_with_note("get_all_registered_configs")
-
-from neural_compressor.torch.quantization.config import get_all_registered_configs
-
-torch_configs = get_all_registered_configs()
-print(torch_configs)
-
-
-print_with_note("parse from dict")
-config = {"rtn_weight_only_quant": qconfig_dict}
-q_model = quantize(UserMolde(), config)
-
-
-print_with_note("new test")
-quant_config = {
-    "rtn_weight_only_quant": {
-        "global": {
-            "weight_dtype": "nf4",
-            "weight_bits": 4,
-            "weight_group_size": 32,
-        },
-        "operator_type": {
-            "Linear": {
+        quant_config = {
+            "rtn_weight_only_quant": {
                 "weight_dtype": "nf4",
-                "weight_bits": 6,
-            }
-        },
-        "operator_name": {
-            "model.linear1": {
-                "weight_dtype": "int8",
                 "weight_bits": 4,
-            }
-        },
-    }
-}
+                "weight_group_size": 32,
+            },
+        }
+        fp32_model = build_simple_torch_model()
+        qmodel = quantize(fp32_model, quant_config)
+        self.assertIsNotNone(qmodel)
 
-q_model = quantize(UserMolde(), quant_config)
+    def test_quantize_rtn_from_class_beginner(self):
+        from neural_compressor.torch.quantization import quantize
+        from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
+
+        quant_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4", weight_group_size=32)
+        fp32_model = build_simple_torch_model()
+        qmodel = quantize(fp32_model, quant_config)
+        self.assertIsNotNone(qmodel)
+
+    def test_quantize_rtn_from_dict_advance(self):
+        from neural_compressor.torch.quantization import quantize
+
+        fp32_model = build_simple_torch_model()
+        quant_config = {
+            "rtn_weight_only_quant": {
+                "global": {
+                    "weight_dtype": "nf4",
+                    "weight_bits": 4,
+                    "weight_group_size": 32,
+                },
+                "operator_type": {
+                    "Linear": {
+                        "weight_dtype": "nf4",
+                        "weight_bits": 6,
+                    }
+                },
+                "operator_name": {
+                    "model.linear1": {
+                        "weight_dtype": "int8",
+                        "weight_bits": 4,
+                    }
+                },
+            }
+        }
+        qmodel = quantize(fp32_model, quant_config)
+        self.assertIsNotNone(qmodel)
+
+    def test_quantize_rtn_from_class_advance(self):
+        from neural_compressor.torch.quantization import quantize
+        from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
+
+        quant_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4")
+        # set global config
+        global_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4")
+        quant_config.set_global(global_config)
+        # set operator type
+        conv_config = RTNWeightQuantConfig(weight_bits=6, weight_dtype="nf4")
+        quant_config.set_operator_type(torch.nn.Linear, conv_config)
+        # set operator instance
+        conv1_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="int8")
+        quant_config.set_operator_name("model.linear1", conv1_config)
+
+        # get model and quantize
+        fp32_model = build_simple_torch_model()
+        qmodel = quantize(fp32_model, quant_config)
+        self.assertIsNotNone(qmodel)
+
+
+if __name__ == "__main__":
+    unittest.main()

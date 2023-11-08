@@ -55,7 +55,6 @@ class RTNWeightQuantConfig(BaseConfig):
         weight_group_size: int = 32,
         weight_sym: bool = True,
         act_dtype: str = "fp32",
-        **kwargs,
     ):
         super().__init__()
         self.weight_bits = weight_bits
@@ -63,7 +62,6 @@ class RTNWeightQuantConfig(BaseConfig):
         self.weight_group_size = weight_group_size
         self.weight_sym = weight_sym
         self.act_dtype = act_dtype
-        self.kwargs = kwargs
 
     def to_dict(self, depth=0):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str, depth=depth)
