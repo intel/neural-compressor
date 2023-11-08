@@ -342,8 +342,6 @@ class WeightOnlyLinear(torch.nn.Module):
         if gptq_perm is not None:
             assert hasattr(self, "gptq_perm"), "gptq_perm is not set when initializing."
             self.gptq_perm = gptq_perm.type(torch.int32).to(self.device)
-            if self.use_HF_format:
-                self.gptq_perm = self.gptq_perm // self.groupsize
         assert scale.shape == self.scale.shape, "Scale shape is mismatched."
         self.scale = scale.type(self.float_type).to(self.device)
         if not self.use_HF_format and self.compression_dim == 0:
@@ -404,6 +402,9 @@ class WeightOnlyLinear(torch.nn.Module):
         if self.gptq_perm is None:
             # used for recovering fp32_weight
             self.gptq_perm = torch.tensor([i // self.groupsize for i in range(self.in_features)], dtype=torch.int32)
+        else:
+            invperm = torch.argsort(self.gptq_perm)
+            self.gptq_perm = invperm // self.groupsize
         mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype).to(device)
         if hasattr(self, "packed_zp"):
             weight_dtype = torch.uint8
@@ -461,7 +462,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 zp += 1
             # recover fp32 weight with int_weight, scale, and zero_point
             for idx in range(self.in_features):
-                fp32_weight[:, idx] = weight[:, idx] * self.scale[:, self.gptq_perm[idx]] - zp[:, self.gptq_perm[idx]]
+                fp32_weight[:, idx] = (weight[:, idx] - zp[:, self.gptq_perm[idx]]) * self.scale[:, self.gptq_perm[idx]]
         else:
             # recover fp32 weight with int_weight, scale
             for idx in range(self.in_features):
