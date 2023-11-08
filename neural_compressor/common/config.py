@@ -28,7 +28,6 @@ from abc import ABC
 from enum import Enum, auto
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union
 
-from neural_compressor.common.utility import not_empty_dict
 from neural_compressor.utils import logger
 
 registered_configs = {}
@@ -84,12 +83,12 @@ class BaseConfig(ABC):
                 result[GLOBAL] = global_config
             else:
                 return global_config
-        if not_empty_dict(self.operator_type_config):
+        if bool(self.operator_type_config):
             result[OPERATOR_TYPE] = {}
             for op_type, config in self.operator_type_config.items():
                 _op_type = operator2str[op_type] if operator2str else op_type
                 result[OPERATOR_TYPE][_op_type] = config.to_dict(depth=depth + 1)
-        if not_empty_dict(self.operator_name_config):
+        if bool(self.operator_name_config):
             result[OPERATOR_NAME] = {}
             for op_name, config in self.operator_name_config.items():
                 result[OPERATOR_NAME][op_name] = config.to_dict(depth=depth + 1)
