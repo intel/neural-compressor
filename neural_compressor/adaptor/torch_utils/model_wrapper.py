@@ -268,15 +268,14 @@ class WeightOnlyLinear(torch.nn.Module):
                 ).to(device),
             )
             self.packed_weight = self.qweight.T
-            if zp:
-                self.register_buffer(
-                    "qzeros",
-                    torch.zeros(
-                        (math.ceil(self.in_features / self.groupsize), math.ceil(self.out_features / self.n_pack)),
-                        dtype=self.compressed_dtype,
-                    ).to(device),
-                )
-                self.packed_zp = self.qzeros.T
+            self.register_buffer(
+                "qzeros",
+                torch.zeros(
+                    (math.ceil(self.in_features / self.groupsize), math.ceil(self.out_features / self.n_pack)),
+                    dtype=self.compressed_dtype,
+                ).to(device),
+            )
+            self.packed_zp = self.qzeros.T
             if gptq_perm:
                 self.register_buffer("g_idx", torch.zeros(in_features, dtype=torch.int32).to(device))
             else:
@@ -333,6 +332,10 @@ class WeightOnlyLinear(torch.nn.Module):
 
     def pack(self, int_weight, scale, zp, bias, gptq_perm=None):
         int_weight = int_weight.to(self.device)
+        if self.use_HF_format and zp is None:
+            shift_bias = 2 ** (self.bits - 1) - 1
+            int_weight += shift_bias
+            zp = torch.zeros_like(scale, dtype=torch.uint8) + shift_bias
         if bias is not None:
             assert hasattr(self, "bias"), "bias is not set when initializing."
             self.bias = bias.type(self.float_type).to(self.device)
