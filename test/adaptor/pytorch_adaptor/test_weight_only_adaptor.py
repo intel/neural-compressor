@@ -534,6 +534,16 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         # # case 2: list or tuple
         model_2 = copy.deepcopy(self.gptj)
         input = torch.ones([1, 512], dtype=torch.long)
+        conf.op_type_dict = {
+            ".*": {  # re.match
+                "weight": {
+                    "bits": 4,  # 1-8 bits
+                    "group_size": 8,  # -1 (per-channel)
+                    "scheme": "asym",
+                    "algorithm": "GPTQ",
+                },
+            },
+        }
         q_model = quantization.fit(
             model_2,
             conf,
@@ -556,7 +566,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model.save("saved")
         out1 = q_model.model(input)
-        compressed_model = q_model.export_compressed_model()
+        compressed_model = q_model.export_compressed_model(use_HF_format=True)
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
