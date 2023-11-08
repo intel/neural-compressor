@@ -1,7 +1,7 @@
 import os.path
 import torch
 import torch.nn as nn
-
+from parse_results import result_parser
 
 import fnmatch
 def pattern_match(patterns, source_list):
@@ -60,7 +60,7 @@ def eval_model(model, output_dir, tokenizer, tasks=["lambada_openai", "hellaswag
             model_args = f'pretrained={output_dir},tokenizer="{output_dir}",dtype={dtype},use_accelerate=True'
         else:
             model_args = f'pretrained="{output_dir}",tokenizer="{output_dir}",dtype={dtype}'
-        
+            
         task_names = pattern_match(tasks, ALL_TASKS)
         results = simple_evaluate(model="hf-causal", 
                                   model_args=model_args,
@@ -68,14 +68,11 @@ def eval_model(model, output_dir, tokenizer, tasks=["lambada_openai", "hellaswag
                                   device=str(device),
                                   batch_size=eval_bs,
                                   no_cache=True)
-        
+        # dumped = json.dumps(results, indent=2)
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir)
             
-    dumped = json.dumps(results, indent=2)
+    result_parser(results)
     
-    print(dumped)
+    
 
-        
-            
-            
