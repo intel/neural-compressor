@@ -13,4 +13,4 @@
 # limitations under the License.
 
 from neural_compressor.torch.quantization.quantize import quantize
-from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
+from neural_compressor.torch.quantization.config import RTNWeightQuantConfig, get_default_rtn_config

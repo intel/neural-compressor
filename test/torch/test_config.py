@@ -31,6 +31,13 @@ class TestQuantizationConfig(unittest.TestCase):
     def tearDownClass(self):
         pass
 
+    def test_quantize_rtn_from_dict_default(self):
+        from neural_compressor.torch import get_default_rtn_config, quantize
+
+        fp32_model = build_simple_torch_model()
+        qmodel = quantize(fp32_model, quant_config=get_default_rtn_config())
+        self.assertIsNotNone(qmodel)
+
     def test_quantize_rtn_from_dict_beginner(self):
         from neural_compressor.torch import quantize
 
@@ -90,7 +97,7 @@ class TestQuantizationConfig(unittest.TestCase):
         quant_config.set_global(global_config)
         # set operator type
         linear_config = RTNWeightQuantConfig(weight_bits=6, weight_dtype="nf4")
-        quant_config.set_operator_type(torch.nn.Linear, linear_config)
+        quant_config._set_operator_type(torch.nn.Linear, linear_config)
         # set operator instance
         fc1_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="int8")
         quant_config.set_operator_name("model.fc1", fc1_config)

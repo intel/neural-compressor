@@ -117,3 +117,7 @@ def parse_config_from_dict(config_dict: Dict) -> BaseConfig:
             config = torch_registered_configs[key].from_dict(val)
             return config
         # TODO(Yi) parse multiple configs after support configs add
+
+
+def get_default_rtn_config():
+    return RTNWeightQuantConfig()

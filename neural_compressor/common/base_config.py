@@ -49,7 +49,9 @@ class BaseConfig(ABC):
     def set_global(self, config: BaseConfig):
         self.global_config = config
 
-    def set_operator_type(self, operator_type: Union[str, Callable], config: BaseConfig) -> BaseConfig:
+    def _set_operator_type(self, operator_type: Union[str, Callable], config: BaseConfig) -> BaseConfig:
+        # TODO (Yi), clean the usage
+        # hide it from user, as we can use set_operator_name with regular expression to covert its functionality
         self.operator_type_config[operator_type] = config
         return self
 
@@ -91,7 +93,7 @@ class BaseConfig(ABC):
             q_config.set_global(global_config)
         for type_name, config in config_dict.get(OPERATOR_TYPE, {}).items():
             _op_type = str2operator[type_name] if str2operator else type_name
-            q_config.set_operator_type(_op_type, cls(**config))
+            q_config._set_operator_type(_op_type, cls(**config))
         for op_name, config in config_dict.get(OPERATOR_NAME, {}).items():
             q_config.set_operator_name(op_name, cls(**config))
         return q_config
