@@ -38,7 +38,9 @@ class DummyNLPDataloader(object):
 class TestWeightOnlyAdaptor(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        cmd = "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation gptj/"
+        cmd = (
+            "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation --legacy gptj/"
+        )
         p = subprocess.Popen(
             cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
         )  # nosec
@@ -47,7 +49,9 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         self.gptj_model = onnx.load("gptj/decoder_model.onnx")
         self.gptj_dataloader = DummyNLPDataloader("hf-internal-testing/tiny-random-gptj")
 
-        cmd = "optimum-cli export onnx --model PY007/TinyLlama-1.1B-Chat-v0.3 --task text-generation tiny-llama/"
+        cmd = (
+            "optimum-cli export onnx --model PY007/TinyLlama-1.1B-Chat-v0.3 --task text-generation --legacy tiny-llama/"
+        )
         p = subprocess.Popen(
             cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
         )  # nosec
