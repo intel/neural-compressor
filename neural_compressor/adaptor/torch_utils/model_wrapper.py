@@ -347,6 +347,7 @@ class WeightOnlyLinear(torch.nn.Module):
             if self.use_HF_format:
                 invperm = torch.argsort(self.gptq_perm)
                 self.gptq_perm = invperm // self.groupsize
+                self.gptq_perm = self.gptq_perm.type(torch.int32).to(self.device)
         assert scale.shape == self.scale.shape, "Scale shape is mismatched."
         self.scale = scale.type(self.float_type).to(self.device)
         if not self.use_HF_format and self.compression_dim == 0:
