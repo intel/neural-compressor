@@ -243,6 +243,8 @@ def export_compressed_model(model, saved_dir=None, use_HF_format=False):
     stat_dict = os.path.join(saved_dir, "best_model.pt")
     qweight_config_path = os.path.join(saved_dir, "qconfig.json")
     gptq_config_path = os.path.join(saved_dir, "gptq_config.json")
+    if not os.path.exists(gptq_config_path):
+        gptq_config_path = None
     model.load_state_dict(torch.load(stat_dict))
 
     from neural_compressor.model import Model as INCModel
