@@ -333,7 +333,9 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack(self, int_weight, scale, zp, bias, gptq_perm=None):
         int_weight = int_weight.to(self.device)
         if self.use_HF_format and zp is None:
-            shift_bias = 2 ** (self.bits - 1) - 1
+            # to avoid overflow
+            int_weight = int_weight.type(torch.int32)
+            shift_bias = 2 ** (self.bits - 1)
             int_weight += shift_bias
             zp = torch.zeros_like(scale, dtype=torch.uint8) + shift_bias
         if bias is not None:

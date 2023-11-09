@@ -533,6 +533,7 @@ class PyTorchModel(PyTorchBaseModel):
                 gptq_scale = torch.tensor(gptq_conf["scale"], dtype=torch.float32)
                 gptq_zp = None if scheme == "sym" else torch.tensor(gptq_conf["zero"], dtype=torch.int32)
                 int_weight = quant_weight_w_scale(fp32_weight, gptq_scale, gptq_zp, group_size)
+                int_weight = int_weight.type(torch.int32)
                 if "perm" in gptq_conf:
                     invperm = torch.argsort(gptq_perm)
                     int_weight = int_weight[:, invperm]
