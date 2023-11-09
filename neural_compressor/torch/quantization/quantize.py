@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from neural_compressor.common.config import BaseConfig
+from neural_compressor.common.utility import RTN_WEIGHT_ONLY_QUANT
 from neural_compressor.torch.quantization.config import parse_config_from_dict
 from neural_compressor.torch.utils import algos_mapping
 from neural_compressor.utils import logger
@@ -27,10 +28,10 @@ def quantize(model, quant_config: BaseConfig):
         assert isinstance(
             quant_config, BaseConfig
         ), "Please pass a dict or config instance as the quantization configuration."
-    logger.info(f"Quantize model with config: \n {quant_config.to_json_string()}")
+    logger.info(f"Quantize model with config: \n {quant_config.to_json_string()} \n")
     # select quantization algo according to config
     # TODO (Yi) support combine more than one algo
-    if quant_config.name == "rtn_weight_only_quant":
+    if quant_config.name == RTN_WEIGHT_ONLY_QUANT:
         quant_fn = algos_mapping[quant_config.name]
     else:
         raise NotImplementedError("Currently, only the rtn algorithm is being ported.")

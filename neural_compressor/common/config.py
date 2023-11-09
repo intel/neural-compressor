@@ -17,17 +17,11 @@
 
 from __future__ import annotations
 
-"""
-#TODO(Yi)
-- [ ] support configs add, like RTNWeightOnlyQuantConfig() + GPTQWeightOnlyQuantConfig()
-- [ ] validate the config
-"""
-
 import json
 from abc import ABC
-from enum import Enum, auto
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
+from neural_compressor.common.utility import GLOBAL, OPERATOR_NAME, OPERATOR_TYPE
 from neural_compressor.utils import logger
 
 registered_configs = {}
@@ -40,11 +34,6 @@ def register_config(framework_name="None", algo_name=None):
         return config_cls
 
     return decorator
-
-
-GLOBAL = "global"
-OPERATOR_TYPE = "operator_type"
-OPERATOR_NAME = "operator_name"
 
 
 class BaseConfig(ABC):
@@ -144,4 +133,8 @@ class BaseConfig(ABC):
     @classmethod
     def validate(self, user_config: BaseConfig):
         # TODO(Yi) validate the user config
+        pass
+
+    def __add__(self, other: BaseConfig) -> BaseConfig:
+        # TODO(Yi) implement config add, like RTNWeightOnlyQuantConfig() + GPTQWeightOnlyQuantConfig()
         pass

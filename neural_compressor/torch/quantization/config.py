@@ -18,16 +18,10 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union
+from typing import Callable, Dict, List, NamedTuple, Union
 
-from neural_compressor.common.config import (
-    GLOBAL,
-    OPERATOR_NAME,
-    OPERATOR_TYPE,
-    BaseConfig,
-    register_config,
-    registered_configs,
-)
+from neural_compressor.common.config import BaseConfig, register_config, registered_configs
+from neural_compressor.common.utility import RTN_WEIGHT_ONLY_QUANT
 
 FRAMEWORK_NAME = "torch"
 
@@ -44,7 +38,7 @@ operator2str = {torch.nn.Linear: "Linear", torch.nn.functional.linear: "linear",
 str2operator = {"Linear": torch.nn.Linear, "linear": torch.nn.functional.linear, "Conv2d": torch.nn.Conv2d}
 
 
-@register_config(framework_name=FRAMEWORK_NAME, algo_name="rtn_weight_only_quant")
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN_WEIGHT_ONLY_QUANT)
 class RTNWeightQuantConfig(BaseConfig):
     supported_configs: List[OperatorConfig] = []
     params_list = [
@@ -57,7 +51,7 @@ class RTNWeightQuantConfig(BaseConfig):
         "enable_mse_search",
         "group_dim",
     ]
-    name = "rtn_weight_only_quant"
+    name = RTN_WEIGHT_ONLY_QUANT
 
     def __init__(
         self,

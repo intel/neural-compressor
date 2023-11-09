@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from typing import Callable, Dict, List, Tuple
+from typing import Dict
 
 import torch
 
@@ -22,13 +22,13 @@ from neural_compressor.adaptor.torch_utils.util import fetch_module, set_module
 # TODO(Yi) move the algorithm implementations from adaptor.torch_utils to neural_compressor.torch.algo
 from neural_compressor.adaptor.torch_utils.weight_only import rtn_quantize as torch_rtn_quantize
 from neural_compressor.common.config import BaseConfig
+from neural_compressor.common.utility import RTN_WEIGHT_ONLY_QUANT
 from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
 from neural_compressor.torch.utils import register_algo
 from neural_compressor.utils import logger
 
 
-def _apply_single_module(module: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
-    logger.debug(f"Apply RTN on module: {module}")
+def _apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
     enable_full_range = quant_config.enable_full_range
     enable_mse_search = quant_config.enable_mse_search
     group_dim = quant_config.group_dim
@@ -53,7 +53,7 @@ def _convert_quant_config_into_quant_config_mapping(
     fp32_model: torch.nn.Module, quant_config: BaseConfig
 ) -> Dict[str, BaseConfig]:
     # TODO(Yi) enhance it, currently we only assign the global config to module
-    model_info: List[Tuple[str, Callable]] = []
+    # model_info: List[Tuple[str, Callable]] = []
     linear_lst = []
     for name, module in fp32_model.named_modules():
         if isinstance(module, torch.nn.Linear):
@@ -63,13 +63,14 @@ def _convert_quant_config_into_quant_config_mapping(
     return quant_config_mapping
 
 
-@register_algo(name="rtn_weight_only_quant")
+@register_algo(name=RTN_WEIGHT_ONLY_QUANT)
 def rtn_quantize_entry(model: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
     quant_config_mapping: Dict[str, RTNWeightQuantConfig] = _convert_quant_config_into_quant_config_mapping(
         model, quant_config
     )
     for op_name, quant_config in quant_config_mapping.items():
         original_module = fetch_module(model, op_name)
-        rtn_module = _apply_single_module(original_module, quant_config)
+        logger.info(f"Apply RTN on module: {op_name}, {original_module}")
+        rtn_module = _apply_rtn_on_single_module(original_module, quant_config)
         set_module(model, op_name, rtn_module)
     return model
