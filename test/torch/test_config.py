@@ -32,7 +32,7 @@ class TestQuantizationConfig(unittest.TestCase):
         pass
 
     def test_quantize_rtn_from_dict_beginner(self):
-        from neural_compressor.torch.quantization import quantize
+        from neural_compressor.torch import quantize
 
         quant_config = {
             "rtn_weight_only_quant": {
@@ -46,8 +46,7 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(qmodel)
 
     def test_quantize_rtn_from_class_beginner(self):
-        from neural_compressor.torch.quantization import quantize
-        from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
+        from neural_compressor.torch import RTNWeightQuantConfig, quantize
 
         quant_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4", weight_group_size=32)
         fp32_model = build_simple_torch_model()
@@ -55,7 +54,7 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(qmodel)
 
     def test_quantize_rtn_from_dict_advance(self):
-        from neural_compressor.torch.quantization import quantize
+        from neural_compressor.torch import quantize
 
         fp32_model = build_simple_torch_model()
         quant_config = {
@@ -83,8 +82,7 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(qmodel)
 
     def test_quantize_rtn_from_class_advance(self):
-        from neural_compressor.torch.quantization import quantize
-        from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
+        from neural_compressor.torch import RTNWeightQuantConfig, quantize
 
         quant_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4")
         # set global config

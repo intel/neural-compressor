@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.common.config import BaseConfig
+from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utility import RTN_WEIGHT_ONLY_QUANT
 from neural_compressor.torch.quantization.config import parse_config_from_dict
 from neural_compressor.torch.utils import algos_mapping

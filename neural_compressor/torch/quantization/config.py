@@ -22,7 +22,7 @@ from typing import Callable, Dict, List, NamedTuple, Union
 
 import torch
 
-from neural_compressor.common.config import BaseConfig, register_config, registered_configs
+from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
 from neural_compressor.common.utility import RTN_WEIGHT_ONLY_QUANT
 
 FRAMEWORK_NAME = "torch"
