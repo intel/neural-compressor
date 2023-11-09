@@ -247,6 +247,7 @@ def export_compressed_model(model, saved_dir=None, use_HF_format=False):
 
     from neural_compressor.model import Model as INCModel
 
+    # pylint: disable=E1101
     inc_model = INCModel(model)
     inc_model.export_compressed_model(
         qweight_config_path=qweight_config_path,
