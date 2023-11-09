@@ -230,3 +230,32 @@ def save_for_huggingface_upstream(model, tokenizer, output_dir):
     model.model.config.architectures = [model.model.__class__.__name__]
     model.model.config.torch_dtype = "int8"
     model.model.config.save_pretrained(output_dir)
+
+
+def export_compressed_model(model, saved_dir=None, use_HF_format=False):
+    """Support get compressed model from saved_dir.
+
+    Args:
+        model (torch.nn.Module): origin fp32 model.
+        saved_dir (_type_, optional): the dir path of compression info. Defaults to None.
+        use_HF_format (bool, optional): whether use HuggingFace format. Defaults to False.
+    """
+    stat_dict = os.path.join(saved_dir, "best_model.pt")
+    qweight_config_path = os.path.join(saved_dir, "qconfig.json")
+    gptq_config_path = os.path.join(saved_dir, "gptq_config.json")
+    model.load_state_dict(torch.load(stat_dict))
+
+    from neural_compressor.model import Model as INCModel
+
+    inc_model = INCModel(model)
+    inc_model.export_compressed_model(
+        qweight_config_path=qweight_config_path,
+        enable_full_range=False,
+        compression_dtype=torch.int32,
+        compression_dim=1,
+        scale_dtype=torch.float32,
+        gptq_config_path=gptq_config_path,
+        device="cpu",
+        use_HF_format=use_HF_format,
+    )
+    return inc_model.model

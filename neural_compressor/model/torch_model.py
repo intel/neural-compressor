@@ -479,6 +479,8 @@ class PyTorchModel(PyTorchBaseModel):
                 1: compression_dim: weight = 1, zeros = 0 and both are transposed.
                 2: zeros -= 1 before compression. Why we need it?
                 3: g_idx: use same number for one group instead of recording the channel order.
+                4. parameter name changed, such as 'packed_weight' -> 'qweight'.
+                5. zeros is always needed even for sym.
         """
         from ..adaptor.torch_utils.model_wrapper import WeightOnlyLinear
         from ..adaptor.torch_utils.util import collect_weight_info, fetch_module, set_module
@@ -496,7 +498,6 @@ class PyTorchModel(PyTorchBaseModel):
             gptq_config = self.gptq_config if hasattr(self, "gptq_config") else {}
         if gptq_config:
             for k, v in weight_config.items():
-                print(k)
                 logger.debug(f"Compressing {k} on device {device}")
                 if v["dtype"] == "fp32":
                     continue

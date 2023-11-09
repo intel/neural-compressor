@@ -9,6 +9,7 @@ import transformers
 from neural_compressor import PostTrainingQuantConfig, quantization
 from neural_compressor.adaptor.torch_utils.model_wrapper import MulLinear, WeightOnlyLinear
 from neural_compressor.model import Model as INCModel
+from neural_compressor.utils.load_huggingface import export_compressed_model
 from neural_compressor.utils.pytorch import load
 
 
@@ -101,6 +102,11 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out4 = inc_model.model(input)
         self.assertTrue("fc1.qweight" in inc_model.model.state_dict().keys())
         q_weight2 = inc_model.model.state_dict()["fc1.qweight"]
+        self.assertTrue(torch.all(q_weight1.T == q_weight2))
+        model = Model()
+        compressed_model = export_compressed_model(model, saved_dir="saved", use_HF_format=True)
+        self.assertTrue("fc1.qweight" in compressed_model.state_dict().keys())
+        q_weight2 = compressed_model.state_dict()["fc1.qweight"]
         self.assertTrue(torch.all(q_weight1.T == q_weight2))
         self.assertTrue(torch.all(out3 == out4))
 
