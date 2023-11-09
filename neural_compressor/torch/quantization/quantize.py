@@ -21,6 +21,7 @@ from neural_compressor.utils import logger
 
 def quantize(model, quant_config: BaseConfig):
     """The main entry to quantize model."""
+    # TODO(Yi) add more args, like calib_func, calib_func_args
     if isinstance(quant_config, dict):
         quant_config = parse_config_from_dict(quant_config)
         logger.info("Parsed dict to construct the quantization config.")

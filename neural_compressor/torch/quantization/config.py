@@ -20,6 +20,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import Callable, Dict, List, NamedTuple, Union
 
+import torch
+
 from neural_compressor.common.config import BaseConfig, register_config, registered_configs
 from neural_compressor.common.utility import RTN_WEIGHT_ONLY_QUANT
 
@@ -30,8 +32,6 @@ class Backend(Enum):
     DEFAULT = "stock_pytorch"
     IPEX = "ipex"
 
-
-import torch
 
 operator2str = {torch.nn.Linear: "Linear", torch.nn.functional.linear: "linear", torch.nn.Conv2d: "Conv2d"}
 
