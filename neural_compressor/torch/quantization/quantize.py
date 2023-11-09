@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import torch
+
 from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utility import RTN_WEIGHT_ONLY_QUANT
 from neural_compressor.torch.quantization.config import parse_config_from_dict
@@ -19,9 +21,18 @@ from neural_compressor.torch.utils import algos_mapping
 from neural_compressor.utils import logger
 
 
-def quantize(model, quant_config: BaseConfig):
-    """The main entry to quantize model."""
-    # TODO(Yi) add more args, like calib_func, calib_func_args
+def quantize(model: torch.nn.Module, quant_config: BaseConfig, calib_func=None, calib_func_arg=None) -> torch.nn.Module:
+    """The main entry to quantize model.
+
+    Args:
+        model: a float model to be quantized.
+        quant_config: a quantization configuration.
+        calib_func: a calibration function for calibrating the model. Defaults to None.
+        calib_func_arg: positional arguments for `calib_func`. Defaults to None.
+
+    Returns:
+        The quantized model.
+    """
     if isinstance(quant_config, dict):
         quant_config = parse_config_from_dict(quant_config)
         logger.info("Parsed dict to construct the quantization config.")
