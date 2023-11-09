@@ -92,7 +92,7 @@ class TestQuantizationConfig(unittest.TestCase):
         quant_config.set_global(global_config)
         # set operator type
         linear_config = RTNWeightQuantConfig(weight_bits=6, weight_dtype="nf4")
-        quant_config.set_operator_type(torch.nn.Conv2d, linear_config)
+        quant_config.set_operator_type(torch.nn.Linear, linear_config)
         # set operator instance
         fc1_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="int8")
         quant_config.set_operator_name("model.fc1", fc1_config)
