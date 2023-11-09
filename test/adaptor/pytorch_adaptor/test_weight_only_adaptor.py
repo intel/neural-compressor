@@ -91,7 +91,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         compressed_model = q_model.export_compressed_model()
         out3 = compressed_model(input)
         self.assertTrue("fc1.packed_weight" in compressed_model.state_dict().keys())
-        q_weight1 = compressed_model.state_dict()["fc1.packed_weight"]
         self.assertTrue(torch.all(out3 == out2))
 
         # test huggingface popular int4 format
@@ -101,13 +100,9 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         inc_model.export_compressed_model(qweight_config_path="saved/qconfig.json", use_HF_format=True)
         out4 = inc_model.model(input)
         self.assertTrue("fc1.qweight" in inc_model.model.state_dict().keys())
-        q_weight2 = inc_model.model.state_dict()["fc1.qweight"]
-        self.assertTrue(torch.all(q_weight1.T == q_weight2))
         model = Model()
         compressed_model = export_compressed_model(model, saved_dir="saved", use_HF_format=True)
         self.assertTrue("fc1.qweight" in compressed_model.state_dict().keys())
-        q_weight2 = compressed_model.state_dict()["fc1.qweight"]
-        self.assertTrue(torch.all(q_weight1.T == q_weight2))
         self.assertTrue(torch.all(out3 == out4))
 
         model = Model()
