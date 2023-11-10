@@ -21,6 +21,8 @@ import re
 import numpy as np
 import yaml
 
+FLATTEN_DIM2 = 16
+
 from ...config import WeightPruningConfig as WeightPruningConf
 
 try:
@@ -549,6 +551,7 @@ def parse_to_prune(config, model):
         config: A string representing the path to the configuration file.
         model: The model to be pruned.
     """
+    # import pdb; pdb.set_trace()
     modules = {}
     # additional function: exclude last layer (often a classifier head and not suitable to be pruned)
     classifier_head_name = parse_last_linear(model)
@@ -577,6 +580,7 @@ def parse_to_prune(config, model):
     for name in modules.keys():
         if any([p.search(name) for p in patterns]):
             continue
+        logger.info(f"Add {name} as pruning layer")
         new_modules[name] = modules[name]
     return new_modules
 
@@ -771,6 +775,10 @@ class Mode(Enum):
     DeepSpeed = auto()
 
 
+from torch.nn.parameter import Parameter
+import torch
+
+
 class ParamHandle:
     """
     mode = Mode.DeepSpeed  # set the mode by a global variable.
@@ -817,11 +825,67 @@ class ParamHandle:
 
     """
 
-    def __init__(self, param) -> None:
-        pass
+    def __init__(self, param: Parameter):
+        """_summary_
+
+        Args:
+            param: the torch's paramster not ds's parameter
+        """        
+        self._param = param
+        # disable the directly access
+        self._data = self._param.data
+        self._shape = self._param.shape
+        self._grad = self._param.grad
+    
+    
+        
 
     # def safe_assign(self):
     #     pass
 
     # def safe_get(self):
     #     pass
+
+
+# param = model.conv1.weight
+# inc_param_handle =ParamHandle(param)
+# shape = inc_param_handle.get_shape()
+# data = inc_param_handle.get_data()
+# grad = inc_param_handle.get_grad()
+
+# inc_param_handle.assign_data(new_value)
+# inc_param_handle.assign_grad(new_grad)
+
+import os
+
+USE_DEEPSPEED = os.environ.get("USE_DEEPSPEED", False)
+
+def safe_get_shape(param):
+    if USE_DEEPSPEED:
+        # from deepspeed.utils import safe_get_local_grad, safe_set_local_fp32_param
+        logger.info(f"[safe_get_shape][original shape is {param.ds_shape}, return shape is {param.ds_tensor.shape}]")
+        return param.ds_tensor.shape
+    else:
+        return param.shape
+
+def safe_get_data(param):
+    if USE_DEEPSPEED:
+        from deepspeed.utils import safe_get_local_grad, safe_get_local_fp32_param
+        return safe_get_local_fp32_param(param)
+    else:
+        return param.data
+
+def safe_get_grad(param):
+    if USE_DEEPSPEED:
+        from deepspeed.utils import safe_get_local_grad
+        return safe_get_local_grad(param)
+    else:
+        return param.grad
+    
+def safe_set_data(param, new_val):
+    if USE_DEEPSPEED:
+        from deepspeed.utils import safe_set_local_fp32_param
+        safe_set_local_fp32_param(new_val, param)
+    else:
+        param.data = new_val
+

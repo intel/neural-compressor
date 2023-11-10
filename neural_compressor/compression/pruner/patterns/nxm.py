@@ -19,7 +19,7 @@ import numpy as np
 
 from ..utils import logger, nn, tf, torch
 from .base import KerasBasePattern, ProgressivePatternUtils, PytorchBasePattern, SparsityInfo, register_pattern
-
+from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
 
 @register_pattern("ptNxM")
 class PytorchPatternNxM(PytorchBasePattern):
@@ -66,12 +66,15 @@ class PytorchPatternNxM(PytorchBasePattern):
         """
         datas = self.modules
         block_sizes_dict = {}
+        from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
         for key in datas.keys():
             block_sizes_dict[key] = self.block_size
             if not (self.N == "channel" or self.M == "channel"):
                 continue
             if isinstance(datas[key], torch.nn.Module):
-                shape = datas[key].weight.shape
+                param = datas[key].weight
+                shape = safe_get_shape(param)
+                # shape = datas[key].weight.shape
             else:
                 shape = datas[key].shape
             if self.N == "channel":  # support "channelxM" format
@@ -85,8 +88,12 @@ class PytorchPatternNxM(PytorchBasePattern):
         """Check if a layer is valid for this block_size."""
         block_sizes = self.block_size
         datas = self.modules
+        from neural_compressor.utils.utility import ForkedPdb
         for key in datas.keys():
-            data = datas[key].weight
+            # ForkedPdb().set_trace()
+            from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
+            param = datas[key].weight
+            data = safe_get_data(param)
             data = self._reshape_orig_to_2dims(data)
             shape = data.shape
             block_size = block_sizes[key]
@@ -153,19 +160,28 @@ class PytorchPatternNxM(PytorchBasePattern):
             Reshaped data.
         """
         # TODO: need to verify whether it's ok for transposed conv
-        if len(data.shape) == 4:
+        from neural_compressor.compression.pruner.utils import FLATTEN_DIM2
+        if len(data.shape) == 2:
+            return data
+        elif len(data.shape) == 4:
             if isinstance(data, np.ndarray):
                 data = np.transpose(data, (0, 2, 3, 1))
             else:
                 data = data.permute(0, 2, 3, 1)  # cout,k,k,cin
             data = data.reshape(data.shape[0], -1)
-        if len(data.shape) == 3:
+        elif len(data.shape) == 3:
             if isinstance(data, np.ndarray):
                 data = np.transpose(data, (0, 2, 1))
             else:
                 data = data.permute(0, 2, 1)  # cout,k,cin
             data = data.reshape(data.shape[0], -1)
+        # TODO(Yi) support handle 1-dim (flatten param from DeepSpeed or FSDP)
+        elif len(data.shape) == 1:
+            data = data.reshape(-1, FLATTEN_DIM2)
+        else:
+            raise NotImplementedError(f"Currently only support 1,3,4 reshape, but got shape {data.shape}")
         return data
+
 
     def _reshape_2dims_to_orig(self, data, orig_shape):
         """Recover layers that are not two-dimensional(e.g conv layer).
@@ -177,18 +193,24 @@ class PytorchPatternNxM(PytorchBasePattern):
         Returns:
             Reshaped data.
         """
-        if len(orig_shape) == 4:
+        if len(orig_shape) == 2:
+            return data
+        elif len(orig_shape) == 4:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[3], orig_shape[1])
             if isinstance(data, np.ndarray):  # pragma: no cover
                 data = np.transpose(data, (0, 3, 1, 2))
             else:
                 data = data.permute(0, 3, 1, 2)
-        if len(orig_shape) == 3:
+        elif len(orig_shape) == 3:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[1])
             if isinstance(data, np.ndarray):  # pragma: no cover
                 data = np.transpose(data, (0, 2, 1))
             else:
                 data = data.permute(0, 2, 1)
+        elif len(orig_shape) == 1:
+            data = data.reshape(-1)
+        else:
+            raise NotImplementedError(f"Currently only support 1,3,4 reshape, but got shape {data.shape}")
         return data
 
     def reshape_orig_to_pattern(self, data, key):
@@ -359,7 +381,9 @@ class PytorchPatternNxM(PytorchBasePattern):
         for key in masks.keys():
             if key in self.invalid_layers:
                 continue
-            orig_shape = self.modules[key].weight.shape
+            param = self.modules[key].weight
+            orig_shape = safe_get_shape(param)
+            # orig_shape = self.modules[key].weight.shape
             if len(orig_shape) == 4 or len(orig_shape) == 3:  # need to permute
                 mask = masks[key]
                 # orig_shape = scores[key].shape
@@ -381,9 +405,10 @@ class PytorchPatternNxM(PytorchBasePattern):
         pattern_lock_masks = {}
         for key in modules.keys():
             weight = modules[key].weight
-            ori_shape = weight.shape
+            ori_shape = safe_get_shape(weight)
+            # ori_shape = weight.shape
             if key in self.invalid_layers:
-                mask = torch.ones(weight.shape, device=weight.device)
+                mask = torch.ones(ori_shape, device=weight.device)
                 pattern_lock_masks[key] = mask
                 continue
             reduced_mask = self.get_reduced_masks_from_data(weight, key)
@@ -424,7 +449,8 @@ class PytorchPatternNxM(PytorchBasePattern):
                 continue
             module = self.modules[key]
             block_size = self.block_size[key]
-            org_shape = module.weight.shape
+            # org_shape = module.weight.shape
+            org_shape = safe_get_shape(module.weight)
             mask = (
                 masks[key]
                 .data.repeat_interleave(block_size[0], dim=0)
@@ -531,7 +557,9 @@ class PytorchPatternNxM(PytorchBasePattern):
 
         if isinstance(module, transformers.Conv1D):
             W = W.t()
-        module.weight.data = W.reshape(module.weight.shape).to(dtype=module.weight.data.dtype)
+        param = module.weight
+        param_shape = safe_get_shape(param)
+        module.weight.data = W.reshape(param_shape).to(dtype=module.weight.data.dtype)
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 

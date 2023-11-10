@@ -172,7 +172,7 @@ class BasePruner:
             return True
         return False
 
-
+from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape, safe_set_data
 class PytorchBasePruner(BasePruner):
     """Pruning Pruner.
 
@@ -205,7 +205,8 @@ class PytorchBasePruner(BasePruner):
         for key in self.modules.keys():
             module = self.modules[key]
             # TODO: support bias or others
-            self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device).bool()
+            param_shape = safe_get_shape(module.weight)
+            self.masks[key] = torch.ones(param_shape).to(module.weight.device).bool()
         self._init()
 
     def mask_weights(self):
@@ -216,7 +217,11 @@ class PytorchBasePruner(BasePruner):
         with torch.no_grad():
             for key in self.modules.keys():
                 module = self.modules[key]
-                module.weight.data = module.weight.data * self.masks[key]
+                param = module.weight
+                param_data = safe_get_data(param)
+                new_val = param_data * self.masks[key]
+                safe_set_data(new_val=new_val, param=param)
+                # module.weight.data = module.weight.data * self.masks[key]
 
 
 class KerasBasePruner(BasePruner):
