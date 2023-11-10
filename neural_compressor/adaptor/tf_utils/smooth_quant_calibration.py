@@ -18,19 +18,23 @@
 
 import os
 import copy
+import time
 import logging
 import tempfile
 import numpy as np
+import tensorflow as tf
 from collections import OrderedDict, UserDict
 
 from tensorflow.python.framework import tensor_util, dtypes
 from tensorflow.python.saved_model import load, tag_constants
 from tensorflow.core.framework import graph_pb2, attr_value_pb2
+
 from .graph_util import GraphAnalyzer
 from .graph_util import GraphRewriterHelper as Helper
 from .quantize_graph_common import QuantizeGraphHelper
-from neural_compressor.utils.utility import CaptureOutputToFile
 from .util import iterator_sess_run, parse_saved_model, reconstruct_saved_model
+from neural_compressor import Model
+from neural_compressor.utils.utility import CaptureOutputToFile
 
 logger = logging.getLogger("neural_compressor")
 debug = bool(logger.level == logging.DEBUG)
@@ -242,18 +246,18 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
         temp_path (str): The temporary path to store median model.
         weight_name_mapping (): A function that convert weight tensor name in autotrackable to node name in graph_def
     """
-    def __init__(self, model_path, iterations, op_types, percentile, 
-                    black_nodes, eval_func, temp_path, weight_name_mapping):
+    def __init__(self, model_path, dataloader, iterations, op_types, percentile, 
+                    black_nodes, temp_path, weight_name_mapping):
         """Initializes a SmoothQuantCalibrationLLM object."""
         self.func = None
         self.graph_def = None
         self.frozen_func = None
         self._saved_model = None
         self.model = model_path
-        self.op_types = op_types
-        self.eval_func = eval_func
-        self.percentile = percentile
+        self.dataloader = dataloader
         self.iterations = iterations
+        self.op_types = op_types
+        self.percentile = percentile
         self.black_nodes = black_nodes
         self.temp_path = temp_path
         self.weight_name_mapping = weight_name_mapping
@@ -384,11 +388,36 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
                         
         return cur_graph.dump_graph()
 
+    def evaluate(self, model):
+        """Evaluate function that inference the model to apply calibration.
+
+        Args:
+            model (tf.python.training.tracking.tracking.AutoTrackable): The model to be evaluated.
+            The object is usually gotten by using tf.saved_model.load(model_dir) API.
+
+        Returns:
+            accuracy (float): The accuracy result.
+        """
+        input_tensor_names = model.input_tensor_names
+        auto_trackable = model.model
+        infer = auto_trackable.signatures["serving_default"]
+        for idx, (inputs, _) in enumerate(self.dataloader):
+            assert len(input_tensor_names) == len(inputs), "inputs len must equal with input_tensor"
+            feed_dict = {}
+            for i, input_tensor_name in enumerate(input_tensor_names):
+                feed_dict[input_tensor_name] = inputs[i]
+
+            _ = infer(**feed_dict)
+
+            if idx >= self.iterations:
+                break
+
     def _inference(self, sampling_graph_def):
         logger.info("Start sampling on calibration dataset for Smooth Quantization.")
         # reconstruct graph_def that inserted print node to saved_model
         reconstruct_saved_model(sampling_graph_def, self.func, self.frozen_func, self._saved_model, self.temp_path)
-        _, _ = self.eval_func(self.temp_path, self.iterations)
+        model = Model(self.temp_path, modelType='llm_saved_model')
+        self.evaluate(model)
 
     def _inference_for_calibration(self, model):
         """Run the calibration on the input graph."""

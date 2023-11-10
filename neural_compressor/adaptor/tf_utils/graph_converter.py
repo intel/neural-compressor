@@ -200,6 +200,11 @@ class GraphConverter:
         if self.calib_func:
             self.calib_func(model.model)
             return
+            
+        if model.model_type == 'llm_saved_model':
+            self._inference_llm(model)
+            return
+            
         # ITEX optimization has broken INC calibration process.
         # INC needs turn off ITEX optimization pass in calibration stage.
         # TODO ITEX will provide API to replace setting environment variable.
@@ -287,6 +292,21 @@ class GraphConverter:
             if idx + 1 == self.calib_iteration:
                 break
         os.environ["ITEX_REMAPPER"] = "1"
+
+    def _inference_llm(self, model):
+        input_tensor_names = model.input_tensor_names
+        auto_trackable = model.model
+        infer = auto_trackable.signatures["serving_default"]
+        for idx, (inputs, _) in enumerate(self.dataloader):
+            assert len(input_tensor_names) == len(inputs), "inputs len must equal with input_tensor"
+            feed_dict = {}
+            for i, input_tensor_name in enumerate(input_tensor_names):
+                feed_dict[input_tensor_name] = inputs[i]
+
+            _ = infer(**feed_dict)
+
+            if idx >= self.calib_iteration:
+                break
 
     def _check_tf_version(self):
         """Check if the installed tensorflow version is supported."""

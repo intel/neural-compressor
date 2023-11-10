@@ -31,7 +31,7 @@ from neural_compressor.model.tensorflow_model import (
     TensorflowModel,
     TensorflowQATModel,
     get_model_type,
-    TensorflowLLMSavedModelModel,
+    TensorflowLLMModel,
 )
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
@@ -53,8 +53,8 @@ np = LazyImport("numpy")
 MODELS = {
     "tensorflow": TensorflowModel,
     "tensorflow_itex": TensorflowModel,
-    "keras": KerasModel,
     "tensorflow_qat": TensorflowQATModel,
+    "keras": KerasModel,
     "mxnet": MXNetModel,
     "pytorch": PyTorchModel if TORCH else None,
     "pytorch_ipex": IPEXModel if TORCH else None,
@@ -179,7 +179,10 @@ class Model(object):
         conf = kwargs.pop("conf", "NA")
         if isinstance(root, BaseModel):
             if conf != "NA" and conf.framework is None:
-                conf.framework = list(MODELS.keys())[list(MODELS.values()).index(type(root))]
+                try:
+                    conf.framework = list(MODELS.keys())[list(MODELS.values()).index(type(root))]
+                except:
+                    conf.framework = get_model_fwk_name(root._model)
                 if hasattr(conf, "backend") and conf.backend == "ipex":
                     assert conf.framework == "pytorch_ipex", "Please wrap the model with correct Model class!"
                 if hasattr(conf, "backend") and conf.backend == "itex":
@@ -237,7 +240,7 @@ class Model(object):
                         else:
                             model_type = get_model_type(root)
                         if model_type == 'llm_saved_model':
-                            return TensorflowLLMSavedModelModel(root, **kwargs)
+                            return TensorflowLLMModel(root, **kwargs)
                         if hasattr(conf, "backend") and conf.backend == "itex":
                             if model_type == "keras":
                                 conf.framework = "keras"

@@ -26,7 +26,6 @@ from collections import OrderedDict, UserDict
 from ..utils import logger
 from ..conf.dotdict import deep_get
 from ..data.dataloaders.base_dataloader import BaseDataLoader
-from ..model.tensorflow_model import TensorflowLLMSavedModelModel
 from ..utils.utility import (
     GLOBAL_STATE,
     MODE,
@@ -1848,7 +1847,7 @@ class TensorFlowAdaptor(Adaptor):
         if self.smooth_quant_model is not None:
             return self.smooth_quant_model
 
-        if isinstance(model, TensorflowLLMSavedModelModel):
+        if model.model_type == "llm_saved_model":
             return self.smooth_quant_LLM(model, calib_iter, tune_cfg, alpha, folding,
                      percentile, op_types, scales_per_op)
 
@@ -1887,12 +1886,12 @@ class TensorFlowAdaptor(Adaptor):
         self.smooth_quant_model = model
         return self.smooth_quant_model
 
-    def smooth_quant_LLM(self, model, calib_iter=1, tune_cfg=None, alpha=0.5, folding=False,
+    def smooth_quant_LLM(self, model, dataloader, calib_iter=1, tune_cfg=None, alpha=0.5, folding=False,
                      percentile=99.999, op_types=['MatMul', 'Conv2D'], scales_per_op=True):
         """Convert the model by smooth quant.
 
         Args:
-            model: original model of TensorflowLLMSavedModelModel object.
+            model: original model of TensorflowLLMModel object.
             calib_iter: how many steps of iterations on the dataloader to move forward.
             tune_cfg: quantization config.
             alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ.
@@ -1921,8 +1920,8 @@ class TensorFlowAdaptor(Adaptor):
         llm_temp_dir = self.work_dir+'/temp_saved_model'
         # Run calibration to get max values per channel
         from .tf_utils.smooth_quant_calibration import SmoothQuantCalibrationLLM
-        calibration = SmoothQuantCalibrationLLM(model._model, calib_iter, op_types, percentile, black_nodes,\
-                                                        self.evaluate, llm_temp_dir, model.weight_name_mapping)
+        calibration = SmoothQuantCalibrationLLM(model._model, dataloader, calib_iter, op_types, percentile, \
+                                                    black_nodes, llm_temp_dir, model.weight_name_mapping)
         max_vals_per_channel, sq_target_node_names, sq_weight_tensor_dict, sq_graph_def = calibration()
 
         # Calculate the smooth quant scaler and insert Mul op into the graph

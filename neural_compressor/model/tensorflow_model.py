@@ -657,6 +657,7 @@ SESSIONS = {
     "graph_def": graph_def_session,
     "graph": graph_session,
     "saved_model": saved_model_session,
+    "llm_saved_model": saved_model_session,
     "keras": keras_session,
     "checkpoint": checkpoint_session,
     "estimator": estimator_session,
@@ -1097,7 +1098,7 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         logger.info("Save quantized model to {}.".format(root))
 
 
-class TensorflowLLMSavedModelModel(TensorflowBaseModel):
+class TensorflowLLMModel(TensorflowSavedModelModel):
     """The class Tensorflow saved model whose GraphDef exceeding maximum protobuf size of 2GB."""
     def __init__(self, model, **kwargs):
         """Initialize a Tensorflow model.
@@ -1105,19 +1106,24 @@ class TensorflowLLMSavedModelModel(TensorflowBaseModel):
         Args:
             model (string or tensorflow model object): model path or model object.
         """
-        super(TensorflowLLMSavedModelModel, self).__init__(model, **kwargs)
+        super(TensorflowLLMModel, self).__init__(model, **kwargs)
 
         self._weight_name_mapping = None
         self._sq_weight_scale_dict = None
         self._weight_tensor_minmax_dict = {}
         self._model_type = 'llm_saved_model'
-        self.graph_def, self._saved_model, self.func, self.frozen_func, \
+        self._graph_def, self._saved_model, self.func, self.frozen_func, \
             self._input_tensor_names, self._output_tensor_names = parse_saved_model(model)
     
     @property
     def graph_def(self):
         """Return graph_def."""
-        return self.graph_def
+        return self._graph_def
+
+    @graph_def.setter
+    def graph_def(self, graph_def):
+        """Set graph definition."""
+        self._graph_def = graph_def
 
     @property
     def model(self):
@@ -1170,6 +1176,24 @@ class TensorflowLLMSavedModelModel(TensorflowBaseModel):
                 self._output_tensor_names.append(output_tensor.name)
         return copy.deepcopy(self._output_tensor_names)
 
+    @output_tensor_names.setter
+    def output_tensor_names(self, tensor_names):
+        """Set output tensor names."""
+        if len(tensor_names) == 0:
+            logger.warn("Output tensor names is empty.")
+            return
+        if self._graph_def is not None:
+            assert validate_graph_node(
+                self.graph_def, tensor_to_node(tensor_names)
+            ), "tensor names {} not in graph".format(tensor_names)
+        self._output_tensor_names = tensor_names
+
+    @property
+    def output_node_names(self):
+        """Return output node names."""
+        output_node_names = tensor_to_node(self.output_tensor_names)
+        return copy.deepcopy(output_node_names)
+
     def adjust_weight(self, graph_def):
         """Adjust weight of LLM saved_model by scale."""
         from tensorflow.python.saved_model import load, tag_constants
@@ -1197,7 +1221,7 @@ class TensorflowLLMSavedModelModel(TensorflowBaseModel):
             shutil.rmtree(root)
         os.makedirs(root, exist_ok=True)
 
-        self.adjust_weight(self.graph_def)
+        self.adjust_weight(self._graph_def)
         graph_def, _saved_model, func, frozen_func, _, _ = parse_saved_model(self._auto_trackable)
         reconstruct_saved_model(graph_def, func, frozen_func, _saved_model, root)
         logger.info("Save quantized model to {}.".format(root))
@@ -1312,7 +1336,9 @@ TENSORFLOW_MODELS = {
     "slim": TensorflowBaseModel,
     "saved_model": TensorflowSavedModelModel,
     "keras": TensorflowSavedModelModel,
+    "llm_saved_model": TensorflowLLMModel,
 }
+
 
 
 class TensorflowModel(object):

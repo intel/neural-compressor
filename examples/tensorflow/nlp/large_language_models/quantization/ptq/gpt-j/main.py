@@ -112,6 +112,7 @@ class DataTrainingArguments:
         metadata={"help": "The number of processes to use for the preprocessing."},
     )
 
+
 parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TFTrainingArguments))
 model_args, data_args, run_args = parser.parse_args_into_dataclasses()
 
@@ -136,29 +137,84 @@ text_column_name = "text" if "text" in column_names else column_names[0]
 
 mydata = tokenizer(raw_datasets["test"][text_column_name], return_tensors="np").input_ids
 
-marg = {}
-stacked = np.concatenate(mydata)
-unique, counts = np.unique(stacked, return_counts=True)
-counts = counts / np.sum(counts)
-
-marg = dict(zip(unique, counts))
-marg = defaultdict(lambda: 0, marg)
 
 def prepare_attention_mask_for_generation(
     inputs: tf.Tensor,
     pad_token_id=50256,
     eos_token_id=50256,
 ) -> tf.Tensor:
+    """Generate attention_mask from input_ids.
 
+    Args:
+        inputs (tf.Tensor): The tensor of input_ids.
+
+    Returns:
+        attention_mask (tf.Tensor): The tensor of attention_mask.
+    """
     is_input_ids = len(inputs.shape) == 2 and inputs.dtype in (tf.int32, tf.int64)
     is_pad_token_in_inputs = (pad_token_id is not None) and tf.math.reduce_any(inputs == pad_token_id)
     is_pad_token_not_equal_to_eos_token_id = (eos_token_id is None) or (pad_token_id != eos_token_id)
 
     # Check if input is input_ids and padded -> only then is attention_mask defined
-    if is_input_ids and is_pad_token_in_inputs and is_pad_token_not_equal_to_eos_token_id:
-        return tf.cast(tf.math.not_equal(inputs, pad_token_id), dtype=tf.int32)
-    else:
-        return tf.ones(inputs.shape[:2], dtype=tf.int32)
+    attention_mask = tf.cast(tf.math.not_equal(inputs, pad_token_id), dtype=tf.int32) \
+        if is_input_ids and is_pad_token_in_inputs and is_pad_token_not_equal_to_eos_token_id \
+            else tf.ones(inputs.shape[:2], dtype=tf.int32)
+
+    return attention_mask
+
+class MyDataloader:
+    def __init__(self, dataset, batch_size=1, for_calib=False):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.for_calib = for_calib
+        self.length = math.ceil(len(dataset) / self.batch_size)
+
+    def generate_data(self, data, pad_token_id=50256):
+        input_ids = tf.convert_to_tensor([data[:-1]], dtype=tf.int32)
+        cur_len = len(data)-1
+        input_ids_padding = tf.ones((self.batch_size, 1), dtype=tf.int32) * (pad_token_id or 0)
+        generated = tf.concat([input_ids, input_ids_padding], axis=-1)
+        model_kwargs = {'attention_mask': prepare_attention_mask_for_generation(input_ids)}
+        if model_kwargs.get("past_key_values") is None:
+            input_ids = generated[:, :cur_len]
+        else:
+            input_ids = tf.expand_dims(generated[:, cur_len - 1], -1)
+        return input_ids, model_kwargs['attention_mask']
+    
+    def __iter__(self):
+        labels = None
+        for idx, data in enumerate(self.dataset):
+            cur_input = self.generate_data(data)
+            yield (cur_input, labels)
+
+    def __len__(self):
+        return self.length
+
+def postprocess(outputs, generated, batch_size, cur_len):
+    """The function that processes the inference outputs to prediction"""
+    finished_sequences = tf.convert_to_tensor([False])
+    next_token_logits = outputs['logits'][:, -1]
+    # pre-process distribution
+    next_tokens_scores = next_token_logits
+    # argmax
+    next_tokens = tf.argmax(next_tokens_scores, axis=-1, output_type=tf.int32)
+
+    pad_token_id = 50256
+    eos_token_id = [50256]
+
+    unfinished_seq = 1 - tf.cast(finished_sequences, tf.int32)
+    next_tokens = next_tokens * unfinished_seq + pad_token_id * (1 - unfinished_seq)
+    next_token_is_eos = tf.math.reduce_any(
+        tf.equal(
+            tf.broadcast_to(next_tokens, (len(eos_token_id), batch_size)), tf.expand_dims(eos_token_id, -1)
+        ),
+        axis=0,
+    )
+    finished_sequences = finished_sequences | next_token_is_eos
+
+    # update `generated` and `cur_len`
+    update_indices = tf.stack([tf.range(batch_size), tf.broadcast_to(cur_len, [batch_size])], axis=-1)
+    return tf.tensor_scatter_nd_update(tensor=generated, indices=update_indices, updates=next_tokens)
 
 def evaluate(model, tf_eval_dataset=mydata):
     """Evaluate function that inference the model to apply calibration or benchmarking.
@@ -173,9 +229,10 @@ def evaluate(model, tf_eval_dataset=mydata):
     warmup = 5
     batch_size = 1
     pad_token_id = 50256
-    iteration = 10
+    iteration = 200
     correct = 0
     latency_list = []
+    model=tf.saved_model.load(model)
     infer = model.signatures["serving_default"]
     for idx, data in enumerate(tf_eval_dataset):
         print('Running Iteration: ', idx)
@@ -188,11 +245,14 @@ def evaluate(model, tf_eval_dataset=mydata):
         inputs = {'input_ids': input_ids, 'attention_mask': attention_mask}
 
         start = time.time()
-        predictions = infer(**inputs)
+        outputs = infer(**inputs)
         end = time.time()
-
         dur = end-start
-        print('Time taken: ', dur)
+
+        predictions = postprocess(outputs, generated, batch_size, cur_len)
+        if data[-1] == predictions[0][-1].numpy():
+            correct+=1
+
         latency_list.append(dur)
         if idx >= iteration:
             break
@@ -201,11 +261,14 @@ def evaluate(model, tf_eval_dataset=mydata):
     return latency, acc
 
 def weight_name_mapping(name):
+    """The function that maps name from AutoTrackable variables to graph nodes"""
     name = name.replace('tfgptj_for_causal_lm', 'StatefulPartitionedCall')
     name = name.replace('kernel:0', 'Tensordot/ReadVariableOp')
     return name
 
-def main():    
+def main(): 
+    calib_dataloader = MyDataloader(mydata)  
+
     with run_args.strategy.scope():
         options = tf.data.Options()
         options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
@@ -216,18 +279,18 @@ def main():
 
         recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': 0.491}}
         op_type_dict = {}
-        conf = PostTrainingQuantConfig(quant_level=1, excluded_precisions=["bf16"],##use basic tuning
+        conf = PostTrainingQuantConfig(quant_level=1, 
+                                        excluded_precisions=["bf16"],##use basic tuning
                                         recipes=recipes,
-                                        op_type_dict=op_type_dict, accuracy_criterion=AccuracyCriterion(
-        tolerable_loss=0.011,      # TODO remove for debug
-        ))
-
-        model = Model('./gpt-j-6B', model_type='llm_saved_model')
+                                        op_type_dict=op_type_dict, 
+                                        accuracy_criterion=AccuracyCriterion()
+                                        )
+        model = Model('./gpt-j-6B', modelType='llm_saved_model')
         model.weight_name_mapping = weight_name_mapping
         q_model = quantization.fit( model,
                                     conf,
-                                    calib_func=evaluate,
-                                    eval_func=evaluate)
+                                    eval_func=evaluate,
+                                    calib_dataloader=calib_dataloader)
         save_model_name ='gpt-j-6B'
         q_model.save(f"{save_model_name}_int8")
 
