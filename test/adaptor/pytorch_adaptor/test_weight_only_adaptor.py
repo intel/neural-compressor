@@ -729,7 +729,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             calib_dataloader=dataloader,
         )
         out2 = q_model.model(input)
-        print(out1[0] - out2[0])
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
 
 
