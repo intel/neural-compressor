@@ -546,7 +546,7 @@ class PyTorchModel(PyTorchBaseModel):
                     dtype=dtype,
                     zp=gptq_zp is not None,
                     bias=m.bias is not None,
-                    gptq_perm=gptq_perm is not None,
+                    g_idx=gptq_perm is not None,
                     compression_dtype=compression_dtype,
                     compression_dim=compression_dim,
                     scale_dtype=scale_dtype,

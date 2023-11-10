@@ -16,7 +16,7 @@ from neural_compressor.utils.pytorch import load
 class Model(torch.nn.Module):
     def __init__(self):
         super(Model, self).__init__()
-        self.fc1 = torch.nn.Linear(30, 50)
+        self.fc1 = torch.nn.Linear(30, 50, bias=True)
         self.fc2 = torch.nn.Linear(50, 30)
         self.fc3 = torch.nn.Linear(30, 5)
 
@@ -90,7 +90,9 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertFalse(torch.all(out1 == out2))
         compressed_model = q_model.export_compressed_model()
         out3 = compressed_model(input)
-        self.assertTrue("fc1.packed_weight" in compressed_model.state_dict().keys())
+        self.assertTrue("fc1.qweight" in compressed_model.state_dict().keys())
+        self.assertTrue("fc1.qzeros" not in compressed_model.state_dict().keys())
+        shape2 = compressed_model.state_dict()["fc1.scales"]
         self.assertTrue(torch.all(out3 == out2))
 
         # test huggingface popular int4 format
@@ -99,10 +101,10 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         inc_model = INCModel(new_model)
         inc_model.export_compressed_model(qweight_config_path="saved/qconfig.json", use_HF_format=True)
         out4 = inc_model.model(input)
-        self.assertTrue("fc1.qweight" in inc_model.model.state_dict().keys())
+        self.assertTrue("fc1.qzeros" in inc_model.model.state_dict().keys())
         model = Model()
         compressed_model = export_compressed_model(model, saved_dir="saved", use_HF_format=True)
-        self.assertTrue("fc1.qweight" in compressed_model.state_dict().keys())
+        self.assertTrue("fc1.qzeros" in inc_model.model.state_dict().keys())
         self.assertTrue(torch.all(out3 == out4))
 
         model = Model()
