@@ -1,0 +1,1 @@
+USE_DEEPSPEED=1 deepspeed --include="localhost:2,3" test_in_pruner.py
