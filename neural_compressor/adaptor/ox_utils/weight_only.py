@@ -64,7 +64,7 @@ def make_matmul_weight_only_node(
     q_weight,
     scale,
     zero_point,
-    accuracy_level=-1,
+    accuracy_level=0,
 ):  # pragma: no cover
     """Build MatMulFpQ4 node.
 
