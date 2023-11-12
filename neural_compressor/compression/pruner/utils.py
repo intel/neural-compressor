@@ -674,10 +674,10 @@ def get_layers(model):
 
 def move_input_to_device(input, device):
     if device is None:
-            device = torch.device("cpu")
+        device = torch.device("cpu")
     elif isinstance(device, str):
         device = torch.device(device)
-        
+
     if isinstance(input, dict) or isinstance(input, UserDict):
         for inp in input.keys():
             input[inp] = input[inp].to(device) if isinstance(input[inp], torch.Tensor) else input[inp]
