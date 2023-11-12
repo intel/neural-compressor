@@ -346,7 +346,7 @@ def parse_args():
     )
     parser.add_argument(
         "--target_sparsity",
-        type=float, default=0.8,
+        type=float, default=0.5,
         help="Target sparsity of the model."
     )
     parser.add_argument(
