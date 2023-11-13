@@ -273,6 +273,7 @@
                       'dtype': ['fp32'],
                       },
                   },
+      'default': *cap_weight_only_integer_linear,
   }
 
 
