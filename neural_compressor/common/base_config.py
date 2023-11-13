@@ -51,7 +51,7 @@ class BaseConfig(ABC):
 
     def _set_operator_type(self, operator_type: Union[str, Callable], config: BaseConfig) -> BaseConfig:
         # TODO (Yi), clean the usage
-        # hide it from user, as we can use set_operator_name with regular expression to covert its functionality
+        # hide it from user, as we can use set_operator_name with regular expression to convert its functionality
         self.operator_type_config[operator_type] = config
         return self
 
