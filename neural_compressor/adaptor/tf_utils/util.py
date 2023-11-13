@@ -783,7 +783,7 @@ def parse_saved_model(model, freeze=False, input_tensor_names=[], output_tensor_
         frozen_func = construct_function_from_graph_def(func, inlined_graph_def)
 
     if len(input_tensor_names) == 0:
-        input_tensor_names = [i.name.split(":")[0] for i in frozen_func.inputs]
+        input_tensor_names = [i.name.split(":")[0] for i in frozen_func.inputs if 'unknown' not in i.name]
     if len(output_tensor_names) == 0:
         output_tensor_names = [i.name.split(":")[0] for i in frozen_func.outputs]
 

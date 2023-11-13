@@ -1817,7 +1817,6 @@ class TensorFlowAdaptor(Adaptor):
         model,
         dataloader,
         calib_iter=1,
-        tune_cfg=None,
         alpha=0.5,
         folding=False,
         percentile=99.999,
@@ -1831,7 +1830,6 @@ class TensorFlowAdaptor(Adaptor):
             model: original model
             dataloader: the calibration dataloader
             calib_iter: how many steps of iterations on the dataloader to move forward
-            tune_cfg: quantization config
             alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
             folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
             percentile: percentile of calibration to remove outliers
@@ -1848,7 +1846,7 @@ class TensorFlowAdaptor(Adaptor):
             return self.smooth_quant_model
 
         if model.model_type == "llm_saved_model":
-            return self.smooth_quant_LLM(model, calib_iter, tune_cfg, alpha, folding,
+            return self.smooth_quant_LLM(model, dataloader, calib_iter, alpha, folding,
                      percentile, op_types, scales_per_op)
 
         # Do a pre-optimization before smooth quant
@@ -1859,6 +1857,7 @@ class TensorFlowAdaptor(Adaptor):
         model.graph_def = self.pre_optimized_model.graph_def
 
         # Get the nodes list which can't be quantized from tune_cfg
+        tune_cfg = None
         black_nodes = []
         if tune_cfg is not None:
             self._tuning_cfg_to_fw(tune_cfg)
@@ -1886,7 +1885,7 @@ class TensorFlowAdaptor(Adaptor):
         self.smooth_quant_model = model
         return self.smooth_quant_model
 
-    def smooth_quant_LLM(self, model, dataloader, calib_iter=1, tune_cfg=None, alpha=0.5, folding=False,
+    def smooth_quant_LLM(self, model, dataloader, calib_iter=1, alpha=0.5, folding=False,
                      percentile=99.999, op_types=['MatMul', 'Conv2D'], scales_per_op=True):
         """Convert the model by smooth quant.
 
@@ -1912,6 +1911,7 @@ class TensorFlowAdaptor(Adaptor):
         model.graph_def = self.pre_optimized_model.graph_def
 
         # Get the nodes list which can't be quantized from tune_cfg
+        tune_cfg = None
         black_nodes = []
         if tune_cfg is not None:
             self._tuning_cfg_to_fw(tune_cfg)

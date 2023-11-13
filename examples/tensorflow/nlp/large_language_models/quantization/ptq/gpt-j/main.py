@@ -183,7 +183,7 @@ class MyDataloader:
     
     def __iter__(self):
         labels = None
-        for idx, data in enumerate(self.dataset):
+        for _, data in enumerate(self.dataset):
             cur_input = self.generate_data(data)
             yield (cur_input, labels)
 
@@ -232,7 +232,6 @@ def evaluate(model, tf_eval_dataset=mydata):
     iteration = 200
     correct = 0
     latency_list = []
-    model=tf.saved_model.load(model)
     infer = model.signatures["serving_default"]
     for idx, data in enumerate(tf_eval_dataset):
         print('Running Iteration: ', idx)

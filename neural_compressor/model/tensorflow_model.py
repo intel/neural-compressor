@@ -1108,7 +1108,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         """
         super(TensorflowLLMModel, self).__init__(model, **kwargs)
 
-        self._weight_name_mapping = None
+        self._weight_name_mapping = self.kwargs.get('weight_name_mapping', None)
         self._sq_weight_scale_dict = None
         self._weight_tensor_minmax_dict = {}
         self._model_type = 'llm_saved_model'
@@ -1135,11 +1135,15 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     @property
     def weight_name_mapping(self):
         """Return weight_name_mapping function."""
+        if not self._weight_name_mapping:
+            self._weight_name_mapping = self.kwargs.get('weight_name_mapping', None)
+        assert self._weight_name_mapping is not None, "weight_name_mapping should not be None!"
         return self._weight_name_mapping
 
     @weight_name_mapping.setter
     def weight_name_mapping(self, weight_name_mapping):
         """Set weight_name_mapping function."""
+        self.kwargs.update({"weight_name_mapping": weight_name_mapping})
         self._weight_name_mapping = weight_name_mapping
 
     @property
@@ -1162,11 +1166,23 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         """Return input tensor names."""
         if len(self._input_tensor_names) == 0:
             for input_tensor in self.func.inputs:
-                # skip all ReadVariablesOp
+                # skip all ReadVariableOp
                 if 'unknown' in input_tensor.name:
                     continue
                 self._input_tensor_names.append(input_tensor.name)
         return copy.deepcopy(self._input_tensor_names)
+
+    @input_tensor_names.setter
+    def input_tensor_names(self, tensor_names):
+        """Set input tensor names."""
+        if len(tensor_names) == 0:
+            logger.warn("Input tensor names is empty.")
+            return
+            
+        assert validate_graph_node(
+            self._graph_def, tensor_to_node(tensor_names)
+        ), "tensor names {} not in graph".format(tensor_names)
+        self._input_tensor_names = tensor_names
 
     @property
     def output_tensor_names(self):
@@ -1201,7 +1217,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         model = load.load(self._model_path, [tag_constants.SERVING])
 
         for idx, weight_tensor in enumerate(model.variables):
-            parsed_weight_name = self._weight_name_mapping(weight_tensor.name)
+            parsed_weight_name = self.weight_name_mapping(weight_tensor.name)
             if parsed_weight_name in self._sq_weight_scale_dict:
                 weight_array = np.transpose(weight_tensor, [1, 0])
                 weight_array *= self._sq_weight_scale_dict[parsed_weight_name]
