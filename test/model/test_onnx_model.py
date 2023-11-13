@@ -193,7 +193,7 @@ class TestOnnxModel(unittest.TestCase):
         model = onnx.helper.make_model(graph, **{"opset_imports": [onnx.helper.make_opsetid("", 14)]})
         self.matmul_reshape_model = model
 
-        cmd = "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation gptj/"
+        cmd = "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation --legacy gptj/"
         p = subprocess.Popen(
             cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
         )  # nosec
@@ -216,7 +216,7 @@ class TestOnnxModel(unittest.TestCase):
 
         config = AutoConfig.from_pretrained("hf_test")
         sessions = ORTModelForCausalLM.load_model("hf_test/decoder_model.onnx")
-        model = ORTModelForCausalLM(sessions[0], config, "hf_test", use_cache=False, use_io_binding=False)
+        model = ORTModelForCausalLM(sessions, config, model_save_dir="hf_test", use_cache=False, use_io_binding=False)
         self.assertNotEqual(model, None)
 
     def test_nodes(self):

@@ -38,7 +38,7 @@ class DummyNLPDataloader(object):
 class TestWeightOnlyAdaptor(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        cmd = "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation gptj/"
+        cmd = "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation --legacy gptj/"
         p = subprocess.Popen(
             cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
         )  # nosec
