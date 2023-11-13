@@ -17,7 +17,7 @@ pip install -r requirements.txt
 ## 2. Prepare Model
 
 ```bash
-optimum-cli export onnx --model decapoda-research/llama-7b-hf --task text-generation-with-past ./llama_7b
+python prepare_model.py  --input_model="decapoda-research/llama-7b-hf" --output_model="./llama_7b"
 ```
 
 # Run
