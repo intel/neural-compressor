@@ -15,6 +15,9 @@ pr:
       - .azure-pipelines/scripts/ut
     exclude:
       - test/neural_coder
+      - test/3x
+      - neural_compressor/common
+      - neural_compressor/torch
 
 pool: ICX-16C
 
