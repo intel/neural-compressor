@@ -18,7 +18,6 @@ except Exception as error:
     assert False, "Error: Could not open '%s' due %s\n" % (filepath, error)
 
 PKG_INSTALL_CFG = {
-
     # overall install config for build from source, python setup.py install
     "neural_compressor": {
         "project_name": "neural_compressor",
