@@ -103,7 +103,6 @@ To support low memory inference, Neural Compressor implemented WeightOnlyLinear,
 > 1: Compression Dimension: weight = 1, zero = 0 and both are transposed.   
 > 2: Zero Point: zero_point-= 1 before compression. zero_point is always required even for sym.    
 > 3: Group Index: Use the same number for a group instead of recording channel order.    
-> 4. Parameter Name: `packed_weight` -> `qweight`; `packed_zp` -> `qzeros`; `gptq_perm` -> `g_idx`; `scale` -> `scales`. 
 
 
 ### **User Code Example**
