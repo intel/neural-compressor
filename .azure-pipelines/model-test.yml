@@ -14,6 +14,10 @@ pr:
       - .azure-pipelines/model-test.yml
       - .azure-pipelines/scripts/models
       - examples/tensorflow/oob_models/quantization/ptq
+    exclude:
+      - test
+      - neural_compressor/common
+      - neural_compressor/torch
 
 pool: MODEL_PERF_TEST_TF
 
