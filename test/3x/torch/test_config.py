@@ -1,5 +1,4 @@
 import unittest
-from copy import deepcopy
 
 from neural_compressor.utils.logger import Logger
 
@@ -36,7 +35,7 @@ class TestQuantizationConfig(unittest.TestCase):
 
     def setUp(self):
         # print the test name
-        logger.info(f"\nRunning test: {self._testMethodName}")
+        logger.info("Running TestQuantizationConfig test: %s".format())
 
     def test_quantize_rtn_from_dict_default(self):
         logger.info("test_quantize_rtn_from_dict_default")
@@ -100,11 +99,41 @@ class TestQuantizationConfig(unittest.TestCase):
         # set operator instance
         fc1_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="int8")
         quant_config.set_operator_name("model.fc1", fc1_config)
-
         # get model and quantize
         fp32_model = build_simple_torch_model()
         qmodel = quantize(fp32_model, quant_config)
         self.assertIsNotNone(qmodel)
+
+    def test_config_from_dict(self):
+        from neural_compressor.torch import RTNWeightQuantConfig
+
+        quant_config = {
+            "rtn_weight_only_quant": {
+                "global": {
+                    "weight_dtype": "nf4",
+                    "weight_bits": 4,
+                    "weight_group_size": 32,
+                },
+                "operator_name": {
+                    "fc1": {
+                        "weight_dtype": "int8",
+                        "weight_bits": 4,
+                    }
+                },
+            }
+        }
+        config = RTNWeightQuantConfig.from_dict(quant_config)
+        self.assertIsNotNone(config.operator_name_config)
+
+    def test_config_to_dict(self):
+        from neural_compressor.torch import RTNWeightQuantConfig
+
+        quant_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4")
+        fc1_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="int8")
+        quant_config.set_operator_name("model.fc1", fc1_config)
+        config_dict = quant_config.to_dict()
+        self.assertIn("global", config_dict)
+        self.assertIn("operator_name", config_dict)
 
 
 if __name__ == "__main__":
