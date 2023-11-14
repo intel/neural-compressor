@@ -21,6 +21,7 @@ import os
 import re
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
+from deprecated import deprecated
 from typing import Dict, Tuple
 
 from ....utils import logger
@@ -29,6 +30,7 @@ from .tuning_structs import OpTuningConfig
 from .utility import OrderedDefaultDict
 
 
+@deprecated(version="2.0")
 class TuningItem:
     """Not displayed in API Docs."""
 
@@ -106,6 +108,7 @@ class TuningItem:
         return "\n".join(details)
 
 
+@deprecated(version="2.0")
 class TuningSpace:
     """Not displayed in API Docs.
 
@@ -648,6 +651,7 @@ class TuningSpace:
         return result
 
 
+@deprecated(version="2.0")
 def pattern_to_internal(pattern, default_dtype="int8"):
     """Convert pattern to internal format.
 
@@ -669,6 +673,7 @@ def pattern_to_internal(pattern, default_dtype="int8"):
     return internal_pattern
 
 
+@deprecated(version="2.0")
 def pattern_to_path(pattern):
     """Convert pattern to path."""
     act_path = (pattern[0], "activation", *pattern[1][0])
@@ -676,6 +681,7 @@ def pattern_to_path(pattern):
     return act_path, weight_path
 
 
+@deprecated(version="2.0")
 def quant_mode_from_pattern(internal_pattern):
     """Get quant mode from internal pattern."""
     if internal_pattern[0] == "precision":
@@ -684,6 +690,7 @@ def quant_mode_from_pattern(internal_pattern):
         return internal_pattern[0]
 
 
+@deprecated(version="2.0")
 def initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space: TuningSpace) -> OpTuningConfig:
     """Initialize the tuning cfg.
 

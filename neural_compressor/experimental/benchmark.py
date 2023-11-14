@@ -25,7 +25,7 @@ from threading import Thread
 
 import numpy as np
 import psutil
-
+from deprecated import deprecated
 from ..adaptor import FRAMEWORKS
 from ..conf.config import BenchmarkConf
 from ..conf.dotdict import DotDict, deep_get, deep_set
@@ -42,7 +42,7 @@ from .common import Postprocess as NCPostprocess
 from .common import _generate_common_dataloader
 from .metric import METRICS
 
-
+@deprecated(version="2.0")
 def set_env_var(env_var, value, overwrite_existing=False):
     """Set the specified environment variable.
 
@@ -54,6 +54,7 @@ def set_env_var(env_var, value, overwrite_existing=False):
         os.environ[env_var] = str(value)
 
 
+@deprecated(version="2.0")
 def set_all_env_var(conf, overwrite_existing=False):
     """Set all the environment variables with the configuration dict.
 
@@ -76,6 +77,7 @@ def set_all_env_var(conf, overwrite_existing=False):
         set_env_var(var.upper(), value, overwrite_existing)
 
 
+@deprecated(version="2.0")
 def get_architecture():
     """Get the architecture name of the system."""
     p1 = subprocess.Popen("lscpu", stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -87,6 +89,7 @@ def get_architecture():
     return res
 
 
+@deprecated(version="2.0")
 def get_threads_per_core():
     """Get the threads per core."""
     p1 = subprocess.Popen("lscpu", stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -98,6 +101,7 @@ def get_threads_per_core():
     return res
 
 
+@deprecated(version="2.0")
 def get_threads():
     """Get the list of threads."""
     p1 = subprocess.Popen(["cat", "/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -109,6 +113,7 @@ def get_threads():
     return res
 
 
+@deprecated(version="2.0")
 def get_physical_ids():
     """Get the list of sockets."""
     p1 = subprocess.Popen(["cat", "/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -120,6 +125,7 @@ def get_physical_ids():
     return res
 
 
+@deprecated(version="2.0")
 def get_core_ids():
     """Get the ids list of the cores."""
     p1 = subprocess.Popen(["cat", "/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -131,6 +137,7 @@ def get_core_ids():
     return res
 
 
+@deprecated(version="2.0")
 def get_bounded_threads(core_ids, threads, sockets):
     """Return the threads id list that we will bind instances to."""
     res = []
@@ -143,6 +150,7 @@ def get_bounded_threads(core_ids, threads, sockets):
     return res
 
 
+@deprecated(version="2.0")
 class Benchmark(object):
     """Benchmark class is used to evaluate the model performance with the objective settings.
 

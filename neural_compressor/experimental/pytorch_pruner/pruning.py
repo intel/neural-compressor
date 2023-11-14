@@ -17,12 +17,13 @@
 # limitations under the License.
 
 import torch.nn
-
+from deprecated import deprecated
 from .logger import logger
 from .prune_utils import parse_not_to_prune, parse_to_prune, process_config
 from .pruner import get_pruner
 
 
+@deprecated(version="2.0")
 class Pruning:
     """Pruning.
 

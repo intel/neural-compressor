@@ -18,6 +18,7 @@
 import copy
 import os
 from collections import OrderedDict
+from deprecated import deprecated
 from functools import partial
 from pathlib import Path
 
@@ -38,6 +39,7 @@ except ImportError:
     logger.info("Pandas package is required for best result and CSV files generation.")
 
 
+@deprecated(version="2.0")
 @strategy_registry
 class TpeTuneStrategy(TuneStrategy):
     """The tuning strategy using tpe search in tuning space.

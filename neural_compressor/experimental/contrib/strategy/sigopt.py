@@ -17,7 +17,7 @@
 """The SigOpt Tuning Strategy provides support for the quantization process."""
 import copy
 from collections import OrderedDict
-
+from deprecated import deprecated
 from neural_compressor.experimental.strategy.strategy import TuneStrategy, strategy_registry
 from neural_compressor.experimental.strategy.utils.tuning_sampler import OpWiseTuningSampler
 from neural_compressor.experimental.strategy.utils.tuning_structs import OpTuningConfig
@@ -27,6 +27,7 @@ from neural_compressor.utils.utility import LazyImport
 sigopt = LazyImport("sigopt")
 
 
+@deprecated(version="2.0")
 @strategy_registry
 class SigOptTuneStrategy(TuneStrategy):
     """The tuning strategy using SigOpt HPO search in tuning space.

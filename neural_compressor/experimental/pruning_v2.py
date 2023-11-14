@@ -43,6 +43,7 @@ import re
 from deprecated import deprecated
 
 
+@deprecated(version="2.0")
 class Pruning(Component):
     """This is base class of pruning object.
 
@@ -433,6 +434,7 @@ class Pruning(Component):
         return "Pruning"
 
 
+@deprecated(version="2.0")
 class TfPruningCallback(object):
     """Class that contains callback functions.
 

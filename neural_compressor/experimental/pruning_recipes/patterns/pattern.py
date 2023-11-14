@@ -16,13 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import abstractmethod
-
 import numpy as np
+from deprecated import deprecated
+
 
 registry_patterns = {}
 
 
+@deprecated(version="2.0")
 def pattern_registry(pattern_type):
     """Class decorator used to register all Pruning Pattern subclasses.
 
@@ -43,6 +44,7 @@ def pattern_registry(pattern_type):
     return decorator_pattern
 
 
+@deprecated(version="2.0")
 class PATTERNS(object):
     """Class that contain all registered pattern types.
 
@@ -63,6 +65,7 @@ class PATTERNS(object):
         return set(self.patterns.keys())
 
 
+@deprecated(version="2.0")
 class PatternBase:
     """Base class of pruning pattern."""
 

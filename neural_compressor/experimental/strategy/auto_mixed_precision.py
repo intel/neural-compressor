@@ -18,6 +18,7 @@
 
 import copy
 from collections import OrderedDict
+from deprecated import deprecated
 
 import numpy as np
 
@@ -27,6 +28,7 @@ from .utils.tuning_sampler import FallbackTuningSampler, OpTypeWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
 
 
+@deprecated(version="2.0")
 @strategy_registry
 class AutoMixedPrecisionTuneStrategy(TuneStrategy):
     """Tuning strategy for auto mixed precision."""

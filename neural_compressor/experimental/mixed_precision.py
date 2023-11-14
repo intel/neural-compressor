@@ -20,7 +20,7 @@ import os
 import pickle
 import random
 import sys
-
+from deprecated import deprecated
 import numpy as np
 
 from ..conf.config import MixedPrecision_Conf
@@ -34,6 +34,7 @@ from .graph_optimization import GraphOptimization
 from .strategy import EXP_STRATEGIES
 
 
+@deprecated(version="2.0")
 class MixedPrecision(GraphOptimization):
     """Class used for generating low precision model.
 

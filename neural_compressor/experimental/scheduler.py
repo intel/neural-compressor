@@ -19,6 +19,7 @@
 
 import os
 
+from deprecated import deprecated
 from ..conf.dotdict import DotDict, deep_set
 from ..model import BaseModel
 from ..model.model import get_model_fwk_name
@@ -35,6 +36,7 @@ from .quantization import Quantization
 SUPPORTED_COMPONENTS = [Quantization, Pruning, Graph_Optimization, ModelConversion, Benchmark, Component]
 
 
+@deprecated(version="2.0")
 class Scheduler(object):
     """Scheduler for neural_compressor component pipeline execution.
 

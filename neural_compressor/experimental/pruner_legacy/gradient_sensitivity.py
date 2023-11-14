@@ -16,16 +16,15 @@
 # limitations under the License.
 """Gradient sensitivity pruner."""
 
-import re
-from heapq import heappop, heappush
-
 import numpy as np
-
+import re
+from deprecated import deprecated
+from heapq import heappop, heappush
 from neural_compressor.utils import logger
-
 from .pruner import Pruner, pruner_registry
 
 
+@deprecated(version="2.0")
 @pruner_registry
 class GradientSensitivityPruner(Pruner):
     """Gradient sensitivity pruner class.

@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Common Model just collects the information to construct a Model."""
-
+from deprecated import deprecated
 from neural_compressor.model.model import MODELS, get_model_fwk_name
 from neural_compressor.model.tensorflow_model import get_model_type
 from neural_compressor.utils import logger
@@ -23,6 +23,7 @@ from neural_compressor.utils import logger
 BACKEND = "default"
 
 
+@deprecated(version="2.0")
 class Model(object):
     """A wrapper of the information needed to construct a Model."""
 
@@ -63,6 +64,7 @@ class Model(object):
         return model
 
 
+@deprecated(version="2.0")
 def set_backend(backend: str):
     """Set backed from configure file."""
     global BACKEND

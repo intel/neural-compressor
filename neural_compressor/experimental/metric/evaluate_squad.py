@@ -23,10 +23,11 @@ from __future__ import print_function
 
 import sys
 from collections import Counter
-
+from deprecated import deprecated
 from .f1 import normalize_answer
 
 
+@deprecated(version="2.0")
 def f1_score(prediction, ground_truth):
     """Calculate the F1 score of the prediction and the ground_truth.
 
@@ -49,6 +50,7 @@ def f1_score(prediction, ground_truth):
     return f1
 
 
+@deprecated(version="2.0")
 def metric_max_over_ground_truths(metric_fn, prediction, ground_truths):
     """Calculate the max metric for each ground truth.
 
@@ -70,6 +72,7 @@ def metric_max_over_ground_truths(metric_fn, prediction, ground_truths):
     return max(scores_for_ground_truths)
 
 
+@deprecated(version="2.0")
 def exact_match_score(prediction, ground_truth):
     """Compute the exact match score between prediction and ground truth.
 
@@ -83,6 +86,7 @@ def exact_match_score(prediction, ground_truth):
     return normalize_answer(prediction) == normalize_answer(ground_truth)
 
 
+@deprecated(version="2.0")
 def evaluate(dataset, predictions):
     """Evaluate the average F1 score and the exact match score for Question-Answering results.
 

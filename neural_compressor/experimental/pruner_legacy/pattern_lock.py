@@ -15,10 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Pattern lock pruner."""
-
+from deprecated import deprecated
 from .pruner import Pruner, pruner_registry
 
 
+@deprecated(version="2.0")
 @pruner_registry
 class PatternLockPruner(Pruner):
     """Pattern lock pruner class.

@@ -17,14 +17,13 @@
 """Neural Compressor metrics."""
 
 
-from abc import abstractmethod
-from ctypes import Union
-
 import numpy as np
-from sklearn.metrics import accuracy_score
-
+from abc import abstractmethod
+from deprecated import deprecated
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport, singleton
+from sklearn.metrics import accuracy_score
+
 
 torch = LazyImport("torch")
 tf = LazyImport("tensorflow")
@@ -32,6 +31,7 @@ mx = LazyImport("mxnet")
 transformers = LazyImport("transformers")
 
 
+@deprecated(version="2.0")
 @singleton
 class TensorflowMetrics(object):
     """Tensorflow metrics collection.
@@ -46,6 +46,7 @@ class TensorflowMetrics(object):
         self.metrics.update(TENSORFLOW_METRICS)
 
 
+@deprecated(version="2.0")
 @singleton
 class PyTorchMetrics(object):
     """PyTorch metrics collection.
@@ -60,6 +61,7 @@ class PyTorchMetrics(object):
         self.metrics.update(PYTORCH_METRICS)
 
 
+@deprecated(version="2.0")
 @singleton
 class MXNetMetrics(object):
     """MXNet metrics collection.
@@ -85,6 +87,7 @@ class MXNetMetrics(object):
         self.metrics.update(MXNET_METRICS)
 
 
+@deprecated(version="2.0")
 @singleton
 class ONNXRTQLMetrics(object):
     """ONNXRT QLinear metrics collection.
@@ -99,6 +102,7 @@ class ONNXRTQLMetrics(object):
         self.metrics.update(ONNXRT_QL_METRICS)
 
 
+@deprecated(version="2.0")
 @singleton
 class ONNXRTITMetrics(object):
     """ONNXRT Integer metrics collection.
@@ -150,6 +154,7 @@ registry_metrics = {
 }
 
 
+@deprecated(version="2.0")
 class METRICS(object):
     """Intel Neural Compressor Metrics.
 
@@ -202,6 +207,7 @@ class METRICS(object):
         self.metrics.update({name: metric_cls})
 
 
+@deprecated(version="2.0")
 def metric_registry(metric_type: str, framework: str):
     """Decorate for registering all Metric subclasses.
 
@@ -239,6 +245,7 @@ def metric_registry(metric_type: str, framework: str):
     return decorator_metric
 
 
+@deprecated(version="2.0")
 class BaseMetric(object):
     """The base class of Metric."""
 
@@ -323,6 +330,7 @@ class BaseMetric(object):
         self._hvd = hvd
 
 
+@deprecated(version="2.0")
 class WrapPyTorchMetric(BaseMetric):
     """The wrapper of Metric class for PyTorch."""
 
@@ -349,6 +357,7 @@ class WrapPyTorchMetric(BaseMetric):
         return self._metric_cls.result()
 
 
+@deprecated(version="2.0")
 class WrapMXNetMetric(BaseMetric):
     """The wrapper of Metric class for MXNet."""
 
@@ -378,6 +387,7 @@ class WrapMXNetMetric(BaseMetric):
         return acc
 
 
+@deprecated(version="2.0")
 class WrapONNXRTMetric(BaseMetric):
     """The wrapper of Metric class for ONNXRT."""
 
@@ -407,6 +417,7 @@ class WrapONNXRTMetric(BaseMetric):
         return acc
 
 
+@deprecated(version="2.0")
 def _topk_shape_validate(preds, labels):
     # preds shape can be Nxclass_num or class_num(N=1 by default)
     # it's more suitable for 'Accuracy' with preds shape Nx1(or 1) output from argmax
@@ -457,6 +468,7 @@ def _topk_shape_validate(preds, labels):
     return preds, labels
 
 
+@deprecated(version="2.0")
 def _shape_validate(preds, labels):
     assert type(preds) in [int, list, np.ndarray], "preds must be in int or list, ndarray"
     assert type(labels) in [int, list, np.ndarray], "labels must be in int or list, ndarray"
@@ -479,6 +491,7 @@ def _shape_validate(preds, labels):
     return preds, labels
 
 
+@deprecated(version="2.0")
 @metric_registry("F1", "tensorflow, tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
 class F1(BaseMetric):
     """F1 score of a binary classification problem.
@@ -522,6 +535,7 @@ class F1(BaseMetric):
         return np.array(self._score_list).mean()
 
 
+@deprecated(version="2.0")
 def _accuracy_shape_check(preds, labels):
     """Check and convert the shape of predictions and labels.
 
@@ -548,6 +562,7 @@ def _accuracy_shape_check(preds, labels):
     return preds, labels
 
 
+@deprecated(version="2.0")
 def _accuracy_type_check(preds, labels):
     """Determine the type of prediction.
 
@@ -572,6 +587,7 @@ def _accuracy_type_check(preds, labels):
     return update_type
 
 
+@deprecated(version="2.0")
 @metric_registry("Accuracy", "tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops")
 class Accuracy(BaseMetric):
     """The Accuracy for the classification tasks.
@@ -639,6 +655,7 @@ class Accuracy(BaseMetric):
         return correct_num / self.sample
 
 
+@deprecated(version="2.0")
 class PyTorchLoss:
     """A dummy PyTorch Metric.
 
@@ -687,6 +704,7 @@ class PyTorchLoss:
         return self._sum.item() / self._num_examples
 
 
+@deprecated(version="2.0")
 @metric_registry("Loss", "tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops")
 class Loss(BaseMetric):
     """A dummy Metric.
@@ -733,6 +751,7 @@ class Loss(BaseMetric):
         return self.sum / self.sample
 
 
+@deprecated(version="2.0")
 @metric_registry("MAE", "tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops")
 class MAE(BaseMetric):
     """Computes Mean Absolute Error (MAE) loss.
@@ -791,6 +810,7 @@ class MAE(BaseMetric):
         return aes_sum / aes_size
 
 
+@deprecated(version="2.0")
 @metric_registry("RMSE", "tensorflow, tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
 class RMSE(BaseMetric):
     """Computes Root Mean Squared Error (RMSE) loss.
@@ -833,6 +853,7 @@ class RMSE(BaseMetric):
         return np.sqrt(self.mse.result())
 
 
+@deprecated(version="2.0")
 @metric_registry("MSE", "tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops")
 class MSE(BaseMetric):
     """Computes Mean Squared Error (MSE) loss.
@@ -892,6 +913,7 @@ class MSE(BaseMetric):
         return squares_sum / squares_size
 
 
+@deprecated(version="2.0")
 @metric_registry("topk", "tensorflow, tensorflow_itex")
 class TensorflowTopK(BaseMetric):
     """Compute Top-k Accuracy classification score for Tensorflow model.
@@ -960,6 +982,7 @@ class TensorflowTopK(BaseMetric):
         return self.num_correct / self.num_sample
 
 
+@deprecated(version="2.0")
 @metric_registry("topk", "pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
 class GeneralTopK(BaseMetric):
     """Compute Top-k Accuracy classification score.
@@ -1028,6 +1051,7 @@ class GeneralTopK(BaseMetric):
         return self.num_correct / self.num_sample
 
 
+@deprecated(version="2.0")
 @metric_registry("COCOmAPv2", "tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops")
 class COCOmAPv2(BaseMetric):
     """Compute mean average precision of the detection task."""
@@ -1189,6 +1213,7 @@ class COCOmAPv2(BaseMetric):
             return box_metrics[self.map_key]
 
 
+@deprecated(version="2.0")
 @metric_registry("mAP", "tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops")
 class TensorflowMAP(BaseMetric):
     """Computes mean average precision."""
@@ -1345,6 +1370,7 @@ class TensorflowMAP(BaseMetric):
             return box_metrics[self.map_key]
 
 
+@deprecated(version="2.0")
 @metric_registry("COCOmAP", "tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops")
 class TensorflowCOCOMAP(TensorflowMAP):
     """Computes mean average precision using algorithm in COCO."""
@@ -1367,6 +1393,7 @@ class TensorflowCOCOMAP(TensorflowMAP):
         self.map_points = 101
 
 
+@deprecated(version="2.0")
 @metric_registry("VOCmAP", "tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops")
 class TensorflowVOCMAP(TensorflowMAP):
     """Computes mean average precision using algorithm in VOC."""
@@ -1389,6 +1416,7 @@ class TensorflowVOCMAP(TensorflowMAP):
         self.map_points = 0
 
 
+@deprecated(version="2.0")
 @metric_registry("SquadF1", "tensorflow, tensorflow_itex")
 class SquadF1(BaseMetric):
     """Evaluate for v1.1 of the SQuAD dataset."""
@@ -1431,6 +1459,7 @@ class SquadF1(BaseMetric):
         return np.array(self._score_list).mean()
 
 
+@deprecated(version="2.0")
 @metric_registry("mIOU", "tensorflow, tensorflow_itex")
 class mIOU(BaseMetric):
     """Compute the mean IOU(Intersection over Union) score."""
@@ -1483,6 +1512,7 @@ class mIOU(BaseMetric):
         return mean_iu
 
 
+@deprecated(version="2.0")
 @metric_registry("GLUE", "onnxrt_qlinearops, onnxrt_integerops")
 class ONNXRTGLUE(BaseMetric):
     """Compute the GLUE score."""
@@ -1547,6 +1577,7 @@ class ONNXRTGLUE(BaseMetric):
         return result[self.return_key[self.task]]
 
 
+@deprecated(version="2.0")
 @metric_registry("ROC", "pytorch")
 class ROC(BaseMetric):
     """Computes ROC score."""

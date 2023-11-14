@@ -18,24 +18,22 @@
 
 import collections
 import logging
-import sys
-from abc import abstractmethod
-from math import ceil, floor
-
 import numpy as np
-
+import sys
+from deprecated import deprecated
+from math import ceil, floor
 from neural_compressor.utils.utility import LazyImport
-
 from ..datasets.bert_dataset import TensorflowBertDataset, TensorflowModelZooBertDataset
 from .base_dataloader import BaseDataLoader
 from .default_dataloader import DefaultDataLoader, default_collate
 from .fetcher import FETCHERS
-from .sampler import BatchSampler, IterableSampler, SequentialSampler
+from .sampler import BatchSampler
 
 tf = LazyImport("tensorflow")
 neural_compressor = LazyImport("neural_compressor")
 
 
+@deprecated(version="2.0")
 class TFDataDataLoader(BaseDataLoader):
     """Tensorflow dataloader class.
 
@@ -166,6 +164,7 @@ class TFDataDataLoader(BaseDataLoader):
                             return
 
 
+@deprecated(version="2.0")
 class TensorflowBertDataLoader(DefaultDataLoader):
     """Subclass of DefaultDataLoader.
 
@@ -205,6 +204,7 @@ class TensorflowBertDataLoader(DefaultDataLoader):
                 return
 
 
+@deprecated(version="2.0")
 class TensorflowModelZooBertDataLoader(DefaultDataLoader):
     """Subclass of DefaultDataLoader.
 
@@ -252,6 +252,7 @@ class TensorflowModelZooBertDataLoader(DefaultDataLoader):
                 return
 
 
+@deprecated(version="2.0")
 class TensorflowDataLoader(BaseDataLoader):
     """DataLoader for framework Tensorflow.
 

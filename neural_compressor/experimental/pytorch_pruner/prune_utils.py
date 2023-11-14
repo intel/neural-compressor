@@ -17,8 +17,8 @@
 # limitations under the License.
 
 import re
-
 import yaml
+from deprecated import deprecated
 
 try:
     from ...conf.dotdict import DotDict
@@ -28,6 +28,7 @@ except:
 from .logger import logger
 
 
+@deprecated(version="2.0")
 def check_config(prune_config):
     """Functions that check key-value is valid to run Pruning object.
 
@@ -81,6 +82,7 @@ def check_config(prune_config):
         prune_config["max_sparsity_ratio_per_layer"] = min(max_ratio, prune_config["max_sparsity_ratio_per_layer"])
 
 
+@deprecated(version="2.0")
 def reset_non_value_to_default(obj, key, default):
     """Functions that add up undefined configurations.
 
@@ -103,6 +105,7 @@ def reset_non_value_to_default(obj, key, default):
             return getattr(obj, key)
 
 
+@deprecated(version="2.0")
 def process_and_check_config(val):
     """Functions which converts a initial configuration object to a Pruning configuration.
 
@@ -155,6 +158,7 @@ def process_and_check_config(val):
     return pruners_info
 
 
+@deprecated(version="2.0")
 def process_config(config):
     """Obtain a config dict object from a config file.
 
@@ -191,6 +195,7 @@ def process_config(config):
     return process_and_check_config(val)
 
 
+@deprecated(version="2.0")
 def parse_to_prune(model, config):
     """Keep target pruned layers."""
     modules = {}
@@ -207,6 +212,7 @@ def parse_to_prune(model, config):
     return modules
 
 
+@deprecated(version="2.0")
 def parse_not_to_prune(modules, config):
     """Drop non pruned layers."""
     exclude_names = config["extra_excluded_names"]

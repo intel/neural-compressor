@@ -16,15 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
-
 import torch
-
+from deprecated import deprecated
 from .logger import logger
 
 PATTERNS = {}
 
 
+@deprecated(version="2.0")
 def register_pattern(name):
     """Class decorator used to register a Pattern subclass to the registry.
 
@@ -46,6 +45,7 @@ def register_pattern(name):
     return register
 
 
+@deprecated(version="2.0")
 def get_pattern(config):
     """Get registered pattern class.
 
@@ -69,6 +69,7 @@ def get_pattern(config):
     assert False, f"currently only support {PATTERNS.keys()}"
 
 
+@deprecated(version="2.0")
 class Pattern:
     """Pruning Pattern.
 
@@ -194,6 +195,7 @@ class Pattern:
         return pattern_lock_masks
 
 
+@deprecated(version="2.0")
 @register_pattern("NxM")
 class PatternNxM(Pattern):
     """Pruning Pattern.
@@ -404,6 +406,7 @@ class PatternNxM(Pattern):
         return pattern_lock_masks
 
 
+@deprecated(version="2.0")
 @register_pattern("N:M")
 class PatternNInM(Pattern):
     """Pruning Pattern.

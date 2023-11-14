@@ -18,8 +18,10 @@
 """Definitions of the methods to sample data."""
 
 from abc import abstractmethod
+from deprecated import deprecated
 
 
+@deprecated(version="2.0")
 class Sampler(object):
     """Base class for all Samplers.
 
@@ -40,6 +42,7 @@ class Sampler(object):
         raise NotImplementedError
 
 
+@deprecated(version="2.0")
 class IterableSampler(Sampler):
     """Internally samples elements.
 
@@ -65,6 +68,7 @@ class IterableSampler(Sampler):
         raise NotImplementedError("'__len__' for IterableDataset object has not defined")
 
 
+@deprecated(version="2.0")
 class SequentialSampler(Sampler):
     """Sequentially samples elements, used for datasets retrieved element by index."""
 
@@ -103,6 +107,7 @@ class SequentialSampler(Sampler):
         return len(self.whole_dataset)
 
 
+@deprecated(version="2.0")
 class BatchSampler(Sampler):
     """Yield a batch of indices and number of batches."""
 

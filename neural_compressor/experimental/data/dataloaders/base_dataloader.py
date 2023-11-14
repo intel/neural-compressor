@@ -18,8 +18,10 @@
 """BaseDataloder of all dataloaders."""
 
 from abc import abstractmethod
+from deprecated import deprecated
 
 
+@deprecated(version="2.0")
 class BaseDataLoader:
     """Base class for all DataLoaders.
 

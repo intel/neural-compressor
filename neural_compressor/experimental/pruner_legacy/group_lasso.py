@@ -17,16 +17,13 @@
 """Group Lasso pruner."""
 
 import copy
-import re
-
 import numpy as np
-
-from neural_compressor.utils import logger
-
+from deprecated import deprecated
 from .magnitude import BasicMagnitudePruner
 from .pruner import Pruner, pruner_registry
 
 
+@deprecated(version="2.0")
 @pruner_registry
 class GroupLassoPruner(BasicMagnitudePruner):
     """Group Lasso pruner class.

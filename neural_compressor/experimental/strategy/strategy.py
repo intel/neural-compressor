@@ -21,14 +21,12 @@ import copy
 import math
 import os
 import pickle
-import sys
 from abc import abstractmethod
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from enum import EnumMeta
+from deprecated import deprecated
 from pathlib import Path
 from time import time
-from typing import OrderedDict as T_OrderedDict
 
 import numpy as np
 import yaml
@@ -45,20 +43,19 @@ from ...utils.create_obj_from_config import create_eval_func, create_train_func
 from ...utils.utility import (
     GLOBAL_STATE,
     MODE,
-    LazyImport,
     Statistics,
-    dump_data_to_local,
     equal_dicts,
     fault_tolerant_file,
 )
 from ...version import __version__
 from .utils.constant import FALLBACK_RECIPES_SET
-from .utils.tuning_space import TuningItem, TuningSpace
+from .utils.tuning_space import TuningSpace
 from .utils.tuning_structs import OpTuningConfig
 
 EXP_STRATEGIES = {}
 
 
+@deprecated(version="2.0")
 def strategy_registry(cls):
     """Class decorator used to register all TuneStrategy subclasses.
 
@@ -77,6 +74,7 @@ def strategy_registry(cls):
     return cls
 
 
+@deprecated(version="2.0")
 @strategy_registry
 class TuneStrategy(object):
     """Basic class for tuning strategy."""

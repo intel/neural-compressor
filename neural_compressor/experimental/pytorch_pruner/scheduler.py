@@ -17,10 +17,12 @@
 # limitations under the License.
 
 import math
+from deprecated import deprecated
 
 SCHEDULERS = {}
 
 
+@deprecated(version="2.0")
 def register_scheduler(name):
     """Class decorator used to register a Scheduler subclass to the registry.
 
@@ -42,6 +44,7 @@ def register_scheduler(name):
     return register
 
 
+@deprecated(version="2.0")
 def get_scheduler(config):
     """Get registered scheduler class.
 
@@ -59,6 +62,7 @@ def get_scheduler(config):
     return SCHEDULERS[name](config)
 
 
+@deprecated(version="2.0")
 class Scheduler:
     """Pruning Scheduler.
 
@@ -83,6 +87,7 @@ class Scheduler:
         raise NotImplementedError
 
 
+@deprecated(version="2.0")
 @register_scheduler("oneshot")
 class OneshotScheduler(Scheduler):
     """Pruning Scheduler.
@@ -106,6 +111,7 @@ class OneshotScheduler(Scheduler):
         return aggressive_ratio
 
 
+@deprecated(version="2.0")
 @register_scheduler("iterative")
 class IterativeScheduler(Scheduler):
     """Pruning Scheduler.
