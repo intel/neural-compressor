@@ -1,0 +1,52 @@
+:orphan:
+
+:py:mod:`neural_compressor.common.base_config`
+==============================================
+
+.. py:module:: neural_compressor.common.base_config
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.common.base_config.BaseConfig
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.common.base_config.register_config
+
+
+
+.. py:function:: register_config(framework_name='None', algo_name=None)
+
+   Register config decorator.
+
+   The register the configuration classes for different algorithms within specific frameworks.
+
+   Usage example:
+       @register_config(framework_name="PyTorch", algo_name="ExampleAlgorithm")
+       class ExampleAlgorithmConfig:
+           # Configuration details for the ExampleAlgorithm
+
+   :param framework_name: the framework name. Defaults to "None".
+   :param algo_name: the algorithm name. Defaults to None.
+
+
+.. py:class:: BaseConfig
+
+
+
+
+   The base config for all algorithm configs.
+
+

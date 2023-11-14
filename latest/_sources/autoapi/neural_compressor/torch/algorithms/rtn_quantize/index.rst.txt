@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.rtn_quantize`
+=========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.rtn_quantize
+
+

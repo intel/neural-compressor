@@ -1,0 +1,33 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.quantization.quantize`
+=======================================================
+
+.. py:module:: neural_compressor.torch.quantization.quantize
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.quantization.quantize.quantize
+
+
+
+.. py:function:: quantize(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig, calib_func: Callable = None, calib_func_arg: Any = None) -> torch.nn.Module
+
+   The main entry to quantize model.
+
+   :param model: a float model to be quantized.
+   :param quant_config: a quantization configuration.
+   :param calib_func: a calibration function for calibrating the model. Defaults to None.
+   :param calib_func_arg: positional arguments for `calib_func`. Defaults to None.
+
+   :returns: The quantized model.
+
+
