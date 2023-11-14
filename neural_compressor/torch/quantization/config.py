@@ -33,13 +33,24 @@ class Backend(Enum):
     IPEX = "ipex"
 
 
+class OperatorConfig(NamedTuple):
+    config: BaseConfig
+    operators: List[Union[str, Callable]]
+    backend: List[Backend]
+    valid_func_list: List[Callable] = []
+
+
+# mapping the torch module type and functional operation type to string representations
 operator2str = {torch.nn.Linear: "Linear", torch.nn.functional.linear: "linear", torch.nn.Conv2d: "Conv2d"}
 
+# Mapping from string representations to their corresponding torch operation/module type
 str2operator = {"Linear": torch.nn.Linear, "linear": torch.nn.functional.linear, "Conv2d": torch.nn.Conv2d}
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN_WEIGHT_ONLY_QUANT)
 class RTNWeightQuantConfig(BaseConfig):
+    """Config class for round-to-nearest weight-only quantization."""
+
     supported_configs: List[OperatorConfig] = []
     params_list = [
         "weight_dtype",
@@ -64,6 +75,18 @@ class RTNWeightQuantConfig(BaseConfig):
         enable_mse_search: bool = False,
         group_dim: int = 1,
     ):
+        """Init RTN weight-only quantization config.
+
+        Args:
+            weight_dtype (str): Data type for weights, default is "int".
+            weight_bits (int): Number of bits used to represent weights, default is 4.
+            weight_group_size (int): Size of weight groups, default is 32.
+            weight_sym (bool): Indicates whether weights are symmetric, default is True.
+            act_dtype (str): Data type for activations, default is "fp32".
+            enable_full_range (bool): Enables full range for activations, default is False.
+            enable_mse_search (bool): Enables mean squared error (MSE) search, default is False.
+            group_dim (int): Dimension for grouping, default is 1.
+        """
         super().__init__()
         self.weight_bits = weight_bits
         self.weight_dtype = weight_dtype
@@ -74,36 +97,30 @@ class RTNWeightQuantConfig(BaseConfig):
         self.enable_mse_search = enable_mse_search
         self.group_dim = group_dim
 
-    def to_dict(self, depth=0):
-        return super().to_dict(params_list=self.params_list, operator2str=operator2str, depth=depth)
+    def to_dict(self):
+        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
 
     @classmethod
     def from_dict(cls, config_dict):
         return super(RTNWeightQuantConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
 
-
-class OperatorConfig(NamedTuple):
-    config: BaseConfig
-    operators: List[Union[str, Callable]]
-    backend: List[Backend]
-    valid_func_list: List[Callable] = []
-
-
-def _register_supported_configs(cls) -> List[OperatorConfig]:
-    supported_configs = []
-    linear_rtn_config = RTNWeightQuantConfig(
-        weight_dtype=["int", "int8", "int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"],
-        weight_bits=[4, 1, 2, 3, 5, 6, 7, 8],
-        weight_group_size=[32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024],
-        weight_sym=[True, False],
-        act_dtype=["fp32"],
-    )
-    operators = [torch.nn.Linear, torch.nn.functional.linear]
-    supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT))
-    cls.supported_configs = supported_configs
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        linear_rtn_config = RTNWeightQuantConfig(
+            weight_dtype=["int", "int8", "int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"],
+            weight_bits=[4, 1, 2, 3, 5, 6, 7, 8],
+            weight_group_size=[32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024],
+            weight_sym=[True, False],
+            act_dtype=["fp32"],
+        )
+        operators = [torch.nn.Linear, torch.nn.functional.linear]
+        supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT))
+        cls.supported_configs = supported_configs
 
 
-_register_supported_configs(RTNWeightQuantConfig)
+# TODO(Yi) run `register_supported_configs` for all registered config.
+RTNWeightQuantConfig.register_supported_configs()
 
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
@@ -119,5 +136,10 @@ def parse_config_from_dict(config_dict: Dict) -> BaseConfig:
         # TODO(Yi) parse multiple configs after support configs add
 
 
-def get_default_rtn_config():
+def get_default_rtn_config() -> RTNWeightQuantConfig:
+    """Generate the default rtn config.
+
+    Returns:
+        the default rtn config.
+    """
     return RTNWeightQuantConfig()

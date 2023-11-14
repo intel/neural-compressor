@@ -18,16 +18,31 @@
 from __future__ import annotations
 
 import json
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, Optional, Union
 
 from neural_compressor.common.utility import BASE_CONFIG, GLOBAL, OPERATOR_NAME
 from neural_compressor.utils import logger
 
+# Dictionary to store registered configurations
 registered_configs = {}
 
 
 def register_config(framework_name="None", algo_name=None):
+    """Register config decorator.
+
+    The register the configuration classes for different algorithms within specific frameworks.
+
+    Usage example:
+        @register_config(framework_name="PyTorch", algo_name="ExampleAlgorithm")
+        class ExampleAlgorithmConfig:
+            # Configuration details for the ExampleAlgorithm
+
+    Args:
+        framework_name: the framework name. Defaults to "None".
+        algo_name: the algorithm name. Defaults to None.
+    """
+
     def decorator(config_cls):
         registered_configs.setdefault(framework_name, {})
         registered_configs[framework_name][algo_name] = config_cls
@@ -37,6 +52,8 @@ def register_config(framework_name="None", algo_name=None):
 
 
 class BaseConfig(ABC):
+    """The base config for all algorithm configs."""
+
     name = BASE_CONFIG
 
     def __init__(self) -> None:
@@ -56,7 +73,7 @@ class BaseConfig(ABC):
         self.operator_type_config[operator_type] = config
         return self
 
-    def to_dict(self, params_list=[], operator2str=None, depth=0):
+    def to_dict(self, params_list=[], operator2str=None):
         result = {}
         global_config = {}
         for param in params_list:
@@ -64,7 +81,7 @@ class BaseConfig(ABC):
         if bool(self.operator_name_config):
             result[OPERATOR_NAME] = {}
             for op_name, config in self.operator_name_config.items():
-                result[OPERATOR_NAME][op_name] = config.to_dict(depth=depth + 1)
+                result[OPERATOR_NAME][op_name] = config.to_dict()
             result[GLOBAL] = global_config
         else:
             result = global_config
@@ -126,6 +143,12 @@ class BaseConfig(ABC):
         return f"{self.__class__.__name__} {self.to_json_string()}"
 
     @classmethod
+    @abstractmethod
+    def register_supported_configs(cls):
+        """Add all supported configs."""
+        raise NotImplementedError
+
+    @classmethod
     def validate(self, user_config: BaseConfig):
         # TODO(Yi) validate the user config
         pass
@@ -135,6 +158,6 @@ class BaseConfig(ABC):
         pass
 
     @staticmethod
-    def is_op_type(name: str) -> bool:
+    def _is_op_type(name: str) -> bool:
         # TODO (Yi), ort and tf need override it
         return not isinstance(name, str)

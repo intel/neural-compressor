@@ -15,10 +15,25 @@
 
 from typing import Callable, Dict
 
+# Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
 algos_mapping: Dict[str, Callable] = {}
 
 
 def register_algo(name):
+    """Decorator function to register algorithms in the algos_mapping dictionary.
+
+    Usage example:
+        @register_algo(name=example_algo)
+        def example_algo(model: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
+            ...
+
+    Args:
+        name (str): The name under which the algorithm function will be registered.
+
+    Returns:
+        decorator: The decorator function to be used with algorithm functions.
+    """
+
     def decorator(algo_func):
         algos_mapping[name] = algo_func
         return algo_func

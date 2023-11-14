@@ -68,6 +68,7 @@ def rtn_quantize_entry(model: torch.nn.Module, quant_config: RTNWeightQuantConfi
     quant_config_mapping: Dict[str, RTNWeightQuantConfig] = _convert_quant_config_into_quant_config_mapping(
         model, quant_config
     )
+    """The main entry to apply rtn quantization."""
     for op_name, quant_config in quant_config_mapping.items():
         original_module = fetch_module(model, op_name)
         logger.info(f"Apply RTN on module: {op_name}, {original_module}")
