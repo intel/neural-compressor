@@ -1,6 +1,6 @@
 import unittest
 
-from neural_compressor.utils.logger import Logger
+from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
 import torch

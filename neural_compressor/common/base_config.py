@@ -21,8 +21,11 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, Optional, Union
 
+from neural_compressor.common.logger import Logger
 from neural_compressor.common.utility import BASE_CONFIG, GLOBAL, OPERATOR_NAME
-from neural_compressor.utils import logger
+
+logger = Logger().get_logger()
+
 
 # Dictionary to store registered configurations
 registered_configs = {}

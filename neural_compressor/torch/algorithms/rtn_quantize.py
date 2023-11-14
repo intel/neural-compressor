@@ -22,10 +22,12 @@ from neural_compressor.adaptor.torch_utils.util import fetch_module, set_module
 # TODO(Yi) move the algorithm implementations from adaptor.torch_utils to neural_compressor.torch.algo
 from neural_compressor.adaptor.torch_utils.weight_only import rtn_quantize as torch_rtn_quantize
 from neural_compressor.common.base_config import BaseConfig
+from neural_compressor.common.logger import Logger
 from neural_compressor.common.utility import RTN_WEIGHT_ONLY_QUANT
 from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
 from neural_compressor.torch.utils import register_algo
-from neural_compressor.utils import logger
+
+logger = Logger().get_logger()
 
 
 def _apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
