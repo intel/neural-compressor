@@ -21,7 +21,7 @@ import json
 from abc import ABC
 from typing import Any, Callable, Dict, Optional, Union
 
-from neural_compressor.common.utility import GLOBAL, OPERATOR_NAME, OPERATOR_TYPE
+from neural_compressor.common.utility import BASE_CONFIG, GLOBAL, OPERATOR_NAME
 from neural_compressor.utils import logger
 
 registered_configs = {}
@@ -37,7 +37,7 @@ def register_config(framework_name="None", algo_name=None):
 
 
 class BaseConfig(ABC):
-    name = "base"
+    name = BASE_CONFIG
 
     def __init__(self) -> None:
         self.global_config: Optional[BaseConfig] = None
@@ -46,8 +46,9 @@ class BaseConfig(ABC):
         self.operator_type_config: Dict[Union[str, Callable], Optional[BaseConfig]] = {}
         self.operator_name_config: Dict[str, Optional[BaseConfig]] = {}
 
-    def set_global(self, config: BaseConfig):
-        self.global_config = config
+    def set_operator_name(self, operator_name: str, config: BaseConfig) -> BaseConfig:
+        self.operator_name_config[operator_name] = config
+        return self
 
     def _set_operator_type(self, operator_type: Union[str, Callable], config: BaseConfig) -> BaseConfig:
         # TODO (Yi), clean the usage
@@ -55,48 +56,37 @@ class BaseConfig(ABC):
         self.operator_type_config[operator_type] = config
         return self
 
-    def set_operator_name(self, operator_name: str, config: BaseConfig) -> BaseConfig:
-        self.operator_name_config[operator_name] = config
-        return self
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__} {self.to_json_string()}"
-
     def to_dict(self, params_list=[], operator2str=None, depth=0):
         result = {}
-        if self.global_config is not None:
-            result[GLOBAL] = self.global_config.to_dict(depth=depth + 1)
-        else:
-            global_config = {}
-            for param in params_list:
-                global_config[param] = getattr(self, param)
-            if depth == 0:
-                result[GLOBAL] = global_config
-            else:
-                return global_config
-        if bool(self.operator_type_config):
-            result[OPERATOR_TYPE] = {}
-            for op_type, config in self.operator_type_config.items():
-                _op_type = operator2str[op_type] if operator2str else op_type
-                result[OPERATOR_TYPE][_op_type] = config.to_dict(depth=depth + 1)
+        global_config = {}
+        for param in params_list:
+            global_config[param] = getattr(self, param)
         if bool(self.operator_name_config):
             result[OPERATOR_NAME] = {}
             for op_name, config in self.operator_name_config.items():
                 result[OPERATOR_NAME][op_name] = config.to_dict(depth=depth + 1)
+            result[GLOBAL] = global_config
+        else:
+            result = global_config
         return result
 
     @classmethod
     def from_dict(cls, config_dict, str2operator=None):
-        q_config = cls()
-        if GLOBAL in config_dict:
-            global_config = cls(**config_dict[GLOBAL])
-            q_config.set_global(global_config)
-        for type_name, config in config_dict.get(OPERATOR_TYPE, {}).items():
-            _op_type = str2operator[type_name] if str2operator else type_name
-            q_config._set_operator_type(_op_type, cls(**config))
-        for op_name, config in config_dict.get(OPERATOR_NAME, {}).items():
-            q_config.set_operator_name(op_name, cls(**config))
-        return q_config
+        """Construct config from a dict.
+
+        Args:
+            config_dict: _description_
+            str2operator: _description_. Defaults to None.
+
+        Returns:
+            The constructed config.
+        """
+        config = cls(**config_dict.get(GLOBAL, {}))
+        operator_config = config_dict.get(OPERATOR_NAME, {})
+        if operator_config:
+            for op_name, op_config in operator_config.items():
+                config.set_operator_name(op_name, cls(**op_config))
+        return config
 
     @classmethod
     def to_diff_dict(cls, instance) -> Dict[str, Any]:
@@ -105,13 +95,13 @@ class BaseConfig(ABC):
 
     @classmethod
     def from_json_file(cls, filename):
-        with open(filename, "r") as file:
+        with open(filename, "r", encoding="utf-8") as file:
             config_dict = json.load(file)
         return cls.from_dict(**config_dict)
 
     def to_json_file(self, filename):
         config_dict = self.to_dict()
-        with open(filename, "w") as file:
+        with open(filename, "w", encoding="utf-8") as file:
             json.dump(config_dict, file, indent=4)
         logger.info(f"Dump the config into {filename}")
 
@@ -132,6 +122,9 @@ class BaseConfig(ABC):
             config_dict = self.to_dict()
         return json.dumps(config_dict, indent=2, sort_keys=True) + "\n"
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__} {self.to_json_string()}"
+
     @classmethod
     def validate(self, user_config: BaseConfig):
         # TODO(Yi) validate the user config
@@ -140,3 +133,8 @@ class BaseConfig(ABC):
     def __add__(self, other: BaseConfig) -> BaseConfig:
         # TODO(Yi) implement config add, like RTNWeightOnlyQuantConfig() + GPTQWeightOnlyQuantConfig()
         pass
+
+    @staticmethod
+    def is_op_type(name: str) -> bool:
+        # TODO (Yi), ort and tf need override it
+        return not isinstance(name, str)

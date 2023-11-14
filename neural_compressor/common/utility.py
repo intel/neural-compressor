@@ -18,9 +18,10 @@
 
 # All constants
 
-
+# constants for configs
 GLOBAL = "global"
-OPERATOR_TYPE = "operator_type"
 OPERATOR_NAME = "operator_name"
 
+# config name
+BASE_CONFIG = "base_config"
 RTN_WEIGHT_ONLY_QUANT = "rtn_weight_only_quant"

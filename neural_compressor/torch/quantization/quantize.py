@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Any, Callable
+
 import torch
 
 from neural_compressor.common.base_config import BaseConfig
@@ -21,7 +23,9 @@ from neural_compressor.torch.utils import algos_mapping
 from neural_compressor.utils import logger
 
 
-def quantize(model: torch.nn.Module, quant_config: BaseConfig, calib_func=None, calib_func_arg=None) -> torch.nn.Module:
+def quantize(
+    model: torch.nn.Module, quant_config: BaseConfig, calib_func: Callable = None, calib_func_arg: Any = None
+) -> torch.nn.Module:
     """The main entry to quantize model.
 
     Args:
