@@ -1822,6 +1822,7 @@ class TensorFlowAdaptor(Adaptor):
         op_types=["MatMul", "Conv2D"],
         scales_per_op=True,
         record_max_info=False,
+        weight_clip=True,
     ):
         """Convert the model by smooth quant.
 
