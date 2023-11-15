@@ -52,6 +52,7 @@ class SmoothQuant(Algorithm):
         self.op_types = None
         self.scales_per_op = None
         self.tune_cfg = None
+        self.weight_clip = None
 
     def __call__(self, origin_model, q_model, adaptor, dataloader, calib_iter):
         """Return the processed model via SmoothQuant algorithm.
@@ -80,6 +81,7 @@ class SmoothQuant(Algorithm):
             kwargs["scales_per_op"] = self.scales_per_op
         kwargs["folding"] = self.folding
         kwargs["record_max_info"] = True
+        kwargs["weight_clip"] = self.weight_clip
         q_model = adaptor.smooth_quant(
             origin_model,
             dataloader,

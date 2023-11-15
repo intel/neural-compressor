@@ -330,6 +330,7 @@ class TorchSmoothQuant:
         self.self_absorb_layers = {}
         self.absorb_to_layer = {}
         self.adjust_alpha_space = False
+        self.weight_clip = True
 
     def _get_device(self):
         """Get the model device
@@ -946,6 +947,7 @@ class TorchSmoothQuant:
         scales_per_op=False,
         calib_iter=100,
         auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
+        weight_clip=True,
     ):
         """The main entry of smooth quant
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
@@ -971,6 +973,7 @@ class TorchSmoothQuant:
 
             alpha = numpy.clip(alpha, 0.0, 1.0)
 
+        self.weight_clip = weight_clip
         self.recover()
         need_calibration = self._check_need_calibration(alpha, percentile, op_types, scales_per_op, calib_iter)
         with torch.no_grad():
