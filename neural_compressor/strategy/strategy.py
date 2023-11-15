@@ -948,7 +948,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 if self.framework == "pytorch_ipex":
                     smooth_quant_args["folding"] = None  # will reset it to True if IPEX version < 2.1.
             sq_algo.folding = smooth_quant_args["folding"]
-            sq_algo.weight_clip = smooth_quant_args.get("weight_clip", True) # make weight_clipping a default_on option.
+            sq_algo.weight_clip = smooth_quant_args.get(
+                "weight_clip", True
+            )  # make weight_clipping a default_on option.
             logger.debug(f"Set smooth quant with alpha {sq_algo.alpha} as the pre-tuning algo.")
             algo_scheduler.append_algorithm("pre_quantization", sq_algo)
 

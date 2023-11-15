@@ -1761,7 +1761,7 @@ class TemplateAdaptor(Adaptor):
         scales_per_op=None,
         force_re_smooth=False,
         record_max_info=False,
-        weight_clip = True,
+        weight_clip=True,
     ):
         """Convert the model by smooth quant.
 
@@ -1805,7 +1805,9 @@ class TemplateAdaptor(Adaptor):
             kwargs["percentile"] = percentile
         if scales_per_op is not None:
             kwargs["scales_per_op"] = scales_per_op
-        model._model = self.sq.transform(alpha=alpha, folding=folding, calib_iter=calib_iter, weight_clip=weight_clip, **kwargs)
+        model._model = self.sq.transform(
+            alpha=alpha, folding=folding, calib_iter=calib_iter, weight_clip=weight_clip, **kwargs
+        )
         if self.sq.record_max_info:
             model.sq_max_info = self.sq.max_value_info
         return model
