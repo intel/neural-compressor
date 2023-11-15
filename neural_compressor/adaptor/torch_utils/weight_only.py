@@ -390,6 +390,9 @@ def rtn_quantize(
         model: fake quantized torch module
     """
     assert isinstance(model, torch.nn.Module), "only support torch module"
+    orig_dtype = next(model.parameters()).dtype
+    if orig_dtype != torch.float:
+        model = model.float()
     supported_layers = ["Linear"]
     if return_int:
         compression_dtype = kwargs.get("compression_dtype", torch.int32)
@@ -466,6 +469,8 @@ def rtn_quantize(
             )
             q_weight = q_weight.T if group_dim == 0 else q_weight
             m.weight.data.copy_(q_weight)
+    if orig_dtype != torch.float:
+        model = model.to(orig_dtype)
     return model
 
 

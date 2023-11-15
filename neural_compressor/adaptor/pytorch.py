@@ -4587,9 +4587,6 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 if recipe_cfgs.get("layer_wise_quant", False):
                     # load weight
                     load_module(model, op_name, model_path, device=self.device)
-                orig_dtype = m.weight.dtype
-                if orig_dtype != torch.float:
-                    m = m.float()
                 m = rtn_quantize(
                     m,
                     num_bits,
@@ -4601,8 +4598,6 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     enable_mse_search=enable_mse_search,
                     group_dim=group_dim,
                 )
-                if orig_dtype != torch.float:
-                    m = m.to(orig_dtype)
                 if recipe_cfgs.get("layer_wise_quant", False):
                     # save and clean weight
                     from .torch_utils.layer_wise_quant.utils import clean_module_weight
