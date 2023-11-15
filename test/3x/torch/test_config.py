@@ -135,6 +135,59 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIn("global", config_dict)
         self.assertIn("operator_name", config_dict)
 
+    def test_same_type_configs_addition(self):
+        from neural_compressor.torch import RTNWeightQuantConfig
+
+        quant_config1 = {
+            "rtn_weight_only_quant": {
+                "weight_dtype": "nf4",
+                "weight_bits": 4,
+                "weight_group_size": 32,
+            },
+        }
+        q_config = RTNWeightQuantConfig.from_dict(quant_config1["rtn_weight_only_quant"])
+        quant_config2 = {
+            "rtn_weight_only_quant": {
+                "global": {
+                    "weight_bits": 8,
+                    "weight_group_size": 32,
+                },
+                "operator_name": {
+                    "fc1": {
+                        "weight_dtype": "int8",
+                        "weight_bits": 4,
+                    }
+                },
+            }
+        }
+        q_config2 = RTNWeightQuantConfig.from_dict(quant_config2["rtn_weight_only_quant"])
+        q_config3 = q_config + q_config2
+        q3_dict = q_config3.to_dict()
+        for op_name, op_config in quant_config2["rtn_weight_only_quant"]["operator_name"].items():
+            for attr, val in op_config.items():
+                self.assertEqual(q3_dict["operator_name"][op_name][attr], val)
+        self.assertNotEqual(
+            q3_dict["global"]["weight_bits"], quant_config2["rtn_weight_only_quant"]["global"]["weight_bits"]
+        )
+
+    def test_diff_types_configs_addition(self):
+        from neural_compressor.torch import DummyConfig, RTNWeightQuantConfig
+
+        quant_config1 = {
+            "rtn_weight_only_quant": {
+                "weight_dtype": "nf4",
+                "weight_bits": 4,
+                "weight_group_size": 32,
+            },
+        }
+        q_config = RTNWeightQuantConfig.from_dict(quant_config1["rtn_weight_only_quant"])
+        d_config = DummyConfig(act_dtype="fp32", dummy_attr=3)
+        combined_config = q_config + d_config
+        combined_config_d = combined_config.to_dict()
+        logger.info(combined_config)
+        self.assertTrue("rtn_weight_only_quant" in combined_config_d)
+        self.assertIn("dummy_config", combined_config_d)
+
 
 if __name__ == "__main__":
     unittest.main()

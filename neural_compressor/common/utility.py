@@ -24,4 +24,6 @@ OPERATOR_NAME = "operator_name"
 
 # config name
 BASE_CONFIG = "base_config"
+COMPOSABLE_CONFIG = "composable_config"
 RTN_WEIGHT_ONLY_QUANT = "rtn_weight_only_quant"
+DUMMY_CONFIG = "dummy_config"
