@@ -578,6 +578,8 @@ class TorchSmoothQuant:
                     weights.append(weight)
 
                 weight_max_per_channel = torch.max(torch.abs(torch.cat(weights, dim=0)), dim=0)[0]
+                if self.weight_clip:
+                    weight_max_per_channel = weight_max_per_channel.clamp(min=1e-5)
                 if self.record_max_info and not tuning:
                     # the input of layers with same absorb layer is the same.
                     input_minmax = [self.input_mins[layer_names[0]], self.input_maxes[layer_names[0]]]
