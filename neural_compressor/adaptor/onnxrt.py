@@ -329,13 +329,14 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             while len(model_to_split) != 0:
                 split_model = model_to_split.pop(0)
                 split_node = split_nodes.pop(0)
-                last_split = True if len(split_nodes) == 0 else False
+                save_both_split_models = True if len(split_nodes) == 0 else False
 
                 # split model with given split_node
                 split_model_part_1, split_model_part_2 = split_model.split_model_with_node(
-                    split_node.name, tmp_model.model_path, self.work_space, split_idx, last_split
+                    split_node.name, tmp_model.model_path, save_both_split_models
                 )
-                if not last_split:
+                if not save_both_split_models:
+                    # append split_model_part_2 to do next split
                     model_to_split.append(split_model_part_2)
 
                 logger.info("Quantize split model {}".format(split_idx))
@@ -353,7 +354,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
                 split_idx += 1
 
-                if last_split:
+                # if this is the last split, then quantize the last split model
+                if save_both_split_models:
                     logger.info("Quantize split model {}".format(split_idx))
                     # get quantize params of split model
                     split_quantize_params, dataloder_for_next_split_model = self._get_split_model_quantize_params(

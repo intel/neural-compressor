@@ -982,11 +982,22 @@ class ONNXModel(BaseModel):
         split_nodes = self.find_split_node_for_layer_wise_quantization()
         return split_nodes
 
-    def split_model_with_node(self, split_node_name, data_path, work_space, split_idx, last_split):
-        """Split model with given node."""
-        # origin model:   ... -> node_1 -> split_node -> node_2 -> ...
-        # split model1: ... -> node_1 -> split_node
-        # split model2: node_2 -> ...
+    def split_model_with_node(self, split_node_name, path_of_model_to_split, save_both_split_models=True):
+        """Split model into two parts at a given node.
+
+        Args:
+            split_node_name (str): name of the node where the model is split at>
+            path_of_model_to_split (str): path of model to be split.
+            save_both_split_models (bool): whether to save the two split models.
+                False means only save the first split model.
+                True means save both the two split models.
+
+        Returns:
+            tuple: the first split model, the second split model
+        """
+        # origin model : ... -> node_1 -> split_node -> node_2 -> ...
+        # split model 1: ... -> node_1 -> split_node
+        # split model 2: node_2 -> ...
 
         split_model_part_1 = onnx.ModelProto()
         split_model_part_1.CopyFrom(self._model)
@@ -1014,19 +1025,19 @@ class ONNXModel(BaseModel):
         )
         split_tensor_name = split_node_output[0]
 
-        if split_idx == 1:
-            try:
-                # need ort.GraphOptimizationLevel <= ORT_ENABLE_BASIC
-                import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
+        # infer shape of the model to be split
+        try:
+            # need ort.GraphOptimizationLevel <= ORT_ENABLE_BASIC
+            import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
 
-                self._model = symbolic_shape_infer.SymbolicShapeInference.infer_shapes(self._model, auto_merge=True)
-            except Exception as e:  # pragma: no cover
-                logger.error("Shape infer fails for layer-wise quantization")
-                if "Incomplete symbolic shape inference" in str(e):
-                    logger.warning("Please set graph optimization level to 'ENABLE_BASIC' for layer-wise quantization.")
-                raise e
+            self._model = symbolic_shape_infer.SymbolicShapeInference.infer_shapes(self._model, auto_merge=True)
+        except Exception as e:  # pragma: no cover
+            logger.error("Shape infer fails for layer-wise quantization")
+            if "Incomplete symbolic shape inference" in str(e):
+                logger.warning("Please set graph optimization level to 'ENABLE_BASIC' for layer-wise quantization.")
+            raise e
 
-        split_tensor_type, split_tensor_shape = self._confirm_output_type_shape(split_tensor_name)
+        split_tensor_type, split_tensor_shape = self._get_output_type_shape_by_tensor_name(split_tensor_name)
         split_tensor = onnx.helper.make_tensor_value_info(split_tensor_name, split_tensor_type, split_tensor_shape)
 
         split_model_part_1 = ONNXModel(split_model_part_1, ignore_warning=True)
@@ -1043,7 +1054,7 @@ class ONNXModel(BaseModel):
         insert_input_for_model_2 = []
         for output in split_model_part_1.output_name_to_node.keys():
             if output in split_model_part_2.input_name_to_nodes.keys():
-                output_type, output_shape = self._confirm_output_type_shape(output)
+                output_type, output_shape = self._get_output_type_shape_by_tensor_name(output)
                 output_tensor = onnx.helper.make_tensor_value_info(output, output_type, output_shape)
                 if output_tensor not in split_model_part_1.model.graph.output:
                     insert_output_for_model_1.append(output_tensor)
@@ -1065,16 +1076,18 @@ class ONNXModel(BaseModel):
         split_model_part_1.update()
         split_model_part_2.update()
 
-        split_model_part_1.load_model_initializer_by_tensor(os.path.dirname(data_path))
-        split_model_part_1_path = os.path.join(work_space, "split_model_part_1.onnx")
+        dir_of_model_to_split = os.path.dirname(path_of_model_to_split)
+
+        split_model_part_1.load_model_initializer_by_tensor(dir_of_model_to_split)
+        split_model_part_1_path = os.path.join(dir_of_model_to_split, "split_model_part_1.onnx")
         split_model_part_1.model_path = split_model_part_1_path
         split_model_part_1._save_split_model(split_model_part_1_path)
         split_model_part_1.check_is_large_model()
         logger.debug("save split model part 1 to {} for layer wise quantization".format(split_model_part_1_path))
 
-        if last_split:
-            split_model_part_2.load_model_initializer_by_tensor(os.path.dirname(data_path))
-            split_model_part_2_path = os.path.join(work_space, "split_model_part_2.onnx")
+        if save_both_split_models:
+            split_model_part_2.load_model_initializer_by_tensor(dir_of_model_to_split)
+            split_model_part_2_path = os.path.join(dir_of_model_to_split, "split_model_part_2.onnx")
             split_model_part_2.model_path = split_model_part_2_path
             split_model_part_2._save_split_model(split_model_part_2_path)
             split_model_part_2.check_is_large_model()
@@ -1087,7 +1100,7 @@ class ONNXModel(BaseModel):
         """Save split model as external data for layer wise quantization.
 
         Args:
-            save_path (_type_): save path of split model
+            save_path (str): the path to save the split model
         """
         if os.path.exists(save_path + "_data"):
             os.remove(save_path + "_data")
@@ -1101,8 +1114,8 @@ class ONNXModel(BaseModel):
             convert_attribute=False,
         )
 
-    def _confirm_output_type_shape(self, tensor_name):
-        """Get output type and shape of a tensor.
+    def _get_output_type_shape_by_tensor_name(self, tensor_name):
+        """Get output type and shape with a tensor name.
 
         Args:
             tensor_name (str): name of a tensor
@@ -1147,7 +1160,11 @@ class ONNXModel(BaseModel):
         self.remove_initializers(remov_inits)
 
     def load_model_initializer_by_tensor(self, data_path=None):
-        """Load model initializer by tensor for split."""
+        """Load model initializer by tensor.
+
+        Args:
+            data_path (str, optional): the directory of saved initializer. Defaults to None.
+        """
         from onnx.external_data_helper import load_external_data_for_tensor
 
         if data_path is None:
