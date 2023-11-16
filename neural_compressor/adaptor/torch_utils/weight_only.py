@@ -399,6 +399,9 @@ def rtn_quantize(
     for name, m in model.named_modules():
         if m.__class__.__name__ not in supported_layers:
             continue
+        orig_dtype = next(m.parameters()).dtype
+        if orig_dtype != torch.float:
+            m = m.float()
         if name in weight_config:  # pragma: no cover
             num_bits = weight_config[name]["bits"]
             group_size = weight_config[name]["group_size"]
@@ -466,19 +469,33 @@ def rtn_quantize(
             )
             q_weight = q_weight.T if group_dim == 0 else q_weight
             m.weight.data.copy_(q_weight)
+        if orig_dtype != torch.float:
+            m = m.to(orig_dtype)
     return model
 
 
 def gptq_quantize(
-    model, weight_config={}, dataloader=None, nsamples=128, use_max_length=True, pad_max_length=2048, device=None
+    model,
+    weight_config={},
+    dataloader=None,
+    nsamples=128,
+    use_max_length=True,
+    pad_max_length=2048,
+    device=None,
+    layer_wise=False,
+    model_path=None,
 ):
     """Run weight-only quantization with."""
     # TODO: unify weight_config keys, add docstring, and support default config
     assert isinstance(model, torch.nn.Module), "only support torch module"
+    if layer_wise:
+        assert model_path is not None, "model_path should not be None when use layer_wise mode"
     from .gptq import GPTQuantizer
 
-    gptq_quantizer = GPTQuantizer(model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device)
-    fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization()
+    gptq_quantizer = GPTQuantizer(
+        model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise
+    )
+    fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
     logger.info("GPTQ quantizing done.")
     return fp32_modified_model, gptq_config
 

@@ -1833,7 +1833,7 @@ class TemplateAdaptor(Adaptor):
                 absorb_layer = op_name
                 absorbed_layer = info["absorbed_layer"]
                 input_minmax = info["input_minmax"]
-                weight_max = info["weight_max"]
+                weight_max = info["weight_max"].clamp(min=1e-5)
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
@@ -1858,11 +1858,12 @@ class TemplateAdaptor(Adaptor):
         """
         q_model = model._model
         from .torch_utils.model_wrapper import QDQLinear, SQLinearWrapper
-        from .torch_utils.util import fetch_module, set_module
+        from .torch_utils.smooth_quant import get_module, set_module
 
         smoothquant_scale_info = {}
         fallback_op_name_list = []
         stats_result = {}
+        stats_result["Linear(failed when SQ)"] = {"INT8(QDQ)": 0, "BF16": 0, "FP32": 0}
         for (op_name, op_type), qconfig in tune_cfg["op"].items():
             if op_type == "Linear" and qconfig["weight"]["dtype"] != "int8":
                 fallback_op_name_list.append(op_name)
@@ -1876,13 +1877,16 @@ class TemplateAdaptor(Adaptor):
                 alpha = info["alpha"]
                 absorbed_layer = info["absorbed_layer"]
                 input_minmax = info["input_minmax"]
-                weight_max = info["weight_max"]
+                weight_max = info["weight_max"].clamp(min=1e-5)
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
+                if torch.isnan(scale).any() or torch.isinf(scale).any():
+                    stats_result["Linear(failed when SQ)"]["FP32"] += 1
+                    continue  # for peft model,lora_B weights is 0.
                 for op_name in absorbed_layer:
-                    module = fetch_module(q_model, op_name)
+                    module = get_module(q_model, op_name)
                     new_module = SQLinearWrapper(module, 1.0 / scale, input_minmax, alpha)
                     set_module(q_model, op_name, new_module)
                     logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
@@ -2622,6 +2626,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         self.op_infos_from_cfgs = None
         self.output_tensor_id_op_name = None
         self.ipex_config_path = os.path.join(self.workspace_path, "ipex_config_tmp.json")
+        self.sq_minmax_init = True if framework_specific_info.get("model_init_algo", "kl") == "minmax" else False
 
         try:
             os.remove(self.ipex_config_path)
@@ -2765,14 +2770,20 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     q_model._model = ipex.quantization.convert(model._model, inplace=inplace)
                     try:
                         if isinstance(self.example_inputs, dict):
-                            q_model._model = torch.jit.trace(q_model._model, example_kwarg_inputs=self.example_inputs)
+                            q_model._model = torch.jit.trace(
+                                q_model._model,
+                                example_kwarg_inputs=self.example_inputs,
+                            )
                         else:
                             q_model._model = torch.jit.trace(q_model._model, self.example_inputs)
                         q_model._model = torch.jit.freeze(q_model._model.eval())
                     except:
                         if isinstance(self.example_inputs, dict):
                             q_model._model = torch.jit.trace(
-                                q_model._model, example_kwarg_inputs=self.example_inputs, strict=False
+                                q_model._model,
+                                example_kwarg_inputs=self.example_inputs,
+                                strict=False,
+                                check_trace=False,
                             )
                         else:
                             q_model._model = torch.jit.trace(q_model._model, self.example_inputs, strict=False)
@@ -2789,7 +2800,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 except:
                     if isinstance(self.example_inputs, dict):
                         q_model._model = torch.jit.trace(
-                            q_model._model, example_kwarg_inputs=self.example_inputs, strict=False
+                            q_model._model, example_kwarg_inputs=self.example_inputs, strict=False, check_trace=False
                         )
                     else:
                         q_model._model = torch.jit.trace(q_model._model, self.example_inputs, strict=False)
@@ -2851,7 +2862,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             output_data, header="Mixed Precision Statistics", field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]
         ).print_stat()
 
-    def _cfg_to_qconfig(self, tune_cfg):
+    def _cfg_to_qconfig(self, tune_cfg, smooth_quant=False):
         """Convert tune configure to quantization config for each op.
 
         Args:
@@ -2942,7 +2953,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         else:
             op_infos = copy.deepcopy(self.op_infos_from_cfgs)
             self.cfgs = torch_utils.util.check_cfg_and_qconfig(
-                tune_cfg["op"], self.cfgs, op_infos, self.output_tensor_id_op_name
+                tune_cfg["op"], self.cfgs, op_infos, self.output_tensor_id_op_name, smooth_quant
             )
 
             with open(self.ipex_config_path, "w") as write_f:
@@ -3105,7 +3116,14 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         smooth_quant_args = self.recipes.get("smooth_quant_args", {})
                         folding = smooth_quant_args.get("folding", False)
                         if not folding:
-                            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+                            if self.sq_minmax_init or self.version.release >= Version("2.2").release:
+                                from torch.ao.quantization.observer import MinMaxObserver
+
+                                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                                    alpha=0.5, act_observer=MinMaxObserver()
+                                )
+                            else:
+                                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
                     if self.example_inputs is None:
                         self.example_inputs = get_example_inputs(model, self.q_dataloader)
                     if isinstance(self.example_inputs, dict):
@@ -3254,19 +3272,20 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         if sq_max_info:
             smoothquant_scale_info = {}
             from .torch_utils.model_wrapper import SQLinearWrapper
-            from .torch_utils.util import fetch_module
+            from .torch_utils.smooth_quant import get_module
 
             for _, info in sq_max_info.items():
                 alpha = info["alpha"]
                 absorbed_layer = info["absorbed_layer"]
                 input_minmax = info["input_minmax"]
-                weight_max = info["weight_max"]
+                # for peft model,lora_B weights is 0.
+                weight_max = info["weight_max"].clamp(min=1e-5)
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
                 scale = torch.clip(input_power / weight_power, min=1e-5)
                 for op_name in absorbed_layer:
-                    module = copy.deepcopy(fetch_module(q_model._model, op_name))
+                    module = copy.deepcopy(get_module(q_model._model, op_name))
                     new_module = SQLinearWrapper(module, 1.0 / scale, input_minmax, alpha)
                     weight_scale = new_module._get_weight_scale()
                     smoothquant_scale_info[op_name] = {
@@ -3282,7 +3301,14 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         # Check save_qconf_summary part is a workaround for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
         if not hasattr(model._model, "save_qconf_summary") or not hasattr(model._model, "load_qconf_summary"):
-            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+            if self.sq_minmax_init or self.version.release >= Version("2.2").release:
+                from torch.ao.quantization.observer import MinMaxObserver
+
+                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                    alpha=0.5, act_observer=MinMaxObserver()
+                )
+            else:
+                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
             if isinstance(self.example_inputs, dict):
                 model._model = ipex.quantization.prepare(
                     model._model, static_qconfig, example_kwarg_inputs=self.example_inputs, inplace=inplace
@@ -3292,10 +3318,14 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     model._model, static_qconfig, example_inputs=self.example_inputs, inplace=inplace
                 )
 
-        # TODO: update_sq_scale is used to update observer, should fuse in _cfg_to_qconfig
+        # The IPEX SmoothQuant observer can only use save/load_qconf_summary once.
+        # The save_qconf_summary API will freeze the scale used in model and calibration won't work anymore.
+        # The load_qconf_summary will overwrite the scales used in model but only work in the first call.
+        # Here, we use INC collected scale for Linear and set normal observer instead of SQObserver \
+        # to make sure calibration works for other ops, like add, bmm.
         from .torch_utils.util import update_sq_scale
 
-        self._cfg_to_qconfig(tune_cfg)
+        self._cfg_to_qconfig(tune_cfg, smooth_quant=True)
         update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
         model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
 
@@ -3316,11 +3346,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 + "using scale info from SmoothQuant for Linear and "
                 + "one iter calibration for other ops."
             )
-            # update ipex_config.json with smoothquant_scale_info
-            model._model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-            update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
-            model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
 
+        model._model.save_qconf_summary(qconf_summary=self.ipex_config_path)
         self._ipex_post_quant_process(model, q_model, dataloader, inplace=inplace)
 
         with open(self.ipex_config_path, "r") as f:
@@ -3496,13 +3523,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         ):
             from .torch_utils.layer_wise_quant import LayerWiseQuant
 
-            model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+            # model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+            model_path = model._model.path
             smooth_quant = recipe_cfgs["layer_wise_quant_args"].get("smooth_quant", False)
             alpha = recipe_cfgs["layer_wise_quant_args"].get("smooth_quant_alpha", 0.5)
-            assert (
-                model_path is not None
-            ), "the layer_wise_quant_args should have args model_path to load the weight of model."
-            device = recipe_cfgs["layer_wise_quant_args"].get("decvice", "cpu")
+            # device = recipe_cfgs["layer_wise_quant_args"].get("decvice", "cpu")
+            assert model_path is not None, "The model_path should not be None."
+            device = self.device
             lw_quant = LayerWiseQuant(
                 q_model._model,
                 model_path,
@@ -4535,14 +4562,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         # for layer_wise quant mode
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
         if recipe_cfgs.get("layer_wise_quant", False):
-            from neural_compressor.config import options
+            from .torch_utils.layer_wise_quant.utils import LWQ_WORKSPACE, _get_path, load_module
 
-            from .torch_utils.layer_wise_quant.utils import _get_path, load_module
-
-            lwq_workspace = os.path.join(options.workspace, "lwq_tmpdir")
-            os.makedirs(lwq_workspace, exist_ok=True)
-            model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
-            assert model_path, "model_path should specify in layer_wise_quant_args."
+            os.makedirs(LWQ_WORKSPACE, exist_ok=True)
+            # model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+            model_path = model.path
+            assert model_path, "model_path should not be None."
             model_path = _get_path(model_path)
 
         for key, config in tune_cfg["op"].items():
@@ -4578,7 +4603,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     # save and clean weight
                     from .torch_utils.layer_wise_quant.utils import clean_module_weight
 
-                    torch.save(m.state_dict(), os.path.join(lwq_workspace, f"{op_name}.pt"))
+                    torch.save(m.state_dict(), os.path.join(LWQ_WORKSPACE, f"{op_name}.pt"))
                     clean_module_weight(m)
                 set_module(model, op_name, m)
         if recipe_cfgs.get("layer_wise_quant", False):
@@ -4613,6 +4638,23 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             ...
         }
         """
+        # for layer_wise quant mode
+        recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
+        model_path = None
+        layer_wise = False
+        if recipe_cfgs.get("layer_wise_quant", False):
+            layer_wise = True
+            from .torch_utils.layer_wise_quant.utils import LWQ_WORKSPACE, _get_path, register_weight_hooks
+
+            os.makedirs(LWQ_WORKSPACE, exist_ok=True)
+            # model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+            model_path = model.path
+            assert model_path, "model_path should not be None."
+            model_path = _get_path(model_path)
+            lwq_handles = register_weight_hooks(
+                model, model_path, device=self.device, clean_weight=True, saved_path=LWQ_WORKSPACE
+            )
+
         weight_config = {}
         for key, config in tune_cfg["op"].items():
             op_name, op_type = key
@@ -4637,7 +4679,15 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             )
         # tune_cfg => weight_config
         model, quantization_perm = gptq_quantize(
-            model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, self.device
+            model,
+            weight_config,
+            dataloader,
+            nsamples,
+            use_max_length,
+            pad_max_length,
+            self.device,
+            layer_wise,
+            model_path,
         )
         return model, quantization_perm
 

@@ -197,8 +197,7 @@ def main():
 
     tokenizer = GPT2Tokenizer.from_pretrained(args.model_name_or_path,
                                                 use_fast=True,
-                                                cache_dir=args.cache_dir if args.cache_dir else None,
-                                                use_auth_token='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')
+                                                cache_dir=args.cache_dir if args.cache_dir else None)
     if args.block_size <= 0:
         args.block_size = tokenizer.max_len_single_sentence  # Our input block size will be the max possible for the model
     args.block_size = min(args.block_size, tokenizer.max_len_single_sentence)

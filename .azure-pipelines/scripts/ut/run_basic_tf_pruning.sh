@@ -18,9 +18,10 @@ mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_tf_pruning.log
 
 echo "cat run.sh..."
+sort run.sh -o run.sh
 cat run.sh | tee ${ut_log_name}
 echo "------UT start-------"
-bash run.sh 2>&1 | tee -a ${ut_log_name}
+bash -x run.sh 2>&1 | tee -a ${ut_log_name}
 cp .coverage ${LOG_DIR}/.coverage.tf_pruning
 echo "------UT end -------"
 
