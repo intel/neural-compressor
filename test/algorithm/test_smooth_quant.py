@@ -1458,9 +1458,9 @@ class TestInputConfig(unittest.TestCase):
 
         model = Model()
 
-        sq = TorchSmoothQuant(model, self.linear_dl, weight_clip=False)
-        sq.transform(alpha="auto", calib_iter=1, folding=True)
-        assert sq.weight_clip is False
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha="auto", calib_iter=1, folding=True, weight_clip=False)
+        assert sq.weight_clip == False
 
 
 if __name__ == "__main__":
