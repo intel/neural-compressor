@@ -31,6 +31,13 @@ ortq = LazyImport("neural_compressor.adaptor.ox_utils.util")
 
 logger = logging.getLogger("neural_compressor")
 
+from onnx.external_data_helper import (
+    convert_model_to_external_data,
+    load_external_data_for_model,
+    load_external_data_for_tensor,
+    write_external_data_tensors,
+)
+
 
 class ONNXModel(BaseModel):
     """Build ONNX model."""
@@ -43,9 +50,11 @@ class ONNXModel(BaseModel):
         """
         self._model = model if not isinstance(model, str) else onnx.load(model)
         self._model_path = None if not isinstance(model, str) else model
-        self._is_large_model = self.check_large_model()
-        if self._is_large_model and self._model_path is None:
+
+        self.check_is_large_model()
+        if self._is_large_model and self._model_path is None and not kwargs.get("ignore_warning", False):
             logger.warning("Model size > 2GB. Please use model path instead of onnx model object to quantize")
+
         self._config = None
         if isinstance(model, str) and os.path.exists(Path(model).parent.joinpath("config.json").as_posix()):
             from transformers import PretrainedConfig
@@ -61,25 +70,28 @@ class ONNXModel(BaseModel):
         self._get_graph_info()
         self._q_config = None
 
-    def check_large_model(self):
+    def check_is_large_model(self):
         """Check model > 2GB."""
         init_size = 0
         for init in self._model.graph.initializer:
             # if initializer has external data location, return True
             if init.HasField("data_location") and init.data_location == onnx.TensorProto.EXTERNAL:
-                return True
+                self._is_large_model = True
+                return
             # if raise error of initializer size > 2GB, return True
             try:
                 init_bytes = init.SerializeToString()
                 init_size += sys.getsizeof(init_bytes)
             except Exception as e:
                 if "exceeds maximum protobuf size of 2GB" in str(e):
-                    return True
+                    self._is_large_model = True
+                    return
                 else:  # pragma: no cover
                     raise e
             if init_size > MAXIMUM_PROTOBUF:
-                return True
-        return False
+                self._is_large_model = True
+                return
+        self._is_large_model = False
 
     @property
     def is_large_model(self):
@@ -158,8 +170,6 @@ class ONNXModel(BaseModel):
         if os.path.split(root)[0] != "" and not os.path.exists(os.path.split(root)[0]):
             raise ValueError('"root" directory does not exists.')
         if self.is_large_model:  # pragma: no cover
-            from onnx.external_data_helper import convert_model_to_external_data, load_external_data_for_model
-
             load_external_data_for_model(self._model, os.path.split(self._model_path)[0])
             onnx.save_model(
                 self._model,
@@ -435,7 +445,7 @@ class ONNXModel(BaseModel):
     def save_model_to_file(self, output_path, use_external_data_format=False):
         """Save model to external data, which is needed for model size > 2GB."""
         if use_external_data_format:
-            onnx.external_data_helper.convert_model_to_external_data(
+            convert_model_to_external_data(
                 self._model, all_tensors_to_one_file=True, location=Path(output_path).name + ".data"
             )
         onnx.save_model(self._model, output_path)
@@ -619,6 +629,82 @@ class ONNXModel(BaseModel):
 
         return result_chain
 
+    def find_split_node_for_layer_wise_quantization(self):
+        """Find split node for layer wise quantization."""
+        # find split nodes of decoder blocks
+        # embed -> decoder.0 -(split_node)-> ... -(split_node)-> decoder.n -(split_node)-> norm -> head
+        # after split: embed -> decoder.0,
+        #              decoder.1,
+        #              decoder.2,
+        #              ...,
+        #              decoder.n,
+        #              norm -> head
+        start_nodes = []
+        for node in self._model.graph.node:
+            start_node, qkv_nodes_list = None, None
+            if node.op_type == "SkipLayerNormalization":
+                start_node = node
+                qkv_nodes_list = [
+                    self.match_parent_path(
+                        start_node,
+                        ["MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
+                        [None, 0, 0, 0, 0],
+                    ),
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
+                        [1, 1, 0, 0, 0],
+                    ),
+                ]
+            if node.op_type == "Add":
+                start_node = node
+                qkv_nodes_list = [
+                    # match base attention structure
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
+                        [0, None, 0, 0, 0],
+                    ),
+                    self.match_parent_path(
+                        start_node, ["Add", "MatMul", "Reshape", "Transpose", "MatMul"], [1, None, 0, 0, 0]
+                    ),
+                    # match gpt attention no past structure
+                    self.match_parent_path(
+                        start_node,
+                        ["Reshape", "Gemm", "Reshape", "Reshape", "Transpose", "MatMul"],
+                        [None, 0, 0, 0, 0, 0],
+                        output_name_to_node=self.output_name_to_node,
+                        return_indice=[],
+                    ),
+                    # match bart attention structure
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
+                        [0, None, 0, 0, 0, 0],
+                    ),
+                    self.match_parent_path(
+                        start_node,
+                        ["Add", "MatMul", "Reshape", "Transpose", "Reshape", "MatMul"],
+                        [1, None, 0, 0, 0, 0],
+                    ),
+                    self.match_parent_path(
+                        start_node,
+                        ["MatMul", "Mul", "MatMul", "Mul", "Div", "Add"],
+                        [None, 0, None, 0, None, 0],
+                    ),
+                    self.match_parent_path(
+                        start_node,
+                        ["MatMul", "Mul", "MatMul", "SimplifiedLayerNormalization", "Add"],
+                        [None, 0, None, 0, 0],
+                    ),
+                ]
+            if not start_node:
+                continue
+            if not any(qkv_nodes_list):
+                continue
+            start_nodes.append(start_node)
+        return start_nodes
+
     def find_qkv_in_attention(self, find_all=False):
         """Find qkv MatMul in Attention.
 
@@ -680,7 +766,6 @@ class ONNXModel(BaseModel):
                         [1, None, 0, 0, 0, 0],
                     ),
                 ]
-
             if not start_node:
                 continue
             if not any(qkv_nodes_list):
@@ -894,3 +979,238 @@ class ONNXModel(BaseModel):
             if "_smooth_scale" in init.name:
                 return True
         return False
+
+    def find_split_nodes(self):
+        """Find split nodes for layer-wise quantization."""
+        split_nodes = self.find_split_node_for_layer_wise_quantization()
+        return split_nodes
+
+    def split_model_with_node(self, split_node_name, data_path, work_space, split_idx, last_split):
+        """Split model with given node."""
+        # origin model:   ... -> node_1 -> split_node -> node_2 -> ...
+        # split model1: ... -> node_1 -> split_node
+        # split model2: node_2 -> ...
+
+        split_model_part_1 = onnx.ModelProto()
+        split_model_part_1.CopyFrom(self._model)
+        split_model_part_1.graph.ClearField("node")
+
+        split_model_part_2 = onnx.ModelProto()
+        split_model_part_2.CopyFrom(self._model)
+        split_model_part_2.graph.ClearField("node")
+
+        split_node_output = None
+        part_idx = 1
+        for node in self._model.graph.node:
+            if part_idx == 1:
+                split_model_part_1.graph.node.append(node)
+            elif part_idx == 2:
+                split_model_part_2.graph.node.append(node)
+
+            if node.name == split_node_name:
+                split_node_output = node.output
+                part_idx = 2
+
+        assert len(split_node_output) == 1, (
+            "Only support split at node with 1 output tensor, while "
+            "current split node {} has {} output tensors".format(split_node_name, len(split_node_output))
+        )
+        split_tensor_name = split_node_output[0]
+
+        if split_idx == 1:
+            try:
+                # need ort.GraphOptimizationLevel <= ORT_ENABLE_BASIC
+                import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
+
+                self._model = symbolic_shape_infer.SymbolicShapeInference.infer_shapes(self._model, auto_merge=True)
+            except Exception as e:  # pragma: no cover
+                logger.error("Shape infer fails for layer-wise quantization")
+                if "Incomplete symbolic shape inference" in str(e):
+                    logger.warning("Please set graph optimization level to 'ENABLE_BASIC' for layer-wise quantization.")
+                raise e
+
+        split_tensor_type, split_tensor_shape = self._confirm_output_type_shape(split_tensor_name)
+        split_tensor = onnx.helper.make_tensor_value_info(split_tensor_name, split_tensor_type, split_tensor_shape)
+
+        split_model_part_1 = ONNXModel(split_model_part_1, ignore_warning=True)
+        split_model_part_2 = ONNXModel(split_model_part_2, ignore_warning=True)
+
+        # remove unused input & output
+        split_model_part_1._remove_unused_input_output()
+        split_model_part_2._remove_unused_input_output()
+
+        split_model_part_1.model.graph.output.append(split_tensor)
+        split_model_part_2.model.graph.input.append(split_tensor)
+
+        insert_output_for_model_1 = []
+        insert_input_for_model_2 = []
+        for output in split_model_part_1.output_name_to_node.keys():
+            if output in split_model_part_2.input_name_to_nodes.keys():
+                output_type, output_shape = self._confirm_output_type_shape(output)
+                output_tensor = onnx.helper.make_tensor_value_info(output, output_type, output_shape)
+                if output_tensor not in split_model_part_1.model.graph.output:
+                    insert_output_for_model_1.append(output_tensor)
+                if output_tensor not in split_model_part_2.model.graph.input:
+                    insert_input_for_model_2.append(output_tensor)
+
+        # insert model 1 output
+        for output in insert_output_for_model_1:
+            split_model_part_1.model.graph.output.append(output)
+
+        # insert model 2 input
+        for input in insert_input_for_model_2:
+            split_model_part_2.model.graph.input.append(input)
+
+        # remove unused init
+        split_model_part_1.remove_unused_init()
+        split_model_part_2.remove_unused_init()
+
+        split_model_part_1.update()
+        split_model_part_2.update()
+
+        split_model_part_1.load_model_initializer_by_tensor(os.path.dirname(data_path))
+        split_model_part_1_path = os.path.join(work_space, "split_model_part_1.onnx")
+        split_model_part_1.model_path = split_model_part_1_path
+        split_model_part_1._save_split_model(split_model_part_1_path)
+        split_model_part_1.check_is_large_model()
+        logger.debug("save split model part 1 to {} for layer wise quantization".format(split_model_part_1_path))
+
+        if last_split:
+            split_model_part_2.load_model_initializer_by_tensor(os.path.dirname(data_path))
+            split_model_part_2_path = os.path.join(work_space, "split_model_part_2.onnx")
+            split_model_part_2.model_path = split_model_part_2_path
+            split_model_part_2._save_split_model(split_model_part_2_path)
+            split_model_part_2.check_is_large_model()
+            logger.debug("save split model part 2 to {} for layer wise quantization".format(split_model_part_2_path))
+            return split_model_part_1, split_model_part_2
+        else:
+            return split_model_part_1, split_model_part_2
+
+    def _save_split_model(self, save_path):
+        """Save split model as external data for layer wise quantization.
+
+        Args:
+            save_path (_type_): save path of split model
+        """
+        if os.path.exists(save_path + "_data"):
+            os.remove(save_path + "_data")
+        onnx.save_model(
+            self._model,
+            save_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location=save_path.split("/")[-1] + "_data",
+            size_threshold=1024,
+            convert_attribute=False,
+        )
+
+    def _confirm_output_type_shape(self, tensor_name):
+        """Get output type and shape of a tensor.
+
+        Args:
+            tensor_name (str): name of a tensor
+
+        Returns:
+            tuple: output type and shape
+        """
+        elem_type = onnx.TensorProto.FLOAT
+        shape = None
+        for output in self._model.graph.value_info:
+            if output.name == tensor_name:
+                elem_type = output.type.tensor_type.elem_type
+                shape = [
+                    dim.dim_value if dim.HasField("dim_value") else -1 for dim in output.type.tensor_type.shape.dim
+                ]
+                break
+        return elem_type, shape
+
+    def _remove_unused_input_output(self):
+        """Remove unused input & output for split model."""
+        remove_outputs = []
+        remove_inputs = []
+        for output in self._model.graph.output:
+            if output.name not in self.output_name_to_node.keys():
+                remove_outputs.append(output)
+
+        for input in self._model.graph.input:
+            if input.name not in self.input_name_to_nodes.keys():
+                remove_inputs.append(input)
+
+        for output in remove_outputs:
+            self._model.graph.output.remove(output)
+        for input in remove_inputs:
+            self._model.graph.input.remove(input)
+
+    def remove_unused_init(self):
+        """Remove unused init."""
+        remov_inits = []
+        for init in self._model.graph.initializer:
+            if init.name not in self.input_name_to_nodes.keys():
+                remov_inits.append(init)
+        self.remove_initializers(remov_inits)
+
+    def load_model_initializer_by_tensor(self, data_path=None):
+        """Load model initializer by tensor for split."""
+        if data_path is None:
+            data_path = os.path.dirname(self._model_path)
+        for init in self._model.graph.initializer:
+            if init.HasField("data_location") and init.data_location == onnx.TensorProto.EXTERNAL:
+                load_external_data_for_tensor(init, data_path)
+
+    def write_external_data_to_new_location(self, external_data_location="external.data", overwrite=False):
+        """Write external data of merged quantized model to new location to save memory.
+
+        Args:
+            external_data_location (str, optional): external data location of merged quantized model.
+                                                    Defaults to "external.data".
+            overwrite (bool, optional): if True, remove existed externa data. Defaults to False.
+        """
+        if overwrite and os.path.exists(os.path.join(os.path.dirname(self._model_path), external_data_location)):
+            os.remove(os.path.join(os.path.dirname(self._model_path), external_data_location))
+        self.load_model_initializer_by_tensor()
+        convert_model_to_external_data(self._model, location=external_data_location)
+        # TODO : if init is already saved, skip write it
+        write_external_data_tensors(self._model, filepath=os.path.dirname(self._model_path))
+
+    def merge_split_models(self, to_merge_model):
+        """Merge two split model into final model."""
+        to_merge_model.write_external_data_to_new_location()
+        self.add_nodes([node for node in to_merge_model.nodes()])
+        self.add_initializers([init for init in to_merge_model.initializer()])
+        self.update()
+
+        # add new output
+        for output in to_merge_model.graph().output:
+            if output.name not in self.output():
+                self._model.graph.output.append(output)
+
+        # remove unused output
+        remove_output = []
+        for output in self._model.graph.output:
+            if output.name in to_merge_model.input():
+                remove_output.append(output)
+        for output in remove_output:
+            self._model.graph.output.remove(output)
+
+        # add new input
+        for input in to_merge_model.graph().input:
+            if (
+                input.name not in self.input()
+                and input.name not in self.output()
+                and input.name not in self.output_name_to_node.keys()
+            ):
+                self._model.graph.input.append(input)
+
+    def re_org_output(self, origin_output):
+        """Re-org output of merged model for layer-wise quantization."""
+        outputs = {}
+        tmp_remove = []
+        for output in self._model.graph.output:
+            outputs[output.name] = output
+            tmp_remove.append(output)
+
+        for output in tmp_remove:
+            self._model.graph.output.remove(output)
+
+        for out_name in origin_output:
+            self._model.graph.output.append(outputs[out_name])
