@@ -963,6 +963,7 @@ class TorchSmoothQuant:
         :param scales_per_op: Not supported now
         :param calib_iter: Data size for calibration
         :param weight_clip: Whether to clip weight_max when calculating scales.
+
         :param auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
             By default the search space is 0.0-1.0 with step_size 0.1.
         :param default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.

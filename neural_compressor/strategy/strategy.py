@@ -953,8 +953,10 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             )  # make weight_clipping a default_on option.
             sq_algo.auto_alpha_args = smooth_quant_args.get(
                 "auto_alpha_args", {"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"}
-            ) # default alpha search space parameters.
-            sq_algo.default_alpha = smooth_quant_args.get("default_alpha", 0.5) # default value for alpha in auto-tuning
+            )  # default alpha search space parameters.
+            sq_algo.default_alpha = smooth_quant_args.get(
+                "default_alpha", 0.5
+            )  # default value for alpha in auto-tuning
             logger.debug(f"Set smooth quant with alpha {sq_algo.alpha} as the pre-tuning algo.")
             algo_scheduler.append_algorithm("pre_quantization", sq_algo)
 
