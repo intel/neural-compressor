@@ -217,10 +217,10 @@ class WeightOnlyLinear(torch.nn.Module):
         compression_dim=1,
         g_idx=False,
         device="cpu",
-        use_HF_format=False,
+        use_hf_format=False,
     ):
         super().__init__()
-        self.use_HF_format = use_HF_format
+        self.use_hf_format = use_hf_format
         self.dtype = dtype
         if "int" not in self.dtype:  # for nf4, fp4
             from neural_compressor.adaptor.torch_utils.weight_only import FLOAT_MAPPING, INT_MAPPING
@@ -251,7 +251,7 @@ class WeightOnlyLinear(torch.nn.Module):
         assert compression_dim in [0, 1], (
             "Only support 0 or 1 as compression dimension, " + "0 is output channel, 1 is input channel."
         )
-        if self.use_HF_format:
+        if self.use_hf_format:
             self.register_buffer(
                 "scales",
                 torch.zeros(
@@ -327,7 +327,7 @@ class WeightOnlyLinear(torch.nn.Module):
 
     def pack(self, int_weight, scale, zp, bias, g_idx=None):
         int_weight = int_weight.to(self.device)
-        if self.use_HF_format and zp is None:
+        if self.use_hf_format and zp is None:
             # to avoid overflow
             int_weight = int_weight.type(torch.int32)
             shift_bias = 2 ** (self.bits - 1)
@@ -339,13 +339,13 @@ class WeightOnlyLinear(torch.nn.Module):
         if g_idx is not None:
             assert hasattr(self, "g_idx"), "g_idx is not set when initializing."
             self.g_idx = g_idx.type(torch.int32).to(self.device)
-            if self.use_HF_format:
+            if self.use_hf_format:
                 invperm = torch.argsort(self.g_idx)
                 self.g_idx = invperm // self.groupsize
                 self.g_idx = self.g_idx.type(torch.int32).to(self.device)
         assert scale.shape == self.scales.shape, "Scale shape is mismatched."
         self.scales = scale.type(self.float_type).to(self.device)
-        if not self.use_HF_format and self.compression_dim == 0:
+        if not self.use_hf_format and self.compression_dim == 0:
             int_weight = int_weight.T
             self.qweight = self.qweight.T
         origin_shape = int_weight.shape
@@ -362,14 +362,14 @@ class WeightOnlyLinear(torch.nn.Module):
                 tmp[:, e] &= mask
                 tmp[:, e] = tmp[:, e] << (self.bits * e)
                 self.qweight[:, j] |= tmp[:, e]
-        if not self.use_HF_format and self.compression_dim == 0:
+        if not self.use_hf_format and self.compression_dim == 0:
             self.qweight = self.qweight.T
 
         if zp is not None:
             zp = zp.to(self.device)
-            if self.use_HF_format:
+            if self.use_hf_format:
                 zp -= 1
-            if self.use_HF_format or self.compression_dim == 0:
+            if self.use_hf_format or self.compression_dim == 0:
                 zp = zp.T
                 self.qzeros = self.qzeros.T
             assert hasattr(self, "qzeros"), "zp is not set when initializing."
@@ -382,9 +382,9 @@ class WeightOnlyLinear(torch.nn.Module):
                     tmp[:, e] &= mask
                     tmp[:, e] = tmp[:, e] << (self.bits * e)
                     self.qzeros[:, j] |= tmp[:, e]
-            if self.use_HF_format or self.compression_dim == 0:
+            if self.use_hf_format or self.compression_dim == 0:
                 self.qzeros = self.qzeros.T
-        if self.use_HF_format:
+        if self.use_hf_format:
             self.scales = self.scales.T
             self.qweight = self.qweight.T
             self.g_idx = self.g_idx
@@ -392,7 +392,7 @@ class WeightOnlyLinear(torch.nn.Module):
 
     def recover(self):
         logger.debug(f"Recovering {self} weight")
-        if self.use_HF_format:
+        if self.use_hf_format:
             # Prevent broken id links of self.scales and self.scales
             self.scales = self.scales.T
             self.qweight = self.qweight.T
@@ -411,7 +411,7 @@ class WeightOnlyLinear(torch.nn.Module):
         # unpack weight
         weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype).to(device)
         qweight = self.qweight
-        if not self.use_HF_format and self.compression_dim == 0:
+        if not self.use_hf_format and self.compression_dim == 0:
             weight = weight.T
             qweight = qweight.T
         origin_shape = weight.shape
@@ -427,7 +427,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 if weight_dtype == torch.uint8:
                     tmp &= mask  # remove sign bit
                 weight[:, index] = tmp.type(weight_dtype)
-        if not self.use_HF_format and self.compression_dim == 0:
+        if not self.use_hf_format and self.compression_dim == 0:
             weight = weight.T
         if "int" not in self.dtype:
             new_weight = torch.zeros(self.out_features, self.in_features).to(device)
@@ -439,7 +439,7 @@ class WeightOnlyLinear(torch.nn.Module):
             zp_dtype = self.compressed_dtype  # to avoid overflow when weight-zp
             zp = torch.zeros(self.scales.shape, dtype=zp_dtype).to(device)
             qzeros = self.qzeros
-            if self.use_HF_format or self.compression_dim == 0:
+            if self.use_hf_format or self.compression_dim == 0:
                 zp = zp.T
                 qzeros = qzeros.T
             origin_shape = zp.shape
@@ -454,9 +454,9 @@ class WeightOnlyLinear(torch.nn.Module):
                     tmp = tmp >> self.compress_bits - self.bits
                     tmp &= mask
                     zp[:, index] = tmp.type(zp_dtype)
-            if self.use_HF_format or self.compression_dim == 0:
+            if self.use_hf_format or self.compression_dim == 0:
                 zp = zp.T
-            if self.use_HF_format:
+            if self.use_hf_format:
                 # zp -= 1 may cause zp == -1, after recover it becomes 2**self.bits - 1
                 zp += 1
                 zp = torch.where(zp > (2**self.bits - 1), 0, zp)
@@ -489,8 +489,8 @@ class WeightOnlyLinear(torch.nn.Module):
             self.groupsize,
             self.bias is not None,
         )
-        if self.use_HF_format:
-            tmp_str += ", use_HF_format=True"
+        if self.use_hf_format:
+            tmp_str += ", use_hf_format=True"
         return tmp_str
 
 
