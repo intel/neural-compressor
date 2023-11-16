@@ -31,13 +31,6 @@ ortq = LazyImport("neural_compressor.adaptor.ox_utils.util")
 
 logger = logging.getLogger("neural_compressor")
 
-from onnx.external_data_helper import (
-    convert_model_to_external_data,
-    load_external_data_for_model,
-    load_external_data_for_tensor,
-    write_external_data_tensors,
-)
-
 
 class ONNXModel(BaseModel):
     """Build ONNX model."""
@@ -170,6 +163,8 @@ class ONNXModel(BaseModel):
         if os.path.split(root)[0] != "" and not os.path.exists(os.path.split(root)[0]):
             raise ValueError('"root" directory does not exists.')
         if self.is_large_model:  # pragma: no cover
+            from onnx.external_data_helper import load_external_data_for_model
+
             load_external_data_for_model(self._model, os.path.split(self._model_path)[0])
             onnx.save_model(
                 self._model,
@@ -444,6 +439,8 @@ class ONNXModel(BaseModel):
 
     def save_model_to_file(self, output_path, use_external_data_format=False):
         """Save model to external data, which is needed for model size > 2GB."""
+        from onnx.external_data_helper import convert_model_to_external_data
+
         if use_external_data_format:
             convert_model_to_external_data(
                 self._model, all_tensors_to_one_file=True, location=Path(output_path).name + ".data"
@@ -1151,6 +1148,8 @@ class ONNXModel(BaseModel):
 
     def load_model_initializer_by_tensor(self, data_path=None):
         """Load model initializer by tensor for split."""
+        from onnx.external_data_helper import load_external_data_for_tensor
+
         if data_path is None:
             data_path = os.path.dirname(self._model_path)
         for init in self._model.graph.initializer:
@@ -1165,6 +1164,8 @@ class ONNXModel(BaseModel):
                                                     Defaults to "external.data".
             overwrite (bool, optional): if True, remove existed externa data. Defaults to False.
         """
+        from onnx.external_data_helper import convert_model_to_external_data, write_external_data_tensors
+
         if overwrite and os.path.exists(os.path.join(os.path.dirname(self._model_path), external_data_location)):
             os.remove(os.path.join(os.path.dirname(self._model_path), external_data_location))
         self.load_model_initializer_by_tensor()
