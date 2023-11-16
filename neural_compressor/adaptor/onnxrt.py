@@ -172,6 +172,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         op_types=["MatMul", "Gemm", "Conv", "FusedConv"],
         scales_per_op=True,
         record_max_info=False,
+        weight_clip=True,
     ):
         """Get augmented model with smooth quant.
 
