@@ -17,7 +17,7 @@ from datasets import load_dataset
 #from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
 from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
 from neural_compressor import quantization, PostTrainingQuantConfig
-from evaluation.lm_eval import evaluate as lm_evaluate
+from evaluation import evaluate as lm_evaluate
 
 @torch.no_grad()
 def eval_ppl_with_gptq(model, test_dataloader, dev):
