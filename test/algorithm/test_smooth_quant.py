@@ -1460,7 +1460,7 @@ class TestInputConfig(unittest.TestCase):
 
         sq = TorchSmoothQuant(model, self.linear_dl)
         sq.transform(alpha="auto", calib_iter=1, folding=True, weight_clip=False)
-        assert sq.weight_clip == False
+        assert sq.weight_clip is False
 
     @classmethod
     def test_sq_auto_alpha_arg(self):
@@ -1482,9 +1482,15 @@ class TestInputConfig(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.linear_dl)
-        sq.transform(alpha="auto", calib_iter=1, folding=False, auto_alpha_args={"alpha_min": 0.5, "alpha_max": 0.9, "alpha_step": 0.1, "shared_criterion": "mean"}, default_alpha=0.7)
+        sq.transform(
+            alpha="auto",
+            calib_iter=1,
+            folding=False,
+            auto_alpha_args={"alpha_min": 0.5, "alpha_max": 0.9, "alpha_step": 0.1, "shared_criterion": "mean"},
+            default_alpha=0.7,
+        )
         assert sq.default_alpha == 0.7
-        assert sq.auto_alpha_args['alpha_min'] == 0.5
+        assert sq.auto_alpha_args["alpha_min"] == 0.5
 
 
 if __name__ == "__main__":
