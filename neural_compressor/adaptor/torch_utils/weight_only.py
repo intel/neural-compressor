@@ -399,6 +399,9 @@ def rtn_quantize(
     for name, m in model.named_modules():
         if m.__class__.__name__ not in supported_layers:
             continue
+        orig_dtype = next(m.parameters()).dtype
+        if orig_dtype != torch.float:
+            m = m.float()
         if name in weight_config:  # pragma: no cover
             num_bits = weight_config[name]["bits"]
             group_size = weight_config[name]["group_size"]
@@ -466,6 +469,8 @@ def rtn_quantize(
             )
             q_weight = q_weight.T if group_dim == 0 else q_weight
             m.weight.data.copy_(q_weight)
+        if orig_dtype != torch.float:
+            m = m.to(orig_dtype)
     return model
 
 
