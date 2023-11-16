@@ -986,6 +986,7 @@ class TorchSmoothQuant:
 
         self.weight_clip = weight_clip
         self.default_alpha = default_alpha
+        self.auto_alpha_args = auto_alpha_args
         self.recover()
         need_calibration = self._check_need_calibration(alpha, percentile, op_types, scales_per_op, calib_iter)
         with torch.no_grad():
