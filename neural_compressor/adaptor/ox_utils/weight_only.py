@@ -136,7 +136,7 @@ def make_matmul_weight_only_node(
         kwargs["N"] = weight_shape[1]
         kwargs["bits"] = num_bits
         kwargs["block_size"] = group_size
-        if accuracy_level > 0: # pragma: no cover
+        if accuracy_level > 0:
             # require onnxruntime > 1.16.2
             kwargs["accuracy_level"] = accuracy_level
 
