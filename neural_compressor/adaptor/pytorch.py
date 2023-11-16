@@ -3356,6 +3356,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 + "one iter calibration for other ops."
             )
 
+        model._model.save_qconf_summary(qconf_summary=self.ipex_config_path)
         self._ipex_post_quant_process(model, q_model, dataloader, inplace=inplace)
 
         with open(self.ipex_config_path, "r") as f:
