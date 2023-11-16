@@ -331,6 +331,7 @@ class TorchSmoothQuant:
         self.absorb_to_layer = {}
         self.adjust_alpha_space = False
         self.weight_clip = True
+        self.default_alpha = 0.5
 
     def _get_device(self):
         """Get the model device
@@ -851,6 +852,7 @@ class TorchSmoothQuant:
         default_alpha = alpha_space[len(alpha_space) // 2]
         if 0.5 in alpha_space:
             default_alpha = 0.5
+        default_alpha = self.default_alpha
         absorb_input_scales, weight_scales = self._cal_scales(
             self.absorb_to_layer, input_maxes, default_alpha, tuning=True
         )
@@ -950,6 +952,7 @@ class TorchSmoothQuant:
         calib_iter=100,
         auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
         weight_clip=True,
+        default_alpha=0.5,
     ):
         """The main entry of smooth quant
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
@@ -959,8 +962,14 @@ class TorchSmoothQuant:
         :param op_types: The op typed to be smooth quantized
         :param scales_per_op: Not supported now
         :param calib_iter: Data size for calibration
+        :param weight_clip: Whether to clip weight_max when calculating scales.
+
+        :param auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
+            By default the search space is 0.0-1.0 with step_size 0.1.
+        :param default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
-        benefit to quantization."""
+        benefit to quantization.
+        """
         if not isinstance(self.model, torch.nn.Module):
             logger.warning("smooth quant is ignored since the model is not a torch module")
             return self.model
@@ -976,6 +985,8 @@ class TorchSmoothQuant:
             alpha = numpy.clip(alpha, 0.0, 1.0)
 
         self.weight_clip = weight_clip
+        self.default_alpha = default_alpha
+        self.auto_alpha_args = auto_alpha_args
         self.recover()
         need_calibration = self._check_need_calibration(alpha, percentile, op_types, scales_per_op, calib_iter)
         with torch.no_grad():
