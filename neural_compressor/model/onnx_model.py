@@ -982,15 +982,19 @@ class ONNXModel(BaseModel):
         split_nodes = self.find_split_node_for_layer_wise_quantization()
         return split_nodes
 
-    def split_model_with_node(self, split_node_name, path_of_model_to_split, save_both_split_models=True):
+    def split_model_with_node(
+        self, split_node_name, path_of_model_to_split, shape_infer=True, save_both_split_models=True
+    ):
         """Split model into two parts at a given node.
 
         Args:
             split_node_name (str): name of the node where the model is split at>
             path_of_model_to_split (str): path of model to be split.
+            shape_infer (bool): do shape inference. Default is True.
             save_both_split_models (bool): whether to save the two split models.
                 False means only save the first split model.
                 True means save both the two split models.
+                Default id True.
 
         Returns:
             tuple: the first split model, the second split model
@@ -1026,16 +1030,17 @@ class ONNXModel(BaseModel):
         split_tensor_name = split_node_output[0]
 
         # infer shape of the model to be split
-        try:
-            # need ort.GraphOptimizationLevel <= ORT_ENABLE_BASIC
-            import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
+        if shape_infer:
+            try:
+                # need ort.GraphOptimizationLevel <= ORT_ENABLE_BASIC
+                import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
 
-            self._model = symbolic_shape_infer.SymbolicShapeInference.infer_shapes(self._model, auto_merge=True)
-        except Exception as e:  # pragma: no cover
-            logger.error("Shape infer fails for layer-wise quantization")
-            if "Incomplete symbolic shape inference" in str(e):
-                logger.warning("Please set graph optimization level to 'ENABLE_BASIC' for layer-wise quantization.")
-            raise e
+                self._model = symbolic_shape_infer.SymbolicShapeInference.infer_shapes(self._model, auto_merge=True)
+            except Exception as e:  # pragma: no cover
+                logger.error("Shape infer fails for layer-wise quantization")
+                if "Incomplete symbolic shape inference" in str(e):
+                    logger.warning("Please set graph optimization level to 'ENABLE_BASIC' for layer-wise quantization.")
+                raise e
 
         split_tensor_type, split_tensor_shape = self._get_output_type_shape_by_tensor_name(split_tensor_name)
         split_tensor = onnx.helper.make_tensor_value_info(split_tensor_name, split_tensor_type, split_tensor_shape)

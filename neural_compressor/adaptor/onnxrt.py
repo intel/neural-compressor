@@ -321,19 +321,18 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             split_idx = 1
             model_to_split = [_model_to_split]
             dataloader_for_split_model = [data_loader]
-
             quantize_params = {}
-
             quantized_model_merged = None
 
             while len(model_to_split) != 0:
                 split_model = model_to_split.pop(0)
                 split_node = split_nodes.pop(0)
                 save_both_split_models = True if len(split_nodes) == 0 else False
+                shape_infer = True if split_idx == 1 else False
 
                 # split model with given split_node
                 split_model_part_1, split_model_part_2 = split_model.split_model_with_node(
-                    split_node.name, tmp_model.model_path, save_both_split_models
+                    split_node.name, tmp_model.model_path, shape_infer, save_both_split_models
                 )
                 if not save_both_split_models:
                     # append split_model_part_2 to do next split
