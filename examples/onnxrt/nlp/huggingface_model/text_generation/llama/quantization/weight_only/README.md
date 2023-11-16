@@ -8,7 +8,7 @@ This example confirms llama's weight only accuracy on [lambada](https://huggingf
 ## 1. Environment
 ```shell
 pip install neural-compressor
-pip install -r requirements.txt
+SKIP_RUNTIME=True pip install -r requirements.txt
 ```
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
@@ -29,7 +29,7 @@ Note that this README.md uses meta-llama/Llama-2-7b-hf as an example. There are 
 
 Export to ONNX model:
 ```bash
-python prepare_model.py  --input_model="decapoda-research/llama-7b-hf" --output_model="./llama_7b"
+python prepare_model.py  --input_model="meta-llama/Llama-2-7b-hf" --output_model="./llama-2-7b-hf"
 ```
 
 # Run

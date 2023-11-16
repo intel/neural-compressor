@@ -8,7 +8,7 @@ This example confirms llama's accuracy and speed based on [lambada](https://hugg
 ## 1. Environment
 ```shell
 pip install neural-compressor
-pip install -r requirements.txt
+SKIP_RUNTIME=True pip install -r requirements.txt
 ```
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
