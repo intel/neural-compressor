@@ -1460,7 +1460,7 @@ class TestInputConfig(unittest.TestCase):
 
         sq = TorchSmoothQuant(model, self.linear_dl, weight_clip=False)
         sq.transform(alpha="auto", calib_iter=1, folding=True)
-        assert sq.weight_clip == False
+        assert sq.weight_clip is False
 
 
 if __name__ == "__main__":
