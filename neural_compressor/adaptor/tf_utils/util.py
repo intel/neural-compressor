@@ -18,26 +18,25 @@
 """Tensorflow Utils Helper functions."""
 
 import os
-import numpy as np
-import tensorflow as tf
-from pkg_resources import parse_version
-from google.protobuf import text_format
 from collections import OrderedDict, UserDict
 
-from tensorflow.python.util import nest
-from tensorflow.python.training import saver
-from tensorflow.python.platform import gfile
-from tensorflow.python.grappler import tf_optimizer
+import numpy as np
+import tensorflow as tf
+from google.protobuf import text_format
+from pkg_resources import parse_version
+from tensorflow.core.framework import attr_value_pb2, graph_pb2, node_def_pb2, variable_pb2
+from tensorflow.core.protobuf import config_pb2, meta_graph_pb2
 from tensorflow.python.eager import context, wrap_function
 from tensorflow.python.framework import convert_to_constants
-from tensorflow.core.protobuf import config_pb2, meta_graph_pb2
-from tensorflow.core.framework import graph_pb2, variable_pb2, node_def_pb2, attr_value_pb2
-from tensorflow.python.saved_model import save, load, tag_constants, signature_constants
+from tensorflow.python.grappler import tf_optimizer
+from tensorflow.python.platform import gfile
+from tensorflow.python.saved_model import load, save, signature_constants, tag_constants
+from tensorflow.python.training import saver
+from tensorflow.python.util import nest
 
 from neural_compressor.utils import logger
-from .graph_util import GraphAnalyzer
-from .graph_util import GraphRewriterHelper
 
+from .graph_util import GraphAnalyzer, GraphRewriterHelper
 
 TF_SPR_BASE_VERSIONS = ("2.11.0202242", "2.11.0202250", "2.11.0202317", "2.11.0202323")
 
@@ -666,6 +665,7 @@ def get_weight_from_input_tensor(model, input_tensor_names, op_types):
         sq_weights_nodes[name] = curr_weights_nodes
     return sq_weight_tensors, sq_weights_nodes
 
+
 def apply_inlining(func):
     """Apply an inlining optimization to the function's graph definition.
     Args:
@@ -691,9 +691,7 @@ def apply_inlining(func):
 
     # Clear the initializer_name for the variables collections, since they are not
     # needed after saved to saved_model.
-    for name in [
-        "variables", "model_variables", "trainable_variables", "local_variables"
-    ]:
+    for name in ["variables", "model_variables", "trainable_variables", "local_variables"]:
         raw_list = []
         for raw in meta_graph.collection_def["variables"].bytes_list.value:
             variable = variable_pb2.VariableDef()
@@ -718,6 +716,7 @@ def apply_inlining(func):
 
     return new_graph_def
 
+
 def construct_function_from_graph_def(func, graph_def, frozen_func=None):
     """Rebuild function from graph_def.
     Args:
@@ -737,22 +736,24 @@ def construct_function_from_graph_def(func, graph_def, frozen_func=None):
         while context.context().has_function(f.signature.name):
             context.context().remove_function(f.signature.name)
 
-    captures = {
-        c[1].name.split(":")[0]: c[0]
-        for c in frozen_func.graph.captures
-    }
+    captures = {c[1].name.split(":")[0]: c[0] for c in frozen_func.graph.captures}
     new_func = wrap_function.function_from_graph_def(
-        graph_def, [tensor.name for tensor in frozen_func.inputs],
-        [tensor.name for tensor in frozen_func.outputs], captures)
+        graph_def,
+        [tensor.name for tensor in frozen_func.inputs],
+        [tensor.name for tensor in frozen_func.outputs],
+        captures,
+    )
     new_func.graph.structured_outputs = nest.pack_sequence_as(
-        func.graph.structured_outputs, new_func.graph.structured_outputs)
+        func.graph.structured_outputs, new_func.graph.structured_outputs
+    )
     # new_func._function_type = func.function_type  # pylint: disable=protected-access
 
     # Copy structured input signature from original function (used during
     # serialization)
-    new_func.graph.structured_input_signature = (func.structured_input_signature)
+    new_func.graph.structured_input_signature = func.structured_input_signature
 
     return new_func
+
 
 def parse_saved_model(model, freeze=False, input_tensor_names=[], output_tensor_names=[]):
     """Parse a input saved_model.
@@ -773,7 +774,7 @@ def parse_saved_model(model, freeze=False, input_tensor_names=[], output_tensor_
         _saved_model = load.load(model, [tag_constants.SERVING])
     else:
         _saved_model = model
-        
+
     func = _saved_model.signatures[signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY]
 
     if freeze:
@@ -783,37 +784,35 @@ def parse_saved_model(model, freeze=False, input_tensor_names=[], output_tensor_
         frozen_func = construct_function_from_graph_def(func, inlined_graph_def)
 
     if len(input_tensor_names) == 0:
-        input_tensor_names = [i.name.split(":")[0] for i in frozen_func.inputs if 'unknown' not in i.name]
+        input_tensor_names = [i.name.split(":")[0] for i in frozen_func.inputs if "unknown" not in i.name]
     if len(output_tensor_names) == 0:
         output_tensor_names = [i.name.split(":")[0] for i in frozen_func.outputs]
 
     frozen_graph_def = frozen_func.graph.as_graph_def()
-    grappler_meta_graph_def = saver.export_meta_graph(
-        graph_def=frozen_graph_def, graph=frozen_func.graph)
+    grappler_meta_graph_def = saver.export_meta_graph(graph_def=frozen_graph_def, graph=frozen_func.graph)
 
     # Add a collection 'train_op' so that Grappler knows the outputs.
     fetch_collection = meta_graph_pb2.CollectionDef()
     for array in frozen_func.inputs + frozen_func.outputs:
         fetch_collection.node_list.value.append(array.name)
-        grappler_meta_graph_def.collection_def["train_op"].CopyFrom(
-            fetch_collection)
+        grappler_meta_graph_def.collection_def["train_op"].CopyFrom(fetch_collection)
 
     grappler_session_config = config_pb2.ConfigProto()
     rewrite_options = grappler_session_config.graph_options.rewrite_options
     rewrite_options.min_graph_nodes = -1
-    graph_def = tf_optimizer.OptimizeGraph(grappler_session_config,
-                                        grappler_meta_graph_def, graph_id=b"tf_graph")
+    graph_def = tf_optimizer.OptimizeGraph(grappler_session_config, grappler_meta_graph_def, graph_id=b"tf_graph")
     return graph_def, _saved_model, func, frozen_func, input_tensor_names, output_tensor_names
+
 
 def reconstruct_saved_model(graph_def, func, frozen_func, trackable, path):
     """Reconstruct a saved_model.
+
     Args:
         graph_def: The input graph_def.
         func: The concrete function get from the original saved_model.
         frozen_func: The reconstructed function from inlining optimized graph.
         trackable: TF AutoTrackable object loaded from the original saved_model.
         path: The destination path to save the reconstructed saved_model.
-
     """
     converted_func = construct_function_from_graph_def(func, graph_def, frozen_func)
     signatures = {signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY: converted_func}

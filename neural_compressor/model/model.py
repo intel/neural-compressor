@@ -28,10 +28,10 @@ from neural_compressor.model.mxnet_model import MXNetModel
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.model.tensorflow_model import (
     TensorflowBaseModel,
+    TensorflowLLMModel,
     TensorflowModel,
     TensorflowQATModel,
     get_model_type,
-    TensorflowLLMModel,
 )
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
@@ -239,7 +239,7 @@ class Model(object):
                             model_type = kwargs["modelType"]
                         else:
                             model_type = get_model_type(root)
-                        if model_type == 'llm_saved_model':
+                        if model_type == "llm_saved_model":
                             return TensorflowLLMModel(root, **kwargs)
                         if hasattr(conf, "backend") and conf.backend == "itex":
                             if model_type == "keras":

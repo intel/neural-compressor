@@ -16,16 +16,17 @@
 # limitations under the License.
 """Tensorflow Adaptor Classes."""
 
-import os
 import copy
 import math
-import yaml
-import numpy as np
+import os
 from collections import OrderedDict, UserDict
 
-from ..utils import logger
+import numpy as np
+import yaml
+
 from ..conf.dotdict import deep_get
 from ..data.dataloaders.base_dataloader import BaseDataLoader
+from ..utils import logger
 from ..utils.utility import (
     GLOBAL_STATE,
     MODE,
@@ -1846,8 +1847,9 @@ class TensorFlowAdaptor(Adaptor):
             return self.smooth_quant_model
 
         if model.model_type == "llm_saved_model":
-            return self.smooth_quant_LLM(model, dataloader, calib_iter, alpha, folding,
-                     percentile, op_types, scales_per_op)
+            return self.smooth_quant_LLM(
+                model, dataloader, calib_iter, alpha, folding, percentile, op_types, scales_per_op
+            )
 
         # Do a pre-optimization before smooth quant
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
@@ -1885,8 +1887,17 @@ class TensorFlowAdaptor(Adaptor):
         self.smooth_quant_model = model
         return self.smooth_quant_model
 
-    def smooth_quant_LLM(self, model, dataloader, calib_iter=1, alpha=0.5, folding=False,
-                     percentile=99.999, op_types=['MatMul', 'Conv2D'], scales_per_op=True):
+    def smooth_quant_LLM(
+        self,
+        model,
+        dataloader,
+        calib_iter=1,
+        alpha=0.5,
+        folding=False,
+        percentile=99.999,
+        op_types=["MatMul", "Conv2D"],
+        scales_per_op=True,
+    ):
         """Convert the model by smooth quant.
 
         Args:
@@ -1917,18 +1928,29 @@ class TensorFlowAdaptor(Adaptor):
             self._tuning_cfg_to_fw(tune_cfg)
             black_nodes = [node for node in self.quantize_config if self.quantize_config[node] == "fp32"]
 
-        llm_temp_dir = self.work_dir+'/temp_saved_model'
+        llm_temp_dir = self.work_dir + "/temp_saved_model"
         # Run calibration to get max values per channel
         from .tf_utils.smooth_quant_calibration import SmoothQuantCalibrationLLM
-        calibration = SmoothQuantCalibrationLLM(model._model, dataloader, calib_iter, op_types, percentile, \
-                                                    black_nodes, llm_temp_dir, model.weight_name_mapping)
+
+        calibration = SmoothQuantCalibrationLLM(
+            model._model,
+            dataloader,
+            calib_iter,
+            op_types,
+            percentile,
+            black_nodes,
+            llm_temp_dir,
+            model.weight_name_mapping,
+        )
         max_vals_per_channel, sq_target_node_names, sq_weight_tensor_dict, sq_graph_def = calibration()
 
         # Calculate the smooth quant scaler and insert Mul op into the graph
         from .tf_utils.smooth_quant_scaler import SmoothQuantScalerLLM
+
         scaler = SmoothQuantScalerLLM(sq_graph_def, alpha, scales_per_op, op_types)
-        sq_graph_def, sq_weight_scale_dict, mul_list = scaler.transform(max_vals_per_channel,
-                                                            sq_weight_tensor_dict, sq_target_node_names)
+        sq_graph_def, sq_weight_scale_dict, mul_list = scaler.transform(
+            max_vals_per_channel, sq_weight_tensor_dict, sq_target_node_names
+        )
         model.graph_def = sq_graph_def
         model.model_path = llm_temp_dir
         model.sq_weight_scale_dict = sq_weight_scale_dict

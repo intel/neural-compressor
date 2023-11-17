@@ -94,8 +94,11 @@ class FuseMatMulRedundantDequantizeTransformer(GraphRewriterBase):
             if "U" in quantized_node.attr:
                 new_node.attr["U"].CopyFrom(quantized_node.attr["U"])
             if "is_weight_const" in quantized_node.attr:
-                if self.graph_info[quantized_node.input[1]].node.op == 'QuantizeV2' and \
-                self.graph_info[self.graph_info[quantized_node.input[1]].node.input[0]].node.op == 'ReadVariableOp':
+                if (
+                    self.graph_info[quantized_node.input[1]].node.op == "QuantizeV2"
+                    and self.graph_info[self.graph_info[quantized_node.input[1]].node.input[0]].node.op
+                    == "ReadVariableOp"
+                ):
                     Helper.set_attr_bool(new_node, "is_weight_const", False)
                 else:
                     new_node.attr["is_weight_const"].CopyFrom(quantized_node.attr["is_weight_const"])

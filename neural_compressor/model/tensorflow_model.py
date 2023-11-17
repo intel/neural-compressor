@@ -16,19 +16,19 @@
 # limitations under the License.
 """Class for Tensorflow model."""
 
-import os
-import sys
-import time
 import copy
-import json
-import shutil
-import tempfile
 import importlib
+import json
+import os
+import shutil
+import sys
+import tempfile
+import time
 from abc import abstractmethod
 
 from neural_compressor import config as cfg
-from neural_compressor.model.base_model import BaseModel
 from neural_compressor.adaptor.tf_utils.util import parse_saved_model, reconstruct_saved_model
+from neural_compressor.model.base_model import BaseModel
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import (
     LazyImport,
@@ -312,16 +312,18 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
 
 
 def _get_graph_from_saved_model_v2(saved_model_dir, input_tensor_names, output_tensor_names):
-    from .adaptor.tf_utils.util import parse_saved_model
     from tensorflow.python.saved_model import signature_constants, tag_constants
+
+    from .adaptor.tf_utils.util import parse_saved_model
+
     saved_model_exported_names = [signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY]
     saved_model_tags = set([tag_constants.SERVING])
-    try: 
-        graph_def, _saved_model, _, _, input_names, output_names = parse_saved_model(saved_model_dir, \
-                                                                        True, input_tensor_names, output_tensor_names)
+    try:
+        graph_def, _saved_model, _, _, input_names, output_names = parse_saved_model(
+            saved_model_dir, True, input_tensor_names, output_tensor_names
+        )
     except:
-        return load_saved_model(saved_model_dir, saved_model_tags, 
-                                                                input_tensor_names, output_tensor_names)
+        return load_saved_model(saved_model_dir, saved_model_tags, input_tensor_names, output_tensor_names)
     return graph_def, input_names, output_names
 
 
@@ -943,6 +945,7 @@ class TensorflowBaseModel(BaseModel):
 
 class TensorflowSavedModelModel(TensorflowBaseModel):
     """Build Tensorflow saved model."""
+
     def __init__(self, model, **kwargs):
         """Initialize a Tensorflow model.
 
@@ -1000,7 +1003,7 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
 
     @model.setter
     def model(self, input_model):
-        """Set model in AutoTrackable object"""
+        """Set model in AutoTrackable object."""
         self._auto_trackable = input_model
 
     def report_sparsity(self):
@@ -1071,8 +1074,9 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
 
         os.makedirs(root, exist_ok=True)
 
-        from neural_compressor.adaptor.tf_utils.util import get_tensor_by_name
         from tensorflow.python.saved_model import signature_constants, tag_constants
+
+        from neural_compressor.adaptor.tf_utils.util import get_tensor_by_name
 
         builder = tf.compat.v1.saved_model.builder.SavedModelBuilder(root)
         sigs = {}
@@ -1100,6 +1104,7 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
 
 class TensorflowLLMModel(TensorflowSavedModelModel):
     """The class Tensorflow saved model whose GraphDef exceeding maximum protobuf size of 2GB."""
+
     def __init__(self, model, **kwargs):
         """Initialize a Tensorflow model.
 
@@ -1108,26 +1113,34 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         """
         super(TensorflowLLMModel, self).__init__(model, **kwargs)
 
-        self._model_path = self.kwargs.get('model_path', None)
-        self._weight_name_mapping = self.kwargs.get('weight_name_mapping', None)
-        self._sq_weight_scale_dict = self.kwargs.get('sq_weight_scale_dict', None)
+        self._model_path = self.kwargs.get("model_path", None)
+        self._weight_name_mapping = self.kwargs.get("weight_name_mapping", None)
+        self._sq_weight_scale_dict = self.kwargs.get("sq_weight_scale_dict", None)
         self._weight_tensor_minmax_dict = {}
-        self._model_type = 'llm_saved_model'
-        self._graph_def, self._saved_model, self.func, self.frozen_func, \
-            self._input_tensor_names, self._output_tensor_names = parse_saved_model(model)
+        self._model_type = "llm_saved_model"
+        (
+            self._graph_def,
+            self._saved_model,
+            self.func,
+            self.frozen_func,
+            self._input_tensor_names,
+            self._output_tensor_names,
+        ) = parse_saved_model(model)
 
     @property
     def model_path(self):
-        """Return model path. 
+        """Return model path.
+
         The model path in this class is used as a temp path for intermediate model
         """
         if not self._model_path:
-            self._model_path = self.kwargs.get('model_path', None)
+            self._model_path = self.kwargs.get("model_path", None)
         if not self._model_path:
             self._model_path = cfg.default_workspace
             self._model_path = os.path.abspath(os.path.expanduser(self._model_path))
             if os.path.exists(self._model_path):
                 import shutil
+
                 shutil.rmtree(self._model_path)
             os.makedirs(self._model_path, exist_ok=True)
 
@@ -1136,11 +1149,11 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     @model_path.setter
     def model_path(self, path):
         """Set model path.
+
         The model path in this class is used as a temp path for intermediate model
         """
         self.kwargs.update({"model_path": path})
         self._model_path = path
-
 
     @property
     def graph_def(self):
@@ -1158,12 +1171,12 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         if not self._auto_trackable:
             self._auto_trackable = tf.saved_model.load(self._model)
         return self._auto_trackable
-        
+
     @property
     def weight_name_mapping(self):
         """Return weight_name_mapping function."""
         if not self._weight_name_mapping:
-            self._weight_name_mapping = self.kwargs.get('weight_name_mapping', None)
+            self._weight_name_mapping = self.kwargs.get("weight_name_mapping", None)
         assert self._weight_name_mapping is not None, "weight_name_mapping should not be None!"
         return self._weight_name_mapping
 
@@ -1177,7 +1190,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     def sq_weight_scale_dict(self):
         """Return dict of weight scaler for smooth quantization."""
         if not self._sq_weight_scale_dict:
-            self._sq_weight_scale_dict = self.kwargs.get('sq_weight_scale_dict', None)
+            self._sq_weight_scale_dict = self.kwargs.get("sq_weight_scale_dict", None)
         assert self._weight_name_mapping is not None, "sq_weight_scale_dict should not be None!"
         return self._sq_weight_scale_dict
 
@@ -1198,7 +1211,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         if len(self._input_tensor_names) == 0:
             for input_tensor in self.func.inputs:
                 # skip all ReadVariableOp
-                if 'unknown' in input_tensor.name:
+                if "unknown" in input_tensor.name:
                     continue
                 self._input_tensor_names.append(input_tensor.name)
         return copy.deepcopy(self._input_tensor_names)
@@ -1209,7 +1222,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         if len(tensor_names) == 0:
             logger.warn("Input tensor names is empty.")
             return
-            
+
         assert validate_graph_node(
             self._graph_def, tensor_to_node(tensor_names)
         ), "tensor names {} not in graph".format(tensor_names)
@@ -1244,6 +1257,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     def adjust_weight(self, graph_def):
         """Adjust weight of LLM saved_model by scale."""
         from tensorflow.python.saved_model import load, tag_constants
+
         reconstruct_saved_model(graph_def, self.func, self.frozen_func, self._saved_model, self.model_path)
         model = load.load(self.model_path, [tag_constants.SERVING])
 
@@ -1265,6 +1279,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         root = os.path.abspath(os.path.expanduser(root))
         if os.path.exists(root):
             import shutil
+
             shutil.rmtree(root)
         os.makedirs(root, exist_ok=True)
 
@@ -1385,7 +1400,6 @@ TENSORFLOW_MODELS = {
     "keras": TensorflowSavedModelModel,
     "llm_saved_model": TensorflowLLMModel,
 }
-
 
 
 class TensorflowModel(object):
