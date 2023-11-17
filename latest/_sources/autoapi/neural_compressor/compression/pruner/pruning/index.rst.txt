@@ -104,7 +104,7 @@ Functions
       A config dict object that contains pruners' information.
 
 
-.. py:class:: SparseGPTPruning(config, model, dataloader, framework='pytorch', device: str = None)
+.. py:class:: SparseGPTPruning(config, model, dataloader, framework='pytorch', device=None)
 
 
 
