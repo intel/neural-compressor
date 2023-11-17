@@ -30,6 +30,8 @@ from .fuse_qdq_deconv import FuseNodeStartWithDeconv2d
 from .fuse_qdq_in import FuseNodeStartWithFusedInstanceNorm
 from .fuse_qdq_matmul import FuseNodeStartWithMatmul
 from .fuse_qdq_pooling import FuseNodeStartWithPooling
+from .fuse_qdq_reshape import FuseNodeStartWithReshape
+from .fuse_qdq_transpose import FuseNodeStartWithTranspose
 
 
 class OptimizeQDQGraph(QuantizeGraphBase):
@@ -82,6 +84,8 @@ class OptimizeQDQGraph(QuantizeGraphBase):
         self.register_transformer("FusedBatchNormV3", FuseNodeStartWithFusedBatchNormV3)
         self.register_transformer("_MklFusedInstanceNorm", FuseNodeStartWithFusedInstanceNorm)
         self.register_transformer("AvgPool", FuseNodeStartWithPooling)
+        self.register_transformer("Reshape", FuseNodeStartWithReshape)
+        self.register_transformer("Transpose", FuseNodeStartWithTranspose)
         self.register_transformer("ConcatV2", FuseNodeStartWithConcatV2)
         self.register_transformer("MatMul", FuseNodeStartWithMatmul)
         self.register_transformer("BatchMatMul", FuseNodeStartWithMatmul)
