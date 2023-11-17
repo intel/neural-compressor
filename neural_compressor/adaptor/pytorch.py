@@ -1764,6 +1764,7 @@ class TemplateAdaptor(Adaptor):
         weight_clip=True,
         auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
         default_alpha=0.5,
+        shift_bias=True,  # lyt_os_debug_1011
     ):
         """Convert the model by smooth quant.
 
@@ -1818,8 +1819,9 @@ class TemplateAdaptor(Adaptor):
             weight_clip=weight_clip,
             default_alpha=default_alpha,
             auto_alpha_args=auto_alpha_args,
+            shift_bias=shift_bias,
             **kwargs,
-        )
+        ) # lyt_os_debug_1011
         if self.sq.record_max_info:
             model.sq_max_info = self.sq.max_value_info
         return model
@@ -1906,7 +1908,9 @@ class TemplateAdaptor(Adaptor):
                     continue  # for peft model,lora_B weights is 0.
                 for op_name in absorbed_layer:
                     module = get_module(q_model, op_name)
-                    new_module = SQLinearWrapper(module, 1.0 / scale, input_minmax, alpha)
+                    new_module = SQLinearWrapper(
+                        module, 1.0 / scale, input_minmax, alpha
+                    )  # lyt_os_debug_0822 #removed_1110
                     set_module(q_model, op_name, new_module)
                     logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
@@ -2035,15 +2039,24 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
+        if "smooth_quant_args" in recipe_cfgs and "shift_bias" in recipe_cfgs["smooth_quant_args"]:  # lyt_os_debug_1013
+            do_OS = True if recipe_cfgs["smooth_quant_args"]["shift_bias"] is True else False
+            folding = recipe_cfgs["smooth_quant_args"]["folding"]
         if (
             recipe_cfgs
             and recipe_cfgs.get("smooth_quant", False)
             and not recipe_cfgs["smooth_quant_args"]["folding"]
             and self.approach != "post_training_dynamic_quant"
+            and not do_OS  # lyt_os_Debug_1013
         ):
             return self.qdq_quantize(q_model, tune_cfg)
 
-        if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and recipe_cfgs["smooth_quant_args"]["folding"]:
+        if (
+            recipe_cfgs
+            and recipe_cfgs.get("smooth_quant", False)
+            and recipe_cfgs["smooth_quant_args"]["folding"]
+            and not do_OS
+        ):  # lyt_os_debug_1013
             self._apply_pre_optimization(q_model, tune_cfg)
 
         # For tensorboard display
@@ -2694,16 +2707,20 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     folding = False
             else:
                 folding = recipe_cfgs["smooth_quant_args"]["folding"]
+        if "smooth_quant_args" in recipe_cfgs and "shift_bias" in recipe_cfgs["smooth_quant_args"]:  # lyt_os_debug_1012
+            do_OS = True if recipe_cfgs["smooth_quant_args"]["shift_bias"] is True else False
+        logger.info(f"lyt_debug pytorch.py 2690 do_OS: {do_OS}, folding: {folding}")  # lyt_os_debug_1012
         # Update model parameter when smoothquant folding = False
         if (
             recipe_cfgs
             and recipe_cfgs.get("smooth_quant", False)
             and not folding
             and self.approach != "post_training_dynamic_quant"
+            and not do_OS  # lyt_os_debug_1012
         ):
             return self.qdq_quantize(model, q_model, tune_cfg, dataloader, q_func)
         # Update model parameter when smoothquant folding = True
-        if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding:
+        if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding and not do_OS:  # lyt_os_debug_1012
             self._apply_pre_optimization(model, tune_cfg)
 
         assert (
@@ -3307,7 +3324,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 scale = torch.clip(input_power / weight_power, min=1e-5)
                 for op_name in absorbed_layer:
                     module = copy.deepcopy(get_module(q_model._model, op_name))
-                    new_module = SQLinearWrapper(module, 1.0 / scale, input_minmax, alpha)
+                    new_module = SQLinearWrapper(module, 1.0 / scale, input_minmax, alpha)  # lyt_os_debug_1012
+                    # new_module = SQLinearWrapper(module, 1.0 / scale, input_minmax, alpha)
                     weight_scale = new_module._get_weight_scale()
                     smoothquant_scale_info[op_name] = {
                         "alpha": new_module.alpha,
@@ -3499,13 +3517,25 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
         if (
+            "smooth_quant_args" in recipe_cfgs and "shift_bias" in recipe_cfgs["smooth_quant_args"]
+        ):  # lyt_os_debug_1013-2
+            do_OS = True if recipe_cfgs["smooth_quant_args"]["shift_bias"] is True else False
+            do_OS = True
+            folding = recipe_cfgs["smooth_quant_args"]["folding"]
+        if (
             recipe_cfgs
             and recipe_cfgs.get("smooth_quant", False)
             and not recipe_cfgs["smooth_quant_args"]["folding"]
             and self.approach != "post_training_dynamic_quant"
+            and not do_OS  # lyt_os_debug_1013-2
         ):
             return self.qdq_quantize(q_model, tune_cfg)
-        if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and recipe_cfgs["smooth_quant_args"]["folding"]:
+        if (
+            recipe_cfgs
+            and recipe_cfgs.get("smooth_quant", False)
+            and recipe_cfgs["smooth_quant_args"]["folding"]
+            and not do_OS
+        ):  # lyt_os_debug_1013-2
             self._apply_pre_optimization(q_model, tune_cfg)
 
         self.tune_cfg = tune_cfg

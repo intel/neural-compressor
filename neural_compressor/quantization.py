@@ -210,7 +210,7 @@ def fit(
             logger.debug("Dump user configuration:")
             conf_dict = {}
             dump_class_attrs(conf, conf_dict)
-            logger.info(conf_dict)
+            logger.debug(conf_dict)
             if conf.diagnosis:
                 ni_workload_id = register_neural_insights_workload(
                     workload_location=os.path.abspath(options.workspace),
