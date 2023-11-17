@@ -3135,11 +3135,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         smooth_quant_args = self.recipes.get("smooth_quant_args", {})
                         folding = smooth_quant_args.get("folding", False)
                         if not folding:
-                            if self.sq_minmax_init or self.version.release >= Version("2.2").release:
+                            if self.sq_minmax_init or self.version.release >= Version("2.1.1").release:
                                 from torch.ao.quantization.observer import MinMaxObserver
 
                                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                                    alpha=0.5, act_observer=MinMaxObserver()
+                                    alpha=0.5, act_observer=MinMaxObserver
                                 )
                             else:
                                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
@@ -3322,11 +3322,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         # Check save_qconf_summary part is a workaround for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
         if not hasattr(model._model, "save_qconf_summary") or not hasattr(model._model, "load_qconf_summary"):
-            if self.sq_minmax_init or self.version.release >= Version("2.2").release:
+            if self.sq_minmax_init or self.version.release >= Version("2.1.1").release:
                 from torch.ao.quantization.observer import MinMaxObserver
 
                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                    alpha=0.5, act_observer=MinMaxObserver()
+                    alpha=0.5, act_observer=MinMaxObserver
                 )
             else:
                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
