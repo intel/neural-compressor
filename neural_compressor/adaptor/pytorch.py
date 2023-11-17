@@ -1762,6 +1762,8 @@ class TemplateAdaptor(Adaptor):
         force_re_smooth=False,
         record_max_info=False,
         weight_clip=True,
+        auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
+        default_alpha=0.5,
     ):
         """Convert the model by smooth quant.
 
@@ -1776,6 +1778,10 @@ class TemplateAdaptor(Adaptor):
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
                            False, ops with the same input will share a scale, mainly for performance
             record_max_info: whether record the max info in model for alpha tuning.
+            weight_clip: Whether to clip weight when calculating scales; by default it is on.
+            auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
+                            By default the search space is 0.0-1.0 with step_size 0.1.
+            default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
 
         Returns:
             model: A modified fp32 model, inplace=True.
@@ -1806,7 +1812,13 @@ class TemplateAdaptor(Adaptor):
         if scales_per_op is not None:
             kwargs["scales_per_op"] = scales_per_op
         model._model = self.sq.transform(
-            alpha=alpha, folding=folding, calib_iter=calib_iter, weight_clip=weight_clip, **kwargs
+            alpha=alpha,
+            folding=folding,
+            calib_iter=calib_iter,
+            weight_clip=weight_clip,
+            default_alpha=default_alpha,
+            auto_alpha_args=auto_alpha_args,
+            **kwargs,
         )
         if self.sq.record_max_info:
             model.sq_max_info = self.sq.max_value_info
@@ -3123,11 +3135,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         smooth_quant_args = self.recipes.get("smooth_quant_args", {})
                         folding = smooth_quant_args.get("folding", False)
                         if not folding:
-                            if self.sq_minmax_init or self.version.release >= Version("2.2").release:
+                            if self.sq_minmax_init or self.version.release >= Version("2.1.1").release:
                                 from torch.ao.quantization.observer import MinMaxObserver
 
                                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                                    alpha=0.5, act_observer=MinMaxObserver()
+                                    alpha=0.5, act_observer=MinMaxObserver
                                 )
                             else:
                                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
@@ -3310,11 +3322,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         # Check save_qconf_summary part is a workaround for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
         if not hasattr(model._model, "save_qconf_summary") or not hasattr(model._model, "load_qconf_summary"):
-            if self.sq_minmax_init or self.version.release >= Version("2.2").release:
+            if self.sq_minmax_init or self.version.release >= Version("2.1.1").release:
                 from torch.ao.quantization.observer import MinMaxObserver
 
                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                    alpha=0.5, act_observer=MinMaxObserver()
+                    alpha=0.5, act_observer=MinMaxObserver
                 )
             else:
                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)

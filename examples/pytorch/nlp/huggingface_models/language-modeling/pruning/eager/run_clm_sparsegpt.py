@@ -53,7 +53,6 @@ from neural_compressor.training import WeightPruningConfig
 from timers import CPUTimer, GPUTimer
 from neural_compressor.compression.pruner import model_slim
 from neural_compressor.compression.pruner import parse_auto_slim_config
-
 check_min_version("4.27.0.dev0")
 logger = logging.getLogger(__name__)
 
@@ -163,7 +162,7 @@ def parse_args():
     parser.add_argument(
         "--calibration_dataset_name",
         type=str,
-        default=None,
+        default="wikitext-2-raw-v1",
         help="The name of the pruning dataset to use (via the datasets library).",
     )
     parser.add_argument(
@@ -219,13 +218,13 @@ def parse_args():
     parser.add_argument(
         "--per_device_train_batch_size",
         type=int,
-        default=8,
+        default=1,
         help="Batch size (per device) for the training dataloader.",
     )
     parser.add_argument(
         "--per_device_eval_batch_size",
         type=int,
-        default=8,
+        default=16,
         help="Batch size (per device) for the evaluation dataloader.",
     )
     parser.add_argument(
@@ -270,7 +269,7 @@ def parse_args():
     parser.add_argument(
         "--block_size",
         type=int,
-        default=None,
+        default=2048,
         help=(
             "Optional input sequence length after tokenization. The training dataset will be truncated in block of"
             " this size for training. Default to the model max input length for single sentence inputs (take into"
@@ -347,7 +346,7 @@ def parse_args():
     )
     parser.add_argument(
         "--target_sparsity",
-        type=float, default=0.8,
+        type=float, default=0.5,
         help="Target sparsity of the model."
     )
     parser.add_argument(
@@ -371,11 +370,16 @@ def parse_args():
     parser.add_argument(
         "--trust_remote_code", default=True,
         help="Transformers parameter: use the external repo")
+    
     ### DDP mode config
     parser.add_argument(
         "--local_rank",
         type=int, default=-1,
         help="Automatic DDP Multi-GPU argument, do not modify")
+    
+    parser.add_argument("--eval_fp16", action='store_true',
+                    help=" fp16")
+
     
     args = parser.parse_args()
         
@@ -487,7 +491,7 @@ def main():
         if is_llama:
             tokenizer = transformers.LlamaTokenizer.from_pretrained(args.model_name_or_path)
         else :
-            tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=not args.use_slow_tokenizer)
+            tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=not args.use_slow_tokenizer, trust_remote_code=True)
     else:
         raise ValueError(
             "You are instantiating a new tokenizer from scratch. This is not supported by this script."
@@ -541,6 +545,7 @@ def main():
             load_from_cache_file=not args.overwrite_cache,
             desc="Running tokenizer on dataset",
         )
+        tokenized_datasets.set_format(type="torch", columns=["input_ids"])
 
     if args.block_size is None:
         block_size = tokenizer.model_max_length
@@ -591,6 +596,7 @@ def main():
             load_from_cache_file=not args.overwrite_cache,
             desc=f"Grouping texts in chunks of {block_size}",
         )
+        
     train_dataset = lm_datasets["train"]
     
     # DataLoaders creation:
@@ -656,12 +662,16 @@ def main():
             output_dir += "/before_slim"
         model.save_pretrained(output_dir)
         tokenizer.save_pretrained(output_dir)
+        logger.info(f"The model has been exported to {output_dir}")
         
-    if torch.cuda.is_available():
-        model = model.cuda()
+    if device != 'cpu':
+        model = model.to(device)
+        logger.info(f"*****  Evaluation in GPU mode.  *****")
+    else:
+        logger.info(f"*****  Evaluation in CPU mode.  *****")
     model.eval()
     if args.evaluation_dataset_name != None:
-        dataset_eval = load_dataset( 
+        dataset_eval = load_dataset(
             # for example:use the_pile's validation set for pruning, and lambada dataset for eval
             args.evaluation_dataset_name,
             args.dataset_config_name,
@@ -700,4 +710,5 @@ def main():
     
 if __name__ == "__main__":
     main()
+
 
