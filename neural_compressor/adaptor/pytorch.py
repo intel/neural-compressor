@@ -1821,7 +1821,7 @@ class TemplateAdaptor(Adaptor):
             auto_alpha_args=auto_alpha_args,
             shift_bias=shift_bias,
             **kwargs,
-        ) # lyt_os_debug_1011
+        )  # lyt_os_debug_1011
         if self.sq.record_max_info:
             model.sq_max_info = self.sq.max_value_info
         return model
