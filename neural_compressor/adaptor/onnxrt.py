@@ -1666,6 +1666,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             actorder = self.recipes.get("gptq_args", {}).get("actorder", False)
             mse = self.recipes.get("gptq_args", {}).get("mse", False)
             perchannel = self.recipes.get("gptq_args", {}).get("perchannel", True)
+            accuracy_level = self.recipes.get("gptq_args", {}).get("accuracy_level", 0)
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
             tmp_model = gptq_quantize(
                 tmp_model,
@@ -1677,6 +1678,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 actorder=actorder,
                 mse=mse,
                 perchannel=perchannel,
+                accuracy_level=accuracy_level,
             )
         if "AWQ" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
@@ -1684,6 +1686,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
             assert data_loader is not None, "AWQ WOQ algorithm needs to pass 'calib_dataloader' to quantization.fit()"
             enable_auto_scale = self.recipes.get("awq_args", {}).get("enable_auto_scale", True)
             enable_mse_search = self.recipes.get("awq_args", {}).get("enable_mse_search", True)
+            accuracy_level = self.recipes.get("awq_args", {}).get("accuracy_level", 0)
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
             tmp_model = awq_quantize(
                 tmp_model,
@@ -1692,11 +1695,17 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 n_samples=calib_sampling_size,
                 enable_auto_scale=enable_auto_scale,
                 enable_mse_search=enable_mse_search,
+                accuracy_level=accuracy_level,
             )
         elif "RTN" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
 
-            tmp_model = rtn_quantize(tmp_model, quant_config)
+            accuracy_level = self.recipes.get("rtn_args", {}).get("accuracy_level", 0)
+            tmp_model = rtn_quantize(
+                tmp_model,
+                quant_config,
+                accuracy_level=accuracy_level,
+            )
         tmp_model.q_config = copy.deepcopy(quant_config)
         self._dump_model_op_stats(tmp_model, tune_cfg)
         tmp_model.topological_sort()
