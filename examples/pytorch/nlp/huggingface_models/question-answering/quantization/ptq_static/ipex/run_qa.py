@@ -113,7 +113,9 @@ class ModelArguments:
             "help": "The inference iterations to run for benchmark."
         },
     )
-
+    xpu: bool = field(
+        default=False, metadata={"help": "whether to use xpu"}
+    )
 
 @dataclass
 class DataTrainingArguments:
@@ -650,6 +652,9 @@ def main():
     def eval_func(model):
         return take_eval_steps(model, trainer, metric_name)
 
+    if model_args.xpu:
+        model = model.to("xpu")
+
     if model_args.tune:
         ipex.nn.utils._model_convert.replace_dropout_with_identity(model)
         from neural_compressor.config import PostTrainingQuantConfig
@@ -664,6 +669,8 @@ def main():
         else:
             example_inputs = None  # please provide correct example_inputs if necessary.
         conf = PostTrainingQuantConfig(backend="ipex", calibration_sampling_size=800, example_inputs=example_inputs)
+        if model_args.xpu:
+            conf.device = "xpu"
         q_model = quantization.fit(model,
                                    conf,
                                    calib_dataloader=eval_dataloader,
@@ -692,6 +699,8 @@ def main():
                                      iteration=model_args.iters,
                                      cores_per_instance=4,
                                      num_of_instance=1)
+            if model_args.xpu:
+                b_conf.device = "xpu"
             benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)
         else:
             eval_func(model)

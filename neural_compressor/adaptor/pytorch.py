@@ -3087,6 +3087,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                             static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
                     if self.example_inputs is None:
                         self.example_inputs = get_example_inputs(model, self.q_dataloader)
+                    from neural_compressor.adaptor.torch_utils.util import move_input_device
+                    self.example_inputs = move_input_device(self.example_inputs, device=self.device)
                     if isinstance(self.example_inputs, dict):
                         model = ipex.quantization.prepare(
                             model, static_qconfig, example_kwarg_inputs=self.example_inputs, inplace=True
@@ -3331,7 +3333,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         """The function is used for ipex warm-up inference."""
         if self.example_inputs is not None:
             for _ in range(iterations):
-                if isinstance(self.example_inputs, tuple):
+                if isinstance(self.example_inputs, tuple) or isinstance(self.example_inputs, list):
                     q_model(*self.example_inputs)
                 elif isinstance(self.example_inputs, dict):
                     q_model(**self.example_inputs)
