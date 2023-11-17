@@ -31,7 +31,18 @@ except:
 
     logger = logging.getLogger()
 from collections import UserDict, defaultdict
+from tqdm import tqdm
 
+def enough_memo_store_scale(device, need_space):
+    if device == 'cuda':
+        current_gpu_index = torch.cuda.current_device()
+        total_memory = torch.cuda.get_device_properties(current_gpu_index).total_memory
+        used_memory = torch.cuda.memory_allocated(current_gpu_index)
+        free_space = total_memory - used_memory
+    else:
+        import psutil
+        free_space = psutil.virtual_memory().free
+    return free_space >= need_space
 
 def move_input_to_device(input, device=torch.device("cpu")):
     if isinstance(input, dict) or isinstance(input, UserDict):
@@ -331,6 +342,9 @@ class TorchSmoothQuant:
         self.absorb_to_layer = {}
         self.adjust_alpha_space = False
 
+        self._save_scale = False
+        self.weight_scale_dict = {}
+
     def _get_device(self):
         """Get the model device
         :return:Model device."""
@@ -560,12 +574,7 @@ class TorchSmoothQuant:
         weight_scales_info = {}
         absorb_scales_info = {}
         for index, key in enumerate(absorb_to_layer.keys()):
-            if isinstance(alpha, float):
-                alpha_tmp = alpha
-            elif isinstance(alpha, dict):
-                alpha_tmp = alpha[key]
-            else:
-                alpha_tmp = alpha
+            alpha_tmp = alpha[key] if isinstance(alpha, dict) else alpha
             if alpha_tmp < 0:
                 scale = torch.ones((1), device=self.device)
             else:
@@ -587,13 +596,21 @@ class TorchSmoothQuant:
                     self.max_value_info[key]["absorbed_layer"] = layer_names
                     continue
 
-                scale = cal_scale(input_max, weights, alpha_tmp)
+                if key in self.weight_scale_dict and alpha_tmp in self.weight_scale_dict[key]:
+                    scale = self.weight_scale_dict[key][alpha_tmp]
+                else:
+                    scale = cal_scale(input_max, weights, alpha_tmp)
+
             absorb_scales_info[key] = 1.0 / scale
             absorb_scales_info[key][scale == 0] = 0
             layer_names = absorb_to_layer[key]
             for layer_name in layer_names:
                 ##self._scale_layer_weight(layer_name, scale)
                 weight_scales_info[layer_name] = scale
+                if self._save_scale:
+                    if layer_name not in self.weight_scale_dict:
+                        self.weight_scale_dict[layer_name] = {}
+                    self.weight_scale_dict[layer_name][alpha_tmp] = scale
         return absorb_scales_info, weight_scales_info
 
     def _adjust_parameters(self, absorb_to_layer, input_maxes, alpha=0.5, tuning=False):
@@ -864,8 +881,9 @@ class TorchSmoothQuant:
             logger.info(f"Auto-tuning failed due to no dataloader, using {best_alphas} instead.")
             self._qdq_model_unwrapper_for_auto()
             return best_alphas
+        bar = tqdm(self.dataloader, total=len(self.dataloader), desc="auto tune alpha")
         try:
-            for input, label in self.dataloader:
+            for input, label in bar:
                 loss_alphas = {}
                 best_alphas_per_module = best_alphas
                 if isinstance(best_alphas, dict):
@@ -894,10 +912,12 @@ class TorchSmoothQuant:
                         self.absorb_to_layer, input_maxes, best_alphas, tuning=True
                     )
                     self._update_scales_for_auto(absorb_input_scales, weight_scales)
+                    # does not need to reset the weight_scale_dict, because use the weight of ori_layer, no change
+                    # self.weight_scale_dict = {}
                 if total_cnt >= calib_sample_num:
                     break
         except:
-            for input in self.dataloader:
+            for input in bar:
                 loss_alphas = {}
                 best_alphas_per_module = best_alphas
                 if isinstance(best_alphas, dict):
@@ -927,6 +947,7 @@ class TorchSmoothQuant:
                         self.absorb_to_layer, input_maxes, best_alphas, tuning=True
                     )
                     self._update_scales_for_auto(absorb_input_scales, weight_scales)
+                    # self.weight_scale_dict = {}
                 if total_cnt >= calib_sample_num:
                     break
 
@@ -1019,6 +1040,16 @@ class TorchSmoothQuant:
                     diff_modules = set(self.absorb_to_layer.keys()).difference(input_maxes_abs.keys())
                     for d in diff_modules:
                         del self.absorb_to_layer[d]
+                
+                scale_memo_use = 0
+                for key in self.absorb_to_layer:
+                    for layer in self.absorb_to_layer[key]:
+                        input_max = input_maxes_abs[key]
+                        scale_memo_use += 4 * input_max.shape[0]
+                if alpha == "auto":
+                    alpha_space = (auto_alpha_args['alpha_max'] - auto_alpha_args['alpha_min']) / auto_alpha_args['alpha_step'] + 1
+                    scale_memo_use *= alpha_space
+                self._save_scale = enough_memo_store_scale(self.device, scale_memo_use)
 
                 if alpha == "auto":
                     self.alpha_per_layer = self._auto_tune_alpha(

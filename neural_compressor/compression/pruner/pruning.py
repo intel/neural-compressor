@@ -174,7 +174,7 @@ class SparseGPTPruning(BasePruning):
         if device is None:
             self.dev = model.device
         else:
-            assert "cpu" in device or "cuda" in device, "Only cpu and cuda are supported."
+            assert "cpu" in str(device) or "cuda" in str(device), "Only cpu and cuda are supported."
             self.dev = torch.device(device)
         self._layers = []
         self._dataloader = dataloader
