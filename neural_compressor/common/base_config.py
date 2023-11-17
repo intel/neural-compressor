@@ -212,6 +212,11 @@ class BaseConfig(ABC):
                     if op_name in op_name_config_dict:
                         config_mapping[op_type][op_name] = op_name_config_dict[op_name]
 
+    @staticmethod
+    def _is_op_type(name: str) -> bool:
+        # TODO (Yi), ort and tf need override it
+        return not isinstance(name, str)
+
 
 class ComposableConfig(BaseConfig):
     name = COMPOSABLE_CONFIG
