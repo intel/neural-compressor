@@ -44,7 +44,7 @@ Functions
    :type has_zp: bool
 
 
-.. py:function:: make_matmul_weight_only_node(node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point)
+.. py:function:: make_matmul_weight_only_node(node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point, accuracy_level=0)
 
    Build MatMulFpQ4 node.
 
@@ -62,6 +62,10 @@ Functions
    :type scale: array
    :param zero_point: zero point
    :type zero_point: array
+   :param accuracy_level: accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                          2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                          4 (int8 compute type of jblas kernel)
+   :type accuracy_level: int
 
    :returns: MatMulFpQ4 or MatMulNBits node
              new_inits: initializers of the new node
@@ -125,7 +129,7 @@ Functions
    :rtype: weight
 
 
-.. py:function:: rtn_quantize(model, weight_config={}, num_bits=4, group_size=32, scheme='asym', ratios={})
+.. py:function:: rtn_quantize(model, weight_config={}, num_bits=4, group_size=32, scheme='asym', ratios={}, accuracy_level=0)
 
    Quant the model with round to nearst method.
 
@@ -151,6 +155,10 @@ Functions
    :type scheme: str, optional
    :param ratios: percentile of clip. Defaults to {}.
    :type ratios: dict, optional
+   :param accuracy_level: accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                          2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                          4 (int8 compute type of jblas kernel)
+   :type accuracy_level: int
 
    :returns: fake quantized ONNXModel
    :rtype: model
@@ -187,7 +195,7 @@ Functions
    :rtype: inputs
 
 
-.. py:function:: awq_quantize(model, dataloader, weight_config={}, num_bits=4, group_size=32, scheme='asym', n_samples=128, enable_auto_scale=True, enable_mse_search=True)
+.. py:function:: awq_quantize(model, dataloader, weight_config={}, num_bits=4, group_size=32, scheme='asym', n_samples=128, enable_auto_scale=True, enable_mse_search=True, accuracy_level=0)
 
    Quant the model with Activation-aware Weight quantization(AWQ) method.
 
@@ -219,6 +227,10 @@ Functions
    :type enable_auto_scale: bool, optional
    :param enable_mse_search: whether enable clip for weight by checking mse. Defaults to True.
    :type enable_mse_search: bool, optional
+   :param accuracy_level: accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                          2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                          4 (int8 compute type of jblas kernel)
+   :type accuracy_level: int
 
    :returns: fake quantized ONNXModel
    :rtype: model
@@ -253,7 +265,7 @@ Functions
    :rtype: Q
 
 
-.. py:function:: gptq_quantize(model, dataloader, weight_config={}, num_bits=4, group_size=32, scheme='asym', n_samples=128, percdamp=0.01, blocksize=128, actorder=False, mse=False, perchannel=True)
+.. py:function:: gptq_quantize(model, dataloader, weight_config={}, num_bits=4, group_size=32, scheme='asym', n_samples=128, percdamp=0.01, blocksize=128, actorder=False, mse=False, perchannel=True, accuracy_level=0)
 
    Quant the model with GPTQ method.
 
@@ -291,6 +303,10 @@ Functions
    :type mse: bool, optional
    :param perchannel: whether quantize weight per-channel.
    :type perchannel: bool, optional
+   :param accuracy_level: accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                          2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                          4 (int8 compute type of jblas kernel)
+   :type accuracy_level: int
 
    :returns: fake quantized ONNXModel
    :rtype: model
