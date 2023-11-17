@@ -39,3 +39,44 @@ def register_algo(name):
         return algo_func
 
     return decorator
+
+
+def fetch_module(model, op_name):
+    """Get module with a given op name.
+
+    Args:
+        model (object): the input model.
+        op_name (str): name of op.
+
+    Returns:
+        module (object).
+    """
+    module = model
+    name_list = op_name.split(".")
+    for name in name_list:
+        if hasattr(module, name):
+            module = getattr(module, name)
+        else:
+            module = module
+    return module
+
+
+def set_module(model, op_name, new_module):
+    """Set module with a given op name.
+
+    Args:
+        model (object): the input model.
+        op_name (str): name of op.
+        new_module (object): the input model.
+
+    Returns:
+        module (object).
+    """
+    module = model
+    name_list = op_name.split(".")
+    for name in name_list[:-1]:
+        if hasattr(module, name):
+            module = getattr(module, name)
+        else:
+            module = module
+    setattr(module, name_list[-1], new_module)
