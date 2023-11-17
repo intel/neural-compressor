@@ -1108,13 +1108,40 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         """
         super(TensorflowLLMModel, self).__init__(model, **kwargs)
 
+        self._model_path = self.kwargs.get('model_path', None)
         self._weight_name_mapping = self.kwargs.get('weight_name_mapping', None)
-        self._sq_weight_scale_dict = None
+        self._sq_weight_scale_dict = self.kwargs.get('sq_weight_scale_dict', None)
         self._weight_tensor_minmax_dict = {}
         self._model_type = 'llm_saved_model'
         self._graph_def, self._saved_model, self.func, self.frozen_func, \
             self._input_tensor_names, self._output_tensor_names = parse_saved_model(model)
-    
+
+    @property
+    def model_path(self):
+        """Return model path. 
+        The model path in this class is used as a temp path for intermediate model
+        """
+        if not self._model_path:
+            self._model_path = self.kwargs.get('model_path', None)
+        if not self._model_path:
+            self._model_path = cfg.default_workspace
+            self._model_path = os.path.abspath(os.path.expanduser(self._model_path))
+            if os.path.exists(self._model_path):
+                import shutil
+                shutil.rmtree(self._model_path)
+            os.makedirs(self._model_path, exist_ok=True)
+
+        return self._model_path
+
+    @model_path.setter
+    def model_path(self, path):
+        """Set model path.
+        The model path in this class is used as a temp path for intermediate model
+        """
+        self.kwargs.update({"model_path": path})
+        self._model_path = path
+
+
     @property
     def graph_def(self):
         """Return graph_def."""
@@ -1149,11 +1176,15 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     @property
     def sq_weight_scale_dict(self):
         """Return dict of weight scaler for smooth quantization."""
+        if not self._sq_weight_scale_dict:
+            self._sq_weight_scale_dict = self.kwargs.get('sq_weight_scale_dict', None)
+        assert self._weight_name_mapping is not None, "sq_weight_scale_dict should not be None!"
         return self._sq_weight_scale_dict
 
     @sq_weight_scale_dict.setter
     def sq_weight_scale_dict(self, sq_weight_scale_dict):
         """Set dict of weight scaler for smooth quantization."""
+        self.kwargs.update({"sq_weight_scale_dict": sq_weight_scale_dict})
         self._sq_weight_scale_dict = sq_weight_scale_dict
 
     @property
@@ -1213,14 +1244,14 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     def adjust_weight(self, graph_def):
         """Adjust weight of LLM saved_model by scale."""
         from tensorflow.python.saved_model import load, tag_constants
-        reconstruct_saved_model(graph_def, self.func, self.frozen_func, self._saved_model, self._model_path)
-        model = load.load(self._model_path, [tag_constants.SERVING])
+        reconstruct_saved_model(graph_def, self.func, self.frozen_func, self._saved_model, self.model_path)
+        model = load.load(self.model_path, [tag_constants.SERVING])
 
         for idx, weight_tensor in enumerate(model.variables):
             parsed_weight_name = self.weight_name_mapping(weight_tensor.name)
-            if parsed_weight_name in self._sq_weight_scale_dict:
+            if parsed_weight_name in self.sq_weight_scale_dict:
                 weight_array = np.transpose(weight_tensor, [1, 0])
-                weight_array *= self._sq_weight_scale_dict[parsed_weight_name]
+                weight_array *= self.sq_weight_scale_dict[parsed_weight_name]
                 weight_array = np.transpose(weight_array, [1, 0])
                 tf.compat.v1.assign(model.variables[idx], weight_array)
                 if parsed_weight_name not in self._weight_tensor_minmax_dict:
@@ -1242,7 +1273,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         reconstruct_saved_model(graph_def, func, frozen_func, _saved_model, root)
         logger.info("Save quantized model to {}.".format(root))
         # delete the LLM file saved in this temporary path
-        os.remove(self._model_path)
+        os.remove(self.model_path)
 
 
 class TensorflowQATModel(TensorflowSavedModelModel):

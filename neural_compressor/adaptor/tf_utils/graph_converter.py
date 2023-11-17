@@ -200,7 +200,7 @@ class GraphConverter:
         if self.calib_func:
             self.calib_func(model.model)
             return
-            
+
         if model.model_type == 'llm_saved_model':
             self._inference_llm(model)
             return
@@ -297,7 +297,7 @@ class GraphConverter:
         input_tensor_names = model.input_tensor_names
         auto_trackable = model.model
         infer = auto_trackable.signatures["serving_default"]
-        for idx, (inputs, _) in enumerate(self.dataloader):
+        for idx, (inputs, _) in enumerate(self.data_loader):
             assert len(input_tensor_names) == len(inputs), "inputs len must equal with input_tensor"
             feed_dict = {}
             for i, input_tensor_name in enumerate(input_tensor_names):

@@ -257,7 +257,7 @@ def evaluate(model, tf_eval_dataset=mydata):
             break
     latency = np.array(latency_list[warmup:]).mean() / 1
     acc = correct/(iteration+1)
-    return latency, acc
+    return acc
 
 def weight_name_mapping(name):
     """The function that maps name from AutoTrackable variables to graph nodes"""
@@ -282,6 +282,7 @@ def main():
                                         excluded_precisions=["bf16"],##use basic tuning
                                         recipes=recipes,
                                         op_type_dict=op_type_dict, 
+                                        calibration_sampling_size=[1],
                                         accuracy_criterion=AccuracyCriterion()
                                         )
         model = Model('./gpt-j-6B', modelType='llm_saved_model')
