@@ -78,7 +78,7 @@ class TestQuantizationConfig(unittest.TestCase):
                     "weight_bits": 4,
                     "weight_group_size": 32,
                 },
-                "operator_name": {
+                "local": {
                     "fc1": {
                         "weight_dtype": "int8",
                         "weight_bits": 4,
@@ -98,7 +98,7 @@ class TestQuantizationConfig(unittest.TestCase):
         # quant_config._set_operator_type(torch.nn.Linear, linear_config)
         # set operator instance
         fc1_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="int8")
-        quant_config.set_operator_name("model.fc1", fc1_config)
+        quant_config.set_local("model.fc1", fc1_config)
         # get model and quantize
         fp32_model = build_simple_torch_model()
         qmodel = quantize(fp32_model, quant_config)
@@ -114,7 +114,7 @@ class TestQuantizationConfig(unittest.TestCase):
                     "weight_bits": 4,
                     "weight_group_size": 32,
                 },
-                "operator_name": {
+                "local": {
                     "fc1": {
                         "weight_dtype": "int8",
                         "weight_bits": 4,
@@ -130,10 +130,10 @@ class TestQuantizationConfig(unittest.TestCase):
 
         quant_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4")
         fc1_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="int8")
-        quant_config.set_operator_name("model.fc1", fc1_config)
+        quant_config.set_local("model.fc1", fc1_config)
         config_dict = quant_config.to_dict()
         self.assertIn("global", config_dict)
-        self.assertIn("operator_name", config_dict)
+        self.assertIn("local", config_dict)
 
     def test_same_type_configs_addition(self):
         from neural_compressor.torch import RTNWeightQuantConfig
@@ -152,7 +152,7 @@ class TestQuantizationConfig(unittest.TestCase):
                     "weight_bits": 8,
                     "weight_group_size": 32,
                 },
-                "operator_name": {
+                "local": {
                     "fc1": {
                         "weight_dtype": "int8",
                         "weight_bits": 4,
@@ -163,9 +163,9 @@ class TestQuantizationConfig(unittest.TestCase):
         q_config2 = RTNWeightQuantConfig.from_dict(quant_config2["rtn_weight_only_quant"])
         q_config3 = q_config + q_config2
         q3_dict = q_config3.to_dict()
-        for op_name, op_config in quant_config2["rtn_weight_only_quant"]["operator_name"].items():
+        for op_name, op_config in quant_config2["rtn_weight_only_quant"]["local"].items():
             for attr, val in op_config.items():
-                self.assertEqual(q3_dict["operator_name"][op_name][attr], val)
+                self.assertEqual(q3_dict["local"][op_name][attr], val)
         self.assertNotEqual(
             q3_dict["global"]["weight_bits"], quant_config2["rtn_weight_only_quant"]["global"]["weight_bits"]
         )

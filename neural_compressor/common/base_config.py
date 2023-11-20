@@ -23,7 +23,7 @@ from collections import OrderedDict
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import BASE_CONFIG, COMPOSABLE_CONFIG, GLOBAL, OPERATOR_NAME
+from neural_compressor.common.utility import BASE_CONFIG, COMPOSABLE_CONFIG, GLOBAL, LOCAL
 
 logger = Logger().get_logger()
 
@@ -93,7 +93,7 @@ class BaseConfig(ABC):
     def operator_name_config(self, config):
         self._operator_name_config = config
 
-    def set_operator_name(self, operator_name: str, config: BaseConfig) -> BaseConfig:
+    def set_local(self, operator_name: str, config: BaseConfig) -> BaseConfig:
         if operator_name in self.operator_name_config:
             logger.warning("The configuration for %s has already been set, update it.", operator_name)
         if self.global_config is None:
@@ -102,7 +102,7 @@ class BaseConfig(ABC):
         return self
 
     def _set_operator_type(self, operator_type: Union[str, Callable], config: BaseConfig) -> BaseConfig:
-        # hide it from user, as we can use set_operator_name with regular expression to convert its functionality
+        # hide it from user, as we can use set_local with regular expression to convert its functionality
         self.operator_type_config[operator_type] = config
         return self
 
@@ -112,9 +112,9 @@ class BaseConfig(ABC):
         for param in params_list:
             global_config[param] = getattr(self, param)
         if bool(self.operator_name_config):
-            result[OPERATOR_NAME] = {}
+            result[LOCAL] = {}
             for op_name, config in self.operator_name_config.items():
-                result[OPERATOR_NAME][op_name] = config.to_dict()
+                result[LOCAL][op_name] = config.to_dict()
             result[GLOBAL] = global_config
         else:
             result = global_config
@@ -132,10 +132,10 @@ class BaseConfig(ABC):
             The constructed config.
         """
         config = cls(**config_dict.get(GLOBAL, {}))
-        operator_config = config_dict.get(OPERATOR_NAME, {})
+        operator_config = config_dict.get(LOCAL, {})
         if operator_config:
             for op_name, op_config in operator_config.items():
-                config.set_operator_name(op_name, cls(**op_config))
+                config.set_local(op_name, cls(**op_config))
         return config
 
     @classmethod
@@ -189,7 +189,7 @@ class BaseConfig(ABC):
     def __add__(self, other: BaseConfig) -> BaseConfig:
         if isinstance(other, type(self)):
             for op_name, config in other.operator_name_config.items():
-                self.set_operator_name(op_name, config)
+                self.set_local(op_name, config)
             return self
         else:
             return ComposableConfig(configs=[self, other])

@@ -20,7 +20,7 @@
 
 # constants for configs
 GLOBAL = "global"
-OPERATOR_NAME = "operator_name"
+LOCAL = "local"
 
 # config name
 BASE_CONFIG = "base_config"
