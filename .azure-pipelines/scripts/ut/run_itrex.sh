@@ -9,14 +9,14 @@ bash /intel-extension-for-transformers/.github/workflows/script/prepare_env.sh
 bash /intel-extension-for-transformers/.github/workflows/script/install_binary.sh
 
 # prepare test env
-pip install -r /intel-extension-for-transformers/test/requirements.txt
+pip install -r /intel-extension-for-transformers/tests/requirements.txt
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_itrex.log
 
 # run unit test
 pip install pytest
-pytest -v -s --log-cli-level=WARNING --junitxml=test-ITREX.xml /intel-extension-for-transformers/test -k "not test_tf*" 2>&1 | tee -a ${ut_log_name}
+pytest -v -s --log-cli-level=WARNING --junitxml=test-ITREX.xml /intel-extension-for-transformers/tests -k "not test_tf*" 2>&1 | tee -a ${ut_log_name}
 
 xml_data=$(cat test-ITREX.xml)
 errors=$(echo "$xml_data" | grep -o 'errors="[0-9]*"' | sed 's/errors="\([0-9]*\)"/\1/')
