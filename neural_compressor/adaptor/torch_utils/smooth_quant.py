@@ -1136,7 +1136,7 @@ class TorchSmoothQuant:
                     )
                     if self.to_shift_bias:  # lyt_os_add_1110
                         self.absorb_biasS_layers, _ = self._trace(
-                            op_types, to_shift_bias=self.to_shift_bias
+                            str_op_types, to_shift_bias=self.to_shift_bias
                         )  # lyt_os_debug_1108
                 if self.allow_absorb:
                     if self.to_shift_bias:

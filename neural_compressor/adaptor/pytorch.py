@@ -2716,7 +2716,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             and recipe_cfgs.get("smooth_quant", False)
             and not folding
             and self.approach != "post_training_dynamic_quant"
-            and not do_OS  # lyt_os_debug_1012
+            # and not do_OS  # lyt_os_debug_1012 #commented_1120
         ):
             return self.qdq_quantize(model, q_model, tune_cfg, dataloader, q_func)
         # Update model parameter when smoothquant folding = True
