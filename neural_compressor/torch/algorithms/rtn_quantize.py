@@ -35,12 +35,13 @@ def _apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeight
     num_bits = quant_config.weight_bits
     scheme = quant_config.weight_sym
     group_size = quant_config.weight_group_size
+    return_int = quant_config.return_int
     return torch_rtn_quantize(
         module,
         num_bits,
         group_size,
         scheme,
-        return_int=False,
+        return_int=return_int,
         data_type=dtype,
         enable_full_range=enable_full_range,
         enable_mse_search=enable_mse_search,
