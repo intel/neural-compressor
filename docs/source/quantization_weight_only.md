@@ -98,6 +98,14 @@ To support low memory inference, Neural Compressor implemented WeightOnlyLinear,
 |  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8\|16\|32\|64]   |
 |  compression_dim  |       1       |   0 means output channel while 1 means input channel   |
 |  scale_dtype  |       torch.float32       |  Data type for scale and bias   |
+|  use_hf_format  |     False       |  Whether to use the popular format present on HuggingFace hub   |
+
+**Note:** HuggingFace format is quite special, the main differences are as follows:
+
+> 1: Compression Dimension: weight = 1, zero = 0 and both are transposed.   
+> 2: Zero Point: zero_point-= 1 before compression. zero_point is always required even for sym.    
+> 3: Group Index: Use the same number for a group instead of recording channel order.    
+
 
 ### **User Code Example**
 ```python
@@ -121,12 +129,14 @@ conf = PostTrainingQuantConfig(
 )
 q_model = quantization.fit(model, conf, eval_func=eval_func)
 q_model.save("saved_results")
-compressed_model = q_model.export_compressed_model(
-    compression_dtype=torch.int32,
-    compression_dim=1,
-    scale_dtype=torch.float16,
-)
+compressed_model = q_model.export_compressed_model()
 torch.save(compressed_model.state_dict(), "compressed_model.pt")
+# or
+model = Model()
+compressed_model = export_compressed_model(
+    model,
+    saved_dir="saved_results",
+)
 ```
 
 The saved_results folder contains two files: `best_model.pt` and `qconfig.json`, and the generated q_model is a fake quantized model.
