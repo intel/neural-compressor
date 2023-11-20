@@ -28,6 +28,9 @@ function init_params {
       --quant_format=*)
           quant_format=$(echo $var |cut -f2 -d=)
       ;;
+      --device=*)
+          device=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -41,6 +44,7 @@ function run_tuning {
             --label_path ${label_path-${dataset_location}/../val.txt} \
             --output_model ${output_model} \
             --quant_format ${quant_format-default} \
+            --device ${device-cpu} \
             --tune
 }
 
