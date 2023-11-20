@@ -3336,6 +3336,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         "weight_scale_after_mul": weight_scale,
                     }
                     logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
+                    logger.info(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
         # Check save_qconf_summary part is a workaround for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
