@@ -35,7 +35,7 @@ class TestQuantizationConfig(unittest.TestCase):
 
     def setUp(self):
         # print the test name
-        logger.info("Running TestQuantizationConfig test: %s".format())
+        logger.info(f"Running TestQuantizationConfig test: {self.id()}")
 
     def test_quantize_rtn_from_dict_default(self):
         logger.info("test_quantize_rtn_from_dict_default")

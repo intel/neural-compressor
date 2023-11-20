@@ -36,7 +36,7 @@ class TestRTNQuant(unittest.TestCase):
 
     def setUp(self):
         # print the test name
-        logger.info("Running TestRTNQuant test: %s".format())
+        logger.info(f"Running TestRTNQuant test: {self.id()}")
 
     def _apply_rtn(self, quant_config):
         logger.info(f"Test RTN with config {quant_config}")
@@ -63,8 +63,7 @@ class TestRTNQuant(unittest.TestCase):
         }
         from itertools import product
 
-        keys = RTNWeightQuantConfig.params_list
-        keys.pop(-1)  # pop return_int
+        keys = RTNWeightQuantConfig.params_list[:-1]
         for value in product(*rnt_options.values()):
             d = dict(zip(keys, value))
             if (d["weight_dtype"] != "int" and d["weight_bits"] != 4) or (
@@ -80,9 +79,6 @@ class TestRTNQuant(unittest.TestCase):
         for return_int in [True, False]:
             quant_config = RTNWeightQuantConfig(return_int=return_int)
             qmodel = self._apply_rtn(quant_config)
-            if return_int:
-                recovered_fc1 = qmodel.fc1.recover()
-                self.assertIsNotNone(recovered_fc1)
 
     def test_rtn_recover(self):
         from neural_compressor.torch import RTNWeightQuantConfig
