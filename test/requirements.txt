@@ -9,7 +9,7 @@ neural-compressor
 onnx
 onnxruntime
 onnxruntime-extensions; python_version < '3.11'
-optimum
+optimum<1.14.0
 tensorflow-addons
 tf2onnx
 tf_slim

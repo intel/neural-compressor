@@ -7,5 +7,5 @@ onnx
 onnxruntime
 onnxruntime-extensions; python_version < '3.11'
 datasets
-optimum
+optimum<1.14.0
 evaluate
