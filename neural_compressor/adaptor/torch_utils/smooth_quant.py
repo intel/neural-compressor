@@ -31,18 +31,22 @@ except:
 
     logger = logging.getLogger()
 from collections import UserDict, defaultdict
+
 from tqdm import tqdm
 
+
 def enough_memo_store_scale(device, need_space):
-    if device == 'cuda':
+    if device == "cuda":
         current_gpu_index = torch.cuda.current_device()
         total_memory = torch.cuda.get_device_properties(current_gpu_index).total_memory
         used_memory = torch.cuda.memory_allocated(current_gpu_index)
         free_space = total_memory - used_memory
     else:
         import psutil
+
         free_space = psutil.virtual_memory().free
     return free_space >= need_space
+
 
 def move_input_to_device(input, device=torch.device("cpu")):
     if isinstance(input, dict) or isinstance(input, UserDict):
@@ -1056,14 +1060,16 @@ class TorchSmoothQuant:
                     diff_modules = set(self.absorb_to_layer.keys()).difference(input_maxes_abs.keys())
                     for d in diff_modules:
                         del self.absorb_to_layer[d]
-                
+
                 scale_memo_use = 0
                 for key in self.absorb_to_layer:
                     for layer in self.absorb_to_layer[key]:
                         input_max = input_maxes_abs[key]
                         scale_memo_use += 4 * input_max.shape[0]
                 if alpha == "auto":
-                    alpha_space = (auto_alpha_args['alpha_max'] - auto_alpha_args['alpha_min']) / auto_alpha_args['alpha_step'] + 1
+                    alpha_space = (auto_alpha_args["alpha_max"] - auto_alpha_args["alpha_min"]) / auto_alpha_args[
+                        "alpha_step"
+                    ] + 1
                     scale_memo_use *= alpha_space
                 self._save_scale = enough_memo_store_scale(self.device, scale_memo_use)
 
