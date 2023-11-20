@@ -1,4 +1,5 @@
 #!/bin/bash
+set -xe
 source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
 echo "run itrex ut..."
