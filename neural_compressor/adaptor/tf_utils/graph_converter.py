@@ -869,10 +869,7 @@ class GraphConverter:
 
         if self.quantized_node_info:
             sampling_graph_def.library.CopyFrom(self.model.graph_def.library)
-            if self._sampling_model.model_type == 'llm_saved_model':
-                self._sampling_model.adjust_weight(sampling_graph_def)
-            else:
-                self._sampling_model.graph_def = sampling_graph_def
+            self._sampling_model.graph_def = sampling_graph_def
             self._sampling_model.output_tensor_names = output_tensor_names
             tmp_dump_file = tempfile.mkstemp(suffix=".log")[1]
             with CaptureOutputToFile(tmp_dump_file):

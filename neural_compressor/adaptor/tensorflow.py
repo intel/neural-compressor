@@ -763,15 +763,15 @@ class TensorFlowAdaptor(Adaptor):
             if i.op in fp32_op_list:
                 if "T" not in i.attr and i.op != "Cast":
                     continue
-                if i.attr["T"].type == dtypes.bfloat16:
-                    res[i.op]["BF16"] += 1
-                elif i.attr["T"].type in (dtypes.quint8, dtypes.qint8):
-                    res[i.op]["INT8"] += 1
-                elif i.op == "Cast":
+                if i.op == "Cast":
                     if i.attr["DstT"].type == dtypes.bfloat16:
                         res[i.op]["BF16"] += 1
                     elif i.attr["DstT"].type == dtypes.float32:
                         res[i.op]["FP32"] += 1
+                elif i.attr["T"].type == dtypes.bfloat16:
+                    res[i.op]["BF16"] += 1
+                elif i.attr["T"].type in (dtypes.quint8, dtypes.qint8):
+                    res[i.op]["INT8"] += 1
                 else:
                     res[i.op]["FP32"] += 1
 

@@ -1141,7 +1141,6 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         self.kwargs.update({"model_path": path})
         self._model_path = path
 
-
     @property
     def graph_def(self):
         """Return graph_def."""
@@ -1151,10 +1150,14 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     def graph_def(self, graph_def):
         """Set graph definition."""
         self._graph_def = graph_def
+        # the attributes of some nodes can't be correctly read if don't import the graph_def
+        tf.import_graph_def(self._graph_def, name='')
 
     @property
     def model(self):
         """Return model in AutoTrackable Format."""
+        if self._sq_weight_scale_dict:
+                self.adjust_weight(self.graph_def)
         if not self._auto_trackable:
             self._auto_trackable = tf.saved_model.load(self._model)
         return self._auto_trackable
@@ -1197,7 +1200,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         """Return input tensor names."""
         if len(self._input_tensor_names) == 0:
             for input_tensor in self.func.inputs:
-                # skip all ReadVariableOp
+                # skip all inputs for ReadVariableOp
                 if 'unknown' in input_tensor.name:
                     continue
                 self._input_tensor_names.append(input_tensor.name)
