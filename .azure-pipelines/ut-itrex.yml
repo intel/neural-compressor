@@ -17,7 +17,7 @@ pr:
       - test/neural_coder
       - test/3x
 
-pool: ICX-16C
+pool: MODEL_PERF_TEST
 
 variables:
   UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
