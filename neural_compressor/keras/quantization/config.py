@@ -34,47 +34,10 @@ class Backend(Enum):
     ITEX = "itex"
 
 
-class OperatorConfig(NamedTuple):
-    config: BaseConfig
-    operators: List[Union[str, Callable]]
-    backend: List[Backend]
-    valid_func_list: List[Callable] = []
-
-
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=KERAS_STATIC_QUANT)
 class KerasStaticQuantConfig(PostTrainingQuantConfig):
     """Config class for keras static quantization."""
-
-    supported_configs: List[OperatorConfig] = []
-    params_list = []
     name = KERAS_STATIC_QUANT
-
-    @classmethod
-    def register_supported_configs(cls) -> List[OperatorConfig]:
-        supported_configs = []
-        keras_static_quant_config = KerasStaticQuantConfig()
-        operators = [tf.keras.layers.dense, tf.keras.layers.conv2d]
-        supported_configs.append(
-            OperatorConfig(config=keras_static_quant_config, operators=operators, backend=Backend.DEFAULT)
-        )
-        cls.supported_configs = supported_configs
-
-
-# TODO(Yi) run `register_supported_configs` for all registered config.
-KerasStaticQuantConfig.register_supported_configs()
-
-
-def get_all_registered_configs() -> Dict[str, BaseConfig]:
-    return registered_configs.get(FRAMEWORK_NAME, {})
-
-
-def parse_config_from_dict(config_dict: Dict) -> BaseConfig:
-    keras_registered_configs = get_all_registered_configs()
-    for key, val in config_dict.items():
-        if key in keras_registered_configs:
-            config = keras_registered_configs[key].from_dict(val)
-            return config
-        # TODO(Yi) parse multiple configs after support configs add
 
 
 def get_default_keras_config() -> KerasStaticQuantConfig:
