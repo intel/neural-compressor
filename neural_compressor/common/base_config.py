@@ -64,8 +64,8 @@ class BaseConfig(ABC):
         self._global_config: Optional[BaseConfig] = None
         # For PyTorch, operator_type is the collective name for module type and functional operation type,
         # for example, `torch.nn.Linear`, and `torch.nn.functional.linear`.
-        self._operator_type_config: Dict[Union[str, Callable], Optional[BaseConfig]] = {}
-        self._operator_name_config: Dict[str, Optional[BaseConfig]] = {}
+        # local config is the collections of operator_type configs and operator configs
+        self._local_config: Dict[str, Optional[BaseConfig]] = {}
 
     @property
     def global_config(self):
@@ -78,32 +78,19 @@ class BaseConfig(ABC):
         self._global_config = config
 
     @property
-    def operator_type_config(self):
-        return self._operator_type_config
+    def local_config(self):
+        return self._local_config
 
-    @operator_type_config.setter
-    def operator_type_config(self, config):
-        self._operator_type_config = config
-
-    @property
-    def operator_name_config(self):
-        return self._operator_name_config
-
-    @operator_name_config.setter
-    def operator_name_config(self, config):
-        self._operator_name_config = config
+    @local_config.setter
+    def local_config(self, config):
+        self._local_config = config
 
     def set_local(self, operator_name: str, config: BaseConfig) -> BaseConfig:
-        if operator_name in self.operator_name_config:
+        if operator_name in self.local_config:
             logger.warning("The configuration for %s has already been set, update it.", operator_name)
         if self.global_config is None:
             self.global_config = self.__class__(**self.to_dict())
-        self.operator_name_config[operator_name] = config
-        return self
-
-    def _set_operator_type(self, operator_type: Union[str, Callable], config: BaseConfig) -> BaseConfig:
-        # hide it from user, as we can use set_local with regular expression to convert its functionality
-        self.operator_type_config[operator_type] = config
+        self.local_config[operator_name] = config
         return self
 
     def to_dict(self, params_list=[], operator2str=None):
@@ -111,9 +98,9 @@ class BaseConfig(ABC):
         global_config = {}
         for param in params_list:
             global_config[param] = getattr(self, param)
-        if bool(self.operator_name_config):
+        if bool(self.local_config):
             result[LOCAL] = {}
-            for op_name, config in self.operator_name_config.items():
+            for op_name, config in self.local_config.items():
                 result[LOCAL][op_name] = config.to_dict()
             result[GLOBAL] = global_config
         else:
@@ -188,7 +175,7 @@ class BaseConfig(ABC):
 
     def __add__(self, other: BaseConfig) -> BaseConfig:
         if isinstance(other, type(self)):
-            for op_name, config in other.operator_name_config.items():
+            for op_name, config in other.local_config.items():
                 self.set_local(op_name, config)
             return self
         else:
@@ -204,7 +191,7 @@ class BaseConfig(ABC):
         for config in config_list:
             global_config = config.global_config
             op_type_config_dict = config.operator_type_config
-            op_name_config_dict = config.operator_name_config
+            op_name_config_dict = config.local_config
             for op_name, op_type in model_info:
                 config_mapping[op_type][op_name] = global_config
                 if op_type in op_type_config_dict:

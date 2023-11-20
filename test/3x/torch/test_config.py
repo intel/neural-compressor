@@ -93,9 +93,6 @@ class TestQuantizationConfig(unittest.TestCase):
         from neural_compressor.torch import RTNWeightQuantConfig, quantize
 
         quant_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4")
-        # # set operator type
-        # linear_config = RTNWeightQuantConfig(weight_bits=6, weight_dtype="nf4")
-        # quant_config._set_operator_type(torch.nn.Linear, linear_config)
         # set operator instance
         fc1_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="int8")
         quant_config.set_local("model.fc1", fc1_config)
@@ -123,7 +120,7 @@ class TestQuantizationConfig(unittest.TestCase):
             }
         }
         config = RTNWeightQuantConfig.from_dict(quant_config)
-        self.assertIsNotNone(config.operator_name_config)
+        self.assertIsNotNone(config.local_config)
 
     def test_config_to_dict(self):
         from neural_compressor.torch import RTNWeightQuantConfig
