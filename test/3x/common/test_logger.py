@@ -29,6 +29,15 @@ class TestLogger(unittest.TestCase):
         logger.warning(({"msg": "call logger warning function"}, {"msg2": "done"}))
         logger.warning(({"msg": [{"sub_msg": "call logger"}, {"sub_msg2": "call warning function"}]}, {"msg2": "done"}))
 
+    def test2(self):
+        from neural_compressor.common import debug, error, fatal, info, level, log, warn, warning
+
+        fn_lst = [info, debug, warn, warning, error, fatal]
+        msg_lst = ["log msg", {"msg": "call logger function"}, {"msg": {("bert", "embedding"): {"op": ("a", "b")}}}]
+        for fn in fn_lst:
+            for msg in msg_lst:
+                fn(msg)
+
 
 if __name__ == "__main__":
     unittest.main()

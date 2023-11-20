@@ -431,19 +431,12 @@ class WeightOnlyLinear(torch.nn.Module):
             self.register_buffer("bias", torch.zeros(self.out_features, dtype=self.float_type).to(device))
         else:
             self.bias = None
-        if gptq_perm:
-            self.register_buffer("gptq_perm", torch.zeros(in_features, dtype=torch.int32).to(device))
-        else:
-            self.gptq_perm = None
 
     def pack(self, int_weight, scale, zp, bias, gptq_perm=None):
         int_weight = int_weight.to(self.device)
         if bias is not None:
             assert hasattr(self, "bias"), "bias is not set when initializing."
             self.bias = bias.type(self.float_type).to(self.device)
-        if gptq_perm is not None:
-            assert hasattr(self, "gptq_perm"), "gptq_perm is not set when initializing."
-            self.gptq_perm = gptq_perm.type(torch.int32).to(self.device)
         assert (
             scale.shape == self.scale.shape
         ), f"Scale shape is mismatched, got self.scale.shape: {self.scale.shape} and scale.shape: {scale.shape}"
@@ -533,9 +526,6 @@ class WeightOnlyLinear(torch.nn.Module):
             weight = weight.reshape(-1, self.groupsize)
             scale = self.scale.reshape(-1, 1)
             fp32_weight = (weight * scale).reshape(self.out_features, -1)
-        if self.gptq_perm is not None:
-            invperm = torch.argsort(self.gptq_perm)
-            fp32_weight = fp32_weight[:, invperm]
         return fp32_weight
 
     def forward(self, input):
@@ -620,9 +610,6 @@ def rtn_quantize(
         elif scheme == "sym":  # nf4/fp4 is always [-7,7]
             log_msg += f", enable_full_range={enable_full_range}"
         logger.debug(log_msg)
-        if num_bits <= 0:
-            logger.info(f"Skip {name}")
-            continue
         weight = m.weight.T if group_dim == 0 else m.weight
         if enable_mse_search:
             quantile = search_clip(m, num_bits, group_size, scheme, data_type, enable_full_range)
