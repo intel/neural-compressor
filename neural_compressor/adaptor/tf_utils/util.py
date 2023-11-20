@@ -668,6 +668,7 @@ def get_weight_from_input_tensor(model, input_tensor_names, op_types):
 
 def apply_inlining(func):
     """Apply an inlining optimization to the function's graph definition.
+
     Args:
         func: A concrete function get from saved_model.
 
@@ -719,6 +720,7 @@ def apply_inlining(func):
 
 def construct_function_from_graph_def(func, graph_def, frozen_func=None):
     """Rebuild function from graph_def.
+
     Args:
         func: The original concrete function get from saved_model.
         graph_def: The optimized graph after applying inlining optimization.
@@ -757,6 +759,7 @@ def construct_function_from_graph_def(func, graph_def, frozen_func=None):
 
 def parse_saved_model(model, freeze=False, input_tensor_names=[], output_tensor_names=[]):
     """Parse a input saved_model.
+    
     Args:
         model(string or AutoTrackable object): The input saved_model.
 

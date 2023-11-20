@@ -1045,9 +1045,12 @@ class GraphRewriterHelper:
             return res
 
         def separate(line):
-            """This function is to separate the strings such as
-            ';slice__print__;__max:[1];slice__print__;__min:[-1]'
-            to [';slice__print__;__max:[1]', ';slice__print__;__min:[-1]']"""
+            """This function is to separate the strings.
+
+            Example:
+                ';slice__print__;__max:[1];slice__print__;__min:[-1]' --> 
+                [';slice__print__;__max:[1]', ';slice__print__;__min:[-1]']
+            """
             separated_lines = []
             for subline in line.split("];"):
                 if not subline.startswith(";"):
