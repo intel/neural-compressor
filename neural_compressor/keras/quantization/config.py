@@ -37,6 +37,7 @@ class Backend(Enum):
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=KERAS_STATIC_QUANT)
 class KerasStaticQuantConfig(PostTrainingQuantConfig):
     """Config class for keras static quantization."""
+
     name = KERAS_STATIC_QUANT
 
 
