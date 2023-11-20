@@ -21,6 +21,7 @@ algos_mapping: Dict[str, Callable] = {}
 
 def register_algo(name):
     """Decorator function to register algorithms in the algos_mapping dictionary.
+
     Usage example:
         @register_algo(name=example_algo)
         def example_algo(model: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:

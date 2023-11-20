@@ -22,9 +22,9 @@ from typing import Callable, Dict, List, NamedTuple, Union
 
 import tensorflow as tf
 
-from neural_compressor.config import PostTrainingQuantConfig
-from neural_compressor.common.utility import KERAS_STATIC_QUANT
 from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
+from neural_compressor.common.utility import KERAS_STATIC_QUANT
+from neural_compressor.config import PostTrainingQuantConfig
 
 FRAMEWORK_NAME = "keras"
 
@@ -40,12 +40,13 @@ class OperatorConfig(NamedTuple):
     backend: List[Backend]
     valid_func_list: List[Callable] = []
 
+
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=KERAS_STATIC_QUANT)
 class KerasStaticQuantConfig(PostTrainingQuantConfig):
     """Config class for keras static quantization."""
+
     supported_configs: List[OperatorConfig] = []
-    params_list = [
-    ]
+    params_list = []
     name = KERAS_STATIC_QUANT
 
     @classmethod
@@ -53,8 +54,9 @@ class KerasStaticQuantConfig(PostTrainingQuantConfig):
         supported_configs = []
         keras_static_quant_config = KerasStaticQuantConfig()
         operators = [tf.keras.layers.dense, tf.keras.layers.conv2d]
-        supported_configs.append(OperatorConfig(config=keras_static_quant_config, \
-                                                    operators=operators, backend=Backend.DEFAULT))
+        supported_configs.append(
+            OperatorConfig(config=keras_static_quant_config, operators=operators, backend=Backend.DEFAULT)
+        )
         cls.supported_configs = supported_configs
 
 
@@ -77,6 +79,7 @@ def parse_config_from_dict(config_dict: Dict) -> BaseConfig:
 
 def get_default_keras_config() -> KerasStaticQuantConfig:
     """Generate the default keras config.
+
     Returns:
         the default keras config.
     """

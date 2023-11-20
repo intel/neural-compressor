@@ -16,17 +16,19 @@ from typing import Any, Callable
 
 import tensorflow as tf
 
-from neural_compressor.keras.utils import algos_mapping
 from neural_compressor.common.utility import KERAS_STATIC_QUANT
-from neural_compressor.keras.quantization.config import parse_config_from_dict, KerasStaticQuantConfig
+from neural_compressor.keras.quantization.config import KerasStaticQuantConfig, parse_config_from_dict
+from neural_compressor.keras.utils import algos_mapping
 
 # TODO (Yi) move logger into common in next PR
 from neural_compressor.utils import logger
 
 
 def quantize_model(
-    model: tf.keras.Model, quant_config: KerasStaticQuantConfig, calib_dataloader: Callable = None) -> tf.keras.Model:
+    model: tf.keras.Model, quant_config: KerasStaticQuantConfig, calib_dataloader: Callable = None
+) -> tf.keras.Model:
     """The main entry to quantize model.
+
     Args:
         model: a fp32 model to be quantized.
         quant_config: a quantization configuration.

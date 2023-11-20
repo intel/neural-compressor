@@ -116,13 +116,13 @@ class TestKeras3xNewApi(unittest.TestCase):
 
         from neural_compressor import set_random_seed
         from neural_compressor.data.dataloaders.dataloader import DataLoader
-        from neural_compressor.keras.quantization.quantize import quantize_model
         from neural_compressor.keras.quantization.config import KerasStaticQuantConfig
+        from neural_compressor.keras.quantization.quantize import quantize_model
 
         set_random_seed(9527)
         config = KerasStaticQuantConfig(backend="itex")
         model = keras.models.load_model("./baseline_model")
-        calib_dataloader=DataLoader(framework="tensorflow", dataset=Dataset())
+        calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
         logger.info("=================Run Quantization...")
         q_model = quantize_model(model, config, calib_dataloader)
         q_model.save("itex_qdq_keras_model")
@@ -146,6 +146,7 @@ class TestKeras3xNewApi(unittest.TestCase):
                 found_dequantize = True
         self.assertEqual(found_quantize, True)
         self.assertEqual(found_dequantize, True)
+
 
 if __name__ == "__main__":
     unittest.main()

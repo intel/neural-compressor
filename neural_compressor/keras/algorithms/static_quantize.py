@@ -17,19 +17,22 @@ from typing import Dict
 
 import tensorflow as tf
 
-from neural_compressor.adaptor.torch_utils.util import fetch_module, set_module
-
-from neural_compressor.utils import logger
 from neural_compressor import quantization
-from neural_compressor.keras.utils import register_algo
+from neural_compressor.adaptor.torch_utils.util import fetch_module, set_module
 from neural_compressor.common.utility import KERAS_STATIC_QUANT
 from neural_compressor.keras.quantization.config import KerasStaticQuantConfig
+from neural_compressor.keras.utils import register_algo
+from neural_compressor.utils import logger
 
 
 @register_algo(name=KERAS_STATIC_QUANT)
-def static_quantize_entry(model: tf.keras.Model, quant_config: KerasStaticQuantConfig, calib_dataloader) -> tf.keras.Model:
+def static_quantize_entry(
+    model: tf.keras.Model, quant_config: KerasStaticQuantConfig, calib_dataloader
+) -> tf.keras.Model:
     """The main entry to apply keras basic quantization."""
+
     def fake_eval(model: tf.keras.Model):
         return 1
+
     q_model = quantization.fit(model, conf=quant_config, calib_dataloader=calib_dataloader, eval_func=fake_eval)
     return q_model
