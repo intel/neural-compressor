@@ -25,6 +25,7 @@ sed -i '/ mixed_precision/d' run.sh
 sed -i '/ distillation\//d' run.sh
 sed -i '/ scheduler\//d' run.sh
 sed -i '/ nas\//d' run.sh
+sed -i '/ 3x\//d' run.sh
 
 echo "copy model for dynas..."
 mkdir -p .torch/ofa_nets || true

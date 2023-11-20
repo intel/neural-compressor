@@ -56,7 +56,15 @@ def get_blob_size(group_size, has_zp):  # pragma: no cover
 
 
 def make_matmul_weight_only_node(
-    node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point
+    node,
+    weight_shape,
+    num_bits,
+    group_size,
+    k_blocks,
+    q_weight,
+    scale,
+    zero_point,
+    accuracy_level=0,
 ):  # pragma: no cover
     """Build MatMulFpQ4 node.
 
@@ -69,6 +77,9 @@ def make_matmul_weight_only_node(
         q_weight (array): quantized weight
         scale (array): scale
         zero_point (array): zero point
+        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                              4 (int8 compute type of jblas kernel)
 
     Returns:
         matmul_weight_only_node: MatMulFpQ4 or MatMulNBits node
@@ -125,6 +136,9 @@ def make_matmul_weight_only_node(
         kwargs["N"] = weight_shape[1]
         kwargs["bits"] = num_bits
         kwargs["block_size"] = group_size
+        if accuracy_level > 0:
+            # require onnxruntime > 1.16.2
+            kwargs["accuracy_level"] = accuracy_level
 
     else:
         offset = 5 if zero_point is not None else 4
@@ -274,6 +288,7 @@ def rtn_quantize(
     group_size=32,
     scheme="asym",
     ratios={},
+    accuracy_level=0,
 ):
     """Quant the model with round to nearst method.
 
@@ -294,6 +309,9 @@ def rtn_quantize(
         group_size (int, optional): how many elements share one scale/zp. Default is 32.
         scheme (str, optional): sym or asym. Defaults to "asym".
         ratios (dict, optional): percentile of clip. Defaults to {}.
+        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                              4 (int8 compute type of jblas kernel)
 
     Returns:
         model: fake quantized ONNXModel
@@ -344,6 +362,7 @@ def rtn_quantize(
                     q_weight=q_weight.astype("uint8"),
                     scale=scale,
                     zero_point=zp if scheme == "asym" else None,
+                    accuracy_level=accuracy_level,
                 )
 
                 model.add_initializers(new_inits)
@@ -664,6 +683,7 @@ def awq_quantize(
     n_samples=128,
     enable_auto_scale=True,
     enable_mse_search=True,
+    accuracy_level=0,
 ):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
@@ -687,6 +707,9 @@ def awq_quantize(
         n_samples (int, optional): calibration sample number.
         enable_auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
         enable_mse_search (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
+        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                              4 (int8 compute type of jblas kernel)
 
     Returns:
         model: fake quantized ONNXModel
@@ -773,7 +796,7 @@ def awq_quantize(
 
         model.remove_tensors_from_outputs(output_names)
         model.model.graph.output.MergeFrom(org_output)
-    model = rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio)
+    model = rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio, accuracy_level)
     return model
 
 
@@ -934,6 +957,7 @@ def gptq_quantize(
     actorder=False,
     mse=False,
     perchannel=True,
+    accuracy_level=0,
 ):
     """Quant the model with GPTQ method.
 
@@ -960,6 +984,9 @@ def gptq_quantize(
         actorder (bool, optional): whether rearrange Hessian matrix considering the diag's value.
         mse (bool, optional): whether get scale and zero point with mse error.
         perchannel (bool, optional): whether quantize weight per-channel.
+        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                              4 (int8 compute type of jblas kernel)
 
     Returns:
         model: fake quantized ONNXModel
@@ -1076,6 +1103,7 @@ def gptq_quantize(
                     q_weight=q_weight.astype("uint8"),
                     scale=scale,
                     zero_point=zp if scheme == "asym" else None,
+                    accuracy_level=accuracy_level,
                 )
 
                 model.add_initializers(new_inits)

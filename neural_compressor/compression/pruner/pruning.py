@@ -16,6 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import gc
 from typing import Optional
 
 from neural_compressor.compression.pruner.pruners import get_pruner
@@ -168,14 +169,18 @@ class SparseGPTPruning(BasePruning):
         device: available device of pruning.
     """
 
-    def __init__(self, config, model, dataloader, framework="pytorch", device: str = None):
+    def __init__(self, config, model, dataloader, framework="pytorch", device=None):
         """Initialize."""
         super().__init__(config, model)
         if device is None:
             self.dev = model.device
-        else:
-            assert "cpu" in str(device) or "cuda" in str(device), "Only cpu and cuda are supported."
+        elif isinstance(device, str):
+            assert "cpu" in device or "cuda" in device, "Only 'cpu' and 'cuda' are supported."
             self.dev = torch.device(device)
+        else:
+            assert isinstance(device, torch.device), "Only 'str' and 'torch.device' are supported."
+            self.dev = device
+
         self._layers = []
         self._dataloader = dataloader
         if dataloader is not None:
@@ -189,6 +194,12 @@ class SparseGPTPruning(BasePruning):
         self._model = self._model.to(self.model_dev)
         # TODO add get_sparsity_ratio() for sparseGPT
 
+    def gather_single_batch_from_dict(self, data_dict, idx):
+        single_batch = {}
+        for k, v in data_dict.items():
+            single_batch[k] = data_dict[k][idx]
+        return single_batch
+
     def _do_pruning(self):
         from tqdm.auto import tqdm
 
@@ -197,8 +208,7 @@ class SparseGPTPruning(BasePruning):
         inputs, inp_dict = collect_layer_inputs(
             model=self._model, layers=layers, layer_idx=0, layer_inputs=self._dataloader, device=self.dev
         )
-        if "cuda" in self.dev.type:
-            torch.cuda.empty_cache()
+
         with torch.no_grad():
             for i in tqdm(range(len(layers))):
                 layer = layers[i].to(self.dev)
@@ -208,7 +218,8 @@ class SparseGPTPruning(BasePruning):
                     layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
                     handles_list.append(pruner.register_gpt_hook(layer_op_names))
                 for j in range(len(inputs)):
-                    layer(inputs[j], **inp_dict)[0]
+                    input_infos = self.gather_single_batch_from_dict(inp_dict, j)
+                    layer(inputs[j], **input_infos)[0]
                 for handles in handles_list:
                     for h in handles:
                         h.remove()
@@ -217,10 +228,16 @@ class SparseGPTPruning(BasePruning):
                     pruner.fasterprune(layer_op_names)
                 for j in range(len(inputs)):
                     # the weights of current layer have been pruned, get the latest outputs as the inputs for next layer
-                    inputs[j] = layer(inputs[j], **inp_dict)[0]
+                    input_infos = self.gather_single_batch_from_dict(inp_dict, j)
+                    inputs[j] = layer(inputs[j], **input_infos)[0]
                 layers[i] = layer.cpu()
                 if "cuda" in self.dev.type:
                     torch.cuda.empty_cache()
+            del inp_dict
+            del inputs
+            gc.collect()
+        if "cuda" in self.dev.type:
+            torch.cuda.empty_cache()
 
     def on_train_begin(self, dataloader):  # pragma: no cover
         if self._dataloader is not None:

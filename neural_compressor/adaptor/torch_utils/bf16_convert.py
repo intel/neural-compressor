@@ -30,6 +30,10 @@ class BF16ModuleWrapper(nn.Module):
         super(BF16ModuleWrapper, self).__init__()
         self.add_module("module", module)
         self.train(module.training)
+        # WA for TransformerEncoder to access its Linear's weights and bias
+        if isinstance(module, nn.Linear):
+            self.weight = self.module.weight if hasattr(self.module, "weight") else None
+            self.bias = self.module.bias if hasattr(self.module, "bias") else None
 
     def forward(self, X):
         """Convert dtype."""
