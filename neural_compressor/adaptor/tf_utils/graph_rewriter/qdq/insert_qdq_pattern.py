@@ -550,7 +550,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 # qint8_tensor = np.clip(qint8_tensor, -127, 127).astype(np.int8)
                 min_value = -range_value
                 max_value = range_value
-        elif weight_node.op == 'ReadVariableOp':
+        elif weight_node.op == "ReadVariableOp":
             min_value = self.llm_weight_minmax[weight_node.name][0]
             max_value = self.llm_weight_minmax[weight_node.name][1]
             min_value *= range_coefficent

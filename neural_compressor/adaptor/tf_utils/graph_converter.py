@@ -201,10 +201,10 @@ class GraphConverter:
             self.calib_func(model.model)
             return
 
-        if model.model_type == 'llm_saved_model':
+        if model.model_type == "llm_saved_model":
             self._inference_llm(model)
             return
-            
+
         # ITEX optimization has broken INC calibration process.
         # INC needs turn off ITEX optimization pass in calibration stage.
         # TODO ITEX will provide API to replace setting environment variable.
@@ -876,7 +876,7 @@ class GraphConverter:
                 self._inference(self._sampling_model)
             self._calibration_data = Helper.gen_valid_sampling_log(tmp_dump_file)
 
-        if hasattr(self._sampling_model, '_weight_tensor_minmax_dict'):
+        if hasattr(self._sampling_model, "_weight_tensor_minmax_dict"):
             self._llm_weight_minmax = self._sampling_model.weight_tensor_minmax_dict
 
         del sampling_graph_def

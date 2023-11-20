@@ -154,6 +154,7 @@ class SmoothQuantScaler:
         self.model.graph_def = sq_graph_def
         return self.model, self.mul_list
 
+
 class SmoothQuantScalerLLM(SmoothQuantScaler):
     """A class for scaling model weights for TF LLM models using Smooth Quantization method.
 
@@ -162,8 +163,9 @@ class SmoothQuantScalerLLM(SmoothQuantScaler):
         alpha: float, the scaling factor
         scales_per_op: bool, each op will have an individual scale or
                        ops with the same input will share a scale
-        op_types: 
+        op_types:
     """
+
     def __init__(self, graph_def, alpha, scales_per_op, op_types):
         """Initialization."""
         self.graph_def = graph_def
@@ -216,8 +218,7 @@ class SmoothQuantScalerLLM(SmoothQuantScaler):
         self.g_analyzer = GraphAnalyzer()
         self.g_analyzer.graph = self.graph_def
         self.graph_info = self.g_analyzer.parse_graph()
-        sq_weight_tensors, sq_weight_node_names = self._parse_weight_dict(max_vals_per_channel, 
-                                                            sq_weight_tensor_dict)
+        sq_weight_tensors, sq_weight_node_names = self._parse_weight_dict(max_vals_per_channel, sq_weight_tensor_dict)
         logger.info("Start scaling on model graph for Smooth Quantization.")
         if self.scales_per_op:
             # 1. obtain the smooth scale per op
@@ -237,17 +238,18 @@ class SmoothQuantScalerLLM(SmoothQuantScaler):
                         tensor = np.abs(np.transpose(W, [0, 1, 3, 2]))
                         # reduce weight max to (in_channel, ), aligned with activation max
                         W_max_per_in_channel = np.max(np.reshape(tensor, (-1, tensor.shape[-1])), axis=0)
-                    elif len(W.shape) == 2: # matmul
+                    elif len(W.shape) == 2:  # matmul
                         # reduce weight max to (in_channel, ), aligned with activation max
                         tensor = np.abs(W)
                         W_max_per_in_channel = np.max(tensor, axis=1)
-                    else: # pragma: no cover
+                    else:  # pragma: no cover
                         assert False, "not supported"
                     cur_weight_node_name = W_node_name_lst[w_i]
                     try:
-                        scale = np.power(activation_max_per_in_channel, self.alpha) /  \
-                                np.power(W_max_per_in_channel, (1-self.alpha))
-                    except ValueError as e: # pragma: no cover
+                        scale = np.power(activation_max_per_in_channel, self.alpha) / np.power(
+                            W_max_per_in_channel, (1 - self.alpha)
+                        )
+                    except ValueError as e:  # pragma: no cover
                         logger.info(e)
                         logger.info("Skip smoothing the node: {}".format(cur_weight_node_name))
                         continue
