@@ -16,7 +16,7 @@ ut_log_name=${LOG_DIR}/ut_itrex.log
 
 # run unit test
 pip install pytest
-pytest -v -s --log-cli-level=WARNING --junitxml=test-ITREX.xml /intel-extension-for-transformers/tests -k "not test_tf*" 2>&1 | tee -a ${ut_log_name}
+pytest -v -s --log-cli-level=WARNING --junitxml=test-ITREX.xml /intel-extension-for-transformers/tests -k "not test_tf" 2>&1 | tee -a ${ut_log_name}
 
 xml_data=$(cat test-ITREX.xml)
 errors=$(echo "$xml_data" | grep -o 'errors="[0-9]*"' | sed 's/errors="\([0-9]*\)"/\1/')
