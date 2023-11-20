@@ -18,9 +18,9 @@
 
 import copy
 from collections import OrderedDict
-from deprecated import deprecated
 
 import numpy as np
+from deprecated import deprecated
 
 from ...utils import logger
 from .strategy import TuneStrategy, strategy_registry

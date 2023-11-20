@@ -18,6 +18,7 @@
 
 import numpy as np
 from deprecated import deprecated
+
 from .pattern import PatternBase, pattern_registry
 
 

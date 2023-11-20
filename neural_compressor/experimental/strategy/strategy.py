@@ -24,12 +24,12 @@ import pickle
 from abc import abstractmethod
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from deprecated import deprecated
 from pathlib import Path
 from time import time
 
 import numpy as np
 import yaml
+from deprecated import deprecated
 
 from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
 from neural_compressor.config import options
@@ -40,13 +40,7 @@ from ...conf.dotdict import DotDict, deep_get, deep_set
 from ...objective import MultiObjective
 from ...utils import logger
 from ...utils.create_obj_from_config import create_eval_func, create_train_func
-from ...utils.utility import (
-    GLOBAL_STATE,
-    MODE,
-    Statistics,
-    equal_dicts,
-    fault_tolerant_file,
-)
+from ...utils.utility import GLOBAL_STATE, MODE, Statistics, equal_dicts, fault_tolerant_file
 from ...version import __version__
 from .utils.constant import FALLBACK_RECIPES_SET
 from .utils.tuning_space import TuningSpace

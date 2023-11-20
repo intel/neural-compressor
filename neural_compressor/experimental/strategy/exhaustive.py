@@ -16,6 +16,7 @@
 # limitations under the License.
 """The exhaustive tuning strategy."""
 from deprecated import deprecated
+
 from .strategy import TuneStrategy, strategy_registry
 from .utils.tuning_sampler import OpWiseTuningSampler
 

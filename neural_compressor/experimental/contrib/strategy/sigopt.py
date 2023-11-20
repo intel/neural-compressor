@@ -17,7 +17,9 @@
 """The SigOpt Tuning Strategy provides support for the quantization process."""
 import copy
 from collections import OrderedDict
+
 from deprecated import deprecated
+
 from neural_compressor.experimental.strategy.strategy import TuneStrategy, strategy_registry
 from neural_compressor.experimental.strategy.utils.tuning_sampler import OpWiseTuningSampler
 from neural_compressor.experimental.strategy.utils.tuning_structs import OpTuningConfig

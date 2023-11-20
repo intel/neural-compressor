@@ -16,6 +16,7 @@
 # limitations under the License.
 """Helper functions to export onnx model from QLinearops to QDQ."""
 from deprecated import deprecated
+
 from neural_compressor.adaptor.ox_utils.util import find_by_name
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport

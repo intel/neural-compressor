@@ -18,11 +18,14 @@
 
 import collections
 import logging
-import numpy as np
 import sys
-from deprecated import deprecated
 from math import ceil, floor
+
+import numpy as np
+from deprecated import deprecated
+
 from neural_compressor.utils.utility import LazyImport
+
 from ..datasets.bert_dataset import TensorflowBertDataset, TensorflowModelZooBertDataset
 from .base_dataloader import BaseDataLoader
 from .default_dataloader import DefaultDataLoader, default_collate

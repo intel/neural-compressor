@@ -17,13 +17,14 @@
 """Neural Compressor metrics."""
 
 
-import numpy as np
 from abc import abstractmethod
+
+import numpy as np
 from deprecated import deprecated
-from neural_compressor.utils import logger
-from neural_compressor.utils.utility import LazyImport, singleton
 from sklearn.metrics import accuracy_score
 
+from neural_compressor.utils import logger
+from neural_compressor.utils.utility import LazyImport, singleton
 
 torch = LazyImport("torch")
 tf = LazyImport("tensorflow")

@@ -21,8 +21,9 @@ import os
 import re
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from deprecated import deprecated
 from typing import Dict, Tuple
+
+from deprecated import deprecated
 
 from ....utils import logger
 from .constant import TUNING_ITEMS_LST

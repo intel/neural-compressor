@@ -18,6 +18,7 @@
 """Intel Neural Compressor built-in Optimizers on multiple framework backends."""
 
 from deprecated import deprecated
+
 from neural_compressor.utils.utility import LazyImport, singleton
 
 torch = LazyImport("torch")

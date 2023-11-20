@@ -20,8 +20,9 @@ import os
 import pickle
 import random
 import sys
-from deprecated import deprecated
+
 import numpy as np
+from deprecated import deprecated
 
 from ..conf.config import MixedPrecision_Conf
 from ..conf.dotdict import deep_get

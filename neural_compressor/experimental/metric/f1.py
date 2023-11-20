@@ -22,9 +22,11 @@ From https://github.com/allenai/bi-att-flow/blob/master/squad/evaluate-v1.1.py
 import re
 import string
 from collections import Counter, abc
-from deprecated import deprecated
-from neural_compressor.utils import logger
 from typing import Any, Callable, Dict, List, TypeVar
+
+from deprecated import deprecated
+
+from neural_compressor.utils import logger
 
 
 @deprecated(version="2.0")

@@ -15,7 +15,9 @@
 # limitations under the License.
 
 import os
+
 from deprecated import deprecated
+
 from neural_compressor.conf.config import Conf, NASConfig
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport

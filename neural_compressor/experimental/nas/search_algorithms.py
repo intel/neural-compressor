@@ -18,7 +18,9 @@
 # limitations under the License.
 
 import random
+
 from deprecated import deprecated
+
 from neural_compressor.strategy.bayesian import BayesianOptimization
 from neural_compressor.utils import logger
 

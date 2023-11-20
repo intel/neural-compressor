@@ -22,9 +22,11 @@ Classes includes:
     PyTorchIntermediateLayersKnowledgeDistillationLoss.
 """
 
-import numpy as np
 from collections import Counter
+
+import numpy as np
 from deprecated import deprecated
+
 from neural_compressor.adaptor.pytorch import pytorch_forward_wrapper
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport, singleton

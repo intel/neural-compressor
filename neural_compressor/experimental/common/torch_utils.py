@@ -16,6 +16,7 @@
 # limitations under the License.
 """This is an utility file for PyTorch distillation."""
 from deprecated import deprecated
+
 from neural_compressor.utils.utility import LazyImport
 
 torch = LazyImport("torch")

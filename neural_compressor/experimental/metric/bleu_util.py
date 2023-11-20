@@ -38,13 +38,14 @@ https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/utils/bleu
 from __future__ import absolute_import, division, print_function
 
 import collections
-import numpy as np
 import math
-from deprecated import deprecated
-from neural_compressor.utils.utility import LazyImport
 from typing import List, Sequence, Union
+
+import numpy as np
+from deprecated import deprecated
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
+from neural_compressor.utils.utility import LazyImport
 
 tf = LazyImport("tensorflow")
 

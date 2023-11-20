@@ -21,10 +21,11 @@ NASBase class defines the common methods of different NAS approaches.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import os
 import shutil
 from collections.abc import Iterable
+
+import numpy as np
 from deprecated import deprecated
 
 from neural_compressor.conf.config import Conf, NASConfig

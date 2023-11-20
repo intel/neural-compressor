@@ -18,6 +18,7 @@
 """Definitions of the methods to sample data."""
 
 from abc import abstractmethod
+
 from deprecated import deprecated
 
 

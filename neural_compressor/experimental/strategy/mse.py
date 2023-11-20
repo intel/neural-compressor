@@ -17,10 +17,10 @@
 """MSE tuning strategy."""
 from collections import OrderedDict
 from copy import deepcopy
-from deprecated import deprecated
 from typing import List
 
 import numpy as np
+from deprecated import deprecated
 
 from ...utils import logger
 from .strategy import TuneStrategy, strategy_registry

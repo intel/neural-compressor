@@ -17,11 +17,13 @@
 """Script for BLEU metric."""
 
 import re
-import six
 import sys
 import unicodedata
-from deprecated import deprecated
 from typing import List, Sequence
+
+import six
+from deprecated import deprecated
+
 from .bleu_util import compute_bleu
 from .metric import metric_registry
 

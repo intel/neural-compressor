@@ -17,8 +17,10 @@
 """Group Lasso pruner."""
 
 import copy
+
 import numpy as np
 from deprecated import deprecated
+
 from .magnitude import BasicMagnitudePruner
 from .pruner import Pruner, pruner_registry
 

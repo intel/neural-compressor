@@ -19,7 +19,6 @@
 import numpy as np
 from deprecated import deprecated
 
-
 registry_patterns = {}
 
 

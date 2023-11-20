@@ -18,6 +18,7 @@
 
 import torch.nn
 from deprecated import deprecated
+
 from .logger import logger
 from .prune_utils import parse_not_to_prune, parse_to_prune, process_config
 from .pruner import get_pruner

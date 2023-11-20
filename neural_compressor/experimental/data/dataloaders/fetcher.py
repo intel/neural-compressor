@@ -18,6 +18,7 @@
 """Definitions of the methods to fetch data from an iterable-style or list-style dataset."""
 
 from abc import abstractmethod
+
 from deprecated import deprecated
 
 

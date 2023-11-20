@@ -26,6 +26,7 @@ from threading import Thread
 import numpy as np
 import psutil
 from deprecated import deprecated
+
 from ..adaptor import FRAMEWORKS
 from ..conf.config import BenchmarkConf
 from ..conf.dotdict import DotDict, deep_get, deep_set
@@ -41,6 +42,7 @@ from .common import Model as NCModel
 from .common import Postprocess as NCPostprocess
 from .common import _generate_common_dataloader
 from .metric import METRICS
+
 
 @deprecated(version="2.0")
 def set_env_var(env_var, value, overwrite_existing=False):

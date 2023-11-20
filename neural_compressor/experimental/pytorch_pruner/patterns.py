@@ -18,6 +18,7 @@
 
 import torch
 from deprecated import deprecated
+
 from .logger import logger
 
 PATTERNS = {}

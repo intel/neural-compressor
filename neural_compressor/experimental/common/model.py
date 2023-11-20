@@ -16,6 +16,7 @@
 # limitations under the License.
 """Common Model just collects the information to construct a Model."""
 from deprecated import deprecated
+
 from neural_compressor.model.model import MODELS, get_model_fwk_name
 from neural_compressor.model.tensorflow_model import get_model_type
 from neural_compressor.utils import logger

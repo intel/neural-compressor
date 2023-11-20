@@ -25,6 +25,7 @@ import tempfile
 import numpy as np
 import yaml
 from deprecated import deprecated
+
 from ..conf.config import Graph_Optimization_Conf
 from ..conf.dotdict import DotDict, deep_get, deep_set
 from ..model import BaseModel

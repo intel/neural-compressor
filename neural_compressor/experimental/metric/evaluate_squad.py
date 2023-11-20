@@ -23,7 +23,9 @@ from __future__ import print_function
 
 import sys
 from collections import Counter
+
 from deprecated import deprecated
+
 from .f1 import normalize_answer
 
 

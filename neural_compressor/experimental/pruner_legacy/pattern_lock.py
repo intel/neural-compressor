@@ -16,6 +16,7 @@
 # limitations under the License.
 """Pattern lock pruner."""
 from deprecated import deprecated
+
 from .pruner import Pruner, pruner_registry
 
 

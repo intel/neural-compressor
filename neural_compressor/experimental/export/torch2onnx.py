@@ -18,7 +18,9 @@
 
 import os
 from collections import UserDict
+
 from deprecated import deprecated
+
 from neural_compressor.adaptor.torch_utils.util import input2tuple
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport

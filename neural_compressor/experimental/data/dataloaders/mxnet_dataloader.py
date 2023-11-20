@@ -18,8 +18,11 @@
 """MXNet Dataloader implementation."""
 
 import logging
+
 from deprecated import deprecated
+
 from neural_compressor.utils.utility import LazyImport
+
 from .base_dataloader import BaseDataLoader
 
 mx = LazyImport("mxnet")

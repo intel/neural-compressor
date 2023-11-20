@@ -18,7 +18,9 @@
 # limitations under the License.
 
 import copy
+
 from deprecated import deprecated
+
 from neural_compressor.compression.distillation.criterions import Criterions
 from neural_compressor.experimental.common import Optimizers
 

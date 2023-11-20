@@ -16,8 +16,9 @@
 # limitations under the License.
 
 """Tuning structure."""
-from deprecated import deprecated
 from typing import Dict
+
+from deprecated import deprecated
 
 from ....utils import logger
 from .constant import PRECISION_SET, QUANT_MODE_SET, TUNING_ITEMS_LST

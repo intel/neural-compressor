@@ -18,7 +18,9 @@
 # limitations under the License.
 
 import os
+
 from deprecated import deprecated
+
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.conf.config import Conf, NASConfig
 from neural_compressor.experimental.component import Component

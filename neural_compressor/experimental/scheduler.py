@@ -20,6 +20,7 @@
 import os
 
 from deprecated import deprecated
+
 from ..conf.dotdict import DotDict, deep_set
 from ..model import BaseModel
 from ..model.model import get_model_fwk_name

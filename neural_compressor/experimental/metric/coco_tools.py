@@ -42,13 +42,15 @@ then evaluation (in multi-class mode) can be invoked as follows:
 """
 
 import copy
-import numpy as np
 import time
 from collections import OrderedDict
-from deprecated import deprecated
-from neural_compressor.utils import logger
-from pycocotools import coco, cocoeval, mask
 from typing import Any, Dict, List, Set, Union
+
+import numpy as np
+from deprecated import deprecated
+from pycocotools import coco, cocoeval, mask
+
+from neural_compressor.utils import logger
 
 
 @deprecated(version="2.0")

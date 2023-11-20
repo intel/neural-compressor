@@ -16,6 +16,7 @@
 # limitations under the License.
 """Initialize the Datasets class."""
 from deprecated import deprecated
+
 from neural_compressor.utils.utility import LazyImport
 
 from .base_dataloader import BaseDataLoader

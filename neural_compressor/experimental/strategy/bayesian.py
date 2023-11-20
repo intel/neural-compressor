@@ -16,11 +16,11 @@
 # limitations under the License.
 """The Bayesian tuning strategy."""
 
-import numpy as np
 import warnings
 from copy import deepcopy
-from deprecated import deprecated
 
+import numpy as np
+from deprecated import deprecated
 from scipy.optimize import minimize
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern

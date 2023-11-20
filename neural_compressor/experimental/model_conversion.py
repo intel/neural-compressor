@@ -21,6 +21,7 @@ import tempfile
 
 import yaml
 from deprecated import deprecated
+
 from neural_compressor.adaptor import FRAMEWORKS
 
 from ..conf.config import Conf

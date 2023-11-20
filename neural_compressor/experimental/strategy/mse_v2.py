@@ -17,8 +17,10 @@
 """The MSE_V2 tuning strategy."""
 from collections import OrderedDict
 from copy import deepcopy
-from deprecated import deprecated
 from time import time
+
+from deprecated import deprecated
+
 from ...utils import logger
 from .strategy import TuneStrategy, strategy_registry
 from .utils.tuning_sampler import OpTypeWiseTuningSampler

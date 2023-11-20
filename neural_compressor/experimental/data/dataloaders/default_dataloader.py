@@ -18,9 +18,11 @@
 """Default dataloader for multiple framework backends."""
 
 import collections
+from math import ceil, floor
+
 import numpy as np
 from deprecated import deprecated
-from math import ceil, floor
+
 from .base_dataloader import BaseDataLoader
 from .fetcher import FETCHERS
 from .sampler import BatchSampler, IterableSampler, SequentialSampler

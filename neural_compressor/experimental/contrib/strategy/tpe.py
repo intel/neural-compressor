@@ -18,11 +18,11 @@
 import copy
 import os
 from collections import OrderedDict
-from deprecated import deprecated
 from functools import partial
 from pathlib import Path
 
 import numpy as np
+from deprecated import deprecated
 
 from neural_compressor.experimental.strategy.strategy import TuneStrategy, strategy_registry
 from neural_compressor.experimental.strategy.utils.tuning_sampler import OpWiseTuningSampler

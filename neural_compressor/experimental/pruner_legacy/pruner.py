@@ -16,6 +16,7 @@
 # limitations under the License.
 """Pattern lock pruner."""
 from deprecated import deprecated
+
 from neural_compressor.experimental.pruning_recipes.patterns import patterns
 
 PRUNERS = {}

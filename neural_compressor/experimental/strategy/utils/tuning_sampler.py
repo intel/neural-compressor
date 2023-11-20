@@ -19,9 +19,10 @@
 
 import copy
 from collections import OrderedDict, defaultdict, deque
-from deprecated import deprecated
 from itertools import product
 from typing import Any, Dict, List
+
+from deprecated import deprecated
 
 from ....utils import logger
 from .tuning_space import TuningSpace, pattern_to_internal, pattern_to_path, quant_mode_from_pattern

@@ -16,11 +16,14 @@
 # limitations under the License.
 """Gradient sensitivity pruner."""
 
-import numpy as np
 import re
-from deprecated import deprecated
 from heapq import heappop, heappush
+
+import numpy as np
+from deprecated import deprecated
+
 from neural_compressor.utils import logger
+
 from .pruner import Pruner, pruner_registry
 
 
