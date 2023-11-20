@@ -116,8 +116,7 @@ class TestKeras3xNewApi(unittest.TestCase):
 
         from neural_compressor import set_random_seed
         from neural_compressor.data.dataloaders.dataloader import DataLoader
-        from neural_compressor.keras.quantization.config import KerasStaticQuantConfig
-        from neural_compressor.keras.quantization.quantize import quantize_model
+        from neural_compressor.keras import KerasStaticQuantConfig, quantize_model
 
         set_random_seed(9527)
         config = KerasStaticQuantConfig(backend="itex")

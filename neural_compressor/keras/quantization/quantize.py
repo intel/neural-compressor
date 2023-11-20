@@ -17,7 +17,7 @@ from typing import Any, Callable
 import tensorflow as tf
 
 from neural_compressor.common.utility import KERAS_STATIC_QUANT
-from neural_compressor.keras.quantization.config import KerasStaticQuantConfig, parse_config_from_dict
+from neural_compressor.keras.quantization.config import KerasStaticQuantConfig
 from neural_compressor.keras.utils import algos_mapping
 
 # TODO (Yi) move logger into common in next PR
@@ -36,14 +36,10 @@ def quantize_model(
     Returns:
         The quantized model.
     """
-    if isinstance(quant_config, dict):
-        quant_config = parse_config_from_dict(quant_config)
-        logger.info("Parsed dict to construct the quantization config.")
-    else:
-        assert isinstance(
-            quant_config, KerasStaticQuantConfig
-        ), "Please pass a dict or config instance as the quantization configuration."
-    logger.info(f"Quantize model with config: \n {quant_config.to_json_string()} \n")
+    assert isinstance(
+        quant_config, KerasStaticQuantConfig
+    ), "Please pass a dict or config instance as the quantization configuration."
+
     # select quantization algo according to config
     # TODO (Yi) support combine more than one algo
     if quant_config.name == KERAS_STATIC_QUANT:
