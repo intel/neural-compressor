@@ -785,7 +785,7 @@ def parse_saved_model(model, freeze=False, input_tensor_names=[], output_tensor_
 
     if len(input_tensor_names) == 0:
         # skip all inputs for ReadVariableOp
-        input_tensor_names = [i.name.split(":")[0] for i in frozen_func.inputs if 'unknown' not in i.name]
+        input_tensor_names = [i.name.split(":")[0] for i in frozen_func.inputs if "unknown" not in i.name]
     if len(output_tensor_names) == 0:
         output_tensor_names = [i.name.split(":")[0] for i in frozen_func.outputs]
 
