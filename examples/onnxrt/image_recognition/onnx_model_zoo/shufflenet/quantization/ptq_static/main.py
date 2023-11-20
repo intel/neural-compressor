@@ -275,7 +275,7 @@ if __name__ == "__main__":
             conf = BenchmarkConfig(warmup=10,
                                    iteration=1000,
                                    cores_per_instance=4,
-                                   num_of_instance=1
+                                   num_of_instance=1,
                                    device=args.device,
                                    backend=backend)
             fit(model, conf, b_dataloader=dataloader)
