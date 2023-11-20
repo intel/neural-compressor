@@ -230,3 +230,53 @@ def save_for_huggingface_upstream(model, tokenizer, output_dir):
     model.model.config.architectures = [model.model.__class__.__name__]
     model.model.config.torch_dtype = "int8"
     model.model.config.save_pretrained(output_dir)
+
+
+def export_compressed_model(
+    model,
+    saved_dir=None,
+    use_hf_format=False,
+    enable_full_range=False,
+    compression_dtype=torch.int32,
+    compression_dim=1,
+    scale_dtype=torch.float32,
+    device="cpu",
+):
+    """Support get compressed model from saved_dir.
+
+    Args:
+        model (torch.nn.Module): origin fp32 model.
+        saved_dir (_type_, optional): the dir path of compression info. Defaults to None.
+        use_hf_format (bool, optional): whether use HuggingFace format. Defaults to False.
+        enable_full_range (bool, optional): Whether to leverage the full compression range
+                                            under symmetric quantization. Defaults to False.
+        compression_dtype (torch.Tensor, optional): The target dtype after comoression.
+                                                    Defaults to torch.int32.
+        compression_dim (int, optional): Select from [0, 1], 0 is output channel,
+                                            1 is input channel. Defaults to 1.
+        scale_dtype (torch.Tensor, optional): Use float32 or float16.
+                                                Defaults to torch.float32.
+        device (str, optional): choose device for compression. Defaults to cpu.
+    """
+    stat_dict = os.path.join(saved_dir, "best_model.pt")
+    qweight_config_path = os.path.join(saved_dir, "qconfig.json")
+    gptq_config_path = os.path.join(saved_dir, "gptq_config.json")
+    if not os.path.exists(gptq_config_path):
+        gptq_config_path = None
+    model.load_state_dict(torch.load(stat_dict))
+
+    from neural_compressor.model import Model as INCModel
+
+    # pylint: disable=E1101
+    inc_model = INCModel(model)
+    inc_model.export_compressed_model(
+        qweight_config_path=qweight_config_path,
+        enable_full_range=enable_full_range,
+        compression_dtype=compression_dtype,
+        compression_dim=compression_dim,
+        scale_dtype=scale_dtype,
+        gptq_config_path=gptq_config_path,
+        device=device,
+        use_hf_format=use_hf_format,
+    )
+    return inc_model.model
