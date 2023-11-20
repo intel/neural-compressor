@@ -33,7 +33,7 @@ def _apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeight
     group_dim = quant_config.group_dim
     dtype = quant_config.weight_dtype
     num_bits = quant_config.weight_bits
-    scheme = quant_config.weight_sym
+    scheme = "sym" if quant_config.weight_sym else "asym"
     group_size = quant_config.weight_group_size
     return_int = quant_config.return_int
     return torch_rtn_quantize(
