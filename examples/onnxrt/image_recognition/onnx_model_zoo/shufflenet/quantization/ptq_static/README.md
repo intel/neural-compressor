@@ -73,6 +73,5 @@ bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
                       --device=cpu # default is cpu, support cpu and npu
 ```
 
-::: warning Note
-npu device requires the batch size of model is 1.
-:::
+### warning
+npu device requires the batch size of model to be 1.
