@@ -759,7 +759,7 @@ def construct_function_from_graph_def(func, graph_def, frozen_func=None):
 
 def parse_saved_model(model, freeze=False, input_tensor_names=[], output_tensor_names=[]):
     """Parse a input saved_model.
-    
+
     Args:
         model(string or AutoTrackable object): The input saved_model.
 

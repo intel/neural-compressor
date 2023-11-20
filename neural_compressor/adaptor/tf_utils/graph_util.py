@@ -1048,7 +1048,7 @@ class GraphRewriterHelper:
             """This function is to separate the strings.
 
             Example:
-                ';slice__print__;__max:[1];slice__print__;__min:[-1]' --> 
+                ';slice__print__;__max:[1];slice__print__;__min:[-1]' -->
                 [';slice__print__;__max:[1]', ';slice__print__;__min:[-1]']
             """
             separated_lines = []

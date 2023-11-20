@@ -311,8 +311,9 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
 
 
 def _get_graph_from_saved_model_v2(saved_model_dir, input_tensor_names, output_tensor_names):
-    from neural_compressor.adaptor.tf_utils.util import parse_saved_model
     from tensorflow.python.saved_model import signature_constants, tag_constants
+
+    from neural_compressor.adaptor.tf_utils.util import parse_saved_model
 
     saved_model_exported_names = [signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY]
     saved_model_tags = set([tag_constants.SERVING])
@@ -1118,6 +1119,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         self._model_type = "llm_saved_model"
 
         from neural_compressor.adaptor.tf_utils.util import parse_saved_model
+
         (
             self._graph_def,
             self._saved_model,
@@ -1261,7 +1263,9 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     def adjust_weight(self, graph_def):
         """Adjust weight of LLM saved_model by scale."""
         from tensorflow.python.saved_model import load, tag_constants
+
         from neural_compressor.adaptor.tf_utils.util import reconstruct_saved_model
+
         reconstruct_saved_model(graph_def, self.func, self.frozen_func, self._saved_model, self.model_path)
         model = load.load(self.model_path, [tag_constants.SERVING])
 
@@ -1279,6 +1283,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     def save(self, root=None):
         """Save the model to the root path."""
         from neural_compressor.adaptor.tf_utils.util import parse_saved_model, reconstruct_saved_model
+
         if not root:
             root = cfg.default_workspace
         root = os.path.abspath(os.path.expanduser(root))
