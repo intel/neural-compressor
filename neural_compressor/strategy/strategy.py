@@ -46,6 +46,7 @@ from ..utils.utility import (
     DotDict,
     LazyImport,
     Statistics,
+    check_key_exist,
     dump_table,
     equal_dicts,
     fault_tolerant_file,
@@ -947,6 +948,15 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 if self.framework == "pytorch_ipex":
                     smooth_quant_args["folding"] = None  # will reset it to True if IPEX version < 2.1.
             sq_algo.folding = smooth_quant_args["folding"]
+            sq_algo.weight_clip = smooth_quant_args.get(
+                "weight_clip", True
+            )  # make weight_clipping a default_on option.
+            sq_algo.auto_alpha_args = smooth_quant_args.get(
+                "auto_alpha_args", {"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"}
+            )  # default alpha search space parameters.
+            sq_algo.default_alpha = smooth_quant_args.get(
+                "default_alpha", 0.5
+            )  # default value for alpha in auto-tuning
             logger.debug(f"Set smooth quant with alpha {sq_algo.alpha} as the pre-tuning algo.")
             algo_scheduler.append_algorithm("pre_quantization", sq_algo)
 
@@ -1153,6 +1163,40 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         for tune_cfg in sq_sampler:
             yield tune_cfg
 
+    def _should_tuning_woq_algo(self):
+        """Currently, it's only available for the ORT backend with approach is weight_only.
+
+        It will be triggered when
+            a) quant_level is auto or quant_level is 1 && strategy is basic
+            b) and the "algorithm" is not set in op_type_dict
+            c) and woq will only trigger once
+        """
+        return (
+            "onnx" in self.framework.lower()
+            and "weight_only" in self.config.approach
+            and not check_key_exist(self.config.op_type_dict, "algorithm")
+            and not check_key_exist(self.tuning_history, "woq_tuning_cfg")
+        )
+
+    def tuning_woq_algo(self, tuning_space, tuning_cfg):
+        """Tuning weight only algorithm.
+
+        Args:
+            tuning_space: tuning space
+            tuning_cfg: the initial tuning config
+
+        Yields:
+            tuning config
+        """
+        logger.info("[STRATEGY] Start tuning Weight Only Quant' algo.")
+        woq_sampler = tuning_sampler_dict.get_class("woq_algorithm")(tuning_space, [], tuning_cfg)
+        for tune_cfg in woq_sampler:
+            yield tune_cfg
+
+        logger.info(
+            "[Strategy] The best tuning config with WeightOnlyQuant is" f"{self.cur_best_tuning_cfg['woq_tuning_cfg']}."
+        )
+
     def initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg: OpTuningConfig):
         """Init the dynamic tuning config according to the static config.
 
@@ -1322,6 +1366,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         # For not tuning recipe, tune cfg use it directly
         tune_cfg["recipe_cfgs"].update(self._not_tuning_recipes_values)
         tune_cfg["trial_number"] = deepcopy(self.trials_count)
+        tune_cfg.setdefault("woq_tuning_cfg", op_tuning_cfg.get("woq_tuning_cfg"))
         # The sq-related args comes from user config, current best tuning config
         # TODO simplify the logic for transforming the arguments
         # update the sq-related args from self.cur_best_tuning_cfg
@@ -1473,9 +1518,17 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         if framework == "pytorch_ipex" or framework == "pytorch" or framework == "pytorch_fx":
             if self.config.backend == "ipex":
                 framework = "pytorch_ipex"
+                if self.config.recipes.get("smooth_quant", None) and (
+                    self.config.op_name_dict or self.config.op_type_dict
+                ):
+                    model_dict = self.config.op_type_dict if self.config.op_type_dict else self.config.op_name_dict
+                    model_algo = model_dict.get(".*", {}).get("activation", {}).get("algorithm", {})
+                    if model_algo == "minmax" or "minmax" in model_algo:
+                        framework_specific_info.update({"model_init_algo": "minmax"})
             elif self.config.backend == "default":
                 framework = "pytorch_fx"
             if self.mixed_precision_mode:
+                framework = "pytorch"
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
             framework_specific_info.update({"recipes": self.config.recipes})
             framework_specific_info.update({"q_dataloader": q_dataloader})

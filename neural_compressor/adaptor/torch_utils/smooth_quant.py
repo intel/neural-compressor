@@ -182,6 +182,12 @@ def get_module(model, key):
     for name in name_list:
         if hasattr(module, name):
             module = getattr(module, name)
+        elif hasattr(module, "sq_linear"):  # for peft models
+            module = getattr(module, "sq_linear")
+            module = getattr(module, name)
+        elif hasattr(module, "orig_layer"):  # for peft models and auto alpha
+            module = getattr(module, "orig_layer")
+            module = getattr(module, name)
         else:
             module = module
     return module
@@ -200,8 +206,19 @@ def set_module(model, key, new_module):
     for name in name_list[:-1]:
         if hasattr(module, name):
             module = getattr(module, name)
+        elif hasattr(module, ("sq_linear")):  # for peft models that Linears are contained in Linear
+            module = getattr(module, "sq_linear")
+            module = getattr(module, name)
+        elif hasattr(module, ("orig_layer")):  # for peft models and auto alpha
+            module = getattr(module, "orig_layer")
+            module = getattr(module, name)
         else:
             module = module
+
+    if hasattr(module, "sq_linear") and name_list[-1] != "sq_linear":  # for peft models
+        module = getattr(module, "sq_linear")
+    if hasattr(module, "orig_layer") and name_list[-1] != "orig_layer":  # for peft models and auto alpha
+        module = getattr(module, "orig_layer")
     setattr(module, name_list[-1], new_module)
 
 
@@ -222,7 +239,7 @@ def cal_scale(input_max, weights, alpha, scale_type="orig"):
 class WrapperLayer(torch.nn.Module):
     def __init__(self, layer, input_min, input_max, save_q_input=False):
         super(WrapperLayer, self).__init__()
-        self.orig_layer = layer
+        self.add_module("orig_layer", layer)  # set orig_layer in get/set_module
         self.quant = False
         self.q_input = None
         self.fp32_output = None
@@ -281,7 +298,7 @@ class TorchSmoothQuant:
     to recover the weights if needed
     """
 
-    def __init__(self, model, dataloader, example_inputs=None, q_func=None, traced_model=None):
+    def __init__(self, model, dataloader=None, example_inputs=None, q_func=None, traced_model=None):
         """
         :param model: Torch model :param dataloader: Calibration dataloader :param traced_model: A specific model
         shares the same architecture as the model and could be traced by torch.jit. If not supplied, we use model
@@ -313,6 +330,8 @@ class TorchSmoothQuant:
         self.self_absorb_layers = {}
         self.absorb_to_layer = {}
         self.adjust_alpha_space = False
+        self.weight_clip = True
+        self.default_alpha = 0.5
 
     def _get_device(self):
         """Get the model device
@@ -372,7 +391,7 @@ class TorchSmoothQuant:
         ##hook all the module
         hook_modules = {}
         for n, module in self.model.named_modules():
-            if module.__class__.__name__.split(".")[-1] in self.op_types:
+            if isinstance(module, tuple(self.op_types)):
                 hook_modules[n] = module
 
         self._add_min_max_observer(hook_modules, percentile)
@@ -386,6 +405,7 @@ class TorchSmoothQuant:
         :param calibration_method: only support min_max currently
         :param calib_iter: Sample size for calibration
         :return:"""
+        logger.info("Calibrating...")
         if self.q_func:
             self.q_func(self.model)
         else:
@@ -546,6 +566,8 @@ class TorchSmoothQuant:
                 alpha_tmp = alpha
             elif isinstance(alpha, dict):
                 alpha_tmp = alpha[key]
+            else:
+                alpha_tmp = alpha
             if alpha_tmp < 0:
                 scale = torch.ones((1), device=self.device)
             else:
@@ -557,6 +579,8 @@ class TorchSmoothQuant:
                     weights.append(weight)
 
                 weight_max_per_channel = torch.max(torch.abs(torch.cat(weights, dim=0)), dim=0)[0]
+                if self.weight_clip:
+                    weight_max_per_channel = weight_max_per_channel.clamp(min=1e-5)
                 if self.record_max_info and not tuning:
                     # the input of layers with same absorb layer is the same.
                     input_minmax = [self.input_mins[layer_names[0]], self.input_maxes[layer_names[0]]]
@@ -669,7 +693,7 @@ class TorchSmoothQuant:
     def _get_all_hook_module_names(self):
         module_names = []
         for n, module in self.model.named_modules():
-            if module.__class__.__name__.split(".")[-1] in self.op_types:
+            if isinstance(module, tuple(self.op_types)):
                 module_names.append(n)
         return module_names
 
@@ -679,18 +703,18 @@ class TorchSmoothQuant:
         module_names = self._get_all_hook_module_names()
         self.to_unwrap_module_names = module_names
         for name in module_names:
+            if name not in self.input_mins:  # skip module if it's not used in calibration
+                continue
             module = get_module(self.model, name)
-            set_module(
-                self.model,
-                name,
-                WrapperLayer(module, self.input_mins[name], self.input_maxes[name], save_q_input=save_q_input),
-            )
+            new_module = WrapperLayer(module, self.input_mins[name], self.input_maxes[name], save_q_input=save_q_input)
+            set_module(self.model, name, new_module)
 
     def _qdq_model_unwrapper_for_auto(self):
         module_names = self.to_unwrap_module_names
         for name in module_names:
             module = get_module(self.model, name)
-            # print(name, flush=True)
+            if not hasattr(module, "orig_layer"):  # skip module if it's not used in calibration
+                continue
             set_module(self.model, name, module.orig_layer)
 
     def _change_qdq_for_auto(self, enable=True):
@@ -698,6 +722,8 @@ class TorchSmoothQuant:
         for name in module_names:
             name = name.split(".orig_layer")[0]
             module = get_module(self.model, name)
+            if not hasattr(module, "orig_layer"):  # skip module if it's not used in calibration
+                continue
             if enable:
                 module.enable_quant()
             else:
@@ -826,6 +852,7 @@ class TorchSmoothQuant:
         default_alpha = alpha_space[len(alpha_space) // 2]
         if 0.5 in alpha_space:
             default_alpha = 0.5
+        default_alpha = self.default_alpha
         absorb_input_scales, weight_scales = self._cal_scales(
             self.absorb_to_layer, input_maxes, default_alpha, tuning=True
         )
@@ -920,10 +947,12 @@ class TorchSmoothQuant:
         alpha=0.5,
         folding=False,
         percentile=100,
-        op_types=["Linear", "Conv2d"],
+        op_types=[torch.nn.Linear, torch.nn.Conv2d],
         scales_per_op=False,
         calib_iter=100,
         auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
+        weight_clip=True,
+        default_alpha=0.5,
     ):
         """The main entry of smooth quant
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
@@ -933,8 +962,14 @@ class TorchSmoothQuant:
         :param op_types: The op typed to be smooth quantized
         :param scales_per_op: Not supported now
         :param calib_iter: Data size for calibration
+        :param weight_clip: Whether to clip weight_max when calculating scales.
+
+        :param auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
+            By default the search space is 0.0-1.0 with step_size 0.1.
+        :param default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
-        benefit to quantization."""
+        benefit to quantization.
+        """
         if not isinstance(self.model, torch.nn.Module):
             logger.warning("smooth quant is ignored since the model is not a torch module")
             return self.model
@@ -949,15 +984,19 @@ class TorchSmoothQuant:
 
             alpha = numpy.clip(alpha, 0.0, 1.0)
 
+        self.weight_clip = weight_clip
+        self.default_alpha = default_alpha
+        self.auto_alpha_args = auto_alpha_args
         self.recover()
         need_calibration = self._check_need_calibration(alpha, percentile, op_types, scales_per_op, calib_iter)
         with torch.no_grad():
+            str_op_types = [i.__name__ for i in op_types]
             input_maxes_abs = self.input_maxes_abs
             if need_calibration:  ##avoid multiple calibaration during tuning if the only difference is alpha
                 if self.insert_mul:
-                    self.self_absorb_layers = self._get_all_layer_names()  # TODO: only support linear now.
+                    self.self_absorb_layers = self._get_all_layer_names(op_types)  # TODO: only support linear now.
                     # fetch modules with the same input
-                    group_modules = self._trace(op_types, skip_unsupported_layers=False)
+                    group_modules = self._trace(str_op_types, skip_unsupported_layers=False)
                     if group_modules is not None:
                         # use one input for qkv
                         for k, v in group_modules.items():
@@ -968,7 +1007,7 @@ class TorchSmoothQuant:
                         logger.debug(f"self_absorb_layers:{self.self_absorb_layers}")
                 if self.allow_absorb:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
-                        op_types
+                        str_op_types
                     )  ##TODO we need to insert mul layer for no_absorb_layers later
                     if self.absorb_to_layer is None and no_absorb_layers is None:
                         return self.model
@@ -1060,7 +1099,7 @@ class TorchSmoothQuant:
             self.weight_scale_info = {}  ##clear the data
             self.absorb_scales_info = {}
 
-    def _get_all_layer_names(self, op_types=["Linear"]):
+    def _get_all_layer_names(self, op_types=[torch.nn.Linear]):
         """Try the model to find the layers which can be smooth quantized.
 
         :param op_types: The op types to be smooth quantized
@@ -1068,20 +1107,10 @@ class TorchSmoothQuant:
         self_absorb_layer: A dict, absorb layer name (itself): layers to be smooth quantized
         """
         self_absorb_layer = {}
+        op_types = [torch.nn.Linear]  # TODO： only support SQLinearWrapper
         for name, module in self.model.named_modules():
-            for op_type in op_types:
-                if op_type == str(module.__class__.__name__):
-                    self_absorb_layer[name] = [name]
-        # remove duplicate Linear if Linear is wrapped by Linear
-        key_list = list(self_absorb_layer.keys())
-        key_list.sort()
-        duplicate_list = []
-        for i, k1 in enumerate(key_list):
-            for k2 in key_list[i + 1 :]:
-                if k1 in k2:
-                    duplicate_list.append(k1)
-        for i in duplicate_list:
-            self_absorb_layer.pop(i)
+            if isinstance(module, tuple(op_types)):
+                self_absorb_layer[name] = [name]
         return self_absorb_layer
 
     def _get_example_input(self):
@@ -1185,7 +1214,9 @@ class GraphTrace:
             dummy_input = move_input_to_device(dummy_input, "cpu")
         if isinstance(dummy_input, dict) or isinstance(dummy_input, UserDict):
             try:
-                traced_model = torch.jit.trace(model, example_kwarg_inputs=dict(dummy_input), strict=False)
+                traced_model = torch.jit.trace(
+                    model, example_kwarg_inputs=dict(dummy_input), strict=False, check_trace=False
+                )
                 traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
             except Exception as e:
                 logger.warning(e)
@@ -1331,46 +1362,3 @@ class GraphTrace:
             if supported:
                 res[key] = absorb_to_layer[key]
         return res
-
-
-def update_sq_scale(ipex_config_path, smoothquant_scale_info):
-    """Update ipex_config.json with smoothquant scale info generated by our algorithm.
-
-    Args:
-        ipex_config_path (str): a path to temporary ipex_config.json file.
-        smoothquant_scale_info (dict): a dict contains smoothquant scale info.
-    """
-    with open(ipex_config_path, "r") as f:
-        ipex_config = json.load(f)
-        for module_name, v in ipex_config.items():
-            if "q_op_infos" in v and v["q_op_infos"]:
-                for op_num, v1 in v["q_op_infos"].items():
-                    # update alpha data instead of updating weight scale
-                    op_name = v1["fqn"]  # fqn always exists even it's empty.
-                    if op_name in smoothquant_scale_info:
-                        # observers were overridden by the fallback step, setting it back.
-                        v1["activation_observer"] = {
-                            "name": "SmoothQuantActivationObserver",
-                            "smooth_quant_enabled": False,
-                            "dtype": "torch.quint8",
-                            "qscheme": "torch.per_tensor_affine",
-                            "reduce_range": False,
-                            "quant_min": 0,
-                            "quant_max": 255,
-                            "alpha": smoothquant_scale_info[op_name]["alpha"],
-                        }
-                        v1["weight_observer"] = {
-                            "name": "SmoothQuantWeightObserver",
-                            "smooth_quant_enabled": False,
-                            "dtype": "torch.qint8",
-                            "qscheme": "torch.per_channel_symmetric",
-                            "reduce_range": False,
-                            "quant_min": -128,
-                            "quant_max": 127,
-                            "alpha": smoothquant_scale_info[op_name]["alpha"],  # only update alpha
-                        }
-        f.close()
-    # overwrite ipex_config_path
-    with open(ipex_config_path, "w") as f1:
-        json.dump(ipex_config, f1, indent=4)
-        f1.close()

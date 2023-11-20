@@ -1824,6 +1824,9 @@ class TensorFlowAdaptor(Adaptor):
         op_types=["MatMul", "Conv2D"],
         scales_per_op=True,
         record_max_info=False,
+        weight_clip=True,
+        auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
+        default_alpha=0.5,
     ):
         """Convert the model by smooth quant.
 
@@ -1838,6 +1841,10 @@ class TensorFlowAdaptor(Adaptor):
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
                            False, ops with the same input will share a scale, mainly for performance
             record_max_info: whether record the max info in model for alpha tuning.
+            weight_clip: Whether to clip weight when calculating scales; by default it is on.
+            auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
+                            By default the search space is 0.0-1.0 with step_size 0.1.
+            default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
 
         Returns:
             model: A smoothed Tensorflow model

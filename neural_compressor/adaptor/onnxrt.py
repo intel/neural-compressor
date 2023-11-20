@@ -172,6 +172,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         op_types=["MatMul", "Gemm", "Conv", "FusedConv"],
         scales_per_op=True,
         record_max_info=False,
+        weight_clip=True,
+        auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
+        default_alpha=0.5,
     ):
         """Get augmented model with smooth quant.
 
@@ -186,6 +189,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             scales_per_op (bool): True, each op will have an individual scale, mainly for accuracy
                                   False, ops with the same input will share a scale, mainly for performance
             record_max_info (bool): False, whether record the scale information
+            weight_clip: Whether to clip weight when calculating scales; by default it is on.
+            auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
+                            By default the search space is 0.0-1.0 with step_size 0.1.
+            default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
 
         Returns:
             model: A modified onnx model
@@ -1632,25 +1639,37 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
         Returns:
             (dict): quantized model
         """
+        if self.performance_only:
+            tmp_model = model
+        else:
+            try:
+                tmp_model = copy.deepcopy(model)
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(repr(e)))
+                tmp_model = model
+
         assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
         for precision in self.query_handler.get_precisions():
             if precision == "weight_only_integer":
                 self.quantizable_op_types += self.query_handler.get_op_types_by_precision(precision=precision)
-        self.quantizable_ops = self._query_quantizable_ops(model.model)
+        self.quantizable_ops = self._query_quantizable_ops(tmp_model.model)
 
+        self._update_tune_cfg(tune_cfg, tmp_model.model)
         quant_config = self._cfg_to_quantize_config(tune_cfg)
         algos = set([item["algorithm"] for key, item in quant_config.items() if isinstance(item, dict)])
         if "GPTQ" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import gptq_quantize
 
+            assert data_loader is not None, "GPTQ WOQ algorithm needs to pass 'calib_dataloader' to quantization.fit()"
             percdamp = self.recipes.get("gptq_args", {}).get("percdamp", 0.01)
             blocksize = self.recipes.get("gptq_args", {}).get("blocksize", 128)
             actorder = self.recipes.get("gptq_args", {}).get("actorder", False)
             mse = self.recipes.get("gptq_args", {}).get("mse", False)
             perchannel = self.recipes.get("gptq_args", {}).get("perchannel", True)
+            accuracy_level = self.recipes.get("gptq_args", {}).get("accuracy_level", 0)
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
-            model = gptq_quantize(
-                model,
+            tmp_model = gptq_quantize(
+                tmp_model,
                 data_loader,
                 quant_config,
                 n_samples=calib_sampling_size,
@@ -1659,29 +1678,38 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 actorder=actorder,
                 mse=mse,
                 perchannel=perchannel,
+                accuracy_level=accuracy_level,
             )
         if "AWQ" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
 
+            assert data_loader is not None, "AWQ WOQ algorithm needs to pass 'calib_dataloader' to quantization.fit()"
             enable_auto_scale = self.recipes.get("awq_args", {}).get("enable_auto_scale", True)
             enable_mse_search = self.recipes.get("awq_args", {}).get("enable_mse_search", True)
+            accuracy_level = self.recipes.get("awq_args", {}).get("accuracy_level", 0)
             calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
-            model = awq_quantize(
-                model,
+            tmp_model = awq_quantize(
+                tmp_model,
                 data_loader,
                 quant_config,
                 n_samples=calib_sampling_size,
                 enable_auto_scale=enable_auto_scale,
                 enable_mse_search=enable_mse_search,
+                accuracy_level=accuracy_level,
             )
         elif "RTN" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
 
-            model = rtn_quantize(model, quant_config)
-        model.q_config = copy.deepcopy(quant_config)
-        self._dump_model_op_stats(model, tune_cfg)
-        model.topological_sort()
-        return model
+            accuracy_level = self.recipes.get("rtn_args", {}).get("accuracy_level", 0)
+            tmp_model = rtn_quantize(
+                tmp_model,
+                quant_config,
+                accuracy_level=accuracy_level,
+            )
+        tmp_model.q_config = copy.deepcopy(quant_config)
+        self._dump_model_op_stats(tmp_model, tune_cfg)
+        tmp_model.topological_sort()
+        return tmp_model
 
     def _dump_model_op_stats(self, model, tune_cfg):
         import re
@@ -1694,7 +1722,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
 
         dtype_set = set()
         for node in model.nodes():
-            if node.op_type == "MatMulFpQ4":
+            if node.op_type in ["MatMulFpQ4", "MatMulNBits"]:
                 optype = "MatMul"
             else:
                 optype = node.op_type
@@ -1746,6 +1774,31 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 quantize_config[op.name] = copy.deepcopy(tune_cfg["op"][(op.name, op.op_type)]["weight"])
 
         return quantize_config
+
+    def _update_tune_cfg(self, tune_cfg, model):
+        """Update tune cfg according to woq_tuning_cfg."""
+        if tune_cfg.get("woq_tuning_cfg") is None:
+            return tune_cfg
+
+        from neural_compressor.strategy.utils.constant import WOQ_TUNING_ALGOS
+
+        woq_tuning_cfg = tune_cfg.get("woq_tuning_cfg")
+        new_woq_cfg = WOQ_TUNING_ALGOS.get(woq_tuning_cfg)
+
+        for node_cfg in tune_cfg["op"].values():
+            node_cfg["weight"].update(
+                {cfg_name: cfg_value for cfg_name, cfg_value in new_woq_cfg.items() if cfg_name in node_cfg["weight"]}
+            )
+
+        # find last matmul and set to fp32
+        if "DISABLE_LAST_MATMUL" in woq_tuning_cfg:
+            last_matmul = None
+            fp32_op_cfg = {"weight": {"dtype": "fp32"}, "activation": {"dtype": "fp32", "quant_mode": "fp32"}}
+            for node in model.graph.node:
+                if node.op_type in ["MatMul"]:
+                    last_matmul = (node.name, node.op_type)
+            if last_matmul in tune_cfg["op"]:
+                tune_cfg["op"][last_matmul].update(fp32_op_cfg)
 
     def query_fw_capability(self, model):
         """The function is used to query framework capability.

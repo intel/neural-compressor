@@ -12,10 +12,12 @@ pip install -r requirements.txt
 ```
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
+> Note: Weight-only quantization in Intel® Neural Compressor is still under development. We encourage you to use the `master` branch to access the latest features.
+
 ## 2. Prepare Model
 
 ```bash
-optimum-cli export onnx --model decapoda-research/llama-7b-hf --task text-generation-with-past ./llama_7b
+python prepare_model.py  --input_model="decapoda-research/llama-7b-hf" --output_model="./llama_7b"
 ```
 
 # Run

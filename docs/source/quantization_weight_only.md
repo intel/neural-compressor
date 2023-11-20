@@ -96,6 +96,14 @@ To support low memory inference, Neural Compressor implemented WeightOnlyLinear,
 |  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8\|16\|32\|64]   |
 |  compression_dim  |       1       |   0 means output channel while 1 means input channel   |
 |  scale_dtype  |       torch.float32       |  Data type for scale and bias   |
+|  use_hf_format  |     False       |  Whether to use the popular format present on HuggingFace hub   |
+
+**Note:** HuggingFace format is quite special, the main differences are as follows:
+
+> 1: Compression Dimension: weight = 1, zero = 0 and both are transposed.   
+> 2: Zero Point: zero_point-= 1 before compression. zero_point is always required even for sym.    
+> 3: Group Index: Use the same number for a group instead of recording channel order.    
+
 
 ### **User Code Example**
 ```python
@@ -119,15 +127,49 @@ conf = PostTrainingQuantConfig(
 )
 q_model = quantization.fit(model, conf, eval_func=eval_func)
 q_model.save("saved_results")
-compressed_model = q_model.export_compressed_model(
-    compression_dtype=torch.int32,
-    compression_dim=1,
-    scale_dtype=torch.float16,
-)
+compressed_model = q_model.export_compressed_model()
 torch.save(compressed_model.state_dict(), "compressed_model.pt")
+# or
+model = Model()
+compressed_model = export_compressed_model(
+    model,
+    saved_dir="saved_results",
+)
 ```
 
 The saved_results folder contains two files: `best_model.pt` and `qconfig.json`, and the generated q_model is a fake quantized model.
+
+To seek the performance of weight-only quantized models, Please go to [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization#1-performance) to quantize and deploy the model.
+
+
+### **WOQ algorithms tuning**
+
+To find the best algorithm, users can omit specifying a particular algorithm. In comparison to setting a specific algorithm, this tuning process will traverse through a set of pre-defined WOQ configurations and identify the optimal one with the best result. For details usage, please refer to the [tuning strategy](./tuning_strategies.md#Basic).
+
+> **Note:** Currently, this behavior is specific to the `ONNX Runtime` backend.
+
+**Pre-defined configurations**
+
+| WOQ configurations | setting |
+|:------------------:|:-------:|
+|RTN_G32ASYM| {"algorithm": "RTN", "group_size": 32, "scheme": "asym"}|
+|GPTQ_G32ASYM| {"algorithm": "GPTQ", "group_size": 32, "scheme": "asym"}|
+|GPTQ_G32ASYM_DISABLE_LAST_MATMUL| {"algorithm": "GPTQ", "group_size": 32, "scheme": "asym"} <br> & disable last MatMul|
+|GPTQ_G128ASYM| {"algorithm": "GPTQ", "group_size": 128, "scheme": "asym"}|
+|AWQ_G32ASYM| {"algorithm": "AWQ", "group_size": 32, "scheme": "asym"}|
+
+**User code example**
+
+```python
+conf = PostTrainingQuantConfig(
+    approach="weight_only",
+    quant_level="auto",  # quant_level supports "auto" or 1 for woq config tuning
+)
+q_model = quantization.fit(model, conf, eval_func=eval_func, calib_dataloader=dataloader)
+q_model.save("saved_results")
+```
+
+Refer to this [link](../../examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only) for an example of WOQ algorithms tuning on ONNX Llama models.
 
 ## Layer Wise Quantization
 
@@ -143,22 +185,19 @@ Large language models (LLMs) have shown exceptional performance across various t
 |:--------------:|:----------:|
 |       RTN      |  &#10004;  | 
 |       AWQ      |  &#10005;  |
-|      GPTQ      | &#10005; | 
+|      GPTQ      | &#10004; | 
 |      TEQ      | &#10005; |
 
 ### Example
 ```python
 from neural_compressor import PostTrainingQuantConfig, quantization
-from neural_compressor.adaptor.torch_utils.layer_wise_quant import load_shell
+from neural_compressor.adaptor.torch_utils.layer_wise_quant import load_empty_model
 
-fp32_model = load_shell(model_name_or_path, AutoModelForCausalLM, torchscript=True)
+fp32_model = load_empty_model(model_name_or_path, torchscript=True)
 conf = PostTrainingQuantConfig(
     approach="weight_only",
     recipes={
         "layer_wise_quant": True,
-        "layer_wise_quant_args": {
-            "model_path": "facebook/opt-125m",
-        },
         "rtn_args": {"enable_full_range": True},
     },
 )
@@ -171,6 +210,7 @@ q_model = quantization.fit(
 )
 ouput_dir = "./saved_model"
 q_model.save(ouput_dir)
+q_model = load(ouput_dir, fp32_model, weight_only=True, layer_wise=True)
 ```
 
 ## Reference

@@ -36,10 +36,35 @@ from neural_compressor.utils.utility import LazyImport
 ort = LazyImport("onnxruntime")
 logger = logging.getLogger("neural_compressor")
 ONNXRT116_VERSION = Version("1.16.0")
+ONNXRT1161_VERSION = Version("1.16.1")
+
+
+def get_blob_size(group_size, has_zp):  # pragma: no cover
+    """Get blob_size.
+
+    Args:
+        group_size (int): how many elements share one scale/zp
+        has_zp (bool): whether zero_point is None
+    """
+    if Version(ort.__version__) > ONNXRT1161_VERSION:
+        blob_size = group_size // 2
+    elif has_zp:
+        blob_size = group_size // 2 + 4 + 1
+    else:
+        blob_size = group_size // 2 + 4
+    return blob_size
 
 
 def make_matmul_weight_only_node(
-    node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point
+    node,
+    weight_shape,
+    num_bits,
+    group_size,
+    k_blocks,
+    q_weight,
+    scale,
+    zero_point,
+    accuracy_level=0,
 ):  # pragma: no cover
     """Build MatMulFpQ4 node.
 
@@ -52,51 +77,110 @@ def make_matmul_weight_only_node(
         q_weight (array): quantized weight
         scale (array): scale
         zero_point (array): zero point
+        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                              4 (int8 compute type of jblas kernel)
 
     Returns:
-        matmul_weight_only_node: MatMulFpQ4 node
-        new_inits: initializers of the MatMulFpQ4 node
+        matmul_weight_only_node: MatMulFpQ4 or MatMulNBits node
+        new_inits: initializers of the new node
     """
-    if zero_point is not None:
-        blob_size = group_size // 2 + 4 + 1
-        offset = 5
-    else:
-        blob_size = group_size // 2 + 4
-        offset = 4
-
+    blob_size = get_blob_size(group_size, zero_point is not None)
     packed = np.zeros((q_weight.shape[0], blob_size), dtype="uint8")
-    for i in range(q_weight.shape[0]):
-        bf = struct.pack("f", scale[i])
-        packed[i][0] = bf[0]
-        packed[i][1] = bf[1]
-        packed[i][2] = bf[2]
-        packed[i][3] = bf[3]
+    q_weight_name = node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size))
+    input_names = [node.input[0], q_weight_name]
+    new_inits = []
+    kwargs = {}
 
-        if zero_point is not None:
-            packed[i][4] = zero_point[i]
+    if Version(ort.__version__) > ONNXRT1161_VERSION:
+        op_type = "MatMulNBits"
 
-        packed[i][offset:] = np.bitwise_or(
-            q_weight[i][: group_size // 2], np.left_shift(q_weight[i][group_size // 2 :], num_bits)
+        # pack quantized weight
+        for i in range(q_weight.shape[0]):
+            for k in range(0, group_size, 2):
+                packed[i][k // 2] = q_weight[i][k] | q_weight[i][k + 1] << 4
+        packed = np.reshape(packed, (-1, k_blocks, blob_size))
+
+        # build scale tensor
+        scale = np.reshape(scale, (-1, k_blocks)).astype("float32")
+        scale_tensor = onnx.helper.make_tensor(
+            name=node.input[1] + "_scale", data_type=1, dims=scale.shape, vals=scale.tobytes(), raw=True
         )
+        input_names.append(scale_tensor.name)
+        new_inits.append(scale_tensor)
 
-    packed = packed.reshape(-1)
+        # build zero_point tensor
+        if zero_point is not None:
+            if num_bits > 4:
+                packed_zp = np.reshape(zero_point, (1, -1)).astype("uint8")
+            else:
+                packed_zp = np.full((zero_point.shape[0] + 1) // 2, 136, dtype="uint8")
+                for i in range(zero_point.shape[0] // k_blocks):
+                    for j in range(k_blocks):
+                        idx = i * k_blocks + j
+                        zp = zero_point[idx]
+                        packed_zp[idx // 2] = (
+                            ((packed_zp[idx // 2] & 0x0F) | (zp << 4))
+                            if (idx & 1)
+                            else ((packed_zp[idx // 2] & 0xF0) | zp)
+                        )
+
+            zp_tensor = onnx.helper.make_tensor(
+                name=node.input[1] + "_zp", data_type=2, dims=packed_zp.shape, vals=packed_zp.tobytes(), raw=True
+            )
+            input_names.append(zp_tensor.name)
+            new_inits.append(zp_tensor)
+
+        # set kwargs
+        kwargs["K"] = weight_shape[0]
+        kwargs["N"] = weight_shape[1]
+        kwargs["bits"] = num_bits
+        kwargs["block_size"] = group_size
+        if accuracy_level > 0:
+            # require onnxruntime > 1.16.2
+            kwargs["accuracy_level"] = accuracy_level
+
+    else:
+        offset = 5 if zero_point is not None else 4
+        op_type = "MatMulFpQ4"
+
+        # pack quantized weight
+        for i in range(q_weight.shape[0]):
+            bf = struct.pack("f", scale[i])
+            packed[i][0] = bf[0]
+            packed[i][1] = bf[1]
+            packed[i][2] = bf[2]
+            packed[i][3] = bf[3]
+
+            if zero_point is not None:
+                packed[i][4] = zero_point[i]
+
+            packed[i][offset:] = np.bitwise_or(
+                q_weight[i][: group_size // 2], np.left_shift(q_weight[i][group_size // 2 :], num_bits)
+            )
+        packed = packed.reshape(-1)
+
+        # build shape tensor
+        shape_tensor = onnx.helper.make_tensor(
+            name=node.input[1] + "_shape", data_type=7, dims=(2,), vals=np.array(weight_shape, dtype="int64")
+        )
+        new_inits.append(shape_tensor)
+        input_names.append(shape_tensor.name)
+
+        # set kwargs
+        kwargs["blk_quant_type"] = 1 if zero_point is not None else 0
+
     q_weight_tensor = onnx.helper.make_tensor(
-        name=node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size)),
+        name=q_weight_name,
         data_type=2,
         dims=packed.shape,
         vals=packed.tobytes(),
         raw=True,
     )
-    shape_tensor = onnx.helper.make_tensor(
-        name=node.input[1] + "_shape", data_type=7, dims=(2,), vals=np.array(weight_shape, dtype="int64")
-    )
-    input_names = [node.input[0], q_weight_tensor.name, shape_tensor.name]
-    new_inits = [q_weight_tensor, shape_tensor]
+    new_inits.append(q_weight_tensor)
 
-    kwargs = {}
-    kwargs["blk_quant_type"] = 1 if zero_point is not None else 0
     matmul_weight_only_node = onnx.helper.make_node(
-        "MatMulFpQ4",
+        op_type,
         inputs=input_names,
         outputs=node.output,
         name=node.name + "_Q" + str(num_bits) if node.name else "_Q" + str(num_bits),
@@ -204,6 +288,7 @@ def rtn_quantize(
     group_size=32,
     scheme="asym",
     ratios={},
+    accuracy_level=0,
 ):
     """Quant the model with round to nearst method.
 
@@ -224,6 +309,9 @@ def rtn_quantize(
         group_size (int, optional): how many elements share one scale/zp. Default is 32.
         scheme (str, optional): sym or asym. Defaults to "asym".
         ratios (dict, optional): percentile of clip. Defaults to {}.
+        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                              4 (int8 compute type of jblas kernel)
 
     Returns:
         model: fake quantized ONNXModel
@@ -257,8 +345,11 @@ def rtn_quantize(
 
             weight = pad_tensor(weight, group_size, k_blocks)
 
-            if Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32:  # pragma: no cover
-                # currently MatMulFpQ4 only support 4 bits and 32 group_size
+            if (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (
+                Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
+            ):  # pragma: no cover
+                # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions
+                # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1
                 q_weight, scale, zp = quant_tensor(
                     weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
                 )
@@ -271,6 +362,7 @@ def rtn_quantize(
                     q_weight=q_weight.astype("uint8"),
                     scale=scale,
                     zero_point=zp if scheme == "asym" else None,
+                    accuracy_level=accuracy_level,
                 )
 
                 model.add_initializers(new_inits)
@@ -361,9 +453,11 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 weight = weight.T * scales
                 weight = pad_tensor(weight, group_size, (org_w_shape[0] + group_size - 1) // group_size).T
 
-                if (
+                if (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (
                     Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
                 ):  # pragma: no cover
+                    # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions
+                    # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1
                     q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint") / np.expand_dims(
                         scales, axis=-1
                     )
@@ -504,10 +598,11 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
             for i_s in range(10):
                 ratio = 1 - i_s / 100
                 weight = copy.deepcopy(org_weight)
-                if (
+                if (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (
                     Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
                 ):  # pragma: no cover
-                    # currently MatMulFpQ4 only support 4 bits and 32 group_size
+                    # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions
+                    # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1
                     weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1))
                 else:
                     weight = qdq_tensor(weight, num_bits, group_size, scheme, "int", ratios.get(node.input[1], 1))
@@ -571,9 +666,9 @@ def prepare_inputs(model, n_samples, dataloader):
 
         if isinstance(data[0], dict):
             inputs.append(dict([(name, to_numpy(inp_data)) for name, inp_data in data[0].items()]))
-        elif isinstance(data[0], np.ndarray):
+        elif isinstance(data[0], np.ndarray):  # pragma: no cover
             inputs.append(dict([(name, inp) for name, inp in zip(inputs_names, [data[0]])]))
-        else:
+        else:  # pragma: no cover
             inputs.append(dict([(name, to_numpy(inp)) for name, inp in zip(inputs_names, data[0])]))
     return inputs, so
 
@@ -588,6 +683,7 @@ def awq_quantize(
     n_samples=128,
     enable_auto_scale=True,
     enable_mse_search=True,
+    accuracy_level=0,
 ):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
@@ -611,6 +707,9 @@ def awq_quantize(
         n_samples (int, optional): calibration sample number.
         enable_auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
         enable_mse_search (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
+        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                              4 (int8 compute type of jblas kernel)
 
     Returns:
         model: fake quantized ONNXModel
@@ -697,7 +796,7 @@ def awq_quantize(
 
         model.remove_tensors_from_outputs(output_names)
         model.model.graph.output.MergeFrom(org_output)
-    model = rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio)
+    model = rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio, accuracy_level)
     return model
 
 
@@ -858,6 +957,7 @@ def gptq_quantize(
     actorder=False,
     mse=False,
     perchannel=True,
+    accuracy_level=0,
 ):
     """Quant the model with GPTQ method.
 
@@ -884,6 +984,9 @@ def gptq_quantize(
         actorder (bool, optional): whether rearrange Hessian matrix considering the diag's value.
         mse (bool, optional): whether get scale and zero point with mse error.
         perchannel (bool, optional): whether quantize weight per-channel.
+        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                              4 (int8 compute type of jblas kernel)
 
     Returns:
         model: fake quantized ONNXModel
@@ -982,8 +1085,11 @@ def gptq_quantize(
 
             weight_tensor = model.get_initializer(node.input[1])
             init_share_num = model.get_initializer_share_num(node.input[1])
-            if Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32:  # pragma: no cover
-                # currently MatMulFpQ4 only support 4 bits and 32 group_size
+            if (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (
+                Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
+            ):  # pragma: no cover
+                # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions
+                # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1
                 org_shape = weight.shape
                 k_blocks = (org_shape[0] + group_size - 1) // group_size
                 q_weight = pad_tensor(q_weight, group_size, k_blocks)
@@ -997,6 +1103,7 @@ def gptq_quantize(
                     q_weight=q_weight.astype("uint8"),
                     scale=scale,
                     zero_point=zp if scheme == "asym" else None,
+                    accuracy_level=accuracy_level,
                 )
 
                 model.add_initializers(new_inits)
