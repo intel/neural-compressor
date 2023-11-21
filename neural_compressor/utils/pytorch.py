@@ -465,6 +465,7 @@ def load(checkpoint_dir=None, model=None, layer_wise=False, history_cfg=None, **
     util.get_embedding_contiguous(model)
     return model
 
+
 def recover_model_from_json(model, json_file_path, example_inputs):
     """Recover ipex model from JSON file.
 
@@ -477,11 +478,11 @@ def recover_model_from_json(model, json_file_path, example_inputs):
         (object): quantized model
     """
     from ..utils.utility import LazyImport
+
     ipex = LazyImport("intel_extension_for_pytorch")
     from torch.ao.quantization.observer import MinMaxObserver
-    qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-        alpha=0.5, act_observer=MinMaxObserver()
-    )
+
+    qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5, act_observer=MinMaxObserver())
     if isinstance(example_inputs, dict):
         model = ipex.quantization.prepare(model, qconfig, example_kwarg_inputs=example_inputs, inplace=True)
     else:
@@ -497,9 +498,7 @@ def recover_model_from_json(model, json_file_path, example_inputs):
             model = torch.jit.freeze(model.eval())
         except:
             if isinstance(example_inputs, dict):
-                model = torch.jit.trace(
-                    model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False
-                )
+                model = torch.jit.trace(model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False)
             else:
                 model = torch.jit.trace(model, example_inputs, strict=False)
             model = torch.jit.freeze(model.eval())
