@@ -492,12 +492,14 @@ def recover_model_from_json(model, json_file_path, example_inputs):
     with torch.no_grad():
         try:
             if isinstance(example_inputs, dict):
+                # pylint: disable=E1120
                 model = torch.jit.trace(model, example_kwarg_inputs=example_inputs)
             else:
                 model = torch.jit.trace(model, example_inputs)
             model = torch.jit.freeze(model.eval())
         except:
             if isinstance(example_inputs, dict):
+                # pylint: disable=E1120
                 model = torch.jit.trace(model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False)
             else:
                 model = torch.jit.trace(model, example_inputs, strict=False)
