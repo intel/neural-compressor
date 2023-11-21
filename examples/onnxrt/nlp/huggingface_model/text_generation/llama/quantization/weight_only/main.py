@@ -269,9 +269,14 @@ if __name__ == "__main__":
             # TODO: support WOQ tuning on model with more than one onnx files
             model_path = os.path.join(args.model_path, "decoder_model.onnx")
             dataloader = GPTQDataloader(model_path, seqlen=args.seqlen, batch_size=1)
+
+            from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
+            # set tolerable_loss to 0.5% for test, default is 1%
+            accuracy_criterion = AccuracyCriterion(tolerable_loss=0.005)
             config = PostTrainingQuantConfig(
                 approach="weight_only",
-                calibration_sampling_size=[8])
+                calibration_sampling_size=[8],
+                accuracy_criterion=accuracy_criterion)
             q_model = quantization.fit(
                 model_path,
                 config,
