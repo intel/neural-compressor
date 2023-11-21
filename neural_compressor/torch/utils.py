@@ -80,12 +80,16 @@ def set_module(model, op_name, new_module):
         module (object).
     """
     name_list = op_name.split(".")
-    second_last_module = fetch_module(model, ".".join(name_list[:-1]))
-    if second_last_module is None:
-        logger.warning(f"Setting skipped as the {op_name} is not present in the model.")
-        return None
+    if len(name_list) == 1:
+        setattr(model, name_list[-1], new_module)
+        return
     else:
-        setattr(second_last_module, name_list[-1], new_module)
+        second_last_module = fetch_module(model, ".".join(name_list[:-1]))
+        if second_last_module is None:
+            logger.warning(f"Setting skipped as the {op_name} is not present in the model.")
+            return None
+        else:
+            setattr(second_last_module, name_list[-1], new_module)
 
 
 def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) -> List[Tuple[str, Callable]]:
