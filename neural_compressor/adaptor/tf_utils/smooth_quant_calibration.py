@@ -239,7 +239,7 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
     """A class for performing smooth quantization calibration on a Tensorflow LLM model.
 
     Args:
-        model (str): A path to the origianl Tensorflow model.
+        model (str): A path to the original Tensorflow model.
         iterations (int): The number of iterations to run the calibration process.
         op_types (List[str]): The types of operations to be quantized.
         percentile (float): The percentile of calibration to remove outliers.
@@ -348,7 +348,7 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
 
                     if index == 0:
                         msg = ";{}__print__:".format(each_node_name)
-                        # workround for swish_f32, attribute T is not in the op definition
+                        # workaround for swish_f32, attribute T is not in the op definition
                         if "swish_f32" in graph_info[pre_node_name].node.name:
                             src_dt = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
                         else:
