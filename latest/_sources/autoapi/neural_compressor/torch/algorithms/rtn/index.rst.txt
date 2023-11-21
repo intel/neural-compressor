@@ -1,0 +1,193 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.rtn`
+================================================
+
+.. py:module:: neural_compressor.torch.algorithms.rtn
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.rtn.quantize_4bit
+   neural_compressor.torch.algorithms.rtn.qdq_weight_asym
+   neural_compressor.torch.algorithms.rtn.qdq_weight_sym
+   neural_compressor.torch.algorithms.rtn.qdq_weight_actor
+   neural_compressor.torch.algorithms.rtn.quant_weight
+   neural_compressor.torch.algorithms.rtn.search_clip
+   neural_compressor.torch.algorithms.rtn.rtn_quantize
+
+
+
+.. py:function:: quantize_4bit(tensor, quantile=1.0, data_type='nf4', return_int=False)
+
+   Quantize tensor to NF4/FP4 data type.
+
+   :param tensor: input tensor
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+   :param data_type: data type. Defaults to 'nf4'.
+   :type data_type: str, optional
+   :param return_int: whether return int data. Defaults to False.
+   :type return_int: bool, optional
+
+   :returns: fake quantized tensor
+   :rtype: q_tensor
+
+
+.. py:function:: qdq_weight_asym(weight, num_bits=4, quantile=1.0, return_int=False)
+
+   Quant and dequant tensor with asym schema.
+
+   :param weight: input weight
+   :param num_bits: num_bits. Defaults to 4.
+   :type num_bits: int, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+   :param return_int: Choose return fp32 or int8/uint8 data.
+                      Defaults to False.
+   :type return_int: bool, optional
+
+   :returns: qdq weight
+   :rtype: output
+
+
+.. py:function:: qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_range=False)
+
+   Quant and dequant tensor with sym schema.
+
+   :param weight: input weight
+   :param num_bits: num_bits. Defaults to 4.
+   :type num_bits: int, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+   :param return_int: Choose return fp32 or int8/uint8 data.
+                      Defaults to False.
+   :type return_int: bool, optional
+   :param full_range: Choose sym range whether use -2**(bits-1).
+                      For example: 4 bit
+                          scale = amax / 8 if full_range else amax / 7
+                          If True, scale = -scale if abs(min)> abs(max) else scale
+                          Defaults to False.
+   :type full_range: bool, optional
+
+   :returns: qdq weight
+   :rtype: output
+
+
+.. py:function:: qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, data_type='int', return_int=False, full_range=False)
+
+   Quant and dequant tensor per channel.
+
+   :param weight: input weight
+   :param num_bits: num_bits. Defaults to 4.
+   :type num_bits: int, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+   :param data_type: select from int, nf4, fp4. Defaults to int.
+   :type data_type: str, optional
+   :param return_int: Choose return fp32 or int8/uint8 data.
+                      Defaults to False.
+   :type return_int: bool, optional
+   :param full_range: Choose sym range whether use -2**(bits-1).
+   :type full_range: bool, optional
+
+   :returns: qdq weight
+   :rtype: output
+
+
+.. py:function:: quant_weight(weight, num_bits=4, group_size=-1, scheme='asym', quantile=1.0, data_type='int', return_int=False, full_range=False)
+
+   Quant and dequant tensor with group size.
+
+   :param weight: input weight
+   :param num_bits: num_bits. Defaults to 4.
+   :type num_bits: int, optional
+   :param group_size: how many elements share one scale/zp. Defaults to -1.
+   :type group_size: int, optional
+   :param scheme: sym or asym. Defaults to "asym".
+   :type scheme: str, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+   :param data_type: select from int, nf4, fp4. Defaults to int.
+   :type data_type: str, optional
+   :param return_int: Choose return fp32 or int8/uint8 data.
+                      Defaults to False.
+   :type return_int: bool, optional
+   :param full_range: Choose sym range whether use -2**(bits-1).
+   :type full_range: bool, optional
+
+   :returns: qdq weight.
+   :rtype: output
+
+
+.. py:function:: search_clip(m, num_bits=4, group_size=32, scheme='asym', data_type='int', enable_full_range=False)
+
+   Search best clip range of each linears in current block.
+
+   :param m: torch module.
+   :type m: torch.nn.Module
+   :param num_bits: num bits.
+   :type num_bits: int, optional
+   :param group_size: how many elements share one scale/zp.
+   :type group_size: int, optional
+   :param scheme: sym or asym.
+   :type scheme: str, optional
+   :param data_type: select from int, nf4, fp4. Defaults to int.
+   :type data_type: str, optional
+   :param enable_full_range: Choose sym range whether use -2**(bits-1).
+   :type enable_full_range: bool, optional
+
+   :returns: best percentile of clip
+   :rtype: best_clip_ratio (float)
+
+
+.. py:function:: rtn_quantize(model, num_bits=4, group_size=32, scheme='asym', quantile=1.0, weight_config={}, return_int=False, data_type='int', enable_full_range=False, enable_mse_search=False, group_dim=1, **kwargs)
+
+   Quant the model with round to nearst method.
+
+   :param model: torch module
+   :param num_bits: num bits. Defaults to 4.
+   :param group_size: how many elements share one scale/zp. Defaults to 32.
+   :type group_size: int, optional
+   :param scheme: sym or asym. Defaults to "asym".
+   :type scheme: str, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+   :param data_type: select from int, nf4, fp4. Defaults to int.
+   :type data_type: str, optional
+   :param weight_config: specific layer wise configurations. Defaults to {}.
+                         For example,
+                             weight_config={
+                                 'fc2':
+                                     {
+                                         'bits': 4,
+                                         'group_size': 32,
+                                         'scheme': 'sym'
+                                         'gptq_perm': [1, 1, ...] # for gptq perm
+                                     }
+                             }
+   :type weight_config: dict, optional
+   :param return_int: Choose return fp32 or int32 model.
+                      Defaults to False.
+   :type return_int: bool, optional
+   :param enable_full_range: Choose sym range whether use -2**(bits-1).
+                             Defaults to False.
+   :type enable_full_range: bool, optional
+   :param enable_mse_search: Whether search clip range.
+                             Defaults to True.
+   :type enable_mse_search: bool, optional
+   :param group_dim: 0 means splitting output channel,
+                     1 means splitting input channel. Defaults to 1.
+   :type group_dim: int, optional
+
+   :returns: fake quantized torch module
+   :rtype: model
+
+

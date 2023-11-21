@@ -15,6 +15,7 @@ Classes
 .. autoapisummary::
 
    neural_compressor.common.base_config.BaseConfig
+   neural_compressor.common.base_config.ComposableConfig
 
 
 
@@ -43,6 +44,14 @@ Functions
 
 
 .. py:class:: BaseConfig
+
+
+
+
+   The base config for all algorithm configs.
+
+
+.. py:class:: ComposableConfig(configs: List[BaseConfig])
 
 
 

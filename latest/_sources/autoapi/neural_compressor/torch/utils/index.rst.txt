@@ -16,6 +16,8 @@ Functions
 .. autoapisummary::
 
    neural_compressor.torch.utils.register_algo
+   neural_compressor.torch.utils.fetch_module
+   neural_compressor.torch.utils.set_module
 
 
 
@@ -33,5 +35,31 @@ Functions
 
    :returns: The decorator function to be used with algorithm functions.
    :rtype: decorator
+
+
+.. py:function:: fetch_module(model, op_name)
+
+   Get module with a given op name.
+
+   :param model: the input model.
+   :type model: object
+   :param op_name: name of op.
+   :type op_name: str
+
+   :returns: module (object).
+
+
+.. py:function:: set_module(model, op_name, new_module)
+
+   Set module with a given op name.
+
+   :param model: the input model.
+   :type model: object
+   :param op_name: name of op.
+   :type op_name: str
+   :param new_module: the input model.
+   :type new_module: object
+
+   :returns: module (object).
 
 

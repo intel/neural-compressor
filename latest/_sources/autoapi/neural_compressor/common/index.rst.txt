@@ -6,3 +6,12 @@
 .. py:module:: neural_compressor.common
 
 
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   logger/index.rst
+
+
