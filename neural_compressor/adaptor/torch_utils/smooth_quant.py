@@ -1063,9 +1063,9 @@ class TorchSmoothQuant:
 
                 scale_memo_use = 0
                 for key in self.absorb_to_layer:
-                    for layer in self.absorb_to_layer[key]:
-                        input_max = input_maxes_abs[key]
-                        scale_memo_use += 4 * input_max.shape[0]
+                    layer_name = self.absorb_to_layer[key][0]
+                    input_max = input_maxes_abs[layer_name]
+                    scale_memo_use += 4 * input_max.shape[0] * len(self.absorb_to_layer[key])
                 if alpha == "auto":
                     alpha_space = (auto_alpha_args["alpha_max"] - auto_alpha_args["alpha_min"]) / auto_alpha_args[
                         "alpha_step"
