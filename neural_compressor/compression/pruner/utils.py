@@ -17,6 +17,7 @@
 # limitations under the License.
 
 import re
+from collections import UserDict, defaultdict
 
 import numpy as np
 import yaml
@@ -671,6 +672,34 @@ def get_layers(model):
     return layers
 
 
+def move_input_to_device(input, device):
+    if device is None:
+        device = torch.device("cpu")
+    elif isinstance(device, str):
+        device = torch.device(device)
+
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        for inp in input.keys():
+            input[inp] = input[inp].to(device) if isinstance(input[inp], torch.Tensor) else input[inp]
+    elif isinstance(input, list) or isinstance(input, tuple):
+        input_res, prev_size = [], None
+        for inp in input:
+            if prev_size:
+                if isinstance(inp, torch.Tensor):
+                    if inp.size() == prev_size:
+                        input_res.append(inp.to(device))
+                else:
+                    if torch.tensor(inp).size == prev_size:
+                        input_res.append(inp)
+            else:
+                input_res.append(inp.to(device) if isinstance(inp, torch.Tensor) else inp)
+            prev_size = torch.tensor(inp).size()
+        input = input_res
+    else:
+        input = input.to(device)  # pylint: disable=no-member
+    return input
+
+
 def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"):
     """Getting the forward input of a layer.
 
@@ -686,13 +715,7 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"
     model_dev = model.device
     attention_mask = None
     # 'alibi' is a necessary attribute for the bloom models
-    inputs_info = {"attention_mask": None}
-    if hasattr(model, "config"):
-        model_type = model.config.model_type
-    else:
-        model_type = "null"
-    if "bloom" in model_type:
-        inputs_info["alibi"] = None
+    inputs_info = {}
 
     with torch.no_grad():
         if layer_idx == 0:
@@ -701,9 +724,13 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"
             def forward(self, hidden_states, **kwargs):
                 # TODO solve the problem of batchsize!=1
                 inputs.append(hidden_states.to(device))
-                inputs_info["attention_mask"] = kwargs["attention_mask"]
-                if "alibi" in kwargs.keys():
-                    inputs_info["alibi"] = kwargs["alibi"]
+                for key in kwargs.keys():
+                    if isinstance(kwargs[key], torch.Tensor) or (key == "alibi"):
+                        if key not in inputs_info.keys():
+                            inputs_info[key] = []
+                        if isinstance(kwargs[key], torch.Tensor):
+                            kwargs[key] = kwargs[key].to(device)
+                        inputs_info[key].append(kwargs[key])
                 raise ValueError
 
             forward_cache = layers[layer_idx].forward
@@ -711,19 +738,18 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"
 
             layer.forward = partial(forward, layer)
             for batch in layer_inputs:
+                batch = move_input_to_device(batch, model_dev)
                 try:
-                    if "values" in dir(batch):
-                        hidden_states = list(batch.values())[0].to(model_dev)
+                    if isinstance(batch, tuple) or isinstance(batch, list):
+                        model(batch[0])
+                    elif isinstance(batch, dict):
+                        model(**batch)
                     else:
-                        hidden_states = batch[0].to(model_dev).to(model_dev)
-                    model(hidden_states)
-                    # model(**batch)
+                        model(batch)
                 except ValueError:
                     pass
             layer.forward = forward_cache
-            for key in inputs_info.keys():
-                if inputs_info[key] is not None:
-                    inputs_info[key] = inputs_info[key].to(device)
+
         else:
             prev_layer = layers[layer_idx - 1]
 

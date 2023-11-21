@@ -348,13 +348,11 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         class M(torch.nn.Module):
             def __init__(self):
                 super().__init__()
-                self.conv = torch.nn.Conv2d(3, 1, 1)
-                self.linear = torch.nn.Linear(224 * 224, 5)
+                self.linear = torch.nn.Linear(224 * 224 * 3, 5)
 
-            def forward(self, a):
-                x = self.conv(a)
-                x = x.view(1, -1)
+            def forward(self, x):
                 x += x
+                x = x.view(1, -1)
                 x = self.linear(x)
                 return x
 
@@ -372,6 +370,35 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         )
         calib_dataloader = Dataloader()
         q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader, eval_func=fake_eval)
+        self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
+
+    def test_tune_minmax_obs(self):
+        class M(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.linear = torch.nn.Linear(2, 2, False)
+
+            def forward(self, x):
+                x = self.linear(x)
+                x = x + x
+                return x
+
+        example_input = torch.tensor([[torch.finfo(torch.float32).max, -torch.finfo(torch.float32).max]])
+        model = M()
+        model.linear.weight = torch.nn.Parameter(torch.tensor([[0.0, 1.0], [1.0, 0.0]]))
+
+        def calib_func(model):
+            model(example_input)
+
+        from neural_compressor import PostTrainingQuantConfig, quantization
+
+        conf = PostTrainingQuantConfig(
+            backend="ipex",
+            example_inputs=example_input,
+            op_name_dict={".*": {"activation": {"algorithm": "minmax"}}},
+            recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}},
+        )
+        q_model = quantization.fit(model, conf, calib_func=calib_func)
         self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
 
     @unittest.skipIf(

@@ -25,6 +25,7 @@ sed -i '/ mixed_precision/d' run.sh
 sed -i '/ distillation\//d' run.sh
 sed -i '/ scheduler\//d' run.sh
 sed -i '/ nas\//d' run.sh
+sed -i '/ 3x\//d' run.sh
 
 echo "copy model for dynas..."
 mkdir -p .torch/ofa_nets || true
@@ -35,9 +36,10 @@ mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_tf_${tensorflow_version}_pt_${pytorch_version}.log
 
 echo "cat run.sh..."
+sort run.sh -o run.sh
 cat run.sh | tee ${ut_log_name}
 echo "------UT start-------"
-bash run.sh 2>&1 | tee -a ${ut_log_name}
+bash -x run.sh 2>&1 | tee -a ${ut_log_name}
 cp .coverage ${LOG_DIR}/.coverage.others
 echo "------UT end -------"
 

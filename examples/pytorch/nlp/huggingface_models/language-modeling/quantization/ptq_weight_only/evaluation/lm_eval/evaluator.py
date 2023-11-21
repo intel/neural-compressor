@@ -65,6 +65,7 @@ def evaluate(model,
              decontamination_ngrams_path=None,
              seed=1234,
              user_model=None,
+             model_format='torch'
             ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -98,6 +99,8 @@ def evaluate(model,
         Model object user provided.
     :param output_dir: str
         Save the results Path
+    :param model_format: str
+        Model format, support 'torch' and 'onnx'
     :return
         Dictionary of results
     """
@@ -111,7 +114,7 @@ def evaluate(model,
     if isinstance(model, str):
         if model_args is None:
             model_args = ""
-        kwargs = {"batch_size": batch_size, "device": device}
+        kwargs = {"batch_size": batch_size, "device": device, "model_format": model_format}
         if user_model:
             kwargs["init_empty_weights"] = True
         lm = get_model(model).create_from_arg_string(
@@ -132,7 +135,9 @@ def evaluate(model,
         )
     
     task_dict = get_task_dict(tasks)
-    if re.search("llama", lm.model.config.model_type):
+    if re.search("llama", lm.model.config.model_type) or \
+            re.search("mistral", lm.model.config.model_type) or \
+            (re.search("baichuan", lm.model.config.model_type) and not re.search("baichuan2", model_args.lower())):
         for key, value in task_dict.items():
             if key == "lambada_openai":
                 from .tasks import lambada

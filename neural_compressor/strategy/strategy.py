@@ -948,6 +948,15 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 if self.framework == "pytorch_ipex":
                     smooth_quant_args["folding"] = None  # will reset it to True if IPEX version < 2.1.
             sq_algo.folding = smooth_quant_args["folding"]
+            sq_algo.weight_clip = smooth_quant_args.get(
+                "weight_clip", True
+            )  # make weight_clipping a default_on option.
+            sq_algo.auto_alpha_args = smooth_quant_args.get(
+                "auto_alpha_args", {"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"}
+            )  # default alpha search space parameters.
+            sq_algo.default_alpha = smooth_quant_args.get(
+                "default_alpha", 0.5
+            )  # default value for alpha in auto-tuning
             logger.debug(f"Set smooth quant with alpha {sq_algo.alpha} as the pre-tuning algo.")
             algo_scheduler.append_algorithm("pre_quantization", sq_algo)
 
@@ -1509,9 +1518,17 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         if framework == "pytorch_ipex" or framework == "pytorch" or framework == "pytorch_fx":
             if self.config.backend == "ipex":
                 framework = "pytorch_ipex"
+                if self.config.recipes.get("smooth_quant", None) and (
+                    self.config.op_name_dict or self.config.op_type_dict
+                ):
+                    model_dict = self.config.op_type_dict if self.config.op_type_dict else self.config.op_name_dict
+                    model_algo = model_dict.get(".*", {}).get("activation", {}).get("algorithm", {})
+                    if model_algo == "minmax" or "minmax" in model_algo:
+                        framework_specific_info.update({"model_init_algo": "minmax"})
             elif self.config.backend == "default":
                 framework = "pytorch_fx"
             if self.mixed_precision_mode:
+                framework = "pytorch"
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
             framework_specific_info.update({"recipes": self.config.recipes})
             framework_specific_info.update({"q_dataloader": q_dataloader})
