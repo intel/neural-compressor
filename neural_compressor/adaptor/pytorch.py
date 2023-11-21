@@ -3125,6 +3125,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     if self.example_inputs is None:
                         self.example_inputs = get_example_inputs(model, self.q_dataloader)
                     from neural_compressor.adaptor.torch_utils.util import move_input_device
+
                     self.example_inputs = move_input_device(self.example_inputs, device=self.device)
                     if isinstance(self.example_inputs, dict):
                         model = ipex.quantization.prepare(
