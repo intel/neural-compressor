@@ -459,7 +459,6 @@ class FallbackTuningSampler(TuningSampler):
             yield new_tune_cfg  # need to skip the first one
 
 
-@deprecated(version="2.0")
 @TuningSamplerRegistry.register("smooth_quant")
 class SmoothQuantSampler(TuningSampler):
     """Sampler for the hyperparameter tuning of smooth quantization."""
