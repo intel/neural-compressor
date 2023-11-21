@@ -19,10 +19,14 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Optional, Union
+from collections import OrderedDict
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from neural_compressor.common.utility import BASE_CONFIG, GLOBAL, OPERATOR_NAME
-from neural_compressor.utils import logger
+from neural_compressor.common.logger import Logger
+from neural_compressor.common.utility import BASE_CONFIG, COMPOSABLE_CONFIG, GLOBAL, LOCAL
+
+logger = Logger().get_logger()
+
 
 # Dictionary to store registered configurations
 registered_configs = {}
@@ -57,20 +61,36 @@ class BaseConfig(ABC):
     name = BASE_CONFIG
 
     def __init__(self) -> None:
-        self.global_config: Optional[BaseConfig] = None
+        self._global_config: Optional[BaseConfig] = None
         # For PyTorch, operator_type is the collective name for module type and functional operation type,
         # for example, `torch.nn.Linear`, and `torch.nn.functional.linear`.
-        self.operator_type_config: Dict[Union[str, Callable], Optional[BaseConfig]] = {}
-        self.operator_name_config: Dict[str, Optional[BaseConfig]] = {}
+        # local config is the collections of operator_type configs and operator configs
+        self._local_config: Dict[str, Optional[BaseConfig]] = {}
 
-    def set_operator_name(self, operator_name: str, config: BaseConfig) -> BaseConfig:
-        self.operator_name_config[operator_name] = config
-        return self
+    @property
+    def global_config(self):
+        if self._global_config is None:
+            self._global_config = self.__class__(**self.to_dict())
+        return self._global_config
 
-    def _set_operator_type(self, operator_type: Union[str, Callable], config: BaseConfig) -> BaseConfig:
-        # TODO (Yi), clean the usage
-        # hide it from user, as we can use set_operator_name with regular expression to convert its functionality
-        self.operator_type_config[operator_type] = config
+    @global_config.setter
+    def global_config(self, config):
+        self._global_config = config
+
+    @property
+    def local_config(self):
+        return self._local_config
+
+    @local_config.setter
+    def local_config(self, config):
+        self._local_config = config
+
+    def set_local(self, operator_name: str, config: BaseConfig) -> BaseConfig:
+        if operator_name in self.local_config:
+            logger.warning("The configuration for %s has already been set, update it.", operator_name)
+        if self.global_config is None:
+            self.global_config = self.__class__(**self.to_dict())
+        self.local_config[operator_name] = config
         return self
 
     def to_dict(self, params_list=[], operator2str=None):
@@ -78,10 +98,10 @@ class BaseConfig(ABC):
         global_config = {}
         for param in params_list:
             global_config[param] = getattr(self, param)
-        if bool(self.operator_name_config):
-            result[OPERATOR_NAME] = {}
-            for op_name, config in self.operator_name_config.items():
-                result[OPERATOR_NAME][op_name] = config.to_dict()
+        if bool(self.local_config):
+            result[LOCAL] = {}
+            for op_name, config in self.local_config.items():
+                result[LOCAL][op_name] = config.to_dict()
             result[GLOBAL] = global_config
         else:
             result = global_config
@@ -99,10 +119,10 @@ class BaseConfig(ABC):
             The constructed config.
         """
         config = cls(**config_dict.get(GLOBAL, {}))
-        operator_config = config_dict.get(OPERATOR_NAME, {})
+        operator_config = config_dict.get(LOCAL, {})
         if operator_config:
             for op_name, op_config in operator_config.items():
-                config.set_operator_name(op_name, cls(**op_config))
+                config.set_local(op_name, cls(**op_config))
         return config
 
     @classmethod
@@ -120,7 +140,7 @@ class BaseConfig(ABC):
         config_dict = self.to_dict()
         with open(filename, "w", encoding="utf-8") as file:
             json.dump(config_dict, file, indent=4)
-        logger.info(f"Dump the config into {filename}")
+        logger.info("Dump the config into %s.", filename)
 
     def to_json_string(self, use_diff: bool = False) -> str:
         """Serializes this instance to a JSON string.
@@ -137,7 +157,7 @@ class BaseConfig(ABC):
             config_dict = self.to_diff_dict(self)
         else:
             config_dict = self.to_dict()
-        return json.dumps(config_dict, indent=2, sort_keys=True) + "\n"
+        return json.dumps(config_dict, indent=2) + "\n"
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__} {self.to_json_string()}"
@@ -154,10 +174,82 @@ class BaseConfig(ABC):
         pass
 
     def __add__(self, other: BaseConfig) -> BaseConfig:
-        # TODO(Yi) implement config add, like RTNWeightOnlyQuantConfig() + GPTQWeightOnlyQuantConfig()
-        pass
+        if isinstance(other, type(self)):
+            for op_name, config in other.local_config.items():
+                self.set_local(op_name, config)
+            return self
+        else:
+            return ComposableConfig(configs=[self, other])
+
+    def _get_op_name_op_type_config(self):
+        op_type_config_dict = dict()
+        op_name_config_dict = dict()
+        for name, config in self.local_config.items():
+            if self._is_op_type(name):
+                op_type_config_dict[name] = config
+            else:
+                op_name_config_dict[name] = config
+        return op_type_config_dict, op_name_config_dict
+
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDict[Union[str, Callable], OrderedDict[str, BaseConfig]]:
+        config_mapping = OrderedDict()
+        if config_list is None:
+            config_list = [self]
+        for config in config_list:
+            global_config = config.global_config
+            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
+            for op_name, op_type in model_info:
+                config_mapping.setdefault(op_type, OrderedDict())[op_name] = global_config
+                if op_type in op_type_config_dict:
+                    config_mapping[op_type][op_name] = op_name_config_dict[op_type]
+                if op_name in op_name_config_dict:
+                    config_mapping[op_type][op_name] = op_name_config_dict[op_name]
+        return config_mapping
 
     @staticmethod
     def _is_op_type(name: str) -> bool:
         # TODO (Yi), ort and tf need override it
         return not isinstance(name, str)
+
+
+class ComposableConfig(BaseConfig):
+    name = COMPOSABLE_CONFIG
+
+    def __init__(self, configs: List[BaseConfig]) -> None:
+        self.config_list = configs
+
+    def __add__(self, other: BaseConfig) -> BaseConfig:
+        if isinstance(other, type(self)):
+            self.config_list.extend(other.config_list)
+        else:
+            self.config_list.append(other)
+        return self
+
+    def to_dict(self, params_list=[], operator2str=None):
+        result = {}
+        for config in self.config_list:
+            result[config.name] = config.to_dict()
+        return result
+
+    @classmethod
+    def from_dict(cls, config_dict, str2operator=None):
+        # TODO(Yi)
+        pass
+
+    def to_json_string(self, use_diff: bool = False) -> str:
+        return json.dumps(self.to_dict(), indent=2) + "\n"
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__} {self.to_json_string()}"
+
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDict[str, BaseConfig]:
+        return super().to_config_mapping(self.config_list, model_info)
+
+    @classmethod
+    def register_supported_configs(cls):
+        """Add all supported configs."""
+        raise NotImplementedError
