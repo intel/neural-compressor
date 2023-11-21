@@ -472,7 +472,7 @@ def recover_model_from_json(model, json_file_path, example_inputs):
     Args:
         model (object): fp32 model need to do quantization.
         json_file_path (json): configuration JSON file for ipex.
-        example_inputs (tuple or torch.Tensor): example inputs that will be passed to the ipex function.
+        example_inputs (tuple or torch.Tensor or dict): example inputs that will be passed to the ipex function.
 
     Returns:
         (object): quantized model
