@@ -51,7 +51,6 @@ class BasicTuneStrategy(TuneStrategy):
         Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
-
         tuning_space = self.tuning_space
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name("calib_sampling_size").options
         for calib_sampling_size in calib_sampling_size_lst:
