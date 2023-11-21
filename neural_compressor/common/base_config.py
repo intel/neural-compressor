@@ -181,23 +181,32 @@ class BaseConfig(ABC):
         else:
             return ComposableConfig(configs=[self, other])
 
+    def _get_op_name_op_type_config(self):
+        op_type_config_dict = dict()
+        op_name_config_dict = dict()
+        for name, config in self.local_config.items():
+            if self._is_op_type(name):
+                op_type_config_dict[name] = config
+            else:
+                op_name_config_dict[name] = config
+        return op_type_config_dict, op_name_config_dict
+
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
-    ) -> OrderedDict[str, BaseConfig]:
-        # TODO (Yi) add UTs
+    ) -> OrderedDict[Union[str, Callable], OrderedDict[str, BaseConfig]]:
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
         for config in config_list:
             global_config = config.global_config
-            op_type_config_dict = config.operator_type_config
-            op_name_config_dict = config.local_config
+            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
             for op_name, op_type in model_info:
-                config_mapping[op_type][op_name] = global_config
+                config_mapping.setdefault(op_type, OrderedDict())[op_name] = global_config
                 if op_type in op_type_config_dict:
                     config_mapping[op_type][op_name] = op_name_config_dict[op_type]
-                    if op_name in op_name_config_dict:
-                        config_mapping[op_type][op_name] = op_name_config_dict[op_name]
+                if op_name in op_name_config_dict:
+                    config_mapping[op_type][op_name] = op_name_config_dict[op_name]
+        return config_mapping
 
     @staticmethod
     def _is_op_type(name: str) -> bool:
@@ -216,6 +225,7 @@ class ComposableConfig(BaseConfig):
             self.config_list.extend(other.config_list)
         else:
             self.config_list.append(other)
+        return self
 
     def to_dict(self, params_list=[], operator2str=None):
         result = {}

@@ -205,6 +205,23 @@ class TestQuantizationConfig(unittest.TestCase):
         combined_config2 = combined_config + d_config
         combined_config3 = combined_config + combined_config2
 
+    def test_config_mapping(self):
+        from neural_compressor.torch import RTNWeightQuantConfig
+        from neural_compressor.torch.utils import get_model_info
+
+        quant_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4")
+        # set operator instance
+        fc1_config = RTNWeightQuantConfig(weight_bits=6, weight_dtype="int8")
+        quant_config.set_local("fc1", fc1_config)
+        # get model and quantize
+        fp32_model = build_simple_torch_model()
+        model_info = get_model_info(fp32_model, white_module_list=[torch.nn.Linear])
+        logger.info(quant_config)
+        configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+        logger.info(configs_mapping)
+        self.assertTrue(configs_mapping[torch.nn.Linear]["fc1"].weight_bits == 6)
+        self.assertTrue(configs_mapping[torch.nn.Linear]["fc2"].weight_bits == 4)
+
 
 if __name__ == "__main__":
     unittest.main()

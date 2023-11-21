@@ -13,10 +13,16 @@
 # limitations under the License.
 
 
-from typing import Callable, Dict
+from typing import Callable, Dict, List, Tuple
+
+from neural_compressor.common.logger import Logger
+
+logger = Logger().get_logger()
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
 algos_mapping: Dict[str, Callable] = {}
+
+import torch
 
 
 def register_algo(name):
@@ -57,7 +63,8 @@ def fetch_module(model, op_name):
         if hasattr(module, name):
             module = getattr(module, name)
         else:
-            module = module
+            logger.warning(f"The {op_name} is not present in the model.")
+            return None
     return module
 
 
@@ -72,11 +79,23 @@ def set_module(model, op_name, new_module):
     Returns:
         module (object).
     """
-    module = model
     name_list = op_name.split(".")
-    for name in name_list[:-1]:
-        if hasattr(module, name):
-            module = getattr(module, name)
-        else:
-            module = module
-    setattr(module, name_list[-1], new_module)
+    second_last_module = fetch_module(model, ".".join(name_list[:-1]))
+    if second_last_module is None:
+        logger.warning(f"Setting skipped as the {op_name} is not present in the model.")
+        return None
+    else:
+        setattr(second_last_module, name_list[-1], new_module)
+
+
+def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) -> List[Tuple[str, Callable]]:
+    module_dict = dict(model.named_modules())
+    filter_result = []
+    filter_result_set = set()
+    for op_name, module in module_dict.items():
+        if isinstance(module, tuple(white_module_list)):
+            pair = (op_name, type(module))
+            if pair not in filter_result_set:
+                filter_result_set.add(pair)
+                filter_result.append(pair)
+    return filter_result
