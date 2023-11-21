@@ -215,7 +215,7 @@ def fit(
                 o = copy.copy(d)
                 for k, v in o.items():
                     if k == 'example_inputs':
-                        o[k] = 'Not printed here due to large size tensor...'
+                        o[k] = 'Not printed here due to large size tensors...'
                     elif isinstance(v, dict):
                         o[k] = update(v)
                 return o
