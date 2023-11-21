@@ -592,6 +592,8 @@ def main():
     if model_args.tune:
         from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
         from neural_compressor import quantization
+        from neural_compressor.torch import RTNWeightQuantConfig, quantize
+
         op_type_dict={
             '.*':{
                 "weight": {
@@ -603,14 +605,33 @@ def main():
             },
         }
         accuracy_criterion = AccuracyCriterion(higher_is_better=False, tolerable_loss=0.01)
-        conf = PostTrainingQuantConfig(accuracy_criterion=accuracy_criterion,
-                                    approach='weight_only',
-                                    op_type_dict=op_type_dict)
-        q_model = quantization.fit(model,
-                                   conf,
-                                   calib_dataloader=eval_dataloader,
-                                   eval_func=eval_func_for_nc)
-        q_model.save(training_args.output_dir)
+        
+        if model_args.weight_only_algorithm == "RTN":
+            weight_sym = True if model_args.weight_only_scheme == "sym" else False
+            '''
+            quant_config = {
+                "rtn_weight_only_quant": {
+                    "weight_dtype": "nf4",
+                    "weight_bits": model_args.weight_only_bits,
+                    "weight_sym": weight_sym,
+                    "weight_group_size":  model_args.weight_only_group,
+                },
+            }
+            '''
+            quant_config = RTNWeightQuantConfig(weight_bits=model_args.weight_only_bits, weight_dtype="nf4",
+                                                weight_sym=weight_sym, weight_group_size=model_args.weight_only_group)
+            q_model = quantize(model, quant_config)
+            eval_func_for_nc(q_model)
+        else:
+            conf = PostTrainingQuantConfig(accuracy_criterion=accuracy_criterion,
+                                        approach='weight_only',
+                                        op_type_dict=op_type_dict)
+            q_model = quantization.fit(model,
+                                        conf,
+                                        calib_dataloader=eval_dataloader,
+                                        eval_func=eval_func_for_nc)
+            q_model.save(training_args.output_dir)
+
         exit(0)
 
     # Benchmark or accuracy
