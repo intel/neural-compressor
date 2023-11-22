@@ -20,6 +20,7 @@ import warnings
 from copy import deepcopy
 
 import numpy as np
+from deprecated import deprecated
 from scipy.optimize import minimize
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern
@@ -29,6 +30,7 @@ from .strategy import TuneStrategy, strategy_registry
 from .utils.tuning_sampler import OpWiseTuningSampler
 
 
+@deprecated(version="2.0")
 @strategy_registry
 class BayesianTuneStrategy(TuneStrategy):
     """The Bayesian tuning strategy."""
@@ -112,6 +114,7 @@ class BayesianTuneStrategy(TuneStrategy):
 # Bayesian opt acq function
 
 
+@deprecated(version="2.0")
 def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
     """Find the maximum of the acquisition function parameters.
 
@@ -157,12 +160,14 @@ def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
     return np.clip(x_max, bounds[:, 0], bounds[:, 1])
 
 
+@deprecated(version="2.0")
 def _hashable(x):
     """Ensure that an point is hashable by a python dict."""
     return tuple(map(float, x))
 
 
 # Target space part
+@deprecated(version="2.0")
 class TargetSpace(object):
     """Holds the param-space coordinates (X) and target values (Y).
 
@@ -346,6 +351,7 @@ class TargetSpace(object):
 
 
 # Tuning part
+@deprecated(version="2.0")
 class BayesianOptimization:
     """The class for bayesian optimization.
 

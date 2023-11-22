@@ -15,10 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The exhaustive tuning strategy."""
+from deprecated import deprecated
+
 from .strategy import TuneStrategy, strategy_registry
 from .utils.tuning_sampler import OpWiseTuningSampler
 
 
+@deprecated(version="2.0")
 @strategy_registry
 class ExhaustiveTuneStrategy(TuneStrategy):
     """The exhaustive tuning strategy."""

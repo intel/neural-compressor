@@ -15,12 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Pattern lock pruner."""
+from deprecated import deprecated
 
 from neural_compressor.experimental.pruning_recipes.patterns import patterns
 
 PRUNERS = {}
 
 
+@deprecated(version="2.0")
 def pruner_registry(cls):
     """The class decorator used to register all Pruners subclasses.
 
@@ -37,6 +39,7 @@ def pruner_registry(cls):
     return cls
 
 
+@deprecated(version="2.0")
 class Pruner:
     """The base clase of Pruner.
 

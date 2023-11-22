@@ -17,12 +17,14 @@
 """Magnitude pruner."""
 
 import numpy as np
+from deprecated import deprecated
 
 from neural_compressor.utils import logger
 
 from .pruner import Pruner, pruner_registry
 
 
+@deprecated(version="2.0")
 @pruner_registry
 class BasicMagnitudePruner(Pruner):
     """Magnitude pruner class.
