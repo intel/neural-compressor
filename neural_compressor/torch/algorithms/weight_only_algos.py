@@ -19,7 +19,7 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import GTPQ, RTN_WEIGHT_ONLY_QUANT
+from neural_compressor.common.utility import GPTQ, RTN_WEIGHT_ONLY_QUANT
 from neural_compressor.torch.algorithms.rtn import rtn_quantize as torch_rtn_quantize
 from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
 from neural_compressor.torch.utils import fetch_module, register_algo, set_module
@@ -77,7 +77,7 @@ def rtn_quantize_entry(model: torch.nn.Module, quant_config: RTNWeightQuantConfi
     return model
 
 
-@register_algo(name=GTPQ)
+@register_algo(name=GPTQ)
 def gptq_quantize_entry(
     model,
     weight_config={},
