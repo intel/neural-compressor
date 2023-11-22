@@ -249,7 +249,7 @@ class CpuInfo(object):
                     b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\xC3",  # mov eax, 7  # cpuid  # ret
                 )
                 self._bf16 = bool(eax & (1 << 5))
-        if "arch" in info and "ARM" in info["arch"]: # pragma: no cover
+        if "arch" in info and "ARM" in info["arch"]:  # pragma: no cover
             self._sockets = 1
         else:
             self._sockets = self.get_number_of_sockets()
