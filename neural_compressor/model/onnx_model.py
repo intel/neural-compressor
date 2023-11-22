@@ -116,6 +116,11 @@ class ONNXModel(BaseModel):
         self._q_config = q_config
 
     @property
+    def hf_config(self):
+        """Return huggingface config if model is Transformer-based."""
+        return self._config
+
+    @property
     def model(self):
         """Return model itself."""
         return self._model
