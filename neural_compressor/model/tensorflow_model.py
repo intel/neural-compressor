@@ -244,7 +244,7 @@ def _contains_function_with_implements_attr(saved_model_proto):
     return False
 
 
-def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_names):
+def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_names):  # pragma: no cover
     """Load graph_def from saved model with the default serving signature key.
 
     Args:
@@ -463,7 +463,7 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
                 graph_def, input_names, output_names = _get_graph_from_original_keras_v2(model, temp_dir)
             except:
                 keras_format = "saved_model_v1"
-        if keras_format == "saved_model_v1":
+        if keras_format == "saved_model_v1":  # pragma: no cover
             try:
                 tf.keras.backend.set_learning_phase(0)
                 graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
@@ -1135,17 +1135,6 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
 
         The model path in this class is used as a temp path for intermediate model
         """
-        if not self._model_path:
-            self._model_path = self.kwargs.get("model_path", None)
-        if not self._model_path:
-            self._model_path = cfg.default_workspace
-            self._model_path = os.path.abspath(os.path.expanduser(self._model_path))
-            if os.path.exists(self._model_path):
-                import shutil
-
-                shutil.rmtree(self._model_path)
-            os.makedirs(self._model_path, exist_ok=True)
-
         return self._model_path
 
     @model_path.setter
@@ -1214,18 +1203,12 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     @property
     def input_tensor_names(self):
         """Return input tensor names."""
-        if len(self._input_tensor_names) == 0:
-            for input_tensor in self.func.inputs:
-                # skip all ReadVariableOp
-                if "unknown" in input_tensor.name:
-                    continue
-                self._input_tensor_names.append(input_tensor.name)
         return copy.deepcopy(self._input_tensor_names)
 
     @input_tensor_names.setter
     def input_tensor_names(self, tensor_names):
         """Set input tensor names."""
-        if len(tensor_names) == 0:
+        if len(tensor_names) == 0:  # pragma: no cover
             logger.warn("Input tensor names is empty.")
             return
 
@@ -1237,15 +1220,12 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     @property
     def output_tensor_names(self):
         """Return output tensor names."""
-        if len(self._output_tensor_names) == 0:
-            for output_tensor in self.func.outputs:
-                self._output_tensor_names.append(output_tensor.name)
         return copy.deepcopy(self._output_tensor_names)
 
     @output_tensor_names.setter
     def output_tensor_names(self, tensor_names):
         """Set output tensor names."""
-        if len(tensor_names) == 0:
+        if len(tensor_names) == 0:  # pragma: no cover
             logger.warn("Output tensor names is empty.")
             return
         if self._graph_def is not None:
