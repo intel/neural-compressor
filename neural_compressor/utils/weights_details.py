@@ -19,6 +19,8 @@ import numpy as np
 
 from neural_compressor.utils.utility import mse_metric_gap
 
+PRECISION = 5
+
 
 class WeightsDetails:
     """Weights details class."""
@@ -68,9 +70,9 @@ class WeightsStatistics:
             Dictionary with serialized WeightsStatistics object
         """
         return {
-            "Min weight": self.min,
-            "Max weight": self.max,
-            "Mean": self.mean,
-            "Standard deviation": self.std,
-            "Variance": self.var,
+            "Min weight": round(self.min, PRECISION),
+            "Max weight": round(self.max, PRECISION),
+            "Mean": round(self.mean, PRECISION),
+            "Standard deviation": round(self.std, PRECISION),
+            "Variance": round(self.var, PRECISION),
         }

@@ -1,9 +1,16 @@
 Examples
 ==========
 Intel® Neural Compressor validated examples with multiple compression techniques, including quantization, pruning, knowledge distillation and orchestration. Part of the validated cases can be found in the example tables, and the release data is available [here](../docs/source/validated_model_list.md).
-> Note: 2.0 API migration work in progress, the example marked with `*` means it still using 1.x API.
+> Note: The example marked with `*` means it still use 1.x API.
 
-## Helloworld Examples
+# Quick Get Started Notebook Examples
+* [Quick Get Started Notebook of Intel® Neural Compressor for ONNXRuntime](/examples/notebook/onnxruntime/Quick_Started_Notebook_of_INC_for_ONNXRuntime.ipynb)
+
+* [Quick Get Started Notebook of Intel® Neural Compressor for Tensorflow](/examples/notebook/tensorflow/resnet/resnet_quantization.ipynb)
+
+* [Quick Get Started Notebook of Intel® Neural Compressor for Pytorch](/examples/notebook/pytorch/Quick_Started_Notebook_of_INC_for_Pytorch.ipynb)
+
+# Helloworld Examples
 
 * [tf_example1](/examples/helloworld/tf_example1): quantize with built-in dataloader and metric.
 * [tf_example2](/examples/helloworld/tf_example2): quantize keras model with customized metric and dataloader.
@@ -12,14 +19,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
 * [tf_example5](/examples/helloworld/tf_example5): config performance and accuracy measurement.
 * [tf_example6](/examples/helloworld/tf_example6): use default user-facing APIs to quantize a pb model.
 * [tf_example7](/examples/helloworld/tf_example7): quantize and benchmark with pure python API.
-
-## Notebook Examples
-
-* *[BERT Mini SST2 performance boost with INC](/examples/notebook/bert_mini_distillation): train a BERT-Mini model on SST-2 dataset through distillation, and leverage quantization to accelerate the inference while maintaining the accuracy using Intel® Neural Compressor.
-* [Performance of FP32 Vs. INT8 ResNet50 Model](/examples/notebook/perf_fp32_int8_tf): compare existed FP32 & INT8 ResNet50 model directly.
-* [Intel® Neural Compressor Sample for PyTorch*](/examples/notebook/pytorch/alexnet_fashion_mnist): an End-To-End pipeline to build up a CNN model by PyTorch to recognize fashion image and speed up AI model by Intel® Neural Compressor.
-* [Intel® Neural Compressor Sample for TensorFlow*](/examples/notebook/tensorflow/alexnet_mnist): an End-To-End pipeline to build up a CNN model by TensorFlow to recognize handwriting number and speed up AI model by Intel® Neural Compressor.
-* [Accelerate VGG19 Inference on Intel® Gen4 Xeon® Sapphire Rapids](/examples/notebook/tensorflow/vgg19_ibean): an End-To-End pipeline to train VGG19 model by transfer learning based on pre-trained model from [TensorFlow Hub](https://tfhub.dev); quantize it by Intel® Neural Compressor on Intel® Gen4 Xeon® Sapphire Rapids.
 
 # TensorFlow Examples
 ## Quantization
@@ -278,6 +277,18 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/nlp/large_language_models/quantization/ptq/smoothquant">pb (smooth quant)</a></td>
   </tr>
+  <tr>
+    <td>ViT</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/vision_transformer/">pb</a></td>
+  </tr>
+  <tr>
+    <td>GraphSage</td>
+    <td>Graph Networks</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/graph_networks/graphsage/">pb</a></td>
+  </tr>
 </tbody>
 </table>
 
@@ -299,6 +310,32 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Image Recognition</td>
     <td>Knowledge Distillation</td>
     <td><a href="./tensorflow/image_recognition/tensorflow_models/distillation">pb</a></td>
+  </tr>
+</tbody>
+</table>
+
+## Pruning
+<table>
+<thead>
+  <tr>
+    <th>Model</th>
+    <th>Domain</th>
+    <th>Approach</th>
+    <th>Examples</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>ResNet V2</td>
+    <td>Image Recognition</td>
+    <td>Structured (4x1, 2in4)</td>
+    <td><a href="./tensorflow/image_recognition/resnet_v2/pruning/magnitude">keras</a></td>
+  </tr>
+  <tr>
+    <td>ViT</td>
+    <td>Image Recognition</td>
+    <td>Structured (4x1, 2in4)</td>
+    <td><a href="./tensorflow/image_recognition/ViT/pruning/magnitude">keras</a></td>
   </tr>
 </tbody>
 </table>
@@ -450,6 +487,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/object_detection/yolo_v3/quantization/ptq_static/fx">fx</a></td>
   </tr>
   <tr>
+    <td>Mask R-CNN</td>
+    <td>Object Detection</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/object_detection/maskrcnn/quantization/ptq/fx">fx</a></td>
+  </tr>
+  <tr>
     <td>DLRM</td>
     <td>Recommendation</td>
     <td>Post-Training Static Quantization</td>
@@ -458,8 +501,26 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>HuBERT</td>
     <td>Speech Recognition</td>
-    <td>Post-Training Dynamic /Static Quantization</td>
+    <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>HuBERT</td>
+    <td>Speech Recognition</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>RNNT</td>
+    <td>Speech Recognition</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/speech_recognition/rnnt/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>BlendCNN</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/blendcnn/quantization/ptq/ipex">ipex</a></td>
   </tr>
   <tr>
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
@@ -606,6 +667,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant">smooth quant</a></td>
   </tr>
   <tr>
+    <td>EleutherAI/gpt-j-6B</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Weight Only Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_weight_only">weight_only</a></td>
+  </tr>
+  <tr>
     <td>abeja/gpt-neox-japanese-2.7b</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
@@ -634,6 +701,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Speech Recognition</td>
     <td>Post-Training Dynamic Quantization</td>
     <td><a href="./pytorch/speech_recognition/whisper_large/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>torchaudio/wav2vec2</td>
+    <td>Speech Recognition</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx">fx</a></td>
   </tr>
 
 </tbody>
@@ -741,6 +814,20 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Structured (2x1)</td>
     <td>Snip-momentum</td>
     <td><a href="./pytorch/image_recognition/ResNet50/pruning/eager">eager</a></td>
+  </tr>
+  <tr>
+    <td>Bert-base</td>
+    <td>Question Answering</td>
+    <td>Structured (channel, multi-head attention)</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/model_slim/">eager</a></td>
+  </tr>
+  <tr>
+    <td>Bert-large</td>
+    <td>Question Answering</td>
+    <td>Structured (channel, multi-head attention)</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/model_slim/">eager</a></td>
   </tr>
 </tbody>
 </table>
@@ -1047,6 +1134,24 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
+    <td>BEiT</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/image_recognition/beit/quantization/ptq_static">qlinearops</a></td>
+  </tr>
+  <tr>
+    <td>CodeBert</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/code_detection/quantization/ptq_static">qlinearops</a></td>
+  </tr>
+  <tr>
+    <td>CodeBert</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/code_detection/quantization/ptq_dynamic">integerops</a></td>
+  </tr>
+  <tr>
     <td>BERT base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
@@ -1079,17 +1184,17 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>BERT SQuAD (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Dynamic / Static Quantization</td>
+    <td>Post-Training Dynamic Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/bert-squad/quantization/ptq_dynamic">integerops</a> </td>
   </tr>
   <tr>
-    <td>GPT2 lm head WikiText</td>
+    <td>GPT2 lm head WikiText (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/gpt2/quantization/ptq_dynamic">integerops</a></td>
   </tr>
   <tr>
-    <td>MobileBERT SQuAD MLPerf</td>
+    <td>MobileBERT SQuAD MLPerf (ONNX Model Zoo)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
     <td><a href="./onnxrt/nlp/onnx_model_zoo/mobilebert/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/onnx_model_zoo/mobilebert/quantization/ptq_static">qdq</a></td>
@@ -1269,6 +1374,30 @@ Intel® Neural Compressor validated examples with multiple compression technique
     </td>
   </tr>
   <tr>
+    <td>LayoutLMv3 FUNSD (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td>
+      <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_static">qlinearops</a>
+    </td>
+  </tr>
+  <tr>
+    <td>LayoutLMv2 FUNSD (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td>
+      <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmv2/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlmv2/quantization/ptq_static">qlinearops</a>
+    </td>
+  </tr>
+  <tr>
+    <td>LayoutLM FUNSD (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td>
+      <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlm/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/token_classification/layoutlm/quantization/ptq_static">qlinearops</a>
+    </td>
+  </tr>
+  <tr>
     <td>SSD MobileNet V1</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
@@ -1279,6 +1408,18 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/object_detection/ssd_mobilenet_v2/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/object_detection/ssd_mobilenet_v2/quantization/ptq_static">qdq</a></td>
+  </tr>
+  <tr>
+    <td>Table Transformer Structure Recognition</td>
+    <td>Object Detection</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/object_detection/table_transformer/quantization/ptq_static">qlinearops</a></td>
+  </tr>
+  <tr>
+    <td>Table Transformer Detection</td>
+    <td>Object Detection</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/object_detection/table_transformer/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
     <td>SSD MobileNet V1 (ONNX Model Zoo)</td>
@@ -1345,9 +1486,25 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Text Generation</td>
     <td>Post-Training Dynamic / Static Quantization</td>
     <td>
-      <a href="./onnxrt/nlp/huggingface_model/text_generation/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/text_generation/quantization/ptq_static">qlinearops</a>
+      <a href="./onnxrt/nlp/huggingface_model/text_generation/gptj/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/text_generation/gptj/quantization/ptq_static">qlinearops</a>
+    </td>
+  </tr>
+  <tr>
+    <td>Llama-7B (HuggingFace)</td>
+    <td>Text Generation</td>
+    <td>Static / Weight Only Quantization</td>
+    <td>
+      <a href="./onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only">weight_only</a>
     </td>
   </tr>
 </tbody>
 </table>
+
+# Notebook Examples
+
+* *[BERT Mini SST2 performance boost with INC](/examples/notebook/bert_mini_distillation): train a BERT-Mini model on SST-2 dataset through distillation, and leverage quantization to accelerate the inference while maintaining the accuracy using Intel® Neural Compressor.
+* [Performance of FP32 Vs. INT8 ResNet50 Model](/examples/notebook/perf_fp32_int8_tf): compare existed FP32 & INT8 ResNet50 model directly.
+* [Intel® Neural Compressor Sample for PyTorch*](/examples/notebook/pytorch/alexnet_fashion_mnist): an End-To-End pipeline to build up a CNN model by PyTorch to recognize fashion image and speed up AI model by Intel® Neural Compressor.
+* [Intel® Neural Compressor Sample for TensorFlow*](/examples/notebook/tensorflow/alexnet_mnist): an End-To-End pipeline to build up a CNN model by TensorFlow to recognize handwriting number and speed up AI model by Intel® Neural Compressor.
+* [Accelerate VGG19 Inference on Intel® Gen4 Xeon® Sapphire Rapids](/examples/notebook/tensorflow/vgg19_ibean): an End-To-End pipeline to train VGG19 model by transfer learning based on pre-trained model from [TensorFlow Hub](https://tfhub.dev); quantize it by Intel® Neural Compressor on Intel® Gen4 Xeon® Sapphire Rapids.
 

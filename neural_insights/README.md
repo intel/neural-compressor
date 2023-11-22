@@ -2,12 +2,12 @@
   
 Neural Insights
 ===========================
-
-<h3>Neural Insights is a web application for easier use of Intel® Neural Compressor diagnosis.</h3>
-
 </div>
 
-<div align="left">
+Neural Insights is a web application for easier use of Intel® Neural Compressor [diagnosis](/docs/source/diagnosis.md) feature.
+It provides the capability to show the model graph, histograms of weights and activations, quantization configs, etc. 
+The workflow shows the relationship of Neural Insights and diagnosis. 
+![workflow](/docs/source/imgs/workflow.jpg)
 
 ## Installation
 
@@ -88,21 +88,37 @@ pip install tensorflow
 # Prepare fp32 model
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 ```
+
 ```python
+from neural_compressor import Metric
 from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.data import DataLoader
 from neural_compressor.data import Datasets
 
-dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
-dataloader = DataLoader(framework='tensorflow', dataset=dataset)
+top1 = Metric(name="topk", k=1)
+dataset = Datasets("tensorflow")["dummy"](shape=(1, 224, 224, 3))
+dataloader = DataLoader(framework="tensorflow", dataset=dataset)
 
 from neural_compressor.quantization import fit
+
 q_model = fit(
     model="./mobilenet_v1_1.0_224_frozen.pb",
     conf=PostTrainingQuantConfig(diagnosis=True),
     calib_dataloader=dataloader,
-    eval_dataloader=dataloader)
+    eval_dataloader=dataloader,
+    eval_metric=top1,
+)
 ```
+
+When the quantization is started, the workload should appear on the Neural Insights page and successively, new information should be available while quantization is in progress (such as weights distribution and accuracy data).
+
+> Note that above example uses dummy data which is used to describe usage of Neural Insights. For diagnosis purposes you should use real dataset specific for your use case.
+
+## Tensor dump examples
+- [Step by step example how to dump weights data for PyTorch model with Neural Insights](docs/source/pytorch_nlp_cli_mode.md)
+
+## Step by Step Diagnosis Example
+Refer to [Step by Step Diagnosis Example with TensorFlow](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/tf_accuracy_debug.md) and [Step by Step Diagnosis Example with ONNXRT](https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/onnx_accuracy_debug.md) to get started with some basic quantization accuracy diagnostic skills.
 
 ## Research Collaborations
 

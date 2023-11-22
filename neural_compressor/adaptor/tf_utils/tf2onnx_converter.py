@@ -18,27 +18,37 @@
 """Tensorflow QDQ model convert to ONNX QDQ model."""
 
 import logging
-import tensorflow as tf
+
 import numpy as np
+import tensorflow as tf
 from onnx import helper
 from packaging.version import Version
-from tensorflow.core.framework import tensor_pb2, node_def_pb2
+from tensorflow.core.framework import node_def_pb2, tensor_pb2
 
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.utils.utility import dump_elapsed_time, LazyImport
+from neural_compressor.utils.utility import LazyImport, dump_elapsed_time
+
 from .graph_rewriter.onnx import tf2onnx_utils as utils
 from .graph_rewriter.onnx.onnx_graph import OnnxGraph
 
-t2o = LazyImport('tf2onnx')
+t2o = LazyImport("tf2onnx")
 
 logger = logging.getLogger("neural_compressor")
 
 
 class TensorflowQDQToOnnxQDQConverter:
     """Convert tensorflow QDQ graph to ONNX QDQ graph."""
-    def __init__(self, model, input_names, output_names, shape_override,
-                 inputs_as_nchw=None, opset_version=utils.DEFAULT_OPSET_VERSION):
-        """Constructor, initilization.
+
+    def __init__(
+        self,
+        model,
+        input_names,
+        output_names,
+        shape_override,
+        inputs_as_nchw=None,
+        opset_version=utils.DEFAULT_OPSET_VERSION,
+    ):
+        """Constructor, initialization.
 
         Args:
             model (graphdef): tensorflow QDQ graphdef
@@ -52,7 +62,7 @@ class TensorflowQDQToOnnxQDQConverter:
 
         graph = tf.Graph()
         with graph.as_default():
-            tf.import_graph_def(graph_def, name='')
+            tf.import_graph_def(graph_def, name="")
 
         self.graph = graph
         self.opset_version = opset_version
@@ -66,11 +76,10 @@ class TensorflowQDQToOnnxQDQConverter:
             for name, shape in self.shape_override.items():
                 logger.info("\tSet %s shape to %s", name, shape)
                 self.graph.get_tensor_by_name(name).set_shape(shape)
-                graph_def =  self.graph.as_graph_def(add_shapes=True)
+                graph_def = self.graph.as_graph_def(add_shapes=True)
                 with tf.Graph().as_default() as inferred_graph:
                     tf.import_graph_def(graph_def, name="")
                 self.graph = inferred_graph
-
 
     def duplicate_tf_quantizev2_nodes(self, model):
         """Duplicate QuantizeV2 nodes if the Dequantize nodes share the same QuantizeV2."""
@@ -79,7 +88,7 @@ class TensorflowQDQToOnnxQDQConverter:
         graph_info = cur_graph.parse_graph()
 
         # Scan the QDQ pairs
-        patterns = [['QuantizeV2'], ['Dequantize']]
+        patterns = [["QuantizeV2"], ["Dequantize"]]
         matched_nodes = cur_graph.query_fusion_pattern_nodes(patterns)
 
         # Append the QDQ pairs to QuantizeV2 nodes map and Dequantize nodes map
@@ -118,13 +127,12 @@ class TensorflowQDQToOnnxQDQConverter:
                     dequantize_node = dequantize_nodes[index + 1]
                     new_quantizev2_node = node_def_pb2.NodeDef()
                     new_quantizev2_node.CopyFrom(quantizev2_nodes[0])
-                    new_quantizev2_node.name = quantizev2_nodes[0].name + '_copy_' + str(index+1)
-                    cur_graph.add_node(
-                        new_quantizev2_node, input_map_node_name, [dequantize_node.name])
-                    cur_graph.node_name_details[dequantize_node.name].node.ClearField('input')
-                    cur_graph.node_name_details[dequantize_node.name].node.input.extend([
-                        new_quantizev2_node.name, new_quantizev2_node.name + ':1',
-                        new_quantizev2_node.name + ':2'])
+                    new_quantizev2_node.name = quantizev2_nodes[0].name + "_copy_" + str(index + 1)
+                    cur_graph.add_node(new_quantizev2_node, input_map_node_name, [dequantize_node.name])
+                    cur_graph.node_name_details[dequantize_node.name].node.ClearField("input")
+                    cur_graph.node_name_details[dequantize_node.name].node.input.extend(
+                        [new_quantizev2_node.name, new_quantizev2_node.name + ":1", new_quantizev2_node.name + ":2"]
+                    )
 
         return cur_graph.dump_graph()
 
@@ -132,8 +140,8 @@ class TensorflowQDQToOnnxQDQConverter:
         """Pre optimize the tensorflow graphdef to make ONNX QDQ model convert more easier."""
         # Convert HostConst to Const
         for node in model.node:
-            if node.op == 'HostConst':
-                node.op = 'Const'
+            if node.op == "HostConst":
+                node.op = "Const"
 
         # Duplicate the QuantizeV2 node if it has multi Dequantize nodes
         model = self.duplicate_tf_quantizev2_nodes(model)
@@ -186,8 +194,7 @@ class TensorflowQDQToOnnxQDQConverter:
 
         node_list = self.graph.get_operations()
 
-        outputs_to_values, _ = utils.compute_const_folding_using_tf(
-            self.graph, None, self.output_names)
+        outputs_to_values, _ = utils.compute_const_folding_using_tf(self.graph, None, self.output_names)
 
         # Create dict with output to shape mappings
         for node in node_list:
@@ -218,8 +225,7 @@ class TensorflowQDQToOnnxQDQConverter:
                     attr_dict[each_attr] = nattr.name
                     functions[nattr.name] = input_shapes
                 elif isinstance(value, tensor_pb2.TensorProto):
-                    onnx_tensor = utils.convert_tensorflow_tensor_to_onnx(
-                        value, name=utils.add_port_to_name(node.name))
+                    onnx_tensor = utils.convert_tensorflow_tensor_to_onnx(value, name=utils.add_port_to_name(node.name))
                     attr_dict[each_attr] = onnx_tensor
             node_type = node.type
             node_input_names = [i.name for i in node.inputs]
@@ -227,16 +233,18 @@ class TensorflowQDQToOnnxQDQConverter:
 
             if convert_to_onnx:
                 try:
-                    onnx_node = helper.make_node(node_type, node_input_names, node_output_names,
-                                                name=node.name, **attr_dict)
+                    onnx_node = helper.make_node(
+                        node_type, node_input_names, node_output_names, name=node.name, **attr_dict
+                    )
                     onnx_nodes.append(onnx_node)
                 except Exception as ex:
                     logger.error("tensorflow node convert to onnx failed for %s, ex=%s", node.name, ex)
                     raise
 
         # Build ONNX Graph using onnx_nodes, output_shapes and dtypes
-        onnx_graph = OnnxGraph(onnx_nodes, output_shapes, dtypes, input_names=self.input_names,
-                               output_names=self.output_names)
+        onnx_graph = OnnxGraph(
+            onnx_nodes, output_shapes, dtypes, input_names=self.input_names, output_names=self.output_names
+        )
         t2o.tfonnx.fold_constants_using_tf(onnx_graph, outputs_to_values)
 
         if self.inputs_as_nchw:
@@ -244,10 +252,10 @@ class TensorflowQDQToOnnxQDQConverter:
 
         # Convert TF QDQ pattern to ONNX QDQ format
         for node in onnx_graph.get_nodes():
-            if node.type == 'Dequantize':
-                parent_node = onnx_graph.get_node_by_name(node.input[0].rsplit(':', 1)[0])
+            if node.type == "Dequantize":
+                parent_node = onnx_graph.get_node_by_name(node.input[0].rsplit(":", 1)[0])
                 if parent_node:
-                    if parent_node.type == 'QuantizeV2':
+                    if parent_node.type == "QuantizeV2":
                         onnx_graph.convert_qdq_nodes(parent_node, node)
 
         # Create ops mapping for the desired opsets
@@ -279,7 +287,7 @@ class TensorflowQDQToOnnxQDQConverter:
             t2o.rewriter.rewrite_generic_loop,
             t2o.rewriter.rewrite_cond,
             # rewrite_biasadd_with_conv2d introduces accuracy issue
-            #t2o.rewriter.rewrite_biasadd_with_conv2d,
+            # t2o.rewriter.rewrite_biasadd_with_conv2d,
             t2o.rewriter.rewrite_layer_normalization,
             t2o.rewriter.rewrite_gemm,
             t2o.rewriter.rewrite_ragged_variant_shape,
@@ -291,8 +299,7 @@ class TensorflowQDQToOnnxQDQConverter:
         onnx_graph.delete_unused_nodes(onnx_graph.outputs)
         t2o.tfonnx.topological_sort(onnx_graph, False)
 
-        mapped_op, unmapped_op, exceptions = \
-            t2o.tfonnx.tensorflow_onnx_mapping(onnx_graph, ops_mapping)
+        mapped_op, unmapped_op, exceptions = t2o.tfonnx.tensorflow_onnx_mapping(onnx_graph, ops_mapping)
         if unmapped_op:
             logger.error("Unsupported ops: %s", unmapped_op)
         if exceptions:
@@ -305,11 +312,12 @@ class TensorflowQDQToOnnxQDQConverter:
 
         op_cnt, attr_cnt = onnx_graph.dump_node_statistics(include_attrs=True, include_subgraphs=False)
         logger.info(
-            "Summay Stats:\n"
+            "Summary Stats:\n"
             "\ttensorflow ops: {}\n"
             "\ttensorflow attr: {}\n"
             "\tonnx mapped: {}\n"
-            "\tonnx unmapped: {}".format(op_cnt, attr_cnt, mapped_op, unmapped_op))
+            "\tonnx unmapped: {}".format(op_cnt, attr_cnt, mapped_op, unmapped_op)
+        )
 
         onnx_graph = t2o.optimizer.optimize_graph(onnx_graph)
 

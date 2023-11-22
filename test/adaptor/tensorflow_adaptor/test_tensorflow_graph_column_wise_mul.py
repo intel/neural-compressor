@@ -2,15 +2,16 @@
 #  -*- coding: utf-8 -*-
 #
 import unittest
+
 import numpy as np
+import tensorflow as tf
+from tensorflow.compat.v1 import graph_util
+
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_column_wise_mul import FuseColumnWiseMulOptimizer
 from neural_compressor.adaptor.tf_utils.util import disable_random
 
-import tensorflow as tf
-from tensorflow.python.framework import graph_util
 
 class TestColumnWiseMulFusion(unittest.TestCase):
-
     @disable_random()
     def test_conv_mul_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
@@ -22,26 +23,25 @@ class TestColumnWiseMulFusion(unittest.TestCase):
         mul_tensor = tf.constant([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7], dtype=tf.float32)
         mul = tf.math.multiply(conv, mul_tensor)
         relu = tf.nn.relu(mul)
-        relu6 = tf.nn.relu6(relu, name='op_to_store')
+        relu6 = tf.nn.relu6(relu, name="op_to_store")
 
-        out_name = relu6.name.split(':')[0]
+        out_name = relu6.name.split(":")[0]
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             output_graph_def = graph_util.convert_variables_to_constants(
-                sess=sess,
-                input_graph_def=sess.graph_def,
-                output_node_names=[out_name])
+                sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
+            )
             output_graph_def = FuseColumnWiseMulOptimizer(output_graph_def).do_transformation()
 
             found_mul = False
 
             for i in output_graph_def.node:
-                if i.op == 'Mul':
+                if i.op == "Mul":
                     found_mul = True
                     break
 
             self.assertEqual(found_mul, False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

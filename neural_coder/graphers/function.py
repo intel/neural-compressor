@@ -12,38 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List
-from ..utils.line_operation import get_line_indent_level
-from .. import globals
 import logging
+from typing import List
 
-logging.basicConfig(level=globals.logging_level,
-                    format='%(asctime)s %(levelname)s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S +0000')
+from .. import globals
+from ..utils.line_operation import get_line_indent_level
+
+logging.basicConfig(
+    level=globals.logging_level, format="%(asctime)s %(levelname)s %(message)s", datefmt="%a, %d %b %Y %H:%M:%S +0000"
+)
 logger = logging.getLogger(__name__)
 
 
 def register_func_wrap_pair():
-    """ register all relationships of ( [function name] : [return_item] ) pair of the list of code path provided
+    """Register all relationships of ( [function name] : [return_item] ) pair of the list of code path provided
     but only for "return xxx()" (return a function w/o class prefix) or "return xxx" (return an instance)
     e.g.
     def a1():
-        return b1()
+
+    return b1()
     def b1():
         return x
     def c():
         return T.q()
-    INPUT: 
+    INPUT:
         ["example.py"] (above code snippet)
     OUTPUT:
         globals.list_all_function_return_item = ["b1", "x"]
         globals.list_all_function_name = ["a1", "b1"]
     """
-    logger.info(
-        f"Analyzing function wrapping relationship for call graph analysis...")
+    logger.info("Analyzing function wrapping relationship for call graph analysis...")
     for path in globals.list_code_path:
-        code = open(path, 'r').read()
-        lines = code.split('\n')
+        code = open(path, "r").read()
+        lines = code.split("\n")
         line_idx = 0
         is_in_function = False
         func_end_line_idx = -1
@@ -55,9 +56,9 @@ def register_func_wrap_pair():
             if is_in_function and line_idx == func_end_line_idx:
                 is_in_function = False
 
-            # handle function's defnition line, to initiate a function
+            # handle function's definition line, to initiate a function
             if not is_in_function and "def " in line:  # only deal with outermost def
-                function_name = line[line.find("def")+4:line.find("(")]
+                function_name = line[line.find("def") + 4 : line.find("(")]
 
                 def_indent_level = get_line_indent_level(line)
                 function_def_line_idx = line_idx
@@ -80,8 +81,9 @@ def register_func_wrap_pair():
                     judge_1 = following_indent_level <= def_indent_level
                     # judge_2: not starting with")"
                     try:
-                        judge_2 = True if (
-                            following_line != "" and following_line[following_indent_level] != ")") else False
+                        judge_2 = (
+                            True if (following_line != "" and following_line[following_indent_level] != ")") else False
+                        )
                     except:
                         judge_2 = False
                     # judge_3: is not a comment
@@ -109,7 +111,7 @@ def register_func_wrap_pair():
             if is_in_function and line_idx < func_end_line_idx:
                 # handle return
                 if "return" in line:
-                    line_s = line[line.find("return")+7:].strip()
+                    line_s = line[line.find("return") + 7 :].strip()
                     # line_s common case: 1. "" 2. "xxx" 3. "xxx, xxx" 3. "xxx()" 4. "xxx(xxx)" 5. "xxx(xxx, xxx)"
                     if line_s == "":  # case 1
                         pass
@@ -118,36 +120,31 @@ def register_func_wrap_pair():
                     elif 'f"' in line or "#" in line or "if" in line or "." in line or '""' in line or "+" in line:
                         pass
                     elif "(" in line_s:  # case 4 or case 5
-                        return_item = line_s[:line_s.find("(")]
-                        globals.list_all_function_return_item.append(
-                            return_item)
+                        return_item = line_s[: line_s.find("(")]
+                        globals.list_all_function_return_item.append(return_item)
                         globals.list_all_function_name.append(function_name)
                     elif ", " in line_s:  # case 3
                         ls = line_s.split(", ")
                         for return_item in ls:
-                            globals.list_all_function_return_item.append(
-                                return_item)
-                            globals.list_all_function_name.append(
-                                function_name)
+                            globals.list_all_function_return_item.append(return_item)
+                            globals.list_all_function_name.append(function_name)
                     else:  # case 2
                         return_item = line_s
-                        globals.list_all_function_return_item.append(
-                            return_item)
+                        globals.list_all_function_return_item.append(return_item)
                         globals.list_all_function_name.append(function_name)
 
             line_idx += 1
             continue
 
-    logger.debug(
-        f"globals.list_all_function_name: {globals.list_all_function_name}")
-    logger.debug(
-        f"globals.list_all_function_return_item: {globals.list_all_function_return_item}")
+    logger.debug(f"globals.list_all_function_name: {globals.list_all_function_name}")
+    logger.debug(f"globals.list_all_function_return_item: {globals.list_all_function_return_item}")
 
 
 def get_all_wrap_children(base_function_name: str) -> List:
-    """get all wrapper children names of the base function name
+    """Get all wrapper children names of the base function name
     e.g.
     class Net(nn.Module):
+
     xxx
     #
     def _resnet():

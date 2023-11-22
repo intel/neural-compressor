@@ -24,10 +24,10 @@ pip install tensorflow
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
-pip install --upgrade intel-extension-for-tensorflow[gpu]
+pip install --upgrade intel-extension-for-tensorflow[xpu]
 ```
 Please refer to the [Installation Guides](https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal-dc.html) for latest Intel GPU driver installation.
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_gpu.md#install-gpu-drivers).
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_xpu.md#install-gpu-drivers).
 
 #### Quantizing the model on Intel CPU(Optional to install ITEX)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
@@ -67,11 +67,11 @@ bash prepare_model.sh --dataset_location=./data --output_dir=./model
 Make sure the data and model have been generated successfully which located at ./data and ./model respectively.
 And your output_model will be located at ./output_model like the command below
   ```shell
-    bash run_tuning.sh --input_model=./model --dataset_location=./data --output_model=output_model
+    bash run_quant.sh --input_model=./model --dataset_location=./data --output_model=output_model
   ```
 If you want the model without iterator inside the graph, you can add --strip_iterator like:
   ```shell
-    bash run_tuning.sh --input_model=./model --dataset_location=./data --output_model=output_model --strip_iterator
+    bash run_quant.sh --input_model=./model --dataset_location=./data --output_model=output_model --strip_iterator
   ```
 To run benchmark:
   ```shell
@@ -128,6 +128,9 @@ After prepare step is done, we add tune and benchmark code to generate quantized
         q_model.graph_def = strip_iterator(q_model.graph_def)
     q_model.save(FLAGS.output_model)
 ```
+
+You can also add the optional parameter `op_type_dict={'matmul':{'weight':{'granularity':['per_channel']}}}` in `PostTrainingQuantConfig`, which enables the per-channel quantization of MatMul, to get an int8 model with better accuracy.
+
 #### Benchmark
 ```python
     from neural_compressor.benchmark import fit

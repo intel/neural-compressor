@@ -14,11 +14,11 @@ pip install -r requirements.txt
 
 ## 2. Prepare Model
 
-Use `export.py` script for ONNX model conversion.
+Use `prepare_model.py` script for ONNX model conversion.
 Require transformers==3.2.0.
 
 ```shell
-python export.py
+python prepare_model.py
 ```
 
 ## 3. Prepare Dataset
@@ -40,7 +40,7 @@ wikitext-2-raw
 Dynamic quantization:
 
 ```bash
-bash run_tuning.sh --dataset_location=/path/to/wikitext-2-raw/wiki.test.raw \ 
+bash run_quant.sh --dataset_location=/path/to/wikitext-2-raw/wiki.test.raw \ 
                    --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune # model path as *.onnx
 ```

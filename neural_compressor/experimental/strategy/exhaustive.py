@@ -15,31 +15,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The exhaustive tuning strategy."""
-from .strategy import strategy_registry, TuneStrategy
+from deprecated import deprecated
+
+from .strategy import TuneStrategy, strategy_registry
 from .utils.tuning_sampler import OpWiseTuningSampler
 
+
+@deprecated(version="2.0")
 @strategy_registry
 class ExhaustiveTuneStrategy(TuneStrategy):
     """The exhaustive tuning strategy."""
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config using exhaustive search in tuning space.
-        
+
         It sequentially traverse all possible quantization tuning configurations
         in a tuning space. From the perspective of the impact on performance,
         we currently only traverse all possible quantization tuning configs.
         Same reason as Bayesian, fallback datatypes are not included for now.
-        
+
         Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
         tuning_space = self.tuning_space
-        calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        calib_sampling_size_lst = tuning_space.root_item.get_option_by_name("calib_sampling_size").options
         for calib_sampling_size in calib_sampling_size_lst:
             op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
-            op_wise_tuning_sampler = OpWiseTuningSampler(tuning_space, [], [], 
-                                                         op_item_dtype_dict, initial_op_tuning_cfg)
+            op_wise_tuning_sampler = OpWiseTuningSampler(
+                tuning_space, [], [], op_item_dtype_dict, initial_op_tuning_cfg
+            )
             for op_tuning_cfg in op_wise_tuning_sampler:
-                op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                op_tuning_cfg["calib_sampling_size"] = calib_sampling_size
                 yield op_tuning_cfg
         return

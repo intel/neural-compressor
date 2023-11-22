@@ -1,7 +1,9 @@
+import socket
 import unittest
 from unittest.mock import patch
-import socket
-from neural_solution.frontend.task_submitter import TaskSubmitter, Task
+
+from neural_solution.frontend.task_submitter import Task, TaskSubmitter
+
 
 class TestTask(unittest.TestCase):
     def test_task_creation(self):
@@ -18,7 +20,7 @@ class TestTask(unittest.TestCase):
             arguments=arguments,
             approach=approach,
             requirements=requirements,
-            workers=workers
+            workers=workers,
         )
 
         self.assertEqual(task.script_url, script_url)
@@ -28,15 +30,17 @@ class TestTask(unittest.TestCase):
         self.assertEqual(task.requirements, requirements)
         self.assertEqual(task.workers, workers)
 
+
 class TestTaskSubmitter(unittest.TestCase):
-    @patch('socket.socket')
+    @patch("socket.socket")
     def test_submit_task(self, mock_socket):
         task_submitter = TaskSubmitter()
-        task_id = '1234'
+        task_id = "1234"
         task_submitter.submit_task(task_id)
-        mock_socket.return_value.connect.assert_called_once_with(('localhost', 2222))
+        mock_socket.return_value.connect.assert_called_once_with(("localhost", 2222))
         mock_socket.return_value.send.assert_called_once_with(b'{"task_id": "1234"}')
         mock_socket.return_value.close.assert_called_once()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

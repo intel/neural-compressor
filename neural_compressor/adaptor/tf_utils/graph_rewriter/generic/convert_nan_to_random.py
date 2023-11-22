@@ -17,11 +17,12 @@
 """Convert NAN to random Graph Rewriter."""
 
 import numpy as np
-from ..graph_base import GraphRewriterBase
-from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-from tensorflow.python.framework import dtypes
-from tensorflow.python.framework import tensor_util
 from tensorflow.core.framework import attr_value_pb2
+from tensorflow.python.framework import dtypes, tensor_util
+
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+
+from ..graph_base import GraphRewriterBase
 
 
 class ConvertNanToRandom(GraphRewriterBase):
@@ -38,10 +39,14 @@ class ConvertNanToRandom(GraphRewriterBase):
 
         for i in target_nodes:
             const_node = graph_info[i[0]].node
-            const_content =  tensor_util.MakeNdarray(const_node.attr['value'].tensor)
+            const_content = tensor_util.MakeNdarray(const_node.attr["value"].tensor)
             if const_content.dtype == np.float32 and np.any(np.isnan(const_content)):
-                const_node.attr['value'].CopyFrom(
-                attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
-                    np.random.rand(*const_content.shape), dtypes.float32, const_content.shape)))
+                const_node.attr["value"].CopyFrom(
+                    attr_value_pb2.AttrValue(
+                        tensor=tensor_util.make_tensor_proto(
+                            np.random.rand(*const_content.shape), dtypes.float32, const_content.shape
+                        )
+                    )
+                )
 
         return cur_graph.dump_graph()

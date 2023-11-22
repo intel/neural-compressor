@@ -15,9 +15,9 @@ This document is used to list steps of reproducing Intel® Neural Compressor QAT
 pip install neural-compressor
 ```
 
-### Install Tensorflow
+### Installation Dependency packages
 ```shell
-pip install tensorflow
+pip install -r requirements.txt
 ```
 
 ### Install Intel Extension for Tensorflow
@@ -35,7 +35,7 @@ To apply QAT, run the command below:
 
 ## 1. Quantization
 ```shell
-bash run_tuning.sh --output_model=/path/to/output_model
+bash run_quant.sh --output_model=/path/to/output_model
 ```
 
 ## 2. Benchmark

@@ -49,62 +49,85 @@ export default function OpDetails({ selectedWorkload, selectedOp, setHistogramTy
   }, [selectedOp]);
 
   return (
-    <div id='opDetails' className='data-panel'>
-      <h3>OP details</h3>
-      <br />
-      <table className="property-table">
-        <tbody>
-          <tr>
-            <td className="table-key">OP name</td>
-            <td className="table-value" colSpan={2}>{opDetails['OP name']}</td>
-          </tr>
-          <tr>
-            <td className="table-title" colSpan={3}>Pattern</td>
-          </tr>
-          <tr>
-            <td className="table-key">Sequence</td>
-            <td className="table-value" colSpan={2}>
-              {opDetails.Pattern.sequence.map(
-                sequence => {
-                  return <span key={sequence}>{sequence} </span>
-                }
-              )}
-            </td>
-          </tr>
-          <tr>
-            <td className="table-key">Precision</td>
-            <td className="table-value" colSpan={2}>{opDetails.Pattern.precision}</td>
-          </tr>
-          <tr>
-            <td className="table-title" colSpan={3}>
-              Weights
-            </td>
-          </tr>
-          <tr>
-            <td className="table-key">Dtype</td>
-            <td className="table-value">{opDetails.Weights.dtype}</td>
-            <td className="table-value">
+    <div>
+      {selectedOp &&
+        <div id='opDetails' className='data-panel'>
+          <h3>OP details</h3>
+          <br />
+          {selectedWorkload.framework !== 'PyTorch' &&
+            <table className="property-table">
+              <tbody>
+                <tr>
+                  <td className="table-key">OP name</td>
+                  <td className="table-value" colSpan={2}>{opDetails['OP name']}</td>
+                </tr>
+                <tr>
+                  <td className="table-title" colSpan={3}>Pattern</td>
+                </tr>
+                <tr>
+                  <td className="table-key">Sequence</td>
+                  <td className="table-value" colSpan={2}>
+                    {opDetails.Pattern.sequence.map(
+                      sequence => {
+                        return <span key={sequence}>{sequence} </span>
+                      }
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="table-key">Precision</td>
+                  <td className="table-value" colSpan={2}>{opDetails.Pattern.precision}</td>
+                </tr>
+                <tr>
+                  <td className="table-title" colSpan={3}>
+                    Weights
+                  </td>
+                </tr>
+                <tr>
+                  <td className="table-key">Dtype</td>
+                  <td className="table-value">{opDetails.Weights.dtype}</td>
+                  <td className="table-value">
+                    <Button variant="primary" className="histogram-btn" onClick={() => setHistogramType('weights')}>Show weights histogram</Button>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="table-key">Granularity</td>
+                  <td className="table-value" colSpan={2}>{opDetails.Weights.granularity}</td>
+                </tr>
+                <tr>
+                  <td className="table-title" colSpan={3}>
+                    Activation
+                  </td>
+                </tr>
+                <tr>
+                  <td className="table-key">Dtype</td>
+                  <td className="table-value">{opDetails.Activation.dtype}</td>
+                  <td className="table-value">
+                    <Button variant="primary" className="histogram-btn" onClick={() => setHistogramType('activation')}>Show activation histogram</Button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          }
+          {selectedWorkload.framework === 'PyTorch' &&
+            <>
+              <table className="property-table">
+                <tbody>
+                  <tr>
+                    <td className="table-key">OP name</td>
+                    <td className="table-value" colSpan={2}>{opDetails['OP name']}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <br />
               <Button variant="primary" className="histogram-btn" onClick={() => setHistogramType('weights')}>Show weights histogram</Button>
-            </td>
-          </tr>
-          <tr>
-            <td className="table-key">Granularity</td>
-            <td className="table-value" colSpan={2}>{opDetails.Weights.granularity}</td>
-          </tr>
-          <tr>
-            <td className="table-title" colSpan={3}>
-              Activation
-            </td>
-          </tr>
-          <tr>
-            <td className="table-key">Dtype</td>
-            <td className="table-value">{opDetails.Activation.dtype}</td>
-            <td className="table-value">
+              <br />
+              <br />
               <Button variant="primary" className="histogram-btn" onClick={() => setHistogramType('activation')}>Show activation histogram</Button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div >
+            </>
+          }
+        </div>
+      }
+    </div>
   );
 }

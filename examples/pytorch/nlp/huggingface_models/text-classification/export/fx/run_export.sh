@@ -11,7 +11,7 @@ function main {
 # init params
 function init_params {
     dtype='fp32'
-    quant_format='QDQ' # or QLinear
+    quant_format='QDQ' # or QOperator
     for var in "$@"
     do
         case $var in
@@ -29,6 +29,9 @@ function init_params {
         ;;
         --quant_format=*)
             quant_format=$(echo $var |cut -f2 -d=)
+        ;;
+        --approach=*)
+            approach=$(echo $var |cut -f2 -d=)
         ;;
         esac
     done
@@ -60,6 +63,7 @@ function run_tuning {
         --quant_format ${quant_format} \
         --output_dir ${tuned_checkpoint} \
         --overwrite_output_dir \
+        --approach ${approach} \
         ${extra_cmd}
 }
 

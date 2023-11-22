@@ -15,7 +15,6 @@
 """Neural Insights Logger module."""
 import logging
 
-
 log = logging.getLogger("Neural Insights")
 
 handler = logging.StreamHandler()

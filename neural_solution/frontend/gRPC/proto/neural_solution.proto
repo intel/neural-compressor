@@ -38,7 +38,7 @@ message Task {
     repeated string requirements = 5;
     int32 workers = 6;
   }
-// task responce
+// task response
 message TaskResponse {
     string status = 1;
     string task_id = 2;
@@ -52,7 +52,7 @@ message TaskId {
     string task_id = 1;
 }
 
-// responce
+// response
 message TaskStatus {
     string status = 1;
     string optimized_result = 2;

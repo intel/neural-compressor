@@ -1,0 +1,125 @@
+[tool.isort]
+profile = "black"
+line_length = 120
+known_first_party = ["neural_compressor", "neural_insights", "neural_solution"]
+extend_skip_glob = ["**/__init__.py"]
+
+
+[tool.black]
+line-length = 120
+
+
+[tool.codespell]
+skip = '*.po,*.ts,*.js,*.map,*.js.map,*.css.map,.azure-pipelines/scripts/codeScan/codespell/inc_dict.txt'
+count = ''
+quiet-level = 3
+ignore-words = ".azure-pipelines/scripts/codeScan/codespell/inc_dict.txt"
+
+
+[tool.ruff]
+# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
+select = ["E", "F"]
+ignore = [
+    "E402", # Module level import not at top of file
+    "E501", # Line too long (121 > 120 characters)
+    "E721", # Do not compare types, use isinstance()
+    "E722", # Do not use bare except
+    "E731", # Do not assign a lambda expression, use a def
+    "E741", # Do not use variables named ‘l’, ‘O’, or ‘I’
+    "F401", # {name} imported but unused
+    "F403", # from {name} import * used; unable to detect undefined names
+    "F405", # {name} may be undefined, or defined from star imports
+    "F841", # Local variable is assigned to but never used{name}
+]
+
+ignore-init-module-imports = true
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "I",
+    "N",
+    "Q",
+    "S",
+    "T",
+    "W",
+    "ANN",
+    "ARG",
+    "BLE",
+    "COM",
+    "DJ",
+    "DTZ",
+    "EM",
+    "ERA",
+    "EXE",
+    "FBT",
+    "ICN",
+    "INP",
+    "ISC",
+    "NPY",
+    "PD",
+    "PGH",
+    "PIE",
+    "PL",
+    "PT",
+    "PTH",
+    "PYI",
+    "RET",
+    "RSE",
+    "RUF",
+    "SIM",
+    "SLF",
+    "TCH",
+    "TID",
+    "TRY",
+    "UP",
+    "YTT",
+]
+unfixable = []
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+# Same as Black.
+line-length = 120
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Assume Python 3.10.
+target-version = "py310"
+
+[tool.ruff.per-file-ignores]
+"**/__init__.py" = ["F401"]
+
+[tool.ruff.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 10

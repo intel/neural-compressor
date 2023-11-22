@@ -17,18 +17,21 @@
 #
 """Utils for Tensorflow model converting to ONNX model."""
 
-import os
 import copy
 import logging
+import os
 import re
+
+import numpy as np
 import tensorflow as tf
 from google.protobuf import text_format
-import numpy as np
-from tensorflow.core.framework import types_pb2, tensor_pb2
+from onnx import OperatorSetIdProto, TensorProto, defs, helper, numpy_helper, onnx_pb, shape_inference
+from tensorflow.core.framework import tensor_pb2, types_pb2
 from tensorflow.python.framework import tensor_util
-from onnx import helper, onnx_pb, numpy_helper, defs, TensorProto, OperatorSetIdProto, shape_inference
+
 from neural_compressor.utils.utility import LazyImport
-t2o = LazyImport('tf2onnx')
+
+t2o = LazyImport("tf2onnx")
 
 logger = logging.getLogger("neural_compressor")
 
@@ -53,19 +56,56 @@ ONNX_EMPTY_INPUT = ""
 
 # ignore the following attributes
 TF2ONNX_IGNORED_NODE_ATTRS = {
-    "T", "unknown_rank", "_class", "Tshape", "use_cudnn_on_gpu", "Index", "Tpaddings",
-    "TI", "Tparams", "Tindices", "Tlen", "Tdim", "Tin", "dynamic_size", "Tmultiples",
-    "Tblock_shape", "Tcrops", "index_type", "Taxis", "U", "maxval",
-    "Tout", "Tlabels", "Tindex", "element_shape", "Targmax", "Tperm", "Tcond",
-    "T_threshold", "shape_type", "_lower_using_switch_merge",
-    "parallel_iterations", "_num_original_outputs", "output_types", "output_shapes",
-    "key_dtype", "value_dtype" "capacity", "component_types", "shapes",  "SrcT", "Treal",
-    "Toutput_types", "dense_shapes", "Tdense", "Tsegmentids", "Tshift", "Tnumsegments"
+    "T",
+    "unknown_rank",
+    "_class",
+    "Tshape",
+    "use_cudnn_on_gpu",
+    "Index",
+    "Tpaddings",
+    "TI",
+    "Tparams",
+    "Tindices",
+    "Tlen",
+    "Tdim",
+    "Tin",
+    "dynamic_size",
+    "Tmultiples",
+    "Tblock_shape",
+    "Tcrops",
+    "index_type",
+    "Taxis",
+    "U",
+    "maxval",
+    "Tout",
+    "Tlabels",
+    "Tindex",
+    "element_shape",
+    "Targmax",
+    "Tperm",
+    "Tcond",
+    "T_threshold",
+    "shape_type",
+    "_lower_using_switch_merge",
+    "parallel_iterations",
+    "_num_original_outputs",
+    "output_types",
+    "output_shapes",
+    "key_dtype",
+    "value_dtype" "capacity",
+    "component_types",
+    "shapes",
+    "SrcT",
+    "Treal",
+    "Toutput_types",
+    "dense_shapes",
+    "Tdense",
+    "Tsegmentids",
+    "Tshift",
+    "Tnumsegments",
 }
 
-TF2ONNX_SUBGRAPH_ATTRS = {
-    "body", "cond", "then_branch", "else_branch", "f"
-}
+TF2ONNX_SUBGRAPH_ATTRS = {"body", "cond", "then_branch", "else_branch", "f"}
 
 TF2ONNX_DTYPE_MAP = {
     types_pb2.DT_FLOAT: onnx_pb.TensorProto.FLOAT,
@@ -87,7 +127,7 @@ TF2ONNX_DTYPE_MAP = {
     types_pb2.DT_COMPLEX128: onnx_pb.TensorProto.COMPLEX128,
     types_pb2.DT_BOOL: onnx_pb.TensorProto.BOOL,
     types_pb2.DT_RESOURCE: onnx_pb.TensorProto.INT64,
-    types_pb2.DT_VARIANT: onnx_pb.TensorProto.UNDEFINED
+    types_pb2.DT_VARIANT: onnx_pb.TensorProto.UNDEFINED,
 }
 
 
@@ -116,18 +156,37 @@ ONNX_TO_NUMPY_DTYPE = {
 # Note: opset 7 and opset 8 came out with IR3 but we need IR4 because of PlaceholderWithDefault
 # Refer from https://github.com/onnx/onnx/blob/main/docs/Versioning.md#released-versions
 OPSET_TO_IR_VERSION = {
-    1: 3, 2: 3, 3: 3, 4: 3, 5: 3, 6: 3, 7: 4, 8: 4, 9: 4, 10: 5, 11: 6, 12: 7, 13: 7, 14: 7, 15: 8, 16: 8, 17: 8
+    1: 3,
+    2: 3,
+    3: 3,
+    4: 3,
+    5: 3,
+    6: 3,
+    7: 4,
+    8: 4,
+    9: 4,
+    10: 5,
+    11: 6,
+    12: 7,
+    13: 7,
+    14: 7,
+    15: 8,
+    16: 8,
+    17: 8,
 }
 
 
 DEFAULT_TARGET = []
 
 INSERTED_OP_NAME = 1
+
+
 def set_name(name):
     """Set op name for inserted ops."""
     global INSERTED_OP_NAME
     INSERTED_OP_NAME += 1
     return "{}__{}".format(name, INSERTED_OP_NAME)
+
 
 def find_opset(opset):
     """Find opset."""
@@ -138,10 +197,12 @@ def find_opset(opset):
             opset = PREFERRED_OPSET
     return opset
 
+
 def assert_error(bool_val, error_msg, *args):
     """Raise error message."""
     if not bool_val:
         raise ValueError("Assert failure: " + error_msg % args)
+
 
 def map_numpy_to_onnx_dtype(np_dtype):
     """Map numpy dtype to ONNX dtype."""
@@ -150,17 +211,21 @@ def map_numpy_to_onnx_dtype(np_dtype):
             return onnx_dtype
     raise ValueError("unsupported numpy dtype '%s' for mapping to onnx" % np_dtype)
 
+
 def map_onnx_to_numpy_type(onnx_type):
     """Map ONNX dtype to numpy dtype."""
     return ONNX_TO_NUMPY_DTYPE[onnx_type]
+
 
 def add_port_to_name(name, nr=0):
     """Map node output number to name."""
     return name + ":" + str(nr)
 
+
 def get_tensorflow_node_attr(node, name):
     """Parse tensorflow node attribute."""
     return node.get_attr(name)
+
 
 def get_tensorflow_tensor_shape(tensor):
     """Get shape from tensorflow tensor."""
@@ -170,6 +235,7 @@ def get_tensorflow_tensor_shape(tensor):
     except Exception:  # pylint: disable=broad-except
         shape = None
     return shape
+
 
 def get_tensorflow_node_shape_attr(node):
     """Get shape from tensorflow attr "shape"."""
@@ -182,11 +248,13 @@ def get_tensorflow_node_shape_attr(node):
         pass
     return dims
 
+
 def map_tensorflow_dtype(dtype):
     """Convert tensorflow dtype to ONNX."""
     if dtype:
         dtype = TF2ONNX_DTYPE_MAP[dtype]
     return dtype
+
 
 def get_tensorflow_tensor_data(tensor):
     """Get data from tensorflow tensor."""
@@ -196,6 +264,7 @@ def get_tensorflow_tensor_data(tensor):
     if not isinstance(np_data, np.ndarray):
         raise ValueError("np_data=", np_data, " isn't ndarray")
     return np_data
+
 
 def convert_tensorflow_tensor_to_onnx(tensor, name=""):
     """Convert tensorflow tensor to onnx tensor."""
@@ -207,11 +276,12 @@ def convert_tensorflow_tensor_to_onnx(tensor, name=""):
             # Faster but fails on Unicode
             np_data = np_data.astype(np.str).astype(object)
         except UnicodeDecodeError:
-            decode = np.vectorize(lambda x: x.decode('UTF-8'))
+            decode = np.vectorize(lambda x: x.decode("UTF-8"))
             np_data = decode(np_data).astype(object)
         except:  # pylint: disable=bare-except
             raise RuntimeError("Not support type: {}".format(type(np_data.flat[0])))
     return numpy_helper.from_array(np_data, name=name)
+
 
 def read_tensorflow_node_attrs(node):
     """Read tensorflow node attribute names."""
@@ -219,11 +289,15 @@ def read_tensorflow_node_attrs(node):
 
     for attr_name in node.node_def.attr:
         value = get_tensorflow_node_attr(node, attr_name)
-        if attr_name == 'T' and node.type in ('QuantizeV2', 'Dequantize'):
-            attr[attr_name] = TensorProto.INT8 if get_tensorflow_node_attr(node, attr_name) == 'qint8' \
-                              else TensorProto.UINT8
-        elif attr_name in TF2ONNX_IGNORED_NODE_ATTRS or attr_name in TF2ONNX_SUBGRAPH_ATTRS or \
-           isinstance(value, tensor_pb2.TensorProto):
+        if attr_name == "T" and node.type in ("QuantizeV2", "Dequantize"):
+            attr[attr_name] = (
+                TensorProto.INT8 if get_tensorflow_node_attr(node, attr_name) == "qint8" else TensorProto.UINT8
+            )
+        elif (
+            attr_name in TF2ONNX_IGNORED_NODE_ATTRS
+            or attr_name in TF2ONNX_SUBGRAPH_ATTRS
+            or isinstance(value, tensor_pb2.TensorProto)
+        ):
             pass
         elif attr_name == "shape":
             shape = get_tensorflow_node_shape_attr(node)
@@ -239,6 +313,7 @@ def read_tensorflow_node_attrs(node):
             attr[attr_name] = get_tensorflow_node_attr(node, attr_name)
 
     return attr
+
 
 def infer_onnx_shape_dtype(node, opset_version, input_shapes, input_dtypes, initializers=None):
     """Infer shapes and dtypes for outputs of the node.
@@ -281,10 +356,7 @@ def infer_onnx_shape_dtype(node, opset_version, input_shapes, input_dtypes, init
             # strict_mode arg doesn't exist in old onnx packages
             inferred_model = shape_inference.infer_shapes(model_proto)
     except Exception:  # pylint: disable=broad-except
-        logger.warning(
-            "ONNX Failed to infer shapes and dtypes for [%s, type: %s]",
-            node.name, node.type, exc_info=1
-        )
+        logger.warning("ONNX Failed to infer shapes and dtypes for [%s, type: %s]", node.name, node.type, exc_info=1)
         return None, None
 
     shapes = {}
@@ -295,11 +367,9 @@ def infer_onnx_shape_dtype(node, opset_version, input_shapes, input_dtypes, init
             dtypes[output.name] = tensor_type.elem_type
         else:
             dtypes[output.name] = TensorProto.UNDEFINED
-        # Missing dim_value in shapes of onnx means unknown which is -1 in our convertor
+        # Missing dim_value in shapes of onnx means unknown which is -1 in our converter
         if tensor_type.HasField("shape"):
-            shapes[output.name] = [
-                dim.dim_value if dim.HasField("dim_value") else -1 for dim in tensor_type.shape.dim
-            ]
+            shapes[output.name] = [dim.dim_value if dim.HasField("dim_value") else -1 for dim in tensor_type.shape.dim]
         else:
             shapes[output.name] = None
     output_shapes = []
@@ -315,15 +385,21 @@ def infer_onnx_shape_dtype(node, opset_version, input_shapes, input_dtypes, init
             output_dtypes.append(TensorProto.UNDEFINED)
     return output_shapes, output_dtypes
 
+
 def make_onnx_shape(shape):
-    """Shape with -1 is not valid in onnx ... make it a name."""
+    """Shape with -1 is not valid in onnx ...
+
+    make it a name.
+    """
     if shape:
         # don't do this if input is a scalar
         return [set_name("unk") if i == -1 else i for i in shape]
     return shape
 
+
 class SeqType:
     """Wrap around TensorProto.* to signify a tensor sequence of a given type."""
+
     def __init__(self, tensor_dtype):
         """Initlization."""
         self.dtype = tensor_dtype
@@ -338,6 +414,7 @@ class SeqType:
         """Return string of SeqType's dtype."""
         return "SeqType(%r)" % self.dtype
 
+
 def make_onnx_inputs_outputs(name, elem_type, shape, **kwargs):
     """Wrapper for creating onnx graph inputs or outputs.
 
@@ -350,12 +427,8 @@ def make_onnx_inputs_outputs(name, elem_type, shape, **kwargs):
         elem_type = onnx_pb.TensorProto.UNDEFINED
     elif isinstance(elem_type, SeqType):
         return helper.make_tensor_sequence_value_info(name, elem_type.dtype, make_onnx_shape(shape), **kwargs)
-    return helper.make_tensor_value_info(
-        name,
-        elem_type,
-        make_onnx_shape(shape),
-        **kwargs
-    )
+    return helper.make_tensor_value_info(name, elem_type, make_onnx_shape(shape), **kwargs)
+
 
 def save_protobuf(path, message, as_text=False):
     """Save ONNX protobuf file."""
@@ -369,15 +442,18 @@ def save_protobuf(path, message, as_text=False):
         with open(path, "wb") as f:
             f.write(message.SerializeToString())
 
+
 def is_onnx_domain(domain):
     """Check if it's onnx domain."""
     if domain is None or domain == "":
         return True
     return False
 
+
 def is_list_or_tuple(obj):
     """Check the object is list or tuple."""
     return isinstance(obj, (list, tuple))
+
 
 def are_shapes_equal(src, dest):
     """Check whether 2 shapes are equal."""
@@ -393,6 +469,7 @@ def are_shapes_equal(src, dest):
         return False
     return all(i == j for i, j in zip(src, dest))
 
+
 def get_subgraphs_from_onnx(model_proto):
     """Returns an iterator over the graphs/subgraphs of a model (using dfs)."""
     stack = [model_proto.graph]
@@ -406,29 +483,27 @@ def get_subgraphs_from_onnx(model_proto):
                 if hasattr(attr, "graphs"):
                     stack.extend(attr.graphs)
 
+
 def initialize_name_counter(model_proto):
     """Avoid name conflicts by initializing the counter used by make_name based on the provided model."""
     suffix_regex = re.compile(r"__(\d+)(:\d+)?$")
+
     def avoid_name(name):
         global INSERTED_OP_NAME
         suffix = suffix_regex.search(name)
         if suffix:
             INSERTED_OP_NAME = max(INSERTED_OP_NAME, int(suffix.group(1)) + 1)
+
     for g in get_subgraphs_from_onnx(model_proto):
         for n in g.node:
             avoid_name(n.name)
             for out in n.output:
                 avoid_name(out)
 
+
 def get_index_from_strided_slice_of_shape(node, outputs_to_values):
     """Returns the index of the dimension that the strided slice is reading from the shape node or None."""
-    attr_vals = {
-        'shrink_axis_mask': 1,
-        'ellipsis_mask': 0,
-        'begin_mask': 0,
-        'new_axis_mask': 0,
-        'end_mask': 0
-    }
+    attr_vals = {"shrink_axis_mask": 1, "ellipsis_mask": 0, "begin_mask": 0, "new_axis_mask": 0, "end_mask": 0}
     for a in node.node_def.attr:
         if a in attr_vals:
             i = get_tensorflow_node_attr(node, a)
@@ -445,6 +520,7 @@ def get_index_from_strided_slice_of_shape(node, outputs_to_values):
     if i1 + 1 != i2 or i3 != 1:
         return None
     return i1
+
 
 def compute_const_folding_using_tf(g, const_node_values, graph_outputs):
     """Find nodes with constant inputs and compute their values using TF."""
@@ -489,8 +565,11 @@ def compute_const_folding_using_tf(g, const_node_values, graph_outputs):
             # Find ops with constant inputs and compute their values
             input_names = [i.name for i in node.inputs]
             output_names = [i.name for i in node.outputs]
-            if node.type == 'StridedSlice' and input_names[0] in shape_node_outputs \
-                                           and output_names[0] not in outputs_to_values:
+            if (
+                node.type == "StridedSlice"
+                and input_names[0] in shape_node_outputs
+                and output_names[0] not in outputs_to_values
+            ):
                 shape = shape_node_outputs[input_names[0]]
                 i = get_index_from_strided_slice_of_shape(node, outputs_to_values)
                 if i is not None and 0 <= i < len(shape) and shape[i] is not None:
@@ -498,10 +577,19 @@ def compute_const_folding_using_tf(g, const_node_values, graph_outputs):
                     outputs_to_values[output_names[0]] = np.array(shape[i], dtype=np_dtype)
                     outputs_to_dtypes[node.outputs[0].name] = node.outputs[0].dtype
                     progress = True
-            can_fold = node.type not in ['Enter', 'Placeholder', 'PlaceholderWithDefault', 'Switch', 'Merge',
-                                         'NextIteration', 'Exit', 'QuantizeAndDequantizeV2', 'QuantizeAndDequantizeV3',
-                                         'QuantizeAndDequantizeV4']
-            can_fold = can_fold and not node.type.startswith('Random')
+            can_fold = node.type not in [
+                "Enter",
+                "Placeholder",
+                "PlaceholderWithDefault",
+                "Switch",
+                "Merge",
+                "NextIteration",
+                "Exit",
+                "QuantizeAndDequantizeV2",
+                "QuantizeAndDequantizeV3",
+                "QuantizeAndDequantizeV4",
+            ]
+            can_fold = can_fold and not node.type.startswith("Random")
             can_fold = can_fold and len(input_names) > 0 and all(inp in outputs_to_values for inp in input_names)
             # We can only fold nodes with a single output
             can_fold = can_fold and len(output_names) == 1 and output_names[0] not in outputs_to_values
@@ -512,7 +600,7 @@ def compute_const_folding_using_tf(g, const_node_values, graph_outputs):
                 g2 = tf.Graph()
                 with g2.as_default():
                     for inp in input_names:
-                        t2o.tf_loader.tf_placeholder(outputs_to_dtypes[inp], name=inp.split(':')[0])
+                        t2o.tf_loader.tf_placeholder(outputs_to_dtypes[inp], name=inp.split(":")[0])
                     mini_graph_def = g2.as_graph_def()
                     mini_graph_def.node.append(node.node_def)
                 g3 = tf.Graph()
@@ -525,11 +613,16 @@ def compute_const_folding_using_tf(g, const_node_values, graph_outputs):
                         inp_shapes.append(inp_np.shape)
                     try:
                         with t2o.tf_loader.tf_session() as sess:
-                            tf.import_graph_def(mini_graph_def, name='')
+                            tf.import_graph_def(mini_graph_def, name="")
                             results = sess.run(output_names, feed_dict=feed_dict)
                         if is_huge_shape(results[0].shape) and all(is_small_shape(inp) for inp in inp_shapes):
-                            logger.debug("Skipping folding of node %s since result shape %s is much larger "
-                                         "than input shapes %s", node.name, results[0].shape, inp_shapes)
+                            logger.debug(
+                                "Skipping folding of node %s since result shape %s is much larger "
+                                "than input shapes %s",
+                                node.name,
+                                results[0].shape,
+                                inp_shapes,
+                            )
                         else:
                             outputs_to_values[output_names[0]] = results[0]
                             outputs_to_dtypes[output_names[0]] = node.outputs[0].dtype

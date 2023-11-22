@@ -16,23 +16,21 @@
 # limitations under the License.
 # ==============================================================================
 """Built-in dataloaders for multiple framework backends."""
-
-from .tensorflow_dataloader import TensorflowDataLoader
 from .mxnet_dataloader import MXNetDataLoader
-from .pytorch_dataloader import PyTorchDataLoader
 from .onnxrt_dataloader import ONNXRTDataLoader
-from .default_dataloader import DefaultDataLoader
+from .pytorch_dataloader import PyTorchDataLoader
+from .tensorflow_dataloader import TensorflowDataLoader
 
-DATALOADERS = {"tensorflow": TensorflowDataLoader,
-               "tensorflow_itex": TensorflowDataLoader,
-               "keras": TensorflowDataLoader,
-               "mxnet": MXNetDataLoader,
-               "pytorch": PyTorchDataLoader,
-               "pytorch_ipex": PyTorchDataLoader,
-               "pytorch_fx": PyTorchDataLoader,
-               "onnxrt_qlinearops": ONNXRTDataLoader,
-               "onnxrt_integerops": ONNXRTDataLoader,
-               "onnxrt_qdq": ONNXRTDataLoader,
-               "onnxruntime": ONNXRTDataLoader,
-               }
-
+DATALOADERS = {
+    "tensorflow": TensorflowDataLoader,
+    "tensorflow_itex": TensorflowDataLoader,
+    "keras": TensorflowDataLoader,
+    "mxnet": MXNetDataLoader,
+    "pytorch": PyTorchDataLoader,
+    "pytorch_ipex": PyTorchDataLoader,
+    "pytorch_fx": PyTorchDataLoader,
+    "onnxrt_qlinearops": ONNXRTDataLoader,
+    "onnxrt_integerops": ONNXRTDataLoader,
+    "onnxrt_qdq": ONNXRTDataLoader,
+    "onnxruntime": ONNXRTDataLoader,
+}

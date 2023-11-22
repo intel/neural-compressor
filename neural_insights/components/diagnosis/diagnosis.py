@@ -24,6 +24,7 @@ from neural_insights.components.diagnosis.weights_details import WeightsDetails
 from neural_insights.components.model.model import Model
 from neural_insights.components.workload_manager.workload import Workload
 from neural_insights.utils.exceptions import ClientErrorException, InternalException
+from neural_insights.utils.logger import log
 from neural_insights.utils.utils import check_module
 
 
@@ -69,62 +70,80 @@ class Diagnosis:
             "cfg.pkl",
         )
         if not os.path.exists(config_path):
-            raise ClientErrorException("Could not find config data for specified optimization.")
+            log.debug("Could not find config data for specified optimization. Getting data from inspect files.")
+            input_model_tensors: dict = self.get_tensors_info(model_type="input")["activation"][0]
+            optimized_model_tensors: dict = self.get_tensors_info(model_type="optimized")["activation"][0]
+            common_ops = list(set(input_model_tensors.keys()) & set(optimized_model_tensors.keys()))
+            config_data = {
+                "op": {},
+            }
+            for op in common_ops:
+                config_data["op"].update({(op,): {}})
+            return config_data
+
         with open(config_path, "rb") as config_pickle:
             config_data = pickle.load(config_pickle)
         return config_data
 
     def get_op_list(self) -> List[dict]:
         """Get OP list for model."""
+        check_module("numpy")
+        import numpy as np
+
+        op_list: List[dict] = []
+
+        input_model_tensors: dict = self.get_tensors_info(model_type="input")["activation"][0]
+        optimized_model_tensors: dict = self.get_tensors_info(model_type="optimized")["activation"][0]
+
         minmax_file_path = os.path.join(
             self.workload_location,
             "inspect_saved",
-            "dequan_min_max.pkl",
+            "activation_min_max.pkl",
         )
-        with open(minmax_file_path, "rb") as min_max_file:
-            min_max_data: dict = pickle.load(min_max_file)
 
-        op_list: List[dict] = []
-        input_model_tensors: dict = self.get_tensors_info(model_type="input")["activation"][0]
-        optimized_model_tensors: dict = self.get_tensors_info(model_type="optimized")[
-            "activation"
-        ][0]
+        try:
+            with open(minmax_file_path, "rb") as min_max_file:
+                min_max_data: dict = pickle.load(min_max_file)
+        except FileNotFoundError:
+            log.debug("Could not find minmax file.")
+            common_ops = list(set(input_model_tensors.keys()) & set(optimized_model_tensors.keys()))
+            min_max_data = dict(zip(common_ops, [{"min": None, "max": None}] * len(common_ops)))
+
         for op_name, min_max in min_max_data.items():
-
             mse = self.calculate_mse(op_name, input_model_tensors, optimized_model_tensors)
-            if mse is None:
+            if mse is None or np.isnan(mse):
                 continue
-            min = float(min_max.get("min", None))
-            max = float(min_max.get("max", None))
+            min = min_max.get("min", None)
+            max = min_max.get("max", None)
+
+            if min is not None:
+                min = float(min)
+            if max is not None:
+                max = float(max)
+
             op_entry = OpEntry(op_name, mse, min, max)
             op_list.append(op_entry.serialize())
         return op_list
 
     def get_weights_details(self, inspect_type: str) -> List[WeightsDetails]:
         """Get weights details for model."""
-        check_module("numpy")
-        import numpy as np
-
         weights_details = []
 
         minmax_file_path = os.path.join(
             self.workload_location,
             "inspect_saved",
-            "dequan_min_max.pkl",
+            "activation_min_max.pkl",
         )
         with open(minmax_file_path, "rb") as min_max_file:
             min_max_data: dict = pickle.load(min_max_file)
 
         input_model_tensors: dict = self.get_tensors_info(model_type="input")[inspect_type]
-        optimized_model_tensors: dict = self.get_tensors_info(model_type="optimized")[
-            inspect_type
-        ]
+        optimized_model_tensors: dict = self.get_tensors_info(model_type="optimized")[inspect_type]
         if inspect_type == "activation":
             input_model_tensors = input_model_tensors[0]
             optimized_model_tensors = optimized_model_tensors[0]
         common_ops = list(set(input_model_tensors.keys()) & set(optimized_model_tensors.keys()))
         for op_name in common_ops:
-
             input_model_op_tensors = input_model_tensors[op_name]
             optimized_model_op_tensors = optimized_model_tensors[op_name]
 
@@ -132,7 +151,9 @@ class Diagnosis:
                 continue
 
             if isinstance(input_model_op_tensors, dict):
-                for (input_op_name, input_op_values), (optimized_op_name, optimized_op_values) in zip(input_model_op_tensors.items(), optimized_model_op_tensors.items()):
+                for (input_op_name, input_op_values), (optimized_op_name, optimized_op_values) in zip(
+                    input_model_op_tensors.items(), optimized_model_op_tensors.items()
+                ):
                     if input_op_values.ndim != 4 or optimized_op_values.ndim != 4:
                         continue
 
@@ -151,7 +172,6 @@ class Diagnosis:
         optimized_model_tensors: dict,
     ) -> Optional[float]:
         """Calculate MSE for specified tensors."""
-
         input_model_op_data = input_model_tensors.get(op_name, None)
         optimized_model_op_data = optimized_model_tensors.get(op_name, None)
 
@@ -218,8 +238,7 @@ class Diagnosis:
 
     @staticmethod
     def mse_metric_gap(fp32_tensor: Any, dequantize_tensor: Any) -> float:
-        """
-        Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
+        """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
 
         Args:
             fp32_tensor (tensor): The FP32 tensor.
@@ -238,9 +257,7 @@ class Diagnosis:
 
         # Normalize tensor values
         fp32_tensor = (fp32_tensor - fp32_min) / (fp32_max - fp32_min)
-        dequantize_tensor = (dequantize_tensor - dequantize_min) / (
-            dequantize_max - dequantize_min
-        )
+        dequantize_tensor = (dequantize_tensor - dequantize_min) / (dequantize_max - dequantize_min)
 
         diff_tensor = fp32_tensor - dequantize_tensor
         euclidean_dist = np.sum(diff_tensor**2)  # type: ignore
@@ -249,13 +266,14 @@ class Diagnosis:
     def get_weights_data(self, op_name: str, channel_normalization=True) -> list:
         """Get weights data for optimized model."""
         from PIL import Image
+
         check_module("numpy")
         import numpy as np
 
         tensors = self.get_tensors_info(model_type="optimized").get("weight", None)
         if tensors is None:
             raise ClientErrorException(
-                f"Could not get tensor information to display activations.",
+                "Could not get tensor information to display activations.",
             )
 
         op_tensors: Optional[dict] = tensors.get(op_name, None)
@@ -269,7 +287,7 @@ class Diagnosis:
             if tensor_data_raw.ndim != 4:
                 continue
             tensor_data = tensor_data_raw[0]
-            shapes_order = self.model.shape_elements_order
+            shapes_order = self.model.shape_elements_order  # pylint: disable=no-member
             channels_index = shapes_order.index("channels")
             new_order = [channels_index]
             new_order.extend([x for x in range(len(shapes_order)) if x != channels_index])
@@ -281,12 +299,9 @@ class Diagnosis:
 
             for tensor in tensor_data:
                 if channel_normalization:
-                    tensor = 255 * (tensor-np.min(tensor))/(np.max(tensor) - np.min(tensor))
+                    tensor = 255 * (tensor - np.min(tensor)) / (np.max(tensor) - np.min(tensor))
                 img = Image.fromarray(tensor)
                 img = img.convert("L")
                 img.show()
-                # filename = f"tf/tensor_activations/{tensor_name}/{idx}.jpg"
-                # os.makedirs(os.path.dirname(filename), exist_ok=True)
-                # img.save(filename)
                 weights.append(tensor.tolist())
         return weights

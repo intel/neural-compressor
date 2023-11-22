@@ -16,14 +16,16 @@
 # limitations under the License.
 """Dequantize Cast Graph Rerewriter."""
 
+import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
 
-from ..graph_base import GraphRewriterBase
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.utils.utility import dump_elapsed_time
-import tensorflow as tf
 from neural_compressor.adaptor.tf_utils.util import TF_SPR_BASE_VERSIONS
+from neural_compressor.utils.utility import dump_elapsed_time
+
+from ..graph_base import GraphRewriterBase
+
 
 class DequantizeCastOptimizer(GraphRewriterBase):
     """Remove the Cast OP and set Dequantize output to B16 if the Cast OP output is BF16."""
@@ -40,7 +42,7 @@ class DequantizeCastOptimizer(GraphRewriterBase):
         """
         # stock TF _MklDequantize doesn't support BF16 currently.
         # TODO remove this when spr-base upstream to stock TF.
-        if not tf.version.VERSION in TF_SPR_BASE_VERSIONS:
+        if tf.version.VERSION not in TF_SPR_BASE_VERSIONS:
             return self.model
 
         DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
@@ -54,17 +56,16 @@ class DequantizeCastOptimizer(GraphRewriterBase):
 
             if len(dq_outputs) > 1:
                 continue
-
             cast_node = graph_info[i[1]].node
             cast_outputs = graph_info[i[1]].outputs
             all_cast_outputs_bf16 = True
             for cast_output in cast_outputs:
                 cast_output_node = graph_info[cast_output].node
-                if cast_output_node.attr['T'] != DT_BFLOAT16:# des dtype of the cast must be bfloat16
+                if cast_output_node.attr["T"] != DT_BFLOAT16:  # des dtype of the cast must be bfloat16
                     all_cast_outputs_bf16 = False
             if not all_cast_outputs_bf16:
                 continue
-            dq_node.attr['dtype'].CopyFrom(DT_BFLOAT16)
+            dq_node.attr["dtype"].CopyFrom(DT_BFLOAT16)
             for cast_output in cast_outputs:
                 successor_node = graph_info[cast_output].node
                 replace_index = None

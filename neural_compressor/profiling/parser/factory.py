@@ -16,13 +16,14 @@
 from typing import Optional
 
 from neural_compressor.model import BaseModel
+from neural_compressor.profiling.parser.onnx_parser.factory import OnnxrtParserFactory
 from neural_compressor.profiling.parser.parser import ProfilingParser
 from neural_compressor.profiling.parser.tensorflow_parser.factory import TensorFlowParserFactory
-from neural_compressor.profiling.parser.onnx_parser.factory import OnnxrtParserFactory
 
 
 class ParserFactory:
     """Parser factory."""
+
     @staticmethod
     def get_parser(
         model: BaseModel,
@@ -44,6 +45,5 @@ class ParserFactory:
 
         parser = framework_parser.get(model.framework(), None)
         if parser is None:
-            raise Exception(
-                f"Profiling Parser for '{model.framework()}' framework is not supported.")
+            raise Exception(f"Profiling Parser for '{model.framework()}' framework is not supported.")
         return parser(logs)

@@ -32,14 +32,17 @@
 """Neural Compressor built-in imagenet transforms."""
 
 import numpy as np
-from neural_compressor.utils.utility import LazyImport
-from neural_compressor.utils import logger
-from .transform import transform_registry, BaseTransform
-tf = LazyImport('tensorflow')
-cv2 = LazyImport('cv2')
 
-@transform_registry(transform_type="QuantizedInput", \
-                    process="preprocess", framework="tensorflow, tensorflow_itex")
+from neural_compressor.utils import logger
+from neural_compressor.utils.utility import LazyImport
+
+from .transform import BaseTransform, transform_registry
+
+tf = LazyImport("tensorflow")
+cv2 = LazyImport("cv2")
+
+
+@transform_registry(transform_type="QuantizedInput", process="preprocess", framework="tensorflow, tensorflow_itex")
 class QuantizedInput(BaseTransform):
     """Convert the dtype of input to quantize it.
 
@@ -53,9 +56,8 @@ class QuantizedInput(BaseTransform):
 
     def __init__(self, dtype, scale=None):
         """Initialize `QuantizedInput` class."""
-        self.dtype_map = {'uint8': tf.uint8, 'int8': tf.int8}
-        assert dtype in self.dtype_map.keys(), \
-            'only support cast dtype {}'.format(self.dtype_map.keys())
+        self.dtype_map = {"uint8": tf.uint8, "int8": tf.int8}
+        assert dtype in self.dtype_map.keys(), "only support cast dtype {}".format(self.dtype_map.keys())
         self.dtype = dtype
         self.scale = scale
 
@@ -63,18 +65,22 @@ class QuantizedInput(BaseTransform):
         """Convert the dtype of input."""
         # scale is not know when tuning, in this case this transform
         # do nothing, it's only used when scale is set
-        if self.scale == None:
+        if self.scale is None:
             return sample
         image, label = sample
         image = image * self.scale
-        if self.dtype == 'uint8':
+        if self.dtype == "uint8":
             image = image + 128
         image = tf.dtypes.cast(image, dtype=self.dtype_map[self.dtype])
         return image, label
 
-@transform_registry(transform_type="LabelShift", \
-    process="postprocess", framework="pytorch, tensorflow, tensorflow_itex,\
-                           onnxrt_qlinearops, onnxrt_integerops")
+
+@transform_registry(
+    transform_type="LabelShift",
+    process="postprocess",
+    framework="pytorch, tensorflow, tensorflow_itex,\
+                           onnxrt_qlinearops, onnxrt_integerops",
+)
 class LabelShift(BaseTransform):
     """Convert label to label - label_shift.
 
@@ -106,7 +112,8 @@ class LabelShift(BaseTransform):
             labels = np.array(labels) - self.label_shift
         return images, labels
 
-class ParseDecodeImagenet():
+
+class ParseDecodeImagenet:
     """Parse features in Example proto.
 
     Returns:
@@ -117,41 +124,49 @@ class ParseDecodeImagenet():
         """Parse features in example."""
         # Dense features in Example proto.
         feature_map = {
-            'image/encoded': tf.io.FixedLenFeature([], dtype=tf.string, default_value=''),
-            'image/class/label': tf.io.FixedLenFeature([1], dtype=tf.int64, default_value=-1)}
+            "image/encoded": tf.io.FixedLenFeature([], dtype=tf.string, default_value=""),
+            "image/class/label": tf.io.FixedLenFeature([1], dtype=tf.int64, default_value=-1),
+        }
 
         sparse_float32 = tf.io.VarLenFeature(dtype=tf.float32)
         # Sparse features in Example proto.
         feature_map.update(
-            {k: sparse_float32 for k in ['image/object/bbox/xmin',
-                                         'image/object/bbox/ymin',
-                                         'image/object/bbox/xmax',
-                                         'image/object/bbox/ymax']})
+            {
+                k: sparse_float32
+                for k in [
+                    "image/object/bbox/xmin",
+                    "image/object/bbox/ymin",
+                    "image/object/bbox/xmax",
+                    "image/object/bbox/ymax",
+                ]
+            }
+        )
 
         features = tf.io.parse_single_example(serialized=sample, features=feature_map)
-        label = tf.cast(features['image/class/label'], dtype=tf.int32)
-        image = features['image/encoded']
-        image = tf.image.decode_jpeg(
-            image, channels=3, fancy_upscaling=False, dct_method='INTEGER_FAST')
+        label = tf.cast(features["image/class/label"], dtype=tf.int32)
+        image = features["image/encoded"]
+        image = tf.image.decode_jpeg(image, channels=3, fancy_upscaling=False, dct_method="INTEGER_FAST")
         return (image, label)
 
-@transform_registry(transform_type="ParseDecodeImagenet", \
-                    process="preprocess", framework="tensorflow")
+
+@transform_registry(transform_type="ParseDecodeImagenet", process="preprocess", framework="tensorflow")
 class ParseDecodeImagenetTransform(BaseTransform):
     """Imagenet decoding will be performed automatically from Neural Compressor v1.4.
 
     Returns:
         sample
     """
- 
+
     def __call__(self, sample):
         """Convert `ParseDecodeImagenetTransform` feature."""
-        logger.warning("This transform is going to be deprecated, " \
-            "imagenet decoding will be performed automatically from Neural Compressor v1.4.")
+        logger.warning(
+            "This transform is going to be deprecated, "
+            "imagenet decoding will be performed automatically from Neural Compressor v1.4."
+        )
         return sample
 
-@transform_registry(transform_type="ResizeCropImagenet", \
-                    process="preprocess", framework="tensorflow")
+
+@transform_registry(transform_type="ResizeCropImagenet", process="preprocess", framework="tensorflow")
 class TensorflowResizeCropImagenetTransform(BaseTransform):
     """Combination of a series of transforms which is applicable to images in Imagenet.
 
@@ -168,10 +183,19 @@ class TensorflowResizeCropImagenetTransform(BaseTransform):
         tuple of processed image and label
     """
 
-    def __init__(self, height, width, random_crop=False, resize_side=256, \
-                 resize_method='bilinear', random_flip_left_right=False, \
-                 mean_value=[0.0,0.0,0.0], scale=1.0, \
-                 data_format='channels_last', subpixels='RGB'):
+    def __init__(
+        self,
+        height,
+        width,
+        random_crop=False,
+        resize_side=256,
+        resize_method="bilinear",
+        random_flip_left_right=False,
+        mean_value=[0.0, 0.0, 0.0],
+        scale=1.0,
+        data_format="channels_last",
+        subpixels="RGB",
+    ):
         """Initialize `TensorflowResizeCropImagenetTransform` class."""
         self.height = height
         self.width = width
@@ -189,37 +213,44 @@ class TensorflowResizeCropImagenetTransform(BaseTransform):
         """Convert `TensorflowResizeCropImagenetTransform` feature."""
         image, label = sample
         shape = tf.shape(input=image)
-        
-        height = tf.cast(shape[0], dtype=tf.float32) \
-            if self.data_format=="channels_last" else tf.cast(shape[1], dtype=tf.float32)
-        width = tf.cast(shape[1], dtype=tf.float32) \
-            if self.data_format=="channels_last" else tf.cast(shape[2], dtype=tf.float32)
-        scale = tf.cond(pred=tf.greater(height, width), \
-                        true_fn=lambda: self.resize_side / width,
-                        false_fn=lambda: self.resize_side / height,)
+
+        height = (
+            tf.cast(shape[0], dtype=tf.float32)
+            if self.data_format == "channels_last"
+            else tf.cast(shape[1], dtype=tf.float32)
+        )
+        width = (
+            tf.cast(shape[1], dtype=tf.float32)
+            if self.data_format == "channels_last"
+            else tf.cast(shape[2], dtype=tf.float32)
+        )
+        scale = tf.cond(
+            pred=tf.greater(height, width),
+            true_fn=lambda: self.resize_side / width,
+            false_fn=lambda: self.resize_side / height,
+        )
 
         scale = tf.cast(scale, dtype=tf.float32)
-        new_height = tf.cast(tf.math.rint(height*scale), dtype=tf.int32)
-        new_width = tf.cast(tf.math.rint(width*scale), dtype=tf.int32)
+        new_height = tf.cast(tf.math.rint(height * scale), dtype=tf.int32)
+        new_width = tf.cast(tf.math.rint(width * scale), dtype=tf.int32)
 
-        if self.subpixels=='BGR' and self.data_format=='channels_first':
+        if self.subpixels == "BGR" and self.data_format == "channels_first":
             # 'RGB'->'BGR'
-            image = tf.cond(tf.equal(tf.rank(image), 3),
-                            lambda: tf.experimental.numpy.moveaxis(image[::-1, ...], 0, -1),
-                            lambda: tf.experimental.numpy.moveaxis(image[:, ::-1, ...], 1, -1))
-        elif self.subpixels=='BGR':
+            image = tf.cond(
+                tf.equal(tf.rank(image), 3),
+                lambda: tf.experimental.numpy.moveaxis(image[::-1, ...], 0, -1),
+                lambda: tf.experimental.numpy.moveaxis(image[:, ::-1, ...], 1, -1),
+            )
+        elif self.subpixels == "BGR":
             # 'RGB'->'BGR'
             image = image[..., ::-1]
         image = tf.expand_dims(image, 0)
-        image = tf.image.resize(image, [new_height, new_width],
-                                method=self.resize_method)
-        image = tf.squeeze(image)       
+        image = tf.image.resize(image, [new_height, new_width], method=self.resize_method)
+        image = tf.squeeze(image)
         shape = tf.shape(input=image)
         if self.random_crop:
-            y0 = tf.random.uniform(shape=[], minval=0, maxval=(shape[0] - self.height +1), 
-                    dtype=tf.dtypes.int32)
-            x0 = tf.random.uniform(shape=[], minval=0, maxval=(shape[1] - self.width +1), 
-                    dtype=tf.dtypes.int32)
+            y0 = tf.random.uniform(shape=[], minval=0, maxval=(shape[0] - self.height + 1), dtype=tf.dtypes.int32)
+            x0 = tf.random.uniform(shape=[], minval=0, maxval=(shape[1] - self.width + 1), dtype=tf.dtypes.int32)
         else:
             y0 = (shape[0] - self.height) // 2
             x0 = (shape[1] - self.width) // 2
@@ -232,14 +263,14 @@ class TensorflowResizeCropImagenetTransform(BaseTransform):
         image = (image - means) * self.scale
         return (image, label)
 
-@transform_registry(transform_type="BilinearImagenet", \
-                    process="preprocess", framework="tensorflow")
+
+@transform_registry(transform_type="BilinearImagenet", process="preprocess", framework="tensorflow")
 class BilinearImagenetTransform(BaseTransform):
     """Combination of a series of transforms which is applicable to images in Imagenet.
 
     Args:
         height: Height of the result
-        width:Width of the result  
+        width:Width of the result
         central_fraction(float, default=0.875):fraction of size to crop
         mean_value(list, default=[0.0,0.0,0.0]):means for each channel
         scale(float, default=1.0):std value
@@ -248,8 +279,7 @@ class BilinearImagenetTransform(BaseTransform):
         tuple of processed image and label
     """
 
-    def __init__(self, height, width, central_fraction=0.875,
-                 mean_value=[0.0,0.0,0.0], scale=1.0):
+    def __init__(self, height, width, central_fraction=0.875, mean_value=[0.0, 0.0, 0.0], scale=1.0):
         """Initialize `BilinearImagenetTransform` class."""
         self.height = height
         self.width = width
@@ -270,8 +300,7 @@ class BilinearImagenetTransform(BaseTransform):
         if self.height and self.width:
             # Resize the image to the specified height and width.
             image = tf.expand_dims(image, 0)
-            image = tf.image.resize(image, [self.height, self.width], \
-                                    method=tf.image.ResizeMethod.BILINEAR)
+            image = tf.image.resize(image, [self.height, self.width], method=tf.image.ResizeMethod.BILINEAR)
             image = tf.squeeze(image, [0])
 
         image = tf.subtract(image, 0.5)
@@ -280,14 +309,16 @@ class BilinearImagenetTransform(BaseTransform):
         image = (image - means) * self.scale
         return (image, label)
 
-@transform_registry(transform_type="BilinearImagenet", process="preprocess", \
-                    framework="onnxrt_qlinearops, onnxrt_integerops")
+
+@transform_registry(
+    transform_type="BilinearImagenet", process="preprocess", framework="onnxrt_qlinearops, onnxrt_integerops"
+)
 class OnnxBilinearImagenetTransform(BaseTransform):
     """Combination of a series of transforms which is applicable to images in Imagenet.
 
     Args:
         height: Height of the result
-        width:Width of the result  
+        width:Width of the result
         central_fraction(float, default=0.875):fraction of size to crop
         mean_value(list, default=[0.0,0.0,0.0]):means for each channel
         scale(float, default=1.0):std value
@@ -296,8 +327,7 @@ class OnnxBilinearImagenetTransform(BaseTransform):
         tuple of processed image and label
     """
 
-    def __init__(self, height, width, central_fraction=0.875,
-                 mean_value=[0.0,0.0,0.0], scale=1.0):
+    def __init__(self, height, width, central_fraction=0.875, mean_value=[0.0, 0.0, 0.0], scale=1.0):
         """Initialize `OnnxBilinearImagenetTransform` class."""
         self.height = height
         self.width = width
@@ -309,7 +339,7 @@ class OnnxBilinearImagenetTransform(BaseTransform):
         """Convert `OnnxBilinearImagenetTransform` feature."""
         image, label = sample
         if isinstance(image, np.ndarray):
-            image = image.astype('float32') / 255. 
+            image = image.astype("float32") / 255.0
         img_shape = image.shape
         depth = img_shape[2]
         img_hd = float(img_shape[0])
@@ -320,11 +350,11 @@ class OnnxBilinearImagenetTransform(BaseTransform):
         bbox_h_size = img_shape[0] - bbox_h_start * 2
         bbox_w_size = img_shape[1] - bbox_w_start * 2
 
-        image = image[bbox_h_start:bbox_h_start+bbox_h_size, bbox_w_start:bbox_w_start+bbox_w_size]
+        image = image[bbox_h_start : bbox_h_start + bbox_h_size, bbox_w_start : bbox_w_start + bbox_w_size]
 
         if self.height and self.width:
             image = cv2.resize(image, (self.width, self.height), interpolation=cv2.INTER_LINEAR)
-        
+
         image = np.subtract(image, 0.5)
         image = np.multiply(image, 2.0)
         means = np.broadcast_to(self.mean_value, image.shape)
@@ -332,14 +362,16 @@ class OnnxBilinearImagenetTransform(BaseTransform):
         image = image.astype(np.float32)
         return (image, label)
 
-@transform_registry(transform_type="ResizeCropImagenet", process="preprocess", \
-                    framework="onnxrt_qlinearops, onnxrt_integerops")
+
+@transform_registry(
+    transform_type="ResizeCropImagenet", process="preprocess", framework="onnxrt_qlinearops, onnxrt_integerops"
+)
 class ONNXResizeCropImagenetTransform(BaseTransform):
     """Combination of a series of transforms which is applicable to images in Imagenet.
 
     Args:
         height: Height of the result
-        width:Width of the result  
+        width:Width of the result
         central_fraction(float, default=0.875):fraction of size to crop
         mean_value(list, default=[0.0,0.0,0.0]):means for each channel
         scale(float, default=1.0):std value
@@ -348,9 +380,18 @@ class ONNXResizeCropImagenetTransform(BaseTransform):
         tuple of processed image and label
     """
 
-    def __init__(self, height, width, random_crop=False, resize_side=256, \
-                 mean_value=[0.0,0.0,0.0], std_value=[0.229, 0.224, 0.225], \
-                 resize_method='bilinear', data_format='channels_last', subpixels='RGB'):
+    def __init__(
+        self,
+        height,
+        width,
+        random_crop=False,
+        resize_side=256,
+        mean_value=[0.0, 0.0, 0.0],
+        std_value=[0.229, 0.224, 0.225],
+        resize_method="bilinear",
+        data_format="channels_last",
+        subpixels="RGB",
+    ):
         """Initialize `ONNXResizeCropImagenetTransform` class."""
         self.height = height
         self.width = width
@@ -369,14 +410,14 @@ class ONNXResizeCropImagenetTransform(BaseTransform):
         image, label = sample
         height, width = image.shape[0], image.shape[1]
         scale = self.resize_side / width if height > width else self.resize_side / height
-        new_height = int(height*scale)
-        new_width = int(width*scale)
+        new_height = int(height * scale)
+        new_width = int(width * scale)
         image = cv2.resize(image, (new_height, new_width))
-        image = image / 255.
+        image = image / 255.0
         shape = image.shape
         if self.random_crop:
-            y0 = np.random.randint(low=0, high=(shape[0] - self.height +1))
-            x0 = np.random.randint(low=0, high=(shape[1] - self.width +1))
+            y0 = np.random.randint(low=0, high=(shape[0] - self.height + 1))
+            x0 = np.random.randint(low=0, high=(shape[1] - self.width + 1))
         else:
             y0 = (shape[0] - self.height) // 2
             x0 = (shape[1] - self.width) // 2
@@ -384,12 +425,14 @@ class ONNXResizeCropImagenetTransform(BaseTransform):
             image = np.array([image])
             image = np.repeat(image, 3, axis=0)
             image = image.transpose(1, 2, 0)
-        image = image[y0:y0+self.height, x0:x0+self.width, :]
-        image = ((image - self.mean_value)/self.std_value).astype(np.float32)
+        image = image[y0 : y0 + self.height, x0 : x0 + self.width, :]
+        image = ((image - self.mean_value) / self.std_value).astype(np.float32)
         return (image.transpose(2, 0, 1), label)
 
-@transform_registry(transform_type="ResizeWithAspectRatio", process="preprocess", \
-                    framework="onnxrt_qlinearops, onnxrt_integerops")
+
+@transform_registry(
+    transform_type="ResizeWithAspectRatio", process="preprocess", framework="onnxrt_qlinearops, onnxrt_integerops"
+)
 class ResizeWithAspectRatio(BaseTransform):
     """Resize the image with aspect ratio.
 
@@ -409,8 +452,8 @@ class ResizeWithAspectRatio(BaseTransform):
         (img, label) = sample
         assert len(img.shape) == 3
         height, width, _ = img.shape
-        new_height = int(100. * self.height / self.scale) 
-        new_width = int(100. * self.width / self.scale)
+        new_height = int(100.0 * self.height / self.scale)
+        new_width = int(100.0 * self.width / self.scale)
         if height > width:
             w = new_width
             h = int(new_height * height / width)

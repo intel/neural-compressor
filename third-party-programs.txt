@@ -58,9 +58,6 @@ terms are listed below.
 
    pytorch-mobilenet-v3
 
-   rxjs
-   Copyright (c) 2015-2018 Google, Inc., Netflix, Inc., Microsoft Corp. and contributors
-
    tensor2tensor
 
    tensorflow-yolo-v3
@@ -70,19 +67,19 @@ terms are listed below.
    nnUnet
    Copyright [2019] [Division of Medical Image Computing, German Cancer Research Center (DKFZ), Heidelberg, Germany]
 
-   Ultra-Light-Fast-Generic-Face-Detector-1MB
-   Copyright (c) 2019 linzai
+   Diffusers
 
-   plotly
+   web-vitals
+   Copyright 2020 Google LLC
 
-   diffusers
+   web-worker
+
 
                                 Apache License
                             Version 2.0, January 2004
                         http://www.apache.org/licenses/
 
    TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
-
 
    1. Definitions.
 
@@ -323,89 +320,91 @@ terms are listed below.
     dlrm
     Copyright (c) Facebook, Inc. and its affiliates.
 
-    example-TensorFlow-DCGAN
-    Copyright (c) 2016 Taehoon Kim
-
-    MMdnn
-    Copyright (c) Microsoft Corporation. All rights reserved.
-
-    @angular/animations
-    Copyright (c) 2010-2020 Google LLC.
-
-    @angular/cdk
-    Copyright (c) 2010-2020 Google LLC.
-
-    @angular/common
-    Copyright (c) 2010-2020 Google LLC.
-
-    @angular/compiler
-    Copyright (c) 2010-2020 Google LLC.
-
-    @angular/core
-    Copyright (c) 2010-2020 Google LLC.
-
-    @angular/flex-layout
-    Copyright (c) 2010-2020 Google LLC.
-
-    @angular/forms
-    Copyright (c) 2010-2020 Google LLC.
-
-    @angular/material
-    Copyright (c) 2010-2020 Google LLC.
-
-    @angular/platform-browser
-    Copyright (c) 2010-2020 Google LLC.
-
-    @angular/platform-browser-dynamic
-    Copyright (c) 2010-2020 Google LLC.
-
-    @angular/router
-    Copyright (c) 2010-2020 Google LLC.
-
-    socket.io-client
-    Copyright (c) 2014 Guillermo Rauch
-
-    ts-md5
-    Copyright (C) 2014 Raymond Hill
-
-    zone.js
-    Copyright (c) 2010-2020 Google LLC.
-
-    js-sha256
-    Copyright (c) 2014-2017 Chen, Yi-Cyuan
-
-    @swimlane/ngx-graph
-    Copyright (c) 2016 Swimlane <info@swimlane.com>
-
-    ngx-pipes
-    Copyright (c) Dan Revah
-
-    ngx-charts
-
-    ngx-joyride
-    Copyright (c) 2018 Tommasi Nicola.
+    example-pytorch-plain_cnn-cifar100
+    Copyright (c) 2019 Iman Mirzadeh
 
     example-pytorch-WideResNet-cifar10
     Copyright (c) 2019 xternalz
 
-    example-pytorch-plain_cnn-cifar100
-    Copyright (c) 2019 Iman Mirzadeh
+    example-TensorFlow-DCGAN
+    Copyright (c) 2016 Taehoon Kim
+
+    FileSaver.js
+    Copyright © 2016 Eli Grey.
 
     haq/model/mobilenetv2
     Copyright (c) 2019 MIT HAN Lab
 
+    microsoft/table-transformer
+    Copyright (c) Microsoft Corporation.
+
+    MMdnn
+    Copyright (c) Microsoft Corporation. All rights reserved.
+
     mnist
     Copyright (c) Microsoft Corporation. All rights reserved.
 
-	onnxconverter-common
-	Copyright (c) Microsoft Corporation. All rights reserved.
+    onnxconverter-common
+    Copyright (c) Microsoft Corporation. All rights reserved.
 
-	FileSaver.js
-	Copyright © 2016 Eli Grey.
+    socket.io-client
+    Copyright (c) 2014 Guillermo Rauch
 
-    Hardware Aware Transformers
-    Copyright (c) 2020, Hanrui Wang, Zhanghao Wu, Zhijian Liu, Han Cai, Ligeng Zhu, Chuang Gan and Song Han. All rights reserved.
-    Copyright (c) Facebook, Inc. and its affiliates.
+    Ultra-Light-Fast-Generic-Face-Detector-1MB
+    Copyright (c) 2019 linzai
+
+    @testing-library/jest-dom
+    Copyright (c) 2017 Kent C. Dodds
+
+    @testing-library/react
+    Copyright (c) 2017-Present Kent C. Dodds
+
+    @testing-library/user-event
+    Copyright (c) 2020 Giorgio Polvara
+
+    axios
+    Copyright (c) 2014-present Matt Zabriskie & Collaborators
+
+    bootstrap
+    Copyright (c) 2011-2018 Twitter, Inc.
+    Copyright (c) 2011-2018 The Bootstrap Authors
+
+    cytoscape-elk
+    Copyright (c) 2016-2018, 2020, The Cytoscape Consortium.
+
+    moment
+    Copyright (c) JS Foundation and other contributors
+
+    node-sass
+    Copyright (c) 2013-2016 Andrew Nesbitt
+
+    react
+    Copyright (c) Meta Platforms, Inc. and affiliates.
+
+    react-bootstrap
+    Copyright (c) 2014-present Stephen J. Collings, Matthew Honnibal, Pieter Vanderwerff
+
+    react-cytoscapejs
+    Copyright (c) 2018 Plotly Technologies Inc.
+
+    react-dom
+    Copyright (c) 2017 Tylor Steinberger
+
+    plotly.js
+    Copyright (c) 2021 Plotly, Inc
+
+    react-plotly.js
+    Copyright (c) 2017 Plotly, Inc.
+
+    react-scripts
+    Copyright (c) 2013-present, Facebook, Inc.
+
+    socket.io
+    Copyright (c) 2014-2018 Automattic <dev@cloudup.com>
+
+    sass
+    Copyright (c) 2016, Google Inc.
+
 
     The MIT License (MIT)
 
@@ -1449,76 +1448,7 @@ terms are listed below.
 
 
 ------------------------------------------------------------------
-6.  tslib
-    Copyright (c) Microsoft Corporation.
-
-	BSD Zero Clause License
-
-	Permission to use, copy, modify, and/or distribute this software for any
-	purpose with or without fee is hereby granted.
-
-	THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-	REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-	INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-	LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-	OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-	PERFORMANCE OF THIS SOFTWARE.
-
-
-------------------------------------------------------------------
-7. sha.js
-   Copyright (c) 2013-2018 sha.js contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-
-Copyright (c) 1998 - 2009, Paul Johnston & Contributors
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-Redistributions of source code must retain the above copyright notice, this
-list of conditions and the following disclaimer.
-
-Redistributions in binary form must reproduce the above copyright notice, this
-list of conditions and the following disclaimer in the documentation and/or
-other materials provided with the distribution.
-
-Neither the name of the author nor the names of its contributors may be used to
-endorse or promote products derived from this software without specific prior
-written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-------------------------------------------------------------------
-8. FastFormers
+6. FastFormers
    Copyright (c) Microsoft Corporation.
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -1766,7 +1696,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    limitations under the License.
 
    ======================================================================================
-   BSD Lisence
+   BSD License
 
    --------------------------------------------------------------------------------------
    1. FBGEMM from Facebook
@@ -1880,7 +1810,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    POSSIBILITY OF SUCH DAMAGE.
 
 -------------------------------------------------------------
-9. protobuf
+7. protobuf-compiler
    Copyright 2008 Google Inc.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1913,11 +1843,67 @@ Code generated by the Protocol Buffer compiler is owned by the owner
 of the input file used when generating it.  This code is not
 standalone and requires a support library to be linked with it.  This
 support library is itself covered by the above license.
+
+-------------------------------------------------------------
+8. Hardware-Aware Transformer software
+   Copyright (c) 2020, Hanrui Wang, Zhanghao Wu, Zhijian Liu, Han Cai,
+   Ligeng Zhu, Chuang Gan and Song Han
+   All rights reserved.
+
+   css-select
+   Copyright (c) Felix Böhm
+   All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+------------------------- LICENSE FOR Fairseq ------------------------------
+MIT License
+
+Copyright (c) Facebook, Inc. and its affiliates.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 ------------------------------------------------------------------
 
 The following third party programs have their own third party program files. These additional
 third party program files are as follows:
 
-1. Intel® AI Quantization Tools for Tensorflow*: python3.7/site-packages/neural_compressor-1.11.dist-info
+1. Intel® AI Quantization Tools for Tensorflow*: https://github.com/IntelAI/tools/blob/master/api/third-party-programs.txt
 -------------------------------------------------------------
 Other names and brands may be claimed as the property of others

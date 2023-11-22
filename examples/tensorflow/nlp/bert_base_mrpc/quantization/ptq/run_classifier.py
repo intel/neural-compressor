@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The Google AI Language Team Authors.
+# Copyright 2023 The Google AI Language Team Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1108,8 +1108,9 @@ def main(_):
             latency = np.array(latency_list[warmup:]).mean() / FLAGS.eval_batch_size
             return latency
 
-        from neural_compressor.data import DefaultDataLoader
-        dataloader = DefaultDataLoader(dataset, collate_fn=collate_fn, batch_size=FLAGS.eval_batch_size)
+        from neural_compressor.data import DataLoader
+        dataloader = DataLoader(framework='tensorflow', dataset=dataset, 
+                          batch_size=FLAGS.eval_batch_size, collate_fn=collate_fn)
         latency = eval_func(dataloader)
         if FLAGS.benchmark and FLAGS.mode == 'performance':
             print("Batch size = {}".format(FLAGS.eval_batch_size))
@@ -1152,8 +1153,8 @@ def main(_):
             inputs=["input_file", "batch_size"],
             outputs=["loss/Softmax:0", "IteratorGetNext:3"],
             calibration_sampling_size=[500],)
-        calib_dataloader=DataLoader(dataset=dataset, collate_fn=collate_fn, framework='tensorflow')
-        eval_dataloader=DataLoader(dataset=dataset, collate_fn=collate_fn, framework='tensorflow')
+        calib_dataloader=DataLoader(framework='tensorflow', dataset=dataset, collate_fn=collate_fn)
+        eval_dataloader=DataLoader(framework='tensorflow', dataset=dataset, collate_fn=collate_fn)
         q_model = quantization.fit(model=model, conf=config, calib_dataloader=calib_dataloader,
                         eval_dataloader=eval_dataloader, eval_metric=Accuracy())
 

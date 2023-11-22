@@ -1,15 +1,17 @@
 import os
 import shutil
-import unittest
+import signal
 import subprocess
+import unittest
 
-import torch
-import torchvision
-import torch.nn as nn
 import horovod.torch as hvd
+import torch
+import torch.nn as nn
+import torchvision
 
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+
 
 def build_fake_py():
     fake_py = """
@@ -42,8 +44,9 @@ class TestPruning(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
     """
-    with open('fake.py', 'w', encoding="utf-8") as f:
+    with open("fake.py", "w", encoding="utf-8") as f:
         f.write(fake_py)
+
 
 def build_fake_yaml():
     fake_yaml = """
@@ -102,12 +105,13 @@ def build_fake_yaml():
               shape: [128, 3, 224, 224]
               label: True
     """
-    with open('fake.yaml', 'w', encoding="utf-8") as f:
+    with open("fake.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
 
 class TestDistributed(unittest.TestCase):
     model = torchvision.models.resnet18()
+
     @classmethod
     def setUpClass(cls):
         build_fake_yaml()
@@ -115,34 +119,37 @@ class TestDistributed(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove('fake.yaml')
-        os.remove('fake.py')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
-
+        os.remove("fake.yaml")
+        os.remove("fake.py")
+        shutil.rmtree("./saved", ignore_errors=True)
+        shutil.rmtree("runs", ignore_errors=True)
 
     def test_distributed(self):
-        distributed_cmd = 'horovodrun -np 2 python fake.py'
-        p = subprocess.Popen(distributed_cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, shell=True) # nosec
+        distributed_cmd = "horovodrun -np 2 python fake.py"
+        p = subprocess.Popen(
+            distributed_cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+        )  # nosec
         try:
             out, error = p.communicate()
             import re
-            matches = re.findall(r'.*rank ([01]) in size 2.*', out.decode('utf-8'))
-            assert '0' in matches
-            assert '1' in matches
+
+            matches = re.findall(r".*rank ([01]) in size 2.*", out.decode("utf-8"))
+            assert "0" in matches
+            assert "1" in matches
         except KeyboardInterrupt:
             os.killpg(os.getpgid(p.pid), signal.SIGKILL)
             assert 0
 
     def test_single_node(self):
         from neural_compressor.experimental import Pruning, common
-        prune = Pruning('fake.yaml')
+
+        prune = Pruning("fake.yaml")
 
         prune.model = self.model
         _ = prune()
         # assert hvd hook is registered. pruner has 2 on_train_begin hooks: hvd and prune
-        assert len(prune.hooks_dict['on_train_begin'])==2
+        assert len(prune.hooks_dict["on_train_begin"]) == 2
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,17 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Config for both frontend and backend."""
 
 INTERVAL_TIME_BETWEEN_DISPATCH_TASK = 3
 
+
 class Config:
+    """Config for services."""
+
     workspace: str = "./ns_workspace"
     task_monitor_port: int = 2222
     result_monitor_port: int = 3333
     service_address: str = "localhost"
     grpc_api_port: int = 4444
-    #TODO add set and get methods for each attribute
+    # TODO add set and get methods for each attribute
+
 
 config = Config()

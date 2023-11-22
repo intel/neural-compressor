@@ -74,7 +74,7 @@ class TextDataset(Dataset):
 
             for i in range(0, len(tokenized_text)-block_size+1, block_size): # Truncate in block of block_size
                 self.examples.append(tokenizer.build_inputs_with_special_tokens(tokenized_text[i:i+block_size]))
-            # Note that we are loosing the last truncated example here for the sake of simplicity (no padding)
+            # Note that we are losing the last truncated example here for the sake of simplicity (no padding)
             # If your dataset is small, first you should loook for a bigger one :-) and second you
             # can change this behavior by adding (model specific) padding.
 
@@ -184,7 +184,7 @@ def main():
     parser.add_argument("--model_name_or_path", type=str,
                         help="The model checkpoint for weights initialization.")
     parser.add_argument("--cache_dir", default="", type=str,
-                        help="Optional directory to store the pre-trained models downloaded from s3 (instread of the default one)")
+                        help="Optional directory to store the pre-trained models downloaded from s3 (instead of the default one)")
     parser.add_argument("--block_size", default=1024, type=int,
                         help="Optional input sequence length after tokenization."
                              "The training dataset will be truncated in block of this size for training."
@@ -239,30 +239,37 @@ def main():
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+            from neural_compressor.data import DataLoader
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=4,
                                    num_of_instance=1)
-            b_dataloader = DefaultDataLoader(ds, args.eval_batch_size)
+            b_dataloader = DataLoader(framework='onnxruntime', dataset=ds, batch_size=args.eval_batch_size)
             fit(model, conf, b_dataloader=b_dataloader)
         else:
             evaluate(args, model, tokenizer)
         
     if args.tune:
-        if ort.__version__ <= '1.13.1':
-            from onnxruntime.transformers import optimizer
-            from onnxruntime.transformers.fusion_options import FusionOptions
-            opt_options = FusionOptions('gpt2')
-            opt_options.enable_embed_layer_norm = False
+        # optimize model
+        from onnxruntime.transformers import optimizer
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        opt_options = FusionOptions('gpt2')
+        opt_options.enable_embed_layer_norm = False
 
-            model_optimizer = optimizer.optimize_model(
-                args.model_path,
-                'gpt2',
-                num_heads=12,
-                hidden_size=768,
-                optimization_options=opt_options)
-            model = model_optimizer.model
-        else:
+        model_optimizer = optimizer.optimize_model(
+            args.model_path,
+            'gpt2',
+            num_heads=12,
+            hidden_size=768,
+            optimization_options=opt_options)
+        model = model_optimizer.model
+
+        # check the optimized model is valid
+        try:
+            ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+        except Exception as e:
+            logger.warning("Optimized model is invalid: {}. ".format(e))
+            logger.warning("Model optimizer will be skipped. " \
+                        "Try to upgrade onnxruntime to avoid this error")
             model = onnx.load(args.model_path)
 
         from neural_compressor import quantization

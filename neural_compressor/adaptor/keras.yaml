@@ -16,33 +16,33 @@
 -
   version:
     name: 'default'
-  
+
   precisions: &common_precisions
     names: int8, fp32
     valid_mixed_precisions: []
-  
+
   ops: &common_ops
     int8: ['Conv2D', 'SeparableConv2D', 'DepthwiseConv2D', 'Dense', 'AveragePooling2D', 'MaxPooling2D',
            'AvgPool2D', 'MaxPool2D']
-    bf16: ['Dense', 'Conv1D', 'Conv2D', 'Conv3D', 'SeparableConv1D', 'SeparableConv2D', 'SeparableConv3D',
-           'DepthwiseConv2D', 'Conv1DTranspose', 'Conv2DTranspose', 'Conv3DTranspose', 'AveragePooling2D', 
-           'MaxPooling2D', 'AvgPool2D', 'MaxPool2D', 'MaxPooling1D', 'MaxPooling3D', 'AveragePooling1D', 
-           'AveragePooling3D', 'GlobalMaxPooling1D', 'GlobalMaxPooling2D', 'GlobalMaxPooling3D', 'SimpleRNN', 
-           'GlobalAveragePooling1D', 'GlobalAveragePooling2D', 'GlobalAveragePooling3D', 'LSTM', 'GRU', 
-           'TimeDistributed', 'Bidirectional', 'ConvLSTM1D', 'ConvLSTM2D', 'ConvLSTM3D', 'TextVectorization', 
-           'Normalization', 'Discretization', 'CategoryEncoding', 'Hashing', 'StringLookup', 'IntegerLookup', 
-           'Resizing', 'Rescaling', 'CenterCrop', 'RandomCrop', 'RandomFlip', 'RandomTranslation', 'Activation',
-           'RandomRotation', 'RandomZoom', 'RandomHeight', 'RandomWidth', 'RandomContrast', 'RandomBrightness', 
-           'BatchNormalization', 'LayerNormalization', 'UnitNormalization', 'GroupNormalization', 'Dropout', 
-           'SpatialDropout1D', 'SpatialDropout2D', 'SpatialDropout3D', 'GaussianDropout', 'GaussianNoise', 
-           'ActivityRegularization', 'AlphaDropout', 'MultiHeadAttention', 'Attention', 'AdditiveAttention', 
-           'Reshape', 'Flatten', 'RepeatVector', 'Permute', 'Cropping1D', 'Cropping2D', 'Cropping3D', 'UpSampling1D', 
-           'UpSampling2D', 'UpSampling3D', 'ZeroPadding1D', 'ZeroPadding2D', 'ZeroPadding3D', 'Concatenate', 'Average',
-           'Maximum', 'Minimum', 'Add', 'Subtract', 'Multiply', 'Dot', 'LocallyConnected1D', 'LocallyConnected2D',
-           'Embedding', 'Masking', 'Lambda', 'ReLU', 'Softmax', 'LeakyReLU', 'PReLU', 'ELU', 'ThresholdedReLU'
+    bf16: ['Dense', 'Conv1D', 'Conv2D', 'Conv3D', 'SeparableConv1D', 'SeparableConv2D', 'Conv1DTranspose',
+           'Conv2DTranspose', 'Conv3DTranspose', 'DepthwiseConv2D', 'AveragePooling2D', 'MaxPooling2D',
+           'AvgPool2D', 'MaxPool2D', 'MaxPooling1D', 'MaxPooling3D', 'AveragePooling1D', 'AveragePooling3D',
+           'GlobalMaxPooling1D', 'GlobalMaxPooling2D', 'GlobalMaxPooling3D', 'GlobalAveragePooling1D',
+           'GlobalAveragePooling2D', 'GlobalAveragePooling3D','SimpleRNN', 'TimeDistributed', 'ConvLSTM1D',
+           'ConvLSTM2D', 'ConvLSTM3D', 'TextVectorization', 'Discretization', 'CategoryEncoding', 'Hashing',
+           'StringLookup', 'IntegerLookup', 'Resizing', 'Rescaling', 'CenterCrop', 'RandomCrop', 'RandomFlip',
+           'RandomTranslation', 'Activation', 'RandomRotation', 'RandomZoom', 'RandomHeight', 'RandomWidth',
+           'RandomContrast', 'RandomBrightness', 'Normalization', 'BatchNormalization', 'LayerNormalization',
+           'UnitNormalization', 'GroupNormalization', 'Dropout', 'SpatialDropout1D', 'SpatialDropout2D',
+           'SpatialDropout3D', 'GaussianDropout', 'GaussianNoise', 'ActivityRegularization', 'AlphaDropout',
+           'MultiHeadAttention', 'Attention', 'AdditiveAttention', 'Reshape', 'Flatten', 'RepeatVector',
+           'Permute', 'Cropping1D', 'Cropping2D', 'Cropping3D', 'UpSampling1D', 'UpSampling2D', 'UpSampling3D',
+           'ZeroPadding1D', 'ZeroPadding2D', 'ZeroPadding3D', 'Concatenate', 'Average', 'Maximum', 'Minimum',
+           'Add', 'Subtract', 'Multiply', 'Dot', 'LocallyConnected1D', 'LocallyConnected2D', 'Embedding',
+           'Masking', 'Lambda', 'ReLU', 'Softmax', 'LeakyReLU', 'PReLU', 'ELU', 'ThresholdedReLU'
           ]
     fp32: ['*'] # '*' means all op types
-  
+
   capabilities: &common_capabilities
     int8: {
           'Conv2D':  {

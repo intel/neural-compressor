@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Configuration module for Neural Insights server."""
 
 import argparse
@@ -23,9 +22,9 @@ import socket
 import sys
 from typing import Dict
 
-from neural_compressor.utils.utility import singleton
 from numpy.random import randint
 
+from neural_compressor.utils.utility import singleton
 from neural_insights.utils.consts import WORKDIR_LOCATION
 from neural_insights.utils.exceptions import NotFoundException
 from neural_insights.utils.logger import log
@@ -126,7 +125,7 @@ class Configuration:
             "--workdir-location",
             type=str,
             default=WORKDIR_LOCATION,
-            help="Path to work directory."
+            help="Path to work directory.",
         )
         parser.add_argument(
             "--verbose",
@@ -138,8 +137,7 @@ class Configuration:
         return vars(parser.parse_args())
 
     def determine_server_port(self, args: Dict) -> int:
-        """
-        Return port to be used by the server.
+        """Return port to be used by the server.
 
         Will raise a NotFoundException if port is already in use.
 
@@ -172,8 +170,7 @@ class Configuration:
         )
 
     def determine_gui_port(self, args: Dict) -> int:
-        """
-        Return port to be used by the GUI client.
+        """Return port to be used by the GUI client.
 
         Will return self.server_port unless specified in configuration.
         """

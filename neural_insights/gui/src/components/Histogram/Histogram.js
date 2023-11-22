@@ -30,14 +30,14 @@ function Histogram({ selectedWorkload, selectedOp, histogramType, setWarningText
             setHistogramData(response.data);
           })
         .catch(error => {
-          setWarningText(error.message);
+          setWarningText(error?.response?.data);
         });
     }
   }, [histogramType, selectedOp]);
 
   return (
     <div className="Histogram">
-      <h3>Histogram</h3>
+      <h3>{histogramType.charAt(0).toUpperCase() + histogramType.slice(1)} histogram</h3>
       {!histogramData && <Spinner className="spinner" animation="border" />}
 
       {histogramData?.length === 0 && <p>No histogram data for this OP.</p>}
@@ -84,7 +84,8 @@ const getHistogramData = (histogramData) => {
             width: 1,
             color: series.data.length === 1 ? colorPalette[index] : '#fff',
           },
-          points: false
+          points: false,
+          spanmode: 'hard'
         }
       );
     });
@@ -93,7 +94,7 @@ const getHistogramData = (histogramData) => {
 }
 
 const layout = {
-  height: 356,
+  height: 450,
   responsive: true,
   yaxis: {
     autorange: 'reversed',
@@ -104,13 +105,13 @@ const layout = {
   },
   violinmode: 'overlay',
   opacity: 1,
-  // margin: {
-  //   l: 150,
-  //   r: 50,
-  //   b: 100,
-  //   t: 50,
-  //   pad: 40
-  // }
+  margin: {
+    l: 150,
+    r: 50,
+    b: 20,
+    t: 30,
+    pad: 0
+  }
 };
 
 const generateColor = (num) => {

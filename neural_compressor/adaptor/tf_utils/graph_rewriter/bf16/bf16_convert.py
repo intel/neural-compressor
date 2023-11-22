@@ -17,37 +17,33 @@
 #
 """Graph rewriter BF16 Converter Class."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
-import logging
 import copy
+import logging
+
+import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2
-from tensorflow.python.framework import dtypes
-from tensorflow.python.framework import tensor_util
-from tensorflow.python.framework import op_def_registry
+from tensorflow.python.framework import dtypes, op_def_registry, tensor_util
 from tensorflow.python.framework.kernels import get_registered_kernels_for_op
 
-from ..graph_base import GraphRewriterBase
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
-from ..generic.graph_cse_optimizer import GraphCseOptimizer
-from ..generic.dequantize_cast_optimizer import DequantizeCastOptimizer
-import tensorflow as tf
 from neural_compressor.adaptor.tf_utils.util import TF_SPR_BASE_VERSIONS
 
-DT_FLOAT32  = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
+from ..generic.dequantize_cast_optimizer import DequantizeCastOptimizer
+from ..generic.graph_cse_optimizer import GraphCseOptimizer
+from ..graph_base import GraphRewriterBase
+
+DT_FLOAT32 = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
 DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
+
 
 class BF16Convert(GraphRewriterBase):
     """BF16 node convert transformation."""
 
-    def __init__(self,
-                 model,
-                 fp32_ops=[],
-                 bf16_ops=[]):
-        """Initilization.
+    def __init__(self, model, fp32_ops=[], bf16_ops=[]):
+        """Initialization.
 
         Args: model: the model to be converted to BF16.
               fp32_ops: keep with fp32 op list
@@ -60,7 +56,7 @@ class BF16Convert(GraphRewriterBase):
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
         self.converted_ops = []
-        self.device = ["CPU", "DEFAULT"]  #TODO support differnt device types, such as GPU
+        self.device = ["CPU", "DEFAULT"]  # TODO support different device types, such as GPU
 
     def _dtype(self, node):
         """Get the dtype of the node."""
@@ -71,14 +67,14 @@ class BF16Convert(GraphRewriterBase):
             inputs_num = node.attr[i.number_attr].i if i.number_attr else 1
             for j in range(inputs_num):
                 if i.type:
-                    inputs_dt.append('')
+                    inputs_dt.append("")
                 else:
                     inputs_dt.append(i.type_attr)
         for i in op_def.output_arg:
             outputs_num = node.attr[i.number_attr].i if i.number_attr else 1
             for j in range(outputs_num):
                 if i.type:
-                    outputs_dt.append('')
+                    outputs_dt.append("")
                 else:
                     outputs_dt.append(i.type_attr)
         return inputs_dt, outputs_dt
@@ -110,7 +106,7 @@ class BF16Convert(GraphRewriterBase):
         allowed_dt_val = {}
         for attr_def in op_def.attr:
             if attr_def.type != "type":
-              continue
+                continue
             if attr_def.HasField("allowed_values"):
                 allowed_dt_val[attr_def.name] = attr_def.allowed_values.list.type
         # The supported data type in op_def may be different with registered kernels.
@@ -131,7 +127,7 @@ class BF16Convert(GraphRewriterBase):
         return allowed_dt_val
 
     def _bf16_convert(self, bf16_node_name):
-        """BF16 convertion for the model.
+        """BF16 conversion for the model.
 
         Args: bf16_node_name: nodes converted to BF16 op list
         """
@@ -141,77 +137,87 @@ class BF16Convert(GraphRewriterBase):
 
         if bf16_node.name in self.converted_ops:
             return
-        elif 'Dequantize' in bf16_node.op:
+        elif "Dequantize" in bf16_node.op:
             return
         else:
             self.converted_ops.append(bf16_node.name)
-        
+
         inputs_dt, outputs_dt = self._dtype(bf16_node)
         inputs_dt_val, outputs_dt_val = self._dtype_val(bf16_node)
         allowed_dt_val = self._allowed_dtype_val(bf16_node)
         for index, input_name in enumerate(bf16_node.input):
-            if input_name.startswith('^'):
+            if input_name.startswith("^"):
                 continue
 
-            input_detail = self.cur_graph.node_name_details[Helper.node_name_from_input(
-                input_name)]
+            input_detail = self.cur_graph.node_name_details[Helper.node_name_from_input(input_name)]
             input_node = input_detail.node
             input_node_outputs = input_detail.outputs
-            if inputs_dt[index] in allowed_dt_val and \
-                                        dtypes.bfloat16.as_datatype_enum not in allowed_dt_val[inputs_dt[index]]:
+            if (
+                inputs_dt[index] in allowed_dt_val
+                and dtypes.bfloat16.as_datatype_enum not in allowed_dt_val[inputs_dt[index]]
+            ):
                 continue
 
             if inputs_dt_val[index] != DT_FLOAT32:
                 continue
-            if input_node.op == 'Cast' and \
-                 input_node.attr["SrcT"] == DT_BFLOAT16 and \
-                 input_node.attr["DstT"] == DT_FLOAT32 and len(input_node_outputs) == 1:
-                    parent_input_name = Helper.node_name_from_input(input_node.input[0])
-                    bf16_node.input[index] = input_node.input[0]
-                    outputs = self.cur_graph.node_name_details[parent_input_name].outputs
-                    outputs = list(map(lambda x: x.replace(input_name, bf16_node.name), outputs))
-                    self.cur_graph.remove_node(input_name)
-            elif input_node.op == 'Cast' and \
-                 input_node.attr["DstT"] == DT_FLOAT32 and len(input_node_outputs) == 1:
+            if (
+                input_node.op == "Cast"
+                and input_node.attr["SrcT"] == DT_BFLOAT16
+                and input_node.attr["DstT"] == DT_FLOAT32
+                and len(input_node_outputs) == 1
+            ):
+                parent_input_name = Helper.node_name_from_input(input_node.input[0])
+                bf16_node.input[index] = input_node.input[0]
+                outputs = self.cur_graph.node_name_details[parent_input_name].outputs
+                outputs = list(map(lambda x: x.replace(input_name, bf16_node.name), outputs))
+                self.cur_graph.remove_node(input_name)
+            elif input_node.op == "Cast" and input_node.attr["DstT"] == DT_FLOAT32 and len(input_node_outputs) == 1:
                 input_node.attr["DstT"].CopyFrom(DT_BFLOAT16)
             elif input_node.op == "Const" and len(input_node_outputs) == 1:
-                fp32_value = tensor_util.MakeNdarray(input_node.attr.get('value').tensor)
+                fp32_value = tensor_util.MakeNdarray(input_node.attr.get("value").tensor)
                 Helper.set_attr_dtype(input_node, "dtype", dtypes.bfloat16)
-                input_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
-                    tensor=tensor_util.make_tensor_proto(
-                        fp32_value, dtypes.bfloat16, fp32_value.shape)))
-            elif 'Dequantize' == input_node.op and len(input_node_outputs) == 1 \
-                                and input_node.attr['mode'].s != b'MIN_FIRST' \
-                                and tf.version.VERSION in TF_SPR_BASE_VERSIONS:
+                input_node.attr["value"].CopyFrom(
+                    attr_value_pb2.AttrValue(
+                        tensor=tensor_util.make_tensor_proto(fp32_value, dtypes.bfloat16, fp32_value.shape)
+                    )
+                )
+            elif (
+                "Dequantize" == input_node.op
+                and len(input_node_outputs) == 1
+                and input_node.attr["mode"].s != b"MIN_FIRST"
+                and tf.version.VERSION in TF_SPR_BASE_VERSIONS
+            ):
                 # Dequantize with mode MIN_FIRST does not support bf16 in both eigen and mkl
                 _, outputs_dt_input_node = self._dtype(input_node)
                 allowed_input_node_dt_val = self._allowed_dtype_val(input_node)
-                if outputs_dt_input_node[0] in allowed_input_node_dt_val and \
-                        dtypes.bfloat16.as_datatype_enum in allowed_input_node_dt_val[outputs_dt_input_node[0]]:
+                if (
+                    outputs_dt_input_node[0] in allowed_input_node_dt_val
+                    and dtypes.bfloat16.as_datatype_enum in allowed_input_node_dt_val[outputs_dt_input_node[0]]
+                ):
                     input_node.attr[outputs_dt_input_node[0]].CopyFrom(DT_BFLOAT16)
             # ResizeBilinear input can be of different types but output is always float
-            elif input_node.name in self.bf16_ops and "Dequantize" not in input_node.op and \
-                 input_node.op != 'ResizeBilinear':
+            elif (
+                input_node.name in self.bf16_ops
+                and "Dequantize" not in input_node.op
+                and input_node.op != "ResizeBilinear"
+            ):
                 self._bf16_convert(input_node.name)
             else:
-                cast_node_name = input_name.replace(':', '_') + "/" + bf16_node_name + "_FP32toBF16"
+                cast_node_name = input_name.replace(":", "_") + "/" + bf16_node_name + "_FP32toBF16"
                 if cast_node_name not in list(self.cur_graph.node_name_details.keys()):
-                    input_cast_node = Helper.create_node(
-                        "Cast", cast_node_name, [input_name])
+                    input_cast_node = Helper.create_node("Cast", cast_node_name, [input_name])
                     Helper.set_attr_dtype(input_cast_node, "DstT", dtypes.bfloat16)
                     Helper.set_attr_dtype(input_cast_node, "SrcT", dtypes.float32)
                     Helper.set_attr_bool(input_cast_node, "Truncate", False)
                 bf16_node.input[index] = cast_node_name
-                outputs = self.cur_graph.node_name_details[ \
-                                  Helper.node_name_from_input(input_name)].outputs
+                outputs = self.cur_graph.node_name_details[Helper.node_name_from_input(input_name)].outputs
                 outputs = list(map(lambda x: x.replace(bf16_node.name, cast_node_name), outputs))
                 self.cur_graph.add_node(input_cast_node, input_name, [bf16_node_name])
 
-            bf16_node.attr[inputs_dt[index]].CopyFrom(
-                               attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
+            bf16_node.attr[inputs_dt[index]].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
 
         for output_name in bf16_node_outputs:
-            if bf16_node.op == 'ResizeBilinear':
+            if bf16_node.op == "ResizeBilinear":
                 continue
             output_detail = self.cur_graph.node_name_details[output_name]
             output_node = output_detail.node
@@ -219,33 +225,38 @@ class BF16Convert(GraphRewriterBase):
             allowed_output_node_dt_val = self._allowed_dtype_val(output_node)
 
             for i, input_name in enumerate(output_node.input):
-                if input_name.startswith('^'):
+                if input_name.startswith("^"):
                     continue
 
-                if bf16_node.name != input_name.split(':')[0]:
+                if bf16_node.name != input_name.split(":")[0]:
                     continue
 
-                index = int(input_name.split(':')[-1]) if ':' in input_name else 0
-                if outputs_dt[index] in allowed_dt_val and \
-                                            dtypes.bfloat16.as_datatype_enum not in allowed_dt_val[outputs_dt[index]]:
+                index = int(input_name.split(":")[-1]) if ":" in input_name else 0
+                if (
+                    outputs_dt[index] in allowed_dt_val
+                    and dtypes.bfloat16.as_datatype_enum not in allowed_dt_val[outputs_dt[index]]
+                ):
                     continue
                 if outputs_dt_val[index] != DT_FLOAT32:
                     continue
 
-                if output_node.op == 'Cast':
+                if output_node.op == "Cast":
                     output_node.attr["SrcT"].CopyFrom(DT_BFLOAT16)
-                elif output_node.op == 'QuantizeV2' and 'dtype' in output_node.attr:
-                    if 'dtype' in allowed_output_node_dt_val and \
-                         dtypes.bfloat16.as_datatype_enum in allowed_output_node_dt_val['dtype']:
+                elif output_node.op == "QuantizeV2" and "dtype" in output_node.attr:
+                    if (
+                        "dtype" in allowed_output_node_dt_val
+                        and dtypes.bfloat16.as_datatype_enum in allowed_output_node_dt_val["dtype"]
+                    ):
                         output_node.attr["dtype"].CopyFrom(DT_BFLOAT16)
-                elif output_node.name not in self.bf16_ops or \
-                         inputs_dt_input_node[i] in allowed_output_node_dt_val and \
-                         dtypes.bfloat16.as_datatype_enum not in allowed_output_node_dt_val[inputs_dt_input_node[i]]:
+                elif (
+                    output_node.name not in self.bf16_ops
+                    or inputs_dt_input_node[i] in allowed_output_node_dt_val
+                    and dtypes.bfloat16.as_datatype_enum not in allowed_output_node_dt_val[inputs_dt_input_node[i]]
+                ):
                     cast_node_name = bf16_node_name + "/" + output_node.name + "_BF16toFP32"
                     if cast_node_name in self.cur_graph.node_name_details.keys():
                         continue
-                    output_cast_node = Helper.create_node(
-                        "Cast", cast_node_name, [input_name])
+                    output_cast_node = Helper.create_node("Cast", cast_node_name, [input_name])
                     Helper.set_attr_dtype(output_cast_node, "DstT", dtypes.float32)
                     Helper.set_attr_dtype(output_cast_node, "SrcT", dtypes.bfloat16)
                     Helper.set_attr_bool(output_cast_node, "Truncate", False)

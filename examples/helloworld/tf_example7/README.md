@@ -32,12 +32,8 @@ We can quantize a model only needing to set the dataloader with dummy dataset to
     dataloader = DataLoader(framework='tensorflow', dataset=dataset)
     # Post Training Quantization Config
     config = PostTrainingQuantConfig()
-    # Built-in topk metric
-    top1 = Metric(name="topk", k=1)
     # Just call fit to do quantization.
     q_model = fit(model="./mobilenet_v1_1.0_224_frozen.pb",
                   conf=config,
-                  calib_dataloader=dataloader,
-                  eval_dataloader=dataloader,
-                  eval_metric=top1)
+                  calib_dataloader=dataloader)
 ```

@@ -14,26 +14,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """This is a module for Component class.
 
 The Component class will be inherited by the class 'QuantizationAwareTrainingCallbacks',
 'PruningCallbacks' and 'DistillationCallbacks'.
 """
 
-from .distillation.criterions import Criterions
-from ..utils import logger
-from ..utils.utility import LazyImport
 from ..model import BaseModel, Model
 from ..model.model import MODELS
-from .pruner.utils import process_config, parse_to_prune, get_sparsity_ratio
-from .pruner.pruners import get_pruner, PRUNERS
+from ..utils import logger
+from ..utils.utility import LazyImport
+from .distillation.criterions import Criterions
+from .pruner.pruners import PRUNERS, get_pruner
+from .pruner.utils import get_sparsity_ratio, get_sparsity_ratio_tf, parse_to_prune, parse_to_prune_tf, process_config
 
-# model auto slim related
-from .pruner.model_slim.pattern_analyzer import SelfMHASearcher
+LazyImport("torch.nn")
+torch = LazyImport("torch")
+tf = LazyImport("tensorflow")
 
-LazyImport('torch.nn')
-torch = LazyImport('torch')
 
 class BaseCallbacks(object):
     """This is base class of Neural Compressor Callbacks.
@@ -59,63 +57,62 @@ class BaseCallbacks(object):
         self.model = model
         self.adaptor = None
         self.hooks = {
-            'on_train_begin': self.on_train_begin,
-            'on_train_end': self.on_train_end,
-            'on_epoch_begin': self.on_epoch_begin,
-            'on_epoch_end': self.on_epoch_end,
-            'on_step_begin': self.on_step_begin,
-            'on_step_end': self.on_step_end,
-            'on_after_compute_loss': self.on_after_compute_loss,
-            'on_before_optimizer_step': self.on_before_optimizer_step,
-            'on_after_optimizer_step': self.on_after_optimizer_step,
-            'on_before_eval': self.on_before_eval,
-            'on_after_eval': self.on_after_eval
+            "on_train_begin": self.on_train_begin,
+            "on_train_end": self.on_train_end,
+            "on_epoch_begin": self.on_epoch_begin,
+            "on_epoch_end": self.on_epoch_end,
+            "on_step_begin": self.on_step_begin,
+            "on_step_end": self.on_step_end,
+            "on_after_compute_loss": self.on_after_compute_loss,
+            "on_before_optimizer_step": self.on_before_optimizer_step,
+            "on_after_optimizer_step": self.on_after_optimizer_step,
+            "on_before_eval": self.on_before_eval,
+            "on_after_eval": self.on_after_eval,
         }
         self.hooks_dict = {
-            'on_train_begin': [],
-            'on_train_end': [],
-            'on_epoch_begin': [],
-            'on_epoch_end': [],
-            'on_step_begin': [],
-            'on_step_end': [],
-            'on_after_compute_loss': [],
-            'on_before_optimizer_step': [],
-            'on_after_optimizer_step': [],
-            'on_before_eval': [],
-            'on_after_eval': []
+            "on_train_begin": [],
+            "on_train_end": [],
+            "on_epoch_begin": [],
+            "on_epoch_end": [],
+            "on_step_begin": [],
+            "on_step_end": [],
+            "on_after_compute_loss": [],
+            "on_before_optimizer_step": [],
+            "on_after_optimizer_step": [],
+            "on_before_eval": [],
+            "on_after_eval": [],
         }
 
     def on_train_begin(self, dataloader=None):
         """Be called before the beginning of training."""
-        for on_train_begin_hook in self.hooks_dict['on_train_begin']:
+        for on_train_begin_hook in self.hooks_dict["on_train_begin"]:
             on_train_begin_hook(dataloader)
 
     def on_train_end(self):
         """Be called after the end of training."""
-        for on_train_end_hook in self.hooks_dict['on_train_end']:
+        for on_train_end_hook in self.hooks_dict["on_train_end"]:
             on_train_end_hook()
 
     def on_epoch_begin(self, epoch):
         """Be called on the beginning of epochs."""
-        for on_epoch_begin_hook in self.hooks_dict['on_epoch_begin']:
+        for on_epoch_begin_hook in self.hooks_dict["on_epoch_begin"]:
             on_epoch_begin_hook(epoch)
 
     def on_step_begin(self, batch_id):
         """Be called on the beginning of batches."""
-        if len(self.hooks_dict['on_step_begin']) > 0:
+        if len(self.hooks_dict["on_step_begin"]) > 0:
             res_list = []
-            for on_step_begin_hook in self.hooks_dict['on_step_begin']:
+            for on_step_begin_hook in self.hooks_dict["on_step_begin"]:
                 res_list.append(on_step_begin_hook(batch_id))
             return res_list
         else:
             return None
 
-    def on_after_compute_loss(self, input, student_output, \
-                              student_loss, teacher_output=None):
+    def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
         """Be called on the end of loss computation."""
-        if len(self.hooks_dict['on_after_compute_loss']) > 0:
+        if len(self.hooks_dict["on_after_compute_loss"]) > 0:
             loss = student_loss
-            for on_after_compute_loss_hook in self.hooks_dict['on_after_compute_loss']:
+            for on_after_compute_loss_hook in self.hooks_dict["on_after_compute_loss"]:
                 loss = on_after_compute_loss_hook(input, student_output, loss, teacher_output)
             return loss
         else:
@@ -123,29 +120,29 @@ class BaseCallbacks(object):
 
     def on_before_optimizer_step(self):
         """Be called before optimizer step."""
-        for on_before_optimizer_step_hook in self.hooks_dict['on_before_optimizer_step']:
+        for on_before_optimizer_step_hook in self.hooks_dict["on_before_optimizer_step"]:
             on_before_optimizer_step_hook()
 
     def on_after_optimizer_step(self):
         """Be called after optimizer step."""
-        for on_after_optimizer_step_hook in self.hooks_dict['on_after_optimizer_step']:
+        for on_after_optimizer_step_hook in self.hooks_dict["on_after_optimizer_step"]:
             on_after_optimizer_step_hook()
 
     def on_before_eval(self):
         """Be called before evaluation."""
-        for on_before_eval_hook in self.hooks_dict['on_before_eval']:
+        for on_before_eval_hook in self.hooks_dict["on_before_eval"]:
             on_before_eval_hook()
 
     def on_after_eval(self):
         """Be called after evaluation."""
-        for on_after_eval_hook in self.hooks_dict['on_after_eval']:
+        for on_after_eval_hook in self.hooks_dict["on_after_eval"]:
             on_after_eval_hook()
 
     def on_step_end(self):
         """Be called on the end of batches."""
-        if len(self.hooks_dict['on_step_end']) > 0:
+        if len(self.hooks_dict["on_step_end"]) > 0:
             res_list = []
-            for on_step_end_hook in self.hooks_dict['on_step_end']:
+            for on_step_end_hook in self.hooks_dict["on_step_end"]:
                 res_list.append(on_step_end_hook())
             return res_list
         else:
@@ -155,7 +152,7 @@ class BaseCallbacks(object):
         """Be called on the end of epochs."""
         res_list = []
 
-        for on_epoch_end_hook in self.hooks_dict['on_epoch_end']:
+        for on_epoch_end_hook in self.hooks_dict["on_epoch_end"]:
             res_list.append(on_epoch_end_hook())
 
         return res_list
@@ -194,8 +191,8 @@ class QuantizationAwareTrainingCallbacks(BaseCallbacks):
             model: Model to be quantized in this object. It should be neural compressor model.
         """
         super(QuantizationAwareTrainingCallbacks, self).__init__(conf=conf, model=model)
-        self.register_hook('on_train_begin', adaptor._pre_hook_for_qat)
-        self.register_hook('on_train_end', adaptor._post_hook_for_qat)
+        self.register_hook("on_train_begin", adaptor._pre_hook_for_qat)
+        self.register_hook("on_train_end", adaptor._post_hook_for_qat)
 
     def __repr__(self):
         """Represent this class."""
@@ -223,14 +220,16 @@ class PruningCallbacks(BaseCallbacks):
 
     def on_train_end(self):
         """Be called after the end of training."""
-        for on_train_end_hook in self.hooks_dict['on_train_end']:
+        for on_train_end_hook in self.hooks_dict["on_train_end"]:
             on_train_end_hook()
-        if isinstance(self.model.model, torch.nn.Module):
+        if self.conf.framework == "pytorch" and isinstance(self.model.model, torch.nn.Module):
             get_sparsity_ratio(self.pruners, self.model)
+        elif self.conf.framework == "keras" and isinstance(self.model.model, tf.keras.Model):
+            get_sparsity_ratio_tf(self.pruners, self.model)
 
     def __repr__(self):
         """Return the class's string representation."""
-        return 'Pruning Callbacks'
+        return "Pruning Callbacks"
 
     def generate_hooks(self):
         """Register hooks for pruning."""
@@ -241,12 +240,15 @@ class PruningCallbacks(BaseCallbacks):
 
     def _generate_pruners(self):
         """Obtain Pruner objects."""
-        if isinstance(self.model.model, torch.nn.Module):
+        if self.conf.framework == "pytorch" and isinstance(self.model.model, torch.nn.Module):
+            # model auto slim related
+            from .pruner.model_slim.pattern_analyzer import SelfMHASearcher
+
             for info in self.pruners_info:
-                if 'mha' in info['pattern']:
+                if "mha" in info["pattern"]:
                     # head pruning
                     pa_obj = SelfMHASearcher(self.model.model)
-                    modules, _ = pa_obj.search(split_qkv_ffn = False)
+                    modules, _ = pa_obj.search(split_qkv_ffn=False)
                     modules = pa_obj.obtain_mha_module(modules)
                     modules = pa_obj.from_layer_name_to_object(modules)
                     if len(modules) == 0:
@@ -259,11 +261,25 @@ class PruningCallbacks(BaseCallbacks):
                         logger.warning("one pruner hooks no layers, please have a check")
 
                     self.pruners.append(get_pruner(info, modules))
-                    info['modules'] = [key for key in modules.keys()]
-                    info['len_of_modules'] = len(info['modules'])
+                    info["modules"] = [key for key in modules.keys()]
+                    info["len_of_modules"] = len(info["modules"])
                     logger.info(info)
+        elif self.conf.framework == "keras" and isinstance(self.model.model, tf.keras.Model):
+            from tensorflow.python.ops.numpy_ops import np_config
+
+            np_config.enable_numpy_behavior()
+            for info in self.pruners_info:
+                # original pruning types, e.g NxM or N:M
+                modules = parse_to_prune_tf(info, self.model.model)
+                if modules == {}:
+                    logger.warning("one pruner hooks no layers, please have a check")
+
+                self.pruners.append(get_pruner(info, modules, "keras"))
+                info["modules"] = [key for key in modules.keys()]
+                info["len_of_modules"] = len(info["modules"])
+                logger.info(info)
         else:
-            assert False, 'now only support {}'.format(PRUNERS.keys())
+            assert False, "now only support {}".format(PRUNERS.keys())
 
 
 class DistillationCallbacks(BaseCallbacks):
@@ -304,11 +320,8 @@ class DistillationCallbacks(BaseCallbacks):
 
     def _parse_model_class(self, model):
         """Parse model class for getting framework."""
-        from neural_compressor.model.tensorflow_model import (
-            TensorflowBaseModel,
-            TensorflowModel,
-            TensorflowQATModel,
-            )
+        from neural_compressor.model.tensorflow_model import TensorflowBaseModel, TensorflowModel, TensorflowQATModel
+
         if isinstance(model, TensorflowQATModel):
             return type(model)
         if isinstance(model, TensorflowBaseModel):
@@ -317,7 +330,7 @@ class DistillationCallbacks(BaseCallbacks):
 
     def _on_step_begin(self, batch_id):
         """Operations called on the beginning of batches."""
-        if self.criterion is not None and hasattr(self.criterion, 'clear_features'):
+        if self.criterion is not None and hasattr(self.criterion, "clear_features"):
             self.criterion.clear_features()
 
     def _on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
@@ -334,13 +347,10 @@ class DistillationCallbacks(BaseCallbacks):
         """
         if self.criterion is None:
             self.create_criterion()
-        assert self.criterion, \
-            'criterion must be set in yaml config file.'
+        assert self.criterion, "criterion must be set in yaml config file."
         if teacher_output is None:
-            assert self.teacher_model, 'teacher_model must be set.'
-            teacher_output = self.criterion.teacher_model_forward(
-                input, teacher_model=self.teacher_model._model
-            )
+            assert self.teacher_model, "teacher_model must be set."
+            teacher_output = self.criterion.teacher_model_forward(input, teacher_model=self.teacher_model._model)
         return self.criterion.loss_cal_sloss(student_output, teacher_output, student_loss)
 
     def init_train_cfg(self):
@@ -348,25 +358,29 @@ class DistillationCallbacks(BaseCallbacks):
         if self._train_cfg is None:
             # train section of distillation section in yaml file should be configured.
             self._train_cfg = self.conf.criterion
-        assert self._train_cfg, "train field of distillation section in yaml file must " \
-                                "be configured for distillation if train_func is NOT set."
+        assert self._train_cfg, (
+            "train field of distillation section in yaml file must "
+            "be configured for distillation if train_func is NOT set."
+        )
 
     def create_criterion(self):
         """Create the criterion for training."""
         self.init_train_cfg()
         if self.criterion is None:
-            assert self._train_cfg.config is not None, \
-                "criterion part in train field of distillation section in yaml file " \
+            assert self._train_cfg.config is not None, (
+                "criterion part in train field of distillation section in yaml file "
                 "must be configured for distillation if criterion is NOT set."
+            )
             criterion_cfg = self._train_cfg.config
-            assert len(criterion_cfg) == 1, "There must be exactly one loss in " \
-                "criterion part, instead got {} loss.".format(len(criterion_cfg))
+            assert (
+                len(criterion_cfg) == 1
+            ), "There must be exactly one loss in " "criterion part, instead got {} loss.".format(len(criterion_cfg))
             loss = [i for i in criterion_cfg.keys()][0]
             loss_cfg = criterion_cfg[loss]
             criterion_builder = Criterions(self.framework)[loss](loss_cfg)
             criterion_tuple = criterion_builder()
             if self.teacher_model and self.student_model:
-                if self.framework == 'tensorflow':  # new, for tf
+                if self.framework == "tensorflow":  # new, for tf
                     teacher_model = self.teacher_model._model
                     student_model = self.student_model._model
                 else:  # for pytorch and other frameworks
@@ -386,8 +400,8 @@ class DistillationCallbacks(BaseCallbacks):
         Register necessary hooks for distillation pipeline.
         """
         if not self.hooks_registered:
-            self.register_hook('on_step_begin', self._on_step_begin)
-            self.register_hook('on_after_compute_loss', self._on_after_compute_loss)
+            self.register_hook("on_step_begin", self._on_step_begin)
+            self.register_hook("on_after_compute_loss", self._on_after_compute_loss)
             self.hooks_registered = True
 
     @property
@@ -435,7 +449,6 @@ class DistillationCallbacks(BaseCallbacks):
                        Another corner case is slim model of tensorflow,
                        be careful of the name of model configured in yaml file,
                        make sure the name is in supported slim model list.
-
         """
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
@@ -463,4 +476,4 @@ class DistillationCallbacks(BaseCallbacks):
 
     def __repr__(self):
         """Class representation."""
-        return 'Distillation Callbacks'
+        return "Distillation Callbacks"

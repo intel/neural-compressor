@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Neural Solution task monitor."""
 import socket
-from neural_solution.backend.utils.utility import serialize, deserialize
+
+from neural_solution.backend.utils.utility import deserialize, serialize
 from neural_solution.utils import logger
+
 
 class TaskMonitor:
     """TaskMonitor is a thread that monitors the coming tasks and appends them to the task queue.
@@ -24,13 +25,15 @@ class TaskMonitor:
         port: the port that the task monitor listens to
         task_db: the TaskDb object that manages the tasks
     """
+
     def __init__(self, port, task_db):
+        """Init TaskMonitor."""
         self.s = socket.socket()
         self.port = port
         self.task_db = task_db
 
     def _start_listening(self, host, port, max_parallelism):
-        self.s.bind(("localhost", port)) # open a port as the serving port for tasks
+        self.s.bind(("localhost", port))  # open a port as the serving port for tasks
         self.s.listen(max_parallelism)
 
     def _receive_task(self):

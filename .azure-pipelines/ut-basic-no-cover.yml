@@ -11,9 +11,12 @@ pr:
       - neural_compressor
       - test
       - setup.py
-      - .azure-pipelines/scripts/ut
+      - requirements.txt
     exclude:
       - test/neural_coder
+      - test/3x
+      - neural_compressor/common
+      - neural_compressor/torch
 
 pool: ICX-16C
 
@@ -31,6 +34,7 @@ stages:
     dependsOn: []
     jobs:
       - job:
+        displayName: Test FWKs adaptor
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -41,33 +45,46 @@ stages:
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
 
+  - stage: API
+    displayName: Unit Test User facing API
+    dependsOn: []
+    jobs:
+      - job:
+        displayName: Test User facing API
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              utScriptFileName: "run_basic_api"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut-coverage-api"
+              utTestMode: "no-coverage"
+              utContainerName: "utTest-no-coverage"
+
   - stage: Pruning
     displayName: Unit Test Pruning
     dependsOn: []
     jobs:
       - job:
+        displayName: Test PyTorch Pruning
         steps:
           - template: template/ut-template.yml
             parameters:
               dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "run_basic_pruning"
+              utScriptFileName: "run_basic_pt_pruning"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-pruning"
+              utArtifact: "ut-coverage-pt-pruning"
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
-
-  - stage: IPEX
-    displayName: Unit Test IPEX
-    dependsOn: []
-    jobs:
       - job:
+        displayName: Test TensorFlow Pruning
         steps:
           - template: template/ut-template.yml
             parameters:
               dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "run_basic_ipex"
+              utScriptFileName: "run_basic_tf_pruning"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-ipex"
+              utArtifact: "ut-coverage-tf-pruning"
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
 
@@ -76,6 +93,7 @@ stages:
     dependsOn: []
     jobs:
       - job:
+        displayName: Test other basic case
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -86,3 +104,17 @@ stages:
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
 
+#  - stage: IPEX
+#    displayName: Unit Test IPEX 2.1 for SQ algo
+#    dependsOn: []
+#    jobs:
+#      - job:
+#        steps:
+#          - template: template/ut-template.yml
+#            parameters:
+#              dockerConfigName: "commonDockerConfig"
+#              utScriptFileName: "run_basic_v2.1_ipex"
+#              uploadPath: $(UPLOAD_PATH)
+#              utArtifact: "ut-ipex_v2.1"
+#              utTestMode: "no-coverage"
+#              utContainerName: "utTest-no-coverage"

@@ -14,21 +14,34 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Initialize the Datasets class."""
+from deprecated import deprecated
 
-import numpy as np
 from neural_compressor.utils.utility import LazyImport
-from .base_dataloader import BaseDataLoader
-torch = LazyImport('torch')
-hvd = LazyImport('horovod.torch')
 
+from .base_dataloader import BaseDataLoader
+
+torch = LazyImport("torch")
+hvd = LazyImport("horovod.torch")
+
+
+@deprecated(version="2.0")
 class PyTorchDataLoader(BaseDataLoader):
     """PyTorchDataLoader inherits from BaseDataLoader."""
 
-    def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
-                             sampler, batch_sampler, num_workers, pin_memory,
-                             shuffle, distributed):
+    def _generate_dataloader(
+        self,
+        dataset,
+        batch_size,
+        last_batch,
+        collate_fn,
+        sampler,
+        batch_sampler,
+        num_workers,
+        pin_memory,
+        shuffle,
+        distributed,
+    ):
         """Generate PyTorch dataloader.
 
         Args:
@@ -46,15 +59,15 @@ class PyTorchDataLoader(BaseDataLoader):
         Returns:
             _type_: _description_
         """
-        drop_last = False if last_batch == 'rollover' else True
-        assert len(dataset) != 0, \
-                    "Warning: Dataset is empty, Please check dataset path!"
+        drop_last = False if last_batch == "rollover" else True
+        assert len(dataset) != 0, "Warning: Dataset is empty, Please check dataset path!"
         if distributed and sampler is None:
             # TODO: lazy init here
             hvd.init()
             # sampler option is mutually exclusive with shuffle pytorch
             self.sampler = sampler = torch.utils.data.distributed.DistributedSampler(
-                dataset, num_replicas=hvd.size(), rank=hvd.rank())
+                dataset, num_replicas=hvd.size(), rank=hvd.rank()
+            )
 
         return torch.utils.data.DataLoader(
             dataset,
@@ -65,5 +78,5 @@ class PyTorchDataLoader(BaseDataLoader):
             num_workers=num_workers,
             pin_memory=pin_memory,
             sampler=sampler,
-            batch_sampler=batch_sampler)
-            
+            batch_sampler=batch_sampler,
+        )

@@ -13,20 +13,22 @@
 # limitations under the License.
 
 import re
+
+
 def determine_domain(path) -> str:
-    codes = open(path, 'r').read()
-    if ('import torchvision.models' in codes or 'from torchvision.models' in codes) and 'val_loader' in codes:
-        return 'torchvision'
-    elif re.search(r'from (.*)transformers import', codes) and re.search(r'(.*)Model(.*)', codes):
-        if 'Trainer' in codes or 'trainer' in codes:
-            return 'transformers_trainer'
+    codes = open(path, "r").read()
+    if ("import torchvision.models" in codes or "from torchvision.models" in codes) and "val_loader" in codes:
+        return "torchvision"
+    elif re.search(r"from (.*)transformers import", codes) and re.search(r"(.*)Model(.*)", codes):
+        if "Trainer" in codes or "trainer" in codes:
+            return "transformers_trainer"
         else:
-            return 'transformers_no_trainer'
-    elif 'onnx.load(' in codes:
-        return 'onnx'
-    elif 'keras.Sequential' in codes:
-        return 'keras_script'
-    elif 'from tensorflow import' in codes or 'import tensorflow' in codes:
-        return 'tensorflow_keras_model'
+            return "transformers_no_trainer"
+    elif "onnx.load(" in codes:
+        return "onnx"
+    elif "keras.Sequential" in codes:
+        return "keras_script"
+    elif "from tensorflow import" in codes or "import tensorflow" in codes:
+        return "tensorflow_keras_model"
     else:
-        return 'random model'
+        return "random model"

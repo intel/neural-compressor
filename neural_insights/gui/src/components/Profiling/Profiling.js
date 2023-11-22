@@ -19,13 +19,13 @@ import Plot from 'react-plotly.js';
 import { getLabel } from './../Diagnosis/Diagnosis';
 import Table from 'react-bootstrap/Table';
 
-export default function Profiling({ selectedWorkload }) {
+export default function Profiling({ selectedWorkload, setWarningText }) {
   const [profilingTable, setProfilingTable] = useState([]);
   const [profilingChartData, setProfilingChartData] = useState([]);
   return (
     <div>
       <ProfilingChart profilingChartData={profilingChartData} />
-      <ProfilingTable selectedWorkload={selectedWorkload} profilingTable={profilingTable} setProfilingTable={setProfilingTable} setProfilingChartData={setProfilingChartData} />
+      <ProfilingTable selectedWorkload={selectedWorkload} profilingTable={profilingTable} setProfilingTable={setProfilingTable} setProfilingChartData={setProfilingChartData} setWarningText={setWarningText} />
     </div>
   )
 }
@@ -147,9 +147,9 @@ function ProfilingChart({ profilingChartData }) {
       data={getChartData(profilingChartData)}
       layout={layout}
       useResizeHandler={true}
-      style={{ width: '80vw' }}
+      style={{ 'width': '100%' }}
     ></Plot>
-  </div>)
+  </div >)
 };
 
 const getChartData = (profilingData) => {

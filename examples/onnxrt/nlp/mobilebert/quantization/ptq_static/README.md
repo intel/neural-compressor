@@ -49,9 +49,7 @@ python ./run_glue.py \
 
 Run the `prepare_model.sh` script：
 ```shell
-bash prepare_model.sh --input_dir=$OUT_DIR \
-                      --task_name=$TASK_NAME \
-                      --output_model=path/to/model # model path as *.onnx
+python prepare_model.py --input_model='google/mobilebert-uncased' --output_model=bert.onnx 
 ```
 
 # Run
@@ -61,7 +59,7 @@ bash prepare_model.sh --input_dir=$OUT_DIR \
 Static quantization with QDQ format:
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune \ # model path as *.onnx
                    --dataset_location=path/to/glue_data \
                    --quant_format="QDQ"

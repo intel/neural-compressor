@@ -9,5 +9,3 @@ The model API information is available:
    neural_compressor.model.keras_model
    neural_compressor.model.torch_model
    neural_compressor.model.onnx_model
-
-   

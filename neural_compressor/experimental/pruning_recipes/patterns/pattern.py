@@ -1,4 +1,4 @@
-"""pattern classes."""
+"""Pattern classes."""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -16,11 +16,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import abstractmethod
 import numpy as np
+from deprecated import deprecated
 
 registry_patterns = {}
 
+
+@deprecated(version="2.0")
 def pattern_registry(pattern_type):
     """Class decorator used to register all Pruning Pattern subclasses.
 
@@ -31,16 +33,20 @@ def pattern_registry(pattern_type):
     Returns:
         cls: The class of register.
     """
+
     def decorator_pattern(cls):
         if pattern_type in registry_patterns:
-            raise ValueError('Cannot have two pattern with the same name')
+            raise ValueError("Cannot have two pattern with the same name")
         registry_patterns[pattern_type] = cls
         return cls
+
     return decorator_pattern
 
+
+@deprecated(version="2.0")
 class PATTERNS(object):
     """Class that contain all registered pattern types.
-    
+
     Attributes:
         patterns: A dict which stores registered Pruning Pattern subclasses.
     """
@@ -49,8 +55,7 @@ class PATTERNS(object):
 
     def __getitem__(self, pattern_type):
         """Obtain a Pruning Pattern subclass."""
-        assert pattern_type in self.patterns, "pattern type only support {}".\
-            format(self.patterns.keys())
+        assert pattern_type in self.patterns, "pattern type only support {}".format(self.patterns.keys())
         return self.patterns[pattern_type]
 
     @classmethod
@@ -58,6 +63,8 @@ class PATTERNS(object):
         """Support patterns."""
         return set(self.patterns.keys())
 
+
+@deprecated(version="2.0")
 class PatternBase:
     """Base class of pruning pattern."""
 
@@ -70,7 +77,7 @@ class PatternBase:
         """To be implemented in subclasses."""
         raise NotImplementedError
 
-    def reduce(self, tensor, method='abs_sum'):
+    def reduce(self, tensor, method="abs_sum"):
         """Reshaped tensor, support 'abs_max', 'abs_sum'."""
         if len(tensor.shape) in [2, 4]:
             reshaped_tensor = self.reshape(tensor)
@@ -80,9 +87,9 @@ class PatternBase:
             reduced_tensor = new_tensor.reshape(new_shape[:-3] + [new_shape[-2], -1])
         else:
             assert False, "tile-pattern pruning now only support 2d & 4d tensor"
-        if method == 'abs_max':
+        if method == "abs_max":
             return np.abs(reduced_tensor).max(-1).values
-        elif method == 'abs_sum':
+        elif method == "abs_sum":
             return np.abs(reduced_tensor).sum(-1)
         else:
             raise NotImplementedError
@@ -91,9 +98,9 @@ class PatternBase:
         """Reshape tensor into dims+2."""
         if len(tensor.shape) == 4:
             tensor = tensor.reshape(tensor.shape[0], -1)
-        assert tensor.shape[-1] % self.mask_shape[-1] == 0 and \
-                tensor.shape[-2] % self.mask_shape[-2] == 0, \
-            'tensor shape {} cannot be divided by mask {}'.format(tensor.shape, self.mask_shape)
+        assert (
+            tensor.shape[-1] % self.mask_shape[-1] == 0 and tensor.shape[-2] % self.mask_shape[-2] == 0
+        ), "tensor shape {} cannot be divided by mask {}".format(tensor.shape, self.mask_shape)
 
         new_shape = list(tensor.shape)[:-2]
         new_shape.append(tensor.shape[-2] // self.mask_shape[-2])

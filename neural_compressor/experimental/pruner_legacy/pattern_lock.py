@@ -14,12 +14,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Pattern lock pruner."""
+from deprecated import deprecated
 
-from .pruner import pruner_registry, Pruner
+from .pruner import Pruner, pruner_registry
 
 
+@deprecated(version="2.0")
 @pruner_registry
 class PatternLockPruner(Pruner):
     """Pattern lock pruner class.
@@ -56,7 +57,7 @@ class PatternLockPruner(Pruner):
         for weight in self.weights:
             tensor = self.model.get_weight(weight)
             if len(tensor.shape) in self.tensor_dims:
-                self.masks[weight] = tensor == 0.
+                self.masks[weight] = tensor == 0.0
 
     def update_weights(self):
         """Update weights according to the masks."""

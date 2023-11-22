@@ -304,7 +304,7 @@ def _unescape_token(token):
     replacement ('_' and '\') are returned. Note that in python, a single
     backslash is written as '\\', and double backslash as '\\\\'.
 
-    If m.goup(1) exists, then use the integer in m.group(1) to return a
+    If m.group(1) exists, then use the integer in m.group(1) to return a
     unicode character.
 
     Args:
@@ -503,7 +503,7 @@ def _gen_new_subtoken_list(
     subtoken_counts, min_count, alphabet, reserved_tokens=None):
   """Generate candidate subtokens ordered by count, and new max subtoken length.
 
-  Add subtokens to the candiate list in order of length (longest subtokens
+  Add subtokens to the candidate list in order of length (longest subtokens
   first). When a subtoken is added, the counts of each of its prefixes are
   decreased. Prefixes that don't appear much outside the subtoken are not added
   to the candidate list.
@@ -521,7 +521,7 @@ def _gen_new_subtoken_list(
 
   Args:
     subtoken_counts: defaultdict mapping str subtokens to int counts
-    min_count: int minumum count requirement for subtokens
+    min_count: int minimum count requirement for subtokens
     alphabet: set of characters. Each character is added to the subtoken list to
       guarantee that all tokens can be encoded.
     reserved_tokens: list of tokens that will be added to the beginning of the

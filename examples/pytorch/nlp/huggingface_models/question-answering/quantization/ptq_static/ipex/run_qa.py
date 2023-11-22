@@ -44,12 +44,14 @@ from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 from typing import Optional
 from utils_qa import postprocess_qa_predictions
+from neural_compressor.utils.utility import LazyImport
 try:
     import intel_extension_for_pytorch as ipex
     from intel_extension_for_pytorch.quantization import prepare, convert
     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
 except:
     assert False, "transformers 4.19.0 requests IPEX version higher or equal to 1.12"
+torch = LazyImport("torch")
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -111,7 +113,9 @@ class ModelArguments:
             "help": "The inference iterations to run for benchmark."
         },
     )
-
+    xpu: bool = field(
+        default=False, metadata={"help": "whether to use xpu"}
+    )
 
 @dataclass
 class DataTrainingArguments:
@@ -342,7 +346,7 @@ def main():
         )
 
     # Preprocessing the datasets.
-    # Preprocessing is slighlty different for training and evaluation.
+    # Preprocessing is slightly different for training and evaluation.
     if training_args.do_train:
         column_names = raw_datasets["train"].column_names
     elif training_args.do_eval:
@@ -610,6 +614,19 @@ def main():
     )
 
     eval_dataloader = trainer.get_eval_dataloader()
+    # transformer issue #1
+    # for transformers 4.31.0: accelerate dataloader
+    # *** ValueError: batch_size attribute should not be set 
+    # after DataLoaderShard is initialized
+    if eval_dataloader.batch_size is None:
+        def _build_inc_dataloader(dataloader):
+            class INCDataLoader:
+                __iter__ = dataloader.__iter__
+                def __init__(self) -> None:
+                    self.dataloader = dataloader
+                    self.batch_size = dataloader.total_batch_size
+            return INCDataLoader()
+        eval_dataloader = _build_inc_dataloader(eval_dataloader)
     batch_size = eval_dataloader.batch_size
     metric_name = "eval_f1"
 
@@ -635,11 +652,25 @@ def main():
     def eval_func(model):
         return take_eval_steps(model, trainer, metric_name)
 
+    if model_args.xpu:
+        model = model.to("xpu")
+
     if model_args.tune:
         ipex.nn.utils._model_convert.replace_dropout_with_identity(model)
         from neural_compressor.config import PostTrainingQuantConfig
         from neural_compressor import quantization
-        conf = PostTrainingQuantConfig(backend="ipex", calibration_sampling_size=800)
+        dummy_input_ids = torch.ones((training_args.per_device_eval_batch_size, data_args.max_seq_length), dtype=torch.long)
+        dummy_token_type_ids = torch.ones((training_args.per_device_eval_batch_size, data_args.max_seq_length), dtype=torch.long)
+        dummy_attention_mask = torch.ones((training_args.per_device_eval_batch_size, data_args.max_seq_length), dtype=torch.long)
+        if model.config.model_type == "distilbert":
+            example_inputs = (dummy_input_ids, dummy_attention_mask)
+        elif model.config.model_type == "bert":
+            example_inputs = (dummy_input_ids, dummy_attention_mask, dummy_token_type_ids)
+        else:
+            example_inputs = None  # please provide correct example_inputs if necessary.
+        conf = PostTrainingQuantConfig(backend="ipex", calibration_sampling_size=800, example_inputs=example_inputs)
+        if model_args.xpu:
+            conf.device = "xpu"
         q_model = quantization.fit(model,
                                    conf,
                                    calib_dataloader=eval_dataloader,
@@ -655,9 +686,8 @@ def main():
         from neural_compressor.adaptor.pytorch import get_example_inputs
         example_inputs = get_example_inputs(model, eval_dataloader)
         model = ipex.optimize(model)
-        import torch
         with torch.no_grad():
-            model = torch.jit.trace(model, example_inputs, strict=False)
+            model = torch.jit.trace(model, example_inputs=example_inputs, strict=False)
             model = torch.jit.freeze(model)
 
     if model_args.benchmark or model_args.accuracy_only:
@@ -669,6 +699,8 @@ def main():
                                      iteration=model_args.iters,
                                      cores_per_instance=4,
                                      num_of_instance=1)
+            if model_args.xpu:
+                b_conf.device = "xpu"
             benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)
         else:
             eval_func(model)

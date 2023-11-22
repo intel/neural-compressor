@@ -16,8 +16,7 @@
 
 from typing import Optional
 
-from neural_compressor.experimental.data.dataloaders.onnxrt_dataloader import \
-    ONNXRTDataLoader
+from neural_compressor.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.profiling.profiler.onnxrt_profiler.profiler import Profiler
 
@@ -27,11 +26,11 @@ class ProfilerFactory:
 
     @staticmethod
     def get_profiler(
-            model: ONNXModel,
-            dataloader: ONNXRTDataLoader,
-            log_file: Optional[str] = None,
-            *args,
-            **kwargs,
+        model: ONNXModel,
+        dataloader: ONNXRTDataLoader,
+        log_file: Optional[str] = None,
+        *args,
+        **kwargs,
     ) -> Profiler:
         """Get profiling for specified framework.
 

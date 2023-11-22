@@ -24,7 +24,7 @@ tar -xzvf billsum.tar.gz
 ## 1. Quantization
 ```shell
 cd examples/pytorch/nlp/huggingface_models/summarization/quantization/ptq_dynamic/fx
-sh run_tuning.sh --topology=topology_name
+sh run_quant.sh --topology=topology_name
 ```
 
 ## 2. Benchmark

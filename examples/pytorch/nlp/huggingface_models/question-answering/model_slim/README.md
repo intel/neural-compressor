@@ -8,7 +8,7 @@ To be specific, if a model has two consecutive linear layers, which is common in
 This leads to no change for model's accuracy, but can obtain a significant acceleration for model's inference, because the transformer models' FFN parts take nearly 50% of entire computing overhead. Thus, compressing weights in FFN parts is really useful.
 
 ## Multi-head Pruning for Self-Attention Layers
-Self attention modules are common in all Transformer-based models. These models use multi-head attention (also known as MHA) to enhance their abilities of linking contextual information. Transformer-based models usually stack a sequence of MHA modules, and this makes MHA takes a noticable storage and memory bandwith. As an optimization method, head pruning removes attention heads which make minor contribution to model's contextual analysis. This method does not lead to much accuracy loss, but provides us with much opportunity for model acceleration. 
+Self attention modules are common in all Transformer-based models. These models use multi-head attention (also known as MHA) to enhance their abilities of linking contextual information. Transformer-based models usually stack a sequence of MHA modules, and this makes MHA takes a noticeable storage and memory bandwidth. As an optimization method, head pruning removes attention heads which make minor contribution to model's contextual analysis. This method does not lead to much accuracy loss, but provides us with much opportunity for model acceleration. 
 
 ## API for Consecutive Linear Layers and Multi-head attention Slim.
 We provide API functions for you to complete the process above and slim your transformer models easily. Here is how to call our API functions. Simply provide a target sparsity value to our Our API function **parse_auto_slim_config** and it can generate the [pruning_configs](https://github.com/intel/neural-compressor/tree/master/neural_compressor/compression/pruner#get-started-with-pruning-api) used by our pruning API. Such process is fully automatic and target linear layers will be included without manual setting. After pruning process finished, use API function **model_slim** to slim the model.
@@ -17,7 +17,7 @@ We provide API functions for you to complete the process above and slim your tra
 # auto slim config
 # part1 generate pruning configs for the second linear layers. 
 pruning_configs = []
-from neural_compressor.compression.pruner.model_slim.auto_slim import parse_auto_slim_config
+from neural_compressor.compression.pruner import parse_auto_slim_config
 auto_slim_configs = parse_auto_slim_config(
     model, 
     ffn2_sparsity = prune_ffn2_sparsity, # define target sparsity with a float between 0 and 1
@@ -32,7 +32,7 @@ pruning_configs += auto_slim_configs
 """
 ################
 
-from neural_compressor.compression.pruner.model_slim.auto_slim import model_slim
+from neural_compressor.compression.pruner import model_slim
 model = model_slim(model)
 ```
 Please noted that if you already have a sparse model which corresponding linear layers pruned, you can simply call the last two lines to complete the model slim. 

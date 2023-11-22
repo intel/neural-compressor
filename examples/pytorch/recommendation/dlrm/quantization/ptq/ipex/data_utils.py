@@ -1079,7 +1079,7 @@ def getCriteoAdData(
     # create all splits (reuse existing files if possible)
     recreate_flag = False
     convertDicts = [{} for _ in range(26)]
-    # WARNING: to get reproducable sub-sampling results you must reset the seed below
+    # WARNING: to get reproducible sub-sampling results you must reset the seed below
     # np.random.seed(123)
     # in this case there is a single split in each day
     for i in range(days):

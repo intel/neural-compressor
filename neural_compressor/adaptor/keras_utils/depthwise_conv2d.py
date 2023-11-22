@@ -16,14 +16,20 @@
 # limitations under the License.
 
 import json
+
 import tensorflow as tf
-from tensorflow.keras import activations
-from tensorflow.keras import constraints
-from tensorflow.keras import initializers
-from tensorflow.keras import regularizers
-from keras.utils import tf_utils, conv_utils # pylint: disable=E0401
-from keras.layers.convolutional.base_depthwise_conv import DepthwiseConv # pylint: disable=E0401
 from tensorflow import quantization
+from tensorflow.keras import activations, constraints, initializers, regularizers
+
+from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
+
+if version1_gte_version2(tf.__version__, "2.13.0"):
+    from keras.src.layers.convolutional.base_depthwise_conv import DepthwiseConv  # pylint: disable=E0401
+    from keras.src.utils import conv_utils, tf_utils  # pylint: disable=E0401
+else:
+    from keras.layers.convolutional.base_depthwise_conv import DepthwiseConv  # pylint: disable=E0401
+    from keras.utils import conv_utils, tf_utils  # pylint: disable=E0401
+
 
 class QDepthwiseConv2D(DepthwiseConv):
     def __init__(
@@ -70,33 +76,37 @@ class QDepthwiseConv2D(DepthwiseConv):
         self.max_value = json.loads(max_value)
 
     def call(self, inputs):
-      # add the Q/DQ here
-      kernel, _, _ = quantization.quantize(self.depthwise_kernel, self.min_value,
-                                      self.max_value, tf.qint8,
-                                      axis=3, mode='SCALED')
-      kernel = quantization.dequantize(kernel, self.min_value,
-                                      self.max_value, axis=3, mode='SCALED',)
-      outputs = tf.keras.backend.depthwise_conv2d(
-          inputs,
-          kernel,
-          strides=self.strides,
-          padding=self.padding,
-          data_format=self.data_format,
-          dilation_rate=self.dilation_rate)
+        # add the Q/DQ here
+        kernel, _, _ = quantization.quantize(
+            self.depthwise_kernel, self.min_value, self.max_value, tf.qint8, axis=3, mode="SCALED"
+        )
+        kernel = quantization.dequantize(
+            kernel,
+            self.min_value,
+            self.max_value,
+            axis=3,
+            mode="SCALED",
+        )
+        outputs = tf.keras.backend.depthwise_conv2d(
+            inputs,
+            kernel,
+            strides=self.strides,
+            padding=self.padding,
+            data_format=self.data_format,
+            dilation_rate=self.dilation_rate,
+        )
 
-      if self.use_bias:
-        outputs = tf.keras.backend.bias_add(
-            outputs, self.bias, data_format=self.data_format)
+        if self.use_bias:
+            outputs = tf.keras.backend.bias_add(outputs, self.bias, data_format=self.data_format)
 
-      if self.activation is not None:
-        return self.activation(outputs)
+        if self.activation is not None:
+            return self.activation(outputs)
 
-      return outputs
+        return outputs
 
     @classmethod
     def from_config(cls, config):
         return cls(**config)
-
 
     @tf_utils.shape_type_conversion
     def compute_output_shape(self, input_shape):

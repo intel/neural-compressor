@@ -27,32 +27,10 @@ bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
 
 Please refer to [Bert-GLUE_OnnxRuntime_quantization guide](https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/notebooks/bert/Bert-GLUE_OnnxRuntime_quantization.ipynb) for detailed model export. The following is a simple example.
 
-Use [Huggingface Transformers](https://github.com/huggingface/transformers/tree/v2.2.1) to fine-tune the model based on the [MRPC](https://github.com/huggingface/transformers/tree/master/examples/text-classification#mrpc) example with command like:
-```shell
-export OUT_DIR=/path/to/out_dir/
-python ./run_glue.py \
-    --model_type roberta \
-    --model_name_or_path roberta-base \
-    --task_name $TASK_NAME \
-    --do_train \
-    --do_eval \
-    --do_lower_case \
-    --data_dir $GLUE_DIR/$TASK_NAME \
-    --max_seq_length 128 \
-    --per_gpu_eval_batch_size=8   \
-    --per_gpu_train_batch_size=8   \
-    --learning_rate 2e-5 \
-    --num_train_epochs 3.0 \
-    --save_steps 100000 \
-    --output_dir $OUT_DIR
-```
+Use [Huggingface Transformers](https://github.com/huggingface/transformers/tree/v2.2.1) to fine-tune the model based on the [MRPC](https://github.com/huggingface/transformers/tree/main/examples/pytorch/text-classification) example with command like:
 
-Run the `prepare_model.sh` script:
 ```shell
-
-bash prepare_model.sh --input_dir=$OUT_DIR \
-                      --task_name=$TASK_NAME \
-                      --output_model=path/to/model # model path as *.onnx
+python prepare_model.py --input_model='roberta-base' --output_model=roberta.onnx
 ```
 
 # Run
@@ -62,7 +40,7 @@ bash prepare_model.sh --input_dir=$OUT_DIR \
 Static quantization with QDQ format:
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune \ # model path as *.onnx
                    --dataset_location=path/to/glue_data \
                    --quant_format="QDQ"

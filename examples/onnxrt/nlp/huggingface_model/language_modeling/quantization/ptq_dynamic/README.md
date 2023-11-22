@@ -21,11 +21,10 @@ Supported model identifier from [huggingface.co](https://huggingface.co/):
 |           gpt2          |
 |             distilgpt2           |
 
-Use `export.py` script for ONNX model conversion.
 Require transformers==3.2.0.
 
 ```shell
-python export.py --model_name_or_path=gpt2 # or other supported model identifier
+python prepare_model.py --input_model=gpt2 --output_model=gpt2.onnx  # or other supported model identifier
 ```
 
 ## 3. Prepare Dataset
@@ -38,7 +37,7 @@ Please download [WikiText-2 dataset](https://s3.amazonaws.com/research.metamind.
 Quantize model with dynamic quantization:
 
 ```bash
-bash run_tuning.sh --dataset_location=/path/to/wikitext-2-raw/wiki.test.raw \ 
+bash run_quant.sh --dataset_location=/path/to/wikitext-2-raw/wiki.test.raw \ 
                    --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune
 ```

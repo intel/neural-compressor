@@ -26,8 +26,7 @@ import torch
 import numpy as np
 from dataclasses import dataclass
 from typing import List, Optional, Union
-from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
-from neural_compressor.data.datasets.dummy_dataset import DummyDataset
+from neural_compressor.data import DataLoader
 
 
 class ONNXRTBertDataset:
@@ -348,7 +347,7 @@ if __name__ == "__main__":
                                 data_dir=args.data_path,
                                 model_name_or_path=args.model_name_or_path,
                                 task=args.task)
-    dataloader = DefaultDataLoader(dataset, args.batch_size)
+    dataloader = DataLoader(framework='onnxruntime', dataset=dataset, batch_size=args.batch_size)
     metric = ONNXRTGLUE(args.task)
 
     def eval_func(model, *args):
@@ -384,30 +383,37 @@ if __name__ == "__main__":
 
 
     if args.tune:
-        if ort.__version__ <= '1.13.1':
-            from onnxruntime.transformers import optimizer
-            from onnxruntime.transformers.fusion_options import FusionOptions
-            model_type = 'bart' if args.model_name_or_path == 'Intel/bart-large-mrpc' else 'bert'
-            opt_options = FusionOptions(model_type)
-            opt_options.enable_embed_layer_norm = False
+        # optimize model
+        from onnxruntime.transformers import optimizer
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        model_type = 'bart' if args.model_name_or_path == 'Intel/bart-large-mrpc' else 'bert'
+        opt_options = FusionOptions(model_type)
+        opt_options.enable_embed_layer_norm = False
 
-            model_optimizer = optimizer.optimize_model(
-                args.model_path,
-                model_type,
-                num_heads=args.num_heads,
-                hidden_size=args.hidden_size,
-                optimization_options=opt_options)
-            model = model_optimizer.model
-        else:
+        model_optimizer = optimizer.optimize_model(
+            args.model_path,
+            model_type,
+            num_heads=args.num_heads,
+            hidden_size=args.hidden_size,
+            optimization_options=opt_options)
+        model = model_optimizer.model
+
+        # check the optimized model is valid
+        try:
+            ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+        except Exception as e:
+            logger.warning("Optimized model is invalid: {}. ".format(e))
+            logger.warning("Model optimizer will be skipped. " \
+                           "Try to upgrade onnxruntime to avoid this error")
             model = onnx.load(args.model_path)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.utils.constant import FP32
-        fp32_op_names = None
+        specific_quant_config = {}
         if args.model_name_or_path == 'Alireza1044/albert-base-v2-sst2':
-            fp32_op_names = ['Gemm_1410_MatMul', 'MatMul_(259|168)']
+            specific_quant_config['recipes'] = {'first_conv_or_matmul_quantization': False}
         config = PostTrainingQuantConfig(approach='dynamic',
-                                         op_name_dict={op_name:FP32 for op_name in fp32_op_names} if fp32_op_names else None,)
+                                         **specific_quant_config)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func)

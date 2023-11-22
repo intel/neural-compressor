@@ -19,39 +19,35 @@
 
 import os
 
-from ..utils import logger
-from .common import Model as NCModel
+from deprecated import deprecated
+
+from ..conf.dotdict import DotDict, deep_set
 from ..model import BaseModel
 from ..model.model import get_model_fwk_name
-
-from .quantization import Quantization
-from .pruning import Pruning
-from .distillation import Distillation
-from .model_conversion import ModelConversion
-from .graph_optimization import Graph_Optimization
+from ..utils import logger
 from .benchmark import Benchmark
+from .common import Model as NCModel
 from .component import Component
-from ..conf.dotdict import DotDict, deep_set
+from .distillation import Distillation
+from .graph_optimization import Graph_Optimization
+from .model_conversion import ModelConversion
+from .pruning import Pruning
+from .quantization import Quantization
 
-SUPPORTED_COMPONENTS = [
-  Quantization,
-  Pruning,
-  Graph_Optimization,
-  ModelConversion,
-  Benchmark,
-  Component
-]
+SUPPORTED_COMPONENTS = [Quantization, Pruning, Graph_Optimization, ModelConversion, Benchmark, Component]
 
+
+@deprecated(version="2.0")
 class Scheduler(object):
     """Scheduler for neural_compressor component pipeline execution.
 
-    Neural Compressor supports serveral seperate components: Quantization, Pruning, Benchmarking.
+    Neural Compressor supports several separate components: Quantization, Pruning, Benchmarking.
     This scheduler will sequentially execute specified components by the order of
-    appending. This interface provids an unique entry to pipeline execute all supported
+    appending. This interface provides an unique entry to pipeline execute all supported
     components.
 
     There are two typical usages:
-    1) if all informations are set in user configuration yaml files by using neural_compressor built-in
+    1) if all information are set in user configuration yaml files by using neural_compressor built-in
        dataloaders/datasets/metrics, the code usage is like below:
 
        prune = Pruning('/path/to/pruning.yaml')
@@ -83,7 +79,6 @@ class Scheduler(object):
        scheduler.append(quantizer)
        opt_model = scheduler()
        opt_model.save()
-
     """
 
     def __init__(self):
@@ -119,32 +114,26 @@ class Scheduler(object):
             kwargs (named arguments):     Reserved for interface extension.
         """
         for item in args:
-            assert any([isinstance(item, supported_component) \
-                        for supported_component in SUPPORTED_COMPONENTS])
+            assert any([isinstance(item, supported_component) for supported_component in SUPPORTED_COMPONENTS])
             self.components.append(item)
 
     def __call__(self):
         """Do sequential pipeline execution.
 
-        NOTE: it's user responsibility to ensure the output of each componenet could be fed as
+        NOTE: it's user responsibility to ensure the output of each component could be fed as
         the input of next component.
 
         Returns:
             optimized model: best optimized model generated, otherwise return None
-
         """
-        assert self.model, "Scheduler class's model property should be set " \
-                           "before invoking this __call__() function"
+        assert self.model, "Scheduler class's model property should be set " "before invoking this __call__() function"
         model = self.model
         assert len(self.components) > 0
         logger.info("Start sequential pipeline execution.")
         for i, component in enumerate(self.components):
             # print appropriate ordinal number representation (1st, 2nd, 3rd) for each step
-            ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
-            logger.info("The {} step being executing is {}.".format(
-                        ordinal(i),
-                        repr(component).upper()
-                        ))
+            ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10 :: 4])
+            logger.info("The {} step being executing is {}.".format(ordinal(i), repr(component).upper()))
 
             component.model = model
             if self._train_func is not None:
@@ -176,8 +165,7 @@ class Scheduler(object):
         # create component for the combination
         combination = []
         for arg in args:
-            combination += [arg.__class__.__name__] \
-                    if arg.combination is None else arg.combination
+            combination += [arg.__class__.__name__] if arg.combination is None else arg.combination
         new_component = Component(combination=combination)
         self._combine_components(*args, dist_component=new_component)
 
@@ -185,16 +173,14 @@ class Scheduler(object):
 
     def _combination_sanity_check(self, *args):
         """Check sanity of the combination."""
-        TEMP_SUPPORTED_COMPONENTS = ['Quantization', 'Pruning', 'Distillation']
+        TEMP_SUPPORTED_COMPONENTS = ["Quantization", "Pruning", "Distillation"]
         checked_components = []
         for component in args:
             component_class = component.__class__.__name__
-            if component_class in TEMP_SUPPORTED_COMPONENTS and \
-                    component_class not in checked_components :
+            if component_class in TEMP_SUPPORTED_COMPONENTS and component_class not in checked_components:
                 checked_components.append(component_class)
             else:
-                logger.error("The combination of {} is not supported.".format(
-                    checked_components + [component_class]))
+                logger.error("The combination of {} is not supported.".format(checked_components + [component_class]))
 
     def _combine_components(self, *args, dist_component=None):
         """Actual implementation of combine().
@@ -222,31 +208,36 @@ class Scheduler(object):
 
         for combine_component in args:
             # check if config is valid
-            assert combine_component.framework == framework, "Combined components should have " \
-                    "same framework. Detect different frameworks: {} and {} are used.".format(
-                    framework, combine_component.framework )
-            assert combine_component.cfg.device == device, "Combined components should have " \
-                    "same device. Detect different device: {} and {} are used.".format(
-                    device, combine_component.cfg.device )
+            assert combine_component.framework == framework, (
+                "Combined components should have "
+                "same framework. Detect different frameworks: {} and {} are used.".format(
+                    framework, combine_component.framework
+                )
+            )
+            assert (
+                combine_component.cfg.device == device
+            ), "Combined components should have " "same device. Detect different device: {} and {} are used.".format(
+                device, combine_component.cfg.device
+            )
 
             # sync configs
             component_name = combine_component.__class__.__name__.lower()
-            component_cfg = getattr(combine_component.cfg,
-                                    component_name,
-                                    None)
-            assert combine_component is not None, "Please ensure field {} is configured " \
-                    "in input yaml".format(component_name)
+            component_cfg = getattr(combine_component.cfg, component_name, None)
+            assert combine_component is not None, "Please ensure field {} is configured " "in input yaml".format(
+                component_name
+            )
 
             # in case of key train/evaluation not exist, return an empty DotDict
-            component_train_cfg = component_cfg.get('train', DotDict())
+            component_train_cfg = component_cfg.get("train", DotDict())
 
             # TODO: Assumption here: train phase is defined inside component yaml field.
             # But eval is defined at root yaml field.
-            component_eval_cfg = combine_component.cfg.get('evaluation', DotDict())
-            component_tuning_cfg = combine_component.cfg.get('tuning', DotDict())
-            component_model_cfg = combine_component.cfg.get('model', DotDict())
-            component_quantization_cfg = combine_component.cfg.get('quantization', DotDict()) \
-                if component_name == 'quantization' else DotDict()
+            component_eval_cfg = combine_component.cfg.get("evaluation", DotDict())
+            component_tuning_cfg = combine_component.cfg.get("tuning", DotDict())
+            component_model_cfg = combine_component.cfg.get("model", DotDict())
+            component_quantization_cfg = (
+                combine_component.cfg.get("quantization", DotDict()) if component_name == "quantization" else DotDict()
+            )
 
             combine_component._model = self._model
             if component_eval_cfg and component_train_cfg:
@@ -290,12 +281,12 @@ class Scheduler(object):
         # sync to dist component
         dist_component_cfg = DotDict()
         if dist_component is not None:
-            deep_set(dist_component_cfg, 'train', train_cfg)
-            deep_set(dist_component_cfg, 'evaluation', eval_cfg)
-            deep_set(dist_component_cfg, 'tuning', tuning_cfg)
-            deep_set(dist_component_cfg, 'device', device)
-            deep_set(dist_component_cfg, 'model', model_cfg)
-            deep_set(dist_component_cfg, 'quantization', quantization_cfg)
+            deep_set(dist_component_cfg, "train", train_cfg)
+            deep_set(dist_component_cfg, "evaluation", eval_cfg)
+            deep_set(dist_component_cfg, "tuning", tuning_cfg)
+            deep_set(dist_component_cfg, "device", device)
+            deep_set(dist_component_cfg, "model", model_cfg)
+            deep_set(dist_component_cfg, "quantization", quantization_cfg)
             dist_component._model = self._model
             dist_component.framework = framework
             dist_component.cfg = dist_component_cfg
@@ -322,10 +313,10 @@ class Scheduler(object):
                 if isinstance(dist_config[key], dict) and isinstance(src_config[key], dict):
                     self._sync_config(dist_config[key], src_config[key])
                 elif dist_config[key] != src_config[key]:
-                    logger.warning("Find different value {} and {} on key {}.".format(
-                                   dist_config[key], src_config[key], key) + \
-                                   " Use first key-value ({}: {}) pair as default".format(
-                                   key, dist_config[key]))
+                    logger.warning(
+                        "Find different value {} and {} on key {}.".format(dist_config[key], src_config[key], key)
+                        + " Use first key-value ({}: {}) pair as default".format(key, dist_config[key])
+                    )
         # update src config to dist if dist is empty.
         elif not dist_config and src_config:
             dist_config.update(src_config)
@@ -333,7 +324,7 @@ class Scheduler(object):
     @property
     def model(self):
         """Getter of model.
-        
+
         Returns:
             The model used in the Scheduler process.
         """
@@ -355,7 +346,6 @@ class Scheduler(object):
                        Another corner case is slim model of tensorflow,
                        be careful of the name of model configured in yaml file,
                        make sure the name is in supported slim model list.
-
         """
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
@@ -366,7 +356,7 @@ class Scheduler(object):
     @property
     def train_func(self):
         """Do not support get train_func."""
-        assert False, 'Should not try to get the value of `train_func` attribute.'
+        assert False, "Should not try to get the value of `train_func` attribute."
         return None
 
     @train_func.setter
@@ -387,7 +377,7 @@ class Scheduler(object):
     @property
     def eval_func(self):
         """Do not support get eval_func."""
-        assert False, 'Should not try to get the value of `eval_func` attribute.'
+        assert False, "Should not try to get the value of `eval_func` attribute."
         return None
 
     @eval_func.setter
@@ -398,7 +388,7 @@ class Scheduler(object):
             user_eval_func: This function takes "model" as input parameter
                          and executes entire evaluation process with self
                          contained metrics. If eval_func set,
-                         an evaluation process must be triggered 
+                         an evaluation process must be triggered
                          to make evaluation of the model executed.
         """
         self._eval_func = user_eval_func
