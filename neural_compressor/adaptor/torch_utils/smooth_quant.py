@@ -36,7 +36,7 @@ from tqdm import tqdm
 
 
 def enough_memo_store_scale(device, need_space):
-    if device == "cuda":
+    if device == "cuda":  # pragma: no cover
         current_gpu_index = torch.cuda.current_device()
         total_memory = torch.cuda.get_device_properties(current_gpu_index).total_memory
         used_memory = torch.cuda.memory_allocated(current_gpu_index)
