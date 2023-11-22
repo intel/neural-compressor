@@ -387,7 +387,7 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
             if device != model_device:
                 model.to(device)
             with torch.no_grad():
-                outputs = pytorch_forward_wrapper(model, input, device=device)
+                outputs = pytorch_forward_wrapper(model, input)
             self.teacher_outputs = outputs
         return outputs
 
@@ -863,7 +863,7 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(IntermediateLayersKnowl
         if device != model_device:
             model.to(device)
         with torch.no_grad():
-            outputs = pytorch_forward_wrapper(model, input, device=device)
+            outputs = pytorch_forward_wrapper(model, input)
         return outputs
 
     def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
