@@ -200,7 +200,7 @@ Default value is 1978.</p></li>
 <li><p><strong>workspace</strong> (<em>str</em>) – <p>The directory where intermediate files and tuning history file are stored.
 Default value is:</p>
 <blockquote>
-<div><p>’./nc_workspace/{}/’.format(datetime.datetime.now().strftime(‘%Y-%m-%d_%H-%M-%S’)).</p>
+<div><p>”./nc_workspace/{}/”.format(datetime.datetime.now().strftime(“%Y-%m-%d_%H-%M-%S”)).</p>
 </div></blockquote>
 </p></li>
 <li><p><strong>resume_from</strong> (<em>str</em>) – <p>The directory you want to resume tuning history file from.
@@ -238,9 +238,9 @@ The tuning history was automatically saved in the workspace directory</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>inputs</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of strings containing the inputs of model. Default is an empty list.</p></li>
 <li><p><strong>outputs</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of strings containing the outputs of model. Default is an empty list.</p></li>
-<li><p><strong>backend</strong> (<em>str</em><em>, </em><em>optional</em>) – Backend name for model execution. Supported values include: ‘default’, ‘itex’,
-‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, ‘onnxrt_dnnl_ep’, ‘onnxrt_dml_ep’.
-Default value is ‘default’.</p></li>
+<li><p><strong>backend</strong> (<em>str</em><em>, </em><em>optional</em>) – Backend name for model execution. Supported values include: “default”, “itex”,
+“ipex”, “onnxrt_trt_ep”, “onnxrt_cuda_ep”, “onnxrt_dnnl_ep”, “onnxrt_dml_ep”.
+Default value is “default”.</p></li>
 <li><p><strong>warmup</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of iterations to perform warmup before running performance tests.
 Default value is 5.</p></li>
 <li><p><strong>iteration</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of iterations to run performance tests. Default is -1.</p></li>
@@ -260,7 +260,7 @@ Default value is None.</p></li>
 <span class="kn">from</span> <span class="nn">neural_compressor.benchmark</span> <span class="kn">import</span> <span class="n">fit</span>
 
 <span class="n">conf</span> <span class="o">=</span> <span class="n">BenchmarkConfig</span><span class="p">(</span><span class="n">iteration</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">cores_per_instance</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_of_instance</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
-<span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;./int8.pb&#39;</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span> <span class="n">b_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">)</span>
+<span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;./int8.pb&quot;</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span> <span class="n">b_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -274,8 +274,8 @@ Default value is None.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>higher_is_better</strong> (<em>bool</em><em>, </em><em>optional</em>) – This flag indicates whether the metric higher is the better.
 Default value is True.</p></li>
-<li><p><strong>criterion</strong> – (str, optional): This flag indicates whether the metric loss is ‘relative’ or ‘absolute’.
-Default value is ‘relative’.</p></li>
+<li><p><strong>criterion</strong> – (str, optional): This flag indicates whether the metric loss is “relative” or “absolute”.
+Default value is “relative”.</p></li>
 <li><p><strong>tolerable_loss</strong> (<em>float</em><em>, </em><em>optional</em>) – This float indicates how much metric loss we can accept.
 Default value is 0.01.</p></li>
 </ul>
@@ -286,7 +286,7 @@ Default value is 0.01.</p></li>
 
 <span class="n">accuracy_criterion</span> <span class="o">=</span> <span class="n">AccuracyCriterion</span><span class="p">(</span>
     <span class="n">higher_is_better</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># optional.</span>
-    <span class="n">criterion</span><span class="o">=</span><span class="s1">&#39;relative&#39;</span><span class="p">,</span>  <span class="c1"># optional. Available values are &#39;relative&#39; and &#39;absolute&#39;.</span>
+    <span class="n">criterion</span><span class="o">=</span><span class="s2">&quot;relative&quot;</span><span class="p">,</span>  <span class="c1"># optional. Available values are &quot;relative&quot; and &quot;absolute&quot;.</span>
     <span class="n">tolerable_loss</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># optional.</span>
 <span class="p">)</span>
 </pre></div>
@@ -303,7 +303,7 @@ Default value is 0.01.</p></li>
 <li><p><strong>strategy</strong> – Strategy name used in tuning. Please refer to docs/source/tuning_strategies.md.</p></li>
 <li><p><strong>strategy_kwargs</strong> – Parameters for strategy. Please refer to docs/source/tuning_strategies.md.</p></li>
 <li><p><strong>objective</strong> – <p>String or dict. Objective with accuracy constraint guaranteed. String value supports
-‘performance’, ‘modelsize’, ‘footprint’. Default value is ‘performance’.</p>
+“performance”, “modelsize”, “footprint”. Default value is “performance”.</p>
 <blockquote>
 <div><p>Please refer to docs/source/objective.md.</p>
 </div></blockquote>
@@ -334,48 +334,48 @@ strategy_kwargs=None,</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>device</strong> – Support ‘cpu’, ‘gpu’ and ‘npu’.</p></li>
+<li><p><strong>device</strong> – Support “cpu”, “gpu”, “npu” and “xpu”.</p></li>
 <li><p><strong>backend</strong> – Backend for model execution.
-Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, ‘onnxrt_dnnl_ep’,
-‘onnxrt_dml_ep’</p></li>
-<li><p><strong>domain</strong> – Model domain. Support ‘auto’, ‘cv’, ‘object_detection’, ‘nlp’ and ‘recommendation_system’.
+Support “default”, “itex”, “ipex”, “onnxrt_trt_ep”, “onnxrt_cuda_ep”, “onnxrt_dnnl_ep”,
+“onnxrt_dml_ep”</p></li>
+<li><p><strong>domain</strong> – Model domain. Support “auto”, “cv”, “object_detection”, “nlp” and “recommendation_system”.
 Adaptor will use specific quantization settings for different domains automatically, and
 explicitly specified quantization settings will override the automatic setting.
 If users set domain as auto, automatic detection for domain will be executed.</p></li>
 <li><p><strong>recipes</strong> – <p>Recipes for quantiztaion, support list is as below.
-‘smooth_quant’: whether do smooth quant
-‘smooth_quant_args’: parameters for smooth_quant
-‘layer_wise_quant’: whether to use layer wise quant
-‘fast_bias_correction’: whether do fast bias correction
-‘weight_correction’: whether do weight correction
-‘gemm_to_matmul’: whether convert gemm to matmul and add, only valid for onnx models
-‘graph_optimization_level’: support ‘DISABLE_ALL’, ‘ENABLE_BASIC’, ‘ENABLE_EXTENDED’, ‘ENABLE_ALL’</p>
+“smooth_quant”: whether do smooth quant
+“smooth_quant_args”: parameters for smooth_quant
+“layer_wise_quant”: whether to use layer wise quant
+“fast_bias_correction”: whether do fast bias correction
+“weight_correction”: whether do weight correction
+“gemm_to_matmul”: whether convert gemm to matmul and add, only valid for onnx models
+“graph_optimization_level”: support “DISABLE_ALL”, “ENABLE_BASIC”, “ENABLE_EXTENDED”, “ENABLE_ALL”</p>
 <blockquote>
 <div><p>only valid for onnx models</p>
 </div></blockquote>
-<p>’first_conv_or_matmul_quantization’: whether quantize the first conv or matmul
-‘last_conv_or_matmul_quantization’: whether quantize the last conv or matmul
-‘pre_post_process_quantization’: whether quantize the ops in preprocess and postprocess
-‘add_qdq_pair_to_weight’: whether add QDQ pair for weights, only valid for onnxrt_trt_ep
-‘optypes_to_exclude_output_quant’: don’t quantize output of specified optypes
-‘dedicated_qdq_pair’: whether dedicate QDQ pair, only valid for onnxrt_trt_ep</p>
+<p>”first_conv_or_matmul_quantization”: whether quantize the first conv or matmul
+“last_conv_or_matmul_quantization”: whether quantize the last conv or matmul
+“pre_post_process_quantization”: whether quantize the ops in preprocess and postprocess
+“add_qdq_pair_to_weight”: whether add QDQ pair for weights, only valid for onnxrt_trt_ep
+“optypes_to_exclude_output_quant”: don”t quantize output of specified optypes
+“dedicated_qdq_pair”: whether dedicate QDQ pair, only valid for onnxrt_trt_ep</p>
 </p></li>
-<li><p><strong>quant_format</strong> – Support ‘default’, ‘QDQ’ and ‘QOperator’, only required in ONNXRuntime.</p></li>
+<li><p><strong>quant_format</strong> – Support “default”, “QDQ” and “QOperator”, only required in ONNXRuntime.</p></li>
 <li><p><strong>inputs</strong> – Inputs of model, only required in tensorflow.</p></li>
 <li><p><strong>outputs</strong> – Outputs of model, only required in tensorflow.</p></li>
 <li><p><strong>approach</strong> – <dl class="simple">
-<dt>Post-Training Quantization method. Neural compressor support ‘static’, ‘dynamic’,</dt><dd><p>’weight_only’ and ‘auto’ method.</p>
+<dt>Post-Training Quantization method. Neural compressor support “static”, “dynamic”,</dt><dd><p>”weight_only” and “auto” method.</p>
 </dd>
 </dl>
-<p>Default value is ‘static’.
-For strategy ‘basic’, ‘auto’ method means neural compressor will quantize all OPs support PTQ static</p>
+<p>Default value is “static”.
+For strategy “basic”, “auto” method means neural compressor will quantize all OPs support PTQ static</p>
 <blockquote>
 <div><p>or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic,
 PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise
 tuning configs meet the accuracy loss criteria.</p>
 </div></blockquote>
 <dl class="simple">
-<dt>For strategy ‘bayesian’, ‘mse’, ‘mse_v2’ and ‘HAWQ_V2’, ‘exhaustive’, and ‘random’,</dt><dd><p>’auto’ means neural compressor will quantize all OPs support PTQ static or PTQ dynamic.
+<dt>For strategy “bayesian”, “mse”, “mse_v2” and “HAWQ_V2”, “exhaustive”, and “random”,</dt><dd><p>”auto” means neural compressor will quantize all OPs support PTQ static or PTQ dynamic.
 if OPs supporting both PTQ static and PTQ dynamic, PTQ static will be tried, else PTQ dynamic
 will be tried.</p>
 </dd>
@@ -388,14 +388,14 @@ example:
 {</p>
 <blockquote>
 <div><dl>
-<dt>’Conv’: {</dt><dd><dl class="simple">
-<dt>‘weight’: {</dt><dd><p>‘dtype’: [‘fp32’]</p>
+<dt>”Conv”: {</dt><dd><dl class="simple">
+<dt>“weight”: {</dt><dd><p>“dtype”: [“fp32”]</p>
 </dd>
 </dl>
 <p>},
-‘activation’: {</p>
+“activation”: {</p>
 <blockquote>
-<div><p>’dtype’: [‘fp32’]</p>
+<div><p>”dtype”: [“fp32”]</p>
 </div></blockquote>
 <p>}</p>
 </dd>
@@ -429,7 +429,7 @@ example:
 <li><p><strong>reduce_range</strong> – Whether use 7 bits to quantization.</p></li>
 <li><p><strong>excluded_precisions</strong> – Precisions to be excluded, Default value is empty list.
 Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
-If you want to disable bf16 data type, you can specify excluded_precisions = [‘bf16].</p></li>
+If you want to disable bf16 data type, you can specify excluded_precisions = [“bf16].</p></li>
 <li><p><strong>quant_level</strong> – Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
 strategy, auto (default) is the combination of 0 and 1.</p></li>
 <li><p><strong>tuning_criterion</strong> – <dl class="simple">
@@ -447,7 +447,7 @@ strategy, auto (default) is the combination of 0 and 1.</p></li>
 <li><p><strong>diagnosis</strong> (<em>bool</em>) – This flag indicates whether to do diagnosis.
 Default value is False.</p></li>
 <li><p><strong>ni_workload_name</strong> – Custom workload name for Neural Insights diagnosis workload.
-Default value is ‘quantization’.</p></li>
+Default value is “quantization”.</p></li>
 </ul>
 </dd>
 </dl>
@@ -472,10 +472,10 @@ Default value is ‘quantization’.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>device</strong> – Support ‘cpu’, ‘gpu’ and ‘npu’.</p></li>
+<li><p><strong>device</strong> – Support “cpu”, “gpu”, “npu” and “xpu”.</p></li>
 <li><p><strong>backend</strong> – Backend for model execution.
-Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, ‘onnxrt_dnnl_ep’,
-‘onnxrt_dml_ep’</p></li>
+Support “default”, “itex”, “ipex”, “onnxrt_trt_ep”, “onnxrt_cuda_ep”, “onnxrt_dnnl_ep”,
+“onnxrt_dml_ep”</p></li>
 <li><p><strong>inputs</strong> – Inputs of model, only required in tensorflow.</p></li>
 <li><p><strong>outputs</strong> – Outputs of model, only required in tensorflow.</p></li>
 <li><p><strong>op_type_dict</strong> – <p>Tuning constraints on optype-wise  for advance user to reduce tuning space.
@@ -484,14 +484,14 @@ example:
 {</p>
 <blockquote>
 <div><dl>
-<dt>’Conv’: {</dt><dd><dl class="simple">
-<dt>‘weight’: {</dt><dd><p>‘dtype’: [‘fp32’]</p>
+<dt>”Conv”: {</dt><dd><dl class="simple">
+<dt>“weight”: {</dt><dd><p>“dtype”: [“fp32”]</p>
 </dd>
 </dl>
 <p>},
-‘activation’: {</p>
+“activation”: {</p>
 <blockquote>
-<div><p>’dtype’: [‘fp32’]</p>
+<div><p>”dtype”: [“fp32”]</p>
 </div></blockquote>
 <p>}</p>
 </dd>
@@ -526,7 +526,7 @@ example:
 <li><p><strong>model_name</strong> – The name of the model. Default value is empty.</p></li>
 <li><p><strong>excluded_precisions</strong> – Precisions to be excluded, Default value is empty list.
 Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
-If you want to disable bf16 data type, you can specify excluded_precisions = [‘bf16].</p></li>
+If you want to disable bf16 data type, you can specify excluded_precisions = [“bf16].</p></li>
 <li><p><strong>quant_level</strong> – Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
 strategy, auto (default) is the combination of 0 and 1.</p></li>
 <li><p><strong>tuning_criterion</strong> – <dl class="simple">
@@ -580,7 +580,7 @@ Supports “magnitude”, “snip”, “snip_momentum”,</p>
 </div></blockquote>
 <p>Default to “snip_momentum”, which is the most feasible pruning criteria under most situations.</p>
 </p></li>
-<li><p><strong>pattern</strong> (<em>str</em><em>, </em><em>optional</em>) – Sparsity’s structure (or unstructure) types.
+<li><p><strong>pattern</strong> (<em>str</em><em>, </em><em>optional</em>) – Sparsity”s structure (or unstructure) types.
 Supports “NxM” (e.g “4x1”, “8x1”), “channelx1” &amp; “1xchannel”(channel-wise), “N:M” (e.g “2:4”).
 Default to “4x1”, which can be directly processed by our kernels in ITREX.</p></li>
 <li><p><strong>op_names</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – Layers contains some specific names to be included for pruning.
@@ -593,24 +593,24 @@ Default to 0.</p></li>
 <li><p><strong>end_step</strong> – (int, optional): The step to end pruning.
 Supports an integer.
 Default to 0.</p></li>
-<li><p><strong>pruning_scope</strong> (<em>str</em><em>, </em><em>optional</em>) – Determine layers’ scores should be gather together to sort
+<li><p><strong>pruning_scope</strong> (<em>str</em><em>, </em><em>optional</em>) – Determine layers” scores should be gather together to sort
 Supports “global” and “local”.
 Default: “global”, since this leads to less accuracy loss.</p></li>
 <li><p><strong>pruning_frequency</strong> – the frequency of pruning operation.
 Supports an integer.
 Default to 1.</p></li>
-<li><p><strong>min_sparsity_ratio_per_op</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum restriction for every layer’s sparsity.
+<li><p><strong>min_sparsity_ratio_per_op</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum restriction for every layer”s sparsity.
 Supports a float between 0 and 1.
 Default to 0.0.</p></li>
-<li><p><strong>max_sparsity_ratio_per_op</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum restriction for every layer’s sparsity.
+<li><p><strong>max_sparsity_ratio_per_op</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum restriction for every layer”s sparsity.
 Supports a float between 0 and 1.
 Default to 0.98.</p></li>
 <li><p><strong>sparsity_decay_type</strong> (<em>str</em><em>, </em><em>optional</em>) – how to schedule the sparsity increasing methods.
 Supports “exp”, “cube”, “cube”, “linear”.
 Default to “exp”.</p></li>
 <li><p><strong>pruning_op_types</strong> (<em>list</em><em> of </em><em>str</em>) – Operator types currently support for pruning.
-Supports [‘Conv’, ‘Linear’].
-Default to [‘Conv’, ‘Linear’].</p></li>
+Supports [“Conv”, “Linear”].
+Default to [“Conv”, “Linear”].</p></li>
 </ul>
 </dd>
 </dl>
@@ -677,7 +677,7 @@ First item is the loss type for student model output and groundtruth label,
 second item is the loss type for student model output and teacher model output.
 Supported types for first item are “CE”, “MSE”.
 Supported types for second item are “CE”, “MSE”, “KL”.
-Defaults to [‘CE’, ‘CE’].</p></li>
+Defaults to [“CE”, “CE”].</p></li>
 <li><p><strong>loss_weights</strong> (<em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – loss weights, should be a list of length 2 and sum to 1.0.
 First item is the weight multiplied to the loss of student model output and groundtruth label,
 second item is the weight multiplied to the loss of student model output and teacher model output.
@@ -709,7 +709,7 @@ the student model and the teacher model. Each item in layer_mappings should be a
 list with the format [(student_layer_name, student_layer_output_process),
 (teacher_layer_name, teacher_layer_output_process)], where the student_layer_name
 and the teacher_layer_name are the layer names of the student and the teacher models,
-e.g. ‘bert.layer1.attention’. The student_layer_output_process and teacher_layer_output_process
+e.g. “bert.layer1.attention”. The student_layer_output_process and teacher_layer_output_process
 are output process method to get the desired output from the layer specified in the layer
 name, its value can be either a function or a string, in function case, the function
 takes output of the specified layer as input, in string case, when output of the
@@ -721,9 +721,9 @@ When output process is not needed, the item in layer_mappings can be abbreviated
 are the same, it can be abbreviated further to [(layer_name, )].
 Some examples of the item in layer_mappings are listed below:</p>
 <blockquote>
-<div><p>[(‘student_model.layer1.attention’, ‘1’), (‘teacher_model.layer1.attention’, ‘1’)]
-[(‘student_model.layer1.output’, ), (‘teacher_model.layer1.output’, )].
-[(‘model.layer1.output’, )].</p>
+<div><p>[(“student_model.layer1.attention”, “1”), (“teacher_model.layer1.attention”, “1”)]
+[(“student_model.layer1.output”, ), (“teacher_model.layer1.output”, )].
+[(“model.layer1.output”, )].</p>
 </div></blockquote>
 </p></li>
 <li><p><strong>loss_types</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – loss types, should be a list with the same length of
@@ -742,9 +742,9 @@ in the layer_mappings. Defaults to [1.0 / len(layer_mappings)] * len(layer_mappi
 <span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
 
 <span class="n">criterion_conf</span> <span class="o">=</span> <span class="n">IntermediateLayersKnowledgeDistillationLossConfig</span><span class="p">(</span>
-    <span class="n">layer_mappings</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;layer1.0&#39;</span><span class="p">,</span> <span class="p">],</span>
-                    <span class="p">[[</span><span class="s1">&#39;layer1.1.conv1&#39;</span><span class="p">,</span> <span class="p">],</span> <span class="p">[</span><span class="s1">&#39;layer1.1.conv1&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">]],],</span>
-    <span class="n">loss_types</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;MSE&#39;</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">layer_mappings</span><span class="p">),</span>
+    <span class="n">layer_mappings</span><span class="o">=</span><span class="p">[[</span><span class="s2">&quot;layer1.0&quot;</span><span class="p">,</span> <span class="p">],</span>
+                    <span class="p">[[</span><span class="s2">&quot;layer1.1.conv1&quot;</span><span class="p">,</span> <span class="p">],</span> <span class="p">[</span><span class="s2">&quot;layer1.1.conv1&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">]],],</span>
+    <span class="n">loss_types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;MSE&quot;</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">layer_mappings</span><span class="p">),</span>
     <span class="n">loss_weights</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">layer_mappings</span><span class="p">)]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">layer_mappings</span><span class="p">),</span>
     <span class="n">add_origin_loss</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
@@ -782,16 +782,16 @@ len(layer_mappings).</p></li>
 
 <span class="n">criterion_conf</span> <span class="o">=</span> <span class="n">SelfKnowledgeDistillationLossConfig</span><span class="p">(</span>
     <span class="n">layer_mappings</span><span class="o">=</span><span class="p">[</span>
-        <span class="p">[[</span><span class="s1">&#39;resblock.1.feature.output&#39;</span><span class="p">,</span> <span class="s1">&#39;resblock.deepst.feature.output&#39;</span><span class="p">],</span>
-        <span class="p">[</span><span class="s1">&#39;resblock.2.feature.output&#39;</span><span class="p">,</span><span class="s1">&#39;resblock.deepst.feature.output&#39;</span><span class="p">]],</span>
-        <span class="p">[[</span><span class="s1">&#39;resblock.2.fc&#39;</span><span class="p">,</span><span class="s1">&#39;resblock.deepst.fc&#39;</span><span class="p">],</span>
-        <span class="p">[</span><span class="s1">&#39;resblock.3.fc&#39;</span><span class="p">,</span><span class="s1">&#39;resblock.deepst.fc&#39;</span><span class="p">]],</span>
-        <span class="p">[[</span><span class="s1">&#39;resblock.1.fc&#39;</span><span class="p">,</span><span class="s1">&#39;resblock.deepst.fc&#39;</span><span class="p">],</span>
-        <span class="p">[</span><span class="s1">&#39;resblock.2.fc&#39;</span><span class="p">,</span><span class="s1">&#39;resblock.deepst.fc&#39;</span><span class="p">],</span>
-        <span class="p">[</span><span class="s1">&#39;resblock.3.fc&#39;</span><span class="p">,</span><span class="s1">&#39;resblock.deepst.fc&#39;</span><span class="p">]]</span>
+        <span class="p">[[</span><span class="s2">&quot;resblock.1.feature.output&quot;</span><span class="p">,</span> <span class="s2">&quot;resblock.deepst.feature.output&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s2">&quot;resblock.2.feature.output&quot;</span><span class="p">,</span><span class="s2">&quot;resblock.deepst.feature.output&quot;</span><span class="p">]],</span>
+        <span class="p">[[</span><span class="s2">&quot;resblock.2.fc&quot;</span><span class="p">,</span><span class="s2">&quot;resblock.deepst.fc&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s2">&quot;resblock.3.fc&quot;</span><span class="p">,</span><span class="s2">&quot;resblock.deepst.fc&quot;</span><span class="p">]],</span>
+        <span class="p">[[</span><span class="s2">&quot;resblock.1.fc&quot;</span><span class="p">,</span><span class="s2">&quot;resblock.deepst.fc&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s2">&quot;resblock.2.fc&quot;</span><span class="p">,</span><span class="s2">&quot;resblock.deepst.fc&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s2">&quot;resblock.3.fc&quot;</span><span class="p">,</span><span class="s2">&quot;resblock.deepst.fc&quot;</span><span class="p">]]</span>
     <span class="p">],</span>
     <span class="n">temperature</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
-    <span class="n">loss_types</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;L2&#39;</span><span class="p">,</span> <span class="s1">&#39;KL&#39;</span><span class="p">,</span> <span class="s1">&#39;CE&#39;</span><span class="p">],</span>
+    <span class="n">loss_types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;L2&quot;</span><span class="p">,</span> <span class="s2">&quot;KL&quot;</span><span class="p">,</span> <span class="s2">&quot;CE&quot;</span><span class="p">],</span>
     <span class="n">loss_weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">],</span>
     <span class="n">add_origin_loss</span><span class="o">=</span><span class="kc">True</span><span class="p">,)</span>
 <span class="n">conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">criterion_conf</span><span class="p">)</span>
@@ -840,21 +840,21 @@ Defaults to None.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>device</strong> (<em>str</em><em>, </em><em>optional</em>) – Device for execution.
-Support ‘cpu’, ‘gpu’ and ‘npu’, default is ‘cpu’.</p></li>
+Support “cpu”, “gpu”, “npu” and “xpu”, default is “cpu”.</p></li>
 <li><p><strong>backend</strong> (<em>str</em><em>, </em><em>optional</em>) – Backend for model execution.
-Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’, ‘onnxrt_dnnl_ep’,
-‘onnxrt_dml_ep’. Default is ‘default’.</p></li>
+Support “default”, “itex”, “ipex”, “onnxrt_trt_ep”, “onnxrt_cuda_ep”, “onnxrt_dnnl_ep”,
+“onnxrt_dml_ep”. Default is “default”.</p></li>
 <li><p><strong>precisions</strong> (<em>[</em><em>str</em><em>, </em><em>list</em><em>]</em><em>, </em><em>optional</em>) – Target precision for mix precision conversion.
-Support ‘bf16’ and ‘fp16’, default is ‘bf16’.</p></li>
+Support “bf16” and “fp16”, default is “bf16”.</p></li>
 <li><p><strong>model_name</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the model. Default value is empty.</p></li>
 <li><p><strong>inputs</strong> (<em>list</em><em>, </em><em>optional</em>) – Inputs of model, default is [].</p></li>
 <li><p><strong>outputs</strong> (<em>list</em><em>, </em><em>optional</em>) – Outputs of model, default is [].</p></li>
 <li><p><strong>quant_level</strong> – Support auto, 0 and 1, 0 is conservative(fallback in op type wise),
 1(fallback in op wise), auto (default) is the combination of 0 and 1.</p></li>
 <li><p><strong>tuning_criterion</strong> (<em>TuningCriterion object</em><em>, </em><em>optional</em>) – Accuracy tuning settings,
-it won’t work if there is no accuracy tuning process.</p></li>
+it won”t work if there is no accuracy tuning process.</p></li>
 <li><p><strong>accuracy_criterion</strong> (<em>AccuracyCriterion object</em><em>, </em><em>optional</em>) – Accuracy constraint settings,
-it won’t work if there is no accuracy tuning process.</p></li>
+it won”t work if there is no accuracy tuning process.</p></li>
 <li><p><strong>excluded_precisions</strong> (<em>list</em><em>, </em><em>optional</em>) – Precisions to be excluded during mix precision conversion, default is [].</p></li>
 <li><p><strong>op_type_dict</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>Tuning constraints on optype-wise  for advance user to reduce tuning space.
 User can specify the quantization config by op type:
@@ -862,14 +862,14 @@ example:
 {</p>
 <blockquote>
 <div><dl>
-<dt>’Conv’: {</dt><dd><dl class="simple">
-<dt>‘weight’: {</dt><dd><p>‘dtype’: [‘fp32’]</p>
+<dt>”Conv”: {</dt><dd><dl class="simple">
+<dt>“weight”: {</dt><dd><p>“dtype”: [“fp32”]</p>
 </dd>
 </dl>
 <p>},
-‘activation’: {</p>
+“activation”: {</p>
 <blockquote>
-<div><p>’dtype’: [‘fp32’]</p>
+<div><p>”dtype”: [“fp32”]</p>
 </div></blockquote>
 <p>}</p>
 </dd>
@@ -956,7 +956,7 @@ select from [“QDQ”, “QLinear”]. Defaults to “QDQ”.</p></li>
 <li><p><strong>dynamic_axes</strong> (<em>dict</em><em>, </em><em>optional</em>) – A dictionary of dynamic axes information. Defaults to None.</p></li>
 <li><p><strong>recipe</strong> (<em>str</em><em>, </em><em>optional</em>) – A string to select recipes used for Linear -&gt; Matmul + Add, select from
 [“QDQ_OP_FP32_BIAS”, “QDQ_OP_INT32_BIAS”, “QDQ_OP_FP32_BIAS_QDQ”].
-Defaults to ‘QDQ_OP_FP32_BIAS’.</p></li>
+Defaults to “QDQ_OP_FP32_BIAS”.</p></li>
 </ul>
 </dd>
 </dl>
@@ -969,15 +969,15 @@ int8_onnx_config = Torch2ONNXConfig(</p>
 opset_version=14,
 quant_format=”QDQ”, # or QLinear
 example_inputs=torch.randn(1, 3, 224, 224),
-input_names=[‘input’],
-output_names=[‘output’],
+input_names=[“input”],
+output_names=[“output”],
 dynamic_axes={“input”: {0: “batch_size”},</p>
 <blockquote>
 <div><p>“output”: {0: “batch_size”}},</p>
 </div></blockquote>
 </div></blockquote>
 <p>)
-q_model.export(‘int8-model.onnx’, int8_onnx_config)</p>
+q_model.export(“int8-model.onnx”, int8_onnx_config)</p>
 </dd></dl>
 
 <dl class="py class">
@@ -987,11 +987,11 @@ q_model.export(‘int8-model.onnx’, int8_onnx_config)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – The data type of export target model. Supports ‘fp32’ and ‘int8’.
-Defaults to ‘int8’.</p></li>
+<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – The data type of export target model. Supports “fp32” and “int8”.
+Defaults to “int8”.</p></li>
 <li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – The version of the ONNX operator set to use. Defaults to 14.</p></li>
 <li><p><strong>quant_format</strong> (<em>str</em><em>, </em><em>optional</em>) – The quantization format for the export target model.
-Supports ‘default’, ‘QDQ’ and ‘QOperator’. Defaults to ‘QDQ’.</p></li>
+Supports “default”, “QDQ” and “QOperator”. Defaults to “QDQ”.</p></li>
 <li><p><strong>example_inputs</strong> (<em>list</em><em>, </em><em>optional</em>) – A list example inputs to use for tracing the model.
 Defaults to None.</p></li>
 <li><p><strong>input_names</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of model input names. Defaults to None.</p></li>
@@ -1002,7 +1002,7 @@ Defaults to None.</p></li>
 </dd>
 </dl>
 <p>Examples:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># tensorflow QDQ int8 model &#39;q_model&#39; export to ONNX int8 model</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># tensorflow QDQ int8 model &quot;q_model&quot; export to ONNX int8 model</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">TF2ONNXConfig</span>
 <span class="n">config</span> <span class="o">=</span> <span class="n">TF2ONNXConfig</span><span class="p">()</span>
 <span class="n">q_model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">output_graph</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
@@ -1064,7 +1064,7 @@ Defaults to None.</p></li>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7ff6748ac670> 
+   <jinja2.runtime.BlockReference object at 0x7f8acb30f970> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

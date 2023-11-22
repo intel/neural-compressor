@@ -18,6 +18,8 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.adaptor.torch_utils.util.move_input_device
+   neural_compressor.adaptor.torch_utils.util.forward_wrapper
    neural_compressor.adaptor.torch_utils.util.get_embedding_contiguous
    neural_compressor.adaptor.torch_utils.util.is_fused_module
    neural_compressor.adaptor.torch_utils.util.collate_torch_preds
@@ -50,6 +52,32 @@ Functions
    neural_compressor.adaptor.torch_utils.util.calibration
    neural_compressor.adaptor.torch_utils.util.get_hidden_states
 
+
+
+.. py:function:: move_input_device(input, device='cpu')
+
+   Auto mapping input to device for all kinds of format.
+
+   :param input: input data
+   :type input: torch.tensor
+   :param device: target device. Defaults to "cpu".
+   :type device: str, optional
+
+   :returns: input data on target device
+   :rtype: input (torch.tensor)
+
+
+.. py:function:: forward_wrapper(model, input)
+
+   Model forward with device auto mapping.
+
+   :param model: input model
+   :type model: torch.nn.Module
+   :param input: input data
+   :type input: torch.tensor
+
+   :returns: output data
+   :rtype: output
 
 
 .. py:function:: get_embedding_contiguous(model)
