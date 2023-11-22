@@ -239,7 +239,7 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
     """A class for performing smooth quantization calibration on a Tensorflow LLM model.
 
     Args:
-        model (str): A path to the origianl Tensorflow model.
+        model (str): A path to the original Tensorflow model.
         iterations (int): The number of iterations to run the calibration process.
         op_types (List[str]): The types of operations to be quantized.
         percentile (float): The percentile of calibration to remove outliers.
@@ -348,7 +348,7 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
 
                     if index == 0:
                         msg = ";{}__print__:".format(each_node_name)
-                        # workround for swish_f32, attribute T is not in the op definition
+                        # workaround for swish_f32, attribute T is not in the op definition
                         if "swish_f32" in graph_info[pre_node_name].node.name:
                             src_dt = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
                         else:
@@ -416,10 +416,13 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
         auto_trackable = model.model
         infer = auto_trackable.signatures["serving_default"]
         for idx, (inputs, _) in enumerate(self.dataloader):
-            assert len(input_tensor_names) == len(inputs), "inputs len must equal with input_tensor"
             feed_dict = {}
-            for i, input_tensor_name in enumerate(input_tensor_names):
-                feed_dict[input_tensor_name] = inputs[i]
+            if len(input_tensor_names) == 1:
+                feed_dict[input_tensor_names[0]] = inputs
+            else:
+                assert len(input_tensor_names) == len(inputs), "inputs len must equal with input_tensor"
+                for i, input_tensor_name in enumerate(input_tensor_names):
+                    feed_dict[input_tensor_name] = inputs[i]
 
             _ = infer(**feed_dict)
 
@@ -453,12 +456,12 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
             self._sq_target_node_names
         ), "Failed to get weights for some nodes, please check variables"
 
-    def _generate_calibration_data(self):
+    def _generate_calibration_data(self, input_node_names, output_node_names):
         """Generate the calibration data."""
         sorted_graph = QuantizeGraphHelper().get_sorted_graph(
             self.graph_def,
-            ["attention_mask", "input_ids"],
-            ["Identity", "Identity_1"],
+            input_node_names,
+            output_node_names,
         )
 
         for node in sorted_graph.node:
@@ -474,16 +477,19 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
         sampling_graph_def = copy.deepcopy(self.graph_def)
         self._inference_for_calibration(sampling_graph_def)
 
-    def __call__(self):
+    def __call__(self, input_node_names, output_node_names):
         """Generates calibration data and calculate the maximum values per channel.
 
+        Args:
+            input_node_names: (list): A list of names for input nodes.
+            output_node_names: (list): A list of names for output nodes.
         Returns:
             max_vals_per_channel (dict): A dictionary containing the maximum values per channel.
             sq_target_node_names (dict): A dictionary mapping from weight names to target node names.
             sq_weight_tensor_dict (dict): A dictionary containing tensor of weights.
         """
         self.graph_def, self._saved_model, self.func, self.frozen_func, _, _ = parse_saved_model(self.model)
-        self._generate_calibration_data()
+        self._generate_calibration_data(input_node_names, output_node_names)
         max_vals_per_channel = {}
         for activation_name, output_tensor in self._sq_output_tensor_dict.items():
             max_val_per_channel = self._get_maxval_per_channel(output_tensor, percentile=self.percentile)

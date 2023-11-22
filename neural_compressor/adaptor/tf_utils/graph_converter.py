@@ -298,10 +298,13 @@ class GraphConverter:
         auto_trackable = model.model
         infer = auto_trackable.signatures["serving_default"]
         for idx, (inputs, _) in enumerate(self.data_loader):
-            assert len(input_tensor_names) == len(inputs), "inputs len must equal with input_tensor"
             feed_dict = {}
-            for i, input_tensor_name in enumerate(input_tensor_names):
-                feed_dict[input_tensor_name] = inputs[i]
+            if len(input_tensor_names) == 1:
+                feed_dict[input_tensor_names[0]] = inputs
+            else:
+                assert len(input_tensor_names) == len(inputs), "inputs len must equal with input_tensor"
+                for i, input_tensor_name in enumerate(input_tensor_names):
+                    feed_dict[input_tensor_name] = inputs[i]
 
             _ = infer(**feed_dict)
 

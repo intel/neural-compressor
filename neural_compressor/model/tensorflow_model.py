@@ -1276,20 +1276,22 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
                 weight_array *= self.sq_weight_scale_dict[parsed_weight_name]
                 weight_array = np.transpose(weight_array, [1, 0])
                 tf.compat.v1.assign(model.variables[idx], weight_array)
-                if parsed_weight_name not in self._weight_tensor_minmax_dict:
-                    self._weight_tensor_minmax_dict[parsed_weight_name] = [np.min(weight_array), np.max(weight_array)]
+            else:
+                weight_array = weight_tensor
+
+            if parsed_weight_name not in self._weight_tensor_minmax_dict:
+                self._weight_tensor_minmax_dict[parsed_weight_name] = [np.min(weight_array), np.max(weight_array)]
         self._auto_trackable = model
 
     def save(self, root=None):
         """Save the model to the root path."""
+        import shutil
         from neural_compressor.adaptor.tf_utils.util import parse_saved_model, reconstruct_saved_model
 
         if not root:
             root = cfg.default_workspace
         root = os.path.abspath(os.path.expanduser(root))
         if os.path.exists(root):
-            import shutil
-
             shutil.rmtree(root)
         os.makedirs(root, exist_ok=True)
 
@@ -1298,7 +1300,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         reconstruct_saved_model(graph_def, func, frozen_func, _saved_model, root)
         logger.info("Save quantized model to {}.".format(root))
         # delete the LLM file saved in this temporary path
-        os.remove(self.model_path)
+        shutil.rmtree(self.model_path, ignore_errors=True)
 
 
 class TensorflowQATModel(TensorflowSavedModelModel):
