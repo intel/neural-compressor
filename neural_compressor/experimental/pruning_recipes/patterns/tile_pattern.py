@@ -17,10 +17,12 @@
 # limitations under the License.
 
 import numpy as np
+from deprecated import deprecated
 
 from .pattern import PatternBase, pattern_registry
 
 
+@deprecated(version="2.0")
 class TilePatternBase(PatternBase):
     """Parent class for all NxM tile patterns."""
 
@@ -42,6 +44,7 @@ class TilePatternBase(PatternBase):
             return flatten_mask
 
 
+@deprecated(version="2.0")
 @pattern_registry(pattern_type="tile_pattern_1x1")
 class TilePattern_1x1(TilePatternBase):
     """1x1 tile pattern (unstructured)."""
@@ -51,6 +54,7 @@ class TilePattern_1x1(TilePatternBase):
         super(TilePattern_1x1, self).__init__([1, 1])
 
 
+@deprecated(version="2.0")
 @pattern_registry(pattern_type="tile_pattern_2x2")
 class TilePattern_2x2(TilePatternBase):
     """2x2 tile pattern (unstructured)."""
@@ -60,6 +64,7 @@ class TilePattern_2x2(TilePatternBase):
         super(TilePattern_2x2, self).__init__([2, 2])
 
 
+@deprecated(version="2.0")
 @pattern_registry(pattern_type="tile_pattern_1x16")
 class TilePattern_1x16(TilePatternBase):
     """1x16 tile pattern (unstructured)."""
@@ -69,6 +74,7 @@ class TilePattern_1x16(TilePatternBase):
         super(TilePattern_1x16, self).__init__([1, 16])
 
 
+@deprecated(version="2.0")
 @pattern_registry(pattern_type="tile_pattern_4x1")
 class TilePattern_4x1(TilePatternBase):
     """4x1 tile pattern (unstructured)."""
@@ -78,6 +84,7 @@ class TilePattern_4x1(TilePatternBase):
         super(TilePattern_4x1, self).__init__([4, 1])
 
 
+@deprecated(version="2.0")
 @pattern_registry(pattern_type="tile_pattern_1x2")
 class TilePattern_1x2(TilePatternBase):
     """1x2 tile pattern (unstructured)."""

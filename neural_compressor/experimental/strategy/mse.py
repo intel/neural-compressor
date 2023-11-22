@@ -17,10 +17,10 @@
 """MSE tuning strategy."""
 from collections import OrderedDict
 from copy import deepcopy
-from time import time
-from typing import Any, Dict, List
+from typing import List
 
 import numpy as np
+from deprecated import deprecated
 
 from ...utils import logger
 from .strategy import TuneStrategy, strategy_registry
@@ -28,6 +28,7 @@ from .utils.tuning_sampler import FallbackTuningSampler, OpTypeWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
 
 
+@deprecated(version="2.0")
 @strategy_registry
 class MSETuneStrategy(TuneStrategy):
     """The tuning strategy using MSE policy in tuning space.

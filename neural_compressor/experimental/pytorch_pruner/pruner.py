@@ -17,6 +17,7 @@
 # limitations under the License.
 
 import torch
+from deprecated import deprecated
 
 from .logger import logger
 from .patterns import get_pattern
@@ -25,6 +26,7 @@ from .scheduler import get_scheduler
 PRUNERS = {}
 
 
+@deprecated(version="2.0")
 def register_pruners(name):
     """Class decorator to register a Pruner subclass to the registry.
 
@@ -46,6 +48,7 @@ def register_pruners(name):
     return register
 
 
+@deprecated(version="2.0")
 def get_pruner(modules, config):
     """Get registered pruner class.
 
@@ -66,6 +69,7 @@ def get_pruner(modules, config):
     return PRUNERS[name](modules, config)
 
 
+@deprecated(version="2.0")
 class Pruner:
     """Pruning Pruner.
 
@@ -217,6 +221,7 @@ class Pruner:
         pass
 
 
+@deprecated(version="2.0")
 @register_pruners("magnitude")
 class MagnitudePruner(Pruner):
     """Pruning Pruner.
@@ -244,6 +249,7 @@ class MagnitudePruner(Pruner):
                 self.scores[key] = p
 
 
+@deprecated(version="2.0")
 @register_pruners("snip")
 class SnipPruner(Pruner):
     """Pruning Pruner.
@@ -278,6 +284,7 @@ class SnipPruner(Pruner):
                 self.scores[key] = torch.abs(p * p.grad)
 
 
+@deprecated(version="2.0")
 @register_pruners("snip_momentum")
 class SnipMomentumPruner(Pruner):
     """Pruning Pruner.
@@ -315,6 +322,7 @@ class SnipMomentumPruner(Pruner):
                 self.scores[key] += 1.0 * torch.abs(p * p.grad)
 
 
+@deprecated(version="2.0")
 @register_pruners("pattern_lock")
 class PatternLockPruner(Pruner):
     """Pruning Pruner.

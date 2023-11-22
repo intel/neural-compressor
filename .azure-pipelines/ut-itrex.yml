@@ -1,0 +1,34 @@
+trigger: none
+
+pr:
+  autoCancel: true
+  drafts: false
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - neural_compressor
+      - setup.py
+      - requirements.txt
+      - .azure-pipelines/scripts/ut/run_itrex.sh
+      - .azure-pipelines/ut-itrex.yml
+
+pool: MODEL_PERF_TEST
+
+variables:
+  UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
+
+stages:
+  - stage:
+    displayName: Unit Test of ITREX
+    jobs:
+      - job:
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: 'commonDockerConfig'
+              utScriptFileName: 'run_itrex'
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: 'ut-itrex'
+              utContainerName: "utTest-itrex"

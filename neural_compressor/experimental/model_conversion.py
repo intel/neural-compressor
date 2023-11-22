@@ -20,6 +20,7 @@ import datetime
 import tempfile
 
 import yaml
+from deprecated import deprecated
 
 from neural_compressor.adaptor import FRAMEWORKS
 
@@ -31,6 +32,7 @@ from ..utils.create_obj_from_config import create_dataloader, create_eval_func
 from .common import Model as NCModel
 
 
+@deprecated(version="2.0")
 class ModelConversion:  # pragma: no cover
     """ModelConversion class is used to convert one model format to another.
 

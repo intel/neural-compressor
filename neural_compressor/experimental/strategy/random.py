@@ -15,9 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The random tuning strategy."""
-from collections import OrderedDict
-
 import numpy as np
+from deprecated import deprecated
 
 from ...utils import logger
 from .strategy import TuneStrategy, strategy_registry
@@ -25,6 +24,7 @@ from .utils.tuning_sampler import FallbackTuningSampler, OpWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
 
 
+@deprecated(version="2.0")
 @strategy_registry
 class RandomTuneStrategy(TuneStrategy):
     """The random tuning strategy."""

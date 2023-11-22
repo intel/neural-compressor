@@ -29,6 +29,7 @@ from .component import Component
 from .pruner_legacy import PRUNERS
 
 
+@deprecated(version="2.0")
 class Pruning(Component):
     """This is base class of pruning object.
 
@@ -410,6 +411,7 @@ class Pruning(Component):
         return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
 
 
+@deprecated(version="2.0")
 class TfPruningCallback(object):
     """Class that contains callback functions.
 

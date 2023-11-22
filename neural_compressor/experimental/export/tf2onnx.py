@@ -18,12 +18,15 @@
 
 import re
 
+from deprecated import deprecated
+
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
 
 t2o = LazyImport("tf2onnx")
 
 
+@deprecated(version="2.0")
 def _split_nodename_and_shape(name):
     """Split input name with shape into name and shape."""
     # pattern for a node name
@@ -45,6 +48,7 @@ def _split_nodename_and_shape(name):
     return inputs, shapes
 
 
+@deprecated(version="2.0")
 def tf_to_fp32_onnx(graph_def, save_path, opset_version=14, input_names=None, output_names=None, inputs_as_nchw=None):
     """Export FP32 Tensorflow model into FP32 ONNX model using tf2onnx tool.
 
@@ -77,6 +81,7 @@ def tf_to_fp32_onnx(graph_def, save_path, opset_version=14, input_names=None, ou
     logger.info("*" * len(info))
 
 
+@deprecated(version="2.0")
 def tf_to_int8_onnx(
     int8_model, save_path, opset_version: int = 14, input_names=None, output_names=None, inputs_as_nchw=None
 ):
