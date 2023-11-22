@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: GenerateGraphWithQDQPattern(model, calibration_data, op_wise_config, fake_quant, fp32_ops, bf16_ops, quantized_nodes, device, performance_only, itex_mode)
+.. py:class:: GenerateGraphWithQDQPattern(model, calibration_data, op_wise_config, fake_quant, fp32_ops, bf16_ops, quantized_nodes, device, performance_only, itex_mode, llm_weight_minmax)
 
 
 

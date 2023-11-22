@@ -101,13 +101,16 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel" title="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowSavedModelModel</span></code></a></p></td>
 <td><p>Build Tensorflow saved model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowQATModel" title="neural_compressor.model.tensorflow_model.TensorflowQATModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowQATModel</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowLLMModel" title="neural_compressor.model.tensorflow_model.TensorflowLLMModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowLLMModel</span></code></a></p></td>
+<td><p>The class Tensorflow saved model whose GraphDef exceeding maximum protobuf size of 2GB.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowQATModel" title="neural_compressor.model.tensorflow_model.TensorflowQATModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowQATModel</span></code></a></p></td>
 <td><p>Build Tensorflow QAT model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowCheckpointModel" title="neural_compressor.model.tensorflow_model.TensorflowCheckpointModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowCheckpointModel</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowCheckpointModel" title="neural_compressor.model.tensorflow_model.TensorflowCheckpointModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowCheckpointModel</span></code></a></p></td>
 <td><p>Build Tensorflow checkpoint model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowModel" title="neural_compressor.model.tensorflow_model.TensorflowModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowModel</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowModel" title="neural_compressor.model.tensorflow_model.TensorflowModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowModel</span></code></a></p></td>
 <td><p>A wrapper to construct a Tensorflow Model.</p></td>
 </tr>
 </tbody>
@@ -284,9 +287,11 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>saved_model_dir</strong> – Directory of the SavedModel.</p></li>
+<li><p><strong>model</strong> – Directory of the SavedModel.</p></li>
 <li><p><strong>saved_model_tags</strong> – Set of tags identifying the MetaGraphDef within the
 SavedModel to analyze.</p></li>
+<li><p><strong>input_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – input_tensor_names of model.</p></li>
+<li><p><strong>output_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – output_tensor_names of model.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -429,6 +434,12 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowLLMModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowLLMModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowLLMModel" title="Permalink to this definition"></a></dt>
+<dd><p>The class Tensorflow saved model whose GraphDef exceeding maximum protobuf size of 2GB.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowQATModel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowQATModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowQATModel" title="Permalink to this definition"></a></dt>
 <dd><p>Build Tensorflow QAT model.</p>
@@ -464,7 +475,7 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fab32fcd390> 
+   <jinja2.runtime.BlockReference object at 0x7fd42ef29b40> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

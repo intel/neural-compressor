@@ -98,6 +98,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.smooth_quant_scaler.SmoothQuantScaler" title="neural_compressor.adaptor.tf_utils.smooth_quant_scaler.SmoothQuantScaler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SmoothQuantScaler</span></code></a></p></td>
 <td><p>A class for scaling model weights using Smooth Quantization method.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.smooth_quant_scaler.SmoothQuantScalerLLM" title="neural_compressor.adaptor.tf_utils.smooth_quant_scaler.SmoothQuantScalerLLM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SmoothQuantScalerLLM</span></code></a></p></td>
+<td><p>A class for scaling model weights for TF LLM models using Smooth Quantization method.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py class">
@@ -112,6 +115,23 @@
 <li><p><strong>alpha</strong> – float, the scaling factor</p></li>
 <li><p><strong>scales_per_op</strong> – bool, each op will have an individual scale or
 ops with the same input will share a scale</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.smooth_quant_scaler.SmoothQuantScalerLLM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.smooth_quant_scaler.</span></span><span class="sig-name descname"><span class="pre">SmoothQuantScalerLLM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scales_per_op</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/smooth_quant_scaler.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.smooth_quant_scaler.SmoothQuantScalerLLM" title="Permalink to this definition"></a></dt>
+<dd><p>A class for scaling model weights for TF LLM models using Smooth Quantization method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph_def</strong> – graph_def of the model to be scaled</p></li>
+<li><p><strong>alpha</strong> – float, the scaling factor</p></li>
+<li><p><strong>scales_per_op</strong> – bool, each op will have an individual scale or
+ops with the same input will share a scale</p></li>
+<li><p><strong>op_types</strong> – </p></li>
 </ul>
 </dd>
 </dl>
@@ -135,7 +155,7 @@ ops with the same input will share a scale</p></li>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fab331389d0> 
+   <jinja2.runtime.BlockReference object at 0x7fd42ed52e00> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

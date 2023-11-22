@@ -19,6 +19,7 @@ Classes
 
    neural_compressor.model.tensorflow_model.TensorflowBaseModel
    neural_compressor.model.tensorflow_model.TensorflowSavedModelModel
+   neural_compressor.model.tensorflow_model.TensorflowLLMModel
    neural_compressor.model.tensorflow_model.TensorflowQATModel
    neural_compressor.model.tensorflow_model.TensorflowCheckpointModel
    neural_compressor.model.tensorflow_model.TensorflowModel
@@ -137,9 +138,13 @@ Functions
 
    Load graph_def from saved model with the default serving signature key.
 
-   :param saved_model_dir: Directory of the SavedModel.
+   :param model: Directory of the SavedModel.
    :param saved_model_tags: Set of tags identifying the MetaGraphDef within the
                             SavedModel to analyze.
+   :param input_tensor_names: input_tensor_names of model.
+   :type input_tensor_names: list of string
+   :param output_tensor_names: output_tensor_names of model.
+   :type output_tensor_names: list of string
 
    :returns: The loaded GraphDef.
              input_tensors: List of input tensors.
@@ -248,6 +253,14 @@ Functions
 
 
    Build Tensorflow saved model.
+
+
+.. py:class:: TensorflowLLMModel(model, **kwargs)
+
+
+
+
+   The class Tensorflow saved model whose GraphDef exceeding maximum protobuf size of 2GB.
 
 
 .. py:class:: TensorflowQATModel(model='', **kwargs)

@@ -43,6 +43,10 @@ Functions
    neural_compressor.adaptor.tf_utils.util.tf_diagnosis_helper
    neural_compressor.adaptor.tf_utils.util.generate_feed_dict
    neural_compressor.adaptor.tf_utils.util.get_weight_from_input_tensor
+   neural_compressor.adaptor.tf_utils.util.apply_inlining
+   neural_compressor.adaptor.tf_utils.util.construct_function_from_graph_def
+   neural_compressor.adaptor.tf_utils.util.parse_saved_model
+   neural_compressor.adaptor.tf_utils.util.reconstruct_saved_model
 
 
 
@@ -241,5 +245,51 @@ Functions
              - sq_weights_nodes: A dictionary mapping each input tensor name
                  to a dict of its associated weight nodes with weight name.
    :rtype: A tuple of two dictionaries
+
+
+.. py:function:: apply_inlining(func)
+
+   Apply an inlining optimization to the function's graph definition.
+
+   :param func: A concrete function get from saved_model.
+
+   :returns: The optimized graph in graph_def format.
+   :rtype: new_graph_def
+
+
+.. py:function:: construct_function_from_graph_def(func, graph_def, frozen_func=None)
+
+   Rebuild function from graph_def.
+
+   :param func: The original concrete function get from saved_model.
+   :param graph_def: The optimized graph after applying inlining optimization.
+
+   :returns: The reconstructed function.
+   :rtype: new_func
+
+
+.. py:function:: parse_saved_model(model, freeze=False, input_tensor_names=[], output_tensor_names=[])
+
+   Parse a input saved_model.
+
+   :param model: The input saved_model.
+   :type model: string or AutoTrackable object
+
+   :returns: The graph_def parsed from saved_model.
+             _saved_model: TF AutoTrackable object loaded from saved_model.
+             func: The concrete function get from saved_model.
+             frozen_func: The reconstructed function from inlining optimized graph.
+   :rtype: graph_def
+
+
+.. py:function:: reconstruct_saved_model(graph_def, func, frozen_func, trackable, path)
+
+   Reconstruct a saved_model.
+
+   :param graph_def: The input graph_def.
+   :param func: The concrete function get from the original saved_model.
+   :param frozen_func: The reconstructed function from inlining optimized graph.
+   :param trackable: TF AutoTrackable object loaded from the original saved_model.
+   :param path: The destination path to save the reconstructed saved_model.
 
 

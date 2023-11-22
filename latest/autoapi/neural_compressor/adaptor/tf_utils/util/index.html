@@ -170,6 +170,18 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.get_weight_from_input_tensor" title="neural_compressor.adaptor.tf_utils.util.get_weight_from_input_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_weight_from_input_tensor</span></code></a>(model, ...)</p></td>
 <td><p>Extracts weight tensors and their associated nodes from a smooth quant node's input tensor.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.apply_inlining" title="neural_compressor.adaptor.tf_utils.util.apply_inlining"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_inlining</span></code></a>(func)</p></td>
+<td><p>Apply an inlining optimization to the function's graph definition.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.construct_function_from_graph_def" title="neural_compressor.adaptor.tf_utils.util.construct_function_from_graph_def"><code class="xref py py-obj docutils literal notranslate"><span class="pre">construct_function_from_graph_def</span></code></a>(func, graph_def[, ...])</p></td>
+<td><p>Rebuild function from graph_def.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.parse_saved_model" title="neural_compressor.adaptor.tf_utils.util.parse_saved_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_saved_model</span></code></a>(model[, freeze, input_tensor_names, ...])</p></td>
+<td><p>Parse a input saved_model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.reconstruct_saved_model" title="neural_compressor.adaptor.tf_utils.util.reconstruct_saved_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reconstruct_saved_model</span></code></a>(graph_def, func, frozen_func, ...)</p></td>
+<td><p>Reconstruct a saved_model.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -454,6 +466,80 @@ of official tensorflow r1.15 branch</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.apply_inlining">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">apply_inlining</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.apply_inlining" title="Permalink to this definition"></a></dt>
+<dd><p>Apply an inlining optimization to the function’s graph definition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>func</strong> – A concrete function get from saved_model.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The optimized graph in graph_def format.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>new_graph_def</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.construct_function_from_graph_def">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">construct_function_from_graph_def</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frozen_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.construct_function_from_graph_def" title="Permalink to this definition"></a></dt>
+<dd><p>Rebuild function from graph_def.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>func</strong> – The original concrete function get from saved_model.</p></li>
+<li><p><strong>graph_def</strong> – The optimized graph after applying inlining optimization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The reconstructed function.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>new_func</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.parse_saved_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">parse_saved_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freeze</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.parse_saved_model" title="Permalink to this definition"></a></dt>
+<dd><p>Parse a input saved_model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>string</em><em> or </em><em>AutoTrackable object</em>) – The input saved_model.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The graph_def parsed from saved_model.
+_saved_model: TF AutoTrackable object loaded from saved_model.
+func: The concrete function get from saved_model.
+frozen_func: The reconstructed function from inlining optimized graph.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>graph_def</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.reconstruct_saved_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">reconstruct_saved_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frozen_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trackable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.reconstruct_saved_model" title="Permalink to this definition"></a></dt>
+<dd><p>Reconstruct a saved_model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph_def</strong> – The input graph_def.</p></li>
+<li><p><strong>func</strong> – The concrete function get from the original saved_model.</p></li>
+<li><p><strong>frozen_func</strong> – The reconstructed function from inlining optimized graph.</p></li>
+<li><p><strong>trackable</strong> – TF AutoTrackable object loaded from the original saved_model.</p></li>
+<li><p><strong>path</strong> – The destination path to save the reconstructed saved_model.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 </section>
@@ -472,7 +558,7 @@ of official tensorflow r1.15 branch</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fab3bb2fc10> 
+   <jinja2.runtime.BlockReference object at 0x7fd435238280> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

@@ -98,6 +98,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.smooth_quant_calibration.SmoothQuantCalibration" title="neural_compressor.adaptor.tf_utils.smooth_quant_calibration.SmoothQuantCalibration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SmoothQuantCalibration</span></code></a></p></td>
 <td><p>A class for performing smooth quantization calibration on a Tensorflow model.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.smooth_quant_calibration.SmoothQuantCalibrationLLM" title="neural_compressor.adaptor.tf_utils.smooth_quant_calibration.SmoothQuantCalibrationLLM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SmoothQuantCalibrationLLM</span></code></a></p></td>
+<td><p>A class for performing smooth quantization calibration on a Tensorflow LLM model.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py class">
@@ -113,6 +116,26 @@
 <li><p><strong>op_types</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – The types of operations to be quantized.</p></li>
 <li><p><strong>percentile</strong> (<em>float</em>) – The percentile of calibration to remove outliers.</p></li>
 <li><p><strong>black_nodes</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – A list of node names to be ignored during calibration.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.smooth_quant_calibration.SmoothQuantCalibrationLLM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.smooth_quant_calibration.</span></span><span class="sig-name descname"><span class="pre">SmoothQuantCalibrationLLM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">black_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temp_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_name_mapping</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/tf_utils/smooth_quant_calibration.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.smooth_quant_calibration.SmoothQuantCalibrationLLM" title="Permalink to this definition"></a></dt>
+<dd><p>A class for performing smooth quantization calibration on a Tensorflow LLM model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>str</em>) – A path to the original Tensorflow model.</p></li>
+<li><p><strong>iterations</strong> (<em>int</em>) – The number of iterations to run the calibration process.</p></li>
+<li><p><strong>op_types</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – The types of operations to be quantized.</p></li>
+<li><p><strong>percentile</strong> (<em>float</em>) – The percentile of calibration to remove outliers.</p></li>
+<li><p><strong>black_nodes</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – A list of node names to be ignored during calibration.</p></li>
+<li><p><strong>eval_func</strong> (<em>function</em>) – The function to inference the model.</p></li>
+<li><p><strong>temp_path</strong> (<em>str</em>) – The temporary path to store median model.</p></li>
+<li><p><strong>(</strong><strong>)</strong> (<em>weight_name_mapping</em>) – A function that convert weight tensor name in autotrackable to node name in graph_def</p></li>
 </ul>
 </dd>
 </dl>
@@ -136,7 +159,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fab3aecca60> 
+   <jinja2.runtime.BlockReference object at 0x7fd42ed50fd0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
