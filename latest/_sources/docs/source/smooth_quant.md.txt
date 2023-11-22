@@ -89,9 +89,9 @@ def dequantize(q_x, scale, zp):
 ```
 
 ```bash
->>> W_dq = dequantize(W_dq, 0.001, -50)
+>>> W_dq = dequantize(W_q, 0.001, -50)
 >>> W_dq
-tensor([[0.1220, 0.0500, 0.1430],
+tensor([[0.2220, 0.1510, 0.2420],
         [0.2570, 0.0500, 0.1890]])
 >>> loss = torch.nn.MSELoss()(W_dq, W)
 >>> loss.item()
@@ -120,8 +120,8 @@ def quantize_per_channel(x, num_bits=8):
     zp = torch.round(0 - x_tmp.min(dim=-1, keepdim=True)[0].divide(scales))
     q_x = x_tmp.divide(scales) + zp
     q_x.clamp_(q_min, q_max).round_()
-    print(f"scale = {scales}, \n zp = {zp}")
-    return q_x, scale, zp
+    print(f"scales = {scales}, \n zp = {zp}")
+    return q_x, scales, zp
 
 
 def dequantize_per_channel(q_x, scales, zp):
@@ -131,7 +131,7 @@ def dequantize_per_channel(q_x, scales, zp):
 ```
 
 ```bash
->>>W_q, scale, zp = quantize_per_channel(W)
+>>>W_q, scales, zp = quantize_per_channel(W)
 scale = tensor([[0.0029],
         [0.0036]]), 
 zp = tensor([[-162.],
@@ -212,7 +212,7 @@ tensor([[ 83.,  89., 119.,  85.],
 >>>Y_q
 tensor([[17509.,  7608.,  4055., 16599.],
         [21020., 10016.,  9860., 22444.]])
->>>Y_dq = dequantize(Y, W_scale * X_scale)
+>>>Y_dq = dequantize(Y_q, W_scale * X_scale)
 >>>Y_dq
 tensor([[0.6836, 0.2970, 0.1583, 0.6481],
         [0.8207, 0.3911, 0.3850, 0.8763]])

@@ -157,9 +157,9 @@ tensor<span class="o">([[</span><span class="m">172</span>.,<span class="w"> </s
     <span class="k">return</span> <span class="n">scale</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">zp</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;<span class="w"> </span><span class="nv">W_dq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>dequantize<span class="o">(</span>W_dq,<span class="w"> </span><span class="m">0</span>.001,<span class="w"> </span>-50<span class="o">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;<span class="w"> </span><span class="nv">W_dq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>dequantize<span class="o">(</span>W_q,<span class="w"> </span><span class="m">0</span>.001,<span class="w"> </span>-50<span class="o">)</span>
 &gt;&gt;&gt;<span class="w"> </span>W_dq
-tensor<span class="o">([[</span><span class="m">0</span>.1220,<span class="w"> </span><span class="m">0</span>.0500,<span class="w"> </span><span class="m">0</span>.1430<span class="o">]</span>,
+tensor<span class="o">([[</span><span class="m">0</span>.2220,<span class="w"> </span><span class="m">0</span>.1510,<span class="w"> </span><span class="m">0</span>.2420<span class="o">]</span>,
 <span class="w">        </span><span class="o">[</span><span class="m">0</span>.2570,<span class="w"> </span><span class="m">0</span>.0500,<span class="w"> </span><span class="m">0</span>.1890<span class="o">]])</span>
 &gt;&gt;&gt;<span class="w"> </span><span class="nv">loss</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>torch.nn.MSELoss<span class="o">()(</span>W_dq,<span class="w"> </span>W<span class="o">)</span>
 &gt;&gt;&gt;<span class="w"> </span>loss.item<span class="o">()</span>
@@ -186,8 +186,8 @@ tensor<span class="o">([[</span><span class="m">0</span>.6848,<span class="w"> <
     <span class="n">zp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span> <span class="o">-</span> <span class="n">x_tmp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">scales</span><span class="p">))</span>
     <span class="n">q_x</span> <span class="o">=</span> <span class="n">x_tmp</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span> <span class="o">+</span> <span class="n">zp</span>
     <span class="n">q_x</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span><span class="p">)</span><span class="o">.</span><span class="n">round_</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;scale = </span><span class="si">{</span><span class="n">scales</span><span class="si">}</span><span class="s2">, </span><span class="se">\n</span><span class="s2"> zp = </span><span class="si">{</span><span class="n">zp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">zp</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;scales = </span><span class="si">{</span><span class="n">scales</span><span class="si">}</span><span class="s2">, </span><span class="se">\n</span><span class="s2"> zp = </span><span class="si">{</span><span class="n">zp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">zp</span>
 
 
 <span class="k">def</span> <span class="nf">dequantize_per_channel</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">zp</span><span class="p">):</span>
@@ -196,7 +196,7 @@ tensor<span class="o">([[</span><span class="m">0</span>.6848,<span class="w"> <
     <span class="k">return</span> <span class="n">scales</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">zp</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;W_q,<span class="w"> </span>scale,<span class="w"> </span><span class="nv">zp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>quantize_per_channel<span class="o">(</span>W<span class="o">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;W_q,<span class="w"> </span>scales,<span class="w"> </span><span class="nv">zp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>quantize_per_channel<span class="o">(</span>W<span class="o">)</span>
 <span class="nv">scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>tensor<span class="o">([[</span><span class="m">0</span>.0029<span class="o">]</span>,
 <span class="w">        </span><span class="o">[</span><span class="m">0</span>.0036<span class="o">]])</span>,<span class="w"> </span>
 <span class="nv">zp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>tensor<span class="o">([[</span>-162.<span class="o">]</span>,
@@ -269,7 +269,7 @@ tensor<span class="o">([[</span><span class="w"> </span><span class="m">83</span
 &gt;&gt;&gt;Y_q
 tensor<span class="o">([[</span><span class="m">17509</span>.,<span class="w">  </span><span class="m">7608</span>.,<span class="w">  </span><span class="m">4055</span>.,<span class="w"> </span><span class="m">16599</span>.<span class="o">]</span>,
 <span class="w">        </span><span class="o">[</span><span class="m">21020</span>.,<span class="w"> </span><span class="m">10016</span>.,<span class="w">  </span><span class="m">9860</span>.,<span class="w"> </span><span class="m">22444</span>.<span class="o">]])</span>
-&gt;&gt;&gt;Y_dq<span class="w"> </span><span class="o">=</span><span class="w"> </span>dequantize<span class="o">(</span>Y,<span class="w"> </span>W_scale<span class="w"> </span>*<span class="w"> </span>X_scale<span class="o">)</span>
+&gt;&gt;&gt;Y_dq<span class="w"> </span><span class="o">=</span><span class="w"> </span>dequantize<span class="o">(</span>Y_q,<span class="w"> </span>W_scale<span class="w"> </span>*<span class="w"> </span>X_scale<span class="o">)</span>
 &gt;&gt;&gt;Y_dq
 tensor<span class="o">([[</span><span class="m">0</span>.6836,<span class="w"> </span><span class="m">0</span>.2970,<span class="w"> </span><span class="m">0</span>.1583,<span class="w"> </span><span class="m">0</span>.6481<span class="o">]</span>,
 <span class="w">        </span><span class="o">[</span><span class="m">0</span>.8207,<span class="w"> </span><span class="m">0</span>.3911,<span class="w"> </span><span class="m">0</span>.3850,<span class="w"> </span><span class="m">0</span>.8763<span class="o">]])</span>
@@ -680,7 +680,7 @@ conf = PostTrainingQuantConfig(
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f3221911750> 
+   <jinja2.runtime.BlockReference object at 0x7fe99ee5ceb0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
