@@ -483,6 +483,7 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
         Args:
             input_node_names: (list): A list of names for input nodes.
             output_node_names: (list): A list of names for output nodes.
+            
         Returns:
             max_vals_per_channel (dict): A dictionary containing the maximum values per channel.
             sq_target_node_names (dict): A dictionary mapping from weight names to target node names.
