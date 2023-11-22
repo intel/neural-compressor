@@ -604,8 +604,11 @@ class TorchSmoothQuant:
                     self.max_value_info[key]["absorbed_layer"] = layer_names
                     continue
 
-                if key in self.weight_scale_dict and alpha_tmp in self.weight_scale_dict[key]:
-                    scale = self.weight_scale_dict[key][alpha_tmp]
+                if self._save_scale:
+                    if key in self.weight_scale_dict and alpha_tmp in self.weight_scale_dict[key]:
+                        scale = self.weight_scale_dict[key][alpha_tmp]
+                    else:
+                        scale = cal_scale(input_max, weights, alpha_tmp)
                 else:
                     scale = cal_scale(input_max, weights, alpha_tmp)
 
@@ -1084,6 +1087,7 @@ class TorchSmoothQuant:
             if example_inputs is not None:
                 out_pre_sq = model_forward_per_sample(self.model, example_inputs, self.device)
 
+            self._save_scale = False
             if self.record_max_info:
                 # max_info is recorded in self.max_value_info
                 self._adjust_parameters(self.absorb_to_layer, input_maxes_abs, alpha)
