@@ -648,6 +648,7 @@ class TensorFlowAdaptor(Adaptor):
                     fp32_ops=self.fp32_ops,
                     bf16_ops=self.bf16_ops,
                     data_loader=data_loader,
+                    calib_func=q_func,
                     qdq_enabled=self.qdq_enabled,
                     new_api=self.new_api,
                     performance_only=self.performance_only,
@@ -670,6 +671,7 @@ class TensorFlowAdaptor(Adaptor):
                     fp32_ops=self.fp32_ops,
                     bf16_ops=self.bf16_ops,
                     data_loader=data_loader,
+                    calib_func=q_func,
                     qdq_enabled=self.qdq_enabled,
                     new_api=self.new_api,
                     performance_only=self.performance_only,
@@ -693,6 +695,7 @@ class TensorFlowAdaptor(Adaptor):
                 fp32_ops=self.fp32_ops,
                 bf16_ops=self.bf16_ops,
                 data_loader=data_loader,
+                calib_func=q_func,
                 qdq_enabled=self.qdq_enabled,
                 new_api=self.new_api,
                 performance_only=self.performance_only,
@@ -761,15 +764,15 @@ class TensorFlowAdaptor(Adaptor):
             if i.op in fp32_op_list:
                 if "T" not in i.attr and i.op != "Cast":
                     continue
-                if i.attr["T"].type == dtypes.bfloat16:
-                    res[i.op]["BF16"] += 1
-                elif i.attr["T"].type in (dtypes.quint8, dtypes.qint8):
-                    res[i.op]["INT8"] += 1
-                elif i.op == "Cast":
+                if i.op == "Cast":
                     if i.attr["DstT"].type == dtypes.bfloat16:
                         res[i.op]["BF16"] += 1
                     elif i.attr["DstT"].type == dtypes.float32:
                         res[i.op]["FP32"] += 1
+                elif i.attr["T"].type == dtypes.bfloat16:
+                    res[i.op]["BF16"] += 1
+                elif i.attr["T"].type in (dtypes.quint8, dtypes.qint8):
+                    res[i.op]["INT8"] += 1
                 else:
                     res[i.op]["FP32"] += 1
 
@@ -1815,7 +1818,6 @@ class TensorFlowAdaptor(Adaptor):
         model,
         dataloader,
         calib_iter=1,
-        tune_cfg=None,
         alpha=0.5,
         folding=False,
         percentile=99.999,
@@ -1832,7 +1834,6 @@ class TensorFlowAdaptor(Adaptor):
             model: original model
             dataloader: the calibration dataloader
             calib_iter: how many steps of iterations on the dataloader to move forward
-            tune_cfg: quantization config
             alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
             folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
             percentile: percentile of calibration to remove outliers
@@ -1852,6 +1853,11 @@ class TensorFlowAdaptor(Adaptor):
         if self.smooth_quant_model is not None:
             return self.smooth_quant_model
 
+        if model.model_type == "llm_saved_model":
+            return self.smooth_quant_LLM(
+                model, dataloader, calib_iter, alpha, folding, percentile, op_types, scales_per_op
+            )
+
         # Do a pre-optimization before smooth quant
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
@@ -1860,6 +1866,7 @@ class TensorFlowAdaptor(Adaptor):
         model.graph_def = self.pre_optimized_model.graph_def
 
         # Get the nodes list which can't be quantized from tune_cfg
+        tune_cfg = None
         black_nodes = []
         if tune_cfg is not None:
             self._tuning_cfg_to_fw(tune_cfg)
@@ -1883,6 +1890,81 @@ class TensorFlowAdaptor(Adaptor):
         model, mul_list = scaler.transform(
             max_vals_per_channel, sq_weight_tensors, sq_weights_nodes, sq_weight_node_names
         )
+        self.smooth_quant_mul_ops.extend(mul_list)
+        self.smooth_quant_model = model
+        return self.smooth_quant_model
+
+    def smooth_quant_LLM(
+        self,
+        model,
+        dataloader,
+        calib_iter=1,
+        alpha=0.5,
+        folding=False,
+        percentile=99.999,
+        op_types=["MatMul", "Conv2D"],
+        scales_per_op=True,
+    ):
+        """Convert the model by smooth quant.
+
+        Args:
+            model: original model of TensorflowLLMModel object.
+            calib_iter: how many steps of iterations on the dataloader to move forward.
+            tune_cfg: quantization config.
+            alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ.
+            folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant.
+            percentile: percentile of calibration to remove outliers.
+            op_types: The op types whose input tensor will be dumped.
+            scales_per_op: True, each op will have an individual scale, mainly for accuracy.
+                           False, ops with the same input will share a scale, mainly for performance.
+
+        Returns:
+            model: A smoothed Tensorflow model.
+        """
+        # Do a pre-optimization before smooth quant
+        from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
+
+        self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
+        self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
+        model.graph_def = self.pre_optimized_model.graph_def
+
+        # Get the nodes list which can't be quantized from tune_cfg
+        tune_cfg = None
+        black_nodes = []
+        if tune_cfg is not None:
+            self._tuning_cfg_to_fw(tune_cfg)
+            black_nodes = [node for node in self.quantize_config if self.quantize_config[node] == "fp32"]
+
+        # only support per-tensor MatMul now
+        op_types = ["MatMul"]
+        llm_temp_dir = self.work_dir + "/temp_saved_model"
+        # Run calibration to get max values per channel
+        from .tf_utils.smooth_quant_calibration import SmoothQuantCalibrationLLM
+
+        calibration = SmoothQuantCalibrationLLM(
+            model._model,
+            dataloader,
+            calib_iter,
+            op_types,
+            percentile,
+            black_nodes,
+            llm_temp_dir,
+            model.weight_name_mapping,
+        )
+        max_vals_per_channel, sq_target_node_names, sq_weight_tensor_dict, sq_graph_def = calibration(
+            model.input_node_names, model.output_node_names
+        )
+
+        # Calculate the smooth quant scaler and insert Mul op into the graph
+        from .tf_utils.smooth_quant_scaler import SmoothQuantScalerLLM
+
+        scaler = SmoothQuantScalerLLM(sq_graph_def, alpha, scales_per_op, op_types)
+        sq_graph_def, sq_weight_scale_dict, mul_list = scaler.transform(
+            max_vals_per_channel, sq_weight_tensor_dict, sq_target_node_names
+        )
+        model.graph_def = sq_graph_def
+        model.model_path = llm_temp_dir
+        model.sq_weight_scale_dict = sq_weight_scale_dict
         self.smooth_quant_mul_ops.extend(mul_list)
         self.smooth_quant_model = model
         return self.smooth_quant_model
@@ -1945,6 +2027,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                     fp32_ops=self.fp32_ops,
                     bf16_ops=self.bf16_ops,
                     data_loader=data_loader,
+                    calib_func=q_func,
                     itex_mode=self.itex_mode,
                     qdq_enabled=self.qdq_enabled,
                     new_api=self.new_api,
@@ -1992,6 +2075,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                 fp32_ops=self.fp32_ops,
                 bf16_ops=self.bf16_ops,
                 data_loader=data_loader,
+                calib_func=q_func,
                 itex_mode=self.itex_mode,
                 qdq_enabled=self.qdq_enabled,
                 new_api=self.new_api,

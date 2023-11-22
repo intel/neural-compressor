@@ -1044,8 +1044,33 @@ class GraphRewriterHelper:
                 res.append(mixed_str)
             return res
 
+        def separate(line):
+            """This function is to separate the strings.
+
+            Example:
+                ';slice__print__;__max:[1];slice__print__;__min:[-1]' -->
+                [';slice__print__;__max:[1]', ';slice__print__;__min:[-1]']
+            """
+            separated_lines = []
+            for subline in line.split("];"):
+                if not subline.startswith(";"):
+                    subline = ";" + subline
+                if not subline.endswith("]"):
+                    subline += "]"
+                separated_lines.append(subline)
+            return separated_lines
+
         with open(log_path) as f:
-            valid_data = [i.strip() for i in f.readlines() if i.startswith(";")]
+            valid_data = []
+            for i in f.readlines():
+                if not i.startswith(";"):
+                    continue
+                line = i.strip()
+                if line.find("];") != 0:
+                    separated_lines = separate(line)
+                    valid_data += separated_lines
+                else:
+                    valid_data.append(line)
 
         first_line = valid_data[0].rsplit(":")[0]
 
