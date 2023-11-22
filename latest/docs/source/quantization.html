@@ -736,6 +736,10 @@ This method requires the user to provide training function and evaluation functi
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;onnxrt_cuda_ep&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;gpu&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with ONNXRT DmlExecutionProvider on NPU</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;onnxrt_dml_ep&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;npu&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with ITEX on GPU</span>
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;itex&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;gpu&quot;</span><span class="p">)</span>
 </pre></div>
@@ -744,7 +748,8 @@ This method requires the user to provide training function and evaluation functi
 </section>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
-<p>User could refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/README.html">examples</a> on how to quantize a new model.</p>
+<p>User could refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/README.html">examples</a> on how to quantize a new model.
+If user wants to quantize an onnx model with npu, please refer to this <a class="reference external" href="../../examples/onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq_static/README.html">example</a>.</p>
 </section>
 </section>
 
@@ -762,7 +767,7 @@ This method requires the user to provide training function and evaluation functi
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fba1f0f4a00> 
+   <jinja2.runtime.BlockReference object at 0x7f6909c29150> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

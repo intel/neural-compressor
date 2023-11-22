@@ -540,6 +540,10 @@ conf = PostTrainingQuantConfig(backend="ipex")
 conf = PostTrainingQuantConfig(backend="onnxrt_cuda_ep", device="gpu")
 ```
 ```python
+# run with ONNXRT DmlExecutionProvider on NPU
+conf = PostTrainingQuantConfig(backend="onnxrt_dml_ep", device="npu")
+```
+```python
 # run with ITEX on GPU
 conf = PostTrainingQuantConfig(backend="itex", device="gpu")
 ```
@@ -547,3 +551,4 @@ conf = PostTrainingQuantConfig(backend="itex", device="gpu")
 ## Examples
 
 User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/README.html) on how to quantize a new model.
+If user wants to quantize an onnx model with npu, please refer to this [example](../../examples/onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq_static/README.html).
