@@ -9,10 +9,10 @@ pr:
   paths:
     include:
       - neural_compressor
-      - test
       - setup.py
       - requirements.txt
-      - .azure-pipelines/scripts/ut
+      - .azure-pipelines/scripts/ut/run_itrex.sh
+      - .azure-pipelines/ut-itrex.yml
     exclude:
       - test/neural_coder
       - test/3x
