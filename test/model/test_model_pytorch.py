@@ -123,8 +123,8 @@ class TestPytorchModel(unittest.TestCase):
             model_size2 = os.path.getsize("saved/tmp.pt") / 1024
             print("WeightOnlyLinear Model size:{:.3f}M".format(model_size2))
             self.assertTrue(isinstance(inc_model.model.fc1, WeightOnlyLinear))
-            self.assertTrue(inc_model.model.fc1.packed_weight.dtype == dtype)
-            self.assertTrue(inc_model.model.fc1.scale.dtype == torch.float32)
+            self.assertTrue(inc_model.model.fc1.qweight.dtype == dtype)
+            self.assertTrue(inc_model.model.fc1.scales.dtype == torch.float32)
             self.assertTrue(model_size1 / model_size2 > 2)
             self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
 
@@ -143,9 +143,9 @@ class TestPytorchModel(unittest.TestCase):
             print("WeightOnlyLinear Model size:{:.3f}M".format(model_size2))
             self.assertTrue(isinstance(inc_model.model.fc1, WeightOnlyLinear))
             if dim == 1:
-                self.assertTrue(inc_model.model.fc1.packed_weight.shape[0] == inc_model.model.fc1.out_features)
+                self.assertTrue(inc_model.model.fc1.qweight.shape[0] == inc_model.model.fc1.out_features)
             else:
-                self.assertTrue(inc_model.model.fc1.packed_weight.shape[1] == inc_model.model.fc1.in_features)
+                self.assertTrue(inc_model.model.fc1.qweight.shape[1] == inc_model.model.fc1.in_features)
             self.assertTrue(model_size1 / model_size2 > 2)
             self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
 
@@ -161,7 +161,7 @@ class TestPytorchModel(unittest.TestCase):
         model_size2 = os.path.getsize("saved/tmp.pt") / 1024
         print("WeightOnlyLinear Model size:{:.3f}M".format(model_size2))
         self.assertTrue(isinstance(inc_model.model.fc1, WeightOnlyLinear))
-        self.assertTrue(inc_model.model.fc1.scale.dtype == torch.float16)
+        self.assertTrue(inc_model.model.fc1.scales.dtype == torch.float16)
         self.assertTrue(model_size1 / model_size2 > 2)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
 

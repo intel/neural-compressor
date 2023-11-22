@@ -18,16 +18,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import math
-from copy import deepcopy
-from typing import OrderedDict
 
-from ...utils import logger
-from ...utils.utility import LazyImport
-from .util import set_module
+import torch
+from torch.nn import functional as F
 
-tqdm = LazyImport("tqdm")
-torch = LazyImport("torch")
+from neural_compressor.common.logger import DEBUG, Logger, level
+from neural_compressor.torch.utils import set_module
+
+logger = Logger().get_logger()
 
 
 NF4 = [
@@ -228,7 +226,6 @@ def quant_weight(
             full_range=full_range,
             data_type=data_type,
         )
-
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
@@ -343,6 +340,205 @@ def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", en
     return best_clip_ratio
 
 
+import math
+
+
+class WeightOnlyLinear(torch.nn.Module):
+    def __init__(
+        self,
+        in_features,
+        out_features,
+        bits,
+        groupsize,
+        dtype="int",
+        zp=False,
+        bias=False,
+        scale_dtype=torch.float32,
+        compression_dtype=torch.int32,
+        compression_dim=1,
+        gptq_perm=False,
+        device="cpu",
+    ):
+        super().__init__()
+        self.dtype = dtype
+        if "int" not in self.dtype:  # for nf4, fp4
+            float_list = FLOAT_MAPPING[self.dtype]
+            int_list = INT_MAPPING[self.dtype]
+            self.int2float_mapping = {}
+            for k, v in zip(int_list, float_list):
+                self.int2float_mapping[k] = v
+        self.device = device
+        self.in_features = in_features
+        self.out_features = out_features
+        self.bits = bits
+        self.groupsize = groupsize if groupsize != -1 else in_features
+        self.compression_dim = compression_dim
+        assert compression_dtype in [
+            torch.int8,
+            torch.int16,
+            torch.int32,
+            torch.int64,
+        ], "Only support torch.int8|16|32|64 as compressed dtype."
+        dtype_bits_mapping = {torch.int8: 8, torch.int16: 16, torch.int32: 32, torch.int64: 64}
+        self.compress_bits = dtype_bits_mapping[compression_dtype]
+        self.n_pack = self.compress_bits // self.bits
+        self.compressed_dtype = compression_dtype
+        self.float_type = scale_dtype
+        # K is input channel, N is output channel
+        assert compression_dim in [0, 1], (
+            "Only support 0 or 1 as compression dimension, " + "0 is output channel, 1 is input channel."
+        )
+        self.register_buffer(
+            "scale",
+            torch.zeros(
+                (out_features, math.ceil(in_features / self.groupsize)),
+                dtype=self.float_type,
+            ).to(device),
+        )
+        if compression_dim == 1:
+            self.register_buffer(
+                "packed_weight",
+                torch.zeros(
+                    (out_features, math.ceil(in_features / self.n_pack)),
+                    dtype=self.compressed_dtype,
+                ).to(device),
+            )
+            if zp:
+                self.register_buffer(
+                    "packed_zp",
+                    torch.zeros(
+                        (self.out_features, math.ceil(self.in_features / self.groupsize / self.n_pack)),
+                        dtype=self.compressed_dtype,
+                    ).to(device),
+                )
+        else:
+            self.register_buffer(
+                "packed_weight",
+                torch.zeros(
+                    (math.ceil(out_features / self.n_pack), in_features),
+                    dtype=self.compressed_dtype,
+                ).to(device),
+            )
+            if zp:
+                self.register_buffer(
+                    "packed_zp",
+                    torch.zeros(
+                        (math.ceil(self.out_features / self.n_pack), math.ceil(self.in_features / self.groupsize)),
+                        dtype=self.compressed_dtype,
+                    ).to(device),
+                )
+        if bias:
+            self.register_buffer("bias", torch.zeros(self.out_features, dtype=self.float_type).to(device))
+        else:
+            self.bias = None
+
+    def pack(self, int_weight, scale, zp, bias, gptq_perm=None):
+        int_weight = int_weight.to(self.device)
+        if bias is not None:
+            assert hasattr(self, "bias"), "bias is not set when initializing."
+            self.bias = bias.type(self.float_type).to(self.device)
+        assert (
+            scale.shape == self.scale.shape
+        ), f"Scale shape is mismatched, got self.scale.shape: {self.scale.shape} and scale.shape: {scale.shape}"
+        self.scale = scale.type(self.float_type).to(self.device)
+        if self.compression_dim == 0:
+            int_weight = int_weight.T
+            self.packed_weight = self.packed_weight.T
+        origin_shape = int_weight.shape
+        target_shape = self.packed_weight.shape
+        assert origin_shape[0] == target_shape[0], "output channels mismatch, please check."
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype).to(self.device)
+
+        # pack weight
+        for j in range(target_shape[1]):
+            start = self.n_pack * j
+            end = self.n_pack * (j + 1)
+            tmp = int_weight[:, start:end].type(self.compressed_dtype)
+            for e in range(tmp.shape[1]):
+                tmp[:, e] &= mask
+                tmp[:, e] = tmp[:, e] << (self.bits * e)
+                self.packed_weight[:, j] |= tmp[:, e]
+        if self.compression_dim == 0:
+            self.packed_weight = self.packed_weight.T
+
+        if zp is not None:
+            zp = zp.to(self.device)
+            if self.compression_dim == 0:
+                zp = zp.T
+                self.packed_zp = self.packed_zp.T
+            assert hasattr(self, "packed_zp"), "zp is not set when initializing."
+            target_shape = self.packed_zp.shape
+            for j in range(target_shape[1]):
+                start = self.n_pack * j
+                end = self.n_pack * (j + 1)
+                tmp = zp[:, start:end].type(self.compressed_dtype)
+                for e in range(tmp.shape[1]):
+                    tmp[:, e] &= mask
+                    tmp[:, e] = tmp[:, e] << (self.bits * e)
+                    self.packed_zp[:, j] |= tmp[:, e]
+            if self.compression_dim == 0:
+                self.packed_zp = self.packed_zp.T
+
+    def recover(self):
+        logger.debug(f"Recovering {self} weight")
+        device = self.scale.device
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype).to(device)
+        weight_dtype = torch.int8
+        # unpack weight
+        weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype).to(device)
+        packed_weight = self.packed_weight
+        if self.compression_dim == 0:
+            weight = weight.T
+            packed_weight = packed_weight.T
+        origin_shape = weight.shape
+        target_shape = packed_weight.shape
+        for j in range(target_shape[1]):
+            for e in range(self.n_pack):
+                index = j * self.n_pack + e
+                if index >= origin_shape[1]:
+                    continue
+                tmp = packed_weight[:, j]
+                tmp = tmp << (self.compress_bits - self.bits * (e + 1))
+                tmp = tmp >> self.compress_bits - self.bits
+                if weight_dtype == torch.uint8:
+                    tmp &= mask  # remove sign bit
+                weight[:, index] = tmp.type(weight_dtype)
+        if self.compression_dim == 0:
+            weight = weight.T
+        if "int" not in self.dtype:
+            new_weight = torch.zeros(self.out_features, self.in_features).to(device)
+            for k, v in self.int2float_mapping.items():
+                new_weight += torch.where(weight == k, v, 0)
+            weight = new_weight
+
+        # recover fp32 weight with int_weight, scale
+        left_element = self.in_features % self.groupsize
+        if left_element != 0:
+            split_index = self.in_features // self.groupsize * self.groupsize
+            weight1 = weight[:, :split_index].reshape(-1, self.groupsize)
+            scale1 = self.scale[:, :-1].reshape(-1, 1)
+            weight1 = (weight1 * scale1).reshape(self.out_features, -1)
+            weight2 = weight[:, split_index:]
+            scale2 = self.scale[:, -1:]
+            weight2 = weight2 * scale2
+            fp32_weight = torch.cat((weight1, weight2), dim=1)
+        else:
+            weight = weight.reshape(-1, self.groupsize)
+            scale = self.scale.reshape(-1, 1)
+            fp32_weight = (weight * scale).reshape(self.out_features, -1)
+        return fp32_weight
+
+    def forward(self, input):
+        weight = self.recover()
+        input = input.type(weight.dtype)
+        return F.linear(input, weight, self.bias)
+
+    def extra_repr(self) -> str:
+        return "in_features={}, out_features={}, bits={}, group_size={}, bias={}".format(
+            self.in_features, self.out_features, self.bits, self.groupsize, self.bias is not None
+        )
+
+
 def rtn_quantize(
     model,
     num_bits=4,
@@ -396,13 +592,9 @@ def rtn_quantize(
         compression_dim = kwargs.get("compression_dim", 1)
         scale_dtype = kwargs.get("scale_dtype", torch.float32)
         device = kwargs.get("device", "cpu")
-        use_hf_format = kwargs.get("use_hf_format", False)
     for name, m in model.named_modules():
         if m.__class__.__name__ not in supported_layers:
             continue
-        orig_dtype = next(m.parameters()).dtype
-        if orig_dtype != torch.float:
-            m = m.float()
         if name in weight_config:  # pragma: no cover
             num_bits = weight_config[name]["bits"]
             group_size = weight_config[name]["group_size"]
@@ -418,15 +610,10 @@ def rtn_quantize(
         elif scheme == "sym":  # nf4/fp4 is always [-7,7]
             log_msg += f", enable_full_range={enable_full_range}"
         logger.debug(log_msg)
-        if num_bits <= 0:
-            logger.info(f"Skip {name}")
-            continue
         weight = m.weight.T if group_dim == 0 else m.weight
         if enable_mse_search:
             quantile = search_clip(m, num_bits, group_size, scheme, data_type, enable_full_range)
         if return_int:
-            from .model_wrapper import WeightOnlyLinear
-
             int_weight, scale, zp = quant_weight(
                 weight,
                 num_bits,
@@ -452,7 +639,6 @@ def rtn_quantize(
                 compression_dim=compression_dim,
                 scale_dtype=scale_dtype,
                 device=device,
-                use_hf_format=use_hf_format,
             )
             new_module.pack(int_weight, scale, zp, m.bias)
             if name == "":
@@ -471,189 +657,4 @@ def rtn_quantize(
             )
             q_weight = q_weight.T if group_dim == 0 else q_weight
             m.weight.data.copy_(q_weight)
-        if orig_dtype != torch.float:
-            m = m.to(orig_dtype)
     return model
-
-
-def gptq_quantize(
-    model,
-    weight_config={},
-    dataloader=None,
-    nsamples=128,
-    use_max_length=True,
-    pad_max_length=2048,
-    device=None,
-    layer_wise=False,
-    model_path=None,
-):
-    """Run weight-only quantization with."""
-    # TODO: unify weight_config keys, add docstring, and support default config
-    assert isinstance(model, torch.nn.Module), "only support torch module"
-    if layer_wise:
-        assert model_path is not None, "model_path should not be None when use layer_wise mode"
-    from .gptq import GPTQuantizer
-
-    gptq_quantizer = GPTQuantizer(
-        model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise
-    )
-    fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
-    logger.info("GPTQ quantizing done.")
-    return fp32_modified_model, gptq_config
-
-
-@torch.no_grad()
-def awq_quantize(
-    model,
-    bits=4,
-    group_size=32,
-    scheme="asym",
-    weight_config={},
-    example_inputs=None,
-    dataloader=None,
-    n_samples=128,
-    calib_func=None,
-    enable_auto_scale=True,
-    enable_mse_search=True,
-    folding=False,
-    return_int=False,
-    enable_full_range=False,
-    data_type="int",
-):
-    """Quant the model with Activation-aware Weight quantization(AWQ) method.
-
-    Args:
-        model (torch.nn.Module): torch model.
-        example_inputs: example_inputs.
-        weight_config (dict, optional): contains all info required by AWQ. Defaults to {}.
-            For example,
-                weight_config={
-                    'fc2':
-                        {
-                            # 'absorb_layer': 'fc1',
-                            'bits': 4,
-                            'group_size': 32,
-                            'scheme': 'sym'
-                        }
-                }
-        absorb_dict (dict, optional): contains all absorb info required by AWQ.. Defaults to {}.
-            For example,
-                absorb_dict = {
-                    # 'absorb_layer': absorbed_layer
-                    'fc1': ['fc1', 'fc2', 'fc3']
-                } # in this case, fc2 and fc3 need to share the same scale. fc1 is self absorbed.
-                # self absorb module will replace with MulLinear, which contains torch.mul and module.
-        n_samples: calibration sample number.
-        enable_auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
-        enable_mse_search (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
-        calib_func: a custom inference function to replace dataloader and iters.
-        n_blocks: split model into block number to avoid OOM.
-        return_int (bool, optional): Choose return fp32 or int32 model.
-                                     Defaults to False.
-        enable_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
-
-    Returns:
-        model: fake quantized model
-    """
-    from .awq import ActAwareWeightQuant
-
-    assert isinstance(model, torch.nn.Module), "only support torch module"
-    awq = ActAwareWeightQuant(
-        model,
-        example_inputs=example_inputs,
-        calib_func=calib_func,
-        dataloader=dataloader,
-        n_samples=n_samples,
-        bits=bits,
-        group_size=group_size,
-        scheme=scheme,
-        enable_full_range=enable_full_range,
-        weight_config=weight_config,
-        data_type=data_type,
-    )
-    qdq_model = awq.quantize(
-        enable_auto_scale=enable_auto_scale,
-        enable_mse_search=enable_mse_search,
-        folding=folding,
-        return_int=return_int,
-    )
-    return qdq_model
-
-
-def teq_quantize(
-    model, weight_config={}, absorb_to_layer={}, extra_config={}, dataloader=None, calib_func=None, example_inputs=None
-):
-    """Run weight-only quantization with."""
-    assert isinstance(model, torch.nn.Module), "only support torch module"
-    logger.info("TEQ quantizing start.")
-    if example_inputs is None:
-        if dataloader is None:  # pragma: no cover
-            assert False, "Please provide dataloader or example_inputs for TEQ algorithm."
-        try:
-            for idx, (input, label) in enumerate(dataloader):
-                example_inputs = input
-                break
-        except:  # pragma: no cover
-            for idx, input in enumerate(dataloader):
-                example_inputs = input
-                break
-
-    from .teq import TEQuantizer
-
-    teq_quantizer = TEQuantizer(model, weight_config, absorb_to_layer, extra_config, example_inputs)
-
-    # 1. wrapper tuning scale to model
-    teq_quantizer.add_tuning_scale()
-
-    # 2. tuning
-    # custom train function, there calls calib_func
-    if calib_func:  # pragma: no cover
-        calib_func(teq_quantizer.model)
-    else:
-        if dataloader is None:  # pragma: no cover
-            assert False, "Please provide dataloader to train."
-        teq_quantizer.train(dataloader)
-
-    # 3. apply scale to model
-    teq_quantizer.transform()
-
-    # 4. get quantized model
-    teq_quantizer.quantize()
-
-    # quantization_data = gptq_quantizer.execute_quantization()
-    logger.info("TEQ quantizing done.")
-    return teq_quantizer.model
-
-
-def quant_weight_w_scale(weight, scale, zp, group_size=-1):
-    """Quant and dequant tensor with group size.
-
-    Args:
-        weight: input weight
-        scale: scale
-        zp: zero point
-        group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
-
-    Returns:
-        output: int weight.
-    """
-    device = weight.device
-    scale = scale.to(device)
-    if zp is not None:
-        zp = zp.to(device)
-    if group_size == -1:
-        return torch.round(weight / scale) if zp is None else torch.round(weight / scale + zp)
-    int_weight = torch.zeros(weight.shape).to(device)
-    leng = weight.shape[1] // group_size
-    tail_flag = False if weight.shape[1] % group_size == 0 else True
-    for i in range(leng):
-        int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size] / scale[:, i].unsqueeze(1)
-        if zp is not None:
-            int_weight_tmp += zp[:, i].unsqueeze(1)
-        int_weight[:, i * group_size : (i + 1) * group_size] = torch.round(int_weight_tmp)
-    if tail_flag:
-        int_weight_tmp = weight[:, leng * group_size :] / scale[:, -1].unsqueeze(1)
-        if zp is not None:
-            int_weight_tmp += zp[:, -1].unsqueeze(1)
-        int_weight[:, leng * group_size :] = torch.round(int_weight_tmp)
-    return int_weight
