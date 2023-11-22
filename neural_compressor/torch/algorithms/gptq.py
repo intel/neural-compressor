@@ -582,7 +582,8 @@ class GPTQuantizer(object):
                 full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                 weight_config_this_layer = self.get_layer_config(full_layer_name)
                 if self.layer_wise:
-                    from ..torch_utils.layer_wise_quant.utils import load_value
+                    # TODO (Yi)
+                    from neural_compressor.adaptor.torch_utils.layer_wise_quant.utils import load_value
 
                     W = load_value(self.model, full_layer_name + ".weight", model_path)
                 else:
@@ -624,7 +625,8 @@ class GPTQuantizer(object):
                 weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
                 logger.info(f"Quantizing layer {layer_name}")
                 if self.layer_wise:
-                    from ..torch_utils.layer_wise_quant.utils import load_value
+                    # TODO (Yi)
+                    from neural_compressor.adaptor.torch_utils.layer_wise_quant.utils import load_value
 
                     full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                     W = load_value(self.model, full_layer_name + ".weight", model_path)
@@ -638,7 +640,8 @@ class GPTQuantizer(object):
                     act_order=weight_config_this_layer["act_order"],
                 )
                 if self.layer_wise:
-                    from ..torch_utils.layer_wise_quant.utils import (
+                    # TODO (Yi)
+                    from neural_compressor.adaptor.torch_utils.layer_wise_quant.utils import (
                         LWQ_WORKSPACE,
                         clean_module_weight,
                         load_value,
