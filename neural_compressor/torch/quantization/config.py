@@ -169,9 +169,11 @@ class GPTQConfig(BaseConfig):
 
     def __init__(
         self,
+        weight_dtype: str = "int",
         weight_bits: int = 4,
         weight_group_size: int = 32,
         weight_sym: bool = True,
+        block_size: int = 128,
         act_dtype: str = "fp32",
         group_dim: int = 1,
         nsamples: int = 128,
@@ -189,17 +191,19 @@ class GPTQConfig(BaseConfig):
         Args:
         """
         super().__init__()
+        self.weight_dtype = weight_dtype
         self.weight_bits = weight_bits
         self.weight_group_size = weight_group_size
         self.weight_sym = weight_sym
         self.act_dtype = act_dtype
+        self.block_size = block_size
         self.enable_mse_search = enable_mse_search
         self.group_dim = group_dim
-        self.nsamples = (nsamples,)
-        self.percdamp = (percdamp,)
-        self.act_order = (act_order,)
-        self.use_max_length = (use_max_length,)
-        self.pad_max_length = (pad_max_length,)
+        self.nsamples = nsamples
+        self.percdamp = percdamp
+        self.act_order = act_order
+        self.use_max_length = use_max_length
+        self.pad_max_length = pad_max_length
         self.layer_wise = layer_wise
         self.device = device
         self.return_int = return_int

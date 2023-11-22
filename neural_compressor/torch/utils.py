@@ -102,4 +102,5 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
             if pair not in filter_result_set:
                 filter_result_set.add(pair)
                 filter_result.append(pair)
+    logger.debug(f"Get model info: {filter_result}")
     return filter_result

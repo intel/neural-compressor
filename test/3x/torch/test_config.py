@@ -219,8 +219,8 @@ class TestQuantizationConfig(unittest.TestCase):
         logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[torch.nn.Linear]["fc1"].weight_bits == 6)
-        self.assertTrue(configs_mapping[torch.nn.Linear]["fc2"].weight_bits == 4)
+        self.assertTrue(configs_mapping[(torch.nn.Linear, "fc1")].weight_bits == 6)
+        self.assertTrue(configs_mapping[(torch.nn.Linear, "fc2")].weight_bits == 4)
 
 
 if __name__ == "__main__":

@@ -13,7 +13,8 @@
 # limitations under the License.
 
 
-from typing import Dict
+import os
+from typing import Dict, Tuple
 
 import torch
 
@@ -21,13 +22,15 @@ from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.logger import Logger
 from neural_compressor.common.utility import GPTQ, RTN_WEIGHT_ONLY_QUANT
 from neural_compressor.torch.algorithms.rtn import rtn_quantize as torch_rtn_quantize
-from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
+from neural_compressor.torch.quantization.config import GPTQConfig, RTNWeightQuantConfig
 from neural_compressor.torch.utils import fetch_module, register_algo, set_module
 
 logger = Logger().get_logger()
 
 
+###################### RTN Algo Entry ##################################
 def _apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
+    # TODO (Yi) remove it
     enable_full_range = quant_config.enable_full_range
     enable_mse_search = quant_config.enable_mse_search
     group_dim = quant_config.group_dim
@@ -64,12 +67,11 @@ def _convert_quant_config_into_quant_config_mapping(
 
 
 @register_algo(name=RTN_WEIGHT_ONLY_QUANT)
-def rtn_quantize_entry(model: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
-    quant_config_mapping: Dict[str, RTNWeightQuantConfig] = _convert_quant_config_into_quant_config_mapping(
-        model, quant_config
-    )
+def rtn_quantize_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNWeightQuantConfig], *args, **kwargs
+) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
-    for op_name, quant_config in quant_config_mapping.items():
+    for (op_type, op_name), quant_config in configs_mapping.items():
         original_module = fetch_module(model, op_name)
         logger.info(f"Apply RTN on module: {op_name}, {original_module}")
         rtn_module = _apply_rtn_on_single_module(original_module, quant_config)
@@ -77,29 +79,95 @@ def rtn_quantize_entry(model: torch.nn.Module, quant_config: RTNWeightQuantConfi
     return model
 
 
+###################### GPTQ Algo Entry ##################################
+
+
+def gptq_config_mapping(configs_mapping: Dict[Tuple[str, callable], GPTQConfig]):
+    # convert GPTQ_CONFIG to gptq_quantize's weight config
+    # convert tune_cfg to gptq_quantize's weight config
+    """please refer to weight_config which can be analyzed by user-define API function weight_only.gptq_quantize
+    keys of weight_config can not only be specific name, but can also be a re formula
+    weight_config = {
+        "layer_name_1": {
+            'wbits': 4,
+            'group_size': 128,
+            'sym': False,
+            'percdamp': 0.01,
+            'actorder': True
+        },
+        "layer_name_2": {
+            'wbits': 4,
+            'group_size': 128,
+            'sym': False,
+            'percdamp': 0.01,
+            'actorder': True
+        }
+        ...
+    }
+    """
+    # for layer_wise quant mode
+    model_path = None
+    layer_wise = False
+    # TODO (Yi) uncomment it when port layer-wise
+    # if recipe_cfgs.get("layer_wise_quant", False):
+    #     layer_wise = True
+    #     from .torch_utils.layer_wise_quant.utils import LWQ_WORKSPACE, _get_path, register_weight_hooks
+
+    #     os.makedirs(LWQ_WORKSPACE, exist_ok=True)
+    #     # model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+    #     model_path = model.path
+    #     assert model_path, "model_path should not be None."
+    #     model_path = _get_path(model_path)
+    #     lwq_handles = register_weight_hooks(
+    #         model, model_path, device=self.device, clean_weight=True, saved_path=LWQ_WORKSPACE
+    #     )
+
+    weight_config = {}
+    for (op_type, op_name), op_config in configs_mapping.items():
+        if op_config.weight_dtype == "fp32":
+            continue
+        else:
+            weight_config[op_name] = {
+                "wbits": op_config.weight_bits,
+                "group_size": op_config.weight_group_size,
+                "sym": op_config.weight_sym,
+                "percdamp": op_config.percdamp,
+                "act_order": op_config.act_order,
+                "block_size": op_config.block_size,
+            }
+            nsamples = op_config.nsamples
+            use_max_length = op_config.use_max_length
+            pad_max_length = op_config.pad_max_length
+            device = op_config.device
+
+    if use_max_length and op_config.pad_max_length == 2048:
+        logger.warning(
+            "You choose to use unified sequence length for calibration, \
+        but you have not set length value. Default sequence length is 2048 and this might cause inference error!"
+        )
+
+    return weight_config, nsamples, use_max_length, pad_max_length, device
+
+
 @register_algo(name=GPTQ)
 def gptq_quantize_entry(
-    model,
-    weight_config={},
-    dataloader=None,
-    nsamples=128,
-    use_max_length=True,
-    pad_max_length=2048,
-    device=None,
-    layer_wise=False,
-    model_path=None,
-):
-    """Run weight-only quantization with."""
-    # TODO(Yi) aligned with rtn_quantize_entry
-    # TODO: unify weight_config keys, add docstring, and support default config
-    assert isinstance(model, torch.nn.Module), "only support torch module"
-    if layer_wise:
-        assert model_path is not None, "model_path should not be None when use layer_wise mode"
-    from neural_compressor.torch.algorithms.gptq import GPTQuantizer
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], dataloader, *args, **kwargs
+) -> torch.nn.Module:
+    logger.info("quantizing with the GPTQ algorithm")
+    weight_config, nsamples, use_max_length, pad_max_length, device = gptq_config_mapping(configs_mapping)
+    from neural_compressor.torch.algorithms.gptq import apply_gptq_quantize
 
-    gptq_quantizer = GPTQuantizer(
-        model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise
+    model, quantization_perm = apply_gptq_quantize(
+        model=model,
+        weight_config=weight_config,
+        dataloader=dataloader,
+        nsamples=nsamples,
+        use_max_length=use_max_length,
+        pad_max_length=pad_max_length,
+        device=device,
+        layer_wise=False,
+        model_path=None,
     )
-    fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
-    logger.info("GPTQ quantizing done.")
-    return fp32_modified_model, gptq_config
+    # Assign the gptq config as an attribute of model
+    model._gptq_quantization_perm = quantization_perm
+    return model
