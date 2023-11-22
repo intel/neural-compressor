@@ -36,6 +36,7 @@ from neural_compressor.adaptor.adaptor import Adaptor, adaptor_registry
 from neural_compressor.adaptor.ox_utils.util import ONNXRT_BACKENDS, PROVIDERS, to_numpy
 from neural_compressor.adaptor.query import QueryBackendCapability
 from neural_compressor.data.dataloaders.base_dataloader import BaseDataLoader
+from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.utils.utility import GLOBAL_STATE, MODE, CpuInfo, LazyImport, Statistics, dump_elapsed_time
 
 onnx = LazyImport("onnx")
@@ -268,8 +269,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         ):  # pragma: no cover
             from onnx import version_converter
 
-            from neural_compressor.model.onnx_model import ONNXModel
-
             try:
                 model = self._rename_node(ONNXModel(version_converter.convert_version(model.model, 15)))
             except:
@@ -309,42 +308,121 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         iterations = tune_cfg.get("calib_iteration", 1)
         calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
-        if not self.dynamic:
-            calib_iterations = self._reset_calib_iter(data_loader, calib_sampling_size, iterations)
-            quantize_params = self._get_quantize_params(tmp_model, data_loader, quantize_config, calib_iterations)
+
+        if self.recipes.get("layer_wise_quant", False) and not self.dynamic:
+            # layer-wise quantization
+            # details refer to docs/source/quantization_weight_only.md#layer-wise-quantization
+            _model_to_split = copy.deepcopy(tmp_model)
+
+            split_nodes = _model_to_split.find_split_nodes()
+            logger.info(
+                "Will split model into {} parts to do layer-wise quantization".format(
+                    len([node.name for node in split_nodes]) + 1
+                )
+            )
+            logger.debug(
+                "Will split model with these nodes for layer-wise quantization: {}".format(
+                    [node.name for node in split_nodes]
+                )
+            )
+
+            split_idx = 1
+            model_to_split = [_model_to_split]
+            dataloader_for_split_model = [data_loader]
+            quantize_params = {}
+            quantized_model_merged = None
+
+            while len(model_to_split) != 0:
+                split_model = model_to_split.pop(0)
+                split_node = split_nodes.pop(0)
+                save_both_split_models = True if len(split_nodes) == 0 else False
+                shape_infer = True if split_idx == 1 else False
+
+                # split model with given split_node
+                split_model_part_1, split_model_part_2 = split_model.split_model_with_node(
+                    split_node.name, tmp_model.model_path, shape_infer, save_both_split_models
+                )
+                if not save_both_split_models:
+                    # append split_model_part_2 to do next split
+                    model_to_split.append(split_model_part_2)
+
+                logger.info("Quantize split model {}".format(split_idx))
+                # get quantize params of split model
+                split_quantize_params, dataloder_for_next_split_model = self._get_split_model_quantize_params(
+                    split_model_part_1, dataloader_for_split_model, quantize_config, calib_sampling_size, iterations
+                )
+                dataloader_for_split_model.append(dataloder_for_next_split_model)
+                quantize_params.update(split_quantize_params)
+
+                # quantize split model
+                quantized_model_merged = self._quantize_split_model(
+                    split_model_part_1, quantize_config, split_quantize_params, quantized_model_merged
+                )
+
+                split_idx += 1
+
+                # if this is the last split, then quantize the last split model
+                if save_both_split_models:
+                    logger.info("Quantize split model {}".format(split_idx))
+                    # get quantize params of split model
+                    split_quantize_params, dataloder_for_next_split_model = self._get_split_model_quantize_params(
+                        split_model_part_2, dataloader_for_split_model, quantize_config, calib_sampling_size, iterations
+                    )
+                    quantize_params.update(split_quantize_params)
+
+                    # quantize split model
+                    quantized_model_merged = self._quantize_split_model(
+                        split_model_part_2, quantize_config, split_quantize_params, quantized_model_merged
+                    )
+                    quantized_model_merged.re_org_output(tmp_model.output())  # re-org output as the origin output
+
+            self.quantize_params = quantize_params
+            tmp_model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
+            tmp_model.model = quantized_model_merged.model
+            self.quantize_config = quantize_config  # update so other methods can know current configs
+            self._dump_model_op_stats(tmp_model)
+            tmp_model.topological_sort()
+            tmp_model.check_is_large_model()
+
         else:
-            quantize_params = None
-        self.quantize_params = quantize_params
+            if not self.dynamic:
+                calib_iterations = self._reset_calib_iter(data_loader, calib_sampling_size, iterations)
+                quantize_params, _ = self._get_quantize_params(
+                    tmp_model, data_loader, quantize_config, calib_iterations
+                )
+            else:
+                quantize_params = None
+            self.quantize_params = quantize_params
 
-        from neural_compressor import options
-        from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
+            from neural_compressor import options
+            from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
 
-        quantizer = Quantizer(
-            tmp_model,
-            quantize_config,
-            format,
-            self.static,
-            quantize_params,
-            self.quantizable_op_types,
-            self.query_handler.get_fallback_list(),
-            self.reduce_range,
-            options.onnxrt.qdq_setting.AddQDQPairToWeight
-            if "add_qdq_pair_to_weight" not in self.recipes
-            else self.recipes.get("add_qdq_pair_to_weight", False),
-            options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin
-            if "optypes_to_exclude_output_quant" not in self.recipes
-            else self.recipes.get("optypes_to_exclude_output_quant", []),
-            options.onnxrt.qdq_setting.DedicatedQDQPair
-            if "dedicated_qdq_pair" not in self.recipes
-            else self.recipes.get("dedicated_qdq_pair", False),
-            self.backend,
-        )
-        quantizer.quantize_model()
-        tmp_model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
-        tmp_model.model = quantizer.model.model
-        self.quantize_config = quantize_config  # update so other methods can know current configs
-        self._dump_model_op_stats(tmp_model)
-        tmp_model.topological_sort()
+            quantizer = Quantizer(
+                tmp_model,
+                quantize_config,
+                format,
+                self.static,
+                quantize_params,
+                self.quantizable_op_types,
+                self.query_handler.get_fallback_list(),
+                self.reduce_range,
+                options.onnxrt.qdq_setting.AddQDQPairToWeight
+                if "add_qdq_pair_to_weight" not in self.recipes
+                else self.recipes.get("add_qdq_pair_to_weight", False),
+                options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin
+                if "optypes_to_exclude_output_quant" not in self.recipes
+                else self.recipes.get("optypes_to_exclude_output_quant", []),
+                options.onnxrt.qdq_setting.DedicatedQDQPair
+                if "dedicated_qdq_pair" not in self.recipes
+                else self.recipes.get("dedicated_qdq_pair", False),
+                self.backend,
+            )
+            quantizer.quantize_model()
+            tmp_model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
+            tmp_model.model = quantizer.model.model
+            self.quantize_config = quantize_config  # update so other methods can know current configs
+            self._dump_model_op_stats(tmp_model)
+            tmp_model.topological_sort()
 
         # if the model is large and acc tuning is required, save it to workspace
         if not self.performance_only and tmp_model.is_large_model:  # pragma: no cover
@@ -383,6 +461,58 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             onnx.save_model(tmp_model.model, model_path)
 
         return tmp_model
+
+    def _get_split_model_quantize_params(
+        self, split_model, split_dataloader, quantize_config, calib_sampling_size, iterations
+    ):
+        """Get quantize params for current split model and get dataloader for next split model."""
+        dataloader = split_dataloader.pop(0)
+        calib_iterations = self._reset_calib_iter(dataloader, calib_sampling_size, iterations)
+        split_quantize_params, dataloder_for_next_split_model = self._get_quantize_params(
+            split_model,
+            dataloader,
+            quantize_config,
+            calib_iterations,
+            split_model_input_names=split_model.input(),
+        )
+        return split_quantize_params, dataloder_for_next_split_model
+
+    def _quantize_split_model(self, split_model, quantize_config, quantize_params, quantized_model_merged):
+        """Quantize split model, and merge the quantized models to generate final model."""
+        from neural_compressor import options
+        from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
+
+        quantizer = Quantizer(
+            split_model,
+            quantize_config,
+            format,
+            self.static,
+            quantize_params,
+            self.quantizable_op_types,
+            self.query_handler.get_fallback_list(),
+            self.reduce_range,
+            options.onnxrt.qdq_setting.AddQDQPairToWeight
+            if "add_qdq_pair_to_weight" not in self.recipes
+            else self.recipes.get("add_qdq_pair_to_weight", False),
+            options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin
+            if "optypes_to_exclude_output_quant" not in self.recipes
+            else self.recipes.get("optypes_to_exclude_output_quant", []),
+            options.onnxrt.qdq_setting.DedicatedQDQPair
+            if "dedicated_qdq_pair" not in self.recipes
+            else self.recipes.get("dedicated_qdq_pair", False),
+            self.backend,
+        )
+        quantizer.quantize_model()
+        split_model.model = quantizer.model.model
+        split_model.topological_sort()
+
+        if quantized_model_merged is None:
+            quantized_model_merged = quantizer.model
+            quantized_model_merged.write_external_data_to_new_location(overwrite=True)
+        else:
+            quantized_model_merged.merge_split_models(quantizer.model)
+
+        return quantized_model_merged
 
     def _check_backend_available(self, backend):
         """Check backend is available or not."""
@@ -608,7 +738,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         Statistics(output_data, header="Mixed Precision Statistics", field_names=field_names).print_stat()
         self.optype_statistics = field_names, output_data
 
-    def _get_quantize_params(self, model, data_loader, quantize_config, iterations):
+    def _get_quantize_params(self, model, data_loader, quantize_config, iterations, **kwargs):
         from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
         from neural_compressor.model.onnx_model import ONNXModel
 
@@ -626,10 +756,12 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             iterations=list(range(0, iterations)),
             backend=self.backend,
             reduce_range=self.reduce_range,
+            **kwargs,
         )
         self.min_max = augment.dump_minmax(quantize_config)
         quantize_params = augment.dump_calibration(quantize_config, min_max=self.min_max)
-        return quantize_params
+        dataloder_for_next_split_model = augment.dataloder_for_next_split_model
+        return quantize_params, dataloder_for_next_split_model
 
     def inspect_tensor(
         self,
@@ -644,7 +776,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
     ):
         """The function is used by tune strategy class for dumping tensor info."""
         from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
-        from neural_compressor.model.onnx_model import ONNXModel
         from neural_compressor.utils.utility import dump_data_to_local
 
         if not isinstance(model, ONNXModel):
@@ -801,6 +932,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         }
         if not isinstance(self.query_handler.get_graph_optimization(), list):
             level = self.query_handler.get_graph_optimization()
+        elif self.recipes.get("layer_wise_quant"):
+            level = "ENABLE_BASIC"
+            logger.info("Force set graph optimization level to 'ENABLE_BASIC' for layer-wise quantization")
         elif options.onnxrt.graph_optimization.level is not None:
             level = options.onnxrt.graph_optimization.level
         elif self.recipes.get("graph_optimization_level", None) is not None:
@@ -816,10 +950,23 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             )
         sess_options.graph_optimization_level = optimization_levels[level]
         sess_options.optimized_model_filepath = os.path.join(self.work_space, "Optimized_model.onnx")
+        if model.is_large_model and self.recipes.get("layer_wise_quant", False):
+            # save the model and external data for layer-wise quantization
+            external_data_filename = os.path.basename(sess_options.optimized_model_filepath) + "_data"
+            external_data_file_threshold = 1024
+            sess_options.add_session_config_entry(
+                "session.optimized_model_external_initializers_file_name", external_data_filename
+            )
+            sess_options.add_session_config_entry(
+                "session.optimized_model_external_initializers_min_size_in_bytes", str(external_data_file_threshold)
+            )
+            logger.info("Saving optimized model for layer-wise quantization. This may take a while...")
+
         if sys.version_info < (3, 11) and find_spec("onnxruntime_extensions"):  # pragma: no cover
             from onnxruntime_extensions import get_library_path
 
             sess_options.register_custom_ops_library(get_library_path())
+
         if not model.is_large_model:
             sess = ort.InferenceSession(
                 model.model.SerializeToString(), sess_options, providers=["CPUExecutionProvider"]
@@ -830,16 +977,15 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         else:  # pragma: no cover
             logger.warning("Please use model path instead of onnx model object to quantize")
         del sess
-
         tmp_model = onnx.load(sess_options.optimized_model_filepath, load_external_data=False)
 
-        if model.is_large_model:  # pragma: no cover
-            from onnx.external_data_helper import load_external_data_for_model
-
-            load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
-            # save the large model to workspace if acc tuning is required
+        if model.is_large_model:
             if not self.performance_only:
-                from onnx.external_data_helper import convert_model_to_external_data
+                # save the large model to workspace if acc tuning is required
+                from onnx.external_data_helper import convert_model_to_external_data, load_external_data_for_model
+
+                # load external data
+                load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
 
                 # if optimized model exists, remove it
                 if os.path.isfile(sess_options.optimized_model_filepath):
@@ -870,7 +1016,12 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 onnx.save_model(tmp_model, model_path)
                 model.model_path = model_path
             else:
-                model.model_path = sess_options.optimized_model_filepath
+                if not self.recipes.get("layer_wise_quant", False):
+                    # load external data if layer-wise quant is False
+                    from onnx.external_data_helper import load_external_data_for_model
+
+                    load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
+                    model.model_path = sess_options.optimized_model_filepath
         else:
             model.model_path = sess_options.optimized_model_filepath
 
@@ -976,8 +1127,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
     def _replace_gemm_with_matmul(model):
         new_nodes = []
         from onnx import numpy_helper
-
-        from neural_compressor.model.onnx_model import ONNXModel
 
         if not isinstance(model, ONNXModel):
             model = ONNXModel(model)

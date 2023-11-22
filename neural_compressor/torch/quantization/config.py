@@ -23,7 +23,7 @@ from typing import Callable, Dict, List, NamedTuple, Union
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
-from neural_compressor.common.utility import RTN_WEIGHT_ONLY_QUANT
+from neural_compressor.common.utility import DUMMY_CONFIG, RTN_WEIGHT_ONLY_QUANT
 
 FRAMEWORK_NAME = "torch"
 
@@ -61,6 +61,7 @@ class RTNWeightQuantConfig(BaseConfig):
         "enable_full_range",
         "enable_mse_search",
         "group_dim",
+        "return_int",
     ]
     name = RTN_WEIGHT_ONLY_QUANT
 
@@ -74,6 +75,7 @@ class RTNWeightQuantConfig(BaseConfig):
         enable_full_range: bool = False,
         enable_mse_search: bool = False,
         group_dim: int = 1,
+        return_int: bool = False,
     ):
         """Init RTN weight-only quantization config.
 
@@ -86,6 +88,7 @@ class RTNWeightQuantConfig(BaseConfig):
             enable_full_range (bool): Enables full range for activations, default is False.
             enable_mse_search (bool): Enables mean squared error (MSE) search, default is False.
             group_dim (int): Dimension for grouping, default is 1.
+            return_int (bool): Enables return model in int8/uint8 format or not. Defaults to False.
         """
         super().__init__()
         self.weight_bits = weight_bits
@@ -96,6 +99,7 @@ class RTNWeightQuantConfig(BaseConfig):
         self.enable_full_range = enable_full_range
         self.enable_mse_search = enable_mse_search
         self.group_dim = group_dim
+        self.return_int = return_int
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)
@@ -113,6 +117,9 @@ class RTNWeightQuantConfig(BaseConfig):
             weight_group_size=[32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024],
             weight_sym=[True, False],
             act_dtype=["fp32"],
+            enable_full_range=[False, True],
+            enable_mse_search=[False, True],
+            group_dim=[1, 0],
         )
         operators = [torch.nn.Linear, torch.nn.functional.linear]
         supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT))
@@ -121,6 +128,75 @@ class RTNWeightQuantConfig(BaseConfig):
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 RTNWeightQuantConfig.register_supported_configs()
+
+
+def get_default_rtn_config() -> RTNWeightQuantConfig:
+    """Generate the default rtn config.
+
+    Returns:
+        the default rtn config.
+    """
+    return RTNWeightQuantConfig()
+
+
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=DUMMY_CONFIG)
+class DummyConfig(BaseConfig):
+    """Config class for round-to-nearest weight-only quantization."""
+
+    supported_configs: List[OperatorConfig] = []
+    params_list = ["act_dtype", "weight_dtype", "dummy_attr"]
+    name = DUMMY_CONFIG
+
+    def __init__(
+        self,
+        weight_dtype: str = "int",
+        act_dtype: str = "fp32",
+        dummy_attr: int = 0,
+    ):
+        """Init RTN weight-only quantization config.
+
+        Args:
+            act_dtype (str): Data type for activations, default is "fp32".
+            weight_dtype (str): Data type for weights, default is "int".
+            dummy_attr (int): Dummy attribute, default is 0.
+        """
+        super().__init__()
+        self.act_dtype = act_dtype
+        self.weight_dtype = weight_dtype
+        self.dummy_attr = dummy_attr
+
+    def to_dict(self):
+        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
+
+    @classmethod
+    def from_dict(cls, config_dict):
+        return super(DummyConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        linear_dummy_config = DummyConfig(
+            act_dtype=["fp32"],
+            weight_dtype=["int4", "int8"],
+            dummy_attr=[1, 2, 3],
+        )
+        operators = [torch.nn.Linear, torch.nn.functional.linear]
+        supported_configs.append(
+            OperatorConfig(config=linear_dummy_config, operators=operators, backend=Backend.DEFAULT)
+        )
+        cls.supported_configs = supported_configs
+
+
+def get_default_dummy_config() -> DummyConfig:
+    """Generate the default dummy config.
+
+    Returns:
+        the default dummy config.
+    """
+    return DummyConfig()
+
+
+##################### Algo Configs End ###################################
 
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
@@ -134,12 +210,3 @@ def parse_config_from_dict(config_dict: Dict) -> BaseConfig:
             config = torch_registered_configs[key].from_dict(val)
             return config
         # TODO(Yi) parse multiple configs after support configs add
-
-
-def get_default_rtn_config() -> RTNWeightQuantConfig:
-    """Generate the default rtn config.
-
-    Returns:
-        the default rtn config.
-    """
-    return RTNWeightQuantConfig()
