@@ -880,6 +880,26 @@ class TestExample(unittest.TestCase):
                 calib_func=calib_func,
             )
             q_model.save("saved")
+            # test recover_model_from_json
+            from neural_compressor.utils.pytorch import recover_model_from_json
+
+            tmp_model = copy.deepcopy(fp32_model)
+
+            ipex_model = recover_model_from_json(tmp_model, "./saved/best_configure.json", example_inputs=input_ids)
+            inc_output = q_model.model(input_ids)
+            ipex_output = ipex_model(input_ids)
+            self.assertTrue(torch.allclose(inc_output, ipex_output, atol=1e-05))
+
+            example_tuple = (input_ids,)
+            ipex_model = recover_model_from_json(tmp_model, "./saved/best_configure.json", example_inputs=example_tuple)
+            ipex_output = ipex_model(input_ids)
+            self.assertTrue(torch.allclose(inc_output, ipex_output, atol=1e-05))
+
+            example_dict = {"x": input_ids}
+            ipex_model = recover_model_from_json(tmp_model, "./saved/best_configure.json", example_inputs=example_dict)
+            ipex_output = ipex_model(input_ids)
+            self.assertTrue(torch.allclose(inc_output, ipex_output, atol=1e-05))
+
             # compare ipex and inc quantization
             with open("saved/best_configure.json", "r") as f:
                 inc_config_json = json.load(f)
