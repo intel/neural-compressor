@@ -979,33 +979,6 @@ class Quantizer(nn.Module):
         return torch.all(self.scale != 0)
 
 
-def apply_gptq_quantize(
-    model,
-    weight_config={},
-    dataloader=None,
-    nsamples=128,
-    use_max_length=True,
-    pad_max_length=2048,
-    device=None,
-    layer_wise=False,
-    model_path=None,
-):
-    from neural_compressor.torch.algorithms.gptq import GPTQuantizer
-
-    """Run gptq."""
-    # TODO: unify weight_config keys, add docstring, and support default config
-    assert isinstance(model, torch.nn.Module), "only support torch module"
-    if layer_wise:
-        assert model_path is not None, "model_path should not be None when use layer_wise mode"
-
-    gptq_quantizer = GPTQuantizer(
-        model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise
-    )
-    fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
-    logger.info("GPTQ quantizing done.")
-    return fp32_modified_model, gptq_config
-
-
 # TODO (Yi) remove it after unifying the algo config parser
 from typing import Callable, Dict, Tuple
 
@@ -1057,3 +1030,24 @@ def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig])
         )
 
     return weight_config, nsamples, use_max_length, pad_max_length, device
+
+
+def apply_gptq_quantize(model, configs_mapping, dataloader, *args, **kwargs):
+    """Apply gptq."""
+    # TODO: unify weight_config keys, add docstring, and support default config
+    weight_config, nsamples, use_max_length, pad_max_length, device = gptq_config_mapping(configs_mapping)
+    assert isinstance(model, torch.nn.Module), "only support torch module"
+    # TODO (Yi) disable layer-wise and model_path first
+    layer_wise = False
+    model_path = None
+
+    # Below is the same as the 2.x
+    if layer_wise:
+        assert model_path is not None, "model_path should not be None when use layer_wise mode"
+
+    gptq_quantizer = GPTQuantizer(
+        model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise
+    )
+    fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
+    logger.info("GPTQ quantization done.")
+    return fp32_modified_model, gptq_config
