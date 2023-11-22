@@ -1936,7 +1936,7 @@ class TensorFlowAdaptor(Adaptor):
             black_nodes = [node for node in self.quantize_config if self.quantize_config[node] == "fp32"]
 
         # only support per-tensor MatMul now
-        op_types=["MatMul"]
+        op_types = ["MatMul"]
         llm_temp_dir = self.work_dir + "/temp_saved_model"
         # Run calibration to get max values per channel
         from .tf_utils.smooth_quant_calibration import SmoothQuantCalibrationLLM
@@ -1951,9 +1951,9 @@ class TensorFlowAdaptor(Adaptor):
             llm_temp_dir,
             model.weight_name_mapping,
         )
-        max_vals_per_channel, sq_target_node_names, \
-            sq_weight_tensor_dict, sq_graph_def = calibration(model.input_node_names,
-                                                              model.output_node_names)
+        max_vals_per_channel, sq_target_node_names, sq_weight_tensor_dict, sq_graph_def = calibration(
+            model.input_node_names, model.output_node_names
+        )
 
         # Calculate the smooth quant scaler and insert Mul op into the graph
         from .tf_utils.smooth_quant_scaler import SmoothQuantScalerLLM

@@ -1286,6 +1286,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     def save(self, root=None):
         """Save the model to the root path."""
         import shutil
+
         from neural_compressor.adaptor.tf_utils.util import parse_saved_model, reconstruct_saved_model
 
         if not root:

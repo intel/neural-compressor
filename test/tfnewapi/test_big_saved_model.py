@@ -99,27 +99,29 @@ class TestBigSavedModel(unittest.TestCase):
 
     def test_newapi_sq_big_saved_model(self):
         def weight_name_mapping(name):
-            """The function that maps name from AutoTrackable variables to graph nodes"""
-            name = name.replace('dense', 'StatefulPartitionedCall/sequential/dense/MatMul')
-            name = name.replace('conv2d', 'StatefulPartitionedCall/sequential/conv2d/Conv2D')
-            name = name.replace('kernel:0', 'ReadVariableOp')
+            """The function that maps name from AutoTrackable variables to graph nodes."""
+            name = name.replace("dense", "StatefulPartitionedCall/sequential/dense/MatMul")
+            name = name.replace("conv2d", "StatefulPartitionedCall/sequential/conv2d/Conv2D")
+            name = name.replace("kernel:0", "ReadVariableOp")
             return name
 
-        from neural_compressor import Model
-        from neural_compressor import quantization
+        from neural_compressor import Model, quantization
         from neural_compressor.config import PostTrainingQuantConfig
 
-        model = Model('baseline_model' , modelType='llm_saved_model')
+        model = Model("baseline_model", modelType="llm_saved_model")
         model.weight_name_mapping = weight_name_mapping
 
         output_node_names = model.output_node_names
-        self.assertEqual(output_node_names, ['Identity'])
+        self.assertEqual(output_node_names, ["Identity"])
 
-        calib_dataloader=DataLoader(framework="tensorflow", dataset=Dataset())
-        recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.6}}
+        calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
+        recipes = {"smooth_quant": True, "smooth_quant_args": {"alpha": 0.6}}
         op_name_dict = {
-            'StatefulPartitionedCall/sequential/conv2d/Conv2D':{"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}
+            "StatefulPartitionedCall/sequential/conv2d/Conv2D": {
+                "weight": {"dtype": ["fp32"]},
+                "activation": {"dtype": ["fp32"]},
             }
+        }
         config = PostTrainingQuantConfig(
             quant_level=1,
             recipes=recipes,
@@ -127,9 +129,7 @@ class TestBigSavedModel(unittest.TestCase):
             calibration_sampling_size=[500],
         )
         model.weight_name_mapping = weight_name_mapping
-        q_model = quantization.fit( model,
-                                    config,
-                                    calib_dataloader=calib_dataloader)
+        q_model = quantization.fit(model, config, calib_dataloader=calib_dataloader)
         q_model.save("int8_model")
         quant_count = 0
         for i in q_model.graph_def.node:
@@ -137,6 +137,7 @@ class TestBigSavedModel(unittest.TestCase):
                 quant_count += 1
 
         self.assertEqual(quant_count, 3)
+
 
 if __name__ == "__main__":
     unittest.main()
