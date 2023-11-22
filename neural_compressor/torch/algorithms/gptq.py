@@ -1001,3 +1001,56 @@ def apply_gptq_quantize(
     fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
     logger.info("GPTQ quantizing done.")
     return fp32_modified_model, gptq_config
+
+
+# TODO (Yi) remove it after unifying the algo config parser
+from typing import Callable, Dict, Tuple
+
+from neural_compressor.torch.quantization.config import GPTQConfig
+
+
+def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig]):
+    # convert GPTQ_CONFIG to gptq_quantize's weight config
+    # convert tune_cfg to gptq_quantize's weight config
+    # for layer_wise quant mode
+    model_path = None
+    layer_wise = False
+    # TODO (Yi) uncomment it when port layer-wise
+    # if recipe_cfgs.get("layer_wise_quant", False):
+    #     layer_wise = True
+    #     from .torch_utils.layer_wise_quant.utils import LWQ_WORKSPACE, _get_path, register_weight_hooks
+
+    #     os.makedirs(LWQ_WORKSPACE, exist_ok=True)
+    #     # model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
+    #     model_path = model.path
+    #     assert model_path, "model_path should not be None."
+    #     model_path = _get_path(model_path)
+    #     lwq_handles = register_weight_hooks(
+    #         model, model_path, device=self.device, clean_weight=True, saved_path=LWQ_WORKSPACE
+    #     )
+
+    weight_config = {}
+    for (op_type, op_name), op_config in configs_mapping.items():
+        if op_config.weight_dtype == "fp32":
+            continue
+        else:
+            weight_config[op_name] = {
+                "wbits": op_config.weight_bits,
+                "group_size": op_config.weight_group_size,
+                "sym": op_config.weight_sym,
+                "percdamp": op_config.percdamp,
+                "act_order": op_config.act_order,
+                "block_size": op_config.block_size,
+            }
+            nsamples = op_config.nsamples
+            use_max_length = op_config.use_max_length
+            pad_max_length = op_config.pad_max_length
+            device = op_config.device
+
+    if use_max_length and op_config.pad_max_length == 2048:
+        logger.warning(
+            "You choose to use unified sequence length for calibration, \
+        but you have not set length value. Default sequence length is 2048 and this might cause inference error!"
+        )
+
+    return weight_config, nsamples, use_max_length, pad_max_length, device
