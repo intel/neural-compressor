@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """This is an utility file for PyTorch distillation."""
+from deprecated import deprecated
 
 from neural_compressor.utils.utility import LazyImport
 
@@ -25,6 +26,7 @@ TEACHER_FEATURES = {}
 
 
 # for adapting fx model
+@deprecated(version="2.0")
 @torch.fx.wrap
 def record_output(output, name, output_process, student=False):
     """Record layers output.
@@ -53,6 +55,7 @@ def record_output(output, name, output_process, student=False):
     return output
 
 
+@deprecated(version="2.0")
 def get_activation(name, output_process="", student=False):
     """Get a hook for getting activation."""
 

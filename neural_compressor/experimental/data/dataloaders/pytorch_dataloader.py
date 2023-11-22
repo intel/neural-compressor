@@ -15,8 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Initialize the Datasets class."""
-
-import numpy as np
+from deprecated import deprecated
 
 from neural_compressor.utils.utility import LazyImport
 
@@ -26,6 +25,7 @@ torch = LazyImport("torch")
 hvd = LazyImport("horovod.torch")
 
 
+@deprecated(version="2.0")
 class PyTorchDataLoader(BaseDataLoader):
     """PyTorchDataLoader inherits from BaseDataLoader."""
 

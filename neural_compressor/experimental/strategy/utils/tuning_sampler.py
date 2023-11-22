@@ -22,6 +22,8 @@ from collections import OrderedDict, defaultdict, deque
 from itertools import product
 from typing import Any, Dict, List
 
+from deprecated import deprecated
+
 from ....utils import logger
 from .tuning_space import TuningSpace, pattern_to_internal, pattern_to_path, quant_mode_from_pattern
 from .tuning_structs import OpTuningConfig
@@ -37,6 +39,7 @@ TUNING_ITEM_PRIORITY = [
 ]
 
 
+@deprecated(version="2.0")
 class TuningSamplerRegistry:
     """Class decorator used to register all TuningSampler subclasses."""
 
@@ -57,6 +60,7 @@ class TuningSamplerRegistry:
         return decorator
 
 
+@deprecated(version="2.0")
 class TuningOrder:
     """Not displayed in API Docs."""
 
@@ -65,6 +69,7 @@ class TuningOrder:
         pass
 
 
+@deprecated(version="2.0")
 class TuningSampler:
     """Not displayed in API Docs.
 
@@ -106,6 +111,7 @@ class TuningSampler:
             config_args["weight_dtype"] = self.tuning_space.ops_data_type[op_name_type][path]
 
 
+@deprecated(version="2.0")
 class ModelWiseTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
 
@@ -189,6 +195,7 @@ class ModelWiseTuningSampler(TuningSampler):
             yield tune_cfg
 
 
+@deprecated(version="2.0")
 class OpTypeWiseTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
 
@@ -287,6 +294,7 @@ class OpTypeWiseTuningSampler(TuningSampler):
             yield new_tune_cfg
 
 
+@deprecated(version="2.0")
 class OpWiseTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
 
@@ -393,6 +401,7 @@ class OpWiseTuningSampler(TuningSampler):
         return op_wise_configs
 
 
+@deprecated(version="2.0")
 class FallbackTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
 

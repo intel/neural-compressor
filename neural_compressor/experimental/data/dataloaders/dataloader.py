@@ -16,8 +16,6 @@
 # limitations under the License.
 # ==============================================================================
 """Built-in dataloaders for multiple framework backends."""
-
-from .default_dataloader import DefaultDataLoader
 from .mxnet_dataloader import MXNetDataLoader
 from .onnxrt_dataloader import ONNXRTDataLoader
 from .pytorch_dataloader import PyTorchDataLoader

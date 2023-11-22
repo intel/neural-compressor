@@ -44,7 +44,7 @@ function run_tuning {
             --dataset_name squad \
             --do_eval \
             --max_seq_length 384 \
-            --no_cuda \
+            --no_cuda \ # remove if using xpu
             --tune \
             --output_dir $tuned_checkpoint
     fi
@@ -55,7 +55,7 @@ function run_tuning {
            --dataset_name squad \
            --do_eval \
            --max_seq_length 384 \
-           --no_cuda \
+           --no_cuda \ # remove if using xpu
            --tune \
            --output_dir $tuned_checkpoint
     fi

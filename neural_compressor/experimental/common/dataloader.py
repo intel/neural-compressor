@@ -15,10 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Common DataLoader just collects the information to construct a dataloader."""
+from deprecated import deprecated
 
 from ..data import DATALOADERS
 
 
+@deprecated(version="2.0")
 class DataLoader(object):
     """A wrapper of the information needed to construct a dataloader.
 
@@ -81,6 +83,7 @@ class DataLoader(object):
         self.distributed = distributed
 
 
+@deprecated(version="2.0")
 def _generate_common_dataloader(dataloader, framework, distributed=False):
     """Generate common dataloader.
 

@@ -17,12 +17,12 @@ from typing import Any, Callable
 import torch
 
 from neural_compressor.common.base_config import BaseConfig
+from neural_compressor.common.logger import Logger
 from neural_compressor.common.utility import RTN_WEIGHT_ONLY_QUANT
 from neural_compressor.torch.quantization.config import parse_config_from_dict
 from neural_compressor.torch.utils import algos_mapping
 
-# TODO (Yi) move logger into common in next PR
-from neural_compressor.utils import logger
+logger = Logger().get_logger()
 
 
 def quantize(

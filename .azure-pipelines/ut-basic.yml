@@ -12,7 +12,6 @@ pr:
       - test
       - setup.py
       - requirements.txt
-      - .azure-pipelines/scripts/ut
     exclude:
       - test/neural_coder
       - test/3x
