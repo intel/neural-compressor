@@ -90,6 +90,7 @@ class BasicNAS(NASBase, Component):
         """Initialize the train and evaluation settings."""
         framework_specific_info = {
             "device": self.cfg.device,
+            "backend": self.cfg.backend,
             "random_seed": self.cfg.tuning.random_seed,
             "workspace_path": self.cfg.tuning.workspace.path,
             "q_dataloader": None,
