@@ -43,7 +43,7 @@ support_int8_activation = {
 
 
 def update_config(op_value: Dict, quant_config: StaticQuantConfig, layer_class: str):
-    """Update op-wise config from gloabal config or operator name config or operator type config."""
+    """Update op-wise config from global config or operator name config or operator type config."""
     op_value["activation"].update(
         {
             "dtype": quant_config.act_dtype,
@@ -64,7 +64,7 @@ def update_config(op_value: Dict, quant_config: StaticQuantConfig, layer_class: 
 
 
 def parse_to_keras_tune_cfg(model: tf.keras.Model, quant_config: StaticQuantConfig, calib_iteration: int) -> Dict:
-    """The funtion that parses StaticQuantConfig to keras tunning config.
+    """The function that parses StaticQuantConfig to keras tuning config.
 
     Args:
         model: a fp32 model to be quantized.
@@ -72,7 +72,7 @@ def parse_to_keras_tune_cfg(model: tf.keras.Model, quant_config: StaticQuantConf
         calib_iteration: the iteration of calibration.
 
     Returns:
-        tune_cfg: the tunning config for keras adaptor.
+        tune_cfg: the tuning config for keras adaptor.
     """
     tune_cfg = {"op": OrderedDict()}
     for layer in model.layers:
