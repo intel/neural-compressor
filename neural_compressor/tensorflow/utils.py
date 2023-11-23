@@ -14,7 +14,6 @@
 
 import logging
 import time
-
 from functools import reduce
 from typing import Callable, Dict
 
@@ -64,6 +63,7 @@ def deep_get(dictionary, keys, default=None):
         item: the item of the deep dot keys
     """
     return reduce(lambda d, key: d.get(key, default) if isinstance(d, dict) else default, keys.split("."), dictionary)
+
 
 def dump_elapsed_time(customized_msg=""):
     """Get the elapsed time for decorated functions.

@@ -15,12 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 import os
 import shutil
 import time
 import unittest
 
-import math
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -89,20 +89,22 @@ class Dataset(object):
     def __getitem__(self, idx):
         return self.test_images[idx], self.test_labels[idx]
 
+
 class MyDataloader:
     def __init__(self, dataset, batch_size=1):
         self.dataset = dataset
         self.batch_size = batch_size
         self.length = math.ceil(len(dataset) / self.batch_size)
-    
+
     def __iter__(self):
         for _, (images, labels) in enumerate(self.dataset):
-            images = np.expand_dims(images,axis=0)
-            labels = np.expand_dims(labels,axis=0)
+            images = np.expand_dims(images, axis=0)
+            labels = np.expand_dims(labels, axis=0)
             yield (images, labels)
 
     def __len__(self):
         return self.length
+
 
 class TestKeras3xNewApi(unittest.TestCase):
     @classmethod
