@@ -12,24 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time
-import logging
 import collections
-import numpy as np
-from functools import reduce
+import logging
+import time
 from abc import abstractmethod
+from functools import reduce
 from typing import Callable, Dict
-from pkg_resources import parse_version
 
+import numpy as np
 import tensorflow as tf
+from pkg_resources import parse_version
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
 algos_mapping: Dict[str, Callable] = {}
 
+
 def version1_gte_version2(version1, version2):
     """Check if version1 is greater than or equal to version2."""
     return parse_version(version1) > parse_version(version2) or parse_version(version1) == parse_version(version2)
-    
+
+
 def register_algo(name):
     """Decorator function to register algorithms in the algos_mapping dictionary.
 
@@ -87,6 +89,7 @@ def dump_elapsed_time(customized_msg=""):
 
     return f
 
+
 def default_collate(batch):  # pragma: no cover
     """Merge data with outer dimension batch size."""
     elem = batch[0]
@@ -102,6 +105,7 @@ def default_collate(batch):  # pragma: no cover
             return batch
     else:
         return batch
+
 
 class BaseDataLoader:  # pragma: no cover
     """Base class for all DataLoaders.

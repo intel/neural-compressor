@@ -16,8 +16,8 @@ from typing import Any, Callable
 
 import tensorflow as tf
 
-from neural_compressor.common.logger import Logger
 from neural_compressor.common.base_config import BaseConfig
+from neural_compressor.common.logger import Logger
 from neural_compressor.common.utility import STATIC_QUANT
 from neural_compressor.tensorflow.quantization.config import parse_config_from_dict
 from neural_compressor.tensorflow.utils import algos_mapping
