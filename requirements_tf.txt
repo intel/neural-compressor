@@ -1,2 +1,2 @@
-tensorflow
 intel-extension-for-tensorflow[cpu]
+tensorflow
