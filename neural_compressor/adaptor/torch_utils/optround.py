@@ -95,7 +95,7 @@ def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
     return scale * (q - zp)
 
 
-def quant_weight_sym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
+def quant_weight_sym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):##TODO having not validated,also min_scale could be dropped later
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-2 ** (num_bits - 1)).to(weight.device)
     if num_bits == 1:
@@ -344,22 +344,6 @@ def block_forward(block, input_ids, input_others, amp=False, device=torch.device
     return output
 
 
-def move_input_to_device(input, device=torch.device("cpu")):
-    if isinstance(input, dict) or isinstance(input, UserDict):
-        tmp_input = {}
-        for k, inp in input.items():
-            tmp_input[k] = move_input_to_device(inp, device)
-        input = tmp_input
-    elif isinstance(input, list) or isinstance(input, tuple):
-        tmp_input = []
-        for inp in input:
-            tmp_input.append(move_input_to_device(inp, device))
-        input = tmp_input
-    elif isinstance(input, torch.Tensor):
-        input = input.to(device)  # pylint: disable=no-member
-    return input
-
-
 def get_scale_shape(weight, group_size):
     if group_size == -1 or weight.shape[1] < group_size:
         shape = (weight.shape[0])
@@ -376,28 +360,19 @@ class WrapperLinear(torch.nn.Module):
         self.num_bits = num_bits
         self.group_size = group_size
         self.schema = schema
-        self.value = torch.nn.Parameter(torch.zeros(self.orig_layer.weight.shape, device=self.orig_layer.weight.device),
+        device = self.orig_layer.weight.device
+        self.value = torch.nn.Parameter(torch.zeros(self.orig_layer.weight.shape, device=device),
                                         requires_grad=True)
-        self.enable_minmax_tuning = enable_minmax_tuning
         shape = get_scale_shape(self.orig_layer.weight, group_size)
 
-        if self.enable_minmax_tuning:
-            self.min_scale = torch.nn.Parameter(torch.zeros(shape, device=self.orig_layer.weight.device),
+        if enable_minmax_tuning:
+            self.min_scale = torch.nn.Parameter(torch.zeros(shape, device=device),
                                                 requires_grad=True)
-            self.max_scale = torch.nn.Parameter(torch.zeros(shape, device=self.orig_layer.weight.device),
+            self.max_scale = torch.nn.Parameter(torch.zeros(shape, device=device),
                                                 requires_grad=True)
         else:
-            self.min_scale = torch.tensor(0, device=self.orig_layer.weight.device)
-            self.max_scale = torch.tensor(0, device=self.orig_layer.weight.device)
-
-    @torch.no_grad()
-    def update_grad(self, grad):
-        self.value.data.copy_(grad)
-
-    @torch.no_grad()
-    def update_minmax_grad(self, min_scale, max_scale):
-        self.min_scale.copy_(min_scale)
-        self.max_scale.copy_(max_scale)
+            self.min_scale = torch.tensor(0, device=device)
+            self.max_scale = torch.tensor(0, device=device)
 
     def forward(self, x):
         weight = self.orig_layer.weight
@@ -520,7 +495,6 @@ class OPTRoundQuantizer(object):
         Returns:
         """
         self.model = model
-
         self.model = self.model.to("cpu")
         self.amp = amp
         self.use_quant_input = use_quant_input
@@ -583,8 +557,7 @@ class OPTRoundQuantizer(object):
             if len(input_ids_new) == 0:
                 return None
             tmp = torch.vstack(input_ids_new)
-            res = {}
-            res["input_ids"] = tmp
+            res = {"input_ids": tmp}
             return res
 
         calib_dataset = load_dataset(data_name, split=self.dataset_split)
@@ -605,7 +578,6 @@ class OPTRoundQuantizer(object):
         best_loss = torch.finfo(torch.float).max
         mse_loss = torch.nn.MSELoss()
         grad = None
-        grad_m = None
         min_scale_grad = None
         max_scale_grad = None
         output = []
@@ -651,18 +623,16 @@ class OPTRoundQuantizer(object):
         lr_schedule = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0, total_iters=400,
                                                         verbose=False)
 
-        search_iters = self.iters
-        pick_samples = self.train_bs
         if len(input_ids.shape) == 3:
             n_samples = input_ids.shape[0]
         else:
             n_samples = input_ids.shape[0] // self.seqlen
         if self.sampler != "rand":
-            indices = torch.randperm(n_samples)[:pick_samples]
+            indices = torch.randperm(n_samples)[:self.train_bs]
         last_best_iter = 0
-        for i in range(search_iters):
+        for i in range(self.iters):
             if self.sampler == "rand":
-                indices = torch.randperm(n_samples)[:pick_samples]
+                indices = torch.randperm(n_samples)[:self.train_bs]
 
             total_loss = 0
             for _ in range(self.gradient_accumulate_steps):
@@ -747,11 +717,11 @@ class OPTRoundQuantizer(object):
         for i in range(0, len(block_names), n_blocks):
             if n_blocks == 1:
                 n = block_names[i]
-                print(n, flush=True)
+                logger.info(n)
                 m = get_module(model, n)
             else:
                 names = block_names[i: i + n_blocks]
-                print(names, flush=True)
+                logger.info(names)
                 modules = [get_module(model, n) for n in names]
                 m = WrapperMultiblock(modules)
 
@@ -774,6 +744,9 @@ class OPTRoundQuantizer(object):
     def quantize(self):
         logger.info("cache input")
         block_names = get_block_names(self.model)
+        if len(block_names)==0:
+            logger.warning("could not find blocks, exit with original model")
+            return
 
         if self.amp:
             self.model = self.model.to(self.amp_dtype)
