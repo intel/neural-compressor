@@ -16,17 +16,17 @@ from typing import Any, Callable
 
 import tensorflow as tf
 
-from neural_compressor.common.utility import STATIC_QUANT
 from neural_compressor.common.base_config import BaseConfig
-from neural_compressor.tensorflow.utils import algos_mapping
+from neural_compressor.common.utility import STATIC_QUANT
 from neural_compressor.tensorflow.quantization.config import parse_config_from_dict
+from neural_compressor.tensorflow.utils import algos_mapping
 
 # TODO (Yi) move logger into common in next PR
 from neural_compressor.utils import logger
 
 
 def quantize_model(
-    model: tf.keras.Model, quant_config: BaseConfig, calib_dataloader: Callable = None, calib_iteration: int=100
+    model: tf.keras.Model, quant_config: BaseConfig, calib_dataloader: Callable = None, calib_iteration: int = 100
 ) -> tf.keras.Model:
     """The main entry to quantize model.
 

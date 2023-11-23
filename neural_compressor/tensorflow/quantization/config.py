@@ -22,8 +22,8 @@ from typing import Callable, Dict, List, NamedTuple, Union
 
 import tensorflow as tf
 
-from neural_compressor.common.utility import STATIC_QUANT
 from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
+from neural_compressor.common.utility import STATIC_QUANT
 
 FRAMEWORK_NAME = "keras"
 
@@ -32,29 +32,43 @@ class Backend(Enum):
     DEFAULT = "keras"
     ITEX = "itex"
 
+
 class OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
     backend: List[Backend]
     valid_func_list: List[Callable] = []
 
+
 # mapping the torch module type and functional operation type to string representations
-operator2str = {tf.keras.layers.Dense: "Dense", tf.keras.layers.DepthwiseConv2D: "DepthwiseConv2D", 
-                tf.keras.layers.Conv2D: "Conv2d", tf.keras.layers.SeparableConv2D: "SeparableConv2D",
-                tf.keras.layers.AvgPool2D: "AvgPool2D", tf.keras.layers.AveragePooling2D: "AveragePooling2D",
-                tf.keras.layers.MaxPool2D: "MaxPool2D", tf.keras.layers.MaxPooling2D: "MaxPooling2D",
-                }
+operator2str = {
+    tf.keras.layers.Dense: "Dense",
+    tf.keras.layers.DepthwiseConv2D: "DepthwiseConv2D",
+    tf.keras.layers.Conv2D: "Conv2d",
+    tf.keras.layers.SeparableConv2D: "SeparableConv2D",
+    tf.keras.layers.AvgPool2D: "AvgPool2D",
+    tf.keras.layers.AveragePooling2D: "AveragePooling2D",
+    tf.keras.layers.MaxPool2D: "MaxPool2D",
+    tf.keras.layers.MaxPooling2D: "MaxPooling2D",
+}
 
 # Mapping from string representations to their corresponding torch operation/module type
-str2operator = {"Dense": tf.keras.layers.Dense, "DepthwiseConv2D": tf.keras.layers.DepthwiseConv2D, 
-                "Conv2d": tf.keras.layers.Conv2D, "SeparableConv2D": tf.keras.layers.SeparableConv2D,
-                "AvgPool2D": tf.keras.layers.AvgPool2D, "AveragePooling2D": tf.keras.layers.AveragePooling2D,
-                "MaxPool2D": tf.keras.layers.MaxPool2D, "MaxPooling2D": tf.keras.layers.MaxPooling2D,
-                }
+str2operator = {
+    "Dense": tf.keras.layers.Dense,
+    "DepthwiseConv2D": tf.keras.layers.DepthwiseConv2D,
+    "Conv2d": tf.keras.layers.Conv2D,
+    "SeparableConv2D": tf.keras.layers.SeparableConv2D,
+    "AvgPool2D": tf.keras.layers.AvgPool2D,
+    "AveragePooling2D": tf.keras.layers.AveragePooling2D,
+    "MaxPool2D": tf.keras.layers.MaxPool2D,
+    "MaxPooling2D": tf.keras.layers.MaxPooling2D,
+}
+
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
 class StaticQuantConfig(BaseConfig):
     """Config class for keras static quantization."""
+
     supported_configs: List[OperatorConfig] = []
     params_list = [
         "weight_dtype",
@@ -105,31 +119,40 @@ class StaticQuantConfig(BaseConfig):
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         static_quant_config = StaticQuantConfig(
-            weight_dtype = ["int8", "fp32"],
-            weight_sym = [True, False],
-            weight_granularity = ["per_tensor", "per_channel"],
-            act_dtype = ["int8", "fp32"],
-            act_sym = [True, False],
-            act_granularity = ["per_tensor", "per_channel"],
+            weight_dtype=["int8", "fp32"],
+            weight_sym=[True, False],
+            weight_granularity=["per_tensor", "per_channel"],
+            act_dtype=["int8", "fp32"],
+            act_sym=[True, False],
+            act_granularity=["per_tensor", "per_channel"],
         )
-        operators = [tf.keras.layers.Dense, tf.keras.layers.Conv2D, tf.keras.layers.DepthwiseConv2D,
-                     tf.keras.layers.SeparableConv2D, tf.keras.layers.AvgPool2D, tf.keras.layers.MaxPool2D,
-                     tf.keras.layers.AveragePooling2D, tf.keras.layers.MaxPooling2D,
-                    ]
-        supported_configs.append(OperatorConfig(config=static_quant_config, operators=operators, backend=Backend.DEFAULT))
+        operators = [
+            tf.keras.layers.Dense,
+            tf.keras.layers.Conv2D,
+            tf.keras.layers.DepthwiseConv2D,
+            tf.keras.layers.SeparableConv2D,
+            tf.keras.layers.AvgPool2D,
+            tf.keras.layers.MaxPool2D,
+            tf.keras.layers.AveragePooling2D,
+            tf.keras.layers.MaxPooling2D,
+        ]
+        supported_configs.append(
+            OperatorConfig(config=static_quant_config, operators=operators, backend=Backend.DEFAULT)
+        )
         cls.supported_configs = supported_configs
+
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 StaticQuantConfig.register_supported_configs()
 
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
-    """Get all registered configs for keras framework"""
+    """Get all registered configs for keras framework."""
     return registered_configs.get(FRAMEWORK_NAME, {})
 
 
 def parse_config_from_dict(config_dict: Dict) -> BaseConfig:
-    """Generate a BaseConfig instance from a dict"""
+    """Generate a BaseConfig instance from a dict."""
     keras_registered_configs = get_all_registered_configs()
     for key, val in config_dict.items():
         if key in keras_registered_configs:

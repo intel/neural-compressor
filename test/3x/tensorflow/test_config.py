@@ -68,6 +68,7 @@ def build_model():
     print("Baseline test accuracy:", baseline_model_accuracy)
     model.save("baseline_model")
 
+
 class Dataset(object):
     def __init__(self, batch_size=100):
         mnist = keras.datasets.mnist
@@ -100,8 +101,8 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_dict_default(self):
         logger.info("test_static_quant_from_dict_default")
-        from neural_compressor.tensorflow import get_default_static_quant_config, quantize_model
         from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.tensorflow import get_default_static_quant_config, quantize_model
 
         calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
@@ -114,16 +115,17 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_dict_beginner(self):
         logger.info("test_static_quant_from_dict_beginner")
-        from neural_compressor.tensorflow import quantize_model
         from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.tensorflow import quantize_model
+
         calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
 
         quant_config = {
             "static_quant": {
                 "global": {
-                    "weight_dtype":  "int8",
-                    "weight_sym":  True,
-                    "weight_granularity":  "per_tensor",
+                    "weight_dtype": "int8",
+                    "weight_sym": True,
+                    "weight_granularity": "per_tensor",
                     "act_dtype": "int8",
                     "act_sym": True,
                     "act_granularity": "per_tensor",
@@ -140,12 +142,12 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_class_default(self):
         logger.info("test_static_quant_from_class_default")
-        from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
         from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
 
         calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
-        quant_config =  StaticQuantConfig()
+        quant_config = StaticQuantConfig()
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
@@ -155,18 +157,18 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_class_beginner(self):
         logger.info("test_static_quant_from_class_beginner")
-        from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
         from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
 
         calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
-        quant_config =  StaticQuantConfig(
-            weight_dtype = "int8",
-            weight_sym = True,
-            weight_granularity = "per_channel",
-            act_dtype = "int8",
-            act_sym = True,
-            act_granularity = "per_channel",
+        quant_config = StaticQuantConfig(
+            weight_dtype="int8",
+            weight_sym=True,
+            weight_granularity="per_channel",
+            act_dtype="int8",
+            act_sym=True,
+            act_granularity="per_channel",
         )
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
@@ -177,24 +179,24 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_dict_advance(self):
         logger.info("test_static_quant_from_dict_advance")
-        from neural_compressor.tensorflow import quantize_model
         from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.tensorflow import quantize_model
 
         calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         quant_config = {
             "static_quant": {
                 "global": {
-                    "weight_dtype":  "int8",
-                    "weight_sym":  True,
-                    "weight_granularity":  "per_tensor",
+                    "weight_dtype": "int8",
+                    "weight_sym": True,
+                    "weight_granularity": "per_tensor",
                     "act_dtype": "int8",
                     "act_sym": True,
                     "act_granularity": "per_tensor",
                 },
                 "operator_name": {
                     "dense": {
-                        "weight_dtype":  "fp32",
+                        "weight_dtype": "fp32",
                         "act_dtype": "fp32",
                     }
                 },
@@ -209,21 +211,21 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_class_advance(self):
         logger.info("test_static_quant_from_class_advance")
-        from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
         from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
 
         calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
-        quant_config =  StaticQuantConfig(
-            weight_dtype = "int8",
-            weight_sym = True,
-            weight_granularity = "per_channel",
-            act_dtype = "int8",
-            act_sym = True,
-            act_granularity = "per_channel",
+        quant_config = StaticQuantConfig(
+            weight_dtype="int8",
+            weight_sym=True,
+            weight_granularity="per_channel",
+            act_dtype="int8",
+            act_sym=True,
+            act_granularity="per_channel",
         )
-        dense_config =  StaticQuantConfig(
-            weight_dtype = "fp32",
-            act_dtype = "fp32",
+        dense_config = StaticQuantConfig(
+            weight_dtype="fp32",
+            act_dtype="fp32",
         )
         quant_config.set_operator_name("dense", dense_config)
         # get model and quantize
@@ -242,16 +244,16 @@ class TestKeras3xNewApi(unittest.TestCase):
         quant_config = {
             "static_quant": {
                 "global": {
-                    "weight_dtype":  "int8",
-                    "weight_sym":  True,
-                    "weight_granularity":  "per_tensor",
+                    "weight_dtype": "int8",
+                    "weight_sym": True,
+                    "weight_granularity": "per_tensor",
                     "act_dtype": "int8",
                     "act_sym": True,
                     "act_granularity": "per_tensor",
                 },
                 "operator_type": {
                     "Dense": {
-                        "weight_dtype":  "fp32",
+                        "weight_dtype": "fp32",
                         "act_dtype": "fp32",
                     }
                 },
@@ -264,22 +266,23 @@ class TestKeras3xNewApi(unittest.TestCase):
         logger.info("test_config_to_dict")
         from neural_compressor.tensorflow import StaticQuantConfig
 
-        quant_config =  StaticQuantConfig(
-            weight_dtype = "int8",
-            weight_sym = True,
-            weight_granularity = "per_channel",
-            act_dtype = "int8",
-            act_sym = True,
-            act_granularity = "per_channel",
+        quant_config = StaticQuantConfig(
+            weight_dtype="int8",
+            weight_sym=True,
+            weight_granularity="per_channel",
+            act_dtype="int8",
+            act_sym=True,
+            act_granularity="per_channel",
         )
-        dense_config =  StaticQuantConfig(
-            weight_dtype = "fp32",
-            act_dtype = "fp32",
+        dense_config = StaticQuantConfig(
+            weight_dtype="fp32",
+            act_dtype="fp32",
         )
         quant_config.set_operator_name("dense", dense_config)
         config_dict = quant_config.to_dict()
         self.assertIn("global", config_dict)
         self.assertIn("operator_name", config_dict)
+
 
 if __name__ == "__main__":
     unittest.main()

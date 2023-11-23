@@ -15,20 +15,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import yaml
 import copy
 import json
 import math
-import numpy as np
+import os
 from collections import OrderedDict, UserDict
 
+import numpy as np
 import tensorflow as tf
+import yaml
 
-from ...utils import deep_get, dump_elapsed_time
 from neural_compressor.data.dataloaders.base_dataloader import BaseDataLoader
 from neural_compressor.utils import logger
 
+from ...utils import deep_get, dump_elapsed_time
 
 
 def _add_supported_quantized_objects(custom_objects):
@@ -54,8 +54,7 @@ def _add_supported_quantized_objects(custom_objects):
     return custom_objects
 
 
-
-class KerasAdaptor():
+class KerasAdaptor:
     """The keras class of framework adaptor layer."""
 
     def __init__(self, framework_specific_info):
@@ -149,7 +148,7 @@ class KerasAdaptor():
         return model
 
     def _check_quantize_format(self, model):
-        """The function that checks format for conv ops"""
+        """The function that checks format for conv ops."""
         json_model = copy.deepcopy(json.loads(model.to_json()))
         config = json_model["config"]
         fp32_layers = config["layers"]
@@ -172,7 +171,7 @@ class KerasAdaptor():
         return model
 
     def _fuse_bn(self, model):
-        """Fusing Batch Normalization"""
+        """Fusing Batch Normalization."""
         json_model = copy.deepcopy(json.loads(model.to_json()))
         config = json_model["config"]
         fp32_layers = config["layers"]
@@ -377,7 +376,7 @@ class KerasAdaptor():
         return converted_model
 
     def _calibrate(self, model, dataloader, calib_interation):
-        """Apply calibration"""
+        """Apply calibration."""
         # run eagerly to fetch the numpy min/max
         model.compile(run_eagerly=True)
         results = {}
@@ -491,7 +490,7 @@ class KerasAdaptor():
 
     # (TODO) choose the properly quantize mode
     def _check_quantize_mode(self, json_model):
-        """Check what quantize mode to use"""
+        """Check what quantize mode to use."""
         config = json_model["config"]
         layers = config["layers"]
         for idx, layer in enumerate(layers):
@@ -500,7 +499,7 @@ class KerasAdaptor():
         return "SCALED"
 
     def _restore_model_from_json(self, json_model):
-        """Generate a keras model from json files"""
+        """Generate a keras model from json files."""
         from tensorflow.keras.models import model_from_json
 
         custom_objects = {}
@@ -787,17 +786,18 @@ class KerasAdaptor():
         pass
 
 
-class KerasQuery():
-    """Class that queries configs from yaml settings"""
+class KerasQuery:
+    """Class that queries configs from yaml settings."""
+
     def __init__(self, local_config_file=None):
-        """Initialize KerasQuery"""
+        """Initialize KerasQuery."""
         self.version = tf.version.VERSION
         self.cfg = local_config_file
         self.cur_config = None
         self._one_shot_query()
 
     def _one_shot_query(self):
-        """Query cur configs in one shot"""
+        """Query cur configs in one shot."""
         with open(self.cfg) as f:
             content = yaml.safe_load(f)
             try:
@@ -875,4 +875,3 @@ class KerasQuery():
         """
         assert precision in list(self.cur_config["ops"].keys())
         return self.cur_config["ops"][precision]
-
