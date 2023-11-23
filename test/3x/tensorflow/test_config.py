@@ -20,6 +20,7 @@ import shutil
 import time
 import unittest
 
+import math
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -70,7 +71,8 @@ def build_model():
 
 
 class Dataset(object):
-    def __init__(self, batch_size=100):
+    def __init__(self, batch_size=1):
+        self.batch_size = batch_size
         mnist = keras.datasets.mnist
         (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
         train_images, train_labels = train_images[:1000], train_labels[:1000]
@@ -87,6 +89,20 @@ class Dataset(object):
     def __getitem__(self, idx):
         return self.test_images[idx], self.test_labels[idx]
 
+class MyDataloader:
+    def __init__(self, dataset, batch_size=1):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.length = math.ceil(len(dataset) / self.batch_size)
+    
+    def __iter__(self):
+        for _, (images, labels) in enumerate(self.dataset):
+            images = np.expand_dims(images,axis=0)
+            labels = np.expand_dims(labels,axis=0)
+            yield (images, labels)
+
+    def __len__(self):
+        return self.length
 
 class TestKeras3xNewApi(unittest.TestCase):
     @classmethod
@@ -102,9 +118,8 @@ class TestKeras3xNewApi(unittest.TestCase):
     def test_static_quant_from_dict_default(self):
         logger.info("test_static_quant_from_dict_default")
         from neural_compressor.tensorflow import get_default_static_quant_config, quantize_model
-        from neural_compressor.tensorflow.utils import TFDataDataLoader
 
-        calib_dataloader = TFDataDataLoader(dataset=Dataset())
+        calib_dataloader = MyDataloader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         qmodel = quantize_model(fp32_model, get_default_static_quant_config(), calib_dataloader)
         self.assertIsNotNone(qmodel)
@@ -116,9 +131,6 @@ class TestKeras3xNewApi(unittest.TestCase):
     def test_static_quant_from_dict_beginner(self):
         logger.info("test_static_quant_from_dict_beginner")
         from neural_compressor.tensorflow import quantize_model
-        from neural_compressor.tensorflow.utils import TFDataDataLoader
-
-        calib_dataloader = TFDataDataLoader(dataset=Dataset())
 
         quant_config = {
             "static_quant": {
@@ -132,6 +144,7 @@ class TestKeras3xNewApi(unittest.TestCase):
                 },
             }
         }
+        calib_dataloader = MyDataloader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
@@ -143,9 +156,8 @@ class TestKeras3xNewApi(unittest.TestCase):
     def test_static_quant_from_class_default(self):
         logger.info("test_static_quant_from_class_default")
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
-        from neural_compressor.tensorflow.utils import TFDataDataLoader
 
-        calib_dataloader = TFDataDataLoader(dataset=Dataset())
+        calib_dataloader = MyDataloader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         quant_config = StaticQuantConfig()
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
@@ -158,9 +170,8 @@ class TestKeras3xNewApi(unittest.TestCase):
     def test_static_quant_from_class_beginner(self):
         logger.info("test_static_quant_from_class_beginner")
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
-        from neural_compressor.tensorflow.utils import TFDataDataLoader
 
-        calib_dataloader = TFDataDataLoader(dataset=Dataset())
+        calib_dataloader = MyDataloader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         quant_config = StaticQuantConfig(
             weight_dtype="int8",
@@ -180,9 +191,8 @@ class TestKeras3xNewApi(unittest.TestCase):
     def test_static_quant_from_dict_advance(self):
         logger.info("test_static_quant_from_dict_advance")
         from neural_compressor.tensorflow import quantize_model
-        from neural_compressor.tensorflow.utils import TFDataDataLoader
 
-        calib_dataloader = TFDataDataLoader(dataset=Dataset())
+        calib_dataloader = MyDataloader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         quant_config = {
             "static_quant": {
@@ -212,9 +222,8 @@ class TestKeras3xNewApi(unittest.TestCase):
     def test_static_quant_from_class_advance(self):
         logger.info("test_static_quant_from_class_advance")
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
-        from neural_compressor.tensorflow.utils import TFDataDataLoader
 
-        calib_dataloader = TFDataDataLoader(dataset=Dataset())
+        calib_dataloader = MyDataloader(dataset=Dataset())
         quant_config = StaticQuantConfig(
             weight_dtype="int8",
             weight_sym=True,
@@ -281,7 +290,7 @@ class TestKeras3xNewApi(unittest.TestCase):
         quant_config.set_local("dense", dense_config)
         config_dict = quant_config.to_dict()
         self.assertIn("global", config_dict)
-        self.assertIn("operator_name", config_dict)
+        self.assertIn("local", config_dict)
 
 
 if __name__ == "__main__":

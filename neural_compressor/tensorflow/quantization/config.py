@@ -95,10 +95,10 @@ class StaticQuantConfig(BaseConfig):
         Args:
             weight_dtype (str): Data type for weights, default is "int".
             weight_sym (bool): Indicates whether weights are symmetric, default is True.
-            weight_granularity (str): Calculate tensor-wise scales or channel-wise scales for weights, default is per tensor.
+            weight_granularity (str): Calculate tensor-wise scales or channel-wise scales for weights.
             act_dtype (str): Data type for activations, default is "int8".
             act_sym (bool): Indicates whether activations are symmetric, default is True.
-            act_granularity (str): Calculate tensor-wise scales or channel-wise scales for activations, default is per tensor.
+            act_granularity (str): Calculate tensor-wise scales or channel-wise scales for activations.
         """
         super().__init__()
         self.weight_dtype = weight_dtype

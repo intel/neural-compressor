@@ -26,7 +26,7 @@ import tensorflow as tf
 import yaml
 
 from neural_compressor.common.logger import Logger
-from neural_compressor.tensorflow.utils import BaseDataLoader, deep_get, dump_elapsed_time
+from neural_compressor.tensorflow.utils import deep_get, dump_elapsed_time
 
 logger = Logger().get_logger()
 
@@ -313,32 +313,16 @@ class KerasAdaptor:
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
-        if isinstance(dataloader, BaseDataLoader):
-            batch_size = dataloader.batch_size
-            for i in range(batch_size):
-                if calib_sampling_size % (batch_size - i) == 0:
-                    calib_batch_size = batch_size - i
-                    if i != 0:  # pragma: no cover
-                        logger.warning(
-                            "Reset `calibration.dataloader.batch_size` field "
-                            "to {}".format(calib_batch_size) + " to make sure the sampling_size is "
-                            "divisible exactly by batch size"
-                        )
-                    break
-            tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
-            dataloader.batch(calib_batch_size)
-            self.quantize_config["calib_iteration"] = tmp_iterations
 
-        else:  # pragma: no cover
-            if hasattr(dataloader, "batch_size") and calib_sampling_size % dataloader.batch_size != 0:
-                iter = self.quantize_config["calib_iteration"]
-                logger.warning(
-                    "Please note that calibration sampling size {} "
-                    "isn't divisible exactly by batch size {}. "
-                    "So the real sampling size is {}.".format(
-                        calib_sampling_size, dataloader.batch_size, dataloader.batch_size * iter
-                    )
+        if hasattr(dataloader, "batch_size") and calib_sampling_size % dataloader.batch_size != 0:
+            iter = self.quantize_config["calib_iteration"]
+            logger.warning(
+                "Please note that calibration sampling size {} "
+                "isn't divisible exactly by batch size {}. "
+                "So the real sampling size is {}.".format(
+                    calib_sampling_size, dataloader.batch_size, dataloader.batch_size * iter
                 )
+            )
 
         q_layers = []
         self.inbound_nodes_map = {}
@@ -661,119 +645,6 @@ class KerasAdaptor:
                 if "weight" in quantizable_op_details[op][0]:
                     res[op[1]]["weight"] = quantizable_op_details[op][0]["weight"]
         return res
-
-    def inspect_tensor(
-        self, model, dataloader, op_list=[], iteration_list=[], inspect_type="activation", save_to_disk=False
-    ):
-        """The function is used by tune strategy class for dumping tensor info.
-
-        Args:
-            model (object): The model to inspect.
-            dataloader (object): The dataloader used to feed into.
-            op_list (list): The op name in the fp32 model for dumpping.
-            iteration_list (list): The iteration list containing iterations to dump.
-            inspect_type (str): The valid value are 'weight', 'activation', 'all'.
-            save_to_disk (bool): Save to disk or memory.
-
-        Return:
-            Numpy Array Dict
-            {
-              'weight': {
-                'node0_name': {'weight0_name': numpy.array, 'bias0_name': numpy.array, ...},
-                'node1_name': {'weight1_name': numpy.array, 'bias1_name': numpy.array, ...},
-                ...
-              },
-              'activation': [
-                # iter 0
-                {
-                  'node0_name': {'output0_name': numpy.array, 'output1_name': numpy.array, ...}
-                  'node1_name': {'output1_name': numpy.array, 'output1_name': numpy.array, ...}
-                  ...
-                },
-                # iter 1
-                ...
-              ]
-            }
-        """
-        assert inspect_type in ["weight", "activation", "all"], "Inspect type only support weight, activation or all"
-        from keras import backend as K  # pylint: disable=E0401
-
-        tensor_out = {}
-        inp = model.input
-        outputs = [(layer.name, layer.output) for layer in model.layers]
-        outputs = [(name, out) for (name, out) in outputs if name in op_list] if len(op_list) else outputs
-        if inspect_type == "weight" or inspect_type == "all":
-            weights = [(layer.name, layer.get_weights()) for layer in model.layers if layer.get_weights()]
-            weights = [(name, wei) for (name, wei) in weights if name in op_list] if len(op_list) else weights
-            tensor_out["weight"] = weights
-
-        functors = [(name, K.function([inp], [out])) for (name, out) in outputs]
-        iterations = max(iteration_list) if iteration_list is not None else -1
-        observer_dict = {}
-        ret = {}
-        if inspect_type == "activation" or inspect_type == "all":
-            activation_list = []
-            for idx, (inputs, labels) in enumerate(dataloader):
-                layer_outs = [(name, func([inputs])) for (name, func) in functors]
-                iter_map = {}
-                for name, out_list in layer_outs:
-                    iter_map[name] = dict([(name + ":" + str(i), out) for i, out in enumerate(out_list)])
-                activation_list.append(iter_map)
-                if idx == iterations:
-                    break
-            tensor_out["activation"] = [acti for idx, acti in enumerate(activation_list) if idx in iteration_list]
-
-        return tensor_out
-
-    def set_tensor(self, model, tensor_dict):
-        """The function is used by tune strategy class for setting tensor back to model.
-
-        Args:
-            model (object): The model to set tensor. Usually it is quantized model.
-            tensor_dict (dict): The tensor dict to set. Note the numpy array contains float
-                                value, adaptor layer has the responsibility to quantize to
-                                int8 or int32 to set into the quantized model if needed.
-                                The dict format is something like:
-                                {
-                                  'weight0_name': numpy.array,
-                                  'bias0_name': numpy.array,
-                                  ...
-                                }
-        """
-        pass
-
-    def quantize_input(self, model):
-        """Quantize the model to be able to take quantized input.
-
-        Args:
-            model (object): The model to quantize input
-
-        Return:
-            model (object): The quantized input model
-            scale (float): The scale for dataloader to generate quantized input
-        """
-        return model, 1.0
-
-    def _pre_eval_hook(self, model, *args, **kwargs):
-        """The function is used to do some preprocession before evaluation phase.
-
-        Return:
-              model
-        """
-        return model
-
-    def _post_eval_hook(self, model, *args, **kwargs):
-        """The function is used to do some post process after complete evaluation."""
-        pass
-
-    def save(self, model, path):
-        """The function is used by tune strategy class for saving model.
-
-        Args:
-            model (object): The model to saved.
-            path (string): The path where to save.
-        """
-        model.save(path)
 
 
 class KerasQuery:
