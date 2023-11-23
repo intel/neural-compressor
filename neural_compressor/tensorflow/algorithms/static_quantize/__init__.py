@@ -1,0 +1,1 @@
+from neural_compressor.tensorflow.algorithms.static_quantize.quantize_entry import static_quantize_entry

@@ -12,6 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.keras.utils import register_algo
-from neural_compressor.keras.algorithms import static_quantize_entry
-from neural_compressor.keras.quantization import quantize_model, KerasStaticQuantConfig, get_default_keras_config
+from neural_compressor.tensorflow.quantization.quantize import quantize_model
+from neural_compressor.tensorflow.quantization.config import StaticQuantConfig, get_default_static_quant_config

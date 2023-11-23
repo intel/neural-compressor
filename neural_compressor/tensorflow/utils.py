@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import time
+import logging
+from functools import reduce
 from typing import Callable, Dict
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
@@ -37,3 +39,40 @@ def register_algo(name):
         return algo_func
 
     return decorator
+
+
+def deep_get(dictionary, keys, default=None):
+    """Get the dot key's item in nested dict
+       eg person = {'person':{'name':{'first':'John'}}}
+       deep_get(person, "person.name.first") will output 'John'.
+
+    Args:
+        dictionary (dict): The dict object to get keys
+        keys (dict): The deep keys
+        default (object): The return item if key not exists
+    Returns:
+        item: the item of the deep dot keys
+    """
+    return reduce(lambda d, key: d.get(key, default) if isinstance(d, dict) else default, keys.split("."), dictionary)
+
+def dump_elapsed_time(customized_msg=""):
+    """Get the elapsed time for decorated functions.
+
+    Args:
+        customized_msg (string, optional): The parameter passed to decorator. Defaults to None.
+    """
+
+    def f(func):
+        def fi(*args, **kwargs):
+            start = time.time()
+            res = func(*args, **kwargs)
+            end = time.time()
+            logging.getLogger("neural_compressor").info(
+                "%s elapsed time: %s ms"
+                % (customized_msg if customized_msg else func.__qualname__, round((end - start) * 1000, 2))
+            )
+            return res
+
+        return fi
+
+    return f
