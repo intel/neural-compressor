@@ -36,7 +36,7 @@ python run_qa.py
 
 ## 2. Quantization with XPU
 Please build an IPEX docker container with following steps. Please also refer to the [official guide](https://github.com/intel/intel-extension-for-pytorch/tree/xpu-master/docker).
-#### 2.1 Build Container and Enviornment Variables
+#### 2.1 Build Container and Environment Variables
 ```bash
 wget https://raw.githubusercontent.com/intel/intel-extension-for-pytorch/xpu-master/docker/Dockerfile.xpu
 wget https://raw.githubusercontent.com/intel/intel-extension-for-pytorch/xpu-master/docker/build.sh
