@@ -151,11 +151,14 @@ class GPTQConfig(BaseConfig):
     https://arxiv.org/abs/2210.17323
     """
 
+    name = GPTQ
     supported_configs: List[OperatorConfig] = []
     params_list = [
+        "weight_dtype",
         "weight_bits",
         "weight_group_size",
         "weight_sym",
+        "block_size",
         "act_dtype",
         "group_dim",
         "nsamples",
@@ -164,8 +167,12 @@ class GPTQConfig(BaseConfig):
         "use_max_length",
         "pad_max_length",
         "enable_mse_search",
+        "device",
+        "layer_wise",
+        "return_int",
+        "double_quant_bits",
+        "double_quant_group_size",
     ]
-    name = GPTQ
 
     def __init__(
         self,

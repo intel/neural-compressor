@@ -18,7 +18,6 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import RTN_WEIGHT_ONLY_QUANT
 from neural_compressor.torch.quantization.config import parse_config_from_dict
 from neural_compressor.torch.utils import algos_mapping, get_model_info
 
@@ -41,22 +40,23 @@ def quantize(
     Args:
         model: a float model to be quantized.
         quant_config: a quantization configuration.
+        calib_dataloader: a calibration dataloader for calibrating the model. Defaults to None.
         calib_func: a calibration function for calibrating the model. Defaults to None.
         calib_func_arg: positional arguments for `calib_func`. Defaults to None.
 
     Returns:
         The quantized model.
     """
+    # TODO (Yi) support combine more than one algo
     if isinstance(quant_config, dict):
         quant_config = parse_config_from_dict(quant_config)
-        logger.info("Parsed dict to construct the quantization config.")
+        logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
     else:
         assert isinstance(
             quant_config, BaseConfig
         ), "Please pass a dict or config instance as the quantization configuration."
     logger.info(f"Quantize model with config: \n {quant_config.to_json_string()} \n")
     # select quantization algo according to config
-    # TODO (Yi) support combine more than one algo
 
     model_info = get_model_info(model=model, white_module_list=[torch.nn.Linear])
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)

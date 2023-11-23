@@ -989,8 +989,6 @@ def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig])
     # convert GPTQ_CONFIG to gptq_quantize's weight config
     # convert tune_cfg to gptq_quantize's weight config
     # for layer_wise quant mode
-    model_path = None
-    layer_wise = False
     # TODO (Yi) uncomment it when port layer-wise
     # if recipe_cfgs.get("layer_wise_quant", False):
     #     layer_wise = True
