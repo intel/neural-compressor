@@ -138,13 +138,19 @@ class TestUtils(unittest.TestCase):
     @patch("builtins.open", mock_open(read_data="Save quantized model to /path/to/model."))
     def test_get_q_model_path_success(self):
         log_path = "fake_log_path"
-        q_model_path = get_q_model_path(log_path)
+        q_model_path = get_q_model_path(log_path, "task_id")
         self.assertEqual(q_model_path, "/path/to/model")
+
+    @patch("builtins.open", mock_open(read_data="Save quantized model to /path/to/task_workspace/task_id/model/1.pb."))
+    def test_get_q_model_path_success_task_id(self):
+        log_path = "fake_log_path"
+        q_model_path = get_q_model_path(log_path, "task_id")
+        self.assertEqual(q_model_path, "/path/to/task_workspace/task_id/model")
 
     @patch("builtins.open", mock_open(read_data="No quantized model saved."))
     def test_get_q_model_path_failure(self):
         log_path = "fake_log_path"
-        q_model_path = get_q_model_path(log_path)
+        q_model_path = get_q_model_path(log_path, "task_id")
         self.assertEqual(q_model_path, "quantized model path not found")
 
 
