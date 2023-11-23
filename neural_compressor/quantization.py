@@ -210,7 +210,18 @@ def fit(
             logger.debug("Dump user configuration:")
             conf_dict = {}
             dump_class_attrs(conf, conf_dict)
-            logger.debug(conf_dict)
+            import copy
+
+            def update(d):
+                o = copy.copy(d)
+                for k, v in o.items():
+                    if k == "example_inputs":
+                        o[k] = "Not printed here due to large size tensors..."
+                    elif isinstance(v, dict):
+                        o[k] = update(v)
+                return o
+
+            logger.debug(update(conf_dict))
             if conf.diagnosis:
                 ni_workload_id = register_neural_insights_workload(
                     workload_location=os.path.abspath(options.workspace),

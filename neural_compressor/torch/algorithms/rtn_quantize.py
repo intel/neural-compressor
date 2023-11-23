@@ -17,15 +17,14 @@ from typing import Dict
 
 import torch
 
-from neural_compressor.adaptor.torch_utils.util import fetch_module, set_module
-
-# TODO(Yi) move the algorithm implementations from adaptor.torch_utils to neural_compressor.torch.algo
-from neural_compressor.adaptor.torch_utils.weight_only import rtn_quantize as torch_rtn_quantize
 from neural_compressor.common.base_config import BaseConfig
+from neural_compressor.common.logger import Logger
 from neural_compressor.common.utility import RTN_WEIGHT_ONLY_QUANT
+from neural_compressor.torch.algorithms.rtn import rtn_quantize as torch_rtn_quantize
 from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
-from neural_compressor.torch.utils import register_algo
-from neural_compressor.utils import logger
+from neural_compressor.torch.utils import fetch_module, register_algo, set_module
+
+logger = Logger().get_logger()
 
 
 def _apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
@@ -34,14 +33,15 @@ def _apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeight
     group_dim = quant_config.group_dim
     dtype = quant_config.weight_dtype
     num_bits = quant_config.weight_bits
-    scheme = quant_config.weight_sym
+    scheme = "sym" if quant_config.weight_sym else "asym"
     group_size = quant_config.weight_group_size
+    return_int = quant_config.return_int
     return torch_rtn_quantize(
         module,
         num_bits,
         group_size,
         scheme,
-        return_int=False,
+        return_int=return_int,
         data_type=dtype,
         enable_full_range=enable_full_range,
         enable_mse_search=enable_mse_search,

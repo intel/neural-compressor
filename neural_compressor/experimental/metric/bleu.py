@@ -22,11 +22,13 @@ import unicodedata
 from typing import List, Sequence
 
 import six
+from deprecated import deprecated
 
 from .bleu_util import compute_bleu
 from .metric import metric_registry
 
 
+@deprecated(version="2.0")
 class UnicodeRegex(object):
     """Ad-hoc hack to recognize all punctuation and symbols.
 
@@ -64,6 +66,7 @@ class UnicodeRegex(object):
 uregex = UnicodeRegex()
 
 
+@deprecated(version="2.0")
 def bleu_tokenize(string: str) -> List[str]:
     """Tokenize a string following the official BLEU implementation.
 
@@ -83,6 +86,7 @@ def bleu_tokenize(string: str) -> List[str]:
     return tokens
 
 
+@deprecated(version="2.0")
 @metric_registry("BLEU", "tensorflow, tensorflow_itex")
 class BLEU(object):
     """Computes the BLEU (Bilingual Evaluation Understudy) score.

@@ -15,18 +15,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The basic tuning strategy."""
-import copy
 from collections import OrderedDict
+from copy import deepcopy
 
-import numpy as np
+from deprecated import deprecated
 
 from ...utils import logger
 from .strategy import TuneStrategy, strategy_registry
 from .utils.constant import TUNING_ITEMS_LST
-from .utils.tuning_sampler import FallbackTuningSampler, ModelWiseTuningSampler, OpTypeWiseTuningSampler
+from .utils.tuning_sampler import FallbackTuningSampler, OpTypeWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
 
 
+@deprecated(version="2.0")
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
     """The basic tuning strategy.
@@ -50,8 +51,6 @@ class BasicTuneStrategy(TuneStrategy):
         Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
-        from copy import deepcopy
-
         tuning_space = self.tuning_space
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name("calib_sampling_size").options
         for calib_sampling_size in calib_sampling_size_lst:

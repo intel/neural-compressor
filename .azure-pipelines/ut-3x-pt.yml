@@ -14,7 +14,6 @@ pr:
       - setup.py
       - requirements.txt
       - requirements_pt.txt
-      - .azure-pipelines/scripts/ut
 
 pool: ICX-16C
 
