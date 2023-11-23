@@ -10,6 +10,7 @@ import onnxruntime as ort
 from transformers import AutoTokenizer
 
 from neural_compressor import PostTrainingQuantConfig, quantization
+from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize, gptq_quantize, rtn_quantize
 from neural_compressor.utils.constant import FP32
 
 
@@ -340,6 +341,39 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         woq_model = self._test_woq_tune_common(partial_fake_eval, "auto", op_type_dict={".*": {"weight": {"bits": 8}}})
         self.assertEqual(self._count_woq_matmul(woq_model, bits=8), 31)
 
+    def test_woq_with_ModelProto_input(self):
+        from neural_compressor.model.onnx_model import ONNXModel
+
+        q4_node_config = {}
+        template_config_q4 = {"bits": 4, "group_size": 32, "scheme": "sym"}
+        template_config_fp32 = "fp32"
+        for node in self.gptj_model.graph.node:
+            if node.op_type in ["MatMul"]:
+                if not all([ONNXModel(self.gptj_model).get_initializer(i) is None for i in node.input]):
+                    q4_node_config[node.name] = template_config_q4
+                else:
+                    q4_node_config[node.name] = template_config_fp32
+
+        q_model = rtn_quantize(self.gptj_model, q4_node_config)
+        for data, _ in self.gptj_dataloader:
+            q_out = Inference(q_model.model, data)
+            org_out = Inference(self.gptj_model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
+
+        q_model = gptq_quantize(self.gptj_model, self.gptj_dataloader, q4_node_config)
+        for data, _ in self.gptj_dataloader:
+            q_out = Inference(q_model.model, data)
+            org_out = Inference(self.gptj_model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
+
+        q_model = awq_quantize(self.gptj_model, self.gptj_dataloader, q4_node_config)
+        for data, _ in self.gptj_dataloader:
+            q_out = Inference(q_model.model, data)
+            org_out = Inference(self.gptj_model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
 
 if __name__ == "__main__":
     unittest.main()
