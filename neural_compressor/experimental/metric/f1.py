@@ -24,9 +24,12 @@ import string
 from collections import Counter, abc
 from typing import Any, Callable, Dict, List, TypeVar
 
+from deprecated import deprecated
+
 from neural_compressor.utils import logger
 
 
+@deprecated(version="2.0")
 def normalize_answer(text: str) -> str:
     """Normalize the answer text.
 
@@ -56,6 +59,7 @@ def normalize_answer(text: str) -> str:
     return _white_space_fix(_remove_articles(_remove_punc(_lower(text))))
 
 
+@deprecated(version="2.0")
 def f1_score(prediction: abc.Sequence, ground_truth: abc.Sequence):
     """Calculate the F1 score of the prediction and the ground_truth.
 

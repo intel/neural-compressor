@@ -20,9 +20,11 @@
 
 # constants for configs
 GLOBAL = "global"
-OPERATOR_NAME = "operator_name"
+LOCAL = "local"
 
 # config name
 BASE_CONFIG = "base_config"
+COMPOSABLE_CONFIG = "composable_config"
 RTN_WEIGHT_ONLY_QUANT = "rtn_weight_only_quant"
 STATIC_QUANT = "static_quant"
+DUMMY_CONFIG = "dummy_config"

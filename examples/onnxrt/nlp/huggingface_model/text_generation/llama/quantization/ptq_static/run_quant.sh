@@ -62,7 +62,7 @@ function run_tuning {
     python main.py \
             --quant_format ${quant_format-QOperator} \
             --model_path ${input_model} \
-	    --tokenizer ${tokenizer-decapoda-research/llama-7b-hf} \
+	    --tokenizer ${tokenizer-meta-llama/Llama-2-7b-hf} \
             --output_model ${output_model} \
             --batch_size ${batch_size-1} \
             --smooth_quant_alpha ${alpha-0.6} \

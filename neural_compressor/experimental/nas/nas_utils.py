@@ -18,10 +18,12 @@
 # limitations under the License.
 
 import numpy as np
+from deprecated import deprecated
 
 NASMethods = {}
 
 
+@deprecated(version="2.0")
 def nas_registry(nas_method):
     """Decorate the NAS subclasses.
 
@@ -42,6 +44,7 @@ def nas_registry(nas_method):
     return decorator
 
 
+@deprecated(version="2.0")
 def create_search_space_pool(search_space, idx=0):
     """Create all the samples from the search space.
 
@@ -63,6 +66,7 @@ def create_search_space_pool(search_space, idx=0):
     return search_space_pool
 
 
+@deprecated(version="2.0")
 def find_pareto_front(metrics):
     """Find the pareto front points, assuming all metrics are "higher is better".
 

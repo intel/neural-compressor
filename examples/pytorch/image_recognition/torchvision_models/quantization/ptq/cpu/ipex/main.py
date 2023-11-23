@@ -106,6 +106,8 @@ parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark')
 parser.add_argument('--ipex', dest='ipex', action='store_true',
                     help='tuning or benchmark with Intel PyTorch Extension')
+parser.add_argument('--xpu', action='store_true',
+                    help='whether use xpu')
 
 best_acc1 = 0
 
@@ -225,7 +227,8 @@ def main_worker(gpu, ngpus_per_node, args):
             model.cuda()
         else:
             model = torch.nn.DataParallel(model)
-
+    if args.xpu:
+        model = model.to("xpu")
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss()
     #criterion = nn.CrossEntropyLoss().cuda(args.gpu)
@@ -297,7 +300,10 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.tune:
         from neural_compressor import PostTrainingQuantConfig
         from neural_compressor import quantization
-        conf = PostTrainingQuantConfig(backend='ipex')
+        if args.xpu:
+            conf = PostTrainingQuantConfig(backend='ipex', device="xpu")
+        else:
+            conf = PostTrainingQuantConfig(backend='ipex')
         q_model = quantization.fit(model,
                                     conf,
                                     calib_dataloader=val_loader,
@@ -417,6 +423,9 @@ def validate(val_loader, model, criterion, args):
             if args.gpu is not None:
                 input = input.cuda(args.gpu, non_blocking=True)
                 target = target.cuda(args.gpu, non_blocking=True)
+            if args.xpu:
+                input = input.to("xpu")
+                target = target.to("xpu")
 
             # compute output
             output = model(input)

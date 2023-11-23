@@ -19,7 +19,10 @@
 
 from abc import abstractmethod
 
+from deprecated import deprecated
 
+
+@deprecated(version="2.0")
 class Fetcher(object):
     """Base class for different fetchers."""
 
@@ -45,6 +48,7 @@ class Fetcher(object):
         raise NotImplementedError
 
 
+@deprecated(version="2.0")
 class IterableFetcher(Fetcher):
     """Iterate to get next batch-size samples as a batch."""
 
@@ -100,6 +104,7 @@ class IterableFetcher(Fetcher):
         return self.collate_fn(batch_data)
 
 
+@deprecated(version="2.0")
 class IndexFetcher(Fetcher):
     """Take single index or a batch of indices to fetch samples as a batch."""
 

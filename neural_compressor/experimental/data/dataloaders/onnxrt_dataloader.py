@@ -19,6 +19,8 @@
 
 import logging
 
+from deprecated import deprecated
+
 from neural_compressor.utils.utility import LazyImport
 
 from ..datasets.bert_dataset import ONNXRTBertDataset
@@ -28,6 +30,7 @@ from .default_dataloader import DefaultDataLoader
 torch = LazyImport("torch")
 
 
+@deprecated(version="2.0")
 class ONNXRTBertDataLoader(DefaultDataLoader):
     """Built-in dataloader for onnx bert model and its variants."""
 
@@ -71,6 +74,7 @@ class ONNXRTBertDataLoader(DefaultDataLoader):
                 return
 
 
+@deprecated(version="2.0")
 class ONNXRTDataLoader(BaseDataLoader):
     """Built-in dataloader for onnxruntime framework backends."""
 
