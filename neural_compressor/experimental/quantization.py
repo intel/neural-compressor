@@ -37,6 +37,7 @@ from .component import Component
 from .strategy import EXP_STRATEGIES
 
 
+@deprecated(version="2.0")
 class Quantization(Component):
     """This class provides easy use API for quantization.
 

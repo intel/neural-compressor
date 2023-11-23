@@ -39,7 +39,7 @@ function run_benchmark {
     python main.py \
             --model_path ${input_model} \
             --batch_size=${batch_size-1} \
-            --tokenizer=${tokenizer-decapoda-research/llama-7b-hf} \
+            --tokenizer=${tokenizer-meta-llama/Llama-2-7b-hf} \
             --tasks=${tasks-lambada_openai} \
             --benchmark
             

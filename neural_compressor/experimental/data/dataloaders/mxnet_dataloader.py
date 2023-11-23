@@ -19,6 +19,8 @@
 
 import logging
 
+from deprecated import deprecated
+
 from neural_compressor.utils.utility import LazyImport
 
 from .base_dataloader import BaseDataLoader
@@ -26,6 +28,7 @@ from .base_dataloader import BaseDataLoader
 mx = LazyImport("mxnet")
 
 
+@deprecated(version="2.0")
 class MXNetDataLoader(BaseDataLoader):
     """Subclass of BaseDataLoader."""
 

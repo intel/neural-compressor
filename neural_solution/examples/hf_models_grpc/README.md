@@ -80,6 +80,7 @@ optional arguments:
 - Step 2: Submit the task request to service, and it will return the submit status and task id for future use.
 
 ```shell
+[user@server hf_models_grpc]$ cd path/to/neural_solution/examples/hf_models_grpc
 [user@server hf_models_grpc]$ python client.py submit --request="test_task_request.json"
 
 # response if submit successfully
