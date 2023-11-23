@@ -20,6 +20,7 @@ try:
     from neural_compressor.utils.utility import LazyImport
 
     torch = LazyImport("torch")
+
     from ...utils import logger
 except:  # pragma: no cover
     import logging
@@ -27,7 +28,12 @@ except:  # pragma: no cover
     import torch
 
     logger = logging.getLogger()
+from torch.amp import autocast
+from torch.autograd import Function
 from typing import Union
+from functools import partial
+from torch.functional import F
+import copy
 
 
 def get_module(model, key):
@@ -64,6 +70,395 @@ def set_module(model, key, new_module):
     setattr(module, name_list[-1], new_module)
 
 
+def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
+    maxq = torch.tensor(2 ** num_bits - 1)
+    zeros = torch.zeros(weight.shape[0], device=weight.device)
+    if isinstance(min_scale, torch.Tensor):
+        wmin_tmp = torch.minimum(weight.min(1)[0], zeros)
+        wmax_tmp = torch.maximum(weight.max(1)[0], zeros)
+        wmin_tmp *= torch.sigmoid(8 * (min_scale + 0.5))
+        wmax_tmp *= torch.sigmoid(8 * (max_scale + 0.5))
+        wmax = torch.maximum(wmax_tmp, wmin_tmp)
+        wmin = torch.minimum(wmax_tmp, wmin_tmp)
+    else:
+        wmin = torch.minimum(weight.min(1)[0], zeros)
+        wmax = torch.maximum(weight.max(1)[0], zeros)
+    tmp = (wmin == 0) & (wmax == 0)
+    wmin[tmp] = -1
+    wmax[tmp] = +1
+    scale = (wmax - wmin) / maxq
+    zp = round_ste(-wmin / scale)
+    scale = scale.unsqueeze(dim=-1)
+    zp = zp.unsqueeze(dim=-1)
+    int_w = round_ste(weight / scale + grad)
+    q = torch.clamp(int_w + zp, 0, maxq)
+    return scale * (q - zp)
+
+
+def quant_weight_sym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
+    maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
+    minq = torch.tensor(-2 ** (num_bits - 1)).to(weight.device)
+    if num_bits == 1:
+        maxq = torch.tensor(2 ** (num_bits - 1))
+        minq = torch.tensor(2 ** (num_bits - 1) - 1)
+
+    wmax = torch.abs(weight).max(1)[0]
+    wmax *= (1 + max_scale)
+    tmp = (wmax == 0)
+    wmax[tmp] = +1
+    scale = wmax / ((maxq - minq) / 2)
+    scale.unsqueeze_(dim=-1)
+    q = torch.clamp(round_ste(weight / scale + grad), minq, maxq)
+    return scale * q
+
+
+def quant_weight_actor(weight, num_bits, schema, grad, min_scale, max_scale):
+    assert num_bits > 0, "num_bits should be larger than 0"
+    if schema == "sym":
+        return quant_weight_sym(weight, num_bits, grad, min_scale, max_scale)
+    else:
+        return quant_weight_asym(weight, num_bits, grad, min_scale, max_scale)
+
+
+def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0, min_scale=0, max_scale=0):
+    if group_size == -1 or weight.shape[1] < group_size:
+        return quant_weight_actor(weight, num_bits, schema=schema, grad=grad, min_scale=min_scale, max_scale=max_scale)
+    orig_shape = weight.shape
+    if weight.shape[1] % group_size == 0:
+        weight = weight.reshape(-1, group_size)
+        if isinstance(grad, torch.Tensor):
+            grad = grad.reshape(-1, group_size)
+
+        weight = quant_weight_actor(weight, num_bits, schema=schema, grad=grad, min_scale=min_scale,
+                                    max_scale=max_scale)
+
+        weight = weight.reshape(orig_shape)
+
+        return weight
+    else:
+        split_index = weight.shape[1] // group_size * group_size
+        weight1 = weight[:, :split_index]
+        weight1 = weight1.reshape(-1, group_size)
+        if isinstance(grad, torch.Tensor):
+            grad1 = grad[:, :split_index]
+            grad1 = grad1.reshape(-1, group_size)
+            grad2 = grad[:, split_index:]
+        else:
+            grad1 = 0
+            grad2 = 0
+        if isinstance(min_scale, torch.Tensor):
+            min_scale_1 = min_scale[:, :weight.shape[1] // group_size]
+            min_scale_2 = min_scale[:, weight.shape[1] // group_size:]
+            max_scale_1 = max_scale[:, :weight.shape[1] // group_size]
+            max_scale_2 = max_scale[:, weight.shape[1] // group_size:]
+        else:
+            min_scale_1 = min_scale
+            min_scale_2 = min_scale
+            max_scale_1 = max_scale
+            max_scale_2 = max_scale
+
+        weight1 = quant_weight_actor(weight1, num_bits, schema=schema, grad=grad1, min_scale=min_scale_1,
+                                     max_scale=max_scale_1)
+        weight1 = weight1.reshape(orig_shape[0], split_index)
+        weight2 = weight[:, split_index:]
+        weight2 = quant_weight_actor(weight2, num_bits, schema=schema, grad=grad2, min_scale=min_scale_2,
+                                     max_scale=max_scale_2)
+        weight = torch.cat([weight1, weight2], dim=1)
+
+        return weight
+
+
+class WrapperMultiblock(torch.nn.Module):
+    def __init__(self, module_list):
+        super(WrapperMultiblock, self).__init__()
+        self.layers = torch.nn.ModuleList(module_list)
+
+    def forward(self, x, **kwargs):
+        hidden_states = x
+        for idx, decoder_layer in enumerate(self.layers):
+            layer_outputs = decoder_layer(
+                hidden_states,
+                **kwargs
+            )
+            hidden_states = layer_outputs
+            if isinstance(hidden_states, tuple) or isinstance(hidden_states, list):
+                hidden_states = layer_outputs[0]
+        return hidden_states
+
+
+def get_block_names(model):
+    block_names = []
+    target_m = None
+    for n, m in model.named_modules():
+        if hasattr(type(m), "__name__") and 'ModuleList' in type(m).__name__:
+            target_m = (n, m)
+    for n, m in target_m[1].named_children():
+        block_names.append(target_m[0] + "." + n)
+    return block_names
+
+
+class SaveInputs:
+    def __init__(self, model, dataloader, seqlen=256, block_name=None):
+        self.model = model.eval()
+        self.dataloader = dataloader
+        self.inputs = {}
+        self.block_name = block_name
+        self.seqlen = seqlen
+
+    @torch.no_grad()
+    def get_forward_func(self, name):
+
+        def forward(block, hidden_states, **kwargs):  ##This may have bug for other models
+            if name in self.inputs:
+                data = torch.cat([self.inputs[name]['input_ids'], hidden_states.to("cpu")], dim=0)
+                self.inputs[name]['input_ids'] = data
+            else:
+                self.inputs[name] = {}
+                self.inputs[name]['input_ids'] = hidden_states.to("cpu")
+
+            if kwargs is not None and len(kwargs) > 0:
+                if "position_ids" in kwargs.keys() and kwargs["position_ids"] is not None:
+                    self.inputs[name]["position_ids"] = kwargs["position_ids"].to("cpu")
+                if "attention_mask" in kwargs.keys() and kwargs["attention_mask"] is not None:
+                    if "attention_mask" in self.inputs[name] and kwargs["attention_mask"] is not None:
+                        self.inputs[name]["attention_mask"] = torch.cat(
+                            [self.inputs[name]['attention_mask'], kwargs['attention_mask'].to("cpu")], dim=0)
+                    else:
+                        self.inputs[name]["attention_mask"] = kwargs['attention_mask'].to("cpu")
+                if "alibi" in kwargs.keys():  ##this is only for bloom alibi TODO may have bugs for other alibi
+                    alibi = kwargs["alibi"]
+                    batch = kwargs['attention_mask'].shape[0]
+                    alibi = alibi.reshape(batch, -1, alibi.shape[1], alibi.shape[2])
+                    if "alibi" in self.inputs[name].keys():
+                        self.inputs[name]["alibi"] = torch.cat(
+                            [self.inputs[name]['alibi'], alibi.to("cpu")], dim=0)
+                    else:
+                        self.inputs[name]["alibi"] = alibi.to("cpu")
+            raise NotImplementedError
+
+        return forward
+
+    @torch.no_grad()
+    def get_inputs(self, n_samples=512):
+        total_cnt = 0
+        self._replace_forward()
+        for data in self.dataloader:
+            if data is None:
+                continue
+
+            input_ids = data['input_ids'].to(self.model.device)
+            if input_ids.shape[-1] < self.seqlen:
+                continue
+            if total_cnt + input_ids.shape[0] > n_samples:
+                input_ids = input_ids[:n_samples - total_cnt, ...]
+            try:
+                self.model(input_ids)
+            except:
+                pass
+            total_cnt += input_ids.shape[0]
+            if total_cnt >= n_samples:
+                break
+        self._recover_forward()
+        return self.inputs[self.block_name]
+
+    def _recover_forward(self):
+        for n, m in self.model.named_modules():
+            if n == self.block_name:
+                m.forward = m.orig_forward
+                delattr(m, "orig_forward")
+                break
+
+    def _replace_forward(self):
+        for n, m in self.model.named_modules():
+            if n == self.block_name:
+                m.orig_forward = m.forward
+                m.forward = partial(self.get_forward_func(n), m)
+                break
+
+
+def round_ste(x: torch.Tensor):
+    """
+    cp from https://github.com/OpenGVLab/OmniQuant/blob/main/quantize/quantizer.py
+    Implement Straight-Through Estimator for rounding operation.
+    """
+    return (x.round() - x).detach() + x
+
+
+def sampling_inputs(input_ids, input_others, indices, seqlen):
+    if len(input_ids.shape) == 3:
+        current_input_ids = input_ids[indices, :, :]
+    else:
+        n_samples = input_ids.shape[0] // seqlen
+        current_input_ids = input_ids.view(n_samples, seqlen, -1)
+        current_input_ids = current_input_ids[indices, :, :]
+        current_input_ids = current_input_ids.reshape(-1, input.shape[-1])
+
+    current_input_others = {}
+    if "position_ids" in input_others.keys():
+        current_input_others["position_ids"] = input_others["position_ids"]
+    if "attention_mask" in input_others.keys():
+        current_input_others["attention_mask"] = input_others["attention_mask"][indices, ...]
+    if "alibi" in input_others.keys():  ##TODO support more alibi
+        alibi = input_others["alibi"][indices, ...]
+        current_input_others["alibi"] = alibi
+
+    return current_input_ids, current_input_others
+
+
+def move_to_device(input_ids, inputs_others=None, device=torch.device("cpu")):
+    if input_ids != None:
+        input_ids = input_ids.to(device)
+    if inputs_others is not None:
+        for key in inputs_others.keys():
+            inputs_others[key] = inputs_others[key].to(device)
+        return input_ids, inputs_others
+    return input_ids
+
+
+def block_forward(block, input_ids, input_others, amp=False, device=torch.device("cpu")):
+    if input_ids.device != device:
+        input_ids, input_others = move_to_device(input_ids, input_others, device)
+    if "alibi" in input_others.keys():  ##bloom
+        attention_mask = input_others["attention_mask"]
+        alibi = input_others["alibi"]
+        alibi = alibi.reshape(-1, alibi.shape[2], alibi.shape[3])
+        if amp and device != torch.device("cpu"):
+            with autocast(device_type="cuda"):
+                output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
+        elif amp and device == torch.device("cpu"):
+            with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+                output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
+        else:
+            output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
+    else:
+        if amp and device != torch.device("cpu"):
+            with autocast(device_type="cuda"):
+                output = block.forward(input_ids, **input_others)
+        elif amp and device == torch.device("cpu"):
+            with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+                output = block.forward(input_ids, **input_others)
+        else:
+            output = block.forward(input_ids, **input_others)
+    if isinstance(output, list) or isinstance(output, tuple):
+        output = output[0]
+    return output
+
+
+def move_input_to_device(input, device=torch.device("cpu")):
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        tmp_input = {}
+        for k, inp in input.items():
+            tmp_input[k] = move_input_to_device(inp, device)
+        input = tmp_input
+    elif isinstance(input, list) or isinstance(input, tuple):
+        tmp_input = []
+        for inp in input:
+            tmp_input.append(move_input_to_device(inp, device))
+        input = tmp_input
+    elif isinstance(input, torch.Tensor):
+        input = input.to(device)  # pylint: disable=no-member
+    return input
+
+
+def get_scale_shape(weight, group_size):
+    if group_size == -1 or weight.shape[1] < group_size:
+        shape = (weight.shape[0])
+    else:
+        shape = (weight.shape[0] * ((weight.shape[1] + group_size - 1) // group_size))
+
+    return shape
+
+
+class WrapperLinear(torch.nn.Module):
+    def __init__(self, orig_layer, num_bits, group_size, schema, enable_minmax_tuning=True):
+        super(WrapperLinear, self).__init__()
+        self.orig_layer = orig_layer
+        self.num_bits = num_bits
+        self.group_size = group_size
+        self.schema = schema
+        self.value = torch.nn.Parameter(torch.zeros(self.orig_layer.weight.shape, device=self.orig_layer.weight.device),
+                                        requires_grad=True)
+        self.enable_minmax_tuning = enable_minmax_tuning
+        shape = get_scale_shape(self.orig_layer.weight, group_size)
+
+        if self.enable_minmax_tuning:
+            self.min_scale = torch.nn.Parameter(torch.zeros(shape, device=self.orig_layer.weight.device),
+                                                requires_grad=True)
+            self.max_scale = torch.nn.Parameter(torch.zeros(shape, device=self.orig_layer.weight.device),
+                                                requires_grad=True)
+        else:
+            self.min_scale = torch.tensor(0, device=self.orig_layer.weight.device)
+            self.max_scale = torch.tensor(0, device=self.orig_layer.weight.device)
+
+    @torch.no_grad()
+    def update_grad(self, grad):
+        self.value.data.copy_(grad)
+
+    @torch.no_grad()
+    def update_minmax_grad(self, min_scale, max_scale):
+        self.min_scale.copy_(min_scale)
+        self.max_scale.copy_(max_scale)
+
+    def forward(self, x):
+        weight = self.orig_layer.weight
+        self.min_scale.data.copy_(torch.clamp(self.min_scale.data, -1, 0))
+        self.max_scale.data.copy_(torch.clamp(self.max_scale.data, -1, 0))
+        weight_q = quant_weight(weight, self.num_bits, self.group_size, self.schema,
+                                self.value, self.min_scale, self.max_scale)
+
+        return F.linear(x, weight_q, self.orig_layer.bias)
+
+
+def wrapper_block(block, num_bits, group_size, schema, enable_minmax_tuning):
+    for n, m in block.named_modules():
+        if isinstance(m, torch.nn.Linear):
+            new_m = WrapperLinear(m, num_bits, group_size, schema, enable_minmax_tuning=enable_minmax_tuning)
+            set_module(block, n, new_m)
+
+
+@torch.no_grad()
+def unwrapper_block(block, num_bits, group_size, schema, grads, min_scale_grads, max_scale_grads):
+    for n, m in block.named_modules():
+        if isinstance(m, WrapperLinear):
+            orig_layer = m.orig_layer
+            grad = 0
+            min_scale_grad = 0
+            max_scale_grad = 0
+            if isinstance(grads, dict):
+                grad = grads[n]
+            if isinstance(min_scale_grads, dict):
+                min_scale_grad = min_scale_grads[n]
+                min_scale_grad = torch.clamp(min_scale_grad, -1, 0)
+            if isinstance(max_scale_grads, dict):
+                max_scale_grad = max_scale_grads[n]
+                max_scale_grad = torch.clamp(max_scale_grad, -1, 0)
+
+            q_dq_weight = quant_weight(orig_layer.weight, num_bits, group_size, schema, grad, min_scale_grad,
+                                       max_scale_grad)
+            orig_layer.weight.data.copy_(q_dq_weight)
+            orig_layer.weight.grad = None  ##clear grad
+            set_module(block, n, orig_layer)
+
+
+def collect_round_grad(block):
+    grads = {}
+    for n, m in block.named_modules():
+        if isinstance(m, WrapperLinear):
+            grad = m.value.data
+            grads[n] = copy.deepcopy(grad)
+    return grads
+
+
+def collect_minmax_grad(block):
+    min_grads = {}
+    max_grads = {}
+    for n, m in block.named_modules():
+        if isinstance(m, WrapperLinear):
+            min_grads[n] = copy.deepcopy(torch.clamp(m.min_scale.data, -1, 0))
+            max_grads[n] = copy.deepcopy(torch.clamp(m.max_scale.data, -1, 0))
+    return min_grads, max_grads
+
+
 class OPTRoundQuantizer(object):
     def __init__(self,
                  model,
@@ -71,22 +466,30 @@ class OPTRoundQuantizer(object):
                  bits=4,
                  group_size=128,
                  scheme="asym",
-                 # weight_config={},##TODO support later
+                 weight_config={},  ##TODO support later
                  enable_full_range=False,  ##for symmetric, TODO support later
-                 optimizer=None,
-                 lr_scheduler=None,
-                 dataloader=None,
-                 default_dataset_name="NeelNanda/pile-10k",
-                 dataset_split="train",
                  bs=8,
                  amp=True,
-                 amp_dtype="float16",##could we get dtype from model?
-                 device="",
+                 optimizer=None,
+                 lr_scheduler=None,
+                 dataloader=None,  ## to support later
+                 default_dataset_name="NeelNanda/pile-10k",
+                 dataset_split="train",
+                 device="cuda:0",  ##TODO support multiple gpu
                  use_quant_input=True,
                  enable_minmax_tuning=True,
+                 lr=0.0025,
+                 minmax_lr=0.0025,
+                 low_gpu_mem_usage=True,
+                 iters=200,
                  seqlen=2048,
-                 nsamples=512,
+                 n_samples=512,
+                 sampler="rand",
                  seed=42,
+                 n_blocks=1,
+                 gradient_accumulate_steps=1,
+                 not_use_mse=False,
+                 dynamic_max_gap=-1,
                  data_type="int",
                  **kwargs
                  ):
@@ -117,23 +520,48 @@ class OPTRoundQuantizer(object):
         Returns:
         """
         self.model = model
+
+        self.model = self.model.to("cpu")
+        self.amp = amp
+        self.use_quant_input = use_quant_input
+        self.enable_minmax_tuning = enable_minmax_tuning
+        self.n_samples = n_samples  ##TODO check configurations
+        self.n_blocks = n_blocks
         self.bits = bits
         self.group_size = group_size
         self.scheme = scheme
+        self.low_gpu_mem_usage = low_gpu_mem_usage
         self.data_type = data_type
         self.supported_types = [torch.nn.Linear]  ## TODO support conv1d
-        self.weight_config = {}
+        self.weight_config = {}  ##TODO support later
         assert (dataloader != None or tokenizer != None)  ##TODO datatype
+        self.dataset_split = dataset_split
+        self.seed = seed
+        self.tokenizer = tokenizer
+        self.seqlen = seqlen
+        self.train_bs = bs
+        self.n_blocks = 1
+        self.device = device
+        self.amp_dtype = torch.float16
+        if self.model.dtype != torch.float32:
+            self.amp_dtype = self.model.dtype
+        if self.device == "cpu":
+            self.amp_dtype = torch.bfloat16
         if dataloader is None:
             self.dataloader = self.get_default_dataloader(data_name=default_dataset_name)
         else:
             self.dataloader = dataloader
+        self.lr = lr
+        self.minmax_lr = minmax_lr
+        self.iters = iters
+        self.sampler = sampler
+        self.gradient_accumulate_steps = gradient_accumulate_steps
+        self.not_use_mse = not_use_mse
+        self.dynamic_max_gap = dynamic_max_gap
 
-        self.dataset_split = dataset_split
-        self.seed = seed
-        self.tokenizer = tokenizer
-        self.seqlen = self.seqlen
-        self.bs = bs
+    def default_tokenize_function(self, examples):
+        example = self.tokenizer(examples["text"], truncation=True, max_length=self.seqlen)
+        return example
 
     def get_default_dataloader(self, data_name="NeelNanda/pile-10k"):
         from datasets import load_dataset
@@ -159,29 +587,206 @@ class OPTRoundQuantizer(object):
             res["input_ids"] = tmp
             return res
 
-        def default_tokenize_function(self, examples):
-            example = self.tokenizer(examples["text"], truncation=True, max_length=self.seqlen)
-            return example
-
         calib_dataset = load_dataset(data_name, split=self.dataset_split)
         calib_dataset = calib_dataset.shuffle(seed=self.seed)
-        calib_dataset = calib_dataset.map(default_tokenize_function, batched=True)
+        calib_dataset = calib_dataset.map(self.default_tokenize_function, batched=True)
         calib_dataset.set_format(type='torch', columns=['input_ids'])
         calib_dataloader = DataLoader(
             calib_dataset,
-            batch_size=self.bs,
+            batch_size=self.train_bs,
             shuffle=False,
             collate_fn=collate_batch
         )
         return calib_dataloader
 
-    #
-    # def load_model(self):
-    #     from transformers import AutoModel,AutoTokenizer
-    #
-    #     model = AutoModel.from_pretrained(self.model)
-    #     tokenizer = AutoTokenizer.from_pretrained(self.model)
-    #     return
+    def quant_block(self, block, input_ids, input_others, num_bits, group_size, schema,
+                    q_input=None,
+                    device=torch.device("cpu")):
+        best_loss = torch.finfo(torch.float).max
+        mse_loss = torch.nn.MSELoss()
+        grad = None
+        grad_m = None
+        min_scale_grad = None
+        max_scale_grad = None
+        output = []
+
+        if not self.low_gpu_mem_usage and input_ids.device != device:
+            input_ids, input_others = move_to_device(input_ids, input_others, device)
+
+        with torch.no_grad():
+            current_bs = self.train_bs
+            for i in range(0, self.n_samples, current_bs):
+                indices = torch.arange(i, i + current_bs).to(torch.long)
+                tmp_input_ids, tmp_input_others = sampling_inputs(input_ids, input_others, indices, self.seqlen)
+                tmp_output = block_forward(block, tmp_input_ids, tmp_input_others, self.amp, device)
+                if self.low_gpu_mem_usage:
+                    tmp_output = tmp_output.to("cpu")
+                output.append(tmp_output)
+
+            output = torch.cat(output, dim=0)
+        torch.cuda.empty_cache()
+        if q_input is not None:
+            input_ids = q_input
+            if not self.low_gpu_mem_usage and input_ids.device != device:
+                input_ids = input_ids.to(device)
+
+        wrapper_block(block, num_bits, group_size, schema, self.enable_minmax_tuning)
+
+        round_params = []
+        minmax_params = []
+        for n, m in block.named_modules():
+            if isinstance(m, WrapperLinear):
+                round_params.append(m.value)
+                minmax_params.append(m.min_scale)
+                minmax_params.append(m.max_scale)
+        # from sgd import SGD
+        # optimizer = SGD(params, lr=0.0025)
+        if self.enable_minmax_tuning:
+            optimizer = torch.optim.AdamW([{'params': round_params}, {'params': minmax_params, 'lr': self.minmax_lr}],
+                                          lr=self.lr, weight_decay=0)
+        else:
+            optimizer = torch.optim.AdamW(round_params,
+                                          lr=self.lr, weight_decay=0)
+
+        lr_schedule = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0, total_iters=400,
+                                                        verbose=False)
+
+        search_iters = self.iters
+        pick_samples = self.train_bs
+        if len(input_ids.shape) == 3:
+            n_samples = input_ids.shape[0]
+        else:
+            n_samples = input_ids.shape[0] // self.seqlen
+        if self.sampler != "rand":
+            indices = torch.randperm(n_samples)[:pick_samples]
+        last_best_iter = 0
+        for i in range(search_iters):
+            if self.sampler == "rand":
+                indices = torch.randperm(n_samples)[:pick_samples]
+
+            total_loss = 0
+            for _ in range(self.gradient_accumulate_steps):
+                current_input_ids, current_input_others = sampling_inputs(input_ids, input_others, indices,
+                                                                          seqlen=self.seqlen)
+                if len(input_ids.shape) == 3:
+                    current_output = output[indices, :, :]
+                else:
+                    current_output = output.view(n_samples, self.seqlen, -1)
+                    current_output = current_output[indices, :, :]
+                    current_output = current_output.reshape(-1, current_output.shape[-1])
+                current_output = move_to_device(current_output, None, device)
+
+                output_q = block_forward(block, current_input_ids, current_input_others, self.amp, device)
+                if self.amp and device != torch.device("cpu"):
+                    with autocast(device_type="cuda"):
+                        loss = mse_loss(output_q, current_output) * 1000
+                elif self.amp:
+                    with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+                        loss = mse_loss(output_q, current_output) * 1000
+                else:
+                    loss = mse_loss(output_q, current_output)
+                total_loss += loss.item()
+                loss.backward()
+
+            if total_loss < best_loss:
+                best_loss = total_loss
+                if not self.not_use_mse:
+                    # print(f"get better result at iter {i}, the loss is {total_loss}", flush=True)
+                    best_grad = collect_round_grad(block)
+                    best_min_scale_grad, best_max_scale_grad = collect_minmax_grad(block)
+                    last_best_iter = i
+            if self.not_use_mse:
+                best_grad = grad
+                best_min_scale_grad = min_scale_grad
+                best_max_scale_grad = max_scale_grad
+
+            if not self.not_use_mse:
+                if self.dynamic_max_gap > 0 and i - last_best_iter >= self.dynamic_max_gap:
+                    break
+            optimizer.step()
+            optimizer.zero_grad()
+            lr_schedule.step()
+        unwrapper_block(block, num_bits, group_size, schema, best_grad, best_min_scale_grad, best_max_scale_grad)
+        if self.use_quant_input:
+            with torch.no_grad():
+                current_bs = self.train_bs
+                start_index = 0
+                q_outputs = []
+                while 1:
+                    end_index = start_index + current_bs
+                    end_index = min(end_index, input_ids.shape[0])
+                    indices = torch.arange(start_index, end_index)
+                    current_input_ids, current_input_others = sampling_inputs(input_ids, input_others, indices,
+                                                                              seqlen=self.seqlen)
+                    q_output = block_forward(block, current_input_ids, current_input_others,
+                                             self.amp, device)
+                    q_outputs.append(q_output.to("cpu"))
+
+                    if end_index >= input_ids.shape[0]:
+                        break
+                    else:
+                        start_index = end_index
+                q_outputs = torch.cat(q_outputs, dim=0)
+
+            return q_outputs, output
+
+        else:
+            return None, output
+
+    def q_dq_weight_round(self, model: torch.nn.Module, inputs, block_names, num_bits=4, group_size=128, schema='asym',
+                          n_blocks=1,
+                          device=torch.device("cpu")):
+        q_input = None
+        torch.cuda.empty_cache()
+        for n, m in model.named_parameters():
+            m.requires_grad_(False)
+        input_ids = inputs["input_ids"]
+        inputs.pop('input_ids', None)
+        input_others = inputs
+        torch.cuda.empty_cache()
+        for i in range(0, len(block_names), n_blocks):
+            if n_blocks == 1:
+                n = block_names[i]
+                print(n, flush=True)
+                m = get_module(model, n)
+            else:
+                names = block_names[i: i + n_blocks]
+                print(names, flush=True)
+                modules = [get_module(model, n) for n in names]
+                m = WrapperMultiblock(modules)
+
+            m = m.to(device)
+
+            q_input, input_ids = self.quant_block(m, input_ids, input_others, num_bits=num_bits, group_size=group_size,
+                                                  schema=schema,
+                                                  q_input=q_input,
+                                                  device=device)
+            m.to("cpu")
+            torch.cuda.empty_cache()
+
+        del q_input
+        del input_ids
+        del input_others
+        del inputs
+
+        torch.cuda.empty_cache()
+
+    def quantize(self):
+        logger.info("cache input")
+        block_names = get_block_names(self.model)
+
+        if self.amp:
+            self.model = self.model.to(self.amp_dtype)
+        if not self.low_gpu_mem_usage:  ##TODO automaticall detect
+            self.model = self.model.to(self.device)
+
+        save_input_actor = SaveInputs(self.model, self.dataloader, self.seqlen, block_names[0])
+        inputs = save_input_actor.get_inputs(n_samples=self.n_samples)
+        del save_input_actor
+        self.model = self.model.to("cpu")
+        torch.cuda.empty_cache()
+        self.q_dq_weight_round(self.model, inputs, block_names, num_bits=self.bits, group_size=self.group_size,
+                               n_blocks=self.n_blocks, device=self.device)
 
     def export(self):
         pass

@@ -18,9 +18,9 @@ from transformers import set_seed
 from functools import partial
 from torch.amp import autocast
 from neural_compressor.adaptor.torch_utils.optround import OPTRoundQuantizer
+from eval import eval_model
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
 
 if __name__ == '__main__':
 
@@ -43,8 +43,6 @@ if __name__ == '__main__':
     parser.add_argument("--device", default=0, type=str,
                         help="device gpu int number, or 'cpu' ")
 
-    parser.add_argument("--sym", action='store_true',
-                        help=" sym quantization")
 
     parser.add_argument("--iters", default=400, type=int,
                         help=" iters")
@@ -109,7 +107,8 @@ if __name__ == '__main__':
 
     # parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
     #                     help="lm-eval tasks")
-
+    parser.add_argument("--scheme", default="asym",
+                        help="sym or asym")
     parser.add_argument("--tasks", default=["lambada_openai"],
                         help="lm-eval tasks")
     #
@@ -118,9 +117,7 @@ if __name__ == '__main__':
     #                 help="lm-eval tasks") # "truthfulqa_gen"
 
     parser.add_argument("--output_dir", default="./tmp_optround", type=str,
-                    help="Where to store the final model.")
-
-
+                        help="Where to store the final model.")
 
     args = parser.parse_args()
     set_seed(args.seed)
@@ -138,10 +135,11 @@ if __name__ == '__main__':
         device_str = f"cuda:{int(args.device)}"
     cuda_device = torch.device(device_str)
     model = AutoModelForCausalLM.from_pretrained(
-        model_name, low_cpu_mem_usage=True  ##low_cpu_mem_usage has impact to acc, changed the random seed?
+        model_name, low_cpu_mem_usage=True, torch_dtype="auto"
+        ##low_cpu_mem_usage has impact to acc, changed the random seed?
     )
     model = model.eval()
-    #align wigh GPTQ to eval ppl
+    # align wigh GPTQ to eval ppl
     if "opt" in model_name:
         seqlen = model.config.max_position_embeddings
         model.seqlen = model.config.max_position_embeddings
@@ -159,8 +157,6 @@ if __name__ == '__main__':
     else:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    optq = OPTRoundQuantizer(model)
-
-
-
-
+    optq = OPTRoundQuantizer(model, tokenizer, args.num_bits, args.group_size, args.scheme, bs=args.train_bs,seqlen=seqlen)
+    optq.quantize()
+    eval_model(optq.model, args.model_name, tokenizer, args.tasks)
