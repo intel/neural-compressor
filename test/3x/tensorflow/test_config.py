@@ -101,10 +101,10 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_dict_default(self):
         logger.info("test_static_quant_from_dict_default")
-        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.tensorflow.utils import TFDataDataLoader
         from neural_compressor.tensorflow import get_default_static_quant_config, quantize_model
 
-        calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
+        calib_dataloader = TFDataDataLoader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         qmodel = quantize_model(fp32_model, get_default_static_quant_config(), calib_dataloader)
         self.assertIsNotNone(qmodel)
@@ -115,10 +115,10 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_dict_beginner(self):
         logger.info("test_static_quant_from_dict_beginner")
-        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.tensorflow.utils import TFDataDataLoader
         from neural_compressor.tensorflow import quantize_model
 
-        calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
+        calib_dataloader = TFDataDataLoader(dataset=Dataset())
 
         quant_config = {
             "static_quant": {
@@ -142,10 +142,10 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_class_default(self):
         logger.info("test_static_quant_from_class_default")
-        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.tensorflow.utils import TFDataDataLoader
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
 
-        calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
+        calib_dataloader = TFDataDataLoader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         quant_config = StaticQuantConfig()
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
@@ -157,10 +157,10 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_class_beginner(self):
         logger.info("test_static_quant_from_class_beginner")
-        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.tensorflow.utils import TFDataDataLoader
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
 
-        calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
+        calib_dataloader = TFDataDataLoader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         quant_config = StaticQuantConfig(
             weight_dtype="int8",
@@ -179,10 +179,10 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_dict_advance(self):
         logger.info("test_static_quant_from_dict_advance")
-        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.tensorflow.utils import TFDataDataLoader
         from neural_compressor.tensorflow import quantize_model
 
-        calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
+        calib_dataloader = TFDataDataLoader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         quant_config = {
             "static_quant": {
@@ -194,7 +194,7 @@ class TestKeras3xNewApi(unittest.TestCase):
                     "act_sym": True,
                     "act_granularity": "per_tensor",
                 },
-                "operator_name": {
+                "local": {
                     "dense": {
                         "weight_dtype": "fp32",
                         "act_dtype": "fp32",
@@ -211,10 +211,10 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_class_advance(self):
         logger.info("test_static_quant_from_class_advance")
-        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.tensorflow.utils import TFDataDataLoader
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
 
-        calib_dataloader = DataLoader(framework="tensorflow", dataset=Dataset())
+        calib_dataloader = TFDataDataLoader(dataset=Dataset())
         quant_config = StaticQuantConfig(
             weight_dtype="int8",
             weight_sym=True,
@@ -227,7 +227,7 @@ class TestKeras3xNewApi(unittest.TestCase):
             weight_dtype="fp32",
             act_dtype="fp32",
         )
-        quant_config.set_operator_name("dense", dense_config)
+        quant_config.set_local("dense", dense_config)
         # get model and quantize
         fp32_model = keras.models.load_model("./baseline_model")
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
@@ -251,8 +251,8 @@ class TestKeras3xNewApi(unittest.TestCase):
                     "act_sym": True,
                     "act_granularity": "per_tensor",
                 },
-                "operator_type": {
-                    "Dense": {
+                "local": {
+                    "dense": {
                         "weight_dtype": "fp32",
                         "act_dtype": "fp32",
                     }
@@ -260,7 +260,7 @@ class TestKeras3xNewApi(unittest.TestCase):
             }
         }
         config = StaticQuantConfig.from_dict(quant_config)
-        self.assertIsNotNone(config.operator_type_config)
+        self.assertIsNotNone(config.local_config)
 
     def test_config_to_dict(self):
         logger.info("test_config_to_dict")
@@ -278,7 +278,7 @@ class TestKeras3xNewApi(unittest.TestCase):
             weight_dtype="fp32",
             act_dtype="fp32",
         )
-        quant_config.set_operator_name("dense", dense_config)
+        quant_config.set_local("dense", dense_config)
         config_dict = quant_config.to_dict()
         self.assertIn("global", config_dict)
         self.assertIn("operator_name", config_dict)

@@ -21,7 +21,7 @@ import tensorflow as tf
 from tensorflow import quantization
 from tensorflow.keras import activations, constraints, initializers, regularizers
 
-from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
+from neural_compressor.tensorflow.utils import version1_gte_version2
 
 if version1_gte_version2(tf.__version__, "2.13.0"):
     from keras.src.layers.convolutional.base_depthwise_conv import DepthwiseConv  # pylint: disable=E0401

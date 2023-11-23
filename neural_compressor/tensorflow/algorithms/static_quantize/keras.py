@@ -25,17 +25,16 @@ import numpy as np
 import tensorflow as tf
 import yaml
 
-from neural_compressor.data.dataloaders.base_dataloader import BaseDataLoader
-from neural_compressor.utils import logger
+from neural_compressor.common.logger import Logger
+from neural_compressor.tensorflow.utils import deep_get, dump_elapsed_time, BaseDataLoader
 
-from ...utils import deep_get, dump_elapsed_time
-
+logger = Logger().get_logger()
 
 def _add_supported_quantized_objects(custom_objects):
     """Map all the quantized objects."""
     from .keras_utils.conv2d import QConv2D
     from .keras_utils.dense import QDense
-    from .keras_utils.depthwise_conv2d import QDepthwiseConv2D
+    from .keras_utils.depthwise_conv2d import QDepthwiseConv2Ds
     from .keras_utils.pool2d import QAvgPool2D, QMaxPool2D
     from .keras_utils.quantizer import DeQuantize, FakeQuant, Quantize
     from .keras_utils.separable_conv2d import QSeparableConv2D
@@ -774,16 +773,6 @@ class KerasAdaptor:
             path (string): The path where to save.
         """
         model.save(path)
-
-    def convert(self, model, source, destination):
-        """The function is used to convert a source model format to another.
-
-        Args:
-            model (neural_compressor.model): base model to be converted.
-            source (string): The source model format.
-            destination (string): The destination model format.
-        """
-        pass
 
 
 class KerasQuery:
