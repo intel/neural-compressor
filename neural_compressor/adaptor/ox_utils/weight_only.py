@@ -317,6 +317,7 @@ def rtn_quantize(
         model: fake quantized ONNXModel
     """
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
+    base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
     new_nodes = []
     remove_nodes = []
     for node in model.nodes():
@@ -326,7 +327,6 @@ def rtn_quantize(
             and weight_config.get(node.name, {}) != "fp32"
         ):
             weight_tensor = model.get_initializer(node.input[1])
-            base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
             weight = numpy_helper.to_array(weight_tensor, base_dir=base_dir).copy()
             if len(weight.shape) != 2:
                 continue
@@ -503,9 +503,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             model.input_name_to_nodes[nodes[0].input[0]]
         ) == len(nodes):
             for idx in [1, 2]:
-                tensor = numpy_helper.to_array(
-                    model.get_initializer(parent.input[idx]), base_dir
-                )
+                tensor = numpy_helper.to_array(model.get_initializer(parent.input[idx]), base_dir)
                 new_tensor = tensor / np.reshape(best_scale, (1, -1))
                 model.set_initializer(parent.input[idx], new_tensor.astype(tensor.dtype), raw=True)
                 updated_nodes.append(parent.name)
@@ -583,10 +581,8 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
                 num_bits = weight_config[node.name]["bits"]
                 group_size = weight_config[node.name]["group_size"]
                 scheme = weight_config[node.name]["scheme"]
-            
-            org_weight = numpy_helper.to_array(
-                model.get_initializer(node.input[1]), base_dir=base_dir
-            )
+
+            org_weight = numpy_helper.to_array(model.get_initializer(node.input[1]), base_dir=base_dir)
             org_w_shape = org_weight.shape  # ic, oc
             group_size = group_size if group_size != -1 else org_w_shape[0]
             org_out = np.matmul(inp, org_weight)  # n_token, oc

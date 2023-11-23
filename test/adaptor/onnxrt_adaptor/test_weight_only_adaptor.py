@@ -10,7 +10,7 @@ import onnxruntime as ort
 from transformers import AutoTokenizer
 
 from neural_compressor import PostTrainingQuantConfig, quantization
-from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize, gptq_quantize, awq_quantize
+from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize, gptq_quantize, rtn_quantize
 from neural_compressor.utils.constant import FP32
 
 
@@ -389,9 +389,10 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
 
     def test_woq_with_ModelProto_input(self):
         from neural_compressor.model.onnx_model import ONNXModel
+
         q4_node_config = {}
         template_config_q4 = {"bits": 4, "group_size": 32, "scheme": "sym"}
-        template_config_fp32 = 'fp32'
+        template_config_fp32 = "fp32"
         for node in self.gptj_model.graph.node:
             if node.op_type in ["MatMul"]:
                 if not all([ONNXModel(self.gptj_model).get_initializer(i) is None for i in node.input]):
@@ -405,21 +406,20 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             org_out = Inference(self.gptj_model, data)
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
-        
+
         q_model = gptq_quantize(self.gptj_model, self.gptj_dataloader, q4_node_config)
         for data, _ in self.gptj_dataloader:
             q_out = Inference(q_model.model, data)
             org_out = Inference(self.gptj_model, data)
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
-        
+
         q_model = awq_quantize(self.gptj_model, self.gptj_dataloader, q4_node_config)
         for data, _ in self.gptj_dataloader:
             q_out = Inference(q_model.model, data)
             org_out = Inference(self.gptj_model, data)
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
-
 
 
 if __name__ == "__main__":
