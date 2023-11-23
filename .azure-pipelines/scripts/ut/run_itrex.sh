@@ -17,7 +17,7 @@ ut_log_name=${LOG_DIR}/ut_itrex.log
 
 # run unit test
 cd /intel-extension-for-transformers/tests
-find . -name "test*.py" | grep -v "test_tf" | sed 's,\.\/,python ,g' | sed 's/$/ --verbose/' >run.sh
+find ./CI -name "test*.py" | grep -v "test_tf" | sed 's,\.\/,python ,g' | sed 's/$/ --verbose/' > run.sh
 
 # run UT
 $BOLD_YELLOW && echo "cat run.sh..." && $RESET
