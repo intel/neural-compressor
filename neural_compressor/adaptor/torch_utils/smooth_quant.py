@@ -1248,7 +1248,7 @@ class TorchSmoothQuant:
                 out_pre_sq = model_forward_per_sample(self.model, example_inputs, self.device)
             if folding:
                 self._save_scale = False
-                
+
             if self.to_shift_bias and self.allow_absorb:  # lyt_os_debug_1013-2
                 self.record_max_info = False
             logger.info(f"lyt_debug 1164 record_max_info: {self.record_max_info}, to_shift_bias: {self.to_shift_bias}")
