@@ -34,7 +34,7 @@ def _add_supported_quantized_objects(custom_objects):
     """Map all the quantized objects."""
     from .keras_utils.conv2d import QConv2D
     from .keras_utils.dense import QDense
-    from .keras_utils.depthwise_conv2d import QDepthwiseConv2Ds
+    from .keras_utils.depthwise_conv2d import QDepthwiseConv2D
     from .keras_utils.pool2d import QAvgPool2D, QMaxPool2D
     from .keras_utils.quantizer import DeQuantize, FakeQuant, Quantize
     from .keras_utils.separable_conv2d import QSeparableConv2D
