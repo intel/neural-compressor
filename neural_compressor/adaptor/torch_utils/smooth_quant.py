@@ -1085,7 +1085,7 @@ class TorchSmoothQuant:
         best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, shared_criterion)
         for key in best_alphas.keys():
             logger.info(f"Final alpha {key}:{best_alphas[key]}")
-        logger.info(f"lyt_debug loss_alphas: {loss_alphas}") #lyt_os_debug_1121
+        logger.info(f"lyt_debug loss_alphas: {loss_alphas}")  # lyt_os_debug_1121
         self._qdq_model_unwrapper_for_auto()
         logger.info("auto tuning done")
         return best_alphas
