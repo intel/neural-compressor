@@ -271,7 +271,7 @@ class Scheduler:
         )
         task_status = self.check_task_status(log_path)
         self.task_db.update_task_status(task.task_id, task_status)
-        self.q_model_path = get_q_model_path(log_path=log_path) if task_status == "done" else None
+        self.q_model_path = get_q_model_path(log_path=log_path, task_id=task.task_id) if task_status == "done" else None
         self.report_result(task.task_id, log_path, task_runtime)
 
     def dispatch_task(self, task, resource):
