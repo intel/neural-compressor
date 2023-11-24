@@ -119,7 +119,7 @@ class TestQuantizationConfig(unittest.TestCase):
                 },
             }
         }
-        config = RTNWeightQuantConfig.from_dict(quant_config)
+        config = RTNWeightQuantConfig.from_dict(quant_config["rtn_weight_only_quant"])
         self.assertIsNotNone(config.local_config)
 
     def test_config_to_dict(self):
@@ -221,6 +221,16 @@ class TestQuantizationConfig(unittest.TestCase):
         logger.info(configs_mapping)
         self.assertTrue(configs_mapping[(torch.nn.Linear, "fc1")].weight_bits == 6)
         self.assertTrue(configs_mapping[(torch.nn.Linear, "fc2")].weight_bits == 4)
+
+    def test_gptq_config(self):
+        from neural_compressor.torch.quantization import GPTQConfig
+
+        gptq_config1 = GPTQConfig(weight_bits=8, pad_max_length=512)
+        quant_config_dict = {
+            "gptq": {"weight_bits": 8, "pad_max_length": 512},
+        }
+        gptq_config2 = GPTQConfig.from_dict(quant_config_dict["gptq"])
+        self.assertEqual(gptq_config1.to_dict(), gptq_config2.to_dict())
 
 
 if __name__ == "__main__":

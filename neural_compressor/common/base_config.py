@@ -118,12 +118,16 @@ class BaseConfig(ABC):
         Returns:
             The constructed config.
         """
-        config = cls(**config_dict.get(GLOBAL, {}))
-        operator_config = config_dict.get(LOCAL, {})
-        if operator_config:
-            for op_name, op_config in operator_config.items():
-                config.set_local(op_name, cls(**op_config))
-        return config
+        if GLOBAL not in config_dict and LOCAL not in config_dict:
+            config = cls(**config_dict)
+            return config
+        else:
+            config = cls(**config_dict.get(GLOBAL, {}))
+            operator_config = config_dict.get(LOCAL, {})
+            if operator_config:
+                for op_name, op_config in operator_config.items():
+                    config.set_local(op_name, cls(**op_config))
+            return config
 
     @classmethod
     def to_diff_dict(cls, instance) -> Dict[str, Any]:
@@ -234,9 +238,15 @@ class ComposableConfig(BaseConfig):
         return result
 
     @classmethod
-    def from_dict(cls, config_dict, str2operator=None):
-        # TODO(Yi)
-        pass
+    def from_dict(cls, config_dict: OrderedDict[str, Dict], config_registry: Dict[str, BaseConfig]):
+        assert len(config_dict) >= 1, "The config dict must include at least one configuration."
+        num_configs = len(config_dict)
+        name, value = next(iter(config_dict.items()))
+        config = config_registry[name].from_dict(value)
+        for _ in range(num_configs - 1):
+            name, value = next(iter(config_dict.items()))
+            config += config_registry[name].from_dict(value)
+        return config
 
     def to_json_string(self, use_diff: bool = False) -> str:
         return json.dumps(self.to_dict(), indent=2) + "\n"

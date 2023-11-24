@@ -16,9 +16,9 @@ from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.base_config import BaseConfig
+from neural_compressor.common.base_config import BaseConfig, ComposableConfig, registered_configs
 from neural_compressor.common.logger import Logger
-from neural_compressor.torch.quantization.config import parse_config_from_dict
+from neural_compressor.torch.quantization.config import FRAMEWORK_NAME
 from neural_compressor.torch.utils import algos_mapping, get_model_info
 
 logger = Logger().get_logger()
@@ -49,7 +49,7 @@ def quantize(
     """
     # TODO (Yi) support combine more than one algo
     if isinstance(quant_config, dict):
-        quant_config = parse_config_from_dict(quant_config)
+        quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs[FRAMEWORK_NAME])
         logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
     else:
         assert isinstance(
