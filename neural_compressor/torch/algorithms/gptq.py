@@ -1015,6 +1015,7 @@ def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig])
                 "percdamp": op_config.percdamp,
                 "act_order": op_config.act_order,
                 "block_size": op_config.block_size,
+                "mse": op_config.enable_mse_search,
             }
             nsamples = op_config.nsamples
             use_max_length = op_config.use_max_length
