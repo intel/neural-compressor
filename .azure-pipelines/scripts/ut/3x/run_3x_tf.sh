@@ -5,12 +5,11 @@ echo "${test_case}"
 
 # install requirements
 echo "set up UT env..."
-pip install -r /neural-compressor/requirements_tf.txt
 pip install coverage
 pip install pytest
 pip list
 
-export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.3x_tf
+export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/3x/coverage.3x_tf
 lpot_path=$(python -c 'import neural_compressor; import os; print(os.path.dirname(neural_compressor.__file__))')
 cd /neural-compressor/test || exit 1
 find ./3x/tensorflow/* -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'> run.sh
