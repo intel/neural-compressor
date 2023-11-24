@@ -24,6 +24,9 @@ algos_mapping: Dict[str, Callable] = {}
 
 import torch
 
+# All constants for torch
+WHITE_MODULE_LIST = [torch.nn.Linear, torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d]
+
 
 def register_algo(name):
     """Decorator function to register algorithms in the algos_mapping dictionary.

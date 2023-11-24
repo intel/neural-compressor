@@ -19,7 +19,7 @@ import torch
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, registered_configs
 from neural_compressor.common.logger import Logger
 from neural_compressor.torch.quantization.config import FRAMEWORK_NAME
-from neural_compressor.torch.utils import algos_mapping, get_model_info
+from neural_compressor.torch.utils import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
 logger = Logger().get_logger()
 
@@ -47,7 +47,6 @@ def quantize(
     Returns:
         The quantized model.
     """
-    # TODO (Yi) support combine more than one algo
     if isinstance(quant_config, dict):
         quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs[FRAMEWORK_NAME])
         logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
@@ -58,7 +57,7 @@ def quantize(
     logger.info(f"Quantize model with config: \n {quant_config.to_json_string()} \n")
     # select quantization algo according to config
 
-    model_info = get_model_info(model=model, white_module_list=[torch.nn.Linear])
+    model_info = get_model_info(model=model, white_module_list=WHITE_MODULE_LIST)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
     logger.debug(configs_mapping)
     for algo_name, algo_func in algos_mapping.items():
