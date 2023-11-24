@@ -101,6 +101,9 @@ if __name__ == '__main__':
 
     parser.add_argument("--low_gpu_mem_usage", action='store_true',
                         help="low_gpu_mem_usage")
+    
+    parser.add_argument("--trust_remote_code", default=True,
+                        help="Transformers parameter: use the external repo")
 
     parser.add_argument("--enable_minmax_tuning", action='store_true',
                         help="enable_tuning_minmax")
@@ -134,10 +137,14 @@ if __name__ == '__main__':
     else:
         device_str = f"cuda:{int(args.device)}"
     cuda_device = torch.device(device_str)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name, low_cpu_mem_usage=True, torch_dtype="auto"
-        ##low_cpu_mem_usage has impact to acc, changed the random seed?
-    )
+    is_glm = bool(re.search("chatglm", model_name.lower()))
+    if is_glm:
+        model = AutoModel.from_pretrained(model_name, trust_remote_code=args.trust_remote_code)
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name, low_cpu_mem_usage=True, torch_dtype="auto", trust_remote_code=args.trust_remote_code
+            ##low_cpu_mem_usage has impact to acc, changed the random seed?
+        )
     model = model.eval()
     # align wigh GPTQ to eval ppl
     if "opt" in model_name:

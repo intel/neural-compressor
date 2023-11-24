@@ -72,7 +72,7 @@ def set_module(model, key, new_module):
 
 def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
     maxq = torch.tensor(2 ** num_bits - 1)
-    zeros = torch.zeros(weight.shape[0], device=weight.device)
+    zeros = torch.zeros(weight.shape[0], device=weight.device, dtype=weight.dtype)
     if isinstance(min_scale, torch.Tensor):
         wmin_tmp = torch.minimum(weight.min(1)[0], zeros)
         wmax_tmp = torch.maximum(weight.max(1)[0], zeros)
@@ -208,32 +208,45 @@ class SaveInputs:
     @torch.no_grad()
     def get_forward_func(self, name):
 
-        def forward(block, hidden_states, **kwargs):  ##This may have bug for other models
+        def forward(_, hidden_states, *positional_args, **kwargs):  ##This may have bug for other models
+            dim = int((hasattr(self.model, 'config') and "chatglm" in self.model.config.model_type))
             if name in self.inputs:
-                data = torch.cat([self.inputs[name]['input_ids'], hidden_states.to("cpu")], dim=0)
+                data = torch.cat([self.inputs[name]['input_ids'], hidden_states.to("cpu")], dim=dim)
                 self.inputs[name]['input_ids'] = data
             else:
                 self.inputs[name] = {}
                 self.inputs[name]['input_ids'] = hidden_states.to("cpu")
+                
+            if "positional_inputs" not in self.inputs[name]:
+                self.inputs[name]['positional_inputs'] = []
+            for idx, item in enumerate(positional_args):
+                self.inputs[name]['positional_inputs'] = move_input_to_device(positional_args)
 
-            if kwargs is not None and len(kwargs) > 0:
-                if "position_ids" in kwargs.keys() and kwargs["position_ids"] is not None:
-                    self.inputs[name]["position_ids"] = kwargs["position_ids"].to("cpu")
-                if "attention_mask" in kwargs.keys() and kwargs["attention_mask"] is not None:
-                    if "attention_mask" in self.inputs[name] and kwargs["attention_mask"] is not None:
-                        self.inputs[name]["attention_mask"] = torch.cat(
-                            [self.inputs[name]['attention_mask'], kwargs['attention_mask'].to("cpu")], dim=0)
-                    else:
-                        self.inputs[name]["attention_mask"] = kwargs['attention_mask'].to("cpu")
-                if "alibi" in kwargs.keys():  ##this is only for bloom alibi TODO may have bugs for other alibi
-                    alibi = kwargs["alibi"]
-                    batch = kwargs['attention_mask'].shape[0]
-                    alibi = alibi.reshape(batch, -1, alibi.shape[1], alibi.shape[2])
-                    if "alibi" in self.inputs[name].keys():
-                        self.inputs[name]["alibi"] = torch.cat(
-                            [self.inputs[name]['alibi'], alibi.to("cpu")], dim=0)
-                    else:
-                        self.inputs[name]["alibi"] = alibi.to("cpu")
+            for key in kwargs.keys():
+                if isinstance(kwargs[key], torch.Tensor) or isinstance(kwargs[key], list) or (key == 'alibi'):
+                    if "attention_mask" in key:
+                        if key not in self.inputs[name].keys():
+                            self.inputs[name][key] = None
+                        if kwargs[key] is not None and ((not args.not_with_attention) or "bloom" in args.model_name):
+                            if self.inputs[name][key] is not None:
+                                self.inputs[name][key] = torch.cat(
+                                    [self.inputs[name][key], kwargs[key].to("cpu")], dim=0)
+                            else:
+                                self.inputs[name][key] = kwargs[key].to("cpu")
+                    elif "alibi" in key:
+                        if key not in self.inputs[name].keys():
+                            self.inputs[name][key] = None
+                        if isinstance(kwargs[key], torch.Tensor):
+                            alibi = kwargs[key]
+                            batch = kwargs["attention_mask"].shape[0]
+                            alibi = alibi.reshape(batch, -1, alibi.shape[1], alibi.shape[2])
+                            if self.inputs[name][key] is not None:
+                                self.inputs[name][key] = torch.cat(
+                                    [self.inputs[name][key], alibi.to("cpu")], dim=0)
+                            else:
+                                self.inputs[name][key] = alibi.to("cpu")
+                    elif key not in self.inputs[name].keys():
+                        self.inputs[name][key] = move_input_to_device(kwargs[key], device=torch.device("cpu"))
             raise NotImplementedError
 
         return forward
@@ -286,7 +299,10 @@ def round_ste(x: torch.Tensor):
 
 def sampling_inputs(input_ids, input_others, indices, seqlen):
     if len(input_ids.shape) == 3:
-        current_input_ids = input_ids[indices, :, :]
+        if int(len(input_others['positional_inputs']) > 0):
+            current_input_ids = input_ids[:, indices, :]
+        else:
+            current_input_ids = input_ids[indices, :, :]
     else:
         n_samples = input_ids.shape[0] // seqlen
         current_input_ids = input_ids.view(n_samples, seqlen, -1)
@@ -294,31 +310,47 @@ def sampling_inputs(input_ids, input_others, indices, seqlen):
         current_input_ids = current_input_ids.reshape(-1, input.shape[-1])
 
     current_input_others = {}
-    if "position_ids" in input_others.keys():
-        current_input_others["position_ids"] = input_others["position_ids"]
-    if "attention_mask" in input_others.keys():
-        current_input_others["attention_mask"] = input_others["attention_mask"][indices, ...]
-    if "alibi" in input_others.keys():  ##TODO support more alibi
-        alibi = input_others["alibi"][indices, ...]
-        current_input_others["alibi"] = alibi
+    current_input_others["positional_inputs"] = input_others["positional_inputs"]
+    for key in input_others.keys():
+        if "attention_mask" in key or "alibi" in key:
+            current_input_others[key] = None
+            if input_others[key] is not None:
+                current_input_others[key] = input_others[key][indices, ...]
+        else:
+            current_input_others[key] = input_others[key]
 
     return current_input_ids, current_input_others
 
 
-def move_to_device(input_ids, inputs_others=None, device=torch.device("cpu")):
-    if input_ids != None:
-        input_ids = input_ids.to(device)
-    if inputs_others is not None:
-        for key in inputs_others.keys():
-            inputs_others[key] = inputs_others[key].to(device)
-        return input_ids, inputs_others
-    return input_ids
+# def move_to_device(input_ids, inputs_others=None, device=torch.device("cpu")):
+#     if input_ids != None:
+#         input_ids = input_ids.to(device)
+#     if inputs_others is not None:
+#         for key in inputs_others.keys():
+#             inputs_others[key] = inputs_others[key].to(device)
+#         return input_ids, inputs_others
+#     return input_ids
+
+def move_input_to_device(input, device=torch.device("cpu")):
+    if isinstance(input, torch.Tensor):
+        return input.to(device)
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        for inp in input.keys():
+            input[inp] = move_input_to_device(input[inp], device)
+    elif isinstance(input, list) or isinstance(input, tuple):
+        input_res = []
+        for inp in input:
+            input_res.append(move_input_to_device(inp, device))
+        input = input_res
+    return input
 
 
 def block_forward(block, input_ids, input_others, amp=False, device=torch.device("cpu")):
     if input_ids.device != device:
-        input_ids, input_others = move_to_device(input_ids, input_others, device)
-    if "alibi" in input_others.keys():  ##bloom
+        # input_ids, input_others = move_to_device(input_ids, input_others, device)
+        input_ids = move_input_to_device(input_ids, device)
+        input_others = move_input_to_device(input_others, device)
+    if "alibi" in input_others.keys():
         attention_mask = input_others["attention_mask"]
         alibi = input_others["alibi"]
         alibi = alibi.reshape(-1, alibi.shape[2], alibi.shape[3])
@@ -331,14 +363,15 @@ def block_forward(block, input_ids, input_others, amp=False, device=torch.device
         else:
             output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
     else:
+        input_tuple = input_others.pop('positional_inputs', None)
         if amp and device != torch.device("cpu"):
             with autocast(device_type="cuda"):
-                output = block.forward(input_ids, **input_others)
+                output = block.forward(input_ids, *input_tuple, **input_others)
         elif amp and device == torch.device("cpu"):
             with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
-                output = block.forward(input_ids, **input_others)
+                output = block.forward(input_ids, *input_tuple, **input_others)
         else:
-            output = block.forward(input_ids, **input_others)
+            output = block.forward(input_ids, *input_tuple, **input_others)
     if isinstance(output, list) or isinstance(output, tuple):
         output = output[0]
     return output
@@ -581,9 +614,11 @@ class OPTRoundQuantizer(object):
         min_scale_grad = None
         max_scale_grad = None
         output = []
-
+        is_glm = int(len(input_others['positional_inputs']) > 0)
         if not self.low_gpu_mem_usage and input_ids.device != device:
-            input_ids, input_others = move_to_device(input_ids, input_others, device)
+            # input_ids, input_others = move_to_device(input_ids, input_others, device)
+            input_ids = move_input_to_device(input_ids, device)
+            input_others = move_input_to_device(input_others, device)
 
         with torch.no_grad():
             current_bs = self.train_bs
@@ -594,8 +629,7 @@ class OPTRoundQuantizer(object):
                 if self.low_gpu_mem_usage:
                     tmp_output = tmp_output.to("cpu")
                 output.append(tmp_output)
-
-            output = torch.cat(output, dim=0)
+            output = torch.cat(output, dim=is_glm)
         torch.cuda.empty_cache()
         if q_input is not None:
             input_ids = q_input
@@ -639,12 +673,15 @@ class OPTRoundQuantizer(object):
                 current_input_ids, current_input_others = sampling_inputs(input_ids, input_others, indices,
                                                                           seqlen=self.seqlen)
                 if len(input_ids.shape) == 3:
-                    current_output = output[indices, :, :]
+                    if is_glm:
+                        current_output = output[:, indices, :]
+                    else:
+                        current_output = output[indices, :, :]
                 else:
                     current_output = output.view(n_samples, self.seqlen, -1)
                     current_output = current_output[indices, :, :]
                     current_output = current_output.reshape(-1, current_output.shape[-1])
-                current_output = move_to_device(current_output, None, device)
+                current_output = move_input_to_device(current_output, device)
 
                 output_q = block_forward(block, current_input_ids, current_input_others, self.amp, device)
                 if self.amp and device != torch.device("cpu"):
@@ -696,7 +733,7 @@ class OPTRoundQuantizer(object):
                         break
                     else:
                         start_index = end_index
-                q_outputs = torch.cat(q_outputs, dim=0)
+                q_outputs = torch.cat(q_outputs, dim=is_glm)
 
             return q_outputs, output
 
