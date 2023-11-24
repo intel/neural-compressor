@@ -401,29 +401,15 @@ class GPTQuantizer(object):
 
     def check_layer_config(self):
         """Copy arguments from weight_config to built-in attributes."""
-        if "wbits" in self.weight_config:
-            tmp_weight_config = {}
-            for name, module in self.model.named_modules():
-                tmp_weight_config[name] = {}
-                tmp_weight_config[name]["wbits"] = self.weight_config.get("wbits", self.wbits_default)
-                tmp_weight_config[name]["group_size"] = self.weight_config.get("group_size", self.group_size_default)
-                tmp_weight_config[name]["block_size"] = self.weight_config.get("block_size", self.group_size_default)
-                tmp_weight_config[name]["percdamp"] = self.weight_config.get("pecdamp", self.percdamp_default)
-                tmp_weight_config[name]["sym"] = self.weight_config.get("sym", self.sym_default)
-                tmp_weight_config[name]["act_order"] = self.weight_config.get("act_order", self.act_order_default)
-                tmp_weight_config[name]["perchannel"] = self.weight_config.get("perchannel", self.perchannel_default)
-                tmp_weight_config[name]["mse"] = self.weight_config.get("mse", self.mse_default)
-            self.weight_config = tmp_weight_config
-        else:
-            for layer_name, config in self.weight_config.items():
-                self.weight_config[layer_name]["wbits"] = config.get("wbits", self.wbits_default)
-                self.weight_config[layer_name]["group_size"] = config.get("group_size", self.group_size_default)
-                self.weight_config[layer_name]["block_size"] = config.get("block_size", self.group_size_default)
-                self.weight_config[layer_name]["percdamp"] = config.get("pecdamp", self.percdamp_default)
-                self.weight_config[layer_name]["sym"] = config.get("sym", self.sym_default)
-                self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
-                self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
-                self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
+        for layer_name, config in self.weight_config.items():
+            self.weight_config[layer_name]["wbits"] = config.get("wbits", self.wbits_default)
+            self.weight_config[layer_name]["group_size"] = config.get("group_size", self.group_size_default)
+            self.weight_config[layer_name]["block_size"] = config.get("block_size", self.group_size_default)
+            self.weight_config[layer_name]["percdamp"] = config.get("pecdamp", self.percdamp_default)
+            self.weight_config[layer_name]["sym"] = config.get("sym", self.sym_default)
+            self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
+            self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
+            self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
 
     def get_layer_config(self, layer_name):
         """Obtain config for one layer, since GPTQ supports layer-wise config."""
@@ -581,14 +567,7 @@ class GPTQuantizer(object):
                 # )
                 full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                 weight_config_this_layer = self.get_layer_config(full_layer_name)
-                if self.layer_wise:
-                    # TODO (Yi)
-                    from neural_compressor.adaptor.torch_utils.layer_wise_quant.utils import load_value
-
-                    W = load_value(self.model, full_layer_name + ".weight", model_path)
-                else:
-                    W = sub_layers[layer_name].weight.data.clone()
-
+                W = sub_layers[layer_name].weight.data.clone()
                 gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name], W, self.device)
                 # gptq_for_this_block[layer_name].quantizer = Quantizer()
                 gptq_for_this_block[layer_name].quantizer.configure(
@@ -624,14 +603,7 @@ class GPTQuantizer(object):
                 # )
                 weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
                 logger.info(f"Quantizing layer {layer_name}")
-                if self.layer_wise:
-                    # TODO (Yi)
-                    from neural_compressor.adaptor.torch_utils.layer_wise_quant.utils import load_value
-
-                    full_layer_name = self.get_full_layer_name(layer_name, block_idx)
-                    W = load_value(self.model, full_layer_name + ".weight", model_path)
-                else:
-                    W = sub_layers[layer_name].weight.data.clone()
+                W = sub_layers[layer_name].weight.data.clone()
                 scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(
                     W,
                     blocksize=weight_config_this_layer["block_size"],
@@ -639,31 +611,7 @@ class GPTQuantizer(object):
                     groupsize=weight_config_this_layer["group_size"],
                     act_order=weight_config_this_layer["act_order"],
                 )
-                if self.layer_wise:
-                    # TODO (Yi)
-                    from neural_compressor.adaptor.torch_utils.layer_wise_quant.utils import (
-                        LWQ_WORKSPACE,
-                        clean_module_weight,
-                        load_value,
-                        set_module_tensor_to_device,
-                    )
-
-                    sub_layer = sub_layers[layer_name]
-                    full_layer_name = self.get_full_layer_name(layer_name, block_idx)
-                    for n, p in sub_layer.named_parameters():
-                        param_name = full_layer_name + "." + n
-                        if n == "weight":
-                            set_module_tensor_to_device(self.model, param_name, self.device, Q)
-                        else:
-                            value = load_value(self.model, param_name, model_path)
-                            set_module_tensor_to_device(self.model, param_name, self.device, value)
-                    # sub_layer.weight.data = Q
-                    torch.save(sub_layer.state_dict(), LWQ_WORKSPACE + f"/{full_layer_name}.pt")
-                    clean_module_weight(sub_layer)
-                    del Q
-                    gc.collect()
-                else:
-                    sub_layers[layer_name].weight.data = Q
+                sub_layers[layer_name].weight.data = Q
                 gptq_config[self.get_full_layer_name(layer_name, block_idx)] = {"scale": scale}
                 if not weight_config_this_layer["sym"]:
                     gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"] = zp
@@ -683,10 +631,7 @@ class GPTQuantizer(object):
                 out = self.track_hidden_states(out)
                 outs.append(out)
             self.cache_key_arguments["i"] = idx
-            if self.layer_wise:
-                self.gptq_related_blocks["transformers"][block_idx] = transformer_block
-            else:
-                self.gptq_related_blocks["transformers"][block_idx] = transformer_block.cpu()
+            self.gptq_related_blocks["transformers"][block_idx] = transformer_block.cpu()
             del gptq_for_this_block
             torch.cuda.empty_cache()
             # iteratively replace the input with output, thus layerwise quantization can continue.
