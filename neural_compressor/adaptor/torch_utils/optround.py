@@ -35,6 +35,7 @@ from typing import Union
 from torch.amp import autocast
 from torch.autograd import Function
 from torch.functional import F
+from collections import UserDict
 
 
 def get_module(model, key):
@@ -72,7 +73,7 @@ def set_module(model, key, new_module):
 
 
 def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
-    maxq = torch.tensor(2**num_bits - 1)
+    maxq = torch.tensor(2 ** num_bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device, dtype=weight.dtype)
     if isinstance(min_scale, torch.Tensor):
         wmin_tmp = torch.minimum(weight.min(1)[0], zeros)
@@ -97,7 +98,7 @@ def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
 
 
 def quant_weight_sym(
-    weight, num_bits=4, grad=0, min_scale=0, max_scale=0
+        weight, num_bits=4, grad=0, min_scale=0, max_scale=0
 ):  ##TODO having not validated,also min_scale could be dropped later
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-(2 ** (num_bits - 1))).to(weight.device)
@@ -152,9 +153,9 @@ def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0, min_s
             grad2 = 0
         if isinstance(min_scale, torch.Tensor):
             min_scale_1 = min_scale[:, : weight.shape[1] // group_size]
-            min_scale_2 = min_scale[:, weight.shape[1] // group_size :]
+            min_scale_2 = min_scale[:, weight.shape[1] // group_size:]
             max_scale_1 = max_scale[:, : weight.shape[1] // group_size]
-            max_scale_2 = max_scale[:, weight.shape[1] // group_size :]
+            max_scale_2 = max_scale[:, weight.shape[1] // group_size:]
         else:
             min_scale_1 = min_scale
             min_scale_2 = min_scale
@@ -471,38 +472,38 @@ def collect_minmax_grad(block):
 
 class OPTRoundQuantizer(object):
     def __init__(
-        self,
-        model,
-        tokenizer=None,
-        bits=4,
-        group_size=128,
-        scheme="asym",
-        weight_config={},  ##TODO support later
-        enable_full_range=False,  ##for symmetric, TODO support later
-        bs=8,
-        amp=True,
-        optimizer=None,
-        lr_scheduler=None,
-        dataloader=None,  ## to support later
-        default_dataset_name="NeelNanda/pile-10k",
-        dataset_split="train",
-        device="cuda:0",  ##TODO support multiple gpu
-        use_quant_input=True,
-        enable_minmax_tuning=True,
-        lr=0.0025,
-        minmax_lr=0.0025,
-        low_gpu_mem_usage=True,
-        iters=200,
-        seqlen=2048,
-        n_samples=512,
-        sampler="rand",
-        seed=42,
-        n_blocks=1,
-        gradient_accumulate_steps=1,
-        not_use_mse=False,
-        dynamic_max_gap=-1,
-        data_type="int",
-        **kwargs
+            self,
+            model,
+            tokenizer=None,
+            bits=4,
+            group_size=128,
+            scheme="asym",
+            weight_config={},  ##TODO support later
+            enable_full_range=False,  ##for symmetric, TODO support later
+            bs=8,
+            amp=True,
+            optimizer=None,
+            lr_scheduler=None,
+            dataloader=None,  ## to support later
+            default_dataset_name="NeelNanda/pile-10k",
+            dataset_split="train",
+            device="cuda:0",  ##TODO support multiple gpu
+            use_quant_input=True,
+            enable_minmax_tuning=True,
+            lr=0.0025,
+            minmax_lr=0.0025,
+            low_gpu_mem_usage=True,
+            iters=200,
+            seqlen=2048,
+            n_samples=512,
+            sampler="rand",
+            seed=42,
+            n_blocks=1,
+            gradient_accumulate_steps=1,
+            not_use_mse=False,
+            dynamic_max_gap=-1,
+            data_type="int",
+            **kwargs
     ):
         """
         Args:
@@ -604,8 +605,12 @@ class OPTRoundQuantizer(object):
         calib_dataloader = DataLoader(calib_dataset, batch_size=self.train_bs, shuffle=False, collate_fn=collate_batch)
         return calib_dataloader
 
+    def get_batch_dim(self, input_others):
+        dim = int(len(input_others["positional_inputs"]) > 0)
+        return dim
+
     def quant_block(
-        self, block, input_ids, input_others, num_bits, group_size, schema, q_input=None, device=torch.device("cpu")
+            self, block, input_ids, input_others, num_bits, group_size, schema, q_input=None, device=torch.device("cpu")
     ):
         best_loss = torch.finfo(torch.float).max
         mse_loss = torch.nn.MSELoss()
@@ -613,7 +618,9 @@ class OPTRoundQuantizer(object):
         min_scale_grad = None
         max_scale_grad = None
         output = []
-        is_glm = int(len(input_others["positional_inputs"]) > 0)
+
+        batch_dim = self.get_batch_dim(input_others)
+
         if not self.low_gpu_mem_usage and input_ids.device != device:
             # input_ids, input_others = move_to_device(input_ids, input_others, device)
             input_ids = move_input_to_device(input_ids, device)
@@ -628,7 +635,7 @@ class OPTRoundQuantizer(object):
                 if self.low_gpu_mem_usage:
                     tmp_output = tmp_output.to("cpu")
                 output.append(tmp_output)
-            output = torch.cat(output, dim=is_glm)
+            output = torch.cat(output, dim=batch_dim)
         torch.cuda.empty_cache()
         if q_input is not None:
             input_ids = q_input
@@ -674,10 +681,12 @@ class OPTRoundQuantizer(object):
                     input_ids, input_others, indices, seqlen=self.seqlen
                 )
                 if len(input_ids.shape) == 3:
-                    if is_glm:
+                    if batch_dim == 0:
+                        current_output = output[indices, :, :]
+                    elif batch_dim == 1:
                         current_output = output[:, indices, :]
                     else:
-                        current_output = output[indices, :, :]
+                        current_output = output[:, :, indices]
                 else:
                     current_output = output.view(n_samples, self.seqlen, -1)
                     current_output = current_output[indices, :, :]
@@ -734,7 +743,7 @@ class OPTRoundQuantizer(object):
                         break
                     else:
                         start_index = end_index
-                q_outputs = torch.cat(q_outputs, dim=is_glm)
+                q_outputs = torch.cat(q_outputs, dim=batch_dim)
 
             return q_outputs, output
 
@@ -742,15 +751,15 @@ class OPTRoundQuantizer(object):
             return None, output
 
     def q_dq_weight_round(
-        self,
-        model: torch.nn.Module,
-        inputs,
-        block_names,
-        num_bits=4,
-        group_size=128,
-        schema="asym",
-        n_blocks=1,
-        device=torch.device("cpu"),
+            self,
+            model: torch.nn.Module,
+            inputs,
+            block_names,
+            num_bits=4,
+            group_size=128,
+            schema="asym",
+            n_blocks=1,
+            device=torch.device("cpu"),
     ):
         q_input = None
         torch.cuda.empty_cache()
@@ -766,7 +775,7 @@ class OPTRoundQuantizer(object):
                 logger.info(n)
                 m = get_module(model, n)
             else:
-                names = block_names[i : i + n_blocks]
+                names = block_names[i: i + n_blocks]
                 logger.info(names)
                 modules = [get_module(model, n) for n in names]
                 m = WrapperMultiblock(modules)

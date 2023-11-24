@@ -4,7 +4,7 @@ import copy
 parser = argparse.ArgumentParser()
 import torch
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
 from datasets import load_dataset
 from torch.functional import F
 
@@ -19,6 +19,7 @@ from functools import partial
 from torch.amp import autocast
 from neural_compressor.adaptor.torch_utils.optround import OPTRoundQuantizer
 from eval import eval_model
+import re
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
