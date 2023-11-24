@@ -73,7 +73,7 @@ def set_module(model, key, new_module):
 
 
 def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
-    maxq = torch.tensor(2**num_bits - 1)
+    maxq = torch.tensor(2 ** num_bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device, dtype=weight.dtype)
     if isinstance(min_scale, torch.Tensor):
         wmin_tmp = torch.minimum(weight.min(1)[0], zeros)
@@ -98,7 +98,7 @@ def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
 
 
 def quant_weight_sym(
-    weight, num_bits=4, grad=0, min_scale=0, max_scale=0
+        weight, num_bits=4, grad=0, min_scale=0, max_scale=0
 ):  ##TODO having not validated,also min_scale could be dropped later
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-(2 ** (num_bits - 1))).to(weight.device)
@@ -124,7 +124,8 @@ def quant_weight_actor(weight, num_bits, schema, grad, min_scale, max_scale):
         return quant_weight_asym(weight, num_bits, grad, min_scale, max_scale)
 
 
-def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0, min_scale=0, max_scale=0):
+def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0, min_scale=0,
+                 max_scale=0):  ##TODO polish the code
     if group_size == -1 or weight.shape[1] < group_size:
         return quant_weight_actor(weight, num_bits, schema=schema, grad=grad, min_scale=min_scale, max_scale=max_scale)
     orig_shape = weight.shape
@@ -153,9 +154,9 @@ def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0, min_s
             grad2 = 0
         if isinstance(min_scale, torch.Tensor):
             min_scale_1 = min_scale[:, : weight.shape[1] // group_size]
-            min_scale_2 = min_scale[:, weight.shape[1] // group_size :]
+            min_scale_2 = min_scale[:, weight.shape[1] // group_size:]
             max_scale_1 = max_scale[:, : weight.shape[1] // group_size]
-            max_scale_2 = max_scale[:, weight.shape[1] // group_size :]
+            max_scale_2 = max_scale[:, weight.shape[1] // group_size:]
         else:
             min_scale_1 = min_scale
             min_scale_2 = min_scale
@@ -212,7 +213,7 @@ class SaveInputs:
     @torch.no_grad()
     def get_forward_func(self, name):
         def forward(_, hidden_states, *positional_args, **kwargs):  ##This may have bug for other models
-            dim = int((hasattr(self.model, "config") and "chatglm" in self.model.config.model_type))
+            dim = int((hasattr(self.model, "config") and "chatglm" in self.model.config.model_type))  ##TODO
             if name in self.inputs:
                 data = torch.cat([self.inputs[name]["input_ids"], hidden_states.to("cpu")], dim=dim)
                 self.inputs[name]["input_ids"] = data
@@ -230,7 +231,7 @@ class SaveInputs:
                     if "attention_mask" in key:
                         if key not in self.inputs[name].keys():
                             self.inputs[name][key] = None
-                        if kwargs[key] is not None and ((not args.not_with_attention) or "bloom" in args.model_name):
+                        if kwargs[key] is not None:
                             if self.inputs[name][key] is not None:
                                 self.inputs[name][key] = torch.cat(
                                     [self.inputs[name][key], kwargs[key].to("cpu")], dim=0
@@ -360,7 +361,8 @@ def block_forward(block, input_ids, input_others, amp=False, device=torch.device
         alibi = alibi.reshape(-1, alibi.shape[2], alibi.shape[3])
         if amp and device != torch.device("cpu"):
             with autocast(device_type="cuda"):
-                output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
+                output = block(input_ids, attention_mask=attention_mask,
+                               alibi=alibi)  ##TODO is this correct for all models with alibi?
         elif amp and device == torch.device("cpu"):
             with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
                 output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
@@ -472,38 +474,38 @@ def collect_minmax_grad(block):
 
 class OPTRoundQuantizer(object):
     def __init__(
-        self,
-        model,
-        tokenizer=None,
-        bits=4,
-        group_size=128,
-        scheme="asym",
-        weight_config={},  ##TODO support later
-        enable_full_range=False,  ##for symmetric, TODO support later
-        bs=8,
-        amp=True,
-        optimizer=None,
-        lr_scheduler=None,
-        dataloader=None,  ## to support later
-        default_dataset_name="NeelNanda/pile-10k",
-        dataset_split="train",
-        device="cuda:0",  ##TODO support multiple gpu
-        use_quant_input=True,
-        enable_minmax_tuning=True,
-        lr=0.0025,
-        minmax_lr=0.0025,
-        low_gpu_mem_usage=True,
-        iters=200,
-        seqlen=2048,
-        n_samples=512,
-        sampler="rand",
-        seed=42,
-        n_blocks=1,
-        gradient_accumulate_steps=1,
-        not_use_mse=False,
-        dynamic_max_gap=-1,
-        data_type="int",
-        **kwargs
+            self,
+            model,
+            tokenizer=None,
+            device="cuda:0",  ##TODO support multiple gpu
+            bits=4,
+            group_size=128,
+            scheme="asym",
+            weight_config={},  ##TODO support later
+            enable_full_range=False,  ##for symmetric, TODO support later
+            bs=8,
+            amp=True,
+            optimizer=None,
+            lr_scheduler=None,
+            dataloader=None,  ## to support later
+            default_dataset_name="NeelNanda/pile-10k",
+            dataset_split="train",
+            use_quant_input=True,
+            enable_minmax_tuning=True,
+            lr=0.0025,
+            minmax_lr=0.0025,
+            low_gpu_mem_usage=True,
+            iters=200,
+            seqlen=2048,
+            n_samples=512,
+            sampler="rand",
+            seed=42,
+            n_blocks=1,
+            gradient_accumulate_steps=1,
+            not_use_mse=False,
+            dynamic_max_gap=-1,
+            data_type="int",  ##only support data_type
+            **kwargs
     ):
         """
         Args:
@@ -569,6 +571,14 @@ class OPTRoundQuantizer(object):
         self.gradient_accumulate_steps = gradient_accumulate_steps
         self.not_use_mse = not_use_mse
         self.dynamic_max_gap = dynamic_max_gap
+        self.enable_full_range = enable_full_range
+        assert self.enable_full_range == False, "only support enable_full_range=False currently"
+        self.weight_config = weight_config
+        assert self.weight_config == {}, "does not support weight config currently"
+        self.optimizer = optimizer
+        if self.optimizer is None:
+            self.optimizer = torch.optim.AdamW
+        self.lr_scheduler = lr_scheduler
 
     def default_tokenize_function(self, examples):
         example = self.tokenizer(examples["text"], truncation=True, max_length=self.seqlen)
@@ -622,16 +632,10 @@ class OPTRoundQuantizer(object):
         return output
 
     def quant_block(
-        self, block, input_ids, input_others, num_bits, group_size, schema, q_input=None, device=torch.device("cpu")
+            self, block, input_ids, input_others, num_bits, group_size, schema, q_input=None, device=torch.device("cpu")
     ):
-        best_loss = torch.finfo(torch.float).max
-        mse_loss = torch.nn.MSELoss()
-        grad = None
-        min_scale_grad = None
-        max_scale_grad = None
 
         batch_dim = self.get_batch_dim(input_others)
-
         if not self.low_gpu_mem_usage and input_ids.device != device:
             # input_ids, input_others = move_to_device(input_ids, input_others, device)
             input_ids = move_input_to_device(input_ids, device)  ##move input data to GPU
@@ -648,6 +652,8 @@ class OPTRoundQuantizer(object):
 
         wrapper_block(block, num_bits, group_size, schema, self.enable_minmax_tuning)
 
+        best_loss = torch.finfo(torch.float).max
+        mse_loss = torch.nn.MSELoss()
         round_params = []
         minmax_params = []
         for n, m in block.named_modules():
@@ -658,16 +664,18 @@ class OPTRoundQuantizer(object):
         # from sgd import SGD
         # optimizer = SGD(params, lr=0.0025)
         if self.enable_minmax_tuning:
-            optimizer = torch.optim.AdamW(
+            optimizer = self.optimizer(
                 [{"params": round_params}, {"params": minmax_params, "lr": self.minmax_lr}], lr=self.lr, weight_decay=0
             )
         else:
-            optimizer = torch.optim.AdamW(round_params, lr=self.lr, weight_decay=0)
+            optimizer = self.optimizer(round_params, lr=self.lr, weight_decay=0)
 
-        lr_schedule = torch.optim.lr_scheduler.LinearLR(
-            optimizer, start_factor=1.0, end_factor=0.0, total_iters=400, verbose=False
-        )
-
+        if self.lr_scheduler is None:
+            lr_schedule = torch.optim.lr_scheduler.LinearLR(
+                optimizer, start_factor=1.0, end_factor=0.0, total_iters=self.iters, verbose=False
+            )
+        else:
+            lr_schedule = copy.deepcopy(self.lr_scheduler)
         if len(input_ids.shape) == 3:
             n_samples = input_ids.shape[0]
         else:
@@ -716,10 +724,9 @@ class OPTRoundQuantizer(object):
                     best_grad = collect_round_grad(block)
                     best_min_scale_grad, best_max_scale_grad = collect_minmax_grad(block)
                     last_best_iter = i
-            if self.not_use_mse:
-                best_grad = grad
-                best_min_scale_grad = min_scale_grad
-                best_max_scale_grad = max_scale_grad
+            if self.not_use_mse and i == self.iters - 1:
+                best_grad = collect_round_grad(block)
+                best_min_scale_grad, best_max_scale_grad = collect_minmax_grad(block)
 
             if not self.not_use_mse:
                 if self.dynamic_max_gap > 0 and i - last_best_iter >= self.dynamic_max_gap:
@@ -738,15 +745,15 @@ class OPTRoundQuantizer(object):
             return None, output
 
     def q_dq_weight_round(
-        self,
-        model: torch.nn.Module,
-        inputs,
-        block_names,
-        num_bits=4,
-        group_size=128,
-        schema="asym",
-        n_blocks=1,
-        device=torch.device("cpu"),
+            self,
+            model: torch.nn.Module,
+            inputs,
+            block_names,
+            num_bits=4,
+            group_size=128,
+            schema="asym",
+            n_blocks=1,
+            device=torch.device("cpu"),
     ):
         q_input = None
         torch.cuda.empty_cache()
@@ -762,7 +769,7 @@ class OPTRoundQuantizer(object):
                 logger.info(n)
                 m = get_module(model, n)
             else:
-                names = block_names[i : i + n_blocks]
+                names = block_names[i: i + n_blocks]
                 logger.info(names)
                 modules = [get_module(model, n) for n in names]
                 m = WrapperMultiblock(modules)
