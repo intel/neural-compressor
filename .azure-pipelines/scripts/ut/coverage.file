@@ -17,6 +17,7 @@ omit =
  */neural_compressor/template/*
  */neural_compressor/common/*
  */neural_compressor/torch/*
+ */neural_compressor/tensorflow/*
 exclude_lines =
  pragma: no cover
  raise NotImplementedError
