@@ -31,9 +31,9 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.adaptor.tf_utils.util import TF_SPR_BASE_VERSIONS
 
-from .dequantize_cast_optimizer import DequantizeCastOptimizer
 from ..generic.graph_cse_optimizer import GraphCseOptimizer
 from ..graph_base import GraphRewriterBase
+from .dequantize_cast_optimizer import DequantizeCastOptimizer
 
 DT_FLOAT32 = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
 DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)

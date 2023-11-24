@@ -44,7 +44,15 @@ from .adaptor import Adaptor, adaptor_registry
 from .query import QueryBackendCapability
 
 tensorflow = LazyImport("tensorflow")
-spr_base_verions = ("2.11.0202242", "2.11.0202250", "2.11.0202317", "2.11.0202323", "2.14.0202335", "2.14.dev202335", "2.15.0202341")
+spr_base_verions = (
+    "2.11.0202242",
+    "2.11.0202250",
+    "2.11.0202317",
+    "2.11.0202323",
+    "2.14.0202335",
+    "2.14.dev202335",
+    "2.15.0202341",
+)
 
 
 @adaptor_registry
@@ -2055,7 +2063,15 @@ class TensorflowQuery(QueryBackendCapability):
             if self.version in sub_data["version"]["name"]:
                 return sub_data
             else:
-                if sub_data["version"]["name"] == ["2.11.0202242", "2.11.0202250", "2.11.0202317", "2.11.0202323", "2.14.0202335", "2.14.dev202335", "2.15.0202341"]:
+                if sub_data["version"]["name"] == [
+                    "2.11.0202242",
+                    "2.11.0202250",
+                    "2.11.0202317",
+                    "2.11.0202323",
+                    "2.14.0202335",
+                    "2.14.dev202335",
+                    "2.15.0202341",
+                ]:
                     continue
                 sorted_list = copy.deepcopy(sub_data["version"]["name"])
                 sorted_list.remove("default") if "default" in sorted_list else None
