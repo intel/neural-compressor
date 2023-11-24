@@ -134,8 +134,6 @@
                       }
                   },
         'ConcatV2': *ref_default_static,
-        'Reshape': *ref_default_static,
-        'Transpose': *ref_default_static,
         'FusedBatchNorm': *ref_default_static,
         'FusedBatchNormV2': *ref_default_static,
         'MaxPool': *ref_default_static,
