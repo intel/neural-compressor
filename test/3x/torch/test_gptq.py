@@ -71,19 +71,19 @@ class TestGPTQ(unittest.TestCase):
         input = torch.ones([1, 512], dtype=torch.long)
         out0 = model_1(input)
 
-        def calib_func(*args):
+        def run_fn(*args):
             return dataloader
 
-        q_model = quantize(model=model_1, quant_config=quant_config, calib_func=calib_func)
+        q_model = quantize(model=model_1, quant_config=quant_config, run_fn=run_fn)
         out1 = q_model(input)
         self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
 
-    def _apply_gptq(self, input, model, quant_config, calib_func):
+    def _apply_gptq(self, input, model, quant_config, run_fn):
         logger.info(f"Test GPTQ with config {quant_config}")
         from neural_compressor.torch import quantize
 
         out0 = model(input)
-        q_model = quantize(model=model, quant_config=quant_config, calib_func=calib_func)
+        q_model = quantize(model=model, quant_config=quant_config, run_fn=run_fn)
         out1 = q_model(input)
         self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
 
@@ -109,10 +109,10 @@ class TestGPTQ(unittest.TestCase):
                 quant_config = GPTQConfig(**d)
                 length = 512 if quant_config.use_max_length else random.randint(1, 1024)
 
-                def calib_func(*args):
+                def run_fn(*args):
                     return dataloader(length)
 
-                self._apply_gptq(model=get_gpt_j(), input=input, quant_config=quant_config, calib_func=calib_func)
+                self._apply_gptq(model=get_gpt_j(), input=input, quant_config=quant_config, run_fn=run_fn)
 
     def test_gptq_advance(self):
         # Ported from test/adaptor/pytorch_adaptor/test_weight_only_adaptor.py
@@ -128,10 +128,10 @@ class TestGPTQ(unittest.TestCase):
         input = torch.ones([1, 512], dtype=torch.long)
         out0 = model_1(input)
 
-        def calib_func(*args):
+        def run_fn(*args):
             return dataloader
 
-        q_model = quantize(model=model_1, quant_config=quant_config, calib_func=calib_func)
+        q_model = quantize(model=model_1, quant_config=quant_config, run_fn=run_fn)
         out1 = q_model(input)
         self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
 

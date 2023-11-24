@@ -262,10 +262,10 @@ class GPTQuantizer(object):
 
     def prepare_dataloader(self):
         if self.dataloader_original is None:
-            run_fn = self.kwargs.get("calib_func", None)
-            fn_args = self.kwargs.get("calib_func_args", None)
+            run_fn = self.kwargs.get("run_fn", None)
+            run_args = self.kwargs.get("run_args", None)
             assert run_fn, "Since the dataloader not is provided, please provide a run func as the "
-            self.dataloader_original = run_fn(fn_args)
+            self.dataloader_original = run_fn(run_args)
         if self.use_max_length:
             # (Recommend) only take sequence whose length exceeds self.pad_max_length,
             # which preserves calibration's tokens are all valid
