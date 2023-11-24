@@ -63,18 +63,11 @@ docker run --rm \
 ```
 
 #### 2.3 Environment Settings
-Source installed torch is required:
+Source installed torch 2.0.1+gpu is required. Please refer to this [tutorial](https://github.com/pytorch/pytorch#from-source) to check system requirements and and install dependencies.
 ```bash
-git clone https://github.com/intel-innersource/frameworks.ai.pytorch.private-gpu.git --depth=1
-cd frameworks.ai.pytorch.private-gpu/
-git submodule sync
-git submodule update --init --recursive
-pip install cmake ninja
-pip install -r requirements.txt
-apt-get update
-apt-get install python3-dev
-python setup.py install
+git clone https://github.com/pytorch/pytorch.git
 ```
+
 Please set basekit configurations as following:
 ```bash
 bash l_BaseKit_p_2024.0.0.49261_offline.sh -a -s --eula accept --components intel.oneapi.lin.tbb.devel:intel.oneapi.lin.ccl.devel:intel.oneapi.lin.mkl.devel:intel.oneapi.lin.dpcpp-cpp-compiler --install-dir ${HOME}/intel/oneapi
@@ -86,12 +79,9 @@ export MKL_DPCPP_ROOT=${MKLROOT}
 export LD_LIBRARY_PATH=${MKL_DPCPP_ROOT}/lib:${MKL_DPCPP_ROOT}/lib64:${MKL_DPCPP_ROOT}/lib/intel64:${LD_LIBRARY_PATH}
 export LIBRARY_PATH=${MKL_DPCPP_ROOT}/lib:${MKL_DPCPP_ROOT}/lib64:${MKL_DPCPP_ROOT}/lib/intel64:$LIBRARY_PATH
 ```
-Source installed IPEX:
+Source installed IPEX is required. Please refer to this [tutorial](https://intel.github.io/intel-extension-for-pytorch/index.html#installation?platform=gpu&version=v2.0.110%2Bxpu) to check system requirements and install dependencies.
 ```bash
-git clone -b master --depth=1 --recursive https://github.com/intel-innersource/frameworks.ai.pytorch.ipex-gpu.git
-cd frameworks.ai.pytorch.ipex-gpu
-pip install -r requirements.txt
-python setup.py install
+git clone https://github.com/intel/intel-extension-for-pytorch.git
 ```
 
 #### 2.4 Quantization Command
