@@ -44,12 +44,12 @@ def rtn_quantize_entry(
 ###################### GPTQ Algo Entry ##################################
 @register_algo(name=GPTQ)
 def gptq_quantize_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], dataloader, *args, **kwargs
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
     from neural_compressor.torch.algorithms.gptq import apply_gptq_quantize
 
-    model, quantization_perm = apply_gptq_quantize(model=model, configs_mapping=configs_mapping, dataloader=dataloader)
+    model, quantization_perm = apply_gptq_quantize(model=model, configs_mapping=configs_mapping, *args, **kwargs)
     # Assign the gptq config as an attribute of model
     model._gptq_quantization_perm = quantization_perm
     return model

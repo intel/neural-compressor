@@ -196,12 +196,13 @@ class GPTQuantizer(object):
         self,
         model,
         weight_config={},
-        dataloader=None,
         nsamples=128,
         use_max_length=True,
         pad_max_length=2048,
         device=None,
         layer_wise=False,
+        *args,
+        **kwargs,
     ):
         """
         Args:
@@ -252,12 +253,19 @@ class GPTQuantizer(object):
         # dataloader
         self.use_max_length = use_max_length
         self.pad_max_length = pad_max_length
-        self.dataloader_original = dataloader
+        self.dataloader_original = None
         self.dataloader = []
         self.nsamples = nsamples
+        self.args = args
+        self.kwargs = kwargs
         self.prepare_dataloader()
 
     def prepare_dataloader(self):
+        if self.dataloader_original is None:
+            run_fn = self.kwargs.get("calib_func", None)
+            fn_args = self.kwargs.get("calib_func_args", None)
+            assert run_fn, "Since the dataloader not is provided, please provide a run func as the "
+            self.dataloader_original = run_fn(fn_args)
         if self.use_max_length:
             # (Recommend) only take sequence whose length exceeds self.pad_max_length,
             # which preserves calibration's tokens are all valid
@@ -976,7 +984,7 @@ def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig])
     return weight_config, nsamples, use_max_length, pad_max_length, device
 
 
-def apply_gptq_quantize(model, configs_mapping, dataloader, *args, **kwargs):
+def apply_gptq_quantize(model, configs_mapping, *args, **kwargs):
     """Apply gptq."""
     # TODO: unify weight_config keys, add docstring, and support default config
     weight_config, nsamples, use_max_length, pad_max_length, device = gptq_config_mapping(configs_mapping)
@@ -990,7 +998,7 @@ def apply_gptq_quantize(model, configs_mapping, dataloader, *args, **kwargs):
         assert model_path is not None, "model_path should not be None when use layer_wise mode"
 
     gptq_quantizer = GPTQuantizer(
-        model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise
+        model, weight_config, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise, *args, **kwargs
     )
     fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
     logger.info("GPTQ quantization done.")

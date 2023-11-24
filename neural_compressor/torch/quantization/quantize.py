@@ -31,18 +31,16 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
 def quantize(
     model: torch.nn.Module,
     quant_config: BaseConfig,
-    calib_dataloader=None,
     calib_func: Callable = None,
-    calib_func_arg: Any = None,
+    calib_func_args: Any = None,
 ) -> torch.nn.Module:
     """The main entry to quantize model.
 
     Args:
         model: a float model to be quantized.
         quant_config: a quantization configuration.
-        calib_dataloader: a calibration dataloader for calibrating the model. Defaults to None.
         calib_func: a calibration function for calibrating the model. Defaults to None.
-        calib_func_arg: positional arguments for `calib_func`. Defaults to None.
+        calib_func_args: positional arguments for `calib_func`. Defaults to None.
 
     Returns:
         The quantized model.
@@ -63,5 +61,5 @@ def quantize(
     for algo_name, algo_func in algos_mapping.items():
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
-            model = algo_func(model, configs_mapping, calib_dataloader, calib_func, calib_func_arg)
+            model = algo_func(model, configs_mapping, calib_func=calib_func, calib_func_arg=calib_func_args)
     return model
