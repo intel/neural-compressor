@@ -729,8 +729,9 @@ class OPTRoundQuantizer(object):
             lr_schedule.step()
         unwrapper_block(block, num_bits, group_size, schema, best_grad, best_min_scale_grad, best_max_scale_grad)
         if self.use_quant_input:
-            q_outputs = self.get_block_outputs(block, input_ids, input_others, self.train_bs, device, cache_device,
-                                               batch_dim)
+            q_outputs = self.get_block_outputs(
+                block, input_ids, input_others, self.train_bs, device, cache_device, batch_dim
+            )
 
             return q_outputs, output
 
