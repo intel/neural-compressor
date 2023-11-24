@@ -609,6 +609,18 @@ class OPTRoundQuantizer(object):
         dim = int(len(input_others["positional_inputs"]) > 0)
         return dim
 
+    @torch.no_grad()
+    def get_block_outputs(self, block, input_ids, input_others, bs, device, cache_device, batch_dim):
+        output = []
+        for i in range(0, self.n_samples, bs):
+            indices = torch.arange(i, i + bs).to(torch.long)
+            tmp_input_ids, tmp_input_others = sampling_inputs(input_ids, input_others, indices, self.seqlen)
+            tmp_output = block_forward(block, tmp_input_ids, tmp_input_others, self.amp, device).to(cache_device)
+            output.append(tmp_output)
+        output = torch.cat(output, dim=batch_dim)
+        torch.cuda.empty_cache()
+        return output
+
     def quant_block(
             self, block, input_ids, input_others, num_bits, group_size, schema, q_input=None, device=torch.device("cpu")
     ):
@@ -617,30 +629,22 @@ class OPTRoundQuantizer(object):
         grad = None
         min_scale_grad = None
         max_scale_grad = None
-        output = []
 
         batch_dim = self.get_batch_dim(input_others)
 
         if not self.low_gpu_mem_usage and input_ids.device != device:
             # input_ids, input_others = move_to_device(input_ids, input_others, device)
-            input_ids = move_input_to_device(input_ids, device)
+            input_ids = move_input_to_device(input_ids, device)  ##move input data to GPU
             input_others = move_input_to_device(input_others, device)
-
-        with torch.no_grad():
-            current_bs = self.train_bs
-            for i in range(0, self.n_samples, current_bs):
-                indices = torch.arange(i, i + current_bs).to(torch.long)
-                tmp_input_ids, tmp_input_others = sampling_inputs(input_ids, input_others, indices, self.seqlen)
-                tmp_output = block_forward(block, tmp_input_ids, tmp_input_others, self.amp, device)
-                if self.low_gpu_mem_usage:
-                    tmp_output = tmp_output.to("cpu")
-                output.append(tmp_output)
-            output = torch.cat(output, dim=batch_dim)
         torch.cuda.empty_cache()
+
+        cache_device = device
+        if self.low_gpu_mem_usage:
+            cache_device = "cpu"
+        output = self.get_block_outputs(block, input_ids, input_others, self.train_bs, device, cache_device, batch_dim)
+
         if q_input is not None:
-            input_ids = q_input
-            if not self.low_gpu_mem_usage and input_ids.device != device:
-                input_ids = input_ids.to(device)
+            input_ids = q_input.to(cache_device)
 
         wrapper_block(block, num_bits, group_size, schema, self.enable_minmax_tuning)
 
@@ -725,25 +729,8 @@ class OPTRoundQuantizer(object):
             lr_schedule.step()
         unwrapper_block(block, num_bits, group_size, schema, best_grad, best_min_scale_grad, best_max_scale_grad)
         if self.use_quant_input:
-            with torch.no_grad():
-                current_bs = self.train_bs
-                start_index = 0
-                q_outputs = []
-                while 1:
-                    end_index = start_index + current_bs
-                    end_index = min(end_index, input_ids.shape[0])
-                    indices = torch.arange(start_index, end_index)
-                    current_input_ids, current_input_others = sampling_inputs(
-                        input_ids, input_others, indices, seqlen=self.seqlen
-                    )
-                    q_output = block_forward(block, current_input_ids, current_input_others, self.amp, device)
-                    q_outputs.append(q_output.to("cpu"))
-
-                    if end_index >= input_ids.shape[0]:
-                        break
-                    else:
-                        start_index = end_index
-                q_outputs = torch.cat(q_outputs, dim=batch_dim)
+            q_outputs = self.get_block_outputs(block, input_ids, input_others, self.train_bs, device, cache_device,
+                                               batch_dim)
 
             return q_outputs, output
 
