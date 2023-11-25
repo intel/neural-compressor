@@ -23,7 +23,7 @@ git config --global --add safe.directory /neural-compressor
 git fetch
 git checkout master
 echo y | pip uninstall neural-compressor
-cd /neural-compressor/.azure-pipelines/scripts && bash install_nc.sh
+cd /neural-compressor/.azure-pipelines/scripts && bash install_nc.sh ${1}
 
 coverage erase
 cd /neural-compressor/log_dir
