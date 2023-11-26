@@ -469,7 +469,7 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
             <td align="left">cpu</td>
         </tr>
         <tr>
-            <td rowspan="4" align="left">ONNX Runtime</td>
+            <td rowspan="5" align="left">ONNX Runtime</td>
             <td align="left">CPUExecutionProvider</td>
             <td align="left">MLAS</td>
             <td align="left">"default"</td>
@@ -492,6 +492,12 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
             <td align="left">OneDNN</td>
             <td align="left">"onnxrt_dnnl_ep"</td>
             <td align="left">cpu</td>
+        </tr>
+        <tr>
+            <td align="left">DmlExecutionProvider*</td>
+            <td align="left">OneDNN</td>
+            <td align="left">"onnxrt_dml_ep"</td>
+            <td align="left">npu</td>
         </tr>
         <tr>
             <td rowspan="2" align="left">Tensorflow</td>
@@ -518,6 +524,7 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
 <br>
 <br>
 
+> Note: DmlExecutionProvider support works as experimental, please expect exceptions.    
 
 Examples of configure:
 ```python
@@ -533,6 +540,10 @@ conf = PostTrainingQuantConfig(backend="ipex")
 conf = PostTrainingQuantConfig(backend="onnxrt_cuda_ep", device="gpu")
 ```
 ```python
+# run with ONNXRT DmlExecutionProvider on NPU
+conf = PostTrainingQuantConfig(backend="onnxrt_dml_ep", device="npu")
+```
+```python
 # run with ITEX on GPU
 conf = PostTrainingQuantConfig(backend="itex", device="gpu")
 ```
@@ -540,3 +551,4 @@ conf = PostTrainingQuantConfig(backend="itex", device="gpu")
 ## Examples
 
 User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/README.md) on how to quantize a new model.
+If user wants to quantize an onnx model with npu, please refer to this [example](../../examples/onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq_static/README.md).

@@ -43,6 +43,7 @@ import re
 from deprecated import deprecated
 
 
+@deprecated(version="2.0")
 class Pruning(Component):
     """This is base class of pruning object.
 
@@ -167,7 +168,7 @@ class Pruning(Component):
             pruner.on_before_optimizer_step()
 
     def _on_after_optimizer_step(self):
-        """Functions called after optimzier step."""
+        """Functions called after optimizer step."""
         for pruner in self.pruners:
             pruner.on_after_optimizer_step()
 
@@ -433,6 +434,7 @@ class Pruning(Component):
         return "Pruning"
 
 
+@deprecated(version="2.0")
 class TfPruningCallback(object):
     """Class that contains callback functions.
 

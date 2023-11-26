@@ -24,7 +24,8 @@ echo "========= test case is ${test_case}"
 if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
 elif [[ "${tensorflow_version}" == "spr-base" ]]; then
-    pip install /tf_dataset/tf_binary/221212/tensorflow*.whl
+    pip install /tf_dataset/tf_binary/230928/tensorflow*.whl
+    pip install cmake
     pip install protobuf==3.20.3
     pip install horovod==0.27.0
     if [[ $? -ne 0 ]]; then
@@ -48,10 +49,13 @@ if [[ "${torchvision_version}" != "" ]]; then
 fi
 
 if [[ "${ipex_version}" == "1.13.0+cpu" ]]; then
-    ipex_whl="https://github.com/intel/intel-extension-for-pytorch/releases/download/v1.13.0%2Bcpu/intel_extension_for_pytorch-1.13.0-cp38-cp38-manylinux2014_x86_64.whl"
+    ipex_whl="https://github.com/intel/intel-extension-for-pytorch/releases/download/v1.13.0%2Bcpu/intel_extension_for_pytorch-1.13.0-cp310-cp310-manylinux2014_x86_64.whl"
     pip install $ipex_whl
 elif [[ "${ipex_version}" == "2.0.0+cpu" ]]; then
-    ipex_whl="https://intel-extension-for-pytorch.s3.amazonaws.com/ipex_stable/cpu/intel_extension_for_pytorch-2.0.0%2Bcpu-cp38-cp38-linux_x86_64.whl"
+    ipex_whl="https://intel-extension-for-pytorch.s3.amazonaws.com/ipex_stable/cpu/intel_extension_for_pytorch-2.0.0%2Bcpu-cp310-cp310-linux_x86_64.whl"
+    pip install $ipex_whl
+elif [[ "${ipex_version}" == "2.0.1+cpu" ]]; then
+    ipex_whl="https://intel-extension-for-pytorch.s3.amazonaws.com/ipex_stable/cpu/intel_extension_for_pytorch-2.0.100%2Bcpu-cp310-cp310-linux_x86_64.whl"
     pip install $ipex_whl
 elif [[ "${ipex_version}" == "2.1.0" ]]; then
     pip install /tf_dataset/pt_binary/ww32/torch-*.whl
@@ -65,7 +69,11 @@ fi
 
 if [[ "${onnxruntime_version}" != "" ]]; then
     pip install onnxruntime==${onnxruntime_version}
-    pip install onnxruntime-extensions
+    if [[ "${onnxruntime_version}" == "1.14"* ]]; then
+        pip install onnxruntime-extensions==0.8.0
+    else
+        pip install onnxruntime-extensions
+    fi
     pip install optimum
 fi
 
@@ -79,12 +87,14 @@ fi
 
 # install special test env requirements
 # common deps
-pip install transformers
+pip install cmake
 pip install horovod
+pip install transformers
+
 if [[ $(echo "${test_case}" | grep -c "others") != 0 ]];then
-    pip install tf_slim xgboost accelerate==0.21.0
+    pip install tf_slim xgboost accelerate==0.21.0 peft
 elif [[ $(echo "${test_case}" | grep -c "nas") != 0 ]]; then
-    pip install dynast==1.5.1
+    pip install dynast==1.6.0rc1
 elif [[ $(echo "${test_case}" | grep -c "tf pruning") != 0 ]]; then
     pip install tensorflow-addons
 fi

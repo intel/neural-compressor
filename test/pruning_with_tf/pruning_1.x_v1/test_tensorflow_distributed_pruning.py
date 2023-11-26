@@ -407,9 +407,11 @@ class TestDistributed(unittest.TestCase):
         build_fake_ut()
         build_fake_yaml()
         if system().lower() == "windows":
-            shutil.copytree("C:\\tmp\\.neural_compressor\\inc_ut\\resnet_v2\\", os.getcwd(), dirs_exist_ok=True)
+            src_path = "C:\\tmp\\.neural_compressor\\inc_ut\\resnet_v2\\"
         elif system().lower() == "linux":
-            shutil.copytree("/tmp/.neural_compressor/inc_ut/resnet_v2/", os.getcwd(), dirs_exist_ok=True)
+            src_path = "/tmp/.neural_compressor/inc_ut/resnet_v2/"
+        if os.path.exists(src_path):
+            shutil.copytree(src_path, os.getcwd(), dirs_exist_ok=True)
         if not os.path.exists(cls.dst_path):
             raise FileNotFoundError(f"'{cls.dst_path}' doesn't exist.")
         elif dir_md5_check(cls.dst_path) != [

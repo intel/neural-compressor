@@ -352,7 +352,7 @@ def check_integrity(fpath, md5):  # pragma: no cover
 
 def calculate_md5(fpath, chunk_size=1024 * 1024):  # pragma: no cover
     """Generate MD5 checksum for a file."""
-    md5 = hashlib.md5()
+    md5 = hashlib.md5()  # nosec
     with open(fpath, "rb") as f:
         for chunk in iter(lambda: f.read(chunk_size), b""):
             md5.update(chunk)

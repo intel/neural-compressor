@@ -193,7 +193,9 @@ class TestOnnxModel(unittest.TestCase):
         model = onnx.helper.make_model(graph, **{"opset_imports": [onnx.helper.make_opsetid("", 14)]})
         self.matmul_reshape_model = model
 
-        cmd = "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation gptj/"
+        cmd = (
+            "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation --legacy gptj/"
+        )
         p = subprocess.Popen(
             cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
         )  # nosec
@@ -203,6 +205,7 @@ class TestOnnxModel(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree("./gptj", ignore_errors=True)
         shutil.rmtree("./hf_test", ignore_errors=True)
+        os.remove("model.onnx")
 
     def test_hf_model(self):
         from optimum.onnxruntime import ORTModelForCausalLM
@@ -215,7 +218,7 @@ class TestOnnxModel(unittest.TestCase):
 
         config = AutoConfig.from_pretrained("hf_test")
         sessions = ORTModelForCausalLM.load_model("hf_test/decoder_model.onnx")
-        model = ORTModelForCausalLM(sessions[0], config, "hf_test", use_cache=False, use_io_binding=False)
+        model = ORTModelForCausalLM(sessions, config, model_save_dir="hf_test", use_cache=False, use_io_binding=False)
         self.assertNotEqual(model, None)
 
     def test_nodes(self):
@@ -406,6 +409,59 @@ class TestOnnxModel(unittest.TestCase):
         self.assertEqual(len(self.model.nodes()), 7)
         self.model.remove_unused_nodes()
         self.assertEqual(len(self.model.nodes()), 6)
+
+    def test_check_large_model(self):
+        import onnx
+        import torch
+        import torch.nn as nn
+
+        from neural_compressor.model.onnx_model import ONNXModel
+
+        class Net(nn.Module):
+            def __init__(self, in_features, out_features):
+                super(Net, self).__init__()
+                self.fc = nn.Linear(in_features, out_features)
+
+            def forward(self, x):
+                x = self.fc(x)
+                return x
+
+        # model > 2GB
+        model = Net(512, 1024 * 1024)
+        input = torch.randn(512, requires_grad=True)
+        with torch.no_grad():
+            torch.onnx.export(model, (input,), "model.onnx", do_constant_folding=True, opset_version=13)
+        model = onnx.load("model.onnx")
+        model = ONNXModel(model)  # pass ModelProto
+        model.check_is_large_model()
+        self.assertTrue(model.is_large_model)
+
+        model = ONNXModel("model.onnx")  # pass string
+        model.check_is_large_model()
+        self.assertTrue(model.is_large_model)
+
+        model = onnx.load("model.onnx", load_external_data=False)  # not load init
+        model = ONNXModel(model)
+        model.check_is_large_model()
+        self.assertTrue(model.is_large_model)
+
+        # model < 2GB
+        model = Net(10, 10 * 10)
+        input = torch.randn(10, requires_grad=True)
+        with torch.no_grad():
+            torch.onnx.export(model, (input,), "model.onnx", do_constant_folding=True, opset_version=13)
+        model = onnx.load("model.onnx")
+        model = ONNXModel(model)  # pass ModelProto
+        model.check_is_large_model()
+        self.assertFalse(model.is_large_model)
+
+        model = ONNXModel("model.onnx")  # pass string
+        model.check_is_large_model()
+        self.assertFalse(model.is_large_model)
+
+        model = ONNXModel("model.onnx", load_external_data_for_model=False)  # not load init
+        model.check_is_large_model()
+        self.assertFalse(model.is_large_model)
 
 
 if __name__ == "__main__":

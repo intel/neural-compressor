@@ -56,7 +56,7 @@ def register_func_wrap_pair():
             if is_in_function and line_idx == func_end_line_idx:
                 is_in_function = False
 
-            # handle function's defnition line, to initiate a function
+            # handle function's definition line, to initiate a function
             if not is_in_function and "def " in line:  # only deal with outermost def
                 function_name = line[line.find("def") + 4 : line.find("(")]
 

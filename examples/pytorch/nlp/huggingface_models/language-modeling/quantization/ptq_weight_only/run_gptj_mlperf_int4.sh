@@ -12,5 +12,5 @@ python -u examples/pytorch/nlp/huggingface_models/language-modeling/quantization
     --val-data-path ${VALIDATION_DATA} \
     --calib-iters 128 \
     --use_max_length \
-    --use_fp16 \
+    --pad_max_length 2048 \
     --use_gpu

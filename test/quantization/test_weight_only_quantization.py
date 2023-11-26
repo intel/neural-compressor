@@ -1,6 +1,3 @@
-import sys
-
-sys.path.append("./")
 import copy
 import unittest
 
@@ -57,6 +54,7 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
 
     def test_rtn(self):
         fp32_model = copy.deepcopy(self.model)
+        fp16_model = copy.deepcopy(self.model).to(torch.float16)
         model1 = rtn_quantize(fp32_model, num_bits=3, group_size=-1)
         self.assertTrue(isinstance(model1.fc1, torch.nn.Linear))
         weight_config = {
@@ -70,7 +68,7 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
             },
         }
         model2 = rtn_quantize(fp32_model, weight_config=weight_config)
-        model2 = rtn_quantize(fp32_model, weight_config=weight_config, return_int=True)
+        model2 = rtn_quantize(fp16_model, weight_config=weight_config, return_int=True)
         self.assertTrue(isinstance(model2.fc1, WeightOnlyLinear))
 
     def test_awq(self):
@@ -110,7 +108,6 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
         # default awq_quantize is 4 bits, 32 group size, use big atol=1e-1
         qdq_model = awq_quantize(self.gptj, example_inputs=self.lm_input, calib_func=calib_func)
         out2 = qdq_model(example_inputs)
-        print(out1[0], out2[0])
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-1))
 
 
@@ -172,7 +169,6 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
             model, weight_config=weight_config, dataloader=dataloader, use_max_length=True, pad_max_length=512
         )
         self.assertTrue(isinstance(model, torch.nn.Module))
-        del model
 
         model = copy.deepcopy(self.gptj)
         weight_config = {"wbits": 4}
@@ -180,7 +176,6 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
             model, weight_config=weight_config, dataloader=dataloader, use_max_length=False, pad_max_length=512
         )
         self.assertTrue(isinstance(model, torch.nn.Module))
-        del model
 
 
 class TestTEQWeightOnlyQuant(unittest.TestCase):

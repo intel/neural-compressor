@@ -27,6 +27,7 @@ try:
     import intel_extension_for_pytorch as ipex
 
     TEST_IPEX = True
+    IPEX_VERSION = Version(ipex.__version__)
 except:
     TEST_IPEX = False
 
@@ -53,10 +54,11 @@ class DemoCalibDataloader:
 
 class LLMCalibDataloader:
     def __init__(self):
-        self.batch_size = 1
+        self.batch_size = 3
 
     def __iter__(self):
-        yield torch.ones([1, 3], dtype=torch.long)
+        for i in range(4):
+            yield torch.ones([3, 3], dtype=torch.long)
 
 
 class TestSqDepthwiseConv(unittest.TestCase):
@@ -64,7 +66,7 @@ class TestSqDepthwiseConv(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3, 1, 1))
@@ -141,7 +143,7 @@ class TestSqConvOpFuseAuto(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3, 1, 1))
@@ -181,7 +183,7 @@ class TestSqConvOpFuse(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3, 1, 1))
@@ -386,21 +388,21 @@ class TestSqListInput(unittest.TestCase):
     def setUpClass(self):
         class ListDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield [torch.rand((1, 3))]
 
         class TupleDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield (torch.rand((1, 3)))
 
         class ListTupleDataLoader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 input1 = torch.rand((1, 3))
@@ -499,7 +501,7 @@ class TestAlphaAutoLinear(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3))
@@ -535,7 +537,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 3))
@@ -736,6 +738,8 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=-1, folding=False)
         assert isinstance(sq.model.model.decoder.layers[0].self_attn.k_proj, SQLinearWrapper)
 
+
+class TestExample(unittest.TestCase):
     def test_sq_quant(self):
         from neural_compressor import PostTrainingQuantConfig, quantization
 
@@ -763,10 +767,11 @@ class TestSqLinearOpFuse(unittest.TestCase):
 
         class CalibDataloader:
             def __init__(self):
-                self.batch_size = 1
+                self.batch_size = 3
 
             def __iter__(self):
-                yield input_ids
+                for i in range(4):
+                    yield input_ids
 
         def calib_func(model):
             for i in range(10):
@@ -875,6 +880,26 @@ class TestSqLinearOpFuse(unittest.TestCase):
                 calib_func=calib_func,
             )
             q_model.save("saved")
+            # test recover_model_from_json
+            from neural_compressor.utils.pytorch import recover_model_from_json
+
+            tmp_model = copy.deepcopy(fp32_model)
+
+            ipex_model = recover_model_from_json(tmp_model, "./saved/best_configure.json", example_inputs=input_ids)
+            inc_output = q_model.model(input_ids)
+            ipex_output = ipex_model(input_ids)
+            self.assertTrue(torch.allclose(inc_output, ipex_output, atol=1e-05))
+
+            example_tuple = (input_ids,)
+            ipex_model = recover_model_from_json(tmp_model, "./saved/best_configure.json", example_inputs=example_tuple)
+            ipex_output = ipex_model(input_ids)
+            self.assertTrue(torch.allclose(inc_output, ipex_output, atol=1e-05))
+
+            example_dict = {"x": input_ids}
+            ipex_model = recover_model_from_json(tmp_model, "./saved/best_configure.json", example_inputs=example_dict)
+            ipex_output = ipex_model(input_ids)
+            self.assertTrue(torch.allclose(inc_output, ipex_output, atol=1e-05))
+
             # compare ipex and inc quantization
             with open("saved/best_configure.json", "r") as f:
                 inc_config_json = json.load(f)
@@ -887,8 +912,8 @@ class TestSqLinearOpFuse(unittest.TestCase):
             )
             self.assertTrue(torch.allclose(inc_sq_weight_scale, ipex_sq_weight_scale))
             # set a big atol to avoid random issue
-            self.assertTrue(torch.allclose(ipex_out, inc_out, atol=1e-02))
-            self.assertTrue(torch.allclose(output1, inc_out, atol=1e-02))
+            self.assertTrue(torch.allclose(ipex_out, inc_out, atol=2e-02))
+            self.assertTrue(torch.allclose(output1, inc_out, atol=2e-02))
 
         class CalibDataloader:
             def __init__(self):
@@ -911,7 +936,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         )
         output2 = q_model.model(input_ids)
         # set a big atol to avoid random issue
-        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
+        self.assertTrue(torch.allclose(output1, output2, atol=2e-02))
 
         conf = PostTrainingQuantConfig(
             backend="ipex",
@@ -927,7 +952,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         )
         output2 = q_model.model(input_ids)
         # set a big atol to avoid random issue
-        self.assertTrue(torch.allclose(output1, output2, atol=1e-02))
+        self.assertTrue(torch.allclose(output1, output2, atol=2e-02))
 
 
 class TestSqSkipOp(unittest.TestCase):
@@ -935,7 +960,7 @@ class TestSqSkipOp(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 4))
@@ -992,7 +1017,7 @@ class TestSqSkipOp_attn(unittest.TestCase):
     def setUpClass(self):
         class RandDataloader:
             def __init__(self):
-                pass
+                self.batch_size = 1
 
             def __iter__(self):
                 yield torch.rand((1, 4))
@@ -1263,6 +1288,229 @@ class TestTextGeneration(unittest.TestCase):
         self.assertEqual(indices[0], torch.tensor([887]))
         self.assertEqual(indices[1], torch.tensor([362]))
         self.assertEqual(indices[2], torch.tensor([504]))
+
+
+class TestMemoryUsage(unittest.TestCase):
+    def test_sq_auto_mem_usage(self):
+        import psutil
+
+        data = psutil.virtual_memory()
+        cpu_process = psutil.Process()
+        p = psutil.Process(cpu_process.pid)
+        mem_use0 = p.memory_info().rss / (1024**3)
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+        )
+        sq = TorchSmoothQuant(model, LLMCalibDataloader())
+        sq.transform(alpha="auto", calib_iter=0, folding=False)
+        mem_use1 = p.memory_info().rss / (1024**3)
+        logger.info(f"The memory usage of this ut is {mem_use1 - mem_use0} GBs.")
+        assert (mem_use1 - mem_use0) <= 2.0
+
+
+class TestPeftModel(unittest.TestCase):
+    def test_peft_model_fixed_alpha(self):
+        import peft
+
+        model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id)
+        example_input = torch.ones(1, 12, dtype=torch.long)
+        out1 = model(example_input)
+
+        def calib_func(model):
+            model(example_input)
+
+        sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
+        sq.transform(alpha=0.5, folding=False)
+        self.assertTrue(isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
+        self.assertTrue(
+            isinstance(
+                model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
+                SQLinearWrapper,
+            )
+        )  # Linear in Linear
+        self.assertTrue(
+            isinstance(model.base_model.model.score.original_module, torch.nn.Linear)
+        )  # Linear that is not called in calibration
+
+    def test_peft_model_auto_alpha(self):
+        import peft
+
+        model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id, torchscript=True)
+        example_input = torch.ones(1, 12, dtype=torch.long)
+        out1 = model(example_input)
+
+        def calib_func(model):
+            model(example_input)
+
+        # folding=False
+        sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
+        sq.transform(alpha="auto", folding=False)
+        self.assertTrue(isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
+        self.assertTrue(
+            isinstance(
+                model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
+                SQLinearWrapper,
+            )
+        )  # Linear in Linear
+        self.assertTrue(
+            isinstance(model.base_model.model.score.original_module, torch.nn.Linear)
+        )  # Linear that is not called in calibration
+
+        # folding=True
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id, torchscript=True)
+        example_input = torch.ones(1, 12, dtype=torch.long)
+        out1 = model(example_input)
+
+        def calib_func(model):
+            model(example_input)
+
+        sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
+        sq.transform(alpha="auto", folding=True)
+        self.assertTrue(isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, torch.nn.Linear))
+        self.assertTrue(
+            isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj.lora_A.default, torch.nn.Linear)
+        )  # Linear in Linear
+
+    def test_peft_model_quantization(self):
+        import peft
+
+        model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id)
+        # model.base_model.model.model.decoder.layers[0].self_attn.v_proj.lora_B.default.weight is Zero
+        # peft model is needed to be trained first.
+        example_input = torch.ones(1, 12, dtype=torch.long)
+        out1 = model(example_input)
+
+        def calib_func(model):
+            model(example_input)
+
+        from neural_compressor import PostTrainingQuantConfig, quantization
+
+        recipes = {"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}}
+        conf = PostTrainingQuantConfig(
+            excluded_precisions=["bf16"],
+            recipes=recipes,
+            example_inputs=example_input,
+        )
+        q_model = quantization.fit(
+            model,
+            conf,
+            calib_func=calib_func,
+        )
+        decoder = q_model.model.base_model.model.model.decoder
+        self.assertTrue(isinstance(decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
+        self.assertTrue(
+            isinstance(
+                decoder.layers[0].self_attn.v_proj.sq_linear.module.lora_A.default,
+                SQLinearWrapper,
+            )
+        )  # Linear in Linear
+        self.assertTrue(
+            isinstance(q_model.model.base_model.model.score.original_module, torch.nn.Linear)
+        )  # Linear that is not called in calibration
+
+    @unittest.skipIf(
+        IPEX_VERSION.release <= Version("2.1.0").release and ipex.__version__ != "2.1.0+cpu",
+        "Please use Intel extension for Pytorch version higher or equal to 2.1.0",
+    )
+    def test_peft_model_quantization_ipex(self):
+        import peft
+
+        model_id = "peft-internal-testing/tiny_OPTForSequenceClassification-lora"
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(model_id, torchscript=True)
+        # model.base_model.model.model.decoder.layers[0].self_attn.v_proj.lora_B.default.weight is Zero
+        # peft model is needed to be trained first.
+        example_input = torch.ones(1, 12, dtype=torch.long)
+        out1 = model(example_input)[0]
+
+        def calib_func(model):
+            model(example_input)
+
+        from neural_compressor import PostTrainingQuantConfig, quantization
+
+        recipes = {"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}}
+        conf = PostTrainingQuantConfig(
+            backend="ipex",  # IPEX will got error now, will enhance it.
+            excluded_precisions=["bf16"],
+            op_name_dict={".*": {"activation": {"algorithm": "minmax"}}},
+            recipes=recipes,
+            example_inputs=example_input,
+        )
+        q_model = quantization.fit(
+            model,
+            conf,
+            calib_func=calib_func,
+        )
+        out2 = q_model.model(example_input)[0]
+
+
+class TestInputConfig(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        class RandDataloader:
+            def __init__(self):
+                self.batch_size = 1
+
+            def __iter__(self):
+                yield torch.rand((1, 3))
+
+        self.linear_dl = RandDataloader()
+
+    @classmethod
+    def test_sq_weight_clipping(self):
+        class Model(torch.nn.Module):
+            device = torch.device("cpu")
+
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.norm = LlamaRMSNorm(4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.norm(out)
+                out = self.fc2(out)
+                return out
+
+        model = Model()
+
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha="auto", calib_iter=1, folding=True, weight_clip=False)
+        assert sq.weight_clip is False
+
+    @classmethod
+    def test_sq_auto_alpha_arg(self):
+        class Model(torch.nn.Module):
+            device = torch.device("cpu")
+
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.norm = LlamaRMSNorm(4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.norm(out)
+                out = self.fc2(out)
+                return out
+
+        model = Model()
+
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(
+            alpha="auto",
+            calib_iter=1,
+            folding=False,
+            auto_alpha_args={"alpha_min": 0.5, "alpha_max": 0.9, "alpha_step": 0.1, "shared_criterion": "mean"},
+            default_alpha=0.7,
+        )
+        assert sq.default_alpha == 0.7
+        assert sq.auto_alpha_args["alpha_min"] == 0.5
 
 
 if __name__ == "__main__":

@@ -87,7 +87,7 @@ def _check_value(name, src, supported_type, supported_value=[]):
         from neural_compressor.config import _check_value
 
         def datatype(self, datatype):
-            if _check_value('datatype', datatype, list, ['fp32', 'bf16', 'uint8', 'int8']):
+            if _check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
                 self._datatype = datatype
     """
     if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
@@ -115,11 +115,11 @@ def _list_wrapper(config):
 
     Args:
         config (dict): op_type_dict/op_name_dict.
-            for example: {'weight': {'dtype': 'fp32'}, ...}
+            for example: {"weight": {"dtype": "fp32"}, ...}
 
     Returns:
         config: new_config wrapped with list
-            for example: {'weight': {'dtype': ['fp32']}, ...}
+            for example: {"weight": {"dtype": ["fp32"]}, ...}
     """
     for k, v in config.items():
         # k = weight/activation
@@ -188,7 +188,7 @@ class Options:
                           Default value is 1978.
         workspace(str): The directory where intermediate files and tuning history file are stored.
                         Default value is:
-                            './nc_workspace/{}/'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')).
+                            "./nc_workspace/{}/".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")).
         resume_from(str): The directory you want to resume tuning history file from.
                           The tuning history was automatically saved in the workspace directory
                                during the last tune process.
@@ -264,9 +264,9 @@ class BenchmarkConfig:
     Args:
         inputs (list, optional): A list of strings containing the inputs of model. Default is an empty list.
         outputs (list, optional): A list of strings containing the outputs of model. Default is an empty list.
-        backend (str, optional): Backend name for model execution. Supported values include: 'default', 'itex',
-                                'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep', 'onnxrt_dml_ep'.
-                                Default value is 'default'.
+        backend (str, optional): Backend name for model execution. Supported values include: "default", "itex",
+                                "ipex", "onnxrt_trt_ep", "onnxrt_cuda_ep", "onnxrt_dnnl_ep", "onnxrt_dml_ep".
+                                Default value is "default".
         warmup (int, optional): The number of iterations to perform warmup before running performance tests.
                                 Default value is 5.
         iteration (int, optional): The number of iterations to run performance tests. Default is -1.
@@ -285,7 +285,7 @@ class BenchmarkConfig:
         from neural_compressor.benchmark import fit
 
         conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
-        fit(model='./int8.pb', conf=conf, b_dataloader=eval_dataloader)
+        fit(model="./int8.pb", conf=conf, b_dataloader=eval_dataloader)
     """
 
     def __init__(
@@ -364,7 +364,7 @@ class BenchmarkConfig:
 
     @device.setter
     def device(self, device):
-        if _check_value("device", device, str, ["cpu", "gpu"]):
+        if _check_value("device", device, str, ["cpu", "gpu", "npu", "xpu"]):
             self._device = device
 
     @property
@@ -505,8 +505,8 @@ class AccuracyCriterion:
     Args:
         higher_is_better(bool, optional): This flag indicates whether the metric higher is the better.
                                           Default value is True.
-        criterion:(str, optional): This flag indicates whether the metric loss is 'relative' or 'absolute'.
-                                   Default value is 'relative'.
+        criterion:(str, optional): This flag indicates whether the metric loss is "relative" or "absolute".
+                                   Default value is "relative".
         tolerable_loss(float, optional): This float indicates how much metric loss we can accept.
                                          Default value is 0.01.
 
@@ -516,7 +516,7 @@ class AccuracyCriterion:
 
         accuracy_criterion = AccuracyCriterion(
             higher_is_better=True,  # optional.
-            criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
+            criterion="relative",  # optional. Available values are "relative" and "absolute".
             tolerable_loss=0.01,  # optional.
         )
     """
@@ -609,7 +609,7 @@ class TuningCriterion:
         strategy: Strategy name used in tuning. Please refer to docs/source/tuning_strategies.md.
         strategy_kwargs: Parameters for strategy. Please refer to docs/source/tuning_strategies.md.
         objective: String or dict. Objective with accuracy constraint guaranteed. String value supports
-                  'performance', 'modelsize', 'footprint'. Default value is 'performance'.
+                  "performance", "modelsize", "footprint". Default value is "performance".
                    Please refer to docs/source/objective.md.
         timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
         max_trials: Max tune times. Default value is 100. Combine with timeout field to decide when to exit.
@@ -732,42 +732,42 @@ class _BaseQuantizationConfig:
         inputs: Inputs of model, only required in tensorflow.
         outputs: Outputs of model, only required in tensorflow.
         backend: Backend for model execution.
-                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
-                 'onnxrt_dml_ep'
-        domain: Model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
+                 Support "default", "itex", "ipex", "onnxrt_trt_ep", "onnxrt_cuda_ep", "onnxrt_dnnl_ep",
+                 "onnxrt_dml_ep"
+        domain: Model domain. Support "auto", "cv", "object_detection", "nlp" and "recommendation_system".
                 Adaptor will use specific quantization settings for different domains automatically, and
                 explicitly specified quantization settings will override the automatic setting.
                 If users set domain as auto, automatic detection for domain will be executed.
         model_name: The name of the model. Default value is empty.
         recipes: Recipes for quantiztaion, support list is as below.
-                 'smooth_quant': whether do smooth quant
-                 'smooth_quant_args': parameters for smooth_quant
-                 'layer_wise_quant': whether to use layer wise quant
-                 'layer_wise_quant_args': parameters for layer_wise_quant
-                 'fast_bias_correction': whether do fast bias correction
-                 'weight_correction': whether do weight correction
-                 'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
-                 'graph_optimization_level': support 'DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'
+                 "smooth_quant": whether do smooth quant
+                 "smooth_quant_args": parameters for smooth_quant
+                 "layer_wise_quant": whether to use layer wise quant
+                 "layer_wise_quant_args": parameters for layer_wise_quant
+                 "fast_bias_correction": whether do fast bias correction
+                 "weight_correction": whether do weight correction
+                 "gemm_to_matmul": whether convert gemm to matmul and add, only valid for onnx models
+                 "graph_optimization_level": support "DISABLE_ALL", "ENABLE_BASIC", "ENABLE_EXTENDED", "ENABLE_ALL"
                                            only valid for onnx models
-                 'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
-                 'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
-                 'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
-                 'add_qdq_pair_to_weight': whether add QDQ pair for weights, only valid for onnxrt_trt_ep
-                 'optypes_to_exclude_output_quant': don't quantize output of specified optypes
-                 'dedicated_qdq_pair': whether dedicate QDQ pair, only valid for onnxrt_trt_ep
-        quant_format: Support 'default', 'QDQ' and 'QOperator', only required in ONNXRuntime.
-        device: Support 'cpu' and 'gpu'.
+                 "first_conv_or_matmul_quantization": whether quantize the first conv or matmul
+                 "last_conv_or_matmul_quantization": whether quantize the last conv or matmul
+                 "pre_post_process_quantization": whether quantize the ops in preprocess and postprocess
+                 "add_qdq_pair_to_weight": whether add QDQ pair for weights, only valid for onnxrt_trt_ep
+                 "optypes_to_exclude_output_quant": don"t quantize output of specified optypes
+                 "dedicated_qdq_pair": whether dedicate QDQ pair, only valid for onnxrt_trt_ep
+        quant_format: Support "default", "QDQ" and "QOperator", only required in ONNXRuntime.
+        device: Support "cpu", "gpu", "npu" and "xpu".
         calibration_sampling_size: Number of calibration sample.
         op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
                       User can specify the quantization config by op type:
                       example:
                       {
-                          'Conv': {
-                              'weight': {
-                                  'dtype': ['fp32']
+                          "Conv": {
+                              "weight": {
+                                  "dtype": ["fp32"]
                               },
-                              'activation': {
-                                  'dtype': ['fp32']
+                              "activation": {
+                                  "dtype": ["fp32"]
                               }
                           }
                       }
@@ -788,7 +788,7 @@ class _BaseQuantizationConfig:
         example_inputs: Used to trace PyTorch model with torch.jit/torch.fx.
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
-                             If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
+                             If you want to disable bf16 data type, you can specify excluded_precisions = ["bf16].
         quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
                      strategy, auto (default) is the combination of 0 and 1.
         accuracy_criterion: Accuracy constraint settings.
@@ -1129,7 +1129,7 @@ class _BaseQuantizationConfig:
 
     @device.setter
     def device(self, device):
-        if _check_value("device", device, str, ["cpu", "gpu"]):
+        if _check_value("device", device, str, ["cpu", "gpu", "npu", "xpu"]):
             self._device = device
 
     @property
@@ -1196,41 +1196,41 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
     """Config Class for Post Training Quantization.
 
     Args:
-        device: Support 'cpu' and 'gpu'.
+        device: Support "cpu", "gpu", "npu" and "xpu".
         backend: Backend for model execution.
-                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
-                 'onnxrt_dml_ep'
-        domain: Model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
+                 Support "default", "itex", "ipex", "onnxrt_trt_ep", "onnxrt_cuda_ep", "onnxrt_dnnl_ep",
+                 "onnxrt_dml_ep"
+        domain: Model domain. Support "auto", "cv", "object_detection", "nlp" and "recommendation_system".
                 Adaptor will use specific quantization settings for different domains automatically, and
                 explicitly specified quantization settings will override the automatic setting.
                 If users set domain as auto, automatic detection for domain will be executed.
         recipes: Recipes for quantiztaion, support list is as below.
-                 'smooth_quant': whether do smooth quant
-                 'smooth_quant_args': parameters for smooth_quant
-                 'layer_wise_quant': whether to use layer wise quant
-                 'fast_bias_correction': whether do fast bias correction
-                 'weight_correction': whether do weight correction
-                 'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
-                 'graph_optimization_level': support 'DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'
+                 "smooth_quant": whether do smooth quant
+                 "smooth_quant_args": parameters for smooth_quant
+                 "layer_wise_quant": whether to use layer wise quant
+                 "fast_bias_correction": whether do fast bias correction
+                 "weight_correction": whether do weight correction
+                 "gemm_to_matmul": whether convert gemm to matmul and add, only valid for onnx models
+                 "graph_optimization_level": support "DISABLE_ALL", "ENABLE_BASIC", "ENABLE_EXTENDED", "ENABLE_ALL"
                                            only valid for onnx models
-                 'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
-                 'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
-                 'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
-                 'add_qdq_pair_to_weight': whether add QDQ pair for weights, only valid for onnxrt_trt_ep
-                 'optypes_to_exclude_output_quant': don't quantize output of specified optypes
-                 'dedicated_qdq_pair': whether dedicate QDQ pair, only valid for onnxrt_trt_ep
-        quant_format: Support 'default', 'QDQ' and 'QOperator', only required in ONNXRuntime.
+                 "first_conv_or_matmul_quantization": whether quantize the first conv or matmul
+                 "last_conv_or_matmul_quantization": whether quantize the last conv or matmul
+                 "pre_post_process_quantization": whether quantize the ops in preprocess and postprocess
+                 "add_qdq_pair_to_weight": whether add QDQ pair for weights, only valid for onnxrt_trt_ep
+                 "optypes_to_exclude_output_quant": don"t quantize output of specified optypes
+                 "dedicated_qdq_pair": whether dedicate QDQ pair, only valid for onnxrt_trt_ep
+        quant_format: Support "default", "QDQ" and "QOperator", only required in ONNXRuntime.
         inputs: Inputs of model, only required in tensorflow.
         outputs: Outputs of model, only required in tensorflow.
-        approach: Post-Training Quantization method. Neural compressor support 'static', 'dynamic',
-                      'weight_only' and 'auto' method.
-                  Default value is 'static'.
-                  For strategy 'basic', 'auto' method means neural compressor will quantize all OPs support PTQ static
+        approach: Post-Training Quantization method. Neural compressor support "static", "dynamic",
+                      "weight_only" and "auto" method.
+                  Default value is "static".
+                  For strategy "basic", "auto" method means neural compressor will quantize all OPs support PTQ static
                       or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic,
                       PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise
                       tuning configs meet the accuracy loss criteria.
-                  For strategy 'bayesian', 'mse', 'mse_v2' and 'HAWQ_V2', 'exhaustive', and 'random',
-                      'auto' means neural compressor will quantize all OPs support PTQ static or PTQ dynamic.
+                  For strategy "bayesian", "mse", "mse_v2" and "HAWQ_V2", "exhaustive", and "random",
+                      "auto" means neural compressor will quantize all OPs support PTQ static or PTQ dynamic.
                       if OPs supporting both PTQ static and PTQ dynamic, PTQ static will be tried, else PTQ dynamic
                       will be tried.
         calibration_sampling_size: Number of calibration sample.
@@ -1238,12 +1238,12 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                       User can specify the quantization config by op type:
                       example:
                       {
-                          'Conv': {
-                              'weight': {
-                                  'dtype': ['fp32']
+                          "Conv": {
+                              "weight": {
+                                  "dtype": ["fp32"]
                               },
-                              'activation': {
-                                  'dtype': ['fp32']
+                              "activation": {
+                                  "dtype": ["fp32"]
                               }
                           }
                       }
@@ -1263,7 +1263,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         reduce_range: Whether use 7 bits to quantization.
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
-                             If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
+                             If you want to disable bf16 data type, you can specify excluded_precisions = ["bf16].
         quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
                      strategy, auto (default) is the combination of 0 and 1.
         tuning_criterion: Instance of TuningCriterion class. In this class you can set strategy, strategy_kwargs,
@@ -1275,7 +1275,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         diagnosis(bool): This flag indicates whether to do diagnosis.
                            Default value is False.
         ni_workload_name: Custom workload name for Neural Insights diagnosis workload.
-                           Default value is 'quantization'.
+                           Default value is "quantization".
 
     Example::
 
@@ -1381,22 +1381,22 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     """Config Class for Quantization Aware Training.
 
     Args:
-        device: Support 'cpu' and 'gpu'.
+        device: Support "cpu", "gpu", "npu" and "xpu".
         backend: Backend for model execution.
-                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
-                 'onnxrt_dml_ep'
+                 Support "default", "itex", "ipex", "onnxrt_trt_ep", "onnxrt_cuda_ep", "onnxrt_dnnl_ep",
+                 "onnxrt_dml_ep"
         inputs: Inputs of model, only required in tensorflow.
         outputs: Outputs of model, only required in tensorflow.
         op_type_dict: Tuning constraints on optype-wise  for advance user to reduce tuning space.
                       User can specify the quantization config by op type:
                       example:
                       {
-                          'Conv': {
-                              'weight': {
-                                  'dtype': ['fp32']
+                          "Conv": {
+                              "weight": {
+                                  "dtype": ["fp32"]
                               },
-                              'activation': {
-                                  'dtype': ['fp32']
+                              "activation": {
+                                  "dtype": ["fp32"]
                               }
                           }
                       }
@@ -1417,7 +1417,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
         model_name: The name of the model. Default value is empty.
         excluded_precisions: Precisions to be excluded, Default value is empty list.
                              Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
-                             If you want to disable bf16 data type, you can specify excluded_precisions = ['bf16].
+                             If you want to disable bf16 data type, you can specify excluded_precisions = ["bf16].
         quant_level: Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
                      strategy, auto (default) is the combination of 0 and 1.
         tuning_criterion: Instance of TuningCriterion class. In this class you can set strategy, strategy_kwargs,
@@ -1507,7 +1507,7 @@ class WeightPruningConfig:
             Supports "magnitude", "snip", "snip_momentum",
                      "magnitude_progressive", "snip_progressive", "snip_momentum_progressive", "pattern_lock"
             Default to "snip_momentum", which is the most feasible pruning criteria under most situations.
-        pattern (str, optional): Sparsity's structure (or unstructure) types.
+        pattern (str, optional): Sparsity"s structure (or unstructure) types.
             Supports "NxM" (e.g "4x1", "8x1"), "channelx1" & "1xchannel"(channel-wise), "N:M" (e.g "2:4").
             Default to "4x1", which can be directly processed by our kernels in ITREX.
         op_names (list of str, optional): Layers contains some specific names to be included for pruning.
@@ -1520,24 +1520,24 @@ class WeightPruningConfig:
         end_step: (int, optional): The step to end pruning.
             Supports an integer.
             Default to 0.
-        pruning_scope (str, optional): Determine layers' scores should be gather together to sort
+        pruning_scope (str, optional): Determine layers" scores should be gather together to sort
             Supports "global" and "local".
             Default: "global", since this leads to less accuracy loss.
         pruning_frequency: the frequency of pruning operation.
             Supports an integer.
             Default to 1.
-        min_sparsity_ratio_per_op (float, optional): Minimum restriction for every layer's sparsity.
+        min_sparsity_ratio_per_op (float, optional): Minimum restriction for every layer"s sparsity.
             Supports a float between 0 and 1.
             Default to 0.0.
-        max_sparsity_ratio_per_op (float, optional): Maximum restriction for every layer's sparsity.
+        max_sparsity_ratio_per_op (float, optional): Maximum restriction for every layer"s sparsity.
             Supports a float between 0 and 1.
             Default to 0.98.
         sparsity_decay_type (str, optional): how to schedule the sparsity increasing methods.
             Supports "exp", "cube", "cube", "linear".
             Default to "exp".
         pruning_op_types (list of str): Operator types currently support for pruning.
-            Supports ['Conv', 'Linear'].
-            Default to ['Conv', 'Linear'].
+            Supports ["Conv", "Linear"].
+            Default to ["Conv", "Linear"].
 
     Example:
         from neural_compressor.config import WeightPruningConfig
@@ -1651,7 +1651,7 @@ class KnowledgeDistillationLossConfig:
             second item is the loss type for student model output and teacher model output.
             Supported types for first item are "CE", "MSE".
             Supported types for second item are "CE", "MSE", "KL".
-            Defaults to ['CE', 'CE'].
+            Defaults to ["CE", "CE"].
         loss_weights (list[float], optional): loss weights, should be a list of length 2 and sum to 1.0.
             First item is the weight multiplied to the loss of student model output and groundtruth label,
             second item is the weight multiplied to the loss of student model output and teacher model output.
@@ -1690,7 +1690,7 @@ class IntermediateLayersKnowledgeDistillationLossConfig:
             list with the format [(student_layer_name, student_layer_output_process),
             (teacher_layer_name, teacher_layer_output_process)], where the student_layer_name
             and the teacher_layer_name are the layer names of the student and the teacher models,
-            e.g. 'bert.layer1.attention'. The student_layer_output_process and teacher_layer_output_process
+            e.g. "bert.layer1.attention". The student_layer_output_process and teacher_layer_output_process
             are output process method to get the desired output from the layer specified in the layer
             name, its value can be either a function or a string, in function case, the function
             takes output of the specified layer as input, in string case, when output of the
@@ -1701,9 +1701,9 @@ class IntermediateLayersKnowledgeDistillationLossConfig:
             [(student_layer_name, ), (teacher_layer_name, )], if student_layer_name and teacher_layer_name
             are the same, it can be abbreviated further to [(layer_name, )].
             Some examples of the item in layer_mappings are listed below:
-              [('student_model.layer1.attention', '1'), ('teacher_model.layer1.attention', '1')]
-              [('student_model.layer1.output', ), ('teacher_model.layer1.output', )].
-              [('model.layer1.output', )].
+              [("student_model.layer1.attention", "1"), ("teacher_model.layer1.attention", "1")]
+              [("student_model.layer1.output", ), ("teacher_model.layer1.output", )].
+              [("model.layer1.output", )].
         loss_types (list[str], optional): loss types, should be a list with the same length of
             layer_mappings. Each item is the loss type for each layer mapping specified in the
             layer_mappings. Supported types for each item are "MSE", "KL", "L1". Defaults to
@@ -1719,9 +1719,9 @@ class IntermediateLayersKnowledgeDistillationLossConfig:
         from neural_compressor.training import prepare_compression
 
         criterion_conf = IntermediateLayersKnowledgeDistillationLossConfig(
-            layer_mappings=[['layer1.0', ],
-                            [['layer1.1.conv1', ], ['layer1.1.conv1', '0']],],
-            loss_types=['MSE']*len(layer_mappings),
+            layer_mappings=[["layer1.0", ],
+                            [["layer1.1.conv1", ], ["layer1.1.conv1", "0"]],],
+            loss_types=["MSE"]*len(layer_mappings),
             loss_weights=[1.0 / len(layer_mappings)]*len(layer_mappings),
             add_origin_loss=True
         )
@@ -1767,16 +1767,16 @@ class SelfKnowledgeDistillationLossConfig:
 
         criterion_conf = SelfKnowledgeDistillationLossConfig(
             layer_mappings=[
-                [['resblock.1.feature.output', 'resblock.deepst.feature.output'],
-                ['resblock.2.feature.output','resblock.deepst.feature.output']],
-                [['resblock.2.fc','resblock.deepst.fc'],
-                ['resblock.3.fc','resblock.deepst.fc']],
-                [['resblock.1.fc','resblock.deepst.fc'],
-                ['resblock.2.fc','resblock.deepst.fc'],
-                ['resblock.3.fc','resblock.deepst.fc']]
+                [["resblock.1.feature.output", "resblock.deepst.feature.output"],
+                ["resblock.2.feature.output","resblock.deepst.feature.output"]],
+                [["resblock.2.fc","resblock.deepst.fc"],
+                ["resblock.3.fc","resblock.deepst.fc"]],
+                [["resblock.1.fc","resblock.deepst.fc"],
+                ["resblock.2.fc","resblock.deepst.fc"],
+                ["resblock.3.fc","resblock.deepst.fc"]]
             ],
             temperature=3.0,
-            loss_types=['L2', 'KL', 'CE'],
+            loss_types=["L2", "KL", "CE"],
             loss_weights=[0.5, 0.05, 0.02],
             add_origin_loss=True,)
         conf = DistillationConfig(teacher_model=model, criterion=criterion_conf)
@@ -1869,32 +1869,32 @@ class MixedPrecisionConfig(object):
 
     Args:
         device (str, optional): Device for execution.
-                                Support 'cpu' and 'gpu', default is 'cpu'.
+                                Support "cpu", "gpu", "npu" and "xpu", default is "cpu".
         backend (str, optional): Backend for model execution.
-                                 Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep', 'onnxrt_dnnl_ep',
-                                 'onnxrt_dml_ep'. Default is 'default'.
+                                 Support "default", "itex", "ipex", "onnxrt_trt_ep", "onnxrt_cuda_ep", "onnxrt_dnnl_ep",
+                                 "onnxrt_dml_ep". Default is "default".
         precisions ([str, list], optional): Target precision for mix precision conversion.
-                                   Support 'bf16' and 'fp16', default is 'bf16'.
+                                   Support "bf16" and "fp16", default is "bf16".
         model_name (str, optional): The name of the model. Default value is empty.
         inputs (list, optional): Inputs of model, default is [].
         outputs (list, optional): Outputs of model, default is [].
         quant_level: Support auto, 0 and 1, 0 is conservative(fallback in op type wise),
                     1(fallback in op wise), auto (default) is the combination of 0 and 1.
         tuning_criterion (TuningCriterion object, optional): Accuracy tuning settings,
-                                                             it won't work if there is no accuracy tuning process.
+                                                             it won"t work if there is no accuracy tuning process.
         accuracy_criterion (AccuracyCriterion object, optional): Accuracy constraint settings,
-                                                                 it won't work if there is no accuracy tuning process.
+                                                                 it won"t work if there is no accuracy tuning process.
         excluded_precisions (list, optional): Precisions to be excluded during mix precision conversion, default is [].
         op_type_dict (dict, optional): Tuning constraints on optype-wise  for advance user to reduce tuning space.
                       User can specify the quantization config by op type:
                       example:
                       {
-                          'Conv': {
-                              'weight': {
-                                  'dtype': ['fp32']
+                          "Conv": {
+                              "weight": {
+                                  "dtype": ["fp32"]
                               },
-                              'activation': {
-                                  'dtype': ['fp32']
+                              "activation": {
+                                  "dtype": ["fp32"]
                               }
                           }
                       }
@@ -2023,7 +2023,7 @@ class MixedPrecisionConfig(object):
     @device.setter
     def device(self, device):
         """Set device."""
-        if _check_value("device", device, str, ["cpu", "gpu"]):
+        if _check_value("device", device, str, ["cpu", "gpu", "npu", "xpu"]):
             self._device = device
 
     @property
@@ -2259,7 +2259,7 @@ class Torch2ONNXConfig(ExportConfig):
         dynamic_axes (dict, optional): A dictionary of dynamic axes information. Defaults to None.
         recipe (str, optional): A string to select recipes used for Linear -> Matmul + Add, select from
                                 ["QDQ_OP_FP32_BIAS", "QDQ_OP_INT32_BIAS", "QDQ_OP_FP32_BIAS_QDQ"].
-                                Defaults to 'QDQ_OP_FP32_BIAS'.
+                                Defaults to "QDQ_OP_FP32_BIAS".
 
     Example:
         # resnet50
@@ -2269,12 +2269,12 @@ class Torch2ONNXConfig(ExportConfig):
             opset_version=14,
             quant_format="QDQ", # or QLinear
             example_inputs=torch.randn(1, 3, 224, 224),
-            input_names=['input'],
-            output_names=['output'],
+            input_names=["input"],
+            output_names=["output"],
             dynamic_axes={"input": {0: "batch_size"},
                             "output": {0: "batch_size"}},
         )
-        q_model.export('int8-model.onnx', int8_onnx_config)
+        q_model.export("int8-model.onnx", int8_onnx_config)
     """
 
     def __init__(
@@ -2305,11 +2305,11 @@ class TF2ONNXConfig(ExportConfig):
     """Config Class for TF2ONNX.
 
     Args:
-        dtype (str, optional): The data type of export target model. Supports 'fp32' and 'int8'.
-                               Defaults to 'int8'.
+        dtype (str, optional): The data type of export target model. Supports "fp32" and "int8".
+                               Defaults to "int8".
         opset_version (int, optional): The version of the ONNX operator set to use. Defaults to 14.
         quant_format (str, optional): The quantization format for the export target model.
-                                      Supports 'default', 'QDQ' and 'QOperator'. Defaults to 'QDQ'.
+                                      Supports "default", "QDQ" and "QOperator". Defaults to "QDQ".
         example_inputs (list, optional): A list example inputs to use for tracing the model.
                                         Defaults to None.
         input_names (list, optional): A list of model input names. Defaults to None.
@@ -2319,7 +2319,7 @@ class TF2ONNXConfig(ExportConfig):
 
     Examples::
 
-        # tensorflow QDQ int8 model 'q_model' export to ONNX int8 model
+        # tensorflow QDQ int8 model "q_model" export to ONNX int8 model
         from neural_compressor.config import TF2ONNXConfig
         config = TF2ONNXConfig()
         q_model.export(output_graph, config)

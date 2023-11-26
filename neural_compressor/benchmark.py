@@ -510,11 +510,10 @@ def fit(model, conf, b_dataloader=None, b_func=None):
 
     if b_dataloader is not None:
         check_dataloader(b_dataloader)
-
-    assert sys.platform in ["linux", "win32"], "only support platform windows and linux..."
+    assert sys.platform in ["linux", "win32", "darwin"], "platform not supported..."
     # disable multi-instance for running benchmark on GPU device
     set_all_env_var(conf)
-    if conf.device == "gpu":
+    if conf.device == "gpu" or sys.platform == "darwin":
         set_env_var("NC_ENV_CONF", True, overwrite_existing=True)
 
     if conf.diagnosis and os.environ.get("NC_ENV_CONF", None) in [None, "False"]:

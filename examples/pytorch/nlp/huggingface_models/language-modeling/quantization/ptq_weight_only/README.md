@@ -37,7 +37,7 @@ sh run_quant.sh --topology=gpt_j_wikitext_weight_only --input_model=EleutherAI/g
 >
 > `weight_only_bits`, `weight_only_group`, `weight_only_scheme`, and `weight_only_algorithm` can be modified by user. For details, please refer to [README](../../../../../../../docs/source/quantization_weight_only.md).
 
-### Run MLPerf on GPT-J-6B
+### Run MLPerf on GPT-J-6B using GPTQ
 Use the following link to get
 [**CNN Daily Mail** datasets](https://github.com/intel-innersource/frameworks.ai.benchmarking.mlperf.submission.inference-submission-v3-1/tree/master/closed/Intel/code/gpt-j/pytorch-cpu#download-and-prepare-dataset)
 and [gpt-j-6B mlperf model](https://github.com/mlcommons/inference/tree/master/language/gpt-j#download-gpt-j-model)
@@ -54,10 +54,27 @@ python -u examples/pytorch/nlp/huggingface_models/language-modeling/quantization
     --val-data-path /your/data/validation-data/cnn_dailymail_validation.json \
     --calib-iters 128 \
     --use_max_length \
-    --use_fp16 \
+    --pad_max_length 2048 \
     --use_gpu
 ```
 Notes: for per channel quantization, set group_size to **-1**, otherwise 32, 128, etc. More comprehensive details about user-defined arguments are available at our [weight_onlly quantization documentations](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_weight_only.md#quantization-capability)
+
+### Run general examples on a wide variety of LLMs using GPTQ
+We also support GPTQ algorithm on various language models (OPTs, Blooms, LLaMAs, MPTs, Falcons, ChatGLMs, etc.) in a generalized code. Please refer to script *run-gptq-llm.py* for more information.
+
+You can simply use following command to do quantization (please refer to *run-gptq-llm.sh*).
+```shell
+python examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_weight_only/run-gptq-llm.py \
+    --model_name_or_path facebook/opt-125m \
+    --weight_only_algo GPTQ \
+    --dataset NeelNanda/pile-10k \
+    --wbits 4 \
+    --group_size 128 \
+    --pad_max_length 2048 \
+    --use_max_length \
+    --seed 0 \
+    --gpu
+```
 
 ## 2. Benchmark
 ```bash

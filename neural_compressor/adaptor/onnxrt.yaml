@@ -30,7 +30,6 @@
                     'dtype': ['fp32']
         }
     },
-    'Attention':    *cap_weight_only_matmul
   }
   int8: &ref_1_6 {
     'static': &ref_1_6_static {
@@ -380,6 +379,16 @@
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QDQ', 'QLinear']
       },
+      'GatherElements': {
+        'weight':   *uint8_asym_perchanneltensor_minmax,
+        'activation': *uint8_asym_pertensor_minmax,
+        'mode': ['QDQ', 'QLinear']
+      },
+      'GatherND': {
+        'weight':   *uint8_asym_perchanneltensor_minmax,
+        'activation': *uint8_asym_pertensor_minmax,
+        'mode': ['QDQ', 'QLinear']
+      },
       'MatMul': {
         'weight':   *int8_sym_perchanneltensor_minmax,
         'activation': *uint8_asym_pertensor,
@@ -423,6 +432,7 @@
       'Mod': *default_static_qlinear_qdq_minmax,
       'ReduceMax': *default_static_qlinear_qdq_minmax,
       'ReduceMin': *default_static_qlinear_qdq_minmax,
+      'Tile': *default_static_qlinear_qdq_minmax,
     },
     'dynamic': *ref_1_9_dynamic
   }
@@ -433,6 +443,88 @@
   version:
     name: '1.12.0'
   int8: *ref_1_11
+  weight_only_integer: *cap_weight_only
+  recipes:
+    <<: *default_optimization
+
+-
+  version:
+    name: '1.13.0'
+  int8: &ref_1_13 {
+    'static': {
+      'FusedConv': {
+        'weight': *int8_sym_perchanneltensor_minmax, # QDQ: *int8_sym_pertensor_minmax
+        'activation': *uint8_asym_pertensor_minmax,
+        'mode': ['QDQ', 'QLinear']
+      },
+      'Conv': {
+        'weight':   *int8_sym_perchanneltensor_minmax,
+        'activation': *uint8_asym_pertensor,
+        'mode': ['QDQ', 'QLinear']
+      },
+      'Gather': {
+        'weight':   *uint8_asym_perchanneltensor_minmax,
+        'activation': *uint8_asym_pertensor_minmax,
+        'mode': ['QDQ', 'QLinear']
+      },
+      'GatherElements': {
+        'weight':   *uint8_asym_perchanneltensor_minmax,
+        'activation': *uint8_asym_pertensor_minmax,
+        'mode': ['QDQ', 'QLinear']
+      },
+      'GatherND': {
+        'weight':   *uint8_asym_perchanneltensor_minmax,
+        'activation': *uint8_asym_pertensor_minmax,
+        'mode': ['QDQ', 'QLinear']
+      },
+      'MatMul': {
+        'weight':   *int8_sym_perchanneltensor_minmax,
+        'activation': *uint8_asym_pertensor,
+        'mode': ['QDQ', 'QLinear']
+      },
+      'Gemm': {
+        'weight':   *int8_sym_perchanneltensor_minmax,
+        'activation': *uint8_asym_pertensor_minmax,
+        'mode': ['QDQ', 'QLinear']
+      },
+      'EmbedLayerNormalization': {
+        'weight': *uint8_asym_pertensor_minmax, # QDQ: *int8_sym_pertensor_minmax
+        'activation': *uint8_asym_pertensor_minmax,
+        'mode': ['QDQ', 'QLinear']
+      },
+      'Attention': *default_static_qlinear_qdq_minmax,
+      'Mul': *default_static_qlinear,
+      'Relu': *default_static_qlinear_qdq_minmax,
+      'Clip': *default_static_qlinear_qdq_minmax,
+      'LeakyRelu': *default_static_qlinear_qdq_minmax,
+      'Sigmoid': *default_static_qlinear_qdq_minmax,
+      'MaxPool': *default_static_qlinear_qdq_minmax,
+      'GlobalAveragePool': *default_static_qlinear_qdq_minmax,
+      'Pad': *default_static_qlinear_qdq_minmax,
+      'Split': *default_static_qlinear_qdq_minmax,
+      'Add': *default_static_qlinear,
+      'Squeeze': *default_static_qlinear_qdq_minmax,
+      'Reshape': *default_static_qlinear_qdq_minmax,
+      'Concat': *default_static_qlinear_qdq_minmax,
+      'AveragePool': *default_static_qlinear_qdq_minmax,
+      'Unsqueeze': *default_static_qlinear_qdq_minmax,
+      'Transpose': *default_static_qlinear_qdq_minmax,
+      'ArgMax': *default_static_qlinear,
+      'Resize': *default_static_qlinear_qdq_minmax,
+      'Abs': *default_static_qlinear_qdq_minmax,
+      'Shrink': *default_static_qlinear_qdq_minmax,
+      'Sign': *default_static_qlinear_qdq_minmax,
+      'Flatten': *default_static_qlinear_qdq_minmax,
+      'Expand': *default_static_qlinear_qdq_minmax,
+      'Slice': *default_static_qlinear_qdq_minmax,
+      'Mod': *default_static_qlinear_qdq_minmax,
+      'ReduceMax': *default_static_qlinear_qdq_minmax,
+      'ReduceMin': *default_static_qlinear_qdq_minmax,
+      'Tile': *default_static_qlinear_qdq_minmax,
+      'CenterCropPad': *default_static_qlinear_qdq_minmax,
+    },
+    'dynamic': *ref_1_9_dynamic
+  }
   weight_only_integer: *cap_weight_only
   recipes:
     <<: *default_optimization

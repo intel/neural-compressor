@@ -19,7 +19,10 @@
 
 import copy
 
-from neural_compressor.experimental.common import Criterions, Optimizers
+from deprecated import deprecated
+
+from neural_compressor.compression.distillation.criterions import Criterions
+from neural_compressor.experimental.common import Optimizers
 
 from ..adaptor import FRAMEWORKS
 from ..conf.config import DistillationConf
@@ -31,6 +34,7 @@ from .common import Model
 from .component import Component
 
 
+@deprecated(version="2.0")
 class Distillation(Component):
     """Distillation class derived from Component class.
 

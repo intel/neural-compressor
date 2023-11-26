@@ -17,6 +17,7 @@
 # pylint:disable=redefined-outer-name,logging-format-interpolation
 import os
 import onnx
+import json
 import random
 import torch
 import logging
@@ -26,7 +27,7 @@ from datasets import load_dataset
 import onnxruntime as ort
 from torch.nn.functional import pad
 from torch.utils.data import DataLoader
-from intel_extension_for_transformers.evaluation.lm_eval import evaluate
+from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
 from optimum.onnxruntime import ORTModelForCausalLM
 from transformers import LlamaConfig, LlamaTokenizer
 
@@ -68,7 +69,7 @@ parser.add_argument(
     "--tokenizer",
     type=str,
     help="pretrained model name or path of tokenizer files",
-    default="decapoda-research/llama-7b-hf"
+    default="meta-llama/Llama-2-7b-hf"
 )
 parser.add_argument(
     "--workspace",
@@ -79,8 +80,8 @@ parser.add_argument(
 parser.add_argument(
     "--algorithm",
     type=str,
-    default="RTN",
-    choices=["RTN", "AWQ", "GPTQ"],
+    default="WOQ_TUNE",
+    choices=["WOQ_TUNE", "RTN", "AWQ", "GPTQ"],
     help="weight only algorithm"
 )
 parser.add_argument(
@@ -116,19 +117,45 @@ def tokenize_function(examples):
     example = tokenizer(examples["text"])
     return example
 
+def replace_architectures(json_path):
+    # replace 'LLaMATokenizer' to lowercase 'LlamaTokenizer'
+    # to avoid bug 'Tokenizer class LLaMATokenizer does not exist or is not currently imported.'
+    # refer to https://github.com/huggingface/transformers/issues/22222#issuecomment-1477171703
+    with open(json_path, "r") as file:
+        data = json.load(file)
+        data["architectures"] = ["LlamaForCausalLM"]
+        
+    with open(json_path, 'w') as file:
+        json.dump(data, file, indent=4)
+
 def eval_func(model):
+    model_dir = model
+    if isinstance(model, str) and model.endswith(".onnx"):
+        model_dir = os.path.dirname(model)
+
+    replace_architectures(os.path.join(model_dir, "config.json"))
+
     results = evaluate(
         model="hf-causal",
-        model_args="pretrained=" + model + ",tokenizer="+ args.tokenizer,
+        model_args="pretrained=" + model_dir + ",tokenizer="+ args.tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
-        model_format="onnx"
+        model_format="onnx",
     )
+
+    eval_acc = 0
     for task_name in args.tasks:
         if task_name == "wikitext":
             print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["word_perplexity"]))
+            eval_acc += results["results"][task_name]["word_perplexity"]
         else:
             print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["acc"]))
+            eval_acc += results["results"][task_name]["acc"]
+
+    if len(args.tasks) != 0:
+        eval_acc /= len(args.tasks)
+
+    return eval_acc
 
 class KVDataloader:
     def __init__(self, model_path, pad_max=196, batch_size=1, sub_folder="train"):
@@ -237,34 +264,55 @@ if __name__ == "__main__":
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
-        for model in ["decoder_model.onnx", "decoder_with_past_model.onnx"]:
-            if args.algorithm.upper() == "RTN":
-                dataloader = KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1)
-                config = PostTrainingQuantConfig(
-                    approach="weight_only",
-                    calibration_sampling_size=[8],
-                    op_type_dict={".*": {"weight": {"algorithm": ["RTN"]}}},
-                    )
+        if args.algorithm.upper() == "WOQ_TUNE":
+            # current WOQ tuning is only applied to decoder_model
+            # TODO: support WOQ tuning on model with more than one onnx files
+            model_path = os.path.join(args.model_path, "decoder_model.onnx")
+            dataloader = GPTQDataloader(model_path, seqlen=args.seqlen, batch_size=1)
 
-            elif args.algorithm.upper() == "AWQ":
-                dataloader = KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1)
-                config = PostTrainingQuantConfig(
-                    approach="weight_only",
-                    calibration_sampling_size=[8],
-                    recipes={"awq_args": {"enable_mse_search": False}},
-                    op_type_dict={".*": {"weight": {"algorithm": ["AWQ"]}}},
-                    )
- 
-            elif args.algorithm.upper() == "GPTQ":
-                dataloader = GPTQDataloader(os.path.join(args.model_path, model), seqlen=args.seqlen, batch_size=1)
-                config = PostTrainingQuantConfig(
-                    approach="weight_only",
-                    calibration_sampling_size=[8],
-                    op_type_dict={".*": {"weight": {"algorithm": ["GPTQ"], "scheme": ["asym"]}}},
-                    )
-
+            from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
+            # set tolerable_loss to 0.5% for test, default is 1%
+            accuracy_criterion = AccuracyCriterion(tolerable_loss=0.005)
+            config = PostTrainingQuantConfig(
+                approach="weight_only",
+                calibration_sampling_size=[8],
+                accuracy_criterion=accuracy_criterion)
             q_model = quantization.fit(
+                model_path,
+                config,
+                calib_dataloader=dataloader,
+                eval_func=eval_func)
+            q_model.save(os.path.join(args.output_model, "decoder_model.onnx"))
+        
+        else:
+            for model in ["decoder_model.onnx", "decoder_with_past_model.onnx"]:
+                if args.algorithm.upper() == "RTN":
+                    dataloader = KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1)
+                    config = PostTrainingQuantConfig(
+                        approach="weight_only",
+                        calibration_sampling_size=[8],
+                        op_type_dict={".*": {"weight": {"algorithm": ["RTN"]}}},
+                        )
+
+                elif args.algorithm.upper() == "AWQ":
+                    dataloader = KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1)
+                    config = PostTrainingQuantConfig(
+                        approach="weight_only",
+                        calibration_sampling_size=[8],
+                        recipes={"awq_args": {"enable_mse_search": False}},
+                        op_type_dict={".*": {"weight": {"algorithm": ["AWQ"]}}},
+                        )
+ 
+                elif args.algorithm.upper() == "GPTQ":
+                    dataloader = GPTQDataloader(os.path.join(args.model_path, model), seqlen=args.seqlen, batch_size=1)
+                    config = PostTrainingQuantConfig(
+                        approach="weight_only",
+                        calibration_sampling_size=[8],
+                        op_type_dict={".*": {"weight": {"algorithm": ["GPTQ"], "scheme": ["asym"]}}},
+                        )
+
+                q_model = quantization.fit(
                     os.path.join(args.model_path, model),
                     config,
                     calib_dataloader=dataloader)
-            q_model.save(os.path.join(args.output_model, model))
+                q_model.save(os.path.join(args.output_model, model))

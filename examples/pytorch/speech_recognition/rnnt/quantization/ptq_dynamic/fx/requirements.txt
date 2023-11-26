@@ -1,0 +1,10 @@
+neural-compressor
+sox
+absl-py
+toml
+text-unidecode
+inflect
+librosa==0.8.1
+torch <= 1.13.1
+tqdm
+numpy <= 1.22.4

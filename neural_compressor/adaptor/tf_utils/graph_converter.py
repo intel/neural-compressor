@@ -83,7 +83,7 @@ from .util import (
     version1_lte_version2,
 )
 
-TF_SUPPORTED_MAX_VERSION = "2.12.0"
+TF_SUPPORTED_MAX_VERSION = "2.14.0"
 TF_SUPPORTED_MIN_VERSION = "1.14.0"
 
 logger = logging.getLogger("neural_compressor")
@@ -102,6 +102,7 @@ class GraphConverter:
         fp32_ops=[],
         bf16_ops=[],
         data_loader=None,
+        calib_func=None,
         fake_quant=False,
         itex_mode=False,
         qdq_enabled=False,
@@ -116,6 +117,7 @@ class GraphConverter:
         :param fp32_ops: fall back to fp32 dtype op list
         :param bf16_ops: fall back to bf16 dtype op list
         :param data_loader: for calibration phase used dataloader
+        :param calib_func: for calibration phase used function
         :param fake_quant: for quantization-aware training model conversion to default model
         """
         self.model = model
@@ -139,6 +141,7 @@ class GraphConverter:
         self._calibration_data = []
         self._fp32_print_data = []
         self.data_loader = data_loader
+        self.calib_func = calib_func
         self._check_tf_version()
         self._check_args()
 
@@ -157,6 +160,7 @@ class GraphConverter:
         self._gen_tmp_filenames()
         self._kl_op_dict = {}
         self._kl_keys = []
+        self._llm_weight_minmax = {}
         self._print_node_mapping = {}
         self._enable_kl_op_names = [k for k in self.op_wise_config if self.op_wise_config[k][1] == "kl"]
         self.scale_info = {}
@@ -193,6 +197,14 @@ class GraphConverter:
         Args:
             model(TensorflowBaseModel): input TensorflowBaseModel
         """
+        if self.calib_func:
+            self.calib_func(model.model)
+            return
+
+        if model.model_type == "llm_saved_model":
+            self._inference_llm(model)
+            return
+
         # ITEX optimization has broken INC calibration process.
         # INC needs turn off ITEX optimization pass in calibration stage.
         # TODO ITEX will provide API to replace setting environment variable.
@@ -280,6 +292,24 @@ class GraphConverter:
             if idx + 1 == self.calib_iteration:
                 break
         os.environ["ITEX_REMAPPER"] = "1"
+
+    def _inference_llm(self, model):
+        input_tensor_names = model.input_tensor_names
+        auto_trackable = model.model
+        infer = auto_trackable.signatures["serving_default"]
+        for idx, (inputs, _) in enumerate(self.data_loader):
+            feed_dict = {}
+            if len(input_tensor_names) == 1:
+                feed_dict[input_tensor_names[0]] = inputs
+            else:
+                assert len(input_tensor_names) == len(inputs), "inputs len must equal with input_tensor"
+                for i, input_tensor_name in enumerate(input_tensor_names):
+                    feed_dict[input_tensor_name] = inputs[i]
+
+            _ = infer(**feed_dict)
+
+            if idx >= self.calib_iteration:
+                break
 
     def _check_tf_version(self):
         """Check if the installed tensorflow version is supported."""
@@ -849,6 +879,9 @@ class GraphConverter:
                 self._inference(self._sampling_model)
             self._calibration_data = Helper.gen_valid_sampling_log(tmp_dump_file)
 
+        if hasattr(self._sampling_model, "_weight_tensor_minmax_dict"):
+            self._llm_weight_minmax = self._sampling_model.weight_tensor_minmax_dict
+
         del sampling_graph_def
         del output_tensor_names
         del self._sampling_model
@@ -868,6 +901,7 @@ class GraphConverter:
             self.device,
             self.performance_only,
             self.itex_mode,
+            self._llm_weight_minmax,
         ).do_transformation()
 
     def _convert_qdq(self):

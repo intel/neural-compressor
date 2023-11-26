@@ -85,7 +85,6 @@ def evaluate(model, val_loader):
 
 def fine_tune(args):
     import os
-
     import numpy as np
     import torch
     from torch.utils.data import DataLoader
@@ -134,15 +133,13 @@ def fine_tune(args):
                     results["eval_acc"] = cur_acc
                     best_acc = results["eval_acc"]
                     print("  Best acc:%s", round(best_acc, 4))
-                    checkpoint_prefix = "checkpoint-best-acc-new"
+                    checkpoint_prefix = "checkpoint-best-acc"
                     output_dir = os.path.join("{}".format(checkpoint_prefix))
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
                     model_to_save = model.module if hasattr(model, "module") else model
-                    model.config.to_json_file(
-                        "config-{}-{}-{}".format(checkpoint_prefix, epoch, idx)
-                    )
-                    output_dir = os.path.join(output_dir, "{}".format("model.bin"))
+                    model.config.to_json_file("{}/config.json".format(checkpoint_prefix))
+                    output_dir = os.path.join(output_dir, "{}".format("pytorch_model.bin"))
                     torch.save(model_to_save.state_dict(), output_dir)
                     print("Saving model checkpoint to %s", output_dir)
 

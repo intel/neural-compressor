@@ -17,7 +17,7 @@
 # ==============================================================================
 """Intel Neural Compressor built-in Optimizers on multiple framework backends."""
 
-from abc import abstractmethod
+from deprecated import deprecated
 
 from neural_compressor.utils.utility import LazyImport, singleton
 
@@ -26,6 +26,7 @@ tf = LazyImport("tensorflow")
 tfa = LazyImport("tensorflow_addons")
 
 
+@deprecated(version="2.0")
 @singleton
 class TensorflowOptimizers(object):
     """Class to get all registered TensorFlow Optimizers once only."""
@@ -36,6 +37,7 @@ class TensorflowOptimizers(object):
         self.optimizers.update(TENSORFLOW_OPTIMIZERS)
 
 
+@deprecated(version="2.0")
 @singleton
 class PyTorchOptimizers(object):
     """Class to get all registered PyTorch Optimizers once only."""
@@ -63,6 +65,7 @@ registry_optimizers = {
 }
 
 
+@deprecated(version="2.0")
 class Optimizers(object):
     """Main entry to get the specific type of optimizer."""
 
@@ -83,6 +86,7 @@ class Optimizers(object):
         self.optimizers.update({name: optimizer_cls})
 
 
+@deprecated(version="2.0")
 def optimizer_registry(optimizer_type, framework):
     """Class decorator used to register all Optimizer subclasses.
 
@@ -108,6 +112,7 @@ def optimizer_registry(optimizer_type, framework):
     return decorator_optimizer
 
 
+@deprecated(version="2.0")
 @optimizer_registry("SGD", "tensorflow")
 class TensorFlowSGD(object):
     """TensorFlow keras SGD optimizer.
@@ -134,6 +139,7 @@ class TensorFlowSGD(object):
         return tf.keras.optimizers.SGD, self._mapping(**kwargs)
 
 
+@deprecated(version="2.0")
 @optimizer_registry("AdamW", "tensorflow")
 class TensorFlowAdamW(object):
     """tensorflow_addons AdamW optimizer.
@@ -167,38 +173,7 @@ class TensorFlowAdamW(object):
         return tfa.optimizers.AdamW, self._mapping(**kwargs)
 
 
-@optimizer_registry("Adam", "tensorflow")
-class TensorFlowAdam(object):
-    """Tensorflow Adam optimizer.
-
-    Args:
-        param_dict (dict): The dict of parameters setting by user for Adam optimizer
-    """
-
-    def __init__(self, param_dict):
-        """Initialize `TensorFlowAdam` class."""
-        assert isinstance(param_dict, dict), "This optimizer constructor parameter must be a dict"
-        self._param_dict = param_dict
-
-    def _mapping(self):
-        _param_map = {
-            "learning_rate": "learning_rate",
-            "beta_1": "beta_1",
-            "beta_2": "beta_2",
-            "epsilon": "epsilon",
-            "amsgrad": "amsgrad",
-        }
-        _dict = {}
-        for key in self._param_dict:
-            if key in _param_map:
-                _dict.update({_param_map[key]: self._param_dict[key]})
-        return _dict
-
-    def __call__(self, **kwargs):
-        """Call `TensorFlowAdam` object."""
-        return tf.keras.optimizers.Adam, self._mapping(**kwargs)
-
-
+@deprecated(version="2.0")
 @optimizer_registry("SGD", "pytorch")
 class PyTorchSGD(object):
     """PyTorch SGD optimizer.

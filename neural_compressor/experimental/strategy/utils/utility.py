@@ -19,7 +19,10 @@
 
 from collections import OrderedDict
 
+from deprecated import deprecated
 
+
+@deprecated(version="2.0")
 class OrderedDefaultDict(OrderedDict):
     """Ordered default dict."""
 
@@ -29,6 +32,7 @@ class OrderedDefaultDict(OrderedDict):
         return value
 
 
+@deprecated(version="2.0")
 def extract_data_type(data_type: str) -> str:
     """Extract data type and signed from data type.
 
@@ -41,11 +45,13 @@ def extract_data_type(data_type: str) -> str:
     return ("signed", data_type) if data_type[0] != "u" else ("unsigned", data_type[1:])
 
 
+@deprecated(version="2.0")
 def reverted_data_type(signed_flag: str, data_type: str) -> str:
     """Revert the data type."""
     return data_type if signed_flag == "signed" else "u" + data_type
 
 
+@deprecated(version="2.0")
 def get_adaptor_name(adaptor):
     """Get adaptor name.
 

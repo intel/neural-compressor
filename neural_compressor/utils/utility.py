@@ -119,7 +119,7 @@ class LazyImport(object):
 def singleton(cls):
     """Not displayed in API Docs.
 
-    Singleton decorater.
+    Singleton decorator.
     """
     instances = {}
 
@@ -249,7 +249,10 @@ class CpuInfo(object):
                     b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\xC3",  # mov eax, 7  # cpuid  # ret
                 )
                 self._bf16 = bool(eax & (1 << 5))
-        self._sockets = self.get_number_of_sockets()
+        if "arch" in info and "ARM" in info["arch"]:  # pragma: no cover
+            self._sockets = 1
+        else:
+            self._sockets = self.get_number_of_sockets()
         self._cores = psutil.cpu_count(logical=False)
         self._cores_per_socket = int(self._cores / self._sockets)
 
@@ -272,7 +275,7 @@ class CpuInfo(object):
         """Get number of sockets in platform."""
         cmd = "lscpu | grep 'Socket(s)' | cut -d ':' -f 2"
         if psutil.WINDOWS:
-            cmd = 'wmic cpu get DeviceID | find /c "CPU"'
+            cmd = r'wmic cpu get DeviceID | C:\Windows\System32\find.exe /C "CPU"'
 
         with subprocess.Popen(
             args=cmd,
@@ -1092,3 +1095,34 @@ def mse_metric_gap(fp32_tensor: Any, dequantize_tensor: Any) -> float:
     diff_tensor = fp32_tensor_norm - dequantize_tensor_norm
     euclidean_dist = np.sum(diff_tensor**2)  # type: ignore
     return euclidean_dist / fp32_tensor.size
+
+
+def check_key_exist(data, key):
+    """Recursively checks if a key exists in a dictionary or list.
+
+    Args:
+        data (dict or list): The dictionary or list to search.
+        key (any): The key to search for.
+
+    Returns:
+        bool: True if the key exists in the data structure, False otherwise.
+
+    Examples:
+        >>> check_key_exist({'a': 1, 'b': {'c': 2}}, 'c')
+        True
+        >>> check_key_exist([{'a': 1}, {'b': 2}], 'b')
+        True
+        >>> check_key_exist({'a': 1, 'b': [1, 2, 3]}, 'c')
+        False
+    """
+    if isinstance(data, dict):
+        if key in data:
+            return True
+        for value in data.values():
+            if check_key_exist(value, key):
+                return True
+    elif isinstance(data, list):
+        for item in data:
+            if check_key_exist(item, key):
+                return True
+    return False

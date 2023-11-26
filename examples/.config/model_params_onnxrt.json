@@ -322,6 +322,13 @@
       "main_script": "main.py",
       "batch_size": 1
     },
+    "beit": {
+      "model_src_dir": "image_recognition/beit/quantization/ptq_static",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "/tf_dataset2/models/onnx/beit/beit_base_patch16_224_pt22k_ft22kto1k.onnx",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
     "mobilebert_squad_mlperf_qdq": {
       "model_src_dir": "nlp/onnx_model_zoo/mobilebert/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/squad",
@@ -749,31 +756,38 @@
       "main_script": "main.py",
       "batch_size": 1
     },
-    "llama-7b": {
+    "llama-2-7b": {
       "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/ptq_static",
       "dataset_location": "",
-      "input_model": "/tf_dataset2/models/onnx/llama-7b",
+      "input_model": "/tf_dataset2/models/onnx/llama-2-7b",
       "main_script": "main.py",
       "batch_size": 1
     },
-    "llama-7b-rtn": {
+    "llama-2-7b-rtn": {
       "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
       "dataset_location": "",
-      "input_model": "/tf_dataset2/models/onnx/llama-7b",
+      "input_model": "/tf_dataset2/models/onnx/llama-2-7b",
       "main_script": "main.py",
       "batch_size": 1
     },
-    "llama-7b-awq": {
+    "llama-2-7b-awq": {
       "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
       "dataset_location": "",
-      "input_model": "/tf_dataset2/models/onnx/llama-7b",
+      "input_model": "/tf_dataset2/models/onnx/llama-2-7b",
       "main_script": "main.py",
       "batch_size": 1
     },
-    "llama-7b-gptq": {
+    "llama-2-7b-gptq": {
       "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
       "dataset_location": "",
-      "input_model": "/tf_dataset2/models/onnx/llama-7b",
+      "input_model": "/tf_dataset2/models/onnx/llama-2-7b",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "llama-2-7b-woq_tune": {
+      "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/onnx/llama-2-7b",
       "main_script": "main.py",
       "batch_size": 1
     },
@@ -868,11 +882,18 @@
       "main_script": "main.py",
       "batch_size": 1
     },
-    "table_transformer": {
+    "table_transformer_structure_recognition": {
       "model_src_dir": "object_detection/table_transformer/quantization/ptq_static",
-      "dataset_location": "/tf_dataset/dataset/PubTables-1M-Structure",
-      "input_model": "/tf_dataset2/models/onnx/table-transformer/model.onnx",
-      "main_script": "table-transformer/src/main.py",
+      "dataset_location": "/tf_dataset/dataset/PubTables-1M",
+      "input_model": "/tf_dataset2/models/onnx/table-transformer/pubtables1m_structure_detr_r18.onnx",
+      "main_script": "patch",
+      "batch_size": 1
+    },
+    "table_transformer_detection": {
+      "model_src_dir": "object_detection/table_transformer/quantization/ptq_static",
+      "dataset_location": "/tf_dataset/dataset/PubTables-1M",
+      "input_model": "/tf_dataset2/models/onnx/table-transformer/pubtables1m_detection_detr_r18.onnx",
+      "main_script": "patch",
       "batch_size": 1
     },
     "hf_codebert": {

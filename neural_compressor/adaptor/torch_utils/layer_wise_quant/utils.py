@@ -25,12 +25,15 @@ from neural_compressor.utils.utility import LazyImport
 torch = LazyImport("torch")
 from accelerate import init_empty_weights
 from accelerate.utils import set_module_tensor_to_device
-from transformers import AutoConfig
+from transformers import AutoConfig, AutoModelForCausalLM
 from transformers.models.auto.auto_factory import _BaseAutoModelClass
 
+from ....config import options
 from ..model_wrapper import QDQLayer
 from ..util import logger
 from .torch_load import load
+
+LWQ_WORKSPACE = os.path.join(options.workspace, "lwq_tmpdir")
 
 
 def get_module(model, key):
@@ -104,7 +107,7 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
         return file_path
 
 
-def load_shell(pretrained_model_name_or_path, cls, **kwargs):
+def load_empty_model(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs):
     """Load a empty model."""
     is_local = os.path.isdir(pretrained_model_name_or_path)
     if is_local:  # pragma: no cover
@@ -121,6 +124,7 @@ def load_shell(pretrained_model_name_or_path, cls, **kwargs):
             model = cls(config)
     model.tie_weights()
     model.eval()
+    model.path = pretrained_model_name_or_path
     return model
 
 
@@ -197,31 +201,53 @@ def _get_path(pretrained_model_name_or_path):
     return path
 
 
-def register_weight_hooks(model, path, device="cpu", clean_weight=True):
-    def forward_pre_hook(name):
-        def load_value(param_name):
-            if "lm_head" in param_name and getattr(model.config, "tie_word_embeddings", True):
-                input_embeddings = model.get_input_embeddings()
-                for name, module in modules:
-                    if module == input_embeddings:
-                        param_name = name + "." + param_name.split(".")[-1]
-            prefix = model.base_model_prefix
-            if "pytorch_model.bin.index.json" in os.listdir(path):
-                value = load_tensor_from_shard(path, param_name, prefix)
-            else:
-                value = load_tensor(os.path.join(path, "pytorch_model.bin"), param_name, prefix)
-            return value
+def load_value(model, param_name, path):
+    if "lm_head" in param_name and getattr(model.config, "tie_word_embeddings", True):
+        input_embeddings = model.get_input_embeddings()
+        modules = get_named_children(model)
+        for name, module in modules:
+            if module == input_embeddings:
+                param_name = name + "." + param_name.split(".")[-1]
+    prefix = model.base_model_prefix
+    if "pytorch_model.bin.index.json" in os.listdir(path):
+        value = load_tensor_from_shard(path, param_name, prefix)
+    else:
+        value = load_tensor(os.path.join(path, "pytorch_model.bin"), param_name, prefix)
+    return value
 
+
+def load_module(model, module_name, path, device="cpu"):
+    module = get_module(model, module_name)
+    for n, p in module.named_parameters():
+        param_name = module_name + "." + n
+        value = load_value(model, param_name, path)
+        set_module_tensor_to_device(model, param_name, device, value)
+
+
+def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_path=None):
+    if saved_path:
+        os.makedirs(saved_path, exist_ok=True)
+
+    def forward_pre_hook(name):
         def hook(module, input):
+            state_dict = None
+            if os.path.exists(os.path.join(LWQ_WORKSPACE, f"{name}.pt")):
+                state_dict = torch.load(os.path.join(LWQ_WORKSPACE, f"{name}.pt"))
             for n, p in module.named_parameters():
                 param_name = name + "." + n
-                value = load_value(param_name)
+                if state_dict:
+                    value = state_dict[n]
+                else:
+                    value = load_value(model, param_name, path)
                 set_module_tensor_to_device(model, param_name, device, value)
 
         return hook
 
     def forward_hook(name):
         def hook(module, input, output):
+            if saved_path:
+                file_path = os.path.join(saved_path, f"{name}.pt")
+                torch.save(module.state_dict(), file_path)
             clean_module_weight(module)
 
         return hook

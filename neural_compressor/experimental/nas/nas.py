@@ -26,6 +26,7 @@ import shutil
 from collections.abc import Iterable
 
 import numpy as np
+from deprecated import deprecated
 
 from neural_compressor.conf.config import Conf, NASConfig
 from neural_compressor.conf.pythonic_config import Config
@@ -37,6 +38,7 @@ from .search_algorithms import BayesianOptimizationSearcher, GridSearcher, Rando
 torch = LazyImport("torch")
 
 
+@deprecated(version="2.0")
 class NAS(object):
     """Create object of different NAS approaches.
 
@@ -71,6 +73,7 @@ class NAS(object):
         return NASMethods[method](conf_fname_or_obj, *args, **kwargs)
 
 
+@deprecated(version="2.0")
 class NASBase(object):
     """Base class for defining the common methods of different NAS approaches.
 

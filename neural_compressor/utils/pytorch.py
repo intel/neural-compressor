@@ -197,7 +197,7 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, example_inputs, **kwarg
     return model
 
 
-def load_weight_only(checkpoint_dir, model):
+def load_weight_only(checkpoint_dir, model, layer_wise=False):
     """Load model in weight_only mode.
 
     Args:
@@ -226,12 +226,25 @@ def load_weight_only(checkpoint_dir, model):
             module = util.fetch_module(model, op_name)
             new_module = MulLinear(module)
             util.set_module(model, op_name, new_module)
-    model.load_state_dict(torch.load(weights_file))
+    if layer_wise or (hasattr(model, "device") and str(model.device)) == "meta":
+        from ..adaptor.torch_utils.layer_wise_quant.utils import get_named_children, set_module_tensor_to_device
+
+        # state_dict = torch.load(weights_file)
+        modules = get_named_children(model)
+        for name, module in modules:
+            for n, p in module.named_parameters():
+                param_name = name + "." + n
+                value = torch.load(
+                    os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)), f"{param_name}.pt")
+                )
+                set_module_tensor_to_device(model, param_name, "cpu", value)
+    else:
+        model.load_state_dict(torch.load(weights_file))
     logger.info("Load weight_only quantized model")
     return model
 
 
-def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
+def load(checkpoint_dir=None, model=None, layer_wise=False, history_cfg=None, **kwargs):
     """Execute the quantize process on the specified model.
 
     Args:
@@ -248,7 +261,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     """
     weigth_only = kwargs.get("weight_only", False)
     if weigth_only:
-        return load_weight_only(checkpoint_dir, model)
+        return load_weight_only(checkpoint_dir, model, layer_wise=layer_wise)
     if checkpoint_dir is not None:
         if isinstance(checkpoint_dir, dict):
             stat_dict = checkpoint_dir
@@ -450,4 +463,51 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
             mismatch_log = model.load_state_dict(stat_dict, strict=False)
             assert len(mismatch_log.unexpected_keys) == 0, "Loading state_dict failed: {}".format(mismatch_log)
     util.get_embedding_contiguous(model)
+    return model
+
+
+def recover_model_from_json(model, json_file_path, example_inputs):
+    """Recover ipex model from JSON file.
+
+    Args:
+        model (object): fp32 model need to do quantization.
+        json_file_path (json): configuration JSON file for ipex.
+        example_inputs (tuple or torch.Tensor or dict): example inputs that will be passed to the ipex function.
+
+    Returns:
+        (object): quantized model
+    """
+    from ..utils.utility import LazyImport
+
+    ipex = LazyImport("intel_extension_for_pytorch")
+    from torch.ao.quantization.observer import MinMaxObserver
+
+    qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5, act_observer=MinMaxObserver())
+    if isinstance(example_inputs, dict):
+        model = ipex.quantization.prepare(model, qconfig, example_kwarg_inputs=example_inputs, inplace=True)
+    else:
+        model = ipex.quantization.prepare(model, qconfig, example_inputs=example_inputs, inplace=True)
+    model.load_qconf_summary(qconf_summary=json_file_path)
+    model = ipex.quantization.convert(model, inplace=True)
+    with torch.no_grad():
+        try:
+            if isinstance(example_inputs, dict):
+                # pylint: disable=E1120,E1123
+                model = torch.jit.trace(model, example_kwarg_inputs=example_inputs)
+            else:
+                model = torch.jit.trace(model, example_inputs)
+            model = torch.jit.freeze(model.eval())
+        except:
+            if isinstance(example_inputs, dict):
+                # pylint: disable=E1120,E1123
+                model = torch.jit.trace(model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False)
+            else:
+                model = torch.jit.trace(model, example_inputs, strict=False)
+            model = torch.jit.freeze(model.eval())
+            if isinstance(example_inputs, dict):
+                model(**example_inputs)
+                model(**example_inputs)
+            else:
+                model(example_inputs)
+                model(example_inputs)
     return model

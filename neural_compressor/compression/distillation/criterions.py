@@ -17,6 +17,8 @@
 """Initialize critetion classes.
 
 Classes includes:
+    TensorFlowCrossEntropyLoss, PyTorchCrossEntropyLoss,
+    TensorFlowSparseCategoricalCrossentropy,
     TensorflowKnowledgeDistillationLoss, PyTorchKnowledgeDistillationLoss,
     PyTorchIntermediateLayersKnowledgeDistillationLoss.
 """
@@ -91,7 +93,12 @@ class Criterions(object):
         Returns:
             cls: criterion class.
         """
-        assert criterion_type in self.criterions.keys(), "only support criterions in {}".format(self.criterions.keys())
+        assert (
+            criterion_type in self.criterions.keys()
+        ), "only support criterions in {} \
+            , but got criterion type {}".format(
+            self.criterions.keys(), criterion_type
+        )
 
         return self.criterions[criterion_type]
 
@@ -128,6 +135,119 @@ def criterion_registry(criterion_type, framework):
         return cls
 
     return decorator_criterion
+
+
+@criterion_registry("CrossEntropyLoss", "tensorflow")
+class TensorFlowCrossEntropyLoss(object):
+    """TensorFlow CrossEntropyLoss criterion."""
+
+    def __init__(self, param_dict):
+        """Initialize the Datasets class.
+
+        Args:
+            param_dict (dict): The dict of parameters setting by user for CrossEntropyLoss criterion.
+        """
+        assert isinstance(param_dict, dict), "This criterion constructor parameter must be a dict"
+        self._param_dict = param_dict
+
+    def _mapping(self):
+        _param_map = {"reduction": "reduction", "from_logits": "from_logits"}
+        _dict = {}
+        for key in self._param_dict:
+            if key in _param_map:
+                if key == "reduction":
+                    assert self._param_dict[key] in [
+                        "auto",
+                        "none",
+                        "sum",
+                        "sum_over_batch_size",
+                    ], "Supported reduction value for tensorflow is auto, none, sum, sum_over_batch_size"
+                _dict.update({_param_map[key]: self._param_dict[key]})
+        return _dict
+
+    def __call__(self):
+        """Call the TensorFlowCrossEntropyLoss.
+
+        Returns:
+            cls: criterion class.
+            param_dict(dict): param_dict
+        """
+        return tf.keras.losses.CategoricalCrossentropy, self._mapping()
+
+
+@criterion_registry("SparseCategoricalCrossentropy", "tensorflow")
+class TensorFlowSparseCategoricalCrossentropy(object):
+    """TensorFlow SparseCategoricalCrossentropyLoss criterion."""
+
+    def __init__(self, param_dict):
+        """Initialize the Datasets class.
+
+        Args:
+            param_dict (string): param_dict.
+        """
+        assert isinstance(param_dict, dict), "This criterion constructor parameter must be a dict"
+        self._param_dict = param_dict
+
+    def _mapping(self):
+        _param_map = {"reduction": "reduction", "from_logits": "from_logits"}
+        _dict = {}
+        for key in self._param_dict:
+            if key in _param_map:
+                if key == "reduction":
+                    assert self._param_dict[key] in [
+                        "auto",
+                        "none",
+                        "sum",
+                        "sum_over_batch_size",
+                    ], "Supported reduction value for tensorflow is auto, none, sum, sum_over_batch_size"
+                _dict.update({_param_map[key]: self._param_dict[key]})
+        return _dict
+
+    def __call__(self):
+        """Call the TensorFlowSparseCategoricalCrossentropy.
+
+        Returns:
+            cls: criterion class.
+            param_dict(dict): param_dict
+        """
+        return tf.keras.losses.SparseCategoricalCrossentropy, self._mapping()
+
+
+@criterion_registry("CrossEntropyLoss", "pytorch")
+class PyTorchCrossEntropyLoss(object):
+    """PyTorch CrossEntropyLoss criterion."""
+
+    def __init__(self, param_dict):
+        """Initialize the PyTorchCrossEntropyLoss class.
+
+        Args:
+            param_dict (string): param_dict.
+        """
+        assert isinstance(param_dict, dict), "This criterion constructor parameter must be a dict"
+        self._param_dict = param_dict
+
+    def _mapping(self):
+        _param_map = {"reduction": "reduction"}
+        _dict = {}
+        for key in self._param_dict:
+            if key in _param_map:
+                if key == "reduction":
+                    assert self._param_dict[key] in [
+                        "none",
+                        "mean",
+                        "sum",
+                    ], "Supported reduction value is none, mean, sum"
+                _dict.update({_param_map[key]: self._param_dict[key]})
+        return _dict
+
+    def __call__(self):
+        """Call the PyTorchCrossEntropyLoss.
+
+        Returns:
+            cls: criterion class.
+            param_dict(dict): param_dict
+        """
+        return torch.nn.CrossEntropyLoss, self._mapping()
 
 
 class KnowledgeDistillationFramework(object):
@@ -386,7 +506,7 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
             if device != model_device:
                 model.to(device)
             with torch.no_grad():
-                outputs = pytorch_forward_wrapper(model, input, device=device)
+                outputs = pytorch_forward_wrapper(model, input)
             self.teacher_outputs = outputs
         return outputs
 
@@ -916,7 +1036,7 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(IntermediateLayersKnowl
         Raises:
             AttributeError: AttributeError
         """
-        from neural_compressor.experimental.common import torch_utils
+        from neural_compressor.compression.distillation import utility
 
         def register_model_forward_hook(model, path, output_process="", student=False):
             module = model
@@ -927,7 +1047,7 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(IntermediateLayersKnowl
                         module = module.__getattr__(node)
                     except:
                         raise AttributeError("There is no path {} in the model.".format(path))
-            return module.register_forward_hook(torch_utils.get_activation(path, output_process, student))
+            return module.register_forward_hook(utility.get_activation(path, output_process, student))
 
         assert isinstance(self.student_model, torch.nn.Module) and isinstance(self.teacher_model, torch.nn.Module), (
             "Expect student_model and teacher_model to be an torch.nn.Module object, "
@@ -939,8 +1059,8 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(IntermediateLayersKnowl
             student_output_process, teacher_output_process = self.layer_output_process[idx]
             st_handle = register_model_forward_hook(self.student_model, student_layer, student_output_process, True)
             te_handle = register_model_forward_hook(self.teacher_model, teacher_layer, teacher_output_process)
-            torch_utils.STUDENT_FEATURES = self.student_features
-            torch_utils.TEACHER_FEATURES = self.teacher_features
+            utility.STUDENT_FEATURES = self.student_features
+            utility.TEACHER_FEATURES = self.teacher_features
             self.hook_handles.extend([st_handle, te_handle])
 
     def remove_all_hooks(self):
@@ -1034,7 +1154,7 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(IntermediateLayersKnowl
         if device != model_device:
             model.to(device)
         with torch.no_grad():
-            outputs = pytorch_forward_wrapper(model, input, device=device)
+            outputs = pytorch_forward_wrapper(model, input)
         return outputs
 
     def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
@@ -1441,7 +1561,7 @@ class PyTorchSelfKnowledgeDistillationLoss(SelfKnowledgeDistillationLoss):
             if device != model_device:
                 model.to(device)
             with torch.no_grad():
-                outputs = pytorch_forward_wrapper(model, input, device=device)
+                outputs = pytorch_forward_wrapper(model, input)
             self.teacher_outputs = outputs
         return outputs
 

@@ -19,6 +19,8 @@
 
 import os
 
+from deprecated import deprecated
+
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.conf.config import Conf, NASConfig
 from neural_compressor.experimental.component import Component
@@ -28,6 +30,7 @@ from .nas import NASBase
 from .nas_utils import nas_registry
 
 
+@deprecated(version="2.0")
 @nas_registry("Basic")
 class BasicNAS(NASBase, Component):
     """Basic NAS approach.
@@ -90,6 +93,7 @@ class BasicNAS(NASBase, Component):
         """Initialize the train and evaluation settings."""
         framework_specific_info = {
             "device": self.cfg.device,
+            "backend": self.cfg.backend,
             "random_seed": self.cfg.tuning.random_seed,
             "workspace_path": self.cfg.tuning.workspace.path,
             "q_dataloader": None,
