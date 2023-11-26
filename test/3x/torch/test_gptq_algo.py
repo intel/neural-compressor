@@ -172,7 +172,10 @@ class TestGPTQ(unittest.TestCase):
                 from neural_compressor.torch.algorithms.gptq import DataloaderPreprocessor
 
                 dataloaderPreprocessor = DataloaderPreprocessor(
-                    dataloader_original=dataloader_cls(length), use_max_length=False, pad_max_length=512, nsamples=128
+                    dataloader_original=dataloader_cls(length),
+                    use_max_length=d["use_max_length"],
+                    pad_max_length=d["pad_max_length"],
+                    nsamples=128,
                 )
                 dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
                 quant_config.dataloader_len = len(dataloader_for_calibration)
