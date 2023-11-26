@@ -11,8 +11,9 @@ pip install pytest
 pip list
 
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/3x/coverage.3x_pt
+inc_path=$(python -c 'import neural_compressor; print(neural_compressor.__path__[0])')
 cd /neural-compressor/test || exit 1
-find ./3x/torch/* -name "test*.py" | sed 's,\.\/,coverage run --append ,g' | sed 's/$/ --verbose/'> run.sh
+find ./3x/torch/* -name "test*.py" | sed 's,\.\/,coverage run --source='"${inc_path}"' --append ,g' | sed 's/$/ --verbose/'> run.sh
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
