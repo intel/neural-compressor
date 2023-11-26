@@ -197,6 +197,7 @@ class GPTQuantizer(object):
         model,
         weight_config={},
         nsamples=128,
+        dataloader_len=10,
         use_max_length=True,
         pad_max_length=2048,
         device=None,
@@ -255,153 +256,24 @@ class GPTQuantizer(object):
         self.pad_max_length = pad_max_length
         self.dataloader_original = None
         self.dataloader = []
+        self.dataloader_len = dataloader_len
         self.nsamples = nsamples
         self.args = args
         self.kwargs = kwargs
-        self.prepare_dataloader()
+        self.run_fn = self.kwargs.get("run_fn", None)
+        self.run_args = self.kwargs.get("run_args", None)
+        self.dataloader_len = dataloader_len
+        # compare 2.x, use run_fn to calibration
+        # self.prepare_dataloader()
+        self._post_init()
 
-    def prepare_dataloader(self):
-        if self.dataloader_original is None:
-            run_fn = self.kwargs.get("run_fn", None)
-            run_args = self.kwargs.get("run_args", None)
-            assert run_fn, "Since the dataloader not is provided, please provide a run func as the "
-            self.dataloader_original = run_fn(run_args)
-        if self.use_max_length:
-            # (Recommend) only take sequence whose length exceeds self.pad_max_length,
-            # which preserves calibration's tokens are all valid
-            # This is GPTQ official dataloader implementation
-            self.obtain_first_n_samples_fulllength()
-        else:
-            # general selection, no padding, not GPTQ original implementation.
-            self.obtain_first_n_samples()
-        try:
-            self.cache_key_arguments = {
-                "i": 0
-            }  # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
-            # Note that the first elements in cache_positional_arguments is main input: hidden_states
-            self.cache_positional_arguments = []  # a list of list, positional arguments ("rotary_pos_emb" in chatglm)
-            self.is_ready = True
-        except:
-            logger.warning("GPTQ Quantizer initialization failed!")
-            pass
-
-    def obtain_first_n_samples(self, seed=0):
-        """Get first nsample data as the real calibration dataset."""
-        self.dataloader.clear()
-        random.seed(seed)
-        for batch in self.dataloader_original:
-            # process data, depends on its data type.
-            if len(self.dataloader) == self.nsamples:
-                logger.info(f"Successfully collect {self.nsamples} calibration samples.")
-                break
-            # list, tuple
-            if isinstance(batch, list) or isinstance(batch, tuple):
-                if batch[0].shape[-1] > self.pad_max_length:
-                    i = random.randint(0, batch[0].shape[-1] - self.pad_max_length - 1)
-                    j = i + self.pad_max_length
-                    batch_final = []
-                    for item in batch:
-                        if isinstance(item, torch.Tensor) and item.shape.__len__() == 2:
-                            batch_final.append(item[:, i:j])
-                        else:
-                            batch_final.append(item)
-                else:
-                    batch_final = batch[:]
-            # dict
-            elif isinstance(batch, dict):
-                try:
-                    length = batch["input_ids"].shape[-1]
-                except:
-                    logger.warning("Please make sure your dict'like data contains key of 'input_ids'.")
-                    continue
-                batch_final = {}
-                if length > self.pad_max_length:
-                    i = random.randint(0, length - self.pad_max_length - 1)
-                    j = i + self.pad_max_length
-                    # may have to slice every sequence related data
-                    for key in batch.keys():
-                        if isinstance(batch[key], torch.Tensor):
-                            batch_final[key] = batch[key][:, i:j]  # slice on sequence length dim
-                        else:
-                            batch_final[key] = batch[key]
-                else:
-                    batch_final = batch
-            # tensor
-            else:
-                if batch.shape[-1] > self.pad_max_length:
-                    i = random.randint(0, batch.shape[-1] - self.pad_max_length - 1)
-                    j = i + self.pad_max_length
-                    batch_final = batch[:, i:j]
-                else:
-                    batch_final = batch
-            self.dataloader.append(batch_final)
-
-        if len(self.dataloader) < self.nsamples:
-            logger.warning(f"Try to use {self.nsamples} data, but entire dataset size is {len(self.dataloader)}.")
-
-    def obtain_first_n_samples_fulllength(self, seed=0):
-        self.dataloader.clear()
-        random.seed(seed)
-        unified_length = self.pad_max_length
-        for batch in self.dataloader_original:
-            if len(self.dataloader) == self.nsamples:
-                logger.info(f"Successfully collect {self.nsamples} calibration samples.")
-                break
-            # list & tuple, gpt-j-6b mlperf, etc.
-            if isinstance(batch, list) or isinstance(batch, tuple):
-                if batch[0].shape[-1] == unified_length:
-                    batch_final = batch[:]
-                elif batch[0].shape[-1] > unified_length:
-                    i = random.randint(0, batch[0].shape[-1] - unified_length - 1)
-                    j = i + unified_length
-                    batch_final = []
-                    for item in batch:
-                        if isinstance(item, torch.Tensor) and item.shape.__len__() == 2:
-                            batch_final.append(item[:, i:j])
-                        else:
-                            batch_final.append(item)
-                else:
-                    # not match max length, not include in target dataset
-                    continue
-            # dict
-            elif isinstance(batch, dict):
-                try:
-                    length = batch["input_ids"].shape[-1]
-                except:
-                    logger.warning("Please make sure your dict'like data contains key of 'input_ids'.")
-                    continue
-                batch_final = {}
-                if length == self.pad_max_length:
-                    batch_final = batch
-                elif length > self.pad_max_length:
-                    i = random.randint(0, length - self.pad_max_length - 1)
-                    j = i + self.pad_max_length
-                    # may have to slice every sequence related data
-                    for key in batch.keys():
-                        if isinstance(batch[key], torch.Tensor):
-                            batch_final[key] = batch[key][:, i:j]  # slice on sequence length dim with same position
-                        else:
-                            batch_final[key] = batch[key]
-                else:
-                    # not match max length, not include in target dataset
-                    continue
-            # tensor
-            else:
-                if batch.shape[-1] == unified_length:
-                    batch_final = batch
-                elif batch.shape[-1] > unified_length:
-                    i = random.randint(0, batch.shape[-1] - unified_length - 1)
-                    j = i + unified_length
-                    batch_final = batch[:, i:j]
-                else:
-                    # not match max length, not include in target dataset
-                    continue
-            self.dataloader.append(batch_final)
-        if len(self.dataloader) < self.nsamples:  # pragma: no cover
-            logger.warning(
-                f"Trying to allocate {self.nsamples} data with fixed length {unified_length}, \
-            but only {len(self.dataloader)} samples are found. Please use smaller 'self.pad_max_length' value."
-            )
+    def _post_init(self):
+        self.cache_key_arguments = {
+            "i": 0
+        }  # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
+        # Note that the first elements in cache_positional_arguments is main input: hidden_states
+        self.cache_positional_arguments = []  # a list of list, positional arguments ("rotary_pos_emb" in chatglm)
+        self.is_ready = True
 
     def get_full_layer_name(self, sub_layer_name, block_idx):
         transformer_name = self.gptq_related_blocks["transformers_name"]
@@ -483,18 +355,24 @@ class GPTQuantizer(object):
 
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
-        for batch in tqdm(self.dataloader):
-            if not self.layer_wise:
-                batch = move_input_to_device(batch, self.device)
-            try:
-                if isinstance(batch, tuple) or isinstance(batch, list):
-                    self.model(batch[0])
-                elif isinstance(batch, dict):
-                    self.model(**batch)
-                else:
-                    self.model(batch)
-            except ValueError:
-                pass
+        logger.info("Collecting calibration inputs by running the run_fn provided by user.")
+        if self.run_args:
+            self.run_fn(self.model, self.run_args)
+        else:
+            self.run_fn(self.model)
+
+        # for batch in tqdm(self.dataloader):
+        #     if not self.layer_wise:
+        #         batch = move_input_to_device(batch, self.device)
+        #     try:
+        #         if isinstance(batch, tuple) or isinstance(batch, list):
+        #             self.model(batch[0])
+        #         elif isinstance(batch, dict):
+        #             self.model(**batch)
+        #         else:
+        #             self.model(batch)
+        #     except ValueError:
+        #         pass
         # output inp data shape
         logger.info("All calibration data's shape =>")
         # check all hidden_states shape
@@ -596,7 +474,8 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache_key_arguments.pop("i")
-            for j in range(len(self.dataloader)):
+            # for j in range(len(self.dataloader)):
+            for j in range(self.dataloader_len):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
@@ -632,7 +511,8 @@ class GPTQuantizer(object):
             # Step 2.5: replace output data with quantized weights
             outs = []
             idx = self.cache_key_arguments.pop("i")
-            for j in range(len(self.dataloader)):
+            # for j in range(len(self.dataloader)):
+            for j in range(self.dataloader_len):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
@@ -971,6 +851,7 @@ def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig])
                 "mse": op_config.enable_mse_search,
             }
             nsamples = op_config.nsamples
+            dataloader_len = op_config.dataloader_len
             use_max_length = op_config.use_max_length
             pad_max_length = op_config.pad_max_length
             device = op_config.device
@@ -981,13 +862,15 @@ def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig])
         but you have not set length value. Default sequence length is 2048 and this might cause inference error!"
         )
 
-    return weight_config, nsamples, use_max_length, pad_max_length, device
+    return weight_config, nsamples, use_max_length, pad_max_length, device, dataloader_len
 
 
 def apply_gptq_quantize(model, configs_mapping, *args, **kwargs):
     """Apply gptq."""
     # TODO: unify weight_config keys, add docstring, and support default config
-    weight_config, nsamples, use_max_length, pad_max_length, device = gptq_config_mapping(configs_mapping)
+    weight_config, nsamples, use_max_length, pad_max_length, device, dataloader_len = gptq_config_mapping(
+        configs_mapping
+    )
     assert isinstance(model, torch.nn.Module), "only support torch module"
     # TODO (Yi) disable layer-wise and model_path first
     layer_wise = False
@@ -998,8 +881,170 @@ def apply_gptq_quantize(model, configs_mapping, *args, **kwargs):
         assert model_path is not None, "model_path should not be None when use layer_wise mode"
 
     gptq_quantizer = GPTQuantizer(
-        model, weight_config, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise, *args, **kwargs
+        model,
+        weight_config,
+        nsamples,
+        dataloader_len,
+        use_max_length,
+        pad_max_length,
+        device,
+        layer_wise=layer_wise,
+        *args,
+        **kwargs,
     )
     fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
     logger.info("GPTQ quantization done.")
     return fp32_modified_model, gptq_config
+
+
+class DataloaderPreprocessor:
+    def __init__(self, dataloader_original, use_max_length=False, pad_max_length=2048, nsamples=128) -> None:
+        self.dataloader_original = dataloader_original
+        self.use_max_length = use_max_length
+        self.pad_max_length = pad_max_length
+        self.nsamples = nsamples
+        self.dataloader = []
+        self.is_ready = False
+
+    def get_prepared_dataloader(self):
+        if not self.is_ready:
+            self.prepare_dataloader()
+        return self.dataloader
+
+    def prepare_dataloader(self):
+        if self.use_max_length:
+            # (Recommend) only take sequence whose length exceeds self.pad_max_length,
+            # which preserves calibration's tokens are all valid
+            # This is GPTQ official dataloader implementation
+            self.obtain_first_n_samples_fulllength()
+        else:
+            # general selection, no padding, not GPTQ original implementation.
+            self.obtain_first_n_samples()
+        try:
+            self.cache_key_arguments = {
+                "i": 0
+            }  # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
+            # Note that the first elements in cache_positional_arguments is main input: hidden_states
+            self.cache_positional_arguments = []  # a list of list, positional arguments ("rotary_pos_emb" in chatglm)
+            self.is_ready = True
+        except:
+            logger.warning("GPTQ Quantizer initialization failed!")
+            pass
+
+    def obtain_first_n_samples(self, seed=0):
+        """Get first nsample data as the real calibration dataset."""
+        self.dataloader.clear()
+        random.seed(seed)
+        for batch in self.dataloader_original:
+            # process data, depends on its data type.
+            if len(self.dataloader) == self.nsamples:
+                logger.info(f"Successfully collect {self.nsamples} calibration samples.")
+                break
+            # list, tuple
+            if isinstance(batch, list) or isinstance(batch, tuple):
+                if batch[0].shape[-1] > self.pad_max_length:
+                    i = random.randint(0, batch[0].shape[-1] - self.pad_max_length - 1)
+                    j = i + self.pad_max_length
+                    batch_final = []
+                    for item in batch:
+                        if isinstance(item, torch.Tensor) and item.shape.__len__() == 2:
+                            batch_final.append(item[:, i:j])
+                        else:
+                            batch_final.append(item)
+                else:
+                    batch_final = batch[:]
+            # dict
+            elif isinstance(batch, dict):
+                try:
+                    length = batch["input_ids"].shape[-1]
+                except:
+                    logger.warning("Please make sure your dict'like data contains key of 'input_ids'.")
+                    continue
+                batch_final = {}
+                if length > self.pad_max_length:
+                    i = random.randint(0, length - self.pad_max_length - 1)
+                    j = i + self.pad_max_length
+                    # may have to slice every sequence related data
+                    for key in batch.keys():
+                        if isinstance(batch[key], torch.Tensor):
+                            batch_final[key] = batch[key][:, i:j]  # slice on sequence length dim
+                        else:
+                            batch_final[key] = batch[key]
+                else:
+                    batch_final = batch
+            # tensor
+            else:
+                if batch.shape[-1] > self.pad_max_length:
+                    i = random.randint(0, batch.shape[-1] - self.pad_max_length - 1)
+                    j = i + self.pad_max_length
+                    batch_final = batch[:, i:j]
+                else:
+                    batch_final = batch
+            self.dataloader.append(batch_final)
+
+        if len(self.dataloader) < self.nsamples:
+            logger.warning(f"Try to use {self.nsamples} data, but entire dataset size is {len(self.dataloader)}.")
+
+    def obtain_first_n_samples_fulllength(self, seed=0):
+        self.dataloader.clear()
+        random.seed(seed)
+        unified_length = self.pad_max_length
+        for batch in self.dataloader_original:
+            if len(self.dataloader) == self.nsamples:
+                logger.info(f"Successfully collect {self.nsamples} calibration samples.")
+                break
+            # list & tuple, gpt-j-6b mlperf, etc.
+            if isinstance(batch, list) or isinstance(batch, tuple):
+                if batch[0].shape[-1] == unified_length:
+                    batch_final = batch[:]
+                elif batch[0].shape[-1] > unified_length:
+                    i = random.randint(0, batch[0].shape[-1] - unified_length - 1)
+                    j = i + unified_length
+                    batch_final = []
+                    for item in batch:
+                        if isinstance(item, torch.Tensor) and item.shape.__len__() == 2:
+                            batch_final.append(item[:, i:j])
+                        else:
+                            batch_final.append(item)
+                else:
+                    # not match max length, not include in target dataset
+                    continue
+            # dict
+            elif isinstance(batch, dict):
+                try:
+                    length = batch["input_ids"].shape[-1]
+                except:
+                    logger.warning("Please make sure your dict'like data contains key of 'input_ids'.")
+                    continue
+                batch_final = {}
+                if length == self.pad_max_length:
+                    batch_final = batch
+                elif length > self.pad_max_length:
+                    i = random.randint(0, length - self.pad_max_length - 1)
+                    j = i + self.pad_max_length
+                    # may have to slice every sequence related data
+                    for key in batch.keys():
+                        if isinstance(batch[key], torch.Tensor):
+                            batch_final[key] = batch[key][:, i:j]  # slice on sequence length dim with same position
+                        else:
+                            batch_final[key] = batch[key]
+                else:
+                    # not match max length, not include in target dataset
+                    continue
+            # tensor
+            else:
+                if batch.shape[-1] == unified_length:
+                    batch_final = batch
+                elif batch.shape[-1] > unified_length:
+                    i = random.randint(0, batch.shape[-1] - unified_length - 1)
+                    j = i + unified_length
+                    batch_final = batch[:, i:j]
+                else:
+                    # not match max length, not include in target dataset
+                    continue
+            self.dataloader.append(batch_final)
+        if len(self.dataloader) < self.nsamples:  # pragma: no cover
+            logger.warning(
+                f"Trying to allocate {self.nsamples} data with fixed length {unified_length}, \
+            but only {len(self.dataloader)} samples are found. Please use smaller 'self.pad_max_length' value."
+            )

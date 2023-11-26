@@ -162,6 +162,7 @@ class GPTQConfig(BaseConfig):
         "act_dtype",
         "group_dim",
         "nsamples",
+        "dataloader_len",
         "percdamp",
         "act_order",
         "use_max_length",
@@ -182,6 +183,7 @@ class GPTQConfig(BaseConfig):
         act_dtype: str = "fp32",
         group_dim: int = 1,
         nsamples: int = 128,
+        dataloader_len: int = 10,
         percdamp: float = 0.01,
         act_order: bool = False,
         use_max_length: bool = True,
@@ -205,6 +207,8 @@ class GPTQConfig(BaseConfig):
         self.enable_mse_search = enable_mse_search
         self.group_dim = group_dim
         self.nsamples = nsamples
+        # TODO(Yi) detect it auto
+        self.dataloader_len = dataloader_len
         self.percdamp = percdamp
         self.act_order = act_order
         self.use_max_length = use_max_length

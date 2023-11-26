@@ -61,5 +61,5 @@ def quantize(
     for algo_name, algo_func in algos_mapping.items():
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
-            model = algo_func(model, configs_mapping, run_fn=run_fn, calib_func_arg=run_args)
+            model = algo_func(model, configs_mapping, run_fn=run_fn, run_args=run_args)
     return model
