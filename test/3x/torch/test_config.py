@@ -1,5 +1,6 @@
 import unittest
-
+import copy
+import transformers
 from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
@@ -28,6 +29,11 @@ class TestQuantizationConfig(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.fp32_model = build_simple_torch_model()
+        self.input = torch.randn(1, 30)
+        self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
+            "hf-internal-testing/tiny-random-GPTJForCausalLM",
+        )
+        self.lm_input = torch.ones([1, 10], dtype=torch.long)
 
     @classmethod
     def tearDownClass(self):
@@ -66,6 +72,49 @@ class TestQuantizationConfig(unittest.TestCase):
         fp32_model = build_simple_torch_model()
         qmodel = quantize(fp32_model, quant_config)
         self.assertIsNotNone(qmodel)
+
+    def test_quantize_rtndq_from_class_beginner(self):
+        from neural_compressor.torch import RTNWeightQuantConfig, quantize
+        fp32_config = RTNWeightQuantConfig(weight_dtype="fp32")
+
+        fp32_model = copy.deepcopy(self.gptj)
+        quant_config = RTNWeightQuantConfig(
+            weight_bits=4, weight_dtype="int", weight_sym=False, weight_group_size=32,
+        )
+        quant_config.set_local("lm_head", fp32_config)
+        qmodel = quantize(fp32_model, quant_config)
+        out2 = qmodel(self.lm_input)
+
+        fp32_model = copy.deepcopy(self.gptj)
+        # llama.cpp GGML_TYPE_Q4_K setting
+        quant_config = RTNWeightQuantConfig(
+            weight_bits=4, weight_dtype="int", weight_sym=False, weight_group_size=32,
+            double_quant_bits=6, double_quant_dtype="int", double_quant_sym=True, double_quant_group_size=8,
+        )
+        quant_config.set_local("lm_head", fp32_config)
+        qmodel = quantize(fp32_model, quant_config)
+        out3 = qmodel(self.lm_input)
+        self.assertTrue(torch.allclose(out3[0], out2[0], atol=1e-2))
+
+        fp32_model = copy.deepcopy(self.gptj)
+        # bitsandbytes double quant setting
+        quant_config = RTNWeightQuantConfig(
+            weight_bits=4, weight_dtype="nf4", weight_group_size=32,
+        )
+        quant_config.set_local("lm_head", fp32_config)
+        qmodel = quantize(fp32_model, quant_config)
+        out4 = qmodel(self.lm_input)
+
+        fp32_model = copy.deepcopy(self.gptj)
+        # bitsandbytes double quant setting
+        quant_config = RTNWeightQuantConfig(
+            weight_bits=4, weight_dtype="nf4", weight_group_size=32,
+            double_quant_dtype="int", double_quant_bits=4, double_quant_sym=False, double_quant_group_size=256,
+        )
+        quant_config.set_local("lm_head", fp32_config)
+        qmodel = quantize(fp32_model, quant_config)
+        out5 = qmodel(self.lm_input)
+        self.assertTrue(torch.allclose(out4[0], out5[0], atol=3e-2))
 
     def test_quantize_rtn_from_dict_advance(self):
         from neural_compressor.torch import quantize

@@ -65,6 +65,10 @@ class RTNWeightQuantConfig(BaseConfig):
         "enable_mse_search",
         "group_dim",
         "return_int",
+        "double_quant_dtype",
+        "double_quant_bits",
+        "double_quant_sym",
+        "double_quant_group_size",
     ]
     name = RTN_WEIGHT_ONLY_QUANT
 
@@ -79,6 +83,10 @@ class RTNWeightQuantConfig(BaseConfig):
         enable_mse_search: bool = False,
         group_dim: int = 1,
         return_int: bool = False,
+        double_quant_dtype: str = "fp32",
+        double_quant_bits: int = 8,
+        double_quant_sym: bool = True,
+        double_quant_group_size: int = 256,
     ):
         """Init RTN weight-only quantization config.
 
@@ -103,6 +111,10 @@ class RTNWeightQuantConfig(BaseConfig):
         self.enable_mse_search = enable_mse_search
         self.group_dim = group_dim
         self.return_int = return_int
+        self.double_quant_bits = double_quant_bits
+        self.double_quant_dtype = double_quant_dtype
+        self.double_quant_sym = double_quant_sym
+        self.double_quant_group_size = double_quant_group_size
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)
