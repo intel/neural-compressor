@@ -24,6 +24,9 @@ algos_mapping: Dict[str, Callable] = {}
 
 import torch
 
+# All constants for torch
+WHITE_MODULE_LIST = [torch.nn.Linear, torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d]
+
 
 def register_algo(name):
     """Decorator function to register algorithms in the algos_mapping dictionary.
@@ -102,4 +105,5 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
             if pair not in filter_result_set:
                 filter_result_set.add(pair)
                 filter_result.append(pair)
+    logger.debug(f"Get model info: {filter_result}")
     return filter_result
