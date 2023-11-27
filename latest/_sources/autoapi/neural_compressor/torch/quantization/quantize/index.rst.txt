@@ -19,14 +19,14 @@ Functions
 
 
 
-.. py:function:: quantize(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig, calib_func: Callable = None, calib_func_arg: Any = None) -> torch.nn.Module
+.. py:function:: quantize(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig, run_fn: Callable = None, run_args: Any = None) -> torch.nn.Module
 
    The main entry to quantize model.
 
    :param model: a float model to be quantized.
    :param quant_config: a quantization configuration.
-   :param calib_func: a calibration function for calibrating the model. Defaults to None.
-   :param calib_func_arg: positional arguments for `calib_func`. Defaults to None.
+   :param run_fn: a calibration function for calibrating the model. Defaults to None.
+   :param run_args: positional arguments for `run_fn`. Defaults to None.
 
    :returns: The quantized model.
 

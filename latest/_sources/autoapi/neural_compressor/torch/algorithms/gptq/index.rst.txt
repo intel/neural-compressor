@@ -1,0 +1,108 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.gptq`
+=================================================
+
+.. py:module:: neural_compressor.torch.algorithms.gptq
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.gptq.GPTQuantizer
+   neural_compressor.torch.algorithms.gptq.GPTQ
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.gptq.is_leaf
+   neural_compressor.torch.algorithms.gptq.trace_gptq_target_blocks
+   neural_compressor.torch.algorithms.gptq.find_layers
+   neural_compressor.torch.algorithms.gptq.find_layers_name
+   neural_compressor.torch.algorithms.gptq.log_quantizable_layers_per_transformer
+   neural_compressor.torch.algorithms.gptq.quantize
+   neural_compressor.torch.algorithms.gptq.apply_gptq_quantize
+
+
+
+.. py:function:: is_leaf(module)
+
+   Judge whether a module has no child-modules.
+
+   :param module: torch.nn.Module
+
+   :returns: whether a module has no child-modules.
+   :rtype: a bool
+
+
+.. py:function:: trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn.Sequential])
+
+   Search transformer stacked structures, which is critical in LLMs and GPTQ execution.
+
+   :param module: torch.nn.Module
+   :param module_types: List of torch.nn.Module.
+
+   :returns:
+
+             gptq_related_blocks = {
+                 "embeddings": {}, # Dict embedding layers before transformer stack module,
+                 "transformers_pre": {}, # TODO
+                 "transformers_name": string. LLMs' transformer stack module name ,
+                 "transformers": torch.nn.ModuleList. LLMs' transformer stack module,
+                 "transformers": {}, Dict# TODO
+             }
+
+
+.. py:function:: find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name='')
+
+   Get all layers with target types.
+
+
+.. py:function:: find_layers_name(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name='')
+
+   Get all layers with target types.
+
+
+.. py:function:: log_quantizable_layers_per_transformer(transformer_blocks, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D])
+
+   Print all layers which will be quantized in GPTQ algorithm.
+
+
+.. py:function:: quantize(x, scale, zero, maxq)
+
+   Do quantization.
+
+
+.. py:class:: GPTQuantizer(model, weight_config={}, nsamples=128, dataloader_len=10, use_max_length=True, pad_max_length=2048, device=None, layer_wise=False, *args, **kwargs)
+
+
+
+
+   Main API for GPTQ algorithm.
+
+   Please refer to:
+   GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers
+   url: https://arxiv.org/abs/2210.17323
+
+
+.. py:class:: GPTQ(layer, W, device='cpu')
+
+
+   Please refer to:
+   GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers (https://arxiv.org/abs/2210.17323)
+
+
+.. py:function:: apply_gptq_quantize(model, configs_mapping, *args, **kwargs)
+
+   Apply gptq.
+
+

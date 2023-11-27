@@ -1,0 +1,26 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.weight_only_algos`
+==============================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only_algos
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only_algos.rtn_quantize_entry
+
+
+
+.. py:function:: rtn_quantize_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], neural_compressor.torch.quantization.config.RTNWeightQuantConfig], *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply rtn quantization.
+
+
