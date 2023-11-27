@@ -6,6 +6,7 @@ echo "run itrex ut..."
 
 # prepare itrex
 git clone https://github.com/intel/intel-extension-for-transformers.git /intel-extension-for-transformers
+cd /intel-extension-for-transformers && git rev-parse --short HEAD
 bash /intel-extension-for-transformers/.github/workflows/script/prepare_env.sh
 bash /intel-extension-for-transformers/.github/workflows/script/install_binary.sh
 
