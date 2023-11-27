@@ -573,7 +573,7 @@ def to_numpy(data):
     """Convert to numpy ndarrays."""
     if not isinstance(data, np.ndarray):
         if not importlib.util.find_spec("torch"):
-            logger.warning(
+            logger.error(
                 "Please install torch to enable subsequent data type check and conversion, "
                 "or reorganize your data format to numpy array."
             )
