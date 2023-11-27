@@ -3118,8 +3118,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
                             if self.version.release >= Version("2.1.1").release:
                                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                                        alpha=0.5, act_observer=MinMaxObserver
-                                    )
+                                    alpha=0.5, act_observer=MinMaxObserver
+                                )
                             else:
                                 if self.sq_minmax_init:
                                     static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
@@ -3317,8 +3317,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
             if self.version.release >= Version("2.1.1").release:
                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                        alpha=0.5, act_observer=MinMaxObserver
-                    )
+                    alpha=0.5, act_observer=MinMaxObserver
+                )
             else:
                 if self.sq_minmax_init:
                     static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
