@@ -1646,7 +1646,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertEqual(len(q_capability["block_wise"]), 12)
 
     @patch("logging.Logger.warning")
-    def test_dataloader_input(self):
+    def test_dataloader_input(self, mock_warning):
         cv_dataloader = DataLoader(framework="onnxruntime", dataset=DummyCVDataset_list(shape=(3, 224, 224)))
 
         quantizer = Quantization("qlinear.yaml")
