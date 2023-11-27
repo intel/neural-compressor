@@ -1,4 +1,5 @@
 import os
+import subprocess
 import shutil
 import unittest
 from collections import OrderedDict
@@ -1644,6 +1645,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_capability = adaptor.query_fw_capability(Model(self.albert_model))
         self.assertEqual(len(q_capability["block_wise"]), 12)
 
+    @patch("logging.Logger.warning")
     def test_dataloader_input(self):
         cv_dataloader = DataLoader(framework="onnxruntime", dataset=DummyCVDataset_list(shape=(3, 224, 224)))
 
@@ -1669,6 +1671,18 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer.model = self.distilbert_model
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
+
+        cmd = 'pip uninstall torch'
+        p = subprocess.Popen(cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True) # nosec
+        p.communicate()
+        q_model = quantizer.fit()
+        call_args_list = mock_warning.call_args_list
+        first_warning_args = call_args_list[0][0]
+        self.assertEqual(call_args_list[0][0], "Please install torch to enable subsequent data type check and conversion, or reorganize your data format to numpy array.")
+
+        cmd = 'pip install torch'
+        p = subprocess.Popen(cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True) # nosec
+        p.communicate()
 
         nlp_dataloader = DummyNLPDataloader_dict("distilbert-base-uncased-finetuned-sst-2-english")
         quantizer = Quantization("qlinear.yaml")
