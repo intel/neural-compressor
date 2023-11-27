@@ -188,6 +188,98 @@ class TestGPTQ(unittest.TestCase):
                     run_args=dataloader_for_calibration,
                 )
 
+    def test_gptq_wbits(self):
+        import copy
+        import random
+
+        class GPTQLLMDataLoader:
+            def __init__(self):
+                self.batch_size = 1
+
+            def __iter__(self):
+                for i in range(20):
+                    length = random.randint(1, 1024)
+                    yield torch.ones([1, length], dtype=torch.long)
+
+        dataloader = GPTQLLMDataLoader()
+        model = copy.deepcopy(get_gpt_j())
+        weight_config = {
+            "transformer.h.0.attn.k_proj": {
+                "wbits": 4,
+                "group_size": 128,
+                "sym": True,
+                "percdamp": 0.01,
+                "perchannel": False,
+            },
+            "transformer.h.1.attn.k_proj": {
+                "wbits": 3,
+                "group_size": -1,
+                "sym": False,
+                "percdamp": 0.01,
+                "act_order": True,
+            },
+            "transformer.h.2.attn.k_proj": {
+                "wbits": 3,
+                "group_size": 32,
+                "sym": False,
+                "percdamp": 0.01,
+                "mse": True,
+                "act_order": False,
+            },
+            "transformer.h.3.attn.k_proj": {
+                "wbits": 3,
+                "group_size": 256,
+                "sym": False,
+                "percdamp": 0.01,
+                "mse": True,
+                "act_order": False,
+            },
+        }
+        from neural_compressor.torch.algorithms.gptq import DataloaderPreprocessor
+
+        dataloaderPreprocessor = DataloaderPreprocessor(
+            dataloader_original=dataloader,
+            use_max_length=True,
+            pad_max_length=512,
+            nsamples=128,
+        )
+        preprocessed_dataloader = dataloaderPreprocessor.get_prepared_dataloader()
+        from neural_compressor.torch.algorithms.gptq import GPTQuantizer
+
+        quantizer = GPTQuantizer(
+            model=model,
+            weight_config=weight_config,
+            dataloader_len=13,
+            use_max_length=True,
+            pad_max_length=512,
+            run_fn=run_fn_for_gptq,
+            run_args=preprocessed_dataloader,
+        )
+        quantizer.execute_quantization()
+        self.assertTrue(isinstance(model, torch.nn.Module))
+        self.gptj = get_gpt_j()
+
+        model = copy.deepcopy(self.gptj)
+        weight_config = {"wbits": 4}
+        dataloaderPreprocessor = DataloaderPreprocessor(
+            dataloader_original=dataloader,
+            use_max_length=False,
+            pad_max_length=512,
+            nsamples=128,
+        )
+        quantizer = GPTQuantizer(
+            model=model,
+            weight_config=weight_config,
+            dataloader_len=13,
+            use_max_length=False,
+            pad_max_length=512,
+            run_fn=run_fn_for_gptq,
+            run_args=preprocessed_dataloader,
+        )
+        quantizer.execute_quantization()
+        preprocessed_dataloader = dataloaderPreprocessor.get_prepared_dataloader()
+        self.assertTrue(isinstance(model, torch.nn.Module))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -281,15 +281,29 @@ class GPTQuantizer(object):
 
     def check_layer_config(self):
         """Copy arguments from weight_config to built-in attributes."""
-        for layer_name, config in self.weight_config.items():
-            self.weight_config[layer_name]["wbits"] = config.get("wbits", self.wbits_default)
-            self.weight_config[layer_name]["group_size"] = config.get("group_size", self.group_size_default)
-            self.weight_config[layer_name]["block_size"] = config.get("block_size", self.group_size_default)
-            self.weight_config[layer_name]["percdamp"] = config.get("pecdamp", self.percdamp_default)
-            self.weight_config[layer_name]["sym"] = config.get("sym", self.sym_default)
-            self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
-            self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
-            self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
+        if "wbits" in self.weight_config:
+            tmp_weight_config = {}
+            for name, module in self.model.named_modules():
+                tmp_weight_config[name] = {}
+                tmp_weight_config[name]["wbits"] = self.weight_config.get("wbits", self.wbits_default)
+                tmp_weight_config[name]["group_size"] = self.weight_config.get("group_size", self.group_size_default)
+                tmp_weight_config[name]["block_size"] = self.weight_config.get("block_size", self.group_size_default)
+                tmp_weight_config[name]["percdamp"] = self.weight_config.get("pecdamp", self.percdamp_default)
+                tmp_weight_config[name]["sym"] = self.weight_config.get("sym", self.sym_default)
+                tmp_weight_config[name]["act_order"] = self.weight_config.get("act_order", self.act_order_default)
+                tmp_weight_config[name]["perchannel"] = self.weight_config.get("perchannel", self.perchannel_default)
+                tmp_weight_config[name]["mse"] = self.weight_config.get("mse", self.mse_default)
+            self.weight_config = tmp_weight_config
+        else:
+            for layer_name, config in self.weight_config.items():
+                self.weight_config[layer_name]["wbits"] = config.get("wbits", self.wbits_default)
+                self.weight_config[layer_name]["group_size"] = config.get("group_size", self.group_size_default)
+                self.weight_config[layer_name]["block_size"] = config.get("block_size", self.group_size_default)
+                self.weight_config[layer_name]["percdamp"] = config.get("pecdamp", self.percdamp_default)
+                self.weight_config[layer_name]["sym"] = config.get("sym", self.sym_default)
+                self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
+                self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
+                self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
 
     def get_layer_config(self, layer_name):
         """Obtain config for one layer, since GPTQ supports layer-wise config."""
@@ -426,11 +440,8 @@ class GPTQuantizer(object):
         tblock_length = len(self.gptq_related_blocks["transformers"])
         for block_idx in range(tblock_length):
             logger.info(f"Quantizing layer {block_idx + 1} / {tblock_length}..")
-            if not self.layer_wise:
-                # if we do not apply layer-wise feature, we still place the entire block on the GPU
-                transformer_block = self.gptq_related_blocks["transformers"][block_idx].to(self.device)
-            else:
-                transformer_block = self.gptq_related_blocks["transformers"][block_idx]  # .to(self.device)
+            # if we do not apply layer-wise feature, we still place the entire block on the GPU
+            transformer_block = self.gptq_related_blocks["transformers"][block_idx].to(self.device)
             # Step2.1: obtain all layers (Linear, Conv2d, etc) in the block which can be quantized.
             sub_layers = find_layers(transformer_block)
             sub_layers_to_quant = {}
@@ -474,7 +485,6 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache_key_arguments.pop("i")
-            # for j in range(len(self.dataloader)):
             for j in range(self.dataloader_len):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
@@ -511,7 +521,6 @@ class GPTQuantizer(object):
             # Step 2.5: replace output data with quantized weights
             outs = []
             idx = self.cache_key_arguments.pop("i")
-            # for j in range(len(self.dataloader)):
             for j in range(self.dataloader_len):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
@@ -690,9 +699,6 @@ class GPTQ:
         return scale, zero, Q
 
     def free(self):
-        if DEBUG:
-            self.inp1 = None
-            self.out1 = None
         self.H = None
         self.Losses = None
         self.Trace = None
@@ -876,10 +882,6 @@ def apply_gptq_quantize(model, configs_mapping, *args, **kwargs):
     layer_wise = False
     model_path = None
 
-    # Below is the same as the 2.x
-    if layer_wise:
-        assert model_path is not None, "model_path should not be None when use layer_wise mode"
-
     gptq_quantizer = GPTQuantizer(
         model,
         weight_config,
@@ -920,16 +922,7 @@ class DataloaderPreprocessor:
         else:
             # general selection, no padding, not GPTQ original implementation.
             self.obtain_first_n_samples()
-        try:
-            self.cache_key_arguments = {
-                "i": 0
-            }  # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
-            # Note that the first elements in cache_positional_arguments is main input: hidden_states
-            self.cache_positional_arguments = []  # a list of list, positional arguments ("rotary_pos_emb" in chatglm)
-            self.is_ready = True
-        except:
-            logger.warning("GPTQ Quantizer initialization failed!")
-            pass
+        self.is_ready = True
 
     def obtain_first_n_samples(self, seed=0):
         """Get first nsample data as the real calibration dataset."""
