@@ -1,6 +1,6 @@
 import os
-import subprocess
 import shutil
+import subprocess
 import unittest
 from collections import OrderedDict
 from unittest.mock import patch
@@ -1672,16 +1672,23 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 
-        cmd = 'pip uninstall torch'
-        p = subprocess.Popen(cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True) # nosec
+        cmd = "pip uninstall torch"
+        p = subprocess.Popen(
+            cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+        )  # nosec
         p.communicate()
         q_model = quantizer.fit()
         call_args_list = mock_warning.call_args_list
         first_warning_args = call_args_list[0][0]
-        self.assertEqual(call_args_list[0][0], "Please install torch to enable subsequent data type check and conversion, or reorganize your data format to numpy array.")
+        self.assertEqual(
+            call_args_list[0][0],
+            "Please install torch to enable subsequent data type check and conversion, or reorganize your data format to numpy array.",
+        )
 
-        cmd = 'pip install torch'
-        p = subprocess.Popen(cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True) # nosec
+        cmd = "pip install torch"
+        p = subprocess.Popen(
+            cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+        )  # nosec
         p.communicate()
 
         nlp_dataloader = DummyNLPDataloader_dict("distilbert-base-uncased-finetuned-sst-2-english")
