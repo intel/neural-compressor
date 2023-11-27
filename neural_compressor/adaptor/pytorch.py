@@ -3117,16 +3117,17 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                             from torch.ao.quantization.observer import MinMaxObserver
 
                             if self.version.release >= Version("2.1.1").release:
-                                if self.sq_minmax_init:
-                                    static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
                                         alpha=0.5, act_observer=MinMaxObserver
                                     )
-                                else:
-                                    static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
                             else:
                                 if self.sq_minmax_init:
                                     static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
                                         alpha=0.5, act_observer=MinMaxObserver()
+                                    )
+                                    logger.warning(
+                                        "The int8 model accuracy will be close to 0 with MinMaxobserver, "
+                                        + "the suggested IPEX version is higher or equal than 2.1.100."
                                     )
                                 else:
                                     static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
@@ -3315,16 +3316,17 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             from torch.ao.quantization.observer import MinMaxObserver
 
             if self.version.release >= Version("2.1.1").release:
-                if self.sq_minmax_init:
-                    static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
                         alpha=0.5, act_observer=MinMaxObserver
                     )
-                else:
-                    static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
             else:
                 if self.sq_minmax_init:
                     static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
                         alpha=0.5, act_observer=MinMaxObserver()
+                    )
+                    logger.warning(
+                        "The int8 model accuracy will be close to 0 with MinMaxobserver, "
+                        + "the suggested IPEX version is higher or equal than 2.1.100+cpu."
                     )
                 else:
                     static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
