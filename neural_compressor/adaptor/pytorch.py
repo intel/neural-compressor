@@ -3118,7 +3118,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                                 from torch.ao.quantization.observer import MinMaxObserver
 
                                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                                    alpha=0.5, act_observer=MinMaxObserver
+                                    alpha=0.5, act_observer=MinMaxObserver()
                                 )
                             else:
                                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
@@ -3308,7 +3308,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 from torch.ao.quantization.observer import MinMaxObserver
 
                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                    alpha=0.5, act_observer=MinMaxObserver
+                    alpha=0.5, act_observer=MinMaxObserver()
                 )
             else:
                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
