@@ -1,6 +1,5 @@
 import os
 import shutil
-import subprocess
 import unittest
 from collections import OrderedDict
 from unittest.mock import patch
@@ -1645,8 +1644,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_capability = adaptor.query_fw_capability(Model(self.albert_model))
         self.assertEqual(len(q_capability["block_wise"]), 12)
 
-    @patch("logging.Logger.warning")
-    def test_dataloader_input(self, mock_warning):
+    def test_dataloader_input(self):
         cv_dataloader = DataLoader(framework="onnxruntime", dataset=DummyCVDataset_list(shape=(3, 224, 224)))
 
         quantizer = Quantization("qlinear.yaml")
