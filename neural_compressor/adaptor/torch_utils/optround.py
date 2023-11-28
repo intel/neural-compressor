@@ -478,8 +478,10 @@ def wrapper_block(block, num_bits, group_size, schema, enable_minmax_tuning):
             pass
         elif "Conv1D" in str(type(m)):
             from transformers.modeling_utils import Conv1D
-            new_m = WrapperTransformerConv1d(m, num_bits, group_size, schema,
-                                             enable_minmax_tuning=enable_minmax_tuning)  ##TODO unwrapper
+
+            new_m = WrapperTransformerConv1d(
+                m, num_bits, group_size, schema, enable_minmax_tuning=enable_minmax_tuning
+            )  ##TODO unwrapper
             set_module(block, n, new_m)
 
         else:
@@ -488,8 +490,9 @@ def wrapper_block(block, num_bits, group_size, schema, enable_minmax_tuning):
 
 
 @torch.no_grad()
-def unwrapper_block(block, num_bits, group_size, schema, grads, min_scale_grads,
-                    max_scale_grads):  ## TODO go to wrapper conv1d
+def unwrapper_block(
+    block, num_bits, group_size, schema, grads, min_scale_grads, max_scale_grads
+):  ## TODO go to wrapper conv1d
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear):
             orig_layer = m.orig_layer
@@ -535,38 +538,38 @@ def collect_minmax_grad(block):
 
 class OPTRoundQuantizer(object):
     def __init__(
-            self,
-            model,
-            tokenizer=None,
-            bits: int = 4,
-            group_size: int = 128,
-            scheme: str = "asym",
-            weight_config: dict = {},  ##TODO support later
-            enable_full_range: bool = False,  ##for symmetric, TODO support later
-            bs: int = 8,
-            amp: bool = True,
-            device="cuda:0",
-            optimizer=None,
-            lr_scheduler=None,
-            dataloader=None,  ## to support later
-            default_dataset_name: str = "NeelNanda/pile-10k",
-            dataset_split: str = "train",
-            use_quant_input: bool = True,
-            enable_minmax_tuning: bool = True,
-            lr: float = 0.0025,
-            minmax_lr: float = 0.0025,
-            low_gpu_mem_usage: bool = True,
-            iters: int = 200,
-            seqlen: int = 2048,
-            n_samples: int = 512,
-            sampler: str = "rand",
-            seed: int = 42,
-            n_blocks: int = 1,
-            gradient_accumulate_steps: int = 1,
-            not_use_mse: bool = False,
-            dynamic_max_gap: int = -1,
-            data_type: str = "int",  ##only support data_type
-            **kwargs
+        self,
+        model,
+        tokenizer=None,
+        bits: int = 4,
+        group_size: int = 128,
+        scheme: str = "asym",
+        weight_config: dict = {},  ##TODO support later
+        enable_full_range: bool = False,  ##for symmetric, TODO support later
+        bs: int = 8,
+        amp: bool = True,
+        device="cuda:0",
+        optimizer=None,
+        lr_scheduler=None,
+        dataloader=None,  ## to support later
+        default_dataset_name: str = "NeelNanda/pile-10k",
+        dataset_split: str = "train",
+        use_quant_input: bool = True,
+        enable_minmax_tuning: bool = True,
+        lr: float = 0.0025,
+        minmax_lr: float = 0.0025,
+        low_gpu_mem_usage: bool = True,
+        iters: int = 200,
+        seqlen: int = 2048,
+        n_samples: int = 512,
+        sampler: str = "rand",
+        seed: int = 42,
+        n_blocks: int = 1,
+        gradient_accumulate_steps: int = 1,
+        not_use_mse: bool = False,
+        dynamic_max_gap: int = -1,
+        data_type: str = "int",  ##only support data_type
+        **kwargs
     ):
         """
         Args:
