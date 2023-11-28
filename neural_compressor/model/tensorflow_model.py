@@ -81,7 +81,8 @@ def get_model_type(model):
         return "graph"
     elif isinstance(model, tf.compat.v1.GraphDef):
         return "graph_def"
-    elif isinstance(model, tf.compat.v1.estimator.Estimator):
+    # tf.estimator is removed after tf2.14.0
+    elif version1_lt_version2(tf.__version__, "2.14.0") and isinstance(model, tf.compat.v1.estimator.Estimator):
         return "estimator"
     elif isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))

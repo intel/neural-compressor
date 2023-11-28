@@ -658,3 +658,29 @@ def rtn_quantize(
             q_weight = q_weight.T if group_dim == 0 else q_weight
             m.weight.data.copy_(q_weight)
     return model
+
+
+from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
+
+
+def apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
+    # TODO (Yi) remove it
+    enable_full_range = quant_config.enable_full_range
+    enable_mse_search = quant_config.enable_mse_search
+    group_dim = quant_config.group_dim
+    dtype = quant_config.weight_dtype
+    num_bits = quant_config.weight_bits
+    scheme = "sym" if quant_config.weight_sym else "asym"
+    group_size = quant_config.weight_group_size
+    return_int = quant_config.return_int
+    return rtn_quantize(
+        module,
+        num_bits,
+        group_size,
+        scheme,
+        return_int=return_int,
+        data_type=dtype,
+        enable_full_range=enable_full_range,
+        enable_mse_search=enable_mse_search,
+        group_dim=group_dim,
+    )
