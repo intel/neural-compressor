@@ -482,7 +482,7 @@ def rtn_quantize(
             int_weight = int_weight.T if group_dim == 0 else int_weight
             scale = scale.T if group_dim == 0 else scale
             zp = zp.T if group_dim == 0 and zp is not None else zp
-            from ..quantization.modules import WeightOnlyLinear
+            from neural_compressor.quantization.modules import WeightOnlyLinear
             new_module = WeightOnlyLinear(
                 m.in_features,
                 m.out_features,
@@ -530,6 +530,10 @@ def apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeightQ
     scheme = "sym" if quant_config.weight_sym else "asym"
     group_size = quant_config.weight_group_size
     return_int = quant_config.return_int
+    double_quant_dtype = quant_config.double_quant_dtype
+    double_quant_num_bits = quant_config.double_quant_bits
+    double_quant_scheme = "sym" if quant_config.double_quant_sym else "asym"
+    double_quant_group_size = quant_config.double_quant_group_size
     return rtn_quantize(
         module,
         num_bits,
@@ -540,4 +544,8 @@ def apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeightQ
         enable_full_range=enable_full_range,
         enable_mse_search=enable_mse_search,
         group_dim=group_dim,
+        double_quant_dtype=double_quant_dtype,
+        double_quant_scheme=double_quant_scheme,
+        double_quant_num_bits=double_quant_num_bits,
+        double_quant_group_size=double_quant_group_size,
     )
