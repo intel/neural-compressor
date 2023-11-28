@@ -628,6 +628,7 @@ class OPTRoundQuantizer(object):
         self.supported_types = [torch.nn.Linear]  ## TODO support conv1d
         try:
             import transformers
+
             self.supported_types.append(transformers.modeling_utils.Conv1D)
         except:
             pass
