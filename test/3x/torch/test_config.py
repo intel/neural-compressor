@@ -1,6 +1,8 @@
-import unittest
 import copy
+import unittest
+
 import transformers
+
 from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
@@ -75,11 +77,15 @@ class TestQuantizationConfig(unittest.TestCase):
 
     def test_quantize_rtndq_from_class_beginner(self):
         from neural_compressor.torch import RTNWeightQuantConfig, quantize
+
         fp32_config = RTNWeightQuantConfig(weight_dtype="fp32")
 
         fp32_model = copy.deepcopy(self.gptj)
         quant_config = RTNWeightQuantConfig(
-            weight_bits=4, weight_dtype="int", weight_sym=False, weight_group_size=32,
+            weight_bits=4,
+            weight_dtype="int",
+            weight_sym=False,
+            weight_group_size=32,
         )
         quant_config.set_local("lm_head", fp32_config)
         qmodel = quantize(fp32_model, quant_config)
@@ -88,8 +94,14 @@ class TestQuantizationConfig(unittest.TestCase):
         fp32_model = copy.deepcopy(self.gptj)
         # llama.cpp GGML_TYPE_Q4_K setting
         quant_config = RTNWeightQuantConfig(
-            weight_bits=4, weight_dtype="int", weight_sym=False, weight_group_size=32,
-            double_quant_bits=6, double_quant_dtype="int", double_quant_sym=True, double_quant_group_size=8,
+            weight_bits=4,
+            weight_dtype="int",
+            weight_sym=False,
+            weight_group_size=32,
+            double_quant_bits=6,
+            double_quant_dtype="int",
+            double_quant_sym=True,
+            double_quant_group_size=8,
         )
         quant_config.set_local("lm_head", fp32_config)
         qmodel = quantize(fp32_model, quant_config)
@@ -99,7 +111,9 @@ class TestQuantizationConfig(unittest.TestCase):
         fp32_model = copy.deepcopy(self.gptj)
         # bitsandbytes double quant setting
         quant_config = RTNWeightQuantConfig(
-            weight_bits=4, weight_dtype="nf4", weight_group_size=32,
+            weight_bits=4,
+            weight_dtype="nf4",
+            weight_group_size=32,
         )
         quant_config.set_local("lm_head", fp32_config)
         qmodel = quantize(fp32_model, quant_config)
@@ -108,8 +122,13 @@ class TestQuantizationConfig(unittest.TestCase):
         fp32_model = copy.deepcopy(self.gptj)
         # bitsandbytes double quant setting
         quant_config = RTNWeightQuantConfig(
-            weight_bits=4, weight_dtype="nf4", weight_group_size=32,
-            double_quant_dtype="int", double_quant_bits=4, double_quant_sym=False, double_quant_group_size=256,
+            weight_bits=4,
+            weight_dtype="nf4",
+            weight_group_size=32,
+            double_quant_dtype="int",
+            double_quant_bits=4,
+            double_quant_sym=False,
+            double_quant_group_size=256,
         )
         quant_config.set_local("lm_head", fp32_config)
         qmodel = quantize(fp32_model, quant_config)

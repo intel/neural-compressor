@@ -174,8 +174,9 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_rang
     return scale * q
 
 
-def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, data_type="int", return_int=False, full_range=False,
-                     **kwargs):
+def qdq_weight_actor(
+    weight, num_bits, scheme, quantile=1.0, data_type="int", return_int=False, full_range=False, **kwargs
+):
     """Quant and dequant tensor per channel.
 
     Args:
@@ -191,7 +192,7 @@ def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, data_type="int", re
         output: qdq weight
     """
     assert num_bits > 0, "num_bits should be larger than 0"
-    
+
     if data_type in FLOAT_MAPPING.keys():
         return quantize_4bit(weight, quantile=quantile, data_type=data_type, return_int=return_int, **kwargs)
     if scheme == "sym":
@@ -201,7 +202,14 @@ def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, data_type="int", re
 
 
 def quant_weight(
-    weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0, data_type="int", return_int=False, full_range=False,
+    weight,
+    num_bits=4,
+    group_size=-1,
+    scheme="asym",
+    quantile=1.0,
+    data_type="int",
+    return_int=False,
+    full_range=False,
     **kwargs,
 ):
     """Quant and dequant tensor with group size.
@@ -483,6 +491,7 @@ def rtn_quantize(
             scale = scale.T if group_dim == 0 else scale
             zp = zp.T if group_dim == 0 and zp is not None else zp
             from neural_compressor.quantization.modules import WeightOnlyLinear
+
             new_module = WeightOnlyLinear(
                 m.in_features,
                 m.out_features,

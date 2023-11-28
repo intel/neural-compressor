@@ -24,10 +24,9 @@ from packaging.version import Version
 from torch.autograd import Function
 from torch.nn import functional as F
 
+from neural_compressor.torch.algorithms.weight_only.rtn import quant_weight
 from neural_compressor.utils import logger
 from neural_compressor.utils.logger import DEBUG, level
-
-from neural_compressor.torch.algorithms.weight_only.rtn import quant_weight
 
 
 def get_torch_version():
