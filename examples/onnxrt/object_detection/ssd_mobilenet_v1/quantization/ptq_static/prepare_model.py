@@ -10,6 +10,12 @@ MODEL_URL = "http://download.tensorflow.org/models/object_detection/ssd_mobilene
 MAX_TIMES_RETRY_DOWNLOAD = 5
 
 
+def install_onnx():
+    # For now, use "onnx==1.14.1" in this step in case you get an error 
+    # `ValueError: Could not infer attribute explicit_paddings type from empty iterator`. 
+    # Refer to https://github.com/onnx/tensorflow-onnx/issues/2262 for more details of this error.
+    subprocess.call(['pip', 'install', 'onnx==1.14.1'])
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_model",
@@ -105,4 +111,5 @@ def prepare_model(input_model, output_model):
 
 if __name__ == "__main__":
     args = parse_arguments()
+    install_onnx()
     prepare_model(args.input_model, args.output_model)
