@@ -73,7 +73,7 @@ def set_module(model, key, new_module):
 
 
 def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
-    maxq = torch.tensor(2 ** num_bits - 1)
+    maxq = torch.tensor(2**num_bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device, dtype=weight.dtype)
     if isinstance(min_scale, torch.Tensor):
         wmin_tmp = torch.minimum(weight.min(1)[0], zeros)
@@ -98,7 +98,7 @@ def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
 
 
 def quant_weight_sym(
-        weight, num_bits=4, grad=0, min_scale=0, max_scale=0
+    weight, num_bits=4, grad=0, min_scale=0, max_scale=0
 ):  ##TODO having not validated,also min_scale could be dropped later
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-(2 ** (num_bits - 1))).to(weight.device)
@@ -124,8 +124,9 @@ def quant_weight_actor(weight, num_bits, schema, grad, min_scale, max_scale):
         return quant_weight_asym(weight, num_bits, grad, min_scale, max_scale)
 
 
-def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0, min_scale=0,
-                 max_scale=0):  ##TODO polish the code
+def quant_weight(
+    weight, num_bits=4, group_size=-1, schema="asym", grad=0, min_scale=0, max_scale=0
+):  ##TODO polish the code
     if group_size == -1 or weight.shape[1] < group_size:
         return quant_weight_actor(weight, num_bits, schema=schema, grad=grad, min_scale=min_scale, max_scale=max_scale)
     orig_shape = weight.shape
@@ -154,9 +155,9 @@ def quant_weight(weight, num_bits=4, group_size=-1, schema="asym", grad=0, min_s
             grad2 = 0
         if isinstance(min_scale, torch.Tensor):
             min_scale_1 = min_scale[:, : weight.shape[1] // group_size]
-            min_scale_2 = min_scale[:, weight.shape[1] // group_size:]
+            min_scale_2 = min_scale[:, weight.shape[1] // group_size :]
             max_scale_1 = max_scale[:, : weight.shape[1] // group_size]
-            max_scale_2 = max_scale[:, weight.shape[1] // group_size:]
+            max_scale_2 = max_scale[:, weight.shape[1] // group_size :]
         else:
             min_scale_1 = min_scale
             min_scale_2 = min_scale
@@ -361,8 +362,9 @@ def block_forward(block, input_ids, input_others, amp=False, device=torch.device
         alibi = alibi.reshape(-1, alibi.shape[2], alibi.shape[3])
         if amp and device != torch.device("cpu"):
             with autocast(device_type="cuda"):
-                output = block(input_ids, attention_mask=attention_mask,
-                               alibi=alibi)  ##TODO is this correct for all models with alibi?
+                output = block(
+                    input_ids, attention_mask=attention_mask, alibi=alibi
+                )  ##TODO is this correct for all models with alibi?
         elif amp and device == torch.device("cpu"):
             with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
                 output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
@@ -631,7 +633,7 @@ class OPTRoundQuantizer(object):
         self.not_use_mse = not_use_mse
         self.dynamic_max_gap = dynamic_max_gap
         self.enable_full_range = enable_full_range
-        assert self.enable_full_range == False, "only support enable_full_range=False currently"
+        assert self.enable_full_range is False, "only support enable_full_range=False currently"
         self.weight_config = weight_config
         assert self.weight_config == {}, "does not support weight config currently"
         self.optimizer = optimizer
@@ -701,9 +703,8 @@ class OPTRoundQuantizer(object):
         return output
 
     def quant_block(
-            self, block, input_ids, input_others, num_bits, group_size, schema, q_input=None, device=torch.device("cpu")
+        self, block, input_ids, input_others, num_bits, group_size, schema, q_input=None, device=torch.device("cpu")
     ):
-
         batch_dim = self.get_batch_dim(input_others)
         if not self.low_gpu_mem_usage and input_ids.device != device:
             # input_ids, input_others = move_to_device(input_ids, input_others, device)
@@ -815,15 +816,15 @@ class OPTRoundQuantizer(object):
             return None, output
 
     def q_dq_weight_round(
-            self,
-            model: torch.nn.Module,
-            inputs,
-            block_names,
-            num_bits=4,
-            group_size=128,
-            schema="asym",
-            n_blocks=1,
-            device=torch.device("cpu"),
+        self,
+        model: torch.nn.Module,
+        inputs,
+        block_names,
+        num_bits=4,
+        group_size=128,
+        schema="asym",
+        n_blocks=1,
+        device=torch.device("cpu"),
     ):
         q_input = None
         torch.cuda.empty_cache()
@@ -839,7 +840,7 @@ class OPTRoundQuantizer(object):
                 logger.info(n)
                 m = get_module(model, n)
             else:
-                names = block_names[i: i + n_blocks]
+                names = block_names[i : i + n_blocks]
                 logger.info(names)
                 modules = [get_module(model, n) for n in names]
                 m = WrapperMultiblock(modules)
