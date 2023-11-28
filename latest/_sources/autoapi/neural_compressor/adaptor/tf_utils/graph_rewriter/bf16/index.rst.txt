@@ -16,5 +16,6 @@ Submodules
    :maxdepth: 1
 
    bf16_convert/index.rst
+   dequantize_cast_optimizer/index.rst
 
 

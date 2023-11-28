@@ -20,7 +20,6 @@ Submodules
    convert_leakyrelu/index.rst
    convert_nan_to_random/index.rst
    convert_placeholder_to_const/index.rst
-   dequantize_cast_optimizer/index.rst
    dilated_contraction/index.rst
    dummy_biasadd/index.rst
    expanddims_optimizer/index.rst
