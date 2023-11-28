@@ -418,7 +418,7 @@ class WrapperTransformerConv1d(torch.nn.Module):
             self.weight_t, self.num_bits, self.group_size, self.schema, grad, min_scale_grad, max_scale_grad
         )
         self.orig_layer.weight.data.copy_(weight_q.t())
-        self.orig_layer.weight.grad=None
+        self.orig_layer.weight.grad = None
         return self.orig_layer
 
     def forward(self, x):
@@ -620,6 +620,7 @@ class OPTRoundQuantizer(object):
         self.supported_types = [torch.nn.Linear]  ## TODO support conv1d
         try:
             import transformers
+
             self.supported_types.append(transformers.modeling_utils.Conv1D)
         except:
             pass
