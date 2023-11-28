@@ -1,0 +1,67 @@
+:orphan:
+
+:py:mod:`neural_compressor.tensorflow.quantization.config`
+==========================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.config
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.config.Backend
+   neural_compressor.tensorflow.quantization.config.StaticQuantConfig
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.config.get_all_registered_configs
+   neural_compressor.tensorflow.quantization.config.parse_config_from_dict
+   neural_compressor.tensorflow.quantization.config.get_default_static_quant_config
+
+
+
+.. py:class:: Backend
+
+
+
+
+   Generic enumeration.
+
+   Derive from this class to define new enumerations.
+
+
+.. py:class:: StaticQuantConfig(weight_dtype: str = 'int8', weight_sym: bool = True, weight_granularity: str = 'per_tensor', act_dtype: str = 'int8', act_sym: bool = True, act_granularity: str = 'per_tensor')
+
+
+
+
+   Config class for keras static quantization.
+
+
+.. py:function:: get_all_registered_configs() -> Dict[str, neural_compressor.common.base_config.BaseConfig]
+
+   Get all registered configs for keras framework.
+
+
+.. py:function:: parse_config_from_dict(config_dict: Dict) -> neural_compressor.common.base_config.BaseConfig
+
+   Generate a BaseConfig instance from a dict.
+
+
+.. py:function:: get_default_static_quant_config() -> StaticQuantConfig
+
+   Generate the default static quant config.
+
+   :returns: the default keras config.
+
+

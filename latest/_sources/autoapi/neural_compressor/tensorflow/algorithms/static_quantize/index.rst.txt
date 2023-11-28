@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.tensorflow.algorithms.static_quantize`
+=================================================================
+
+.. py:module:: neural_compressor.tensorflow.algorithms.static_quantize
+
+

@@ -1,0 +1,34 @@
+:orphan:
+
+:py:mod:`neural_compressor.tensorflow.algorithms.static_quantize.keras`
+=======================================================================
+
+.. py:module:: neural_compressor.tensorflow.algorithms.static_quantize.keras
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.algorithms.static_quantize.keras.KerasAdaptor
+   neural_compressor.tensorflow.algorithms.static_quantize.keras.KerasQuery
+
+
+
+
+.. py:class:: KerasAdaptor(framework_specific_info)
+
+
+   The keras class of framework adaptor layer.
+
+
+.. py:class:: KerasQuery(local_config_file=None)
+
+
+   Class that queries configs from yaml settings.
+
+

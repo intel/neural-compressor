@@ -1,0 +1,53 @@
+:orphan:
+
+:py:mod:`neural_compressor.tensorflow.algorithms.static_quantize.quantize_entry`
+================================================================================
+
+.. py:module:: neural_compressor.tensorflow.algorithms.static_quantize.quantize_entry
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.algorithms.static_quantize.quantize_entry.update_config
+   neural_compressor.tensorflow.algorithms.static_quantize.quantize_entry.parse_to_keras_tune_cfg
+   neural_compressor.tensorflow.algorithms.static_quantize.quantize_entry.static_quantize_entry
+
+
+
+.. py:function:: update_config(op_value: Dict, quant_config: neural_compressor.tensorflow.quantization.config.StaticQuantConfig, layer_class: str)
+
+   Update op-wise config from global config or operator name config or operator type config.
+
+
+.. py:function:: parse_to_keras_tune_cfg(model: tensorflow.keras.Model, quant_config: neural_compressor.tensorflow.quantization.config.StaticQuantConfig, calib_iteration: int) -> Dict
+
+   The function that parses StaticQuantConfig to keras tuning config.
+
+   :param model: a fp32 model to be quantized.
+   :param quant_config: a quantization configuration.
+   :param calib_iteration: the iteration of calibration.
+
+   :returns: the tuning config for keras adaptor.
+   :rtype: tune_cfg
+
+
+.. py:function:: static_quantize_entry(model: tensorflow.keras.Model, quant_config: neural_compressor.tensorflow.quantization.config.StaticQuantConfig, calib_dataloader: Callable = None, calib_iteration: int = 100) -> tensorflow.keras.Model
+
+   The main entry to apply static quantization.
+
+   :param model: a fp32 model to be quantized.
+   :param quant_config: a quantization configuration.
+   :param calib_dataloader: a data loader for calibration.
+   :param calib_iteration: the iteration of calibration.
+
+   :returns: the quantized model.
+   :rtype: q_model
+
+
