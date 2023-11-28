@@ -42,36 +42,6 @@ def get_torch_version():
 PT_VERSION = get_torch_version().release
 
 
-class QDQLinear(torch.nn.Module):
-    def __init__(self, module, scale=1.0, zero_point=0, dtype=torch.quint8):
-        super().__init__()
-        if PT_VERSION < Version("1.13.0").release:
-            import torch.nn.quantized as nnq
-        else:
-            import torch.ao.nn.quantized as nnq
-        self.add_module("quant", nnq.Quantize(scale, zero_point, dtype))
-        self.add_module("dequant", nnq.DeQuantize())
-        self.add_module("module", module)
-        self.qdq_weight()
-
-    @property
-    def weight(self):
-        return self.module.weight
-
-    def forward(self, X):
-        X = self.quant(X)
-        X = self.dequant(X)
-        X = self.module(X)
-        return X
-
-    def qdq_weight(self):
-        # update weight w/ QDQ
-        from .smooth_quant import quant_dequant_w
-
-        weith_qdq = quant_dequant_w(self.module)
-        self.module.weight = torch.nn.Parameter(weith_qdq)
-
-
 class QDQLayer(torch.nn.Module):
     def __init__(self, module, input_scale=None) -> None:
         super().__init__()
@@ -87,22 +57,6 @@ class QDQLayer(torch.nn.Module):
         X = self.module(X)
         X = self.dequant(X)
         return X
-
-
-def _wrap_lwq_layer(model, lwq_layers, op_cfgs):
-    from torch.quantization import convert, prepare
-
-    from .layer_wise_quant.utils import get_module, update_module
-
-    for name, input_scale in lwq_layers.items():
-        qconifg = op_cfgs.module_name_qconfigs.get(name + ".module")
-        module = get_module(model, name)
-        new_model = QDQLayer(module, input_scale)
-        new_model.qconfig = qconifg
-        new_model = prepare(new_model)
-        new_model = convert(new_model)
-        update_module(model, name, new_model)
-    return model
 
 
 class SQLinearWrapper(torch.nn.Module):
@@ -164,42 +118,6 @@ class SQLinearWrapper(torch.nn.Module):
         scale = self.input_scale.view(1, self.input_scale.shape[0])
         with torch.no_grad():
             self.sq_linear.weight *= scale
-
-
-def _wrapper_sq_linear(tmp_model, input_scale_dict):
-    """Help function to generate a fake SmoothQuant model for loading weights."""
-
-    class SQLinearWrapper(torch.nn.Module):
-        def __init__(self, module, input_scale):
-            super().__init__()
-            self.register_buffer("input_scale", input_scale)
-            self.add_module("sq_linear", module)
-
-        def forward(self, X):
-            X = torch.mul(X, self.input_scale)
-            X = self.sq_linear(X)
-            return X
-
-    module_name_list = input_scale_dict.keys()
-    from .smooth_quant import get_module, set_module
-
-    for name in module_name_list:
-        module = get_module(tmp_model, name)
-        input_scale = input_scale_dict[name]
-        new_module = SQLinearWrapper(module, input_scale)
-        set_module(tmp_model, name, new_module)
-    return tmp_model
-
-
-def _wrapper_qdq_linear(tmp_model, module_name_list=[]):
-    """Help function to generate a fake QDQ model for loading weights."""
-    from .smooth_quant import get_module, set_module
-
-    for name in module_name_list:
-        module = get_module(tmp_model, name)
-        new_module = QDQLinear(module)
-        set_module(tmp_model, name, new_module)
-    return tmp_model
 
 
 class WeightOnlyLinear(torch.nn.Module):
