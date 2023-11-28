@@ -271,8 +271,8 @@ class SaveInputs:
                 input_ids = input_ids[: n_samples - total_cnt, ...]
             try:
                 self.model(input_ids)
-            except:
-                pass
+            except Exception as error:
+                logger.error(error)
             total_cnt += input_ids.shape[0]
             if total_cnt >= n_samples:
                 break
@@ -413,6 +413,14 @@ class WrapperTransformerConv1d(torch.nn.Module):
             self.max_scale = torch.tensor(0, device=device)
         self.weight_t = self.orig_layer.weight.t()
 
+    def unwrapper(self, grad, min_scale_grad, max_scale_grad):
+        weight_q = quant_weight(
+            self.weight_t, self.num_bits, self.group_size, self.schema, grad, min_scale_grad, max_scale_grad
+        )
+        self.orig_layer.weight.data.copy_(weight_q.t())
+        self.orig_layer.weight.grad=None
+        return self.orig_layer
+
     def forward(self, x):
         with torch.no_grad():
             self.min_scale.clamp_(-1, 0)
@@ -491,7 +499,7 @@ def wrapper_block(block, num_bits, group_size, schema, enable_minmax_tuning):
 def unwrapper_block(block, num_bits, group_size, schema, grads, min_scale_grads,
                     max_scale_grads):  ## TODO go to wrapper conv1d
     for n, m in block.named_modules():
-        if isinstance(m, WrapperLinear):
+        if isinstance(m, WrapperLinear) or isinstance(m, WrapperTransformerConv1d):
             orig_layer = m.orig_layer
             grad = 0
             min_scale_grad = 0
@@ -607,6 +615,11 @@ class OPTRoundQuantizer(object):
         self.low_gpu_mem_usage = low_gpu_mem_usage
         self.data_type = data_type
         self.supported_types = [torch.nn.Linear]  ## TODO support conv1d
+        try:
+            import transformers
+            self.supported_types.append(transformers.modeling_utils.Conv1D)
+        except:
+            pass
         self.weight_config = {}  ##TODO support later
         assert dataloader is not None or tokenizer is not None  ##TODO datatype
         self.dataset_split = dataset_split

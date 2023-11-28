@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     set_seed(args.seed)
-    # args.model_name = "/models/LaMini-GPT-124M"
+    args.model_name = "/models/LaMini-GPT-124M"
     model_name = args.model_name
 
     # tmp = transformers.modeling_utils.Conv1D(8,4)
