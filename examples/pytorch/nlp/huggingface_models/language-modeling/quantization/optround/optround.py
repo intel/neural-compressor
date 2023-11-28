@@ -126,11 +126,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     set_seed(args.seed)
-    args.model_name = "/models/LaMini-GPT-124M"
+    # args.model_name = "/models/LaMini-GPT-124M"
     model_name = args.model_name
 
-    # tmp = transformers.modeling_utils.Conv1D(8,4)
-    # tmp = torch.nn.Conv1d(4,8,1,1)
     if model_name[-1] == "/":
         model_name = model_name[:-1]
     print(model_name, flush=True)
