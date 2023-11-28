@@ -277,6 +277,8 @@ class SaveInputs:
                 input_ids = input_ids[: n_samples - total_cnt, ...]
             try:
                 self.model(input_ids)
+            except NotImplementedError:
+                pass
             except Exception as error:
                 logger.error(error)
             total_cnt += input_ids.shape[0]
@@ -750,6 +752,27 @@ class OPTRoundQuantizer(object):
         torch.cuda.empty_cache()
         return output
 
+    def loss_scale_and_backward(self, scaler, loss):
+        if scaler != None:
+            scale_loss = scaler.scale(loss)
+            scale_loss.backward()
+            return scale_loss
+        else:
+            loss *= 1000
+            loss.backward()
+            return loss
+
+    def step(self, scaler, optimizer, lr_schedule):  ##TODO signround does not need this
+        if scaler != None:
+            scaler.step(optimizer)
+            optimizer.zero_grad()
+            lr_schedule.step()
+            scaler.update()
+        else:
+            optimizer.step()
+            optimizer.zero_grad()
+            lr_schedule.step()
+
     def quant_block(
             self, block, input_ids, input_others, num_bits, group_size, schema, q_input=None, device=torch.device("cpu")
     ):
@@ -801,6 +824,11 @@ class OPTRoundQuantizer(object):
         if self.sampler != "rand":
             indices = torch.randperm(n_samples)[: self.train_bs]
         last_best_iter = 0
+        scaler = None
+        if self.amp:
+            from torch.cuda.amp import GradScaler
+            scaler = GradScaler(init_scale=1024, growth_interval=100000)
+
         for i in range(self.iters):
             if self.sampler == "rand":
                 indices = torch.randperm(n_samples)[: self.train_bs]
@@ -826,14 +854,14 @@ class OPTRoundQuantizer(object):
                 output_q = block_forward(block, current_input_ids, current_input_others, self.amp, device)
                 if self.amp and device != torch.device("cpu"):
                     with autocast(device_type="cuda"):
-                        loss = mse_loss(output_q, current_output) * 1000
+                        loss = mse_loss(output_q, current_output)
                 elif self.amp:
                     with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
-                        loss = mse_loss(output_q, current_output) * 1000
+                        loss = mse_loss(output_q, current_output)
                 else:
                     loss = mse_loss(output_q, current_output)
                 total_loss += loss.item()
-                loss.backward()
+                scale_loss = self.loss_scale_and_backward(scaler, loss)
 
             if total_loss < best_loss:
                 best_loss = total_loss
@@ -849,9 +877,11 @@ class OPTRoundQuantizer(object):
             if not self.not_use_mse:
                 if self.dynamic_max_gap > 0 and i - last_best_iter >= self.dynamic_max_gap:
                     break
-            optimizer.step()
-            optimizer.zero_grad()
-            lr_schedule.step()
+            # optimizer.step()
+            # optimizer.zero_grad()
+            # lr_schedule.step()
+            self.step(scaler, optimizer, lr_schedule)
+
         unwrapper_block(block, num_bits, group_size, schema, best_grad, best_min_scale_grad, best_max_scale_grad)
         if self.use_quant_input:
             q_outputs = self.get_block_outputs(
