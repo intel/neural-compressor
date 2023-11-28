@@ -116,6 +116,11 @@ parser.add_argument(
     type=int,
     default=4
 )
+parser.add_argument(
+    '--layer_wise',
+    action='store_true', \
+    default=False,
+)
 args = parser.parse_args()
 
 # load model
@@ -262,7 +267,8 @@ if __name__ == "__main__":
             calibration_sampling_size=[8],
             recipes={'optypes_to_exclude_output_quant': ['MatMul'],
                      'smooth_quant': True,
-                     'smooth_quant_args': {'alpha': args.smooth_quant_alpha}},
+                     'smooth_quant_args': {'alpha': args.smooth_quant_alpha},
+                     'layer_wise_quant': True if args.layer_wise else False},
             op_type_dict={'^((?!(MatMul|Gather|Conv)).)*$': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
         for model in ['decoder_model.onnx', 'decoder_with_past_model.onnx']:
             q_model = quantization.fit(

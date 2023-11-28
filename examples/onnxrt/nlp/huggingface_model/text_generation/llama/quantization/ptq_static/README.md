@@ -44,6 +44,9 @@ bash run_quant.sh --input_model=/path/to/model \ # folder path of onnx model
                   --quant_format="QOperator" # or QDQ, optional
 ```
 
+Additionally set `--layer-wise=True` to use layer-wise quantization to save your memory. More details please refer to []().
+
+
 ## 2. Benchmark
 
 Accuracy:
