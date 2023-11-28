@@ -524,7 +524,11 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
 <br>
 <br>
 
-> Note: DmlExecutionProvider support works as experimental, please expect exceptions.    
+> ***Note***
+> 
+> DmlExecutionProvider support works as experimental, please expect exceptions.
+> 
+> Known limitation: the batch size of onnx models has to be fixed to 1 for DmlExecutionProvider, no multi-batch and dynamic batch support yet.
 
 Examples of configure:
 ```python
