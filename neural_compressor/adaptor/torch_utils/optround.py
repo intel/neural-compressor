@@ -392,6 +392,38 @@ def get_scale_shape(weight, group_size):
     return shape
 
 
+class WrapperTransformerConv1d(torch.nn.Module):
+    def __init__(self, orig_layer, num_bits, group_size, schema, enable_minmax_tuning=True):
+        super(WrapperTransformerConv1d, self).__init__()
+        self.orig_layer = orig_layer
+        self.num_bits = num_bits
+        self.group_size = group_size
+        self.schema = schema
+        device = self.orig_layer.weight.device
+        self.value = torch.nn.Parameter(torch.zeros(self.orig_layer.weight.shape, device=device), requires_grad=True)
+        shape = get_scale_shape(self.orig_layer.weight, group_size)
+
+        if enable_minmax_tuning:
+            self.min_scale = torch.nn.Parameter(torch.zeros(shape, device=device), requires_grad=True)
+            self.max_scale = torch.nn.Parameter(torch.zeros(shape, device=device), requires_grad=True)
+        else:
+            self.min_scale = torch.tensor(0, device=device)
+            self.max_scale = torch.tensor(0, device=device)
+        self.weight_t = self.orig_layer.weight.t()
+
+    def forward(self, x):
+        with torch.no_grad():
+            self.min_scale.clamp_(-1, 0)
+            self.max_scale.clamp_(-1, 0)
+        weight_q = quant_weight(
+            self.weight_t, self.num_bits, self.group_size, self.schema, self.value, self.min_scale, self.max_scale
+        )
+        size_out = x.size()[:-1] + (self.orig_layer.nf,)
+        x = torch.addmm(self.orig_layer.bias, x.view(-1, x.size(-1)), weight_q.t())
+        x = x.view(*size_out)
+        return x
+
+
 class WrapperLinear(torch.nn.Module):
     def __init__(self, orig_layer, num_bits, group_size, schema, enable_minmax_tuning=True):
         super(WrapperLinear, self).__init__()
@@ -410,10 +442,24 @@ class WrapperLinear(torch.nn.Module):
             self.min_scale = torch.tensor(0, device=device)
             self.max_scale = torch.tensor(0, device=device)
 
+    def unwrapper(self, grad, min_scale_grad, max_scale_grad):
+        min_scale_grad.clamp_(-1, 0)
+        max_scale_grad.clamp_(-1, 0)
+
+        q_dq_weight = quant_weight(
+            self.orig_layer.weight, self.num_bits, self.group_size, self.schema, grad, min_scale_grad, max_scale_grad
+        )
+        self.orig_layer.weight.data.copy_(q_dq_weight)
+        self.orig_layer.weight.grad = None  ##clear grad
+        return self.orig_layer
+
     def forward(self, x):
         weight = self.orig_layer.weight
-        self.min_scale.data.copy_(torch.clamp(self.min_scale.data, -1, 0))
-        self.max_scale.data.copy_(torch.clamp(self.max_scale.data, -1, 0))
+        with torch.no_grad():
+            self.min_scale.clamp_(-1, 0)
+            self.max_scale.clamp_(-1, 0)
+        # self.min_scale.data.copy_(torch.clamp(self.min_scale.data,-1,0))
+        # self.max_scale.data.copy_(torch.clamp(self.max_scale.data, -1, 0))
         weight_q = quant_weight(
             weight, self.num_bits, self.group_size, self.schema, self.value, self.min_scale, self.max_scale
         )
@@ -426,10 +472,22 @@ def wrapper_block(block, num_bits, group_size, schema, enable_minmax_tuning):
         if isinstance(m, torch.nn.Linear):
             new_m = WrapperLinear(m, num_bits, group_size, schema, enable_minmax_tuning=enable_minmax_tuning)
             set_module(block, n, new_m)
+        elif isinstance(m, torch.nn.Conv1d):
+            pass
+        elif "Conv1D" in str(type(m)):
+            from transformers.modeling_utils import Conv1D
+            new_m = WrapperTransformerConv1d(m, num_bits, group_size, schema,
+                                             enable_minmax_tuning=enable_minmax_tuning)  ##TODO unwrapper
+            set_module(block, n, new_m)
+
+        else:
+            pass
+            # print(type(m))
 
 
 @torch.no_grad()
-def unwrapper_block(block, num_bits, group_size, schema, grads, min_scale_grads, max_scale_grads):
+def unwrapper_block(block, num_bits, group_size, schema, grads, min_scale_grads,
+                    max_scale_grads):  ## TODO go to wrapper conv1d
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear):
             orig_layer = m.orig_layer
@@ -444,19 +502,20 @@ def unwrapper_block(block, num_bits, group_size, schema, grads, min_scale_grads,
             if isinstance(max_scale_grads, dict):
                 max_scale_grad = max_scale_grads[n]
                 max_scale_grad = torch.clamp(max_scale_grad, -1, 0)
+            orig_layer = m.unwrapper(grad, min_scale_grad, max_scale_grad)
 
-            q_dq_weight = quant_weight(
-                orig_layer.weight, num_bits, group_size, schema, grad, min_scale_grad, max_scale_grad
-            )
-            orig_layer.weight.data.copy_(q_dq_weight)
-            orig_layer.weight.grad = None  ##clear grad
+            # q_dq_weight = quant_weight(
+            #     orig_layer.weight, num_bits, group_size, schema, grad, min_scale_grad, max_scale_grad
+            # )
+            # orig_layer.weight.data.copy_(q_dq_weight)
+            # orig_layer.weight.grad = None  ##clear grad
             set_module(block, n, orig_layer)
 
 
 def collect_round_grad(block):
     grads = {}
     for n, m in block.named_modules():
-        if isinstance(m, WrapperLinear):
+        if isinstance(m, WrapperLinear) or isinstance(m, WrapperTransformerConv1d):
             grad = m.value.data
             grads[n] = copy.deepcopy(grad)
     return grads
@@ -466,7 +525,7 @@ def collect_minmax_grad(block):
     min_grads = {}
     max_grads = {}
     for n, m in block.named_modules():
-        if isinstance(m, WrapperLinear):
+        if isinstance(m, WrapperLinear) or isinstance(m, WrapperTransformerConv1d):
             min_grads[n] = copy.deepcopy(torch.clamp(m.min_scale.data, -1, 0))
             max_grads[n] = copy.deepcopy(torch.clamp(m.max_scale.data, -1, 0))
     return min_grads, max_grads
@@ -477,34 +536,34 @@ class OPTRoundQuantizer(object):
             self,
             model,
             tokenizer=None,
-            device="cuda:0",  ##TODO support multiple gpu
-            bits=4,
-            group_size=128,
-            scheme="asym",
-            weight_config={},  ##TODO support later
-            enable_full_range=False,  ##for symmetric, TODO support later
-            bs=8,
-            amp=True,
+            bits: int = 4,
+            group_size: int = 128,
+            scheme: str = "asym",
+            weight_config: dict = {},  ##TODO support later
+            enable_full_range: bool = False,  ##for symmetric, TODO support later
+            bs: int = 8,
+            amp: bool = True,
+            device="cuda:0",
             optimizer=None,
             lr_scheduler=None,
             dataloader=None,  ## to support later
-            default_dataset_name="NeelNanda/pile-10k",
-            dataset_split="train",
-            use_quant_input=True,
-            enable_minmax_tuning=True,
-            lr=0.0025,
-            minmax_lr=0.0025,
-            low_gpu_mem_usage=True,
-            iters=200,
-            seqlen=2048,
-            n_samples=512,
-            sampler="rand",
-            seed=42,
-            n_blocks=1,
-            gradient_accumulate_steps=1,
-            not_use_mse=False,
-            dynamic_max_gap=-1,
-            data_type="int",  ##only support data_type
+            default_dataset_name: str = "NeelNanda/pile-10k",
+            dataset_split: str = "train",
+            use_quant_input: bool = True,
+            enable_minmax_tuning: bool = True,
+            lr: float = 0.0025,
+            minmax_lr: float = 0.0025,
+            low_gpu_mem_usage: bool = True,
+            iters: int = 200,
+            seqlen: int = 2048,
+            n_samples: int = 512,
+            sampler: str = "rand",
+            seed: int = 42,
+            n_blocks: int = 1,
+            gradient_accumulate_steps: int = 1,
+            not_use_mse: bool = False,
+            dynamic_max_gap: int = -1,
+            data_type: str = "int",  ##only support data_type
             **kwargs
     ):
         """
@@ -538,7 +597,7 @@ class OPTRoundQuantizer(object):
         self.amp = amp
         self.use_quant_input = use_quant_input
         self.enable_minmax_tuning = enable_minmax_tuning
-        self.n_samples = n_samples  ##TODO check configurations
+        self.n_samples = n_samples
         self.n_blocks = n_blocks
         self.bits = bits
         self.group_size = group_size
@@ -579,6 +638,16 @@ class OPTRoundQuantizer(object):
         if self.optimizer is None:
             self.optimizer = torch.optim.AdamW
         self.lr_scheduler = lr_scheduler
+
+    def check_configs(self):
+        assert isinstance(self.model, torch.nn.Module)
+        assert self.bits > 0, "bits must be positive"
+        assert self.group_size == -1 or self.group_size >= 1, "only supports positive group_size or -1(per channel)"
+        assert self.bs > 0, "batch size must be positive"
+        assert self.iters > 0, "iters must be positive"
+        assert self.seqlen > 0, "seqlen must be positive"
+        assert self.n_blocks > 0, "n_blocks must be positive"
+        assert self.gradient_accumulate_steps > 0, "gradient accumulate step must be positive"
 
     def default_tokenize_function(self, examples):
         example = self.tokenizer(examples["text"], truncation=True, max_length=self.seqlen)

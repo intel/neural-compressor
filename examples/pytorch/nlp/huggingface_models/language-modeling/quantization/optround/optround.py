@@ -1,6 +1,8 @@
 import argparse
 import copy
 
+import transformers.modeling_utils
+
 parser = argparse.ArgumentParser()
 import torch
 
@@ -26,7 +28,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 if __name__ == '__main__':
 
     parser.add_argument(
-        "--model_name", default="/models/opt-125m"
+        "--model_name", default="facebook/opt-125m"  ##LaMini-GPT conv1d
     )
 
     parser.add_argument("--num_bits", default=4, type=int,
@@ -43,7 +45,6 @@ if __name__ == '__main__':
 
     parser.add_argument("--device", default=0, type=str,
                         help="device gpu int number, or 'cpu' ")
-
 
     parser.add_argument("--iters", default=400, type=int,
                         help=" iters")
@@ -102,7 +103,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--low_gpu_mem_usage", action='store_true',
                         help="low_gpu_mem_usage")
-    
+
     parser.add_argument("--trust_remote_code", default=True,
                         help="Transformers parameter: use the external repo")
 
@@ -125,8 +126,11 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     set_seed(args.seed)
-
+    # args.model_name = "/models/LaMini-GPT-124M"
     model_name = args.model_name
+
+    # tmp = transformers.modeling_utils.Conv1D(8,4)
+    # tmp = torch.nn.Conv1d(4,8,1,1)
     if model_name[-1] == "/":
         model_name = model_name[:-1]
     print(model_name, flush=True)
@@ -165,6 +169,7 @@ if __name__ == '__main__':
     else:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    optq = OPTRoundQuantizer(model, tokenizer, args.num_bits, args.group_size, args.scheme, bs=args.train_bs,seqlen=seqlen)
+    optq = OPTRoundQuantizer(model, tokenizer, args.num_bits, args.group_size, args.scheme, bs=args.train_bs,
+                             seqlen=seqlen)
     optq.quantize()
-    eval_model(optq.model, args.model_name, tokenizer, args.tasks)
+    eval_model(optq.model, args.model_name, tokenizer, args.tasks,device=device_str)
