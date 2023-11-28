@@ -1,7 +1,7 @@
 source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 
 pip install coverage
-export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.${1}
+export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/3x/coverage.${1}
 coverage_log="/neural-compressor/log_dir/coverage_log"
 coverage_log_base="/neural-compressor/log_dir/coverage_log_base"
 coverage_compare="/neural-compressor/log_dir/coverage_compare.html"
@@ -23,7 +23,7 @@ git config --global --add safe.directory /neural-compressor
 git fetch
 git checkout master
 echo y | pip uninstall neural-compressor
-cd /neural-compressor/.azure-pipelines/scripts && bash install_nc.sh
+cd /neural-compressor/.azure-pipelines/scripts && bash install_nc.sh ${1}
 
 coverage erase
 cd /neural-compressor/log_dir

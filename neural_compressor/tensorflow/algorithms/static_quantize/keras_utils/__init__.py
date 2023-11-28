@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,18 +14,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
-# All constants
-
-# constants for configs
-GLOBAL = "global"
-LOCAL = "local"
-
-# config name
-BASE_CONFIG = "base_config"
-COMPOSABLE_CONFIG = "composable_config"
-RTN_WEIGHT_ONLY_QUANT = "rtn_weight_only_quant"
-STATIC_QUANT = "static_quant"
-GPTQ = "gptq"
-DUMMY_CONFIG = "dummy_config"
