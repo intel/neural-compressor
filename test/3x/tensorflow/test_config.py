@@ -272,7 +272,7 @@ class TestKeras3xNewApi(unittest.TestCase):
                 },
             }
         }
-        config = StaticQuantConfig.from_dict(quant_config)
+        config = StaticQuantConfig.from_dict(quant_config["static_quant"])
         self.assertIsNotNone(config.local_config)
 
     def test_config_to_dict(self):
