@@ -191,6 +191,10 @@ class GPTQConfig(BaseConfig):
         "device",
         "layer_wise",
         "return_int",
+        "double_quant_dtype",
+        "double_quant_bits",
+        "double_quant_sym",
+        "double_quant_group_size",
     ]
 
     def __init__(
@@ -212,6 +216,10 @@ class GPTQConfig(BaseConfig):
         device=None,
         layer_wise: bool = False,
         return_int: bool = False,
+        double_quant_dtype: str = "fp32",
+        double_quant_bits: int = 8,
+        double_quant_sym: bool = True,
+        double_quant_group_size: int = 256,
     ):
         """Init GPTQ config.
 
@@ -236,6 +244,10 @@ class GPTQConfig(BaseConfig):
         self.layer_wise = layer_wise
         self.device = device
         self.return_int = return_int
+        self.double_quant_bits = double_quant_bits
+        self.double_quant_dtype = double_quant_dtype
+        self.double_quant_sym = double_quant_sym
+        self.double_quant_group_size = double_quant_group_size
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)

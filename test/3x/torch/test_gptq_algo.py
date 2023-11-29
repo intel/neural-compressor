@@ -44,7 +44,7 @@ class GPTQLLMDataLoaderDict(GPTQLLMDataLoader):
 
 from tqdm import tqdm
 
-from neural_compressor.torch.algorithms.gptq import move_input_to_device
+from neural_compressor.torch.algorithms.weight_only.gptq import move_input_to_device
 
 
 def run_fn_for_gptq(model, dataloader_for_calibration, *args):
@@ -88,7 +88,7 @@ class TestGPTQ(unittest.TestCase):
         input = torch.ones([1, 512], dtype=torch.long)
         out0 = model_1(input)
         device = None
-        from neural_compressor.torch.algorithms.gptq import DataloaderPreprocessor
+        from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
 
         dataloaderPreprocessor = DataloaderPreprocessor(
             dataloader_original=dataloader, use_max_length=False, pad_max_length=512, nsamples=128
@@ -97,6 +97,45 @@ class TestGPTQ(unittest.TestCase):
 
         quant_config = GPTQConfig(
             weight_group_size=8, dataloader_len=len(dataloader_for_calibration), pad_max_length=512
+        )
+        quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
+        logger.info(f"Test GPTQ with config {quant_config}")
+        q_model = quantize(
+            model=model_1, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=dataloader_for_calibration
+        )
+        out1 = q_model(input)
+        self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
+
+    def test_dq_gptq(self):
+        # Ported from test/adaptor/pytorch_adaptor/test_weight_only_adaptor.py
+        # TestPytorchWeightOnlyAdaptor.test_GPTQ_fixed_length_quant
+        from neural_compressor.torch import GPTQConfig, quantize
+
+        dataloader = GPTQLLMDataLoader()
+
+        # case 1: tensor
+        model_1 = get_gpt_j()
+        input = torch.ones([1, 512], dtype=torch.long)
+        out0 = model_1(input)
+        device = None
+        from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
+
+        dataloaderPreprocessor = DataloaderPreprocessor(
+            dataloader_original=dataloader, use_max_length=False, pad_max_length=512, nsamples=128
+        )
+        dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
+
+        quant_config = GPTQConfig(
+            weight_dtype="int",
+            weight_bits=4,
+            weight_group_size=32,
+            weight_sym=True,
+            dataloader_len=len(dataloader_for_calibration), 
+            pad_max_length=512,
+            double_quant_bits=6,
+            double_quant_dtype="int",
+            double_quant_sym=True,
+            double_quant_group_size=8,
         )
         quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
         logger.info(f"Test GPTQ with config {quant_config}")
@@ -117,7 +156,7 @@ class TestGPTQ(unittest.TestCase):
         out0 = model_1(input)
 
         device = None
-        from neural_compressor.torch.algorithms.gptq import DataloaderPreprocessor
+        from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
 
         dataloaderPreprocessor = DataloaderPreprocessor(
             dataloader_original=dataloader, use_max_length=False, pad_max_length=512, nsamples=128
@@ -169,7 +208,7 @@ class TestGPTQ(unittest.TestCase):
                 d = dict(zip(gptq_options.keys(), value))
                 quant_config = GPTQConfig(**d)
                 length = 512 if quant_config.use_max_length else random.randint(1, 1024)
-                from neural_compressor.torch.algorithms.gptq import DataloaderPreprocessor
+                from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
 
                 dataloaderPreprocessor = DataloaderPreprocessor(
                     dataloader_original=dataloader_cls(length),
@@ -235,7 +274,7 @@ class TestGPTQ(unittest.TestCase):
                 "act_order": False,
             },
         }
-        from neural_compressor.torch.algorithms.gptq import DataloaderPreprocessor
+        from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
 
         dataloaderPreprocessor = DataloaderPreprocessor(
             dataloader_original=dataloader,
@@ -244,7 +283,7 @@ class TestGPTQ(unittest.TestCase):
             nsamples=128,
         )
         preprocessed_dataloader = dataloaderPreprocessor.get_prepared_dataloader()
-        from neural_compressor.torch.algorithms.gptq import GPTQuantizer
+        from neural_compressor.torch.algorithms.weight_only.gptq import GPTQuantizer
 
         quantizer = GPTQuantizer(
             model=model,
