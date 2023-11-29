@@ -50,10 +50,9 @@ class SmoothQuantCalibration:
         iterations (int): The number of iterations to run the calibration process.
         op_types (List[str]): The types of operations to be quantized.
         percentile (float): The percentile of calibration to remove outliers.
-        black_nodes (List[str]): A list of node names to be ignored during calibration.
     """
 
-    def __init__(self, model, dataloader, iterations, op_types, percentile, black_nodes):
+    def __init__(self, model, dataloader, iterations, op_types, percentile):
         """Initializes a SmoothQuantCalibration object."""
         self.model = model
         self.dataloader = dataloader
@@ -61,7 +60,6 @@ class SmoothQuantCalibration:
         # self.iterations = 3
         self.op_types = op_types
         self.percentile = percentile
-        self.black_nodes = black_nodes
         self._sq_input_node_names = []
         self._sq_output_tensor_dict = {}
         self._sq_weight_node_names = {}  # mapping from its weight node name to the concrete output node name
@@ -171,7 +169,7 @@ class SmoothQuantCalibration:
         )
 
         for node in sorted_graph.node:
-            if node.op not in self.op_types or node.name in self.black_nodes:
+            if node.op not in self.op_types:
                 continue
             # Fix retval already been set issue
             if "while" in node.input[0]:  # pragma: no cover
@@ -243,14 +241,13 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
         iterations (int): The number of iterations to run the calibration process.
         op_types (List[str]): The types of operations to be quantized.
         percentile (float): The percentile of calibration to remove outliers.
-        black_nodes (List[str]): A list of node names to be ignored during calibration.
         eval_func (function):  The function to inference the model.
         temp_path (str): The temporary path to store median model.
         weight_name_mapping (): A function that convert weight tensor name in autotrackable to node name in graph_def
     """
 
     def __init__(
-        self, model_path, dataloader, iterations, op_types, percentile, black_nodes, temp_path, weight_name_mapping
+        self, model_path, dataloader, iterations, op_types, percentile, temp_path, weight_name_mapping
     ):
         """Initializes a SmoothQuantCalibrationLLM object."""
         self.func = None
@@ -262,7 +259,6 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
         self.iterations = iterations
         self.op_types = op_types
         self.percentile = percentile
-        self.black_nodes = black_nodes
         self.temp_path = temp_path
         self.weight_name_mapping = weight_name_mapping
         self.print_node_list = []
@@ -465,7 +461,7 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
         )
 
         for node in sorted_graph.node:
-            if node.op not in self.op_types or node.name in self.black_nodes:
+            if node.op not in self.op_types:
                 continue
             # Fix retval already been set issue
             if "while" in node.input[0]:  # pragma: no cover
