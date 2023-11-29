@@ -64,7 +64,7 @@ function run_tuning {
         model_name_or_path="decapoda-research/llama-7b-hf"
         extra_cmd=$extra_cmd" --ipex --sq --alpha auto"
     elif [ "${topology}" = "gpt_j_ipex_sq" ]; then
-        model_name_or_path="/tf_dataset2/models/pytorch/gpt-j-6B"
+        model_name_or_path="EleutherAI/gpt-j-6b"
         extra_cmd=$extra_cmd" --ipex --sq --alpha 1.0"
     elif [ "${topology}" = "falcon_7b_sq" ]; then
         model_name_or_path="tiiuae/falcon-7b-instruct"
