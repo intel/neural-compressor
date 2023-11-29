@@ -246,9 +246,7 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
         weight_name_mapping (): A function that convert weight tensor name in autotrackable to node name in graph_def
     """
 
-    def __init__(
-        self, model_path, dataloader, iterations, op_types, percentile, temp_path, weight_name_mapping
-    ):
+    def __init__(self, model_path, dataloader, iterations, op_types, percentile, temp_path, weight_name_mapping):
         """Initializes a SmoothQuantCalibrationLLM object."""
         self.func = None
         self.graph_def = None
