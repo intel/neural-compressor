@@ -498,7 +498,7 @@ def rtn_quantize(
             int_weight = int_weight.T if group_dim == 0 else int_weight
             scale = scale.T if group_dim == 0 else scale
             zp = zp.T if group_dim == 0 and zp is not None else zp
-            from neural_compressor.quantization.modules import WeightOnlyLinear
+            from neural_compressor.torch.quantization.modules import WeightOnlyLinear
 
             new_module = WeightOnlyLinear(
                 m.in_features,
