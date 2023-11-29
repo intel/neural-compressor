@@ -78,7 +78,7 @@ def set_module(model, key, new_module):
 
 
 def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
-    maxq = torch.tensor(2 ** num_bits - 1)
+    maxq = torch.tensor(2**num_bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device, dtype=weight.dtype)
     if isinstance(min_scale, torch.Tensor):
         wmin_tmp = torch.minimum(weight.min(1)[0], zeros)
@@ -103,7 +103,7 @@ def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
 
 
 def quant_weight_sym(
-        weight, num_bits=4, grad=0, min_scale=0, max_scale=0
+    weight, num_bits=4, grad=0, min_scale=0, max_scale=0
 ):  ##TODO having not validated,also min_scale could be dropped later
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-(2 ** (num_bits - 1))).to(weight.device)
@@ -130,7 +130,7 @@ def quant_weight_actor(weight, num_bits, scheme, grad, min_scale, max_scale):
 
 
 def quant_weight(
-        weight, num_bits=4, group_size=-1, scheme="asym", grad=0, min_scale=0, max_scale=0
+    weight, num_bits=4, group_size=-1, scheme="asym", grad=0, min_scale=0, max_scale=0
 ):  ##TODO polish the code
     if group_size == -1 or weight.shape[1] < group_size:
         return quant_weight_actor(weight, num_bits, scheme=scheme, grad=grad, min_scale=min_scale, max_scale=max_scale)
@@ -160,9 +160,9 @@ def quant_weight(
             grad2 = 0
         if isinstance(min_scale, torch.Tensor):
             min_scale_1 = min_scale[:, : weight.shape[1] // group_size]
-            min_scale_2 = min_scale[:, weight.shape[1] // group_size:]
+            min_scale_2 = min_scale[:, weight.shape[1] // group_size :]
             max_scale_1 = max_scale[:, : weight.shape[1] // group_size]
-            max_scale_2 = max_scale[:, weight.shape[1] // group_size:]
+            max_scale_2 = max_scale[:, weight.shape[1] // group_size :]
         else:
             min_scale_1 = min_scale
             min_scale_2 = min_scale
@@ -515,16 +515,13 @@ def wrapper_block(block, enable_minmax_tuning, supported_types):
             pass
         elif "Conv1D" in str(type(m)):
             from transformers.modeling_utils import Conv1D
-            new_m = WrapperTransformerConv1d(
-                m, num_bits, group_size, scheme, enable_minmax_tuning=enable_minmax_tuning
-            )
+
+            new_m = WrapperTransformerConv1d(m, num_bits, group_size, scheme, enable_minmax_tuning=enable_minmax_tuning)
             set_module(block, n, new_m)
 
 
 @torch.no_grad()
-def unwrapper_block(
-        block, grads, min_scale_grads, max_scale_grads
-):  ## TODO go to wrapper conv1d
+def unwrapper_block(block, grads, min_scale_grads, max_scale_grads):  ## TODO go to wrapper conv1d
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear) or isinstance(m, WrapperTransformerConv1d):
             orig_layer = m.orig_layer
@@ -570,38 +567,38 @@ def collect_minmax_grad(block):
 
 class OPTRoundQuantizer(object):
     def __init__(
-            self,
-            model,
-            tokenizer=None,
-            bits: int = 4,
-            group_size: int = 128,
-            scheme: str = "asym",
-            weight_config: dict = {},
-            enable_full_range: bool = False,  ##for symmetric, TODO support later
-            bs: int = 8,
-            amp: bool = True,
-            device="cuda:0",
-            optimizer=None,
-            lr_scheduler=None,
-            dataloader=None,  ## to support later
-            default_dataset_name: str = "NeelNanda/pile-10k",
-            dataset_split: str = "train",
-            use_quant_input: bool = True,
-            enable_minmax_tuning: bool = True,
-            lr: float = 0.0025,
-            minmax_lr: float = 0.0025,
-            low_gpu_mem_usage: bool = True,
-            iters: int = 200,
-            seqlen: int = 2048,
-            n_samples: int = 512,
-            sampler: str = "rand",
-            seed: int = 42,
-            n_blocks: int = 1,
-            gradient_accumulate_steps: int = 1,
-            not_use_mse: bool = False,
-            dynamic_max_gap: int = -1,
-            data_type: str = "int",  ##only support data_type
-            **kwargs
+        self,
+        model,
+        tokenizer=None,
+        bits: int = 4,
+        group_size: int = 128,
+        scheme: str = "asym",
+        weight_config: dict = {},
+        enable_full_range: bool = False,  ##for symmetric, TODO support later
+        bs: int = 8,
+        amp: bool = True,
+        device="cuda:0",
+        optimizer=None,
+        lr_scheduler=None,
+        dataloader=None,  ## to support later
+        default_dataset_name: str = "NeelNanda/pile-10k",
+        dataset_split: str = "train",
+        use_quant_input: bool = True,
+        enable_minmax_tuning: bool = True,
+        lr: float = 0.0025,
+        minmax_lr: float = 0.0025,
+        low_gpu_mem_usage: bool = True,
+        iters: int = 200,
+        seqlen: int = 2048,
+        n_samples: int = 512,
+        sampler: str = "rand",
+        seed: int = 42,
+        n_blocks: int = 1,
+        gradient_accumulate_steps: int = 1,
+        not_use_mse: bool = False,
+        dynamic_max_gap: int = -1,
+        data_type: str = "int",  ##only support data_type
+        **kwargs
     ):
         """
         Args:
@@ -644,6 +641,7 @@ class OPTRoundQuantizer(object):
         self.supported_types = [torch.nn.Linear]  ## TODO support conv1d
         try:
             import transformers
+
             self.supported_types.append(transformers.modeling_utils.Conv1D)
         except:
             pass
@@ -800,9 +798,7 @@ class OPTRoundQuantizer(object):
         #         break
         # return  supported
 
-    def quant_block(
-            self, block, input_ids, input_others, q_input=None, device=torch.device("cpu")
-    ):
+    def quant_block(self, block, input_ids, input_others, q_input=None, device=torch.device("cpu")):
         batch_dim = self.get_batch_dim(input_others)
         if not self.low_gpu_mem_usage and input_ids.device != device:
             # input_ids, input_others = move_to_device(input_ids, input_others, device)
@@ -923,12 +919,12 @@ class OPTRoundQuantizer(object):
             return None, output
 
     def q_dq_weight_round(
-            self,
-            model: torch.nn.Module,
-            inputs,
-            block_names,
-            n_blocks=1,
-            device=torch.device("cpu"),
+        self,
+        model: torch.nn.Module,
+        inputs,
+        block_names,
+        n_blocks=1,
+        device=torch.device("cpu"),
     ):
         q_input = None
         torch.cuda.empty_cache()
@@ -944,7 +940,7 @@ class OPTRoundQuantizer(object):
                 logger.info(n)
                 m = get_module(model, n)
             else:
-                names = block_names[i: i + n_blocks]
+                names = block_names[i : i + n_blocks]
                 logger.info(names)
                 modules = [get_module(model, n) for n in names]
                 m = WrapperMultiblock(modules)
