@@ -148,7 +148,6 @@ class Evaluator:
 
         acc = hit / total
         print("Accuracy: ", acc)
-        lantecy = latency / len(self.dataset)
         print("Latency: ", latency)
         return acc
 
@@ -158,53 +157,15 @@ def get_user_model():
     torchscript = False
     if args.sq or args.ipex or args.woq_algo in ['AWQ', 'TEQ']:
         torchscript = True
-    if re.search("llama", args.model.lower()):
-        import transformers
-        from transformers import LlamaForCausalLM, LlamaTokenizer
-        user_model = LlamaForCausalLM.from_pretrained(
-            args.model,
-            torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
-            revision=args.revision,
-        )
-        tokenizer = LlamaTokenizer.from_pretrained(args.model)
-    elif re.search("mpt-7b-chat", args.model.lower()):
-        from mpt_7b.modeling_mpt import MPTForCausalLM
-        user_model = MPTForCausalLM.from_pretrained(
-                args.model,
-                torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
-                trust_remote_code=args.trust_remote_code,
-                revision=args.revision,
-                )
-        tokenizer = AutoTokenizer.from_pretrained(args.model)
-        user_model.config.use_cache = True
-    elif re.search("falcon-7b-instruct", args.model.lower()):
-        from falcon_7b_instruct.modelling_RW import RWForCausalLM
-        user_model = RWForCausalLM.from_pretrained(
-                args.model,
-                torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
-                trust_remote_code=args.trust_remote_code,
-                revision=args.revision,
-                )
-        tokenizer = AutoTokenizer.from_pretrained(args.model)
-        user_model.config.use_cache = True
-    elif re.search("chatglm", args.model.lower()):
-        user_model = AutoModel.from_pretrained(
-                args.model,
-                torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
-                trust_remote_code=args.trust_remote_code,
-                revision=args.revision,
-                )
-        tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
-        if args.approach == 'weight_only':
-            user_model = user_model.float()
-    else:
-        user_model = AutoModelForCausalLM.from_pretrained(
-            args.model,
-            torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
-            trust_remote_code=args.trust_remote_code,
-            revision=args.revision,
-        )
-        tokenizer = AutoTokenizer.from_pretrained(args.model)
+    user_model = AutoModelForCausalLM.from_pretrained(
+        args.model,
+        torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
+        trust_remote_code=args.trust_remote_code,
+        revision=args.revision,
+    )
+    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    if args.approach == 'weight_only':
+        user_model = user_model.float()
 
     # Set model's seq_len when GPTQ calibration is enabled.
     if args.woq_algo == 'GPTQ':
