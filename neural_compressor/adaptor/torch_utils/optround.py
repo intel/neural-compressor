@@ -576,7 +576,7 @@ class OPTRoundQuantizer(object):
             bits: int = 4,
             group_size: int = 128,
             scheme: str = "asym",
-            weight_config: dict = {},  ##TODO support later
+            weight_config: dict = {},
             enable_full_range: bool = False,  ##for symmetric, TODO support later
             bs: int = 8,
             amp: bool = True,
@@ -647,7 +647,7 @@ class OPTRoundQuantizer(object):
             self.supported_types.append(transformers.modeling_utils.Conv1D)
         except:
             pass
-        self.weight_config = {}  ##TODO support later
+        self.weight_config = {}
         assert dataloader is not None or tokenizer is not None  ##TODO datatype
         self.dataset_split = dataset_split
         self.seed = seed
@@ -674,8 +674,6 @@ class OPTRoundQuantizer(object):
         self.dynamic_max_gap = dynamic_max_gap
         self.enable_full_range = enable_full_range
         assert self.enable_full_range is False, "only support enable_full_range=False currently"
-        self.weight_config = weight_config
-        assert self.weight_config == {}, "does not support weight config currently"
         self.optimizer = optimizer
         if self.optimizer is None:
             self.optimizer = torch.optim.AdamW
@@ -929,9 +927,6 @@ class OPTRoundQuantizer(object):
             model: torch.nn.Module,
             inputs,
             block_names,
-            num_bits=4,
-            group_size=128,
-            scheme="asym",
             n_blocks=1,
             device=torch.device("cpu"),
     ):
@@ -994,8 +989,6 @@ class OPTRoundQuantizer(object):
             self.model,
             inputs,
             block_names,
-            num_bits=self.bits,
-            group_size=self.group_size,
             n_blocks=self.n_blocks,
             device=self.device,
         )
