@@ -166,6 +166,9 @@ if __name__ == '__main__':
             tokenizer.add_special_tokens({'pad_token': '[PAD]'})
     else:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
+    if args.eval_fp16_baseline:
+        eval_model(model, args.model_name, tokenizer, args.tasks, device=device_str)
+        exit()
 
     optq = OPTRoundQuantizer(model, tokenizer, args.num_bits, args.group_size, args.scheme, bs=args.train_bs,
                              seqlen=seqlen)
