@@ -1,25 +1,13 @@
 import argparse
-import copy
-
-import transformers.modeling_utils
 
 parser = argparse.ArgumentParser()
 import torch
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
-from datasets import load_dataset
-from torch.functional import F
-
-from torch.autograd import Function
-
-from datasets import load_from_disk
-from torch.utils.data import DataLoader
 
 import os
 from transformers import set_seed
-from functools import partial
-from torch.amp import autocast
-from neural_compressor.adaptor.torch_utils.optround import OPTRoundQuantizer
+from neural_compressor.adaptor.torch_utils.signround.optround import OPTRoundQuantizer
 from eval import eval_model
 import re
 
@@ -46,7 +34,7 @@ if __name__ == '__main__':
     parser.add_argument("--device", default=0, type=str,
                         help="device gpu int number, or 'cpu' ")
 
-    parser.add_argument("--iters", default=400, type=int,
+    parser.add_argument("--iters", default=200, type=int,
                         help=" iters")
 
     parser.add_argument("--dynamic_max_gap", default=0, type=int,
@@ -64,10 +52,10 @@ if __name__ == '__main__':
     parser.add_argument("--clip_val", default=0.5, type=float,
                         help="clip value")
 
-    parser.add_argument("--lr", default=0.0025, type=float,
+    parser.add_argument("--lr", default=0.005, type=float,
                         help="step size")
 
-    parser.add_argument("--min_max_lr", default=0.0025, type=float,
+    parser.add_argument("--min_max_lr", default=0.005, type=float,
                         help="step size")
 
     parser.add_argument("--lr_decay_type", default="linear", type=str,
