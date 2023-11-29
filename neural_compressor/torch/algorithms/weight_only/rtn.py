@@ -76,8 +76,11 @@ def quantize_4bit(tensor, quantile=1.0, data_type="nf4", return_int=False, **kwa
     allow_data = FLOAT_MAPPING[data_type]
     allow_data_bit = INT_MAPPING[data_type]
     # get scale and update tensor
-    scale = tensor.abs().max(1)[0] * quantile / max(allow_data)
-    scale.unsqueeze_(dim=-1)
+    if "scale" in kwargs:
+        scale = kwargs["scale"]
+    else:
+        scale = tensor.abs().max(1)[0] * quantile / max(allow_data)
+        scale.unsqueeze_(dim=-1)
     tensor = tensor / scale
     mid_data = [(allow_data[i] + allow_data[i + 1]) / 2 for i in range(len(allow_data) - 1)]
     q_tensor = torch.zeros_like(tensor)
@@ -258,7 +261,7 @@ def quant_weight(
         else:
             return weight.reshape(orig_shape)
     else:
-        # case 3, process left part splitted by group size
+        # case 3, process left part split by group size
         split_index = weight.shape[1] // group_size * group_size
         weight1 = weight[:, :split_index]
         weight1 = weight1.reshape(-1, group_size)
@@ -304,6 +307,7 @@ def quant_weight(
         double_quant_num_bits = kwargs.get("double_quant_num_bits", 8)
         double_quant_scheme = kwargs.get("double_quant_scheme", "sym")
         double_quant_group_size = kwargs.get("double_quant_group_size", 256)
+        double_quant_return_int = kwargs.get("double_quant_return_int", return_int)
         # process scale
         orig_scale_shape = scale.shape
         scale = scale.reshape(1, -1)
@@ -314,14 +318,18 @@ def quant_weight(
             scheme=double_quant_scheme,
             quantile=1.0,
             data_type=double_quant_dtype,
-            return_int=return_int,
+            return_int=double_quant_return_int,
             full_range=False,
             double_quant=False,
         )
         if return_int:
-            scale, hyper_scale, hyper_zp = scale
-            scale = scale.reshape(orig_scale_shape)
-            return weight, (scale, hyper_scale, hyper_zp), zp
+            if double_quant_return_int:
+                scale, hyper_scale, hyper_zp = scale
+                scale = scale.reshape(orig_scale_shape)
+                return weight, (scale, hyper_scale, hyper_zp), zp
+            else:
+                scale = scale.reshape(orig_scale_shape)
+                return weight, scale, zp
         else:
             scale = scale.reshape(orig_scale_shape)
             if weight.shape[1] % group_size != 0:
@@ -524,6 +532,52 @@ def rtn_quantize(
             q_weight = q_weight.T if group_dim == 0 else q_weight
             m.weight.data.copy_(q_weight)
     return model
+
+
+def quant_weight_w_scale(weight, scale, zp, group_size=-1, dtype="int"):
+    """Quant and dequant tensor with group size.
+
+    Args:
+        weight: input weight
+        scale: scale
+        zp: zero point
+        group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
+        dtype: data type, for NF4 FP4
+
+    Returns:
+        output: int weight.
+    """
+    device = weight.device
+    scale = scale.to(device)
+    # NF4 FP4
+    if dtype in FLOAT_MAPPING.keys():
+        int_weight = quantize_4bit(
+            weight,
+            quantile=1.0,
+            data_type=dtype,
+            return_int=True,
+            scale=scale,
+        )[0]
+        return int_weight
+    # INT
+    if zp is not None:
+        zp = zp.to(device)
+    if group_size == -1:
+        return torch.round(weight / scale) if zp is None else torch.round(weight / scale + zp)
+    int_weight = torch.zeros(weight.shape).to(device)
+    leng = weight.shape[1] // group_size
+    tail_flag = False if weight.shape[1] % group_size == 0 else True
+    for i in range(leng):
+        int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size] / scale[:, i].unsqueeze(1)
+        if zp is not None:
+            int_weight_tmp += zp[:, i].unsqueeze(1)
+        int_weight[:, i * group_size : (i + 1) * group_size] = torch.round(int_weight_tmp)
+    if tail_flag:
+        int_weight_tmp = weight[:, leng * group_size :] / scale[:, -1].unsqueeze(1)
+        if zp is not None:
+            int_weight_tmp += zp[:, -1].unsqueeze(1)
+        int_weight[:, leng * group_size :] = torch.round(int_weight_tmp)
+    return int_weight
 
 
 from neural_compressor.torch.quantization.config import RTNWeightQuantConfig

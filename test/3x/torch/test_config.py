@@ -109,7 +109,7 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertTrue(torch.allclose(out3[0], out2[0], atol=1e-2))
 
         fp32_model = copy.deepcopy(self.gptj)
-        # bitsandbytes double quant setting
+
         quant_config = RTNWeightQuantConfig(
             weight_bits=4,
             weight_dtype="nf4",
@@ -126,14 +126,14 @@ class TestQuantizationConfig(unittest.TestCase):
             weight_dtype="nf4",
             weight_group_size=32,
             double_quant_dtype="int",
-            double_quant_bits=4,
+            double_quant_bits=8,
             double_quant_sym=False,
             double_quant_group_size=256,
         )
         quant_config.set_local("lm_head", fp32_config)
         qmodel = quantize(fp32_model, quant_config)
         out5 = qmodel(self.lm_input)
-        self.assertTrue(torch.allclose(out4[0], out5[0], atol=3e-2))
+        self.assertTrue(torch.allclose(out4[0], out5[0], atol=1e-2))
 
     def test_quantize_rtn_from_dict_advance(self):
         from neural_compressor.torch import quantize

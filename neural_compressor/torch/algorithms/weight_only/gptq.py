@@ -233,7 +233,7 @@ class GPTQuantizer(object):
         # weight config
         self.weight_config = weight_config
         # default settings, check configs
-        self.wdtype_default = 'int'
+        self.wdtype_default = "int"
         self.wbits_default = 4
         self.group_size_default = 128
         self.block_size_default = 128
@@ -242,7 +242,7 @@ class GPTQuantizer(object):
         self.act_order_default = False
         self.perchannel_default = True
         self.mse_default = False
-        self.double_quant_dtype_default = 'fp32'
+        self.double_quant_dtype_default = "fp32"
         self.double_quant_bits_default = 4
         self.double_quant_group_size_default = 128
         self.double_quant_sym_default = False
@@ -299,14 +299,22 @@ class GPTQuantizer(object):
                 tmp_weight_config[name]["act_order"] = self.weight_config.get("act_order", self.act_order_default)
                 tmp_weight_config[name]["perchannel"] = self.weight_config.get("perchannel", self.perchannel_default)
                 tmp_weight_config[name]["mse"] = self.weight_config.get("mse", self.mse_default)
-                tmp_weight_config[name]["double_quant_dtype"] = self.weight_config.get("double_quant_dtype", self.double_quant_dtype_default)
-                tmp_weight_config[name]["double_quant_bits"] = self.weight_config.get("double_quant_bits", self.double_quant_bits_default)
-                tmp_weight_config[name]["double_quant_group_size"] = self.weight_config.get("double_quant_group_size", self.double_quant_group_size_default)
-                tmp_weight_config[name]["double_quant_sym"] = self.weight_config.get("double_quant_sym", self.double_quant_sym_default)
+                tmp_weight_config[name]["double_quant_dtype"] = self.weight_config.get(
+                    "double_quant_dtype", self.double_quant_dtype_default
+                )
+                tmp_weight_config[name]["double_quant_bits"] = self.weight_config.get(
+                    "double_quant_bits", self.double_quant_bits_default
+                )
+                tmp_weight_config[name]["double_quant_group_size"] = self.weight_config.get(
+                    "double_quant_group_size", self.double_quant_group_size_default
+                )
+                tmp_weight_config[name]["double_quant_sym"] = self.weight_config.get(
+                    "double_quant_sym", self.double_quant_sym_default
+                )
             self.weight_config = tmp_weight_config
         else:
             for layer_name, config in self.weight_config.items():
-                self.weight_config[layer_name]["wdtype"] = self.weight_config.get("wdtype", self.wdtype_default)
+                self.weight_config[layer_name]["wdtype"] = config.get("wdtype", self.wdtype_default)
                 self.weight_config[layer_name]["wbits"] = config.get("wbits", self.wbits_default)
                 self.weight_config[layer_name]["group_size"] = config.get("group_size", self.group_size_default)
                 self.weight_config[layer_name]["block_size"] = config.get("block_size", self.group_size_default)
@@ -315,10 +323,18 @@ class GPTQuantizer(object):
                 self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
                 self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
                 self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
-                self.weight_config[layer_name]["double_quant_dtype"] = config.get("double_quant_dtype", self.double_quant_dtype_default)
-                self.weight_config[layer_name]["double_quant_bits"] = config.get("double_quant_bits", self.double_quant_bits_default)
-                self.weight_config[layer_name]["double_quant_group_size"] = config.get("double_quant_group_size", self.double_quant_group_size_default)
-                self.weight_config[layer_name]["double_quant_sym"] = config.get("double_quant_sym", self.double_quant_sym_default)
+                self.weight_config[layer_name]["double_quant_dtype"] = config.get(
+                    "double_quant_dtype", self.double_quant_dtype_default
+                )
+                self.weight_config[layer_name]["double_quant_bits"] = config.get(
+                    "double_quant_bits", self.double_quant_bits_default
+                )
+                self.weight_config[layer_name]["double_quant_group_size"] = config.get(
+                    "double_quant_group_size", self.double_quant_group_size_default
+                )
+                self.weight_config[layer_name]["double_quant_sym"] = config.get(
+                    "double_quant_sym", self.double_quant_sym_default
+                )
 
     def get_layer_config(self, layer_name):
         """Obtain config for one layer, since GPTQ supports layer-wise config."""
@@ -666,7 +682,9 @@ class GPTQ:
                         scale.append(self.quantizer.scale)
                         zero.append(self.quantizer.zero)
 
-                q = quantize(w.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq).flatten()
+                q = self.quantizer.quantize(
+                    w.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq
+                ).flatten()
                 Q1[:, i] = q
                 Losses1[:, i] = (w - q) ** 2 / d**2
 
@@ -738,8 +756,10 @@ class Quantizer(nn.Module):
     def find_params(self, x, weight=False):
         dev = x.device
         self.maxq = self.maxq.to(dev)
+        # NF4 FP4
         if self.wdtype != "int":
             from .rtn import quant_weight
+
             _, scale, zero = quant_weight(
                 x,
                 self.wbits,
@@ -754,19 +774,12 @@ class Quantizer(nn.Module):
                 double_quant_bits=self.double_quant_bits,
                 double_quant_scheme=self.double_quant_scheme,
                 double_quant_group_size=self.double_quant_group_size,
+                double_quant_return_int=False,
             )
-            if self.double_quant:
-                scale, hyper_scale, hyper_zp = scale
-                org_shape = scale.shape
-                scale = scale.reshape(-1)
-                if hyper_zp is not None:
-                    scale = (scale - hyper_zp) * hyper_scale
-                else:
-                    scale = scale * hyper_scale
-                scale = scale.reshape(org_shape)
             self.scale = scale
-            self.zero = zero
+            self.zero = torch.zeros_like(scale)
             return
+        # INT
         shape = x.shape
         if self.perchannel:
             if weight:
@@ -813,7 +826,7 @@ class Quantizer(nn.Module):
                 xmax1 = p * xmax
                 scale1 = (xmax1 - xmin1) / self.maxq
                 zero1 = torch.round(-xmin1 / scale1) if not self.sym else self.zero
-                q = quantize(x, scale1.unsqueeze(1), zero1.unsqueeze(1), self.maxq)
+                q = self.quantizer.quantize(x, scale1.unsqueeze(1), zero1.unsqueeze(1), self.maxq)
                 q -= x
                 q.abs_()
                 q.pow_(self.norm)
@@ -835,9 +848,10 @@ class Quantizer(nn.Module):
             shape = [-1] + [1] * (len(shape) - 1)
             self.scale = self.scale.reshape(shape)
             self.zero = self.zero.reshape(shape)
-        
+
             if self.double_quant:
                 from .rtn import quant_weight
+
                 orig_scale_shape = self.scale.shape
                 self.scale = self.scale.reshape(1, -1)
                 self.scale = quant_weight(
@@ -862,13 +876,17 @@ class Quantizer(nn.Module):
             self.scale = self.scale.unsqueeze(0)
             self.zero = self.zero.unsqueeze(0)
 
-
     def quantize(self, x, scale, zero, maxq):
         """Do quantization."""
-        if maxq < 0:
-            return (x > scale / 2).float() * scale + (x < zero / 2).float() * zero
-        q = torch.clamp(torch.round(x / scale) + zero, 0, maxq)
-        return scale * (q - zero)
+        if self.wdtype != "int":
+            from .rtn import quantize_4bit
+
+            return quantize_4bit(x, data_type=self.wdtype, scale=scale)
+        else:
+            if maxq < 0:
+                return (x > scale / 2).float() * scale + (x < zero / 2).float() * zero
+            q = torch.clamp(torch.round(x / scale) + zero, 0, maxq)
+            return scale * (q - zero)
 
     def ready(self):
         return torch.all(self.scale != 0)

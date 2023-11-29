@@ -1,3 +1,4 @@
+import copy
 import unittest
 
 import torch
@@ -84,9 +85,10 @@ class TestGPTQ(unittest.TestCase):
         dataloader = GPTQLLMDataLoader()
 
         # case 1: tensor
-        model_1 = get_gpt_j()
+        model = get_gpt_j()
         input = torch.ones([1, 512], dtype=torch.long)
-        out0 = model_1(input)
+        out0 = model(input)
+        model_1 = copy.deepcopy(model)
         device = None
         from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
 
@@ -106,6 +108,19 @@ class TestGPTQ(unittest.TestCase):
         out1 = q_model(input)
         self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
 
+        # NF4
+        model_1 = copy.deepcopy(model)
+        quant_config = GPTQConfig(
+            weight_dtype="nf4", weight_group_size=8, dataloader_len=len(dataloader_for_calibration), pad_max_length=512
+        )
+        quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
+        logger.info(f"Test GPTQ with config {quant_config}")
+        q_model = quantize(
+            model=model_1, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=dataloader_for_calibration
+        )
+        out1 = q_model(input)
+        self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
+
     def test_dq_gptq(self):
         # Ported from test/adaptor/pytorch_adaptor/test_weight_only_adaptor.py
         # TestPytorchWeightOnlyAdaptor.test_GPTQ_fixed_length_quant
@@ -114,9 +129,9 @@ class TestGPTQ(unittest.TestCase):
         dataloader = GPTQLLMDataLoader()
 
         # case 1: tensor
-        model_1 = get_gpt_j()
+        model = get_gpt_j()
         input = torch.ones([1, 512], dtype=torch.long)
-        out0 = model_1(input)
+        out0 = model(input)
         device = None
         from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
 
@@ -125,12 +140,14 @@ class TestGPTQ(unittest.TestCase):
         )
         dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
 
+        # llama.cpp GGML_TYPE_Q4_K setting
+        fp32_model = copy.deepcopy(model)
         quant_config = GPTQConfig(
             weight_dtype="int",
             weight_bits=4,
             weight_group_size=32,
             weight_sym=True,
-            dataloader_len=len(dataloader_for_calibration), 
+            dataloader_len=len(dataloader_for_calibration),
             pad_max_length=512,
             double_quant_bits=6,
             double_quant_dtype="int",
@@ -140,10 +157,32 @@ class TestGPTQ(unittest.TestCase):
         quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
         logger.info(f"Test GPTQ with config {quant_config}")
         q_model = quantize(
-            model=model_1, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=dataloader_for_calibration
+            model=fp32_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=dataloader_for_calibration
         )
         out1 = q_model(input)
         self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
+
+        # bitsandbytes double quant setting
+        fp32_model = copy.deepcopy(model)
+        quant_config = GPTQConfig(
+            weight_dtype="nf4",
+            weight_bits=4,
+            weight_group_size=32,
+            weight_sym=True,
+            dataloader_len=len(dataloader_for_calibration),
+            pad_max_length=512,
+            double_quant_bits=8,
+            double_quant_dtype="int",
+            double_quant_sym=False,
+            double_quant_group_size=256,
+        )
+        quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
+        logger.info(f"Test GPTQ with config {quant_config}")
+        q_model = quantize(
+            model=fp32_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=dataloader_for_calibration
+        )
+        out2 = q_model(input)
+        self.assertTrue(torch.allclose(out2[0], out0[0], atol=1e-02))
 
     def test_gptq_advance(self):
         # Ported from test/adaptor/pytorch_adaptor/test_weight_only_adaptor.py
