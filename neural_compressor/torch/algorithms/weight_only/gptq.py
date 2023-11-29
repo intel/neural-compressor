@@ -826,7 +826,7 @@ class Quantizer(nn.Module):
                 xmax1 = p * xmax
                 scale1 = (xmax1 - xmin1) / self.maxq
                 zero1 = torch.round(-xmin1 / scale1) if not self.sym else self.zero
-                q = self.quantizer.quantize(x, scale1.unsqueeze(1), zero1.unsqueeze(1), self.maxq)
+                q = self.quantize(x, scale1.unsqueeze(1), zero1.unsqueeze(1), self.maxq)
                 q -= x
                 q.abs_()
                 q.pow_(self.norm)
