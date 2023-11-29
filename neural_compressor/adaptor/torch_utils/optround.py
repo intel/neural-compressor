@@ -774,15 +774,14 @@ class OPTRoundQuantizer(object):
             optimizer.zero_grad()
             lr_schedule.step()
 
-    def is_supported_type(self,m):
-        return hasattr(m,"orig_layer")
+    def is_supported_type(self, m):
+        return hasattr(m, "orig_layer")
         # supported = False
         # for t in self.supported_types:
         #     if isinstance(m, t):
         #         supported=True
         #         break
         # return  supported
-
 
     def quant_block(
         self, block, input_ids, input_others, num_bits, group_size, schema, q_input=None, device=torch.device("cpu")
@@ -872,7 +871,7 @@ class OPTRoundQuantizer(object):
                         loss = mse_loss(output_q, current_output)
                 else:
                     loss = mse_loss(output_q, current_output)
-                loss = loss/self.gradient_accumulate_steps
+                loss = loss / self.gradient_accumulate_steps
                 total_loss += loss.item()
                 scale_loss = self.loss_scale_and_backward(scaler, loss)
 
