@@ -171,6 +171,6 @@ if __name__ == '__main__':
         exit()
 
     optq = OPTRoundQuantizer(model, tokenizer, args.num_bits, args.group_size, args.scheme, bs=args.train_bs,
-                             seqlen=seqlen)
+                             seqlen=seqlen, n_blocks=args.n_blocks)
     optq.quantize()
-    eval_model(optq.model, args.model_name, tokenizer, args.tasks,device=device_str)
+    eval_model(optq.model, args.model_name, tokenizer, args.tasks, device=device_str)

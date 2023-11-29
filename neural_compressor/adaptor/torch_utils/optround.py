@@ -16,7 +16,6 @@
 # limitations under the License.
 #
 ##TODO LIST
-## lamini-gpt bug
 ## to support signround+
 ## export to itrex
 ## to validate sym
@@ -79,7 +78,7 @@ def set_module(model, key, new_module):
 
 
 def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
-    maxq = torch.tensor(2**num_bits - 1)
+    maxq = torch.tensor(2 ** num_bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device, dtype=weight.dtype)
     if isinstance(min_scale, torch.Tensor):
         wmin_tmp = torch.minimum(weight.min(1)[0], zeros)
@@ -104,7 +103,7 @@ def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
 
 
 def quant_weight_sym(
-    weight, num_bits=4, grad=0, min_scale=0, max_scale=0
+        weight, num_bits=4, grad=0, min_scale=0, max_scale=0
 ):  ##TODO having not validated,also min_scale could be dropped later
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-(2 ** (num_bits - 1))).to(weight.device)
@@ -122,19 +121,19 @@ def quant_weight_sym(
     return scale * q
 
 
-def quant_weight_actor(weight, num_bits, schema, grad, min_scale, max_scale):
+def quant_weight_actor(weight, num_bits, scheme, grad, min_scale, max_scale):
     assert num_bits > 0, "num_bits should be larger than 0"
-    if schema == "sym":
+    if scheme == "sym":
         return quant_weight_sym(weight, num_bits, grad, min_scale, max_scale)
     else:
         return quant_weight_asym(weight, num_bits, grad, min_scale, max_scale)
 
 
 def quant_weight(
-    weight, num_bits=4, group_size=-1, schema="asym", grad=0, min_scale=0, max_scale=0
+        weight, num_bits=4, group_size=-1, scheme="asym", grad=0, min_scale=0, max_scale=0
 ):  ##TODO polish the code
     if group_size == -1 or weight.shape[1] < group_size:
-        return quant_weight_actor(weight, num_bits, schema=schema, grad=grad, min_scale=min_scale, max_scale=max_scale)
+        return quant_weight_actor(weight, num_bits, scheme=scheme, grad=grad, min_scale=min_scale, max_scale=max_scale)
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
@@ -142,7 +141,7 @@ def quant_weight(
             grad = grad.reshape(-1, group_size)
 
         weight = quant_weight_actor(
-            weight, num_bits, schema=schema, grad=grad, min_scale=min_scale, max_scale=max_scale
+            weight, num_bits, scheme=scheme, grad=grad, min_scale=min_scale, max_scale=max_scale
         )
 
         weight = weight.reshape(orig_shape)
@@ -161,9 +160,9 @@ def quant_weight(
             grad2 = 0
         if isinstance(min_scale, torch.Tensor):
             min_scale_1 = min_scale[:, : weight.shape[1] // group_size]
-            min_scale_2 = min_scale[:, weight.shape[1] // group_size :]
+            min_scale_2 = min_scale[:, weight.shape[1] // group_size:]
             max_scale_1 = max_scale[:, : weight.shape[1] // group_size]
-            max_scale_2 = max_scale[:, weight.shape[1] // group_size :]
+            max_scale_2 = max_scale[:, weight.shape[1] // group_size:]
         else:
             min_scale_1 = min_scale
             min_scale_2 = min_scale
@@ -171,12 +170,12 @@ def quant_weight(
             max_scale_2 = max_scale
 
         weight1 = quant_weight_actor(
-            weight1, num_bits, schema=schema, grad=grad1, min_scale=min_scale_1, max_scale=max_scale_1
+            weight1, num_bits, scheme=scheme, grad=grad1, min_scale=min_scale_1, max_scale=max_scale_1
         )
         weight1 = weight1.reshape(orig_shape[0], split_index)
         weight2 = weight[:, split_index:]
         weight2 = quant_weight_actor(
-            weight2, num_bits, schema=schema, grad=grad2, min_scale=min_scale_2, max_scale=max_scale_2
+            weight2, num_bits, scheme=scheme, grad=grad2, min_scale=min_scale_2, max_scale=max_scale_2
         )
         weight = torch.cat([weight1, weight2], dim=1)
 
@@ -403,12 +402,12 @@ def get_scale_shape(weight, group_size):
 
 
 class WrapperTransformerConv1d(torch.nn.Module):
-    def __init__(self, orig_layer, num_bits, group_size, schema, enable_minmax_tuning=True):
+    def __init__(self, orig_layer, num_bits, group_size, scheme, enable_minmax_tuning=True):
         super(WrapperTransformerConv1d, self).__init__()
         self.orig_layer = orig_layer
         self.num_bits = num_bits
         self.group_size = group_size
-        self.schema = schema
+        self.scheme = scheme
         device = self.orig_layer.weight.device
         self.value = torch.nn.Parameter(torch.zeros(self.orig_layer.weight.shape, device=device), requires_grad=True)
         shape = get_scale_shape(self.orig_layer.weight, group_size)
@@ -423,7 +422,7 @@ class WrapperTransformerConv1d(torch.nn.Module):
 
     def unwrapper(self, grad, min_scale_grad, max_scale_grad):
         weight_q = quant_weight(
-            self.weight_t, self.num_bits, self.group_size, self.schema, grad, min_scale_grad, max_scale_grad
+            self.weight_t, self.num_bits, self.group_size, self.scheme, grad, min_scale_grad, max_scale_grad
         )
         self.orig_layer.weight.data.copy_(weight_q.t())
         self.orig_layer.weight.grad = None
@@ -434,7 +433,7 @@ class WrapperTransformerConv1d(torch.nn.Module):
             self.min_scale.clamp_(-1, 0)
             self.max_scale.clamp_(-1, 0)
         weight_q = quant_weight(
-            self.weight_t, self.num_bits, self.group_size, self.schema, self.value, self.min_scale, self.max_scale
+            self.weight_t, self.num_bits, self.group_size, self.scheme, self.value, self.min_scale, self.max_scale
         )
         size_out = x.size()[:-1] + (self.orig_layer.nf,)
         x = torch.addmm(self.orig_layer.bias, x.view(-1, x.size(-1)), weight_q.t())
@@ -443,12 +442,12 @@ class WrapperTransformerConv1d(torch.nn.Module):
 
 
 class WrapperLinear(torch.nn.Module):
-    def __init__(self, orig_layer, num_bits, group_size, schema, enable_minmax_tuning=True):
+    def __init__(self, orig_layer, num_bits, group_size, scheme, enable_minmax_tuning=True):
         super(WrapperLinear, self).__init__()
         self.orig_layer = orig_layer
         self.num_bits = num_bits
         self.group_size = group_size
-        self.schema = schema
+        self.scheme = scheme
         device = self.orig_layer.weight.device
         self.value = torch.nn.Parameter(torch.zeros(self.orig_layer.weight.shape, device=device), requires_grad=True)
         shape = get_scale_shape(self.orig_layer.weight, group_size)
@@ -465,7 +464,7 @@ class WrapperLinear(torch.nn.Module):
         max_scale_grad.clamp_(-1, 0)
 
         q_dq_weight = quant_weight(
-            self.orig_layer.weight, self.num_bits, self.group_size, self.schema, grad, min_scale_grad, max_scale_grad
+            self.orig_layer.weight, self.num_bits, self.group_size, self.scheme, grad, min_scale_grad, max_scale_grad
         )
         self.orig_layer.weight.data.copy_(q_dq_weight)
         self.orig_layer.weight.grad = None  ##clear grad
@@ -479,35 +478,52 @@ class WrapperLinear(torch.nn.Module):
         # self.min_scale.data.copy_(torch.clamp(self.min_scale.data,-1,0))
         # self.max_scale.data.copy_(torch.clamp(self.max_scale.data, -1, 0))
         weight_q = quant_weight(
-            weight, self.num_bits, self.group_size, self.schema, self.value, self.min_scale, self.max_scale
+            weight, self.num_bits, self.group_size, self.scheme, self.value, self.min_scale, self.max_scale
         )
 
         return F.linear(x, weight_q, self.orig_layer.bias)
 
 
-def wrapper_block(block, num_bits, group_size, schema, enable_minmax_tuning):
+def is_supported_layer(m, supported_types):
+    supported = False
+    for t in supported_types:
+        if isinstance(m, t):
+            supported = True
+    return supported
+
+
+def check_is_float(data_type, num_bits, group_size, scheme):
+    if ("fp" in data_type or "float" in data_type) and num_bits >= 16:
+        return True
+    return False
+
+
+def wrapper_block(block, enable_minmax_tuning, supported_types):
     for n, m in block.named_modules():
+        if not is_supported_layer(m, supported_types):
+            continue
+        data_type = m.data_type
+        num_bits = m.bits
+        group_size = m.group_size
+        scheme = m.scheme
+        if check_is_float(data_type, num_bits, group_size, scheme):
+            continue
         if isinstance(m, torch.nn.Linear):
-            new_m = WrapperLinear(m, num_bits, group_size, schema, enable_minmax_tuning=enable_minmax_tuning)
+            new_m = WrapperLinear(m, num_bits, group_size, scheme, enable_minmax_tuning=enable_minmax_tuning)
             set_module(block, n, new_m)
         elif isinstance(m, torch.nn.Conv1d):
             pass
         elif "Conv1D" in str(type(m)):
             from transformers.modeling_utils import Conv1D
-
             new_m = WrapperTransformerConv1d(
-                m, num_bits, group_size, schema, enable_minmax_tuning=enable_minmax_tuning
-            )  ##TODO unwrapper
+                m, num_bits, group_size, scheme, enable_minmax_tuning=enable_minmax_tuning
+            )
             set_module(block, n, new_m)
-
-        else:
-            pass
-            # print(type(m))
 
 
 @torch.no_grad()
 def unwrapper_block(
-    block, num_bits, group_size, schema, grads, min_scale_grads, max_scale_grads
+        block, grads, min_scale_grads, max_scale_grads
 ):  ## TODO go to wrapper conv1d
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear) or isinstance(m, WrapperTransformerConv1d):
@@ -526,7 +542,7 @@ def unwrapper_block(
             orig_layer = m.unwrapper(grad, min_scale_grad, max_scale_grad)
 
             # q_dq_weight = quant_weight(
-            #     orig_layer.weight, num_bits, group_size, schema, grad, min_scale_grad, max_scale_grad
+            #     orig_layer.weight, num_bits, group_size, scheme, grad, min_scale_grad, max_scale_grad
             # )
             # orig_layer.weight.data.copy_(q_dq_weight)
             # orig_layer.weight.grad = None  ##clear grad
@@ -554,38 +570,38 @@ def collect_minmax_grad(block):
 
 class OPTRoundQuantizer(object):
     def __init__(
-        self,
-        model,
-        tokenizer=None,
-        bits: int = 4,
-        group_size: int = 128,
-        scheme: str = "asym",
-        weight_config: dict = {},  ##TODO support later
-        enable_full_range: bool = False,  ##for symmetric, TODO support later
-        bs: int = 8,
-        amp: bool = True,
-        device="cuda:0",
-        optimizer=None,
-        lr_scheduler=None,
-        dataloader=None,  ## to support later
-        default_dataset_name: str = "NeelNanda/pile-10k",
-        dataset_split: str = "train",
-        use_quant_input: bool = True,
-        enable_minmax_tuning: bool = True,
-        lr: float = 0.0025,
-        minmax_lr: float = 0.0025,
-        low_gpu_mem_usage: bool = True,
-        iters: int = 200,
-        seqlen: int = 2048,
-        n_samples: int = 512,
-        sampler: str = "rand",
-        seed: int = 42,
-        n_blocks: int = 1,
-        gradient_accumulate_steps: int = 1,
-        not_use_mse: bool = False,
-        dynamic_max_gap: int = -1,
-        data_type: str = "int",  ##only support data_type
-        **kwargs
+            self,
+            model,
+            tokenizer=None,
+            bits: int = 4,
+            group_size: int = 128,
+            scheme: str = "asym",
+            weight_config: dict = {},  ##TODO support later
+            enable_full_range: bool = False,  ##for symmetric, TODO support later
+            bs: int = 8,
+            amp: bool = True,
+            device="cuda:0",
+            optimizer=None,
+            lr_scheduler=None,
+            dataloader=None,  ## to support later
+            default_dataset_name: str = "NeelNanda/pile-10k",
+            dataset_split: str = "train",
+            use_quant_input: bool = True,
+            enable_minmax_tuning: bool = True,
+            lr: float = 0.0025,
+            minmax_lr: float = 0.0025,
+            low_gpu_mem_usage: bool = True,
+            iters: int = 200,
+            seqlen: int = 2048,
+            n_samples: int = 512,
+            sampler: str = "rand",
+            seed: int = 42,
+            n_blocks: int = 1,
+            gradient_accumulate_steps: int = 1,
+            not_use_mse: bool = False,
+            dynamic_max_gap: int = -1,
+            data_type: str = "int",  ##only support data_type
+            **kwargs
     ):
         """
         Args:
@@ -628,7 +644,6 @@ class OPTRoundQuantizer(object):
         self.supported_types = [torch.nn.Linear]  ## TODO support conv1d
         try:
             import transformers
-
             self.supported_types.append(transformers.modeling_utils.Conv1D)
         except:
             pass
@@ -639,7 +654,7 @@ class OPTRoundQuantizer(object):
         self.tokenizer = tokenizer
         self.seqlen = seqlen
         self.train_bs = bs
-        self.n_blocks = 1
+        self.n_blocks = n_blocks
         self.device = device
         self.amp_dtype = torch.float16
         if self.model.dtype != torch.float32:
@@ -665,7 +680,7 @@ class OPTRoundQuantizer(object):
         if self.optimizer is None:
             self.optimizer = torch.optim.AdamW
         self.lr_scheduler = lr_scheduler
-        self.set_layerwise_config(weight_config)
+        self.set_layerwise_config(weight_config)  ##hook to the module directly
 
     def check_configs(self):
         assert isinstance(self.model, torch.nn.Module)
@@ -701,6 +716,10 @@ class OPTRoundQuantizer(object):
                     weight_config[n]["group_size"] = self.group_size
                 if "scheme" not in weight_config[n].keys():
                     weight_config[n]["scheme"] = self.scheme
+            m.data_type = weight_config[n]["data_type"]
+            m.bits = weight_config[n]["bits"]
+            m.group_size = weight_config[n]["group_size"]
+            m.scheme = weight_config[n]["scheme"]
 
     def default_tokenize_function(self, examples):
         example = self.tokenizer(examples["text"], truncation=True, max_length=self.seqlen)
@@ -774,8 +793,8 @@ class OPTRoundQuantizer(object):
             optimizer.zero_grad()
             lr_schedule.step()
 
-    def is_supported_type(self,m):
-        return hasattr(m,"orig_layer")
+    def is_supported_type(self, m):
+        return hasattr(m, "orig_layer")
         # supported = False
         # for t in self.supported_types:
         #     if isinstance(m, t):
@@ -783,9 +802,8 @@ class OPTRoundQuantizer(object):
         #         break
         # return  supported
 
-
     def quant_block(
-        self, block, input_ids, input_others, num_bits, group_size, schema, q_input=None, device=torch.device("cpu")
+            self, block, input_ids, input_others, q_input=None, device=torch.device("cpu")
     ):
         batch_dim = self.get_batch_dim(input_others)
         if not self.low_gpu_mem_usage and input_ids.device != device:
@@ -802,7 +820,7 @@ class OPTRoundQuantizer(object):
         if q_input is not None:
             input_ids = q_input.to(cache_device)
 
-        wrapper_block(block, num_bits, group_size, schema, self.enable_minmax_tuning)
+        wrapper_block(block, self.enable_minmax_tuning, self.supported_types)
 
         best_loss = torch.finfo(torch.float).max
         mse_loss = torch.nn.MSELoss()
@@ -872,7 +890,7 @@ class OPTRoundQuantizer(object):
                         loss = mse_loss(output_q, current_output)
                 else:
                     loss = mse_loss(output_q, current_output)
-                loss = loss/self.gradient_accumulate_steps
+                loss = loss / self.gradient_accumulate_steps
                 total_loss += loss.item()
                 scale_loss = self.loss_scale_and_backward(scaler, loss)
 
@@ -895,7 +913,7 @@ class OPTRoundQuantizer(object):
             # lr_schedule.step()
             self.step(scaler, optimizer, lr_schedule)
 
-        unwrapper_block(block, num_bits, group_size, schema, best_grad, best_min_scale_grad, best_max_scale_grad)
+        unwrapper_block(block, best_grad, best_min_scale_grad, best_max_scale_grad)
         if self.use_quant_input:
             q_outputs = self.get_block_outputs(
                 block, input_ids, input_others, self.train_bs, device, cache_device, batch_dim
@@ -907,15 +925,15 @@ class OPTRoundQuantizer(object):
             return None, output
 
     def q_dq_weight_round(
-        self,
-        model: torch.nn.Module,
-        inputs,
-        block_names,
-        num_bits=4,
-        group_size=128,
-        schema="asym",
-        n_blocks=1,
-        device=torch.device("cpu"),
+            self,
+            model: torch.nn.Module,
+            inputs,
+            block_names,
+            num_bits=4,
+            group_size=128,
+            scheme="asym",
+            n_blocks=1,
+            device=torch.device("cpu"),
     ):
         q_input = None
         torch.cuda.empty_cache()
@@ -931,7 +949,7 @@ class OPTRoundQuantizer(object):
                 logger.info(n)
                 m = get_module(model, n)
             else:
-                names = block_names[i : i + n_blocks]
+                names = block_names[i: i + n_blocks]
                 logger.info(names)
                 modules = [get_module(model, n) for n in names]
                 m = WrapperMultiblock(modules)
@@ -942,9 +960,6 @@ class OPTRoundQuantizer(object):
                 m,
                 input_ids,
                 input_others,
-                num_bits=num_bits,
-                group_size=group_size,
-                schema=schema,
                 q_input=q_input,
                 device=device,
             )
