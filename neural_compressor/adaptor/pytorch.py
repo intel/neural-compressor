@@ -2678,6 +2678,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 folding = recipe_cfgs["smooth_quant_args"]["folding"]
         if "smooth_quant_args" in recipe_cfgs and "shift_bias" in recipe_cfgs["smooth_quant_args"]:  # lyt_os_debug_1012
             do_OS = True if recipe_cfgs["smooth_quant_args"]["shift_bias"] is True else False
+        else:
+            do_OS = False
         logger.info(f"lyt_debug pytorch.py 2690 do_OS: {do_OS}, folding: {folding}")  # lyt_os_debug_1012
         # Update model parameter when smoothquant folding = False
         if (
@@ -3135,7 +3137,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                                 from torch.ao.quantization.observer import MinMaxObserver
 
                                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                                    alpha=0.5, act_observer=MinMaxObserver
+                                    alpha=0.5, act_observer=MinMaxObserver()
                                 )
                             else:
                                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)

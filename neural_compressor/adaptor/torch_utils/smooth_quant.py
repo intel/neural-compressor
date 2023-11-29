@@ -1400,6 +1400,7 @@ class GraphTrace:
             "InstanceNorm2d": "aten::instance_norm",
             "LlamaRMSNorm": "aten::mul",
             "T5LayerNorm": "aten::mul",
+            "MistralRMSNorm": "aten::mul", #lyt_os_debug_1128
             "LPLayerNorm": "aten::layer_norm",  ##mpt_chat
         }
 
