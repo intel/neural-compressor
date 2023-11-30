@@ -263,16 +263,37 @@ if __name__ == "__main__":
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(
-            calibration_sampling_size=[8],
-            recipes={'optypes_to_exclude_output_quant': ['MatMul'],
-                     'smooth_quant': True,
-                     'smooth_quant_args': {'alpha': args.smooth_quant_alpha},
-                     'layer_wise_quant': True if args.layer_wise else False},
-            op_type_dict={'^((?!(MatMul|Gather|Conv)).)*$': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
-        for model in ['decoder_model.onnx', 'decoder_with_past_model.onnx']:
-            q_model = quantization.fit(
-                    os.path.join(args.model_path, model),
-                    config,
-                    calib_dataloader=KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1))
-            q_model.save(os.path.join(args.output_model, model))
+        if args.layer_wise:
+            # layer-wise quantization for ONNX models is still under development and only support W8A8 quantization now
+            config = PostTrainingQuantConfig(
+                calibration_sampling_size=[8],
+                recipes={'optypes_to_exclude_output_quant': ['MatMul'],
+                        'layer_wise_quant': True},
+                op_type_dict={'^((?!(MatMul|Gather|Conv)).)*$': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
+            for model in ['decoder_model.onnx']:
+                # only test decoder_model
+                q_model = quantization.fit(
+                        os.path.join(args.model_path, model),
+                        config,
+                        calib_dataloader=KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1))
+                q_model.save(os.path.join(args.output_model, model))
+            
+            tokenizer.save_pretrained(args.output_model)
+
+        else:
+            config = PostTrainingQuantConfig(
+                calibration_sampling_size=[8],
+                recipes={'optypes_to_exclude_output_quant': ['MatMul'],
+                        # 'smooth_quant': True,
+                        # 'smooth_quant_args': {'alpha': args.smooth_quant_alpha},
+                        },
+                op_type_dict={'^((?!(MatMul|Gather|Conv)).)*$': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
+            for model in ['decoder_model.onnx', 'decoder_with_past_model.onnx']:
+                q_model = quantization.fit(
+                        os.path.join(args.model_path, model),
+                        config,
+                        calib_dataloader=KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1))
+                q_model.save(os.path.join(args.output_model, model))
+            
+            tokenizer.save_pretrained(args.output_model)
+        

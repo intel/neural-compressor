@@ -17,6 +17,7 @@
 """Helper classes or functions for onnxrt adaptor."""
 
 import os
+import logging
 from enum import Enum
 
 import numpy as np
@@ -27,6 +28,11 @@ helper = LazyImport("onnx.helper")
 numpy_helper = LazyImport("onnx.numpy_helper")
 onnx_proto = LazyImport("onnx.onnx_pb")
 torch = LazyImport("torch")
+symbolic_shape_infer = LazyImport("onnxruntime.tools.symbolic_shape_infer")
+onnx = LazyImport("onnx")
+
+logger = logging.getLogger("neural_compressor")
+
 
 __producer__ = "onnx.quantize"
 __version__ = "0.1.0"
@@ -586,3 +592,36 @@ def to_numpy(data):
                 )
     else:
         return data
+
+class SymbolicShapeInference(symbolic_shape_infer.SymbolicShapeInference):
+    def __init__(self, int_max, auto_merge, guess_output_rank, verbose, prefix="", base_dir=""):
+        super().__init__(int_max, auto_merge, guess_output_rank, verbose, prefix)
+        self.base_dir = base_dir
+
+    def _get_value(self, node, idx):
+        name = node.input[idx]
+        assert name in self.sympy_data_ or name in self.initializers_
+        return self.sympy_data_[name] if name in self.sympy_data_ else \
+            numpy_helper.to_array(self.initializers_[name], base_dir=self.base_dir)
+    
+    @staticmethod
+    def infer_shapes(in_mp, int_max=2**31 - 1, auto_merge=False, guess_output_rank=False, verbose=0, base_dir=""):
+        onnx_opset = symbolic_shape_infer.get_opset(in_mp)
+        if (not onnx_opset) or onnx_opset < 7:
+            logger.warning("Only support models of onnx opset 7 and above.")
+            return None
+        symbolic_shape_inference = SymbolicShapeInference(
+            int_max, 
+            auto_merge, 
+            guess_output_rank, 
+            verbose, 
+            base_dir=base_dir)
+        all_shapes_inferred = False
+        symbolic_shape_inference._preprocess(in_mp)
+        while symbolic_shape_inference.run_:
+            all_shapes_inferred = symbolic_shape_inference._infer_impl()
+        symbolic_shape_inference._update_output_from_vi()
+        if not all_shapes_inferred:
+            onnx.save_model(symbolic_shape_inference.out_mp_, "sym_shape_infer_temp.onnx", save_as_external_data=True)
+            raise Exception("Incomplete symbolic shape inference")
+        return symbolic_shape_inference.out_mp_
