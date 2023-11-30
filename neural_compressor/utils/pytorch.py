@@ -504,10 +504,10 @@ def recover_model_from_json(model, json_file_path, example_inputs):
             else:
                 model = torch.jit.trace(model, example_inputs, strict=False)
             model = torch.jit.freeze(model.eval())
-            if isinstance(example_inputs, dict):
-                model(**example_inputs)
-                model(**example_inputs)
-            else:
-                model(example_inputs)
-                model(example_inputs)
+        if isinstance(example_inputs, dict):
+            model(**example_inputs)
+            model(**example_inputs)
+        else:
+            model(example_inputs)
+            model(example_inputs)
     return model
