@@ -30,7 +30,6 @@ COMPOSABLE_CONFIG = "composable_config"
 RTN_WEIGHT_ONLY_QUANT = "rtn_weight_only_quant"
 STATIC_QUANT = "static_quant"
 GPTQ = "gptq"
-DUMMY_CONFIG = "dummy_config"
 
 
 from typing import Callable, Union

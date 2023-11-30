@@ -81,7 +81,7 @@ class BaseConfig(ABC):
         if self.white_list == DEFAULT_WHITE_LIST:
             global_config = self.get_params_dict()
             self._global_config = self.__class__(**global_config, white_list=None)
-        elif bool(self.white_list):
+        elif isinstance(self.white_list, list) and len(self.white_list) > 0:
             for op_name_or_type in self.white_list:
                 global_config = self.get_params_dict()
                 tmp_config = self.__class__(**global_config, white_list=None)
