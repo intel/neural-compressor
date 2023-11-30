@@ -17,7 +17,6 @@
 """Helper classes or functions for onnxrt adaptor."""
 
 import importlib
-import logging
 import os
 from enum import Enum
 
@@ -32,8 +31,6 @@ onnx_proto = LazyImport("onnx.onnx_pb")
 torch = LazyImport("torch")
 symbolic_shape_infer = LazyImport("onnxruntime.tools.symbolic_shape_infer")
 onnx = LazyImport("onnx")
-
-logger = logging.getLogger("neural_compressor")
 
 
 __producer__ = "onnx.quantize"
@@ -603,7 +600,10 @@ def to_numpy(data):
 
 
 class SymbolicShapeInference(symbolic_shape_infer.SymbolicShapeInference):
+    """Shape inference for ONNX model."""
+    
     def __init__(self, int_max, auto_merge, guess_output_rank, verbose, prefix="", base_dir=""):
+        """Initialize Shape inference class."""
         super().__init__(int_max, auto_merge, guess_output_rank, verbose, prefix)
         self.base_dir = base_dir
 
@@ -618,6 +618,7 @@ class SymbolicShapeInference(symbolic_shape_infer.SymbolicShapeInference):
 
     @staticmethod
     def infer_shapes(in_mp, int_max=2**31 - 1, auto_merge=False, guess_output_rank=False, verbose=0, base_dir=""):
+        """Symbolic shape inference."""
         onnx_opset = symbolic_shape_infer.get_opset(in_mp)
         if (not onnx_opset) or onnx_opset < 7:
             logger.warning("Only support models of onnx opset 7 and above.")
