@@ -473,14 +473,17 @@ class WeightOnlyLinear(torch.nn.Module):
         return fp32_weight
 
     def forward(self, input):
+        weight = self.recover()
+        device = self.scales.device
+        if weight.dtype == torch.float16 and device.type == "cpu":
+            weight.float()
         if level == DEBUG:
             if not hasattr(self, "weight"):
-                self.weight = self.recover()
+                self.weight = weight
             input = input.type(self.weight.dtype)
             logger.debug(f"Calculating {self}")
             return F.linear(input, self.weight, self.bias)
         else:
-            weight = self.recover()
             input = input.type(weight.dtype)
             return F.linear(input, weight, self.bias)
 
