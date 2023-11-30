@@ -89,7 +89,8 @@ class BaseConfig(ABC):
             return
         else:
             raise NotImplementedError(
-                f"The white list should be one of {DEFAULT_WHITE_LIST}, {EMPTY_WHITE_LIST}, a not empty list, but got {self.white_list}"
+                f"The white list should be one of {DEFAULT_WHITE_LIST}, {EMPTY_WHITE_LIST},"
+                " a not empty list, but got {self.white_list}"
             )
 
     @property
@@ -137,7 +138,7 @@ class BaseConfig(ABC):
 
     def get_params_dict(self):
         result = dict()
-        for param in self.params_list:
+        for param in self.params_list:  # pylint: disable=no-member
             result[param] = getattr(self, param)
         return result
 
