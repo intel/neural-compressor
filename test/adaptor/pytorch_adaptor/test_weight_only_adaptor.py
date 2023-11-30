@@ -105,7 +105,8 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         model = Model()
         compressed_model = export_compressed_model(model, saved_dir="saved", use_hf_format=True)
         self.assertTrue("fc1.qzeros" in inc_model.model.state_dict().keys())
-        self.assertTrue(torch.all(out3 == out4))
+        # output gap is because of torch.float16 is used in hf_format
+        self.assertTrue(torch.allclose(out3, out4, atol=1e-3))
 
         model = Model()
         out1 = model(input)

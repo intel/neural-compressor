@@ -476,7 +476,8 @@ class WeightOnlyLinear(torch.nn.Module):
         weight = self.recover()
         device = self.scales.device
         if weight.dtype == torch.float16 and device.type == "cpu":
-            weight.float()
+            weight = weight.float()
+            self.bias = self.bias.float() if self.bias is not None else None
         if level == DEBUG:
             if not hasattr(self, "weight"):
                 self.weight = weight
