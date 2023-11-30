@@ -18,6 +18,7 @@ pr:
       - test
       - neural_compressor/common
       - neural_compressor/torch
+      - neural_compressor/tensorflow
 
 pool: MODEL_PERF_TEST_TF
 
