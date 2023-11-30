@@ -55,7 +55,7 @@ bash run_quant.sh --input_model=/path/to/model \ # folder path of onnx model
                   --dataset NeelNanda/pile-10k \
                   --tokenizer=meta-llama/Llama-2-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
                   --quant_format="QOperator" \ # or QDQ, optional
-                  --layer-wise=True
+                  --layer_wise=True
 ```
 
 
