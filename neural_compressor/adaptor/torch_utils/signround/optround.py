@@ -16,9 +16,11 @@
 # limitations under the License.
 #
 ##TODO LIST
-## export to itrex
 ## to validate sym
 ## to validate other model families
+## LLAMA OK
+## OPT ok
+## Lamini-gpt ok
 
 try:
     from neural_compressor.utils.utility import LazyImport
@@ -102,7 +104,7 @@ def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0, use_
     zp = zp.unsqueeze(dim=-1)
     int_w = round_ste(weight / scale + grad)
     q = torch.clamp(int_w + zp, 0, maxq)
-    return scale * (q - zp)
+    return scale * (q - zp), scale, zp
 
 
 def quant_weight_sym(
@@ -118,13 +120,13 @@ def quant_weight_sym(
     if use_sigmoid:
         wmax *= torch.sigmoid(8 * (min_scale + 0.5))
     else:
-        wmax *= (1 + max_scale)
+        wmax *= (1.0 + max_scale)
     tmp = wmax == 0
     wmax[tmp] = +1
     scale = wmax / ((maxq - minq) / 2)
     scale.unsqueeze_(dim=-1)
     q = torch.clamp(round_ste(weight / scale + grad), minq, maxq)
-    return scale * q
+    return scale * q, scale, None
 
 
 def quant_weight_actor(weight, num_bits, scheme, grad, min_scale, max_scale, use_sigmoid):
@@ -136,24 +138,31 @@ def quant_weight_actor(weight, num_bits, scheme, grad, min_scale, max_scale, use
 
 
 def quant_weight(
-        weight, num_bits=4, group_size=-1, scheme="asym", grad=0, min_scale=0, max_scale=0, use_sigmoid=False
+        weight, num_bits=4, group_size=-1, scheme="asym", grad=0, min_scale=0, max_scale=0, use_sigmoid=False,
+        return_scalezp=False
 ):  ##TODO polish the code
     if group_size == -1 or weight.shape[1] < group_size:
-        return quant_weight_actor(weight, num_bits, scheme=scheme, grad=grad, min_scale=min_scale, max_scale=max_scale,
-                                  use_sigmoid=use_sigmoid)
+        weight, scale, zp = quant_weight_actor(weight, num_bits, scheme=scheme, grad=grad, min_scale=min_scale,
+                                               max_scale=max_scale,
+                                               use_sigmoid=use_sigmoid)
+        if return_scalezp:
+            return weight, scale, zp
+
+        return weight
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
         if isinstance(grad, torch.Tensor):
             grad = grad.reshape(-1, group_size)
 
-        weight = quant_weight_actor(
+        weight, scale, zp = quant_weight_actor(
             weight, num_bits, scheme=scheme, grad=grad, min_scale=min_scale, max_scale=max_scale,
             use_sigmoid=use_sigmoid
         )
 
         weight = weight.reshape(orig_shape)
-
+        if return_scalezp:
+            return weight, scale, zp
         return weight
     else:
         split_index = weight.shape[1] // group_size * group_size
@@ -167,28 +176,37 @@ def quant_weight(
             grad1 = 0
             grad2 = 0
         if isinstance(min_scale, torch.Tensor):
+            min_scale = min_scale.view(weight.shape[0], -1)
+            max_scale = max_scale.view(weight.shape[0], -1)
             min_scale_1 = min_scale[:, : weight.shape[1] // group_size]
             min_scale_2 = min_scale[:, weight.shape[1] // group_size:]
             max_scale_1 = max_scale[:, : weight.shape[1] // group_size]
             max_scale_2 = max_scale[:, weight.shape[1] // group_size:]
+            min_scale_1 = min_scale_1.reshape(-1)
+            min_scale_2 = min_scale_2.reshape(-1)
+            max_scale_1 = max_scale_1.reshape(-1)
+            max_scale_2 = max_scale_2.reshape(-1)
         else:
             min_scale_1 = min_scale
             min_scale_2 = min_scale
             max_scale_1 = max_scale
             max_scale_2 = max_scale
 
-        weight1 = quant_weight_actor(
+        weight1, scale1, zp1, = quant_weight_actor(
             weight1, num_bits, scheme=scheme, grad=grad1, min_scale=min_scale_1, max_scale=max_scale_1,
             use_sigmoid=use_sigmoid
         )
         weight1 = weight1.reshape(orig_shape[0], split_index)
         weight2 = weight[:, split_index:]
-        weight2 = quant_weight_actor(
+        weight2, scale2, zp2 = quant_weight_actor(
             weight2, num_bits, scheme=scheme, grad=grad2, min_scale=min_scale_2, max_scale=max_scale_2,
             use_sigmoid=use_sigmoid
         )
-        weight = torch.cat([weight1, weight2], dim=1)
-
+        weight = torch.cat([weight1, weight2], dim=1)  ##TODO not supported output group
+        if return_scalezp:
+            scale = torch.cat([scale1, scale2], dim=0)
+            zp = torch.cat([zp1, zp2], dim=0)
+            return weight, scale, zp
         return weight
 
 
@@ -229,7 +247,8 @@ class SaveInputs:
     @torch.no_grad()
     def get_forward_func(self, name):
         def forward(_, hidden_states, *positional_args, **kwargs):  ##This may have bug for other models
-            dim = int((hasattr(self.model, "config") and "chatglm" in self.model.config.model_type))  ##TODO
+            dim = int(
+                (hasattr(self.model, "config") and "chatglm" in self.model.config.model_type))  ##TODO a little ugly
             if name in self.inputs:
                 data = torch.cat([self.inputs[name]["input_ids"], hidden_states.to("cpu")], dim=dim)
                 self.inputs[name]["input_ids"] = data
@@ -432,12 +451,16 @@ class WrapperTransformerConv1d(torch.nn.Module):
         self.weight_t = self.orig_layer.weight.t()
 
     def unwrapper(self, grad, min_scale_grad, max_scale_grad):
-        weight_q = quant_weight(
+        min_scale_grad.clamp_(-1, 0)
+        max_scale_grad.clamp_(-1, 0)
+        weight_q, scale, zp = quant_weight(
             self.weight_t, self.num_bits, self.group_size, self.scheme, grad, min_scale_grad, max_scale_grad,
-            use_sigmoid=self.use_sigmoid
+            use_sigmoid=self.use_sigmoid, return_scalezp=True
         )
         self.orig_layer.weight.data.copy_(weight_q.t())
         self.orig_layer.weight.grad = None
+        self.orig_layer.scale = scale.to("cpu")
+        self.orig_layer.zp = zp.to("cpu")
         return self.orig_layer
 
     def forward(self, x):
@@ -477,12 +500,14 @@ class WrapperLinear(torch.nn.Module):
         min_scale_grad.clamp_(-1, 0)
         max_scale_grad.clamp_(-1, 0)
 
-        q_dq_weight = quant_weight(
+        q_dq_weight, scale, zp = quant_weight(
             self.orig_layer.weight, self.num_bits, self.group_size, self.scheme, grad, min_scale_grad, max_scale_grad,
-            use_sigmoid=self.use_sigmoid
+            use_sigmoid=self.use_sigmoid, return_scalezp=True
         )
         self.orig_layer.weight.data.copy_(q_dq_weight)
         self.orig_layer.weight.grad = None  ##clear grad
+        self.orig_layer.scale = scale.to("cpu")
+        self.orig_layer.zp = zp.to("cpu")
         return self.orig_layer
 
     def forward(self, x):
@@ -657,14 +682,14 @@ class OPTRoundQuantizer(object):
         self.scheme = scheme
         self.low_gpu_mem_usage = low_gpu_mem_usage
         self.data_type = data_type
-        self.supported_types = [torch.nn.Linear]  ## TODO support conv1d
+        self.supported_types = [torch.nn.Linear]
         try:
             import transformers
             self.supported_types.append(transformers.modeling_utils.Conv1D)
         except:
             pass
-        self.weight_config = {}
-        assert dataloader is not None or tokenizer is not None  ##TODO datatype
+        self.weight_config = weight_config
+        assert dataloader is not None or tokenizer is not None
         self.dataset_split = dataset_split
         self.seed = seed
         self.tokenizer = tokenizer
@@ -694,23 +719,20 @@ class OPTRoundQuantizer(object):
         self.scale_grad = True
         self.use_sigmoid = use_sigmoid
 
-        if self.optimizer is None:  ##signround does not use sigmoid unless explicated stated
+        if self.optimizer is None:
             self.use_sigmoid = False,
             self.scale_grad = False
             from .sign_sgd import SGD
             self.optimizer = SGD
-            if self.use_sigmoid is None:
-                self.use_sigmoid = False
-        elif isinstance(self.optimizer, str):  ##other optimizer use sigmoid unless explicated stated
-            self.optimizer = getattr(torch.optim, self.optimizer)
-            if self.use_sigmoid is None:
-                self.use_sigmoid = True
-        else:
-            if self.use_sigmoid is None:
-                self.use_sigmoid = True
 
+        elif isinstance(self.optimizer, str):
+            self.optimizer = getattr(torch.optim, self.optimizer)
+        else:
+            self.optimizer = optimizer
+        if self.use_sigmoid is None:
+            self.use_sigmoid = False
         self.lr_scheduler = lr_scheduler
-        self.set_layerwise_config(weight_config)  ##hook to the module directly
+        self.set_layerwise_config(self.weight_config)
 
     def check_configs(self):
         assert isinstance(self.model, torch.nn.Module)
@@ -918,7 +940,7 @@ class OPTRoundQuantizer(object):
             if total_loss < best_loss:
                 best_loss = total_loss
                 if not self.not_use_mse:
-                    print(f"get better result at iter {i}, the loss is {total_loss}", flush=True)
+                    # print(f"get better result at iter {i}, the loss is {total_loss}", flush=True)
                     best_grad = collect_round_grad(block)
                     best_min_scale_grad, best_max_scale_grad = collect_minmax_grad(block)
                     last_best_iter = i
@@ -1015,15 +1037,12 @@ class OPTRoundQuantizer(object):
             n_blocks=self.n_blocks,
             device=self.device,
         )
-
-    def export(self):
-        pass
-
-    def check_weight_config(self):
-        for n, m in self.model.named_modules():
-            if type(m) not in self.supported_types:
-                continue
+        for n,m in self.model.named_modules():
             if n in self.weight_config.keys():
-                pass
-            else:
-                pass
+                if hasattr(m,"scale"):
+                    self.weight_config[n]["scale"] = m.scale
+                    self.weight_config[n]["zp"] = m.zp
+                    delattr(m, 'scale')
+                    delattr(m, 'zp')
+        return self.model, self.weight_config
+
