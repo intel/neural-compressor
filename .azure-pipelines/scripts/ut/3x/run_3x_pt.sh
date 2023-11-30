@@ -1,20 +1,19 @@
 #!/bin/bash
-python -c "import neural_compressor as nc;print(nc.version.__version__)"
+python -c "import neural_compressor as nc"
 test_case="run 3x Torch"
 echo "${test_case}"
 
 # install requirements
 echo "set up UT env..."
-pip install -r /neural-compressor/requirements_pt.txt
 pip install transformers
 pip install coverage
 pip install pytest
 pip list
 
-export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.pt
-lpot_path=$(python -c 'import neural_compressor; import os; print(os.path.dirname(neural_compressor.__file__))')
+export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/3x/coverage.3x_pt
+inc_path=$(python -c 'import neural_compressor; print(neural_compressor.__path__[0])')
 cd /neural-compressor/test || exit 1
-find ./3x/torch/* -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'> run.sh
+find ./3x/torch/* -name "test*.py" | sed 's,\.\/,coverage run --source='"${inc_path}"' --append ,g' | sed 's/$/ --verbose/'> run.sh
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}

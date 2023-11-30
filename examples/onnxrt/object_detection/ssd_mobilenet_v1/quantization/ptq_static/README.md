@@ -19,6 +19,8 @@ pip install -r requirements.txt
 python prepare_model.py --output_model='ssd_mobilenet_v1_coco_2018_01_28.onnx'
 ```
 
+> Note: For now, use "onnx==1.14.1" in this step in case you get an error `ValueError: Could not infer attribute explicit_paddings type from empty iterator`. Refer to this [link](https://github.com/onnx/tensorflow-onnx/issues/2262) for more details of this error.
+
 ## 3. Prepare Dataset
 
 Download [MS COCO 2017 dataset](https://cocodataset.org/#download).

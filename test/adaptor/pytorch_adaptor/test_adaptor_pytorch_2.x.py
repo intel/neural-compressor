@@ -444,24 +444,24 @@ class TestPyTorchBlockDetector(unittest.TestCase):
         model = BertModel.from_pretrained("bert-base-uncased")
         detector = TransformerBasedModelBlockPatternDetector(model, BLOCK_PATTERNS)
         result = detector.detect_block()
-        assert len(result["attention_blocks"]), 12
-        assert len(result["ffn_blocks"]), 12
+        self.assertEqual(len(result["attention_blocks"]), 12)
+        self.assertEqual(len(result["ffn_blocks"]), 12)
 
-        found_attention_op = False
-        found_dense_op = False
-        for block in ["attention_blocks"]:
+        all_op_contain_attention = True
+        for block in result["attention_blocks"]:
             for op in block:
-                if "dense" in op:
-                    found_dense_op = True
+                if "attention" not in op:
+                    all_op_contain_attention = False
                     break
+        self.assertTrue(all_op_contain_attention)
 
-        for block in ["ffn_blocks"]:
+        not_attention_in_ffn = True
+        for block in result["ffn_blocks"]:
             for op in block:
                 if "attention" in op:
-                    found_attention_op = True
+                    not_attention_in_ffn = False
                     break
-        assert not found_attention_op
-        assert not found_dense_op
+        self.assertTrue(not_attention_in_ffn)
 
 
 if __name__ == "__main__":
