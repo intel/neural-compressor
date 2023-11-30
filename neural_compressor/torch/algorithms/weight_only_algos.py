@@ -31,10 +31,12 @@ def rtn_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNWeightQuantConfig], *args, **kwargs
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
-    from neural_compressor.torch.algorithms.rtn import apply_rtn_on_single_module
+    from .weight_only.rtn import apply_rtn_on_single_module
 
     for (op_type, op_name), quant_config in configs_mapping.items():
         original_module = fetch_module(model, op_name)
+        if original_module is None:
+            continue
         logger.info(f"Apply RTN on module: {op_name}, {original_module}")
         rtn_module = apply_rtn_on_single_module(original_module, quant_config)
         set_module(model, op_name, rtn_module)
@@ -47,7 +49,7 @@ def gptq_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
-    from neural_compressor.torch.algorithms.gptq import apply_gptq_quantize
+    from .weight_only.gptq import apply_gptq_quantize
 
     model, quantization_perm = apply_gptq_quantize(model=model, configs_mapping=configs_mapping, *args, **kwargs)
     # Assign the gptq config as an attribute of model
