@@ -16,6 +16,7 @@
 # limitations under the License.
 
 
+from typing import List, Optional
 
 # From PyTorch:
 #
@@ -97,14 +98,16 @@
 import torch
 from torch import Tensor
 from torch.optim.optimizer import Optimizer
-from typing import List, Optional
 
-__all__ = ['SGD', 'sgd']
+__all__ = ["SGD", "sgd"]
+
 
 class _RequiredParameter(object):
     """Singleton class representing a required parameter for an Optimizer."""
+
     def __repr__(self):
         return "<required parameter>"
+
 
 required = _RequiredParameter()
 
@@ -113,12 +116,14 @@ def _use_grad_for_differentiable(func):
     def _use_grad(self, *args, **kwargs):
         prev_grad = torch.is_grad_enabled()
         try:
-            torch.set_grad_enabled(self.defaults['differentiable'])
+            torch.set_grad_enabled(self.defaults["differentiable"])
             ret = func(self, *args, **kwargs)
         finally:
             torch.set_grad_enabled(prev_grad)
         return ret
+
     return _use_grad
+
 
 class SGD(Optimizer):
     r"""Implements stochastic gradient descent (optionally with momentum).
@@ -205,9 +210,19 @@ class SGD(Optimizer):
         The Nesterov version is analogously modified.
     """
 
-    def __init__(self, params, lr=required, momentum=0, dampening=0,
-                 weight_decay=0, nesterov=False, *, maximize=False, foreach: Optional[bool] = None,
-                 differentiable=False):
+    def __init__(
+        self,
+        params,
+        lr=required,
+        momentum=0,
+        dampening=0,
+        weight_decay=0,
+        nesterov=False,
+        *,
+        maximize=False,
+        foreach: Optional[bool] = None,
+        differentiable=False
+    ):
         if lr is not required and lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
         if momentum < 0.0:
@@ -215,10 +230,16 @@ class SGD(Optimizer):
         if weight_decay < 0.0:
             raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
 
-        defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
-                        weight_decay=weight_decay, nesterov=nesterov,
-                        maximize=maximize, foreach=foreach,
-                        differentiable=differentiable)
+        defaults = dict(
+            lr=lr,
+            momentum=momentum,
+            dampening=dampening,
+            weight_decay=weight_decay,
+            nesterov=nesterov,
+            maximize=maximize,
+            foreach=foreach,
+            differentiable=differentiable,
+        )
         if nesterov and (momentum <= 0 or dampening != 0):
             raise ValueError("Nesterov momentum requires a momentum and zero dampening")
         super(SGD, self).__init__(params, defaults)
@@ -226,10 +247,10 @@ class SGD(Optimizer):
     def __setstate__(self, state):
         super().__setstate__(state)
         for group in self.param_groups:
-            group.setdefault('nesterov', False)
-            group.setdefault('maximize', False)
-            group.setdefault('foreach', None)
-            group.setdefault('differentiable', False)
+            group.setdefault("nesterov", False)
+            group.setdefault("maximize", False)
+            group.setdefault("foreach", None)
+            group.setdefault("differentiable", False)
 
     @_use_grad_for_differentiable
     def step(self, closure=None):
@@ -250,7 +271,7 @@ class SGD(Optimizer):
             momentum_buffer_list = []
             has_sparse_grad = False
 
-            for p in group['params']:
+            for p in group["params"]:
                 if p.grad is not None:
                     params_with_grad.append(p)
                     d_p_list.append(p.grad)
@@ -258,46 +279,49 @@ class SGD(Optimizer):
                         has_sparse_grad = True
 
                     state = self.state[p]
-                    if 'momentum_buffer' not in state:
+                    if "momentum_buffer" not in state:
                         momentum_buffer_list.append(None)
                     else:
-                        momentum_buffer_list.append(state['momentum_buffer'])
+                        momentum_buffer_list.append(state["momentum_buffer"])
 
-            sgd(params_with_grad,
+            sgd(
+                params_with_grad,
                 d_p_list,
                 momentum_buffer_list,
-                weight_decay=group['weight_decay'],
-                momentum=group['momentum'],
-                lr=group['lr'],
-                dampening=group['dampening'],
-                nesterov=group['nesterov'],
-                maximize=group['maximize'],
+                weight_decay=group["weight_decay"],
+                momentum=group["momentum"],
+                lr=group["lr"],
+                dampening=group["dampening"],
+                nesterov=group["nesterov"],
+                maximize=group["maximize"],
                 has_sparse_grad=has_sparse_grad,
-                foreach=group['foreach'])
+                foreach=group["foreach"],
+            )
 
             # update momentum_buffers in state
             for p, momentum_buffer in zip(params_with_grad, momentum_buffer_list):
                 state = self.state[p]
-                state['momentum_buffer'] = momentum_buffer
+                state["momentum_buffer"] = momentum_buffer
 
         return loss
 
 
-
-def sgd(params: List[Tensor],
-        d_p_list: List[Tensor],
-        momentum_buffer_list: List[Optional[Tensor]],
-        # kwonly args with defaults are not supported by functions compiled with torchscript issue #70627
-        # setting this as kwarg for now as functional API is compiled by torch/distributed/optim
-        has_sparse_grad: bool = None,
-        foreach: bool = None,
-        *,
-        weight_decay: float,
-        momentum: float,
-        lr: float,
-        dampening: float,
-        nesterov: bool,
-        maximize: bool):
+def sgd(
+    params: List[Tensor],
+    d_p_list: List[Tensor],
+    momentum_buffer_list: List[Optional[Tensor]],
+    # kwonly args with defaults are not supported by functions compiled with torchscript issue #70627
+    # setting this as kwarg for now as functional API is compiled by torch/distributed/optim
+    has_sparse_grad: bool = None,
+    foreach: bool = None,
+    *,
+    weight_decay: float,
+    momentum: float,
+    lr: float,
+    dampening: float,
+    nesterov: bool,
+    maximize: bool
+):
     r"""Functional API that performs SGD algorithm computation.
 
     See :class:`~torch.optim.SGD` for details.
@@ -308,36 +332,40 @@ def sgd(params: List[Tensor],
         foreach = False
 
     if foreach and torch.jit.is_scripting():
-        raise RuntimeError('torch.jit.script not supported with foreach optimizers')
+        raise RuntimeError("torch.jit.script not supported with foreach optimizers")
 
     if foreach and not torch.jit.is_scripting():
         func = _multi_tensor_sgd
     else:
         func = _single_tensor_sgd
 
-    func(params,
-         d_p_list,
-         momentum_buffer_list,
-         weight_decay=weight_decay,
-         momentum=momentum,
-         lr=lr,
-         dampening=dampening,
-         nesterov=nesterov,
-         has_sparse_grad=has_sparse_grad,
-         maximize=maximize)
+    func(
+        params,
+        d_p_list,
+        momentum_buffer_list,
+        weight_decay=weight_decay,
+        momentum=momentum,
+        lr=lr,
+        dampening=dampening,
+        nesterov=nesterov,
+        has_sparse_grad=has_sparse_grad,
+        maximize=maximize,
+    )
 
-def _single_tensor_sgd(params: List[Tensor],
-                       d_p_list: List[Tensor],
-                       momentum_buffer_list: List[Optional[Tensor]],
-                       *,
-                       weight_decay: float,
-                       momentum: float,
-                       lr: float,
-                       dampening: float,
-                       nesterov: bool,
-                       maximize: bool,
-                       has_sparse_grad: bool):
 
+def _single_tensor_sgd(
+    params: List[Tensor],
+    d_p_list: List[Tensor],
+    momentum_buffer_list: List[Optional[Tensor]],
+    *,
+    weight_decay: float,
+    momentum: float,
+    lr: float,
+    dampening: float,
+    nesterov: bool,
+    maximize: bool,
+    has_sparse_grad: bool
+):
     for i, param in enumerate(params):
         d_p = d_p_list[i] if not maximize else -d_p_list[i]
 
@@ -361,18 +389,19 @@ def _single_tensor_sgd(params: List[Tensor],
         param.add_(torch.sign(d_p), alpha=-lr)
 
 
-def _multi_tensor_sgd(params: List[Tensor],
-                      grads: List[Tensor],
-                      momentum_buffer_list: List[Optional[Tensor]],
-                      *,
-                      weight_decay: float,
-                      momentum: float,
-                      lr: float,
-                      dampening: float,
-                      nesterov: bool,
-                      maximize: bool,
-                      has_sparse_grad: bool):
-
+def _multi_tensor_sgd(
+    params: List[Tensor],
+    grads: List[Tensor],
+    momentum_buffer_list: List[Optional[Tensor]],
+    *,
+    weight_decay: float,
+    momentum: float,
+    lr: float,
+    dampening: float,
+    nesterov: bool,
+    maximize: bool,
+    has_sparse_grad: bool
+):
     if len(params) == 0:
         return
 
