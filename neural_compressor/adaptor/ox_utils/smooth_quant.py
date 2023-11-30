@@ -615,6 +615,7 @@ class ORTSmoothQuant:
         weights_max = np.amax(weights, axis=-1)
         input_power = np.power(self.max_vals_per_channel[tensor], specific_alpha)
         weight_power = np.power(weights_max, 1 - specific_alpha)
+        weight_power = np.clip(weight_power, a_min=1e-5, a_max=None)
         scale = np.clip(input_power / weight_power, a_min=1e-5, a_max=None)
         return scale
 
