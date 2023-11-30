@@ -41,7 +41,7 @@ class ONNXModel(BaseModel):
         Args:
             model (str or ModelProto): path to onnx model or loaded ModelProto model object.
             ignore_warning (bool): ignore large model warning. Default is False.
-            load_external_data (bool): load external data for large model.
+            load_external_data (bool): load external data for large model. Default is True.
         """
         self._model = model if not isinstance(model, str) else onnx.load(model, load_external_data=False)
         self._model_path = None if not isinstance(model, str) else model
