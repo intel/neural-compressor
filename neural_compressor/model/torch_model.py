@@ -459,7 +459,7 @@ class PyTorchModel(PyTorchBaseModel):
         scale_dtype=torch.float32,
         gptq_config_path=None,
         device="cpu",
-        use_hf_format=False,
+        use_hf_format=True,
     ):
         """Convert Linear to WeightOnlyLinear for low memory inference.
 

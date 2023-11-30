@@ -134,7 +134,7 @@ class WeightOnlyLinear(torch.nn.Module):
         compression_dim=1,
         g_idx=False,
         device="cpu",
-        use_hf_format=False,
+        use_hf_format=True,
     ):
         super().__init__()
         self.use_hf_format = use_hf_format

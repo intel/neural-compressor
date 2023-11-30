@@ -98,7 +98,7 @@ To support low memory inference, Neural Compressor implemented WeightOnlyLinear,
 |  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8\|16\|32\|64]   |
 |  compression_dim  |       1       |   0 means output channel while 1 means input channel   |
 |  scale_dtype  |       torch.float32       |  Data type for scale and bias   |
-|  use_hf_format  |     False       |  Whether to use the popular format present on HuggingFace hub   |
+|  use_hf_format  |     True       |  Whether to use the popular format present on HuggingFace hub   |
 
 **Note:** HuggingFace format is quite special, the main differences are as follows:
 

@@ -235,7 +235,7 @@ def save_for_huggingface_upstream(model, tokenizer, output_dir):
 def export_compressed_model(
     model,
     saved_dir=None,
-    use_hf_format=False,
+    use_hf_format=True,
     enable_full_range=False,
     compression_dtype=torch.int32,
     compression_dim=1,
@@ -247,7 +247,7 @@ def export_compressed_model(
     Args:
         model (torch.nn.Module): origin fp32 model.
         saved_dir (_type_, optional): the dir path of compression info. Defaults to None.
-        use_hf_format (bool, optional): whether use HuggingFace format. Defaults to False.
+        use_hf_format (bool, optional): whether use HuggingFace format. Defaults to True.
         enable_full_range (bool, optional): Whether to leverage the full compression range
                                             under symmetric quantization. Defaults to False.
         compression_dtype (torch.Tensor, optional): The target dtype after comoression.

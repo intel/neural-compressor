@@ -396,7 +396,7 @@ def rtn_quantize(
         compression_dim = kwargs.get("compression_dim", 1)
         scale_dtype = kwargs.get("scale_dtype", torch.float32)
         device = kwargs.get("device", "cpu")
-        use_hf_format = kwargs.get("use_hf_format", False)
+        use_hf_format = kwargs.get("use_hf_format", True)
     for name, m in model.named_modules():
         if m.__class__.__name__ not in supported_layers:
             continue

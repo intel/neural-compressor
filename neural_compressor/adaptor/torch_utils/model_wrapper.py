@@ -217,7 +217,7 @@ class WeightOnlyLinear(torch.nn.Module):
         compression_dim=1,
         g_idx=False,
         device="cpu",
-        use_hf_format=False,
+        use_hf_format=True,
     ):
         super().__init__()
         self.use_hf_format = use_hf_format
@@ -245,13 +245,13 @@ class WeightOnlyLinear(torch.nn.Module):
         dtype_bits_mapping = {torch.int8: 8, torch.int16: 16, torch.int32: 32, torch.int64: 64}
         self.compress_bits = dtype_bits_mapping[compression_dtype]
         self.n_pack = self.compress_bits // self.bits
-        self.compressed_dtype = compression_dtype
-        self.float_type = scale_dtype
         # K is input channel, N is output channel
         assert compression_dim in [0, 1], (
             "Only support 0 or 1 as compression dimension, " + "0 is output channel, 1 is input channel."
         )
         if self.use_hf_format:
+            self.float_type = torch.float16
+            self.compressed_dtype = torch.int32
             self.register_buffer(
                 "scales",
                 torch.zeros(
@@ -276,7 +276,10 @@ class WeightOnlyLinear(torch.nn.Module):
                 ).to(device),
             )
             self.qzeros = self.qzeros.T
+            self.register_buffer("bias", torch.zeros(self.out_features, dtype=self.float_type).to(device))
         else:
+            self.compressed_dtype = compression_dtype
+            self.float_type = scale_dtype
             self.register_buffer(
                 "scales",
                 torch.zeros(
@@ -316,14 +319,14 @@ class WeightOnlyLinear(torch.nn.Module):
                             dtype=self.compressed_dtype,
                         ).to(device),
                     )
+            if bias:
+                self.register_buffer("bias", torch.zeros(self.out_features, dtype=self.float_type).to(device))
+            else:
+                self.bias = None
         if g_idx:
             self.register_buffer("g_idx", torch.zeros(in_features, dtype=torch.int32).to(device))
         else:
             self.g_idx = None
-        if bias:
-            self.register_buffer("bias", torch.zeros(self.out_features, dtype=self.float_type).to(device))
-        else:
-            self.bias = None
 
     def pack(self, int_weight, scale, zp, bias, g_idx=None):
         int_weight = int_weight.to(self.device)
