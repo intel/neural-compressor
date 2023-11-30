@@ -49,7 +49,7 @@ class ONNXModel(BaseModel):
         self.check_is_large_model()
         if self._is_large_model and self._model_path is None and not kwargs.get("ignore_warning", False):
             logger.warning("Model size > 2GB. Please use model path instead of onnx model object to quantize")
-        
+
         if self._is_large_model and isinstance(model, str) and kwargs.get("load_external_data", True):
             from onnx.external_data_helper import load_external_data_for_model
 
@@ -1047,7 +1047,9 @@ class ONNXModel(BaseModel):
                 # need ort.GraphOptimizationLevel <= ORT_ENABLE_BASIC
                 from neural_compressor.adaptor.ox_utils.util import SymbolicShapeInference
 
-                self._model = SymbolicShapeInference.infer_shapes(self._model, auto_merge=True, base_dir=os.path.dirname(self._model_path))
+                self._model = SymbolicShapeInference.infer_shapes(
+                    self._model, auto_merge=True, base_dir=os.path.dirname(self._model_path)
+                )
             except Exception as e:  # pragma: no cover
                 logger.error("Shape infer fails for layer-wise quantization")
                 if "Incomplete symbolic shape inference" in str(e):

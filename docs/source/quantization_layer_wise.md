@@ -90,11 +90,8 @@ q_model = load(ouput_dir, fp32_model, weight_only=True, layer_wise=True)
 ```python
 from neural_compressor import quantization, PostTrainingQuantConfig
 
-conf = PostTrainingQuantConfig(recipes={'layer_wise_quant': True})
-q_model = quantization.fit(
-    fp32_model_path, 
-    conf,
-    calib_dataloader=dataloader)
+conf = PostTrainingQuantConfig(recipes={"layer_wise_quant": True})
+q_model = quantization.fit(fp32_model_path, conf, calib_dataloader=dataloader)
 q_model.save(int8_model_path)
 ```
 

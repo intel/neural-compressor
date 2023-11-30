@@ -296,4 +296,3 @@ if __name__ == "__main__":
                 q_model.save(os.path.join(args.output_model, model))
             
             tokenizer.save_pretrained(args.output_model)
-        

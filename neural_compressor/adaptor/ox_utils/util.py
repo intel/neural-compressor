@@ -17,8 +17,8 @@
 """Helper classes or functions for onnxrt adaptor."""
 
 import importlib
-import os
 import logging
+import os
 from enum import Enum
 
 import numpy as np
@@ -601,6 +601,7 @@ def to_numpy(data):
     else:
         return data
 
+
 class SymbolicShapeInference(symbolic_shape_infer.SymbolicShapeInference):
     def __init__(self, int_max, auto_merge, guess_output_rank, verbose, prefix="", base_dir=""):
         super().__init__(int_max, auto_merge, guess_output_rank, verbose, prefix)
@@ -609,9 +610,12 @@ class SymbolicShapeInference(symbolic_shape_infer.SymbolicShapeInference):
     def _get_value(self, node, idx):
         name = node.input[idx]
         assert name in self.sympy_data_ or name in self.initializers_
-        return self.sympy_data_[name] if name in self.sympy_data_ else \
-            numpy_helper.to_array(self.initializers_[name], base_dir=self.base_dir)
-    
+        return (
+            self.sympy_data_[name]
+            if name in self.sympy_data_
+            else numpy_helper.to_array(self.initializers_[name], base_dir=self.base_dir)
+        )
+
     @staticmethod
     def infer_shapes(in_mp, int_max=2**31 - 1, auto_merge=False, guess_output_rank=False, verbose=0, base_dir=""):
         onnx_opset = symbolic_shape_infer.get_opset(in_mp)
@@ -619,11 +623,8 @@ class SymbolicShapeInference(symbolic_shape_infer.SymbolicShapeInference):
             logger.warning("Only support models of onnx opset 7 and above.")
             return None
         symbolic_shape_inference = SymbolicShapeInference(
-            int_max, 
-            auto_merge, 
-            guess_output_rank, 
-            verbose, 
-            base_dir=base_dir)
+            int_max, auto_merge, guess_output_rank, verbose, base_dir=base_dir
+        )
         all_shapes_inferred = False
         symbolic_shape_inference._preprocess(in_mp)
         while symbolic_shape_inference.run_:
