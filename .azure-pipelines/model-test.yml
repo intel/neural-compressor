@@ -11,7 +11,6 @@ pr:
       - neural_compressor
       - setup.py
       - requirements.txt
-      - .azure-pipelines/model-test.yml
       - .azure-pipelines/scripts/models
       - examples/tensorflow/oob_models/quantization/ptq
     exclude:
