@@ -65,6 +65,10 @@ class RTNWeightQuantConfig(BaseConfig):
         "enable_mse_search",
         "group_dim",
         "return_int",
+        "double_quant_dtype",
+        "double_quant_bits",
+        "double_quant_sym",
+        "double_quant_group_size",
     ]
     name = RTN_WEIGHT_ONLY_QUANT
 
@@ -79,6 +83,10 @@ class RTNWeightQuantConfig(BaseConfig):
         enable_mse_search: bool = False,
         group_dim: int = 1,
         return_int: bool = False,
+        double_quant_dtype: str = "fp32",
+        double_quant_bits: int = 8,
+        double_quant_sym: bool = True,
+        double_quant_group_size: int = 256,
     ):
         """Init RTN weight-only quantization config.
 
@@ -92,6 +100,10 @@ class RTNWeightQuantConfig(BaseConfig):
             enable_mse_search (bool): Enables mean squared error (MSE) search, default is False.
             group_dim (int): Dimension for grouping, default is 1.
             return_int (bool): Enables return model in int8/uint8 format or not. Defaults to False.
+            double_quant_dtype (str): Data type for double_quant scale, default is "int".
+            double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
+            double_quant_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
+            double_quant_group_size (int): Size of double_quant groups, default is 32.
         """
         super().__init__()
         self.weight_bits = weight_bits
@@ -103,6 +115,10 @@ class RTNWeightQuantConfig(BaseConfig):
         self.enable_mse_search = enable_mse_search
         self.group_dim = group_dim
         self.return_int = return_int
+        self.double_quant_bits = double_quant_bits
+        self.double_quant_dtype = double_quant_dtype
+        self.double_quant_sym = double_quant_sym
+        self.double_quant_group_size = double_quant_group_size
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)
@@ -123,6 +139,10 @@ class RTNWeightQuantConfig(BaseConfig):
             enable_full_range=[False, True],
             enable_mse_search=[False, True],
             group_dim=[1, 0],
+            double_quant_bits=[4, 1, 2, 3, 5, 6, 7, 8],
+            double_quant_dtype=["int", "int8", "int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"],
+            double_quant_sym=[True, False],
+            double_quant_group_size=[32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024],
         )
         operators = [torch.nn.Linear, torch.nn.functional.linear]
         supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT))
@@ -171,6 +191,10 @@ class GPTQConfig(BaseConfig):
         "device",
         "layer_wise",
         "return_int",
+        "double_quant_dtype",
+        "double_quant_bits",
+        "double_quant_sym",
+        "double_quant_group_size",
     ]
 
     def __init__(
@@ -192,6 +216,10 @@ class GPTQConfig(BaseConfig):
         device=None,
         layer_wise: bool = False,
         return_int: bool = False,
+        double_quant_dtype: str = "fp32",
+        double_quant_bits: int = 8,
+        double_quant_sym: bool = True,
+        double_quant_group_size: int = 256,
     ):
         """Init GPTQ config.
 
@@ -216,6 +244,10 @@ class GPTQConfig(BaseConfig):
         self.layer_wise = layer_wise
         self.device = device
         self.return_int = return_int
+        self.double_quant_bits = double_quant_bits
+        self.double_quant_dtype = double_quant_dtype
+        self.double_quant_sym = double_quant_sym
+        self.double_quant_group_size = double_quant_group_size
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)
