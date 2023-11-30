@@ -21,6 +21,8 @@
 # constants for configs
 GLOBAL = "global"
 LOCAL = "local"
+DEFAULT_WHITE_LIST = "*"
+EMPTY_WHITE_LIST = None
 
 # config name
 BASE_CONFIG = "base_config"
