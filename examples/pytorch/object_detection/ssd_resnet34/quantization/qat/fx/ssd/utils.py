@@ -411,17 +411,6 @@ class LightingNoice(object):
         # Transform from HWC to CHW
         img = img.permute(2, 0, 1)
         return img
-        alpha0 = random.gauss(sigma=0.1, mu=0)
-        alpha1 = random.gauss(sigma=0.1, mu=0)
-        alpha2 = random.gauss(sigma=0.1, mu=0)
-
-        channels = alpha0 * self.eigval[0] * self.eigvec[0, :] + \
-                   alpha1 * self.eigval[1] * self.eigvec[1, :] + \
-                   alpha2 * self.eigval[2] * self.eigvec[2, :]
-        channels = channels.view(3, 1, 1)
-        img += channels
-
-        return img
 
 
 class RandomHorizontalFlip(object):

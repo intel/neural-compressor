@@ -717,7 +717,7 @@ def awq_quantize(
     output_dicts = {}
     full_ratio = {}
 
-    if enable_mse_search or enable_mse_search:
+    if enable_mse_search:
         inputs, so = prepare_inputs(model, n_samples, dataloader)
         del dataloader
 
