@@ -11,11 +11,11 @@ Layer Wise Quantization (LWQ)
 
 Large language models (LLMs) have shown exceptional performance across various tasks, meanwhile, the substantial parameter size poses significant challenges for deployment. Layer-wise quantization(LWQ) can greatly reduce the memory footprint of LLMs, usually 80-90% reduction, which means that users can quantize LLMs even on single node using GPU or CPU. We can quantize the model under memory-constrained devices, therefore making the huge-sized LLM quantization possible.
 
-<img src="./imgs/lwq.png">
+<img src="./imgs/lwq.png" width=780 height=429>
 
 *Figure 1: The process of layer-wise quantization for PyTorch model. The color grey means empty parameters and the color blue represents parameters need to be quantized. Every rectangle inside model represents one layer.*
 
-<img src="./imgs/lwq_ort.png">
+<img src="./imgs/lwq_ort.png" width=900 height=400>
 
 *Figure 2: The process of layer-wise quantization for ONNX model. The graph of LLM is split into several parts, and each subgraph is quantized in turn.*
 
