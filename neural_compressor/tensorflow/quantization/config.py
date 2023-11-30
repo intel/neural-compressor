@@ -23,7 +23,7 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Union
 import tensorflow as tf
 
 from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
-from neural_compressor.common.utility import OP_NAME_OR_MODULE_TYPE, STATIC_QUANT
+from neural_compressor.common.utility import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, STATIC_QUANT
 
 FRAMEWORK_NAME = "keras"
 
@@ -89,7 +89,7 @@ class StaticQuantConfig(BaseConfig):
         act_dtype: str = "int8",
         act_sym: bool = True,
         act_granularity: str = "per_tensor",
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = None,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init static quantization config.
 
@@ -108,6 +108,7 @@ class StaticQuantConfig(BaseConfig):
         self.act_dtype = act_dtype
         self.act_sym = act_sym
         self.act_granularity = act_granularity
+        self._post_init()
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)

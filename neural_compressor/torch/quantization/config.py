@@ -23,7 +23,13 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Union
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
-from neural_compressor.common.utility import DUMMY_CONFIG, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN_WEIGHT_ONLY_QUANT
+from neural_compressor.common.utility import (
+    DEFAULT_WHITE_LIST,
+    DUMMY_CONFIG,
+    GPTQ,
+    OP_NAME_OR_MODULE_TYPE,
+    RTN_WEIGHT_ONLY_QUANT,
+)
 
 FRAMEWORK_NAME = "torch"
 
@@ -87,7 +93,7 @@ class RTNWeightQuantConfig(BaseConfig):
         double_quant_bits: int = 8,
         double_quant_sym: bool = True,
         double_quant_group_size: int = 256,
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = None,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init RTN weight-only quantization config.
 
@@ -120,6 +126,7 @@ class RTNWeightQuantConfig(BaseConfig):
         self.double_quant_dtype = double_quant_dtype
         self.double_quant_sym = double_quant_sym
         self.double_quant_group_size = double_quant_group_size
+        self._post_init()
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)
@@ -221,7 +228,7 @@ class GPTQConfig(BaseConfig):
         double_quant_bits: int = 8,
         double_quant_sym: bool = True,
         double_quant_group_size: int = 256,
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = None,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init GPTQ config.
 
@@ -250,6 +257,7 @@ class GPTQConfig(BaseConfig):
         self.double_quant_dtype = double_quant_dtype
         self.double_quant_sym = double_quant_sym
         self.double_quant_group_size = double_quant_group_size
+        self._post_init()
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)

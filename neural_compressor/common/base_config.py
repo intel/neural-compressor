@@ -23,7 +23,15 @@ from collections import OrderedDict
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import BASE_CONFIG, COMPOSABLE_CONFIG, GLOBAL, LOCAL, OP_NAME_OR_MODULE_TYPE
+from neural_compressor.common.utility import (
+    BASE_CONFIG,
+    COMPOSABLE_CONFIG,
+    DEFAULT_WHITE_LIST,
+    EMPTY_WHITE_LIST,
+    GLOBAL,
+    LOCAL,
+    OP_NAME_OR_MODULE_TYPE,
+)
 
 logger = Logger().get_logger()
 
@@ -60,13 +68,30 @@ class BaseConfig(ABC):
 
     name = BASE_CONFIG
 
-    def __init__(self, white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = None) -> None:
+    def __init__(self, white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST) -> None:
         self._global_config: Optional[BaseConfig] = None
         # For PyTorch, operator_type is the collective name for module type and functional operation type,
         # for example, `torch.nn.Linear`, and `torch.nn.functional.linear`.
         # local config is the collections of operator_type configs and operator configs
         self._local_config: Dict[str, Optional[BaseConfig]] = {}
         self._white_list = white_list
+
+    def _post_init(self):
+        if self.white_list == DEFAULT_WHITE_LIST:
+            global_config = self.get_params_dict()
+            self._global_config = self.__class__(**global_config, white_list=None)
+        elif bool(self.white_list):
+            for op_name_or_type in self.white_list:
+                global_config = self.get_params_dict()
+                tmp_config = self.__class__(**global_config, white_list=None)
+                self.set_local(op_name_or_type, tmp_config)
+        elif self.white_list == EMPTY_WHITE_LIST:
+            return
+        else:
+            raise NotImplementedError(
+                f"The white list should be one of {DEFAULT_WHITE_LIST}, {EMPTY_WHITE_LIST},"
+                " a not empty list, but got {self.white_list}"
+            )
 
     @property
     def white_list(self):
@@ -78,8 +103,6 @@ class BaseConfig(ABC):
 
     @property
     def global_config(self):
-        if self._global_config is None:
-            self._global_config = self.__class__(**self.to_dict())
         return self._global_config
 
     @global_config.setter
@@ -97,23 +120,26 @@ class BaseConfig(ABC):
     def set_local(self, operator_name: str, config: BaseConfig) -> BaseConfig:
         if operator_name in self.local_config:
             logger.warning("The configuration for %s has already been set, update it.", operator_name)
-        if self.global_config is None:
-            self.global_config = self.__class__(**self.to_dict())
         self.local_config[operator_name] = config
         return self
 
     def to_dict(self, params_list=[], operator2str=None):
         result = {}
-        global_config = {}
-        for param in params_list:
-            global_config[param] = getattr(self, param)
+        global_config = self.get_params_dict()
         if bool(self.local_config):
             result[LOCAL] = {}
             for op_name, config in self.local_config.items():
                 result[LOCAL][op_name] = config.to_dict()
-            result[GLOBAL] = global_config
+            if self.global_config:
+                result[GLOBAL] = global_config
         else:
             result = global_config
+        return result
+
+    def get_params_dict(self):
+        result = dict()
+        for param in self.params_list:  # pylint: disable=no-member
+            result[param] = getattr(self, param)
         return result
 
     @classmethod
@@ -214,7 +240,8 @@ class BaseConfig(ABC):
             global_config = config.global_config
             op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
             for op_name, op_type in model_info:
-                config_mapping[(op_type, op_name)] = global_config
+                if self.global_config is not None:
+                    config_mapping[(op_type, op_name)] = global_config
                 if op_type in op_type_config_dict:
                     config_mapping[(op_type, op_name)] = op_name_config_dict[op_type]
                 if op_name in op_name_config_dict:
