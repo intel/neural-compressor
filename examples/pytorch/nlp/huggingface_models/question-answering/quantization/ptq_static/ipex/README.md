@@ -63,11 +63,6 @@ docker run --rm \
 ```
 
 #### 2.3 Environment Settings
-Source installed torch 2.0.1+gpu is required. Please refer to this [tutorial](https://github.com/pytorch/pytorch#from-source) to check system requirements and and install dependencies.
-```bash
-git clone https://github.com/pytorch/pytorch.git
-```
-
 Please set basekit configurations as following:
 ```bash
 bash l_BaseKit_p_2024.0.0.49261_offline.sh -a -s --eula accept --components intel.oneapi.lin.tbb.devel:intel.oneapi.lin.ccl.devel:intel.oneapi.lin.mkl.devel:intel.oneapi.lin.dpcpp-cpp-compiler --install-dir ${HOME}/intel/oneapi
@@ -79,10 +74,18 @@ export MKL_DPCPP_ROOT=${MKLROOT}
 export LD_LIBRARY_PATH=${MKL_DPCPP_ROOT}/lib:${MKL_DPCPP_ROOT}/lib64:${MKL_DPCPP_ROOT}/lib/intel64:${LD_LIBRARY_PATH}
 export LIBRARY_PATH=${MKL_DPCPP_ROOT}/lib:${MKL_DPCPP_ROOT}/lib64:${MKL_DPCPP_ROOT}/lib/intel64:$LIBRARY_PATH
 ```
-Source installed IPEX is required. Please refer to this [tutorial](https://intel.github.io/intel-extension-for-pytorch/index.html#installation?platform=gpu&version=v2.0.110%2Bxpu) to check system requirements and install dependencies.
+Prebuilt wheel files are available for Python python 3.8, python 3.9, python 3.10, python 3.11.
 ```bash
-git clone https://github.com/intel/intel-extension-for-pytorch.git
+conda install intel-extension-for-pytorch=2.0.110 pytorch=2.0.1 -c intel -c conda-forge
 ```
+You can run a simple sanity test to double confirm if the correct version is installed, and if the software stack can get correct hardware information onboard your system. The command should return PyTorch and IPEX versions installed, as well as GPU card(s) information detected.
+```bash
+source {DPCPPROOT}/env/vars.sh
+source {MKLROOT}/env/vars.sh
+python -c "import torch; import intel_extension_for_pytorch as ipex; print(torch.__version__); print(ipex.__version__); [print(f'[{i}]: {torch.xpu.get_device_properties(i)}') for i in range(torch.xpu.device_count())];"
+```
+Please also refer to this [tutorial](https://intel.github.io/intel-extension-for-pytorch/index.html#installation?platform=gpu&version=v2.0.110%2Bxpu) to check system requirements and install dependencies.
+
 
 #### 2.4 Quantization Command
 ```shell
@@ -146,5 +149,3 @@ q_model = quantization.fit(model,
                            eval_func=eval_func)
 q_model.save(training_args.output_dir)
 ```
-
-
