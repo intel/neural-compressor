@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from asyncore import write
 import os
 import random
 import re
@@ -29,6 +30,7 @@ from lm_eval.utils import run_task_tests
 from lm_eval.evaluator import evaluate as evaluate_func
 from lm_eval.evaluator import make_table
 from .models import huggingface
+import transformers
 MODEL_REGISTRY = {
     "hf-causal": huggingface.AutoCausalLM,
     "hf-seq2seq": huggingface.AutoSeq2SeqLM,
@@ -56,13 +58,15 @@ def evaluate(model,
              tasks=[],
              new_fewshot=0,
              batch_size=None,
+             max_batch_size=None,
              device="cpu",
              no_cache=True,
              limit=None,
              bootstrap_iters=100000,
-             description_dict=None,
              check_integrity=False,
              decontamination_ngrams_path=None,
+             write_out=False,
+             output_base_path=None,
              seed=1234,
              user_model=None,
              model_format='torch'
@@ -110,57 +114,59 @@ def evaluate(model,
     torch.manual_seed(seed)
 
     assert tasks != [], "No tasks specified"
-
     if isinstance(model, str):
         if model_args is None:
             model_args = ""
-        kwargs = {"batch_size": batch_size, "device": device, "model_format": model_format}
+        kwargs =  {
+                "batch_size": batch_size,
+                "max_batch_size": max_batch_size,
+                "device": device,
+                "model_format": model_format
+            }
         if user_model:
             kwargs["init_empty_weights"] = True
         lm = get_model(model).create_from_arg_string(
-            model_args, kwargs,
+            model_args, kwargs
         )
+    elif isinstance(model, transformers.PreTrainedModel):
+        lm = get_model("hf-causal")(    # pylint: disable=E1125
+            pretrained=model,
+            batch_size=batch_size,
+            max_batch_size=max_batch_size,
+        )
+        no_cache = True
     else:
-        assert isinstance(model, LM)
+        assert isinstance(model, lm_eval.base.LM)
         lm = model
 
     if not no_cache:
-        lm = CachingLM(
+        lm = lm_eval.base.CachingLM(
             lm,
             "lm_cache/"
-            + model
+            + (model if isinstance(model, str) else model.model.config._name_or_path)
             + "_"
             + model_args.replace("=", "-").replace(",", "_").replace("/", "-")
             + ".db",
         )
-    
+
     task_dict = get_task_dict(tasks)
-    if re.search("llama", lm.model.config.model_type) or \
-            re.search("mistral", lm.model.config.model_type) or \
-            (re.search("baichuan", lm.model.config.model_type) and not re.search("baichuan2", model_args.lower())):
-        for key, value in task_dict.items():
-            if key == "lambada_openai":
-                from .tasks import lambada
-                task_dict[key] = lambada.LambadaOpenAI()
-            if key == "lambada_standard":
-                from .tasks import lambada
-                task_dict[key] = lambada.LambadaStandard() 
 
     if check_integrity:
         run_task_tests(task_list=tasks)
-    
+
     if user_model:
         lm.model = user_model
+
     results = evaluate_func(
         lm=lm,
         task_dict=task_dict,
-        provide_description=None,
         num_fewshot=new_fewshot,
-        bootstrap_iters=bootstrap_iters,
         limit=limit,
-        description_dict=description_dict,
-        decontamination_ngrams_path=decontamination_ngrams_path
+        bootstrap_iters=bootstrap_iters,
+        decontamination_ngrams_path=decontamination_ngrams_path,
+        write_out=write_out,
+        output_base_path=output_base_path
     )
 
-    print(make_table(results)) 
+    print(make_table(results))
     return results

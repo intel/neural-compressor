@@ -302,7 +302,8 @@ if __name__ == '__main__':
             'sym': (sym_opt == "sym"),
             'act_order': args.act_order,
         }
-    } 
+    }
+    
     q_model, gptq_config = gptq_quantize(
         model, 
         weight_config=conf, 
@@ -312,11 +313,12 @@ if __name__ == '__main__':
         pad_max_length = args.pad_max_length,
         device = DEV,
     )
+    
 
     results = lm_evaluate(
         model="hf-causal",
-        model_args='pretrained='+args.model_name_or_path+',tokenizer='+args.model_name_or_path+',dtype=float32',
+        model_args='pretrained='+args.model_name_or_path+',tokenizer='+args.model_name_or_path+',dtype=float32'+',trust_remote_code=True',
         user_model=q_model.to(DEV), tasks=["lambada_openai"],
         device=DEV.type,
-        batch_size=4
+        batch_size=4,
     )
