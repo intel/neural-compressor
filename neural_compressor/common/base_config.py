@@ -67,6 +67,7 @@ class BaseConfig(ABC):
     """The base config for all algorithm configs."""
 
     name = BASE_CONFIG
+    params_list = []
 
     def __init__(self, white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST) -> None:
         self._global_config: Optional[BaseConfig] = None
@@ -138,7 +139,7 @@ class BaseConfig(ABC):
 
     def get_params_dict(self):
         result = dict()
-        for param in self.params_list:  # pylint: disable=no-member
+        for param in self.params_list:
             result[param] = getattr(self, param)
         return result
 
