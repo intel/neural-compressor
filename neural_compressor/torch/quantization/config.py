@@ -18,12 +18,12 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Callable, Dict, List, NamedTuple, Union
+from typing import Callable, Dict, List, NamedTuple, Optional, Union
 
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
-from neural_compressor.common.utility import DUMMY_CONFIG, GPTQ, RTN_WEIGHT_ONLY_QUANT
+from neural_compressor.common.utility import DUMMY_CONFIG, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN_WEIGHT_ONLY_QUANT
 
 FRAMEWORK_NAME = "torch"
 
@@ -87,6 +87,7 @@ class RTNWeightQuantConfig(BaseConfig):
         double_quant_bits: int = 8,
         double_quant_sym: bool = True,
         double_quant_group_size: int = 256,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = None,
     ):
         """Init RTN weight-only quantization config.
 
@@ -105,7 +106,7 @@ class RTNWeightQuantConfig(BaseConfig):
             double_quant_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
             double_quant_group_size (int): Size of double_quant groups, default is 32.
         """
-        super().__init__()
+        super().__init__(white_list=white_list)
         self.weight_bits = weight_bits
         self.weight_dtype = weight_dtype
         self.weight_group_size = weight_group_size
@@ -220,12 +221,13 @@ class GPTQConfig(BaseConfig):
         double_quant_bits: int = 8,
         double_quant_sym: bool = True,
         double_quant_group_size: int = 256,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = None,
     ):
         """Init GPTQ config.
 
         Args:
         """
-        super().__init__()
+        super().__init__(white_list=white_list)
         self.weight_dtype = weight_dtype
         self.weight_bits = weight_bits
         self.weight_group_size = weight_group_size

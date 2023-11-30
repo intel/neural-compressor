@@ -23,7 +23,7 @@ from collections import OrderedDict
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import BASE_CONFIG, COMPOSABLE_CONFIG, GLOBAL, LOCAL
+from neural_compressor.common.utility import BASE_CONFIG, COMPOSABLE_CONFIG, GLOBAL, LOCAL, OP_NAME_OR_MODULE_TYPE
 
 logger = Logger().get_logger()
 
@@ -60,12 +60,21 @@ class BaseConfig(ABC):
 
     name = BASE_CONFIG
 
-    def __init__(self) -> None:
+    def __init__(self, white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = None) -> None:
         self._global_config: Optional[BaseConfig] = None
         # For PyTorch, operator_type is the collective name for module type and functional operation type,
         # for example, `torch.nn.Linear`, and `torch.nn.functional.linear`.
         # local config is the collections of operator_type configs and operator configs
         self._local_config: Dict[str, Optional[BaseConfig]] = {}
+        self._white_list = white_list
+
+    @property
+    def white_list(self):
+        return self._white_list
+
+    @white_list.setter
+    def white_list(self, op_name_or_type_list: Optional[List[OP_NAME_OR_MODULE_TYPE]]):
+        self._white_list = op_name_or_type_list
 
     @property
     def global_config(self):

@@ -18,12 +18,12 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Callable, Dict, List, NamedTuple, Union
+from typing import Callable, Dict, List, NamedTuple, Optional, Union
 
 import tensorflow as tf
 
 from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
-from neural_compressor.common.utility import STATIC_QUANT
+from neural_compressor.common.utility import OP_NAME_OR_MODULE_TYPE, STATIC_QUANT
 
 FRAMEWORK_NAME = "keras"
 
@@ -89,6 +89,7 @@ class StaticQuantConfig(BaseConfig):
         act_dtype: str = "int8",
         act_sym: bool = True,
         act_granularity: str = "per_tensor",
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = None,
     ):
         """Init static quantization config.
 
@@ -100,7 +101,7 @@ class StaticQuantConfig(BaseConfig):
             act_sym (bool): Indicates whether activations are symmetric, default is True.
             act_granularity (str): Calculate tensor-wise scales or channel-wise scales for activations.
         """
-        super().__init__()
+        super().__init__(white_list=white_list)
         self.weight_dtype = weight_dtype
         self.weight_sym = weight_sym
         self.weight_granularity = weight_granularity
