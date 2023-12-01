@@ -18,12 +18,12 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Callable, Dict, List, NamedTuple, Union
+from typing import Callable, Dict, List, NamedTuple, Optional, Union
 
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
-from neural_compressor.common.utility import DUMMY_CONFIG, GPTQ, RTN_WEIGHT_ONLY_QUANT
+from neural_compressor.common.utility import DEFAULT_WHITE_LIST, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN_WEIGHT_ONLY_QUANT
 
 FRAMEWORK_NAME = "torch"
 
@@ -87,6 +87,7 @@ class RTNWeightQuantConfig(BaseConfig):
         double_quant_bits: int = 8,
         double_quant_sym: bool = True,
         double_quant_group_size: int = 256,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init RTN weight-only quantization config.
 
@@ -105,7 +106,7 @@ class RTNWeightQuantConfig(BaseConfig):
             double_quant_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
             double_quant_group_size (int): Size of double_quant groups, default is 32.
         """
-        super().__init__()
+        super().__init__(white_list=white_list)
         self.weight_bits = weight_bits
         self.weight_dtype = weight_dtype
         self.weight_group_size = weight_group_size
@@ -119,6 +120,7 @@ class RTNWeightQuantConfig(BaseConfig):
         self.double_quant_dtype = double_quant_dtype
         self.double_quant_sym = double_quant_sym
         self.double_quant_group_size = double_quant_group_size
+        self._post_init()
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)
@@ -220,12 +222,13 @@ class GPTQConfig(BaseConfig):
         double_quant_bits: int = 8,
         double_quant_sym: bool = True,
         double_quant_group_size: int = 256,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init GPTQ config.
 
         Args:
         """
-        super().__init__()
+        super().__init__(white_list=white_list)
         self.weight_dtype = weight_dtype
         self.weight_bits = weight_bits
         self.weight_group_size = weight_group_size
@@ -248,6 +251,7 @@ class GPTQConfig(BaseConfig):
         self.double_quant_dtype = double_quant_dtype
         self.double_quant_sym = double_quant_sym
         self.double_quant_group_size = double_quant_group_size
+        self._post_init()
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)
@@ -279,65 +283,6 @@ def get_default_gptq_config() -> GPTQConfig:
         the default gptq config.
     """
     return GPTQConfig()
-
-
-######################## Dummy Config ###############################
-# TODO (Yi) remove it after finishing the GPTQ config
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=DUMMY_CONFIG)
-class DummyConfig(BaseConfig):
-    """Config class for round-to-nearest weight-only quantization."""
-
-    supported_configs: List[OperatorConfig] = []
-    params_list = ["act_dtype", "weight_dtype", "dummy_attr"]
-    name = DUMMY_CONFIG
-
-    def __init__(
-        self,
-        weight_dtype: str = "int",
-        act_dtype: str = "fp32",
-        dummy_attr: int = 0,
-    ):
-        """Init RTN weight-only quantization config.
-
-        Args:
-            act_dtype (str): Data type for activations, default is "fp32".
-            weight_dtype (str): Data type for weights, default is "int".
-            dummy_attr (int): Dummy attribute, default is 0.
-        """
-        super().__init__()
-        self.act_dtype = act_dtype
-        self.weight_dtype = weight_dtype
-        self.dummy_attr = dummy_attr
-
-    def to_dict(self):
-        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
-
-    @classmethod
-    def from_dict(cls, config_dict):
-        return super(DummyConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
-
-    @classmethod
-    def register_supported_configs(cls) -> List[OperatorConfig]:
-        supported_configs = []
-        linear_dummy_config = DummyConfig(
-            act_dtype=["fp32"],
-            weight_dtype=["int4", "int8"],
-            dummy_attr=[1, 2, 3],
-        )
-        operators = [torch.nn.Linear, torch.nn.functional.linear]
-        supported_configs.append(
-            OperatorConfig(config=linear_dummy_config, operators=operators, backend=Backend.DEFAULT)
-        )
-        cls.supported_configs = supported_configs
-
-
-def get_default_dummy_config() -> DummyConfig:
-    """Generate the default dummy config.
-
-    Returns:
-        the default dummy config.
-    """
-    return DummyConfig()
 
 
 ##################### Algo Configs End ###################################
