@@ -29,6 +29,7 @@ helper = LazyImport("onnx.helper")
 numpy_helper = LazyImport("onnx.numpy_helper")
 onnx_proto = LazyImport("onnx.onnx_pb")
 torch = LazyImport("torch")
+onnxruntime = LazyImport("onnxruntime")
 symbolic_shape_infer = LazyImport("onnxruntime.tools.symbolic_shape_infer")
 onnx = LazyImport("onnx")
 
@@ -601,7 +602,7 @@ def to_numpy(data):
 
 class SymbolicShapeInference(symbolic_shape_infer.SymbolicShapeInference):
     """Shape inference for ONNX model."""
-
+    
     def __init__(self, int_max, auto_merge, guess_output_rank, verbose, prefix="", base_dir=""):
         """Initialize Shape inference class."""
         super().__init__(int_max, auto_merge, guess_output_rank, verbose, prefix)
