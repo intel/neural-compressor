@@ -360,9 +360,7 @@ class SaveInputs:
     @torch.no_grad()
     def get_forward_func(self, name):
         def forward(_, hidden_states, *positional_args, **kwargs):  ##This may have bug for other models
-            dim = int(
-                (hasattr(self.model, "config") and "chatglm" in self.model.config.model_type)
-            )
+            dim = int((hasattr(self.model, "config") and "chatglm" in self.model.config.model_type))
             if name in self.inputs:
                 data = torch.cat([self.inputs[name]["input_ids"], hidden_states.to("cpu")], dim=dim)
                 self.inputs[name]["input_ids"] = data
@@ -819,6 +817,7 @@ class OPTRoundQuantizer(object):
         self.supported_types = [torch.nn.Linear]
         try:
             import transformers
+
             self.supported_types.append(transformers.modeling_utils.Conv1D)
         except:
             pass
