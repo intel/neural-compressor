@@ -1045,9 +1045,9 @@ class ONNXModel(BaseModel):
         if shape_infer:
             try:
                 # need ort.GraphOptimizationLevel <= ORT_ENABLE_BASIC
-                from neural_compressor.adaptor.ox_utils.util import SymbolicShapeInference
+                from neural_compressor.adaptor.ox_utils.util import infer_shapes
 
-                self._model = SymbolicShapeInference.infer_shapes(
+                self._model = infer_shapes(
                     self._model, auto_merge=True, base_dir=os.path.dirname(self._model_path)
                 )
             except Exception as e:  # pragma: no cover
