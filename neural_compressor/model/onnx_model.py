@@ -1047,9 +1047,7 @@ class ONNXModel(BaseModel):
                 # need ort.GraphOptimizationLevel <= ORT_ENABLE_BASIC
                 from neural_compressor.adaptor.ox_utils.util import infer_shapes
 
-                self._model = infer_shapes(
-                    self._model, auto_merge=True, base_dir=os.path.dirname(self._model_path)
-                )
+                self._model = infer_shapes(self._model, auto_merge=True, base_dir=os.path.dirname(self._model_path))
             except Exception as e:  # pragma: no cover
                 logger.error("Shape infer fails for layer-wise quantization")
                 if "Incomplete symbolic shape inference" in str(e):

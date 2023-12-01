@@ -598,6 +598,7 @@ def to_numpy(data):
     else:
         return data
 
+
 def infer_shapes(in_mp, int_max=2**31 - 1, auto_merge=False, guess_output_rank=False, verbose=0, base_dir=""):
     """Symbolic shape inference."""
 
