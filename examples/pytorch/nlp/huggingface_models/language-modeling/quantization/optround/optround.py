@@ -1,6 +1,6 @@
 import argparse
-
-parser = argparse.ArgumentParser()
+import sys
+sys.path.insert(0, './')
 import torch
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
@@ -159,7 +159,7 @@ if __name__ == '__main__':
         if tokenizer.pad_token is None:
             tokenizer.add_special_tokens({'pad_token': '[PAD]'})
     else:
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_name,trust_remote_code=True)
     if args.eval_fp16_baseline:
         eval_model(model, args.model_name, tokenizer, args.tasks, device=device_str)
         exit()
