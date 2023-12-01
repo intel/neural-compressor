@@ -13,9 +13,11 @@ import re
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 ##TODO smoke test
-## LLAMA OK
-## OPT ok
-## Lamini-gpt ok
+## Lamini-gpt-124m ok
+## mistral-7b ok
+## opt-125m ok
+
+
 
 if __name__ == '__main__':
 
