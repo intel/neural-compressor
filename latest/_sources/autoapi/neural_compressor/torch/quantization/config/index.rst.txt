@@ -17,7 +17,6 @@ Classes
    neural_compressor.torch.quantization.config.Backend
    neural_compressor.torch.quantization.config.RTNWeightQuantConfig
    neural_compressor.torch.quantization.config.GPTQConfig
-   neural_compressor.torch.quantization.config.DummyConfig
 
 
 
@@ -28,7 +27,6 @@ Functions
 
    neural_compressor.torch.quantization.config.get_default_rtn_config
    neural_compressor.torch.quantization.config.get_default_gptq_config
-   neural_compressor.torch.quantization.config.get_default_dummy_config
 
 
 
@@ -42,7 +40,7 @@ Functions
    Derive from this class to define new enumerations.
 
 
-.. py:class:: RTNWeightQuantConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, act_dtype: str = 'fp32', enable_full_range: bool = False, enable_mse_search: bool = False, group_dim: int = 1, return_int: bool = False, double_quant_dtype: str = 'fp32', double_quant_bits: int = 8, double_quant_sym: bool = True, double_quant_group_size: int = 256)
+.. py:class:: RTNWeightQuantConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, act_dtype: str = 'fp32', enable_full_range: bool = False, enable_mse_search: bool = False, group_dim: int = 1, return_int: bool = False, double_quant_dtype: str = 'fp32', double_quant_bits: int = 8, double_quant_sym: bool = True, double_quant_group_size: int = 256, white_list: Optional[List[neural_compressor.common.utility.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
 
 
 
@@ -57,7 +55,7 @@ Functions
    :returns: the default rtn config.
 
 
-.. py:class:: GPTQConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, block_size: int = 128, act_dtype: str = 'fp32', group_dim: int = 1, nsamples: int = 128, dataloader_len: int = 10, percdamp: float = 0.01, act_order: bool = False, use_max_length: bool = True, pad_max_length: int = 2048, enable_mse_search: bool = False, device=None, layer_wise: bool = False, return_int: bool = False, double_quant_dtype: str = 'fp32', double_quant_bits: int = 8, double_quant_sym: bool = True, double_quant_group_size: int = 256)
+.. py:class:: GPTQConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, block_size: int = 128, act_dtype: str = 'fp32', group_dim: int = 1, nsamples: int = 128, dataloader_len: int = 10, percdamp: float = 0.01, act_order: bool = False, use_max_length: bool = True, pad_max_length: int = 2048, enable_mse_search: bool = False, device=None, layer_wise: bool = False, return_int: bool = False, double_quant_dtype: str = 'fp32', double_quant_bits: int = 8, double_quant_sym: bool = True, double_quant_group_size: int = 256, white_list: Optional[List[neural_compressor.common.utility.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
 
 
 
@@ -73,20 +71,5 @@ Functions
    Generate the default gptq config.
 
    :returns: the default gptq config.
-
-
-.. py:class:: DummyConfig(weight_dtype: str = 'int', act_dtype: str = 'fp32', dummy_attr: int = 0)
-
-
-
-
-   Config class for round-to-nearest weight-only quantization.
-
-
-.. py:function:: get_default_dummy_config() -> DummyConfig
-
-   Generate the default dummy config.
-
-   :returns: the default dummy config.
 
 

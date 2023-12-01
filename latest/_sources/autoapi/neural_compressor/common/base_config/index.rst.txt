@@ -43,7 +43,7 @@ Functions
    :param algo_name: the algorithm name. Defaults to None.
 
 
-.. py:class:: BaseConfig
+.. py:class:: BaseConfig(white_list: Optional[List[neural_compressor.common.utility.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
 
 
 
