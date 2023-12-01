@@ -15,12 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-##TODO LIST
-## to validate sym
-## to validate other model families
-## LLAMA OK
-## OPT ok
-## Lamini-gpt ok
 
 try:
     from neural_compressor.utils.utility import LazyImport
@@ -78,7 +72,20 @@ def set_module(model, key, new_module):
     setattr(module, name_list[-1], new_module)
 
 
-def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0, use_sigmoid=False):
+def quant_weight_asym(weight, num_bits=4, v=0, min_scale=0, max_scale=0, use_sigmoid=False):
+    """
+    quantize weight asymmetric
+    Args:
+        weight: to be quantized weight tensor
+        num_bits: quantize number of bits, e.g., 2,3,4,8
+        grad: rounding valu
+        min_scale:
+        max_scale:
+        use_sigmoid:
+
+    Returns:
+
+    """
     maxq = torch.tensor(2**num_bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device, dtype=weight.dtype)
     if isinstance(min_scale, torch.Tensor):
@@ -102,13 +109,13 @@ def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0, use_
     zp = round_ste(-wmin / scale)
     scale = scale.unsqueeze(dim=-1)
     zp = zp.unsqueeze(dim=-1)
-    int_w = round_ste(weight / scale + grad)
+    int_w = round_ste(weight / scale + v)
     q = torch.clamp(int_w + zp, 0, maxq)
     return scale * (q - zp), scale, zp
 
 
 def quant_weight_sym(
-    weight, num_bits=4, grad=0, min_scale=0, max_scale=0, use_sigmoid=False
+    weight, num_bits=4, v=0, min_scale=0, max_scale=0, use_sigmoid=False
 ):  ##TODO having not validated,also min_scale could be dropped later
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-(2 ** (num_bits - 1))).to(weight.device)
@@ -125,16 +132,16 @@ def quant_weight_sym(
     wmax[tmp] = +1
     scale = wmax / ((maxq - minq) / 2)
     scale.unsqueeze_(dim=-1)
-    q = torch.clamp(round_ste(weight / scale + grad), minq, maxq)
+    q = torch.clamp(round_ste(weight / scale + v), minq, maxq)
     return scale * q, scale, None
 
 
-def quant_weight_actor(weight, num_bits, scheme, grad, min_scale, max_scale, use_sigmoid):
+def quant_weight_actor(weight, num_bits, scheme, v, min_scale, max_scale, use_sigmoid):
     assert num_bits > 0, "num_bits should be larger than 0"
     if scheme == "sym":
-        return quant_weight_sym(weight, num_bits, grad, min_scale, max_scale, use_sigmoid)
+        return quant_weight_sym(weight, num_bits, v, min_scale, max_scale, use_sigmoid)
     else:
-        return quant_weight_asym(weight, num_bits, grad, min_scale, max_scale, use_sigmoid)
+        return quant_weight_asym(weight, num_bits, v, min_scale, max_scale, use_sigmoid)
 
 
 def quant_weight(
@@ -142,7 +149,7 @@ def quant_weight(
     num_bits=4,
     group_size=-1,
     scheme="asym",
-    grad=0,
+    v=0,
     min_scale=0,
     max_scale=0,
     use_sigmoid=False,
@@ -153,7 +160,7 @@ def quant_weight(
             weight,
             num_bits,
             scheme=scheme,
-            grad=grad,
+            v=v,
             min_scale=min_scale,
             max_scale=max_scale,
             use_sigmoid=use_sigmoid,
@@ -165,14 +172,14 @@ def quant_weight(
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
-        if isinstance(grad, torch.Tensor):
-            grad = grad.reshape(-1, group_size)
+        if isinstance(v, torch.Tensor):
+            v = v.reshape(-1, group_size)
 
         weight, scale, zp = quant_weight_actor(
             weight,
             num_bits,
             scheme=scheme,
-            grad=grad,
+            v=v,
             min_scale=min_scale,
             max_scale=max_scale,
             use_sigmoid=use_sigmoid,
@@ -186,13 +193,13 @@ def quant_weight(
         split_index = weight.shape[1] // group_size * group_size
         weight1 = weight[:, :split_index]
         weight1 = weight1.reshape(-1, group_size)
-        if isinstance(grad, torch.Tensor):
-            grad1 = grad[:, :split_index]
-            grad1 = grad1.reshape(-1, group_size)
-            grad2 = grad[:, split_index:]
+        if isinstance(v, torch.Tensor):
+            v1 = v[:, :split_index]
+            v1 = v1.reshape(-1, group_size)
+            v2 = v[:, split_index:]
         else:
-            grad1 = 0
-            grad2 = 0
+            v1 = 0
+            v2 = 0
         if isinstance(min_scale, torch.Tensor):
             min_scale = min_scale.view(weight.shape[0], -1)
             max_scale = max_scale.view(weight.shape[0], -1)
@@ -218,7 +225,7 @@ def quant_weight(
             weight1,
             num_bits,
             scheme=scheme,
-            grad=grad1,
+            v=v1,
             min_scale=min_scale_1,
             max_scale=max_scale_1,
             use_sigmoid=use_sigmoid,
@@ -229,7 +236,7 @@ def quant_weight(
             weight2,
             num_bits,
             scheme=scheme,
-            grad=grad2,
+            v=v2,
             min_scale=min_scale_2,
             max_scale=max_scale_2,
             use_sigmoid=use_sigmoid,
@@ -281,7 +288,7 @@ class SaveInputs:
         def forward(_, hidden_states, *positional_args, **kwargs):  ##This may have bug for other models
             dim = int(
                 (hasattr(self.model, "config") and "chatglm" in self.model.config.model_type)
-            )  ##TODO a little ugly
+            )
             if name in self.inputs:
                 data = torch.cat([self.inputs[name]["input_ids"], hidden_states.to("cpu")], dim=dim)
                 self.inputs[name]["input_ids"] = data
@@ -472,8 +479,9 @@ class WrapperTransformerConv1d(torch.nn.Module):
         self.scheme = scheme
         self.use_sigmoid = use_sigmoid
         device = self.orig_layer.weight.device
-        self.value = torch.nn.Parameter(torch.zeros(self.orig_layer.weight.shape, device=device), requires_grad=True)
-        shape = get_scale_shape(self.orig_layer.weight, group_size)
+        self.weight_t = self.orig_layer.weight.t()
+        self.value = torch.nn.Parameter(torch.zeros(self.weight_t.shape, device=device), requires_grad=True)
+        shape = get_scale_shape(self.weight_t, group_size)
 
         if enable_minmax_tuning:
             self.min_scale = torch.nn.Parameter(torch.zeros(shape, device=device), requires_grad=True)
@@ -481,7 +489,7 @@ class WrapperTransformerConv1d(torch.nn.Module):
         else:
             self.min_scale = torch.tensor(0, device=device)
             self.max_scale = torch.tensor(0, device=device)
-        self.weight_t = self.orig_layer.weight.t()
+
 
     def unwrapper(self, grad, min_scale_grad, max_scale_grad):
         min_scale_grad.clamp_(-1, 0)
@@ -623,7 +631,7 @@ def wrapper_block(block, enable_minmax_tuning, supported_types, use_sigmoid):
 
 
 @torch.no_grad()
-def unwrapper_block(block, grads, min_scale_grads, max_scale_grads):  ## TODO go to wrapper conv1d
+def unwrapper_block(block, grads, min_scale_grads, max_scale_grads):
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear) or isinstance(m, WrapperTransformerConv1d):
             orig_layer = m.orig_layer
@@ -639,12 +647,6 @@ def unwrapper_block(block, grads, min_scale_grads, max_scale_grads):  ## TODO go
                 max_scale_grad = max_scale_grads[n]
                 max_scale_grad = torch.clamp(max_scale_grad, -1, 0)
             orig_layer = m.unwrapper(grad, min_scale_grad, max_scale_grad)
-
-            # q_dq_weight = quant_weight(
-            #     orig_layer.weight, num_bits, group_size, scheme, grad, min_scale_grad, max_scale_grad
-            # )
-            # orig_layer.weight.data.copy_(q_dq_weight)
-            # orig_layer.weight.grad = None  ##clear grad
             set_module(block, n, orig_layer)
 
 
@@ -744,7 +746,6 @@ class OPTRoundQuantizer(object):
         self.supported_types = [torch.nn.Linear]
         try:
             import transformers
-
             self.supported_types.append(transformers.modeling_utils.Conv1D)
         except:
             pass
@@ -780,7 +781,7 @@ class OPTRoundQuantizer(object):
         self.use_sigmoid = use_sigmoid
 
         if self.optimizer is None:
-            self.use_sigmoid = (False,)
+            self.use_sigmoid = False
             self.scale_grad = False
             from .sign_sgd import SGD
 
@@ -842,8 +843,6 @@ class OPTRoundQuantizer(object):
         from datasets import load_dataset
         from torch.utils.data import DataLoader
 
-        seqlen = self.seqlen
-
         @torch.no_grad()
         def collate_batch(batch):
             input_ids_new = []
@@ -862,6 +861,7 @@ class OPTRoundQuantizer(object):
             res = {"input_ids": tmp}
             return res
 
+        seqlen = self.seqlen
         calib_dataset = load_dataset(data_name, split=self.dataset_split)
         calib_dataset = calib_dataset.shuffle(seed=self.seed)
         calib_dataset = calib_dataset.map(self.default_tokenize_function, batched=True)
@@ -1011,9 +1011,6 @@ class OPTRoundQuantizer(object):
             if not self.not_use_mse:
                 if self.dynamic_max_gap > 0 and i - last_best_iter >= self.dynamic_max_gap:
                     break
-            # optimizer.step()
-            # optimizer.zero_grad()
-            # lr_schedule.step()
             self.step(scaler, optimizer, lr_schedule)
 
         unwrapper_block(block, best_grad, best_min_scale_grad, best_max_scale_grad)

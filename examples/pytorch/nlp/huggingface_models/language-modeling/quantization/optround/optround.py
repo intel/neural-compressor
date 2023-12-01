@@ -12,6 +12,10 @@ from eval import eval_model
 import re
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+##TODO smoke test
+## LLAMA OK
+## OPT ok
+## Lamini-gpt ok
 
 if __name__ == '__main__':
 
@@ -157,8 +161,12 @@ if __name__ == '__main__':
     if args.eval_fp16_baseline:
         eval_model(model, args.model_name, tokenizer, args.tasks, device=device_str)
         exit()
+    if hasattr(tokenizer, "model_max_length"):
+        if tokenizer.model_max_length <= seqlen:
+            print(f"change sequence length to {tokenizer.model_max_length} due to the limitation of model_max_length")
+            seqlen = min(seqlen, tokenizer.model_max_length)
 
     optq = OPTRoundQuantizer(model, tokenizer, args.num_bits, args.group_size, args.scheme, bs=args.train_bs,
-                             seqlen=seqlen, n_blocks=args.n_blocks)##TODO args pass
+                             seqlen=seqlen, n_blocks=args.n_blocks)  ##TODO args pass
     optq.quantize()
     eval_model(optq.model, args.model_name, tokenizer, args.tasks, device=device_str)
