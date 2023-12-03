@@ -1,9 +1,25 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""The workload module for Neural Insights workloads."""
+
 import os
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 from uuid import uuid4
 
-from neural_insights.utils.consts import WorkloadModes, Frameworks, WorkloadStatus
+from neural_insights.utils.consts import Frameworks, WorkloadModes, WorkloadStatus
 from neural_insights.utils.exceptions import InternalException
 from neural_insights.utils.json_serializer import JsonSerializer
 from neural_insights.utils.utils import get_framework_from_path
@@ -22,6 +38,7 @@ class Workload(JsonSerializer):
         self.workload_location: str = data.get("workload_location", None)
 
         mode = data.get("mode")
+        self.workload_name = data.get("workload_name", mode)
         if not isinstance(mode, WorkloadModes) and isinstance(mode, str):
             mode = WorkloadModes(mode)
         self.mode: WorkloadModes = mode
@@ -41,6 +58,8 @@ class Workload(JsonSerializer):
                 framework = Frameworks(framework)
         self.framework: Optional[Frameworks] = framework
 
+        self.model_summary_file = data.get("model_summary_file", None)
+
     @property
     def model_path(self) -> str:
         """Get model_path."""
@@ -57,10 +76,12 @@ class Workload(JsonSerializer):
         """Serialize Workload class."""
         return {
             "uuid": self.uuid,
+            "workload_name": self.workload_name,
             "framework": self.framework.value,
             "workload_location": self.workload_location,
             "mode": self.mode.value,
             "model_path": self.model_path,
+            "model_summary_file": self.model_summary_file,
             "status": self.status.value,
             "creation_time": self.creation_time,
         }

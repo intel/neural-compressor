@@ -89,7 +89,7 @@ def calc_iou_tensor(box1, box2):
 class Encoder(object):
     """
         Inspired by https://github.com/kuangliu/pytorch-ssd
-        Transform between (bboxes, lables) <-> SSD output
+        Transform between (bboxes, labels) <-> SSD output
 
         dboxes: default boxes in size 8732 x 4,
             encoder: input ltrb format, output xywh format
@@ -655,7 +655,7 @@ class VOCDetection(data.Dataset):
             annotate:   annotation folder (xml)
     """
     def __init__(self, img_folder, annotate_folder, file_filter, transform=None, label_map = {}, difficult=True):
-        #print("Reading data informations")
+        #print("Reading data information")
 
         self.img_folder = img_folder
         self.annotate_folder = annotate_folder

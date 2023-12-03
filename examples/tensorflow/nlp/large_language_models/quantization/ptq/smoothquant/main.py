@@ -1,3 +1,20 @@
+#
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 import os.path
 import transformers
 import tensorflow as tf
@@ -27,7 +44,7 @@ class Evaluator:
         self.dataset = dataset
         self.tokenizer = tokenizer
         self.device = device
-        self.dataloader = INCDataloader(dataset, tokenizer, batch_size, device)
+        self.dataloader = CustomDataloader(dataset, tokenizer, batch_size, device)
 
     def evaluate(self, model):
         # model.eval()
@@ -74,7 +91,7 @@ class Evaluator:
         print(acc, flush=True)
         return acc
 
-class INCDataloader:
+class CustomDataloader:
     # for_calib=True in quantization, only input_id is needed, =False in evaluation need label
     def __init__(self, dataset, tokenizer, batch_size=1, device='cpu', for_calib=False):
         self.dataset = dataset
@@ -161,7 +178,7 @@ evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 calib_dataset = load_dataset('lambada', split='train')
 # calib_dataset = eval_dataset  # TODO for debug
 calib_dataset = calib_dataset.shuffle(seed=42)
-calib_dataloader = INCDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)
+calib_dataloader = CustomDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)
 
 def eval_func(model):
     acc = evaluator.evaluate_tf_v1(model)

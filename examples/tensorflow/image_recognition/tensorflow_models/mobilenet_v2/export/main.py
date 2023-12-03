@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ class eval_classifier_optimized_graph:
     """Evaluate image classifier with optimized TensorFlow graph."""
 
     def __init__(self):
-        """Initilization."""
+        """Initialization."""
         arg_parser = ArgumentParser(description='Parse args')
         arg_parser.add_argument('-g', "--input-graph",
                                 help='Specify the input graph for the transform tool',

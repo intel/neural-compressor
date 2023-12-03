@@ -17,9 +17,7 @@ from collections import OrderedDict, UserDict
 from pathlib import Path
 from typing import Optional
 
-from neural_compressor.experimental.data.dataloaders.tensorflow_dataloader import (
-    TensorflowDataLoader,
-)
+from neural_compressor.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
 from neural_compressor.model.tensorflow_model import TensorflowBaseModel
 from neural_compressor.profiling.profiler.profiler import Profiler as Parent
 
@@ -28,10 +26,10 @@ class Profiler(Parent):
     """Tensorflow profiler class."""
 
     def __init__(
-            self,
-            model: TensorflowBaseModel,
-            dataloader: TensorflowDataLoader,
-            log_file: Optional[str] = None,
+        self,
+        model: TensorflowBaseModel,
+        dataloader: TensorflowDataLoader,
+        log_file: Optional[str] = None,
     ) -> None:
         """Initialize profiler for specified model.
 
@@ -53,12 +51,12 @@ class Profiler(Parent):
             profiling_log_file.parent.mkdir(parents=True, exist_ok=True)
 
     def profile_model(
-            self,
-            intra_num_of_threads: int = 1,
-            inter_num_of_threads: int = 1,
-            num_warmup: int = 10,
+        self,
+        intra_num_of_threads: int = 1,
+        inter_num_of_threads: int = 1,
+        num_warmup: int = 10,
     ) -> None:
-        """"Execute model profiling.
+        """ "Execute model profiling.
 
         Args:
             intra_num_of_threads: number of threads used within an individual op for parallelism
@@ -71,6 +69,7 @@ class Profiler(Parent):
         """
         import tensorflow.compat.v1 as tf_v1
         from tensorflow.python.profiler import model_analyzer, option_builder
+
         tf_v1.enable_eager_execution()
 
         run_options = tf_v1.RunOptions(trace_level=tf_v1.RunOptions.FULL_TRACE)
@@ -95,7 +94,7 @@ class Profiler(Parent):
                 else:
                     feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
             else:
-                assert len(input_tensor) == len(inputs), 'inputs len must equal with input_tensor'
+                assert len(input_tensor) == len(inputs), "inputs len must equal with input_tensor"
                 feed_dict = {}
                 if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) or isinstance(inputs, UserDict):
                     for name in inputs:

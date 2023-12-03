@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,20 +16,21 @@
 # limitations under the License.
 #
 #
-
-import time
+import re
+import six
 import sys
+import time
 import numpy as np
 import unicodedata
-import six
-import re
-import tensorflow as tf
-from absl import app
-from argparse import ArgumentParser
 import pandas as pd
+from absl import app
+import tensorflow as tf
+from argparse import ArgumentParser
+
+from utils import metrics
 from utils import tokenizer
 from utils.tokenizer import Subtokenizer
-from utils import metrics
+from neural_compressor.data import DataLoader
 
 flags = tf.compat.v1.flags
 FLAGS = flags.FLAGS
@@ -140,10 +141,11 @@ def eval_func(infer_graph, iteration=-1):
     input_tensor = infer_graph.get_tensor_by_name('input_tensor:0')
     output_tensor = infer_graph.get_tensor_by_name(\
         'model/Transformer/strided_slice_19:0')
+
     ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
-    from neural_compressor.data import DATALOADERS
-    dataloader = DATALOADERS['tensorflow'](ds, batch_size=FLAGS.batch_size, 
-                                           collate_fn=collate_fn)
+    dataloader = DataLoader(framework='tensorflow', dataset=ds,
+                                batch_size=FLAGS.batch_size, collate_fn=collate_fn)
+
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
@@ -234,11 +236,10 @@ def main(_):
     graph = load_graph(FLAGS.input_graph)
     if FLAGS.tune:
         from neural_compressor import quantization
-        from neural_compressor.data import DataLoader
         from neural_compressor.config import PostTrainingQuantConfig
         ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
-        calib_dataloader = DataLoader(dataset=ds, collate_fn=collate_fn, \
-                                      batch_size=FLAGS.batch_size, framework='tensorflow')										
+        calib_dataloader = DataLoader(framework='tensorflow', dataset=ds, \
+                                        batch_size=FLAGS.batch_size, collate_fn=collate_fn,)										
         conf = PostTrainingQuantConfig(inputs=['input_tensor'],
                                         outputs=['model/Transformer/strided_slice_19'],
                                         calibration_sampling_size=[500])       

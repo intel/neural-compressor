@@ -11,21 +11,8 @@ This example can run on Intel CPUs and GPUs.
 ## 1. Environment
 
 ### Installation
-Recommend python 3.6 or higher version.
-
+Recommend python 3.7 or higher version.
 ```shell
-# Install Intel® Neural Compressor
-pip install neural-compressor
-```
-
-### Install Intel Tensorflow
-```shell
-pip install intel-tensorflow
-```
-
-### Installation Dependency packages
-```shell
-cd examples/tensorflow/object_detection/tensorflow_models/quantization/ptq
 pip install -r requirements.txt
 ```
 
@@ -34,9 +21,9 @@ pip install -r requirements.txt
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
-pip install --upgrade intel-extension-for-tensorflow[gpu]
+pip install --upgrade intel-extension-for-tensorflow[xpu]
 ```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_gpu.md#install-gpu-drivers)
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_xpu.md#install-gpu-drivers)
 
 #### Quantizing the model on Intel CPU(Optional to install ITEX)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
@@ -78,7 +65,7 @@ config = PostTrainingQuantConfig(
 
   ```shell
   cd examples/tensorflow/image_recognition/tensorflow_models/efficientnet-b0/quantization/ptq
-  bash run_tuning.sh --input_model=./efficientnet-b0/ \
+  bash run_quant.sh --input_model=./efficientnet-b0/ \
       --output_model=./nc_efficientnet-b0.pb --dataset_location=/path/to/ImageNet/
   ```
 

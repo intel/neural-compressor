@@ -19,12 +19,10 @@
 from .quantize_layer_add import QuantizeLayerAdd
 from .quantize_layer_bn import QuantizeLayerBatchNormalization
 
+
 def config_quantizable_layers(model):
     """Configure the quantizable layers."""
-    quantize_layer_mapping = {
-        'Add': QuantizeLayerAdd,
-        'BatchNormalization': QuantizeLayerBatchNormalization
-    }
+    quantize_layer_mapping = {"Add": QuantizeLayerAdd, "BatchNormalization": QuantizeLayerBatchNormalization}
 
     for layer_class, quantize_layer in quantize_layer_mapping.items():
         quantize_layer_mapping[layer_class] = quantize_layer()

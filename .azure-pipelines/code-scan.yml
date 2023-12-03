@@ -10,6 +10,7 @@ pr:
     include:
       - neural_compressor
       - setup.py
+      - requirements.txt
       - .azure-pipelines/code-scan.yml
       - .azure-pipelines/scripts/codeScan
 
@@ -78,7 +79,7 @@ stages:
                 source $(Build.SourcesDirectory)/.azure-pipelines/scripts/change_color.sh
                 set -e
                 mkdir -p $(Build.SourcesDirectory)/$(CODE_SCAN_LOG_PATH)
-                RESET="echo -en \\E[0m \\n"  # close 
+                RESET="echo -en \\E[0m \\n"  # close
 
                 supported_extensions=(py, sh, yaml)
                 git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(System.PullRequest.TargetBranch)) $(Build.SourcesDirectory)/neural_compressor > $(Build.SourcesDirectory)/$(CODE_SCAN_LOG_PATH)/diff.log

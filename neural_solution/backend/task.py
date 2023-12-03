@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Neural Solution task."""
+
+
 class Task:
     """A Task is an abstraction of a user tuning request that is handled in neural solution service.
 
@@ -23,8 +24,34 @@ class Task:
         status: The status of the task: pending/running/done
         result: The result of the task, which is only value-assigned when the task is done
     """
-    def __init__(self, task_id, arguments, workers, status,  script_url, \
-        optimized, approach, requirement, result="", q_model_path=""):
+
+    def __init__(
+        self,
+        task_id,
+        arguments,
+        workers,
+        status,
+        script_url,
+        optimized,
+        approach,
+        requirement,
+        result="",
+        q_model_path="",
+    ):
+        """Init task.
+
+        Args:
+            task_id (str): the id of task.
+            arguments (str): the running arguments for task.
+            workers (int): the resources.
+            status (str): "pending", "running", "done", "failed"
+            script_url (str): the python script address
+            optimized (bool): the running script has been optimized
+            approach (str): the quantization method
+            requirement (str): python packages
+            result (str, optional): the result of task. Defaults to "".
+            q_model_path (str, optional): the quantized model path. Defaults to "".
+        """
         self.task_id = task_id
         self.arguments = arguments
         self.workers = workers

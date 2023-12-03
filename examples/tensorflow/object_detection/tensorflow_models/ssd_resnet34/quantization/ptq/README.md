@@ -38,9 +38,9 @@ cd ssd_resnet34/quantization/ptq
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
-pip install --upgrade intel-extension-for-tensorflow[gpu]
+pip install --upgrade intel-extension-for-tensorflow[xpu]
 ```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_gpu.md#install-gpu-drivers)
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_xpu.md#install-gpu-drivers)
 
 #### Quantizing the model on Intel CPU(Optional to install ITEX)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
@@ -98,7 +98,7 @@ config = PostTrainingQuantConfig(
   
   ```shell
   # The cmd of running ssd_resnet34
-  bash run_tuning.sh --input_model=./ssd_resnet34_fp32_1200x1200_pretrained_model.pb --output_model=./tensorflow-ssd_resnet34-tune.pb --dataset_location=/path/to/dataset/coco_val.record --anno_path=./label_map.yaml
+  bash run_quant.sh --input_model=./ssd_resnet34_fp32_1200x1200_pretrained_model.pb --output_model=./tensorflow-ssd_resnet34-tune.pb --dataset_location=/path/to/dataset/coco_val.record --anno_path=./label_map.yaml
   ```
 
 ## 2. Benchmark

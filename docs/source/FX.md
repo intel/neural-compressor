@@ -2,7 +2,7 @@ FX
 ====
 1. [Introduction](#introduction)
 2. [FX Mode Support Matrix in Neural Compressor](#fx-mode-support-matrix-in-neural-compressor)
-3. [Get Start](#get-start)
+3. [Get Started](#get-started)
 
     3.1. [Post Training Static Quantization](#post-training-static-quantization)
 
@@ -34,7 +34,7 @@ For detailed description, please refer to [PyTorch FX](https://pytorch.org/docs/
 |Quantization-Aware Training         |&#10004;     |
 
 
-## Get Start
+## Get Started
 
 **Note:** "backend" field indicates the backend used by the user in configure. And the "default" value means it will quantization model with fx backend for PyTorch model.
 
@@ -129,4 +129,3 @@ For users, you will see log output below if you model failed on symbolic trace m
                 scores.append(dscore)
             return [boxes,labels,scores]
             ```
-

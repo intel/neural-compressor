@@ -190,7 +190,7 @@ class ModelArguments:
         default="fp32", metadata={"help": "choose the data type [fp32/int8] of PyTorch model to be exported."}
     )
     quant_format: str = field(
-        default="QDQ", metadata={"help": "choose the format [QDQ/QLinear] of int8 ONNX model exported."}
+        default="QDQ", metadata={"help": "choose the format [QDQ/QOperator] of int8 ONNX model exported."}
     )
     output_model: str = field(
         default="model.onnx", metadata={"help": "the name of exported model."}
@@ -208,6 +208,12 @@ class ModelArguments:
         default=100,
         metadata={
             "help": "The inference iterations to run for benchmark."
+        },
+    )
+    approach: str = field(
+        default='static',
+        metadata={
+            "help": "Post-Training Quantization method."
         },
     )
 
@@ -488,6 +494,19 @@ def main():
     )
 
     eval_dataloader = trainer.get_eval_dataloader()
+    # transformer issue #1
+    # for transformers 4.31.0: accelerate dataloader
+    # *** ValueError: batch_size attribute should not be set 
+    # after DataLoaderShard is initialized
+    if eval_dataloader.batch_size is None:
+        def _build_inc_dataloader(dataloader):
+            class INCDataLoader:
+                __iter__ = dataloader.__iter__
+                def __init__(self) -> None:
+                    self.dataloader = dataloader
+                    self.batch_size = dataloader.total_batch_size
+            return INCDataLoader()
+        eval_dataloader = _build_inc_dataloader(eval_dataloader)
     batch_size = eval_dataloader.batch_size
 
     def take_eval_steps(model, trainer, save_metrics=False):
@@ -541,13 +560,18 @@ def main():
             strategy_kwargs={"confidence_batches": 1},
             max_trials=600,
         )
-        conf = PostTrainingQuantConfig(
-            approach="static", 
-            quant_level=1,
-            tuning_criterion=tuning_criterion,
-            op_type_dict={"Embedding":FP32},
-            calibration_sampling_size=[300],
-        )
+        if model_args.approach == "static":
+            conf = PostTrainingQuantConfig(
+                approach=model_args.approach, 
+                quant_level=1,
+                tuning_criterion=tuning_criterion,
+                op_type_dict={"Embedding":FP32},
+                calibration_sampling_size=[300],
+            )
+        elif model_args.approach == "dynamic":
+            conf = PostTrainingQuantConfig(
+                approach=model_args.approach,
+            )
         q_model = fit(model, conf=conf, calib_dataloader=eval_dataloader, eval_func=eval_func)
         from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
         save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)

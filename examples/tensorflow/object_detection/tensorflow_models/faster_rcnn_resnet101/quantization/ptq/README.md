@@ -38,9 +38,9 @@ cd faster_rcnn_resnet101/quantization/ptq
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
-pip install --upgrade intel-extension-for-tensorflow[gpu]
+pip install --upgrade intel-extension-for-tensorflow[xpu]
 ```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_gpu.md#install-gpu-drivers)
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_xpu.md#install-gpu-drivers)
 
 #### Quantizing the model on Intel CPU(Optional to install ITEX)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
@@ -102,14 +102,14 @@ config = PostTrainingQuantConfig(
   
   ```shell
   # The cmd of running faster_rcnn_resnet101
-  bash run_tuning.sh --input_model=./faster_rcnn_resnet101_coco_2018_01_28/frozen_inference_graph.pb --output_model=./tensorflow-faster_rcnn_resnet101-tune.pb --dataset_location=/path/to/dataset/coco_val.record
+  bash run_quant.sh --input_model=./faster_rcnn_resnet101_coco_2018_01_28/frozen_inference_graph.pb --output_model=./tensorflow-faster_rcnn_resnet101-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
 ### For saved_model format
   
   ```shell
   # The cmd of running faster_rcnn_resnet101
-  bash run_tuning.sh --input_model=./faster_rcnn_resnet101_coco_2018_01_28/saved_model/ --output_model=./tensorflow-faster_rcnn_resnet101-tune --dataset_location=/path/to/dataset/coco_val.record
+  bash run_quant.sh --input_model=./faster_rcnn_resnet101_coco_2018_01_28/saved_model/ --output_model=./tensorflow-faster_rcnn_resnet101-tune --dataset_location=/path/to/dataset/coco_val.record
   ```
 
 ## 2. Benchmark

@@ -37,7 +37,7 @@ Auto Slim
 
   This leads to no change for model's accuracy, but can obtain a significant acceleration for model's inference, because the transformer models' feed forward network parts take nearly 50% of entire computing overhead. Thus, compressing weights in feed forward network is really useful.
 
-### Multi-head Attention Slim (Experimental)
+### Multi-head Attention Slim
 
   Self attention modules are common in all Transformer-based models. These models use multi-head attention to enhance their abilities of linking contextual information. Transformer-based models usually stack a sequence of multi-head attention modules, and they take great storage and memory bandwidth. As an optimization method, head pruning removes attention heads which make minor contribution to model's contextual analysis. This method does not lead to much accuracy loss, but provides us with much opportunity for model acceleration.
 
@@ -49,14 +49,11 @@ Auto Slim
 
 ```python
 # auto slim config
-# part1 generate pruning configs for the second linear layers. 
+# part1 generate pruning configs for the second linear layers.
 pruning_configs = []
-from neural_compressor.compression.pruner.model_slim import parse_auto_slim_config
-auto_slim_configs = parse_auto_slim_config(
-    model, 
-    multi_head_attention_sparsity, 
-    feed_forward_sparsity
-)
+from neural_compressor.compression.pruner import parse_auto_slim_config
+
+auto_slim_configs = parse_auto_slim_config(model, multi_head_attention_sparsity, feed_forward_sparsity)
 pruning_configs += auto_slim_configs
 
 ################
@@ -66,10 +63,11 @@ pruning_configs += auto_slim_configs
 """
 ################
 
-from neural_compressor.compression.pruner.model_slim import model_slim
+from neural_compressor.compression.pruner import model_slim
+
 model = model_slim(model)
 ```
 
 ## Run Examples
 
-We have provided BERT-Base examples for both [feed forward networks](../../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/feed_forward_network_slim) and [multi-head attention](../../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/multi_heads_attention_slim). More examples related to popular large language models will be included right away.
+We have provided BERT-Base examples for both and feed forward networks and multi-head attention modules to explicit our slim potential and obtain best acceleration performance. Please follow this(../../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/). More examples related to popular large language models will be included right away.

@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Main endpoint for GUI."""
 import os
 import time
@@ -159,12 +158,7 @@ def require_api_token(func: Callable) -> Any:
 @app_blueprint.route("/", methods=METHODS)
 def root() -> Any:
     """Serve JS application index."""
-    return render_template(
-        os.path.join(
-            "index.html"
-        ),
-        url_prefix=url_prefix,
-    )
+    return render_template("index.html", url_prefix=url_prefix)
 
 
 @app_blueprint.route("/api/<path:subpath>", methods=METHODS)

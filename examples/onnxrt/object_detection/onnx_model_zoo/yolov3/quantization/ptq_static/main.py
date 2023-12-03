@@ -400,4 +400,3 @@ if __name__ == "__main__":
                                                   'pre_post_process_quantization': False})
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)
-        

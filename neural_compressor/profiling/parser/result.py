@@ -20,13 +20,13 @@ class ProfilingResult:
     """Profiling result class."""
 
     def __init__(
-            self,
-            node_name: str,
-            total_execution_time: int,
-            accelerator_execution_time: int,
-            cpu_execution_time: int,
-            op_run: int,
-            op_defined: int,
+        self,
+        node_name: str,
+        total_execution_time: int,
+        accelerator_execution_time: int,
+        cpu_execution_time: int,
+        op_run: int,
+        op_defined: int,
     ) -> None:
         """Create profiling result instance.
 

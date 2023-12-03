@@ -569,7 +569,7 @@ def main():
         model = AutoModelForQuestionAnswering.from_config(config)
 
     # Preprocessing the datasets.
-    # Preprocessing is slighlty different for training and evaluation.
+    # Preprocessing is slightly different for training and evaluation.
 
     column_names = raw_datasets["train"].column_names
 
@@ -670,7 +670,7 @@ def main():
         raise ValueError("--do_train requires a train dataset")
     train_dataset = raw_datasets["train"]
     if args.max_train_samples is not None:
-        # We will select sample from whole data if agument is specified
+        # We will select sample from whole data if argument is specified
         train_dataset = train_dataset.select(range(args.max_train_samples))
 
     # Create train feature from dataset
@@ -985,7 +985,7 @@ def main():
         pruning_end = pruning_start
     
     # add auto slim pruning config
-    from neural_compressor.compression.pruner.model_slim.auto_slim import parse_auto_slim_config
+    from neural_compressor.compression.pruner import parse_auto_slim_config
     auto_slim_configs = parse_auto_slim_config(
         model, 
         ffn2_sparsity = args.prune_ffn2_sparsity, 
@@ -1216,10 +1216,9 @@ def main():
         return True
 
     #-----------------------------start auto slim----------------------------------#
-    import pdb;pdb.set_trace()
     if args.auto_slim:
         from timers import CPUTimer, GPUTimer
-        from neural_compressor.compression.pruner.model_slim.auto_slim import model_slim
+        from neural_compressor.compression.pruner import model_slim
 
         logger.info(f"***** Running Evaluation before post-training compression*****")
         eval_acc_and_latency(model, eval_dataloader)

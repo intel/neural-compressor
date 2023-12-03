@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,8 +22,10 @@ import time
 import numpy as np
 import tensorflow as tf
 from argparse import ArgumentParser
+from neural_compressor.data import DataLoader
 from neural_compressor.metric import COCOmAPv2
-from neural_compressor.data import COCORecordDataset,ComposeTransform,ResizeTFTransform,DataLoader
+from neural_compressor.data import COCORecordDataset
+from neural_compressor.data import ComposeTransform, ResizeTFTransform
 
 arg_parser = ArgumentParser(description='Parse args')
 
@@ -103,10 +105,29 @@ def main(_):
     if args.tune:
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(
-            inputs=["image_tensor"],
-            outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
-            calibration_sampling_size=[10, 50, 100, 200])
+        op_name_dict = {
+                'FeatureExtractor/resnet_v1_50/fpn/bottom_up_block5/Conv2D': {
+                    'activation':  {'dtype': ['fp32']},
+                },
+                'WeightSharedConvolutionalBoxPredictor_2/BoxPredictionTower/conv2d_0/Conv2D': {
+                    'activation':  {'dtype': ['fp32']},
+                },
+                'WeightSharedConvolutionalBoxPredictor_2/ClassPredictionTower/conv2d_0/Conv2D': {
+                    'activation':  {'dtype': ['fp32']},
+                },
+            }
+        # only for TF newAPI
+        if tf.version.VERSION in ['2.11.0202242', '2.11.0202250', '2.11.0202317', '2.11.0202323']:
+            config = PostTrainingQuantConfig(
+                inputs=["image_tensor"],
+                outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
+                calibration_sampling_size=[10, 50, 100, 200],
+                op_name_dict=op_name_dict)
+        else:
+            config = PostTrainingQuantConfig(
+                inputs=["image_tensor"],
+                outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
+                calibration_sampling_size=[10, 50, 100, 200])
         q_model = quantization.fit(model=args.input_graph, conf=config, 
                                     calib_dataloader=calib_dataloader, eval_func=evaluate)
         q_model.save(args.output_model)

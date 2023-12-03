@@ -40,7 +40,7 @@ from evaluate import load
 from utils_model import ORTModel
 from utils_qa import postprocess_qa_predictions
 
-from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+from neural_compressor.data import DataLoader
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -298,9 +298,6 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer_name or model_args.model_name_or_path)
 
-    training_args.do_eval = True
-    training_args.do_predict = False
-
     # Prepare the dataset downloading, preprocessing and metric creation to perform the evaluation step(s)
     # Get the datasets: you can either provide your own CSV/JSON/TXT training and evaluation files (see below)
     # or just provide the name of one of the public datasets available on the hub at
@@ -453,20 +450,27 @@ def main():
         return metrics['f1']
 
     if model_args.tune:
-        if onnxruntime.__version__ <= '1.13.1':
-            from onnxruntime.transformers import optimizer
-            from onnxruntime.transformers.fusion_options import FusionOptions
-            opt_options = FusionOptions('bert')
-            opt_options.enable_embed_layer_norm = False
+        # optimize model
+        from onnxruntime.transformers import optimizer
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        opt_options = FusionOptions('bert')
+        opt_options.enable_embed_layer_norm = False
 
-            model_optimizer = optimizer.optimize_model(
-                model_args.input_model,
-                'bert',
-                num_heads=model_args.num_heads,
-                hidden_size=model_args.hidden_size,
-                optimization_options=opt_options)
-            model = model_optimizer.model
-        else:
+        model_optimizer = optimizer.optimize_model(
+            model_args.input_model,
+            'bert',
+            num_heads=model_args.num_heads,
+            hidden_size=model_args.hidden_size,
+            optimization_options=opt_options)
+        model = model_optimizer.model
+        
+        # check the optimized model is valid
+        try:
+            onnxruntime.InferenceSession(model.SerializeToString(), providers=onnxruntime.get_available_providers())
+        except Exception as e:
+            logger.warning("Optimized model is invalid: {}. ".format(e))
+            logger.warning("Model optimizer will be skipped. " \
+                           "Try to upgrade onnxruntime to avoid this error")
             model = onnx.load(model_args.input_model)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
@@ -486,7 +490,7 @@ def main():
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=28,
                                    num_of_instance=1)
-            b_dataloader = DefaultDataLoader(b_dataset, model_args.batch_size)
+            b_dataloader = DataLoader(framework='onnxruntime', dataset=b_dataset, batch_size=model_args.batch_size)
             fit(model, conf, b_dataloader=b_dataloader)
         elif model_args.mode == 'accuracy':
             eval_f1 = eval_func(model)

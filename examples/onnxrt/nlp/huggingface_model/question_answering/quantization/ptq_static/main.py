@@ -39,7 +39,7 @@ import onnxruntime
 from evaluate import load
 from utils_model import ORTModel
 from utils_qa import postprocess_qa_predictions
-from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+from neural_compressor.data import DataLoader
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -301,9 +301,6 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer_name or model_args.model_name_or_path)
 
-    training_args.do_eval = True
-    training_args.do_predict = False
-
     # Prepare the dataset downloading, preprocessing and metric creation to perform the evaluation step(s)
     # Get the datasets: you can either provide your own CSV/JSON/TXT training and evaluation files (see below)
     # or just provide the name of one of the public datasets available on the hub at
@@ -456,20 +453,27 @@ def main():
         return metrics['f1']
 
     if model_args.tune:
-        if onnxruntime.__version__ <= '1.13.1':
-            from onnxruntime.transformers import optimizer
-            from onnxruntime.transformers.fusion_options import FusionOptions
-            opt_options = FusionOptions('bert')
-            opt_options.enable_embed_layer_norm = False
+        # optimize model
+        from onnxruntime.transformers import optimizer
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        opt_options = FusionOptions('bert')
+        opt_options.enable_embed_layer_norm = False
 
-            model_optimizer = optimizer.optimize_model(
-                model_args.input_model,
-                'bert',
-                num_heads=model_args.num_heads,
-                hidden_size=model_args.hidden_size,
-                optimization_options=opt_options)
-            model = model_optimizer.model
-        else:
+        model_optimizer = optimizer.optimize_model(
+            model_args.input_model,
+            'bert',
+            num_heads=model_args.num_heads,
+            hidden_size=model_args.hidden_size,
+            optimization_options=opt_options)
+        model = model_optimizer.model
+
+        # check the optimized model is valid
+        try:
+            onnxruntime.InferenceSession(model.SerializeToString(), providers=onnxruntime.get_available_providers())
+        except Exception as e:
+            logger.warning("Optimized model is invalid: {}. ".format(e))
+            logger.warning("Model optimizer will be skipped. " \
+                           "Try to upgrade onnxruntime to avoid this error")
             model = onnx.load(model_args.input_model)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
@@ -477,14 +481,15 @@ def main():
         calib_dataset = SQuADDataset(eval_dataset, model, label_names=["start_positions", "end_positions"])
         fp32_op_names = None
         if model_args.model_name_or_path == 'mrm8488/spanbert-finetuned-squadv1':
-            fp32_op_names = ['Gather_94', 'MatMul_(660|754|848|1036)']
+            fp32_op_names = ['/bert/embeddings/word_embeddings/Gather', 
+                             '/bert/encoder/layer.[5-7|9]/output/dense/MatMul']
         elif model_args.model_name_or_path == 'salti/bert-base-multilingual-cased-finetuned-squad':
-            fp32_op_names = ['MatMul_(660|566)', 'Unsqueeze_91']
+            fp32_op_names = ['/bert/encoder/layer.[4-5]/output/dense/MatMul']
         elif model_args.model_name_or_path == 'distilbert-base-uncased-distilled-squad':
-            fp32_op_names = ['MatMul_(1[7-8]|2[6-7]|3[5-6]|4[3-4]|5[2-3])\d']
+            fp32_op_names = ['/distilbert/transformer/layer.[1-5]/ffn/lin[1-2]/MatMul']
         elif model_args.model_name_or_path == 'deepset/roberta-large-squad2':
-            fp32_op_names = ['MatMul_(1[34]\d|[2-6][45]\d|[7-9][56]\d)',
-                             'MatMul_(1[01][56]\d|1[2-6][67]\d|(1[7-9]|2[01])[78]\d|2[2-4][89]\d)']
+            fp32_op_names = ['/roberta/encoder/layer.\d+/intermediate/dense/MatMul',
+                             '/roberta/encoder/layer.\d+/output/dense/MatMul']
         config = PostTrainingQuantConfig(approach='static',
                                          quant_format=model_args.quant_format,
                                          op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
@@ -492,7 +497,9 @@ def main():
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
-                                   calib_dataloader=DefaultDataLoader(calib_dataset, model_args.batch_size)
+                                   calib_dataloader=DataLoader(framework='onnxruntime', 
+                                                               dataset=calib_dataset, 
+                                                               batch_size=model_args.batch_size)
                                    )
         q_model.save(model_args.save_path)
 
@@ -505,7 +512,7 @@ def main():
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=28,
                                    num_of_instance=1)
-            b_dataloader = DefaultDataLoader(b_dataset, model_args.batch_size)
+            b_dataloader = DataLoader(framework='onnxruntime', dataset=b_dataset, batch_size=model_args.batch_size)
             fit(model, conf, b_dataloader=b_dataloader)
         elif model_args.mode == 'accuracy':
             eval_f1 = eval_func(model)

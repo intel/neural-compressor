@@ -7,6 +7,9 @@ parameters:
   - name: codeScanContainerName
     type: string
     default: "codeScan"
+  - name: scanModule
+    type: string
+    default: "neural_compressor"
 
 steps:
   - template: docker-template.yml
@@ -18,7 +21,8 @@ steps:
       containerName: ${{ parameters.codeScanContainerName }}
 
   - script: |
-      docker exec ${{ parameters.codeScanContainerName }} bash /neural-compressor/.azure-pipelines/scripts/codeScan/${{ parameters.codeScanFileName }}/${{ parameters.codeScanFileName }}.sh
+      docker exec ${{ parameters.codeScanContainerName }} bash -c "bash /neural-compressor/.azure-pipelines/scripts/codeScan/${{ parameters.codeScanFileName }}/${{ parameters.codeScanFileName }}.sh \
+      --scan_module=${{ parameters.scanModule }}"
     displayName: "${{ parameters.codeScanFileName }} Check"
 
   - task: PublishPipelineArtifact@1

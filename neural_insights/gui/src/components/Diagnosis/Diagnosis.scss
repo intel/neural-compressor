@@ -15,9 +15,6 @@
 @import './../../variables.scss';
 
 .Diagnosis {
-  * {
-    font-family: IntelClearRg;
-  }
 
   .property-table {
     border-collapse: collapse;
@@ -48,19 +45,31 @@
     margin-bottom: 6px;
   }
 
+  .data-panel-top {
+    background-color: white;
+    padding: 10px;
+    border-radius: 0.5rem;
+    margin-top: 6px;
+  }
+
   .flexbox {
     display: flex;
-    align-content: stretch;
     max-height: 99vh;
     background-color: $light-gray;
   }
 
   .flexbox-inside {
+    flex-shrink: 0;
+    padding: 3px;
     display: flex;
     flex-direction: column;
     max-height: 90vh;
+  }
+  
+  .workloads-flex {
+    display: flex;
+    flex-direction: column;
     overflow: auto;
-    min-width: 300px;
   }
 
   .overflow-table {
@@ -72,22 +81,17 @@
 
   .flex-item {
     padding: 3px;
-    flex-grow: 1;
+    width: 98%;
+    max-width: calc(100vw - 370px);
   }
 
   .flex-bigger {
     padding: 3px;
-    flex-grow: 4;
-    min-width: 40vw;
-  }
-
-  .flex-smaller {
-    padding: 3px;
-    flex-grow: 0;
+    width: 98%;
   }
 
   .accuracy-table {
-    width: 100%;
+    width: 98%;
   }
 
   .accuracy-number {
@@ -124,5 +128,15 @@
     margin: auto;
     width: 50vw;
     z-index: 100;
+  }
+
+  .spinner-container {
+    width: 50px;
+    margin: auto;
+    padding: 20px;
+  }
+
+  .spinner {
+    color: #5B69FF;
   }
 }

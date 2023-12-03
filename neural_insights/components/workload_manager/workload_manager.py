@@ -1,13 +1,29 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""The workload_manager module contains code used for Neural Insights workloads management."""
+
 import json
 import os
+import shutil
 from os import PathLike
 from typing import List, Optional
 
-from neural_insights.components.workload_manager.quantization_workload import \
-    QuantizationWorkload, AccuracyData
+from neural_insights.components.workload_manager.quantization_workload import AccuracyData, QuantizationWorkload
 from neural_insights.components.workload_manager.workload import Workload
-from neural_insights.utils.consts import WORKDIR_LOCATION, WorkloadStatus, WorkloadModes
-from neural_insights.utils.exceptions import InternalException, ClientErrorException
+from neural_insights.utils.consts import WORKDIR_LOCATION, WorkloadModes, WorkloadStatus
+from neural_insights.utils.exceptions import ClientErrorException, InternalException
 from neural_insights.utils.json_serializer import JsonSerializer
 from neural_insights.utils.logger import log
 from neural_insights.utils.singleton import Singleton
@@ -17,6 +33,7 @@ class WorkloadManager(JsonSerializer, metaclass=Singleton):
     """Workload Manager class."""
 
     def __init__(self, workdir_location: Optional[PathLike] = None):
+        """Initialize WorkloadManager."""
         super().__init__()
         if workdir_location is None:
             log.debug("Using default workdir location.")
@@ -46,10 +63,10 @@ class WorkloadManager(JsonSerializer, metaclass=Singleton):
         self.dump_config()
 
     def update_workload_accuracy_data(
-            self,
-            workload_uuid: str,
-            baseline_accuracy: float,
-            optimized_accuracy: float,
+        self,
+        workload_uuid: str,
+        baseline_accuracy: float,
+        optimized_accuracy: float,
     ) -> None:
         """Update workload status."""
         workload = self.get_workload(workload_uuid)
@@ -69,8 +86,8 @@ class WorkloadManager(JsonSerializer, metaclass=Singleton):
 
     @staticmethod
     def validate_status_flow(
-            prev_status: WorkloadStatus,
-            new_status: WorkloadStatus,
+        prev_status: WorkloadStatus,
+        new_status: WorkloadStatus,
     ) -> None:
         """Validate status flow."""
         status_indices = {
@@ -83,7 +100,7 @@ class WorkloadManager(JsonSerializer, metaclass=Singleton):
 
         # Initialize adjacency matrix with zeros
         adjacency_matrix = [[0 for _ in status_indices] for _ in status_indices]
-        for (source, target) in status_connections:
+        for source, target in status_connections:
             adjacency_matrix[source][target] = 1
 
         prev_status_indice = status_indices[prev_status]
@@ -141,4 +158,14 @@ class WorkloadManager(JsonSerializer, metaclass=Singleton):
         for workload in self.workloads:
             if workload.uuid == workload_uuid:
                 return workload
+        raise ClientErrorException("Could not find workload with specified ID.")
+
+    def remove_workload(self, workload_uuid: str) -> str:
+        """Remove workload from workloads list."""
+        for index, workload in enumerate(self.workloads):
+            if workload.uuid == workload_uuid:
+                shutil.rmtree(workload.workload_location, ignore_errors=True)
+                del self._workloads[index]
+                self.dump_config()
+                return workload.uuid
         raise ClientErrorException("Could not find workload with specified ID.")

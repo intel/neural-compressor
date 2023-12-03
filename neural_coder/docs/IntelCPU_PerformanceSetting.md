@@ -40,7 +40,7 @@ export DNNL_PRIMITIVE_CACHE_CAPACITY=1024
 ```
 
 ### Frequency Governers
-Check the frequency governer state on your machine:
+Check the frequency governor state on your machine:
 ```bash
 cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 ```

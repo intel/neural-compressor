@@ -1,21 +1,27 @@
-import unittest
 import os
 import shutil
-from unittest.mock import patch, mock_open
+import unittest
+from unittest.mock import mock_open, patch
 
 from neural_solution.frontend.utility import (
-    serialize, deserialize,
-    get_cluster_info,get_cluster_table,
-    get_res_during_tuning, get_baseline_during_tuning,
-    check_log_exists, list_to_string)
+    check_log_exists,
+    deserialize,
+    get_baseline_during_tuning,
+    get_cluster_info,
+    get_cluster_table,
+    get_res_during_tuning,
+    list_to_string,
+    serialize,
+)
+
 NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
 DB_PATH = NEURAL_SOLUTION_WORKSPACE + "/db/task.db"
-TASK_WORKSPACE =  NEURAL_SOLUTION_WORKSPACE + "/task_workspace"
+TASK_WORKSPACE = NEURAL_SOLUTION_WORKSPACE + "/task_workspace"
 TASK_LOG_path = NEURAL_SOLUTION_WORKSPACE + "/task_log"
 SERVE_LOG_PATH = NEURAL_SOLUTION_WORKSPACE + "/serve_log"
 
-class TestMyModule(unittest.TestCase):
 
+class TestMyModule(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         if not os.path.exists(TASK_LOG_path):
@@ -35,39 +41,41 @@ class TestMyModule(unittest.TestCase):
         expected_result = {"key": "value"}
         self.assertEqual(deserialize(request), expected_result)
 
-    @patch('sqlite3.connect')
+    @patch("sqlite3.connect")
     def test_get_cluster_info(self, mock_connect):
         mock_cursor = mock_connect().cursor.return_value
         mock_cursor.fetchall.return_value = [(1, "node info", "status", 1, 2, 3)]
         expected_result = {"Cluster info": [(1, "node info", "status", 1, 2, 3)]}
         self.assertEqual(get_cluster_info(TASK_LOG_path), expected_result)
 
-    @patch('sqlite3.connect')
+    @patch("sqlite3.connect")
     def test_get_cluster_table(self, mock_connect):
         mock_cursor = mock_connect().cursor.return_value
         mock_cursor.fetchall.return_value = [(1, "node info", "status", 1, 2, 3)]
-        expected_result = ('<table border="1" class="dataframe">\n'
-                    '  <thead>\n'
-                    '    <tr style="text-align: right;">\n'
-                    '      <th>Node</th>\n'
-                    '      <th>Node info</th>\n'
-                    '      <th>status</th>\n'
-                    '      <th>free workers</th>\n'
-                    '      <th>busy workers</th>\n'
-                    '      <th>total workers</th>\n'
-                    '    </tr>\n'
-                    '  </thead>\n'
-                    '  <tbody>\n'
-                    '    <tr>\n'
-                    '      <td>1</td>\n'
-                    '      <td>node info</td>\n'
-                    '      <td>status</td>\n'
-                    '      <td>1</td>\n'
-                    '      <td>2</td>\n'
-                    '      <td>3</td>\n'
-                    '    </tr>\n'
-                    '  </tbody>\n'
-                    '</table>')
+        expected_result = (
+            '<table border="1" class="dataframe">\n'
+            "  <thead>\n"
+            '    <tr style="text-align: right;">\n'
+            "      <th>Node</th>\n"
+            "      <th>Node info</th>\n"
+            "      <th>status</th>\n"
+            "      <th>free workers</th>\n"
+            "      <th>busy workers</th>\n"
+            "      <th>total workers</th>\n"
+            "    </tr>\n"
+            "  </thead>\n"
+            "  <tbody>\n"
+            "    <tr>\n"
+            "      <td>1</td>\n"
+            "      <td>node info</td>\n"
+            "      <td>status</td>\n"
+            "      <td>1</td>\n"
+            "      <td>2</td>\n"
+            "      <td>3</td>\n"
+            "    </tr>\n"
+            "  </tbody>\n"
+            "</table>"
+        )
         self.assertEqual(get_cluster_table(TASK_LOG_path), expected_result)
 
     def test_get_res_during_tuning(self):
@@ -102,5 +110,6 @@ class TestMyModule(unittest.TestCase):
         expected_result = "Hello Neural Solution"
         self.assertEqual(list_to_string(lst), expected_result)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

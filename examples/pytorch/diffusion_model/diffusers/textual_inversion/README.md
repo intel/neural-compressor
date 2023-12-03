@@ -125,7 +125,7 @@ pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float
 # use gpu
 #pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to("cuda")
 
-prompt = "a lovely <dicoo> in red dress and hat, in the snowly and brightly night, with many brighly buildings."
+prompt = "a lovely <dicoo> in red dress and hat, in the snowly and brightly night, with many brightly buildings."
 
 image = pipe(prompt, num_inference_steps=50, guidance_scale=7.5).images[0]
 

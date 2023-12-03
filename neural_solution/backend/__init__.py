@@ -11,10 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Neural Solution backend."""
+from neural_solution.backend.cluster import Cluster
 from neural_solution.backend.result_monitor import ResultMonitor
 from neural_solution.backend.scheduler import Scheduler
-from neural_solution.backend.task_monitor import TaskMonitor
-from neural_solution.backend.cluster import Cluster
 from neural_solution.backend.task_db import TaskDB
+from neural_solution.backend.task_monitor import TaskMonitor

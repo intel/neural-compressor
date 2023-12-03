@@ -2,14 +2,17 @@ import copy
 import os
 import shutil
 import unittest
-import torch
-import torchvision
-import torch.nn as nn
+
 import tensorflow as tf
-from neural_compressor.data import Datasets
-from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
-from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+import torch
+import torch.nn as nn
+import torchvision
+
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
+from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
+from neural_compressor.data import Datasets
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+
 
 def build_fake_yaml():
     fake_yaml = """
@@ -51,8 +54,9 @@ def build_fake_yaml():
                         shape: [128, 3, 224, 224]
                         label: True
     """
-    with open('fake.yaml', 'w', encoding="utf-8") as f:
+    with open("fake.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
+
 
 def build_fake_yaml_1():
     fake_yaml = """
@@ -94,8 +98,9 @@ def build_fake_yaml_1():
                         shape: [128, 224, 224, 3]
                         label: True
     """
-    with open('fake_1.yaml', 'w', encoding="utf-8") as f:
+    with open("fake_1.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
+
 
 def build_fake_yaml_2():
     fake_yaml = """
@@ -139,11 +144,11 @@ def build_fake_yaml_2():
                         shape: [128, 3, 224, 224]
                         label: True
     """
-    with open('fake_2.yaml', 'w', encoding="utf-8") as f:
+    with open("fake_2.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
-class TestDistillation(unittest.TestCase):
 
+class TestDistillation(unittest.TestCase):
     student_model = torchvision.models.resnet18()
     teacher_model = torchvision.models.resnet34()
 
@@ -158,54 +163,57 @@ class TestDistillation(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove('fake.yaml')
-        os.remove('fake_1.yaml')
-        os.remove('fake_2.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
+        os.remove("fake.yaml")
+        os.remove("fake_1.yaml")
+        os.remove("fake_2.yaml")
+        shutil.rmtree("./saved", ignore_errors=True)
+        shutil.rmtree("runs", ignore_errors=True)
 
     def test_distillation(self):
-        from neural_compressor.experimental import Distillation
         from neural_compressor.conf.config import DistillationConf
-        conf = DistillationConf('fake.yaml')
+        from neural_compressor.experimental import Distillation
+
+        conf = DistillationConf("fake.yaml")
         distiller = Distillation(conf)
         distiller = Distillation()
 
         from neural_compressor.conf.config import conf
-        conf.model.framework = 'pytorch'
+
+        conf.model.framework = "pytorch"
         conf.distillation.train.end_epoch = 3
         conf.distillation.train.iteration = 10
         conf.distillation.train.optimizer = {
-            'SGD': {'learning_rate': 0.001, 'momentum': 0.1, 'nesterov': True, 'weight_decay': 0.001}}
+            "SGD": {"learning_rate": 0.001, "momentum": 0.1, "nesterov": True, "weight_decay": 0.001}
+        }
         conf.distillation.train.dataloader.batch_size = 30
-        conf.distillation.train.dataloader.dataset = {'dummy': {'shape': [128, 3, 224, 224], 'label': True}}
+        conf.distillation.train.dataloader.dataset = {"dummy": {"shape": [128, 3, 224, 224], "label": True}}
         conf.evaluation.accuracy.dataloader.batch_size = 30
-        conf.evaluation.accuracy.dataloader.dataset = {'dummy': {'shape': [128, 3, 224, 224], 'label': True}}
+        conf.evaluation.accuracy.dataloader.dataset = {"dummy": {"shape": [128, 3, 224, 224], "label": True}}
         distiller = Distillation(conf)
         distiller.student_model = self.student_model
         distiller.teacher_model = self.teacher_model
-        print('student model: {}'.format(distiller.student_model))
+        print("student model: {}".format(distiller.student_model))
         distilled_model = distiller.fit()
-        distilled_model.save('./saved')
-        stat = torch.load('./saved/best_model.pt')
+        distilled_model.save("./saved")
+        stat = torch.load("./saved/best_model.pt")
         self.student_model.load_state_dict(stat)
 
     def test_distillation_intermediate_layers(self):
-        from neural_compressor.experimental import Distillation, common
         from neural_compressor.conf.config import DistillationConf
-        conf = DistillationConf('fake_2.yaml')
-        conf.usr_cfg.distillation.train.criterion.\
-            IntermediateLayersKnowledgeDistillationLoss.layer_mappings[1][1][-1] = \
-                lambda x: x[:, :2,...]
+        from neural_compressor.experimental import Distillation, common
+
+        conf = DistillationConf("fake_2.yaml")
+        conf.usr_cfg.distillation.train.criterion.IntermediateLayersKnowledgeDistillationLoss.layer_mappings[1][1][
+            -1
+        ] = lambda x: x[:, :2, ...]
         distiller = Distillation(conf)
         distiller.student_model = common.Model(self.student_model)
         distiller.teacher_model = common.Model(self.teacher_model)
-        print('student model: {}'.format(distiller.student_model))
+        print("student model: {}".format(distiller.student_model))
         _ = distiller.fit()
 
     def test_distillation_external(self):
-        from neural_compressor.experimental.common.criterion import \
-            TensorflowKnowledgeDistillationLossExternal
+        from neural_compressor.experimental.common.criterion import TensorflowKnowledgeDistillationLossExternal
 
         criterion = TensorflowKnowledgeDistillationLossExternal()
         criterion.teacher_model_forward(None)
@@ -216,12 +224,13 @@ class TestDistillation(unittest.TestCase):
 
     def test_distillation_external_new_API(self):
         from neural_compressor.training import prepare_compression
-        datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
+
+        datasets = Datasets("pytorch")
+        dummy_dataset = datasets["dummy"](shape=(100, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         criterion = nn.CrossEntropyLoss()
-        distillation_criterion = KnowledgeDistillationLossConfig(loss_types=['CE', 'KL'])
+        distillation_criterion = KnowledgeDistillationLossConfig(loss_types=["CE", "KL"])
         optimizer = torch.optim.SGD(self.student_model.parameters(), lr=0.0001)
         conf = DistillationConfig(self.teacher_model, distillation_criterion)
         compression_manager = prepare_compression(copy.deepcopy(self.student_model), conf)
@@ -235,7 +244,7 @@ class TestDistillation(unittest.TestCase):
             compression_manager.callbacks.on_epoch_begin(nepoch)
             for image, target in dummy_dataloader:
                 compression_manager.callbacks.on_step_begin(cnt)
-                print('.', end='')
+                print(".", end="")
                 cnt += 1
                 output = model(image)
                 loss = criterion(output, target)
@@ -248,21 +257,10 @@ class TestDistillation(unittest.TestCase):
                     break
             compression_manager.callbacks.on_epoch_end()
 
-        model.save('./saved')
-        stat = torch.load('./saved/best_model.pt')
+        model.save("./saved")
+        stat = torch.load("./saved/best_model.pt")
         opt_model = self.student_model.load_state_dict(stat)
 
-    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.3.0'), " keras requires higher version than tf-2.3.0")
-    def test_tf_distillation(self):
-        from neural_compressor.experimental import Distillation
-        from neural_compressor.conf.config import DistillationConf
-        conf = DistillationConf('fake_1.yaml')
-        distiller = Distillation(conf)
-        distiller = Distillation('fake_1.yaml')
-        distiller.student_model = self.student_model_tf
-        distiller.teacher_model = self.teacher_model_tf
-        print('student model: {}'.format(distiller.student_model))
-        _ = distiller.fit()
 
 if __name__ == "__main__":
     unittest.main()

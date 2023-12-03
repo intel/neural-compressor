@@ -10,8 +10,6 @@ import numpy as np
 from datasets import ClassLabel, load_dataset, load_metric
 
 import transformers
-
-from layoutlmft.data import DataCollatorForKeyValueExtraction
 from transformers import (
     AutoConfig,
     AutoModelForTokenClassification,
@@ -28,7 +26,7 @@ from transformers.utils import check_min_version
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.5.0")
 
-from layoutlmft.data.image_utils import RandomResizedCropAndInterpolationWithTwoPic, pil_loader, Compose
+from utils import RandomResizedCropAndInterpolationWithTwoPic, pil_loader, Compose
 
 from timm.data.constants import \
     IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD
@@ -37,7 +35,7 @@ import torch
 import onnxruntime
 import onnx
 
-from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+from neural_compressor.data import DataLoader
 
 logger = logging.getLogger(__name__)
 
@@ -267,11 +265,8 @@ def main():
 
     if data_args.dataset_name == 'funsd':
         # datasets = load_dataset("nielsr/funsd")
-        import layoutlmft.data.funsd
-        datasets = load_dataset(os.path.abspath(layoutlmft.data.funsd.__file__), cache_dir=model_args.cache_dir)
-    elif data_args.dataset_name == 'cord':
-        import layoutlmft.data.cord
-        datasets = load_dataset(os.path.abspath(layoutlmft.data.cord.__file__), cache_dir=model_args.cache_dir)
+        import funsd
+        datasets = load_dataset(os.path.abspath(funsd.__file__), cache_dir=model_args.cache_dir)
     else:
         raise NotImplementedError()
 
@@ -279,6 +274,7 @@ def main():
     features = datasets["test"].features
 
     text_column_name = "words" if "words" in column_names else "tokens"
+    boxes_column_name = "bboxes"
 
     label_column_name = (
         f"{data_args.task_name}_tags" if f"{data_args.task_name}_tags" in column_names else column_names[1]
@@ -366,8 +362,7 @@ def main():
             padding=False,
             truncation=True,
             return_overflowing_tokens=True,
-            # We use this argument because the texts in our dataset are lists of words (with a label for each word).
-            is_split_into_words=True,
+            boxes=examples[boxes_column_name],
         )
 
         labels = []
@@ -493,7 +488,9 @@ def main():
         q_model = quantization.fit(onnx_model, 
                                     config,
                                     eval_func=eval_func,
-                                    calib_dataloader=DefaultDataLoader(calib_dataset, 1))
+                                    calib_dataloader=DataLoader(framework='onnxruntime', 
+                                                                dataset=calib_dataset, 
+                                                                batch_size=1))
         q_model.save(model_args.save_path)
     
     if model_args.benchmark:
@@ -505,7 +502,7 @@ def main():
             conf = BenchmarkConfig(iteration=100,
                                     cores_per_instance=28,
                                     num_of_instance=1,)
-            b_dataloader = DefaultDataLoader(b_dataset, model_args.batch_size)
+            b_dataloader = DataLoader(framework='onnxruntime', dataset=b_dataset, batch_size=model_args.batch_size)
             fit(onnx_model, conf, b_dataloader=b_dataloader)
         elif model_args.mode == 'accuracy':
             eval_f1 = eval_func(onnx_model)

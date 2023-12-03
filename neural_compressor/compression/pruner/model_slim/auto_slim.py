@@ -16,9 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # model slim related
-from .pattern_analyzer import Linear2LinearSearcher, RecipeSearcher, SelfMHASearcher
-from .weight_slim import LinearCompressionIterator, MHACompression
+
 from ..utils import logger
+
 
 def model_slim(model, dataloader=None, round_multiplier=32):
     """Slim the sparse model automatically."""
@@ -32,14 +32,18 @@ def model_slim(model, dataloader=None, round_multiplier=32):
         logger.warning("model MHA slim failed.")
     return model
 
-def model_slim_ffn2(model, dataloader = None, round_multiplier=32):
+
+def model_slim_ffn2(model, dataloader=None, round_multiplier=32):
     """Remove some sparse part in the model permanently and obtain acceleration directly.
 
     Args:
         model: a sprase model.
         round_multiplier(int): the channel number after slimming should be multiple of this number.
     """
-    logger.warning(f"You are using model slim methods, some weight channels will be removed permanently.")
+    from .pattern_analyzer import Linear2LinearSearcher
+    from .weight_slim import LinearCompressionIterator
+
+    logger.warning("You are using model slim methods, some weight channels will be removed permanently.")
     pa_obj = Linear2LinearSearcher(model, dataloader)
     layers = pa_obj.search()
     layers = pa_obj.from_layer_name_to_object(layers)
@@ -47,15 +51,19 @@ def model_slim_ffn2(model, dataloader = None, round_multiplier=32):
     linear_pruner(masks=None, round_value=round_multiplier)
     return model
 
-def model_slim_mha(model, dataloader = None):
+
+def model_slim_mha(model, dataloader=None):
     """Remove some sparse part in the model permanently and obtain acceleration directly.
 
     Args:
         model: a sprase model.
     """
-    logger.warning(f"You are using model slim methods, some attention heads will be removed permanently.")
+    from .pattern_analyzer import SelfMHASearcher
+    from .weight_slim import MHACompression
+
+    logger.warning("You are using model slim methods, some attention heads will be removed permanently.")
     pa_obj = SelfMHASearcher(model, dataloader)
-    layers, _ = pa_obj.search(split_qkv_ffn = False)
+    layers, _ = pa_obj.search(split_qkv_ffn=False)
     layers = pa_obj.obtain_mha_module(layers)
     layers = pa_obj.from_layer_name_to_object(layers)
     for layer in layers:
@@ -63,8 +71,9 @@ def model_slim_mha(model, dataloader = None):
         mha_compression()
     return model
 
+
 # auto slim config
-def parse_auto_slim_config(model, dataloader = None, ffn2_sparsity = .0, mha_sparsity = .0, **kwargs):
+def parse_auto_slim_config(model, dataloader=None, ffn2_sparsity=0.0, mha_sparsity=0.0, **kwargs):
     """Get model slim pruning configs."""
     auto_slim_configs = []
     if ffn2_sparsity > 0 and ffn2_sparsity < 1:
@@ -73,39 +82,33 @@ def parse_auto_slim_config(model, dataloader = None, ffn2_sparsity = .0, mha_spa
         auto_slim_configs += generate_mha_pruning_config(model, dataloader, mha_sparsity, **kwargs)
     return auto_slim_configs
 
+
 def generate_ffn2_pruning_config(model, dataloader, ffn2_sparsity, **kwargs):
     """Get consecutive linear layers pruning configs."""
+    from .pattern_analyzer import Linear2LinearSearcher
+
     searcher = Linear2LinearSearcher(model, dataloader)
     layers = searcher.search()
     # extract the second linear layer
-    ffn_layers = [ffn2_module['root_linear'] for ffn2_module in layers]
-    ffn2_pruning_config = [
-        {
-            "op_names": ffn_layers,
-            "pattern": "channelx1",
-            "target_sparsity": ffn2_sparsity
-        }
-    ]
+    ffn_layers = [ffn2_module["root_linear"] for ffn2_module in layers]
+    ffn2_pruning_config = [{"op_names": ffn_layers, "pattern": "channelx1", "target_sparsity": ffn2_sparsity}]
     # append kwargs to generated config
     for item in ffn2_pruning_config:
         item.update(kwargs)
     return ffn2_pruning_config
 
+
 def generate_mha_pruning_config(model, dataloader, mha_sparsity, **kwargs):
     """Get multi-head attention layers pruning configs."""
     # method 1: apply real mha pruning
-    mha_pruning_config = [
-        {
-            "pattern": "mha",
-            "target_sparsity": mha_sparsity
-        }
-    ]
+    mha_pruning_config = [{"pattern": "mha", "target_sparsity": mha_sparsity}]
     # append kwargs to generated config
     for item in mha_pruning_config:
         item.update(kwargs)
     return mha_pruning_config
 
     # method 2: apply experimental mha pruning
+    # from .pattern_analyzer import SelfMHASearcher
     # searcher = SelfMHASearcher(model, dataloader)
     # qkv_pattern, ffn_pattern = searcher.get_head_pattern()
     # qkv_layers, ffn_layers = searcher.search()

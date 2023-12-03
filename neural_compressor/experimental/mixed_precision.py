@@ -20,17 +20,22 @@ import os
 import pickle
 import random
 import sys
+
 import numpy as np
+from deprecated import deprecated
+
 from ..conf.config import MixedPrecision_Conf
-from ..conf.pythonic_config import Config
 from ..conf.dotdict import deep_get
-from .strategy import EXP_STRATEGIES
+from ..conf.pythonic_config import Config
+from ..model import BaseModel
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader
 from ..utils.utility import CpuInfo, time_limit
-from ..model import BaseModel
 from .graph_optimization import GraphOptimization
+from .strategy import EXP_STRATEGIES
 
+
+@deprecated(version="2.0")
 class MixedPrecision(GraphOptimization):
     """Class used for generating low precision model.
 
@@ -50,7 +55,7 @@ class MixedPrecision(GraphOptimization):
         self._model = None
         self._eval_dataloader = None
         self._eval_func = None
-        self._precisions = 'fp32'
+        self._precisions = "fp32"
         self._input = None
         self._output = None
         self.conf = None
@@ -63,10 +68,10 @@ class MixedPrecision(GraphOptimization):
         else:
             self.conf = MixedPrecision_Conf(conf_fname_or_obj)
         cfg = self.conf.usr_cfg
-        if cfg.model.framework != 'NA':
+        if cfg.model.framework != "NA":
             self.framework = cfg.model.framework.lower()
 
-        cfg.tuning.strategy.name = 'automixedprecision'
+        cfg.tuning.strategy.name = "automixedprecision"
         seed = cfg.tuning.random_seed
         random.seed(seed)
         np.random.seed(seed)
@@ -97,51 +102,52 @@ class MixedPrecision(GraphOptimization):
 
         Returns:
             converted model: best converted model found, otherwise return None
-
         """
-        assert isinstance(self._model, BaseModel), 'need set your Model for mixed precision....'
-        if 'onnx' in self.framework and 'bf16' in self._precisions:
+        assert isinstance(self._model, BaseModel), "need set your Model for mixed precision...."
+        if "onnx" in self.framework and "bf16" in self._precisions:
             logger.warning("Mixed precision doesn't support bf16 for ONNX models.")
-            self._precisions.remove('bf16')
-    
-        if 'bf16' in self._precisions and not CpuInfo().bf16: # pragma: no cover
-            if os.getenv('FORCE_BF16') == '1':
-                logger.warning("Mixed precision will generate bf16 graph although " \
-                               "the hardware doesn't support bf16 instruction.")
-            else:
-                logger.warning("Mixed precision exits due to the hardware " \
-                               "doesn't support bf16 instruction.")
-                self._precisions.remove('bf16')
+            self._precisions.remove("bf16")
 
-        if 'fp16' in self._precisions and 'gpu' not in self.conf.usr_cfg.device:
-            if os.getenv('FORCE_FP16') == '1':
-                logger.warning("Mixed precision will generate fp16 graph although " \
-                               "the hardware doesn't support fp16 instruction.")
+        if "bf16" in self._precisions and not CpuInfo().bf16:  # pragma: no cover
+            if os.getenv("FORCE_BF16") == "1":
+                logger.warning(
+                    "Mixed precision will generate bf16 graph although "
+                    "the hardware doesn't support bf16 instruction."
+                )
             else:
-                logger.warning("Mixed precision exits due to the hardware " \
-                               "doesn't support fp16 instruction.")
-                self._precisions.remove('fp16')
+                logger.warning("Mixed precision exits due to the hardware " "doesn't support bf16 instruction.")
+                self._precisions.remove("bf16")
 
-        if self._precisions == ['fp32'] or len(self._precisions) == 0:
+        if "fp16" in self._precisions and "gpu" not in self.conf.usr_cfg.device:
+            if os.getenv("FORCE_FP16") == "1":
+                logger.warning(
+                    "Mixed precision will generate fp16 graph although "
+                    "the hardware doesn't support fp16 instruction."
+                )
+            else:
+                logger.warning("Mixed precision exits due to the hardware " "doesn't support fp16 instruction.")
+                self._precisions.remove("fp16")
+
+        if self._precisions == ["fp32"] or len(self._precisions) == 0:
             sys.exit(0)
 
         cfg = self.conf.usr_cfg
-        if self.framework == 'tensorflow':
+        if self.framework == "tensorflow":
             self._model.name = cfg.model.name
-            self._model.output_tensor_names = cfg.model.outputs if \
-                not self._output else self._output
-            self._model.input_tensor_names = cfg.model.inputs if \
-                not self._input else self._input
+            self._model.output_tensor_names = cfg.model.outputs if not self._output else self._output
+            self._model.input_tensor_names = cfg.model.inputs if not self._input else self._input
             self._model.workspace_path = cfg.tuning.workspace.path
-            if 'bf16' in self._precisions or \
-               (cfg.mixed_precision and 'bf16' in cfg.mixed_precision.precisions) or \
-               (cfg.graph_optimization and 'bf16' in cfg.graph_optimization.precisions):
+            if (
+                "bf16" in self._precisions
+                or (cfg.mixed_precision and "bf16" in cfg.mixed_precision.precisions)
+                or (cfg.graph_optimization and "bf16" in cfg.graph_optimization.precisions)
+            ):
                 cfg.use_bf16 = True
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if self._eval_func is None:
             if self._eval_dataloader is None:
-                eval_dataloader_cfg = deep_get(cfg, 'evaluation.accuracy.dataloader')
+                eval_dataloader_cfg = deep_get(cfg, "evaluation.accuracy.dataloader")
                 if eval_dataloader_cfg is None:
                     self._eval_func = None
                 else:
@@ -154,43 +160,43 @@ class MixedPrecision(GraphOptimization):
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
         # whole auto tune process.
-        self.resume_file = os.path.abspath(os.path.expanduser(cfg.tuning.workspace.resume)) \
-                           if cfg.tuning.workspace and cfg.tuning.workspace.resume else None
-        if self.resume_file: # pragma: no cover
-            assert os.path.exists(self.resume_file), \
-                "The specified resume file {} doesn't exist!".format(self.resume_file)
-            with open(self.resume_file, 'rb') as f:
+        self.resume_file = (
+            os.path.abspath(os.path.expanduser(cfg.tuning.workspace.resume))
+            if cfg.tuning.workspace and cfg.tuning.workspace.resume
+            else None
+        )
+        if self.resume_file:  # pragma: no cover
+            assert os.path.exists(self.resume_file), "The specified resume file {} doesn't exist!".format(
+                self.resume_file
+            )
+            with open(self.resume_file, "rb") as f:
                 _resume = pickle.load(f).__dict__
 
         self.strategy = EXP_STRATEGIES[strategy](
-            self._model,
-            self.conf,
-            None,
-            None,
-            self._eval_dataloader,
-            self._eval_func,
-            _resume)
+            self._model, self.conf, None, None, self._eval_dataloader, self._eval_func, _resume
+        )
 
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
                 self.strategy.traverse()
-        except KeyboardInterrupt: # pragma: no cover
+        except KeyboardInterrupt:  # pragma: no cover
             pass
-        except Exception as e: # pragma: no cover
+        except Exception as e:  # pragma: no cover
             logger.info("Unexpected exception {} happened during turing.".format(repr(e)))
-        finally: 
+        finally:
             if self.strategy.best_qmodel:
                 logger.info(
                     "Specified timeout or max trials is reached! "
-                    "Found a converted model which meet accuracy goal. Exit.")
+                    "Found a converted model which meet accuracy goal. Exit."
+                )
                 self.strategy.deploy_config()
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 logger.info(
                     "Specified timeout or max trials is reached! "
-                    "Not found any converted model which meet accuracy goal. Exit.")
+                    "Not found any converted model which meet accuracy goal. Exit."
+                )
 
-            logger.info("Mixed Precision is done. Please invoke model.save() to save " \
-                        "optimized model to disk.")
+            logger.info("Mixed Precision is done. Please invoke model.save() to save " "optimized model to disk.")
 
             return self.strategy.best_qmodel
 
@@ -207,7 +213,7 @@ class MixedPrecision(GraphOptimization):
         if isinstance(customized_precisions, list):
             self._precisions = sorted([i.strip() for i in customized_precisions])
         elif isinstance(customized_precisions, str):
-            self._precisions = sorted([i.strip() for i in customized_precisions.split(',')])
+            self._precisions = sorted([i.strip() for i in customized_precisions.split(",")])
         self.conf.usr_cfg.mixed_precision.precisions = self._precisions
 
     def set_config_by_model(self, model_obj):
@@ -216,11 +222,11 @@ class MixedPrecision(GraphOptimization):
         if self._input:
             self.conf.usr_cfg.model.inputs = self._input
         if self._output:
-            if isinstance(self._output, str) and ',' in self._output:
-                self.conf.usr_cfg.model.outputs = [s.strip() for s in self._output.split(',')]
+            if isinstance(self._output, str) and "," in self._output:
+                self.conf.usr_cfg.model.outputs = [s.strip() for s in self._output.split(",")]
             else:
                 self.conf.usr_cfg.model.outputs = self._output
 
     def __repr__(self):
         """Return 'MixedPrecision'."""
-        return 'MixedPrecision'
+        return "MixedPrecision"

@@ -15,19 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
+import datetime
+import itertools
+import os
+import re
+from collections import OrderedDict
+
 import yaml
-from schema import Schema, And, Use, Optional, Or, Hook
+from schema import And, Hook, Optional, Or, Schema, Use
 
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
 from ..utils import logger
 from ..version import __version__
-import re
-import copy
-import itertools
-from collections import OrderedDict
 from .dotdict import DotDict, deep_set
-import os, datetime
+
 # TODO WA for avoid circular import
 # from ..experimental.strategy import EXP_STRATEGIES
 EXP_STRATEGIES = ['basic', 'auto_mixed_precision', 'bayesian', 'conservative',\
@@ -83,9 +86,7 @@ class Pruner():
 
 @constructor_register
 class PrunerV2:
-    """
-    similiar to torch optimizer's interface
-    """
+    """Similar to torch optimizer's interface."""
 
     def __init__(self,
                  target_sparsity=None, pruning_type=None, pattern=None, op_names=None,
@@ -811,7 +812,7 @@ schema = Schema({
         Optional('approach', default='post_training_static_quant'): And(
             str,
             # TODO check if framework support dynamic quantize
-            # Now only onnruntime and pytorch supoort
+            # Now only onnruntime and pytorch support
             lambda s: s in ['post_training_static_quant',
                             'post_training_dynamic_quant',
                             'post_training_auto_quant',
@@ -1138,8 +1139,10 @@ schema = Schema({
             Optional("dataset_path", default=None): str,
             Optional("supernet_ckpt_path", default=None): str,
             Optional("batch_size", default=64): int,
+            Optional("eval_batch_size", default=64): int,
             Optional("num_workers", default=20): int,
             Optional("distributed", default=False): bool,
+            Optional("test_fraction", default=1.0): float,
             },
     },
 
@@ -1325,15 +1328,14 @@ distillation_default_schema = Schema({
                                   'loss_weights': [0.5, 0.5]}}}}): dict,
 
     Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
- 
+
 })
 
 class Conf(object):
-    """config parser.
+    """Config parser.
 
     Args:
         cfg_fname (string): The path to the configuration file.
-
     """
     def __init__(self, cfg_fname):
         assert cfg_fname is not None
@@ -1342,8 +1344,8 @@ class Conf(object):
     def _read_cfg(self, cfg_fname):
         """Load a config file following yaml syntax.
 
-           Args:
-               cfg_fname(string): The name of configuration yaml file
+        Args:
+            cfg_fname(string): The name of configuration yaml file
         """
         try:
             with open(cfg_fname, 'r') as f:
@@ -1540,11 +1542,10 @@ class Conf(object):
         return dst
 
 class Quantization_Conf(Conf):
-    """config parser.
+    """Config parser.
 
     Args:
         cfg: The path to the configuration file or DotDict object or None.
-
     """
 
     def __init__(self, cfg=None):
@@ -1603,11 +1604,10 @@ class Quantization_Conf(Conf):
         return self._model_wise_tune_space
 
 class Pruning_Conf(Conf):
-    """config parser.
+    """Config parser.
 
     Args:
         cfg: The path to the configuration file or DotDict object or None.
-
     """
 
     def __init__(self, cfg=None):
@@ -1621,11 +1621,10 @@ class Pruning_Conf(Conf):
             self.usr_cfg = DotDict(pruning_default_schema.validate(dict()))
 
 class Graph_Optimization_Conf(Quantization_Conf):
-    """config parser.
+    """Config parser.
 
     Args:
         cfg: The path to the configuration file or DotDict object or None.
-
     """
 
     def __init__(self, cfg=None):
@@ -1638,11 +1637,10 @@ class Graph_Optimization_Conf(Quantization_Conf):
             self.usr_cfg = DotDict(graph_optimization_default_schema.validate(dict()))
 
 class MixedPrecision_Conf(Quantization_Conf):
-    """config parser.
+    """Config parser.
 
     Args:
         cfg: The path to the configuration file or DotDict object or None.
-
     """
 
     def __init__(self, cfg=None):
@@ -1655,11 +1653,10 @@ class MixedPrecision_Conf(Quantization_Conf):
             self.usr_cfg = DotDict(mixed_precision_default_schema.validate(dict()))
 
 class Benchmark_Conf(Conf):
-    """config parser.
+    """Config parser.
 
     Args:
         cfg: The path to the configuration file or DotDict object or None.
-
     """
 
     def __init__(self, cfg=None):
@@ -1672,11 +1669,10 @@ class Benchmark_Conf(Conf):
             self.usr_cfg = DotDict(benchmark_default_schema.validate(dict()))
 
 class Distillation_Conf(Conf):
-    """config parser.
+    """Config parser.
 
     Args:
         cfg: The path to the configuration file or DotDict object or None.
-
     """
 
     def __init__(self, cfg=None):
@@ -1689,12 +1685,11 @@ class Distillation_Conf(Conf):
             self.usr_cfg = DotDict(distillation_default_schema.validate(dict()))
 
 class NASConfig(Conf):
-    """config parser.
+    """Config parser.
 
     Args:
         approach: The approach of the NAS.
         search_algorithm: The search algorithm for NAS procedure.
-
     """
 
     def __init__(self, approach=None, search_space=None, search_algorithm=None):

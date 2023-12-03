@@ -18,12 +18,14 @@
 """ONNX Operator Schemas for Tensorflow model converting to ONNX model."""
 
 import logging
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict
+
 from onnx import defs
 
 from . import tf2onnx_utils as utils
 
 logger = logging.getLogger("neural_compressor")
+
 
 class OnnxOpSchema(object):
     """Wrapper for Onnx schema."""
@@ -87,9 +89,7 @@ def _register_all_schemas_with_history():
     ordered_map = defaultdict(lambda: defaultdict(OrderedDict))
     for name, domain_version_schema_map in name_domain_version_schema_map.items():
         for domain, version_schema_map in domain_version_schema_map.items():
-            ordered_map[name][domain] = OrderedDict(
-                sorted(version_schema_map.items(), key=lambda x: -x[0])
-            )
+            ordered_map[name][domain] = OrderedDict(sorted(version_schema_map.items(), key=lambda x: -x[0]))
     return ordered_map
 
 
@@ -113,6 +113,7 @@ _schemas = _register_all_schemas_with_history()
 
 _domain_opset_versions = _parse_domain_opset_versions(_schemas)
 
+
 def get_schema(name, max_inclusive_opset_version, domain=None):
     """Get schema by name within specific version."""
     domain = domain or utils.ONNX_DOMAIN
@@ -122,6 +123,7 @@ def get_schema(name, max_inclusive_opset_version, domain=None):
         if version <= max_inclusive_opset_version:
             return schema
     return None
+
 
 def get_max_supported_opset_version(domain=None):
     """Get max supported opset version by current onnx package given a domain."""

@@ -666,7 +666,7 @@ def main():
     prefix = args.source_prefix if args.source_prefix is not None else ""
 
     # Preprocessing the datasets.
-    # Preprocessing is slighlty different for training and evaluation.
+    # Preprocessing is slightly different for training and evaluation.
 
     column_names = raw_datasets["train"].column_names
 

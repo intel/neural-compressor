@@ -16,18 +16,19 @@
 # limitations under the License.
 """Freeze FakeQuant op Graph Rewriter."""
 
+from tensorflow.python.framework import dtypes
+
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer, GraphRewriterHelper
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
-from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper
-from tensorflow.python.framework import dtypes
 
-class FreezeFakeQuantOpOptimizer(GraphRewriterBase): # pragma: no cover
+
+class FreezeFakeQuantOpOptimizer(GraphRewriterBase):  # pragma: no cover
     """Freeze fake_quant op to the following Quantize op and prioring Dequantize op."""
 
     def __init__(self, model):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
 
         self.graph_analyzer = GraphAnalyzer()
@@ -36,14 +37,13 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase): # pragma: no cover
         self.graph_info = self.graph_analyzer.parse_graph()
 
         self.freeze_patterns = {
-          str([['Requantize', 'RequantizePerChannel'], ["Dequantize"], \
-                  ['FakeQuantWithMinMaxVars']]):
-            self._freeze_requant_dequant_fakequant,
-          str([['FakeQuantWithMinMaxVars'], ["QuantizeV2"]]):
-            self._freeze_fakequant_quant,
-          str([['FakeQuantWithMinMaxVars'], ['Shape'], ['StridedSlice'], \
-                  ['Pack'], ['Reshape'], ["QuantizeV2"]]):
-            self._freeze_fakequant_metaop_quant
+            str(
+                [["Requantize", "RequantizePerChannel"], ["Dequantize"], ["FakeQuantWithMinMaxVars"]]
+            ): self._freeze_requant_dequant_fakequant,
+            str([["FakeQuantWithMinMaxVars"], ["QuantizeV2"]]): self._freeze_fakequant_quant,
+            str(
+                [["FakeQuantWithMinMaxVars"], ["Shape"], ["StridedSlice"], ["Pack"], ["Reshape"], ["QuantizeV2"]]
+            ): self._freeze_fakequant_metaop_quant,
         }
 
     def _freeze_requant_dequant_fakequant(self, pattern_nodes):
@@ -56,17 +56,15 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase): # pragma: no cover
         # set the third input "requested_output_min" of RequantizePerChannel or Requantize op.
         requested_output_min_node = self.graph_info[requant_node.input[3]].node
         min_node = self.graph_info[fake_quant_node.input[1]].node
-        GraphRewriterHelper.set_attr_tensor(requested_output_min_node,
-                                            "value",
-                                            min_node.attr["value"].tensor,
-                                            dtypes.float32)
+        GraphRewriterHelper.set_attr_tensor(
+            requested_output_min_node, "value", min_node.attr["value"].tensor, dtypes.float32
+        )
         # set the fourth input "requested_output_max" of RequantizePerChannel or Requantize op.
         requested_output_max_node = self.graph_info[requant_node.input[4]].node
         max_node = self.graph_info[fake_quant_node.input[2]].node
-        GraphRewriterHelper.set_attr_tensor(requested_output_max_node,
-                                            "value",
-                                            max_node.attr["value"].tensor,
-                                            dtypes.float32)
+        GraphRewriterHelper.set_attr_tensor(
+            requested_output_max_node, "value", max_node.attr["value"].tensor, dtypes.float32
+        )
 
     def _freeze_fakequant_quant(self, pattern_nodes):
         """Freeze FakeQuant QuantizeV2 fusion."""
@@ -78,17 +76,11 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase): # pragma: no cover
         # set the second input "min_range" of QuantizeV2 op.
         min_node = self.graph_info[fake_quant_node.input[1]].node
         min_range_node = self.graph_info[quant_node.input[1]].node
-        GraphRewriterHelper.set_attr_tensor(min_range_node,
-                                            "value",
-                                            min_node.attr["value"].tensor,
-                                            dtypes.float32)
+        GraphRewriterHelper.set_attr_tensor(min_range_node, "value", min_node.attr["value"].tensor, dtypes.float32)
         # set the third input "max_range" of QuantizeV2 op.
         max_node = self.graph_info[fake_quant_node.input[2]].node
         max_range_node = self.graph_info[quant_node.input[2]].node
-        GraphRewriterHelper.set_attr_tensor(max_range_node,
-                                            "value",
-                                            max_node.attr["value"].tensor,
-                                            dtypes.float32)
+        GraphRewriterHelper.set_attr_tensor(max_range_node, "value", max_node.attr["value"].tensor, dtypes.float32)
 
     def _freeze_fakequant_metaop_quant(self, pattern_nodes):
         """Freeze FakeQuant Meta ops QuantizeV2 fusion."""
@@ -100,17 +92,11 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase): # pragma: no cover
         # set the second input "min_range" of QuantizeV2 op.
         min_node = self.graph_info[fake_quant_node.input[1]].node
         min_range_node = self.graph_info[quant_node.input[1]].node
-        GraphRewriterHelper.set_attr_tensor(min_range_node,
-                                            "value",
-                                            min_node.attr["value"].tensor,
-                                            dtypes.float32)
+        GraphRewriterHelper.set_attr_tensor(min_range_node, "value", min_node.attr["value"].tensor, dtypes.float32)
         # set the third input "max_range" of QuantizeV2 op.
         max_node = self.graph_info[fake_quant_node.input[2]].node
         max_range_node = self.graph_info[quant_node.input[2]].node
-        GraphRewriterHelper.set_attr_tensor(max_range_node,
-                                            "value",
-                                            max_node.attr["value"].tensor,
-                                            dtypes.float32)
+        GraphRewriterHelper.set_attr_tensor(max_range_node, "value", max_node.attr["value"].tensor, dtypes.float32)
 
     def _remove_all_fake_quants(self):
         """Remove all the fake quants."""
@@ -118,7 +104,7 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase): # pragma: no cover
 
         for node_name in list(self.graph_info.keys()):
             node = self.graph_info[node_name].node
-            if node.op == 'FakeQuantWithMinMaxVars':
+            if node.op == "FakeQuantWithMinMaxVars":
                 origin_outputs = list(self.graph_info[node_name].outputs)
                 min_node_name = self.graph_info[node.input[1]].node.name
                 max_node_name = self.graph_info[node.input[2]].node.name
@@ -129,14 +115,17 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase): # pragma: no cover
 
                 for j in origin_outputs[1:]:
                     output_node = self.graph_info[j].node
-                    if len(output_node.input) == 1 and \
-                        output_node.op == 'Const' and output_node.input[0] == '^' + node.name:
-                        self.graph_info[j].node.ClearField('input')
-                    elif output_node.op == 'NoOp' :
+                    if (
+                        len(output_node.input) == 1
+                        and output_node.op == "Const"
+                        and output_node.input[0] == "^" + node.name
+                    ):
+                        self.graph_info[j].node.ClearField("input")
+                    elif output_node.op == "NoOp":
                         new_noop_input = [
-                            noop_input for noop_input in output_node.input \
-                                if noop_input != '^' + node.name]
-                        output_node.ClearField('input')
+                            noop_input for noop_input in output_node.input if noop_input != "^" + node.name
+                        ]
+                        output_node.ClearField("input")
                         output_node.input.extend(new_noop_input)
 
         # remove those left const nodes used by FakeQuantWithMinMaxVars

@@ -16,7 +16,7 @@ pip install -r requirements.txt
 ## 1. Quantization
 ```shell
 cd examples/pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/fx
-sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path
+sh run_quant.sh --topology=topology_name --input_model=model_name_or_path
 ```
 ## 2. Benchmark
 ```bash

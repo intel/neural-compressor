@@ -39,9 +39,7 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 from torch.utils.data import Subset
 
-model_names = sorted(name for name in models.__dict__
-    if name.islower() and not name.startswith("__")
-    and callable(models.__dict__[name]))
+model_names = models.list_models(module=models)
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('data', metavar='DIR', nargs='?', default='imagenet',

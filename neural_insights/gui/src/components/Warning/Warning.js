@@ -14,17 +14,23 @@
 // limitations under the License.
 import React from 'react';
 import Alert from 'react-bootstrap/Alert';
+import Button from 'react-bootstrap/Button';
 import './Warning.scss';
 
 export default function Warning({ warningText, setWarningText }) {
 
   if (warningText.length) {
     return (
-      <Alert variant="danger" onClose={() => setWarningText('')} dismissible>
+      <Alert variant="danger">
         <Alert.Heading>Error</Alert.Heading>
         <p>
           {warningText}
         </p>
+        <div className="d-flex justify-content-end">
+          <Button onClick={() => setWarningText('')} variant="outline-danger">
+            Close
+          </Button>
+        </div>
       </Alert>
     );
   }

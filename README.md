@@ -1,17 +1,16 @@
 <div align="center">
-  
+
 Intel® Neural Compressor
 ===========================
 <h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet)</h3>
 
 [![python](https://img.shields.io/badge/python-3.7%2B-blue)](https://github.com/intel/neural-compressor)
-[![version](https://img.shields.io/badge/release-2.1-green)](https://github.com/intel/neural-compressor/releases)
+[![version](https://img.shields.io/badge/release-2.3-green)](https://github.com/intel/neural-compressor/releases)
 [![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/master/LICENSE)
 [![coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/intel/neural-compressor)
 [![Downloads](https://static.pepy.tech/personalized-badge/neural-compressor?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/neural-compressor)
 
 [Architecture](./docs/source/design.md#architecture)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Workflow](./docs/source/design.md#workflow)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Results](./docs/source/validated_model_list.md)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Examples](./examples/README.md)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Documentations](https://intel.github.io/neural-compressor)
-</div>
 
 ---
 <div align="left">
@@ -20,11 +19,11 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
 as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch).
 In particular, the tool provides the key features, typical examples, and open collaborations as below:
 
-* Support a wide range of Intel hardware such as [Intel Xeon Scalable processor](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/flex-series.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html) with extensive testing; support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing
+* Support a wide range of Intel hardware such as [Intel Xeon Scalable Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/flex-series.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html) with extensive testing; support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing
 
-* Validate more than 10,000 models such as [Bloom-176B](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant), [OPT-6.7B](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant), [Stable Diffusion](/examples/pytorch/nlp/huggingface_models/text-to-image/quantization), [GPT-J](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx), [BERT-Large](/examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx), and [ResNet50](/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx) from popular model hubs such as [Hugging Face](https://huggingface.co/), [Torch Vision](https://pytorch.org/vision/stable/index.html), and [ONNX Model Zoo](https://github.com/onnx/models#models), by leveraging zero-code optimization solution [Neural Coder](/neural_coder#what-do-we-offer) and automatic [accuracy-driven](/docs/source/design.md#workflow) quantization strategies
+* Validate popular LLMs such as LLama2, [LLama](examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static), [MPT](https://github.com/intel/intel-extension-for-transformers/blob/main/examples/huggingface/pytorch/text-generation/quantization/README.md), [Falcon](https://github.com/intel/intel-extension-for-transformers/blob/main/examples/huggingface/pytorch/language-modeling/quantization/README.md), [GPT-J](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx), [Bloom](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant), [OPT](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant), and more than 10,000 broad models such as [Stable Diffusion](/examples/pytorch/nlp/huggingface_models/text-to-image/quantization), [BERT-Large](/examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx), and [ResNet50](/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx) from popular model hubs such as [Hugging Face](https://huggingface.co/), [Torch Vision](https://pytorch.org/vision/stable/index.html), and [ONNX Model Zoo](https://github.com/onnx/models#models), by leveraging zero-code optimization solution [Neural Coder](/neural_coder#what-do-we-offer) and automatic [accuracy-driven](/docs/source/design.md#workflow) quantization strategies
 
-* Collaborate with cloud marketplace such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html) and [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
+* Collaborate with cloud marketplaces such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html), [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00) and [Microsoft Olive](https://github.com/microsoft/Olive), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), [ONNX Runtime](https://github.com/microsoft/onnxruntime), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
 
 ## Installation
 
@@ -32,34 +31,34 @@ In particular, the tool provides the key features, typical examples, and open co
 ```Shell
 pip install neural-compressor
 ```
-> More installation methods can be found at [Installation Guide](./docs/source/installation_guide.md). Please check out our [FAQ](./docs/source/faq.md) for more details.
+> [!NOTE]
+> More installation methods can be found at [Installation Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/installation_guide.md). Please check out our [FAQ](https://github.com/intel/neural-compressor/blob/master/docs/source/faq.md) for more details.
 
 ## Getting Started
-### Quantization with Python API    
+### Quantization with Python API
 
 ```shell
 # Install Intel Neural Compressor and TensorFlow
-pip install neural-compressor 
+pip install neural-compressor
 pip install tensorflow
 # Prepare fp32 model
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 ```
 ```python
+from neural_compressor.data import DataLoader, Datasets
 from neural_compressor.config import PostTrainingQuantConfig
-from neural_compressor.data import DataLoader
-from neural_compressor.data import Datasets
 
-dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
-dataloader = DataLoader(framework='tensorflow', dataset=dataset)
+dataset = Datasets("tensorflow")["dummy"](shape=(1, 224, 224, 3))
+dataloader = DataLoader(framework="tensorflow", dataset=dataset)
 
 from neural_compressor.quantization import fit
+
 q_model = fit(
     model="./mobilenet_v1_1.0_224_frozen.pb",
     conf=PostTrainingQuantConfig(),
     calib_dataloader=dataloader,
-    eval_dataloader=dataloader)
+)
 ```
-> More quick samples can be found in [Get Started Page](./docs/source/get_started.md).
 
 ## Documentation
 
@@ -86,11 +85,11 @@ q_model = fit(
     <tr>
         <td colspan="2" align="center"><a href="./docs/source/quantization.md">Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/source/mixed_precision.md">Advanced Mixed Precision</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/pruning.md">Pruning (Sparsity)</a></td> 
+        <td colspan="2" align="center"><a href="./docs/source/pruning.md">Pruning (Sparsity)</a></td>
         <td colspan="2" align="center"><a href="./docs/source/distillation.md">Distillation</a></td>
     </tr>
     <tr>
-        <td colspan="2" align="center"><a href="./docs/source/orchestration.md">Orchestration</a></td>        
+        <td colspan="2" align="center"><a href="./docs/source/orchestration.md">Orchestration</a></td>
         <td colspan="2" align="center"><a href="./docs/source/benchmark.md">Benchmarking</a></td>
         <td colspan="2" align="center"><a href="./docs/source/distributed.md">Distributed Compression</a></td>
         <td colspan="2" align="center"><a href="./docs/source/export.md">Model Export</a></td>
@@ -107,7 +106,7 @@ q_model = fit(
         <td colspan="2" align="center"><a href="./neural_coder/extensions/neural_compressor_ext_lab/README.md">JupyterLab Extension</a></td>
         <td colspan="2" align="center"><a href="./neural_coder/extensions/neural_compressor_ext_vscode/README.md">Visual Studio Code Extension</a></td>
         <td colspan="2" align="center"><a href="./neural_coder/docs/SupportMatrix.md">Supported Matrix</a></td>
-    </tr>    
+    </tr>
   </tbody>
   <thead>
       <tr>
@@ -121,6 +120,10 @@ q_model = fit(
           <td colspan="2" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
           <td colspan="2" align="center"><a href="./docs/source/smooth_quant.md">SmoothQuant</td>
       </tr>
+      <tr>
+          <td colspan="4" align="center"><a href="./docs/source/quantization_weight_only.md">Weight-Only Quantization (INT8/INT4/FP4/NF4) </td>
+          <td colspan="4" align="center"><a href="https://github.com/intel/neural-compressor/blob/fp8_adaptor/docs/source/fp8.md">FP8 Quantization </td>
+      </tr>
   </tbody>
   <thead>
       <tr>
@@ -130,19 +133,24 @@ q_model = fit(
   <tbody>
       <tr>
           <td colspan="4" align="center"><a href="./neural_insights/README.md">Neural Insights</a></td>
-          <td colspan="4" align="center">Neural Solution (coming soon)</td>
+          <td colspan="4" align="center"><a href="./neural_solution/README.md">Neural Solution</a></td>
       </tr>
   </tbody>
 </table>
 
+> [!NOTE] 
+> More documentations can be found at [User Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/user_guide.md).
+
 ## Selected Publications/Events
-* Blog on Medium: [Intel Optimization at Netflix](https://medium.com/@amerather_9719/intel-optimization-at-netflix-79ef0efb9d2) (May 2023)
-* Blog on Medium: [Effective Post-training Quantization for Large Language Models with Enhanced SmoothQuant Approach](https://medium.com/@NeuralCompressor/effective-post-training-quantization-for-large-language-models-with-enhanced-smoothquant-approach-93e9d104fb98) (Apr 2023)
-* Blog by Intel: [Intel® Xeon® Processors Are Still the Only CPU With MLPerf Results, Raising the Bar By 5x](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Intel-Xeon-Processors-Are-Still-the-Only-CPU-With-MLPerf-Results/post/1472750) (Apr 2023)
+* Blog by Intel: [Effective Weight-Only Quantization for Large Language Models with Intel® Neural Compressor](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Effective-Weight-Only-Quantization-for-Large-Language-Models/post/1529552) (Oct 2023)
+* EMNLP'2023 (Under Review): [TEQ: Trainable Equivalent Transformation for Quantization of LLMs](https://openreview.net/forum?id=iaI8xEINAf&referrer=%5BAuthor%20Console%5D) (Sep 2023)
+* arXiv: [Efficient Post-training Quantization with FP8 Formats](https://arxiv.org/abs/2309.14592) (Sep 2023)
+* arXiv: [Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs](https://arxiv.org/abs/2309.05516) (Sep 2023)
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 
-> View our [Full Publication List](./docs/source/publication_list.md).
+> [!NOTE]
+> View [Full Publication List](https://github.com/intel/neural-compressor/blob/master/docs/source/publication_list.md).
 
 ## Additional Content
 
@@ -151,7 +159,8 @@ q_model = fit(
 * [Legal Information](./docs/source/legal_information.md)
 * [Security Policy](SECURITY.md)
 
-## Research Collaborations
-
-Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us (inc.maintainers@intel.com). Look forward to our collaborations on Intel Neural Compressor!
-
+## Communication 
+- [GitHub Issues](https://github.com/intel/neural-compressor/issues): mainly for bug reports, new feature requests, question asking, etc.
+- [Email](mailto:inc.maintainers@intel.com): welcome to raise any interesting research ideas on model compression techniques by email for collaborations.  
+- [Discord Channel](https://discord.com/invite/Wxk3J3ZJkU): join the discord channel for more flexible technical discussion.
+- [WeChat group](/docs/source/imgs/wechat_group.jpg): scan the QA code to join the technical discussion.
