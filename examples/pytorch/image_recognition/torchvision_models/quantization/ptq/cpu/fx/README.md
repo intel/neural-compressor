@@ -33,11 +33,21 @@ train  val
 ```shell
 python main.py -t -a resnet50 --pretrained /path/to/imagenet
 ```
+or
+```shell
+bash run_quant.sh --input_model=resnet50 --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --input_model=resnet50 --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false
+```
 
 ### 2. ResNet18
 
 ```shell
 python main.py -t -a resnet18 --pretrained /path/to/imagenet
+```
+or
+```shell
+bash run_quant.sh --input_model=resnet18 --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --input_model=resnet18 --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false
 ```
 
 ### 3. ResNeXt101_32x8d
@@ -45,11 +55,21 @@ python main.py -t -a resnet18 --pretrained /path/to/imagenet
 ```shell
 python main.py -t -a resnext101_32x8d --pretrained /path/to/imagenet
 ```
+or
+```shell
+bash run_quant.sh --input_model=resnext101_32x8d --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --input_model=resnext101_32x8d --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false
+```
 
 ### 4. InceptionV3
 
 ```shell
 python main.py -t -a inception_v3 --pretrained /path/to/imagenet
+```
+or
+```shell
+bash run_quant.sh --input_model=inception_v3 --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --input_model=inception_v3 --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false
 ```
 
 ### 5. Mobilenet_v2
@@ -57,12 +77,23 @@ python main.py -t -a inception_v3 --pretrained /path/to/imagenet
 ```shell
 python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
 ```
+or
+```shell
+bash run_quant.sh --input_model=mobilenet_v2 --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --input_model=mobilenet_v2 --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false
+```
 
 ### 6. Efficientnet_b0
 
 ```shell
 python main.py -t -a efficientnet_b0 --pretrained /path/to/imagenet
 ```
+or
+```shell
+bash run_quant.sh --input_model=efficientnet_b0 --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --input_model=efficientnet_b0 --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false
+```
+
 > **Note**
 >
 > To reduce tuning time and get the result faster, the `efficientnet_b0` model uses 
@@ -74,6 +105,12 @@ python main.py -t -a efficientnet_b0 --pretrained /path/to/imagenet
 ```shell
 python main.py -t -a efficientnet_b3 --pretrained /path/to/imagenet
 ```
+or
+```shell
+bash run_quant.sh --input_model=efficientnet_b3 --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --input_model=efficientnet_b3 --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false
+```
+
 > **Note**
 >
 > To reduce tuning time and get the result faster, the `efficientnet_b3` model uses 
@@ -83,6 +120,12 @@ python main.py -t -a efficientnet_b3 --pretrained /path/to/imagenet
 ```shell
 python main.py -t -a efficientnet_b7 --pretrained /path/to/imagenet
 ```
+or
+```shell
+bash run_quant.sh --input_model=efficientnet_b7 --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --input_model=efficientnet_b7 --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false
+```
+
 > **Note**
 >
 > To reduce tuning time and get the result faster, the `efficientnet_b7` model uses 

@@ -1,0 +1,101 @@
+// Copyright (c) 2023 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package neural_solution;
+
+
+// Interface exported by the server
+service TaskService {
+    rpc Ping(google.protobuf.Empty) returns (ResponsePingMessage) {}
+    rpc SubmitTask(Task) returns (TaskResponse) {}
+    rpc GetTaskById(TaskId) returns (TaskStatus) {}
+    rpc QueryTaskResult(TaskId) returns (ResponseTaskResult) {}
+}
+
+
+// [/task/submit/]
+// task request description
+message Task {
+    string script_url = 1;
+    bool optimized = 2;
+    repeated string arguments = 3;
+    string approach = 4;
+    repeated string requirements = 5;
+    int32 workers = 6;
+  }
+// task response
+message TaskResponse {
+    string status = 1;
+    string task_id = 2;
+    string msg = 3;
+}
+
+
+// [/task/{task_id}]
+// query task status by task id
+message TaskId {
+    string task_id = 1;
+}
+
+// response
+message TaskStatus {
+    string status = 1;
+    string optimized_result = 2;
+    string result_path = 3;
+}
+
+// empty message
+message EmptyRequest {}
+
+// /
+message WelcomeMessage {
+    // repsonce welcome message
+    string message = 1;
+}
+
+// /ping
+message ResponsePingMessage {
+    // repsonce message for ping
+    string status = 1;
+    string msg = 2;
+}
+
+// // optimization result message
+// message OptimizatonResult{
+//     string optimization_time = 1;
+//     string accuracy = 2;
+//     string duration = 3;
+//     string result_path = 4;
+// }
+
+// // tuning information
+
+// message TuningInformation{
+//     string bseline = 1;
+//     string message = 2;
+// }
+
+// /task/status/{task_id}
+message ResponseTaskResult {
+    string status = 1;
+    string tuning_information = 2;
+    string optimization_result = 3;
+}
+
+
+

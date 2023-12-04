@@ -11,39 +11,28 @@ This example can run on Intel CPUs and GPUs.
 ## 1. Environment
 
 ### Installation
-Recommend python 3.6 or higher version.
-
+Recommend python 3.7 or higher version.
 ```shell
-# Install Intel® Neural Compressor
-pip install neural-compressor
-```
-
-### Install Intel Tensorflow
-```shell
-pip install intel-tensorflow
-```
-
-### Installation Dependency packages
-```shell
-cd examples/tensorflow/object_detection/tensorflow_models/quantization/ptq
 pip install -r requirements.txt
 ```
 
 ### Install Intel Extension for Tensorflow
-#### Quantizing the model on Intel GPU
+#### Quantizing the model on Intel GPU(Mandatory to install ITEX)
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
-pip install --upgrade intel-extension-for-tensorflow[gpu]
+pip install --upgrade intel-extension-for-tensorflow[xpu]
 ```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_xpu.md#install-gpu-drivers)
 
-#### Quantizing the model on Intel CPU(Experimental)
+#### Quantizing the model on Intel CPU(Optional to install ITEX)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
+> **Note**: 
+> The version compatibility of stock Tensorflow and ITEX can be checked [here](https://github.com/intel/intel-extension-for-tensorflow#compatibility-table). Please make sure you have installed compatible Tensorflow and ITEX.
 
 ## 2. Prepare pre-trained model
 
@@ -64,14 +53,31 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
   # convert train subset
   bash prepare_dataset.sh --output_dir=./resnet101/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
   ```
+> **Note**: 
+> The raw ImageNet dataset resides in JPEG files should be in the following directory structure. Taking validation set as an example:<br>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/PATH/TO/img_raw/val/n01440764/ILSVRC2012_val_00000293.JPEG<br>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/PATH/TO/img_raw/val/n01440764/ILSVRC2012_val_00000543.JPEG<br>
+> where 'n01440764' is the unique synset label associated with these images.
 
 # Run
+
+## Quantization Config
+
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    ...
+    )
+```
 
 ## 1 Quantization
 
   ```shell
   cd examples/tensorflow/image_recognition/tensorflow_models/resnet101/quantization/ptq
-  bash run_tuning.sh --input_model=/PATH/TO/frozen_resnet101.pb \
+  bash run_quant.sh --input_model=/PATH/TO/frozen_resnet101.pb \
       --output_model=./nc_resnet101.pb --dataset_location=/path/to/ImageNet/
   ```
 

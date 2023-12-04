@@ -31,9 +31,10 @@ Supported model identifier from [huggingface.co](https://huggingface.co/):
 |         M-FAC/bert-mini-finetuned-mrpc          |
 |           Intel/xlnet-base-cased-mrpc           |
 |            Intel/bart-large-mrpc                |
+|             Intel/deberta-v3-base-mrpc          |
 
 ```bash
-python export.py --model_name_or_path=Intel/bert-base-uncased-mrpc \ # or other supported model identifier
+python prepare_model.py  --input_model=Intel/bert-base-uncased-mrpc  --output_model=bert-base-uncased-mrpc.onnx
 ```
 
 ## 3. Prepare Dataset
@@ -53,7 +54,7 @@ bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
 Dynamic quantization:
 
 ```bash
-bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
+bash run_quant.sh --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune \ # model path as *.onnx
                    --dataset_location=path/to/glue/data
 ```

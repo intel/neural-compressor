@@ -91,7 +91,7 @@ def train(model, adaptor, compression_manager):
                             train_dataloader, \
                             adaptor, \
                             train_cfg, \
-                            hooks=compression_manager.callbacks.callbacks.hooks)
+                            hooks=compression_manager.callbacks.callbacks_list[0].hooks)
     train_func(model)
 
 

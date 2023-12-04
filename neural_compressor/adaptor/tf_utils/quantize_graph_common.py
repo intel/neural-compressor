@@ -17,27 +17,25 @@
 """Quantize Graph Common Utils Herlper Class."""
 
 import re
+
 import numpy as np
+from tensorflow.core.framework import attr_value_pb2, graph_pb2, node_def_pb2
+from tensorflow.python.framework import dtypes, tensor_util
 
-from tensorflow.core.framework import node_def_pb2
-from tensorflow.core.framework import attr_value_pb2
-from tensorflow.core.framework import graph_pb2
-from tensorflow.python.framework import tensor_util
-from tensorflow.python.framework import dtypes
 
-class QuantizeGraphHelper():
+class QuantizeGraphHelper:
     """This class contains several staticmethod functions."""
+
     node_name_cache = {}
     node_name_port_cache = {}
 
     def __init__(self):
-        """Intialization."""
+        """Initialization."""
         pass
 
     def _recursive_graph_sorting(self, node_name):
         """Recursive sort the graph."""
-        if node_name in self.op_list or not self.node_name_mapping[
-                node_name].input:
+        if node_name in self.op_list or not self.node_name_mapping[node_name].input:
             return
 
         for input_name in self.node_name_mapping[node_name].input:
@@ -59,8 +57,8 @@ class QuantizeGraphHelper():
     def get_sorted_graph(self, input_graph, input_node_names, output_node_names):
         """Return a sorted graphdef object.
 
-        Sometimes the input graphdef was composed of the randome nodedef objects,
-        we reorder the graph to make the parsing more easier.
+        Sometimes the input graphdef was composed of the random nodedef objects,
+        we reorder the graph to make the parsing easier.
 
         Args:
             input_graph (graphdef]): the input graphdef object
@@ -92,7 +90,7 @@ class QuantizeGraphHelper():
         """Split shared inputs(like weights and bias) of the graph.
 
         :param in_graph: input graph file.
-        :return: path to ouput graph file.
+        :return: path to output graph file.
         """
         node_map = {}
         for node in input_graph_def.node:
@@ -106,8 +104,7 @@ class QuantizeGraphHelper():
         for node_name in node_map.keys():
             node = node_map[node_name]
             for input_idx, input_node_name in enumerate(node.input):
-                if node_map[QuantizeGraphHelper.node_name_from_input(
-                        input_node_name)].op == 'Const':
+                if node_map[QuantizeGraphHelper.node_name_from_input(input_node_name)].op == "Const":
                     # is shared and current node is not the first one
                     # sharing the input
                     if input_node_name in input_map.keys():
@@ -115,8 +112,7 @@ class QuantizeGraphHelper():
                         input_map[input_node_name].append(node.name)
                         new_input_node = node_def_pb2.NodeDef()
                         new_input_node.CopyFrom(node_map[input_node_name])
-                        new_input_node.name = input_node_name + '_' + str(
-                            len(input_map[input_node_name]))
+                        new_input_node.name = input_node_name + "_" + str(len(input_map[input_node_name]))
                         node.input[input_idx] = new_input_node.name
                         output_graph_def.node.extend([new_input_node])
                     else:
@@ -126,8 +122,7 @@ class QuantizeGraphHelper():
         return output_graph_def if is_shared_input else input_graph_def
 
     @staticmethod
-    def remove_training_nodes(input_graph, protected_nodes=[],
-                              types_to_splice=['Identity', 'CheckNumerics']):
+    def remove_training_nodes(input_graph, protected_nodes=[], types_to_splice=["Identity", "CheckNumerics"]):
         """Prunes out nodes that aren't needed for inference.
 
         Args:
@@ -158,11 +153,7 @@ class QuantizeGraphHelper():
                     names_to_splice[node.name] = node.input[0]
 
         # We also don't want to remove nodes which are used as control edge inputs.
-        names_to_splice = {
-            name: value
-            for name, value in names_to_splice.items()
-            if name not in control_input_names
-        }
+        names_to_splice = {name: value for name, value in names_to_splice.items() if name not in control_input_names}
 
         nodes_after_splicing = []
 
@@ -210,7 +201,7 @@ class QuantizeGraphHelper():
         return new_node
 
     @staticmethod
-    def create_constant_node(name, value, dtype, shape=None, device='cpu'):
+    def create_constant_node(name, value, dtype, shape=None, device="cpu"):
         """Create constant node.
 
         Args:
@@ -224,8 +215,7 @@ class QuantizeGraphHelper():
         Returns:
             [type]: [description]
         """
-        node = QuantizeGraphHelper.create_node("Const" if device == 'cpu' else "HostConst", name,
-                                                 [])
+        node = QuantizeGraphHelper.create_node("Const" if device == "cpu" else "HostConst", name, [])
         QuantizeGraphHelper.set_attr_dtype(node, "dtype", dtype)
         QuantizeGraphHelper.set_attr_tensor(node, "value", value, dtype, shape)
         return node
@@ -258,8 +248,8 @@ class QuantizeGraphHelper():
             shape (int list, optional): the input tensor's shape. Defaults to None.
         """
         node.attr[key].CopyFrom(
-            attr_value_pb2.AttrValue(
-                tensor=tensor_util.make_tensor_proto(value, dtype=dtype, shape=shape)))
+            attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(value, dtype=dtype, shape=shape))
+        )
 
     @staticmethod
     def set_attr_string_list(node, key, value):
@@ -334,12 +324,9 @@ class QuantizeGraphHelper():
         return QuantizeGraphHelper.node_name_port_cache[node_name]
 
     @staticmethod
-    def generate_quantized_weight_node(host_op_type,
-                                       input_node,
-                                       per_channel,
-                                       weight_bit=7.0,
-                                       device='cpu',
-                                       enter_node=None):
+    def generate_quantized_weight_node(
+        host_op_type, input_node, per_channel, weight_bit=7.0, device="cpu", enter_node=None
+    ):
         """Generated the quantized weight node."""
         base_name = input_node.name + "_"
         qint8_const_name = base_name + "qint8_const"
@@ -347,12 +334,25 @@ class QuantizeGraphHelper():
         max_name = base_name + "max"
         float_tensor = tensor_util.MakeNdarray(input_node.attr["value"].tensor)
         epsilon = 1e-4  # Needs to be set empirically if accuracy is not satisfactory
-        range_coefficent = 127 / (2 ** weight_bit - 1)
-        if host_op_type in ("Conv2D", "MatMul", "Conv3D", "BatchMatMulV2", \
-                            "Conv2DBackpropInput", "Conv3DBackpropInputV2"):
+        range_coefficent = 127 / (2**weight_bit - 1)
+        if host_op_type in (
+            "Conv2D",
+            "MatMul",
+            "Conv3D",
+            "BatchMatMulV2",
+            "Conv2DBackpropInput",
+            "Conv3DBackpropInputV2",
+        ):
             if per_channel:
-                if host_op_type in ('Conv3D', 'Conv3DBackpropInputV2'):
+                if host_op_type in ("Conv3D", "Conv3DBackpropInputV2"):
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2, 3))
+                elif host_op_type in ("Conv2D", "Conv2DBackpropInput"):
+                    ranges = np.abs(float_tensor).max(axis=(0, 1, 2))
+                elif host_op_type in ("MatMul"):
+                    if "transpose_b" in input_node.attr and input_node.attr["transpose_b"].b:  # pragma: no cover
+                        ranges = np.abs(float_tensor).max(axis=(1))
+                    else:
+                        ranges = np.abs(float_tensor).max(axis=(0))
                 else:
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2))
 
@@ -363,7 +363,13 @@ class QuantizeGraphHelper():
                 ranges[ranges < epsilon] = epsilon
                 min_value[np.abs(min_value) < epsilon] = -epsilon
                 max_value[np.abs(max_value) < epsilon] = epsilon
-                qint8_tensor = (np.around(float_tensor *127.0/ranges)).astype(np.int8)
+                if "transpose_b" in input_node.attr and input_node.attr["transpose_b"].b:  # pragma: no cover
+                    # transpose for broadcasting
+                    float_tensor = np.transpose(float_tensor, [1, 0])
+                    qint8_tensor = (np.around(float_tensor * 127.0 / ranges)).astype(np.int8)
+                    qint8_tensor = np.transpose(qint8_tensor, [1, 0])
+                else:
+                    qint8_tensor = (np.around(float_tensor * 127.0 / ranges)).astype(np.int8)
             else:
                 min_value = np.min(float_tensor)
                 max_value = np.max(float_tensor)
@@ -397,50 +403,46 @@ class QuantizeGraphHelper():
             # When divide by range, qint8_tensor needs to be 3 dim
             # where, 3rd dim should be same dim of ranges
             a, b, c, d = float_tensor.shape
-            qint8_tensor = (np.around(float_tensor.reshape(a, b, c * d) * 127.0 /
-                            ranges)).astype(np.int8)
+            qint8_tensor = (np.around(float_tensor.reshape(a, b, c * d) * 127.0 / ranges)).astype(np.int8)
             # get the shape back to 4 dim
             qint8_tensor = qint8_tensor.reshape(a, b, c, d)
         shape = tensor_util.TensorShapeProtoToList(input_node.attr["value"].tensor.tensor_shape)
-        qint8_const_node = QuantizeGraphHelper.create_constant_node(qint8_const_name,
-                                                                    qint8_tensor,
-                                                                    dtypes.qint8,
-                                                                    shape=shape)
+        qint8_const_node = QuantizeGraphHelper.create_constant_node(
+            qint8_const_name, qint8_tensor, dtypes.qint8, shape=shape
+        )
+        min_node = QuantizeGraphHelper.create_constant_node(min_name, min_value, dtypes.float32, device="cpu")
 
-        min_node = QuantizeGraphHelper.create_constant_node(min_name, min_value,
-                                                            dtypes.float32, device="cpu")
-
-        max_node = QuantizeGraphHelper.create_constant_node(max_name, max_value,
-                                                            dtypes.float32, device="cpu")
+        max_node = QuantizeGraphHelper.create_constant_node(max_name, max_value, dtypes.float32, device="cpu")
 
         qint8_const_enter_node = None
         min_enter_node = None
         max_enter_node = None
 
         if enter_node:
-            qint8_const_enter_node = QuantizeGraphHelper.create_node('Enter', \
-                                           qint8_const_name + '_enter', [qint8_const_name])
-            QuantizeGraphHelper.set_attr_string(qint8_const_enter_node,
-                                           'frame_name', enter_node.attr['frame_name'].s)
-            QuantizeGraphHelper.set_attr_dtype(qint8_const_enter_node, 'T', dtypes.qint8)
-            QuantizeGraphHelper.set_attr_bool(qint8_const_enter_node, 'is_constant', True)
-            QuantizeGraphHelper.set_attr_int(qint8_const_enter_node, \
-                                         'parallel_iterations', enter_node.attr['parallel_iterations'].i)
+            qint8_const_enter_node = QuantizeGraphHelper.create_node(
+                "Enter", qint8_const_name + "_enter", [qint8_const_name]
+            )
+            QuantizeGraphHelper.set_attr_string(qint8_const_enter_node, "frame_name", enter_node.attr["frame_name"].s)
+            QuantizeGraphHelper.set_attr_dtype(qint8_const_enter_node, "T", dtypes.qint8)
+            QuantizeGraphHelper.set_attr_bool(qint8_const_enter_node, "is_constant", True)
+            QuantizeGraphHelper.set_attr_int(
+                qint8_const_enter_node, "parallel_iterations", enter_node.attr["parallel_iterations"].i
+            )
 
-            min_enter_node = QuantizeGraphHelper.create_node('Enter', min_name + '_enter', [min_name])
-            QuantizeGraphHelper.set_attr_string(min_enter_node,
-                                           'frame_name', enter_node.attr['frame_name'].s)
-            QuantizeGraphHelper.set_attr_dtype(min_enter_node, 'T', dtypes.float32)
-            QuantizeGraphHelper.set_attr_bool(min_enter_node, 'is_constant', True)
-            QuantizeGraphHelper.set_attr_int(min_enter_node, 'parallel_iterations', \
-                                             enter_node.attr['parallel_iterations'].i)
+            min_enter_node = QuantizeGraphHelper.create_node("Enter", min_name + "_enter", [min_name])
+            QuantizeGraphHelper.set_attr_string(min_enter_node, "frame_name", enter_node.attr["frame_name"].s)
+            QuantizeGraphHelper.set_attr_dtype(min_enter_node, "T", dtypes.float32)
+            QuantizeGraphHelper.set_attr_bool(min_enter_node, "is_constant", True)
+            QuantizeGraphHelper.set_attr_int(
+                min_enter_node, "parallel_iterations", enter_node.attr["parallel_iterations"].i
+            )
 
-            max_enter_node = QuantizeGraphHelper.create_node('Enter', max_name + '_enter', [max_name])
-            QuantizeGraphHelper.set_attr_string(max_enter_node,
-                                           'frame_name', enter_node.attr['frame_name'].s)
-            QuantizeGraphHelper.set_attr_dtype(max_enter_node, 'T', dtypes.float32)
-            QuantizeGraphHelper.set_attr_bool(max_enter_node, 'is_constant', True)
-            QuantizeGraphHelper.set_attr_int(max_enter_node, 'parallel_iterations',\
-                                             enter_node.attr['parallel_iterations'].i)
+            max_enter_node = QuantizeGraphHelper.create_node("Enter", max_name + "_enter", [max_name])
+            QuantizeGraphHelper.set_attr_string(max_enter_node, "frame_name", enter_node.attr["frame_name"].s)
+            QuantizeGraphHelper.set_attr_dtype(max_enter_node, "T", dtypes.float32)
+            QuantizeGraphHelper.set_attr_bool(max_enter_node, "is_constant", True)
+            QuantizeGraphHelper.set_attr_int(
+                max_enter_node, "parallel_iterations", enter_node.attr["parallel_iterations"].i
+            )
 
         return qint8_const_node, min_node, max_node, qint8_const_enter_node, min_enter_node, max_enter_node

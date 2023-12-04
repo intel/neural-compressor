@@ -1,23 +1,25 @@
 #
 #  -*- coding: utf-8 -*-
 #
+import logging
+import os
 import shutil
 import unittest
-import os
-import yaml
-from neural_compressor.adaptor.tf_utils.util import disable_random
 
 import tensorflow as tf
-from tensorflow.python.platform import gfile
-from tensorflow.python.framework import graph_util
+import yaml
+from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import tensor_util
+from tensorflow.python.platform import gfile
 
-import logging
+from neural_compressor.adaptor.tf_utils.util import disable_random
+
 logger = logging.getLogger("neural_compressor")
 logger.setLevel(logging.DEBUG)
 
+
 def build_fake_yaml():
-    fake_yaml = '''
+    fake_yaml = """
         model:
           name: fake_yaml
           framework: tensorflow
@@ -33,14 +35,15 @@ def build_fake_yaml():
               relative: 0.0001
             workspace:
               path: saved
-        '''
+        """
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml.yaml', "w", encoding="utf-8") as f:
+    with open("fake_yaml.yaml", "w", encoding="utf-8") as f:
         yaml.dump(y, f)
     f.close()
 
+
 def build_fake_yaml_2():
-    fake_yaml = '''
+    fake_yaml = """
         model:
           name: fake_yaml
           framework: tensorflow
@@ -58,11 +61,12 @@ def build_fake_yaml_2():
               relative: 0.0001
             workspace:
               path: saved
-        '''
+        """
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml_2.yaml', "w", encoding="utf-8") as f:
+    with open("fake_yaml_2.yaml", "w", encoding="utf-8") as f:
         yaml.dump(y, f)
     f.close()
+
 
 class TestTensorflowRecover(unittest.TestCase):
     @classmethod
@@ -71,51 +75,51 @@ class TestTensorflowRecover(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        os.remove('fake_yaml.yaml')
-        os.remove('test.pb')
-        shutil.rmtree('./saved', ignore_errors=True)
+        os.remove("fake_yaml.yaml")
+        os.remove("test.pb")
+        shutil.rmtree("./saved", ignore_errors=True)
 
     @disable_random()
     def test_tensorflow_recover(self):
-
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(top_relu, paddings, "CONSTANT")
-        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
-                                                 initializer=tf.compat.v1.random_normal_initializer())
-        conv_weights_2 = tf.compat.v1.get_variable("weight_2", [3, 8, 16, 16],
-                                                   initializer=tf.compat.v1.random_normal_initializer())
+        conv_weights = tf.compat.v1.get_variable(
+            "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
+        )
+        conv_weights_2 = tf.compat.v1.get_variable(
+            "weight_2", [3, 8, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
+        )
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
         relu = tf.nn.relu(conv)
 
         max_pool = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
-        conv_bias = tf.compat.v1.get_variable("bias", [16],
-                                              initializer=tf.compat.v1.random_normal_initializer())
-        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[
-                              1, 2, 2, 1], padding="VALID", name='conv1_3')
+        conv_bias = tf.compat.v1.get_variable("bias", [16], initializer=tf.compat.v1.random_normal_initializer())
+        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[1, 2, 2, 1], padding="VALID", name="conv1_3")
         conv_bias = tf.math.add(conv_1, conv_bias)
-        relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
+        relu6 = tf.nn.relu6(conv_bias, name="op_to_store")
 
-        out_name = relu6.name.split(':')[0]
+        out_name = relu6.name.split(":")[0]
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             constant_graph = graph_util.convert_variables_to_constants(
-                sess=sess,
-                input_graph_def=sess.graph_def,
-                output_node_names=[out_name])
-            with gfile.GFile('./test.pb', "wb") as f:
+                sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
+            )
+            with gfile.GFile("./test.pb", "wb") as f:
                 f.write(constant_graph.SerializeToString())
 
             from neural_compressor.experimental import Quantization, common
+
             quantizer = Quantization("./fake_yaml.yaml")
-            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            dataset = quantizer.dataset("dummy", shape=(100, 56, 56, 16), label=True)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = constant_graph
             q_model = quantizer.fit()
 
             from neural_compressor.utils.utility import recover
-            recover_model = recover('./test.pb', './saved/history.snapshot', 0)
+
+            recover_model = recover("./test.pb", "./saved/history.snapshot", 0)
 
             q_model_const_value = {}
             for node in q_model.graph_def.node:
@@ -129,19 +133,20 @@ class TestTensorflowRecover(unittest.TestCase):
                     if node.name in q_model_const_value:
                         self.assertEqual(tensor_value, q_model_const_value[node.name])
 
+
 class TestTensorflowRecoverForceBF16(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        os.environ['FORCE_BF16'] = '1'
+        os.environ["FORCE_BF16"] = "1"
         build_fake_yaml_2()
 
     @classmethod
     def tearDownClass(self):
-        del os.environ['FORCE_BF16']
-        os.remove('fake_yaml_2.yaml')
-        if os.path.exists('./test.pb'):
-            os.remove('test.pb')
-        shutil.rmtree('./saved', ignore_errors=True)
+        del os.environ["FORCE_BF16"]
+        os.remove("fake_yaml_2.yaml")
+        if os.path.exists("./test.pb"):
+            os.remove("test.pb")
+        shutil.rmtree("./saved", ignore_errors=True)
 
     @disable_random()
     @unittest.skipIf(tf.__version__ < "2.0", "currently bf16 converter only support tf > 2.0")
@@ -150,44 +155,45 @@ class TestTensorflowRecoverForceBF16(unittest.TestCase):
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(top_relu, paddings, "CONSTANT")
-        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
-                                                 initializer=tf.compat.v1.random_normal_initializer())
-        conv_weights_2 = tf.compat.v1.get_variable("weight_2", [3, 8, 16, 16],
-                                                   initializer=tf.compat.v1.random_normal_initializer())
+        conv_weights = tf.compat.v1.get_variable(
+            "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
+        )
+        conv_weights_2 = tf.compat.v1.get_variable(
+            "weight_2", [3, 8, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
+        )
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
         relu = tf.nn.relu(conv)
 
         max_pool = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
-        conv_bias = tf.compat.v1.get_variable("bias", [16],
-                                              initializer=tf.compat.v1.random_normal_initializer())
-        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[
-                              1, 2, 2, 1], padding="VALID", name='conv1_3')
+        conv_bias = tf.compat.v1.get_variable("bias", [16], initializer=tf.compat.v1.random_normal_initializer())
+        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[1, 2, 2, 1], padding="VALID", name="conv1_3")
         conv_bias = tf.math.add(conv_1, conv_bias)
-        relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
+        relu6 = tf.nn.relu6(conv_bias, name="op_to_store")
 
-        out_name = relu6.name.split(':')[0]
+        out_name = relu6.name.split(":")[0]
 
         def eval(model):
             return 0.5
-        
+
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             constant_graph = graph_util.convert_variables_to_constants(
-                sess=sess,
-                input_graph_def=sess.graph_def,
-                output_node_names=[out_name])
-            with gfile.GFile('./test.pb', "wb") as f:
+                sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
+            )
+            with gfile.GFile("./test.pb", "wb") as f:
                 f.write(constant_graph.SerializeToString())
 
             from neural_compressor.experimental import MixedPrecision
-            convert = MixedPrecision('./fake_yaml_2.yaml')
+
+            convert = MixedPrecision("./fake_yaml_2.yaml")
             convert.model = constant_graph
             convert.eval_func = eval
             output_model = convert.fit()
             found_cast_op = False
 
             from neural_compressor.utils.utility import recover
-            recover_model = recover('./test.pb', './saved/history.snapshot', 0)
+
+            recover_model = recover("./test.pb", "./saved/history.snapshot", 0)
 
             q_model_const_value = {}
             for node in output_model.graph_def.node:
@@ -196,7 +202,7 @@ class TestTensorflowRecoverForceBF16(unittest.TestCase):
                     if not tensor_value.shape:
                         q_model_const_value[node.name] = tensor_value
             for node in recover_model.graph_def.node:
-                if node.op == 'Cast':
+                if node.op == "Cast":
                     found_cast_op = True
                     continue
                 if node.op == "Const":

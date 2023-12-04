@@ -15,13 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The random tuning strategy."""
-import numpy as np
-from .strategy import strategy_registry, TuneStrategy
-from collections import OrderedDict
 
-from .utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler
-from .utils.tuning_structs import OpTuningConfig
-from ..utils import logger
+import numpy as np
+
+from .strategy import TuneStrategy, strategy_registry
+from .utils.tuning_sampler import OpWiseTuningSampler
+
 
 @strategy_registry
 class RandomTuneStrategy(TuneStrategy):
@@ -29,7 +28,7 @@ class RandomTuneStrategy(TuneStrategy):
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config by random searching in tuning space.
-        
+
         Random strategy is used to randomly choose quantization tuning configurations
         from the tuning space. As with the Exhaustive strategy, it also only considers
         quantization tuning configs to generate a better-performance quantized model.
@@ -39,17 +38,16 @@ class RandomTuneStrategy(TuneStrategy):
         """
         tuning_space = self.tuning_space
         op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
-        op_wise_tuning_sampler = OpWiseTuningSampler(tuning_space, [], [], 
-                                                            op_item_dtype_dict, initial_op_tuning_cfg)
+        op_wise_tuning_sampler = OpWiseTuningSampler(tuning_space, [], [], op_item_dtype_dict, initial_op_tuning_cfg)
         op_tuning_cfg_lst = list(op_wise_tuning_sampler)
         op_tuning_cfg_cnt = len(op_tuning_cfg_lst)
-        calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        calib_sampling_size_lst = tuning_space.root_item.get_option_by_name("calib_sampling_size").options
         calib_sampling_size_cnt = len(calib_sampling_size_lst)
         while True:
             calib_index = np.random.choice(calib_sampling_size_cnt)
             calib_sampling_size = calib_sampling_size_lst[calib_index]
             op_tuning_cfg_index = np.random.choice(op_tuning_cfg_cnt)
             op_tuning_cfg = op_tuning_cfg_lst[op_tuning_cfg_index]
-            op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+            op_tuning_cfg["calib_sampling_size"] = calib_sampling_size
             yield op_tuning_cfg
         return

@@ -20,7 +20,10 @@ Here is the full list of checkpoints on the hub that can be fine-tuned by this s
 https://huggingface.co/models?filter=text-generation
 """
 # You can also adapt this script on your own causal language modeling task. Pointers for this are left as comments.
-
+from accelerate.utils import set_seed
+set_seed(42)
+from accelerate import Accelerator, DistributedType
+from accelerate.logging import get_logger
 import argparse
 import json
 import logging
@@ -29,16 +32,13 @@ import os
 import sys
 sys.path.insert(0, './neural-compressor')
 sys.path.insert(0, './')
-
 import random
 from itertools import chain
 from pathlib import Path
 
 import datasets
 import torch
-from accelerate import Accelerator, DistributedType
-from accelerate.logging import get_logger
-from accelerate.utils import set_seed
+torch.use_deterministic_algorithms(True, warn_only=True)
 from datasets import load_dataset
 from huggingface_hub import Repository, create_repo
 from torch.utils.data import DataLoader
@@ -61,9 +61,8 @@ from transformers.utils.versions import require_version
 from neural_compressor.training import prepare_compression
 from neural_compressor.training import WeightPruningConfig
 from timers import CPUTimer, GPUTimer
-from neural_compressor.compression import model_slim
-from neural_compressor.compression import parse_auto_slim_config
-set_seed(42)
+from neural_compressor.compression.pruner import model_slim
+from neural_compressor.compression.pruner import parse_auto_slim_config
     
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.23.0.dev0")
@@ -96,13 +95,10 @@ class Evaluator:
         step = 0
         for input_ids, label, label_indices in tqdm(self.dataloader):
             with torch.no_grad():
-                # if step == 0:
-                #     model = torch.jit.trace(model, input_ids)
                 step += 1
                 # timing
                 if step > warmup_steps: my_timer.__enter__()
                 outputs = model(input_ids)
-                # outputs = model(input_ids, labels=label)
                 if step > warmup_steps: my_timer.__exit__()
                 last_token_logits = outputs[0][torch.arange(len(label_indices)), label_indices, :]
                 pred = last_token_logits.argmax(dim=-1)
@@ -169,14 +165,60 @@ class INCDataloader():
 
     def __len__(self):
         return self.length
+    
+    
+class Net(torch.nn.Module):
+    def __init__(self, ori_model):
+        super(Net, self).__init__()
+        self.model = ori_model
+    def forward(self, input_ids, mask, pastkv):
+        return self.model(input_ids=input_ids, attention_mask=mask, past_key_values=pastkv, return_dict=False)
+        
+def trace_model(model, tokenizer):
+    from optimum.utils import NormalizedConfigManager
+    normalized_config = NormalizedConfigManager.get_normalized_config_class(model.config.model_type)(model.config)
+    num_layers = normalized_config.num_layers
+    num_attention_heads = normalized_config.num_attention_heads
+    hidden_size = normalized_config.hidden_size
+    d_k = hidden_size // num_attention_heads
+    model_type = model.config.model_type
+    model = model.cpu()
+    model.eval()
+    prompt = "Once upon a time, there existed a little girl, who liked to have adventures." + \
+    " She wanted to go to places and meet new people, and have fun."
+    init_input_ids = tokenizer(prompt, return_tensors="pt").input_ids[0]
+    traced_model = None
+    if 'llama' in model_type:
+        input_ids = init_input_ids.clone().unsqueeze(0)
+        attention_mask = torch.ones(input_ids.shape)
+        past_key_value = tuple([(torch.zeros([1,32,34,128]), torch.zeros([1,32,34,128])) for i in range(32)])
+        if 'llama_13b' in model_type:
+            past_key_value = tuple([(torch.zeros([1,40,34,128]), torch.zeros([1,40,34,128])) for i in range(40)])
+        net = model
+        traced_model = torch.jit.trace(net, (input_ids, attention_mask, past_key_value))
+    else:
+        input_ids = init_input_ids.clone().unsqueeze(0)
+        attention_mask = torch.ones(input_ids.shape)
+        past_key_value = tuple([(torch.zeros([1,num_attention_heads,0,d_k]),
+                                    torch.zeros([1,num_attention_heads,0,d_k])) for i in range(num_layers)])
+        net = Net(model)
+        traced_model = torch.jit.trace(net, (input_ids, attention_mask, past_key_value))
+    return traced_model
+    
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Finetune a transformers model on a causal language modeling task")
     parser.add_argument(
-        "--dataset_name",
+        "--calibration_dataset_name",
         type=str,
         default=None,
-        help="The name of the dataset to use (via the datasets library).",
+        help="The name of the pruning dataset to use (via the datasets library).",
+    )
+    parser.add_argument(
+        "--evaluation_dataset_name",
+        type=str,
+        default=None,
+        help="The name of the evaluation dataset to use (via the datasets library).",
     )
     parser.add_argument(
         "--dataset_config_name",
@@ -231,31 +273,10 @@ def parse_args():
         help="Batch size (per device) for the evaluation dataloader.",
     )
     parser.add_argument(
-        "--learning_rate",
-        type=float,
-        default=5e-5,
-        help="Initial learning rate (after the potential warmup period) to use.",
-    )
-    parser.add_argument("--weight_decay", type=float, default=0.0, help="Weight decay to use.")
-    parser.add_argument("--num_train_epochs", type=int, default=3, help="Total number of training epochs to perform.")
-    parser.add_argument(
-        "--max_train_steps",
-        type=int,
-        default=None,
-        help="Total number of training steps to perform. If provided, overrides num_train_epochs.",
-    )
-    parser.add_argument(
         "--gradient_accumulation_steps",
         type=int,
         default=1,
         help="Number of updates steps to accumulate before performing a backward/update pass.",
-    )
-    parser.add_argument(
-        "--lr_scheduler_type",
-        type=SchedulerType,
-        default="linear",
-        help="The scheduler type to use.",
-        choices=["linear", "cosine", "cosine_with_restarts", "polynomial", "constant", "constant_with_warmup"],
     )
     parser.add_argument(
         "--num_warmup_steps", type=int, default=0, help="Number of steps for the warmup in the lr scheduler."
@@ -265,7 +286,7 @@ def parse_args():
     parser.add_argument(
         "--model_type",
         type=str,
-        default=None,
+        default=42,
         help="Model type to use if training from scratch.",
         choices=MODEL_TYPES,
     )
@@ -296,18 +317,6 @@ def parse_args():
         "--hub_model_id", type=str, help="The name of the repository to keep in sync with the local `output_dir`."
     )
     parser.add_argument("--hub_token", type=str, help="The token to use to push to the Model Hub.")
-    parser.add_argument(
-        "--checkpointing_steps",
-        type=str,
-        default=None,
-        help="Whether the various states should be saved at the end of every n steps, or 'epoch' for each epoch.",
-    )
-    parser.add_argument(
-        "--resume_from_checkpoint",
-        type=str,
-        default=None,
-        help="If the training should continue from a checkpoint folder.",
-    )
     parser.add_argument(
         "--with_tracking",
         action="store_true",
@@ -342,8 +351,14 @@ def parse_args():
         help="Whether or not to prune the model"
     )
     parser.add_argument(
+        "--max_pruning_steps",
+        type=int,
+        default=None,
+        help="Total number of pruning steps to perform. If provided",
+    )
+    parser.add_argument(
         "--pruning_pattern",
-        type=str, default="4x1",
+        type=str, default="channelx1",
         help="pruning pattern type, we support NxM and N:M."
     )
     parser.add_argument(
@@ -360,11 +375,19 @@ def parse_args():
         "--auto_slim", action="store_true",
         help="Whether or not to auto slim the model after pruning."
     )
-    
+    parser.add_argument(
+        "--auto_config", action="store_true",
+        help="Whether to automatically generate pruning configs."
+    )
+    parser.add_argument(
+        "--max_length",
+        type=int, default=2048,
+        help="Maximum data length the model can receive."
+    )
     args = parser.parse_args()
 
     # Sanity checks
-    if args.dataset_name is None and args.train_file is None and args.validation_file is None:
+    if args.calibration_dataset_name is None and args.train_file is None and args.validation_file is None:
         raise ValueError("Need either a dataset name or a training/validation file.")
     else:
         if args.train_file is not None:
@@ -412,8 +435,8 @@ def main():
         transformers.utils.logging.set_verbosity_error()
 
     # If passed along, set the training seed now.
-    if args.seed is not None:
-        set_seed(args.seed)
+    # if args.seed is not None: # Already set at the beginning of the file
+    #     set_seed(args.seed)
 
     # Handle the repository creation
     if accelerator.is_main_process:
@@ -443,18 +466,17 @@ def main():
     #
     # In distributed training, the load_dataset function guarantee that only one local process can concurrently
     # download the dataset.
-    if args.dataset_name is not None:
-        # Downloading and loading a dataset from the hub.
-        raw_datasets = load_dataset(args.dataset_name, args.dataset_config_name)
-        # raw_datasets = load_dataset(args.dataset_name, keep_in_memory=True)
+    if args.calibration_dataset_name is not None:
+        # Downloading and loading a dataset from the hub.i
+        raw_datasets = load_dataset(args.calibration_dataset_name, args.dataset_config_name)
         if "validation" not in raw_datasets.keys():
-            raw_datasets["validation"] = load_dataset(
-                args.dataset_name,
+            raw_datasets["validation"] = load_dataset( #use the_pile's validation set for retraining pruning
+                args.calibration_dataset_name,
                 args.dataset_config_name,
-                split=f"train[:{args.validation_split_percentage}%]",
+                split=f"train[:{args.validation_split_percentage}%]"
             )
             raw_datasets["train"] = load_dataset(
-                args.dataset_name,
+                args.calibration_dataset_name,
                 args.dataset_config_name,
                 split=f"train[{args.validation_split_percentage}%:]",
             )
@@ -497,16 +519,30 @@ def main():
     elif args.model_name_or_path:
         # torchscript will force `return_dict=False` to avoid jit errors
         config = AutoConfig.from_pretrained(args.model_name_or_path, torchscript=True)
+        # config = None
     else:
         config = CONFIG_MAPPING[args.model_type]()
         logger.warning("You are instantiating a new config instance from scratch.")
         
-    is_llama = bool("llama" in args.model_name_or_path)
+    if args.model_name_or_path:
+        model = AutoModelForCausalLM.from_pretrained(
+                args.model_name_or_path,
+                from_tf=bool(".ckpt" in args.model_name_or_path),
+                config=config,
+                low_cpu_mem_usage=args.low_cpu_mem_usage,
+                )
+    else:
+        logger.info("Training new model from scratch")
+        model = AutoModelForCausalLM.from_config(config)
+    
+    model_name = model.config.model_type
+    
     if args.tokenizer_name:
         tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name, use_fast=not args.use_slow_tokenizer)
     elif args.model_name_or_path:
-        if is_llama:
-            tokenizer = transformers.LlamaTokenizer.from_pretrained(args.model_name_or_path)
+        if 'llama' in model_name:
+            from transformers import LlamaTokenizer
+            tokenizer = LlamaTokenizer.from_pretrained(args.model_name_or_path)
         else :
             tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=not args.use_slow_tokenizer)
     else:
@@ -515,16 +551,7 @@ def main():
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
 
-    if args.model_name_or_path:
-        model = AutoModelForCausalLM.from_pretrained(
-            args.model_name_or_path,
-            from_tf=bool(".ckpt" in args.model_name_or_path),
-            config=config,
-            low_cpu_mem_usage=args.low_cpu_mem_usage,
-        )
-    else:
-        logger.info("Training new model from scratch")
-        model = AutoModelForCausalLM.from_config(config)
+    
 
     # We resize the embeddings only when necessary to avoid index errors. If you are creating a model from scratch
     # on a small vocab and want a smaller embedding size, remove this test.
@@ -538,8 +565,8 @@ def main():
     text_column_name = "text" if "text" in column_names else column_names[0]
 
     def tokenize_function(examples):
-        # return tokenizer(examples[text_column_name], max_length=512, truncation=True) #padding
-      return tokenizer(examples[text_column_name])
+        return tokenizer(examples[text_column_name], max_length=args.max_length, truncation=True) #padding
+    #   return tokenizer(examples[text_column_name])
     
 
     with accelerator.main_process_first():
@@ -601,7 +628,6 @@ def main():
             load_from_cache_file=not args.overwrite_cache,
             desc=f"Grouping texts in chunks of {block_size}",
         )
-
     train_dataset = lm_datasets["train"]
     eval_dataset = lm_datasets["validation"]
 
@@ -610,63 +636,24 @@ def main():
     #     logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
 
     # DataLoaders creation:
+    total_batch_size = args.per_device_train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
+    max_sample_num = args.max_pruning_steps * total_batch_size
+    train_dataset = train_dataset.shuffle(seed=42).select(range(max_sample_num))
     train_dataloader = DataLoader(
-        train_dataset, shuffle=True, collate_fn=default_data_collator, batch_size=args.per_device_train_batch_size
+        train_dataset, shuffle=False, collate_fn=default_data_collator, batch_size=args.per_device_train_batch_size
     )
-    eval_dataset = eval_dataset.shuffle(seed=42)
     eval_dataloader = DataLoader(
-        eval_dataset, collate_fn=default_data_collator, batch_size=args.per_device_eval_batch_size
+        eval_dataset, shuffle=False, collate_fn=default_data_collator, batch_size=args.per_device_eval_batch_size
     )
 
-    # Optimizer
-    # Split weights in two groups, one with weight decay and the other not.
-    no_decay = ["bias", "layer_norm.weight"]
-    optimizer_grouped_parameters = [
-        {
-            "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
-            "weight_decay": args.weight_decay,
-        },
-        {
-            "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
-            "weight_decay": 0.0,
-        },
-    ]
-    optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
-
-    # Scheduler and math around the number of training steps.
-    overrode_max_train_steps = False
-    num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
-    if args.max_train_steps is None:
-        args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
-        overrode_max_train_steps = True
-
-    lr_scheduler = get_scheduler(
-        name=args.lr_scheduler_type,
-        optimizer=optimizer,
-        num_warmup_steps=args.num_warmup_steps * args.gradient_accumulation_steps,
-        num_training_steps=args.max_train_steps * args.gradient_accumulation_steps,
-    )
-    # eval_dataloader = eval_dataloader.shuffle(seed=42)
     # Prepare everything with our `accelerator`.
-    model, optimizer, train_dataloader, eval_dataloader, lr_scheduler = accelerator.prepare(
-        model, optimizer, train_dataloader, eval_dataloader, lr_scheduler
+    model, train_dataloader, eval_dataloader = accelerator.prepare(
+        model, train_dataloader, eval_dataloader
     )
 
     # On TPU, the tie weights in our model have been disconnected, so we need to restore the ties.
     if accelerator.distributed_type == DistributedType.TPU:
         model.tie_weights()
-
-    # We need to recalculate our total training steps as the size of the training dataloader may have changed.
-    num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
-    if overrode_max_train_steps:
-        args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
-    # Afterwards we recalculate our number of training epochs
-    args.num_train_epochs = math.ceil(args.max_train_steps / num_update_steps_per_epoch)
-
-    # Figure out how many steps we should save the Accelerator states
-    checkpointing_steps = args.checkpointing_steps
-    if checkpointing_steps is not None and checkpointing_steps.isdigit():
-        checkpointing_steps = int(checkpointing_steps)
 
     # We need to initialize the trackers we use, and also store our configuration.
     # The trackers initializes automatically on the main process.
@@ -676,222 +663,99 @@ def main():
         experiment_config["lr_scheduler_type"] = experiment_config["lr_scheduler_type"].value
         accelerator.init_trackers("clm_no_trainer", experiment_config)
 
-    # Train!
-    total_batch_size = args.per_device_train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
-
-    logger.info("***** Running training *****")
+    # Pruning!
+    logger.info("***** Running Pruning *****")
     logger.info(f"  Num examples = {len(train_dataset)}")
-    logger.info(f"  Num Epochs = {args.num_train_epochs}")
     logger.info(f"  Instantaneous batch size per device = {args.per_device_train_batch_size}")
     logger.info(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
     logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
-    logger.info(f"  Total optimization steps = {args.max_train_steps}")
-    # Only show the progress bar once on each machine.
-    progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
-    completed_steps = 0
-    starting_epoch = 0
-
-    # Potentially load in the weights and states from a previous save
-    if args.resume_from_checkpoint:
-        if args.resume_from_checkpoint is not None or args.resume_from_checkpoint != "":
-            accelerator.print(f"Resumed from checkpoint: {args.resume_from_checkpoint}")
-            accelerator.load_state(args.resume_from_checkpoint)
-            path = os.path.basename(args.resume_from_checkpoint)
-        else:
-            # Get the most recent checkpoint
-            dirs = [f.name for f in os.scandir(os.getcwd()) if f.is_dir()]
-            dirs.sort(key=os.path.getctime)
-            path = dirs[-1]  # Sorts folders by date modified, most recent checkpoint is the last
-        # Extract `epoch_{i}` or `step_{i}`
-        training_difference = os.path.splitext(path)[0]
-
-        if "epoch" in training_difference:
-            starting_epoch = int(training_difference.replace("epoch_", "")) + 1
-            resume_step = None
-        else:
-            # need to multiply `gradient_accumulation_steps` to reflect real steps
-            resume_step = int(training_difference.replace("step_", "")) * args.gradient_accumulation_steps
-            starting_epoch = resume_step // len(train_dataloader)
-            resume_step -= starting_epoch * len(train_dataloader)
-
-    # update the progress_bar if load from checkpoint
-    progress_bar.update(starting_epoch * num_update_steps_per_epoch)
-    completed_steps = starting_epoch * num_update_steps_per_epoch
+    logger.info(f"  Total pruning steps = {args.max_pruning_steps}")
 
     # Pruning preparation 
+    num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
     num_iterations = num_update_steps_per_epoch
     num_warm = args.num_warmup_steps
-    total_iterations = args.max_train_steps
+    total_iterations = args.max_pruning_steps
     frequency = int((total_iterations - num_warm + 1) / 40) if args.pruning_frequency == -1 \
                                                            else args.pruning_frequency
     pruning_start = max(num_warm, 1)
-    pruning_end = total_iterations
+    pruning_end = max(total_iterations - 1, pruning_start)
     if not args.do_prune:
-        pruning_start = num_iterations * args.num_train_epochs + 1
+        pruning_start = args.max_pruning_steps + 1
         pruning_end = pruning_start
         
-    if is_llama or not args.auto_slim:
+    if not args.auto_config:
         pruning_configs=[
             {
                 "pruning_type": "retrain_free",
                 "pruning_scope": "global",
-                # "op_names": ["fc_out"], #for gptj
-                # "op_names": ["down_proj"], #for llama
-                "op_names": ["fc2"], #for opt
+                "op_names": ['.fc', '.mlp'],
                 "excluded_op_names": [".attn"],
                 "sparsity_decay_type": "exp",
                 "pattern": "channelx1",
                 "pruning_op_types": ["Linear"],
                 "max_sparsity_ratio_per_op": 0.98,
-            }
+            },
         ]
     else:
-        # auto slim config
+        # auto config
         pruning_configs=[]
-        auto_slim_configs = parse_auto_slim_config(
+        auto_configs = parse_auto_slim_config(
             model,
             ffn2_sparsity = args.target_sparsity,
             mha_sparsity = 0,
             pruning_scope = "global",
             pruning_type = "retrain_free",
         )
-        pruning_configs += auto_slim_configs
+        pruning_configs += auto_configs
         
     configs = WeightPruningConfig(
         pruning_configs,
         target_sparsity=args.target_sparsity,
-        # pattern=args.pruning_pattern,
+        pattern=args.pruning_pattern,
         pruning_frequency=frequency,
         start_step=pruning_start,
         end_step=pruning_end,
     )
-    compression_manager = prepare_compression(model=model, confs=configs)
-    compression_manager.callbacks.on_train_begin()
-    model = compression_manager.model.model
     
-    for epoch in range(starting_epoch, args.num_train_epochs):
-        # model.train()
-        model.eval()
-        if args.with_tracking:
-            total_loss = 0
-        for step, batch in enumerate(train_dataloader):
-            # We need to skip steps until we reach the resumed step
-            if args.resume_from_checkpoint and epoch == starting_epoch:
-                if resume_step is not None and step < resume_step:
-                    if step % args.gradient_accumulation_steps == 0:
-                        progress_bar.update(1)
-                        completed_steps += 1
-                    continue
-            compression_manager.callbacks.on_step_begin(step)
-            with accelerator.accumulate(model):
-                outputs = model(return_dict=True, **batch)
-                # outputs = model(**batch)
-                loss = outputs.loss
-                # We keep track of the loss at each epoch
-                if args.with_tracking:
-                    total_loss += loss.detach().float()
-                accelerator.backward(loss)
-                compression_manager.callbacks.on_before_optimizer_step()
-                # optimizer.step()
-                compression_manager.callbacks.on_after_optimizer_step()
-                # lr_scheduler.step()
-                optimizer.zero_grad()
-
-            # Checks if the accelerator has performed an optimization step behind the scenes
-            if accelerator.sync_gradients:
-                progress_bar.update(1)
-                completed_steps += 1
-
-            if isinstance(checkpointing_steps, int):
-                if completed_steps % checkpointing_steps == 0:
-                    output_dir = f"step_{completed_steps}"
-                    if args.output_dir is not None:
-                        output_dir = os.path.join(args.output_dir, output_dir)
-                    accelerator.save_state(output_dir)
-            if completed_steps >= args.max_train_steps:
-                break
-
-        model.eval()
+    from neural_compressor.training import prepare_pruning
+    pruning = prepare_pruning(model, configs, dataloader=train_dataloader)
+    
+    model.eval()
+    if args.evaluation_dataset_name != None:
+        dataset_eval = load_dataset( # for example:use the_pile's validation set for retraining-free pruning, and lambada dataset for eval
+            args.evaluation_dataset_name,
+            args.dataset_config_name,
+            split=f"validation",
+        )
+    else:      
         dataset_eval = raw_datasets["validation"]
-        evaluator = Evaluator(dataset_eval, tokenizer, model.device, batch_size=args.per_device_eval_batch_size)
-        def eval_func(model):
-            acc, avg_latency = evaluator.evaluate(model)
-            return acc, avg_latency
-        
-        # losses = []
-        # total, hit = 0, 0
-        # for step, batch in enumerate(eval_dataloader):
-        #     with torch.no_grad():
-        #         # labels = batch['labels']
-        #         input_ids = batch['input_ids']
-        #         labels = input_ids[:, -1].to(input_ids.device)
-        #         outputs = model(return_dict=True, **batch)
-        #         # outputs = model(**batch)
-        #         last_token_logits = outputs['logits'][:,-2,:]
-        #         # last_token_logits = outputs['logits']
-        #         pred = last_token_logits.argmax(dim=-1)
-        #         total += labels.size(0)
-        #         hit += (pred == labels).sum().item()
+    dataset_eval = dataset_eval.shuffle(seed=42)
+    evaluator = Evaluator(dataset_eval, tokenizer, model.device, batch_size=args.per_device_eval_batch_size)
+    
+    def eval_func(model):
+        acc, avg_latency = evaluator.evaluate(model)
+        return acc, avg_latency
 
-        #     loss = outputs.loss
-        #     losses.append(accelerator.gather_for_metrics(loss.repeat(args.per_device_eval_batch_size)))
-            
-        # acc = hit / total
-        # losses = torch.cat(losses)
-        # try:
-        #     eval_loss = torch.mean(losses)
-        #     perplexity = math.exp(eval_loss)
-        # except OverflowError:
-        #     perplexity = float("inf")
-
-        # logger.info(f"epoch {epoch}: perplexity: {perplexity} eval_loss: {eval_loss} accuracy:{acc}")
-        # if args.with_tracking:
-        #     accelerator.log(
-        #         {
-        #             "perplexity": perplexity,
-        #             "eval_loss": eval_loss,
-        #             "train_loss": total_loss.item() / len(train_dataloader),
-        #             "epoch": epoch,
-        #             "step": completed_steps,
-        #         },
-        #         step=completed_steps,
-        #     )
-
-        if args.push_to_hub and epoch < args.num_train_epochs - 1:
-            accelerator.wait_for_everyone()
-            unwrapped_model = accelerator.unwrap_model(model)
-            unwrapped_model.save_pretrained(
-                args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
-            )
-            if accelerator.is_main_process:
-                tokenizer.save_pretrained(args.output_dir)
-                repo.push_to_hub(
-                    commit_message=f"Training in progress epoch {epoch}", blocking=False, auto_lfs_prune=True
-                )
-
-        if args.checkpointing_steps == "epoch":
-            output_dir = f"epoch_{epoch}"
-            if args.output_dir is not None:
-                output_dir = os.path.join(args.output_dir, output_dir)
-            accelerator.save_state(output_dir)
-
-    compression_manager.callbacks.on_train_end()
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
         unwrapped_model = accelerator.unwrap_model(model)
+        output_dir = args.output_dir
+        if args.auto_slim:
+            output_dir += "/before_slim"
         unwrapped_model.save_pretrained(
-            args.output_dir+"_noslim", is_main_process=accelerator.is_main_process, save_function=accelerator.save
+            output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
         )
         if accelerator.is_main_process:
-            tokenizer.save_pretrained(args.output_dir+"_noslim")
+            tokenizer.save_pretrained(output_dir)
             if args.push_to_hub:
-                repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
+                repo.push_to_hub(commit_message="End of pruning", auto_lfs_prune=True)
     
-    if is_llama or not args.auto_slim:
+    if not args.auto_slim:
         # only eval
         logger.info(f"***** Running Evaluation *****")
         acc, _ = eval_func(model)
-        logger.info(f"total_steps:{completed_steps} accuracy:{acc}")
+        logger.info(f"total_steps:{args.max_pruning_steps} accuracy:{acc}")
     else:
         logger.info(f"***** Running Evaluation before ffn auto slim*****")
         accuracy, avg_latency = eval_func(model)
@@ -901,24 +765,22 @@ def main():
         logger.info(f"***** Running Evaluation after ffn auto_slim*****")
         accuracy, avg_latency = eval_func(model)
         logger.info(f"accuracy:{accuracy}  avg_latency:{avg_latency}")
+        
+        if args.output_dir is not None:
+            accelerator.wait_for_everyone()
+            try:
+                traced_model = trace_model(model, tokenizer)
+                logger.info(f"Saving silmed jit model")
+                torch.jit.save(traced_model, args.output_dir+"/slimed_jit_model.pt")
+            except:
+                logger.info(f"Trace on **{model_name}** is not supported yet.")
+            
     
     if args.with_tracking:
         accelerator.end_training()
 
-    if args.output_dir is not None:
-        accelerator.wait_for_everyone()
-        unwrapped_model = accelerator.unwrap_model(model)
-        unwrapped_model.save_pretrained(
-            args.output_dir+"_slimed", is_main_process=accelerator.is_main_process, save_function=accelerator.save
-        )
-        if accelerator.is_main_process:
-            tokenizer.save_pretrained(args.output_dir+"_slimed")
-            if args.push_to_hub:
-                repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
-
-            # with open(os.path.join(args.output_dir, "all_results.json"), "w") as f:
-            #     json.dump({"perplexity": perplexity}, f)
-
 
 if __name__ == "__main__":
     main()
+
+

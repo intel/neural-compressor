@@ -1,4 +1,4 @@
-"""scheduler module."""
+"""Scheduler module."""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -18,15 +18,18 @@
 
 import math
 
+from deprecated import deprecated
+
 SCHEDULERS = {}
 
 
+@deprecated(version="2.0")
 def register_scheduler(name):
     """Class decorator used to register a Scheduler subclass to the registry.
 
     Decorator function used before a Scheduler subclass.
     Make sure that the Scheduler class decorated by this function can be registered in SCHEDULERS.
-    
+
     Args:
         cls (class): The class of register.
         name: A string. Define the scheduler type.
@@ -42,6 +45,7 @@ def register_scheduler(name):
     return register
 
 
+@deprecated(version="2.0")
 def get_scheduler(config):
     """Get registered scheduler class.
 
@@ -59,6 +63,7 @@ def get_scheduler(config):
     return SCHEDULERS[name](config)
 
 
+@deprecated(version="2.0")
 class Scheduler:
     """Pruning Scheduler.
 
@@ -83,7 +88,8 @@ class Scheduler:
         raise NotImplementedError
 
 
-@register_scheduler('oneshot')
+@deprecated(version="2.0")
+@register_scheduler("oneshot")
 class OneshotScheduler(Scheduler):
     """Pruning Scheduler.
 
@@ -106,7 +112,8 @@ class OneshotScheduler(Scheduler):
         return aggressive_ratio
 
 
-@register_scheduler('iterative')
+@deprecated(version="2.0")
+@register_scheduler("iterative")
 class IterativeScheduler(Scheduler):
     """Pruning Scheduler.
 
@@ -133,24 +140,24 @@ class IterativeScheduler(Scheduler):
             current_prune_step: A integer. The current pruning step.
             total_prune_steps: A integer. The total steps included in the pruning progress.
             masks: A dict{"module_name": Tensor}. The masks for modules' weights.
-        
-        Returns：
+
+        Returns:
             A float. the target sparsity ratio the model will reach after the next pruning step.
         """
         aggressive_ratio = target_ratio
         # if self.config.prune_domain == "global":
         #     aggressive_ratio += 0.02
 
-        aggressive_ratio = min(self.config.max_sparsity_ratio_per_layer,
-                               aggressive_ratio)  ##lagacy issue
+        aggressive_ratio = min(self.config.max_sparsity_ratio_per_layer, aggressive_ratio)  # legacy issue
 
         decay_type = self.config.sparsity_decay_type
         if decay_type == "cos":
             current_target_sparsity = (aggressive_ratio) * (
-                    1.0 - math.cos(float(current_prune_step) / total_prune_steps * (math.pi / 2)))
+                1.0 - math.cos(float(current_prune_step) / total_prune_steps * (math.pi / 2))
+            )
         elif decay_type == "exp":
             target_dense_change_ratio = (1.0 - aggressive_ratio) ** (1 / total_prune_steps)
-            current_target_sparsity = 1.0 - target_dense_change_ratio ** current_prune_step
+            current_target_sparsity = 1.0 - target_dense_change_ratio**current_prune_step
 
         elif decay_type == "linear":
             current_target_sparsity = (aggressive_ratio) * float(current_prune_step) / total_prune_steps

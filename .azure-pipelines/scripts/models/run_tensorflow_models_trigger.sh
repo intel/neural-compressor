@@ -22,7 +22,7 @@ do
 done
 
 FRAMEWORK="tensorflow"
-FRAMEWORK_VERSION="2.10.0"
+FRAMEWORK_VERSION="2.13.0"
 
 inc_new_api=false
 # ======== set up config for tensorflow models ========
@@ -32,7 +32,7 @@ if [ "${model}" == "resnet50v1.5" ]; then
     input_model="/tf_dataset/pre-trained-models/resnet50v1_5/fp32/resnet50_v1.pb"
     new_benchmark=true
     inc_new_api=true
-    tuning_cmd="bash run_tuning.sh --dataset_location=${dataset_location} --input_model=${input_model}"
+    tuning_cmd="bash run_quant.sh --dataset_location=${dataset_location} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --dataset_location=${dataset_location} --batch_size=1 --mode=performance"
 elif [ "${model}" == "ssd_resnet50_v1" ];then
     model_src_dir="object_detection/tensorflow_models/ssd_resnet50_v1/quantization/ptq"
@@ -40,7 +40,7 @@ elif [ "${model}" == "ssd_resnet50_v1" ];then
     input_model="/tf_dataset/pre-train-model-oob/object_detection/ssd_resnet50_v1/frozen_inference_graph.pb"
     new_benchmark=true
     inc_new_api=true
-    tuning_cmd="bash run_tuning.sh --dataset_location=${dataset_location} --input_model=${input_model}"
+    tuning_cmd="bash run_quant.sh --dataset_location=${dataset_location} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --dataset_location=${dataset_location} --batch_size=1 --mode=performance"
 elif [ "${model}" == "ssd_mobilenet_v1_ckpt" ];then
     model_src_dir="object_detection/tensorflow_models/ssd_mobilenet_v1/quantization/ptq"
@@ -48,7 +48,7 @@ elif [ "${model}" == "ssd_mobilenet_v1_ckpt" ];then
     input_model="/tf_dataset/pre-train-model-oob/object_detection/ssd_mobilenet_v1"
     new_benchmark=true
     inc_new_api=true
-    tuning_cmd="bash run_tuning.sh --dataset_location=${dataset_location} --input_model=${input_model}"
+    tuning_cmd="bash run_quant.sh --dataset_location=${dataset_location} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --dataset_location=${dataset_location} --batch_size=1 --mode=performance"
 elif [ "${model}" == "inception_v1" ]; then
     model_src_dir="image_recognition/tensorflow_models/quantization/ptq"
@@ -69,7 +69,7 @@ elif [ "${model}" == "darknet19" ]; then
     batch_size=1
     new_benchmark=false
     inc_new_api=true
-    tuning_cmd="bash run_tuning.sh --topology=${model} --input_model=${input_model}"
+    tuning_cmd="bash run_quant.sh --topology=${model} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --topology=${model} --mode=performance --batch_size=1 --iters=500"
 elif [ "${model}" == "densenet-121" ]; then
     model_src_dir="oob_models/quantization/ptq"
@@ -80,7 +80,7 @@ elif [ "${model}" == "densenet-121" ]; then
     batch_size=1
     new_benchmark=false
     inc_new_api=true
-    tuning_cmd="bash run_tuning.sh --topology=${model} --input_model=${input_model}"
+    tuning_cmd="bash run_quant.sh --topology=${model} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --topology=${model} --mode=performance --batch_size=1 --iters=500"
 elif [ "${model}" == "resnet-101" ]; then
     model_src_dir="oob_models/quantization/ptq"
@@ -91,7 +91,7 @@ elif [ "${model}" == "resnet-101" ]; then
     batch_size=1
     new_benchmark=false
     inc_new_api=true
-    tuning_cmd="bash run_tuning.sh --topology=${model} --input_model=${input_model}"
+    tuning_cmd="bash run_quant.sh --topology=${model} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --topology=${model} --mode=performance --batch_size=1 --iters=500"
 fi
 

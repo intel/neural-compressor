@@ -34,20 +34,23 @@ cd ssd_mobilenet_v1/quantization/ptq
 
 ### Install Intel Extension for Tensorflow
 
-#### Quantizing the model on Intel GPU
+#### Quantizing the model on Intel GPU(Mandatory to install ITEX)
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
-pip install --upgrade intel-extension-for-tensorflow[gpu]
+pip install --upgrade intel-extension-for-tensorflow[xpu]
 ```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_xpu.md#install-gpu-drivers)
 
-#### Quantizing the model on Intel CPU(Experimental)
+#### Quantizing the model on Intel CPU(Optional to install ITEX)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
+
+> **Note**: 
+> The version compatibility of stock Tensorflow and ITEX can be checked [here](https://github.com/intel/intel-extension-for-tensorflow#compatibility-table). Please make sure you have installed compatible Tensorflow and ITEX.
 
 ## 2. Prepare Model
 
@@ -100,19 +103,31 @@ Download CoCo Dataset from [Official Website](https://cocodataset.org/#download)
 
 Now we support both pb and ckpt formats.
 
-## 1. Tune
+## Quantization Config
+
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    ...
+    )
+```
+
+## 1. Quantization
 ### For PB format
   
   ```shell
   # The cmd of running ssd_mobilenet_v1
-  bash run_tuning.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28/frozen_inference_graph.pb --output_model=./tensorflow-ssd_mobilenet_v1-tune.pb --dataset_location=/path/to/dataset/coco_val.record
+  bash run_quant.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28/frozen_inference_graph.pb --output_model=./tensorflow-ssd_mobilenet_v1-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
 ### For ckpt format
   
   ```shell
   # The cmd of running ssd_mobilenet_v1
-  bash run_tuning.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28/ --output_model=./tensorflow-ssd_mobilenet_v1-tune.pb --dataset_location=/path/to/dataset/coco_val.record
+  bash run_quant.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28/ --output_model=./tensorflow-ssd_mobilenet_v1-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
 ## 2. Benchmark

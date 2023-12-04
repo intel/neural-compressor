@@ -1,1 +1,2 @@
-tensorflow
+intel-tensorflow>=2.12.0
+protobuf!=4.24.0

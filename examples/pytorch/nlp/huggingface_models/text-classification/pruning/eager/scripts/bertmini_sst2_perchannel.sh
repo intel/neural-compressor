@@ -11,7 +11,7 @@ set -x
         --num_train_epochs 15 \
         --weight_decay 5e-5   \
         --cooldown_epochs 5 \
-        --sparsity_warm_epochs 0 \
+        --sparsity_warm_epochs 1 \
         --lr_scheduler_type "constant" \
         --do_prune \
         --pruning_type "snip_momentum_progressive" \

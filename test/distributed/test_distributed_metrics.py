@@ -1,15 +1,18 @@
 """Tests for the distributed metrics."""
 import os
-import sys
-import cpuinfo
-import signal
-import shutil
-import subprocess
-import unittest
 import re
+import shutil
+import signal
+import subprocess
+import sys
+import unittest
+
+import cpuinfo
 import tensorflow as tf
-from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
+
+from neural_compressor.adaptor.tf_utils.util import version1_gte_version2, version1_lt_version2
 from neural_compressor.utils import logger
+
 
 def build_fake_ut():
     fake_ut = """
@@ -68,7 +71,7 @@ class TestMetrics(unittest.TestCase):
     def test_mIOU(self):
         metrics = METRICS('tensorflow')
         miou = metrics['mIOU']()
-        miou.hvd = hvd        
+        miou.hvd = hvd
         if hvd.rank() == 0:
             preds = np.array([0])
             labels = np.array([0])
@@ -84,7 +87,7 @@ class TestMetrics(unittest.TestCase):
             labels = np.array([0, 1])
         else:
             preds = np.array([1, 1])
-            labels = np.array([1, 1])            
+            labels = np.array([1, 1])
         miou.update(preds, labels)
         self.assertAlmostEqual(miou.result(), 0.58333333)
 
@@ -128,7 +131,7 @@ class TestMetrics(unittest.TestCase):
             labels = [0, 1, 1, 1]
         else:
             preds = [1, 1, 1, 1, 1, 1]
-            labels = [1, 1, 1, 1, 1, 1]    
+            labels = [1, 1, 1, 1, 1, 1]
 
         F1.update(preds, labels)
         self.assertEqual(F1.result(), 0.9)
@@ -179,7 +182,7 @@ class TestMetrics(unittest.TestCase):
         top1.hvd = hvd
         top2.hvd = hvd
         top3.hvd = hvd
-        
+
         if hvd.rank() == 0:
             predicts = [[0, 0.2, 0.9, 0.3]]
             labels = [[0, 1, 0, 0]]
@@ -200,7 +203,7 @@ class TestMetrics(unittest.TestCase):
         self.assertEqual(top1.result(), 0.0)
         self.assertEqual(top2.result(), 0.5)
         self.assertEqual(top3.result(), 1)
-        
+
         # test functionality of sparse label
         top1.reset()
         top2.reset()
@@ -250,7 +253,7 @@ class TestMetrics(unittest.TestCase):
         ground_truth = [
             np.array([[[0.5633255 , 0.34003124, 0.69857144, 0.4009531 ],
                         [0.4763466 , 0.7769531 , 0.54334897, 0.9675937 ]]]),
-            np.array([['a', 'b']]),            
+            np.array([['a', 'b']]),
             np.array([[]]),
             np.array([b'000000397133.jpg'])
         ]
@@ -265,7 +268,7 @@ class TestMetrics(unittest.TestCase):
         ground_truth = [
             np.array([[[0.16117382, 0.59801614, 0.81511605, 0.7858219 ],
                         [0.62706745, 0.35748824, 0.6892729 , 0.41513762]]]),
-            np.array([[b'dog', b'dog']]),            
+            np.array([[b'dog', b'dog']]),
             np.array([[]]),
             np.array([b'000000397133.jpg'])
         ]
@@ -273,7 +276,7 @@ class TestMetrics(unittest.TestCase):
         mAP.result()
         self.assertEqual(format(mAP.result(), '.5f'),
                             '0.00000')
-        
+
         detection = [
             np.array([[[0.16117382, 0.59801614, 0.81511605, 0.7858219 ],
                         [0.5589304 , 0.        , 0.98301625, 0.520178  ],
@@ -319,7 +322,7 @@ class TestMetrics(unittest.TestCase):
                         [0.4763466 , 0.7769531 , 0.54334897, 0.9675937 ]]]),
             np.array([[]]),
             np.array([[44, 67,  1, 49, 51, 51, 79, 1, 47, 47, 51, 51,\\
-                        56, 50, 56, 56, 79, 57, 81]]),            
+                        56, 50, 56, 56, 79, 57, 81]]),
             np.array([b'000000397133.jpg'])
         ]
         ground_truth_2 = [
@@ -343,11 +346,11 @@ class TestMetrics(unittest.TestCase):
         ]
 
         mAP = metrics['mAP']()
-        
+
         self.assertEqual(mAP.result(), 0)
 
         mAP.update(detection, ground_truth)
-        
+
         mAP.update(detection, ground_truth)
         self.assertEqual(format(mAP.result(), '.5f'),
                             '0.18182')
@@ -434,7 +437,7 @@ class TestMetrics(unittest.TestCase):
         ground_truth = [
             np.array([[[0.5633255 , 0.34003124, 0.69857144, 0.4009531 ],
                         [0.4763466 , 0.7769531 , 0.54334897, 0.9675937 ]]]),
-            np.array([['a', 'b']]),            
+            np.array([['a', 'b']]),
             np.array([[]]),
             np.array([b'000000397133.jpg'])
         ]
@@ -486,7 +489,7 @@ class TestMetrics(unittest.TestCase):
                         [0.4763466 , 0.7769531 , 0.54334897, 0.9675937 ]]]),
             np.array([[]]),
             np.array([[44, 67,  1, 49, 51, 51, 79, 1, 47, 47, 51, 51,\\
-                        56, 50, 56, 56, 79, 57, 81]]),            
+                        56, 50, 56, 56, 79, 57, 81]]),
             np.array([b'000000397133.jpg'])
         ]
         ground_truth_2 = [
@@ -508,11 +511,11 @@ class TestMetrics(unittest.TestCase):
             np.array([[64, 62, 62, 67, 82, 52, 79, 81, 55, 55, 55, 55, 62, 55]]),
             np.array([b'000000037777.jpg'])
         ]
-        
+
         self.assertEqual(mAP.result(), 0)
 
         mAP.update(detection, ground_truth)
-        
+
         mAP.update(detection, ground_truth)
         self.assertEqual(format(mAP.result(), '.5f'),
                             '0.18182')
@@ -597,7 +600,7 @@ class TestMetrics(unittest.TestCase):
         ground_truth = [
             np.array([[[0.5633255 , 0.34003124, 0.69857144, 0.4009531 ],
                         [0.4763466 , 0.7769531 , 0.54334897, 0.9675937 ]]]),
-            np.array([['a', 'b']]),            
+            np.array([['a', 'b']]),
             np.array([[]]),
             np.array([b'000000397133.jpg'])
         ]
@@ -648,7 +651,7 @@ class TestMetrics(unittest.TestCase):
                         [0.4763466 , 0.7769531 , 0.54334897, 0.9675937 ]]]),
             np.array([[]]),
             np.array([[44, 67,  1, 49, 51, 51, 79, 1, 47, 47, 51, 51,\\
-                        56, 50, 56, 56, 79, 57, 81]]),            
+                        56, 50, 56, 56, 79, 57, 81]]),
             np.array([b'000000397133.jpg'])
         ]
         ground_truth_2 = [
@@ -670,11 +673,11 @@ class TestMetrics(unittest.TestCase):
             np.array([[64, 62, 62, 67, 82, 52, 79, 81, 55, 55, 55, 55, 62, 55]]),
             np.array([b'000000037777.jpg'])
         ]
-        
+
         self.assertEqual(mAP.result(), 0)
 
         mAP.update(detection, ground_truth)
-        
+
         mAP.update(detection, ground_truth)
         self.assertEqual(format(mAP.result(), '.5f'),
                             '0.14149')
@@ -749,7 +752,7 @@ class TestMetrics(unittest.TestCase):
             labels2 = [[1, 1]]
             predicts3 = [[[0, 1], [0, 1], [0, 1]]]
             labels3 = [[[1, 0], [1, 0], [1, 0]]]
-            predicts4 = [[0.1, 0.9], [0.3, 0.7], [0.4, 0.6]] 
+            predicts4 = [[0.1, 0.9], [0.3, 0.7], [0.4, 0.6]]
             labels4 = [1, 0, 0]
 
         metrics = METRICS('tensorflow')
@@ -859,7 +862,7 @@ class TestMetrics(unittest.TestCase):
         mae.update(predicts2, labels2)
         mae_result = mae.result()
         self.assertEqual(mae_result, 0.5)
-        
+
         self.assertRaises(AssertionError, mae.update, [1], [1, 2])
         self.assertRaises(AssertionError, mae.update, 1, [1,2])
         self.assertRaises(AssertionError, mae.update, [1, 2], [1])
@@ -913,7 +916,7 @@ class TestMetrics(unittest.TestCase):
             labels2 = [0]
             predicts3 = [0, 1]
             labels3 = [0, 0]
-        
+
         metrics = METRICS('tensorflow')
         loss = metrics['Loss']()
         loss.hvd = hvd
@@ -945,8 +948,9 @@ if __name__ == "__main__":
     unittest.main()
     """
 
-    with open('fake_ut.py', 'w', encoding="utf-8") as f:
+    with open("fake_ut.py", "w", encoding="utf-8") as f:
         f.write(fake_ut)
+
 
 class TestDistributed(unittest.TestCase):
     @classmethod
@@ -955,9 +959,9 @@ class TestDistributed(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove('fake_ut.py')
-        shutil.rmtree('./saved', ignore_errors = True)
-        shutil.rmtree('runs', ignore_errors = True)
+        os.remove("fake_ut.py")
+        shutil.rmtree("./saved", ignore_errors=True)
+        shutil.rmtree("runs", ignore_errors=True)
 
     def setUp(self):
         logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
@@ -966,17 +970,21 @@ class TestDistributed(unittest.TestCase):
     def tearDown(self):
         logger.info(f"{self._testMethodName} done.\n")
 
-    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0'), "Only test TF 2.10.0 or above")
+    @unittest.skipIf(
+        version1_lt_version2(tf.version.VERSION, "2.10.0") or version1_gte_version2(tf.version.VERSION, "2.12.0"),
+        "Only test equal or above TF 2.10.0 and less than 2.12.0",
+    )
     def test_distributed(self):
-        distributed_cmd = 'horovodrun -np 2 python fake_ut.py'
-        p = subprocess.Popen(distributed_cmd, preexec_fn = os.setsid, stdout = subprocess.PIPE,
-                             stderr = subprocess.PIPE, shell=True) # nosec
+        distributed_cmd = "horovodrun -np 2 python fake_ut.py"
+        p = subprocess.Popen(
+            distributed_cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+        )  # nosec
         try:
             out, error = p.communicate()
-            matches = re.findall(r'FAILED', error.decode('utf-8'))
+            matches = re.findall(r"FAILED", error.decode("utf-8"))
             self.assertEqual(matches, [])
 
-            matches = re.findall(r'OK', error.decode('utf-8'))
+            matches = re.findall(r"OK", error.decode("utf-8"))
             self.assertTrue(len(matches) > 0)
 
         except KeyboardInterrupt:

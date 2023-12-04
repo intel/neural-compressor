@@ -46,7 +46,7 @@ from transformers import (
 )
 from transformers.file_utils import get_full_repo_name
 from transformers.utils.versions import require_version
-from neural_compressor.training import prepare_pruning,WeightPruningConfig
+from neural_compressor import WeightPruningConfig
 
 logger = logging.getLogger(__name__)
 
@@ -528,7 +528,8 @@ def main():
     # pruner.on_train_begin()
     # compression_manager = prepare_compression(model=model, confs=configs)
     # compression_manager.callbacks.on_train_begin()
-    prepare_pruning(configs, model, optimizer)
+    from neural_compressor.compression.pruner import prepare_pruning
+    prepare_pruning(model, configs, optimizer)
 
     for epoch in range(args.num_train_epochs):
         model.train()
@@ -632,5 +633,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 

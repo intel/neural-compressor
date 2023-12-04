@@ -45,7 +45,7 @@
                     'scheme': ['asym'],
                     'granularity': ['per_channel', 'per_tensor'],
                     'algorithm': ['minmax']
-                    }, 
+                    },
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QDQ', 'QLinear']
       },
@@ -55,7 +55,7 @@
                     'scheme': ['sym'],
                     'granularity': ['per_tensor'],
                     'algorithm': ['minmax']
-                    }, 
+                    },
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QDQ', 'QLinear']
       },
@@ -69,7 +69,7 @@
         'activation': *uint8_asym_pertensor_minmax,
         'mode': ['QLinear']
       },
-      'Relu': *default_static_qlinear_qdq, 
+      'Relu': *default_static_qlinear_qdq,
       'Clip': *default_static_qlinear_qdq,
       'LeakyRelu': *default_static_qlinear_qdq,
       'Sigmoid': *default_static_qlinear_qdq,
@@ -99,7 +99,12 @@
   }
   fp16: &common_fp16 ['Concat', 'Gather', 'Reshape', 'Squeeze', 'Transpose', 'Unsqueeze',
     'EmbedLayerNormalization', 'Attention', 'Split', 'Sigmoid', 'Relu', 'Mul', 'Pad', 'MaxPool',
-    'MatMul', 'LeakyRelu',  'GlobalAveragePool', 'Gemm', 'Conv', 'AveragePool', 'Add', 'Clip']
+    'MatMul', 'LeakyRelu',  'GlobalAveragePool', 'Gemm', 'Conv', 'AveragePool', 'Add', 'Clip',
+    'BatchNormalization', 'Softmax', 'Sum', 'Abs', 'BiasGelu', 'Exp', 'FastGelu',
+    'Gelu', 'Log', 'Round', 'Sigmoid', 'Sqrt', 'Tanh', 'Sub', 'Mul', 'Div', 'Pow',
+    'ReduceMean', 'Equal', 'FusedMatMul', 'Greater', 'GreaterOrEqual', 'Less', 'LessOrEqual',
+    'ReduceL1', 'ReduceL2', 'ReduceLogSum', 'ReduceLogSumExp', 'ReduceMax', 'ReduceProd',
+    'ReduceSum', 'ReduceSumSquare', 'LayerNormalization', 'Concat']
   bf16: &common_bf16 ['Concat', 'Gather', 'Reshape', 'Squeeze', 'Transpose', 'Unsqueeze',
     'Split', 'Sigmoid', 'Relu', 'Mul', 'MatMul', 'Gemm', 'Add']
   recipes: &default_optimization
@@ -140,7 +145,7 @@
       'Split': *default_static_qlinear_qdq,
       'Add': *default_static_qlinear,
     },
-    'dynamic': *ref_1_6_dynamic 
+    'dynamic': *ref_1_6_dynamic
   }
   fp16: *common_fp16
   bf16: *common_bf16
@@ -402,7 +407,15 @@
       'Transpose': *default_static_qlinear_qdq,
       'ArgMax': *default_static_qlinear,
       'Resize': *default_static_qlinear_qdq,
-
+      'Abs': *default_static_qlinear_qdq,
+      'Shrink': *default_static_qlinear_qdq,
+      'Sign': *default_static_qlinear_qdq,
+      'Flatten': *default_static_qlinear_qdq,
+      'Expand': *default_static_qlinear_qdq,
+      'Slice': *default_static_qlinear_qdq,
+      'Mod': *default_static_qlinear_qdq,
+      'ReduceMax': *default_static_qlinear_qdq,
+      'ReduceMin': *default_static_qlinear_qdq,
     },
     'dynamic': *ref_1_9_dynamic
   }

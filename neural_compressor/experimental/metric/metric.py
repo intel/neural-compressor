@@ -14,23 +14,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Neural Compressor metrics."""
 
 
+from abc import abstractmethod
 
 import numpy as np
-from abc import abstractmethod
-from ctypes import Union
-from neural_compressor.utils.utility import LazyImport, singleton
-from neural_compressor.utils import logger
+from deprecated import deprecated
 from sklearn.metrics import accuracy_score
 
-torch = LazyImport('torch')
-tf = LazyImport('tensorflow')
-mx = LazyImport('mxnet')
-transformers = LazyImport('transformers')
+from neural_compressor.utils import logger
+from neural_compressor.utils.utility import LazyImport, singleton
 
+torch = LazyImport("torch")
+tf = LazyImport("tensorflow")
+mx = LazyImport("mxnet")
+transformers = LazyImport("transformers")
+
+
+@deprecated(version="2.0")
 @singleton
 class TensorflowMetrics(object):
     """Tensorflow metrics collection.
@@ -38,13 +40,14 @@ class TensorflowMetrics(object):
     Attributes:
         metrics: A dict to maintain all metrics for Tensorflow model.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the metrics collection."""
         self.metrics = {}
         self.metrics.update(TENSORFLOW_METRICS)
 
 
+@deprecated(version="2.0")
 @singleton
 class PyTorchMetrics(object):
     """PyTorch metrics collection.
@@ -52,13 +55,14 @@ class PyTorchMetrics(object):
     Attributes:
         metrics: A dict to maintain all metrics for PyTorch model.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the metrics collection."""
         self.metrics = {}
         self.metrics.update(PYTORCH_METRICS)
 
 
+@deprecated(version="2.0")
 @singleton
 class MXNetMetrics(object):
     """MXNet metrics collection.
@@ -66,11 +70,12 @@ class MXNetMetrics(object):
     Attributes:
         metrics: A dict to maintain all metrics for MXNet model.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the metrics collection."""
         from ...adaptor.mxnet_utils.util import check_mx_version
-        if check_mx_version('2.0.0'): # pragma: no cover
+
+        if check_mx_version("2.0.0"):  # pragma: no cover
             import mxnet.gluon.metric as mx_metrics
         else:
             import mxnet.metric as mx_metrics
@@ -83,6 +88,7 @@ class MXNetMetrics(object):
         self.metrics.update(MXNET_METRICS)
 
 
+@deprecated(version="2.0")
 @singleton
 class ONNXRTQLMetrics(object):
     """ONNXRT QLinear metrics collection.
@@ -90,13 +96,14 @@ class ONNXRTQLMetrics(object):
     Attributes:
         metrics: A dict to maintain all metrics for ONNXRT QLinear model.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the metrics collection."""
         self.metrics = {}
         self.metrics.update(ONNXRT_QL_METRICS)
 
 
+@deprecated(version="2.0")
 @singleton
 class ONNXRTITMetrics(object):
     """ONNXRT Integer metrics collection.
@@ -104,24 +111,26 @@ class ONNXRTITMetrics(object):
     Attributes:
         metrics: A dict to maintain all metrics for ONNXRT Integer model.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the metrics collection."""
         self.metrics = {}
         self.metrics.update(ONNXRT_IT_METRICS)
 
 
-framework_metrics = {"tensorflow": TensorflowMetrics,
-                     "tensorflow_itex": TensorflowMetrics,
-                     "keras": TensorflowMetrics,
-                     "mxnet": MXNetMetrics,
-                     "pytorch": PyTorchMetrics,
-                     "pytorch_ipex": PyTorchMetrics,
-                     "pytorch_fx": PyTorchMetrics,
-                     "onnxrt_qlinearops": ONNXRTQLMetrics,
-                     "onnxrt_integerops": ONNXRTITMetrics,
-                     "onnxrt_qdq": ONNXRTQLMetrics,
-                     "onnxruntime": ONNXRTQLMetrics}
+framework_metrics = {
+    "tensorflow": TensorflowMetrics,
+    "tensorflow_itex": TensorflowMetrics,
+    "keras": TensorflowMetrics,
+    "mxnet": MXNetMetrics,
+    "pytorch": PyTorchMetrics,
+    "pytorch_ipex": PyTorchMetrics,
+    "pytorch_fx": PyTorchMetrics,
+    "onnxrt_qlinearops": ONNXRTQLMetrics,
+    "onnxrt_integerops": ONNXRTITMetrics,
+    "onnxrt_qdq": ONNXRTQLMetrics,
+    "onnxruntime": ONNXRTQLMetrics,
+}
 
 # user/model specific metrics will be registered here
 TENSORFLOW_METRICS = {}
@@ -131,38 +140,48 @@ PYTORCH_METRICS = {}
 ONNXRT_QL_METRICS = {}
 ONNXRT_IT_METRICS = {}
 
-registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
-                    "tensorflow_itex": TENSORFLOW_ITEX_METRICS,
-                    "keras": TENSORFLOW_METRICS,
-                    "mxnet": MXNET_METRICS,
-                    "pytorch": PYTORCH_METRICS,
-                    "pytorch_ipex": PYTORCH_METRICS,
-                    "pytorch_fx": PYTORCH_METRICS,
-                    "onnxrt_qlinearops": ONNXRT_QL_METRICS,
-                    "onnxrt_qdq": ONNXRT_QL_METRICS,
-                    "onnxrt_integerops": ONNXRT_IT_METRICS,
-                    "onnxruntime": ONNXRT_QL_METRICS,
-                    }
+registry_metrics = {
+    "tensorflow": TENSORFLOW_METRICS,
+    "tensorflow_itex": TENSORFLOW_ITEX_METRICS,
+    "keras": TENSORFLOW_METRICS,
+    "mxnet": MXNET_METRICS,
+    "pytorch": PYTORCH_METRICS,
+    "pytorch_ipex": PYTORCH_METRICS,
+    "pytorch_fx": PYTORCH_METRICS,
+    "onnxrt_qlinearops": ONNXRT_QL_METRICS,
+    "onnxrt_qdq": ONNXRT_QL_METRICS,
+    "onnxrt_integerops": ONNXRT_IT_METRICS,
+    "onnxruntime": ONNXRT_QL_METRICS,
+}
 
 
+@deprecated(version="2.0")
 class METRICS(object):
     """Intel Neural Compressor Metrics.
 
     Attributes:
         metrics: The collection of registered metrics for the specified framework.
     """
-    
+
     def __init__(self, framework: str):
         """Initialize the metrics collection based on the framework name.
 
         Args:
-            framework: The framwork name.
+            framework: The framework name.
         """
-        assert framework in ("tensorflow", "tensorflow_itex", "keras",
-                            "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
-                             "onnxrt_qlinearops", "onnxrt_integerops", "mxnet",
-                             "onnxruntime"), \
-                             "framework support tensorflow pytorch mxnet onnxrt"
+        assert framework in (
+            "tensorflow",
+            "tensorflow_itex",
+            "keras",
+            "pytorch",
+            "pytorch_ipex",
+            "pytorch_fx",
+            "onnxrt_qdq",
+            "onnxrt_qlinearops",
+            "onnxrt_integerops",
+            "mxnet",
+            "onnxruntime",
+        ), "framework support tensorflow pytorch mxnet onnxrt"
         self.metrics = framework_metrics[framework]().metrics
 
     def __getitem__(self, metric_type: str):
@@ -174,8 +193,7 @@ class METRICS(object):
         Returns:
              The metric with the specified type.
         """
-        assert metric_type in self.metrics.keys(), "only support metrics in {}".\
-            format(self.metrics.keys())
+        assert metric_type in self.metrics.keys(), "only support metrics in {}".format(self.metrics.keys())
 
         return self.metrics[metric_type]
 
@@ -186,25 +204,27 @@ class METRICS(object):
             name: The name of metric.
             metric_cls: The metric class.
         """
-        assert name not in self.metrics.keys(), 'registered metric name already exists.'
+        assert name not in self.metrics.keys(), "registered metric name already exists."
         self.metrics.update({name: metric_cls})
 
+
+@deprecated(version="2.0")
 def metric_registry(metric_type: str, framework: str):
     """Decorate for registering all Metric subclasses.
-    
+
     The cross-framework metric is supported by specifying the framework param
     as one of tensorflow, pytorch, mxnet, onnxrt.
-       
+
     Args:
         metric_type: The metric type.
         framework: The framework name.
-    
+
     Returns:
         decorator_metric: The function to register metric class.
     """
-    
+
     def decorator_metric(cls):
-        for single_framework in [fwk.strip() for fwk in framework.split(',')]:
+        for single_framework in [fwk.strip() for fwk in framework.split(",")]:
             assert single_framework in [
                 "tensorflow",
                 "tensorflow_itex",
@@ -216,25 +236,27 @@ def metric_registry(metric_type: str, framework: str):
                 "pytorch",
                 "pytorch_ipex",
                 "pytorch_fx",
-                ], "The framework support tensorflow mxnet pytorch onnxrt"
+            ], "The framework support tensorflow mxnet pytorch onnxrt"
 
-            if metric_type in registry_metrics[single_framework].keys(): # pragma: no cover
-                raise ValueError('Cannot have two metrics with the same name')
+            if metric_type in registry_metrics[single_framework].keys():  # pragma: no cover
+                raise ValueError("Cannot have two metrics with the same name")
             registry_metrics[single_framework][metric_type] = cls
         return cls
+
     return decorator_metric
 
 
+@deprecated(version="2.0")
 class BaseMetric(object):
     """The base class of Metric."""
-    
-    def __init__(self, metric, single_output = False, hvd = None):
+
+    def __init__(self, metric, single_output=False, hvd=None):
         """Initialize the basic metric.
 
         Args:
             metric: The metric class.
             single_output: Whether the output is single or not, defaults to False.
-            hvd: The Horovod class for distributed trainig, defaults to None.
+            hvd: The Horovod class for distributed training, defaults to None.
         """
         self._metric_cls = metric
         self._single_output = single_output
@@ -304,23 +326,24 @@ class BaseMetric(object):
         """Set its hvd.
 
         Args:
-            hvd: The Horovod class for distributed trainig.
+            hvd: The Horovod class for distributed training.
         """
         self._hvd = hvd
 
 
+@deprecated(version="2.0")
 class WrapPyTorchMetric(BaseMetric):
     """The wrapper of Metric class for PyTorch."""
-    
+
     def update(self, preds, labels=None, sample_weight=None):
         """Convert the prediction to torch.
-        
+
         Args:
             preds: The prediction result.
             labels: The reference. Defaults to None.
             sample_weight: The sampling weight. Defaults to None.
         """
-        if self._single_output: # pragma: no cover
+        if self._single_output:  # pragma: no cover
             output = torch.as_tensor(preds)
         else:
             output = (torch.as_tensor(preds), torch.as_tensor(labels))
@@ -335,12 +358,13 @@ class WrapPyTorchMetric(BaseMetric):
         return self._metric_cls.result()
 
 
+@deprecated(version="2.0")
 class WrapMXNetMetric(BaseMetric):
     """The wrapper of Metric class for MXNet."""
-    
+
     def update(self, preds, labels=None, sample_weight=None):
         """Convert the prediction to MXNet array.
-           
+
         Args:
             preds: The prediction result.
             labels: The reference. Defaults to None.
@@ -356,19 +380,21 @@ class WrapMXNetMetric(BaseMetric):
 
     def result(self):
         """Evaluate the difference between predictions and labels.
-        
+
         Returns:
             acc: The evaluated result.
         """
         acc_name, acc = self._metric.get()
         return acc
 
+
+@deprecated(version="2.0")
 class WrapONNXRTMetric(BaseMetric):
     """The wrapper of Metric class for ONNXRT."""
-    
+
     def update(self, preds, labels=None, sample_weight=None):
         """Convert the prediction to NumPy array.
-           
+
         Args:
             preds: The prediction result.
             labels: The reference. Defaults to None.
@@ -384,13 +410,15 @@ class WrapONNXRTMetric(BaseMetric):
 
     def result(self):
         """Evaluate the difference between predictions and labels.
-        
+
         Returns:
             acc: The evaluated result.
         """
         acc_name, acc = self._metric_cls.result()
         return acc
 
+
+@deprecated(version="2.0")
 def _topk_shape_validate(preds, labels):
     # preds shape can be Nxclass_num or class_num(N=1 by default)
     # it's more suitable for 'Accuracy' with preds shape Nx1(or 1) output from argmax
@@ -433,16 +461,18 @@ def _topk_shape_validate(preds, labels):
         class_num = preds.shape[1]
 
     label_N = labels.shape[0]
-    assert label_N == N, 'labels batch size should same with preds'
+    assert label_N == N, "labels batch size should same with preds"
     labels = labels.reshape([N, -1])
     # one-hot labels will have 2 dimension not equal 1
     if labels.shape[1] != 1:
         labels = labels.argsort()[..., -1:]
     return preds, labels
 
+
+@deprecated(version="2.0")
 def _shape_validate(preds, labels):
-    assert type(preds) in [int, list, np.ndarray], 'preds must be in int or list, ndarray'
-    assert type(labels) in [int, list, np.ndarray], 'labels must be in int or list, ndarray'
+    assert type(preds) in [int, list, np.ndarray], "preds must be in int or list, ndarray"
+    assert type(labels) in [int, list, np.ndarray], "labels must be in int or list, ndarray"
     if isinstance(preds, int):
         preds = [np.array([preds])]
     elif isinstance(preds[0], int):
@@ -455,25 +485,27 @@ def _shape_validate(preds, labels):
         labels = [np.array(labels)]
     else:
         labels = [np.array(label) for label in labels]
-    for (pred, label) in zip(preds, labels):
-        assert pred.shape == label.shape, \
-            'Shape mismatch, label shape {} vs pred shape {}'.format(label.shape, pred.shape)
+    for pred, label in zip(preds, labels):
+        assert pred.shape == label.shape, "Shape mismatch, label shape {} vs pred shape {}".format(
+            label.shape, pred.shape
+        )
     return preds, labels
 
 
-@metric_registry('F1', 'tensorflow, tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
+@deprecated(version="2.0")
+@metric_registry("F1", "tensorflow, tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
 class F1(BaseMetric):
     """F1 score of a binary classification problem.
-    
-    The F1 score is the harmonic mean of the precision and recall. 
-    It can be computed with the equation: 
+
+    The F1 score is the harmonic mean of the precision and recall.
+    It can be computed with the equation:
     F1 = 2 * (precision * recall) / (precision + recall)
     """
-    
+
     def __init__(self):
         """Initialize the F1 score list."""
         self._score_list = []
-    
+
     def update(self, preds, labels):
         """Add the predictions and labels.
 
@@ -482,7 +514,8 @@ class F1(BaseMetric):
             labels: The labels corresponding to the predictions.
         """
         from .f1 import f1_score
-        if getattr(self, '_hvd', None) is not None:
+
+        if getattr(self, "_hvd", None) is not None:
             gathered_preds_list = self._hvd.allgather_object(preds)
             gathered_labels_list = self._hvd.allgather_object(labels)
             temp_preds_list, temp_labels_list = [], []
@@ -502,8 +535,10 @@ class F1(BaseMetric):
         """Compute the F1 score."""
         return np.array(self._score_list).mean()
 
+
+@deprecated(version="2.0")
 def _accuracy_shape_check(preds, labels):
-    """Check and conver the shape of predictions and labels.
+    """Check and convert the shape of predictions and labels.
 
     Args:
         preds: The predictions.
@@ -519,13 +554,16 @@ def _accuracy_shape_check(preds, labels):
     if isinstance(labels, int):
         labels = [labels]
     labels = np.array(labels)
-    if len(labels.shape) != len(preds.shape) and len(labels.shape)+1 != len(preds.shape):
+    if len(labels.shape) != len(preds.shape) and len(labels.shape) + 1 != len(preds.shape):
         raise ValueError(
-            'labels must have shape of (batch_size, ..) and preds must have'
-            'shape of (batch_size, num_classes, ...) or (batch_size, ..),'
-            'but given {} and {}.'.format(labels.shape, preds.shape))
+            "labels must have shape of (batch_size, ..) and preds must have"
+            "shape of (batch_size, num_classes, ...) or (batch_size, ..),"
+            "but given {} and {}.".format(labels.shape, preds.shape)
+        )
     return preds, labels
 
+
+@deprecated(version="2.0")
 def _accuracy_type_check(preds, labels):
     """Determine the type of prediction.
 
@@ -536,24 +574,25 @@ def _accuracy_type_check(preds, labels):
     Returns:
         update_type: The type of predictions.
     """
-    if len(preds.shape) == len(labels.shape)+1:
+    if len(preds.shape) == len(labels.shape) + 1:
         num_classes = preds.shape[1]
         if num_classes == 1:
-            update_type = 'binary'
+            update_type = "binary"
         else:
-            update_type = 'multiclass'
+            update_type = "multiclass"
     elif len(preds.shape) == len(labels.shape):
-        if len(preds.shape) == 1 or preds.shape[1] ==1:
-            update_type = 'binary'
+        if len(preds.shape) == 1 or preds.shape[1] == 1:
+            update_type = "binary"
         else:
-            update_type = 'multilabel'
+            update_type = "multilabel"
     return update_type
 
 
-@metric_registry('Accuracy', 'tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops')
+@deprecated(version="2.0")
+@metric_registry("Accuracy", "tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops")
 class Accuracy(BaseMetric):
     """The Accuracy for the classification tasks.
-    
+
     The accuracy score is the proportion of the total number of predictions
     that were correct classified.
 
@@ -562,7 +601,7 @@ class Accuracy(BaseMetric):
         label_list: List of labels to score.
         sample: The total number of samples.
     """
-    
+
     def __init__(self):
         """Initialize predictions, labels and sample."""
         self.pred_list = []
@@ -579,25 +618,25 @@ class Accuracy(BaseMetric):
         """
         preds, labels = _accuracy_shape_check(preds, labels)
         update_type = _accuracy_type_check(preds, labels)
-        if update_type == 'binary':
+        if update_type == "binary":
             self.pred_list.extend(preds)
             self.label_list.extend(labels)
             self.sample += labels.shape[0]
-        elif update_type == 'multiclass':
-            self.pred_list.extend(np.argmax(preds, axis=1).astype('int32'))
+        elif update_type == "multiclass":
+            self.pred_list.extend(np.argmax(preds, axis=1).astype("int32"))
             self.label_list.extend(labels)
             self.sample += labels.shape[0]
-        elif update_type == 'multilabel':
-            #(N, C, ...) -> (N*..., C)
+        elif update_type == "multilabel":
+            # (N, C, ...) -> (N*..., C)
             num_label = preds.shape[1]
             last_dim = len(preds.shape)
-            if last_dim-1 != 1:
+            if last_dim - 1 != 1:
                 trans_list = [0]
                 trans_list.extend(list(range(2, len(preds.shape))))
                 trans_list.extend([1])
                 preds = preds.transpose(trans_list).reshape(-1, num_label)
                 labels = labels.transpose(trans_list).reshape(-1, num_label)
-            self.sample += preds.shape[0]*preds.shape[1]
+            self.sample += preds.shape[0] * preds.shape[1]
             self.pred_list.append(preds)
             self.label_list.append(labels)
 
@@ -609,25 +648,28 @@ class Accuracy(BaseMetric):
 
     def result(self):
         """Compute the accuracy."""
-        correct_num = np.sum(
-            np.array(self.pred_list) == np.array(self.label_list))
-        if getattr(self, '_hvd', None) is not None: # pragma: no cover
+        correct_num = np.sum(np.array(self.pred_list) == np.array(self.label_list))
+        if getattr(self, "_hvd", None) is not None:  # pragma: no cover
             allghter_correct_num = sum(self._hvd.allgather_object(correct_num))
             allgather_sample = sum(self._hvd.allgather_object(self.sample))
             return allghter_correct_num / allgather_sample
         return correct_num / self.sample
 
 
-class PyTorchLoss():
+@deprecated(version="2.0")
+class PyTorchLoss:
     """A dummy PyTorch Metric.
-    
+
     A dummy metric that computes the average of predictions and prints it directly.
     """
-    
+
     def __init__(self):
-        """Initialize the number of examples, sum of prediction. and device."""
+        """Initialize the number of examples, sum of prediction.
+
+        and device.
+        """
         self._num_examples = 0
-        self._device = torch.device('cpu')
+        self._device = torch.device("cpu")
         self._sum = torch.tensor(0.0, device=self._device)
 
     def reset(self):
@@ -656,22 +698,25 @@ class PyTorchLoss():
             The dummy loss.
         """
         if self._num_examples == 0:
-            raise ValueError("Loss must have at least one example \
-                                      before it can be computed.")
+            raise ValueError(
+                "Loss must have at least one example \
+                                      before it can be computed."
+            )
         return self._sum.item() / self._num_examples
-        
-        
-@metric_registry('Loss', 'tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops')
+
+
+@deprecated(version="2.0")
+@metric_registry("Loss", "tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops")
 class Loss(BaseMetric):
     """A dummy Metric.
-    
+
     A dummy metric that computes the average of predictions and prints it directly.
-    
+
     Attributes:
         sample: The number of samples.
         sum: The sum of prediction.
     """
-    
+
     def __init__(self):
         """Initialize the number of samples, sum of prediction."""
         self.sample = 0
@@ -696,36 +741,37 @@ class Loss(BaseMetric):
 
     def result(self):
         """Compute the  average of predictions.
-        
+
         Returns:
             The dummy loss.
         """
-        if getattr(self, '_hvd', None) is not None: # pragma: no cover
+        if getattr(self, "_hvd", None) is not None:  # pragma: no cover
             allgather_sum = sum(self._hvd.allgather_object(self.sum))
             allgather_sample = sum(self._hvd.allgather_object(self.sample))
             return allgather_sum / allgather_sample
         return self.sum / self.sample
 
 
-@metric_registry('MAE', 'tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops')
+@deprecated(version="2.0")
+@metric_registry("MAE", "tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops")
 class MAE(BaseMetric):
     """Computes Mean Absolute Error (MAE) loss.
-    
-    Mean Absolute Error (MAE) is the mean of the magnitude of 
+
+    Mean Absolute Error (MAE) is the mean of the magnitude of
     difference between the predicted and actual numeric values.
-    
+
     Attributes:
         pred_list: List of prediction to score.
         label_list: List of references corresponding to the prediction result.
-        compare_label (bool): Whether to compare label. False if there are no 
+        compare_label (bool): Whether to compare label. False if there are no
           labels and will use FP32 preds as labels.
     """
-    
+
     def __init__(self, compare_label=True):
         """Initialize the list of prediction and labels.
 
         Args:
-            compare_label: Whether to compare label. False if there are no 
+            compare_label: Whether to compare label. False if there are no
               labels and will use FP32 preds as labels.
         """
         self.label_list = []
@@ -755,25 +801,25 @@ class MAE(BaseMetric):
         Returns:
             The MAE score.
         """
-        aes = [abs(a-b) for (a,b) in zip(self.label_list, self.pred_list)]
+        aes = [abs(a - b) for (a, b) in zip(self.label_list, self.pred_list)]
         aes_sum = sum([np.sum(ae) for ae in aes])
         aes_size = sum([ae.size for ae in aes])
         assert aes_size, "predictions shouldn't be none"
-        if getattr(self, '_hvd', None) is not None: # pragma: no cover
+        if getattr(self, "_hvd", None) is not None:  # pragma: no cover
             aes_sum = sum(self._hvd.allgather_object(aes_sum))
-            aes_size = sum(self._hvd.allgather_object(aes_size))       
+            aes_size = sum(self._hvd.allgather_object(aes_size))
         return aes_sum / aes_size
 
 
-@metric_registry('RMSE', 'tensorflow, tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
+@deprecated(version="2.0")
+@metric_registry("RMSE", "tensorflow, tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
 class RMSE(BaseMetric):
     """Computes Root Mean Squared Error (RMSE) loss.
-    
+
     Attributes:
         mse: The instance of MSE Metric.
-
     """
-    
+
     def __init__(self, compare_label=True):
         """Initialize the mse.
 
@@ -803,32 +849,32 @@ class RMSE(BaseMetric):
         Returns:
             The RMSE score.
         """
-        if getattr(self, '_hvd', None) is not None: # pragma: no cover
+        if getattr(self, "_hvd", None) is not None:  # pragma: no cover
             self.mse._hvd = self._hvd
         return np.sqrt(self.mse.result())
 
 
-
-@metric_registry('MSE', 'tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops')
+@deprecated(version="2.0")
+@metric_registry("MSE", "tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops")
 class MSE(BaseMetric):
     """Computes Mean Squared Error (MSE) loss.
-    
+
     Mean Squared Error(MSE) represents the average of the squares of errors.
     For example, the average squared difference between the estimated values
     and the actual values.
-    
+
     Attributes:
         pred_list: List of prediction to score.
         label_list: List of references corresponding to the prediction result.
         compare_label (bool): Whether to compare label. False if there are no labels
                               and will use FP32 preds as labels.
     """
-    
+
     def __init__(self, compare_label=True):
         """Initialize the list of prediction and labels.
 
         Args:
-            compare_label: Whether to compare label. False if there are no 
+            compare_label: Whether to compare label. False if there are no
               labels and will use FP32 preds as labels.
         """
         self.label_list = []
@@ -858,29 +904,30 @@ class MSE(BaseMetric):
         Returns:
             The MSE score.
         """
-        squares = [(a-b)**2.0 for (a,b) in zip(self.label_list, self.pred_list)]
+        squares = [(a - b) ** 2.0 for (a, b) in zip(self.label_list, self.pred_list)]
         squares_sum = sum([np.sum(square) for square in squares])
         squares_size = sum([square.size for square in squares])
-        assert squares_size, "predictions should't be None"
-        if getattr(self, '_hvd', None) is not None: # pragma: no cover
+        assert squares_size, "predictions shouldn't be None"
+        if getattr(self, "_hvd", None) is not None:  # pragma: no cover
             squares_sum = sum(self._hvd.allgather_object(squares_sum))
-            squares_size = sum(self._hvd.allgather_object(squares_size))       
+            squares_size = sum(self._hvd.allgather_object(squares_size))
         return squares_sum / squares_size
 
 
-@metric_registry('topk', 'tensorflow, tensorflow_itex')
+@deprecated(version="2.0")
+@metric_registry("topk", "tensorflow, tensorflow_itex")
 class TensorflowTopK(BaseMetric):
     """Compute Top-k Accuracy classification score for Tensorflow model.
-    
+
     This metric computes the number of times where the correct label is among
     the top k labels predicted.
-    
+
     Attributes:
         k (int): The number of most likely outcomes considered to find the correct label.
         num_correct: The number of predictions that were correct classified.
         num_sample: The total number of predictions.
     """
-    
+
     def __init__(self, k=1):
         """Initialize the k, number of samples and correct predictions.
 
@@ -903,13 +950,14 @@ class TensorflowTopK(BaseMetric):
 
         labels = labels.reshape([len(labels)])
         with tf.Graph().as_default() as acc_graph:
-          topk = tf.nn.in_top_k(predictions=tf.constant(preds, dtype=tf.float32),
-                                targets=tf.constant(labels, dtype=tf.int32), k=self.k)
-          fp32_topk = tf.cast(topk, tf.float32)
-          correct_tensor = tf.reduce_sum(input_tensor=fp32_topk)
+            topk = tf.nn.in_top_k(
+                predictions=tf.constant(preds, dtype=tf.float32), targets=tf.constant(labels, dtype=tf.int32), k=self.k
+            )
+            fp32_topk = tf.cast(topk, tf.float32)
+            correct_tensor = tf.reduce_sum(input_tensor=fp32_topk)
 
-          with tf.compat.v1.Session() as acc_sess:
-            correct  = acc_sess.run(correct_tensor)
+            with tf.compat.v1.Session() as acc_sess:
+                correct = acc_sess.run(correct_tensor)
 
         self.num_sample += len(labels)
         self.num_correct += correct
@@ -928,26 +976,27 @@ class TensorflowTopK(BaseMetric):
         if self.num_sample == 0:
             logger.warning("Sample num during evaluation is 0.")
             return 0
-        elif getattr(self, '_hvd', None) is not None: # pragma: no cover
+        elif getattr(self, "_hvd", None) is not None:  # pragma: no cover
             allgather_num_correct = sum(self._hvd.allgather_object(self.num_correct))
             allgather_num_sample = sum(self._hvd.allgather_object(self.num_sample))
-            return allgather_num_correct / allgather_num_sample 
+            return allgather_num_correct / allgather_num_sample
         return self.num_correct / self.num_sample
 
 
-@metric_registry('topk', 'pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
+@deprecated(version="2.0")
+@metric_registry("topk", "pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
 class GeneralTopK(BaseMetric):
     """Compute Top-k Accuracy classification score.
-    
+
     This metric computes the number of times where the correct label is among
     the top k labels predicted.
-    
+
     Attributes:
         k (int): The number of most likely outcomes considered to find the correct label.
         num_correct: The number of predictions that were correct classified.
         num_sample: The total number of predictions.
     """
-    
+
     def __init__(self, k=1):
         """Initialize the k, number of samples and correct predictions.
 
@@ -967,7 +1016,7 @@ class GeneralTopK(BaseMetric):
             sample_weight: The sample weight.
         """
         preds, labels = _topk_shape_validate(preds, labels)
-        preds = preds.argsort()[..., -self.k:]
+        preds = preds.argsort()[..., -self.k :]
         if self.k == 1:
             correct = accuracy_score(preds, labels, normalize=False)
             self.num_correct += correct
@@ -976,7 +1025,7 @@ class GeneralTopK(BaseMetric):
             for p, l in zip(preds, labels):
                 # get top-k labels with np.argpartition
                 # p = np.argpartition(p, -self.k)[-self.k:]
-                l = l.astype('int32')
+                l = l.astype("int32")
                 if l in p:
                     self.num_correct += 1
 
@@ -996,23 +1045,26 @@ class GeneralTopK(BaseMetric):
         if self.num_sample == 0:
             logger.warning("Sample num during evaluation is 0.")
             return 0
-        elif getattr(self, '_hvd', None) is not None: # pragma: no cover
+        elif getattr(self, "_hvd", None) is not None:  # pragma: no cover
             allgather_num_correct = sum(self._hvd.allgather_object(self.num_correct))
             allgather_num_sample = sum(self._hvd.allgather_object(self.num_sample))
             return allgather_num_correct / allgather_num_sample
         return self.num_correct / self.num_sample
-    
 
-@metric_registry('COCOmAPv2', 'tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops')
+
+@deprecated(version="2.0")
+@metric_registry("COCOmAPv2", "tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops")
 class COCOmAPv2(BaseMetric):
     """Compute mean average precision of the detection task."""
 
-    def __init__(self, 
-                 anno_path=None, 
-                 iou_thrs='0.5:0.05:0.95', 
-                 map_points=101, 
-                 map_key='DetectionBoxes_Precision/mAP', 
-                 output_index_mapping={'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}):
+    def __init__(
+        self,
+        anno_path=None,
+        iou_thrs="0.5:0.05:0.95",
+        map_points=101,
+        map_key="DetectionBoxes_Precision/mAP",
+        output_index_mapping={"num_detections": -1, "boxes": 0, "scores": 1, "classes": 2},
+    ):
         """Initialize the metric.
 
         Args:
@@ -1020,22 +1072,25 @@ class COCOmAPv2(BaseMetric):
             iou_thrs: Minimal value for intersection over union that allows to make decision
               that prediction bounding box is true positive. You can specify one float value
               between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.
-            map_points: The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 
+            map_points: The way to calculate mAP. 101 for 101-point interpolated AP, 11 for
               11-point interpolated AP, 0 for area under PR curve.
-            map_key: The key that mapping to pycocotools COCOeval. 
+            map_key: The key that mapping to pycocotools COCOeval.
               Defaults to 'DetectionBoxes_Precision/mAP'.
-            output_index_mapping: The output index mapping. 
+            output_index_mapping: The output index mapping.
               Defaults to {'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}.
         """
         self.output_index_mapping = output_index_mapping
         from .coco_label_map import category_map
+
         if anno_path:
             import os
+
             import yaml
-            assert os.path.exists(anno_path), 'Annotation path does not exists!'
-            with open(anno_path, 'r') as f:
+
+            assert os.path.exists(anno_path), "Annotation path does not exists!"
+            with open(anno_path, "r") as f:
                 label_map = yaml.safe_load(f.read())
-            self.category_map_reverse = {k: v for k,v in label_map.items()}
+            self.category_map_reverse = {k: v for k, v in label_map.items()}
         else:
             # label: index
             self.category_map_reverse = {v: k for k, v in category_map.items()}
@@ -1044,8 +1099,7 @@ class COCOmAPv2(BaseMetric):
         self.detection_list = []
         self.annotation_id = 1
         self.category_map = category_map
-        self.category_id_set = set(
-            [cat for cat in self.category_map]) #index
+        self.category_id_set = set([cat for cat in self.category_map])  # index
         self.iou_thrs = iou_thrs
         self.map_points = map_points
         self.map_key = map_key
@@ -1058,69 +1112,65 @@ class COCOmAPv2(BaseMetric):
             labels: The labels corresponding to the predictions.
             sample_weight: The sample weight. Defaults to None.
         """
-        from .coco_tools import ExportSingleImageGroundtruthToCoco,\
-            ExportSingleImageDetectionBoxesToCoco
+        from .coco_tools import ExportSingleImageDetectionBoxesToCoco, ExportSingleImageGroundtruthToCoco
+
         detections = []
-        if 'num_detections' in self.output_index_mapping and \
-            self.output_index_mapping['num_detections'] > -1:
+        if "num_detections" in self.output_index_mapping and self.output_index_mapping["num_detections"] > -1:
             for item in zip(*predicts):
                 detection = {}
-                num = int(item[self.output_index_mapping['num_detections']])
-                detection['boxes'] = np.asarray(
-                    item[self.output_index_mapping['boxes']])[0:num]
-                detection['scores'] = np.asarray(
-                    item[self.output_index_mapping['scores']])[0:num]
-                detection['classes'] = np.asarray(
-                    item[self.output_index_mapping['classes']])[0:num]
+                num = int(item[self.output_index_mapping["num_detections"]])
+                detection["boxes"] = np.asarray(item[self.output_index_mapping["boxes"]])[0:num]
+                detection["scores"] = np.asarray(item[self.output_index_mapping["scores"]])[0:num]
+                detection["classes"] = np.asarray(item[self.output_index_mapping["classes"]])[0:num]
                 detections.append(detection)
         else:
             for item in zip(*predicts):
                 detection = {}
-                detection['boxes'] = np.asarray(item[self.output_index_mapping['boxes']])
-                detection['scores'] = np.asarray(item[self.output_index_mapping['scores']])
-                detection['classes'] = np.asarray(item[self.output_index_mapping['classes']])
+                detection["boxes"] = np.asarray(item[self.output_index_mapping["boxes"]])
+                detection["scores"] = np.asarray(item[self.output_index_mapping["scores"]])
+                detection["classes"] = np.asarray(item[self.output_index_mapping["classes"]])
                 detections.append(detection)
 
-        bboxes, str_labels,int_labels, image_ids = labels
+        bboxes, str_labels, int_labels, image_ids = labels
         labels = []
         if len(int_labels[0]) == 0:
             for str_label in str_labels:
-                str_label = [
-                    x if type(x) == 'str' else x.decode('utf-8')
-                    for x in str_label
-                ]
+                str_label = [x if type(x) == "str" else x.decode("utf-8") for x in str_label]
                 labels.append([self.category_map_reverse[x] for x in str_label])
         elif len(str_labels[0]) == 0:
             for int_label in int_labels:
                 labels.append([x for x in int_label])
 
         for idx, image_id in enumerate(image_ids):
-            image_id = image_id if type(
-                image_id) == 'str' else image_id.decode('utf-8')
+            image_id = image_id if type(image_id) == "str" else image_id.decode("utf-8")
             if image_id in self.image_ids:
                 continue
             self.image_ids.append(image_id)
 
             ground_truth = {}
-            ground_truth['boxes'] = np.asarray(bboxes[idx])
-            ground_truth['classes'] = np.asarray(labels[idx])
+            ground_truth["boxes"] = np.asarray(bboxes[idx])
+            ground_truth["classes"] = np.asarray(labels[idx])
 
             self.ground_truth_list.extend(
                 ExportSingleImageGroundtruthToCoco(
                     image_id=image_id,
                     next_annotation_id=self.annotation_id,
                     category_id_set=self.category_id_set,
-                    groundtruth_boxes=ground_truth['boxes'],
-                    groundtruth_classes=ground_truth['classes']))
-            self.annotation_id += ground_truth['boxes'].shape[0]
+                    groundtruth_boxes=ground_truth["boxes"],
+                    groundtruth_classes=ground_truth["classes"],
+                )
+            )
+            self.annotation_id += ground_truth["boxes"].shape[0]
 
             self.detection_list.extend(
                 ExportSingleImageDetectionBoxesToCoco(
                     image_id=image_id,
                     category_id_set=self.category_id_set,
-                    detection_boxes=detections[idx]['boxes'],
-                    detection_scores=detections[idx]['scores'],
-                    detection_classes=detections[idx]['classes']))
+                    detection_boxes=detections[idx]["boxes"],
+                    detection_scores=detections[idx]["scores"],
+                    detection_classes=detections[idx]["classes"],
+                )
+            )
 
     def reset(self):
         """Reset the prediction and labels."""
@@ -1135,69 +1185,64 @@ class COCOmAPv2(BaseMetric):
         Returns:
             The mean average precision score.
         """
-        from .coco_tools import COCOWrapper, COCOEvalWrapper
+        from .coco_tools import COCOEvalWrapper, COCOWrapper
+
         if len(self.ground_truth_list) == 0:
             logger.warning("Sample num during evaluation is 0.")
             return 0
         else:
             groundtruth_dict = {
-                'annotations':
-                self.ground_truth_list,
-                'images': [{
-                    'id': image_id
-                } for image_id in self.image_ids],
-                'categories': [{
-                    'id': k,
-                    'name': v
-                } for k, v in self.category_map.items()]
+                "annotations": self.ground_truth_list,
+                "images": [{"id": image_id} for image_id in self.image_ids],
+                "categories": [{"id": k, "name": v} for k, v in self.category_map.items()],
             }
             coco_wrapped_groundtruth = COCOWrapper(groundtruth_dict)
-            coco_wrapped_detections = coco_wrapped_groundtruth.LoadAnnotations(
-                self.detection_list)
-            box_evaluator = COCOEvalWrapper(coco_wrapped_groundtruth,
-                                                 coco_wrapped_detections,
-                                                 agnostic_mode=False,
-                                                 iou_thrs = self.iou_thrs,
-                                                 map_points = self.map_points)
+            coco_wrapped_detections = coco_wrapped_groundtruth.LoadAnnotations(self.detection_list)
+            box_evaluator = COCOEvalWrapper(
+                coco_wrapped_groundtruth,
+                coco_wrapped_detections,
+                agnostic_mode=False,
+                iou_thrs=self.iou_thrs,
+                map_points=self.map_points,
+            )
             box_metrics, box_per_category_ap = box_evaluator.ComputeMetrics(
-                include_metrics_per_category=False, all_metrics_per_category=False)
+                include_metrics_per_category=False, all_metrics_per_category=False
+            )
             box_metrics.update(box_per_category_ap)
-            box_metrics = {
-                'DetectionBoxes_' + key: value
-                for key, value in iter(box_metrics.items())
-            }
+            box_metrics = {"DetectionBoxes_" + key: value for key, value in iter(box_metrics.items())}
 
             return box_metrics[self.map_key]
 
-@metric_registry('mAP', 'tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops')
+
+@deprecated(version="2.0")
+@metric_registry("mAP", "tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops")
 class TensorflowMAP(BaseMetric):
     """Computes mean average precision."""
-    
-    def __init__(self, 
-                 anno_path=None, 
-                 iou_thrs=0.5, 
-                 map_points=0, 
-                 map_key='DetectionBoxes_Precision/mAP'):
+
+    def __init__(self, anno_path=None, iou_thrs=0.5, map_points=0, map_key="DetectionBoxes_Precision/mAP"):
         """Initialize the metric.
-        
+
         Args:
             anno_path: The path of annotation file.
             iou_thrs: Minimal value for intersection over union that allows to make decision
               that prediction bounding box is true positive. You can specify one float value
               between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.
-            map_points: The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 
+            map_points: The way to calculate mAP. 101 for 101-point interpolated AP, 11 for
               11-point interpolated AP, 0 for area under PR curve.
-            map_key: The key that mapping to pycocotools COCOeval. 
+            map_key: The key that mapping to pycocotools COCOeval.
               Defaults to 'DetectionBoxes_Precision/mAP'.
         """
         from .coco_label_map import category_map
+
         if anno_path:
             import os
+
             import yaml
-            assert os.path.exists(anno_path), 'Annotation path does not exists!'
-            with open(anno_path, 'r') as f:
+
+            assert os.path.exists(anno_path), "Annotation path does not exists!"
+            with open(anno_path, "r") as f:
                 label_map = yaml.safe_load(f.read())
-            self.category_map_reverse = {k: v for k,v in label_map.items()}
+            self.category_map_reverse = {k: v for k, v in label_map.items()}
         else:
             # label: index
             self.category_map_reverse = {v: k for k, v in category_map.items()}
@@ -1206,12 +1251,10 @@ class TensorflowMAP(BaseMetric):
         self.detection_list = []
         self.annotation_id = 1
         self.category_map = category_map
-        self.category_id_set = set(
-            [cat for cat in self.category_map]) #index
+        self.category_id_set = set([cat for cat in self.category_map])  # index
         self.iou_thrs = iou_thrs
         self.map_points = map_points
         self.map_key = map_key
-
 
     def update(self, predicts, labels, sample_weight=None):
         """Add the predictions and labels.
@@ -1221,70 +1264,70 @@ class TensorflowMAP(BaseMetric):
             labels: The labels corresponding to the predictions.
             sample_weight: The sample weight.
         """
-        if getattr(self, '_hvd', None) is not None: # pragma: no cover
-            raise NotImplementedError("Metric TensorflowMAP currently do not support distribued inference.")
+        if getattr(self, "_hvd", None) is not None:  # pragma: no cover
+            raise NotImplementedError("Metric TensorflowMAP currently do not support distributed inference.")
 
-        from .coco_tools import ExportSingleImageGroundtruthToCoco,\
-            ExportSingleImageDetectionBoxesToCoco
+        from .coco_tools import ExportSingleImageDetectionBoxesToCoco, ExportSingleImageGroundtruthToCoco
+
         detections = []
         if len(predicts) == 3:
             for bbox, score, cls in zip(*predicts):
                 detection = {}
-                detection['boxes'] = np.asarray(bbox)
-                detection['scores'] = np.asarray(score)
-                detection['classes'] = np.asarray(cls)
+                detection["boxes"] = np.asarray(bbox)
+                detection["scores"] = np.asarray(score)
+                detection["classes"] = np.asarray(cls)
                 detections.append(detection)
         elif len(predicts) == 4:
             for num, bbox, score, cls in zip(*predicts):
                 detection = {}
                 num = int(num)
-                detection['boxes'] = np.asarray(bbox)[0:num]
-                detection['scores'] = np.asarray(score)[0:num]
-                detection['classes'] = np.asarray(cls)[0:num]
+                detection["boxes"] = np.asarray(bbox)[0:num]
+                detection["scores"] = np.asarray(score)[0:num]
+                detection["classes"] = np.asarray(cls)[0:num]
                 detections.append(detection)
         else:
             raise ValueError("Unsupported prediction format!")
 
-        bboxes, str_labels,int_labels, image_ids = labels
+        bboxes, str_labels, int_labels, image_ids = labels
         labels = []
         if len(int_labels[0]) == 0:
             for str_label in str_labels:
-                str_label = [
-                    x if type(x) == 'str' else x.decode('utf-8')
-                    for x in str_label
-                ]
+                str_label = [x if type(x) == "str" else x.decode("utf-8") for x in str_label]
                 labels.append([self.category_map_reverse[x] for x in str_label])
         elif len(str_labels[0]) == 0:
             for int_label in int_labels:
                 labels.append([x for x in int_label])
 
         for idx, image_id in enumerate(image_ids):
-            image_id = image_id if type(
-                image_id) == 'str' else image_id.decode('utf-8')
+            image_id = image_id if type(image_id) == "str" else image_id.decode("utf-8")
             if image_id in self.image_ids:
                 continue
             self.image_ids.append(image_id)
 
             ground_truth = {}
-            ground_truth['boxes'] = np.asarray(bboxes[idx])
-            ground_truth['classes'] = np.asarray(labels[idx])
+            ground_truth["boxes"] = np.asarray(bboxes[idx])
+            ground_truth["classes"] = np.asarray(labels[idx])
 
             self.ground_truth_list.extend(
                 ExportSingleImageGroundtruthToCoco(
                     image_id=image_id,
                     next_annotation_id=self.annotation_id,
                     category_id_set=self.category_id_set,
-                    groundtruth_boxes=ground_truth['boxes'],
-                    groundtruth_classes=ground_truth['classes']))
-            self.annotation_id += ground_truth['boxes'].shape[0]
+                    groundtruth_boxes=ground_truth["boxes"],
+                    groundtruth_classes=ground_truth["classes"],
+                )
+            )
+            self.annotation_id += ground_truth["boxes"].shape[0]
 
             self.detection_list.extend(
                 ExportSingleImageDetectionBoxesToCoco(
                     image_id=image_id,
                     category_id_set=self.category_id_set,
-                    detection_boxes=detections[idx]['boxes'],
-                    detection_scores=detections[idx]['scores'],
-                    detection_classes=detections[idx]['classes']))
+                    detection_boxes=detections[idx]["boxes"],
+                    detection_scores=detections[idx]["scores"],
+                    detection_classes=detections[idx]["classes"],
+                )
+            )
 
     def reset(self):
         """Reset the prediction and labels."""
@@ -1299,49 +1342,41 @@ class TensorflowMAP(BaseMetric):
         Returns:
             The mean average precision score.
         """
-        from .coco_tools import COCOWrapper, COCOEvalWrapper
+        from .coco_tools import COCOEvalWrapper, COCOWrapper
+
         if len(self.ground_truth_list) == 0:
             logger.warning("Sample num during evaluation is 0.")
             return 0
         else:
             groundtruth_dict = {
-                'annotations':
-                self.ground_truth_list,
-                'images': [{
-                    'id': image_id
-                } for image_id in self.image_ids],
-                'categories': [{
-                    'id': k,
-                    'name': v
-                } for k, v in self.category_map.items()]
+                "annotations": self.ground_truth_list,
+                "images": [{"id": image_id} for image_id in self.image_ids],
+                "categories": [{"id": k, "name": v} for k, v in self.category_map.items()],
             }
             coco_wrapped_groundtruth = COCOWrapper(groundtruth_dict)
-            coco_wrapped_detections = coco_wrapped_groundtruth.LoadAnnotations(
-                self.detection_list)
-            box_evaluator = COCOEvalWrapper(coco_wrapped_groundtruth,
-                                                 coco_wrapped_detections,
-                                                 agnostic_mode=False,
-                                                 iou_thrs = self.iou_thrs,
-                                                 map_points = self.map_points)
+            coco_wrapped_detections = coco_wrapped_groundtruth.LoadAnnotations(self.detection_list)
+            box_evaluator = COCOEvalWrapper(
+                coco_wrapped_groundtruth,
+                coco_wrapped_detections,
+                agnostic_mode=False,
+                iou_thrs=self.iou_thrs,
+                map_points=self.map_points,
+            )
             box_metrics, box_per_category_ap = box_evaluator.ComputeMetrics(
-                include_metrics_per_category=False, all_metrics_per_category=False)
+                include_metrics_per_category=False, all_metrics_per_category=False
+            )
             box_metrics.update(box_per_category_ap)
-            box_metrics = {
-                'DetectionBoxes_' + key: value
-                for key, value in iter(box_metrics.items())
-            }
+            box_metrics = {"DetectionBoxes_" + key: value for key, value in iter(box_metrics.items())}
 
             return box_metrics[self.map_key]
 
-@metric_registry('COCOmAP', 'tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops')
+
+@deprecated(version="2.0")
+@metric_registry("COCOmAP", "tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops")
 class TensorflowCOCOMAP(TensorflowMAP):
     """Computes mean average precision using algorithm in COCO."""
-    
-    def __init__(self, 
-                 anno_path=None, 
-                 iou_thrs=None, 
-                 map_points=None, 
-                 map_key='DetectionBoxes_Precision/mAP'):
+
+    def __init__(self, anno_path=None, iou_thrs=None, map_points=None, map_key="DetectionBoxes_Precision/mAP"):
         """Initialize the iou threshold and max points.
 
         Args:
@@ -1349,24 +1384,22 @@ class TensorflowCOCOMAP(TensorflowMAP):
             iou_thrs: Minimal value for intersection over union that allows to make decision
               that prediction bounding box is true positive. You can specify one float value
               between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.
-            map_points: The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 
+            map_points: The way to calculate mAP. 101 for 101-point interpolated AP, 11 for
               11-point interpolated AP, 0 for area under PR curve.
-            map_key: The key that mapping to pycocotools COCOeval. 
+            map_key: The key that mapping to pycocotools COCOeval.
               Defaults to 'DetectionBoxes_Precision/mAP'.
         """
         super(TensorflowCOCOMAP, self).__init__(anno_path, iou_thrs, map_points, map_key)
-        self.iou_thrs = '0.5:0.05:0.95'
+        self.iou_thrs = "0.5:0.05:0.95"
         self.map_points = 101
 
-@metric_registry('VOCmAP', 'tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops')
+
+@deprecated(version="2.0")
+@metric_registry("VOCmAP", "tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops")
 class TensorflowVOCMAP(TensorflowMAP):
     """Computes mean average precision using algorithm in VOC."""
-    
-    def __init__(self, 
-                 anno_path=None, 
-                 iou_thrs=None, 
-                 map_points=None, 
-                 map_key='DetectionBoxes_Precision/mAP'):
+
+    def __init__(self, anno_path=None, iou_thrs=None, map_points=None, map_key="DetectionBoxes_Precision/mAP"):
         """Initialize the iou threshold and max points.
 
         Args:
@@ -1374,9 +1407,9 @@ class TensorflowVOCMAP(TensorflowMAP):
             iou_thrs: Minimal value for intersection over union that allows to make decision
               that prediction bounding box is true positive. You can specify one float value
               between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.
-            map_points: The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 
+            map_points: The way to calculate mAP. 101 for 101-point interpolated AP, 11 for
               11-point interpolated AP, 0 for area under PR curve.
-            map_key: The key that mapping to pycocotools COCOeval. 
+            map_key: The key that mapping to pycocotools COCOeval.
               Defaults to 'DetectionBoxes_Precision/mAP'.
         """
         super(TensorflowVOCMAP, self).__init__(anno_path, iou_thrs, map_points, map_key)
@@ -1384,14 +1417,15 @@ class TensorflowVOCMAP(TensorflowMAP):
         self.map_points = 0
 
 
-@metric_registry('SquadF1', 'tensorflow, tensorflow_itex')
+@deprecated(version="2.0")
+@metric_registry("SquadF1", "tensorflow, tensorflow_itex")
 class SquadF1(BaseMetric):
     """Evaluate for v1.1 of the SQuAD dataset."""
-    
+
     def __init__(self):
         """Initialize the score list."""
-        self._score_list = [] # squad metric only work when all data preds collected
-        
+        self._score_list = []  # squad metric only work when all data preds collected
+
     def update(self, preds, labels, sample_weight=None):
         """Add the predictions and labels.
 
@@ -1402,7 +1436,8 @@ class SquadF1(BaseMetric):
         """
         if preds:
             from .evaluate_squad import evaluate
-            if getattr(self, '_hvd', None) is not None: # pragma: no cover
+
+            if getattr(self, "_hvd", None) is not None:  # pragma: no cover
                 gathered_preds_list = self._hvd.allgather_object(preds)
                 gathered_labels_list = self._hvd.allgather_object(labels)
                 temp_preds_list, temp_labels_list = [], []
@@ -1413,21 +1448,23 @@ class SquadF1(BaseMetric):
                 labels = temp_labels_list
             result = evaluate(labels, preds)
             self._score_list.append(result["f1"])
-            
+
     def reset(self):
-         """Reset the score list."""
-         self._score_list = []
-        
+        """Reset the score list."""
+        self._score_list = []
+
     def result(self):
         """Compute F1 score."""
         if len(self._score_list) == 0:
-            return 0.
+            return 0.0
         return np.array(self._score_list).mean()
-    
-@metric_registry('mIOU', 'tensorflow, tensorflow_itex')
+
+
+@deprecated(version="2.0")
+@metric_registry("mIOU", "tensorflow, tensorflow_itex")
 class mIOU(BaseMetric):
     """Compute the mean IOU(Intersection over Union) score."""
-    
+
     def __init__(self, num_classes=21):
         """Initialize the number of classes.
 
@@ -1448,19 +1485,18 @@ class mIOU(BaseMetric):
         labels = labels.flatten()
         p_dtype = preds.dtype
         l_dtype = labels.dtype
-        if getattr(self, '_hvd', None) is not None: # pragma: no cover
+        if getattr(self, "_hvd", None) is not None:  # pragma: no cover
             preds = self._hvd.allgather_object(preds)
             labels = self._hvd.allgather_object(labels)
-            preds_list, labels_list = np.array([], dtype = p_dtype), np.array([], dtype = l_dtype)
+            preds_list, labels_list = np.array([], dtype=p_dtype), np.array([], dtype=l_dtype)
             for i in range(self._hvd.size()):
                 preds_list = np.append(preds_list, preds[i])
                 labels_list = np.append(labels_list, labels[i])
             preds, labels = preds_list, labels_list
         mask = (labels >= 0) & (labels < self.num_classes)
         self.hist += np.bincount(
-            self.num_classes * labels[mask].astype(int) +
-            preds[mask], minlength=self.num_classes ** 2).reshape(self.num_classes,
-            self.num_classes)
+            self.num_classes * labels[mask].astype(int) + preds[mask], minlength=self.num_classes**2
+        ).reshape(self.num_classes, self.num_classes)
 
     def reset(self):
         """Reset the hist."""
@@ -1472,24 +1508,24 @@ class mIOU(BaseMetric):
         Returns:
             The mean IOU score.
         """
-        iu = np.diag(self.hist) / (self.hist.sum(axis=1) + self.hist.sum(axis=0) -
-        np.diag(self.hist))
+        iu = np.diag(self.hist) / (self.hist.sum(axis=1) + self.hist.sum(axis=0) - np.diag(self.hist))
         mean_iu = np.nanmean(iu)
         return mean_iu
 
-@metric_registry('GLUE', 'onnxrt_qlinearops, onnxrt_integerops')
+
+@deprecated(version="2.0")
+@metric_registry("GLUE", "onnxrt_qlinearops, onnxrt_integerops")
 class ONNXRTGLUE(BaseMetric):
     """Compute the GLUE score."""
-    
-    def __init__(self, task='mrpc'):
+
+    def __init__(self, task="mrpc"):
         """Initialize the metric.
 
         Args:
             task:The name of the task (Choices: mrpc, qqp, qnli, rte,
               sts-b, cola, mnli, wnli.).
         """
-        assert task in ['mrpc', 'qqp', 'qnli', 'rte', 'sts-b', 'cola', \
-            'mnli', 'wnli', 'sst-2'], 'Unsupported task type'
+        assert task in ["mrpc", "qqp", "qnli", "rte", "sts-b", "cola", "mnli", "wnli", "sst-2"], "Unsupported task type"
         self.pred_list = None
         self.label_list = None
         self.task = task
@@ -1502,7 +1538,7 @@ class ONNXRTGLUE(BaseMetric):
             "qnli": "acc",
             "rte": "acc",
             "wnli": "acc",
-            "sst-2": "acc"
+            "sst-2": "acc",
         }
 
     def update(self, preds, labels):
@@ -1512,8 +1548,8 @@ class ONNXRTGLUE(BaseMetric):
             preds: The predictions.
             labels: The labels corresponding to the predictions.
         """
-        if getattr(self, '_hvd', None) is not None:
-            raise NotImplementedError("Metric ONNXRTGLUE currently do not support distribued inference.")
+        if getattr(self, "_hvd", None) is not None:
+            raise NotImplementedError("Metric ONNXRTGLUE currently do not support distributed inference.")
         if isinstance(preds, list) and len(preds) == 1:
             preds = preds[0]
         if isinstance(labels, list) and len(labels) == 1:
@@ -1536,23 +1572,24 @@ class ONNXRTGLUE(BaseMetric):
 
         if output_mode == "classification":
             processed_preds = np.argmax(self.pred_list, axis=1)
-        elif output_mode == "regression": # pragma: no cover
+        elif output_mode == "regression":  # pragma: no cover
             processed_preds = np.squeeze(self.pred_list)
-        result = transformers.glue_compute_metrics(\
-            self.task, processed_preds, self.label_list)
+        result = transformers.glue_compute_metrics(self.task, processed_preds, self.label_list)
         return result[self.return_key[self.task]]
 
-@metric_registry('ROC', 'pytorch')
+
+@deprecated(version="2.0")
+@metric_registry("ROC", "pytorch")
 class ROC(BaseMetric):
     """Computes ROC score."""
-    
-    def __init__(self, task='dlrm'):
+
+    def __init__(self, task="dlrm"):
         """Initialize the metric.
 
         Args:
             task:The name of the task (Choices: dlrm, dien, wide_deep.).
         """
-        assert task in ['dlrm', 'dien', 'wide_deep'], 'Unsupported task type'
+        assert task in ["dlrm", "dien", "wide_deep"], "Unsupported task type"
         self.pred_list = None
         self.label_list = None
         self.task = task
@@ -1588,6 +1625,7 @@ class ROC(BaseMetric):
     def result(self):
         """Compute the ROC score."""
         import sklearn.metrics
+
         scores = np.squeeze(self.pred_list)
         targets = np.squeeze(self.label_list)
         roc_auc = sklearn.metrics.roc_auc_score(targets, scores)

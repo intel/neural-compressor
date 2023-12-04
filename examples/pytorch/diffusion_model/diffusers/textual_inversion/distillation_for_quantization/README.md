@@ -44,7 +44,7 @@ Once you have trained a INT8 model with the above command, the inference can be 
 ```bash
 python text2image.py \
   --pretrained_model_name_or_path=$INT8_MODEL_NAME \
-  --caption "a lovely <dicoo> in red dress and hat, in the snowly and brightly night, with many brighly buildings." \
+  --caption "a lovely <dicoo> in red dress and hat, in the snowly and brightly night, with many brightly buildings." \
   --images_num 4
 ```
 

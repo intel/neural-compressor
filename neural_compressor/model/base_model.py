@@ -14,10 +14,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Base model for multiple framework backends."""
 
 from abc import abstractmethod
+
 
 class BaseModel:
     """Base class of all neural_compressor.model, will play graph role."""
@@ -26,10 +26,10 @@ class BaseModel:
         """Initialize a BaseModel.
 
         Args:
-            model (object): raw model format. For Tensorflow model, could be path to frozen pb file, 
+            model (object): raw model format. For Tensorflow model, could be path to frozen pb file,
                 path to ckpt or savedmodel folder, loaded estimator/graph_def/graph/keras model object.
-                For PyTorch model, it's torch.nn.model instance. For MXNet model, it's mxnet.symbol.Symbol 
-                or gluon.HybirdBlock instance. For ONNX model, it's path to onnx model or loaded ModelProto 
+                For PyTorch model, it's torch.nn.model instance. For MXNet model, it's mxnet.symbol.Symbol
+                or gluon.HybirdBlock instance. For ONNX model, it's path to onnx model or loaded ModelProto
                 model object.
         """
         self.component = None
@@ -55,7 +55,7 @@ class BaseModel:
         save_path: str,
         conf,
     ):
-        """Abstract method of model convertion to ONNX."""
+        """Abstract method of model conversion to ONNX."""
         raise NotImplementedError
 
     @abstractmethod

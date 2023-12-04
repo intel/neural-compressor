@@ -966,7 +966,7 @@
       "main_script": "tf_benchmark.py",
       "batch_size": 1
     },
-    "GraphSage": {
+    "GraphSage-oob": {
       "model_src_dir": "oob_models/quantization/ptq",
       "dataset_location": "",
       "input_model": "/tf_dataset/tensorflow/tf_oob_models/mlp/GraphSage/GraphSage.pb",
@@ -1766,6 +1766,55 @@
       "main_script": "run_inference.py",
       "batch_size": 128
     },
+    "distilbert_base_sq": {
+      "model_src_dir": "nlp/distilbert_base/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/sst2_validation_dataset",
+      "input_model": "/tf_dataset2/models/tensorflow/distilbert_base/fp32/distilbert_base_fp32.pb",
+      "main_script": "run_inference.py",
+      "batch_size": 128
+    },
+    "gpt2_medium_sq": {
+      "model_src_dir": "nlp/large_language_models/quantization/ptq/smoothquant",
+      "dataset_location": "",
+      "input_model": "gpt2-medium",
+      "main_script": "main.py",
+      "batch_size": 16
+    },
+    "gpt2_medium": {
+      "model_src_dir": "nlp/large_language_models/quantization/ptq/smoothquant",
+      "dataset_location": "",
+      "input_model": "gpt2-medium",
+      "main_script": "main.py",
+      "batch_size": 16
+    },
+    "opt_125m_sq": {
+      "model_src_dir": "nlp/large_language_models/quantization/ptq/smoothquant",
+      "dataset_location": "",
+      "input_model": "facebook/opt-125m",
+      "main_script": "main.py",
+      "batch_size": 16
+    },
+    "opt_125m": {
+      "model_src_dir": "nlp/large_language_models/quantization/ptq/smoothquant",
+      "dataset_location": "",
+      "input_model": "facebook/opt-125m",
+      "main_script": "main.py",
+      "batch_size": 16
+    },
+    "ViT": {
+      "model_src_dir": "image_recognition/tensorflow_models/vision_transformer/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset/tensorflow/vit/HF-ViT-Base16-Img224-frozen.pb",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "GraphSage": {
+      "model_src_dir": "graph_networks/graphsage/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/ppi",
+      "input_model": "/tf_dataset/tensorflow/graphsage/graphsage_frozen_model.pb",
+      "main_script": "main.py",
+      "batch_size": 1000
+    }
   }
 }
 

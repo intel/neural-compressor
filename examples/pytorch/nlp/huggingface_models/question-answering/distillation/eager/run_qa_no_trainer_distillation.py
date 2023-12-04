@@ -535,7 +535,7 @@ def main():
         model = AutoModelForQuestionAnswering.from_config(config)
 
     # Preprocessing the datasets.
-    # Preprocessing is slighlty different for training and evaluation.
+    # Preprocessing is slightly different for training and evaluation.
 
     column_names = raw_datasets["train"].column_names
 
@@ -632,7 +632,7 @@ def main():
         raise ValueError("--do_train requires a train dataset")
     train_examples = raw_datasets["train"]
     if args.max_train_samples is not None:
-        # We will select sample from whole data if agument is specified
+        # We will select sample from whole data if argument is specified
         train_examples = train_examples.select(range(args.max_train_samples))
     # Create train feature from dataset
     train_dataset = train_examples.map(

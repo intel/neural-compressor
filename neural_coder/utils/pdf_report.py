@@ -283,7 +283,7 @@
 #         self.elements.append(spacer)
 
 #         d = []
-#         textData = ["Category", "Num Intances",
+#         textData = ["Category", "Num Instances",
 #                     "Num Cores Per Instance", "BS", "Performance (sample/sec)"]
 
 #         fontSize = 8
@@ -400,7 +400,7 @@
 #         bc.categoryAxis.categoryNames = ["Default: " + str(format(TCO_raw, ',')) + " (sample/$)",
 #                                          "Optimized: " + str(format(TCO_accelerated, ',')) + " (sample/$)"]
 #         drawing.add(bc)
-        
+
 #         # add label
 #         lab = Label()
 #         lab.setOrigin(0, 0)

@@ -16,8 +16,8 @@ Distillation for Quantization
 
 ### Introduction
 
-Distillation and quantization are both promising methods to reduce the computational and memory footprint that huge transformer-based networks require. Quantization refers to a process of reducing the bit precision for both activations and weights. Distillation method transfers knowledge from a heavy teacher model to a light one (student) and it could be used as a performance-booster in lower-bits quantizations. Quantization-aware training recovers accuracy degradation from representation loss in the retraining process and typically provides better performance compared to post-training quantization. 
-Intel provides a quantization-aware training (QAT) method that incorporates a novel layer-by-layer knowledge distillation step for INT8 quantization pipelines. 
+Distillation and quantization are both promising methods to reduce the computational and memory footprint that huge transformer-based networks require. Quantization refers to a process of reducing the bit precision for both activations and weights. Distillation method transfers knowledge from a heavy teacher model to a light one (student) and it could be used as a performance-booster in lower-bits quantizations. Quantization-aware training recovers accuracy degradation from representation loss in the retraining process and typically provides better performance compared to post-training quantization.  
+Intel provides a quantization-aware training (QAT) method that incorporates a novel layer-by-layer knowledge distillation step for INT8 quantization pipelines.
 
 
 
@@ -70,6 +70,7 @@ from neural_compressor.experimental import common, Distillation, Quantization
 from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
 from neural_compressor import QuantizationAwareTrainingConfig
 from neural_compressor.training import prepare_compression
+
 combs = []
 distillation_criterion = KnowledgeDistillationLossConfig()
 d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)

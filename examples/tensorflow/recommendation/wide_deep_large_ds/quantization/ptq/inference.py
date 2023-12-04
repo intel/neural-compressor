@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,12 +32,13 @@ import json
 import datetime
 
 import tensorflow as tf
-from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import ops
 from tensorflow.core.framework import graph_pb2
 from google.protobuf import text_format
 from argparse import ArgumentParser
 from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
+from tensorflow.compat.v1 import graph_util
+
 
 def load_graph(model_file):
     """This is a function to load TF graph from pb file
@@ -183,7 +184,7 @@ class eval_classifier_optimized_graph:
         """
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.utils import set_random_seed
+        from neural_compressor import set_random_seed
         infer_graph = load_graph(self.args.input_graph)
         set_random_seed(9527)
 

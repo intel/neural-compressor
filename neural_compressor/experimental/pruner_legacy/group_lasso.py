@@ -14,16 +14,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Group Lasso pruner."""
 
-import re
 import copy
-import numpy as np
-from .pruner import pruner_registry, Pruner
-from .magnitude import BasicMagnitudePruner
-from neural_compressor.utils import logger
 
+import numpy as np
+from deprecated import deprecated
+
+from .magnitude import BasicMagnitudePruner
+from .pruner import Pruner, pruner_registry
+
+
+@deprecated(version="2.0")
 @pruner_registry
 class GroupLassoPruner(BasicMagnitudePruner):
     """Group Lasso pruner class.
@@ -39,7 +41,7 @@ class GroupLassoPruner(BasicMagnitudePruner):
         super(GroupLassoPruner, self).__init__(model, local_config, global_config)
         self.cur_weights = copy.deepcopy(self.weights)
         self.is_masks_set = False
-        self.alpha = local_config.parameters['alpha']
+        self.alpha = local_config.parameters["alpha"]
 
     def on_before_optimizer_step(self):
         """Update gradient to prune the weights by back propagation."""
@@ -48,7 +50,7 @@ class GroupLassoPruner(BasicMagnitudePruner):
                 weight_grad = self.model.get_gradient(weight_name)
                 weight = np.array(self.model.get_weight(weight_name))
                 reshaped_weight = self.pattern.reshape(weight)
-                coeff = self.alpha / np.linalg.norm(reshaped_weight, 2, axis=(1,3))
+                coeff = self.alpha / np.linalg.norm(reshaped_weight, 2, axis=(1, 3))
                 coeff[np.isinf(coeff)] = 0
                 coeff = self.pattern.repeat_mask(coeff).reshape(weight.shape)
                 weight_grad += coeff * weight

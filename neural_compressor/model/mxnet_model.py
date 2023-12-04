@@ -18,28 +18,32 @@
 """Class for MXNet model."""
 
 import os
-from neural_compressor.utils.utility import LazyImport
+
 from neural_compressor.utils import logger
+from neural_compressor.utils.utility import LazyImport
+
 from .base_model import BaseModel
-mx = LazyImport('mxnet')
+
+mx = LazyImport("mxnet")
+
 
 class MXNetModel(BaseModel):
     """Build MXNet model."""
 
     def __init__(self, model, **kwargs):
         """Initialize a MXNet model.
-        
+
         Args:
             model (mxnet model): model path
         """
-        #(TODO) MXNet does not support recover model from tuning history currently
+        # (TODO) MXNet does not support recover model from tuning history currently
         self.q_config = None
         self._model = model
         self.calib_cache = {}
 
     def framework(self):
         """Return framework."""
-        return 'mxnet'
+        return "mxnet"
 
     @property
     def model(self):
@@ -54,7 +58,8 @@ class MXNetModel(BaseModel):
     def save(self, root=None):
         """Save MXNet model."""
         if root is None:
-            from neural_compressor.conf import config as cfg
+            from neural_compressor import config as cfg
+
             root = cfg.default_workspace
         root = os.path.abspath(os.path.expanduser(root))
         os.makedirs(os.path.dirname(root), exist_ok=True)
@@ -65,7 +70,7 @@ class MXNetModel(BaseModel):
         else:
             symnet, args, auxs = self._model
             symnet = symnet.as_nd_ndarray()
-            args = {k:v.as_nd_ndarray() for k, v in args.items()}
-            auxs = {k:v.as_nd_ndarray() for k, v in auxs.items()}
+            args = {k: v.as_nd_ndarray() for k, v in args.items()}
+            auxs = {k: v.as_nd_ndarray() for k, v in auxs.items()}
             mx.model.save_checkpoint(root, 0, symnet, args, auxs, remove_amp_cast=False)
             logger.info("Save quantized symbol model to {}.".format(root))

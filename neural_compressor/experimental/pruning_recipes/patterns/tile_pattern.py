@@ -17,8 +17,12 @@
 # limitations under the License.
 
 import numpy as np
+from deprecated import deprecated
+
 from .pattern import PatternBase, pattern_registry
 
+
+@deprecated(version="2.0")
 class TilePatternBase(PatternBase):
     """Parent class for all NxM tile patterns."""
 
@@ -33,14 +37,15 @@ class TilePatternBase(PatternBase):
 
     def repeat_mask(self, mask, ori_shape=None):
         """Repeat mask in 2 dimensions."""
-        flatten_mask = np.repeat(np.repeat(mask, self.mask_shape[0], axis=-2), \
-                       self.mask_shape[1], axis=-1)
+        flatten_mask = np.repeat(np.repeat(mask, self.mask_shape[0], axis=-2), self.mask_shape[1], axis=-1)
         if ori_shape:
             return flatten_mask.reshape(ori_shape)
         else:
             return flatten_mask
 
-@pattern_registry(pattern_type='tile_pattern_1x1')
+
+@deprecated(version="2.0")
+@pattern_registry(pattern_type="tile_pattern_1x1")
 class TilePattern_1x1(TilePatternBase):
     """1x1 tile pattern (unstructured)."""
 
@@ -48,7 +53,9 @@ class TilePattern_1x1(TilePatternBase):
         """Element wise sparsity."""
         super(TilePattern_1x1, self).__init__([1, 1])
 
-@pattern_registry(pattern_type='tile_pattern_2x2')
+
+@deprecated(version="2.0")
+@pattern_registry(pattern_type="tile_pattern_2x2")
 class TilePattern_2x2(TilePatternBase):
     """2x2 tile pattern (unstructured)."""
 
@@ -56,7 +63,9 @@ class TilePattern_2x2(TilePatternBase):
         """2x2 tile wise sparsity."""
         super(TilePattern_2x2, self).__init__([2, 2])
 
-@pattern_registry(pattern_type='tile_pattern_1x16')
+
+@deprecated(version="2.0")
+@pattern_registry(pattern_type="tile_pattern_1x16")
 class TilePattern_1x16(TilePatternBase):
     """1x16 tile pattern (unstructured)."""
 
@@ -64,15 +73,19 @@ class TilePattern_1x16(TilePatternBase):
         """1x16 tile wise sparsity."""
         super(TilePattern_1x16, self).__init__([1, 16])
 
-@pattern_registry(pattern_type='tile_pattern_4x1')
+
+@deprecated(version="2.0")
+@pattern_registry(pattern_type="tile_pattern_4x1")
 class TilePattern_4x1(TilePatternBase):
     """4x1 tile pattern (unstructured)."""
 
     def __init__(self):
         """4x1 tile wise vnni-aware sparsity."""
         super(TilePattern_4x1, self).__init__([4, 1])
-        
-@pattern_registry(pattern_type='tile_pattern_1x2')
+
+
+@deprecated(version="2.0")
+@pattern_registry(pattern_type="tile_pattern_1x2")
 class TilePattern_1x2(TilePatternBase):
     """1x2 tile pattern (unstructured)."""
 

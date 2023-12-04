@@ -4,3 +4,4 @@ accelerate
 datasets
 evaluate
 tqdm
+sacrebleu

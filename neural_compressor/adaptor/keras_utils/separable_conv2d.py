@@ -16,14 +16,20 @@
 # limitations under the License.
 
 import json
+
 import tensorflow as tf
-from tensorflow.keras import activations
-from tensorflow.keras import constraints
-from tensorflow.keras import initializers
-from tensorflow.keras import regularizers
-from keras.utils import conv_utils # pylint: disable=E0401
-from keras.layers.convolutional.base_separable_conv import SeparableConv # pylint: disable=E0401
 from tensorflow import quantization
+from tensorflow.keras import activations, constraints, initializers, regularizers
+
+from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
+
+if version1_gte_version2(tf.__version__, "2.13.0"):
+    from keras.src.layers.convolutional.base_separable_conv import SeparableConv  # pylint: disable=E0401
+    from keras.src.utils import conv_utils  # pylint: disable=E0401
+else:
+    from keras.layers.convolutional.base_separable_conv import SeparableConv  # pylint: disable=E0401
+    from keras.utils import conv_utils  # pylint: disable=E0401
+
 
 class QSeparableConv2D(SeparableConv):
     def __init__(
@@ -79,40 +85,40 @@ class QSeparableConv2D(SeparableConv):
         self.max_value = json.loads(max_value)
 
     def call(self, inputs):
-      if self.data_format == "channels_last":
-          strides = (1,) + self.strides + (1,)
-      else:
-          strides = (1, 1) + self.strides
-      # (TODO) it's ugly that we can't get the point_wise min/max here 
-      depthwise_kernel, _, _ = quantization.quantize(self.depthwise_kernel,
-                                      self.min_value, self.max_value, tf.qint8,
-                                      axis=3, mode='SCALED')
-      depthwise_kernel = quantization.dequantize(depthwise_kernel, self.min_value,
-                                      self.max_value, axis=3, mode='SCALED',)
+        if self.data_format == "channels_last":
+            strides = (1,) + self.strides + (1,)
+        else:
+            strides = (1, 1) + self.strides
+        # (TODO) it's ugly that we can't get the point_wise min/max here
+        depthwise_kernel, _, _ = quantization.quantize(
+            self.depthwise_kernel, self.min_value, self.max_value, tf.qint8, axis=3, mode="SCALED"
+        )
+        depthwise_kernel = quantization.dequantize(
+            depthwise_kernel,
+            self.min_value,
+            self.max_value,
+            axis=3,
+            mode="SCALED",
+        )
 
-      outputs = tf.compat.v1.nn.separable_conv2d(
-          inputs,
-          depthwise_kernel,
-          self.pointwise_kernel,
-          strides=strides,
-          padding=self.padding.upper(),
-          rate=self.dilation_rate,
-          data_format=conv_utils.convert_data_format(
-              self.data_format, ndim=4
-          ),
-      )
+        outputs = tf.compat.v1.nn.separable_conv2d(
+            inputs,
+            depthwise_kernel,
+            self.pointwise_kernel,
+            strides=strides,
+            padding=self.padding.upper(),
+            rate=self.dilation_rate,
+            data_format=conv_utils.convert_data_format(self.data_format, ndim=4),
+        )
 
-      if self.use_bias:
-        outputs = tf.keras.backend.bias_add(
-            outputs, self.bias, data_format=self.data_format)
+        if self.use_bias:
+            outputs = tf.keras.backend.bias_add(outputs, self.bias, data_format=self.data_format)
 
-      if self.activation is not None:
-        return self.activation(outputs)
+        if self.activation is not None:
+            return self.activation(outputs)
 
-      return outputs
+        return outputs
 
     @classmethod
     def from_config(cls, config):
         return cls(**config)
-
-

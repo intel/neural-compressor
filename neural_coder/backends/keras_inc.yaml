@@ -19,9 +19,9 @@ transformation:
     - |-
       [+] from neural_compressor.quantization import fit
       [+] from neural_compressor.config import PostTrainingQuantConfig
-      [+] from neural_compressor.experimental import common
-      [+] config = PostTrainingQuantConfig(backend='itex')
+      [+] config = PostTrainingQuantConfig(backend='itex', quant_level=1)
       [+] quantized_model = fit(MODEL_NAME, conf=config, calib_dataloader=DATALOADER_NAME, eval_func=eval_func)
+      [+] quantized_model.save("./quantized_model")
   order:
     - below:
       above:

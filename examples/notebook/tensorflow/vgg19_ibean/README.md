@@ -17,7 +17,7 @@ This example shows a whole pipeline:
 
 3. Test and compare the performance of FP32 & INT8 models.
 
-This exmaple can be executed on Intel® CPU supports VNNI or AMX. There will be more performance improvement on Intel® CPU with AMX.
+This example can be executed on Intel® CPU supports VNNI or AMX. There will be more performance improvement on Intel® CPU with AMX.
 
 
 To learn more about Intel® Neural Compressor, please refer to the official website for detailed info and news: [https://github.com/intel/neural-compressor](https://github.com/intel/neural-compressor)

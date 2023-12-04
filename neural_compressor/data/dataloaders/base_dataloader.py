@@ -20,18 +20,27 @@
 from abc import abstractmethod
 
 
-class BaseDataLoader:    # pragma: no cover
+class BaseDataLoader:  # pragma: no cover
     """Base class for all DataLoaders.
 
     _generate_dataloader is needed to create a dataloader object
     from the general params like batch_size and sampler. The dynamic batching is just to
     generate a new dataloader by setting batch_size and last_batch.
-
     """
-    
-    def __init__(self, dataset, batch_size=1, last_batch='rollover', collate_fn=None,
-                 sampler=None, batch_sampler=None, num_workers=0, pin_memory=False,
-                 shuffle=False, distributed=False):
+
+    def __init__(
+        self,
+        dataset,
+        batch_size=1,
+        last_batch="rollover",
+        collate_fn=None,
+        sampler=None,
+        batch_sampler=None,
+        num_workers=0,
+        pin_memory=False,
+        shuffle=False,
+        distributed=False,
+    ):
         """Initialize BaseDataLoader.
 
         Args:
@@ -58,7 +67,7 @@ class BaseDataLoader:    # pragma: no cover
         self.shuffle = shuffle
         self.distributed = distributed
         self.last_batch = last_batch
-        self.drop_last = False if last_batch == 'rollover' else True
+        self.drop_last = False if last_batch == "rollover" else True
 
         self.dataloader = self._generate_dataloader(
             self.dataset,
@@ -70,7 +79,8 @@ class BaseDataLoader:    # pragma: no cover
             num_workers=num_workers,
             pin_memory=pin_memory,
             shuffle=shuffle,
-            distributed=distributed)
+            distributed=distributed,
+        )
 
     def batch(self, batch_size, last_batch=None):
         """Set batch size for dataloader.
@@ -94,7 +104,8 @@ class BaseDataLoader:    # pragma: no cover
             self.num_workers,
             self.pin_memory,
             self.shuffle,
-            self.distributed)
+            self.distributed,
+        )
 
     @property
     def batch_size(self):
@@ -114,6 +125,17 @@ class BaseDataLoader:    # pragma: no cover
         return iter(self.dataloader)
 
     @abstractmethod
-    def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn, sampler,
-                             batch_sampler, num_workers, pin_memory, shuffle, distributed):
+    def _generate_dataloader(
+        self,
+        dataset,
+        batch_size,
+        last_batch,
+        collate_fn,
+        sampler,
+        batch_sampler,
+        num_workers,
+        pin_memory,
+        shuffle,
+        distributed,
+    ):
         raise NotImplementedError

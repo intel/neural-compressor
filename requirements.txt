@@ -1,24 +1,14 @@
+deprecated >= 1.2.13
 numpy
+opencv-python-headless
 pandas
-pyyaml
-scikit-learn
-schema
-py-cpuinfo
-contextlib2
-requests
-Flask
-Flask-Cors
-Flask-SocketIO
-gevent
-gevent-websocket
-psutil
 Pillow
-pycocotools-windows; sys_platform != 'linux'
-pycocotools; sys_platform == 'linux'
-opencv-python
 prettytable
-cryptography
-sqlalchemy==1.4.27
-alembic==1.7.7
-pywin32; sys_platform != 'linux'
-deprecated
+psutil
+py-cpuinfo
+pycocotools; sys_platform != 'win32' or python_version > '3.8'
+pycocotools-windows; sys_platform == 'win32' and python_version <= '3.8'
+pyyaml
+requests
+schema
+scikit-learn

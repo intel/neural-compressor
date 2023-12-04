@@ -14,28 +14,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """ONNX options."""
 
 from ..conf.dotdict import DotDict
 
+
 class onnxrt:
     """ONNX helper configuration."""
-    graph_optimization = DotDict({'level': None, 'gemm2matmul': True})
-    qdq_setting = DotDict({'OpTypesToExcludeOutputQuantizatioin': None, 
-                           'AddQDQPairToWeight': False,
-                           'DedicatedQDQPair': False})
 
-OPTIONS = {'tensorflow': None,
-           'tensorflow_itex': None,
-           'pytorch': None,
-           'pytorch_fx': None,
-           'pytorch_ipex': None,
-           'mxnet': None,
-           'onnxrt_integerops': onnxrt,
-           'onnxrt_qlinearops': onnxrt,
-           'onnxrt_qdq': onnxrt,
-           'onnxruntime': onnxrt,
-           }
+    graph_optimization = DotDict({"level": None, "gemm2matmul": True})
+    qdq_setting = DotDict(
+        {"OpTypesToExcludeOutputQuantizatioin": [], "AddQDQPairToWeight": False, "DedicatedQDQPair": False}
+    )
 
 
+OPTIONS = {
+    "tensorflow": None,
+    "tensorflow_itex": None,
+    "pytorch": None,
+    "pytorch_fx": None,
+    "pytorch_ipex": None,
+    "mxnet": None,
+    "onnxrt_integerops": onnxrt,
+    "onnxrt_qlinearops": onnxrt,
+    "onnxrt_qdq": onnxrt,
+    "onnxruntime": onnxrt,
+}

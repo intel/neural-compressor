@@ -227,7 +227,7 @@ else
   echo "[INFO] Connect to AWS Instance success"
 fi
 
-echo "[INFO] Start to transfering benchmark files"
+echo "[INFO] Start to transferring benchmark files"
 scp -i $key_name -r ./code/ $host_name:/tmp
 result=$?
 if [ $result -ne '0' ]
@@ -235,7 +235,7 @@ then
   echo "[ERROR] SSH connection failed"
   exit 0
 else 
-  echo "[INFO] File transfering success"
+  echo "[INFO] File transferring success"
 fi
 
 if  [ $whether_launch_new -eq "1" ]
@@ -292,7 +292,7 @@ else
   echo "[INFO] Connect to Ali Yun Instance success"
 fi
 
-echo "[INFO] Start to transfering benchmark files"
+echo "[INFO] Start to transferring benchmark files"
 scp -i $key_name -r ./code/ $host_name:/tmp
 result=$?
 if [ $result -ne '0' ]
@@ -300,7 +300,7 @@ then
   echo "[ERROR] SSH connection failed"
   exit 0
 else 
-  echo "[INFO] File transfering success"
+  echo "[INFO] File transferring success"
 fi
 
 if  [ $whether_launch_new -eq "1" ]

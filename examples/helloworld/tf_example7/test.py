@@ -3,6 +3,7 @@ from neural_compressor.data import DataLoader
 from neural_compressor.data import Datasets
 from neural_compressor.quantization import fit
 
+
 def main():
 
     # Built-in dummy dataset
@@ -14,8 +15,8 @@ def main():
     # Just call fit to do quantization.
     q_model = fit(model="./mobilenet_v1_1.0_224_frozen.pb",
                   conf=config,
-                  calib_dataloader=dataloader,
-                  eval_dataloader=dataloader)
+                  calib_dataloader=dataloader)
+
 
 if __name__ == "__main__":
     main()

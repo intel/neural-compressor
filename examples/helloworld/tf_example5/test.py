@@ -24,12 +24,15 @@ def main():
 
     if args.tune:
         from neural_compressor.quantization import fit
+        from neural_compressor import Metric
+        top1 = Metric(name="topk", k=1)
         config = PostTrainingQuantConfig(calibration_sampling_size=[20])
         q_model = fit(
             model="./mobilenet_v1_1.0_224_frozen.pb",
             conf=config,
             calib_dataloader=calib_dataloader,
-            eval_dataloader=eval_dataloader)
+            eval_dataloader=eval_dataloader,
+            eval_metric=top1)
         q_model.save('./int8.pb')
 
     if args.benchmark:

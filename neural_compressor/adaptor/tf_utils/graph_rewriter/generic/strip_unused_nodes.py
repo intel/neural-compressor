@@ -20,10 +20,12 @@ from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
 
+
 class StripUnusedNodesOptimizer(GraphRewriterBase):
     """Remove the unused nodes in the graph."""
+
     def __init__(self, model, input_node_names, output_node_names):
-        """Initilization."""
+        """Initialization."""
         super().__init__(model)
         self.input_node_names = input_node_names
         self.output_node_names = output_node_names
@@ -31,9 +33,7 @@ class StripUnusedNodesOptimizer(GraphRewriterBase):
     @dump_elapsed_time("Pass StripUnusedNodesOptimizer")
     def do_transformation(self):
         """Execute stripping unused nodes."""
-        from neural_compressor.adaptor.tf_utils.util import fix_ref_type_of_graph_def
-        from neural_compressor.adaptor.tf_utils.util import strip_unused_nodes
+        from neural_compressor.adaptor.tf_utils.util import fix_ref_type_of_graph_def, strip_unused_nodes
+
         self.model = fix_ref_type_of_graph_def(self.model)
-        return strip_unused_nodes(self.model,
-                                  self.input_node_names,
-                                  self.output_node_names)
+        return strip_unused_nodes(self.model, self.input_node_names, self.output_node_names)

@@ -16,11 +16,9 @@
 # limitations under the License.
 """Symbolic Trace for Torch Utils."""
 import torch
-from neural_compressor.adaptor.pytorch import (
-    PyTorch_FXAdaptor,
-    get_torch_version,
-)
 from packaging.version import Version
+
+from neural_compressor.adaptor.pytorch import PyTorch_FXAdaptor, get_torch_version
 
 version = get_torch_version()
 
@@ -36,14 +34,15 @@ def trace_and_fuse_sub_graph(model, prefix, is_qat):
     Returns:
         model (object).
     """
-    from torch.quantization.quantize_fx import _fuse_fx
     import torch.quantization.quantization_mappings as tqqm
+    from torch.quantization.quantize_fx import _fuse_fx
+
     fx_white_list = tqqm.get_default_qconfig_propagation_list()
     for name, module in model.named_children():
         # FX QAT cannot fallback nn.Dropout from train mode to eval
         if type(module) == torch.nn.Dropout:  # pragma: no cover
             continue
-        op_name = prefix + '.' + name if prefix != '' else name
+        op_name = prefix + "." + name if prefix != "" else name
         if type(module) in fx_white_list:
             module = torch.quantization.QuantWrapper(module)
         if PyTorch_FXAdaptor._check_dynamic_control(module):
@@ -74,5 +73,5 @@ def symbolic_trace(model, is_qat=False):
     try:
         traced_model = torch.fx.symbolic_trace(model)
     except:
-        traced_model = trace_and_fuse_sub_graph(model, prefix='', is_qat=is_qat)
+        traced_model = trace_and_fuse_sub_graph(model, prefix="", is_qat=is_qat)
     return traced_model

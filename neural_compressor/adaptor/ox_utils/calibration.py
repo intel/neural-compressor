@@ -24,20 +24,26 @@
 
 import copy
 import logging
+import os
 import sys
+from importlib.util import find_spec
 
 import numpy as np
 import onnx
-import onnxruntime
 import onnx.numpy_helper as numpy_helper
-from onnx import helper, TensorProto, shape_inference
+import onnxruntime
+from onnx import TensorProto, helper, shape_inference
 from packaging.version import Version
-from importlib.util import find_spec
-from neural_compressor.model.onnx_model import ONNXModel
-from neural_compressor.adaptor.ox_utils.util import make_dquant_node, is_B_transposed, \
-    _get_qrange_for_qType, calculate_scale_zp
+
 from neural_compressor.adaptor.ox_utils.calibrator import CALIBRATOR
-from neural_compressor.adaptor.ox_utils.util import find_by_name
+from neural_compressor.adaptor.ox_utils.util import (
+    _get_qrange_for_qType,
+    calculate_scale_zp,
+    is_B_transposed,
+    make_dquant_node,
+    to_numpy,
+)
+from neural_compressor.model.onnx_model import ONNXModel
 
 logger = logging.getLogger("neural_compressor")
 ONNX18_VERSION = Version("1.8.0")
@@ -45,16 +51,20 @@ ORT112_VERSION = Version("1.12.0")
 
 
 class ONNXRTAugment:
-    """augment input model to dump tensor or for calibration."""
+    """Augment input model to dump tensor or for calibration."""
 
-    def __init__(self, model_wrapper,
-                 dataloader,
-                 dump_op_types,
-                 black_nodes=[],
-                 white_nodes=[],
-                 iterations=[],
-                 backend=['CPUExecutionProvider'],
-                 reduce_range=False):
+    def __init__(
+        self,
+        model_wrapper,
+        dataloader,
+        dump_op_types,
+        black_nodes=[],
+        white_nodes=[],
+        iterations=[],
+        backend="CPUExecutionProvider",
+        reduce_range=False,
+        **kwargs,
+    ):
         """Initialization.
 
         Args:
@@ -69,8 +79,7 @@ class ONNXRTAugment:
         """
         self.model_wrapper = model_wrapper
         self.model = model_wrapper.model
-        ai_onnx_domain = [opset for opset in self.model.opset_import \
-                          if not opset.domain or opset.domain == "ai.onnx"]
+        ai_onnx_domain = [opset for opset in self.model.opset_import if not opset.domain or opset.domain == "ai.onnx"]
         self.opset_version = ai_onnx_domain[0].version
         self.dataloader = dataloader
         self.dump_op_types = dump_op_types
@@ -81,15 +90,24 @@ class ONNXRTAugment:
         self.backend = backend
         self.augment_nodes = []
         self.dequantized_output = {}
-        self.already_quantized = 'DequantizeLinear' in \
-                                 [node.op_type for node in self.model.graph.node]
+        self.already_quantized = "DequantizeLinear" in [node.op_type for node in self.model.graph.node]
         self.dynamically_quantized = False
         self.ort_version = Version(onnxruntime.__version__)
         self.reduce_range = reduce_range
 
+        self.layer_wise = True if len(kwargs.get("split_model_input_names", [])) != 0 else False
+        if self.layer_wise:
+            self.split_model_input_names = kwargs.get("split_model_input_names", [])
+            self._dataloder_for_next_split_model = None
+
+    @property
+    def dataloder_for_next_split_model(self):
+        """Return dataloader for next split model for layer-wise quantization."""
+        return self._dataloder_for_next_split_model
+
     def augment_graph(self, activation_only=False, weight_only=False):
         """Augment_graph.
-        
+
         Adds nodes to all quantization_candidates op type nodes in model and
         ensures their outputs are stored as part of the graph output.
 
@@ -100,13 +118,15 @@ class ONNXRTAugment:
         self.dequantized_output.clear()
         onnx_version = Version(onnx.__version__)
         if onnx_version < ONNX18_VERSION:
-            logger.warning("Static quantization for NLP model is supported " \
-                           "at onnx 1.8.0 and newer.")
-        if self.already_quantized and any([i.dims in [1, 2] for i in \
-                                           self.model_wrapper.initializer() if i.name.endswith('_scale')]):
+            logger.warning("Static quantization for NLP model is supported " "at onnx 1.8.0 and newer.")
+        if self.already_quantized and any(
+            [i.dims in [1, 2] for i in self.model_wrapper.initializer() if i.name.endswith("_scale")]
+        ):
             if self.opset_version < 13 and self.ort_version >= ORT112_VERSION:
-                logger.warning("Please use onnxruntime < 1.12.0 or upgrade model opset " \
-                               "version to 13 or higher to inspect per-channel quantized weight")
+                logger.warning(
+                    "Please use onnxruntime < 1.12.0 or upgrade model opset "
+                    "version to 13 or higher to inspect per-channel quantized weight"
+                )
 
         model = copy.deepcopy(self.model)
         model_nodes_names = [node.name for node in model.graph.node]
@@ -116,17 +136,17 @@ class ONNXRTAugment:
         tensors_to_dump = set()
 
         for augment_node_type in self.augment_nodes:
-            if augment_node_type not in ['DequantizeLinear']:  # pragma: no cover
-                raise ValueError("Unexpected augment_node {} only DequantizeLinear is " \
-                                 "supported".format(augment_node_type))
+            if augment_node_type not in ["DequantizeLinear"]:  # pragma: no cover
+                raise ValueError(
+                    "Unexpected augment_node {} only DequantizeLinear is " "supported".format(augment_node_type)
+                )
 
         if self.already_quantized:
             # mapping between fp32 node and int8 node
             new_white_nodes = []
             for white_node in self.white_nodes:
                 new_white_node = white_node + "_quant"
-                assert new_white_node in model_nodes_names, "no quantized {} in the " \
-                                                            "graph".format(white_node)
+                assert new_white_node in model_nodes_names, "no quantized {} in the " "graph".format(white_node)
                 new_white_nodes.append(new_white_node)
             self.white_nodes = new_white_nodes
 
@@ -134,43 +154,51 @@ class ONNXRTAugment:
         node_outputs = []
         for node in model.graph.node:  # pylint: disable=no-member
             node_outputs.extend(node.output)
-            should_be_dump = ((node.op_type in self.dump_op_types) and
-                              (node.name not in self.black_nodes)) or \
-                             (node.name in self.white_nodes)
+            should_be_dump = ((node.op_type in self.dump_op_types) and (node.name not in self.black_nodes)) or (
+                node.name in self.white_nodes
+            )
             if should_be_dump:
                 if not weight_only and not activation_only:
-                    tensors_to_dump.update(node.input)
+                    tensors_to_dump.update([input for input in node.input if len(input) != 0])
+                    tensors_to_dump.update([output for output in node.output if len(output) != 0])
                     tensors_to_dump.update(node.output)
                 elif weight_only:
                     for input in node.input:
-                        if self.already_quantized and \
-                                input.replace('_dequantized', '_quantized') in initializers:
+                        if (
+                            self.already_quantized
+                            and input.replace("_dequantized", "_quantized") in initializers
+                            and len(input) != 0
+                        ):
                             tensors_to_dump.add(input)
-                        elif not self.already_quantized and input in initializers:
+                        elif not self.already_quantized and input in initializers and len(input) != 0:
                             tensors_to_dump.add(input)
                 elif activation_only:
-                    tensors_to_dump.update(node.output)
+                    if len(node.input[0]) != 0:
+                        tensors_to_dump.update([node.input[0]])
 
         model_inputs = [i.name for i in model.graph.input]
         for tensor in tensors_to_dump:
-            if tensor not in node_outputs and tensor not in initializers and \
-                    tensor not in model_inputs:
+            if tensor not in node_outputs and tensor not in initializers and tensor not in model_inputs:
                 continue
             if self.augment_nodes:
                 for augment_node_type in self.augment_nodes:
-                    if augment_node_type in ['DequantizeLinear']:
+                    if augment_node_type in ["DequantizeLinear"]:
                         # insert DequantizeLinear node as output
-                        if tensor.endswith('_scale') or tensor.endswith('_zero_point') or \
-                                tensor.endswith('_QuantizeLinear') or \
-                                tensor.endswith('_QuantizeInput_quantized'):
+                        if tensor.endswith("_scale") or tensor.endswith("_zero_point"):
                             continue
 
                         if not self.dynamically_quantized:
-                            tensor = tensor.replace('_QuantizeInput', '_quantized') if \
-                                tensor.endswith('_QuantizeInput') else tensor
+                            tensor = (
+                                tensor.replace("_QuantizeInput", "_quantized")
+                                if tensor.endswith("_QuantizeInput")
+                                else tensor
+                            )
                         else:
-                            tensor = tensor.replace('_output_quantized', '') if \
-                                tensor.endswith('_output_quantized') else tensor
+                            tensor = (
+                                tensor.replace("_output_quantized", "")
+                                if tensor.endswith("_output_quantized")
+                                else tensor
+                            )
 
                         augment_node_name = tensor + "_new_" + augment_node_type
                         scale, zero_point = self.model_wrapper.get_scale_zero(tensor)
@@ -179,9 +207,11 @@ class ONNXRTAugment:
                             nodes, output = self._dequantize(tensor, scale, zero_point)
                             if output:
                                 added_nodes.extend(nodes)
-                                added_outputs.append(helper.make_tensor_value_info(
-                                    output,  # pylint: disable=no-member
-                                    TensorProto.FLOAT, ()))  # pylint: disable=no-member
+                                added_outputs.append(
+                                    helper.make_tensor_value_info(
+                                        output, TensorProto.FLOAT, ()  # pylint: disable=no-member
+                                    )
+                                )  # pylint: disable=no-member
                         else:
                             # the tensor is in FP32 dtype
                             if tensor not in [t.name for t in model.graph.output]:
@@ -200,98 +230,152 @@ class ONNXRTAugment:
 
         self.augmented_model = model
         if self.model_wrapper.is_large_model:  # pragma: no cover
-            onnx.save_model(model,
-                            self.model_wrapper.model_path + '_augment.onnx',
-                            save_as_external_data=True,
-                            all_tensors_to_one_file=True,
-                            location="weights.pb",
-                            convert_attribute=False)
+            onnx.save_model(
+                model,
+                self.model_wrapper.model_path + "_augment.onnx",
+                save_as_external_data=True,
+                all_tensors_to_one_file=True,
+                convert_attribute=False,
+            )
 
     def get_intermediate_outputs(self, q_config=None):
         """Gather intermediate model outputs after running inference."""
         # conduct inference session and get intermediate outputs
         so = onnxruntime.SessionOptions()
-        if sys.version_info < (3, 10) and find_spec('onnxruntime_extensions'):  # pragma: no cover
+        if sys.version_info < (3, 11) and find_spec("onnxruntime_extensions"):  # pragma: no cover
             from onnxruntime_extensions import get_library_path
+
             so.register_custom_ops_library(get_library_path())
 
-        session = onnxruntime.InferenceSession(
-                    self.augmented_model.SerializeToString(),
-                    so,
-                    provider=self.backend) if not self.model_wrapper.is_large_model else \
-                  onnxruntime.InferenceSession(
-                    self.model_wrapper.model_path  + '_augment.onnx',
-                    so,
-                    provider=self.backend)
+        backend = self.backend if self.backend != "TensorrtExecutionProvider" else "CUDAExecutionProvider"
+        session = (
+            onnxruntime.InferenceSession(self.augmented_model.SerializeToString(), so, providers=[backend])
+            if not self.model_wrapper.is_large_model
+            else onnxruntime.InferenceSession(self.model_wrapper.model_path + "_augment.onnx", so, providers=[backend])
+        )
 
-        intermediate_outputs = []
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+        len_outputs = len(session.get_outputs())
+        outputs_names = [session.get_outputs()[i].name for i in range(len_outputs)]
+
+        node_output_names = [
+            output.name if output.name not in self.dequantized_output else self.dequantized_output[output.name]
+            for output in session.get_outputs()
+        ]
+        augment_model_wrapper = (
+            ONNXModel(self.augmented_model)
+            if not self.model_wrapper.is_large_model
+            else ONNXModel(self.model_wrapper.model_path + "_augment.onnx")
+        )
+        input_name_to_nodes = augment_model_wrapper.input_name_to_nodes
+        output_name_to_node = augment_model_wrapper.output_name_to_node
+        name_to_node = {}
+        for data_name in node_output_names:
+            node = None
+            if data_name in output_name_to_node:
+                node = output_name_to_node[data_name]
+            elif data_name in input_name_to_nodes:
+                node = input_name_to_nodes[data_name][0]
+            assert node, "{} is neither an input nor an output of nodes in augmented model.".format(data_name)
+            name_to_node[data_name] = node.name
+
         output_dicts = {}
-
-        node_output_names = [output.name if output.name not in self.dequantized_output \
-                                 else self.dequantized_output[output.name] \
-                             for output in session.get_outputs()]
-
+        intermediate_tensor = {}
+        name_to_calibrator = {}
+        ort_inputs_for_next_split_model = []
         for idx, (inputs, labels) in enumerate(self.dataloader):
             ort_inputs = {}
+
             if len_inputs == 1:
-                ort_inputs.update(
-                    inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
-                )
-            else:
-                assert len_inputs == len(inputs), \
-                    'number of input tensors must align with graph inputs'
-                if isinstance(inputs, dict):  # pragma: no cover
-                    ort_inputs.update(inputs)
+                if isinstance(inputs, dict):
+                    for name, input in inputs.items():
+                        ort_inputs.update({name: to_numpy(input)})
                 else:
-                    for i in range(len_inputs):
-                        if not isinstance(inputs[i], np.ndarray):  # pragma: no cover
-                            ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                    ort_inputs.update({inputs_names[0]: to_numpy(inputs)})
+            else:
+                if not self.layer_wise:
+                    # for layer-wise calibration
+                    assert len_inputs == len(inputs), "number of input tensors must align with graph inputs"
+
+                if isinstance(inputs, dict):
+                    for name, input in inputs.items():
+                        ort_inputs.update({name: to_numpy(input)})
+                else:
+                    ort_inputs = dict(zip(inputs_names, [to_numpy(i) for i in inputs]))
+
+            def _collect_data(ort_inputs):
+                if self.layer_wise:
+                    # for layer-wise calibration
+                    ort_inputs = {
+                        input_name: input_tensor
+                        for input_name, input_tensor in ort_inputs.items()
+                        if input_name in self.split_model_input_names
+                    }
+
+                for output_idx, output in enumerate(session.run(None, ort_inputs)):
+                    if q_config is not None and output.size != 0:
+                        node_name = name_to_node[node_output_names[output_idx]]
+                        if node_output_names[output_idx] not in name_to_calibrator:
+                            calib_method = (
+                                q_config[node_name]["activation"]["algorithm"]
+                                if q_config and node_name in q_config and "activation" in q_config[node_name]
+                                else "minmax"
+                            )
+                            assert calib_method in CALIBRATOR, "Calibration method {} is not registered.".format(
+                                calib_method
+                            )
+                            calibrator = CALIBRATOR[calib_method]()
                         else:
-                            ort_inputs.update({inputs_names[i]: inputs[i]})
+                            calibrator = name_to_calibrator[node_output_names[output_idx]]
+
+                        # currently, the calibration range for each iteration is collected if
+                        # the calibration method is minmax, otherwise the tensor data is collected.
+                        # TODO: for kl and percentile method, need to support range collection
+                        # per iteration in the future.
+                        if calibrator.method_name == "minmax":
+                            calibrator.collect(output)
+                            output_dicts[node_output_names[output_idx]] = [list(calibrator.calib_range)]
+                            name_to_calibrator[node_output_names[output_idx]] = calibrator
+                        else:
+                            intermediate_tensor.setdefault((node_output_names[output_idx], node_name), []).append(
+                                output
+                            )
+                    elif q_config is None:
+                        output_dicts.setdefault(node_output_names[output_idx], []).append(output)
+
+                    if self.layer_wise:
+                        # for layer-wise calibration
+                        ort_inputs.update({outputs_names[output_idx]: output})
+                        ort_inputs_for_next_split_model.append((ort_inputs, labels))
 
             if self.iterations != []:
                 if idx > max(self.iterations):
                     break
                 if idx in self.iterations:
-                    intermediate_outputs.append(session.run(None, ort_inputs))
+                    _collect_data(ort_inputs)
             else:
-                intermediate_outputs.append(session.run(None, ort_inputs))
-        
-        merged_dict = {}
-        for intermediate_output in intermediate_outputs:
-            for (data, name) in zip(intermediate_output, node_output_names):
-                merged_dict.setdefault(name, []).append(data)
-        intermediate_outputs = []
-        del intermediate_outputs
-        if q_config is not None:
-            ranges_dict = {}
-            for data_name, datas in merged_dict.items():
-                if any([data is None for data in datas]):
-                    continue
-                input_name_to_nodes = self.model_wrapper.input_name_to_nodes
-                output_name_to_node = self.model_wrapper.output_name_to_node
-                node = None
-                if data_name in output_name_to_node:
-                    node = output_name_to_node[data_name]
-                elif data_name in input_name_to_nodes:
-                    node = input_name_to_nodes[data_name][0]
-                assert node, '{} is neither an input nor an output of nodes in augmented model.'.format(data_name)
+                _collect_data(ort_inputs)
 
-                # initialize a calibrater according to 'algorithm' in q_config
-                # and collect ranges of the intermediate output
-                calib_method = q_config[node.name]['activation']['algorithm'] \
-                    if q_config and node.name in q_config and 'activation' in q_config[node.name] else 'minmax'
-                assert calib_method in CALIBRATOR, 'Calibration method {} is not registerd.'.format(calib_method)
-                calibrator = CALIBRATOR[calib_method]()
-                calibrator.collect(datas)
-                ranges_dict.setdefault(data_name, []).append(list(calibrator.calib_range))
-                calibrator.clear()
-                del calibrator 
-            return list(ranges_dict.keys()), ranges_dict
-        else:
-            return list(merged_dict.keys()), merged_dict
+        # for kl and percentile method, collect calibration range after all tensors are collected.
+        merged_dict = intermediate_tensor
+        for (output_name, node_name), datas in merged_dict.items():
+            if any([data is None for data in datas]):
+                continue
+            calib_method = (
+                q_config[node_name]["activation"]["algorithm"]
+                if q_config and node_name in q_config and "activation" in q_config[node_name]
+                else "minmax"
+            )
+            calibrator = CALIBRATOR[calib_method]()
+            calibrator.collect(datas)
+            output_dicts.setdefault(output_name, []).append(list(calibrator.calib_range))
+            calibrator.clear()
+            del calibrator
+
+        self._dataloder_for_next_split_model = ort_inputs_for_next_split_model
+
+        return list(output_dicts.keys()), output_dicts
 
     def _dequantize(self, tensor, scale_tensor, zo_tensor):
         """Helper function to dequantize tensor."""
@@ -302,9 +386,8 @@ class ONNXRTAugment:
             return self._dequantize_activation(tensor, scale_tensor, zo_tensor)
 
     def _dequantize_activation(self, activation_tensor_name, scale_tensor, zo_tensor):
-        """Helper funtion to dequantize activation."""
-        added_nodes, added_output = self._add_dequantize_node(activation_tensor_name, \
-                                                              scale_tensor, zo_tensor)
+        """Helper function to dequantize activation."""
+        added_nodes, added_output = self._add_dequantize_node(activation_tensor_name, scale_tensor, zo_tensor)
         self.dequantized_output[added_output] = activation_tensor_name
         return added_nodes, added_output
 
@@ -312,81 +395,77 @@ class ONNXRTAugment:
         """Helper function to dequantize weight."""
         weight_tensor = self.model_wrapper.get_initializer(weight_tensor_name)
         if len(scale_tensor.dims) in [1, 2] and weight_tensor.dims[0] == max(scale_tensor.dims):
-            logger.debug("weight {} is quantized with per channel granularity."
-                         .format(weight_tensor_name))
+            logger.debug("weight {} is quantized with per channel granularity.".format(weight_tensor_name))
             if self.opset_version < 13 and self.ort_version >= ORT112_VERSION:
-                logger.warning("Skip dequantizing weight {}, please use onnxruntime < 1.12.0 " \
-                               "or upgrade model opset version to 13 or higher".format(weight_tensor_name))
+                logger.warning(
+                    "Skip dequantizing weight {}, please use onnxruntime < 1.12.0 "
+                    "or upgrade model opset version to 13 or higher".format(weight_tensor_name)
+                )
                 return [], None
             node = self.model_wrapper.input_name_to_nodes[weight_tensor_name][0]
-            if 'Conv' in node.op_type or \
-                    ('Gemm' in node.op_type and is_B_transposed(node)):
+            if "Conv" in node.op_type or ("Gemm" in node.op_type and is_B_transposed(node)):
                 added_nodes, added_output = self._add_dequantize_transpose_node(
-                    weight_tensor_name,
-                    scale_tensor, zo_tensor,
-                    len(weight_tensor.dims))
+                    weight_tensor_name, scale_tensor, zo_tensor, len(weight_tensor.dims)
+                )
             else:
                 added_nodes, added_output = self._add_dequantize_node(
-                    weight_tensor_name,
-                    scale_tensor,
-                    zo_tensor,
-                    axis=1 if self.opset_version > 12 else None)
+                    weight_tensor_name, scale_tensor, zo_tensor, axis=1 if self.opset_version > 12 else None
+                )
         else:
-            added_nodes, added_output = self._add_dequantize_node(weight_tensor_name,
-                                                                  scale_tensor, \
-                                                                  zo_tensor)
+            added_nodes, added_output = self._add_dequantize_node(weight_tensor_name, scale_tensor, zo_tensor)
         self.dequantized_output[added_output] = weight_tensor_name
         return added_nodes, added_output
 
     def _add_dequantize_node(self, tensor_name, scale_tensor, zo_tensor, axis=None):
         """Helper function to generate dequantize node."""
-        dequantize_node = make_dquant_node(tensor_name + '_DequantizeLinear',
-                                           [tensor_name,
-                                            scale_tensor.name,
-                                            zo_tensor.name],
-                                           [tensor_name + '_output'],
-                                           axis)
-        return [dequantize_node], tensor_name + '_output'
+        dequantize_node = make_dquant_node(
+            tensor_name + "_DequantizeLinear",
+            [tensor_name, scale_tensor.name, zo_tensor.name],
+            [tensor_name + "_output"],
+            axis,
+        )
+        return [dequantize_node], tensor_name + "_output"
 
     def _add_dequantize_transpose_node(self, tensor_name, scale_tensor, zo_tensor, dim):
         """Insert Transpose-DequantizelLinear-Transpose pairs."""
         pre_transpose_node = onnx.helper.make_node(
-            'Transpose',
+            "Transpose",
             inputs=[tensor_name],
-            outputs=[tensor_name + '_transposed'],
+            outputs=[tensor_name + "_transposed"],
             perm=(1, 0, 2, 3) if dim == 4 else (1, 0),
-            name=tensor_name + '_pre_transpose')
+            name=tensor_name + "_pre_transpose",
+        )
         dequantize_node = make_dquant_node(
-            tensor_name + '_DequantizeLinear',
-            [tensor_name + '_transposed',
-             scale_tensor.name,
-             zo_tensor.name],
-            [tensor_name + '_DequantizeLinear'],
-            axis=1 if self.opset_version > 12 else None)
+            tensor_name + "_DequantizeLinear",
+            [tensor_name + "_transposed", scale_tensor.name, zo_tensor.name],
+            [tensor_name + "_DequantizeLinear"],
+            axis=1 if self.opset_version > 12 else None,
+        )
         post_transpose_node = onnx.helper.make_node(
-            'Transpose',
-            inputs=[tensor_name + '_DequantizeLinear'],
-            outputs=[tensor_name + '_output'],
+            "Transpose",
+            inputs=[tensor_name + "_DequantizeLinear"],
+            outputs=[tensor_name + "_output"],
             perm=(1, 0, 2, 3) if dim == 4 else (1, 0),
-            name=tensor_name + '_post_transpose')
+            name=tensor_name + "_post_transpose",
+        )
         added_nodes = [pre_transpose_node, dequantize_node, post_transpose_node]
-        return added_nodes, tensor_name + '_output'
+        return added_nodes, tensor_name + "_output"
 
     def _map_calibration(self, node_output_names, output_dicts):
         """Map tensor names and min/max values."""
         merged_dict = {}
         for name, minmaxs in output_dicts.items():
             for minmax in minmaxs:
-                merged_dict.setdefault(name + '_Min', []).append(minmax[0])
-                merged_dict.setdefault(name + '_Max', []).append(minmax[1])
+                if len(minmax) < 2:
+                    continue
+                merged_dict.setdefault(name + "_Min", []).append(minmax[0])
+                merged_dict.setdefault(name + "_Max", []).append(minmax[1])
 
         # Characterizing distribution of a node's values across test data sets
         clean_merged_dict = dict((i, merged_dict[i]) for i in merged_dict)
         pairs = [
-            tuple([
-                float(min(clean_merged_dict[name + '_Min'])),
-                float(max(clean_merged_dict[name + '_Max']))
-            ]) for name in node_output_names
+            tuple([float(min(clean_merged_dict[name + "_Min"])), float(max(clean_merged_dict[name + "_Max"]))])
+            for name in node_output_names
         ]
 
         final_dict = dict(zip(node_output_names, pairs))
@@ -405,8 +484,11 @@ class ONNXRTAugment:
             q_config (dict): op-wise quantization config
             min_max (dict, optional): min/max values of tensors
         """
-        return self.calculate_quantization_params(q_config, self.dump_minmax(q_config)) if min_max is None \
+        return (
+            self.calculate_quantization_params(q_config, self.dump_minmax(q_config))
+            if min_max is None
             else self.calculate_quantization_params(q_config, min_max)
+        )
 
     def calculate_quantization_params(self, q_config, quantization_thresholds):
         """Given quantization thresholds, calculate the quantization params.
@@ -420,8 +502,9 @@ class ONNXRTAugment:
         """
         if quantization_thresholds is None:
             raise ValueError(
-                'quantization thresholds is required to calculate quantization \
-                    params (zero point and scale)')
+                "quantization thresholds is required to calculate quantization \
+                    params (zero point and scale)"
+            )
 
         quantization_params = {}
         model = self.model
@@ -436,39 +519,46 @@ class ONNXRTAugment:
                 if len(children) == 1:
                     child = children[0]
             parent = None
-            scheme = 'asym'
+            scheme = "asym"
             qType = 2  # uint8
             if tensor_name in output_name_to_nodes:
                 parent = output_name_to_nodes[tensor_name]
-            if parent and parent.name in q_config and \
-                q_config[parent.name] not in ['fp32', 'fp16']:
-                scheme = q_config[parent.name]['activation']['scheme']
-                qType = q_config[parent.name]['activation']['dtype']
-            elif self.backend in ['TensorrtExecutionProvider']:
-                scheme = 'sym'
+            if parent and parent.name in q_config and q_config[parent.name] not in ["fp32", "fp16", "bf16"]:
+                scheme = q_config[parent.name]["activation"]["scheme"]
+                qType = q_config[parent.name]["activation"]["dtype"]
+            elif self.backend in ["TensorrtExecutionProvider"]:
+                scheme = "sym"
                 qType = 3
             node_thresholds = quantization_thresholds[tensor_name]
-            node_params = self.calculate_scale_zeropoint(parent, child, node_thresholds[0],
-                                                         node_thresholds[1], scheme, qType,
-                                                         _get_qrange_for_qType(qType, self.reduce_range))
+            node_params = self.calculate_scale_zeropoint(
+                parent,
+                child,
+                node_thresholds[0],
+                node_thresholds[1],
+                scheme,
+                qType,
+                _get_qrange_for_qType(qType, self.reduce_range),
+            )
             quantization_params[tensor_name] = node_params
 
         return quantization_params
 
-    def dump_tensor(self, activation=True, weight=False):
+    def dump_tensor(self, activation=True, weight=False, format=None):
         """Dump activation or weight or both from the model."""
-        if "QuantizeLinear" in [node.op_type for node in self.model.graph.node] or \
-                "DynamicQuantizeLinear" in [node.op_type for node in self.model.graph.node]:
+        is_qdq = False
+        if "QuantizeLinear" in [node.op_type for node in self.model.graph.node] or "DynamicQuantizeLinear" in [
+            node.op_type for node in self.model.graph.node
+        ]:
             self.augment_nodes = ["DequantizeLinear"]
             self.already_quantized = True
-            self.dynamically_quantized = \
-                "DynamicQuantizeLinear" in [node.op_type for node in self.model.graph.node]
+            self.dynamically_quantized = "DynamicQuantizeLinear" in [node.op_type for node in self.model.graph.node]
+            is_qdq = format == "qdq"
         self.augment_graph(activation_only=not weight, weight_only=not activation)
         _, output_dicts = self.get_intermediate_outputs()
         iters = len(list(output_dicts.values())[-1])
         map_node_activation = [{} for _ in range(iters)]
         map_node_weight = {}
-        self.white_nodes = [node.replace('_quant', '') for node in self.white_nodes]
+        self.white_nodes = [node.replace("_quant", "") for node in self.white_nodes]
         augmengted_wrapper = ONNXModel(self.augmented_model)
         map_output = augmengted_wrapper.output_name_to_node
         map_input = augmengted_wrapper.input_name_to_nodes
@@ -476,31 +566,44 @@ class ONNXRTAugment:
         model_input_names = [t.name for t in self.model.graph.input]
         model_initializer_names = [t.name for t in self.model.graph.initializer]
         for tensor_name, tensors in output_dicts.items():
-            if tensor_name.replace('_dequantized', '_quantized') in model_initializer_names:
-                nodes = [node for node in map_input[tensor_name] \
-                         if node.name.replace('_quant', '') in self.white_nodes]
-            elif tensor_name.replace('_quantized', '') in model_input_names:
-                continue
-            else:
+            if tensor_name.replace("_dequantized", "_quantized") in model_initializer_names:
+                nodes = [node for node in map_input[tensor_name] if node.name.replace("_quant", "") in self.white_nodes]
+            elif tensor_name in model_output_names:
                 nodes = [map_output[tensor_name]]
+            else:
+                nodes = map_input[tensor_name]
             for node in nodes:
-                node_name = node.name.replace('_quant', '')
+                node_name = node.name.replace("_quant", "")
                 if tensor_name in model_output_names and node_name not in self.white_nodes:
                     continue
-                while node_name not in self.white_nodes and self.already_quantized:
-                    node = augmengted_wrapper.get_parents(node, output_name_to_node=map_output)[0]
-                    node_name = node.name.replace('_quant', '')
                 if node_name not in self.white_nodes:
                     continue
                 if node_name not in map_node_weight:
                     map_node_weight[node_name] = {}
-                if tensor_name not in model_initializer_names:
+                if (
+                    (is_qdq and tensor_name.replace("_dequantized", "_quantized") not in model_initializer_names)
+                    or (not is_qdq and tensor_name not in model_initializer_names)
+                ) and tensor_name in node.input[:2]:
                     for i in range(iters):
-                        map_node_activation[i][node_name] = \
-                            {tensor_name.replace('_quantized', ''): tensors[i]}
-                else:
-                    map_node_weight[node_name].update({tensor_name.replace('_quantized', ''): \
-                                                           tensors[0]})
+                        if node.op_type in ["Attention", "QAttention"] and tensor_name not in node.input[:2]:
+                            continue
+                        if node.op_type in ["MatMul", "QLinearMatMul"] and tensor_name != node.input[0]:
+                            continue
+                        if is_qdq:
+                            map_node_activation[i][node_name] = {
+                                tensor_name.replace("_dequantized", "").replace("_" + node_name, ""): tensors[i]
+                            }
+                        else:
+                            map_node_activation[i][node_name] = {tensor_name.replace("_quantized", ""): tensors[i]}
+                elif (
+                    not (node.op_type in ["QGemm"] and tensor_name not in node.input[:6])
+                    and not (node.op_type in ["QLinearConv"] and tensor_name not in node.input[:8])
+                    and not (node.op_type in ["Conv", "Gemm", "FusedConv"] and tensor_name not in node.input[:2])
+                ):
+                    if is_qdq:
+                        map_node_weight[node_name].update({tensor_name.replace("_dequantized", ""): tensors[0]})
+                    else:
+                        map_node_weight[node_name].update({tensor_name.replace("_quantized", ""): tensors[0]})
         dumped_tensors_map = {}
         if weight:
             dumped_tensors_map.update({"weight": map_node_weight})
@@ -516,29 +619,35 @@ class ONNXRTAugment:
         rmin = min(rmin, 0)
         rmax = max(rmax, 0)
         if next_node:
-            if next_node.op_type == 'Relu':
+            if next_node.op_type == "Relu":
                 if rmin < 0:
                     rmin = 0
-            elif next_node.op_type == 'Clip' and len(next_node.input) == 3:
-                clip_min = numpy_helper.to_array(self.model_wrapper.get_initializer(next_node.input[1]))
-                clip_max = numpy_helper.to_array(self.model_wrapper.get_initializer(next_node.input[2]))
-                if rmin < clip_min:
-                    rmin = clip_min.tolist() if not isinstance(clip_min.tolist(), list)  else clip_min.tolist()[0]
-                if rmax > clip_max:
-                    rmax = clip_max.tolist() if not isinstance(clip_max.tolist(), list)  else clip_max.tolist()[0]
+            elif next_node.op_type == "Clip" and len(next_node.input) == 3:
+                if self.model_wrapper.get_initializer(next_node.input[1]) is not None:
+                    clip_min = numpy_helper.to_array(self.model_wrapper.get_initializer(next_node.input[1]))
+                    if rmin < clip_min:
+                        rmin = clip_min.tolist() if not isinstance(clip_min.tolist(), list) else clip_min.tolist()[0]
+                if self.model_wrapper.get_initializer(next_node.input[2]) is not None:
+                    clip_max = numpy_helper.to_array(self.model_wrapper.get_initializer(next_node.input[2]))
+                    if rmax > clip_max:
+                        rmax = clip_max.tolist() if not isinstance(clip_max.tolist(), list) else clip_max.tolist()[0]
 
         if last_node:
-            if last_node.op_type in ['Conv', 'FusedConv']:
+            if last_node.op_type in ["Conv", "FusedConv"]:
                 attrs = [attr for attr in last_node.attribute]
                 attrs_names = [attr.name for attr in last_node.attribute]
-                if 'activation' in attrs_names:
-                    if attrs[attrs_names.index('activation')].s == b'Relu':
+                if "activation" in attrs_names:
+                    if attrs[attrs_names.index("activation")].s == b"Relu":
                         rmin = max(rmin, 0)
-                    if attrs[attrs_names.index('activation')].s == b'Clip':
-                        assert 'activation_params' in attrs_names, "the model contains no \
+                    if attrs[attrs_names.index("activation")].s == b"Clip":
+                        assert (
+                            "activation_params" in attrs_names
+                        ), "the model contains no \
                                                                    params for clip node \
-                                                                   {}".format(last_node)
-                        clip_params = attrs[attrs_names.index('activation_params')].floats
+                                                                   {}".format(
+                            last_node
+                        )
+                        clip_params = attrs[attrs_names.index("activation_params")].floats
                         rmin = min(rmin, clip_params[0], clip_params[1])
                         rmax = max(rmax, clip_params[0], clip_params[1])
 
@@ -568,21 +677,20 @@ class ONNXRTAugment:
         if node.op_type == "Conv":
             group = 1
             for attr in node.attribute:
-                if hasattr(attr, 'name'):
+                if hasattr(attr, "name"):
                     if attr.name == "group":
                         group = attr.i
                         break
             # currently only normal conv and depthwise conv are supported
             if group > 1:  # group conv, need to check depthwise or not
                 weight_name = node.input[1]
-                weight_shape = numpy_helper.to_array(
-                    model.graph.initializer[name_to_indices[weight_name]]).shape
-                input_channel = weight_shape.shape[1]
+                weight_shape = numpy_helper.to_array(model.graph.initializer[name_to_indices[weight_name]]).shape
+                input_channel = weight_shape[1]
                 if input_channel != 1:  # TODO need to double check
                     return True
         return False
 
-    def _get_input_tensor_of_ops(self, op_types=['MatMul', 'Linear', 'Conv']):
+    def _get_input_tensor_of_ops(self, op_types=["MatMul", "Gemm", "Conv", "FusedConv"]):
         """Traverse the graph and get all the data tensors flowing into layers of {op_types}.
 
         Group conv is excluded.
@@ -592,20 +700,20 @@ class ONNXRTAugment:
             op_types: The op types whose input tensor will be dumped
 
         Returns:
-            A set of tensor names 
+            A dict of dumped tensor: node info
         """
-        tensors_to_dump = set()
+        tensors_to_node = {}
         model = self.model
         initializers = {i.name: i for i in model.graph.initializer}
 
         for node in model.graph.node:
             if len(op_types) == 0 or node.op_type in op_types:
-                if node.op_type == "Conv" and self._check_is_group_conv(node, model):
+                if node.op_type in ["Conv", "FusedConv"] and self._check_is_group_conv(node, model):
                     continue
                 # also need to check whether the layer has weight
                 if len(node.input) >= 2 and node.input[1] in initializers.keys():
-                    tensors_to_dump.add(node.input[0])
-        return tensors_to_dump
+                    tensors_to_node.setdefault(node.input[0], []).append([node.name, node.input, node.output])
+        return tensors_to_node
 
     def _get_max_per_channel(self, datas: list, percentile):
         """Get the max values per input channel.
@@ -650,17 +758,33 @@ class ONNXRTAugment:
             shape_infos: The shape information of input tensors
         """
         # add the input tensors of {op_types} to outputs of the model
-        tensors_to_dump = self._get_input_tensor_of_ops(op_types)
-        self.model_wrapper.add_tensors_to_outputs(tensors_to_dump)
+        tensors_to_node = self._get_input_tensor_of_ops(op_types)
+        self.model_wrapper.add_tensors_to_outputs(tensors_to_node.keys())
         self.augmented_model = self.model_wrapper.model
-        _, output_dicts = self.get_intermediate_outputs(q_config)
+        if self.model_wrapper.is_large_model:  # pragma: no cover
+            onnx.save_model(
+                self.augmented_model,
+                self.model_wrapper.model_path + "_augment.onnx",
+                save_as_external_data=True,
+                all_tensors_to_one_file=True,
+                convert_attribute=False,
+            )
+
+        _, output_dicts = self.get_intermediate_outputs()
 
         # remove the input tensors of {op_types} to outputs of the model
-        self.model_wrapper.remove_tensors_from_outputs(tensors_to_dump)
+        self.model_wrapper.remove_tensors_from_outputs(tensors_to_node.keys())
         max_vals_per_channel = {}
         shape_infos = {}
-        for key in tensors_to_dump:
+        for key, val in tensors_to_node.items():
             max_val_per_channel = self._get_max_per_channel(output_dicts[key], percentile=percentile)
             max_vals_per_channel[key] = max_val_per_channel
             shape_infos[key] = output_dicts[key][0].shape
-        return max_vals_per_channel, shape_infos
+            for item in val:
+                shape_infos[item[1][1]] = numpy_helper.to_array(
+                    self.model_wrapper.get_initializer(item[1][1]),
+                    base_dir=os.path.dirname(self.model_wrapper.model_path)
+                    if self.model_wrapper.model_path is not None
+                    else "",
+                ).shape
+        return max_vals_per_channel, shape_infos, tensors_to_node

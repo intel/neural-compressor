@@ -1,8 +1,10 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing Intel® Neural Compressor QAT feature.
+This document is used to list steps of reproducing Intel® Neural Compressor QAT feature on intel CPU.
 
+> **Note**: 
+> Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x. Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 # Prerequisite
 
@@ -12,13 +14,19 @@ This document is used to list steps of reproducing Intel® Neural Compressor QAT
 ```shell
 pip install neural-compressor
 ```
-### Install Requirements
-The Tensorflow and intel-extension-for-tensorflow is mandatory to be installed to run this QAT example.
-The Intel Extension for Tensorflow for Intel CPUs is installed as default.
+
+### Installation Dependency packages
 ```shell
 pip install -r requirements.txt
 ```
-> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
+
+### Install Intel Extension for Tensorflow
+Intel Extension for Tensorflow is mandatory to be installed to run this QAT example.
+```shell
+pip install intel-extension-for-tensorflow[cpu]
+```
+> **Note**: 
+> The version compatibility of stock Tensorflow and ITEX can be checked [here](https://github.com/intel/intel-extension-for-tensorflow#compatibility-table). Please make sure you have installed compatible Tensorflow and ITEX.
 
 # Run
 
@@ -27,7 +35,7 @@ To apply QAT, run the command below:
 
 ## 1. Quantization
 ```shell
-bash run_tuning.sh --output_model=/path/to/output_model
+bash run_quant.sh --output_model=/path/to/output_model
 ```
 
 ## 2. Benchmark

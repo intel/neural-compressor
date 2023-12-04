@@ -51,7 +51,7 @@ flags.DEFINE_integer(
 flags.DEFINE_integer(
     'iters', 100, 'maximum iteration when evaluating performance')
 
-from neural_compressor.metric import TensorflowTopK
+from neural_compressor import Metric
 from neural_compressor.data import TensorflowImageRecord
 from neural_compressor.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
 from neural_compressor.data import ComposeTransform
@@ -73,13 +73,15 @@ def evaluate(model):
     """Custom evaluate function to inference the model for specified metric on validation dataset.
 
     Args:
-        model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
+        model (tf.keras.Model): The input model will be the objection of tf.keras.Model.
 
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
     postprocess = LabelShift(label_shift=1)
-    metric = TensorflowTopK(k=1)
+    from neural_compressor import METRICS
+    metrics = METRICS('tensorflow')
+    metric = metrics['topk']()
 
     def eval_func(dataloader, metric):
         warmup = 5
@@ -108,26 +110,27 @@ def evaluate(model):
     return acc
 
 def main(_):
-    from neural_compressor.utils import set_random_seed
+    from neural_compressor import set_random_seed
     set_random_seed(9527)
     if FLAGS.tune:
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
         conf = PostTrainingQuantConfig(backend='itex',
                 calibration_sampling_size=[50, 100])
-        q_model = quantization.fit(FLAGS.input_model, conf=conf, calib_dataloader=calib_dataloader,
-                    eval_func=evaluate)
+        q_model = quantization.fit(FLAGS.input_model, conf=conf, 
+                                    calib_dataloader=calib_dataloader, eval_func=evaluate)
         q_model.save(FLAGS.output_model)
 
     if FLAGS.benchmark:
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
         if FLAGS.mode == 'performance':
-            conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1)
+            conf = BenchmarkConfig(warmup=10, iteration=100, \
+                                    backend='itex', cores_per_instance=4, num_of_instance=1)
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
             from neural_compressor.model import Model
-            model = Model(FLAGS.input_model).model
+            model = Model(FLAGS.input_model, backend='itex').model
             accuracy = evaluate(model)
             print('Batch size = %d' % FLAGS.batch_size)
             print("Accuracy: %.5f" % accuracy)

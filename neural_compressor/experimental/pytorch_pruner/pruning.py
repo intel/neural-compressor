@@ -1,4 +1,4 @@
-"""pruning module."""
+"""Pruning module."""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -17,12 +17,14 @@
 # limitations under the License.
 
 import torch.nn
+from deprecated import deprecated
 
-from .prune_utils import process_config, parse_to_prune, parse_not_to_prune
-from .pruner import get_pruner
 from .logger import logger
+from .prune_utils import parse_not_to_prune, parse_to_prune, process_config
+from .pruner import get_pruner
 
 
+@deprecated(version="2.0")
 class Pruning:
     """Pruning.
 
@@ -32,14 +34,14 @@ class Pruning:
     Args:
         config: a string. The path to a config file. For config file template, please refer to
             https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager/
-    
+
     Attributes:
         model: The model object to prune.
         config_file_path: A string. The path to a config file.
         pruners: A list. A list of Pruner objects.
-        pruner_info: A config dict object. Contains pruners' information.    
+        pruner_info: A config dict object. Contains pruners' information.
     """
-    
+
     def __init__(self, config):
         """Initialize."""
         self.model = None
@@ -50,7 +52,7 @@ class Pruning:
     def update_items_for_all_pruners(self, **kwargs):
         """Functions which add User-defined arguments to the original configurations.
 
-        The original config of pruning is read from a file. 
+        The original config of pruning is read from a file.
         However, users can still modify configurations by passing key-value arguments in this function.
         Please note that the key-value arguments' keys are analysable in current configuration.
         """
@@ -94,8 +96,7 @@ class Pruning:
             param_cnt += param.numel()
         blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt
         elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt
-        elementwise_over_all = float(
-            element_sparsity_cnt) / param_cnt
+        elementwise_over_all = float(element_sparsity_cnt) / param_cnt
 
         return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
 
@@ -110,8 +111,8 @@ class Pruning:
                 logger.warning("one pruner hooks no layers, please have a check")
 
             self.pruners.append(get_pruner(modules, info))
-            info['modules'] = [key for key in modules.keys()]
-            info['len_of_modules'] = len(info['modules'])
+            info["modules"] = [key for key in modules.keys()]
+            info["len_of_modules"] = len(info["modules"])
             logger.info(info)
 
     def on_train_begin(self):
@@ -120,7 +121,7 @@ class Pruning:
         Before training, ensure that pruners are generated.
         """
         self._generate_pruners()  ##TODO is there better place to place
-    
+
     def on_epoch_begin(self, epoch):
         """Functions called in the beginning of every epoch."""
         for pruner in self.pruners:

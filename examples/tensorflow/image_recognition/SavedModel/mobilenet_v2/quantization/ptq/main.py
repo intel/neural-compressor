@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,8 +51,9 @@ def evaluate(model):
     infer = model.signatures["serving_default"]
     output_dict_keys = infer.structured_outputs.keys()
     output_name = list(output_dict_keys )[0]
-    from neural_compressor.metric import TensorflowTopK
-    metric = TensorflowTopK(k=1)
+    from neural_compressor import METRICS
+    metrics = METRICS('tensorflow')
+    metric = metrics['topk']()
 
     def eval_func(dataloader, metric):
         warmup = 5
@@ -92,7 +93,7 @@ def evaluate(model):
 
 class eval_object_detection_optimized_graph(object):
     def run(self):
-        from neural_compressor.utils import set_random_seed
+        from neural_compressor import set_random_seed
         set_random_seed(9527)
         if args.tune:
             from neural_compressor import quantization
@@ -124,7 +125,7 @@ class eval_object_detection_optimized_graph(object):
                     'filter': None
                 }
                 eval_dataloader = create_dataloader('tensorflow', dataloader_args)
-                fit(model=args.input_graph, config=conf, b_dataloader=eval_dataloader)
+                fit(model=args.input_graph, conf=conf, b_dataloader=eval_dataloader)
             else:
                 from neural_compressor.model import Model
                 model = Model(args.input_graph).model

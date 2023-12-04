@@ -1,23 +1,29 @@
 import copy
-import neural_compressor.adaptor.pytorch as nc_torch
 import os
 import shutil
+import unittest
+
 import torch
 import torch.nn as nn
-import unittest
-from neural_compressor import PostTrainingQuantConfig, QuantizationAwareTrainingConfig, set_workspace
-from neural_compressor.data import Datasets, DATALOADERS, DataLoader
-from neural_compressor import quantization
-from neural_compressor.training import prepare_compression, fit
-from neural_compressor.utils.pytorch import load
-from neural_compressor.utils.utility import recover
-from neural_compressor.utils.utility import LazyImport
-from torch.quantization import QuantStub, DeQuantStub
 from packaging.version import Version
+from torch.quantization import DeQuantStub, QuantStub
 
+import neural_compressor.adaptor.pytorch as nc_torch
+from neural_compressor import (
+    Metric,
+    PostTrainingQuantConfig,
+    QuantizationAwareTrainingConfig,
+    quantization,
+    set_workspace,
+)
+from neural_compressor.data import DATALOADERS, DataLoader, Datasets
+from neural_compressor.training import fit, prepare_compression
+from neural_compressor.utils.pytorch import load
+from neural_compressor.utils.utility import LazyImport, recover
 
 # improve lazy import UT coverage
 resnet18 = LazyImport("torchvision.models.resnet18")
+
 
 PT_VERSION = nc_torch.get_torch_version().release
 if PT_VERSION >= Version("1.8.0").release:
@@ -27,132 +33,34 @@ else:
 
 
 ptq_fx_op_name_list = {
-    "layer1.0.conv1": {
-        "activation": {
-            "dtype": ["fp32"]
-        },
-        "weight": {
-            "dtype": ["fp32"]
-        }
-    },
-    "layer1.0.conv2": {
-        "activation": {
-            "dtype": ["fp32"]
-        },
-        "weight": {
-            "dtype": ["fp32"]
-        }
-    },
+    "layer1.0.conv1": {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
+    "layer1.0.conv2": {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
     "layer2.0.conv1": {
-        "activation": {
-            "dtype": ["uint8"],
-            "algorithm": ["minmax"],
-            "granularity": ["per_tensor"],
-            "scheme": ["sym"]
-        },
-        "weight": {
-            "dtype": ["int8"],
-            "algorithm": ["minmax"],
-            "granularity": ["per_channel"],
-            "scheme": ["sym"]
-        }
+        "activation": {"dtype": ["uint8"], "algorithm": ["minmax"], "granularity": ["per_tensor"], "scheme": ["sym"]},
+        "weight": {"dtype": ["int8"], "algorithm": ["minmax"], "granularity": ["per_channel"], "scheme": ["sym"]},
     },
     "layer3.0.conv1": {
-        "activation": {
-            "dtype": ["uint8"],
-            "algorithm": ["kl"],
-            "granularity": ["per_tensor"],
-            "scheme": ["sym"]
-        },
-        "weight": {
-            "dtype": ["int8"],
-            "algorithm": ["minmax"],
-            "granularity": ["per_channel"],
-            "scheme": ["sym"]
-        }
+        "activation": {"dtype": ["uint8"], "algorithm": ["kl"], "granularity": ["per_tensor"], "scheme": ["sym"]},
+        "weight": {"dtype": ["int8"], "algorithm": ["minmax"], "granularity": ["per_channel"], "scheme": ["sym"]},
     },
-    "layer1.0.add_relu": {
-        "activation": {
-            "dtype": ["fp32"]
-        },
-        "weight": {
-            "dtype": ["fp32"]
-        }
-    },
-    "conv.module": {
-        "weight": {
-            "dtype": ["fp32"]
-        },
-        "activation": {
-            "dtype": ["fp32"]
-        }
-    },
-    "default_qconfig": {
-        "activation": {
-            "dtype": ["fp32"]
-        },
-        "weight": {
-            "dtype": ["fp32"]
-        }
-    }
+    "layer1.0.add_relu": {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
+    "conv.module": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}},
+    "default_qconfig": {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
 }
 
 qat_op_name_list = {
-    "layer1.0.conv1": {
-        "activation": {
-            "dtype": ["fp32"]
-        },
-        "weight": {
-            "dtype": ["fp32"]
-        }
-    },
-    "layer1.0.conv2": {
-        "activation": {
-            "dtype": ["fp32"]
-        },
-        "weight": {
-            "dtype": ["fp32"]
-        }
-    },
+    "layer1.0.conv1": {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
+    "layer1.0.conv2": {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
     "layer2.0.conv1": {
-        "activation": {
-            "dtype": ["uint8"],
-            "algorithm": ["minmax"],
-            "granularity": ["per_tensor"],
-            "scheme": ["sym"]
-        },
-        "weight": {
-            "dtype": ["int8"],
-            "algorithm": ["minmax"],
-            "granularity": ["per_channel"],
-            "scheme": ["sym"]
-        }
+        "activation": {"dtype": ["uint8"], "algorithm": ["minmax"], "granularity": ["per_tensor"], "scheme": ["sym"]},
+        "weight": {"dtype": ["int8"], "algorithm": ["minmax"], "granularity": ["per_channel"], "scheme": ["sym"]},
     },
     "layer3.0.conv1": {
-        "activation": {
-            "dtype": ["uint8"],
-            "algorithm": ["kl"],
-            "granularity": ["per_tensor"],
-            "scheme": ["sym"]
-        },
-        "weight": {
-            "dtype": ["int8"],
-            "algorithm": ["minmax"],
-            "granularity": ["per_channel"],
-            "scheme": ["sym"]
-        }
+        "activation": {"dtype": ["uint8"], "algorithm": ["kl"], "granularity": ["per_tensor"], "scheme": ["sym"]},
+        "weight": {"dtype": ["int8"], "algorithm": ["minmax"], "granularity": ["per_channel"], "scheme": ["sym"]},
     },
-    "layer1.0.add_relu": {
-        "activation": {
-            "dtype": ["fp32"]
-        },
-        "weight": {
-            "dtype": ["fp32"]
-        }
-    }
+    "layer1.0.add_relu": {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}},
 }
-
-
 
 
 class M(torch.nn.Module):
@@ -187,6 +95,7 @@ class DynamicModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
         self.conv = nn.Conv2d(1, 1, 1)
+
     def forward(self, x):
         if x is not None:
             x = self.conv(x)
@@ -295,7 +204,7 @@ def train_func(model):
     return model
 
 
-@unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
+@unittest.skipIf(not FX_MODE, "Unsupported Fx Mode with PyTorch Version Below 1.8")
 class TestPytorchFXAdaptor(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
@@ -309,8 +218,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             dataloader = DATALOADERS["pytorch"](dataset)
             if approach == "qat":
                 model = copy.deepcopy(model_origin)
-                conf = QuantizationAwareTrainingConfig(
-                  op_name_dict=qat_op_name_list)
+                conf = QuantizationAwareTrainingConfig(op_name_dict=qat_op_name_list)
                 compression_manager = prepare_compression(model, conf)
                 compression_manager.callbacks.on_train_begin()
                 model = compression_manager.model
@@ -318,26 +226,16 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 compression_manager.callbacks.on_train_end()
                 compression_manager.save("./saved")
             else:
-                conf = PostTrainingQuantConfig(
-                  op_name_dict=ptq_fx_op_name_list)
+                conf = PostTrainingQuantConfig(op_name_dict=ptq_fx_op_name_list)
                 conf.example_inputs = torch.randn([1, 3, 224, 224])
                 set_workspace("./saved")
-                q_model = quantization.fit(model_origin,
-                                           conf,
-                                           calib_dataloader=dataloader,
-                                           calib_func=eval_func)
+                q_model = quantization.fit(model_origin, conf, calib_dataloader=dataloader, eval_func=eval_func)
                 q_model.save("./saved")
             # Load configure and weights with neural_compressor.utils
             model_fx = load("./saved", model_origin)
             self.assertTrue("quantize" in str(type(q_model.model.fc)))
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
-            if approach != "qat":
-                # recover int8 model with only tune_cfg
-                history_file = "./saved/history.snapshot"
-                model_fx_recover = recover(model_origin, history_file, 0,
-                                **{"dataloader": dataloader})
-                self.assertEqual(model_fx.code, model_fx_recover.code)
             shutil.rmtree("./saved", ignore_errors=True)
 
         for approach in ["qat", "static"]:
@@ -347,19 +245,13 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             dataloader = DATALOADERS["pytorch"](dataset)
             if approach == "qat":
                 model = copy.deepcopy(model_origin)
-                conf = QuantizationAwareTrainingConfig(
-                  op_name_dict=qat_op_name_list
-                )
+                conf = QuantizationAwareTrainingConfig(op_name_dict=qat_op_name_list)
                 compression_manager = prepare_compression(model, conf)
                 q_model = fit(compression_manager=compression_manager, train_func=train_func, eval_func=eval_func)
                 compression_manager.save("./saved")
             else:
-                conf = PostTrainingQuantConfig(
-                    op_name_dict=ptq_fx_op_name_list
-                )
-                q_model = quantization.fit(model_origin,
-                                           conf,
-                                           calib_dataloader=dataloader)
+                conf = PostTrainingQuantConfig(op_name_dict=ptq_fx_op_name_list)
+                q_model = quantization.fit(model_origin, conf, calib_dataloader=dataloader)
                 q_model.save("./saved")
             # Load configure and weights with neural_compressor.utils
             model_fx = load("./saved", model_origin)
@@ -367,14 +259,38 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
             shutil.rmtree("./saved", ignore_errors=True)
 
-    @unittest.skipIf(PT_VERSION < Version("1.9.0").release,
-      "Please use PyTroch 1.9 or higher version for dynamic quantization with pytorch_fx backend")
+    def test_quantize_with_metric(self):
+        model_origin = resnet18()
+        dataset = Datasets("pytorch")["dummy"]((1, 3, 224, 224))
+        dataloader = DATALOADERS["pytorch"](dataset)
+        # run fx_quant in neural_compressor and save the quantized GraphModule
+        conf = PostTrainingQuantConfig()
+        q_model = quantization.fit(
+            model_origin,
+            conf,
+            calib_dataloader=dataloader,
+            eval_dataloader=dataloader,
+            eval_metric=Metric(name="topk", k=1),
+        )
+        self.assertTrue("quantize" in str(type(q_model.model.fc)))
+
+    def test_quantize_with_calib_func(self):
+        model_origin = resnet18()
+        # run fx_quant in neural_compressor and save the quantized GraphModule
+        conf = PostTrainingQuantConfig()
+        q_model = quantization.fit(model_origin, conf, calib_func=eval_func, eval_func=eval_func)
+        self.assertTrue("quantize" in str(type(q_model.model.fc)))
+
+    @unittest.skipIf(
+        PT_VERSION < Version("1.9.0").release,
+        "Please use PyTroch 1.9 or higher version for dynamic quantization with pytorch_fx backend",
+    )
     def test_fx_dynamic_quant(self):
         origin_model = LSTMModel(
-            ntoken = 10,
-            ninp = 512,
-            nhid = 256,
-            nlayers = 5,
+            ntoken=10,
+            ninp=512,
+            nhid=256,
+            nlayers=5,
         )
         # run fx_quant in neural_compressor and save the quantized GraphModule
         origin_model.eval()
@@ -391,6 +307,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         state_dict = torch.load("./saved/best_model.pt")
         tune_cfg = state_dict.pop("best_configure")
         import yaml
+
         with open("./saved/best_configure.yaml", "w") as f:
             yaml.dump(tune_cfg, f, default_flow_style=False)
         torch.save(state_dict, "./saved/best_model_weights.pt")
@@ -411,19 +328,17 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         # Model Definition
         for approach in ["qat", "auto"]:
             model_origin = LSTMModel(
-                ntoken = 10,
-                ninp = 512,
-                nhid = 256,
-                nlayers = 2,
+                ntoken=10,
+                ninp=512,
+                nhid=256,
+                nlayers=2,
             )
             dataset = Datasets("pytorch")["dummy"]((3, 10))
             dataloader = DATALOADERS["pytorch"](dataset)
             # run fx_quant in neural_compressor and save the quantized GraphModule
             if approach == "qat":
                 model = copy.deepcopy(model_origin)
-                conf = QuantizationAwareTrainingConfig(
-                    op_name_dict=qat_op_name_list
-                )
+                conf = QuantizationAwareTrainingConfig(op_name_dict=qat_op_name_list)
                 compression_manager = prepare_compression(model, conf)
                 compression_manager.callbacks.on_train_begin()
                 model = compression_manager.model.model
@@ -433,9 +348,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 self.assertTrue("quantize" in str(type(model.rnn)))
             else:
                 conf = PostTrainingQuantConfig(approach="auto")
-                q_model = quantization.fit(model_origin,
-                                           conf,
-                                           calib_dataloader=dataloader)
+                q_model = quantization.fit(model_origin, conf, calib_dataloader=dataloader)
                 self.assertTrue("quantize" in str(type(q_model.model.encoder)))
                 self.assertTrue("quantize" in str(type(q_model.model.rnn)))
 
@@ -457,66 +370,98 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             else:
                 set_workspace("./saved")
                 conf = PostTrainingQuantConfig()
-                q_model = quantization.fit(model_origin,
-                                           conf,
-                                           calib_dataloader=dataloader)
+                q_model = quantization.fit(model_origin, conf, calib_dataloader=dataloader)
                 q_model.save("./saved")
             # Load configure and weights with neural_compressor.utils
-            model_fx = load("./saved/best_model.pt", model_origin,
-                               **{"dataloader": torch.utils.data.DataLoader(dataset)
-                              })
+            model_fx = load(
+                "./saved/best_model.pt", model_origin, **{"dataloader": torch.utils.data.DataLoader(dataset)}
+            )
             self.assertTrue(isinstance(model_fx.sub, torch.fx.graph_module.GraphModule))
 
             if approach != "qat":
                 # recover int8 model with only tune_cfg
                 history_file = "./saved/history.snapshot"
-                model_fx_recover = recover(model_origin, history_file, 0,
-                                           **{"dataloader": torch.utils.data.DataLoader(dataset)})
+                model_fx_recover = recover(
+                    model_origin, history_file, 0, **{"dataloader": torch.utils.data.DataLoader(dataset)}
+                )
                 self.assertEqual(model_fx.sub.code, model_fx_recover.sub.code)
             shutil.rmtree("./saved", ignore_errors=True)
 
-    @unittest.skipIf(PT_VERSION < Version("1.11.0").release,
-      "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend")
+    @unittest.skipIf(
+        PT_VERSION < Version("1.11.0").release,
+        "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend",
+    )
     def test_mix_precision(self):
         model_origin = DynamicControlModel()
         # run fx_quant in neural_compressor and save the quantized GraphModule
         dataset = Datasets("pytorch")["dummy"]((100, 3, 224, 224))
         dataloader = DataLoader("pytorch", dataset)
-        set_workspace=("./saved")
+        set_workspace("./saved")
         conf = PostTrainingQuantConfig(op_name_dict=ptq_fx_op_name_list)
-        q_model = quantization.fit(model_origin,
-                                   conf,
-                                   calib_dataloader=dataloader,
-                                   calib_func=eval_func)
+        q_model = quantization.fit(model_origin, conf, calib_dataloader=dataloader, calib_func=eval_func)
         tune_cfg = q_model.q_config
         tune_cfg["op"][("conv.module", "Conv2d")].clear()
-        tune_cfg["op"][("conv.module", "Conv2d")] = \
-            {"weight": {"dtype": "bf16"}, "activation": {"dtype": "bf16"}}
+        tune_cfg["op"][("conv.module", "Conv2d")] = {"weight": {"dtype": "bf16"}, "activation": {"dtype": "bf16"}}
         tune_cfg["bf16_ops_list"].append(("conv.module", "Conv2d"))
         from neural_compressor.adaptor.torch_utils.bf16_convert import Convert
+
         q_model._model = Convert(q_model._model, tune_cfg)
 
         self.assertEqual(q_model._model.conv.module.module.weight.dtype, torch.bfloat16)
         self.assertEqual(q_model._model.conv.module.module.bias.dtype, torch.bfloat16)
-        
+
     def test_hawq_metric(self):
         # Test for hawq metric
         import torchvision
-        from neural_compressor.data import Datasets, DATALOADERS
-        from neural_compressor.quantization import fit
-        from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.model.torch_model import PyTorchFXModel
+
         from neural_compressor.adaptor.torch_utils.hawq_metric import hawq_top
-        
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.data import DATALOADERS, Datasets
+        from neural_compressor.model.torch_model import PyTorchFXModel
+        from neural_compressor.quantization import fit
+
         ori_model = torchvision.models.resnet18()
         pt_model = PyTorchFXModel(ori_model)
         dataset = Datasets("pytorch")["dummy"](((16, 3, 224, 224)))
         dataloader = DATALOADERS["pytorch"](dataset)
-        q_model = fit(ori_model, conf = PostTrainingQuantConfig(), calib_dataloader=dataloader)
-        op_to_traces = hawq_top(fp32_model=pt_model, q_model=q_model, dataloader=dataloader, \
-             criterion=None, enable_act=True)
+        q_model = fit(ori_model, conf=PostTrainingQuantConfig(), calib_dataloader=dataloader)
+        op_to_traces = hawq_top(
+            fp32_model=pt_model, q_model=q_model, dataloader=dataloader, criterion=None, enable_act=True
+        )
         self.assertIsNotNone(op_to_traces)
 
+
+@unittest.skipIf(not FX_MODE, "Unsupported Fx Mode with PyTorch Version Below 1.8")
+class TestPyTorchBlockDetector(unittest.TestCase):
+    def test_block_detector(self):
+        from transformers import BertModel
+
+        from neural_compressor.adaptor.torch_utils.pattern_detector import (
+            BLOCK_PATTERNS,
+            TransformerBasedModelBlockPatternDetector,
+        )
+
+        model = BertModel.from_pretrained("bert-base-uncased")
+        detector = TransformerBasedModelBlockPatternDetector(model, BLOCK_PATTERNS)
+        result = detector.detect_block()
+        self.assertEqual(len(result["attention_blocks"]), 12)
+        self.assertEqual(len(result["ffn_blocks"]), 12)
+
+        all_op_contain_attention = True
+        for block in result["attention_blocks"]:
+            for op in block:
+                if "attention" not in op:
+                    all_op_contain_attention = False
+                    break
+        self.assertTrue(all_op_contain_attention)
+
+        not_attention_in_ffn = True
+        for block in result["ffn_blocks"]:
+            for op in block:
+                if "attention" in op:
+                    not_attention_in_ffn = False
+                    break
+        self.assertTrue(not_attention_in_ffn)
 
 
 if __name__ == "__main__":

@@ -23,16 +23,11 @@ transformation:
       [+]     torch.backends.quantized.engine = 'onednn'
       [+] except:
       [+]     from torch.backends.quantized import engine; engine = 'onednn'
-      [+] from neural_compressor.conf.config import QuantConf
-      [+] from neural_compressor.experimental import Quantization, common
-      [+] quant_config = QuantConf()
-      [+] quant_config.usr_cfg.quantization.approach = "post_training_dynamic_quant"
-      [+] quant_config.usr_cfg.model.framework = "pytorch"
-      [+] quantizer = Quantization(quant_config)
-      [+] quantizer.model = common.Model(MODEL_NAME)
-      [+] quantizer.eval_func = eval_func
-      [+] MODEL_NAME = quantizer()
-      [+] MODEL_NAME = MODEL_NAME.model
+      [+] from neural_compressor.config import PostTrainingQuantConfig
+      [+] from neural_compressor.quantization import fit
+      [+] conf = PostTrainingQuantConfig(approach="dynamic", quant_level=1)
+      [+] MODEL_NAME = fit(model=MODEL_NAME, conf=conf, eval_func=eval_func)
+      [+] MODEL_NAME.save("./quantized_model")
       [+] MODEL_NAME.eval()
       [+] try:
       [+]     with torch.no_grad():

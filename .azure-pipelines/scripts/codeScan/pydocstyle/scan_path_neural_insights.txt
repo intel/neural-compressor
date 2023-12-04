@@ -1,0 +1,4 @@
+/neural-compressor/neural_insights/components
+/neural-compressor/neural_insights/utils
+/neural-compressor/neural_insights/web
+

@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import tensorflow as tf
 import onnxruntime as ort
 from argparse import ArgumentParser
 from neural_compressor.data import LabelShift
-from neural_compressor.metric import TensorflowTopK
 from neural_compressor.utils.create_obj_from_config import create_dataloader
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -113,7 +112,6 @@ class eval_classifier_optimized_graph:
             raise ValueError("Only support tensorflow export to ONNX for QDQ format, "
                 "please make sure input the correct quant_format.")
 
-        top1 = TensorflowTopK(k=1)
         postprocess = LabelShift(label_shift=1)
 
         if args.export:
@@ -138,6 +136,9 @@ class eval_classifier_optimized_graph:
                 eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
                 conf = PostTrainingQuantConfig(backend='itex', calibration_sampling_size=[50, 100],
                                             outputs=['softmax_tensor'])
+                from neural_compressor import METRICS
+                metrics = METRICS('tensorflow')
+                top1 = metrics['topk']()
                 def eval(model):
                     return eval_func_tf(model, eval_dataloader, top1, postprocess)
                 q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
@@ -168,8 +169,14 @@ class eval_classifier_optimized_graph:
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
             def eval(model):
                 if isinstance(model, str):
+                    from neural_compressor import METRICS
+                    metrics = METRICS('tensorflow')
+                    top1 = metrics['topk']()
                     return eval_func_tf(model, eval_dataloader, top1, postprocess)
                 else:
+                    from neural_compressor import METRICS
+                    metrics = METRICS('onnxrt_qlinearops')
+                    top1 = metrics['topk']()
                     return eval_func_onnx(model, eval_dataloader, top1, postprocess)
 
             if args.mode == 'performance':

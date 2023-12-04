@@ -6,5 +6,6 @@ scikit-learn
 Keras-Preprocessing
 onnx
 onnxruntime
-transformers >= 4.16.0
+transformers>=4.16.0
+accelerate
 torch>=1.9.0

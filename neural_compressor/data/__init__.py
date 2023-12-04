@@ -22,16 +22,18 @@ import neural_compressor.data.datasets
 import neural_compressor.data.transforms
 from .datasets import Datasets, Dataset, IterableDataset, dataset_registry, TensorflowImageRecord, COCORecordDataset
 from .dataloaders import DATALOADERS, DataLoader
+from .dataloaders.dataloader import check_dataloader
 from .dataloaders.default_dataloader import DefaultDataLoader
 from .transforms import TRANSFORMS, BaseTransform, ComposeTransform, transform_registry, Postprocess
 from .transforms import LabelShift, BilinearImagenetTransform, TensorflowResizeCropImagenetTransform
 from .transforms import TFSquadV1PostTransform, TFSquadV1ModelZooPostTransform
 from .transforms import TensorflowResizeWithRatio, ResizeTFTransform, RescaleTFTransform, NormalizeTFTransform
-from .transforms import ParseDecodeCocoTransform
+from .transforms import ParseDecodeCocoTransform, TensorflowShiftRescale
 
 from .filters import FILTERS, Filter, filter_registry, LabelBalanceCOCORecordFilter
 
 __all__ = [
+    "check_dataloader",
     "DataLoader",
     "DATALOADERS",
     "DefaultDataLoader",
@@ -40,23 +42,25 @@ __all__ = [
     "IterableDataset",
     "COCORecordDataset",
     "dataset_registry",
-    'TensorflowImageRecord',
+    "TensorflowImageRecord",
     "TRANSFORMS",
     "BaseTransform",
     "ComposeTransform",
     "transform_registry",
     "Postprocess",
-    'LabelShift',
-    "ResizeTFTransform", 
+    "LabelShift",
+    "ResizeTFTransform",
     "RescaleTFTransform",
+    "TensorflowShiftRescale",
     "NormalizeTFTransform",
     "ParseDecodeCocoTransform",
-    'BilinearImagenetTransform',
+    "BilinearImagenetTransform",
     "TensorflowResizeWithRatio",
-    'TensorflowResizeCropImagenetTransform',
+    "TensorflowResizeCropImagenetTransform",
     "FILTERS",
     "Filter",
     "filter_registry",
     "LabelBalanceCOCORecordFilter",
     "TFSquadV1PostTransform",
-    "TFSquadV1ModelZooPostTransform"]
+    "TFSquadV1ModelZooPostTransform",
+]

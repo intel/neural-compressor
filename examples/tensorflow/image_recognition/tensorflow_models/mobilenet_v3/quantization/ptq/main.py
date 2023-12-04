@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ arg_parser.add_argument("--output-graph",
 arg_parser.add_argument('--benchmark', dest='benchmark', action='store_true', help='run benchmark')
 arg_parser.add_argument('--mode', dest='mode', default='performance', help='benchmark mode')
 arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use neural_compressor to tune.')
+arg_parser.add_argument('--diagnose', dest='diagnose', action='store_true', help='use Neural Insights to diagnose tuning and benchmark.')
 arg_parser.add_argument('--dataset_location', dest='dataset_location',
                           help='location of calibration dataset and evaluate dataset')
 arg_parser.add_argument('--batch_size', type=int, default=32, dest='batch_size', help='batch_size of benchmark')
@@ -88,7 +89,7 @@ class eval_classifier_optimized_graph:
 
     def run(self):
         """This is neural_compressor function include tuning, export and benchmark option."""
-        from neural_compressor.utils import set_random_seed
+        from neural_compressor import set_random_seed
         set_random_seed(9527)
 
         if args.tune:
@@ -245,10 +246,15 @@ class eval_classifier_optimized_graph:
                         'activation':  {'dtype': ['fp32']},
                       },
                     }
-            conf = PostTrainingQuantConfig(calibration_sampling_size=[20, 50],
-                                           op_name_dict=op_name_dict)
+            conf = PostTrainingQuantConfig(
+                calibration_sampling_size=[20, 50],
+                op_name_dict=op_name_dict,
+                diagnosis=args.diagnose,
+            )
+            from neural_compressor import Metric
+            top1 = Metric(name="topk", k=1)
             q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
-                        eval_dataloader=eval_dataloader)
+                        eval_dataloader=eval_dataloader, eval_metric=top1)
             q_model.save(args.output_graph)
 
         if args.benchmark:
@@ -260,15 +266,25 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
-            from neural_compressor.metric import TensorflowTopK
-            top1 = TensorflowTopK(k=1)
+            from neural_compressor import METRICS
+            metrics = METRICS('tensorflow')
+            top1 = metrics['topk']()
             def eval(model):
                 return evaluate(model, dataloader, top1)
+
+            if args.diagnose and args.mode != "performance":
+                print("[ WARNING ] Profiling works only with performance benchmark.")
 
             if args.mode == 'performance':
                 from neural_compressor.benchmark import fit
                 from neural_compressor.config import BenchmarkConfig
-                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1)
+                conf = BenchmarkConfig(
+                    warmup=10,
+                    iteration=100,
+                    cores_per_instance=4,
+                    num_of_instance=1,
+                    diagnosis=args.diagnose,
+                )
                 fit(args.input_graph, conf, b_dataloader=dataloader)
             elif args.mode == 'accuracy':
                 acc_result = eval(args.input_graph)

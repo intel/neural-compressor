@@ -78,29 +78,23 @@ if [[ "${inc_new_api}" == "false" ]]; then
 fi
 
 cd ${model_src_dir}
-pip install ruamel_yaml
+pip install ruamel.yaml==0.17.40
 pip install psutil
-pip install protobuf==3.20.1
+pip install protobuf==4.23.4
 if [[ "${framework}" == "tensorflow" ]]; then
     pip install intel-tensorflow==${fwk_ver}
 elif [[ "${framework}" == "pytorch" ]]; then
     pip install torch==${fwk_ver} -f https://download.pytorch.org/whl/torch_stable.html
     pip install torchvision==${torch_vision_ver} -f https://download.pytorch.org/whl/torch_stable.html
 elif [[ "${framework}" == "onnxrt" ]]; then
-    pip install onnx==1.12.0
+    pip install onnx==1.14.1
     pip install onnxruntime==${fwk_ver}
 elif [[ "${framework}" == "mxnet" ]]; then
     pip install numpy==1.23.5
     echo "re-install pycocotools resolve the issue with numpy..."
     pip uninstall pycocotools -y
     pip install --no-cache-dir pycocotools
-    if [[ "${fwk_ver}" == "1.7.0" ]]; then
-        pip install mxnet==${fwk_ver}.post2
-    elif [[ "${fwk_ver}" == "1.6.0" ]]; then
-        pip install mxnet-mkl==${mxnet_version}
-    else
-        pip install mxnet==${fwk_ver}
-    fi
+    pip install mxnet==${fwk_ver}
 fi
 
 if [ -f "requirements.txt" ]; then

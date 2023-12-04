@@ -14,9 +14,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Common Metric just collects the information to construct a Metric."""
+from deprecated import deprecated
 
-"""common Metric just collects the information to construct a Metric."""
 
+@deprecated(version="2.0")
 class Metric(object):
     """A wrapper of the information needed to construct a Metric.
 
@@ -24,12 +26,12 @@ class Metric(object):
     neural_compressor built-in metric always take (predictions, labels) as inputs, it's
     recommended to design metric_cls to take (predictions, labels) as inputs.
     """
-    
-    def __init__(self, metric_cls, name='user_metric', **kwargs):
+
+    def __init__(self, metric_cls, name="user_metric", **kwargs):
         """Initialize a Metric with needed information.
-        
+
         Args:
-            metric_cls (cls): Should be a sub_class of neural_compressor.metric.BaseMetric, 
+            metric_cls (cls): Should be a sub_class of neural_compressor.metric.BaseMetric,
                 which takes (predictions, labels) as inputs
             name (str, optional): Name for metric. Defaults to 'user_metric'.
         """

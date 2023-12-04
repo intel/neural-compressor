@@ -556,7 +556,7 @@ def main():
         model = AutoModelForQuestionAnswering.from_config(config)
 
     # Preprocessing the datasets.
-    # Preprocessing is slighlty different for training and evaluation.
+    # Preprocessing is slightly different for training and evaluation.
 
     column_names = raw_datasets["train"].column_names
 
@@ -657,7 +657,7 @@ def main():
         raise ValueError("--do_train requires a train dataset")
     train_dataset = raw_datasets["train"]
     if args.max_train_samples is not None:
-        # We will select sample from whole data if agument is specified
+        # We will select sample from whole data if argument is specified
         train_dataset = train_dataset.select(range(args.max_train_samples))
 
     # Create train feature from dataset
@@ -975,7 +975,7 @@ def main():
             "pruning_type": "snip_momentum",
             "pruning_scope": "global",
             "sparsity_decay_type": "exp",
-            "excluded_op_names": ["qa_outputs", "pooler", ".*embeddings*"],
+            "excluded_op_names": ["pooler"],
             "pruning_op_types": ["Linear"],
             "max_sparsity_ratio_per_op": 0.98
         }
@@ -988,6 +988,7 @@ def main():
         start_step=pruning_start,
         end_step=pruning_end
     )
+    
     compression_manager = prepare_compression(model=model, confs=configs)
     compression_manager.callbacks.on_train_begin()
     model = compression_manager.model
@@ -1174,5 +1175,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 

@@ -479,6 +479,19 @@ def main():
     )
 
     eval_dataloader = trainer.get_eval_dataloader()
+    # transformer issue #1
+    # for transformers 4.31.0: accelerate dataloader
+    # *** ValueError: batch_size attribute should not be set 
+    # after DataLoaderShard is initialized
+    if eval_dataloader.batch_size is None:
+        def _build_inc_dataloader(dataloader):
+            class INCDataLoader:
+                __iter__ = dataloader.__iter__
+                def __init__(self) -> None:
+                    self.dataloader = dataloader
+                    self.batch_size = dataloader.total_batch_size
+            return INCDataLoader()
+        eval_dataloader = _build_inc_dataloader(eval_dataloader)
     batch_size = eval_dataloader.batch_size
 
     def take_eval_steps(model, trainer, save_metrics=False):
@@ -507,20 +520,10 @@ def main():
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         tuning_criterion = TuningCriterion(max_trials=600)
-        conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion, use_distributed_tuning=False)
+        conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion)
         q_model = fit(model, conf=conf, calib_dataloader=eval_dataloader, eval_func=eval_func)
-        # whether to use distributed tuning
-        if conf.use_distributed_tuning == True:
-            from mpi4py import MPI
-            comm = MPI.COMM_WORLD
-            size = comm.Get_size()
-            assert size > 1
-            rank = comm.Get_rank()
-        else:
-            rank = -1
-        if rank == 0 or conf.use_distributed_tuning == False:
-            from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
-            save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
+        from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
+        save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
         return
 
     if model_args.performance or model_args.accuracy:

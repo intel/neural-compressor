@@ -1,0 +1,5 @@
+accelerate
+datasets==2.12.0
+torch==1.13.1
+transformers==4.30.0
+git+https://github.com/EleutherAI/lm-evaluation-harness.git@e81d3cce155e93ba2445068767c738891ad97024

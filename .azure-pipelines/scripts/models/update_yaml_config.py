@@ -1,10 +1,10 @@
 import argparse
-import re
 import os
-import psutil
+import platform
+import re
 from typing import Optional, Union
 
-import platform
+import psutil
 
 system = platform.system()
 try:
@@ -39,19 +39,19 @@ def update_yaml_dataset(yaml, framework, dataset_location):
 
         patterns = {
             "root_path": {
-                "pattern": r'root:.*/path/to/(calibration|evaluation)/dataset/?',
+                "pattern": r"root:.*/path/to/(calibration|evaluation)/dataset/?",
                 "replacement": f"root: {dataset_location}",
             },
             "data_path": {
-                "pattern": r'data_path:.*/path/to/(calibration|evaluation)/dataset/?',
+                "pattern": r"data_path:.*/path/to/(calibration|evaluation)/dataset/?",
                 "replacement": f"data_path: {dataset_location}",
             },
             "image_list": {
-                "pattern": r'image_list:.*/path/to/(calibration|evaluation)/label/?',
+                "pattern": r"image_list:.*/path/to/(calibration|evaluation)/label/?",
                 "replacement": f"image_list: {val_txt_location}",
             },
             "data_dir": {
-                "pattern": r'data_dir:.*/path/to/dataset/?',
+                "pattern": r"data_dir:.*/path/to/dataset/?",
                 "replacement": f"data_dir: {dataset_location}",
             },
         }
@@ -69,11 +69,11 @@ def update_yaml_dataset(yaml, framework, dataset_location):
         train_dataset = dataset_location + f"{os.path.sep}" + "train"
         patterns = {
             "calibration_dataset": {
-                "pattern": r'root:.*/path/to/calibration/dataset/?',
+                "pattern": r"root:.*/path/to/calibration/dataset/?",
                 "replacement": f"root: {train_dataset}",
             },
             "evaluation_dataset": {
-                "pattern": r'root:.*/path/to/evaluation/dataset/?',
+                "pattern": r"root:.*/path/to/evaluation/dataset/?",
                 "replacement": f"root: {val_dataset}",
             },
         }
@@ -88,9 +88,20 @@ def update_yaml_dataset(yaml, framework, dataset_location):
                 config.write(line)
 
 
-def update_yaml_config_tuning(yaml_file, strategy = None, mode = None, batch_size = None, iteration = None,
-                       max_trials = None, algorithm = None, timeout = None, strategy_token = None,
-                       sampling_size = None, dtype = None, tf_new_api = None):
+def update_yaml_config_tuning(
+    yaml_file,
+    strategy=None,
+    mode=None,
+    batch_size=None,
+    iteration=None,
+    max_trials=None,
+    algorithm=None,
+    timeout=None,
+    strategy_token=None,
+    sampling_size=None,
+    dtype=None,
+    tf_new_api=None,
+):
     with open(yaml_file) as f:
         yaml_config = yaml.round_trip_load(f, preserve_quotes=True)
 
@@ -114,7 +125,7 @@ def update_yaml_config_tuning(yaml_file, strategy = None, mode = None, batch_siz
         except Exception as e:
             print(f"[ WARNING ] {e}")
 
-    if strategy and strategy != "basic":  # Workaround for PyTorch huggingface models (`sed` in run_tuning.sh)
+    if strategy and strategy != "basic":  # Workaround for PyTorch huggingface models (`sed` in run_quant.sh)
         try:
             tuning_config = yaml_config.get("tuning", {})
             prev_strategy = tuning_config.get("strategy", {})
@@ -124,11 +135,13 @@ def update_yaml_config_tuning(yaml_file, strategy = None, mode = None, batch_siz
             strategy_name = prev_strategy.get("name", None)
             prev_strategy.update({"name": strategy})
             if strategy == "sigopt":
-                prev_strategy.update({
-                    "sigopt_api_token": strategy_token,
-                    "sigopt_project_id": "lpot",
-                    "sigopt_experiment_name": "lpot-tune",
-                    })
+                prev_strategy.update(
+                    {
+                        "sigopt_api_token": strategy_token,
+                        "sigopt_project_id": "lpot",
+                        "sigopt_experiment_name": "lpot-tune",
+                    }
+                )
             if strategy == "hawq":
                 prev_strategy.update({"loss": "CrossEntropyLoss"})
             print(f"Changed {strategy_name} to {strategy}")
@@ -140,9 +153,7 @@ def update_yaml_config_tuning(yaml_file, strategy = None, mode = None, batch_siz
             tuning_config = yaml_config.get("tuning", {})
             prev_exit_policy = tuning_config.get("exit_policy", {})
             if not prev_exit_policy:
-                tuning_config.update({"exit_policy": {
-                    "max_trials": max_trials
-                }})
+                tuning_config.update({"exit_policy": {"max_trials": max_trials}})
             else:
                 prev_max_trials = prev_exit_policy.get("max_trials", None)
                 prev_exit_policy.update({"max_trials": max_trials})
@@ -150,7 +161,7 @@ def update_yaml_config_tuning(yaml_file, strategy = None, mode = None, batch_siz
         except Exception as e:
             print(f"[ WARNING ] {e}")
 
-    if mode == 'accuracy':
+    if mode == "accuracy":
         try:
             # delete performance part in yaml if exist
             performance = yaml_config.get("evaluation", {}).get("performance", {})
@@ -183,7 +194,7 @@ def update_yaml_config_tuning(yaml_file, strategy = None, mode = None, batch_siz
                 except Exception as e:
                     print(f"[ WARNING ] {e}")
 
-            if batch_size and mode == 'latency':
+            if batch_size and mode == "latency":
                 try:
                     dataloader = yaml_config.get("evaluation", {}).get("performance", {}).get("dataloader", {})
                     prev_batch_size = dataloader.get("batch_size", None)
@@ -222,39 +233,39 @@ def update_yaml_config_tuning(yaml_file, strategy = None, mode = None, batch_siz
         except Exception as e:
             print(f"[ WARNING ] {e}")
 
-    print(f"====== update_yaml_config_tuning ========")
+    print("====== update_yaml_config_tuning ========")
 
     yaml_content = yaml.round_trip_dump(yaml_config)
 
-    with open(yaml_file, 'w') as output_file:
+    with open(yaml_file, "w") as output_file:
         output_file.write(yaml_content)
 
 
-def update_yaml_config_benchmark_acc(yaml_path: str, batch_size = None):
+def update_yaml_config_benchmark_acc(yaml_path: str, batch_size=None):
     with open(yaml_path) as f:
         yaml_config = yaml.round_trip_load(f, preserve_quotes=True)
     try:
         accuracy = yaml_config.get("evaluation", {}).get("accuracy", {})
         if not accuracy:
             raise AttributeError
-        dataloader = accuracy.get('dataloader', {})
+        dataloader = accuracy.get("dataloader", {})
         if dataloader:
-            dataloader.update({'batch_size': batch_size})
-        configs = accuracy.get('configs', {})
+            dataloader.update({"batch_size": batch_size})
+        configs = accuracy.get("configs", {})
         if configs:
-            del accuracy['configs']
+            del accuracy["configs"]
     except Exception as e:
         print(f"[ WARNING ] {e}")
 
-    print(f"====== update_yaml_config_benchmark_acc ========")
+    print("====== update_yaml_config_benchmark_acc ========")
 
     yaml_content = yaml.round_trip_dump(yaml_config)
 
-    with open(yaml_path, 'w') as output_file:
+    with open(yaml_path, "w") as output_file:
         output_file.write(yaml_content)
 
 
-def update_yaml_config_benchmark_perf(yaml_path: str, batch_size = None, multi_instance = None):
+def update_yaml_config_benchmark_perf(yaml_path: str, batch_size=None, multi_instance=None):
     # Get cpu information for multi-instance
     total_cores = psutil.cpu_count(logical=False)
     total_sockets = 1
@@ -262,7 +273,7 @@ def update_yaml_config_benchmark_perf(yaml_path: str, batch_size = None, multi_i
     ncores_per_instance = ncores_per_socket
     iters = 100
 
-    if multi_instance=='true':
+    if multi_instance == "true":
         ncores_per_instance = 4
         iters = 500
 
@@ -272,30 +283,32 @@ def update_yaml_config_benchmark_perf(yaml_path: str, batch_size = None, multi_i
         performance = yaml_config.get("evaluation", {}).get("performance", {})
         if not performance:
             raise AttributeError
-        dataloader = performance.get('dataloader', {})
+        dataloader = performance.get("dataloader", {})
         if dataloader:
-            dataloader.update({'batch_size': batch_size})
-        performance.update({'iteration': iters})
-        configs = performance.get('configs', {})
+            dataloader.update({"batch_size": batch_size})
+        performance.update({"iteration": iters})
+        configs = performance.get("configs", {})
         if not configs:
             raise AttributeError
         else:
-            configs.update({
-                'cores_per_instance': int(ncores_per_instance),
-                'num_of_instance': int(ncores_per_socket // ncores_per_instance)
-            })
-            for attr in ['intra_num_of_threads', 'inter_num_of_threads', 'kmp_blocktime']:
+            configs.update(
+                {
+                    "cores_per_instance": int(ncores_per_instance),
+                    "num_of_instance": int(ncores_per_socket // ncores_per_instance),
+                }
+            )
+            for attr in ["intra_num_of_threads", "inter_num_of_threads", "kmp_blocktime"]:
                 if configs.get(attr):
                     del configs[attr]
             print(configs)
     except Exception as e:
         print(f"[ WARNING ] {e}")
 
-    print(f"====== update_yaml_config_benchmark_perf ========")
+    print("====== update_yaml_config_benchmark_perf ========")
 
     yaml_content = yaml.round_trip_dump(yaml_config)
 
-    with open(yaml_path, 'w') as output_file:
+    with open(yaml_path, "w") as output_file:
         output_file.write(yaml_content)
 
 
@@ -303,7 +316,7 @@ if __name__ == "__main__":
     args = parse_args()
     update_yaml_dataset(args.yaml, args.framework, args.dataset_location)
     update_yaml_config_tuning(args.yaml, strategy=args.strategy)
-    print('===== multi_instance={} ===='.format(args.multi_instance))
-    if args.new_benchmark=='true':
+    print("===== multi_instance={} ====".format(args.multi_instance))
+    if args.new_benchmark == "true":
         update_yaml_config_benchmark_acc(args.yaml, batch_size=args.batch_size)
         update_yaml_config_benchmark_perf(args.yaml, batch_size=args.batch_size, multi_instance=args.multi_instance)

@@ -60,7 +60,7 @@
     "@jupyterlab/notebook": "^3.4.7",
     "@phosphor/commands": "^1.7.2",
     "loader-utils": "^2.0.4",
-    "react": "^18.2.0",
+    "react": "^17.0.2",
     "react-sanitized-html": "^2.0.0"
   },
   "devDependencies": {
@@ -76,10 +76,10 @@
     "npm-run-all": "^4.1.5",
     "prettier": "^2.1.1",
     "rimraf": "^3.0.2",
-    "stylelint": "^14.3.0",
+    "stylelint": "^15.6.0",
     "stylelint-config-prettier": "^9.0.3",
-    "stylelint-config-recommended": "^6.0.0",
-    "stylelint-config-standard": "~24.0.0",
+    "stylelint-config-recommended": "^12.0.0",
+    "stylelint-config-standard": "~33.0.0",
     "stylelint-prettier": "^2.0.0",
     "typescript": "~4.1.3"
   },

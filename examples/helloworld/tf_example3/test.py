@@ -16,11 +16,14 @@ eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=1)
 def main():
     from neural_compressor.config import MixedPrecisionConfig
     from neural_compressor import mix_precision
+    from neural_compressor import Metric
+    top1 = Metric(name="topk", k=1)
     config = MixedPrecisionConfig()
     mix_precision_model = mix_precision.fit(
         model="./mobilenet_v1_1.0_224_frozen.pb",
         config=config,
-        eval_dataloader=eval_dataloader)
+        eval_dataloader=eval_dataloader,
+        eval_metric=top1)
 
 if __name__ == "__main__":
     main()

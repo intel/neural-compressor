@@ -42,10 +42,10 @@ class Evaluator:
             total += label.size(0)
             hit += (pred == label).sum().item()
             if index % args.log_frequency == 0:
-                print(hit / total)
+                print(hit / total, flush=True)
             index += 1
         acc = hit / total
-        print(acc)
+        print(acc, flush=True)
         return acc
 
 
@@ -145,7 +145,7 @@ if args.int8:
     recipes = {}
     if args.sq:
         recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
-    op_type_dict = None
+    op_type_dict = {}
     if args.kl:
         op_type_dict = {'linear': {'activation': {'algorithm': ['kl']}}}
     if args.fallback_add:

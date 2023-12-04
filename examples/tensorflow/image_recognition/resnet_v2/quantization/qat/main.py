@@ -335,12 +335,12 @@ def evaluate(model):
 
     Args:
         model (tensorflow.Graph_def): The input model graph
-        
+
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
     from neural_compressor.model import Model
-    from neural_compressor.metric import TensorflowTopK
+    from neural_compressor import Metric
     model = Model(model)
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
@@ -348,7 +348,9 @@ def evaluate(model):
     iteration = -1
     if FLAGS.benchmark and FLAGS.mode == 'performance':
         iteration = FLAGS.iters
-    metric = TensorflowTopK(k=1)
+    from neural_compressor import METRICS
+    metrics = METRICS('tensorflow')
+    metric = metrics['topk']()
 
     def eval_func(dataloader):
         latency_list = []
@@ -371,7 +373,7 @@ def evaluate(model):
         return latency
 
     from neural_compressor.data import DataLoader
-    dataloader = DataLoader(dataset=Dataset(), framework='tensorflow', batch_size=FLAGS.batch_size)
+    dataloader = DataLoader(framework='tensorflow', dataset=Dataset(), batch_size=FLAGS.batch_size)
     latency = eval_func(dataloader)
     if FLAGS.benchmark and FLAGS.mode == 'performance':
         print("Batch size = {}".format(FLAGS.batch_size))

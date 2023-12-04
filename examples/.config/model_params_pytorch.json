@@ -8,7 +8,7 @@
       "batch_size": 100
     },
     "resnet18": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnet18",
       "main_script": "main.py",
@@ -29,21 +29,21 @@
       "batch_size": 100
      },
     "efficientnet_b0": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b0",
       "main_script": "main.py",
       "batch_size": 100
     },
     "efficientnet_b3": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b3",
       "main_script": "main.py",
       "batch_size": 100
     },
     "efficientnet_b7": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b7",
       "main_script": "main.py",
@@ -263,14 +263,12 @@
       "main_script": "dlrm_s_pytorch.py",
       "batch_size": 16384
     },
-    "blendcnn": {
-      "model_src_dir": "nlp/blendcnn/quantization/ptq/eager",
+    "blendcnn_ipex": {
+      "model_src_dir": "nlp/blendcnn/quantization/ptq/ipex",
       "dataset_location": "/tf_dataset/pytorch/blendcnn/MRPC/",
       "input_model": "/tf_dataset/pytorch/blendcnn/models/",
-      "yaml": "blendcnn.yaml",
-      "strategy": "basic",
-      "batch_size": 32,
-      "new_benchmark": false
+      "main_script": "classify.py",
+      "batch_size": 32
     },
     "gpt_WikiText(rm)": {
       "model_src_dir": "eager/language_translation/ptq",
@@ -311,40 +309,48 @@
       "batch_size": 64,
       "main_script": "run_glue.py"
     },
+    "3dunet": {
+      "model_src_dir": "image_recognition/3d-unet/quantization/ptq/fx",
+      "dataset_location": "/tf_dataset/dataset/mlperf_3dunet/build",
+      "input_model": "/tf_dataset/pytorch/mlperf_3dunet/nnUNetTrainerV2__nnUNetPlansv2.mlperf.1",
+      "batch_size": 100,
+      "main_script": "run.py"
+    },
     "rnnt": {
-      "model_src_dir": "speech_recognition/rnnt/quantization/ptq_dynamic/eager",
+      "model_src_dir": "speech_recognition/rnnt/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset/pytorch/rnnt/convert_dataset/",
       "input_model": "/tf_dataset/pytorch/rnnt/rnnt.pt",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "main_script": "run_tune.py",
+      "batch_size": 100
     },
-    "wav2vec2":{
-      "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager",
+    "wav2vec2_dynamic":{
+      "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
       "input_model": "wav2vec2",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": false
+      "main_script": "run_asr.py",
+      "batch_size": 1
     },
-    "hubert":{
-       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager",
-       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
-       "input_model": "hubert",
-       "yaml": "conf.yaml",
-       "strategy": "basic",
-       "batch_size": 1,
-       "new_benchmark": false
-    },
-    "hubert_fx":{
-       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
+    "hubert_dynamic":{
+       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx",
        "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
        "input_model": "hubert",
        "main_script": "run_asr.py",
        "batch_size": 1
     },
+    "whisper_large":{
+       "model_src_dir": "speech_recognition/whisper_large/quantization/ptq_dynamic/fx",
+       "dataset_location": "/tf_dataset2/datasets/datasets_cache",
+       "input_model": "",
+       "main_script": "run_whisper_large.py",
+       "batch_size": 1
+    },
+    "hubert":{
+      "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
+      "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
+      "input_model": "hubert",
+      "main_script": "run_asr.py",
+      "batch_size": 1
+   },
     "distilbert_base_MRPC_dynamic": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new",
@@ -439,6 +445,13 @@
     },
     "gpt_j_wikitext":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/fx",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/pytorch/gpt-j-6B",
+      "main_script": "run_clm.py",
+      "batch_size": 8
+    },
+    "gpt_j_wikitext_weight_only":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_weight_only",
       "dataset_location": "",
       "input_model": "/tf_dataset2/models/pytorch/gpt-j-6B",
       "main_script": "run_clm.py",
@@ -556,14 +569,12 @@
       "main_script": "ssd/main.py",
       "batch_size": 100
     },
-    "maskrcnn_fx": {
+    "maskrcnn": {
       "model_src_dir": "object_detection/maskrcnn/quantization/ptq/fx",
       "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
       "input_model": "/tf_dataset2/models/pytorch/maskrcnn_fx/e2e_mask_rcnn_R_50_FPN_1x.pth",
-      "yaml": "pytorch/conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "main_script": "pytorch/tools/test_net.py",
+      "batch_size": 100
     },
     "bert_base_MRPC_qat": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/qat/fx",
@@ -597,6 +608,13 @@
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
       "dataset_location": "",
       "input_model": "facebook/opt-6.7b",
+      "batch_size": 1,
+      "main_script": "eval_lambada.py"
+    },
+    "gpt-j-6B_sq": {
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
+      "dataset_location": "",
+      "input_model": "EleutherAI/gpt-j-6B",
       "batch_size": 1,
       "main_script": "eval_lambada.py"
     },
@@ -1050,5 +1068,6 @@
       "batch_size": 100,
       "new_benchmark": false
     }
+
   }
 }

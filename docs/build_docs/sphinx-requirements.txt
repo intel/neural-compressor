@@ -1,6 +1,6 @@
-sphinx==6.1.1
-sphinx_rtd_theme
 recommonmark
+sphinx==6.1.1
+sphinx-autoapi
 sphinx-markdown-tables
 sphinx-md
-sphinx-autoapi
+sphinx_rtd_theme

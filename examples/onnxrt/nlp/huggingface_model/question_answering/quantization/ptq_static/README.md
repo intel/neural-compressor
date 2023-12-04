@@ -15,15 +15,17 @@ pip install -r requirements.txt
 ## 2. Prepare Model
 Supported model identifier from [huggingface.co](https://huggingface.co/):
 
-|                 Model Identifier                |
-|:-----------------------------------------------:|
+|                 Model Identifier                 |
+|:------------------------------------------------:|
 |           mrm8488/spanbert-finetuned-squadv1     |
-|salti/bert-base-multilingual-cased-finetuned-squad |
+|salti/bert-base-multilingual-cased-finetuned-squad|
+|     distilbert-base-uncased-distilled-squad      |
 |bert-large-uncased-whole-word-masking-finetuned-squad|
+|           deepset/roberta-large-squad2           | 
 
 
 ```bash
-python export.py --model_name_or_path=mrm8488/spanbert-finetuned-squadv1 \ # or other supported model identifier
+python prepare_model.py --input_model=mrm8488/spanbert-finetuned-squadv1 --output_model=spanbert-finetuned-squadv1.onnx # or other supported model identifier
 ```
 
 ## 3. Prepare Dataset
@@ -36,7 +38,7 @@ Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQu
 Static quantization with QOperator format:
 
 ```bash
-bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
+bash run_quant.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
                    --quant_format="QOperator"
 ```

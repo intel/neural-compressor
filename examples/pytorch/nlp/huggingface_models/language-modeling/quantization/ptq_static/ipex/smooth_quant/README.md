@@ -41,7 +41,7 @@ python eval_lambada.py \
   --int8 \
   --sq \
   --alpha auto \
-  --fallback_add \
+  --fallback_add 
 ```
 
 

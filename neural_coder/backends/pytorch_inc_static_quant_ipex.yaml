@@ -17,17 +17,11 @@ transformation:
     - ["insert_below_dataloader_definition_line", "insert_below_model_definition_line"]
   content:
     - |-
-      [+] from neural_compressor.conf.config import QuantConf
-      [+] from neural_compressor.experimental import Quantization, common
-      [+] from neural_compressor import options
-      [+] options.pytorch.quantization.use_bf16 = False
-      [+] quant_config = QuantConf()
-      [+] quant_config.usr_cfg.model.framework = "pytorch_ipex"
-      [+] quantizer = Quantization(quant_config)
-      [+] quantizer.model = common.Model(MODEL_NAME)
-      [+] quantizer.calib_dataloader = DATALOADER_NAME
-      [+] MODEL_NAME = quantizer()
-      [+] MODEL_NAME = MODEL_NAME.model
+      [+] from neural_compressor.config import PostTrainingQuantConfig
+      [+] from neural_compressor.quantization import fit
+      [+] conf = PostTrainingQuantConfig(backend='ipex', quant_level=1)
+      [+] MODEL_NAME = fit(model=MODEL_NAME, conf=conf, calib_dataloader=DATALOADER_NAME)
+      [+] MODEL_NAME.save("./quantized_model")
       [+] MODEL_NAME.eval()
   order:
     - below:

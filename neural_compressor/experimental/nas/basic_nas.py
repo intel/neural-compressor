@@ -19,14 +19,18 @@
 
 import os
 
-from .nas import NASBase
-from .nas_utils import nas_registry
+from deprecated import deprecated
+
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.conf.config import Conf, NASConfig
 from neural_compressor.experimental.component import Component
-from neural_compressor.utils.create_obj_from_config import \
-    create_dataloader, create_train_func, create_eval_func
+from neural_compressor.utils.create_obj_from_config import create_dataloader, create_eval_func, create_train_func
 
+from .nas import NASBase
+from .nas_utils import nas_registry
+
+
+@deprecated(version="2.0")
 @nas_registry("Basic")
 class BasicNAS(NASBase, Component):
     """Basic NAS approach.
@@ -62,8 +66,7 @@ class BasicNAS(NASBase, Component):
         Returns:
             Evaluated metrics of the model.
         """
-        assert self._train_func is not None and self._eval_func is not None, \
-            "train_func and eval_func must be set."
+        assert self._train_func is not None and self._eval_func is not None, "train_func and eval_func must be set."
         self._train_func(model)
         return self._eval_func(model)
 
@@ -72,19 +75,15 @@ class BasicNAS(NASBase, Component):
         if isinstance(conf_fname_or_obj, str):
             if os.path.isfile(conf_fname_or_obj):
                 self.conf = Conf(conf_fname_or_obj)
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 raise FileNotFoundError(
-                    "{} is not a file, please provide a NAS config file path.".format(
-                        conf_fname_or_obj
-                    )
+                    "{} is not a file, please provide a NAS config file path.".format(conf_fname_or_obj)
                 )
         elif isinstance(conf_fname_or_obj, NASConfig):
             conf_fname_or_obj.validate()
             self.conf = conf_fname_or_obj
-        else: # pragma: no cover
-            raise NotImplementedError(
-                "Please provide a str path to the config file or an object of NASConfig."
-            )
+        else:  # pragma: no cover
+            raise NotImplementedError("Please provide a str path to the config file or an object of NASConfig.")
         self._init_with_conf()
         assert self.cfg.nas is not None, "nas section must be set"
         # search related config
@@ -92,50 +91,54 @@ class BasicNAS(NASBase, Component):
 
     def pre_process(self):
         """Initialize the train and evaluation settings."""
-        framework_specific_info = {'device': self.cfg.device,
-                                   'random_seed': self.cfg.tuning.random_seed,
-                                   'workspace_path': self.cfg.tuning.workspace.path,
-                                   'q_dataloader': None}
+        framework_specific_info = {
+            "device": self.cfg.device,
+            "backend": self.cfg.backend,
+            "random_seed": self.cfg.tuning.random_seed,
+            "workspace_path": self.cfg.tuning.workspace.path,
+            "q_dataloader": None,
+        }
 
-        if self.framework == 'tensorflow' or self.framework == 'tensorflow_itex':
-            framework_specific_info.update(
-                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
+        if self.framework == "tensorflow" or self.framework == "tensorflow_itex":
+            framework_specific_info.update({"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
 
         self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
 
         # create dataloaders
         if self._train_dataloader is None and self._train_func is None:
             train_dataloader_cfg = self.cfg.train.dataloader
-            assert train_dataloader_cfg is not None, \
-                   'No training dataloader setting in current component. Please check ' \
-                   'dataloader field of train field in yaml file. Or manually pass ' \
-                   'dataloader to component.'
+            assert train_dataloader_cfg is not None, (
+                "No training dataloader setting in current component. Please check "
+                "dataloader field of train field in yaml file. Or manually pass "
+                "dataloader to component."
+            )
 
             self._train_dataloader = create_dataloader(self.framework, train_dataloader_cfg)
         if self._eval_dataloader is None and self._eval_func is None:
             eval_dataloader_cfg = self.cfg.evaluation.accuracy.dataloader
-            assert eval_dataloader_cfg is not None, \
-                'No evaluation dataloader setting in current component. Please check ' \
-                'dataloader field of evaluation field in yaml file. Or manually pass ' \
-                'dataloader to component.'
+            assert eval_dataloader_cfg is not None, (
+                "No evaluation dataloader setting in current component. Please check "
+                "dataloader field of evaluation field in yaml file. Or manually pass "
+                "dataloader to component."
+            )
             self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
 
         # create functions
         if self._train_func is None:
-            self._train_func = create_train_func(self.framework,
-                                                 self._train_dataloader,
-                                                 self.adaptor,
-                                                 self.cfg.train,
-                                                 hooks=self.hooks)
+            self._train_func = create_train_func(
+                self.framework, self._train_dataloader, self.adaptor, self.cfg.train, hooks=self.hooks
+            )
         if self._eval_func is None:
             metric = [self._metric] if self._metric else self.cfg.evaluation.accuracy.metric
-            self._eval_func = create_eval_func(self.framework,
-                                               self._eval_dataloader,
-                                               self.adaptor,
-                                               metric,
-                                               self.cfg.evaluation.accuracy.postprocess,
-                                               fp32_baseline = False)
+            self._eval_func = create_eval_func(
+                self.framework,
+                self._eval_dataloader,
+                self.adaptor,
+                metric,
+                self.cfg.evaluation.accuracy.postprocess,
+                fp32_baseline=False,
+            )
 
     def __repr__(self):
         """Class representation."""
-        return 'BasicNAS' # pragma: no cover
+        return "BasicNAS"  # pragma: no cover

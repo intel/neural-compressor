@@ -18,14 +18,15 @@
 # limitations under the License.
 
 import numpy as np
-
+from deprecated import deprecated
 
 NASMethods = {}
 
 
+@deprecated(version="2.0")
 def nas_registry(nas_method):
     """Decorate the NAS subclasses.
-    
+
     The class decorator used to register all NAS subclasses.
 
     Args:
@@ -39,9 +40,11 @@ def nas_registry(nas_method):
     def decorator(cls):
         NASMethods[nas_method.lower()] = cls
         return cls
+
     return decorator
 
 
+@deprecated(version="2.0")
 def create_search_space_pool(search_space, idx=0):
     """Create all the samples from the search space.
 
@@ -58,11 +61,12 @@ def create_search_space_pool(search_space, idx=0):
     key = search_space_keys[idx]
     search_space_pool = []
     for v in search_space[key]:
-        sub_search_space_pool = create_search_space_pool(search_space, idx+1)
+        sub_search_space_pool = create_search_space_pool(search_space, idx + 1)
         search_space_pool += [[v] + item for item in sub_search_space_pool]
     return search_space_pool
 
 
+@deprecated(version="2.0")
 def find_pareto_front(metrics):
     """Find the pareto front points, assuming all metrics are "higher is better".
 
@@ -82,5 +86,5 @@ def find_pareto_front(metrics):
         # Remove points being dominated by current point
         pareto_front_point_indices = pareto_front_point_indices[nondominated_points]
         metrics = metrics[nondominated_points]
-        next_point_idx = np.sum(nondominated_points[:next_point_idx+1])
+        next_point_idx = np.sum(nondominated_points[: next_point_idx + 1])
     return pareto_front_point_indices

@@ -17,13 +17,14 @@
 """Fuse Columnwise Mul Graph Rewriter."""
 
 from tensorflow.core.framework import attr_value_pb2
-from tensorflow.python.framework import tensor_util
-from tensorflow.python.framework import dtypes
+from tensorflow.python.framework import dtypes, tensor_util
+
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
-from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
+
 
 class FuseColumnWiseMulOptimizer(GraphRewriterBase):
     """Fuse Mul op into Conv2D/DepthwiseConv2dNative/MatMul."""
@@ -35,8 +36,7 @@ class FuseColumnWiseMulOptimizer(GraphRewriterBase):
         cur_graph.graph = self.model
 
         graph_info = cur_graph.parse_graph()
-        target_nodes = cur_graph.query_fusion_pattern_nodes(
-            [["Conv2D", "DepthwiseConv2dNative", "MatMul"], "Mul"])
+        target_nodes = cur_graph.query_fusion_pattern_nodes([["Conv2D", "DepthwiseConv2dNative", "MatMul"], "Mul"])
 
         for node_combination in target_nodes:
             upper_node = graph_info[node_combination[0]].node
@@ -47,18 +47,22 @@ class FuseColumnWiseMulOptimizer(GraphRewriterBase):
             mul_value_node = graph_info[graph_info[node_combination[1]].node.input[1]].node
             upper_node_type = upper_node.op
 
-            if upper_node_type == 'Conv2D':
-                weights_col = weights_node.attr['value'].tensor.tensor_shape.dim[3].size
-            elif upper_node_type == 'DepthwiseConv2dNative':
-                weights_col = weights_node.attr['value'].tensor.tensor_shape.dim[2].size * \
-                    weights_node.attr['value'].tensor.tensor_shape.dim[3].size
+            if upper_node_type == "Conv2D":
+                weights_col = weights_node.attr["value"].tensor.tensor_shape.dim[3].size
+            elif upper_node_type == "DepthwiseConv2dNative":
+                weights_col = (
+                    weights_node.attr["value"].tensor.tensor_shape.dim[2].size
+                    * weights_node.attr["value"].tensor.tensor_shape.dim[3].size
+                )
             else:
-                weights_col = weights_node.attr['value'].tensor.tensor_shape.dim[1].size
+                weights_col = weights_node.attr["value"].tensor.tensor_shape.dim[1].size
 
-            mul_value_node_tensor = mul_value_node.attr['value'].tensor
-            weights_node_tensor = weights_node.attr['value'].tensor
-            if len(mul_value_node_tensor.tensor_shape.dim
-                   ) != 1 or mul_value_node_tensor.tensor_shape.dim[0].size != weights_col:
+            mul_value_node_tensor = mul_value_node.attr["value"].tensor
+            weights_node_tensor = weights_node.attr["value"].tensor
+            if (
+                len(mul_value_node_tensor.tensor_shape.dim) != 1
+                or mul_value_node_tensor.tensor_shape.dim[0].size != weights_col
+            ):
                 self.logger.warning("Invalid Mul OP fusion.")
                 return self.model
 
@@ -68,10 +72,13 @@ class FuseColumnWiseMulOptimizer(GraphRewriterBase):
                 new_weights_value = i * mul_value_node_list[index % len(mul_value_node_list)]
                 new_weights.append(new_weights_value)
 
-            weights_node.attr['value'].CopyFrom(
-                attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
-                    new_weights, dtypes.float32,
-                    tensor_util.MakeNdarray(weights_node_tensor).shape)))
+            weights_node.attr["value"].CopyFrom(
+                attr_value_pb2.AttrValue(
+                    tensor=tensor_util.make_tensor_proto(
+                        new_weights, dtypes.float32, tensor_util.MakeNdarray(weights_node_tensor).shape
+                    )
+                )
+            )
 
             cur_graph.remove_node_with_single_input_output(mul_node.name)
             cur_graph.remove_node(mul_node.input[1])

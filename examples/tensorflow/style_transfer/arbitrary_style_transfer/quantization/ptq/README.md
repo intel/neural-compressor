@@ -26,20 +26,23 @@ pip install -r requirements.txt
 ```
 
 ### Install Intel Extension for Tensorflow
-#### Quantizing the model on Intel GPU
+#### Quantizing the model on Intel GPU(Mandatory to install ITEX)
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
-pip install --upgrade intel-extension-for-tensorflow[gpu]
+pip install --upgrade intel-extension-for-tensorflow[xpu]
 ```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_xpu.md#install-gpu-drivers)
 
-#### Quantizing the model on Intel CPU(Experimental)
+#### Quantizing the model on Intel CPU(Optional to install ITEX)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
+
+> **Note**: 
+> The version compatibility of stock Tensorflow and ITEX can be checked [here](https://github.com/intel/intel-extension-for-tensorflow#compatibility-table). Please make sure you have installed compatible Tensorflow and ITEX.
 
 ### 2. Prepare Pretrained model
 
@@ -70,11 +73,24 @@ There are two folders named style_images and content_images in current folder. P
   python style_tune.py --output_dir=./result --style_images_paths=./style_images --content_images_paths=./content_images --input_model=./model/model.ckpt
   ```
 
-### Tune model with neural_compressor
+
+## Quantization Config
+
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    ...
+    )
+```
+
+## Quantization
   ```shell
-  bash run_tuning.sh --dataset_location=style_images/,content_images/ --input_model=./model/model.ckpt --output_model=saved_model
+  bash run_quant.sh --dataset_location=style_images/,content_images/ --input_model=./model/model.ckpt --output_model=saved_model
   ```
-### Check benchmark of tuned model
+## Benchmark
   ```shell
   bash run_benchmark.sh --dataset_location=style_images/,content_images/ --input_model=saved_model.pb --batch_size=1
   ```

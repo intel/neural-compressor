@@ -25,7 +25,7 @@ Supported model identifier from [huggingface.co](https://huggingface.co/):
 
 
 ```bash
-python export.py --model_name_or_path=mrm8488/spanbert-finetuned-squadv1 \ # or other supported model identifier
+python prepare_model.py --input_model=mrm8488/spanbert-finetuned-squadv1 --output_model=spanbert-finetuned-squadv1.onnx # or other supported model identifier
 ```
 
 ## 3. Prepare Dataset
@@ -38,7 +38,7 @@ Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQu
 Dynamic quantization:
 
 ```bash
-bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
+bash run_quant.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune 
 ```
 

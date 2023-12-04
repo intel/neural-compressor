@@ -9,184 +9,157 @@ Export
 
 4. [Appendix](#appendix)
 
-# Introduction
-Open Neural Network Exchange (ONNX) is an open standard format for representing machine learning models. Exporting FP32 PyTorch/Tensorflow models has become popular and easy to use. However, for Intel Neural Compressor, we hope to export the INT8 model into the ONNX format to achieve higher applicability in multiple frameworks.
+## Introduction
+Open Neural Network Exchange (ONNX) is an open standard format for representing machine learning models. Exporting FP32 PyTorch/Tensorflow models has become popular and easy to use. For Intel Neural Compressor, we hope to export the INT8 model into the ONNX format to achieve higher applicability in multiple frameworks.
 
-Here we briefly introduce our export API for PyTorch FP32/INT8 models. First, the INT8 ONNX model is not directly exported from the INT8 PyTorch model, but quantized after obtaining the FP32 ONNX model using the mature torch.onnx.export API. To ensure the majority of the quantization process of ONNX is consistent with PyTorch, we reuse three key pieces of information from the Neural Compressor model to perform ONNX quantization.
-
- - Quantized operations: Only operations quantized in PyTorch will be quantized in the quantization process of ONNX.
- - Scale info: Scale information is collected from the quantization process of PyTorch.
- - Weights of quantization aware training(QAT): For quantization aware training, the updated weights are passed to the ONNX model.
-
+Here is the workflow of our export API for PyTorch/Tensorflow FP32/INT8 model.
 <a target="_blank" href="./imgs/export.png" text-align:center>
     <center> 
-        <img src="./imgs/export.png" alt="Architecture" width=650 height=200> 
+        <img src="./imgs/export.png" alt="Architecture" width=700 height=200> 
     </center>
 </a>
 
-# Supported Framework Model Matrix
+## Supported Framework Model Matrix
 
-| Export | PyTorch | TensorFlow |
-| :---: | :---: |:----------:|
-| FP32 Model -> FP32 ONNX Model | &#10004; |  &#10004;  |
-| INT8 Model -> INT8 QDQ ONNX Model | &#10004; |  &#10004;  |
-| INT8 Model -> INT8 QLinear ONNX Model | &#10004; | :x: |
+<table>
+<thead>
+  <tr>
+    <th>Framework</th>
+    <th>model type</th>
+    <th>exported ONNX model type</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td rowspan="4">PyTorch</td>
+    <td>FP32</td>
+    <td>FP32</td>
+  </tr>
+  <tr>
+    <td>Post-Training Static Quantized INT8</td>
+    <td>QOperator/QDQ INT8</td>
+  </tr>
+  <tr>
+    <td>Post-Training Dynamic Quantized INT8</td>
+    <td>QOperator INT8</td>
+  </tr>
+  <tr>
+    <td>Quantization-aware Training INT8</td>
+    <td>QOperator/QDQ INT8</td>
+  </tr>
+  <tr>
+    <td rowspan="3">TensorFlow</td>
+    <td>FP32</td>
+    <td>FP32</td>
+  </tr>
+  <tr>
+    <td>Post-Training Static Quantized INT8</td>
+    <td>QDQ INT8</td>
+  </tr>
+  <tr>
+    <td>Quantization-aware Training INT8</td>
+    <td>QDQ INT8</td>
+  </tr>
+</tbody>
+</table>
 
-# Examples
+## Examples
 
-## FP32 Model Export
+### PyTorch Model
+
+#### FP32 Model Export
+
 ```python
 from neural_compressor.experimental.common import Model
 from neural_compressor.config import Torch2ONNXConfig
+
 inc_model = Model(model)
 fp32_onnx_config = Torch2ONNXConfig(
     dtype="fp32",
     example_inputs=torch.randn(1, 3, 224, 224),
-    input_names=['input'],
-    output_names=['output'],
-    dynamic_axes={"input": {0: "batch_size"},
-                    "output": {0: "batch_size"}},
+    input_names=["input"],
+    output_names=["output"],
+    dynamic_axes={
+        "input": {0: "batch_size"},
+        "output": {0: "batch_size"},
+    },
 )
-inc_model.export('fp32-model.onnx', fp32_onnx_config)
+inc_model.export("fp32-model.onnx", fp32_onnx_config)
 ```
 
-## INT8 Model Export
+#### INT8 Model Export
 
 ```python
 # q_model is a Neural Compressor model after performing quantization.
 from neural_compressor.config import Torch2ONNXConfig
+
 int8_onnx_config = Torch2ONNXConfig(
     dtype="int8",
     opset_version=14,
-    quant_format="QDQ", # or QLinear
+    quant_format="QOperator",  # or QDQ
     example_inputs=torch.randn(1, 3, 224, 224),
-    input_names=['input'],
-    output_names=['output'],
-    dynamic_axes={"input": {0: "batch_size"},
-                    "output": {0: "batch_size"}},
+    input_names=["input"],
+    output_names=["output"],
+    dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
 )
-q_model.export('int8-model.onnx', int8_onnx_config)
+q_model.export("int8-model.onnx", int8_onnx_config)
 ```
 > **Note**: Two export examples covering computer vision and natural language processing tasks exist in examples. Users can leverage them to verify the accuracy and performance of the exported ONNX model.
  - [Image recognition](/examples/pytorch/image_recognition/torchvision_models/export/fx/)
  - [Text classification](/examples/pytorch/nlp/huggingface_models/text-classification/export/fx/)
 
-# Appendix
+### Tensorflow Model
 
-Since there is a known quantization gap between PyTorch 'nn.Linear' module and ONNX 'MatMul + Add' subgraph, we provide three recipes.
+#### FP32 Model Export
 
-For different recipes and ONNX INT8 model formats, 'nn.quantized.Linear' will be exported to the following subgraph:
+```python
+from neural_compressor.experimental.common import Model
+from neural_compressor.config import TF2ONNXConfig
 
+inc_model = Model(model)
+config = TF2ONNXConfig(dtype="fp32")
+inc_model.export("fp32-model.onnx", config)
+```
 
-<table class="docutils">
- <thead>
-   <tr>
-     <th align="center">Recipe</th>
-     <th align="center">QDQ</th>
-     <th align="center">QLinear</th>
-   </tr>
- </thead>
- <tbody>
-   <tr>
-     <td align="center">QDQ_OP_FP32_BIAS</td>
-     <td>
-<pre>
-     QuantizeLinear
-           |
-    DequantizeLinear
-           |             
-         MatMul
-           |
-          Add
-</pre>
-     </td>
-     <td>
-<pre>
-   QuantizeLinear
-         |
-MatMulIntegerToFloat
-         |
-        Add 
-</pre>
-     </td>
-   </tr>
-   <tr>
-     <td align="center">QDQ_OP_INT32_BIAS</td>
-     <td>
-<pre>
-     QuantizeLinear
-           |
-     MatMulInteger
-           |
-          Add
-           |
-          Cast
-           |
-          Mul
-</pre>
-     </td>
-     <td>
-<pre>
-   QuantizeLinear
-         |
-    MatMulInteger
-         |
-        Add
-         |
-        Cast
-         |
-        Mul
-</pre>
-     </td>
-   </tr>
-   <tr>
-     <td align="center">QDQ_OP_FP32_BIAS_QDQ</td>
-     <td>
-<pre>
-     QuantizeLinear
-           |
-    DequantizeLinear   
-           |
-         MatMul
-           |
-          Add
-           |
-     QuantizeLinear
-           |
-    DequantizeLinear
-</pre>
-     </td>
-     <td>
-<pre>
-   QuantizeLinear
-         |
-MatMulIntegerToFloat
-         |
-        Add
-         |
-   QuantizeLinear
-         |
-  DequantizeLinear
-</pre>
-     </td>
-   </tr>
- </tbody>
-</table>
+### INT8 Model Export
 
-The default recipe is `QDQ_OP_FP32_BIAS`. If the accuracy of the exported ONNX INT8 model cannot meet your criterion, we recommend you try recipe `QDQ_OP_INT32_BIAS` and `QDQ_OP_FP32_BIAS_QDQ` as follows:
 ```python
 # q_model is a Neural Compressor model after performing quantization.
-from neural_compressor.config import Torch2ONNXConfig
-int8_onnx_config = Torch2ONNXConfig(
-    dtype="int8",
-    opset_version=14,
-    quant_format="QDQ", # or QLinear
-    example_inputs=torch.randn(1, 3, 224, 224),
-    input_names=['input'],
-    output_names=['output'],
-    dynamic_axes={"input": {0: "batch_size"},
-                    "output": {0: "batch_size"}},
-    recipe='QDQ_OP_INT32_BIAS', # or QDQ_OP_FP32_BIAS_QDQ
-)
-q_model.export('int8-model.onnx', int8_onnx_config)
+from neural_compressor.config import TF2ONNXConfig
+
+config = TF2ONNXConfig(dtype="int8")
+q_model.export("int8-model.onnx", config)
 ```
+
+> **Note**: Some export examples of computer vision task exist in examples. Users can leverage them to verify the accuracy and performance of the exported ONNX model.
+ - [resnet50_v1_5](/examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1_5/export)
+ - [resnet50_v1](/examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/export)
+ - [vgg16](/examples/tensorflow/image_recognition/tensorflow_models/vgg16/export)
+ - [ssd_mobilenet_v1](/examples/tensorflow/object_detection/tensorflow_models/ssd_mobilenet_v1/export)
+ - [mobilenet_v2](/examples/tensorflow/image_recognition/tensorflow_models/mobilenet_v2/export)
+ - [faster_rcnn_resnet50](examples/tensorflow/object_detection/tensorflow_models/faster_rcnn_resnet50/export)
+
+## Appendix
+
+### Supported quantized ops
+
+This table lists the TorchScript operators that are supported by ONNX export with torch v2.0. Refer to this [link](https://pytorch.org/docs/stable/onnx_supported_aten_ops.html) for more supported/unsupported ops.
+
+| Operator                     | opset_version(s) |
+| ---------------------------- | ---------------- |
+| ``quantized::add``           | Since opset 10   |
+| ``quantized::add_relu``      | Since opset 10   |
+| ``quantized::cat``           | Since opset 10   |
+| ``quantized::conv1d_relu``   | Since opset 10   |
+| ``quantized::conv2d``        | Since opset 10   |
+| ``quantized::conv2d_relu``   | Since opset 10   |
+| ``quantized::group_norm``    | Since opset 10   |
+| ``quantized::hardswish``     | Since opset 10   |
+| ``quantized::instance_norm`` | Since opset 10   |
+| ``quantized::layer_norm``    | Since opset 10   |
+| ``quantized::leaky_relu``    | Since opset 10   |
+| ``quantized::linear``        | Since opset 10   |
+| ``quantized::mul``           | Since opset 10   |
+| ``quantized::sigmoid``       | Since opset 10   |
+
+> **Note**: The export function may fail due to unsupported operations. Please fallback unsupported quantized ops by setting 'op_type_dict' or 'op_name_dict' in 'QuantizationAwareTrainingConfig' or 'PostTrainingQuantConfig' config. Fallback examples please refer to [Text classification](/examples/pytorch/nlp/huggingface_models/text-classification/export/fx/)

@@ -14,13 +14,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Magnitude pruner."""
 
 import numpy as np
-from .pruner import pruner_registry, Pruner
+from deprecated import deprecated
+
 from neural_compressor.utils import logger
 
+from .pruner import Pruner, pruner_registry
+
+
+@deprecated(version="2.0")
 @pruner_registry
 class BasicMagnitudePruner(Pruner):
     """Magnitude pruner class.
@@ -38,8 +42,7 @@ class BasicMagnitudePruner(Pruner):
     def on_epoch_begin(self, epoch):
         """Update target sparsity according to the schedule and compute mask accordingly."""
         self.sparsity = self.update_sparsity(epoch)
-        logger.debug("Start pruning in epoch {} with sparsity {}.".
-                     format(str(epoch), str(self.sparsity)))
+        logger.debug("Start pruning in epoch {} with sparsity {}.".format(str(epoch), str(self.sparsity)))
         self.is_last_epoch = epoch == self.end_epoch
         if epoch >= self.start_epoch and epoch <= self.end_epoch:
             self.compute_mask()
@@ -50,8 +53,7 @@ class BasicMagnitudePruner(Pruner):
 
         for weight in self.weights:
             if weight in self.masks:
-                new_weight = self.masks[weight] * \
-                    np.array(self.model.get_weight(weight))
+                new_weight = self.masks[weight] * np.array(self.model.get_weight(weight))
                 self.model.update_weights(weight, new_weight)
                 res[weight] = new_weight
         return res
@@ -79,17 +81,17 @@ class BasicMagnitudePruner(Pruner):
         """Sparsity ratio summary and apply mask to the weight."""
         res = dict()
         if self.is_last_epoch:
-
             for weight in self.weights:
                 if weight in self.masks:
                     logger.info(
                         "Set {} sparsity with mask {} {} {}.".format(
-                            weight, str(
-                            self.masks[weight].size), str(
-                            self.masks[weight].sum()), str(
-                            1 - self.masks[weight].sum() / self.masks[weight].size)))
-                    new_weight = self.masks[weight] * \
-                        np.array(self.model.get_weight(weight))
+                            weight,
+                            str(self.masks[weight].size),
+                            str(self.masks[weight].sum()),
+                            str(1 - self.masks[weight].sum() / self.masks[weight].size),
+                        )
+                    )
+                    new_weight = self.masks[weight] * np.array(self.model.get_weight(weight))
                     self.model.update_weights(weight, new_weight)
                     res[weight] = new_weight
         return res
@@ -99,8 +101,7 @@ class BasicMagnitudePruner(Pruner):
         res = dict()
         for weight in self.weights:
             if weight in self.masks:
-                new_weight = self.masks[weight] * \
-                    np.array(self.model.get_weight(weight))
+                new_weight = self.masks[weight] * np.array(self.model.get_weight(weight))
                 self.model.update_weights(weight, new_weight)
                 res[weight] = new_weight
         return res

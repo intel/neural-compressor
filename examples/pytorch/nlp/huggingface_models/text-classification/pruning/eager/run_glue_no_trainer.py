@@ -327,6 +327,7 @@ def main():
             from_tf=bool(".ckpt" in args.model_name_or_path),
             config=config,
         )
+    
     # Preprocessing the datasets
     if args.task_name is not None:
         sentence1_key, sentence2_key = task_to_keys[args.task_name]
@@ -505,7 +506,7 @@ def main():
             "pruning_type": "snip_momentum",
             "pruning_scope": "global",
             "sparsity_decay_type": "exp",
-            "excluded_op_names": ["classifier", "pooler", ".*embeddings*"],
+            "excluded_op_names": ["pooler"],
             "pruning_op_types": ["Linear"],
             "max_sparsity_ratio_per_op": 0.98
         }
@@ -522,8 +523,8 @@ def main():
     # pruner = Pruning(config)
     # pruner.model = model
     # pruner.on_train_begin()
-    from neural_compressor.training import prepare_pruning
-    prepare_pruning(configs, model, optimizer)
+    from neural_compressor.compression.pruner import prepare_pruning
+    prepare_pruning(model, configs, optimizer)
 
 
     for epoch in range(args.num_train_epochs):
@@ -631,6 +632,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 

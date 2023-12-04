@@ -10,7 +10,7 @@ set -x
         --num_train_epochs 120 \
         --weight_decay 0 \
         --cooldown_epochs 40 \
-        --sparsity_warm_epochs 0 \
+        --sparsity_warm_epochs 1 \
         --lr_scheduler_type "constant" \
         --distill_loss_weight 2 \
         --do_prune \

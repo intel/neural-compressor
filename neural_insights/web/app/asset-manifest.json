@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/static/css/main.bb4c518c.css",
+    "main.js": "/static/js/main.b053b871.js",
+    "static/js/787.c1112931.chunk.js": "/static/js/787.c1112931.chunk.js",
+    "static/media/IntelClear_Rg.ttf": "/static/media/IntelClear_Rg.33af11200cffaf9540ff.ttf",
+    "static/media/IntelClear_Lt.ttf": "/static/media/IntelClear_Lt.c5e18e9d5505364da760.ttf",
+    "static/media/IntelClear_Bd.ttf": "/static/media/IntelClear_Bd.060888be7dccf869db54.ttf",
+    "static/media/intelone-display-light.ttf": "/static/media/intelone-display-light.68a9d0311f7374acb0cf.ttf",
+    "static/media/intelone-display-bold.ttf": "/static/media/intelone-display-bold.64a6eab04dcda9c570c8.ttf",
+    "static/media/intelone-display-regular.ttf": "/static/media/intelone-display-regular.0f8c3ef25c545acb6b7c.ttf",
+    "static/media/intelone-mono-font-family-regular.ttf": "/static/media/intelone-mono-font-family-regular.de914c9a804c00b4f3e5.ttf",
+    "index.html": "/index.html",
+    "main.bb4c518c.css.map": "/static/css/main.bb4c518c.css.map",
+    "main.b053b871.js.map": "/static/js/main.b053b871.js.map",
+    "787.c1112931.chunk.js.map": "/static/js/787.c1112931.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.bb4c518c.css",
+    "static/js/main.b053b871.js"
+  ]
+}

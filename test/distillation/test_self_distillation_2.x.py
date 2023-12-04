@@ -5,9 +5,9 @@ import unittest
 import torch
 import torch.nn as nn
 import torchvision
+
 from neural_compressor.data import Datasets
-from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import \
-    PyTorchDataLoader
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 
 def build_fake_yaml():
@@ -65,7 +65,6 @@ def build_fake_yaml():
 
 
 class TestSelfDistillation(unittest.TestCase):
-
     model = torchvision.models.resnet50()
 
     @classmethod
@@ -80,27 +79,28 @@ class TestSelfDistillation(unittest.TestCase):
 
     def test_self_distillation(self):
         import copy
+
+        from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
         from neural_compressor.training import prepare_compression
-        from neural_compressor.config import DistillationConfig, \
-                                             SelfKnowledgeDistillationLossConfig
 
         datasets = Datasets("pytorch")
-        dummy_dataset = datasets["dummy"](
-            shape=(100, 3, 224, 224), low=0.0, high=1.0, label=True
-        )
+        dummy_dataset = datasets["dummy"](shape=(100, 3, 224, 224), low=0.0, high=1.0, label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         distil_loss = SelfKnowledgeDistillationLossConfig(
             layer_mappings=[
-                [['resblock.1.feature.output', 'resblock.deepst.feature.output'],
-                ['resblock.2.feature.output','resblock.deepst.feature.output']],
-                [['resblock.2.fc','resblock.deepst.fc'],
-                ['resblock.3.fc','resblock.deepst.fc']],
-                [['resblock.1.fc','resblock.deepst.fc'],
-                ['resblock.2.fc','resblock.deepst.fc'],
-                ['resblock.3.fc','resblock.deepst.fc']]
+                [
+                    ["resblock.1.feature.output", "resblock.deepst.feature.output"],
+                    ["resblock.2.feature.output", "resblock.deepst.feature.output"],
+                ],
+                [["resblock.2.fc", "resblock.deepst.fc"], ["resblock.3.fc", "resblock.deepst.fc"]],
+                [
+                    ["resblock.1.fc", "resblock.deepst.fc"],
+                    ["resblock.2.fc", "resblock.deepst.fc"],
+                    ["resblock.3.fc", "resblock.deepst.fc"],
+                ],
             ],
             temperature=3.0,
-            loss_types=['L2', 'KL', 'CE'],
+            loss_types=["L2", "KL", "CE"],
             loss_weights=[0.5, 0.05, 0.02],
             add_origin_loss=True,
         )
@@ -124,15 +124,9 @@ class TestSelfDistillation(unittest.TestCase):
                     output = model(image)
                     loss = criterion(output, target)
                     outputs_features = dict()
-                    outputs_features["resblock.deepst.feature.output"] = torch.randn(
-                        128, 1024
-                    )
-                    outputs_features["resblock.2.feature.output"] = torch.randn(
-                        128, 1024
-                    )
-                    outputs_features["resblock.1.feature.output"] = torch.randn(
-                        128, 1024
-                    )
+                    outputs_features["resblock.deepst.feature.output"] = torch.randn(128, 1024)
+                    outputs_features["resblock.2.feature.output"] = torch.randn(128, 1024)
+                    outputs_features["resblock.1.feature.output"] = torch.randn(128, 1024)
                     outputs_features["resblock.deepst.fc"] = torch.randn(128, 100)
                     outputs_features["resblock.3.fc"] = torch.randn(128, 100)
                     outputs_features["resblock.2.fc"] = torch.randn(128, 100)

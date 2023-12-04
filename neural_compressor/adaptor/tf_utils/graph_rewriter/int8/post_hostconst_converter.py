@@ -17,9 +17,13 @@
 """Post HostConst Graph Rewriter."""
 
 import os
+
 from tensorflow.core.framework import graph_pb2, node_def_pb2
+
 from neural_compressor.utils.utility import dump_elapsed_time
+
 from ..graph_base import GraphRewriterBase
+
 
 class PostHostConstConverter(GraphRewriterBase):
     """Support HostConst as default for all devices, not just for GPU."""
@@ -27,15 +31,23 @@ class PostHostConstConverter(GraphRewriterBase):
     @dump_elapsed_time("Pass PostHostConstConverter")
     def do_transformation(self):
         """Convert Const to HostConst as default."""
-        if os.environ.get("DISABLE_HOSTCONST") == '1':
+        if os.environ.get("DISABLE_HOSTCONST") == "1":
             return self.model
         output_graph_def = graph_pb2.GraphDef()
         for node in self.model.node:
             new_node = node_def_pb2.NodeDef()
             new_node.CopyFrom(node)
-            if node.op == "Const" and node.attr['dtype'].type in [1, 3] \
-                and (node.name.endswith('_min') or node.name.endswith('_max') \
-                    or node.name.endswith('_max_only') or node.name.endswith('_min_only')):
+            new_node.device = ""
+            if (
+                node.op == "Const"
+                and node.attr["dtype"].type in [1, 3]
+                and (
+                    node.name.endswith("_min")
+                    or node.name.endswith("_max")
+                    or node.name.endswith("_max_only")
+                    or node.name.endswith("_min_only")
+                )
+            ):
                 new_node.op = "HostConst"
             output_graph_def.node.extend([new_node])
         return output_graph_def

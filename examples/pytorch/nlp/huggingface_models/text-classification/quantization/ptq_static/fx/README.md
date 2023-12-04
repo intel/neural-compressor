@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to introduce the details about how to quantize the model with `PostTrainingStatic` on the text classification task and obtain the benchmarking results. 
+This document is used to introduce the details about how to quantize the model with `PostTrainingStatic` on the text classification task and obtain the benchmarking results.
 
 # Prerequisite
 ## 1. Environment
@@ -34,26 +34,25 @@ python run_glue.py \
 
 or
 ```bash
-bash run_tuning.sh --topology=topology_name --input_model=model_name_or_path
+bash run_quant.sh --topology=topology_name --input_model=model_name_or_path
 ```
 
 ### 1.2 Quantization with multi-node
 
-We need the `mpi4py` to be installed to execute the distributed tuning across multi-node.
-
 - Prerequisites:
-    - A working MPI implementation
-    - `mpi4py`
-
-> NOTE: For the working MPI implementation, we suggest users either build it with using [Conda](https://anaconda.org/conda-forge/openmpi) or following the instruction provided in the OpenMPI [Installing  documentation](https://docs.open-mpi.org/en/v5.0.x/installing-open-mpi/quickstart.html#building-from-source).
+    - [Open MPI](https://www.open-mpi.org/faq/?category=building#easy-build)
+    - [mpi4py](https://mpi4py.readthedocs.io/en/stable/install.html#using-pip)
 
 
-In `run_glue.py`, set `config.use_distributed_tuning` to True by the following statement.
+> NOTE: User can also install Open MPI with [Conda](https://anaconda.org/conda-forge/openmpi).
+
+
+In `run_glue.py`, set `config.quant_leve1` to 1 and `config.tuning_criterion.strategy` to "basic" by the following statement.
 
 ```python
-conf = PostTrainingQuantConfig(approach="static", 
-                               tuning_criterion=tuning_criterion, 
-                               use_distributed_tuning=True)
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+tuning_criterion = TuningCriterion(max_trials=600, strategy="basic")
+conf = PostTrainingQuantConfig(quant_level=1, approach="static", tuning_criterion=tuning_criterion)
 ```
 
 And then, run the following command:
@@ -164,7 +163,7 @@ bash run_benchmark.sh --topology=topology_name --mode=performance --input_model=
 
 # HuggingFace Model Hub
 ## 1. To upstream into HuggingFace model hub
-We provide an API `save_for_huggingface_upstream` to collect configuration files, tokenizer files and INT8 model weights in the format of [transformers](https://github.com/huggingface/transformers). 
+We provide an API `save_for_huggingface_upstream` to collect configuration files, tokenizer files and INT8 model weights in the format of [transformers](https://github.com/huggingface/transformers).
 ```python
 from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
 save_for_huggingface_upstream(q_model, tokenizer, output_dir)

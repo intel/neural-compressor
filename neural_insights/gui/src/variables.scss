@@ -1,0 +1,117 @@
+// Copyright (c) 2023 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//== Core Intel Colors
+//
+//## Colors defined in the corporate brand guidelines.
+//## https://brandportal.intel.com/us/en/style/color
+
+$red: #ed1c24; // Intel red
+$dark-orange: #fc4c02;
+$orange: #FFA300; // Intel orange
+$yellow: #F3D54E; // Intel yellow
+
+$dark-blue: #005B85; // Intel dark blue
+$classic-blue5: #00285A;
+$classic-blue4: #004A86;
+$classic-blue3: #0068B5;
+$blue: #0095CA; // Intel blue
+$energy-blue: #00C7FD;
+$light-blue: #7BDEFF; // Intel light blue
+$pale-blue: #B4F0FF; // Intel pale blue
+$accent-yellow: #FEC91B;
+
+$green: #8BAE46; // Intel green
+$light-green: #D7F3A2;
+$dark-green: #515A3D;
+
+$light-gray: #ececec; // no change
+$gray: #939598; // no change
+$dark-gray: #53565a; // no change
+
+$loop_color_good: #a6ce39;
+$loop_color_neutral: #fdb813;
+$loop_color_bad: #ed1b24;
+
+//== Extended Intel Colors
+//
+//## Color not included in the brand guidelines but approved for internal usage.
+
+$white: #ffffff;
+$black: #000000;
+
+$lighter-red-selected: #d2b1ac;
+$lighter-red: #ffe1dd;
+$light-red: #ff6450;
+$dark-red: #931c1a;
+$hover-red: $light-red;
+$tapped-red: $dark-red;
+
+$lighter-yellow: #fff2d0;
+
+$lighter-blue: $pale-blue;
+$hover-blue: $light-blue;
+$tapped-blue: $dark-blue;
+
+$lighter-gray1: #f7f8f9;
+$lighter-gray2: #edeff0;
+$lighter-gray3: #e1e5e7;
+$lighter-gray3-5: #CCCCCC;
+$lighter-gray4: #737373;
+$lighter-gray: $lighter-gray2;
+$darker-gray: #333;
+$darkest-gray: #111;
+$hover-gray: $lighter-gray;
+$tapped-gray: $light-gray;
+
+/* Intel Clear font */
+
+@font-face {
+  font-family: IntelOneRg;
+  src: url('/assets/fonts/intelone-display-regular.ttf');
+}
+
+@font-face {
+  font-family: IntelOneLt;
+  src: url('/assets/fonts/intelone-display-light.ttf');
+}
+
+@font-face {
+  font-family: IntelOneBd;
+  src: url('/assets/fonts/intelone-display-bold.ttf');
+}
+
+@font-face {
+  font-family: IntelClearRg;
+  src: url('/assets/fonts/IntelClear_Rg.ttf');
+}
+
+@font-face {
+  font-family: IntelClearLt;
+  src: url('/assets/fonts/IntelClear_Lt.ttf');
+}
+
+@font-face {
+  font-family: IntelClearBd;
+  src: url('/assets/fonts/IntelClear_Bd.ttf');
+}
+
+@font-face {
+  font-family: IntelClearBd;
+  src: url('/assets/fonts/IntelClear_Bd.ttf');
+}
+
+@font-face {
+  font-family: IntelOneMono;
+  src: url('/assets/fonts/intelone-mono-font-family-regular.ttf');
+}

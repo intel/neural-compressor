@@ -14,14 +14,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Register algorithms."""
 
 from abc import abstractmethod
+
 from neural_compressor.utils.create_obj_from_config import get_algorithm
 
 # {location: {algorithm_type: cls}}
 registry_algorithms = {}
+
 
 def algorithm_registry(algorithm_type, location):
     """Decorate and register all Algorithm subclasses.
@@ -34,15 +35,18 @@ def algorithm_registry(algorithm_type, location):
     Returns:
         cls: The class of register.
     """
+
     def decorator_algorithm(cls):
         if location in registry_algorithms and algorithm_type in registry_algorithms[location]:
-            raise ValueError('Cannot have two algorithms with the same name')
+            raise ValueError("Cannot have two algorithms with the same name")
 
         if location not in registry_algorithms:
             registry_algorithms[location] = {}
         registry_algorithms[location][algorithm_type] = cls()
         return cls
+
     return decorator_algorithm
+
 
 class ALGORITHMS(object):
     """Build a dict for registered algorithms."""
@@ -66,19 +70,19 @@ class ALGORITHMS(object):
         assert result, "algorithm type only support {}".format(self.support_algorithms())
         return result
 
-
     @classmethod
     def support_algorithms(self):
         """Get all algorithms.
 
-        Returns: 
+        Returns:
             Set: A set of all algorithms.
         """
         supported_algos = set([self.algorithms[key] for key in self.algorithms])
         return supported_algos
 
+
 class AlgorithmScheduler(object):
-    """control the Algorithm in different phase."""
+    """Control the Algorithm in different phase."""
 
     def __init__(self, conf):
         """Initialize AlgorithmScheduler.
@@ -92,7 +96,7 @@ class AlgorithmScheduler(object):
         self._dataloader = None
         self._adaptor = None
         self._calib_iter = None
-        
+
     def append_algorithm(self, location, algorithm):
         """Append algorithm to list of executed algorithms.
 
@@ -102,7 +106,7 @@ class AlgorithmScheduler(object):
         """
         self._exec_algorithms[location] = self._exec_algorithms.get(location, [])
         self._exec_algorithms[location].append(algorithm)
-        
+
     def reset_exec_algorithms(self):
         """Reset the list of executed algorithms."""
         self._exec_algorithms = {}
@@ -113,19 +117,14 @@ class AlgorithmScheduler(object):
         Returns:
             model: The framework model.
         """
-        assert self._q_model, 'set q_model for algorithm'
+        assert self._q_model, "set q_model for algorithm"
         if len(self._exec_algorithms.get(location, [])) == 0:
             return self._q_model
-        assert self._origin_model, 'set origin model for algorithm'
-        assert self._dataloader, 'set dataloader for algorithm'
-        assert self._adaptor, 'set adaptor for algorithm'
-        assert self._calib_iter, 'set calibration iteration for algorithm'
+        assert self._origin_model, "set origin model for algorithm"
+        assert self._adaptor, "set adaptor for algorithm"
+        assert self._calib_iter, "set calibration iteration for algorithm"
         for algo in self._exec_algorithms.get(location, []):
-            self._q_model = algo(self._origin_model,
-                                 self._q_model, \
-                                 self._adaptor, \
-                                 self._dataloader, \
-                                 self._calib_iter)
+            self._q_model = algo(self._origin_model, self._q_model, self._adaptor, self._dataloader, self._calib_iter)
         return self._q_model
 
     @property
@@ -218,6 +217,7 @@ class AlgorithmScheduler(object):
         """
         self._calib_iter = calib_iter
 
+
 class Algorithm(object):
     """The base class of algorithm."""
 
@@ -229,4 +229,3 @@ class Algorithm(object):
             NotImplementedError: NotImplementedError
         """
         raise NotImplementedError
-

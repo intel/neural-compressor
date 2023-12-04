@@ -51,7 +51,7 @@ flags.DEFINE_integer('batch_size', 32, 'batch_size')
 flags.DEFINE_integer(
     'iters', 100, 'maximum iteration when evaluating performance')
 
-from neural_compressor.metric.metric import TensorflowTopK
+from neural_compressor.metric import Metric
 from neural_compressor.data.transforms.transform import ComposeTransform
 from neural_compressor.data.datasets.dataset import TensorflowImageRecord
 from neural_compressor.data.transforms.imagenet_transform import LabelShift
@@ -74,14 +74,16 @@ def evaluate(model):
     Custom evaluate function to inference the model for specified metric on validation dataset.
 
     Args:
-        model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
+        model (tf.keras.Model): The input model will be the objection of tf.keras.Model.
         measurer (object, optional): for benchmark measurement of duration.
 
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
     postprocess = LabelShift(label_shift=1)
-    metric = TensorflowTopK(k=1)
+    from neural_compressor import METRICS
+    metrics = METRICS('tensorflow')
+    metric = metrics['topk']()
     latency_list = []
 
     def eval_func(dataloader, metric):
@@ -117,15 +119,25 @@ def main(_):
     if FLAGS.tune:
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.utils.utility import set_random_seed
+        from neural_compressor import set_random_seed
         set_random_seed(9527)
-        config = PostTrainingQuantConfig(backend='itex', 
+        op_name_dict = {
+            'average_pooling2d':{
+            'activation':  {'dtype': ['fp32']},
+            },
+            'max_pooling2d_2':{
+            'activation':  {'dtype': ['fp32']},
+            },
+            'max_pooling2d_3':{
+            'activation':  {'dtype': ['fp32']},
+            },
+        }
+        config = PostTrainingQuantConfig(backend='itex', op_name_dict=op_name_dict,
             calibration_sampling_size=[20, 150])
         q_model = fit(
             model=FLAGS.input_model,
             conf=config,
             calib_dataloader=calib_dataloader,
-            eval_dataloader=eval_dataloader,
             eval_func=evaluate)
         q_model.save(FLAGS.output_model)
 
@@ -137,7 +149,7 @@ def main(_):
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
             from neural_compressor.model.model import Model
-            accuracy = evaluate(Model(FLAGS.input_model).model)
+            accuracy = evaluate(Model(FLAGS.input_model, backend='itex').model)
             logger.info('Batch size = %d' % FLAGS.batch_size)
             logger.info("Accuracy: %.5f" % accuracy)
 
