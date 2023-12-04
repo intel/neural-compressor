@@ -117,6 +117,8 @@ class TestPytorchModel(unittest.TestCase):
             inc_model.export_compressed_model(
                 qweight_config_path="saved/qconfig.json",
                 compression_dtype=dtype,
+                scale_dtype=torch.float32,
+                use_hf_format=False,
             )
             out2 = q_model(input)
             torch.save(inc_model.state_dict(), "saved/tmp.pt")
@@ -136,6 +138,7 @@ class TestPytorchModel(unittest.TestCase):
             inc_model.export_compressed_model(
                 qweight_config_path="saved/qconfig.json",
                 compression_dim=dim,
+                use_hf_format=False,
             )
             out2 = q_model(input)
             torch.save(inc_model.state_dict(), "saved/tmp.pt")
@@ -154,7 +157,6 @@ class TestPytorchModel(unittest.TestCase):
         inc_model = INCModel(new_model)
         inc_model.export_compressed_model(
             qweight_config_path="saved/qconfig.json",
-            scale_dtype=torch.float16,
         )
         out2 = q_model(input)
         torch.save(inc_model.state_dict(), "saved/tmp.pt")
