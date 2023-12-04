@@ -367,6 +367,7 @@ class TorchSmoothQuant:
         self._save_scale = False
         self.weight_scale_dict = {}
 
+        self.do_blockwise = False
         self.block_inputs = {}
         self.block_outputs = {}
 
@@ -1120,6 +1121,7 @@ class TorchSmoothQuant:
         auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
         weight_clip=True,
         default_alpha=0.5,
+        do_blockwise=False
     ):
         """The main entry of smooth quant
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
@@ -1130,6 +1132,7 @@ class TorchSmoothQuant:
         :param scales_per_op: Not supported now
         :param calib_iter: Data size for calibration
         :param weight_clip: Whether to clip weight_max when calculating scales.
+        :param do_blockwise: Whether to do blockwise auto-tuning.
 
         :param auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
             By default the search space is 0.0-1.0 with step_size 0.1.
@@ -1137,12 +1140,12 @@ class TorchSmoothQuant:
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
         benefit to quantization.
         """
-        self.do_blockwise = True  # lyt_add_1128
-        self.block_names = self.get_blocks()
-        logger.info(
-            f"lyt_debug INC blockwise: {self.do_blockwise}， {len(self.block_names) if self.do_blockwise else 0}"
-        )
-        # calib_iter = 4
+        self.do_blockwise = do_blockwise
+        if self.do_blockwise:
+            self.block_names = self.get_blocks()
+            logger.info(
+                f"lyt_debug INC blockwise: {self.do_blockwise}， {len(self.block_names) if self.do_blockwise else 0}"
+            )
         if not isinstance(self.model, torch.nn.Module):
             logger.warning("smooth quant is ignored since the model is not a torch module")
             return self.model

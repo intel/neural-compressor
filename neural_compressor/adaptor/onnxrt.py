@@ -177,6 +177,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         weight_clip=True,
         auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
         default_alpha=0.5,
+        do_blockwise=False,
     ):
         """Get augmented model with smooth quant.
 
@@ -195,6 +196,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
                             By default the search space is 0.0-1.0 with step_size 0.1.
             default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
+            do_blockwise: Whether to do blockwise auto-tuning.
 
         Returns:
             model: A modified onnx model
