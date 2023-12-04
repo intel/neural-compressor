@@ -140,7 +140,7 @@ class WeightOnlyLinear(torch.nn.Module):
         self.use_hf_format = use_hf_format
         self.dtype = dtype
         if "int" not in self.dtype:  # for nf4, fp4
-            from neural_compressor.adaptor.torch_utils.weight_only import FLOAT_MAPPING, INT_MAPPING
+            from neural_compressor.torch.algorithms.weight_only.rtn import FLOAT_MAPPING, INT_MAPPING
 
             float_list = FLOAT_MAPPING[self.dtype]
             int_list = INT_MAPPING[self.dtype]
