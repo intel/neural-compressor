@@ -87,7 +87,7 @@ class SmoothQuant(Algorithm):
         kwargs["weight_clip"] = self.weight_clip
         kwargs["auto_alpha_args"] = self.auto_alpha_args
         kwargs["default_alpha"] = self.default_alpha
-        kwargs["do_blockwise"] = self.blockwise
+        kwargs["do_blockwise"] = self.do_blockwise
         q_model = adaptor.smooth_quant(
             origin_model,
             dataloader,
