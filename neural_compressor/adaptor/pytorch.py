@@ -4573,10 +4573,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             enable_full_range = self.recipes["rtn_args"].get("enable_full_range", False)
             enable_mse_search = self.recipes["rtn_args"].get("enable_mse_search", False)
             group_dim = self.recipes["rtn_args"].get("group_dim", 1)
+            return_int = self.recipes["rtn_args"].get("return_int", False)
         else:  # pragma: no cover
             enable_full_range = False
             enable_mse_search = False
             group_dim = 1
+            return_int = False
         from .torch_utils.util import fetch_module, set_module
         from .torch_utils.weight_only import rtn_quantize
 
@@ -4614,7 +4616,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     num_bits,
                     group_size,
                     scheme,
-                    return_int=False,
+                    return_int=return_int,
                     data_type=dtype,
                     enable_full_range=enable_full_range,
                     enable_mse_search=enable_mse_search,

@@ -390,18 +390,14 @@ class WeightOnlyLinear(torch.nn.Module):
         if self.use_hf_format:
             self.scales = self.scales.T
             self.qweight = self.qweight.T
-            self.g_idx = self.g_idx
             self.qzeros = self.qzeros.T
 
     def recover(self):
         logger.debug(f"Recovering {self} weight")
-        if self.use_hf_format:
-            # Prevent broken id links of self.scales and self.scales
-            self.scales = self.scales.T
-            self.qweight = self.qweight.T
-            self.g_idx = self.g_idx
-            self.qzeros = self.qzeros.T
-        device = self.scales.device
+        scales = self.scales.T if self.use_hf_format else self.scales
+        qweight = self.qweight.T if self.use_hf_format else self.qweight
+
+        device = scales.device
         fp32_weight = torch.zeros(self.out_features, self.in_features, dtype=self.float_type).to(device)
         if self.g_idx is None:
             # used for recovering fp32_weight
@@ -413,7 +409,6 @@ class WeightOnlyLinear(torch.nn.Module):
             weight_dtype = torch.int8
         # unpack weight
         weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype).to(device)
-        qweight = self.qweight
         if not self.use_hf_format and self.compression_dim == 0:
             weight = weight.T
             qweight = qweight.T
@@ -440,8 +435,8 @@ class WeightOnlyLinear(torch.nn.Module):
         # unpack zero_point
         if hasattr(self, "qzeros"):
             zp_dtype = self.compressed_dtype  # to avoid overflow when weight-zp
-            zp = torch.zeros(self.scales.shape, dtype=zp_dtype).to(device)
-            qzeros = self.qzeros
+            zp = torch.zeros(scales.shape, dtype=zp_dtype).to(device)
+            qzeros = self.qzeros.T if self.use_hf_format else self.qzeros
             if self.use_hf_format or self.compression_dim == 0:
                 zp = zp.T
                 qzeros = qzeros.T
@@ -465,11 +460,11 @@ class WeightOnlyLinear(torch.nn.Module):
                 zp = torch.where(zp > (2**self.bits - 1), 0, zp)
             # recover fp32 weight with int_weight, scale, and zero_point
             for idx in range(self.in_features):
-                fp32_weight[:, idx] = (weight[:, idx] - zp[:, self.g_idx[idx]]) * self.scales[:, self.g_idx[idx]]
+                fp32_weight[:, idx] = (weight[:, idx] - zp[:, self.g_idx[idx]]) * scales[:, self.g_idx[idx]]
         else:
             # recover fp32 weight with int_weight, scale
             for idx in range(self.in_features):
-                fp32_weight[:, idx] = weight[:, idx] * self.scales[:, self.g_idx[idx]]
+                fp32_weight[:, idx] = weight[:, idx] * scales[:, self.g_idx[idx]]
         return fp32_weight
 
     def forward(self, input):

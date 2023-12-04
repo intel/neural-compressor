@@ -182,6 +182,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
+        self.assertTrue(isinstance(q_model.model.fc1, WeightOnlyLinear))
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
 
@@ -557,8 +558,11 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out1 = q_model.model(input)
         compressed_model = q_model.export_compressed_model(use_hf_format=True)
         out2 = compressed_model(input)
+        print(out1[0])
+        print(out2[0])
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
+        # hf_format uses fp16 for scale, so output atol is higher.
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=2e-04))
 
         # # case 2: list or tuple
         model_3 = copy.deepcopy(self.gptj)
@@ -570,7 +574,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model.save("saved")
         out1 = q_model.model(input)
-        compressed_model = q_model.export_compressed_model(use_hf_format=True)
+        compressed_model = q_model.export_compressed_model(use_hf_format=False)
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
