@@ -1104,7 +1104,7 @@ class TorchSmoothQuant:
                 ratio = loss_ / fp32_norm
                 logger.info(
                     f"lyt_debug final loss: {op_name}: {loss_}; \
-                    fp32_output norm: {fp32_norm} @alpha {best_alphas[key]}; ratio: {fp32_norm}"
+                    fp32_output norm: {fp32_norm} @alpha {best_alphas[key]}; ratio: {ratio}"
                 )
         self._qdq_model_unwrapper_for_auto()
         logger.info("auto tuning done")
