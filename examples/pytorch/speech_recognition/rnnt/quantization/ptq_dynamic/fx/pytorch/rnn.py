@@ -74,7 +74,7 @@ class LstmDrop(torch.nn.Module):
         if dropout:
             self.inplace_dropout = torch.nn.Dropout(dropout, inplace=True)
         else:
-            self.inplace_droput = None
+            self.inplace_dropout = None
 
     def forward(self, x: torch.Tensor,
                 h: Optional[Tuple[torch.Tensor, torch.Tensor]] = None):
