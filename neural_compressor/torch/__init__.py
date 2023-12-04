@@ -17,6 +17,7 @@ from neural_compressor.torch.algorithms import rtn_quantize_entry, gptq_quantize
 
 from neural_compressor.torch.quantization import (
     quantize,
+    MXQuantConfig,
     RTNWeightQuantConfig,
     get_default_rtn_config,
     DummyConfig,

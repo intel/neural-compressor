@@ -15,3 +15,4 @@
 
 from neural_compressor.torch.algorithms.weight_only_algos import rtn_quantize_entry
 from neural_compressor.torch.algorithms.weight_only_algos import gptq_quantize_entry
+from neural_compressor.torch.algorithms.mx import mx_quantize_entry

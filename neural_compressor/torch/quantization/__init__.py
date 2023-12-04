@@ -14,6 +14,8 @@
 
 from neural_compressor.torch.quantization.quantize import quantize
 from neural_compressor.torch.quantization.config import (
+    MXQuantConfig,
+    get_default_mx_config,
     RTNWeightQuantConfig,
     get_default_rtn_config,
     DummyConfig,
