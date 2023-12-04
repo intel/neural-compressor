@@ -1095,7 +1095,7 @@ class TorchSmoothQuant:
         best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, shared_criterion)
         for key in best_alphas.keys():
             logger.info(f"Final alpha {key}:{best_alphas[key]}")
-        max_op, max_ratio, max_key = '', 0, ''
+        max_op, max_ratio, max_key = "", 0, ""
         for key in self.absorb_to_layer:  # lyt_add_1205
             for op_name in self.absorb_to_layer[key]:
                 fp32_norm, loss_ = (
@@ -1110,8 +1110,10 @@ class TorchSmoothQuant:
                     f"lyt_debug final loss: {op_name}: {loss_}; \
                     fp32_output norm: {fp32_norm} @alpha {best_alphas[key]}; ratio: {ratio}"
                 )
-        logger.info(f"lyt_debug max loss: {max_op}: {loss_alphas[max_op][str(best_alphas[max_key])]}; \
-            fp32_output norm: {torch.sum(torch.stack(self.fp32_output_val[max_op]))} @alpha {best_alphas[max_key]}; ratio: {max_ratio}")
+        logger.info(
+            f"lyt_debug max loss: {max_op}: {loss_alphas[max_op][str(best_alphas[max_key])]}; \
+            fp32_output norm: {torch.sum(torch.stack(self.fp32_output_val[max_op]))} @alpha {best_alphas[max_key]}; ratio: {max_ratio}"
+        )
         self._qdq_model_unwrapper_for_auto()
         logger.info("auto tuning done")
         return best_alphas
