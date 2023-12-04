@@ -19,24 +19,17 @@ from functools import partial
 from torch.amp import autocast
 from eval import eval_model
 from collections import UserDict
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 os.environ["HF_HOME"] = "/models/huggingface"
 
 import logging
+
 logger = logging.getLogger()
 
+
 # os.environ['TRANSFORMERS_OFFLINE'] = '0'
-
-
-class FakeAffineTensorQuantFunction(Function):
-    @staticmethod
-    def forward(ctx, inputs, num_bits=4, group_size=128, schema="asym", grad=0):
-        return quant_weight(inputs, num_bits, group_size, schema, grad)
-
-    @staticmethod
-    def backward(ctx, grad_outputs):
-        return grad_outputs, None, None, None, None
 
 
 def round_ste(x: torch.Tensor):
@@ -257,29 +250,6 @@ def q_dq_weight(model: torch.nn.Module, num_bits=4, group_size=128, schema='asym
                     quant_weight(m.weight, num_bits=num_bits, group_size=group_size, schema=schema))
 
 
-# def tokenize_function(examples):
-#     example = tokenizer(examples["text"], truncation=True, max_length=seqlen)
-#     return example
-
-
-@torch.no_grad()
-def collate_batch(batch):
-    input_ids_new = []
-    for text in batch:
-        input_ids = text["input_ids"]
-        if input_ids.shape[0] < seqlen:
-            continue
-        input_ids = input_ids[:seqlen]
-        input_ids_list = input_ids.tolist()
-        if input_ids_list.count(input_ids_list[-1]) > seqlen // 2:
-            continue
-        input_ids_new.append(input_ids)
-    if len(input_ids_new) == 0:
-        return None
-    tmp = torch.vstack(input_ids_new)
-    res = {}
-    res["input_ids"] = tmp
-    return res
 
 
 def get_module(model, key):
@@ -361,13 +331,6 @@ class WrapperLinear(torch.nn.Module):
         self.max_scale.data.copy_(torch.clamp(self.max_scale.data, -1, 0))
         weight_q = quant_weight(weight, self.num_bits, self.group_size, self.schema,
                                 self.value, self.min_scale, self.max_scale)
-        # if self.enable_minmax_tuning:
-        #     weight_q = quant_weight(weight, self.num_bits, self.group_size, self.schema,
-        #                             self.value)
-        #
-        # else:
-        #     weight_q = FakeAffineTensorQuantFunction().apply(weight, self.num_bits, self.group_size, self.schema,
-        #                                                      self.value)  ##mainly for reproducing the data of paper
         return F.linear(x, weight_q, self.orig_layer.bias)
 
 
@@ -410,8 +373,6 @@ def collect_grad_and_zero(block):
             grads[n] = copy.deepcopy(grad)
             m.orig_layer.weight.grad.zero_()
     return grads
-
-
 
 
 def sampling_inputs(input_ids, input_others, indices, seqlen):
@@ -487,9 +448,6 @@ def block_forward(block, input_ids, input_others, amp=False, device=torch.device
     return output
 
 
-
-
-
 def collect_round_grad(block):
     grads = {}
     for n, m in block.named_modules():
@@ -508,26 +466,12 @@ def collect_minmax_grad(block):
             max_grads[n] = copy.deepcopy(torch.clamp(m.max_scale.data, -1, 0))
     return min_grads, max_grads
 
-# @torch.no_grad()
-# def get_block_outputs(block, input_ids, input_others, bs, device, cache_device, batch_dim,args):
-#     output = []
-#     for i in range(0, args.n_samples, bs):
-#         indices = torch.arange(i, i + bs).to(torch.long)
-#         tmp_input_ids, tmp_input_others = sampling_inputs(input_ids, input_others, indices, args.seqlen)
-#         tmp_output = block_forward(block, tmp_input_ids, tmp_input_others, args.amp, device).to(cache_device)
-#         output.append(tmp_output)
-#     output = torch.cat(output, dim=batch_dim)
-#     torch.cuda.empty_cache()
-#     return output
 
 
 @torch.no_grad()
 def get_batch_dim(input_others):
     dim = int(len(input_others["positional_inputs"]) > 0)
     return dim
-
-
-
 
 
 class WrapperMultiblock(torch.nn.Module):
@@ -587,6 +531,7 @@ def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, g
 
     torch.cuda.empty_cache()
 
+
 def get_block_names(model):
     """
     Get the block names for transformers-like networks, this may have issues
@@ -605,6 +550,7 @@ def get_block_names(model):
     for n, m in target_m[1].named_children():
         block_names.append(target_m[0] + "." + n)
     return block_names
+
 
 class OPTRoundQuantizer(object):
     def __init__(
@@ -952,24 +898,17 @@ class OPTRoundQuantizer(object):
 
     def quant_block(self, block, input_ids, input_others, num_bits, group_size, schema, q_input=None,
                     device=torch.device("cpu")):
-        best_loss = torch.finfo(torch.float).max
-        mse_loss = torch.nn.MSELoss()
-        grad = None
-        min_scale_grad = None
-        max_scale_grad = None
         batch_dim = get_batch_dim(input_others)
         if not self.low_gpu_mem_usage and input_ids.device != device:
-            # input_ids, input_others = move_to_device(input_ids, input_others, device)
-            input_ids = move_input_to_device(input_ids, device)  ##move input data to GPU
+            input_ids = move_input_to_device(input_ids, device)
             input_others = move_input_to_device(input_others, device)
         cache_device = device
         if self.low_gpu_mem_usage:
             cache_device = "cpu"
         output = self.get_block_outputs(block, input_ids, input_others, self.train_bs, device, cache_device, batch_dim)
+
         if q_input is not None:
-            input_ids = q_input
-            if not self.low_gpu_mem_usage and input_ids.device != device:
-                input_ids = input_ids.to(device)
+            input_ids = q_input.to(cache_device)
 
         wrapper_block(block, num_bits, group_size, schema, self.enable_minmax_tuning)
 
@@ -980,20 +919,21 @@ class OPTRoundQuantizer(object):
                 round_params.append(m.value)
                 minmax_params.append(m.min_scale)
                 minmax_params.append(m.max_scale)
-        from sign_sgd import SGD
-        # optimizer = SGD(params, lr=0.0025)
+
         if self.enable_minmax_tuning:
-            optimizer = SGD([{'params': round_params}, {'params': minmax_params, 'lr': self.minmax_lr}],
-                            lr=self.lr, weight_decay=0)
+            optimizer = self.optimizer([{'params': round_params}, {'params': minmax_params, 'lr': self.minmax_lr}],
+                                       lr=self.lr, weight_decay=0)
         else:
-            optimizer = SGD(round_params,
-                            lr=self.lr, weight_decay=0)
+            optimizer = self.optimizer(round_params,
+                                       lr=self.lr, weight_decay=0)
 
-        lr_schedule = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
-                                                        total_iters=self.iters,
-                                                        verbose=False)
+        if self.lr_scheduler is None:
+            lr_schedule = torch.optim.lr_scheduler.LinearLR(
+                optimizer, start_factor=1.0, end_factor=0.0, total_iters=self.iters, verbose=False
+            )
+        else:
+            lr_schedule = copy.deepcopy(self.lr_scheduler)
 
-        search_iters = self.iters
         pick_samples = self.train_bs
         if len(input_ids.shape) == 3:
             n_samples = input_ids.shape[0]
@@ -1002,7 +942,13 @@ class OPTRoundQuantizer(object):
         if self.sampler != "rand":
             indices = torch.randperm(n_samples)[:pick_samples]
         last_best_iter = 0
-        for i in range(search_iters):
+        best_loss = torch.finfo(torch.float).max
+        mse_loss = torch.nn.MSELoss().to(device)
+        grad = None
+        min_scale_grad = None
+        max_scale_grad = None
+
+        for i in range(self.iters):
             if self.sampler == "rand":
                 indices = torch.randperm(n_samples)[:pick_samples]
 
@@ -1032,7 +978,7 @@ class OPTRoundQuantizer(object):
                         loss = mse_loss(output_q, current_output) * 1000
                 else:
                     loss = mse_loss(output_q, current_output)
-                total_loss += loss.item()##TODO gradient accumulate step for other optimizer
+                total_loss += (loss.item()/self.gradient_accumulate_steps)  ##TODO gradient accumulate step for other optimizer
                 loss.backward()
 
             if total_loss < best_loss:
@@ -1042,7 +988,7 @@ class OPTRoundQuantizer(object):
                     best_grad = collect_round_grad(block)
                     best_min_scale_grad, best_max_scale_grad = collect_minmax_grad(block)
                     last_best_iter = i
-            if self.not_use_mse:
+            if self.not_use_mse and i == self.iters - 1:
                 best_grad = grad
                 best_min_scale_grad = min_scale_grad
                 best_max_scale_grad = max_scale_grad
@@ -1084,7 +1030,7 @@ class OPTRoundQuantizer(object):
             if n_blocks == 1:
                 n = block_names[i]
                 logger.info(n)
-                print(n,flush=True)
+                print(n, flush=True)
                 m = get_module(model, n)
             else:
                 names = block_names[i: i + n_blocks]
@@ -1100,8 +1046,8 @@ class OPTRoundQuantizer(object):
                 input_ids,
                 input_others,
                 num_bits=self.bits,
-                group_size=self.group_size,##TODO layerwise
-                schema = self.scheme,
+                group_size=self.group_size,  ##TODO layerwise
+                schema=self.scheme,
                 q_input=q_input,
                 device=device,
             )
