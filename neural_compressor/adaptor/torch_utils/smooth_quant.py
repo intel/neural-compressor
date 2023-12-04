@@ -416,17 +416,6 @@ class TorchSmoothQuant:
             hook_handle = modules[key].register_forward_hook(hook_func)
             self.hook_handles.append(hook_handle)
 
-    def _add_blockwise_minmax_observer(self, block_modules): #lyt_add_1128
-        """
-        :param block_modules: the modules which the observer will insert to
-        :return:
-        """
-        self.blockwise_hook_minmax_handles = []
-        for key in block_modules.keys():
-            hook_func = self._save_blockwise_minmax_hook(key)
-            hook_handle = block_modules[key].register_forward_hook(hook_func)
-            self.blockwise_hook_minmax_handles.append(hook_handle)
-
 
     def _remove_observer(self):
         """Remove the observer from the model
@@ -434,56 +423,23 @@ class TorchSmoothQuant:
         for hook_handle in self.hook_handles:
             hook_handle.remove()
 
-    def _calibrate(self, absorb_to_layer, calib_iter, percentile, blockwise=False): #lyt_change_1129
+    def _calibrate(self, absorb_to_layer, calib_iter, percentile):
         """
         :param absorb_to_layer: A dict,key is the absorb layer, val is a list of the to be smoothed layer
         :param calib_iter: Data size for calibration
         :return: A dict that saved the layer name and the channel-wise max value info
         """
         ##hook all the module
-        if not blockwise:
-            hook_modules = {}
-            for n, module in self.model.named_modules():
-                if isinstance(module, tuple(self.op_types)):
-                    hook_modules[n] = module
+        hook_modules = {}
+        for n, module in self.model.named_modules():
+            if isinstance(module, tuple(self.op_types)):
+                hook_modules[n] = module
 
-            self._add_min_max_observer(hook_modules, percentile)
+        self._add_min_max_observer(hook_modules, percentile)
 
-            self._dump_min_max(calib_iter=calib_iter)
-            self._remove_observer()
-            return self.input_maxes_abs
-        else:
-            block_modules = {}
-            for key in self.block_names:
-                block_modules[key] = get_module(self.model, key)
-            self._add_blockwise_minmax_observer(block_modules)
-            self._dump_min_max(calib_iter=calib_iter)
-            self._remove_blockwise_hook(self.blockwise_hook_minmax_handles)
-
-
-
-    def _save_blockwise_minmax_hook(self, name, percentile=100): #lyt_add_1128
-        """A forward hook to save input max of a block
-        :param name: the block name
-        :return: A hook function."""
-
-        def save_blockwise_minmax_hook(module, inputs, outputs):
-            input = inputs[0]
-            input = input.reshape(-1, input.shape[-1])
-            max_tensor = torch.max(input, dim=0)[0]
-            min_tensor = torch.min(input, dim=0)[0]
-            k_index = int(input.shape[0] * percentile / 100)
-            res, _ = torch.kthvalue(torch.abs(input), k_index, dim=0)
-            ##res = torch.max(torch.abs(input),dim=0)[0]
-            if name not in self.block_min_inputs.keys():
-                self.block_min_inputs[name], self.block_max_inputs[name] = min_tensor, max_tensor
-                self.block_maxabs_inputs[name] = res
-            else:
-                self.block_min_inputs[name] = torch.min(self.block_min_inputs[name], min_tensor)
-                self.block_max_inputs[name] = torch.max(self.block_max_inputs[name], max_tensor)
-                self.block_maxabs_inputs[name] = torch.max(self.block_maxabs_inputs[name], max_tensor)
-
-        return save_blockwise_minmax_hook
+        self._dump_min_max(calib_iter=calib_iter)
+        self._remove_observer()
+        return self.input_maxes_abs
 
 
     def _dump_min_max(self, calib_iter=100):
@@ -865,10 +821,7 @@ class TorchSmoothQuant:
             self.block_outputs[name] = outputs[0]
 
         return save_blockwise_hook
-    
-    def _remove_blockwise_hook(self, handles):
-        for hook_handle in handles:
-            hook_handle.remove()
+
 
     def _get_one_batch_auto_loss(self, input, alpha_space, orig_best_alpha, input_maxes):
         self._change_qdq_for_auto(enable=False)
@@ -927,7 +880,6 @@ class TorchSmoothQuant:
                 loss_alphas[block_name] = {key_name: loss}
         # for name in module_names:
         #     loss_alphas[name]={}
-        # print(loss_alphas)
         for alpha in alpha_space:
             absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes, alpha, tuning=True)
             self._update_scales_for_auto(absorb_input_scales, weight_scales)
@@ -1261,7 +1213,7 @@ class TorchSmoothQuant:
                                 checked = True
                         if not checked:
                             self.block_to_module[module] = [module]
-                            self.block_inputnode[module] = module
+                            # self.block_inputnode[module] = module
                     self.block_names = list(self.block_to_module.keys())
                     logger.info(f"lyt_debug B4-calib block num: {len(self.block_names)}, {len(self.block_to_module)}")
 
@@ -1392,9 +1344,8 @@ class TorchSmoothQuant:
         """
         tg = GraphTrace()
         self._get_example_input()
-        absorb_to_layer, no_absorb_layers, self.block_inputnode = tg.get_absorb_to_layer(
-            self.traced_model, self.example_inputs, op_types, 
-            skip_unsupported_layers=skip_unsupported_layers, block_names=self.block_names, #lyt_add_1201
+        absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(
+            self.traced_model, self.example_inputs, op_types, skip_unsupported_layers=skip_unsupported_layers,
         )
         if not skip_unsupported_layers:
             return absorb_to_layer
@@ -1502,15 +1453,10 @@ class GraphTrace:
                     break
         return nodes
 
-    def get_prev_absorb_layer(self, nodes, block_names={}):
+    def get_prev_absorb_layer(self, nodes):
         prev_absorb_layer = []
-        if block_names:
-            block_inputnode, do_blockwise = {}, True
-            block_names_cp = copy.deepcopy(block_names)
-            block_name = block_names_cp.pop(0)
         for node in nodes:
             parent = get_parent(node)
-            wait = 1
             while 1:
                 if parent.kind() in self.skip_ops_to_find_absorb:
                     parent = get_parent(parent)
@@ -1525,28 +1471,15 @@ class GraphTrace:
 
                     if parent_out_kinds == parent_out_kinds.intersection(self.could_absorb_layers):
                         prev_absorb_layer.append(parent)
-                        if do_blockwise:
-                            if block_name in parent.scopeName():
-                                block_inputnode[block_name] = '.'.join(parent.scopeName().split("/")[-1].split(".")[1:])
-                                block_name = block_names_cp.pop(0) if block_names_cp else block_name
-                                print(f"lyt_debug block_inputop added_T1: {len(block_inputnode)}, {block_inputnode}")
                     elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
                         res = self.skip_op_absorb_helper(parent)
                         prev_absorb_layer.append(parent) if res else prev_absorb_layer.append(None)
-                        if do_blockwise:
-                            if block_name in parent.scopeName():
-                                block_inputnode[block_name] = '.'.join(parent.scopeName().split("/")[-1].split(".")[1:])
-                                block_name = block_names_cp.pop(0) if block_names_cp else block_name
-                                print(f"lyt_debug block_inputop added_T2: {len(block_inputnode)}, {block_inputnode}")
                     else:  # When parent to multiple ops, sq transformation could be wrong.
                         prev_absorb_layer.append(None)
                 else:
                     prev_absorb_layer.append(None)
                 break
-        if do_blockwise:
-            return prev_absorb_layer, block_inputnode #lyt_add_1201
-        else:
-            return prev_absorb_layer, []
+        return prev_absorb_layer
 
     def skip_op_absorb_helper(self, parent_node):
         for val_user in list(parent_node.outputs())[0].uses():
@@ -1588,7 +1521,7 @@ class GraphTrace:
                 return False
         return True
 
-    def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True, block_names=[]): #lyt_add_1201
+    def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True): #lyt_add_1201
         traced_model = self.trace(model, example_input)
         if traced_model is None:
             return None, None
@@ -1596,7 +1529,7 @@ class GraphTrace:
         aten_op_types = self.mapping_torch_module_to_aten(op_types)
         nodes_types = self.get_nodes(traced_model, aten_op_types)
         nodes = [node_type[0] for node_type in nodes_types]
-        nodes_prev_absorb, block_inputnode = self.get_prev_absorb_layer(nodes, block_names) #lyt_add_1201
+        nodes_prev_absorb = self.get_prev_absorb_layer(nodes)
         absorb_to_layer = {}
         no_absorb_layers = []
         for index, absorb in enumerate(nodes_prev_absorb):
