@@ -35,6 +35,8 @@ python run_clm_no_trainer.py \
     --peft_model_id "peft_model_id"
 ```
 
+**Notes**: Smooth quantization here is based on torch.jit. Without past key value in example_inputs, the quantized model cannot be used for text-generation. For text-generation task, please go to [link](https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization)
+
 ```bash
 # "--approach weight_only" is used to enable weight only quantization.
 python run_clm_no_trainer.py \
@@ -49,20 +51,6 @@ python run_clm_no_trainer.py \
     --output_dir "saved_results"
 ```
 **Notes**: Weight-only quantization based on fake quantization is previewly supported and supports RTN, GPTQ[1], AWQ[2], TEQ algorithms. For more details, please refer to [link](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_weight_only.md)
-
-
-```bash
-python run_clm_no_trainer.py \
-    --model EleutherAI/gpt-j-6B \
-    --woq_algo GPTQ \
-    --woq_bits 4 \
-    --quantize \
-    --pad_max_length 2048 \
-    --gptq_pad_max_length 2048 \
-    --gptq_use_max_length \
-    --approach weight_only \
-    --output_dir "test_models" \
-```
 
 
 #### Accuracy with lm_eval
@@ -109,7 +97,7 @@ python run_clm_no_trainer.py \
     --output_dir "saved_results"  # load int8 model
 # to validate FP32 model, please remove "--int8" and "--output_dir".
 ```
-### LLAMA-7b/13b/30b
+### LLAMA2-7b/13b/30b
 >Note: LLAMA requires IPEX requirements >= 2.1 to get better accuracy, please source install from [intel_extension_for_pytorch](https://github.com/intel/intel-extension-for-pytorch.git).
 #### Quantization
 
@@ -118,7 +106,7 @@ python run_clm_no_trainer.py \
 # "--int8_bf16_mixed" is used to enable int8-bf16 mixed mode for platform that natively supports bf16
 # "--peft_model_id" is used to loaded PEFT weights from peft_model_id
 python run_clm_no_trainer.py \
-    --model decapoda-research/llama-7b-hf \
+    --model meta-llama/Llama-2-7b-hf \
     --quantize \
     --sq \
     --alpha 0.8 \
@@ -131,7 +119,7 @@ python run_clm_no_trainer.py \
 #### Accuracy with lm_eval
 ```bash
 python run_clm_no_trainer.py \
-    --model decapoda-research/llama-7b-hf \
+    --model meta-llama/Llama-2-7b-hf \
     --accuracy \
     --batch_size 112 \
     --tasks  "lambada_openai" "lambada_standard" \
@@ -141,57 +129,7 @@ python run_clm_no_trainer.py \
 # to validate FP32 model, please remove "--int8" and "--output_dir".
 ```
 
-### MPT-7b-chat
-#### Quantization
-```bash
-# "--sq" is used to enable smooth quant
-# "--int8_bf16_mixed" is used to enable int8-bf16 mixed mode for platform that natively supports bf16
-python run_clm_no_trainer.py \
-    --model mosaicml/mpt-7b-chat \
-    --quantize \
-    --sq \
-    --alpha 0.85 \
-    --ipex \
-    --output_dir "saved_results"
-```
 
-#### Accuracy with lm_eval
-```bash
-python run_clm_no_trainer.py \
-    --model mosaicml/mpt-7b-chat \
-    --accuracy \
-    --batch_size 112 \
-    --tasks  "lambada_openai" \
-    --int8 \
-    --ipex \
-    --output_dir "saved_results"  # load int8 model
-# to validate FP32 model, please remove "--int8" and "--output_dir".
-```
-### Falcon-7b-instruct
-#### Quantization
-```bash
-# "--sq" is used to enable smooth quant
-# "--int8_bf16_mixed" is used to enable int8-bf16 mixed mode for platform that natively supports bf16
-python run_clm_no_trainer.py \
-    --model tiiuae/falcon-7b-instruct \
-    --quantize \
-    --sq \
-    --alpha 0.7 \
-    --output_dir "saved_results"
-```
-
-#### Accuracy with lm_eval
-```bash
-python run_clm_no_trainer.py \
-    --model tiiuae/falcon-7b-instruct \
-    --accuracy \
-    --batch_size 112 \
-    --tasks  "lambada_openai" \
-    --int8 \
-    --ipex \
-    --output_dir "saved_results"  # load int8 model
-# to validate FP32 model, please remove "--int8" and "--output_dir".
-```
 
 [1]. Elias, Frantar, et al. "GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers." arXiv preprint arXiv:2210.17323 (2023).
 [2]. Lin, Ji, et al. "AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration." arXiv preprint arXiv:2306.00978 (2023).

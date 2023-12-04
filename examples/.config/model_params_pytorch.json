@@ -499,7 +499,14 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 8
     },
-    "llama_7b_ipex_sq":{
+    "bloom_560m_ipex_sq": {
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
+      "dataset_location": "",
+      "input_model": "bigscience/bloom-560m",
+      "batch_size": 1,
+      "main_script": "eval_lambada.py"
+    },
+    "llama2_7b_ipex_sq":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
       "dataset_location": "",
       "input_model": "",
@@ -638,41 +645,6 @@
       "input_model": "/tf_dataset2/models/huggingface/bert-base-uncased-mrpc",
       "main_script": "run_glue.py",
       "batch_size": 64
-    },
-    "bloom-560m_sq": {
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm/smooth_quant",
-      "dataset_location": "",
-      "input_model": "bigscience/bloom-560m",
-      "batch_size": 1,
-      "main_script": "eval_lambada.py"
-    },
-    "bloom-176b_sq": {
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm/smooth_quant",
-      "dataset_location": "",
-      "input_model": "bigscience/bloom",
-      "batch_size": 1,
-      "main_script": "eval_lambada.py"
-    },
-    "opt-125m_sq": {
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm/smooth_quant",
-      "dataset_location": "",
-      "input_model": "facebook/opt-125m",
-      "batch_size": 1,
-      "main_script": "eval_lambada.py"
-    },
-    "opt-6.7b_sq": {
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm/smooth_quant",
-      "dataset_location": "",
-      "input_model": "facebook/opt-6.7b",
-      "batch_size": 1,
-      "main_script": "eval_lambada.py"
-    },
-    "gpt-j-6B_sq": {
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm/smooth_quant",
-      "dataset_location": "",
-      "input_model": "EleutherAI/gpt-j-6B",
-      "batch_size": 1,
-      "main_script": "eval_lambada.py"
     },
     "wide_resnet101_2_fx": {
       "model_src_dir": "oob_models/gen-efficientnet-pytorch",
