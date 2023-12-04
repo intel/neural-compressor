@@ -886,6 +886,15 @@ class TorchSmoothQuant:
         )
         self._update_scales_for_auto(absorb_input_scales, weight_scales)
         forward_wrapper(self.model, input, self.device)  ##save quant_input
+
+        for mod_name in module_names:#lyt_add_1205 save fp32 values
+            mod = get_module(self.model, mod_name)
+            if mod_name in self.fp32_output_val:  
+                self.fp32_output_val[mod_name].append(torch.norm(mod.output))
+            else:
+                self.fp32_output_val[mod_name] = [torch.norm(mod.output)]
+        del mod
+
         loss_alphas = {}
         for name in module_names:
             module = get_module(self.model, name)
@@ -1000,6 +1009,7 @@ class TorchSmoothQuant:
         # multiply_factor is used to combine samples to calib_sample_num // 4 before summarizing the best alpha
         tune_cnt = 4
         multiply_factor = calib_sample_num // tune_cnt if calib_sample_num >= tune_cnt else calib_sample_num
+        self.fp32_output_val = {} #lyt_add_1205
 
         best_alphas = default_alpha
         if not self.dataloader:
@@ -1085,7 +1095,12 @@ class TorchSmoothQuant:
         best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, shared_criterion)
         for key in best_alphas.keys():
             logger.info(f"Final alpha {key}:{best_alphas[key]}")
-        logger.info(f"lyt_debug loss_alphas: {loss_alphas}")  # lyt_os_debug_1121
+        for key in self.absorb_to_layer: #lyt_add_1205
+            for op_name in self.absorb_to_layer[key]:
+                fp32_norm, loss_ = torch.sum(torch.stack(self.fp32_output_val[op_name])), loss_alphas[op_name][str(best_alphas[key])]
+                ratio = loss_ / fp32_norm
+                logger.info(f"lyt_debug final loss: {op_name}: {loss_}; \
+                    fp32_output norm: {fp32_norm} @alpha {best_alphas[key]}; ratio: {fp32_norm}")
         self._qdq_model_unwrapper_for_auto()
         logger.info("auto tuning done")
         return best_alphas
