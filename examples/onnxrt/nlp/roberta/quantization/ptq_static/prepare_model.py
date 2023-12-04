@@ -1,5 +1,5 @@
 import argparse
-import os
+import re
 import subprocess
 
 import torch
@@ -25,6 +25,21 @@ def parse_arguments():
                         help='Maximum length of the sentence pairs')
     return parser.parse_args()
 
+def comment_out_line(filepath, code):
+    modified_lines = []
+
+    with open(filepath, 'r') as file:
+        lines = file.readlines()
+        file.seek(0)
+        for line in lines:
+            if re.match(code, line.strip()):
+                import pdb;pdb.set_trace()
+                line = "#" + line
+            modified_lines.append(line)
+    
+    with open(filepath, 'w') as file:
+        file.writelines(modified_lines)
+
 def prepare_model(input_model, output_model, task_name):
     print("\nexport model...")
     subprocess.run(
@@ -41,6 +56,10 @@ def prepare_model(input_model, output_model, task_name):
         stdout=subprocess.PIPE,
         text=True,
     )
+
+    # remove transformers min version check
+    comment_out_line("my_transformers/examples/pytorch/text-classification/run_glue.py", 
+                     r"check_min_version\(.*\)")
 
     subprocess.run(
         [
