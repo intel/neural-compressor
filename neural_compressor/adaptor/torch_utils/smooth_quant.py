@@ -90,6 +90,7 @@ def model_forward(model, dataloader, iters, device):
         for idx, (input, label) in enumerate(dataloader):
             output = forward_wrapper(model, input, device)
             cnt += 1
+            logger.info(f"lyt_debug calib model_forward try: {cnt} done")
             if iters != -1 and cnt >= iters:
                 break
     except Exception as e:
@@ -97,6 +98,7 @@ def model_forward(model, dataloader, iters, device):
         for idx, input in enumerate(dataloader):
             output = forward_wrapper(model, input, device)
             cnt += 1
+            logger.info(f"lyt_debug calib model_forward except: {cnt} done")
             if iters != -1 and cnt >= iters:
                 break
 
@@ -263,6 +265,7 @@ class WrapperLayer(torch.nn.Module):
         self.weight_scale = None
         self.input_scale = None
         self.save_q_input = save_q_input
+        self.do_blockwise = False #lyt_add_1201
 
     def enable_quant(self):
         self.quant = True
@@ -289,12 +292,25 @@ class WrapperLayer(torch.nn.Module):
         output = layer_copy(x)
         return output
 
+    def q_dq_forward_blockwise(self, x, input_scale):
+        layer_copy = copy.deepcopy(self.orig_layer)
+        if input_scale is None:
+            x = quant_dequant_x(x, self.input_min, self.input_max)
+        else:
+            x = input_scale * x
+            x = quant_dequant_x(x, self.input_min * input_scale, self.input_max * input_scale)  ##FIXME
+        output = layer_copy(x)
+        return output
+
     def forward(self, x):
         if self.quant:
             # self.q_input = x * scale ##save the q_input
             if self.save_q_input:
                 self.q_input = x
-            output = self.q_dq_forward(x, self.input_scale, self.weight_scale)
+            if not self.do_blockwise:
+                output = self.q_dq_forward(x, self.input_scale, self.weight_scale)
+            else:
+                output = self.q_dq_forward_blockwise(x, self.input_scale)
 
         else:
             output = self.orig_layer(x)
@@ -351,6 +367,12 @@ class TorchSmoothQuant:
         self._save_scale = False
         self.weight_scale_dict = {}
 
+        self.block_inputs = {}
+        self.block_outputs = {}
+        self.block_min_inputs = {}
+        self.block_max_inputs = {}
+        self.block_maxabs_inputs = {}
+
     def _get_device(self):
         """Get the model device
         :return:Model device."""
@@ -394,29 +416,75 @@ class TorchSmoothQuant:
             hook_handle = modules[key].register_forward_hook(hook_func)
             self.hook_handles.append(hook_handle)
 
+    def _add_blockwise_minmax_observer(self, block_modules): #lyt_add_1128
+        """
+        :param block_modules: the modules which the observer will insert to
+        :return:
+        """
+        self.blockwise_hook_minmax_handles = []
+        for key in block_modules.keys():
+            hook_func = self._save_blockwise_minmax_hook(key)
+            hook_handle = block_modules[key].register_forward_hook(hook_func)
+            self.blockwise_hook_minmax_handles.append(hook_handle)
+
+
     def _remove_observer(self):
         """Remove the observer from the model
         :return:"""
         for hook_handle in self.hook_handles:
             hook_handle.remove()
 
-    def _calibrate(self, absorb_to_layer, calib_iter, percentile):
+    def _calibrate(self, absorb_to_layer, calib_iter, percentile, blockwise=False): #lyt_change_1129
         """
         :param absorb_to_layer: A dict,key is the absorb layer, val is a list of the to be smoothed layer
         :param calib_iter: Data size for calibration
         :return: A dict that saved the layer name and the channel-wise max value info
         """
         ##hook all the module
-        hook_modules = {}
-        for n, module in self.model.named_modules():
-            if isinstance(module, tuple(self.op_types)):
-                hook_modules[n] = module
+        if not blockwise:
+            hook_modules = {}
+            for n, module in self.model.named_modules():
+                if isinstance(module, tuple(self.op_types)):
+                    hook_modules[n] = module
 
-        self._add_min_max_observer(hook_modules, percentile)
+            self._add_min_max_observer(hook_modules, percentile)
 
-        self._dump_min_max(calib_iter=calib_iter)
-        self._remove_observer()
-        return self.input_maxes_abs
+            self._dump_min_max(calib_iter=calib_iter)
+            self._remove_observer()
+            return self.input_maxes_abs
+        else:
+            block_modules = {}
+            for key in self.block_names:
+                block_modules[key] = get_module(self.model, key)
+            self._add_blockwise_minmax_observer(block_modules)
+            self._dump_min_max(calib_iter=calib_iter)
+            self._remove_blockwise_hook(self.blockwise_hook_minmax_handles)
+
+
+
+    def _save_blockwise_minmax_hook(self, name, percentile=100): #lyt_add_1128
+        """A forward hook to save input max of a block
+        :param name: the block name
+        :return: A hook function."""
+
+        def save_blockwise_minmax_hook(module, inputs, outputs):
+            input = inputs[0]
+            input = input.reshape(-1, input.shape[-1])
+            max_tensor = torch.max(input, dim=0)[0]
+            min_tensor = torch.min(input, dim=0)[0]
+            k_index = int(input.shape[0] * percentile / 100)
+            res, _ = torch.kthvalue(torch.abs(input), k_index, dim=0)
+            ##res = torch.max(torch.abs(input),dim=0)[0]
+            if name not in self.block_min_inputs.keys():
+                self.block_min_inputs[name], self.block_max_inputs[name] = min_tensor, max_tensor
+                self.block_maxabs_inputs[name] = res
+            else:
+                self.block_min_inputs[name] = torch.min(self.block_min_inputs[name], min_tensor)
+                self.block_max_inputs[name] = torch.max(self.block_max_inputs[name], max_tensor)
+                self.block_maxabs_inputs[name] = torch.max(self.block_maxabs_inputs[name], max_tensor)
+
+        return save_blockwise_minmax_hook
+
 
     def _dump_min_max(self, calib_iter=100):
         """Dump min max per channel information, the min max value will be saved in input_maxes attribute
@@ -426,9 +494,11 @@ class TorchSmoothQuant:
         logger.info("Calibrating...")
         if self.q_func:
             self.q_func(self.model)
+            logger.info(f"lyt_debug dump_minmax_q_func: {self.q_func}")
         else:
             assert self.dataloader, "Please set dataloader for calibration."
             model_forward(self.model, self.dataloader, calib_iter, self.device)
+            logger.info(f"lyt_debug dump_minmax_dataloader: {self.dataloader}")
 
     def _reshape_in_channel_to_last(self, layer_name):
         """Move the input channel to the last dim
@@ -461,6 +531,15 @@ class TorchSmoothQuant:
             scale = scale.view(1, scale.shape[0])
 
         return scale
+    
+    def get_blocks(self): #lyt_add_1128
+        block_names = []
+        for n, m in self.model.named_modules():
+            if hasattr(type(m), '__name__') and "ModuleList" in type(m).__name__:
+                for nn, mm in m.named_children():
+                    block_name = n + '.' + nn
+                    block_names.append(block_name)
+        return block_names
 
     def _reshape_scale_for_input(self, layer, scale):
         """Reshape the scale for input feature in channel
@@ -764,44 +843,127 @@ class TorchSmoothQuant:
                 weight_scale = self._reshape_scale_for_weight(layer, weight_scale)
                 layer.update_scale(input_scale, weight_scale)  ##FIXME
 
+    def _add_blockwise_observer(self, block_modules): #lyt_add_1128
+        """
+        :param block_modules: the modules which the observer will insert to
+        :return:
+        """
+        self.blockwise_hook_handles = []
+        for key in block_modules.keys():
+            hook_func = self._save_blockwise_hook(key)
+            hook_handle = block_modules[key].register_forward_hook(hook_func)
+            self.blockwise_hook_handles.append(hook_handle)
+
+
+    def _save_blockwise_hook(self, name): #lyt_add_1128
+        """A forward hook to save inputs/outputs of a block
+        :param name: the block name
+        :return: A hook function."""
+
+        def save_blockwise_hook(module, inputs, outputs):
+            self.block_inputs[name] = inputs[0]
+            self.block_outputs[name] = outputs[0]
+
+        return save_blockwise_hook
+    
+    def _remove_blockwise_hook(self, handles):
+        for hook_handle in handles:
+            hook_handle.remove()
+
     def _get_one_batch_auto_loss(self, input, alpha_space, orig_best_alpha, input_maxes):
         self._change_qdq_for_auto(enable=False)
+        module_names = self._get_sq_layer_names() #lyt_moved_1139
 
+        if self.do_blockwise: #lyt_add_1128
+            block_modules = {}
+            for key in self.block_names:
+                block_modules[key] = get_module(self.model, key)
+            self._add_blockwise_observer(block_modules)
+            
         forward_wrapper(self.model, input, self.device)  ##disable quant and get fp32 output
-        module_names = self._get_sq_layer_names()
+
+
         fp32_output = {}
-        for name in module_names:
-            module = get_module(self.model, name)
-            fp32_output[name] = module.output
-            module.output = None
+        if not self.do_blockwise: #lyt_changed_1130
+            for name in module_names:
+                module = get_module(self.model, name)
+                fp32_output[name] = module.output
+                module.output = None
+        else:
+            for block_name in self.block_names:
+                fp32_output[block_name] = self.block_outputs[block_name]
         self._change_qdq_for_auto(enable=True)
         absorb_input_scales, weight_scales = self._cal_scales(
             self.absorb_to_layer, input_maxes, orig_best_alpha, tuning=True
         )
         self._update_scales_for_auto(absorb_input_scales, weight_scales)
         forward_wrapper(self.model, input, self.device)  ##save quant_input
+        for mod_name in module_names:#lyt_add_1205 save fp32 values
+            mod = get_module(self.model, mod_name)
+            if mod_name in self.fp32_output_val:  
+                self.fp32_output_val[mod_name].append(torch.norm(mod.output))
+            else:
+                self.fp32_output_val[mod_name] = [torch.norm(mod.output)]
+        del mod
+
         loss_alphas = {}
-        for name in module_names:
-            module = get_module(self.model, name)
-            loss = self._get_auto_loss(fp32_output[name], module.output)
-            cur_alpha = orig_best_alpha
-            if isinstance(orig_best_alpha, dict):
-                cur_alpha = orig_best_alpha[name]
-            key_name = str(cur_alpha)
-            loss_alphas[name] = {key_name: loss}
+        if not self.do_blockwise: #lyt_changed_1130
+            for name in module_names:
+                module = get_module(self.model, name)
+                loss = self._get_auto_loss(fp32_output[name], module.output)
+                cur_alpha = orig_best_alpha
+                if isinstance(orig_best_alpha, dict):
+                    cur_alpha = orig_best_alpha[name]
+                key_name = str(cur_alpha)
+                loss_alphas[name] = {key_name: loss}
+        else:
+            for block_name in self.block_names:
+                block = get_module(self.model, block_name)
+                loss = self._get_auto_loss(fp32_output[block_name], self.block_outputs[block_name])
+                cur_alpha = orig_best_alpha
+                if isinstance(orig_best_alpha, dict):
+                    cur_alpha = orig_best_alpha[self.block_to_module[block_name][0]]
+                key_name = str(cur_alpha)
+                loss_alphas[block_name] = {key_name: loss}
         # for name in module_names:
         #     loss_alphas[name]={}
+        # print(loss_alphas)
         for alpha in alpha_space:
             absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes, alpha, tuning=True)
             self._update_scales_for_auto(absorb_input_scales, weight_scales)
-            for name in module_names:
-                losses = loss_alphas[name]
-                if str(alpha) in losses.keys():
-                    continue
-                module = get_module(self.model, name)
-                output = module.q_dq_forward(module.q_input, module.input_scale, module.weight_scale)
-                loss = self._get_auto_loss(fp32_output[name], output)
-                loss_alphas[name][str(alpha)] = loss
+            if not self.do_blockwise:
+                for name in module_names:
+                    losses = loss_alphas[name]
+                    if str(alpha) in losses.keys():
+                        continue
+                    module = get_module(self.model, name)
+                    output = module.q_dq_forward(module.q_input, module.input_scale, module.weight_scale)
+                    loss = self._get_auto_loss(fp32_output[name], output)
+                    loss_alphas[name][str(alpha)] = loss
+            else:
+                for block_name in self.block_names:
+                    losses = loss_alphas[block_name]
+                    if str(alpha) in losses.keys():
+                        continue
+                    block = get_module(self.model, block_name)
+                    block_copy = copy.deepcopy(block)
+                    for name in self.block_to_module[block_name]:
+                        if name == block_name and len(self.block_to_module[block_name]) == 1:
+                            module, module_copy = block, block_copy
+                        else:
+                            module = get_module(block, name)
+                            module_copy = copy.deepcopy(module)
+                        if module.weight_scale is not None:
+                            module_copy.orig_layer.weight *= module.weight_scale
+                        q_dq_weight = quant_dequant_w(module_copy.orig_layer)
+                        module_copy.orig_layer.weight.data.copy_(q_dq_weight)
+                        module_copy.do_blockwise = True
+                        if not (name == block_name and len(self.block_to_module[block_name]) == 1):
+                            set_module(block_copy, name, module_copy)
+                        wait = 1
+                    output = block_copy(self.block_inputs[block_name])[0]
+                    loss = self._get_auto_loss(fp32_output[block_name], output)
+                    loss_alphas[block_name][str(alpha)] = loss
         return loss_alphas
 
     def _get_best_alpha(self, absorb_to_layer, loss_alphas, shared_criterion):
@@ -887,6 +1049,7 @@ class TorchSmoothQuant:
         # multiply_factor is used to combine samples to calib_sample_num // 4 before summarizing the best alpha
         tune_cnt = 4
         multiply_factor = calib_sample_num // tune_cnt if calib_sample_num >= tune_cnt else calib_sample_num
+        self.fp32_output_val = {} #lyt_add_1205
 
         best_alphas = default_alpha
         if not self.dataloader:
@@ -905,13 +1068,27 @@ class TorchSmoothQuant:
                             best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
                 loss_tmp = self._get_one_batch_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
-                if loss_alphas == {}:
-                    loss_alphas = loss_tmp
+                if self.do_blockwise:
+                    if loss_alphas == {}:
+                        for block_name in self.block_names:
+                            for key in self.block_to_module[block_name]:
+                                loss_alphas[key] = loss_tmp[block_name]
+                        print(f"lyt_debug loss_alpha created: {len(loss_alphas)}")
+                    else:
+                        for block_name in self.block_names:
+                            for key in self.block_to_module[block_name]:
+                                cur_loss = loss_alphas[key]
+                                for alpha_key in cur_loss.keys():
+                                    cur_loss[alpha_key] += loss_tmp[block_name][alpha_key]
+                        print(f"lyt_debug loss_alpha updated: {len(loss_alphas)}")
                 else:
-                    for key in loss_alphas.keys():
-                        cur_loss = loss_alphas[key]
-                        for alpha_key in cur_loss.keys():
-                            cur_loss[alpha_key] += loss_tmp[key][alpha_key]
+                    if loss_alphas == {}:
+                        loss_alphas = loss_tmp
+                    else:
+                        for key in loss_alphas.keys():
+                            cur_loss = loss_alphas[key]
+                            for alpha_key in cur_loss.keys():
+                                cur_loss[alpha_key] += loss_tmp[key][alpha_key]
                 total_cnt += self.dataloader.batch_size
                 tmp_cnt += self.dataloader.batch_size
                 if tmp_cnt // multiply_factor >= 1:
@@ -966,6 +1143,18 @@ class TorchSmoothQuant:
         best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, shared_criterion)
         for key in best_alphas.keys():
             logger.info(f"Final alpha {key}:{best_alphas[key]}")
+        max_op, max_ratio, max_key = '', 0, ''
+        for key in self.absorb_to_layer:
+            for op_name in self.absorb_to_layer[key]:
+                fp32_norm, loss_ = torch.sum(torch.stack(self.fp32_output_val[op_name])), loss_alphas[op_name][str(best_alphas[key])]
+                ratio = loss_ / fp32_norm
+                max_op = op_name if ratio > max_ratio else max_op
+                max_key = key if ratio > max_ratio else max_key
+                max_ratio = max(ratio, max_ratio)
+                logger.info(f"lyt_debug final loss: {op_name}: {loss_}; \
+                    fp32_output norm: {fp32_norm} @alpha {best_alphas[key]}; ratio: {ratio}")
+        logger.info(f"lyt_debug max loss: {max_op}: {loss_alphas[max_op][str(best_alphas[max_key])]}; \
+            fp32_output norm: {torch.sum(torch.stack(self.fp32_output_val[max_op]))} @alpha {best_alphas[max_key]}; ratio: {max_ratio}")
         self._qdq_model_unwrapper_for_auto()
         logger.info("auto tuning done")
         return best_alphas
@@ -998,6 +1187,10 @@ class TorchSmoothQuant:
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
         benefit to quantization.
         """
+        self.do_blockwise = True #lyt_add_1128
+        self.block_names, self.block_inputnode = self.get_blocks(), {}
+        logger.info(f"lyt_debug INC blockwise: {self.do_blockwise}， {len(self.block_names) if self.do_blockwise else 0}")
+        # calib_iter = 4
         if not isinstance(self.model, torch.nn.Module):
             logger.warning("smooth quant is ignored since the model is not a torch module")
             return self.model
@@ -1055,7 +1248,26 @@ class TorchSmoothQuant:
                     )
                     return self.model
 
+                if self.do_blockwise: #lyt_add_1128
+                    module_names = self._get_sq_layer_names()
+                    block_names, self.block_to_module = self.block_names, {}
+                    for block in block_names:
+                        self.block_to_module[block] = []
+                    for module in module_names:
+                        checked = False
+                        for block in block_names:
+                            if block+'.' in module:
+                                self.block_to_module[block].append(module)
+                                checked = True
+                        if not checked:
+                            self.block_to_module[module] = [module]
+                            self.block_inputnode[module] = module
+                    self.block_names = list(self.block_to_module.keys())
+                    logger.info(f"lyt_debug B4-calib block num: {len(self.block_names)}, {len(self.block_to_module)}")
+
+
                 input_maxes_abs = self._calibrate(self.absorb_to_layer, calib_iter, percentile)
+                # block_maxabs = self._calibrate(self.absorb_to_layer, calib_iter, percentile, blockwise=self.do_blockwise)
 
                 # Check if input_maxes match self.absorb_to_layer
                 # (due to self._get_all_layer_names use layer tree instead of forward_path)
@@ -1180,8 +1392,9 @@ class TorchSmoothQuant:
         """
         tg = GraphTrace()
         self._get_example_input()
-        absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(
-            self.traced_model, self.example_inputs, op_types, skip_unsupported_layers=skip_unsupported_layers
+        absorb_to_layer, no_absorb_layers, self.block_inputnode = tg.get_absorb_to_layer(
+            self.traced_model, self.example_inputs, op_types, 
+            skip_unsupported_layers=skip_unsupported_layers, block_names=self.block_names, #lyt_add_1201
         )
         if not skip_unsupported_layers:
             return absorb_to_layer
@@ -1289,10 +1502,15 @@ class GraphTrace:
                     break
         return nodes
 
-    def get_prev_absorb_layer(self, nodes):
+    def get_prev_absorb_layer(self, nodes, block_names={}):
         prev_absorb_layer = []
+        if block_names:
+            block_inputnode, do_blockwise = {}, True
+            block_names_cp = copy.deepcopy(block_names)
+            block_name = block_names_cp.pop(0)
         for node in nodes:
             parent = get_parent(node)
+            wait = 1
             while 1:
                 if parent.kind() in self.skip_ops_to_find_absorb:
                     parent = get_parent(parent)
@@ -1307,15 +1525,28 @@ class GraphTrace:
 
                     if parent_out_kinds == parent_out_kinds.intersection(self.could_absorb_layers):
                         prev_absorb_layer.append(parent)
+                        if do_blockwise:
+                            if block_name in parent.scopeName():
+                                block_inputnode[block_name] = '.'.join(parent.scopeName().split("/")[-1].split(".")[1:])
+                                block_name = block_names_cp.pop(0) if block_names_cp else block_name
+                                print(f"lyt_debug block_inputop added_T1: {len(block_inputnode)}, {block_inputnode}")
                     elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
                         res = self.skip_op_absorb_helper(parent)
                         prev_absorb_layer.append(parent) if res else prev_absorb_layer.append(None)
+                        if do_blockwise:
+                            if block_name in parent.scopeName():
+                                block_inputnode[block_name] = '.'.join(parent.scopeName().split("/")[-1].split(".")[1:])
+                                block_name = block_names_cp.pop(0) if block_names_cp else block_name
+                                print(f"lyt_debug block_inputop added_T2: {len(block_inputnode)}, {block_inputnode}")
                     else:  # When parent to multiple ops, sq transformation could be wrong.
                         prev_absorb_layer.append(None)
                 else:
                     prev_absorb_layer.append(None)
                 break
-        return prev_absorb_layer
+        if do_blockwise:
+            return prev_absorb_layer, block_inputnode #lyt_add_1201
+        else:
+            return prev_absorb_layer, []
 
     def skip_op_absorb_helper(self, parent_node):
         for val_user in list(parent_node.outputs())[0].uses():
@@ -1357,7 +1588,7 @@ class GraphTrace:
                 return False
         return True
 
-    def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True):
+    def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True, block_names=[]): #lyt_add_1201
         traced_model = self.trace(model, example_input)
         if traced_model is None:
             return None, None
@@ -1365,7 +1596,7 @@ class GraphTrace:
         aten_op_types = self.mapping_torch_module_to_aten(op_types)
         nodes_types = self.get_nodes(traced_model, aten_op_types)
         nodes = [node_type[0] for node_type in nodes_types]
-        nodes_prev_absorb = self.get_prev_absorb_layer(nodes)
+        nodes_prev_absorb, block_inputnode = self.get_prev_absorb_layer(nodes, block_names) #lyt_add_1201
         absorb_to_layer = {}
         no_absorb_layers = []
         for index, absorb in enumerate(nodes_prev_absorb):
@@ -1383,7 +1614,7 @@ class GraphTrace:
                 absorb_to_layer[absorb_name] = [layer_name]
         if skip_unsupported_layers:
             absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer, no_absorb_layers)
-        return absorb_to_layer, no_absorb_layers
+        return absorb_to_layer, no_absorb_layers, block_inputnode
 
     def remove_unsupported_layers(self, model, absorb_to_layer, no_absorb_layers):
         res = {}
