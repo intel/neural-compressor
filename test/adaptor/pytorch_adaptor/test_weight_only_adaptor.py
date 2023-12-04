@@ -655,7 +655,8 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
+        # hf_format uses fp16 for scale, so output atol is higher.
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=2e-04))
 
         # # case 2: list or tuple
         model_2 = copy.deepcopy(self.gptj)
@@ -667,7 +668,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model.save("saved")
         out1 = q_model.model(input)
-        compressed_model = q_model.export_compressed_model()
+        compressed_model = q_model.export_compressed_model(use_hf_format=False)
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
@@ -685,7 +686,8 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
+        # hf_format uses fp16 for scale, so output atol is higher.
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=2e-04))
 
         print("GPTQ with unfixed length Done")
 
