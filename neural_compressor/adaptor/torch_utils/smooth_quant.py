@@ -369,9 +369,6 @@ class TorchSmoothQuant:
 
         self.block_inputs = {}
         self.block_outputs = {}
-        self.block_min_inputs = {}
-        self.block_max_inputs = {}
-        self.block_maxabs_inputs = {}
 
     def _get_device(self):
         """Get the model device
@@ -799,7 +796,7 @@ class TorchSmoothQuant:
 
     def _add_blockwise_observer(self, block_modules):  # lyt_add_1128
         """
-        :param block_modules: the modules which the observer will insert to
+        :param block_modules: the block modules which the observer will insert to
         :return:
         """
         self.blockwise_hook_handles = []
@@ -907,7 +904,6 @@ class TorchSmoothQuant:
                         module_copy.do_blockwise = True
                         if not (name == block_name and len(self.block_to_module[block_name]) == 1):
                             set_module(block_copy, name, module_copy)
-                        wait = 1
                     output = block_copy(self.block_inputs[block_name])[0]
                     loss = self._get_auto_loss(fp32_output[block_name], output)
                     loss_alphas[block_name][str(alpha)] = loss
@@ -1142,7 +1138,7 @@ class TorchSmoothQuant:
         benefit to quantization.
         """
         self.do_blockwise = True  # lyt_add_1128
-        self.block_names, self.block_inputnode = self.get_blocks(), {}
+        self.block_names = self.get_blocks()
         logger.info(
             f"lyt_debug INC blockwise: {self.do_blockwise}， {len(self.block_names) if self.do_blockwise else 0}"
         )
@@ -1217,12 +1213,10 @@ class TorchSmoothQuant:
                                 checked = True
                         if not checked:
                             self.block_to_module[module] = [module]
-                            # self.block_inputnode[module] = module
                     self.block_names = list(self.block_to_module.keys())
                     logger.info(f"lyt_debug B4-calib block num: {len(self.block_names)}, {len(self.block_to_module)}")
 
                 input_maxes_abs = self._calibrate(self.absorb_to_layer, calib_iter, percentile)
-                # block_maxabs = self._calibrate(self.absorb_to_layer, calib_iter, percentile, blockwise=self.do_blockwise)
 
                 # Check if input_maxes match self.absorb_to_layer
                 # (due to self._get_all_layer_names use layer tree instead of forward_path)
@@ -1527,7 +1521,7 @@ class GraphTrace:
                 return False
         return True
 
-    def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True):  # lyt_add_1201
+    def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True):
         traced_model = self.trace(model, example_input)
         if traced_model is None:
             return None, None
@@ -1553,7 +1547,7 @@ class GraphTrace:
                 absorb_to_layer[absorb_name] = [layer_name]
         if skip_unsupported_layers:
             absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer, no_absorb_layers)
-        return absorb_to_layer, no_absorb_layers, block_inputnode
+        return absorb_to_layer, no_absorb_layers
 
     def remove_unsupported_layers(self, model, absorb_to_layer, no_absorb_layers):
         res = {}
