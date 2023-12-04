@@ -12,7 +12,7 @@ from torch.autograd import Function
 
 from datasets import load_from_disk
 from torch.utils.data import DataLoader
-
+from sign_sgd import SGD
 import os
 from transformers import set_seed
 from functools import partial
@@ -23,6 +23,8 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 os.environ["HF_HOME"] = "/models/huggingface"
 
+import logging
+logger = logging.getLogger()
 
 # os.environ['TRANSFORMERS_OFFLINE'] = '0'
 
@@ -255,9 +257,9 @@ def q_dq_weight(model: torch.nn.Module, num_bits=4, group_size=128, schema='asym
                     quant_weight(m.weight, num_bits=num_bits, group_size=group_size, schema=schema))
 
 
-def tokenize_function(examples):
-    example = tokenizer(examples["text"], truncation=True, max_length=seqlen)
-    return example
+# def tokenize_function(examples):
+#     example = tokenizer(examples["text"], truncation=True, max_length=seqlen)
+#     return example
 
 
 @torch.no_grad()
@@ -410,21 +412,6 @@ def collect_grad_and_zero(block):
     return grads
 
 
-def get_lr(step, total_steps, lr=0.01, warmup_step=0, lr_type="linear"):
-    if warmup_step > 0 and step < warmup_step:
-        return (lr - 0.01 * lr) * float(step) / warmup_step + 0.01 * lr
-
-    if lr_type == "const":
-        current_lr = lr
-    elif lr_type == "linear":
-        current_lr = lr - float(step - warmup_step) / (total_steps - warmup_step) * lr
-    elif lr_type == "cos":
-        import math
-        current_lr = math.cos(float(step - warmup_step) / (total_steps - warmup_step) * math.pi / 2) * lr
-    else:
-        raise NotImplemented
-    return current_lr
-
 
 
 def sampling_inputs(input_ids, input_others, indices, seqlen):
@@ -521,17 +508,17 @@ def collect_minmax_grad(block):
             max_grads[n] = copy.deepcopy(torch.clamp(m.max_scale.data, -1, 0))
     return min_grads, max_grads
 
-@torch.no_grad()
-def get_block_outputs(block, input_ids, input_others, bs, device, cache_device, batch_dim,args):
-    output = []
-    for i in range(0, args.n_samples, bs):
-        indices = torch.arange(i, i + bs).to(torch.long)
-        tmp_input_ids, tmp_input_others = sampling_inputs(input_ids, input_others, indices, args.seqlen)
-        tmp_output = block_forward(block, tmp_input_ids, tmp_input_others, args.amp, device).to(cache_device)
-        output.append(tmp_output)
-    output = torch.cat(output, dim=batch_dim)
-    torch.cuda.empty_cache()
-    return output
+# @torch.no_grad()
+# def get_block_outputs(block, input_ids, input_others, bs, device, cache_device, batch_dim,args):
+#     output = []
+#     for i in range(0, args.n_samples, bs):
+#         indices = torch.arange(i, i + bs).to(torch.long)
+#         tmp_input_ids, tmp_input_others = sampling_inputs(input_ids, input_others, indices, args.seqlen)
+#         tmp_output = block_forward(block, tmp_input_ids, tmp_input_others, args.amp, device).to(cache_device)
+#         output.append(tmp_output)
+#     output = torch.cat(output, dim=batch_dim)
+#     torch.cuda.empty_cache()
+#     return output
 
 
 @torch.no_grad()
@@ -540,120 +527,6 @@ def get_batch_dim(input_others):
     return dim
 
 
-def quant_block(block, input_ids, input_others, num_bits, group_size, schema, q_input=None, args=None,
-                device=torch.device("cpu")):
-    best_loss = torch.finfo(torch.float).max
-    mse_loss = torch.nn.MSELoss()
-    grad = None
-    grad_m = None
-    min_scale_grad = None
-    max_scale_grad = None
-    output = []
-    batch_dim = get_batch_dim(input_others)
-    if not args.low_gpu_mem_usage and input_ids.device != device:
-            # input_ids, input_others = move_to_device(input_ids, input_others, device)
-            input_ids = move_input_to_device(input_ids, device)  ##move input data to GPU
-            input_others = move_input_to_device(input_others, device)
-    cache_device = device
-    if args.low_gpu_mem_usage:
-        cache_device = "cpu"
-    output = get_block_outputs(block, input_ids, input_others, args.train_bs, device, cache_device, batch_dim,args)
-    if q_input is not None:
-        input_ids = q_input
-        if not args.low_gpu_mem_usage and input_ids.device != device:
-            input_ids = input_ids.to(device)
-
-    wrapper_block(block, num_bits, group_size, schema, args.enable_minmax_tuning)
-
-    round_params = []
-    minmax_params = []
-    for n, m in block.named_modules():
-        if isinstance(m, WrapperLinear):
-            round_params.append(m.value)
-            minmax_params.append(m.min_scale)
-            minmax_params.append(m.max_scale)
-    from sign_sgd import SGD
-    # optimizer = SGD(params, lr=0.0025)
-    if args.enable_minmax_tuning:
-        optimizer = SGD([{'params': round_params}, {'params': minmax_params, 'lr': args.min_max_lr}],
-                        lr=args.lr, weight_decay=0)
-    else:
-        optimizer = SGD(round_params,
-                        lr=args.lr, weight_decay=0)
-
-    lr_schedule = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0, total_iters=args.iters,
-                                                    verbose=False)
-
-    search_iters = args.iters
-    pick_samples = args.train_bs
-    if len(input_ids.shape) == 3:
-        n_samples = input_ids.shape[0]
-    else:
-        n_samples = input_ids.shape[0] // seqlen
-    if args.sampler != "rand":
-        indices = torch.randperm(n_samples)[:pick_samples]
-    last_best_iter = 0
-    for i in range(search_iters):
-        if args.sampler == "rand":
-            indices = torch.randperm(n_samples)[:pick_samples]
-
-        total_loss = 0
-        for _ in range(args.gradient_accumulate_steps):
-            current_input_ids, current_input_others = sampling_inputs(input_ids, input_others, indices,
-                                                                      seqlen=args.seqlen)
-            if len(input_ids.shape) == 3:
-                if batch_dim == 0:
-                    current_output = output[indices, :, :]
-                elif batch_dim == 1:
-                    current_output = output[:, indices, :]
-                else:
-                    current_output = output[:, :, indices]
-            else:
-                current_output = output.view(n_samples, seqlen, -1)
-                current_output = current_output[indices, :, :]
-                current_output = current_output.reshape(-1, current_output.shape[-1])
-            current_output = move_input_to_device(current_output, device)
-
-            output_q = block_forward(block, current_input_ids, current_input_others, args.amp, device)
-            if args.amp and device != torch.device("cpu"):
-                with autocast(device_type="cuda"):
-                    loss = mse_loss(output_q, current_output) * 1000
-            elif args.amp:
-                with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
-                    loss = mse_loss(output_q, current_output) * 1000
-            else:
-                loss = mse_loss(output_q, current_output)
-            total_loss += loss.item()
-            loss.backward()
-
-        if total_loss < best_loss:
-            best_loss = total_loss
-            if not args.not_use_mse:
-                # print(f"get better result at iter {i}, the loss is {total_loss}", flush=True)
-                best_grad = collect_round_grad(block)
-                best_min_scale_grad, best_max_scale_grad = collect_minmax_grad(block)
-                last_best_iter = i
-        if args.not_use_mse:
-            best_grad = grad
-            best_min_scale_grad = min_scale_grad
-            best_max_scale_grad = max_scale_grad
-
-        if not args.not_use_mse:
-            if args.dynamic_max_gap > 0 and i - last_best_iter >= args.dynamic_max_gap:
-                break
-        optimizer.step()##TODO  scale grad for other optimizer
-        optimizer.zero_grad()
-        lr_schedule.step()
-    unwrapper_block(block, num_bits, group_size, schema, best_grad, best_min_scale_grad, best_max_scale_grad)
-    if args.use_quant_input:
-        q_outputs = get_block_outputs(
-            block, input_ids, input_others, args.train_bs, device,cache_device, batch_dim,args
-        )
-
-        return q_outputs, output
-
-    else:
-        return None, output
 
 
 
@@ -714,236 +587,563 @@ def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, g
 
     torch.cuda.empty_cache()
 
+def get_block_names(model):
+    """
+    Get the block names for transformers-like networks, this may have issues
+    Args:
+        model: The model
 
-if __name__ == '__main__':
+    Returns:
+        all the block names
 
-    parser.add_argument(
-        "--model_name", default="/models/opt-125m"
-    )
-
-    parser.add_argument("--num_bits", default=4, type=int,
-                        help="number of  bits")
-
-    parser.add_argument("--group_size", default=128, type=int,
-                        help="group size")
-
-    parser.add_argument("--train_bs", default=8, type=int,
-                        help="train batch size")
-
-    parser.add_argument("--eval_bs", default=32, type=int,
-                        help="eval batch size")
-
-    parser.add_argument("--device", default=0, type=str,
-                        help="device gpu int number, or 'cpu' ")
-
-    parser.add_argument("--sym", action='store_true',
-                        help=" sym quantization")
-
-    parser.add_argument("--iters", default=400, type=int,
-                        help=" iters")
-
-    parser.add_argument("--dynamic_max_gap", default=0, type=int,
-                        help="stop tuning if no best solution found within max_gap steps")
-
-    parser.add_argument("--not_use_mse", action='store_true',
-                        help=" whether use mse to get best grad")
-
-    parser.add_argument("--use_quant_input", action='store_true',
-                        help="whether to use the output of quantized block to tune the next block")
-
-    parser.add_argument("--sampler", default="rand", type=str,
-                        help="sampling type, rand or fix")
-
-    parser.add_argument("--clip_val", default=0.5, type=float,
-                        help="clip value")
-
-    parser.add_argument("--lr", default=0.05, type=float,
-                        help="step size")
-
-    parser.add_argument("--min_max_lr", default=0.05, type=float,
-                        help="step size")
-
-    parser.add_argument("--lr_decay_type", default="linear", type=str,
-                        help="lr decay type")
-
-    parser.add_argument("--momentum", default=-1, type=float,
-                        help="momentum")
-
-    parser.add_argument("--seed", default=42, type=int,
-                        help="seed")
-
-    parser.add_argument("--eval_fp16_baseline", action='store_true',
-                        help="whether to eval FP16 baseline")
-
-    parser.add_argument("--amp", action='store_true',
-                        help="amp")
-
-    parser.add_argument("--not_with_attention", action='store_true',
-                        help="tuning with attention_mask input")
-
-    parser.add_argument("--seqlen", default=512, type=int,
-                        help="sequence length")
-
-    parser.add_argument("--gradient_accumulate_steps", default=1, type=int, help="gradient accumulate steps")
-
-    parser.add_argument("--n_blocks", default=1, type=int, help="num of blocks to tune together")
-
-    parser.add_argument("--n_samples", default=512, type=int,
-                        help="number of samples")
-
-    parser.add_argument("--lr_wr", default=0.0, type=float,
-                        help="lr warmup ratio")
-
-    parser.add_argument("--low_gpu_mem_usage", action='store_true',
-                        help="low_gpu_mem_usage")
-
-    parser.add_argument("--enable_minmax_tuning", action='store_true',
-                        help="enable_tuning_minmax")
-
-    # parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
-    #                     help="lm-eval tasks")
-
-    # parser.add_argument("--tasks", default=["lambada_openai"],
-    #                     help="lm-eval tasks")
-    #
-    # parser.add_argument("--tasks",
-    #                     default=['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai', 'hellaswag', 'winogrande', 'piqa',
-    #                              'coqa', 'truthfulqa_mc', 'openbookqa', 'boolq', 'rte', 'arc_easy', 'arc_challenge',
-    #                              'hendrycksTest-*', 'wikitext', 'drop', 'gsm8k'],##all
-    #                     help="lm-eval tasks")  # "truthfulqa_gen"
-
-    # parser.add_argument("--tasks",
-    #                     default=['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai', 'hellaswag', 'winogrande', 'piqa',
-    #                              'coqa', 'truthfulqa_mc', 'openbookqa', 'boolq', 'rte', 'arc_easy', 'arc_challenge',
-    #                              'hendrycksTest-*', 'wikitext', 'drop', 'gsm8k'],##all
-    # parser.add_argument("--tasks",
-    #                     default=['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai', 'hellaswag', 'winogrande', 'piqa',
-    #                              "hendrycksTest-*", "wikitext", "truthfulqa_mc", "openbookqa", "boolq", "rte",
-    #                              "arc_easy", "arc_challenge"],
-    #                     help="lm-eval tasks")  # "truthfulqa_gen"
-
-    parser.add_argument("--tasks", default=["lambada_openai"],
-                        help="lm-eval tasks")
-
-    parser.add_argument("--output_dir", default="./tmp_optround", type=str,
-                        help="Where to store the final model.")
-
-    args = parser.parse_args()
-    set_seed(args.seed)
-
-    model_name = args.model_name
-    if model_name[-1] == "/":
-        model_name = model_name[:-1]
-    print(model_name, flush=True)
-
-    tasks = args.tasks
-
-    if args.device == "cpu":
-        device_str = "cpu"
-    else:
-        device_str = f"cuda:{int(args.device)}"
-    cuda_device = torch.device(device_str)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name, low_cpu_mem_usage=True,trust_remote_code=True,  ##low_cpu_mem_usage has impact to acc, changed the random seed?
-    )
-    model = model.eval()
-    # align wigh GPTQ to eval ppl
-    if "opt" in model_name:
-        seqlen = model.config.max_position_embeddings
-        model.seqlen = model.config.max_position_embeddings
-    else:
-        seqlen = 2048
-        model.seqlen = seqlen
-    seqlen = args.seqlen
-
-    if "llama" in model_name:
-        from transformers import LlamaTokenizer
-
-        tokenizer = LlamaTokenizer.from_pretrained(model_name)
-        if tokenizer.pad_token is None:
-            tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-    else:
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-    excel_name = f"{model_name}_{args.num_bits}_{args.group_size}"
-    if args.eval_fp16_baseline:
-        if not args.low_gpu_mem_usage:
-            model = model.to(cuda_device)
-        excel_name += "_fp16.xlsx"
-        eval_model(output_dir=model_name, model=model, tokenizer=tokenizer, tasks=args.tasks, \
-                   eval_bs=args.eval_bs, use_accelerate=args.low_gpu_mem_usage, device=cuda_device,
-                   eval_orig_float=True, excel_file=excel_name)
-        exit()
-
-    if args.iters <= 0:
-        print("eval rtn", flush=True)
-        excel_name += "_optround.xlsx"
-        q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)
-        model.half()
-        if not args.low_gpu_mem_usage:
-            model = model.to(cuda_device)
-        eval_model(output_dir=args.output_dir, model=model, tokenizer=tokenizer, tasks=args.tasks, \
-                   eval_bs=args.eval_bs, use_accelerate=args.low_gpu_mem_usage, device=cuda_device,
-                   excel_file=excel_name)
-        exit()
-
-    dataset_name = "NeelNanda/pile-10k"
-    if os.path.exists(dataset_name.split('/')[-1]):
-        calib_dataset = load_from_disk(dataset_name.split('/')[-1])
-    else:
-        calib_dataset = load_dataset(dataset_name, split="train")
-        calib_dataset.save_to_disk(dataset_name.split('/')[-1])
-
-    calib_dataset = calib_dataset.shuffle(seed=args.seed)
-    calib_dataset = calib_dataset.map(tokenize_function, batched=True)
-    calib_dataset.set_format(type='torch', columns=['input_ids'])
-    calib_dataloader = DataLoader(
-        calib_dataset,
-        batch_size=args.eval_bs,
-        shuffle=False,
-        collate_fn=collate_batch
-    )
+    """
+    block_names = []
     target_m = None
     for n, m in model.named_modules():
-        if hasattr(type(m), "__name__") and 'ModuleList' in type(m).__name__:
+        if hasattr(type(m), "__name__") and "ModuleList" in type(m).__name__:
             target_m = (n, m)
-
-    block_names = []
     for n, m in target_m[1].named_children():
         block_names.append(target_m[0] + "." + n)
-    seqlen = args.seqlen
-    if args.amp and args.device != "cpu":
-        model = model.half()
-    elif args.amp and args.device == "cpu":
-        model = model.to(torch.bfloat16)
-    if not args.low_gpu_mem_usage:
-        model = model.to(cuda_device)
+    return block_names
 
-    import time
+class OPTRoundQuantizer(object):
+    def __init__(
+            self,
+            model,
+            tokenizer=None,
+            bits: int = 4,
+            group_size: int = 128,
+            scheme: str = "asym",
+            weight_config: dict = {},
+            enable_full_range: bool = False,  ##for symmetric, TODO support later
+            bs: int = 8,
+            amp: bool = True,
+            device="cuda:0",
+            optimizer=None,
+            lr_scheduler=None,
+            dataloader=None,  ## to support later
+            default_dataset_name: str = "NeelNanda/pile-10k",
+            dataset_split: str = "train",
+            use_quant_input: bool = True,
+            enable_minmax_tuning: bool = True,
+            lr: float = 0.005,
+            minmax_lr: float = 0.005,
+            low_gpu_mem_usage: bool = True,
+            iters: int = 200,
+            seqlen: int = 2048,
+            n_samples: int = 512,
+            sampler: str = "rand",
+            seed: int = 42,
+            n_blocks: int = 1,
+            gradient_accumulate_steps: int = 1,
+            not_use_mse: bool = False,
+            dynamic_max_gap: int = -1,
+            data_type: str = "int",  ##only support data_type
+            use_sigmoid=None,
+            **kwargs
+    ):
+        """
+        Args:
+            model:
+            data_type:
+            bits:
+            group_size:
+            scheme:
+            weight_config:
+             weight_config={
+                   'layer1':##layer_name
+                   {
+                       'data_type': 'int',
+                       'bits': 4,
+                       'group_size': 32,
+                       'scheme': "sym", ## or asym
+                   }
+                   ...
+               }
 
-    start_time = time.time()
-    save_input_actor = SaveInputs(model, calib_dataloader, seqlen, block_names[0])
-    inputs = save_input_actor.get_inputs(n_samples=args.n_samples)
-    del save_input_actor
-    if args.amp and args.device != "cpu":
-        model = model.to("cpu").to(torch.float)
+            optimizer:
+            lr_scheduler:
+            enable_full_range:
+            **kwargs:
 
-    model = model.to("cpu")
-    torch.cuda.empty_cache()
-    q_dq_weight_round(model, inputs, block_names, num_bits=args.num_bits, group_size=args.group_size,
-                      n_blocks=args.n_blocks, device=cuda_device)
-    end_time = time.time()
-    print(end_time - start_time, flush=True)
+        Returns:
+        """
+        self.model = model
+        self.model = self.model.to("cpu")
+        self.amp = amp
+        self.use_quant_input = use_quant_input
+        self.enable_minmax_tuning = enable_minmax_tuning
+        self.n_samples = n_samples
+        self.n_blocks = n_blocks
+        self.bits = bits
+        self.group_size = group_size
+        self.scheme = scheme
+        self.low_gpu_mem_usage = low_gpu_mem_usage
+        self.data_type = data_type
+        self.supported_types = [torch.nn.Linear]
+        try:
+            import transformers
 
-    torch.cuda.empty_cache()
-    model.half()
-    model.eval()
-    output_dir = args.output_dir + "_" + args.model_name.split('/')[-1] + f"_w{args.num_bits}_g{args.group_size}"
+            self.supported_types.append(transformers.modeling_utils.Conv1D)
+        except:
+            pass
+        self.weight_config = weight_config
+        assert dataloader is not None or tokenizer is not None
+        self.dataset_split = dataset_split
+        self.seed = seed
+        self.tokenizer = tokenizer
+        self.seqlen = seqlen
+        self.train_bs = bs
+        self.n_blocks = n_blocks
+        self.device = device
+        self.amp_dtype = torch.float16
+        if self.model.dtype != torch.float32:
+            self.amp_dtype = self.model.dtype
+        if self.device == "cpu":
+            self.amp_dtype = torch.bfloat16
+        if self.amp:
+            logger.info(f"using {self.amp_dtype}")
 
-    # model.to(cuda_device)
-    # eval_model(model, model_name, tokenizer, tasks=args.tasks, eval_bs=args.eval_bs)
-    excel_name = f"{output_dir}_result.xlsx"
-    output_dir += "/"
-    print(excel_name, flush=True)
-    eval_model(output_dir=output_dir, model=model, tokenizer=tokenizer, tasks=args.tasks, \
-               eval_bs=args.eval_bs, use_accelerate=args.low_gpu_mem_usage, device=cuda_device, excel_file=excel_name,
-               limit=None)
+        if dataloader is None:
+            self.dataloader = self.get_default_dataloader(data_name=default_dataset_name)
+        else:
+            self.dataloader = dataloader
+        self.lr = lr
+        self.minmax_lr = minmax_lr
+        self.iters = iters
+        self.sampler = sampler
+        self.gradient_accumulate_steps = gradient_accumulate_steps
+        self.not_use_mse = not_use_mse
+        self.dynamic_max_gap = dynamic_max_gap
+        self.enable_full_range = enable_full_range
+        assert self.enable_full_range is False, "only support enable_full_range=False currently"
+
+        self.optimizer = SGD
+        self.lr_scheduler = lr_scheduler
+        # self.set_layerwise_config(self.weight_config)
+
+    # def check_configs(self):
+    #     assert isinstance(self.model, torch.nn.Module)
+    #     assert self.bits > 0, "bits must be positive"
+    #     assert self.group_size == -1 or self.group_size >= 1, "only supports positive group_size or -1(per channel)"
+    #     assert self.train_bs > 0, "batch size must be positive"
+    #     assert self.iters > 0, "iters must be positive"
+    #     assert self.seqlen > 0, "seqlen must be positive"
+    #     assert self.n_blocks > 0, "n_blocks must be positive"
+    #     assert self.gradient_accumulate_steps > 0, "gradient accumulate step must be positive"
+
+    # def set_layerwise_config(self, weight_config):
+    #     for n, m in self.model.named_modules():
+    #         is_supported_type = False
+    #         for supported_type in self.supported_types:
+    #             if isinstance(m, supported_type):
+    #                 is_supported_type = True
+    #                 break
+    #         if not is_supported_type:
+    #             continue
+    #         if n not in weight_config.keys():
+    #             weight_config[n] = {}
+    #             weight_config[n]["data_type"] = self.data_type
+    #             weight_config[n]["bits"] = self.bits
+    #             weight_config[n]["group_size"] = self.group_size
+    #             weight_config[n]["scheme"] = self.scheme
+    #         else:
+    #             if "data_type" not in weight_config[n].keys():
+    #                 weight_config[n]["data_type"] = self.data_type
+    #             if "bits" not in weight_config[n].keys():
+    #                 weight_config[n]["bits"] = self.bits
+    #             if "group_size" not in weight_config[n].keys():
+    #                 weight_config[n]["group_size"] = self.group_size
+    #             if "scheme" not in weight_config[n].keys():
+    #                 weight_config[n]["scheme"] = self.scheme
+    #         m.data_type = weight_config[n]["data_type"]
+    #         m.bits = weight_config[n]["bits"]
+    #         m.group_size = weight_config[n]["group_size"]
+    #         m.scheme = weight_config[n]["scheme"]
+
+    def default_tokenize_function(self, examples):
+        example = self.tokenizer(examples["text"], truncation=True, max_length=self.seqlen)
+        return example
+
+    def get_default_dataloader(self, data_name="NeelNanda/pile-10k"):
+        from datasets import load_dataset
+        from torch.utils.data import DataLoader
+
+        @torch.no_grad()
+        def collate_batch(batch):
+            input_ids_new = []
+            for text in batch:
+                input_ids = text["input_ids"]
+                if input_ids.shape[0] < seqlen:
+                    continue
+                input_ids = input_ids[:seqlen]
+                input_ids_list = input_ids.tolist()
+                if input_ids_list.count(input_ids_list[-1]) > seqlen // 2:
+                    continue
+                input_ids_new.append(input_ids)
+            if len(input_ids_new) == 0:
+                return None
+            tmp = torch.vstack(input_ids_new)
+            res = {"input_ids": tmp}
+            return res
+
+        seqlen = self.seqlen
+        calib_dataset = load_dataset(data_name, split=self.dataset_split)
+        calib_dataset = calib_dataset.shuffle(seed=self.seed)
+        calib_dataset = calib_dataset.map(self.default_tokenize_function, batched=True)
+        calib_dataset.set_format(type="torch", columns=["input_ids"])
+        calib_dataloader = DataLoader(calib_dataset, batch_size=self.train_bs, shuffle=False, collate_fn=collate_batch)
+        return calib_dataloader
+
+    def get_batch_dim(self, input_others):
+        dim = int(len(input_others["positional_inputs"]) > 0)
+        return dim
+
+    @torch.no_grad()
+    def get_block_outputs(self, block, input_ids, input_others, bs, device, cache_device, batch_dim):
+        output = []
+        for i in range(0, self.n_samples, bs):
+            indices = torch.arange(i, i + bs).to(torch.long)
+            tmp_input_ids, tmp_input_others = sampling_inputs(input_ids, input_others, indices, self.seqlen)
+            tmp_output = block_forward(block, tmp_input_ids, tmp_input_others, self.amp, device).to(cache_device)
+            output.append(tmp_output)
+        output = torch.cat(output, dim=batch_dim)
+        torch.cuda.empty_cache()
+        return output
+
+    # def loss_scale_and_backward(self, scaler, loss):
+    #     if scaler is not None:
+    #         scale_loss = scaler.scale(loss)
+    #         scale_loss.backward()
+    #         return scale_loss
+    #     else:
+    #         loss *= 1000
+    #         loss.backward()
+    #         return loss
+    #
+    # def step(self, scaler, optimizer, lr_schedule):  ##TODO signround does not need this
+    #     if scaler is not None:
+    #         scaler.step(optimizer)
+    #         optimizer.zero_grad()
+    #         lr_schedule.step()
+    #         scaler.update()
+    #     else:
+    #         optimizer.step()
+    #         optimizer.zero_grad()
+    #         lr_schedule.step()
+    #
+    # def is_supported_type(self, m):
+    #     return hasattr(m, "orig_layer")
+
+    # def quant_block(self, block, input_ids, input_others, q_input=None, device=torch.device("cpu")):
+    #     batch_dim = self.get_batch_dim(input_others)
+    #     if not self.low_gpu_mem_usage and input_ids.device != device:
+    #         # input_ids, input_others = move_to_device(input_ids, input_others, device)
+    #         input_ids = move_input_to_device(input_ids, device)  ##move input data to GPU
+    #         input_others = move_input_to_device(input_others, device)
+    #     torch.cuda.empty_cache()
+    #
+    #     cache_device = device
+    #     if self.low_gpu_mem_usage:
+    #         cache_device = "cpu"
+    #     output = self.get_block_outputs(block, input_ids, input_others, self.train_bs, device, cache_device, batch_dim)
+    #
+    #     if q_input is not None:
+    #         input_ids = q_input.to(cache_device)
+    #
+    #     wrapper_block(block, self.enable_minmax_tuning, self.supported_types, use_sigmoid=self.use_sigmoid)
+    #
+    #     best_loss = torch.finfo(torch.float).max
+    #     mse_loss = torch.nn.MSELoss()
+    #     round_params = []
+    #     minmax_params = []
+    #     for n, m in block.named_modules():
+    #         if self.is_supported_type(m):
+    #             round_params.append(m.value)
+    #             minmax_params.append(m.min_scale)
+    #             minmax_params.append(m.max_scale)
+    #     if self.enable_minmax_tuning:
+    #         optimizer = self.optimizer(
+    #             [{"params": round_params}, {"params": minmax_params, "lr": self.minmax_lr}], lr=self.lr, weight_decay=0
+    #         )
+    #     else:
+    #         optimizer = self.optimizer(round_params, lr=self.lr, weight_decay=0)
+    #
+    #     if self.lr_scheduler is None:
+    #         lr_schedule = torch.optim.lr_scheduler.LinearLR(
+    #             optimizer, start_factor=1.0, end_factor=0.0, total_iters=self.iters, verbose=False
+    #         )
+    #     else:
+    #         lr_schedule = copy.deepcopy(self.lr_scheduler)
+    #     if len(input_ids.shape) == 3:
+    #         n_samples = input_ids.shape[0]
+    #     else:
+    #         n_samples = input_ids.shape[0] // self.seqlen
+    #     if self.sampler != "rand":
+    #         indices = torch.randperm(n_samples)[: self.train_bs]
+    #     last_best_iter = 0
+    #     scaler = None
+    #     if self.amp and self.scale_grad:
+    #         from torch.cuda.amp import GradScaler
+    #
+    #         scaler = GradScaler(init_scale=1024, growth_interval=100000)
+    #
+    #     for i in range(self.iters):
+    #         if self.sampler == "rand":
+    #             indices = torch.randperm(n_samples)[: self.train_bs]
+    #
+    #         total_loss = 0
+    #         for _ in range(self.gradient_accumulate_steps):
+    #             current_input_ids, current_input_others = sampling_inputs(
+    #                 input_ids, input_others, indices, seqlen=self.seqlen
+    #             )
+    #             if len(input_ids.shape) == 3:
+    #                 if batch_dim == 0:
+    #                     current_output = output[indices, :, :]
+    #                 elif batch_dim == 1:
+    #                     current_output = output[:, indices, :]
+    #                 else:
+    #                     current_output = output[:, :, indices]
+    #             else:
+    #                 current_output = output.view(n_samples, self.seqlen, -1)
+    #                 current_output = current_output[indices, :, :]
+    #                 current_output = current_output.reshape(-1, current_output.shape[-1])
+    #             current_output = move_input_to_device(current_output, device)
+    #
+    #             output_q = block_forward(block, current_input_ids, current_input_others, self.amp, device)
+    #             if self.amp and device != torch.device("cpu"):
+    #                 with autocast(device_type="cuda"):
+    #                     loss = mse_loss(output_q, current_output)
+    #             elif self.amp:
+    #                 with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+    #                     loss = mse_loss(output_q, current_output)
+    #             else:
+    #                 loss = mse_loss(output_q, current_output)
+    #             loss = loss / self.gradient_accumulate_steps
+    #             total_loss += loss.item()
+    #             scale_loss = self.loss_scale_and_backward(scaler, loss)
+    #
+    #         if total_loss < best_loss:
+    #             best_loss = total_loss
+    #             if not self.not_use_mse:
+    #                 # print(f"get better result at iter {i}, the loss is {total_loss}", flush=True)
+    #                 best_grad = collect_round_grad(block)
+    #                 best_min_scale_grad, best_max_scale_grad = collect_minmax_grad(block)
+    #                 last_best_iter = i
+    #         if self.not_use_mse and i == self.iters - 1:
+    #             best_grad = collect_round_grad(block)
+    #             best_min_scale_grad, best_max_scale_grad = collect_minmax_grad(block)
+    #
+    #         if not self.not_use_mse:
+    #             if self.dynamic_max_gap > 0 and i - last_best_iter >= self.dynamic_max_gap:
+    #                 break
+    #         self.step(scaler, optimizer, lr_schedule)
+    #
+    #     unwrapper_block(block, best_grad, best_min_scale_grad, best_max_scale_grad)
+    #     if self.use_quant_input:
+    #         q_outputs = self.get_block_outputs(
+    #             block, input_ids, input_others, self.train_bs, device, cache_device, batch_dim
+    #         )
+    #
+    #         return q_outputs, output
+    #
+    #     else:
+    #         return None, output
+
+    def quant_block(self, block, input_ids, input_others, num_bits, group_size, schema, q_input=None,
+                    device=torch.device("cpu")):
+        best_loss = torch.finfo(torch.float).max
+        mse_loss = torch.nn.MSELoss()
+        grad = None
+        min_scale_grad = None
+        max_scale_grad = None
+        batch_dim = get_batch_dim(input_others)
+        if not self.low_gpu_mem_usage and input_ids.device != device:
+            # input_ids, input_others = move_to_device(input_ids, input_others, device)
+            input_ids = move_input_to_device(input_ids, device)  ##move input data to GPU
+            input_others = move_input_to_device(input_others, device)
+        cache_device = device
+        if self.low_gpu_mem_usage:
+            cache_device = "cpu"
+        output = self.get_block_outputs(block, input_ids, input_others, self.train_bs, device, cache_device, batch_dim)
+        if q_input is not None:
+            input_ids = q_input
+            if not self.low_gpu_mem_usage and input_ids.device != device:
+                input_ids = input_ids.to(device)
+
+        wrapper_block(block, num_bits, group_size, schema, self.enable_minmax_tuning)
+
+        round_params = []
+        minmax_params = []
+        for n, m in block.named_modules():
+            if isinstance(m, WrapperLinear):
+                round_params.append(m.value)
+                minmax_params.append(m.min_scale)
+                minmax_params.append(m.max_scale)
+        from sign_sgd import SGD
+        # optimizer = SGD(params, lr=0.0025)
+        if self.enable_minmax_tuning:
+            optimizer = SGD([{'params': round_params}, {'params': minmax_params, 'lr': self.minmax_lr}],
+                            lr=self.lr, weight_decay=0)
+        else:
+            optimizer = SGD(round_params,
+                            lr=self.lr, weight_decay=0)
+
+        lr_schedule = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.0,
+                                                        total_iters=self.iters,
+                                                        verbose=False)
+
+        search_iters = self.iters
+        pick_samples = self.train_bs
+        if len(input_ids.shape) == 3:
+            n_samples = input_ids.shape[0]
+        else:
+            n_samples = input_ids.shape[0] // self.seqlen
+        if self.sampler != "rand":
+            indices = torch.randperm(n_samples)[:pick_samples]
+        last_best_iter = 0
+        for i in range(search_iters):
+            if self.sampler == "rand":
+                indices = torch.randperm(n_samples)[:pick_samples]
+
+            total_loss = 0
+            for _ in range(self.gradient_accumulate_steps):
+                current_input_ids, current_input_others = sampling_inputs(input_ids, input_others, indices,
+                                                                          seqlen=self.seqlen)
+                if len(input_ids.shape) == 3:
+                    if batch_dim == 0:
+                        current_output = output[indices, :, :]
+                    elif batch_dim == 1:
+                        current_output = output[:, indices, :]
+                    else:
+                        current_output = output[:, :, indices]
+                else:
+                    current_output = output.view(n_samples, self.seqlen, -1)
+                    current_output = current_output[indices, :, :]
+                    current_output = current_output.reshape(-1, current_output.shape[-1])
+                current_output = move_input_to_device(current_output, device)
+
+                output_q = block_forward(block, current_input_ids, current_input_others, self.amp, device)
+                if self.amp and device != torch.device("cpu"):
+                    with autocast(device_type="cuda"):
+                        loss = mse_loss(output_q, current_output) * 1000
+                elif self.amp:
+                    with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+                        loss = mse_loss(output_q, current_output) * 1000
+                else:
+                    loss = mse_loss(output_q, current_output)
+                total_loss += loss.item()##TODO gradient accumulate step for other optimizer
+                loss.backward()
+
+            if total_loss < best_loss:
+                best_loss = total_loss
+                if not self.not_use_mse:
+                    # print(f"get better result at iter {i}, the loss is {total_loss}", flush=True)
+                    best_grad = collect_round_grad(block)
+                    best_min_scale_grad, best_max_scale_grad = collect_minmax_grad(block)
+                    last_best_iter = i
+            if self.not_use_mse:
+                best_grad = grad
+                best_min_scale_grad = min_scale_grad
+                best_max_scale_grad = max_scale_grad
+
+            if not self.not_use_mse:
+                if self.dynamic_max_gap > 0 and i - last_best_iter >= self.dynamic_max_gap:
+                    break
+            optimizer.step()  ##TODO  scale grad for other optimizer
+            optimizer.zero_grad()
+            lr_schedule.step()
+        unwrapper_block(block, num_bits, group_size, schema, best_grad, best_min_scale_grad, best_max_scale_grad)
+        if self.use_quant_input:
+            q_outputs = self.get_block_outputs(
+                block, input_ids, input_others, self.train_bs, device, cache_device, batch_dim
+            )
+
+            return q_outputs, output
+
+        else:
+            return None, output
+
+    def q_dq_weight_round(
+            self,
+            model: torch.nn.Module,
+            inputs,
+            block_names,
+            n_blocks=1,
+            device=torch.device("cpu"),
+    ):
+        q_input = None
+        torch.cuda.empty_cache()
+        for n, m in model.named_parameters():
+            m.requires_grad_(False)
+        input_ids = inputs["input_ids"]
+        inputs.pop("input_ids", None)
+        input_others = inputs
+        torch.cuda.empty_cache()
+        for i in range(0, len(block_names), n_blocks):
+            if n_blocks == 1:
+                n = block_names[i]
+                logger.info(n)
+                print(n,flush=True)
+                m = get_module(model, n)
+            else:
+                names = block_names[i: i + n_blocks]
+                logger.info(names)
+                print(names, flush=True)
+                modules = [get_module(model, n) for n in names]
+                m = WrapperMultiblock(modules)
+
+            m = m.to(device)
+
+            q_input, input_ids = self.quant_block(
+                m,
+                input_ids,
+                input_others,
+                num_bits=self.bits,
+                group_size=self.group_size,##TODO layerwise
+                schema = self.scheme,
+                q_input=q_input,
+                device=device,
+            )
+            m.to("cpu")
+            torch.cuda.empty_cache()
+
+        del q_input
+        del input_ids
+        del input_others
+        del inputs
+
+        torch.cuda.empty_cache()
+
+    def quantize(self):
+        logger.info("cache input")
+        block_names = get_block_names(self.model)
+        if len(block_names) == 0:
+            logger.warning("could not find blocks, exit with original model")
+            return
+
+        if self.amp:
+            self.model = self.model.to(self.amp_dtype)
+        if not self.low_gpu_mem_usage:  ##TODO automatically detect
+            self.model = self.model.to(self.device)
+
+        save_input_actor = SaveInputs(self.model, self.dataloader, self.seqlen, block_names[0])
+        inputs = save_input_actor.get_inputs(n_samples=self.n_samples)
+        del save_input_actor
+        self.model = self.model.to("cpu")
+        torch.cuda.empty_cache()
+        self.q_dq_weight_round(
+            self.model,
+            inputs,
+            block_names,
+            n_blocks=self.n_blocks,
+            device=self.device,
+        )
+        # for n, m in self.model.named_modules():
+        #     if n in self.weight_config.keys():
+        #         if hasattr(m, "scale"):
+        #             self.weight_config[n]["scale"] = m.scale
+        #             self.weight_config[n]["zp"] = m.zp
+        #             delattr(m, "scale")
+        #             delattr(m, "zp")
+        return self.model, self.weight_config
