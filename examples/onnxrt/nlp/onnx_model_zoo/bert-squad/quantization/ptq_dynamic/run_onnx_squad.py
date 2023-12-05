@@ -75,7 +75,7 @@ class SquadExample(object):
         s.append("doc_tokens: [%s]" % (" ".join(self.doc_tokens)))
         if self.start_position:
             s.append("start_position: %d" % (self.start_position))
-        if self.start_position:
+        if self.end_position:
             s.append("end_position: %d" % (self.end_position))
         return ", ".join(s)
 
