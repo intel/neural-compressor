@@ -4,7 +4,7 @@ import copy
 parser = argparse.ArgumentParser()
 import torch
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
 from datasets import load_dataset
 from torch.functional import F
 
@@ -19,7 +19,7 @@ from functools import partial
 from torch.amp import autocast
 from eval import eval_model
 from collections import UserDict
-
+import re
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 os.environ["HF_HOME"] = "/models/huggingface"
@@ -153,10 +153,14 @@ if __name__ == '__main__':
     else:
         device_str = f"cuda:{int(args.device)}"
     cuda_device = torch.device(device_str)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name, low_cpu_mem_usage=True, trust_remote_code=True,
-        ##low_cpu_mem_usage has impact to acc, changed the random seed?
-    )
+    is_glm = bool(re.search("chatglm", model_name.lower()))
+    if is_glm:
+        model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name, low_cpu_mem_usage=True, torch_dtype="auto", trust_remote_code=True
+            ##low_cpu_mem_usage has impact to acc, changed the random seed?
+        )
     model = model.eval()
     # align wigh GPTQ to eval ppl
     if "opt" in model_name:
@@ -167,6 +171,7 @@ if __name__ == '__main__':
         model.seqlen = seqlen
     seqlen = args.seqlen
 
+
     if "llama" in model_name:
         from transformers import LlamaTokenizer
 
@@ -175,6 +180,12 @@ if __name__ == '__main__':
             tokenizer.add_special_tokens({'pad_token': '[PAD]'})
     else:
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    if hasattr(tokenizer, "model_max_length"):
+        if tokenizer.model_max_length <= seqlen:
+            print(f"change sequence length to {tokenizer.model_max_length} due to the limitation of model_max_length")
+            seqlen = min(seqlen, tokenizer.model_max_length)
+            args.seqlen = seqlen
+
     excel_name = f"{model_name}_{args.num_bits}_{args.group_size}"
     if args.eval_fp16_baseline:
         if not args.low_gpu_mem_usage:

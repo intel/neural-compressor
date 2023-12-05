@@ -295,6 +295,26 @@ class WrapperLinear(torch.nn.Module):
             self.min_scale = torch.tensor(0, device=self.orig_layer.weight.device)
             self.max_scale = torch.tensor(0, device=self.orig_layer.weight.device)
 
+    def unwrapper(self, grad, min_scale_grad, max_scale_grad):
+        min_scale_grad.clamp_(-1, 0)
+        max_scale_grad.clamp_(-1, 0)
+
+        q_dq_weight, scale, zp = quant_weight(
+            self.orig_layer.weight,
+            self.num_bits,
+            self.group_size,
+            self.scheme,
+            grad,
+            min_scale_grad,
+            max_scale_grad,
+        )
+        self.orig_layer.weight.data.copy_(q_dq_weight)
+        self.orig_layer.weight.grad = None  ##clear grad
+        self.orig_layer.scale = scale.to("cpu")
+        self.orig_layer.zp = zp.to("cpu")
+        return self.orig_layer
+
+
     def forward(self, x):
         weight = self.orig_layer.weight
         self.min_scale.data.copy_(torch.clamp(self.min_scale.data, -1, 0))
@@ -302,6 +322,64 @@ class WrapperLinear(torch.nn.Module):
         weight_q, _, _ = quant_weight(weight, self.num_bits, self.group_size, self.scheme,
                                       self.value, self.min_scale, self.max_scale)
         return F.linear(x, weight_q, self.orig_layer.bias)
+
+class WrapperTransformerConv1d(torch.nn.Module):
+    def __init__(self, orig_layer, num_bits, group_size, scheme, use_sigmoid, enable_minmax_tuning=True):
+        super(WrapperTransformerConv1d, self).__init__()
+        self.orig_layer = orig_layer
+        self.num_bits = num_bits
+        self.group_size = group_size
+        self.scheme = scheme
+        self.use_sigmoid = use_sigmoid
+        device = self.orig_layer.weight.device
+        self.weight_t = self.orig_layer.weight.t()
+        self.value = torch.nn.Parameter(torch.zeros(self.weight_t.shape, device=device), requires_grad=True)
+        shape = get_scale_shape(self.weight_t, group_size)
+
+        if enable_minmax_tuning:
+            self.min_scale = torch.nn.Parameter(torch.zeros(shape, device=device), requires_grad=True)
+            self.max_scale = torch.nn.Parameter(torch.zeros(shape, device=device), requires_grad=True)
+        else:
+            self.min_scale = torch.tensor(0, device=device)
+            self.max_scale = torch.tensor(0, device=device)
+
+    def unwrapper(self, grad, min_scale_grad, max_scale_grad):
+        min_scale_grad.clamp_(-1, 0)
+        max_scale_grad.clamp_(-1, 0)
+        weight_q, scale, zp = quant_weight(
+            self.weight_t,
+            self.num_bits,
+            self.group_size,
+            self.scheme,
+            grad,
+            min_scale_grad,
+            max_scale_grad,
+        )
+        self.orig_layer.weight.data.copy_(weight_q.t())
+        self.orig_layer.weight.grad = None
+        self.orig_layer.scale = scale.to("cpu")
+        self.orig_layer.zp = zp.to("cpu")
+        return self.orig_layer
+
+    def forward(self, x):
+        with torch.no_grad():
+            self.min_scale.clamp_(-1, 0)
+            self.max_scale.clamp_(-1, 0)
+        weight_q = quant_weight(
+            self.weight_t,
+            self.num_bits,
+            self.group_size,
+            self.scheme,
+            self.value,
+            self.min_scale,
+            self.max_scale,
+            use_sigmoid=self.use_sigmoid,
+        )
+        size_out = x.size()[:-1] + (self.orig_layer.nf,)
+        x = torch.addmm(self.orig_layer.bias, x.view(-1, x.size(-1)), weight_q.t())
+        x = x.view(*size_out)
+        return x
+
 
 
 def wrapper_block(block, enable_minmax_tuning):
@@ -314,12 +392,7 @@ def wrapper_block(block, enable_minmax_tuning):
 @torch.no_grad()
 def unwrapper_block(block, grads, min_scale_grads, max_scale_grads):
     for n, m in block.named_modules():
-        if isinstance(m, WrapperLinear):
-            num_bits = m.num_bits
-            group_size = m.group_size
-            scheme = m.scheme
-
-            orig_layer = m.orig_layer
+        if isinstance(m, WrapperLinear) or isinstance(m, WrapperTransformerConv1d):
             grad = 0
             min_scale_grad = 0
             max_scale_grad = 0
@@ -331,14 +404,17 @@ def unwrapper_block(block, grads, min_scale_grads, max_scale_grads):
             if isinstance(max_scale_grads, dict):
                 max_scale_grad = max_scale_grads[n]
                 max_scale_grad = torch.clamp(max_scale_grad, -1, 0)
-
-            q_dq_weight, scale, zp = quant_weight(orig_layer.weight, num_bits, group_size, scheme, grad, min_scale_grad,
-                                             max_scale_grad)
-            orig_layer.weight.data.copy_(q_dq_weight)
-            orig_layer.scale = scale
-            orig_layer.zp = zp
-            orig_layer.weight.grad = None  ##clear grad
+            orig_layer = m.unwrapper(grad, min_scale_grad, max_scale_grad)
             set_module(block, n, orig_layer)
+
+            # q_dq_weight, scale, zp = quant_weight(orig_layer.weight, num_bits, group_size, scheme, grad, min_scale_grad,
+            #                                  max_scale_grad)
+            # orig_layer.weight.data.copy_(q_dq_weight)
+            # orig_layer.scale = scale
+            # orig_layer.zp = zp
+            # orig_layer.weight.grad = None  ##clear grad
+            # set_module(block, n, orig_layer)
+
 
 
 def collect_grad_and_zero(block):
@@ -825,7 +901,7 @@ class OPTRoundQuantizer(object):
         round_params = []
         minmax_params = []
         for n, m in block.named_modules():
-            if isinstance(m, WrapperLinear):
+            if isinstance(m, WrapperLinear) or isinstance(m, WrapperTransformerConv1d):
                 round_params.append(m.value)
                 minmax_params.append(m.min_scale)
                 minmax_params.append(m.max_scale)
