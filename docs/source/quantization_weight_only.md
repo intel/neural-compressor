@@ -93,18 +93,19 @@ To support low memory inference, Neural Compressor implemented WeightOnlyLinear,
 **Export arguments**
 | export args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
-| qweight_config_path |      None     |  If need to export model with fp32_model and json file, set the path of qconfig.json |
+|  use_optimum_format  |     True       |  Whether to use the popular format used in [Optimum](https://github.com/huggingface/optimum/blob/e0927976d06d163ed09fe5bd80d013e1cfa0c463/docs/source/llm_quantization/usage_guides/quantization.mdx#L5)  |
+| qweight_config_path |      None     |  set the path of qconfig.json if you want to export model with json file |
+| gptq_config_path |      None     |  If need to export model with fp32_model and json file, set the path of gptq_config.json for GPTQ quantized model|
 |  sym_full_range |      False     | Whether to leverage the full compression range under symmetric quantization |
-|  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8\|16\|32\|64]   |
-|  compression_dim  |       1       |   0 means output channel while 1 means input channel   |
-|  scale_dtype  |       torch.float32       |  Data type for scale and bias   |
-|  use_hf_format  |     True       |  Whether to use the popular format present on HuggingFace hub   |
+|  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8\|16\|32\|64]. It's torch.int32 when use_optimum_format=True |
+|  compression_dim  |       1       |   0 means output channel while 1 means input channel. It's 1 for weight and 0 for zero-point when use_optimum_format=True   |
+|  scale_dtype  |       torch.float32       |  Data type for scale and bias. It's torch.float16 when use_optimum_format=True   |
 
-**Note:** HuggingFace format is quite special, the main differences are as follows:
+**Note:** The format used in Optimum is acceptable for transformers, which makes it easy to use. However, this format is rather special, the main differences are as follows:
 
 > 1: Compression Dimension: weight = 1, zero = 0 and both are transposed.   
 > 2: Zero Point: zero_point-= 1 before compression. zero_point is always required even for sym.    
-> 3: Group Index: Use the same number for a group instead of recording channel order.    
+> 3: Group Index: Use the same number for a group instead of recording channel order. 
 
 
 ### **User Code Example**
