@@ -34,7 +34,7 @@ python prepare_model.py  --input_model="meta-llama/Llama-2-7b-hf" --output_model
 
 ## 1. Quantization
 
-Run SmoothQuant
+### Run SmoothQuant
 
 ```bash
 bash run_quant.sh --input_model=/path/to/model \ # folder path of onnx model
@@ -46,7 +46,8 @@ bash run_quant.sh --input_model=/path/to/model \ # folder path of onnx model
                   --quant_format="QOperator" # or QDQ, optional
 ```
 
-Additionally set `--layer-wise=True` to use layer-wise quantization to save your memory. Please note that layer-wise quantization for ONNX models is still under development and only support W8A8 quantization now. More details please refer to [layer wise quantiation](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_layer_wise.md).
+### Run layer-wise quantization
+Set `--layer-wise=True` to use layer-wise quantization to save your memory. Please note that layer-wise quantization for ONNX models is still under development and only support W8A8 quantization now. More details please refer to [layer wise quantiation](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_layer_wise.md).
 
 ```bash
 bash run_quant.sh --input_model=/path/to/model \ # folder path of onnx model

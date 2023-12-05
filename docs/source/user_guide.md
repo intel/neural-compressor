@@ -81,9 +81,10 @@ This part provides the advanced topics that help user dive deep into Intel® Neu
 <td colspan="4" align="center"><a href="add_new_adaptor.md">Add New Adaptor</a></td>
 </tr>
 <tr>
-<td colspan="4" align="center"><a href="distillation_quantization.md">Distillation for Quantization</a></td>
-<td colspan="4" align="center"><a href="smooth_quant.md">SmoothQuant</a></td>
-<td colspan="4" align="center"><a href="quantization_weight_only.md">Weight-Only Quantization</a></td>
+<td colspan="3" align="center"><a href="distillation_quantization.md">Distillation for Quantization</a></td>
+<td colspan="3" align="center"><a href="smooth_quant.md">SmoothQuant</a></td>
+<td colspan="3" align="center"><a href="quantization_weight_only.md">Weight-Only Quantization</a></td>
+<td colspan="3" align="center"><a href="quantization_layer_wise.md">Layer-Wise Quantization</a></td>
 </tr>
 </tbody>
 </table>

@@ -7,9 +7,7 @@ Weight Only Quantization (WOQ)
 
 3. [Examples](#examples)
 
-4. [Layer Wise Quantization](#layer-wise-quantization)
-
-5. [WOQ Algorithms Tuning](#woq-algorithms-tuning)
+4. [WOQ Algorithms Tuning](#woq-algorithms-tuning)
 
 
 ## Introduction
@@ -142,50 +140,6 @@ compressed_model = export_compressed_model(
 The saved_results folder contains two files: `best_model.pt` and `qconfig.json`, and the generated q_model is a fake quantized model.
 
 To seek the performance of weight-only quantized models, Please go to [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization#1-performance) to quantize and deploy the model.
-
-
-## Layer Wise Quantization
-
-Large language models (LLMs) have shown exceptional performance across various tasks, meanwhile, the substantial parameter size poses significant challenges for deployment. Layer-wise quantization(LWQ) can greatly reduce the memory footprint of LLMs, usually 80-90% reduction, which means that users can quantize LLMs even on single node using GPU or CPU.  We can quantize the model under memory-constrained devices, therefore making the huge-sized LLM quantization possible.
-
-<img src="./imgs/lwq.png">
-
-*Figure 1: The process of layer-wise quantization. The color grey means empty parameters and the color blue represents parameters need to be quantized. Every rectangle inside model represents one layer.*
-
-### Supported Matrix
-
-| Algorithms/Framework |   PyTorch  |
-|:--------------:|:----------:|
-|       RTN      |  &#10004;  | 
-|       AWQ      |  &#10005;  |
-|      GPTQ      | &#10004; | 
-|      TEQ      | &#10005; |
-
-### Example
-```python
-from neural_compressor import PostTrainingQuantConfig, quantization
-from neural_compressor.adaptor.torch_utils.layer_wise_quant import load_empty_model
-
-fp32_model = load_empty_model(model_name_or_path, torchscript=True)
-conf = PostTrainingQuantConfig(
-    approach="weight_only",
-    recipes={
-        "layer_wise_quant": True,
-        "rtn_args": {"enable_full_range": True},
-    },
-)
-
-q_model = quantization.fit(
-    fp32_model,
-    conf,
-    calib_dataloader=eval_dataloader,
-    eval_func=lambda x: 0.1,
-)
-ouput_dir = "./saved_model"
-q_model.save(ouput_dir)
-q_model = load(ouput_dir, fp32_model, weight_only=True, layer_wise=True)
-```
-
 
 ## WOQ Algorithms Tuning
 
