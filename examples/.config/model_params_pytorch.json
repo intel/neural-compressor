@@ -511,21 +511,28 @@
       "dataset_location": "",
       "input_model": "",
       "main_script": "run_clm_no_trainer.py",
-      "batch_size": 8
+      "batch_size": 1
     },
     "gpt_j_ipex_sq":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
       "dataset_location": "",
       "input_model": "",
       "main_script": "run_clm_no_trainer.py",
-      "batch_size": 8
+      "batch_size": 1
+    },
+    "gpt_j_woq_rtn":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 1
     },
     "falcon_7b_sq":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
       "dataset_location": "",
       "input_model": "",
       "main_script": "run_clm_no_trainer.py",
-      "batch_size": 8
+      "batch_size": 1
     },
     "xlm-roberta-base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",

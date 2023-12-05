@@ -98,6 +98,10 @@ function run_benchmark {
     elif [ "${topology}" = "gpt_j_ipex_sq" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
         extra_cmd=$extra_cmd" --ipex --sq --alpha 1.0"
+    elif [ "${topology}" = "gpt_j_woq_rtn" ]; then
+        model_name_or_path="EleutherAI/gpt-j-6b"
+        approach="weight_only"
+        extra_cmd=$extra_cmd" --woq_algo RTN --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_enable_mse_search"
     elif [ "${topology}" = "falcon_7b_sq" ]; then
         model_name_or_path="tiiuae/falcon-7b-instruct"
         extra_cmd=$extra_cmd" --sq --alpha 0.5"
