@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-from transformers import AutoTokenizer, TFAutoModelForCausalLM,
+from transformers import AutoTokenizer, TFAutoModelForCausalLM
 
 tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-j-6B")
 model = TFAutoModelForCausalLM.from_pretrained("EleutherAI/gpt-j-6B")
