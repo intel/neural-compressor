@@ -691,6 +691,7 @@ def mx_quantize(
             "act_dtype": act_dtype,
             "out_dtype": out_dtype,
         }
+        tmp_stat = m.state_dict()
         new_module = MXLinear(
             m.in_features,
             m.out_features,
@@ -698,6 +699,7 @@ def mx_quantize(
             mx_specs=mx_specs,
             name=name,
         )
+        new_module.load_state_dict(tmp_stat)
         if name == "":
             return new_module
         else:
@@ -708,16 +710,11 @@ def mx_quantize(
 from neural_compressor.torch.quantization.config import MXQuantConfig
 
 
-def apply_mx_on_single_module(module: torch.nn.Module, quant_config: MXQuantConfig) -> torch.nn.Module:
-    weight_dtype = quant_config.weight_dtype
-    act_dtype = quant_config.act_dtype
-    out_dtype = quant_config.out_dtype
-    return mx_quantize(
-        module,
-        weight_dtype=weight_dtype,
-        act_dtype=act_dtype,
-        out_dtype=out_dtype,
-    )
+def apply_mx_on_model(model: torch.nn.Module, configs_mapping: MXQuantConfig) -> torch.nn.Module:
+    config = {}
+    for (op_type, op_name), quant_config in configs_mapping.items():
+        config[op_name] = quant_config.to_dict()
+    return mx_quantize(model, config=config)
 
 from typing import Dict, Tuple
 from neural_compressor.torch.utils import fetch_module, register_algo, set_module
@@ -728,11 +725,6 @@ def mx_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], MXQuantConfig], *args, **kwargs
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
-
-    for (op_type, op_name), quant_config in configs_mapping.items():
-        original_module = fetch_module(model, op_name)
-        #logger.info(f"Apply RTN on module: {op_name}, {original_module}")
-        mx_module = apply_mx_on_single_module(original_module, quant_config)
-        set_module(model, op_name, mx_module)
+    model = apply_mx_on_model(model, configs_mapping)
     return model
 
