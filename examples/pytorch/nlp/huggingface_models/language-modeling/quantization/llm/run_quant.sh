@@ -84,6 +84,7 @@ function run_tuning {
         --approach ${approach} \
         --output_dir ${tuned_checkpoint} \
         --quantize \
+        --batch_size ${batch_size} \
         ${extra_cmd}
 
 }

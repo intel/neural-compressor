@@ -112,6 +112,7 @@ function run_benchmark {
         --approach ${approach} \
         --output_dir ${tuned_checkpoint} \
         --task ${task} \
+        --batch_size ${batch_size} \
         ${extra_cmd} ${mode_cmd}
 }
 
