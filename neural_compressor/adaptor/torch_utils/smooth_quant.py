@@ -1017,14 +1017,12 @@ class TorchSmoothQuant:
                         for block_name in self.block_names:
                             for key in self.block_to_module[block_name]:
                                 loss_alphas[key] = loss_tmp[block_name]
-                        print(f"lyt_debug loss_alpha created: {len(loss_alphas)}")
                     else:
                         for block_name in self.block_names:
                             for key in self.block_to_module[block_name]:
                                 cur_loss = loss_alphas[key]
                                 for alpha_key in cur_loss.keys():
                                     cur_loss[alpha_key] += loss_tmp[block_name][alpha_key]
-                        print(f"lyt_debug loss_alpha updated: {len(loss_alphas)}")
                 else:
                     if loss_alphas == {}:
                         loss_alphas = loss_tmp
