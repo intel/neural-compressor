@@ -2,7 +2,7 @@ Step-by-Step
 ============
 This document describes the step-by-step instructions to run large language models (LLMs) on 4th Gen Intel® Xeon® Scalable Processor (codenamed Sapphire Rapids) with PyTorch and Intel® Extension for PyTorch.
 
-The script `run_clm_no_trainer.py` supports `GPTJ`, `OPT`, `LLaMA`, `BLOOM`, `MPT` and `Falcon` quantization and validates last word prediction accuracy with [lm_eval](https://github.com/EleutherAI/lm-evaluation-harness.git) now, and we are adding more models.
+The script `run_clm_no_trainer.py` supports `GPTJ`, `OPT`, `LLaMA2`, `BLOOM` and `Falcon` quantization and validates last word prediction accuracy with [lm_eval](https://github.com/EleutherAI/lm-evaluation-harness.git) now, and we are adding more models.
 
 # Prerequisite
 ## 1. Create Environment
@@ -98,7 +98,7 @@ python run_clm_no_trainer.py \
 # to validate FP32 model, please remove "--int8" and "--output_dir".
 ```
 ### LLAMA2-7b/13b/30b
->Note: LLAMA requires IPEX requirements >= 2.1 to get better accuracy, please source install from [intel_extension_for_pytorch](https://github.com/intel/intel-extension-for-pytorch.git).
+>Note: LLAMA requires IPEX requirements >= 2.1 to get better accuracy.
 #### Quantization
 
 ```bash
@@ -129,6 +129,52 @@ python run_clm_no_trainer.py \
 # to validate FP32 model, please remove "--int8" and "--output_dir".
 ```
 
+### BLOOM
+#### Quantization
+```bash
+# "--sq" is used to enable smooth quant
+python run_clm_no_trainer.py \
+    --model bigscience/bloom-560m \
+    --quantize \
+    --ipex \
+    --sq \
+    --alpha 0.5 \
+    --output_dir "saved_results"
+```
+#### Accuracy with lm_eval
+```bash
+python run_clm_no_trainer.py \
+    --model bigscience/bloom-560m \
+    --accuracy \
+    --batch_size 112 \
+    --tasks  "lambada_openai" \
+    --int8 \
+    --ipex \
+    --output_dir "saved_results"  # load int8 model
+# to validate FP32 model, please remove "--int8" and "--output_dir".
+```
+
+### Falcon-7b
+```bash
+# "--sq" is used to enable smooth quant
+python run_clm_no_trainer.py \
+    --model tiiuae/falcon-7b-instruct \
+    --quantize \
+    --sq \
+    --alpha 0.5 \
+    --output_dir "saved_results"
+```
+#### Accuracy with lm_eval
+```bash
+python run_clm_no_trainer.py \
+    --model bigscience/bloom-560m \
+    --accuracy \
+    --batch_size 112 \
+    --tasks  "lambada_openai" \
+    --int8 \
+    --output_dir "saved_results"  # load int8 model
+# to validate FP32 model, please remove "--int8" and "--output_dir".
+```
 
 
 [1]. Elias, Frantar, et al. "GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers." arXiv preprint arXiv:2210.17323 (2023).
