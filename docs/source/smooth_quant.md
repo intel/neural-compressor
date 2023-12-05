@@ -89,9 +89,9 @@ def dequantize(q_x, scale, zp):
 ```
 
 ```bash
->>> W_dq = dequantize(W_dq, 0.001, -50)
+>>> W_dq = dequantize(W_q, 0.001, -50)
 >>> W_dq
-tensor([[0.1220, 0.0500, 0.1430],
+tensor([[0.2220, 0.1510, 0.2420],
         [0.2570, 0.0500, 0.1890]])
 >>> loss = torch.nn.MSELoss()(W_dq, W)
 >>> loss.item()
@@ -120,8 +120,8 @@ def quantize_per_channel(x, num_bits=8):
     zp = torch.round(0 - x_tmp.min(dim=-1, keepdim=True)[0].divide(scales))
     q_x = x_tmp.divide(scales) + zp
     q_x.clamp_(q_min, q_max).round_()
-    print(f"scale = {scales}, \n zp = {zp}")
-    return q_x, scale, zp
+    print(f"scales = {scales}, \n zp = {zp}")
+    return q_x, scales, zp
 
 
 def dequantize_per_channel(q_x, scales, zp):
@@ -131,7 +131,7 @@ def dequantize_per_channel(q_x, scales, zp):
 ```
 
 ```bash
->>>W_q, scale, zp = quantize_per_channel(W)
+>>>W_q, scales, zp = quantize_per_channel(W)
 scale = tensor([[0.0029],
         [0.0036]]), 
 zp = tensor([[-162.],
@@ -212,7 +212,7 @@ tensor([[ 83.,  89., 119.,  85.],
 >>>Y_q
 tensor([[17509.,  7608.,  4055., 16599.],
         [21020., 10016.,  9860., 22444.]])
->>>Y_dq = dequantize(Y, W_scale * X_scale)
+>>>Y_dq = dequantize(Y_q, W_scale * X_scale)
 >>>Y_dq
 tensor([[0.6836, 0.2970, 0.1583, 0.6481],
         [0.8207, 0.3911, 0.3850, 0.8763]])
@@ -354,6 +354,7 @@ A list of models that achieved a <1% accuracy drop is shown below.
 | LLaMa-65b | 0.7908 | 0.7957 | alpha=0.9, Ipex 2.1 |
 | LLaMa-2-7b-hf* | 0.7392 | 0.7335  | alpha=Auto, Ipex 2.1 |
 | LLaMa-2-7b-Chat* | 0.7058 | 0.6994 | alpha=Auto, Ipex 2.1 |
+| LLaMa-2-13b-hf* | 0.7677 | 0.7615  | alpha=Auto, Ipex 2.1 |
 | EleutherAI/gpt-j-6B* | 0.6831 | 0.6821 | alpha=1.0, Ipex 2.1 |
 | MBZUAI/LaMini-GPT-124m | 0.3804 | 0.3887 | alpha=0.5, Ipex 2.1 |
 | MBZUAI/LaMini-GPT-774m | 0.5048 | 0.5057 | alpha=0.5, Ipex 2.1 |

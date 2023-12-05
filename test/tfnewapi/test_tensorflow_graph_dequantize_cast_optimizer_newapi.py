@@ -6,7 +6,7 @@ import tensorflow as tf
 import yaml
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer import DequantizeCastOptimizer
+from neural_compressor.adaptor.tf_utils.graph_rewriter.bf16.dequantize_cast_optimizer import DequantizeCastOptimizer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.adaptor.tf_utils.util import disable_random
 

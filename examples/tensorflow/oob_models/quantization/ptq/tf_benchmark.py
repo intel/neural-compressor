@@ -94,6 +94,8 @@ def create_tf_config(args):
     config.allow_soft_placement = True
     config.intra_op_parallelism_threads = OMP_NUM_THREADS
     config.inter_op_parallelism_threads = 1
+    # additional options
+    config.graph_options.rewrite_options.function_optimization = rewriter_config_pb2.RewriterConfig.AGGRESSIVE
     if args.precision == 'bfloat16':
         config.graph_options.rewrite_options.auto_mixed_precision_mkl = rewriter_config_pb2.RewriterConfig.ON
     return config

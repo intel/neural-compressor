@@ -145,7 +145,7 @@ class ModelArguments:
         default="sym", metadata={"help": "Scheme for weight only quantization. Choose from 'sym' and 'asym'."}
     )
     weight_only_algorithm: str = field(
-        default="RTN", metadata={"help": "Scheme for weight only quantization. Choose from 'sym' and 'asym'."}
+        default="RTN", metadata={"help": "Algorithms for weight only quantization. Choose from 'RTN', 'AWQ', 'GPTQ' or 'TEQ'."}
     )
 
 

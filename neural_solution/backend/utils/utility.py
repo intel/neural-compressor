@@ -226,11 +226,12 @@ def create_dir(path):
         os.makedirs(os.path.dirname(path))
 
 
-def get_q_model_path(log_path):
+def get_q_model_path(log_path, task_id):
     """Get the quantized model path from task log.
 
     Args:
         log_path (str): log path for task
+        task_id: the id of task
 
     Returns:
         str: quantized model path
@@ -241,5 +242,8 @@ def get_q_model_path(log_path):
         match = re.search(r"(Save quantized model to|Save config file and weights of quantized model to) (.+?)\.", line)
         if match:
             q_model_path = match.group(2)
+            match_task_id = re.search(r"(.+/task_workspace/{}/[^/]+)".format(task_id), q_model_path)
+            if match_task_id:
+                q_model_path = match_task_id.group()
             return q_model_path
     return "quantized model path not found"

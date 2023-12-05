@@ -17,7 +17,7 @@ from datasets import load_dataset
 #from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
 from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
 from neural_compressor import quantization, PostTrainingQuantConfig
-from evaluation import evaluate as lm_evaluate
+from evaluation.lm_eval import evaluate as lm_evaluate
 
 @torch.no_grad()
 def eval_ppl_with_gptq(model, test_dataloader, dev):
@@ -57,6 +57,13 @@ class INCDataloader(object):
 
     def __iter__(self):
         pass
+
+def filter_chatglmv1(seq):
+    bos_token_id = 130004
+    # eos_token_id = 130005
+    gmask_token_id = 130001
+    # return (bos_token_id in seq and eos_token_id in seq and mask_token_id in seq and gmask_token_id in seq)
+    return (len(seq) < 2048 and bos_token_id in seq and gmask_token_id in seq)
 
 # INC original dataloader example
 class Evaluator:
@@ -217,9 +224,9 @@ if __name__ == '__main__':
     # model
     if re.search("chatglm", args.model_name_or_path.lower()): # chatglm requires a different way to be loaded
         tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, trust_remote_code=True)
-        model = AutoModel.from_pretrained(args.model_name_or_path, trust_remote_code=True)
+        model = AutoModel.from_pretrained(args.model_name_or_path, trust_remote_code=True).float().cpu()
     else:
-        tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
+        tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True, trust_remote_code=True)
         model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, low_cpu_mem_usage=True, trust_remote_code=True)
     model = model.eval()
 
@@ -227,12 +234,20 @@ if __name__ == '__main__':
     # calib_dataset = datasets.load_from_disk('/your/local/pile-10k/') # use this if trouble with connecting to HF
     calib_dataset = calib_dataset.shuffle(seed=args.seed)
     calib_evaluator = Evaluator(calib_dataset, tokenizer, args.calib_size, is_calib=True)
-    calib_dataloader = DataLoader(
-        calib_evaluator.dataset,
-        batch_size=args.calib_size,
-        shuffle=False,
-        collate_fn=calib_evaluator.collate_batch,
-    )
+    if hasattr(model.config, "_name_or_path") and "chatglm-6b" in model.config._name_or_path:
+        calib_dataloader = DataLoader(
+            calib_evaluator.dataset.filter(lambda example: filter_chatglmv1(example['input_ids'])),
+            batch_size=args.calib_size,
+            shuffle=False,
+            collate_fn=calib_evaluator.collate_batch,
+        )
+    else:
+        calib_dataloader = DataLoader(
+            calib_evaluator.dataset,
+            batch_size=args.calib_size,
+            shuffle=False,
+            collate_fn=calib_evaluator.collate_batch,
+        )
 
     if args.gpu and torch.cuda.is_available():
         DEV = torch.device('cuda:0')
@@ -294,7 +309,8 @@ if __name__ == '__main__':
         dataloader=calib_dataloader, 
         nsamples = args.nsamples, 
         use_max_length = args.use_max_length,
-        pad_max_length = args.pad_max_length
+        pad_max_length = args.pad_max_length,
+        device = DEV,
     )
 
     results = lm_evaluate(

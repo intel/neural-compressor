@@ -30,7 +30,7 @@ steps:
 
   - script: |
       docker exec ${{ parameters.utContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-      && bash install_nc.sh \
+      && bash install_nc.sh ${{ parameters.utScriptFileName }} \
       && bash ut/${{ parameters.utScriptFileName }}.sh ${{ parameters.utTestMode }}"
     displayName: "Run UT"
 

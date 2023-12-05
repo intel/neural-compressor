@@ -16,11 +16,13 @@
 #  limitations under the License.
 """Helper classes or functions for onnxrt adaptor."""
 
+import importlib
 import os
 from enum import Enum
 
 import numpy as np
 
+from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
 
 helper = LazyImport("onnx.helper")
@@ -570,6 +572,12 @@ def trt_env_setup(model):
 def to_numpy(data):
     """Convert to numpy ndarrays."""
     if not isinstance(data, np.ndarray):
+        if not importlib.util.find_spec("torch"):
+            logger.error(
+                "Please install torch to enable subsequent data type check and conversion, "
+                "or reorganize your data format to numpy array."
+            )
+            exit(0)
         if isinstance(data, torch.Tensor):
             if data.dtype is torch.bfloat16:  # pragma: no cover
                 return data.detach().cpu().to(torch.float32).numpy()

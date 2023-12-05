@@ -15,8 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Common Postprocess."""
+from deprecated import deprecated
 
 
+@deprecated(version="2.0")
 class Postprocess(object):
     # class Transform(object):
     """Just collect the infos to construct a Postprocess."""

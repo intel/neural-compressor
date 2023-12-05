@@ -31,6 +31,61 @@ tqdm = LazyImport("tqdm")
 torch = LazyImport("torch")
 
 
+def move_input_device(input, device="cpu"):
+    """Auto mapping input to device for all kinds of format.
+
+    Args:
+        input (torch.tensor): input data
+        device (str, optional): target device. Defaults to "cpu".
+
+    Returns:
+        input (torch.tensor): input data on target device
+    """
+    if device == "cpu":
+        return input
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        tmp_input = {}
+        for k, inp in input.items():
+            tmp_input[k] = move_input_device(inp, device)
+        input = tmp_input
+    elif isinstance(input, list) or isinstance(input, tuple):
+        tmp_input = []
+        for inp in input:
+            tmp_input.append(move_input_device(inp, device))
+        input = tmp_input
+    elif isinstance(input, torch.Tensor):
+        input = input.to(device)  # pylint: disable=no-member
+    return input
+
+
+def forward_wrapper(model, input):
+    """Model forward with device auto mapping.
+
+    Args:
+        model (torch.nn.Module): input model
+        input (torch.tensor): input data
+
+    Returns:
+        output: output data
+    """
+    try:
+        device = next(model.parameters()).device
+    except:
+        # for RecursiveScriptModule
+        device = "cpu"
+    input = move_input_device(input, device)
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        output = model(**input)
+    elif isinstance(input, list) or isinstance(input, tuple):
+        try:
+            output = model(*input)
+        except:
+            output = model(input)
+    else:
+        output = model(input)
+    return output
+
+
 def get_embedding_contiguous(model):
     """This is a helper function for nn.Embedding, and it will get input contiguous.
 
@@ -151,7 +206,7 @@ def append_attr(fx_model, model, fx_white_list=[]):
     return fx_model
 
 
-def generate_activation_observer(scheme, algorithm):  # pragma: no cover
+def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False):  # pragma: no cover
     """This is a helper method to generate an activation observer.
 
     Args:
@@ -179,6 +234,46 @@ def generate_activation_observer(scheme, algorithm):  # pragma: no cover
         "quant_min": 0,
         "quant_max": 255,
     }
+    smoothquant_kl_activation_observer = {
+        "name": "SmoothQuantActivationObserver",
+        "smooth_quant_enabled": smooth_quant_enable,
+        "dtype": "torch.quint8",
+        "qscheme": "torch.per_tensor_affine",
+        "reduce_range": False,
+        "quant_min": 0,
+        "quant_max": 255,
+        "alpha": 0.5,
+        "act_observer": kl_activation_observer,
+        "act_ic_observer": {
+            "name": "PerChannelMinMaxObserver",
+            "ch_axis": -1,
+            "dtype": "torch.quint8",
+            "qscheme": "torch.per_channel_affine",
+            "reduce_range": False,
+            "quant_min": 0,
+            "quant_max": 255,
+        },
+    }
+    smoothquant_minmax_activation_observer = {
+        "name": "SmoothQuantActivationObserver",
+        "smooth_quant_enabled": smooth_quant_enable,
+        "dtype": "torch.quint8",
+        "qscheme": "torch.per_tensor_affine",
+        "reduce_range": False,
+        "quant_min": 0,
+        "quant_max": 255,
+        "alpha": 0.5,
+        "act_observer": minmax_activation_observer,
+        "act_ic_observer": {
+            "name": "PerChannelMinMaxObserver",
+            "ch_axis": -1,
+            "dtype": "torch.quint8",
+            "qscheme": "torch.per_channel_affine",
+            "reduce_range": False,
+            "quant_min": 0,
+            "quant_max": 255,
+        },
+    }
     REDUCE_RANGE = False if CpuInfo().vnni else True
     if REDUCE_RANGE:
         minmax_activation_observer["reduce_range"] = REDUCE_RANGE
@@ -192,13 +287,21 @@ def generate_activation_observer(scheme, algorithm):  # pragma: no cover
         kl_activation_observer["dtype"] = "torch.qint8"
         kl_activation_observer["quant_min"] = -128
         kl_activation_observer["quant_max"] = 127
-    if algorithm == "kl":
-        return kl_activation_observer
-    if algorithm == "minmax":
-        return minmax_activation_observer
+    if smooth_quant and smooth_quant_enable:
+        if algorithm == "kl":
+            return smoothquant_kl_activation_observer
+        if algorithm == "minmax":
+            return smoothquant_minmax_activation_observer
+    else:
+        if algorithm == "kl":
+            return kl_activation_observer
+        if algorithm == "minmax":
+            return minmax_activation_observer
 
 
-def check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name):  # pragma: no cover
+def check_cfg_and_qconfig(
+    tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name, smooth_quant=False
+):  # pragma: no cover
     """Check configs and quantization configs.
 
     Args:
@@ -228,11 +331,21 @@ def check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
                         inc_scheme = inc_op_cfg["activation"]["scheme"]
                         inc_algorithm = inc_op_cfg["activation"]["algorithm"]
                         ipex_op_cfg["input_tensor_infos"] = input_tensor_infos
-                        activation_observer = generate_activation_observer(inc_scheme, inc_algorithm)
-                        if inc_scheme == "sym":
-                            input_tensor_infos[index]["force_dtype"] = "torch.qint8"
-                        if inc_scheme == "asym":
-                            input_tensor_infos[index]["force_dtype"] = "torch.quint8"
+                        if (
+                            "op_type" in ipex_op_cfg
+                            and ipex_op_cfg["op_type"] == "<class 'torch.nn.modules.linear.Linear'>"
+                        ):
+                            smooth_quant_enable = True
+                        else:
+                            smooth_quant_enable = False
+                        activation_observer = generate_activation_observer(
+                            inc_scheme, inc_algorithm, smooth_quant, smooth_quant_enable
+                        )
+                        if not smooth_quant:
+                            if inc_scheme == "sym":
+                                input_tensor_infos[index]["force_dtype"] = "torch.qint8"
+                            if inc_scheme == "asym":
+                                input_tensor_infos[index]["force_dtype"] = "torch.quint8"
                         ipex_op_cfg["activation_observer"] = activation_observer
                     # int8 -> fp32
                     else:
@@ -397,7 +510,7 @@ def update_sq_scale(ipex_config_path, smoothquant_scale_info):
                 for op_num, v1 in v["q_op_infos"].items():
                     # update alpha data instead of updating weight scale
                     op_name = v1["fqn"]  # fqn always exists even it's empty.
-                    if op_name in smoothquant_scale_info:
+                    if op_name in smoothquant_scale_info and v1["op_type_is_module"]:
                         input_scale_for_mul = smoothquant_scale_info[op_name]["input_scale_for_mul"].tolist()
                         input_scale_after_mul = smoothquant_scale_info[op_name]["input_scale_after_mul"].tolist()
                         input_zero_point_after_mul = smoothquant_scale_info[op_name][
@@ -405,69 +518,12 @@ def update_sq_scale(ipex_config_path, smoothquant_scale_info):
                         ].tolist()
                         weight_scale_for_mul = (1 / smoothquant_scale_info[op_name]["input_scale_for_mul"]).tolist()
                         weight_scale_after_mul = smoothquant_scale_info[op_name]["weight_scale_after_mul"].tolist()
-                        v1["input_tensor_infos"][0]["smooth_quant_scaling_factor"] = input_scale_for_mul
                         v1["input_tensor_infos"][0]["scale"] = input_scale_after_mul
                         v1["input_tensor_infos"][0]["zero_point"] = input_zero_point_after_mul
+                        v1["input_tensor_infos"][0]["smooth_quant_scaling_factor"] = input_scale_for_mul
                         v1["weight_tensor_infos"][0]["smooth_quant_scaling_factor"] = weight_scale_for_mul
                         v1["weight_tensor_infos"][0]["scale"] = weight_scale_after_mul
                         # # observers were overridden by the fallback step, setting it back.
-                        v1["activation_observer"] = {
-                            "name": "SmoothQuantActivationObserver",
-                            "smooth_quant_enabled": True,
-                            "dtype": "torch.quint8",
-                            "qscheme": "torch.per_tensor_affine",
-                            "reduce_range": False,
-                            "quant_min": 0,
-                            "quant_max": 255,
-                            "alpha": smoothquant_scale_info[op_name]["alpha"],
-                            "act_observer": {
-                                "name": "HistogramObserver",
-                                "bins": 2048,
-                                "upsample_rate": 128,
-                                "dtype": "torch.quint8",
-                                "qscheme": "torch.per_tensor_affine",
-                                "reduce_range": False,
-                                "quant_min": 0,
-                                "quant_max": 255,
-                            },
-                            "act_ic_observer": {
-                                "name": "PerChannelMinMaxObserver",
-                                "ch_axis": -1,
-                                "dtype": "torch.quint8",
-                                "qscheme": "torch.per_channel_affine",
-                                "reduce_range": False,
-                                "quant_min": 0,
-                                "quant_max": 255,
-                            },
-                        }
-                        v1["weight_observer"] = {
-                            "name": "SmoothQuantWeightObserver",
-                            "smooth_quant_enabled": True,
-                            "dtype": "torch.qint8",
-                            "qscheme": "torch.per_channel_symmetric",
-                            "reduce_range": False,
-                            "quant_min": -128,
-                            "quant_max": 127,
-                            "alpha": smoothquant_scale_info[op_name]["alpha"],
-                            "wei_observer": {
-                                "name": "PerChannelMinMaxObserver",
-                                "ch_axis": 0,
-                                "dtype": "torch.qint8",
-                                "qscheme": "torch.per_channel_symmetric",
-                                "reduce_range": False,
-                                "quant_min": -128,
-                                "quant_max": 127,
-                            },
-                            "wei_ic_observer": {
-                                "name": "PerChannelMinMaxObserver",
-                                "ch_axis": 1,
-                                "dtype": "torch.qint8",
-                                "qscheme": "torch.per_channel_affine",
-                                "reduce_range": False,
-                                "quant_min": -128,
-                                "quant_max": 127,
-                            },
-                        }
         f.close()
     # overwrite ipex_config_path
     with open(ipex_config_path, "w") as f1:

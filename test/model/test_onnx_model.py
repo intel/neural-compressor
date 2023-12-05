@@ -193,7 +193,9 @@ class TestOnnxModel(unittest.TestCase):
         model = onnx.helper.make_model(graph, **{"opset_imports": [onnx.helper.make_opsetid("", 14)]})
         self.matmul_reshape_model = model
 
-        cmd = "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation gptj/"
+        cmd = (
+            "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation --legacy gptj/"
+        )
         p = subprocess.Popen(
             cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
         )  # nosec
@@ -216,7 +218,7 @@ class TestOnnxModel(unittest.TestCase):
 
         config = AutoConfig.from_pretrained("hf_test")
         sessions = ORTModelForCausalLM.load_model("hf_test/decoder_model.onnx")
-        model = ORTModelForCausalLM(sessions[0], config, "hf_test", use_cache=False, use_io_binding=False)
+        model = ORTModelForCausalLM(sessions, config, model_save_dir="hf_test", use_cache=False, use_io_binding=False)
         self.assertNotEqual(model, None)
 
     def test_nodes(self):
@@ -431,14 +433,17 @@ class TestOnnxModel(unittest.TestCase):
             torch.onnx.export(model, (input,), "model.onnx", do_constant_folding=True, opset_version=13)
         model = onnx.load("model.onnx")
         model = ONNXModel(model)  # pass ModelProto
-        self.assertTrue(model.check_large_model())
+        model.check_is_large_model()
+        self.assertTrue(model.is_large_model)
 
         model = ONNXModel("model.onnx")  # pass string
-        self.assertTrue(model.check_large_model())
+        model.check_is_large_model()
+        self.assertTrue(model.is_large_model)
 
         model = onnx.load("model.onnx", load_external_data=False)  # not load init
         model = ONNXModel(model)
-        self.assertTrue(model.check_large_model())
+        model.check_is_large_model()
+        self.assertTrue(model.is_large_model)
 
         # model < 2GB
         model = Net(10, 10 * 10)
@@ -447,13 +452,16 @@ class TestOnnxModel(unittest.TestCase):
             torch.onnx.export(model, (input,), "model.onnx", do_constant_folding=True, opset_version=13)
         model = onnx.load("model.onnx")
         model = ONNXModel(model)  # pass ModelProto
-        self.assertFalse(model.check_large_model())
+        model.check_is_large_model()
+        self.assertFalse(model.is_large_model)
 
         model = ONNXModel("model.onnx")  # pass string
-        self.assertFalse(model.check_large_model())
+        model.check_is_large_model()
+        self.assertFalse(model.is_large_model)
 
         model = ONNXModel("model.onnx", load_external_data_for_model=False)  # not load init
-        self.assertFalse(model.check_large_model())
+        model.check_is_large_model()
+        self.assertFalse(model.is_large_model)
 
 
 if __name__ == "__main__":

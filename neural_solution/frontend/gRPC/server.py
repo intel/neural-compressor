@@ -148,6 +148,6 @@ if __name__ == "__main__":
     config.result_monitor_port = args.result_monitor_port
     config.task_monitor_port = args.task_monitor_port
     # initialize the task submitter
-    task_submitter.task_monitor_port = config.task_monitor_portq
+    task_submitter.task_monitor_port = config.task_monitor_port
     task_submitter.result_monitor_port = config.result_monitor_port
     serve()

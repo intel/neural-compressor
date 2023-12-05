@@ -22,7 +22,7 @@ from neural_compressor.adaptor.ox_utils.operators.ops import Operator, QOperator
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
 
 
-@op_registry(op_types="Gather")
+@op_registry(op_types="Gather, GatherElements, GatherND")
 class GatherOperator(Operator):
     """Gather Operator."""
 
