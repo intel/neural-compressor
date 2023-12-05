@@ -846,7 +846,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     postfix = "_eightbit_quantized_conv3d"
                 quantized_node_name = node.name + postfix
                 quantized_conv_node = helper.create_node(
-                    "_FusedQuantizedConv3D" if self.per_channel else "_FusedQuantizedConv3D",
+                    "_FusedQuantizedConv3D",
                     quantized_node_name,
                     all_input_names,
                 )
