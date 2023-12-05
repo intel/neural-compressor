@@ -29,6 +29,10 @@ parser.add_argument(
     action="store_true",
     help="By default it is int8-fp32 mixed, to enable int8 mixed amp bf16 (work on platforms like SPR)",
 )
+parser.add_argument(
+    '--seed',
+    type=int, default=42, help='Seed for sampling the calibration data.'
+)
 parser.add_argument("--approach", type=str, default='static', 
                     help="Select from ['dynamic', 'static', 'weight-only']")
 parser.add_argument("--int8", action="store_true")
@@ -69,6 +73,8 @@ parser.add_argument('--gptq_use_max_length', action="store_true", help='Set all 
 parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calibration dataset sequence max length, \
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
+parser.add_argument('--gptq_debug', action='store_true', help='Whether to use debug model ')
+parser.add_argument('--gptq_gpu', action='store_true', help='Whether to use gpu')
 # =======================================
 
 args = parser.parse_args()
@@ -110,7 +116,8 @@ class Evaluator:
             pad_len = self.pad_max - input_ids.shape[0]
             last_ind.append(input_ids.shape[0] - 1)
             if self.is_calib:
-                input_ids = input_ids[:self.pad_max] if len(input_ids) > self.pad_max else input_ids
+                if args.woq_algo != 'GPTQ':
+                    input_ids = input_ids[:self.pad_max] if len(input_ids) > self.pad_max else input_ids
             else:
                 input_ids = pad(input_ids, (0, pad_len), value=self.pad_val)
             input_ids_padded.append(input_ids)
@@ -185,7 +192,7 @@ if args.quantize:
     user_model, tokenizer = get_user_model()
     calib_dataset = load_dataset(args.dataset, split="train")
     # calib_dataset = datasets.load_from_disk('/your/local/dataset/pile-10k/') # use this if trouble with connecting to HF
-    calib_dataset = calib_dataset.shuffle(seed=42)
+    calib_dataset = calib_dataset.shuffle(seed=args.seed)
     calib_evaluator = Evaluator(calib_dataset, tokenizer, args.batch_size, pad_max=args.pad_max_length, is_calib=True)
     calib_dataloader = DataLoader(
         calib_evaluator.dataset,
@@ -228,7 +235,8 @@ if args.quantize:
                 'act_order':args.gptq_actorder, 
                 'block_size': args.gptq_block_size, 
                 'nsamples': args.gptq_nsamples, 
-                'use_max_length': args.gptq_use_max_length
+                'use_max_length': args.gptq_use_max_length,
+                'pad_max_length': args.gptq_pad_max_length
             }
         # GPTQ: use assistive functions to modify calib_dataloader and calib_func
         # TEQ: set calib_func=None, use default training func as calib_func
@@ -241,6 +249,35 @@ if args.quantize:
             op_name_dict=op_name_dict,
             recipes=recipes,
         )
+
+        # for test on various models, keep the code of directly call gptq_quantize
+        if args.gptq_debug:
+            from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
+            conf = {
+                ".*":{
+                    'wbits': args.woq_bits, # 1-8 bits 
+                    'group_size': args.woq_group_size,  # -1 (per-channel)
+                    'sym': (args.woq_scheme == "sym"),
+                    'act_order': args.gptq_actorder,
+                }
+            } 
+            q_model_gptq_debug, gptq_config = gptq_quantize(
+                user_model, 
+                weight_config=conf, 
+                dataloader=calib_dataloader, 
+                nsamples = args.gptq_nsamples, 
+                use_max_length = args.gptq_use_max_length,
+                pad_max_length = args.gptq_pad_max_length
+            )
+            from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
+            results = lm_evaluate(
+                model="hf-causal",
+                model_args='pretrained='+args.model+',tokenizer='+args.model+',dtype=float32',
+                user_model=q_model_gptq_debug, tasks=["lambada_openai"],
+                device=DEV.type,
+                batch_size=4
+            )
+
     else:
         if re.search("gpt", user_model.config.model_type):
             op_type_dict = {
