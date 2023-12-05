@@ -9,6 +9,7 @@ try:
     USE_HPEX = True
 except:
     USE_HPEX = False
+    exit()
 import torch
 
 from neural_compressor.common import logger

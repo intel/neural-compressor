@@ -9,16 +9,12 @@ try:
     USE_HPEX = True
 except:
     USE_HPEX = False
+    exit()
 import torch
 
 from neural_compressor.common import logger
 from neural_compressor.torch.quantization import BatchMatmul, Matmul, get_fp8_e4m3_qconfig, get_fp8_e5m2_qconfig
 from neural_compressor.torch.quantization.fp8 import quantize, quantize_dynamic
-
-tmp = torch.ops.hpu.cast_to_fp8_v2(torch.tensor(500).to("hpu"), torch.tensor(1).to("hpu"), False, False)[0]
-
-tmp = torch.ops.hpu.cast_from_fp8(tmp, torch.tensor(1).to("hpu"), torch.float32)
-logger.info(f"max value: {tmp}")
 
 
 class M(torch.nn.Module):
