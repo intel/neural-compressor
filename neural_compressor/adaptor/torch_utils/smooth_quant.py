@@ -1086,6 +1086,7 @@ class TorchSmoothQuant:
         for key in best_alphas.keys():
             logger.info(f"Final alpha {key}:{best_alphas[key]}")
         max_op, max_ratio, max_key = "", 0, ""
+        ratio_info = {}
         for key in self.absorb_to_layer:
             for op_name in self.absorb_to_layer[key]:
                 fp32_norm, loss_ = (
@@ -1096,10 +1097,15 @@ class TorchSmoothQuant:
                 max_op = op_name if ratio > max_ratio else max_op
                 max_key = key if ratio > max_ratio else max_key
                 max_ratio = max(ratio, max_ratio)
+                ratio_info[op_name] = ratio
                 logger.info(
                     f"lyt_debug final loss: {op_name}: {loss_}; \
                     fp32_output norm: {fp32_norm} @alpha {best_alphas[key]}; ratio: {ratio}"
                 )
+        import operator
+        ratio_info = dict(sorted(ratio_info.items(), key=operator.itemgetter(1), reverse=True))
+        for key in list(ratio_info.keys()):
+            logger.info(f"lyt_debug sorted opname-ratio: {key}:  {ratio_info[key]}")
         logger.info(
             f"lyt_debug max loss: {max_op}: {loss_alphas[max_op][str(best_alphas[max_key])]}; \
             fp32_output norm: {torch.sum(torch.stack(self.fp32_output_val[max_op]))} @alpha {best_alphas[max_key]}; ratio: {max_ratio}"
