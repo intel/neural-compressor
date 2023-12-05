@@ -486,7 +486,7 @@
     "unet": {
       "model_src_dir": "image_recognition/unet/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
-      "input_model": "/tf_dataset2/models/onnx/unet/model.onnx",
+      "input_model": "/tf_dataset2/models/onnx/unet/unet-export.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
