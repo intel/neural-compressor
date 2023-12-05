@@ -1121,7 +1121,7 @@ class TorchSmoothQuant:
         auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
         weight_clip=True,
         default_alpha=0.5,
-        do_blockwise=False
+        do_blockwise=False,
     ):
         """The main entry of smooth quant
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer

@@ -1786,8 +1786,7 @@ class TemplateAdaptor(Adaptor):
             weight_clip=weight_clip,
             default_alpha=default_alpha,
             auto_alpha_args=auto_alpha_args,
-            do_blockwise=do_blockwise
-            **kwargs,
+            do_blockwise=do_blockwise**kwargs,
         )
         if self.sq.record_max_info:
             model.sq_max_info = self.sq.max_value_info

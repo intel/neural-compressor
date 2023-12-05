@@ -958,8 +958,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 "default_alpha", 0.5
             )  # default value for alpha in auto-tuning
             sq_algo.do_blockwise = smooth_quant_args.get(
-                'do_blockwise', False
-            ) # By default, do_blockwise is set to False.
+                "do_blockwise", False
+            )  # By default, do_blockwise is set to False.
             logger.debug(f"Set smooth quant with alpha {sq_algo.alpha} as the pre-tuning algo.")
             algo_scheduler.append_algorithm("pre_quantization", sq_algo)
 
