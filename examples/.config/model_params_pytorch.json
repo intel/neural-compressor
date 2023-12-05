@@ -450,13 +450,6 @@
       "main_script": "run_clm.py",
       "batch_size": 8
     },
-    "gpt_j_wikitext_weight_only":{
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_weight_only",
-      "dataset_location": "",
-      "input_model": "/tf_dataset2/models/pytorch/gpt-j-6B",
-      "main_script": "run_clm.py",
-      "batch_size": 8
-    },
     "gpt_neox":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new/oscar",
