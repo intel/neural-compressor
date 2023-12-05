@@ -1103,6 +1103,7 @@ class TorchSmoothQuant:
                     fp32_output norm: {fp32_norm} @alpha {best_alphas[key]}; ratio: {ratio}"
                 )
         import operator
+
         ratio_info = dict(sorted(ratio_info.items(), key=operator.itemgetter(1), reverse=True))
         for key in list(ratio_info.keys()):
             logger.info(f"lyt_debug sorted opname-ratio: {key}:  {ratio_info[key]}")
