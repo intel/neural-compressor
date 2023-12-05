@@ -1051,7 +1051,7 @@ class ONNXModel(BaseModel):
                 logger.error(
                     "Shape infer fails for layer-wise quantization. "
                     "We would recommend checking the graph optimization level of your model "
-                    "and setting it to levels 'DISABLE_ALL' and 'ENABLE_BASIC', "
+                    "and setting it to 'DISABLE_ALL' or 'ENABLE_BASIC', "
                     "as this may help avoid this error."
                 )
                 raise e
