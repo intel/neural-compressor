@@ -1790,7 +1790,7 @@
     "gpt-j-6B": {
       "model_src_dir": "nlp/large_language_models/quantization/ptq/gpt-j",
       "dataset_location": "",
-      "input_model": "",
+      "input_model": "/tf_dataset2/models/tensorflow/gpt-j-6B",
       "main_script": "main.py",
       "batch_size": 1
     },

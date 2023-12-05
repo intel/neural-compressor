@@ -14,30 +14,34 @@ pip install neural-compressor
 pip install -r requirements
 ```
 
-## 2. Prepare Dataset and Model
-The dataset and model will be loaded when applying quantization.
+## 2. Prepare Pretrained model
+Run the follow script to download gpt-j-6B saved_model to ```./gpt-j-6B```: 
+ ```
+bash prepare_model.sh
+ ```
+
+## 3. Prepare Dataset
+The dataset will be automatically loaded.
 
 ## Run
 
 ### Smooth Quantization
 
-
 ```shell
-bash run_quant.sh --fp32_path=/path/to/save/fp32/model --output_model=/path/to/save/int8/model
+bash run_quant.sh --input_model=<FP32_MODEL_PATH> --output_model=<INT8_MODEL_PATH>
 ```
-The fp32 gpt-j-6B model will be loaded to the ```fp32_path``` as is set.
 
-## Benchmark
+### Benchmark
 
-### Evaluate performance
+#### Evaluate Performance
 
 ```shell
 bash run_benchmark.sh --input_model=<MODEL_PATH> --mode=benchmark
 ```
 
-### Evaluate accuracy
+#### Evaluate Accuracy
 
 ```shell
-bash run_benchmark.sh --input_model=<MODEL_PATH> --mode=benchmark
+bash run_benchmark.sh --input_model=<MODEL_PATH> --mode=accuracy
 ```
 

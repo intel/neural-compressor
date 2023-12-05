@@ -118,11 +118,11 @@ class RunningArguments:
     Arguments for options of running.
     """
 
-    fp32_path: Optional[str] = field(
+    input_model: Optional[str] = field(
         default="./gpt-j-6B",
         metadata={
             "help": (
-                "The path to load gpt-j-6B fp32 model."
+                "The path of input model."
             )
         },
     )
@@ -131,14 +131,6 @@ class RunningArguments:
         metadata={
             "help": (
                 "The path save quantized gpt-j-6B int8 model."
-            )
-        },
-    )
-    input_model: Optional[str] = field(
-        default="./gpt-j-6B",
-        metadata={
-            "help": (
-                "The input model path for running benchmark."
             )
         },
     )
@@ -325,14 +317,14 @@ def main():
     with train_args.strategy.scope():
         options = tf.data.Options()
         options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
-        saved_model_path = run_args.fp32_path + "/saved_model/1"
         from neural_compressor import Model
+        model = Model(run_args.input_model, modelType='llm_saved_model')
+
         if run_args.tune:
             from neural_compressor.config import AccuracyCriterion
             from neural_compressor import quantization, PostTrainingQuantConfig
 
             calib_dataloader = MyDataloader(mydata, batch_size=run_args.batch_size)  
-            # recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': 0.491}}
             recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': 0.52705}}
             conf = PostTrainingQuantConfig(quant_level=1, 
                                             excluded_precisions=["bf16"],##use basic tuning
@@ -341,7 +333,6 @@ def main():
                                             accuracy_criterion=AccuracyCriterion()
                                             )
             
-            model = Model(saved_model_path, modelType='llm_saved_model')
             model.weight_name_mapping = weight_name_mapping
             q_model = quantization.fit( model,
                                         conf,
@@ -353,18 +344,13 @@ def main():
             if run_args.mode == "performance":
                 from neural_compressor.benchmark import fit
                 from neural_compressor.config import BenchmarkConfig
-                model = Model(saved_model_path, modelType='llm_saved_model')
                 conf = BenchmarkConfig(warmup=10, iteration=run_args.iteration, cores_per_instance=4, num_of_instance=1)
                 fit(model, conf, b_func=evaluate)
             elif run_args.mode == "accuracy":
-                acc_result = evaluate(run_args.input_graph)
+                acc_result = evaluate(model.model)
                 print("Batch size = %d" % run_args.batch_size)
                 print("Accuracy: %.5f" % acc_result)
 
 if __name__ == "__main__":
-    if not (os.path.exists(run_args.fp32_path) and len(os.listdir(run_args.fp32_path)) != 0):
-        tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-j-6B")
-        model = TFAutoModelForCausalLM.from_pretrained("EleutherAI/gpt-j-6B")
-        model.save_pretrained(run_args.fp32_path, saved_model=True)
-
     main()
+    
