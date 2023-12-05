@@ -101,41 +101,22 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", grad=0, min_s
 
         weight = quant_weight_actor(weight, num_bits, scheme=scheme, grad=grad, min_scale=min_scale,
                                     max_scale=max_scale)
-
         weight = weight.reshape(orig_shape)
-
         return weight
-    else:
-        split_index = weight.shape[1] // group_size * group_size
-        weight1 = weight[:, :split_index]
-        weight1 = weight1.reshape(-1, group_size)
+
+    elif True:
+        pad_len = (weight.shape[1] + group_size - 1) // group_size * group_size - weight.shape[1]
+        weight_new = torch.nn.functional.pad(weight, (0, pad_len))
+        grad = torch.nn.functional.pad(grad, (0, pad_len))
+        weight_new = weight_new.reshape(-1, group_size)
         if isinstance(grad, torch.Tensor):
-            grad1 = grad[:, :split_index]
-            grad1 = grad1.reshape(-1, group_size)
-            grad2 = grad[:, split_index:]
-        else:
-            grad1 = 0
-            grad2 = 0
-        if isinstance(min_scale, torch.Tensor):
-            min_scale_1 = min_scale[:, :weight.shape[1] // group_size]
-            min_scale_2 = min_scale[:, weight.shape[1] // group_size:]
-            max_scale_1 = max_scale[:, :weight.shape[1] // group_size]
-            max_scale_2 = max_scale[:, weight.shape[1] // group_size:]
-        else:
-            min_scale_1 = min_scale
-            min_scale_2 = min_scale
-            max_scale_1 = max_scale
-            max_scale_2 = max_scale
+            grad = grad.reshape(-1, group_size)
+        weight_new = quant_weight_actor(weight_new, num_bits, scheme=scheme, grad=grad, min_scale=min_scale,
+                                        max_scale=max_scale)
+        weight_new = weight_new.reshape(orig_shape[0], -1)
 
-        weight1 = quant_weight_actor(weight1, num_bits, scheme=scheme, grad=grad1, min_scale=min_scale_1,
-                                     max_scale=max_scale_1)
-        weight1 = weight1.reshape(orig_shape[0], split_index)
-        weight2 = weight[:, split_index:]
-        weight2 = quant_weight_actor(weight2, num_bits, scheme=scheme, grad=grad2, min_scale=min_scale_2,
-                                     max_scale=max_scale_2)
-        weight = torch.cat([weight1, weight2], dim=1)
-
-        return weight
+        weight_new = weight_new[:, :-pad_len]
+        return weight_new
 
 
 class SaveInputs:
@@ -199,8 +180,8 @@ class SaveInputs:
         for data in self.dataloader:
             if data is None:
                 continue
-
             input_ids = data["input_ids"].to(self.model.device)
+            # input_ids = data.to(self.model.device)
             if input_ids.shape[-1] < self.seqlen:
                 continue
             if total_cnt + input_ids.shape[0] > n_samples:
@@ -313,7 +294,6 @@ class WrapperLinear(torch.nn.Module):
         else:
             self.min_scale = torch.tensor(0, device=self.orig_layer.weight.device)
             self.max_scale = torch.tensor(0, device=self.orig_layer.weight.device)
-
 
     def forward(self, x):
         weight = self.orig_layer.weight
@@ -730,7 +710,59 @@ class OPTRoundQuantizer(object):
         calib_dataset = calib_dataset.map(self.default_tokenize_function, batched=True)
         calib_dataset.set_format(type="torch", columns=["input_ids"])
         calib_dataloader = DataLoader(calib_dataset, batch_size=self.train_bs, shuffle=False, collate_fn=collate_batch)
+
         return calib_dataloader
+
+    # def get_default_dataloader(self, data_name="NeelNanda/pile-10k"):
+    #     from datasets import load_dataset
+    #     from torch.utils.data import DataLoader
+    #
+    #     # @torch.no_grad()
+    #     # def collate_batch(batch):
+    #     #     input_ids_new = []
+    #     #     for text in batch:
+    #     #         input_ids = text["input_ids"]
+    #     #         if input_ids.shape[0] < seqlen:
+    #     #             continue
+    #     #         input_ids = input_ids[:seqlen]
+    #     #         input_ids_list = input_ids.tolist()
+    #     #         if input_ids_list.count(input_ids_list[-1]) > seqlen // 2:
+    #     #             continue
+    #     #         input_ids_new.append(input_ids)
+    #     #     if len(input_ids_new) == 0:
+    #     #         return None
+    #     #     tmp = torch.vstack(input_ids_new)
+    #     #     res = {"input_ids": tmp}
+    #     #     return res
+    #
+    #     seqlen = self.seqlen
+    #     calib_dataset = load_dataset(data_name, split=self.dataset_split).shuffle(seed=self.seed)
+    #     samples = []
+    #     cnt = 0
+    #     tmp_samples = []
+    #     for data in calib_dataset:
+    #         line = data["text"]
+    #         line = line.strip()
+    #         line_tokenized = self.tokenizer.encode(line)
+    #         if len(line_tokenized) < self.seqlen:
+    #             continue
+    #         # import random
+    #         # index = random.randint(0, len(line_encoded) - seqlen)
+    #         index = 0  ##TODO change to random later
+    #         sample = line_tokenized[index:index + self.seqlen]
+    #         if sample.count(sample[-1]) > seqlen // 2:
+    #             continue
+    #         sample = torch.tensor(sample)
+    #         cnt += 1
+    #         tmp_samples.append(sample)
+    #         if cnt % self.train_bs == 0:
+    #             tmp = torch.vstack(tmp_samples)
+    #             samples.append(tmp)
+    #             tmp_samples = []
+    #         if cnt >= self.n_samples:
+    #             break
+    #
+    #     return samples
 
     def get_batch_dim(self, input_others):
         dim = int(len(input_others["positional_inputs"]) > 0)
@@ -855,7 +887,7 @@ class OPTRoundQuantizer(object):
                 else:
                     loss = mse_loss(output_q, current_output)
                 total_loss += (
-                            loss.item() / self.gradient_accumulate_steps)  ##TODO gradient accumulate step for other optimizer
+                        loss.item() / self.gradient_accumulate_steps)  ##TODO gradient accumulate step for other optimizer
                 loss.backward()
 
             if total_loss < best_loss:
