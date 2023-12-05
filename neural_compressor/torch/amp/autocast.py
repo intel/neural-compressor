@@ -18,8 +18,6 @@ from typing import Any, Optional
 import torch
 from torch.types import _dtype
 
-from neural_compressor.torch.dtype import float8_e4m3, float8_e5m2
-
 
 class autocast:
     r"""Instances of :class:`autocast` serve as context managers or decorators that
@@ -77,11 +75,14 @@ class autocast:
             self.fast_dtype = dtype
         if cache_enabled is not None:
             self._cache_enabled = cache_enabled
-        if not (device_type == "hpu" and dtype in [float8_e4m3, float8_e5m2]) or self.global_dtype is not None:
+        if (
+            not (device_type == "hpu" and dtype in [torch.float8_e4m3fn, torch.float8_e5m2])
+            or self.global_dtype is not None
+        ):
             self._autocast = torch.autocast(device_type, dtype, enabled, cache_enabled)
 
     def __enter__(self) -> None:
-        if self.device == "hpu" and self.fast_dtype in [float8_e4m3, float8_e5m2]:
+        if self.device == "hpu" and self.fast_dtype in [torch.float8_e4m3, torch.float8_e5m2]:
             if self.global_dtype is not None:
                 org_dtype = self.fast_dtype
                 self.fast_dtype = self.global_dtype
@@ -95,7 +96,7 @@ class autocast:
             self._autocast.__enter__()
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
-        if self.device == "hpu" and self.fast_dtype in [float8_e4m3, float8_e5m2]:
+        if self.device == "hpu" and self.fast_dtype in [torch.float8_e4m3, torch.float8_e5m2]:
             from neural_compressor.torch.amp.modules.fp8_functions import recover_func
 
             # This function will recover F.linear and torch.matmul with the original one

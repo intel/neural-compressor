@@ -206,11 +206,10 @@ if args.generate:
     eval_start = time.perf_counter()
     if args.approach == "cast":
         from neural_compressor.torch.amp import autocast
-        from neural_compressor.torch.dtype import float8_e4m3, float8_e5m2
         if args.precision == "fp8_e4m3":
-            dtype = float8_e4m3
+            dtype = torch.float8_e4m3fn
         elif args.precision == "fp8_e5m2":
-            dtype = float8_e5m2
+            dtype = torch.float8_e5m2
         elif args.precision == "fp16":
             dtype = torch.float16
         elif args.precision == "bf16":
@@ -304,11 +303,10 @@ if args.accuracy:
     eval_start = time.perf_counter()
     if args.approach == "cast":
         from neural_compressor.torch.amp import autocast
-        from neural_compressor.torch.dtype import float8_e4m3, float8_e5m2
         if args.precision == "fp8_e4m3":
-            dtype = float8_e4m3
+            dtype = torch.float8_e4m3fn
         elif args.precision == "fp8_e5m2":
-            dtype = float8_e5m2
+            dtype = torch.float8_e5m2
         elif args.precision == "fp16":
             dtype = torch.float16
         elif args.precision == "bf16":

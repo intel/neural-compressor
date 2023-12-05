@@ -7,7 +7,6 @@ import habana_frameworks.torch.hpex
 import torch
 
 from neural_compressor.common import logger
-from neural_compressor.torch.dtype import float8_e4m3, float8_e5m2
 from neural_compressor.torch.quantization import BatchMatmul, Matmul, get_fp8_e4m3_qconfig, get_fp8_e5m2_qconfig
 from neural_compressor.torch.quantization.fp8 import quantize, quantize_dynamic
 

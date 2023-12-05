@@ -8,12 +8,6 @@ import torch
 
 from neural_compressor.common import logger
 from neural_compressor.torch.amp import autocast
-from neural_compressor.torch.dtype import float8_e4m3, float8_e5m2
-
-tmp = torch.ops.hpu.cast_to_fp8_v2(torch.tensor(500).to("hpu"), torch.tensor(1).to("hpu"), False, False)[0]
-
-tmp = torch.ops.hpu.cast_from_fp8(tmp, torch.tensor(1).to("hpu"), torch.float32)
-logger.info(f"max value: {tmp}")
 
 
 class M(torch.nn.Module):
@@ -51,11 +45,11 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
             bf16_out = m(inp)
             print("BF16 MSE:", (bf16_out - fp32_out).pow(2).sum())
 
-        with autocast("hpu", dtype=float8_e5m2):
+        with autocast("hpu", dtype=torch.float8_e5m2):
             e5m2_out = m(inp)
             print("FP8_E5M2 MSE:", (e5m2_out - fp32_out).pow(2).sum())
 
-        with autocast("hpu", dtype=float8_e4m3):
+        with autocast("hpu", dtype=torch.float8_e4m3fn):
             e4m3_out = m(inp)
             print("FP8_E4M3 MSE:", (e4m3_out - fp32_out).pow(2).sum())
 
@@ -64,11 +58,11 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
-        with autocast("hpu", dtype=float8_e5m2):
+        with autocast("hpu", dtype=torch.float8_e5m2):
             e5m2_out = m(inp)
             print("FP8_E5M2 using amax MSE:", (e5m2_out - fp32_out).pow(2).sum())
 
-        with autocast("hpu", dtype=float8_e4m3):
+        with autocast("hpu", dtype=torch.float8_e4m3fn):
             e4m3_out = m(inp)
             print("FP8_E4M3 using amax MSE:", (e4m3_out - fp32_out).pow(2).sum())
         os.environ.pop("PT_USE_FP8_AMAX", None)
