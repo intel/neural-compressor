@@ -48,7 +48,7 @@ def log_deferred(op, log_id, every_n=1, first_n=None):
   """
 
   prefix = ":::MLPv0.5.0 [{}]".format(log_id)
-  if not first_n is not None and first_n == 1:
+  if first_n is not None and first_n == 1:
     return tf.compat.v1.Print(op, [tf.timestamp(), op], message=prefix, first_n=1)
 
   counter = tf.Variable(tf.zeros(shape=(), dtype=tf.int32) - 1,

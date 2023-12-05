@@ -89,10 +89,42 @@ def build_onnx_model():
     return model
 
 
+def build_onnx_model_with_zero_weight():
+    A = helper.make_tensor_value_info("A", TensorProto.FLOAT, [1, 5, 5])
+    C = helper.make_tensor_value_info("C", TensorProto.FLOAT, [1, 5, 2])
+    H = helper.make_tensor_value_info("H", TensorProto.FLOAT, [1, 5, 2])
+
+    g_value = np.zeros(25).astype(np.float32)
+    G_init = helper.make_tensor("G", TensorProto.FLOAT, [5, 5], g_value.reshape(25).tolist())
+    matmul_node = onnx.helper.make_node("MatMul", ["A", "G"], ["C"], name="Matmul")
+
+    b_value = np.zeros(10).astype(np.float32)
+    B_init = helper.make_tensor("B", TensorProto.FLOAT, [5, 2], b_value.reshape(10).tolist())
+    matmul_node2 = onnx.helper.make_node("MatMul", ["C", "B"], ["I"], name="Matmul2")
+
+    e_value = np.zeros(10).astype(np.float32)
+    E_init = helper.make_tensor("E", TensorProto.FLOAT, [5, 2], e_value.reshape(10).tolist())
+    matmul_node3 = onnx.helper.make_node("MatMul", ["C", "E"], ["K"], name="Matmul3")
+
+    add = onnx.helper.make_node("Add", ["I", "E"], ["D"], name="add")
+
+    f_value = np.zeros(10).astype(np.float32)
+    F_init = helper.make_tensor("F", TensorProto.FLOAT, [5, 2], f_value.reshape(10).tolist())
+    add2 = onnx.helper.make_node("Add", ["D", "F"], ["H"], name="add2")
+
+    graph = helper.make_graph(
+        [matmul_node, matmul_node2, matmul_node3, add, add2], "test_graph_1", [A], [H], [B_init, E_init, F_init, G_init]
+    )
+    model = helper.make_model(graph)
+    model = helper.make_model(graph, **{"opset_imports": [helper.make_opsetid("", 13)]})
+    return model
+
+
 class TestORTSq(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.model = build_onnx_model()
+        self.zero_model = build_onnx_model_with_zero_weight()
         dataset = Datasets("onnxrt_qdq")["dummy_v2"]((5, 5), (5, 1))
         self.dataloader = DATALOADERS["onnxrt_qlinearops"](dataset)
         fixed_dataset = Datasets("onnxrt_qdq")["dummy"](shape=(5, 5, 5), label=True)
@@ -103,6 +135,10 @@ class TestORTSq(unittest.TestCase):
         shutil.rmtree("./nc_workspace", ignore_errors=True)
 
     def test_sq(self):
+        sq = ORTSmoothQuant(copy.deepcopy(self.zero_model), self.dataloader)
+        model = sq.transform(calib_iter=5, scales_per_op=False)
+        self.assertFalse(np.isnan(numpy_helper.to_array(model.model.graph.initializer[5])[0][0]))
+
         sq = ORTSmoothQuant(copy.deepcopy(self.model), self.dataloader)
         model = sq.transform(calib_iter=5, scales_per_op=False)
         self.assertEqual(len([i for i in model.model.graph.node if i.op_type == "Mul"]), 1)
