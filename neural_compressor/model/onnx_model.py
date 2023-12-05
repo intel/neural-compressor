@@ -1048,10 +1048,12 @@ class ONNXModel(BaseModel):
 
                 self._model = infer_shapes(self._model, auto_merge=True, base_dir=os.path.dirname(self._model_path))
             except Exception as e:  # pragma: no cover
-                logger.error("Shape infer fails for layer-wise quantization. "\
-                             "We would recommend checking the graph optimization level of your model " \
-                             "and setting it to levels 'DISABLE_ALL' and 'ENABLE_BASIC', "\
-                             "as this may help avoid this error.")
+                logger.error(
+                    "Shape infer fails for layer-wise quantization. "
+                    "We would recommend checking the graph optimization level of your model "
+                    "and setting it to levels 'DISABLE_ALL' and 'ENABLE_BASIC', "
+                    "as this may help avoid this error."
+                )
                 raise e
 
         split_tensor_type, split_tensor_shape = self._get_output_type_shape_by_tensor_name(split_tensor_name)
