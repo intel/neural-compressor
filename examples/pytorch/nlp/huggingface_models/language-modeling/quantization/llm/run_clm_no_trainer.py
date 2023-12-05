@@ -270,7 +270,7 @@ if args.quantize:
                 pad_max_length = args.gptq_pad_max_length
             )
             from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
-            results = lm_evaluate(
+            results = evaluate(
                 model="hf-causal",
                 model_args='pretrained='+args.model+',tokenizer='+args.model+',dtype=float32',
                 user_model=q_model_gptq_debug, tasks=["lambada_openai"],
