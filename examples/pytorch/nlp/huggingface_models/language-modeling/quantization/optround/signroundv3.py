@@ -62,7 +62,7 @@ def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
     zp = zp.unsqueeze(dim=-1)
     int_w = round_ste(weight / scale + grad)
     q = torch.clamp(int_w + zp, 0, maxq)
-    return scale * (q - zp)
+    return scale * (q - zp), scale, zp
 
 
 def quant_weight_sym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
@@ -79,7 +79,7 @@ def quant_weight_sym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
     scale = wmax / ((maxq - minq) / 2)
     scale.unsqueeze_(dim=-1)
     q = torch.clamp(round_ste(weight / scale + grad), minq, maxq)
-    return scale * q
+    return scale * q, scale, None
 
 
 def quant_weight_actor(weight, num_bits, scheme, grad, min_scale, max_scale):
@@ -99,24 +99,24 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", grad=0, min_s
         if isinstance(grad, torch.Tensor):
             grad = grad.reshape(-1, group_size)
 
-        weight = quant_weight_actor(weight, num_bits, scheme=scheme, grad=grad, min_scale=min_scale,
-                                    max_scale=max_scale)
+        weight, scale, zp = quant_weight_actor(weight, num_bits, scheme=scheme, grad=grad, min_scale=min_scale,
+                                               max_scale=max_scale)
         weight = weight.reshape(orig_shape)
-        return weight
+        return weight, scale, zp
 
-    elif True:
+    else:
         pad_len = (weight.shape[1] + group_size - 1) // group_size * group_size - weight.shape[1]
         weight_new = torch.nn.functional.pad(weight, (0, pad_len))
         grad = torch.nn.functional.pad(grad, (0, pad_len))
         weight_new = weight_new.reshape(-1, group_size)
         if isinstance(grad, torch.Tensor):
             grad = grad.reshape(-1, group_size)
-        weight_new = quant_weight_actor(weight_new, num_bits, scheme=scheme, grad=grad, min_scale=min_scale,
-                                        max_scale=max_scale)
+        weight_new, scale, zp = quant_weight_actor(weight_new, num_bits, scheme=scheme, grad=grad, min_scale=min_scale,
+                                                   max_scale=max_scale)
         weight_new = weight_new.reshape(orig_shape[0], -1)
 
         weight_new = weight_new[:, :-pad_len]
-        return weight_new
+        return weight_new, scale, zp
 
 
 class SaveInputs:
@@ -228,7 +228,7 @@ def q_dq_weight(model: torch.nn.Module, num_bits=4, group_size=128, scheme='asym
         for n, m in block.named_modules():
             if isinstance(m, torch.nn.Linear):
                 m.weight.data.copy_(
-                    quant_weight(m.weight, num_bits=num_bits, group_size=group_size, scheme=scheme))
+                    quant_weight(m.weight, num_bits=num_bits, group_size=group_size, scheme=scheme)[0])
 
 
 def get_module(model, key):
@@ -299,8 +299,8 @@ class WrapperLinear(torch.nn.Module):
         weight = self.orig_layer.weight
         self.min_scale.data.copy_(torch.clamp(self.min_scale.data, -1, 0))
         self.max_scale.data.copy_(torch.clamp(self.max_scale.data, -1, 0))
-        weight_q = quant_weight(weight, self.num_bits, self.group_size, self.scheme,
-                                self.value, self.min_scale, self.max_scale)
+        weight_q, _, _ = quant_weight(weight, self.num_bits, self.group_size, self.scheme,
+                                      self.value, self.min_scale, self.max_scale)
         return F.linear(x, weight_q, self.orig_layer.bias)
 
 
@@ -332,9 +332,11 @@ def unwrapper_block(block, grads, min_scale_grads, max_scale_grads):
                 max_scale_grad = max_scale_grads[n]
                 max_scale_grad = torch.clamp(max_scale_grad, -1, 0)
 
-            q_dq_weight = quant_weight(orig_layer.weight, num_bits, group_size, scheme, grad, min_scale_grad,
-                                       max_scale_grad)
+            q_dq_weight, scale, zp = quant_weight(orig_layer.weight, num_bits, group_size, scheme, grad, min_scale_grad,
+                                             max_scale_grad)
             orig_layer.weight.data.copy_(q_dq_weight)
+            orig_layer.scale = scale
+            orig_layer.zp = zp
             orig_layer.weight.grad = None  ##clear grad
             set_module(block, n, orig_layer)
 
@@ -991,11 +993,11 @@ class OPTRoundQuantizer(object):
             n_blocks=self.n_blocks,
             device=self.device,
         )
-        # for n, m in self.model.named_modules():
-        #     if n in self.weight_config.keys():
-        #         if hasattr(m, "scale"):
-        #             self.weight_config[n]["scale"] = m.scale
-        #             self.weight_config[n]["zp"] = m.zp
-        #             delattr(m, "scale")
-        #             delattr(m, "zp")
+        for n, m in self.model.named_modules():
+            if n in self.weight_config.keys():
+                if hasattr(m, "scale"):
+                    self.weight_config[n]["scale"] = m.scale
+                    self.weight_config[n]["zp"] = m.zp
+                    delattr(m, "scale")
+                    delattr(m, "zp")
         return self.model, self.weight_config
