@@ -33,7 +33,6 @@ def comment_out_line(filepath, code):
         file.seek(0)
         for line in lines:
             if re.match(code, line.strip()):
-                import pdb;pdb.set_trace()
                 line = "#" + line
             modified_lines.append(line)
     
