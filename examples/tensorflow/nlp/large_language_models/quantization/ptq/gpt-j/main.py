@@ -223,7 +223,7 @@ class MyDataloader:
             input_ids = generated[:, :cur_len]
         else:
             input_ids = tf.expand_dims(generated[:, cur_len - 1], -1)
-        return input_ids, model_kwargs['attention_mask']
+        return model_kwargs['attention_mask'], input_ids
     
     def __iter__(self):
         labels = None
@@ -278,7 +278,6 @@ def evaluate(model, tf_eval_dataset=mydata):
     latency_list = []
     infer = model.signatures["serving_default"]
     for idx, data in enumerate(tf_eval_dataset):
-        print('Running Iteration: ', idx)
         input_ids = tf.convert_to_tensor([data[:-1]], dtype=tf.int32)
         cur_len = len(data)-1
         input_ids_padding = tf.ones((batch_size, 1), dtype=tf.int32) * (pad_token_id or 0)
