@@ -24,15 +24,13 @@ Here is how to run the scripts:
 ```bash
 # "--sq" is used to enable smooth quant
 # "--int8_bf16_mixed" is used to enable int8-bf16 mixed mode for platform that natively supports bf16
-# "--peft_model_id" is used to loaded PEFT weights from peft_model_id
 python run_clm_no_trainer.py \
     --model EleutherAI/gpt-j-6B \
     --quantize \
     --sq \
     --alpha 1.0 \
     --output_dir "saved_results" \
-    --ipex \
-    --peft_model_id "peft_model_id"
+    --ipex 
 ```
 
 **Notes**: Smooth quantization here is based on torch.jit. Without past key value in example_inputs, the quantized model cannot be used for text-generation. For text-generation task, please go to [link](https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization)
@@ -60,7 +58,7 @@ python run_clm_no_trainer.py \
     --model EleutherAI/gpt-j-6B \
     --accuracy \
     --batch_size 112 \
-    --tasks "lambada_openai" "lambada_standard"\
+    --tasks "lambada_openai"\
     --int8 \
     --ipex \
     --output_dir "saved_results"  # load int8 model
@@ -73,7 +71,6 @@ python run_clm_no_trainer.py \
 ```bash
 # "--sq" is used to enable smooth quant
 # "--int8_bf16_mixed" is used to enable int8-bf16 mixed mode for platform that natively supports bf16
-# "--peft_model_id" is used to loaded PEFT weights from peft_model_id
 python run_clm_no_trainer.py \
     --model facebook/opt-2.7b \
     --quantize \
@@ -81,8 +78,7 @@ python run_clm_no_trainer.py \
     --alpha 0.5 \
     --ipex \
     --output_dir "saved_results" \
-    --int8_bf16_mixed \
-    --peft_model_id "peft_model_id"
+    --int8_bf16_mixed 
 ```
 
 #### Accuracy with lm_eval
@@ -91,7 +87,7 @@ python run_clm_no_trainer.py \
     --model facebook/opt-2.7b \
     --accuracy \
     --batch_size 112 \
-    --tasks "lambada_openai" "lambada_standard" \
+    --tasks "lambada_openai" \
     --int8 \
     --ipex \
     --output_dir "saved_results"  # load int8 model
@@ -104,7 +100,6 @@ python run_clm_no_trainer.py \
 ```bash
 # "--sq" is used to enable smooth quant
 # "--int8_bf16_mixed" is used to enable int8-bf16 mixed mode for platform that natively supports bf16
-# "--peft_model_id" is used to loaded PEFT weights from peft_model_id
 python run_clm_no_trainer.py \
     --model meta-llama/Llama-2-7b-hf \
     --quantize \
@@ -112,8 +107,7 @@ python run_clm_no_trainer.py \
     --alpha 0.8 \
     --ipex \
     --output_dir "saved_results" \
-    --int8_bf16_mixed \
-    --peft_model_id "peft_model_id"
+    --int8_bf16_mixed 
 ```
 
 #### Accuracy with lm_eval
@@ -122,7 +116,7 @@ python run_clm_no_trainer.py \
     --model meta-llama/Llama-2-7b-hf \
     --accuracy \
     --batch_size 112 \
-    --tasks  "lambada_openai" "lambada_standard" \
+    --tasks  "lambada_openai" \
     --int8 \
     --ipex \
     --output_dir "saved_results"  # load int8 model
