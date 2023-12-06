@@ -13,9 +13,18 @@ except:
 import torch
 
 from neural_compressor.common import logger
-from neural_compressor.torch.quantization import BatchMatmul, Matmul, get_fp8_e4m3_qconfig, get_fp8_e5m2_qconfig
+from neural_compressor.torch.quantization.modules import BatchMatmul, Matmul
+from neural_compressor.torch.quantization.config import FP8QConfig, get_default_fp8_qconfig
 from neural_compressor.torch.quantization.fp8 import quantize, quantize_dynamic
-
+from neural_compressor.torch.quantization.fp8.modules import (
+    FP8DynamicLinear,
+    FP8DynamicMatmul,
+    FP8DynamicBatchMatmul,
+    FP8Linear,
+    FP8Matmul,
+    FP8BatchMatmul,
+)
+torch.set_grad_enabled(False)
 
 class M(torch.nn.Module):
     def __init__(self) -> None:
@@ -55,7 +64,10 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
-        m = quantize_dynamic(m, dtype=torch.float8_e5m2)
+        m = quantize_dynamic(m, dtype=torch.float8_e5m2, inplace=True)
+        self.assertTrue(isinstance(m.fc1, FP8DynamicLinear))
+        self.assertTrue(isinstance(m.mm, FP8DynamicMatmul))
+        self.assertTrue(isinstance(m.bmm, FP8DynamicBatchMatmul))
         print(m)
         fp8_out = m(inp)
         print("Dynamic quantization FP8_E5M2 MSE:", (fp32_out - fp8_out).pow(2).sum())
@@ -63,7 +75,10 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
-        m = quantize_dynamic(m, dtype=torch.float8_e4m3fn)
+        m = quantize_dynamic(m, dtype=torch.float8_e4m3fn, inplace=True)
+        self.assertTrue(isinstance(m.fc1, FP8DynamicLinear))
+        self.assertTrue(isinstance(m.mm, FP8DynamicMatmul))
+        self.assertTrue(isinstance(m.bmm, FP8DynamicBatchMatmul))
         print(m)
         fp8_out = m(inp)
         print("Dynamic quantization FP8_E4M3 MSE:", (fp32_out - fp8_out).pow(2).sum())
@@ -72,12 +87,15 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
-        qconfig = get_fp8_e5m2_qconfig()
+        qconfig = FP8QConfig(weight_dtype=torch.float8_e5m2, act_dtype=torch.float8_e5m2, approach="static")
 
         def calib_func(model):
             model(inp)
 
-        m = quantize(m, qconfig, calib_func=calib_func)
+        m = quantize(m, qconfig, calib_func=calib_func, inplace=True)
+        self.assertTrue(isinstance(m.fc1, FP8Linear))
+        self.assertTrue(isinstance(m.mm, FP8Matmul))
+        self.assertTrue(isinstance(m.bmm, FP8BatchMatmul))
         print(m)
         fp8_out = m(inp)
         print("Static quantization FP8_E5M2 MSE:", (fp32_out - fp8_out).pow(2).sum())
@@ -85,12 +103,15 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
-        qconfig = get_fp8_e4m3_qconfig()
+        qconfig = get_default_fp8_qconfig()
 
         def calib_func(model):
             model(inp)
 
-        m = quantize(m, qconfig, calib_func=calib_func)
+        m = quantize(m, qconfig, calib_func=calib_func, inplace=True)
+        self.assertTrue(isinstance(m.fc1, FP8Linear))
+        self.assertTrue(isinstance(m.mm, FP8Matmul))
+        self.assertTrue(isinstance(m.bmm, FP8BatchMatmul))
         print(m)
         fp8_out = m(inp)
         print("Static quantization FP8_E4M3 MSE:", (fp32_out - fp8_out).pow(2).sum())

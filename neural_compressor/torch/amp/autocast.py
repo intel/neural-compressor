@@ -88,7 +88,7 @@ class autocast:
                 self.fast_dtype = self.global_dtype
                 self._autocast.__enter__()  # enable bf16/fp16
                 self.fast_dtype = org_dtype
-            from neural_compressor.torch.amp.modules.fp8_functions import replace_func
+            from neural_compressor.torch.amp.fp8.functions import replace_func
 
             # This function will replace F.linear and torch.matmul with the fp8 one
             replace_func(self.fast_dtype)
@@ -97,7 +97,7 @@ class autocast:
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         if self.device == "hpu" and self.fast_dtype in [torch.float8_e4m3, torch.float8_e5m2]:
-            from neural_compressor.torch.amp.modules.fp8_functions import recover_func
+            from neural_compressor.torch.amp.fp8.functions import recover_func
 
             # This function will recover F.linear and torch.matmul with the original one
             recover_func()

@@ -48,15 +48,15 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
-        with autocast("hpu", dtype=torch.bfloat16):
+        with autocast("hpu", dtype=torch.bfloat16) and torch.no_grad():
             bf16_out = m(inp)
             print("BF16 MSE:", (bf16_out - fp32_out).pow(2).sum())
 
-        with autocast("hpu", dtype=torch.float8_e5m2):
+        with autocast("hpu", dtype=torch.float8_e5m2) and torch.no_grad():
             e5m2_out = m(inp)
             print("FP8_E5M2 MSE:", (e5m2_out - fp32_out).pow(2).sum())
 
-        with autocast("hpu", dtype=torch.float8_e4m3fn):
+        with autocast("hpu", dtype=torch.float8_e4m3fn) and torch.no_grad():
             e4m3_out = m(inp)
             print("FP8_E4M3 MSE:", (e4m3_out - fp32_out).pow(2).sum())
 
@@ -65,11 +65,11 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
-        with autocast("hpu", dtype=torch.float8_e5m2):
+        with autocast("hpu", dtype=torch.float8_e5m2) and torch.no_grad():
             e5m2_out = m(inp)
             print("FP8_E5M2 using amax MSE:", (e5m2_out - fp32_out).pow(2).sum())
 
-        with autocast("hpu", dtype=torch.float8_e4m3fn):
+        with autocast("hpu", dtype=torch.float8_e4m3fn) and torch.no_grad():
             e4m3_out = m(inp)
             print("FP8_E4M3 using amax MSE:", (e4m3_out - fp32_out).pow(2).sum())
         os.environ.pop("PT_USE_FP8_AMAX", None)

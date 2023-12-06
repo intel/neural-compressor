@@ -19,7 +19,7 @@ import torch
 from deepspeed.module_inject import LinearAllreduce, LinearLayer
 from deepspeed.module_inject.layers import LmHeadLinearAllreduce
 
-from neural_compressor.torch.amp.modules.fp8_functions import fp8_matmul
+from neural_compressor.torch.amp.fp8.functions import fp8_matmul
 from neural_compressor.torch.utils import set_module
 
 from ..modules import Autocast, BatchMatmul, Matmul
@@ -53,9 +53,9 @@ E5M2_AMAX = torch.tensor(57344 * 0.9, dtype=torch.float).to("hpu")
 
 def quantize_dynamic(model, dtype=torch.float8_e4m3fn, inplace=True):
     from neural_compressor.torch.quantization.fp8.modules import (
-        FP8DynamicBatchMatmul,
         FP8DynamicLinear,
         FP8DynamicMatmul,
+        FP8DynamicBatchMatmul,
     )
 
     q_model = model if inplace else copy.deepcopy(model)
@@ -66,7 +66,7 @@ def quantize_dynamic(model, dtype=torch.float8_e4m3fn, inplace=True):
         elif isinstance(m, Matmul):
             new_m = FP8DynamicMatmul(dtype)
             set_module(q_model, n, new_m)
-        elif isinstance(m, Matmul):
+        elif isinstance(m, BatchMatmul):
             new_m = FP8DynamicBatchMatmul(dtype)
             set_module(q_model, n, new_m)
         elif isinstance(m, Autocast):
@@ -156,9 +156,10 @@ def _replace_module(model, qconfig):
     for name, module in model.named_modules():
         if isinstance(module, white_list):
             QModule = quantization_mapping[type(module)]
-            if QModule:
-                module = QModule(module, qconfig.dtype)
-                set_module(model, name, module)
+            assert qconfig.weight_dtype == qconfig.act_dtype, \
+                    "weight and activation shoould be the same dtype."
+            module = QModule(module, qconfig.dtype)
+            set_module(model, name, module)
 
 
 def convert(model, qconfig):
@@ -169,6 +170,7 @@ def convert(model, qconfig):
 
 def quantize(model, qconfig, calib_func, inplace=True):
     q_model = model if inplace else copy.deepcopy(model)
+    import pdb; pdb.set_trace()
     q_model = prepare(q_model, qconfig)
     calib_func(q_model)
     q_model = convert(q_model, qconfig)

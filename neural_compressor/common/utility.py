@@ -30,6 +30,7 @@ COMPOSABLE_CONFIG = "composable_config"
 RTN_WEIGHT_ONLY_QUANT = "rtn_weight_only_quant"
 STATIC_QUANT = "static_quant"
 GPTQ = "gptq"
+FP8 = "fp8"
 
 
 from typing import Callable, Union
