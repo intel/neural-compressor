@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from abc import abstractmethod
+from typing import List, Union
 
 
 class Runner:
@@ -26,24 +27,6 @@ class Runner:
     @abstractmethod
     def evaluate(self):
         raise NotImplementedError
-
-
-class Tuner:
-    def __init__(self, tune_config):
-        self.tune_config = tune_config
-
-    def generate_quant_config(self):
-        pass
-
-    def get_best_model(self, q_model, eval_res):
-        pass
-
-    def search(self, runner: Runner):
-        for config in self.generate_quant_config():
-            q_model = runner.apply(quant_config=config)
-            eval_res = runner.evaluate()
-            if self.get_best_model(q_model, eval_res):
-                return q_model
 
 
 class BaseTuningConfig:
@@ -60,3 +43,21 @@ class BaseTuningConfig:
         self.tuning_order = tuning_order
         self.timeout = timeout
         self.max_trials = max_trials
+
+
+class Tuner:
+    def __init__(self, tune_config: BaseTuningConfig):
+        self.tune_config = tune_config
+
+    def generate_quant_config(self):
+        pass
+
+    def get_best_model(self, q_model, eval_res: Union[float, int]):
+        pass
+
+    def search(self, runner: Runner):
+        for config in self.generate_quant_config():
+            q_model = runner.apply(quant_config=config)
+            eval_res = runner.evaluate()
+            if self.get_best_model(q_model, eval_res):
+                return q_model
