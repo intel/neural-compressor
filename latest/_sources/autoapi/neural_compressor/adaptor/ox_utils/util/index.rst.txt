@@ -53,6 +53,7 @@ Functions
    neural_compressor.adaptor.ox_utils.util.find_by_name
    neural_compressor.adaptor.ox_utils.util.trt_env_setup
    neural_compressor.adaptor.ox_utils.util.to_numpy
+   neural_compressor.adaptor.ox_utils.util.infer_shapes
 
 
 
@@ -252,5 +253,10 @@ Functions
 .. py:function:: to_numpy(data)
 
    Convert to numpy ndarrays.
+
+
+.. py:function:: infer_shapes(in_mp, int_max=2**31 - 1, auto_merge=False, guess_output_rank=False, verbose=0, base_dir='')
+
+   Symbolic shape inference.
 
 

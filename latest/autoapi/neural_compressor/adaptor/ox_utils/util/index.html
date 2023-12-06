@@ -188,6 +188,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.to_numpy" title="neural_compressor.adaptor.ox_utils.util.to_numpy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_numpy</span></code></a>(data)</p></td>
 <td><p>Convert to numpy ndarrays.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.infer_shapes" title="neural_compressor.adaptor.ox_utils.util.infer_shapes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">infer_shapes</span></code></a>(in_mp[, int_max, auto_merge, ...])</p></td>
+<td><p>Symbolic shape inference.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -418,6 +421,12 @@ z: zero point</p>
 <dd><p>Convert to numpy ndarrays.</p>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.infer_shapes">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">infer_shapes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_mp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2**31</span> <span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_merge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">guess_output_rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.infer_shapes" title="Permalink to this definition"></a></dt>
+<dd><p>Symbolic shape inference.</p>
+</dd></dl>
+
 </section>
 </section>
 </section>
@@ -436,7 +445,7 @@ z: zero point</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f4fe28a6020> 
+   <jinja2.runtime.BlockReference object at 0x7fa194a37e50> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

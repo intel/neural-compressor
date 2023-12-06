@@ -122,7 +122,8 @@ q_model = fit(
       </tr>
       <tr>
           <td colspan="4" align="center"><a href="./quantization_weight_only.html">Weight-Only Quantization (INT8/INT4/FP4/NF4) </td>
-          <td colspan="4" align="center"><a href="https://github.com/intel/neural-compressor/blob/fp8_adapto./fp8.html">FP8 Quantization </td>
+          <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/blob/fp8_adapto./fp8.html">FP8 Quantization </td>
+          <td colspan="2" align="center"><a href="./quantization_layer_wise.html">Layer-Wise Quantization </td>
       </tr>
   </tbody>
   <thead>

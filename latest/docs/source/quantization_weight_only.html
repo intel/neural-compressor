@@ -94,7 +94,6 @@
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#supported-framework-model-matrix">Supported Framework Model Matrix</a></p></li>
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
-<li><p><a class="reference external" href="#layer-wise-quantization">Layer Wise Quantization</a></p></li>
 <li><p><a class="reference external" href="#woq-algorithms-tuning">WOQ Algorithms Tuning</a></p></li>
 </ol>
 <section id="introduction">
@@ -246,65 +245,6 @@
 <p>To seek the performance of weight-only quantized models, Please go to <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization#1-performance">Intel Extension for Transformers</a> to quantize and deploy the model.</p>
 </section>
 </section>
-<section id="layer-wise-quantization">
-<h2>Layer Wise Quantization<a class="headerlink" href="#layer-wise-quantization" title="Permalink to this heading"></a></h2>
-<p>Large language models (LLMs) have shown exceptional performance across various tasks, meanwhile, the substantial parameter size poses significant challenges for deployment. Layer-wise quantization(LWQ) can greatly reduce the memory footprint of LLMs, usually 80-90% reduction, which means that users can quantize LLMs even on single node using GPU or CPU.  We can quantize the model under memory-constrained devices, therefore making the huge-sized LLM quantization possible.</p>
-<img src="./imgs/lwq.png"><p><em>Figure 1: The process of layer-wise quantization. The color grey means empty parameters and the color blue represents parameters need to be quantized. Every rectangle inside model represents one layer.</em></p>
-<section id="supported-matrix">
-<h3>Supported Matrix<a class="headerlink" href="#supported-matrix" title="Permalink to this heading"></a></h3>
-<table border="1" class="docutils">
-<thead>
-<tr>
-<th style="text-align: center;">Algorithms/Framework</th>
-<th style="text-align: center;">PyTorch</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">RTN</td>
-<td style="text-align: center;">&#10004;</td>
-</tr>
-<tr>
-<td style="text-align: center;">AWQ</td>
-<td style="text-align: center;">&#10005;</td>
-</tr>
-<tr>
-<td style="text-align: center;">GPTQ</td>
-<td style="text-align: center;">&#10004;</td>
-</tr>
-<tr>
-<td style="text-align: center;">TEQ</td>
-<td style="text-align: center;">&#10005;</td>
-</tr>
-</tbody>
-</table></section>
-<section id="example">
-<h3>Example<a class="headerlink" href="#example" title="Permalink to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">quantization</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.adaptor.torch_utils.layer_wise_quant</span> <span class="kn">import</span> <span class="n">load_empty_model</span>
-
-<span class="n">fp32_model</span> <span class="o">=</span> <span class="n">load_empty_model</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">,</span> <span class="n">torchscript</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">approach</span><span class="o">=</span><span class="s2">&quot;weight_only&quot;</span><span class="p">,</span>
-    <span class="n">recipes</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">&quot;layer_wise_quant&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="s2">&quot;rtn_args&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;enable_full_range&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
-    <span class="p">},</span>
-<span class="p">)</span>
-
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-    <span class="n">fp32_model</span><span class="p">,</span>
-    <span class="n">conf</span><span class="p">,</span>
-    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">,</span>
-    <span class="n">eval_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">ouput_dir</span> <span class="o">=</span> <span class="s2">&quot;./saved_model&quot;</span>
-<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">ouput_dir</span><span class="p">)</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="n">ouput_dir</span><span class="p">,</span> <span class="n">fp32_model</span><span class="p">,</span> <span class="n">weight_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">layer_wise</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-</section>
 <section id="woq-algorithms-tuning">
 <h2>WOQ Algorithms Tuning<a class="headerlink" href="#woq-algorithms-tuning" title="Permalink to this heading"></a></h2>
 <p>To find the best algorithm, users can omit specifying a particular algorithm. In comparison to setting a specific algorithm, this tuning process will traverse through a set of pre-defined WOQ configurations and identify the optimal one with the best result. For details usage, please refer to the <a class="reference external" href="./tuning_strategies.html#Basic">tuning strategy</a>.</p>
@@ -378,7 +318,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f4fe2f37730> 
+   <jinja2.runtime.BlockReference object at 0x7fa18d580580> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
