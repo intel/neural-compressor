@@ -128,10 +128,14 @@ class LSTMOperator(Operator):
 
         kwargs = {}
         for attribute in node.attribute:
-            kwargs.update(attribute_to_kwarg(attribute))
-        kwargs["domain"] = ms_domain
+            if attribute.name == "layout":
+                continue
+            kwarg = attribute_to_kwarg(attribute)
+            kwargs.update(kwarg)
 
         quant_lstm_name = node.name + "_quant"
-        quant_lstm_node = onnx.helper.make_node("DynamicQuantizeLSTM", inputs, node.output, quant_lstm_name, **kwargs)
+        quant_lstm_node = onnx.helper.make_node(
+            "DynamicQuantizeLSTM", inputs, node.output, quant_lstm_name, domain="com.microsoft", **kwargs
+        )
         self.quantizer.remove_nodes.append(node)
         self.quantizer.new_nodes.append(quant_lstm_node)
