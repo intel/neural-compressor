@@ -53,6 +53,15 @@ def get_torch_version():
     return version
 
 
+def get_ipex_version():
+    try:
+        ipex_version = ipex.__version__.split("+")[0]
+    except ValueError as e:  # pragma: no cover
+        assert False, "Got an unknown version of intel_extension_for_pytorch: {}".format(e)
+    version = Version(ipex_version)
+    return version
+
+
 def get_torch_white_list(approach):
     version = get_torch_version()
     import torch.quantization as tq
@@ -2603,7 +2612,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
     def __init__(self, framework_specific_info):
         super(PyTorch_IPEXAdaptor, self).__init__(framework_specific_info)
-        self.version = get_torch_version()
+        self.version = get_ipex_version()
         query_config_file = "pytorch_ipex.yaml"
         self.query_handler = PyTorchQuery(
             device=self.device, local_config_file=os.path.join(os.path.dirname(__file__), query_config_file)
