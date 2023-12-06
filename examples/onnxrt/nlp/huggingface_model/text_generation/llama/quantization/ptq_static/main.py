@@ -189,9 +189,10 @@ def benchmark(model):
             total_time += toc - tic
 
     print("\n", "-" * 10, "Summary:", "-" * 10)
-    latency = total_time / (num_iter - num_warmup)
     print(args)
-    print("Inference latency: %.3f sec." % latency)
+    throughput = (num_iter - num_warmup) / total_time
+    print("Throughput: {} samples/s".format(throughput))
+    
 
 def replace_architectures(json_path):
     # replace 'LLaMATokenizer' to lowercase 'LlamaTokenizer'
