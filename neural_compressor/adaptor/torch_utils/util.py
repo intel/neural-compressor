@@ -184,6 +184,8 @@ def append_attr(fx_model, model, fx_white_list=[]):
             fx_model.weight = fx_model.module.weight()
         else:
             fx_model.weight = fx_model.module.weight
+        if hasattr(fx_model.module, "bias"):
+            fx_model.bias = fx_model.module.bias
     for i in org_attr:
         if (
             type(model) in fx_white_list
