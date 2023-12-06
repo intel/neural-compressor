@@ -209,7 +209,7 @@ if __name__ == '__main__':
                    excel_file=excel_name)
         exit()
 
-    model = model.to(torch.float16)
+    model = model.to(torch.float32)
 
     if not args.low_gpu_mem_usage:
         model = model.to(cuda_device)
