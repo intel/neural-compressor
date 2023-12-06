@@ -17,6 +17,7 @@
 # pylint:disable=redefined-outer-name,logging-format-interpolation
 import os
 import onnx
+import json
 import torch
 import logging
 import argparse
@@ -136,16 +137,26 @@ def benchmark(model):
     config = LlamaConfig.from_pretrained(args.model_path)
     sess_options = ort.SessionOptions()
     sess_options.intra_op_num_threads = args.intra_op_num_threads
-    sessions = ORTModelForCausalLM.load_model(
-            os.path.join(model, 'decoder_model.onnx'), 
-            os.path.join(model, 'decoder_with_past_model.onnx'), 
+    
+    if os.path.exists(os.path.join(model, "decoder_with_past_model.onnx")):
+        sessions = ORTModelForCausalLM.load_model(  # pylint: disable=E1123
+            os.path.join(model, "decoder_model.onnx"),
+            os.path.join(model, "decoder_with_past_model.onnx"),
             session_options=sess_options)
-    model = ORTModelForCausalLM(
-                sessions[0],
-                config, 
-                model, 
-                sessions[1],
-                use_cache=True)
+        model = ORTModelForCausalLM(sessions[0],  # pylint: disable=E1121
+                                    config,
+                                    model,
+                                    sessions[1],
+                                    use_cache=True)
+    else:
+        sessions = ORTModelForCausalLM.load_model(  # pylint: disable=E1123
+            os.path.join(model, "decoder_model.onnx"),
+            session_options=sess_options)
+        model = ORTModelForCausalLM(sessions[0],  # pylint: disable=E1121
+                                    config,
+                                    model,
+                                    use_cache=False,
+                                    use_io_binding=False)
 
     input_tokens = '32'
     max_new_tokens = 32
@@ -182,19 +193,45 @@ def benchmark(model):
     print(args)
     print("Inference latency: %.3f sec." % latency)
 
+def replace_architectures(json_path):
+    # replace 'LLaMATokenizer' to lowercase 'LlamaTokenizer'
+    # to avoid bug 'Tokenizer class LLaMATokenizer does not exist or is not currently imported.'
+    # refer to https://github.com/huggingface/transformers/issues/22222#issuecomment-1477171703
+    with open(json_path, "r") as file:
+        data = json.load(file)
+        data["architectures"] = ["LlamaForCausalLM"]
+        
+    with open(json_path, 'w') as file:
+        json.dump(data, file, indent=4)
+
 def eval_func(model):
+    model_dir = model
+    if isinstance(model, str) and model.endswith(".onnx"):
+        model_dir = os.path.dirname(model)
+
+    replace_architectures(os.path.join(model_dir, "config.json"))
+
     results = evaluate(
         model="hf-causal",
-        model_args='pretrained=' + model + ',tokenizer='+ args.tokenizer,
+        model_args="pretrained=" + model_dir + ",tokenizer="+ args.tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
-        model_format="onnx"
+        model_format="onnx",
     )
+
+    eval_acc = 0
     for task_name in args.tasks:
         if task_name == "wikitext":
             print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["word_perplexity"]))
+            eval_acc += results["results"][task_name]["word_perplexity"]
         else:
             print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["acc"]))
+            eval_acc += results["results"][task_name]["acc"]
+
+    if len(args.tasks) != 0:
+        eval_acc /= len(args.tasks)
+
+    return eval_acc
 
 class KVDataloader:
     def __init__(self, model_path, pad_max=196, batch_size=1, sub_folder='train'):
