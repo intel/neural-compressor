@@ -1,35 +1,16 @@
-import argparse
 import copy
-
-parser = argparse.ArgumentParser()
 import torch
-
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from datasets import load_dataset
 from torch.functional import F
-
-from torch.autograd import Function
-
-from datasets import load_from_disk
-from torch.utils.data import DataLoader
 from sign_sgd import SGD
 import os
-from transformers import set_seed
 from functools import partial
 from torch.amp import autocast
-from eval import eval_model
+
 from collections import UserDict
-
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-os.environ["HF_HOME"] = "/models/huggingface"
 
 import logging
 
 logger = logging.getLogger()
-
-
-# os.environ['TRANSFORMERS_OFFLINE'] = '0'
 
 
 def round_ste(x: torch.Tensor):
@@ -180,8 +161,10 @@ class SaveInputs:
         for data in self.dataloader:
             if data is None:
                 continue
-            input_ids = data["input_ids"].to(self.model.device)
-            # input_ids = data.to(self.model.device)
+            if isinstance(data,list):
+                input_ids = data.to(self.model.device)
+            else:
+                input_ids = data["input_ids"].to(self.model.device)
             if input_ids.shape[-1] < self.seqlen:
                 continue
             if total_cnt + input_ids.shape[0] > n_samples:
@@ -314,14 +297,15 @@ class WrapperLinear(torch.nn.Module):
         self.orig_layer.zp = zp.to("cpu")
         return self.orig_layer
 
-
     def forward(self, x):
         weight = self.orig_layer.weight
         self.min_scale.data.copy_(torch.clamp(self.min_scale.data, -1, 0))
         self.max_scale.data.copy_(torch.clamp(self.max_scale.data, -1, 0))
         weight_q, _, _ = quant_weight(weight, self.num_bits, self.group_size, self.scheme,
                                       self.value, self.min_scale, self.max_scale)
+        weight_q = weight_q.to(weight.dtype)
         return F.linear(x, weight_q, self.orig_layer.bias)
+
 
 class WrapperTransformerConv1d(torch.nn.Module):
     def __init__(self, orig_layer, num_bits, group_size, scheme, use_sigmoid, enable_minmax_tuning=True):
@@ -365,7 +349,7 @@ class WrapperTransformerConv1d(torch.nn.Module):
         with torch.no_grad():
             self.min_scale.clamp_(-1, 0)
             self.max_scale.clamp_(-1, 0)
-        weight_q = quant_weight(
+        weight_q, _, _ = quant_weight(
             self.weight_t,
             self.num_bits,
             self.group_size,
@@ -375,11 +359,11 @@ class WrapperTransformerConv1d(torch.nn.Module):
             self.max_scale,
             use_sigmoid=self.use_sigmoid,
         )
+        weight_q = weight_q.to(self.weight_t.dtype)
         size_out = x.size()[:-1] + (self.orig_layer.nf,)
         x = torch.addmm(self.orig_layer.bias, x.view(-1, x.size(-1)), weight_q.t())
         x = x.view(*size_out)
         return x
-
 
 
 def wrapper_block(block, enable_minmax_tuning):
@@ -414,7 +398,6 @@ def unwrapper_block(block, grads, min_scale_grads, max_scale_grads):
             # orig_layer.zp = zp
             # orig_layer.weight.grad = None  ##clear grad
             # set_module(block, n, orig_layer)
-
 
 
 def collect_grad_and_zero(block):
@@ -465,7 +448,7 @@ def move_input_to_device(input, device=torch.device("cpu")):
     return input
 
 
-def block_forward(block, input_ids, input_others, amp=False, device=torch.device("cpu")):
+def block_forward(block, input_ids, input_others, amp=False, amp_dtype=torch.float16, device=torch.device("cpu")):
     if input_ids.device != device:
         # input_ids, input_others = move_to_device(input_ids, input_others, device)
         input_ids = move_input_to_device(input_ids, device)
@@ -475,7 +458,7 @@ def block_forward(block, input_ids, input_others, amp=False, device=torch.device
         alibi = input_others["alibi"]
         alibi = alibi.reshape(-1, alibi.shape[2], alibi.shape[3])
         if amp and device != torch.device("cpu"):
-            with autocast(device_type="cuda"):
+            with autocast(device_type="cuda", dtype=amp_dtype):
                 output = block(
                     input_ids, attention_mask=attention_mask, alibi=alibi
                 )  ##TODO is this correct for all models with alibi?
@@ -487,7 +470,7 @@ def block_forward(block, input_ids, input_others, amp=False, device=torch.device
     else:
         input_tuple = input_others.pop("positional_inputs", None)
         if amp and device != torch.device("cpu"):
-            with autocast(device_type="cuda"):
+            with autocast(device_type="cuda", dtype=amp_dtype):
                 output = block.forward(input_ids, *input_tuple, **input_others)
         elif amp and device == torch.device("cpu"):
             with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
@@ -540,47 +523,6 @@ class WrapperMultiblock(torch.nn.Module):
             if isinstance(hidden_states, tuple) or isinstance(hidden_states, list):
                 hidden_states = layer_outputs[0]
         return hidden_states
-
-
-# def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, group_size=128, scheme='asym',
-#                       n_blocks=1,
-#                       device=torch.device("cpu")):
-#     q_input = None
-#     torch.cuda.empty_cache()
-#     for n, m in model.named_parameters():
-#         m.requires_grad_(False)
-#     input_ids = inputs["input_ids"]
-#     inputs.pop('input_ids', None)
-#     input_others = inputs
-#     torch.cuda.empty_cache()
-#     for i in range(0, len(block_names), n_blocks):
-#         if n_blocks == 1:
-#             n = block_names[i]
-#             print(n, flush=True)
-#             m = get_module(model, n)
-#         else:
-#             names = block_names[i: i + n_blocks]
-#             print(names, flush=True)
-#             modules = [get_module(model, n) for n in names]
-#             m = WrapperMultiblock(modules)
-#
-#         m = m.to(device)
-#
-#         q_input, input_ids = quant_block(m, input_ids, input_others, num_bits=num_bits, group_size=group_size,
-#                                          scheme=scheme,
-#                                          q_input=q_input,
-#                                          args=args,
-#                                          device=device)
-#         m.to("cpu")
-#         torch.cuda.empty_cache()
-#
-#     del q_input
-#     del input_ids
-#     del input_others
-#     del inputs
-#
-#     torch.cuda.empty_cache()
-
 
 def get_block_names(model):
     """
@@ -635,7 +577,6 @@ class OPTRoundQuantizer(object):
             not_use_mse: bool = False,
             dynamic_max_gap: int = -1,
             data_type: str = "int",  ##only support data_type
-            use_sigmoid=None,
             **kwargs
     ):
         """
@@ -697,7 +638,9 @@ class OPTRoundQuantizer(object):
         if self.device == "cpu":
             self.amp_dtype = torch.bfloat16
         if self.amp:
+            self.model = self.model.to(self.amp_dtype)
             logger.info(f"using {self.amp_dtype}")
+            print(f"using {self.amp_dtype}", flush=True)
 
         if dataloader is None:
             self.dataloader = self.get_default_dataloader(data_name=default_dataset_name)
@@ -793,25 +736,6 @@ class OPTRoundQuantizer(object):
 
     # def get_default_dataloader(self, data_name="NeelNanda/pile-10k"):
     #     from datasets import load_dataset
-    #     from torch.utils.data import DataLoader
-    #
-    #     # @torch.no_grad()
-    #     # def collate_batch(batch):
-    #     #     input_ids_new = []
-    #     #     for text in batch:
-    #     #         input_ids = text["input_ids"]
-    #     #         if input_ids.shape[0] < seqlen:
-    #     #             continue
-    #     #         input_ids = input_ids[:seqlen]
-    #     #         input_ids_list = input_ids.tolist()
-    #     #         if input_ids_list.count(input_ids_list[-1]) > seqlen // 2:
-    #     #             continue
-    #     #         input_ids_new.append(input_ids)
-    #     #     if len(input_ids_new) == 0:
-    #     #         return None
-    #     #     tmp = torch.vstack(input_ids_new)
-    #     #     res = {"input_ids": tmp}
-    #     #     return res
     #
     #     seqlen = self.seqlen
     #     calib_dataset = load_dataset(data_name, split=self.dataset_split).shuffle(seed=self.seed)
@@ -826,7 +750,7 @@ class OPTRoundQuantizer(object):
     #             continue
     #         # import random
     #         # index = random.randint(0, len(line_encoded) - seqlen)
-    #         index = 0  ##TODO change to random later
+    #         index = 0
     #         sample = line_tokenized[index:index + self.seqlen]
     #         if sample.count(sample[-1]) > seqlen // 2:
     #             continue
@@ -852,7 +776,8 @@ class OPTRoundQuantizer(object):
         for i in range(0, self.n_samples, bs):
             indices = torch.arange(i, i + bs).to(torch.long)
             tmp_input_ids, tmp_input_others = sampling_inputs(input_ids, input_others, indices, self.seqlen)
-            tmp_output = block_forward(block, tmp_input_ids, tmp_input_others, self.amp, device).to(cache_device)
+            tmp_output = block_forward(block, tmp_input_ids, tmp_input_others, self.amp, self.amp_dtype, device).to(
+                cache_device)
             output.append(tmp_output)
         output = torch.cat(output, dim=batch_dim)
         torch.cuda.empty_cache()
@@ -955,9 +880,10 @@ class OPTRoundQuantizer(object):
                     current_output = current_output.reshape(-1, current_output.shape[-1])
                 current_output = move_input_to_device(current_output, device)
 
-                output_q = block_forward(block, current_input_ids, current_input_others, self.amp, device)
+                output_q = block_forward(block, current_input_ids, current_input_others, self.amp, self.amp_dtype,
+                                         device)
                 if self.amp and device != torch.device("cpu"):
-                    with autocast(device_type="cuda"):
+                    with autocast(device_type="cuda", dtype=self.amp_dtype):
                         loss = mse_loss(output_q, current_output) * 1000
                 elif self.amp:
                     with torch.autocast(device_type="cpu", dtype=torch.bfloat16):

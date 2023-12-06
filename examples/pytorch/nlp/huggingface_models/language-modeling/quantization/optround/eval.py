@@ -414,6 +414,8 @@ if __name__ == "__main__":
 
     test_tasks = ['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai', 'hellaswag', 'winogrande', 'piqa',
      "hendrycksTest-*", "wikitext", "truthfulqa_mc", "openbookqa", "boolq", "rte", "arc_easy", "arc_challenge"]
+    test_tasks = ['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai', 'hellaswag', 'winogrande', 'piqa',
+  ]
     excel_name = (args.model_name).split('/')[-1] + ".xlsx"
 
     # test_tasks = ['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai']

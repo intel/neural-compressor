@@ -3,7 +3,10 @@ import copy
 
 parser = argparse.ArgumentParser()
 import torch
+import os
 
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+torch.use_deterministic_algorithms(True)
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
 from datasets import load_dataset
 from torch.functional import F
@@ -13,13 +16,13 @@ from torch.autograd import Function
 from datasets import load_from_disk
 from torch.utils.data import DataLoader
 
-import os
 from transformers import set_seed
 from functools import partial
 from torch.amp import autocast
 from eval import eval_model
 from collections import UserDict
 import re
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 os.environ["HF_HOME"] = "/models/huggingface"
@@ -110,8 +113,8 @@ if __name__ == '__main__':
     parser.add_argument("--enable_minmax_tuning", action='store_true',
                         help="enable_tuning_minmax")
 
-    # parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
-    #                     help="lm-eval tasks")
+    parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
+                        help="lm-eval tasks")
 
     # parser.add_argument("--tasks", default=["lambada_openai"],
     #                     help="lm-eval tasks")
@@ -132,10 +135,10 @@ if __name__ == '__main__':
     #                              "arc_easy", "arc_challenge"],
     #                     help="lm-eval tasks")  # "truthfulqa_gen"
 
-    parser.add_argument("--tasks", default=["lambada_openai"],
-                        help="lm-eval tasks")
+    # parser.add_argument("--tasks", default=["lambada_openai"],
+    #                     help="lm-eval tasks")
 
-    parser.add_argument("--output_dir", default="./tmp_optround", type=str,
+    parser.add_argument("--output_dir", default="./tmp_signround", type=str,
                         help="Where to store the final model.")
 
     args = parser.parse_args()
@@ -171,7 +174,6 @@ if __name__ == '__main__':
         model.seqlen = seqlen
     seqlen = args.seqlen
 
-
     if "llama" in model_name:
         from transformers import LlamaTokenizer
 
@@ -198,9 +200,8 @@ if __name__ == '__main__':
 
     if args.iters <= 0:
         print("eval rtn", flush=True)
-        excel_name += "_optround.xlsx"
+        excel_name += "_rtn.xlsx"
         q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)
-        model.half()
         if not args.low_gpu_mem_usage:
             model = model.to(cuda_device)
         eval_model(output_dir=args.output_dir, model=model, tokenizer=tokenizer, tasks=args.tasks, \
@@ -208,65 +209,29 @@ if __name__ == '__main__':
                    excel_file=excel_name)
         exit()
 
-    dataset_name = "NeelNanda/pile-10k"
-    # if os.path.exists(dataset_name.split('/')[-1]):
-    #     calib_dataset = load_from_disk(dataset_name.split('/')[-1])
-    # else:
-    #     calib_dataset = load_dataset(dataset_name, split="train")
-    #     calib_dataset.save_to_disk(dataset_name.split('/')[-1])
-    #
-    # calib_dataset = calib_dataset.shuffle(seed=args.seed)
-    # calib_dataset = calib_dataset.map(tokenize_function, batched=True)
-    # calib_dataset.set_format(type='torch', columns=['input_ids'])
-    # calib_dataloader = DataLoader(
-    #     calib_dataset,
-    #     batch_size=args.eval_bs,
-    #     shuffle=False,
-    #     collate_fn=collate_batch
-    # )
-    target_m = None
-    for n, m in model.named_modules():
-        if hasattr(type(m), "__name__") and 'ModuleList' in type(m).__name__:
-            target_m = (n, m)
+    model = model.to(torch.float16)
 
-    block_names = []
-    for n, m in target_m[1].named_children():
-        block_names.append(target_m[0] + "." + n)
-    seqlen = args.seqlen
-    if args.amp and args.device != "cpu":
-        model = model.half()
-    elif args.amp and args.device == "cpu":
-        model = model.to(torch.bfloat16)
     if not args.low_gpu_mem_usage:
         model = model.to(cuda_device)
 
     import time
 
     start_time = time.time()
-    # save_input_actor = SaveInputs(model, calib_dataloader, seqlen, block_names[0])
-    # inputs = save_input_actor.get_inputs(n_samples=args.n_samples)
-    # del save_input_actor
-    # if args.amp and args.device != "cpu":
-    #     model = model.to("cpu").to(torch.float)
-    #
-    # model = model.to("cpu")
-    # torch.cuda.empty_cache()
-    # q_dq_weight_round(model, inputs, block_names, num_bits=args.num_bits, group_size=args.group_size,
-    #                   n_blocks=args.n_blocks, device=cuda_device)
-    from signroundv3 import  OPTRoundQuantizer
+
+    from signroundv3 import OPTRoundQuantizer
+
     scheme = "asym"
     if args.sym:
         scheme = "sym"
-
     optq = OPTRoundQuantizer(model, tokenizer, args.num_bits, args.group_size, scheme, bs=args.train_bs,
                              seqlen=seqlen, n_blocks=args.n_blocks, iters=args.iters, lr=args.lr,
-                             minmax_lr=args.min_max_lr, use_quant_input=args.use_quant_input)  ##TODO args pass
+                             minmax_lr=args.min_max_lr, use_quant_input=args.use_quant_input,
+                             amp=args.amp)  ##TODO args pass
     optq.quantize()
     end_time = time.time()
     print(end_time - start_time, flush=True)
 
     torch.cuda.empty_cache()
-    model.half()
     model.eval()
     output_dir = args.output_dir + "_" + args.model_name.split('/')[-1] + f"_w{args.num_bits}_g{args.group_size}"
 
