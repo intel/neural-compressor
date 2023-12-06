@@ -19,9 +19,8 @@ import torch
 from deepspeed.module_inject import LinearAllreduce, LinearLayer
 from deepspeed.module_inject.layers import LmHeadLinearAllreduce
 
-from neural_compressor.torch.utils import fetch_module, set_module, register_algo
 from neural_compressor.common.utility import FP8_QUANT
-from neural_compressor.torch.utils import logger
+from neural_compressor.torch.utils import fetch_module, logger, register_algo, set_module
 
 from ..modules import Autocast, BatchMatmul, Matmul
 from .modules import (
@@ -54,9 +53,9 @@ E5M2_AMAX = torch.tensor(57344 * 0.9, dtype=torch.float).to("hpu")
 
 def quantize_dynamic(model, dtype=torch.float8_e4m3fn, inplace=True):
     from neural_compressor.torch.quantization.fp8.modules import (
+        FP8DynamicBatchMatmul,
         FP8DynamicLinear,
         FP8DynamicMatmul,
-        FP8DynamicBatchMatmul,
     )
 
     q_model = model if inplace else copy.deepcopy(model)
@@ -144,7 +143,6 @@ def _remove_observer(module, qconfig):
             handle_ids_to_remove.add(handle_id)
     for handle_id in handle_ids_to_remove:
         hook_map.pop(handle_id)
-
 
 
 def prepare(model, qconfig_mapping):

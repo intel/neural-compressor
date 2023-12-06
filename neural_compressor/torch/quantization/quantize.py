@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from typing import Any, Callable, Dict, Tuple
 
 import torch
-import copy
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, registered_configs
 from neural_compressor.common.logger import Logger

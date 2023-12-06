@@ -13,19 +13,21 @@ except:
 import torch
 
 from neural_compressor.common import logger
-from neural_compressor.torch.quantization.modules import BatchMatmul, Matmul
+from neural_compressor.torch.quantization import quantize
 from neural_compressor.torch.quantization.config import FP8QConfig, get_default_fp8_qconfig
 from neural_compressor.torch.quantization.fp8 import quantize_dynamic
-from neural_compressor.torch.quantization import quantize
 from neural_compressor.torch.quantization.fp8.modules import (
+    FP8BatchMatmul,
+    FP8DynamicBatchMatmul,
     FP8DynamicLinear,
     FP8DynamicMatmul,
-    FP8DynamicBatchMatmul,
     FP8Linear,
     FP8Matmul,
-    FP8BatchMatmul,
 )
+from neural_compressor.torch.quantization.modules import BatchMatmul, Matmul
+
 torch.set_grad_enabled(False)
+
 
 class M(torch.nn.Module):
     def __init__(self) -> None:

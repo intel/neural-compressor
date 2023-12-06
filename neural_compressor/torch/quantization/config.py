@@ -18,19 +18,19 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Callable, Dict, List, Tuple, NamedTuple, Optional, Union
+from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import torch
 
-from neural_compressor.torch.utils import logger
 from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
 from neural_compressor.common.utility import (
-    DEFAULT_WHITE_LIST, 
-    GPTQ, 
-    OP_NAME_OR_MODULE_TYPE, 
-    RTN_WEIGHT_ONLY_QUANT,
+    DEFAULT_WHITE_LIST,
     FP8_QUANT,
+    GPTQ,
+    OP_NAME_OR_MODULE_TYPE,
+    RTN_WEIGHT_ONLY_QUANT,
 )
+from neural_compressor.torch.utils import logger
 
 FRAMEWORK_NAME = "torch"
 DTYPE_RANGE = Union[torch.dtype, List[torch.dtype]]
@@ -302,7 +302,6 @@ class GPTQConfig(BaseConfig):
         return filter_result
 
 
-
 # TODO(Yi) run `register_supported_configs` for all registered config.
 GPTQConfig.register_supported_configs()
 
@@ -370,15 +369,15 @@ class FP8QConfig(BaseConfig):
             device=["hpu"],
         )
         from .fp8.quantize import white_list
+
         operators = white_list
-        supported_configs.append(
-            OperatorConfig(config=fp8_config, operators=operators, backend=Backend.DEFAULT)
-        )
+        supported_configs.append(OperatorConfig(config=fp8_config, operators=operators, backend=Backend.DEFAULT))
         cls.supported_configs = supported_configs
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
         from .fp8.quantize import white_list
+
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, white_list):
@@ -399,6 +398,7 @@ def get_default_fp8_qconfig() -> FP8QConfig:
         the default gptq config.
     """
     return FP8QConfig()
+
 
 ##################### Algo Configs End ###################################
 
