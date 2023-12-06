@@ -42,7 +42,7 @@ Functions
    Save the model and tokenizer in the output directory.
 
 
-.. py:function:: export_compressed_model(model, saved_dir=None, use_hf_format=False, enable_full_range=False, compression_dtype=torch.int32, compression_dim=1, scale_dtype=torch.float32, device='cpu')
+.. py:function:: export_compressed_model(model, saved_dir=None, use_optimum_format=True, enable_full_range=False, compression_dtype=torch.int32, compression_dim=1, scale_dtype=torch.float32, device='cpu')
 
    Support get compressed model from saved_dir.
 
@@ -50,8 +50,8 @@ Functions
    :type model: torch.nn.Module
    :param saved_dir: the dir path of compression info. Defaults to None.
    :type saved_dir: _type_, optional
-   :param use_hf_format: whether use HuggingFace format. Defaults to False.
-   :type use_hf_format: bool, optional
+   :param use_optimum_format: whether use HuggingFace format. Defaults to True.
+   :type use_optimum_format: bool, optional
    :param enable_full_range: Whether to leverage the full compression range
                              under symmetric quantization. Defaults to False.
    :type enable_full_range: bool, optional
