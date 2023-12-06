@@ -18,17 +18,18 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Callable, Dict, List, NamedTuple, Optional, Union
+from typing import Callable, Dict, List, Tuple, NamedTuple, Optional, Union
 
 import torch
 
+from neural_compressor.torch.utils import logger
 from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
 from neural_compressor.common.utility import (
     DEFAULT_WHITE_LIST, 
     GPTQ, 
     OP_NAME_OR_MODULE_TYPE, 
     RTN_WEIGHT_ONLY_QUANT,
-    FP8,
+    FP8_QUANT,
 )
 
 FRAMEWORK_NAME = "torch"
@@ -157,6 +158,17 @@ class RTNWeightQuantConfig(BaseConfig):
         supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT))
         cls.supported_configs = supported_configs
 
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = [torch.nn.Linear]
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module))
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 RTNWeightQuantConfig.register_supported_configs()
@@ -278,6 +290,18 @@ class GPTQConfig(BaseConfig):
         )
         cls.supported_configs = supported_configs
 
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = [torch.nn.Linear]
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module))
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 GPTQConfig.register_supported_configs()
@@ -293,11 +317,11 @@ def get_default_gptq_config() -> GPTQConfig:
 
 
 ######################## FP8 Config ###############################
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8)
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8QConfig(BaseConfig):
     """Config class for FP8 quantization."""
 
-    name = FP8
+    name = FP8_QUANT
     supported_configs: List[OperatorConfig] = []
     params_list = [
         "weight_dtype",
@@ -351,6 +375,17 @@ class FP8QConfig(BaseConfig):
             OperatorConfig(config=fp8_config, operators=operators, backend=Backend.DEFAULT)
         )
         cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        from .fp8.quantize import white_list
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module))
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
 
 
 # TODO(Yi) run `register_supported_configs` for all registered config.

@@ -15,6 +15,7 @@
 from typing import Any, Callable, Dict, Tuple
 
 import torch
+import copy
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, registered_configs
 from neural_compressor.common.logger import Logger
@@ -33,6 +34,7 @@ def quantize(
     quant_config: BaseConfig,
     run_fn: Callable = None,
     run_args: Any = None,
+    inplace: bool = True,
 ) -> torch.nn.Module:
     """The main entry to quantize model.
 
@@ -45,6 +47,7 @@ def quantize(
     Returns:
         The quantized model.
     """
+    q_model = model if inplace else copy.deepcopy(model)
     if isinstance(quant_config, dict):
         quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs[FRAMEWORK_NAME])
         logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
@@ -55,11 +58,11 @@ def quantize(
     logger.info(f"Quantize model with config: \n {quant_config.to_json_string()} \n")
     # select quantization algo according to config
 
-    model_info = get_model_info(model=model, white_module_list=WHITE_MODULE_LIST)
+    model_info = quant_config.get_model_info(model=q_model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
     logger.debug(configs_mapping)
     for algo_name, algo_func in algos_mapping.items():
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
-            model = algo_func(model, configs_mapping, run_fn=run_fn, run_args=run_args)
-    return model
+            q_model = algo_func(q_model, configs_mapping, run_fn=run_fn, run_args=run_args)
+    return q_model

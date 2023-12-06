@@ -197,7 +197,10 @@ class BaseConfig(ABC):
             config_dict = self.to_diff_dict(self)
         else:
             config_dict = self.to_dict()
-        return json.dumps(config_dict, indent=2) + "\n"
+        try:
+            return json.dumps(config_dict, indent=2) + "\n"
+        except:
+            return config_dict
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__} {self.to_json_string()}"

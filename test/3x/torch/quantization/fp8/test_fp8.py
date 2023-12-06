@@ -15,7 +15,8 @@ import torch
 from neural_compressor.common import logger
 from neural_compressor.torch.quantization.modules import BatchMatmul, Matmul
 from neural_compressor.torch.quantization.config import FP8QConfig, get_default_fp8_qconfig
-from neural_compressor.torch.quantization.fp8 import quantize, quantize_dynamic
+from neural_compressor.torch.quantization.fp8 import quantize_dynamic
+from neural_compressor.torch.quantization import quantize
 from neural_compressor.torch.quantization.fp8.modules import (
     FP8DynamicLinear,
     FP8DynamicMatmul,
@@ -92,7 +93,7 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         def calib_func(model):
             model(inp)
 
-        m = quantize(m, qconfig, calib_func=calib_func, inplace=True)
+        m = quantize(m, qconfig, run_fn=calib_func, inplace=True)
         self.assertTrue(isinstance(m.fc1, FP8Linear))
         self.assertTrue(isinstance(m.mm, FP8Matmul))
         self.assertTrue(isinstance(m.bmm, FP8BatchMatmul))
@@ -108,7 +109,7 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         def calib_func(model):
             model(inp)
 
-        m = quantize(m, qconfig, calib_func=calib_func, inplace=True)
+        m = quantize(m, qconfig, run_fn=calib_func, inplace=True)
         self.assertTrue(isinstance(m.fc1, FP8Linear))
         self.assertTrue(isinstance(m.mm, FP8Matmul))
         self.assertTrue(isinstance(m.bmm, FP8BatchMatmul))
