@@ -289,6 +289,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/graph_networks/graphsage/">pb</a></td>
   </tr>
+  <tr>
+    <td>EleutherAI/gpt-j-6B</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/nlp/large_language_models/quantization/ptq/gpt-j">saved_model (smooth quant)</a></td>
+  </tr>
 </tbody>
 </table>
 
