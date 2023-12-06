@@ -373,7 +373,7 @@ A list of models that achieved a <1% accuracy drop is shown below.
 Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.
 ## Example
 
-User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant/README.html) on how to use smooth quant.
+User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm) on how to use smooth quant.
 
 ```python
 recipes = {
