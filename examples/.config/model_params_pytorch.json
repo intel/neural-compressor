@@ -497,7 +497,7 @@
       "dataset_location": "",
       "input_model": "bigscience/bloom-560m",
       "batch_size": 1,
-      "main_script": "eval_lambada.py"
+      "main_script": "run_clm_no_trainer.py"
     },
     "llama2_7b_ipex_sq":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
