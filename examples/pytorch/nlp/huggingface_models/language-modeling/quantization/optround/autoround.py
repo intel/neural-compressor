@@ -545,7 +545,7 @@ def get_block_names(model):
     return block_names
 
 
-class OPTRoundQuantizer(object):
+class AutoRound(object):
     def __init__(
             self,
             model,
@@ -558,7 +558,6 @@ class OPTRoundQuantizer(object):
             bs: int = 8,
             amp: bool = True,
             device="cuda:0",
-            optimizer=None,
             lr_scheduler=None,
             dataloader=None,  ## to support later
             default_dataset_name: str = "NeelNanda/pile-10k",
@@ -656,10 +655,26 @@ class OPTRoundQuantizer(object):
         self.dynamic_max_gap = dynamic_max_gap
         self.enable_full_range = enable_full_range
         assert self.enable_full_range is False, "only support enable_full_range=False currently"
-
-        self.optimizer = SGD
         self.lr_scheduler = lr_scheduler
         self.set_layerwise_config(self.weight_config)
+        self.optimizer = self.get_optimizer(None)
+
+    def get_optimizer(self, optimizer):
+        from sign_sgd import SGD
+        return SGD
+
+    def get_scaler(self):
+        return None
+
+    def scale_loss_and_backward(self, scaler, loss):
+        scale_loss = loss * 1000
+        scale_loss.backward()
+        return scale_loss
+
+    def step(self, scaler, optimizer, lr_schedule):
+        optimizer.step()
+        optimizer.zero_grad()
+        lr_schedule.step()
 
     def check_configs(self):
         assert isinstance(self.model, torch.nn.Module)
@@ -803,8 +818,6 @@ class OPTRoundQuantizer(object):
     #         optimizer.zero_grad()
     #         lr_schedule.step()
     #
-    # def is_supported_type(self, m):
-    #     return hasattr(m, "orig_layer")
 
     def quant_block(self, block, input_ids, input_others, q_input=None,
                     device=torch.device("cpu")):
@@ -857,7 +870,7 @@ class OPTRoundQuantizer(object):
         grad = None
         min_scale_grad = None
         max_scale_grad = None
-
+        scaler = self.get_scaler()
         for i in range(self.iters):
             if self.sampler == "rand":
                 indices = torch.randperm(n_samples)[:pick_samples]
@@ -883,15 +896,17 @@ class OPTRoundQuantizer(object):
                                          device)
                 if self.amp and device != torch.device("cpu"):
                     with autocast(device_type="cuda", dtype=self.amp_dtype):
-                        loss = mse_loss(output_q, current_output) * 1000
+                        loss = mse_loss(output_q, current_output)
                 elif self.amp:
                     with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
-                        loss = mse_loss(output_q, current_output) * 1000
+                        loss = mse_loss(output_q, current_output)
                 else:
                     loss = mse_loss(output_q, current_output)
+
                 total_loss += (
                         loss.item() / self.gradient_accumulate_steps)  ##TODO gradient accumulate step for other optimizer
-                loss.backward()
+                self.scale_loss_and_backward(scaler, loss)
+                # loss.backward()
 
             if total_loss < best_loss:
                 best_loss = total_loss
@@ -908,9 +923,10 @@ class OPTRoundQuantizer(object):
             if not self.not_use_mse:
                 if self.dynamic_max_gap > 0 and i - last_best_iter >= self.dynamic_max_gap:
                     break
-            optimizer.step()  ##TODO  scale grad for other optimizer
-            optimizer.zero_grad()
-            lr_schedule.step()
+            self.step(scaler, optimizer, lr_schedule)
+            # optimizer.step()  ##TODO  scale grad for other optimizer
+            # optimizer.zero_grad()
+            # lr_schedule.step()
         unwrapper_block(block, best_grad, best_min_scale_grad, best_max_scale_grad)
         if self.use_quant_input:
             q_outputs = self.get_block_outputs(
@@ -1002,3 +1018,101 @@ class OPTRoundQuantizer(object):
                     delattr(m, "scale")
                     delattr(m, "zp")
         return self.model, self.weight_config
+
+
+class AutoOPTRound(AutoRound):
+    def __init__(
+            self,
+            model,
+            tokenizer=None,
+            optimizer="AdamW",
+            bits: int = 4,
+            group_size: int = 128,
+            scheme: str = "asym",
+            weight_config: dict = {},
+            enable_full_range: bool = False,
+            bs: int = 8,
+            amp: bool = True,
+            device="cuda:0",
+            lr_scheduler=None,
+            dataloader=None,
+            default_dataset_name: str = "NeelNanda/pile-10k",
+            dataset_split: str = "train",
+            use_quant_input: bool = True,
+            enable_minmax_tuning: bool = True,
+            lr: float = 0.005,
+            minmax_lr: float = 0.005,
+            low_gpu_mem_usage: bool = True,
+            iters: int = 200,
+            seqlen: int = 2048,
+            n_samples: int = 512,
+            sampler: str = "rand",
+            seed: int = 42,
+            n_blocks: int = 1,
+            gradient_accumulate_steps: int = 1,
+            not_use_mse: bool = False,
+            dynamic_max_gap: int = -1,
+            data_type: str = "int",
+            **kwargs
+    ):
+        super(AutoOPTRound, self).__init__(model,
+                                           tokenizer,
+                                           bits,
+                                           group_size,
+                                           scheme,
+                                           weight_config,
+                                           enable_full_range,
+                                           bs,
+                                           amp,
+                                           device,
+                                           lr_scheduler,
+                                           dataloader,
+                                           default_dataset_name,
+                                           dataset_split,
+                                           use_quant_input,
+                                           enable_minmax_tuning,
+                                           lr,
+                                           minmax_lr,
+                                           low_gpu_mem_usage,
+                                           iters,
+                                           seqlen,
+                                           n_samples,
+                                           sampler,
+                                           seed,
+                                           n_blocks,
+                                           gradient_accumulate_steps,
+                                           not_use_mse,
+                                           dynamic_max_gap,
+                                           data_type,
+                                           **kwargs)
+
+        self.optimizer = self.get_optimizer(optimizer)
+
+    def get_optimizer(self, optimizer):
+        if optimizer is None:
+            optimizer = torch.optim.AdamW
+            ##TODO need to force set lr to some better candidates
+
+        elif isinstance(optimizer, str):
+            optimizer = getattr(torch.optim, self.optimizer)
+        else:
+            optimizer = optimizer
+        return optimizer
+
+    def get_scaler(self):
+        scaler = None
+        if self.amp and self.scale_grad:
+            from torch.cuda.amp import GradScaler
+            scaler = GradScaler(init_scale=1024, growth_interval=100000)
+        return scaler
+
+    def scale_loss_and_backward(self, scaler, loss):
+        scale_loss = scaler.scale(loss)
+        scale_loss.backward()
+        return scale_loss
+
+    def step(self, scaler, optimizer, lr_schedule):
+        scaler.step(optimizer)
+        optimizer.zero_grad()
+        lr_schedule.step()
+        scaler.update()

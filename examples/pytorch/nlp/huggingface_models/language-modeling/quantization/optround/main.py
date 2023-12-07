@@ -113,8 +113,8 @@ if __name__ == '__main__':
     parser.add_argument("--enable_minmax_tuning", action='store_true',
                         help="enable_tuning_minmax")
 
-    parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
-                        help="lm-eval tasks")
+    # parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
+    #                     help="lm-eval tasks")
 
     # parser.add_argument("--tasks", default=["lambada_openai"],
     #                     help="lm-eval tasks")
@@ -129,11 +129,11 @@ if __name__ == '__main__':
     #                     default=['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai', 'hellaswag', 'winogrande', 'piqa',
     #                              'coqa', 'truthfulqa_mc', 'openbookqa', 'boolq', 'rte', 'arc_easy', 'arc_challenge',
     #                              'hendrycksTest-*', 'wikitext', 'drop', 'gsm8k'],##all
-    # parser.add_argument("--tasks",
-    #                     default=['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai', 'hellaswag', 'winogrande', 'piqa',
-    #                              "hendrycksTest-*", "wikitext", "truthfulqa_mc", "openbookqa", "boolq", "rte",
-    #                              "arc_easy", "arc_challenge"],
-    #                     help="lm-eval tasks")  # "truthfulqa_gen"
+    parser.add_argument("--tasks",
+                        default=['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai', 'hellaswag', 'winogrande', 'piqa',
+                                 "hendrycksTest-*", "wikitext", "truthfulqa_mc", "openbookqa", "boolq", "rte",
+                                 "arc_easy", "arc_challenge"],
+                        help="lm-eval tasks")  # "truthfulqa_gen"
 
     # parser.add_argument("--tasks", default=["lambada_openai"],
     #                     help="lm-eval tasks")
@@ -218,12 +218,12 @@ if __name__ == '__main__':
 
     start_time = time.time()
 
-    from signroundv3 import OPTRoundQuantizer
+    from autoround import AutoRound
 
     scheme = "asym"
     if args.sym:
         scheme = "sym"
-    optq = OPTRoundQuantizer(model, tokenizer, args.num_bits, args.group_size, scheme, bs=args.train_bs,
+    optq = AutoRound(model, tokenizer, args.num_bits, args.group_size, scheme, bs=args.train_bs,
                              seqlen=seqlen, n_blocks=args.n_blocks, iters=args.iters, lr=args.lr,
                              minmax_lr=args.min_max_lr, use_quant_input=args.use_quant_input,
                              amp=args.amp)  ##TODO args pass
