@@ -156,16 +156,17 @@ user_model.eval()
 
 if args.approach in ["dynamic", "static"]:
     print("device:", next(user_model.parameters()).device)
-    from neural_compressor.torch.quantization import get_fp8_e5m2_qconfig, get_fp8_e4m3_qconfig
+    from neural_compressor.torch.quantization.config import FP8QConfig, get_default_fp8_qconfig
     if args.precision == "fp8_e4m3":
         dtype = torch.float8_e4m3fn
-        qconfig = get_fp8_e4m3_qconfig()
+        qconfig = get_default_fp8_qconfig()
     else:
         dtype = torch.float8_e5m2
-        qconfig = get_fp8_e5m2_qconfig()
+        qconfig = FP8QConfig(weight_dtype=torch.float8_e5m2, act_dtype=torch.float8_e5m2, approach="static")
 
 
-    from neural_compressor.torch.quantization.fp8 import quantize_dynamic, quantize
+    from neural_compressor.torch.quantization.fp8 import quantize_dynamic
+    from neural_compressor.torch.quantization import quantize
     if args.approach == "dynamic":
         user_model = quantize_dynamic(user_model, dtype, inplace=True)
     elif args.approach == "static":

@@ -164,7 +164,7 @@ class RTNWeightQuantConfig(BaseConfig):
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, white_list):
-                pair = (op_name, type(module))
+                pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
@@ -296,7 +296,7 @@ class GPTQConfig(BaseConfig):
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, white_list):
-                pair = (op_name, type(module))
+                pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
@@ -381,7 +381,7 @@ class FP8QConfig(BaseConfig):
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, white_list):
-                pair = (op_name, type(module))
+                pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result

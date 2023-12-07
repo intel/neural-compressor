@@ -26,6 +26,9 @@ from ..modules import Autocast, BatchMatmul, Matmul
 from .modules import (
     FP8BatchMatmul,
     FP8Cast,
+    FP8DynamicBatchMatmul,
+    FP8DynamicLinear,
+    FP8DynamicMatmul,
     FP8Linear,
     FP8LinearAllreduce,
     FP8LinearLayer,
@@ -51,13 +54,27 @@ E4M3_AMAX = torch.tensor(240 * 0.9, dtype=torch.float).to("hpu")
 E5M2_AMAX = torch.tensor(57344 * 0.9, dtype=torch.float).to("hpu")
 
 
-def quantize_dynamic(model, dtype=torch.float8_e4m3fn, inplace=True):
-    from neural_compressor.torch.quantization.fp8.modules import (
-        FP8DynamicBatchMatmul,
-        FP8DynamicLinear,
-        FP8DynamicMatmul,
-    )
+def _replace_module(module, qconfig):
+    if qconfig.approach == "static":
+        if isinstance(module, white_list):
+            QModule = quantization_mapping[type(module)]
+            assert qconfig.weight_dtype == qconfig.act_dtype, "weight and activation should be the same dtype."
+            module = QModule(module, qconfig.act_dtype)
+    elif qconfig.approach == "dynamic":
+        dtype = qconfig.act_dtype
+        if isinstance(module, torch.nn.Linear):
+            # need module for initialization
+            module = FP8DynamicLinear(module, dtype)
+        elif isinstance(module, Matmul):
+            module = FP8DynamicMatmul(dtype)
+        elif isinstance(module, BatchMatmul):
+            module = FP8DynamicBatchMatmul(dtype)
+        elif isinstance(module, Autocast):
+            module = FP8Cast(dtype=dtype)
+    return module
 
+
+def quantize_dynamic(model, dtype=torch.float8_e4m3fn, inplace=True):
     q_model = model if inplace else copy.deepcopy(model)
     for n, m in q_model.named_modules():
         if isinstance(m, torch.nn.Linear):
@@ -146,7 +163,7 @@ def _remove_observer(module, qconfig):
 
 
 def prepare(model, qconfig_mapping):
-    for (op_type, op_name), qconfig in qconfig_mapping.items():
+    for (op_name, op_type), qconfig in qconfig_mapping.items():
         module = fetch_module(model, op_name)
         if module is None:
             logger.info(f"{op_name} is not found in model.")
@@ -157,7 +174,7 @@ def prepare(model, qconfig_mapping):
 
 
 def convert(model, qconfig_mapping):
-    for (op_type, op_name), qconfig in qconfig_mapping.items():
+    for (op_name, op_type), qconfig in qconfig_mapping.items():
         module = fetch_module(model, op_name)
         if module is None:
             logger.info(f"{op_name} is not found in model.")
