@@ -161,7 +161,7 @@ class SaveInputs:
         for data in self.dataloader:
             if data is None:
                 continue
-            if isinstance(data,list):
+            if isinstance(data, list):
                 input_ids = data.to(self.model.device)
             else:
                 input_ids = data["input_ids"].to(self.model.device)
@@ -524,6 +524,7 @@ class WrapperMultiblock(torch.nn.Module):
                 hidden_states = layer_outputs[0]
         return hidden_states
 
+
 def get_block_names(model):
     """
     Get the block names for transformers-like networks, this may have issues
@@ -748,8 +749,6 @@ class OPTRoundQuantizer(object):
     #         line_tokenized = self.tokenizer.encode(line)
     #         if len(line_tokenized) < self.seqlen:
     #             continue
-    #         # import random
-    #         # index = random.randint(0, len(line_encoded) - seqlen)
     #         index = 0
     #         sample = line_tokenized[index:index + self.seqlen]
     #         if sample.count(sample[-1]) > seqlen // 2:
@@ -826,7 +825,7 @@ class OPTRoundQuantizer(object):
         round_params = []
         minmax_params = []
         for n, m in block.named_modules():
-            if isinstance(m, WrapperLinear) or isinstance(m, WrapperTransformerConv1d):
+            if hasattr(m, "orig_layer"):
                 round_params.append(m.value)
                 minmax_params.append(m.min_scale)
                 minmax_params.append(m.max_scale)
