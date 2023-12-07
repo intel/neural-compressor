@@ -563,6 +563,8 @@ def wrapper_block(block, enable_minmax_tuning):
     names = []
     for n, m in block.named_modules():
         if isinstance(m, torch.nn.Linear):
+            if "fp" in m.data_type or "float" in m.data_type:
+                continue
             new_m = WrapperLinear(m, enable_minmax_tuning=enable_minmax_tuning)
             set_module(block, n, new_m)
             names.append(n)
@@ -571,6 +573,8 @@ def wrapper_block(block, enable_minmax_tuning):
             import transformers
 
             if isinstance(m, transformers.modeling_utils.Conv1D):
+                if "fp" in m.data_type or "float" in m.data_type:
+                    continue
                 new_m = WrapperTransformerConv1d(m, enable_minmax_tuning=enable_minmax_tuning)
                 set_module(block, n, new_m)
                 names.append(names)
@@ -812,6 +816,16 @@ class AutoRound(object):
         group_size (int): Size of the quantization group (default is 128).
         scheme (str): The quantization scheme to be used (default is "asym").
         weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
+        weight_config={
+                   'layer1':##layer_name
+                   {
+                       'data_type': 'int',
+                       'bits': 4,
+                       'group_size': 32,
+                       'scheme': "asym", ## or sym
+                   }
+                   ...
+               }
         enable_full_range (bool): Whether to enable full range quantization (default is False).
         bs (int): Batch size for training (default is 8).
         amp (bool): Whether to use automatic mixed precision (default is True).
@@ -1261,6 +1275,14 @@ class AutoRound(object):
                     self.weight_config[n]["zp"] = m.zp
                     delattr(m, "scale")
                     delattr(m, "zp")
+                else:
+                    self.weight_config[n]["data_type"] = "float"
+                    if self.amp_dtype == torch.bfloat16:
+                        self.weight_config[n]["data_type"] = "bfloat"
+                    self.weight_config[n]["bits"] = 16
+                    self.weight_config[n]["group_size"] = None
+                    self.weight_config[n]["sym"] = None
+
         end_time = time.time()
         cost_time = end_time - start_time
         logger.info(f"quantization runtime {cost_time}")
