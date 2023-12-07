@@ -283,7 +283,18 @@ class SaveInputs:
             if total_cnt >= n_samples:
                 break
         self._recover_forward()
-        return self.inputs[self.block_name]
+        res = self.inputs[self.block_name]
+        if len(res) == 0:
+            logger.error(
+                "no data has been cached, please provide more data in the dataloader or decease the " "sequence length"
+            )
+            exit()
+        if "input_ids" in res.keys():
+            total_samples = res["input_ids"].shape[0]
+            if total_samples < n_samples:
+                logger.warning("only cache {total_samples}")
+
+        return res
 
     def _recover_forward(self):
         """Recovers the forward function."""
@@ -986,7 +997,7 @@ class AutoRound(object):
             input_ids_new = []
             for text in batch:
                 input_ids = text["input_ids"]
-                if input_ids.shape[0] < seqlen:
+                if input_ids.shape[0] < self.seqlen:
                     continue
                 input_ids = input_ids[:seqlen]
                 input_ids_list = input_ids.tolist()
