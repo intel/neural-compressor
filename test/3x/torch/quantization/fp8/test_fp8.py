@@ -86,6 +86,22 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         fp8_out = m(inp)
         print("Dynamic quantization FP8_E4M3 MSE:", (fp32_out - fp8_out).pow(2).sum())
 
+        m = copy.deepcopy(self.model)
+        inp = self.inp
+        fp32_out = m(inp)
+        qconfig = FP8QConfig(approach="dynamic")
+
+        def calib_func(model):
+            model(inp)
+
+        m = quantize(m, qconfig, run_fn=calib_func, inplace=True)
+        self.assertTrue(isinstance(m.fc1, FP8DynamicLinear))
+        self.assertTrue(isinstance(m.mm, FP8DynamicMatmul))
+        self.assertTrue(isinstance(m.bmm, FP8DynamicBatchMatmul))
+        print(m)
+        fp8_out = m(inp)
+        print("Dynamic quantization FP8_E4M3 MSE:", (fp32_out - fp8_out).pow(2).sum())
+
     def test_static(self):
         m = copy.deepcopy(self.model)
         inp = self.inp
