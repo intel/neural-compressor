@@ -101,7 +101,6 @@ if re.search("llama", args.model.lower()) or re.search("bloom", args.model.lower
              token=None,
         )
     else:
-        model_dtype = torch.float16
         user_model = AutoModelForCausalLM.from_pretrained(
             args.model,
             device_map='hpu',
@@ -114,7 +113,6 @@ elif re.search("chatglm", args.model.lower()):
         device_map='hpu',
     )
 else:
-    model_dtype = torch.float32
     user_model = AutoModelForCausalLM.from_pretrained(
         args.model,
         trust_remote_code=args.trust_remote_code,
@@ -148,7 +146,6 @@ if world_size > 1:
     else:
         ds_model = deepspeed.init_inference(user_model,
                                         mp_size=world_size,
-                                        dtype=model_dtype,
                                         replace_with_kernel_inject=False)
     user_model = ds_model.module
 
@@ -189,7 +186,7 @@ if args.approach in ["dynamic", "static"]:
                     attention_mask=calib_input["attention_mask"].to('hpu'),
                 )
 
-        user_model = quantize(user_model, qconfig, calib_func=calib_func, inplace=True)
+        user_model = quantize(user_model, qconfig, calib_func, inplace=True)
     print(user_model, flush=True)
 
 if args.to_graph:

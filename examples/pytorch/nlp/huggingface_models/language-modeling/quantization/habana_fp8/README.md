@@ -19,5 +19,6 @@ python run_llm.py --model [model_name_or_path] --approach [dynamic|static|cast] 
 With deepspeed we can leverage multi-cards inference with a prefix in command, below it's a demonstration of 4 card inference.
 
 ```python
-deepspeed --num_gpus=4  python run_llm.py --model [model_name_or_path] --approach [dynamic|static|cast] --precision [fp8_e4m3|fp8_e5m2] --to_graph  [--performance]|[--accuracy --tasks lambada_openai --batch_size 8]|[--generate --max_new_tokens 10]
+deepspeed --num_gpus=4 run_llm.py --model [model_name_or_path] --approach [dynamic|static|cast] --precision [fp8_e4m3|fp8_e5m2] --to_graph  [--performance]|[--accuracy --tasks lambada_openai --batch_size 8]|[--generate --max_new_tokens 10]
 ```
+deepspeed --num_gpus=4 run_llm.py --model facebook/opt-125m --approach static --precision fp8_e4m3 --to_graph  --accuracy --tasks lambada_openai --batch_size 8
