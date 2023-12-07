@@ -542,13 +542,18 @@ def wrapper_block(block, enable_minmax_tuning):
     """Wraps the layers in the given block with a custom Wrapper module.
 
     Args:
-    block: The input block containing linear,conv1d layers to be wrapped.
-    enable_minmax_tuning: A boolean indicating whether min-max tuning is enabled.
+        block: The input block containing linear and conv1d layers to be wrapped.
+        enable_minmax_tuning: A boolean indicating whether min-max tuning is enabled.
+
+    Returns:
+        list: A list of names of the wrapped layers.
     """
+    names = []
     for n, m in block.named_modules():
         if isinstance(m, torch.nn.Linear):
             new_m = WrapperLinear(m, enable_minmax_tuning=enable_minmax_tuning)
             set_module(block, n, new_m)
+            names.append(n)
 
         try:
             import transformers
@@ -556,8 +561,10 @@ def wrapper_block(block, enable_minmax_tuning):
             if isinstance(m, transformers.modeling_utils.Conv1D):
                 new_m = WrapperTransformerConv1d(m, enable_minmax_tuning=enable_minmax_tuning)
                 set_module(block, n, new_m)
+                names.append(names)
         except:
             pass
+    return names
 
 
 @torch.no_grad()
@@ -1062,7 +1069,8 @@ class AutoRound(object):
         if q_input is not None:
             input_ids = q_input.to(cache_device)
 
-        wrapper_block(block, self.enable_minmax_tuning)
+        names = wrapper_block(block, self.enable_minmax_tuning)
+        logger.info(names)
 
         round_params = []
         minmax_params = []
