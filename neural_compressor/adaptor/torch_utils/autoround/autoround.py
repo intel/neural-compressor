@@ -26,6 +26,7 @@ except:  # pragma: no cover
     logger = logging.getLogger()
 
 import copy
+import time
 from collections import UserDict
 from functools import partial
 
@@ -1035,7 +1036,8 @@ class AutoRound(object):
         torch.cuda.empty_cache()
 
     def quantize(self):
-        logger.info("cache input")
+        start_time = time.time()
+        logger.info("cache block input")
         block_names = get_block_names(self.model)
         if len(block_names) == 0:
             logger.warning("could not find blocks, exit with original model")
@@ -1065,6 +1067,9 @@ class AutoRound(object):
                     self.weight_config[n]["zp"] = m.zp
                     delattr(m, "scale")
                     delattr(m, "zp")
+        end_time = time.time()
+        cost_time = end_time - start_time
+        logger.info(f"quantization runtime {cost_time}")
         return self.model, self.weight_config
 
 

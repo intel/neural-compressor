@@ -208,10 +208,6 @@ if __name__ == '__main__':
     if not args.low_gpu_mem_usage:
         model = model.to(cuda_device)
 
-    import time
-
-    start_time = time.time()
-
 
 
     scheme = "asym"
@@ -222,8 +218,6 @@ if __name__ == '__main__':
                              minmax_lr=args.minmax_lr, use_quant_input=args.use_quant_input,
                              amp=args.amp)  ##TODO args pass
     optq.quantize()
-    end_time = time.time()
-    print(end_time - start_time, flush=True)
 
     torch.cuda.empty_cache()
     model.eval()
