@@ -13,15 +13,20 @@ import logging
 logger = logging.getLogger()
 
 
-def round_ste(x: torch.Tensor):
+def quant_weight_asym(weight, num_bits=4, v=0, min_scale=0, max_scale=0):
     """
-    cp from https://github.com/OpenGVLab/OmniQuant/blob/main/quantize/quantizer.py
-    Implement Straight-Through Estimator for rounding operation.
+    Quantizes and dequantizes weight asymmetrically.
+
+    Args:
+        weight: Tensor containing the weight to be quantized
+        num_bits: Number of bits for quantization (e.g., 2, 3, 4, 8)
+        v: Rounding value perturbation
+        min_scale: Minimum scale coefficient for weight
+        max_scale: Maximum scale coefficient for weight
+
+    Returns:
+        Quantized and dequantized weight, scale, zero-point
     """
-    return (x.round() - x).detach() + x
-
-
-def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
     maxq = torch.tensor(2 ** num_bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device)
     if isinstance(min_scale, torch.Tensor):
@@ -41,12 +46,25 @@ def quant_weight_asym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
     zp = round_ste(-wmin / scale)
     scale = scale.unsqueeze(dim=-1)
     zp = zp.unsqueeze(dim=-1)
-    int_w = round_ste(weight / scale + grad)
+    int_w = round_ste(weight / scale + v)
     q = torch.clamp(int_w + zp, 0, maxq)
     return scale * (q - zp), scale, zp
 
 
-def quant_weight_sym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
+def quant_weight_sym(weight, num_bits=4, v=0, min_scale=0, max_scale=0):
+    """
+     Quantizes and dequantizes weight symmetrically.
+
+    Args:
+        weight: Tensor containing the weight to be quantized
+        num_bits: Number of bits for quantization (e.g., 2, 3, 4, 8)
+        v: Rounding value perturbation
+        min_scale: Minimum scale coefficient for weight
+        max_scale: Maximum scale coefficient for weight
+
+    Returns:
+        Quantized and dequantized weight, scale, zero-point
+    """
     maxq = torch.tensor(2 ** (num_bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-2 ** (num_bits - 1)).to(weight.device)
     if num_bits == 1:
@@ -59,28 +77,43 @@ def quant_weight_sym(weight, num_bits=4, grad=0, min_scale=0, max_scale=0):
     wmax[tmp] = +1
     scale = wmax / ((maxq - minq) / 2)
     scale.unsqueeze_(dim=-1)
-    q = torch.clamp(round_ste(weight / scale + grad), minq, maxq)
+    q = torch.clamp(round_ste(weight / scale + v), minq, maxq)
     return scale * q, scale, None
 
 
-def quant_weight_actor(weight, num_bits, scheme, grad, min_scale, max_scale):
+def quant_weight_actor(weight, num_bits, scheme, v, min_scale, max_scale):
+    """
+     Quantizes and dequantizes weight symmetrically or asymmetrically .
+
+    Args:
+        weight: Tensor containing the weight to be quantized
+        num_bits: Number of bits for quantization (e.g., 2, 3, 4, 8)
+        scheme: Sym or asym
+        v: Rounding value perturbation
+        min_scale: Minimum scale coefficient for weight
+        max_scale: Maximum scale coefficient for weight
+        use_sigmoid: Boolean indicating whether to use sigmoid; found useful in some scenarios for adam
+
+    Returns:
+        Quantized and dequantized weight, scale, zero-point
+    """
     assert num_bits > 0, "num_bits should be larger than 0"
     if scheme == "sym":
-        return quant_weight_sym(weight, num_bits, grad, min_scale, max_scale)
+        return quant_weight_sym(weight, num_bits, v, min_scale, max_scale)
     else:
-        return quant_weight_asym(weight, num_bits, grad, min_scale, max_scale)
+        return quant_weight_asym(weight, num_bits, v, min_scale, max_scale)
 
 
-def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", grad=0, min_scale=0, max_scale=0):
+def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", v=0, min_scale=0, max_scale=0):
     if group_size == -1 or weight.shape[1] < group_size:
-        return quant_weight_actor(weight, num_bits, scheme=scheme, grad=grad, min_scale=min_scale, max_scale=max_scale)
+        return quant_weight_actor(weight, num_bits, scheme=scheme, v=v, min_scale=min_scale, max_scale=max_scale)
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
-        if isinstance(grad, torch.Tensor):
-            grad = grad.reshape(-1, group_size)
+        if isinstance(v, torch.Tensor):
+            v = v.reshape(-1, group_size)
 
-        weight, scale, zp = quant_weight_actor(weight, num_bits, scheme=scheme, grad=grad, min_scale=min_scale,
+        weight, scale, zp = quant_weight_actor(weight, num_bits, scheme=scheme, v=v, min_scale=min_scale,
                                                max_scale=max_scale)
         weight = weight.reshape(orig_shape)
         return weight, scale, zp
@@ -88,17 +121,23 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", grad=0, min_s
     else:
         pad_len = (weight.shape[1] + group_size - 1) // group_size * group_size - weight.shape[1]
         weight_new = torch.nn.functional.pad(weight, (0, pad_len))
-        grad = torch.nn.functional.pad(grad, (0, pad_len))
+        v = torch.nn.functional.pad(v, (0, pad_len))
         weight_new = weight_new.reshape(-1, group_size)
-        if isinstance(grad, torch.Tensor):
-            grad = grad.reshape(-1, group_size)
-        weight_new, scale, zp = quant_weight_actor(weight_new, num_bits, scheme=scheme, grad=grad, min_scale=min_scale,
+        if isinstance(v, torch.Tensor):
+            v = v.reshape(-1, group_size)
+        weight_new, scale, zp = quant_weight_actor(weight_new, num_bits, scheme=scheme, v=v, min_scale=min_scale,
                                                    max_scale=max_scale)
         weight_new = weight_new.reshape(orig_shape[0], -1)
 
         weight_new = weight_new[:, :-pad_len]
         return weight_new, scale, zp
 
+def round_ste(x: torch.Tensor):
+    """
+    cp from https://github.com/OpenGVLab/OmniQuant/blob/main/quantize/quantizer.py
+    Implement Straight-Through Estimator for rounding operation.
+    """
+    return (x.round() - x).detach() + x
 
 class SaveInputs:
     def __init__(self, model, dataloader, seqlen=256, block_name=None):
@@ -278,18 +317,18 @@ class WrapperLinear(torch.nn.Module):
             self.min_scale = torch.tensor(0, device=self.orig_layer.weight.device)
             self.max_scale = torch.tensor(0, device=self.orig_layer.weight.device)
 
-    def unwrapper(self, grad, min_scale_grad, max_scale_grad):
-        min_scale_grad.clamp_(-1, 0)
-        max_scale_grad.clamp_(-1, 0)
+    def unwrapper(self, v, min_scale, max_scale):
+        min_scale.clamp_(-1, 0)
+        max_scale.clamp_(-1, 0)
 
         q_dq_weight, scale, zp = quant_weight(
             self.orig_layer.weight,
             self.num_bits,
             self.group_size,
             self.scheme,
-            grad,
-            min_scale_grad,
-            max_scale_grad,
+            v,
+            min_scale,
+            max_scale,
         )
         self.orig_layer.weight.data.copy_(q_dq_weight)
         self.orig_layer.weight.grad = None  ##clear grad
@@ -327,17 +366,17 @@ class WrapperTransformerConv1d(torch.nn.Module):
             self.min_scale = torch.tensor(0, device=device)
             self.max_scale = torch.tensor(0, device=device)
 
-    def unwrapper(self, grad, min_scale_grad, max_scale_grad):
-        min_scale_grad.clamp_(-1, 0)
-        max_scale_grad.clamp_(-1, 0)
+    def unwrapper(self, v, min_scale, max_scale):
+        min_scale.clamp_(-1, 0)
+        max_scale.clamp_(-1, 0)
         weight_q, scale, zp = quant_weight(
             self.weight_t,
             self.num_bits,
             self.group_size,
             self.scheme,
-            grad,
-            min_scale_grad,
-            max_scale_grad,
+            v,
+            min_scale,
+            max_scale,
         )
         self.orig_layer.weight.data.copy_(weight_q.t())
         self.orig_layer.weight.grad = None
@@ -357,7 +396,6 @@ class WrapperTransformerConv1d(torch.nn.Module):
             self.value,
             self.min_scale,
             self.max_scale,
-            use_sigmoid=self.use_sigmoid,
         )
         weight_q = weight_q.to(self.weight_t.dtype)
         size_out = x.size()[:-1] + (self.orig_layer.nf,)
@@ -374,40 +412,24 @@ def wrapper_block(block, enable_minmax_tuning):
 
 
 @torch.no_grad()
-def unwrapper_block(block, grads, min_scale_grads, max_scale_grads):
+def unwrapper_block(block, vs, min_scales, max_scales):
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear) or isinstance(m, WrapperTransformerConv1d):
-            grad = 0
-            min_scale_grad = 0
-            max_scale_grad = 0
-            if isinstance(grads, dict):
-                grad = grads[n]
-            if isinstance(min_scale_grads, dict):
-                min_scale_grad = min_scale_grads[n]
-                min_scale_grad = torch.clamp(min_scale_grad, -1, 0)
-            if isinstance(max_scale_grads, dict):
-                max_scale_grad = max_scale_grads[n]
-                max_scale_grad = torch.clamp(max_scale_grad, -1, 0)
-            orig_layer = m.unwrapper(grad, min_scale_grad, max_scale_grad)
+            v = 0
+            min_scale = 0
+            max_scale = 0
+            if isinstance(vs, dict):
+                v = vs[n]
+            if isinstance(min_scales, dict):
+                min_scale = min_scales[n]
+                min_scale = torch.clamp(min_scale, -1, 0)
+            if isinstance(max_scales, dict):
+                max_scale = max_scales[n]
+                max_scale = torch.clamp(max_scale, -1, 0)
+            orig_layer = m.unwrapper(v, min_scale, max_scale)
             set_module(block, n, orig_layer)
 
-            # q_dq_weight, scale, zp = quant_weight(orig_layer.weight, num_bits, group_size, scheme, grad, min_scale_grad,
-            #                                  max_scale_grad)
-            # orig_layer.weight.data.copy_(q_dq_weight)
-            # orig_layer.scale = scale
-            # orig_layer.zp = zp
-            # orig_layer.weight.grad = None  ##clear grad
-            # set_module(block, n, orig_layer)
 
-
-def collect_grad_and_zero(block):
-    grads = {}
-    for n, m in block.named_modules():
-        if isinstance(m, WrapperLinear):
-            grad = -m.orig_layer.value.grad
-            grads[n] = copy.deepcopy(grad)
-            m.orig_layer.weight.grad.zero_()
-    return grads
 
 
 def sampling_inputs(input_ids, input_others, indices, seqlen):
@@ -482,23 +504,23 @@ def block_forward(block, input_ids, input_others, amp=False, amp_dtype=torch.flo
     return output
 
 
-def collect_round_grad(block):
-    grads = {}
+def collect_round_v(block):
+    vs = {}
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear):
-            grad = m.value.data
-            grads[n] = copy.deepcopy(grad)
-    return grads
+            v = m.value.data
+            vs[n] = copy.deepcopy(v)
+    return vs
 
 
-def collect_minmax_grad(block):
-    min_grads = {}
-    max_grads = {}
+def collect_minmax_scale(block):
+    min_scales = {}
+    max_scales = {}
     for n, m in block.named_modules():
         if isinstance(m, WrapperLinear):
-            min_grads[n] = copy.deepcopy(torch.clamp(m.min_scale.data, -1, 0))
-            max_grads[n] = copy.deepcopy(torch.clamp(m.max_scale.data, -1, 0))
-    return min_grads, max_grads
+            min_scales[n] = copy.deepcopy(torch.clamp(m.min_scale.data, -1, 0))
+            max_scales[n] = copy.deepcopy(torch.clamp(m.max_scale.data, -1, 0))
+    return min_scales, max_scales
 
 
 @torch.no_grad()
@@ -867,9 +889,6 @@ class AutoRound(object):
         last_best_iter = 0
         best_loss = torch.finfo(torch.float).max
         mse_loss = torch.nn.MSELoss().to(device)
-        grad = None
-        min_scale_grad = None
-        max_scale_grad = None
         scaler = self.get_scaler()
         for i in range(self.iters):
             if self.sampler == "rand":
@@ -912,22 +931,18 @@ class AutoRound(object):
                 best_loss = total_loss
                 if not self.not_use_mse:
                     # print(f"get better result at iter {i}, the loss is {total_loss}", flush=True)
-                    best_grad = collect_round_grad(block)
-                    best_min_scale_grad, best_max_scale_grad = collect_minmax_grad(block)
+                    best_v = collect_round_v(block)
+                    best_min_scale, best_max_scale = collect_minmax_scale(block)
                     last_best_iter = i
             if self.not_use_mse and i == self.iters - 1:
-                best_grad = grad
-                best_min_scale_grad = min_scale_grad
-                best_max_scale_grad = max_scale_grad
+                best_v = collect_round_v(block)
+                best_min_scale, best_max_scale = collect_minmax_scale(block)
 
             if not self.not_use_mse:
                 if self.dynamic_max_gap > 0 and i - last_best_iter >= self.dynamic_max_gap:
                     break
             self.step(scaler, optimizer, lr_schedule)
-            # optimizer.step()  ##TODO  scale grad for other optimizer
-            # optimizer.zero_grad()
-            # lr_schedule.step()
-        unwrapper_block(block, best_grad, best_min_scale_grad, best_max_scale_grad)
+        unwrapper_block(block, best_v, best_min_scale, best_max_scale)
         if self.use_quant_input:
             q_outputs = self.get_block_outputs(
                 block, input_ids, input_others, self.train_bs, device, cache_device, batch_dim
