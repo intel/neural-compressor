@@ -90,11 +90,7 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         inp = self.inp
         fp32_out = m(inp)
         qconfig = FP8QConfig(approach="dynamic")
-
-        def calib_func(model):
-            model(inp)
-
-        m = quantize(m, qconfig, run_fn=calib_func, inplace=True)
+        m = quantize(m, qconfig, inplace=True)
         self.assertTrue(isinstance(m.fc1, FP8DynamicLinear))
         self.assertTrue(isinstance(m.mm, FP8DynamicMatmul))
         self.assertTrue(isinstance(m.bmm, FP8DynamicBatchMatmul))

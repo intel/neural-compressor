@@ -52,6 +52,7 @@ white_list = tuple(quantization_mapping.keys())
 # without scale factor 0.9, the output will be abnormal.
 E4M3_AMAX = torch.tensor(240 * 0.9, dtype=torch.float).to("hpu")
 E5M2_AMAX = torch.tensor(57344 * 0.9, dtype=torch.float).to("hpu")
+FP8_DTYPE = [torch.float8_e5m2, torch.float8_e4m3fn]
 
 
 def _replace_module(module, qconfig):
@@ -164,6 +165,10 @@ def _remove_observer(module, qconfig):
 
 def prepare(model, qconfig_mapping):
     for (op_name, op_type), qconfig in qconfig_mapping.items():
+        if qconfig.approach == "dynamic":
+            continue
+        if qconfig.weight_dtype not in FP8_DTYPE:
+            continue
         module = fetch_module(model, op_name)
         if module is None:
             logger.info(f"{op_name} is not found in model.")
@@ -175,24 +180,28 @@ def prepare(model, qconfig_mapping):
 
 def convert(model, qconfig_mapping):
     for (op_name, op_type), qconfig in qconfig_mapping.items():
+        if qconfig.weight_dtype not in FP8_DTYPE:
+            continue
         module = fetch_module(model, op_name)
         if module is None:
             logger.info(f"{op_name} is not found in model.")
             continue
-        _remove_observer(module, qconfig)
+        if qconfig.approach != "dynamic":
+            _remove_observer(module, qconfig)
         module = _replace_module(module, qconfig)
         set_module(model, op_name, module)
     return model
 
 
 @register_algo(name=FP8_QUANT)
-def quantize(model, qconfig_mapping, run_fn, run_args=None, inplace=True):
+def quantize(model, qconfig_mapping, run_fn=None, run_args=None, inplace=True):
     q_model = model if inplace else copy.deepcopy(model)
     q_model = prepare(q_model, qconfig_mapping)
-    if run_args is not None:
-        run_fn(q_model, *run_args)
-    else:
-        run_fn(q_model)
+    if run_fn is not None:
+        if run_args is not None:
+            run_fn(q_model, *run_args)
+        else:
+            run_fn(q_model)
     q_model = convert(q_model, qconfig_mapping)
     return q_model
 

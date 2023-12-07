@@ -71,6 +71,7 @@ parser.add_argument("--local_rank",
                     type=int,
                     default=-1,
                     help="local_rank for distributed training on gpus")
+parser.add_argument("--skip_lm_head", action="store_true")
 args = parser.parse_args()
 
 
@@ -154,19 +155,24 @@ user_model.eval()
 if args.approach in ["dynamic", "static"]:
     print("device:", next(user_model.parameters()).device)
     from neural_compressor.torch.quantization.config import FP8QConfig, get_default_fp8_qconfig
-    if args.precision == "fp8_e4m3":
-        dtype = torch.float8_e4m3fn
-        qconfig = get_default_fp8_qconfig()
-    else:
-        dtype = torch.float8_e5m2
-        qconfig = FP8QConfig(weight_dtype=torch.float8_e5m2, act_dtype=torch.float8_e5m2, approach="static")
-
-
     from neural_compressor.torch.quantization.fp8 import quantize_dynamic
     from neural_compressor.torch.quantization import quantize
+    if args.precision == "fp8_e4m3":
+        dtype = torch.float8_e4m3fn
+    else:
+        dtype = torch.float8_e5m2
     if args.approach == "dynamic":
-        user_model = quantize_dynamic(user_model, dtype, inplace=True)
+        #user_model = quantize_dynamic(user_model, dtype, inplace=True)
+        qconfig = FP8QConfig(weight_dtype=dtype, act_dtype=dtype, approach="dynamic")
+        if args.skip_lm_head:
+            fp32_config = FP8QConfig(weight_dtype=torch.float32, act_dtype=torch.float32)
+            qconfig.set_local("lm_head", fp32_config)
+        user_model = quantize(user_model, qconfig, inplace=True)
     elif args.approach == "static":
+        qconfig = FP8QConfig(weight_dtype=dtype, act_dtype=dtype, approach="static")
+        if args.skip_lm_head:
+            fp32_config = FP8QConfig(weight_dtype=torch.float32, act_dtype=torch.float32)
+            qconfig.set_local("lm_head", fp32_config)
         # dataset
         from datasets import load_dataset
         calib_dataset = load_dataset(args.dataset, split="train").select(range(100))
