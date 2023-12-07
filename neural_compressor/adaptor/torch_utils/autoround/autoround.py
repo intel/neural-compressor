@@ -168,15 +168,30 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", v=0, min_scal
 
 
 def round_ste(x: torch.Tensor):
-    """
-    cp from https://github.com/OpenGVLab/OmniQuant/blob/main/quantize/quantizer.py
-    Implement Straight-Through Estimator for rounding operation.
+    """Straight-Through Estimator for rounding.
+    This function is adapted from omniquant.
+
+    Args:
+        x: torch.Tensor
+
+    Returns:
+        torch.Tensor
     """
     return (x.round() - x).detach() + x
 
 
 class SaveInputs:
+    """Cache the inputs of the first block."""
+
     def __init__(self, model, dataloader, seqlen=256, block_name=None):
+        """Initializes the SaveInputs class.
+
+        Args:
+            model: The model to be used.
+            dataloader: The dataloader for the input data.
+            seqlen (int): The sequence length.
+            block_name (str): The name of the block.
+        """
         self.model = model.eval()
         self.dataloader = dataloader
         self.inputs = {}
@@ -185,7 +200,16 @@ class SaveInputs:
 
     @torch.no_grad()
     def get_forward_func(self, name):
-        def forward(_, hidden_states, *positional_args, **kwargs):  ##This may have bug for other models
+        """Gets the forward function.
+
+        Args:
+            name (str): The name of the function.
+
+        Returns:
+            function: The forward function.
+        """
+
+        def forward(_, hidden_states, *positional_args, **kwargs):
             dim = int((hasattr(self.model, "config") and "chatglm" in self.model.config.model_type))
             if name in self.inputs:
                 data = torch.cat([self.inputs[name]["input_ids"], hidden_states.to("cpu")], dim=dim)
@@ -230,6 +254,14 @@ class SaveInputs:
 
     @torch.no_grad()
     def get_inputs(self, n_samples=512):
+        """Gets the inputs.
+
+        Args:
+            n_samples (int): The number of samples.
+
+        Returns:
+            dict: The inputs.
+        """
         total_cnt = 0
         self._replace_forward()
         for data in self.dataloader:
@@ -256,6 +288,7 @@ class SaveInputs:
         return self.inputs[self.block_name]
 
     def _recover_forward(self):
+        """Recovers the forward function."""
         for n, m in self.model.named_modules():
             if n == self.block_name:
                 m.forward = m.orig_forward
@@ -263,27 +296,12 @@ class SaveInputs:
                 break
 
     def _replace_forward(self):
+        """Replaces the forward function."""
         for n, m in self.model.named_modules():
             if n == self.block_name:
                 m.orig_forward = m.forward
                 m.forward = partial(self.get_forward_func(n), m)
                 break
-
-
-@torch.no_grad()
-def q_dq_weight(model: torch.nn.Module, num_bits=4, group_size=128, scheme="asym"):
-    target_m = None
-    for n, m in model.named_modules():
-        if hasattr(type(m), "__name__") and "ModuleList" in type(m).__name__:
-            target_m = (n, m)
-    block_names = []
-    for n, m in target_m[1].named_children():
-        block_names.append(target_m[0] + "." + n)
-    for name in block_names:
-        block = get_module(model, name)
-        for n, m in block.named_modules():
-            if isinstance(m, torch.nn.Linear):
-                m.weight.data.copy_(quant_weight(m.weight, num_bits=num_bits, group_size=group_size, scheme=scheme)[0])
 
 
 def get_module(model, key):
@@ -321,6 +339,15 @@ def set_module(model, key, new_module):
 
 
 def get_scale_shape(weight, group_size):
+    """Computes the shape of the scale tensor for quantization based on the weight tensor and group size.
+
+    Args:
+      weight (torch.Tensor): The weight tensor of the layer.
+      group_size (int): The size of the groups for quantization.
+
+    Returns:
+      The shape of the scale tensor to be used for quantization.
+    """
     if group_size == -1 or weight.shape[1] < group_size:
         shape = weight.shape[0]
     else:
@@ -331,6 +358,22 @@ def get_scale_shape(weight, group_size):
 
 class WrapperLinear(torch.nn.Module):
     def __init__(self, orig_layer, enable_minmax_tuning=True):
+        """A wrapper module for linear layers that enables quantization and min-max tuning of weights.
+
+        Args:
+        - orig_layer (torch.nn.Module): The original linear layer to be wrapped.
+        - enable_minmax_tuning (bool): Whether to enable min-max scaling tuning. Default is True.
+
+        Attributes:
+        - orig_layer (torch.nn.Module): The original linear layer being wrapped.
+        - num_bits (int): The number of bits for quantization.
+        - group_size (int): The size of the groups for quantization.
+        - scheme (str): The quantization scheme to use.
+        - value (torch.nn.Parameter): The learnable parameter for quantization.
+        - enable_minmax_tuning (bool): Whether min-max scaling tuning is enabled.
+        - min_scale (torch.nn.Parameter or torch.Tensor): The minimum scale for min-max tuning.
+        - max_scale (torch.nn.Parameter or torch.Tensor): The maximum scale for min-max tuning.
+        """
         super(WrapperLinear, self).__init__()
         self.orig_layer = orig_layer
         self.num_bits = self.orig_layer.bits
@@ -354,6 +397,16 @@ class WrapperLinear(torch.nn.Module):
             self.max_scale = torch.tensor(0, device=self.orig_layer.weight.device)
 
     def unwrapper(self, v, min_scale, max_scale):
+        """Unwrapper the layer to the original layer.
+
+        Args:
+        - v (torch.Tensor): The rounding v parameter for quantization.
+        - min_scale (torch.nn.Parameter or torch.Tensor): The minimum scale for min-max tuning.
+        - max_scale (torch.nn.Parameter or torch.Tensor): The maximum scale for min-max tuning.
+
+        Returns:
+        - torch.nn.Module: The original linear layer with updated weights after quantization and dequantization.
+        """
         min_scale.clamp_(-1, 0)
         max_scale.clamp_(-1, 0)
 
@@ -373,6 +426,14 @@ class WrapperLinear(torch.nn.Module):
         return self.orig_layer
 
     def forward(self, x):
+        """Performs forward pass through the wrapped linear layer with quantized weights.
+
+        Args:
+        - x (torch.Tensor): The input tensor.
+
+        Returns:
+        - torch.Tensor: The output tensor after applying the linear transformation with quantized weights.
+        """
         weight = self.orig_layer.weight
         self.min_scale.data.copy_(torch.clamp(self.min_scale.data, -1, 0))
         self.max_scale.data.copy_(torch.clamp(self.max_scale.data, -1, 0))
@@ -775,7 +836,7 @@ class AutoRound(object):
         return example
 
     def get_default_dataloader(self, data_name="NeelNanda/pile-10k"):
-        from datasets import load_dataset
+        from datasets import load_dataset  # pylint: disable=import-error
         from torch.utils.data import DataLoader
 
         @torch.no_grad()
@@ -805,7 +866,7 @@ class AutoRound(object):
 
         return calib_dataloader
 
-    # def get_default_dataloader(self, data_name="NeelNanda/pile-10k"):
+    # def get_default_dataloader(self, data_name="NeelNanda/pile-10k"):## keep it as it may be useful
     #     from datasets import load_dataset
     #
     #     seqlen = self.seqlen
@@ -852,28 +913,6 @@ class AutoRound(object):
         output = torch.cat(output, dim=batch_dim)
         torch.cuda.empty_cache()
         return output
-
-    # def loss_scale_and_backward(self, scaler, loss):
-    #     if scaler is not None:
-    #         scale_loss = scaler.scale(loss)
-    #         scale_loss.backward()
-    #         return scale_loss
-    #     else:
-    #         loss *= 1000
-    #         loss.backward()
-    #         return loss
-    #
-    # def step(self, scaler, optimizer, lr_schedule):  ##TODO signround does not need this
-    #     if scaler is not None:
-    #         scaler.step(optimizer)
-    #         optimizer.zero_grad()
-    #         lr_schedule.step()
-    #         scaler.update()
-    #     else:
-    #         optimizer.step()
-    #         optimizer.zero_grad()
-    #         lr_schedule.step()
-    #
 
     def quant_block(self, block, input_ids, input_others, q_input=None, device=torch.device("cpu")):
         batch_dim = get_batch_dim(input_others)
@@ -922,7 +961,7 @@ class AutoRound(object):
         last_best_iter = 0
         best_loss = torch.finfo(torch.float).max
         mse_loss = torch.nn.MSELoss().to(device)
-        scaler = self.get_scaler()
+        scaler = self.get_scaler()  # pylint: disable=assignment-from-none
         for i in range(self.iters):
             if self.sampler == "rand":
                 indices = torch.randperm(n_samples)[:pick_samples]
@@ -1156,7 +1195,7 @@ class AutoOPTRound(AutoRound):
 
     def get_scaler(self):
         scaler = None
-        if self.amp and self.scale_grad:
+        if self.amp:
             from torch.cuda.amp import GradScaler
 
             scaler = GradScaler(init_scale=1024, growth_interval=100000)
