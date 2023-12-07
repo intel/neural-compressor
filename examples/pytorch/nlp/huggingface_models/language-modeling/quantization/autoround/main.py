@@ -25,6 +25,8 @@ os.environ["HF_HOME"] = "/models/huggingface"
 ## LLaMAV1 done
 ## LLaMAv2 done
 ## LaMini-GPT-124M done
+## QWEN1-8B done,but has random issue
+## OPT-125M done
 
 
 if __name__ == '__main__':
@@ -93,7 +95,7 @@ if __name__ == '__main__':
     parser.add_argument("--not_with_attention", action='store_true',
                         help="tuning with attention_mask input")
 
-    parser.add_argument("--seqlen", default=512, type=int,
+    parser.add_argument("--seqlen", default=2048, type=int,
                         help="sequence length")
 
     parser.add_argument("--gradient_accumulate_steps", default=1, type=int, help="gradient accumulate steps")
