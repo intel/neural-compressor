@@ -446,6 +446,28 @@ class WrapperLinear(torch.nn.Module):
 
 class WrapperTransformerConv1d(torch.nn.Module):
     def __init__(self, orig_layer, num_bits, group_size, scheme, use_sigmoid, enable_minmax_tuning=True):
+        """A wrapper module for transformers 1D convolutional layers used in transformers, enabling quantization and min-max tuning of weights.
+
+        Args:
+        - orig_layer (torch.nn.Module): The original 1D convolutional layer to be wrapped.
+        - num_bits (int): The number of bits for quantization.
+        - group_size (int): The size of the groups for quantization.
+        - scheme (str): The quantization scheme to use.
+        - use_sigmoid (bool): Whether to use sigmoid function for quantization.
+        - enable_minmax_tuning (bool): Whether to enable min-max scaling tuning. Default is True.
+
+        Attributes:
+        - orig_layer (torch.nn.Module): The original 1D convolutional layer being wrapped.
+        - num_bits (int): The number of bits for quantization.
+        - group_size (int): The size of the groups for quantization.
+        - scheme (str): The quantization scheme to use.
+        - use_sigmoid (bool): Whether to use sigmoid function for quantization.
+        - weight_t (torch.Tensor): Transposed weight tensor of the original layer.
+        - value (torch.nn.Parameter): The learnable parameter for quantization.
+        - enable_minmax_tuning (bool): Whether min-max scaling tuning is enabled.
+        - min_scale (torch.nn.Parameter or torch.Tensor): The minimum scale for min-max tuning.
+        - max_scale (torch.nn.Parameter or torch.Tensor): The maximum scale for min-max tuning.
+        """
         super(WrapperTransformerConv1d, self).__init__()
         self.orig_layer = orig_layer
         self.num_bits = num_bits
@@ -465,6 +487,16 @@ class WrapperTransformerConv1d(torch.nn.Module):
             self.max_scale = torch.tensor(0, device=device)
 
     def unwrapper(self, v, min_scale, max_scale):
+        """Unwrapper the layer to the original conv1d layer..
+
+        Args:
+        - v (torch.Tensor): The scaling parameter for quantization.
+        - min_scale (torch.nn.Parameter or torch.Tensor): The minimum scale for min-max tuning.
+        - max_scale (torch.nn.Parameter or torch.Tensor): The maximum scale for min-max tuning.
+
+        Returns:
+        - torch.nn.Module: The original 1D convolutional layer with updated weights after inverse quantization.
+        """
         min_scale.clamp_(-1, 0)
         max_scale.clamp_(-1, 0)
         weight_q, scale, zp = quant_weight(
@@ -483,6 +515,14 @@ class WrapperTransformerConv1d(torch.nn.Module):
         return self.orig_layer
 
     def forward(self, x):
+        """Performs forward pass through the wrapped 1D convolutional layer with quantized weights.
+
+        Args:
+        x (torch.Tensor): The input tensor.
+
+        Returns:
+        torch.Tensor: The output tensor after applying the convolutional transformation with quantized weights.
+        """
         with torch.no_grad():
             self.min_scale.clamp_(-1, 0)
             self.max_scale.clamp_(-1, 0)
@@ -507,6 +547,14 @@ def wrapper_block(block, enable_minmax_tuning):
         if isinstance(m, torch.nn.Linear):
             new_m = WrapperLinear(m, enable_minmax_tuning=enable_minmax_tuning)
             set_module(block, n, new_m)
+        try:
+            import transformers
+
+            if isinstance(m, torch.nn.Conv1d):
+                new_m = WrapperTransformerConv1d(m, enable_minmax_tuning=enable_minmax_tuning)
+                set_module(block, n, new_m)
+        except:
+            pass
 
 
 @torch.no_grad()
