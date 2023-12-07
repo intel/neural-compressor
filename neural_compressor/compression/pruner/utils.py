@@ -21,7 +21,7 @@ import re
 import numpy as np
 import yaml
 
-FLATTEN_DIM2 = 16
+FLATTEN_DIM2 = 8
 
 from ...config import WeightPruningConfig as WeightPruningConf
 

@@ -18,7 +18,8 @@
 
 from ..patterns import get_pattern
 from .base import KerasBasePruner, PytorchBasePruner, register_pruner
-
+from neural_compressor.utils.logger import Logger
+logger = Logger().get_logger()
 
 @register_pruner("pt_pattern_lock")
 class PytorchPatternLockPruner(PytorchBasePruner):

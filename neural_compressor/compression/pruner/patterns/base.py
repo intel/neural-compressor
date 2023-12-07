@@ -17,6 +17,7 @@
 # limitations under the License.
 
 from collections import namedtuple
+from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
 
 import numpy as np
 
@@ -607,12 +608,16 @@ class PytorchBasePattern(BasePattern):
         """
         pattern_lock_masks = {}
         for key in modules.keys():
-            weight = modules[key].weight
-            shape = weight.shape
+            # weight = modules[key].weight
+            # shape = weight.shape
+            param = modules[key].weight
+            data = safe_get_data(param)
+            shape = safe_get_shape(param)
             mask = torch.ones(shape)
-            mask[weight == 0] = 0.0
+            # mask[weight == 0] = 0.0
+            mask[data == 0] = 0.0
             mask = mask.bool()
-            pattern_lock_masks[key] = mask.to(weight.device)
+            pattern_lock_masks[key] = mask.to(param.device)
 
         return pattern_lock_masks
 

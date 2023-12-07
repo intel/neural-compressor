@@ -381,13 +381,16 @@ class PytorchPatternNInM(PytorchBasePattern):
         """
         pattern_lock_masks = {}
         for key in modules.keys():
-            weight = modules[key].weight
-            orig_shape = weight.shape
+            # weight = modules[key].weight
+            param = modules[key].weight
+            # orig_shape = weight.shape
+            orig_shape = safe_get_shape(param)
+            data = safe_get_data(param)
             if key in self.invalid_layers:
-                mask = torch.ones(orig_shape, device=weight.device)
+                mask = torch.ones(orig_shape, device=param.device)
                 pattern_lock_masks[key] = mask.bool()
                 continue
-            reduced_mask = self.get_reduced_masks_from_data(weight, key)
+            reduced_mask = self.get_reduced_masks_from_data(data, key)
             mask = self.reshape_reduced_to_orig(reduced_mask, key, orig_shape)
             pattern_lock_masks[key] = mask
         return pattern_lock_masks

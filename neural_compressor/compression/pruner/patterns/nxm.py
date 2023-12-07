@@ -17,9 +17,11 @@
 # limitations under the License.
 import numpy as np
 
-from ..utils import logger, nn, tf, torch
+from ..utils import nn, tf, torch
 from .base import KerasBasePattern, ProgressivePatternUtils, PytorchBasePattern, SparsityInfo, register_pattern
 from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
+from neural_compressor.utils.logger import Logger
+logger = Logger().get_logger()
 
 @register_pattern("ptNxM")
 class PytorchPatternNxM(PytorchBasePattern):
@@ -384,11 +386,11 @@ class PytorchPatternNxM(PytorchBasePattern):
             param = self.modules[key].weight
             orig_shape = safe_get_shape(param)
             # orig_shape = self.modules[key].weight.shape
-            if len(orig_shape) == 4 or len(orig_shape) == 3:  # need to permute
-                mask = masks[key]
-                # orig_shape = scores[key].shape
-                mask = self._reshape_2dims_to_orig(mask, orig_shape)
-                masks[key] = mask
+            # if len(orig_shape) == 4 or len(orig_shape) == 3 :  # need to permute
+            mask = masks[key]
+            # orig_shape = scores[key].shape
+            mask = self._reshape_2dims_to_orig(mask, orig_shape)
+            masks[key] = mask
             layer_ratio = torch.sum(masks[key] == 0.0).data.item() / masks[key].numel()
             logger.info(f"{key} sparsity is {layer_ratio}")
         return masks
@@ -404,14 +406,15 @@ class PytorchPatternNxM(PytorchBasePattern):
         """
         pattern_lock_masks = {}
         for key in modules.keys():
-            weight = modules[key].weight
-            ori_shape = safe_get_shape(weight)
+            param = modules[key].weight
+            data = safe_get_data(param)
+            ori_shape = safe_get_shape(param)
             # ori_shape = weight.shape
             if key in self.invalid_layers:
-                mask = torch.ones(ori_shape, device=weight.device)
+                mask = torch.ones(ori_shape, device=param.device)
                 pattern_lock_masks[key] = mask
                 continue
-            reduced_mask = self.get_reduced_masks_from_data(weight, key)
+            reduced_mask = self.get_reduced_masks_from_data(data, key)
             mask = self.reshape_reduced_to_orig(reduced_mask, key, ori_shape)
             pattern_lock_masks[key] = mask
 

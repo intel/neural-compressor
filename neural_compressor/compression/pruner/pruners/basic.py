@@ -21,9 +21,11 @@ from ..patterns import get_pattern
 from ..regs import get_reg
 from ..schedulers import get_scheduler
 from ..tf_criteria import get_tf_criterion
-from ..utils import logger
+# from ..utils import logger
+from neural_compressor.utils.logger import Logger
 from .base import KerasBasePruner, PytorchBasePruner, register_pruner
 
+logger = Logger().get_logger()
 
 @register_pruner("pt_basic")
 class PytorchBasicPruner(PytorchBasePruner):
@@ -81,9 +83,11 @@ class PytorchBasicPruner(PytorchBasePruner):
                 self.current_sparsity_ratio = self.init_sparsity_ratio
 
         if not self.check_is_pruned_step(self.global_step):
+            #logger.debug(f"global_step({self.global_step}) is not pruned step, skip.. ")
             return
 
         if self.current_sparsity_ratio > self.target_sparsity_ratio:
+            logger.info(f"current_sparsity_ratio({self.current_sparsity_ratio}) >  target_sparsity_ratio{self.target_sparsity_ratio} skip.. ")
             return
 
         self.criterion.on_step_begin()
@@ -100,6 +104,8 @@ class PytorchBasicPruner(PytorchBasePruner):
         if self.criterion.scores == {}:
             return
         self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
+        # from neural_compressor.utils.utility import ForkedPdb
+        # ForkedPdb().set_trace()
         self.mask_weights()
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)

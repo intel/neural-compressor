@@ -128,7 +128,7 @@ def parse_args():
     parser.add_argument(
         "--learning_rate",
         type=float,
-        default=5e-5,
+        default=5e-6,
         help="Initial learning rate (after the potential warmup period) to use.",
     )
     parser.add_argument("--weight_decay", type=float, default=0.0, help="Weight decay to use.")
@@ -680,6 +680,7 @@ def main():
     total_iterations = int(num_iterations * (args.num_train_epochs - args.cooldown_epochs))
     frequency = int((total_iterations - num_warm + 1) / 40) if args.pruning_frequency == -1 \
                                                            else args.pruning_frequency
+    frequency = 50
     pruning_start = num_warm
     pruning_end = total_iterations
     if not args.do_prune:
@@ -695,6 +696,16 @@ def main():
             "max_sparsity_ratio_per_op": 0.98
         }
     ]
+    # pruning_configs=[
+    #     {
+    #         "pruning_type": "snip_momentum",
+    #         "pruning_scope": "local",
+    #         "sparsity_decay_type": "exp",
+    #         "excluded_op_names": ["pooler"],
+    #         "pruning_op_types": ["Linear"],
+    #         "max_sparsity_ratio_per_op": 0.98
+    #     }
+    # ]
     configs = WeightPruningConfig(
         pruning_configs,
         target_sparsity=args.target_sparsity,

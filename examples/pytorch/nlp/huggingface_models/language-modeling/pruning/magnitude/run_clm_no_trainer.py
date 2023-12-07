@@ -704,8 +704,8 @@ def main():
         pruning_end = pruning_start
     pruning_configs=[
         {
-            "pruning_type": args.pruning_type,
-            "pruning_scope": "global",
+            "pruning_type": "snip_momentum",
+            "pruning_scope": "local",
             "sparsity_decay_type": "exp",
             "excluded_op_names": ["pooler"],
             "pruning_op_types": ["Linear"],

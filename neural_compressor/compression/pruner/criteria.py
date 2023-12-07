@@ -222,11 +222,14 @@ class SnipMomentumCriterion(PruningCriterion):
         with torch.no_grad():
             from neural_compressor.compression.pruner.utils import safe_get_shape, safe_get_grad, safe_get_data
             for key in self.modules.keys():
-                logger.info(f"[on_before_optimizer_step][start to update the score of {key}]")
+                # logger.info(f"[on_before_optimizer_step][start to update the score of {key}]")
                 p = self.modules[key].weight
                 param = self.modules[key].weight
-                from neural_compressor.utils.utility import ForkedPdb
+                # from neural_compressor.utils.utility import ForkedPdb
                 # ForkedPdb().set_trace()
+                from deepspeed.utils import safe_get_full_fp32_param, safe_get_full_grad
+                full_p = safe_get_full_fp32_param(param)
+                full_g = safe_get_full_grad(param)
                 data = safe_get_data(param)
                 grad = safe_get_grad(param)
                 self.scores[key] *= self.alpha
