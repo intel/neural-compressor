@@ -1149,7 +1149,7 @@ class AutoOPTRound(AutoRound):
             ##TODO need to force set lr to some better candidates
 
         elif isinstance(optimizer, str):
-            optimizer = getattr(torch.optim, self.optimizer)
+            optimizer = getattr(torch.optim, optimizer)
         else:
             optimizer = optimizer
         return optimizer

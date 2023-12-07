@@ -1,0 +1,65 @@
+import unittest
+
+import torch
+from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
+
+from neural_compressor.adaptor.torch_utils.autoround.autoround import AutoOPTRound, AutoRound
+
+
+# class DemoModel(torch.nn.Module):
+#     def __init__(self):
+#         super(DemoModel, self).__init__()
+#         self.fc1 = torch.nn.Linear(3, 4)
+#         self.fc2 = torch.nn.Linear(4, 3)
+#         self.layers = torch.nn.ModuleList([self.fc1,self.fc2])
+#
+#     def forward(self, x):
+#         out = self.layers(x)
+#
+#         return out
+class TestAutoRoundLinear(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        model_name = "facebook/opt-125m"
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            low_cpu_mem_usage=True,
+            torch_dtype="auto",
+            trust_remote_code=True
+            ##low_cpu_mem_usage has impact to acc, changed the random seed?
+        )
+        self.model = self.model.eval()
+
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+
+    @classmethod
+    def test_signround(self):
+        AutoRound(self.model, self.tokenizer, device="cpu", iters=2, seqlen=8, n_samples=1)
+
+    @classmethod
+    def test_Adamround(self):
+        AutoOPTRound(self.model, self.tokenizer, device="cpu", iters=2, seqlen=8, n_samples=1)
+
+
+class TestAutoRoundConv1D(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        model_name = "MBZUAI/LaMini-GPT-124M"
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            low_cpu_mem_usage=True,
+            torch_dtype="auto",
+            trust_remote_code=True
+            ##low_cpu_mem_usage has impact to acc, changed the random seed?
+        )
+        self.model = self.model.eval()
+
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+
+    @classmethod
+    def test_signround(self):
+        AutoRound(self.model, self.tokenizer, device="cpu", iters=2, seqlen=8, n_samples=1)
+
+    @classmethod
+    def test_Adamround(self):
+        AutoOPTRound(self.model, self.tokenizer, device="cpu", iters=2, seqlen=8, n_samples=1)
