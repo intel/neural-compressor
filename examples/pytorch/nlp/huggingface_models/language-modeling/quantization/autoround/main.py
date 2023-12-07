@@ -1,7 +1,6 @@
 import argparse
 import sys
-sys.path.insert(0, '/home/wenhuach/neural-compressor')##TODO change the
-
+sys.path.insert(0, '/home/wenhuach/neural-compressor')##TODO change it later
 from neural_compressor.adaptor.torch_utils.autoround.autoround import AutoRound
 parser = argparse.ArgumentParser()
 import torch
@@ -21,6 +20,12 @@ import re
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 os.environ["HF_HOME"] = "/models/huggingface"
+
+##checklist
+## LLaMAV1 done
+## LLaMAv2 done
+## LaMini-GPT-124M done
+
 
 if __name__ == '__main__':
 
@@ -202,8 +207,6 @@ if __name__ == '__main__':
     #                eval_bs=args.eval_bs, use_accelerate=args.low_gpu_mem_usage, device=cuda_device,
     #                excel_file=excel_name)
     #     exit()
-
-    model = model.to(torch.float32)
 
     if not args.low_gpu_mem_usage:
         model = model.to(cuda_device)
