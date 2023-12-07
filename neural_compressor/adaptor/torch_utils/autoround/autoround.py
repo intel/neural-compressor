@@ -283,12 +283,12 @@ class SaveInputs:
             if total_cnt >= n_samples:
                 break
         self._recover_forward()
-        res = self.inputs[self.block_name]
-        if len(res) == 0:
+        if len(self.inputs) == 0:
             logger.error(
                 "no data has been cached, please provide more data in the dataloader or decease the " "sequence length"
             )
             exit()
+        res = self.inputs[self.block_name]
         if "input_ids" in res.keys():
             total_samples = res["input_ids"].shape[0]
             if total_samples < n_samples:
