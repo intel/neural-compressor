@@ -56,8 +56,6 @@ class DequantizeCastOptimizer(GraphRewriterBase):
 
             if len(dq_outputs) > 1:
                 continue
-            if dq_node.attr["mode"].s == b"MIN_FIRST":
-                continue
             cast_node = graph_info[i[1]].node
             cast_outputs = graph_info[i[1]].outputs
             all_cast_outputs_bf16 = True
