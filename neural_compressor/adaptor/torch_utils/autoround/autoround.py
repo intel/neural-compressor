@@ -543,6 +543,12 @@ class WrapperTransformerConv1d(torch.nn.Module):
 
 
 def wrapper_block(block, enable_minmax_tuning):
+    """Wraps the layers in the given block with a custom Wrapper module.
+
+    Args:
+    block: The input block containing linear,conv1d layers to be wrapped.
+    enable_minmax_tuning: A boolean indicating whether min-max tuning is enabled.
+    """
     for n, m in block.named_modules():
         if isinstance(m, torch.nn.Linear):
             new_m = WrapperLinear(m, enable_minmax_tuning=enable_minmax_tuning)
@@ -559,8 +565,16 @@ def wrapper_block(block, enable_minmax_tuning):
 
 @torch.no_grad()
 def unwrapper_block(block, vs, min_scales, max_scales):
+    """Unwraps the WrapperLinear and WrapperTransformerConv1d modules in the given block.
+
+    Args:
+    block: The input block containing wrapped modules to be unwrapped.
+    vs: A dictionary of scaling parameters for the wrapped modules.
+    min_scales: A dictionary of minimum scaling values for the wrapped modules.
+    max_scales: A dictionary of maximum scaling values for the wrapped modules.
+    """
     for n, m in block.named_modules():
-        if isinstance(m, WrapperLinear) or isinstance(m, WrapperTransformerConv1d):
+        if hasattr(m, "orig_layer"):
             v = 0
             min_scale = 0
             max_scale = 0
@@ -577,6 +591,18 @@ def unwrapper_block(block, vs, min_scales, max_scales):
 
 
 def sampling_inputs(input_ids, input_others, indices, seqlen):
+    """Samples inputs based on the given indices and sequence length.
+
+    Args:
+    input_ids: The input tensor containing IDs.
+    input_others: A dictionary containing other input data.
+    indices: The indices to sample from the input.
+    seqlen: The sequence length.
+
+    Returns:
+    current_input_ids: The sampled input IDs.
+    current_input_others: The sampled other input data.
+    """
     if len(input_ids.shape) == 3:
         if int(len(input_others["positional_inputs"]) > 0):
             current_input_ids = input_ids[:, indices, :]
@@ -601,6 +627,15 @@ def sampling_inputs(input_ids, input_others, indices, seqlen):
 
 
 def move_input_to_device(input, device=torch.device("cpu")):
+    """Moves input data to the specified device.
+
+    Args:
+    input: The input data to be moved.
+    device: The target device.
+
+    Returns:
+    The input data on the specified device.
+    """
     if isinstance(input, torch.Tensor):
         return input.to(device)
     if isinstance(input, dict) or isinstance(input, UserDict):
@@ -615,6 +650,19 @@ def move_input_to_device(input, device=torch.device("cpu")):
 
 
 def block_forward(block, input_ids, input_others, amp=False, amp_dtype=torch.float16, device=torch.device("cpu")):
+    """Performs a forward pass through a block with the given inputs.
+
+    Args:
+    block: The block to perform the forward pass on.
+    input_ids: The input IDs.
+    input_others: A dictionary containing other input data.
+    amp: A boolean indicating whether to use automatic mixed precision.
+    amp_dtype: The data type for automatic mixed precision.
+    device: The target device.
+
+    Returns:
+    output: The output of the forward pass.
+    """
     if input_ids.device != device:
         # input_ids, input_others = move_to_device(input_ids, input_others, device)
         input_ids = move_input_to_device(input_ids, device)
@@ -649,9 +697,17 @@ def block_forward(block, input_ids, input_others, amp=False, amp_dtype=torch.flo
 
 
 def collect_round_v(block):
+    """Collects the round values for wrapped linear modules in the given block.
+
+    Args:
+    block: The input block.
+
+    Returns:
+    vs: A dictionary of round values for the wrapped linear modules.
+    """
     vs = {}
     for n, m in block.named_modules():
-        if isinstance(m, WrapperLinear):
+        if hasattr(m, "orig_layer"):
             v = m.value.data
             vs[n] = copy.deepcopy(v)
     return vs
@@ -661,7 +717,7 @@ def collect_minmax_scale(block):
     min_scales = {}
     max_scales = {}
     for n, m in block.named_modules():
-        if isinstance(m, WrapperLinear):
+        if hasattr(m, "orig_layer"):
             min_scales[n] = copy.deepcopy(torch.clamp(m.min_scale.data, -1, 0))
             max_scales[n] = copy.deepcopy(torch.clamp(m.max_scale.data, -1, 0))
     return min_scales, max_scales
