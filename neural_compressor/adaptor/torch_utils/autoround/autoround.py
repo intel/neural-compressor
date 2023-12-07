@@ -285,7 +285,8 @@ class SaveInputs:
         self._recover_forward()
         if len(self.inputs) == 0:
             logger.error(
-                "no data has been cached, please provide more data in the dataloader or decease the " "sequence length"
+                f"no data has been cached, please provide more data with sequence length >={self.seqlen} in the "
+                f"dataloader or decease the sequence length"
             )
             exit()
         res = self.inputs[self.block_name]
