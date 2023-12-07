@@ -184,8 +184,11 @@ def append_attr(fx_model, model, fx_white_list=[]):
             fx_model.weight = fx_model.module.weight()
         else:
             fx_model.weight = fx_model.module.weight
-        if hasattr(fx_model.module, "bias"):
-            fx_model.bias = fx_model.module.bias
+        if hasattr(fx_model.module, "bias") and fx_model.module.bias is not None:
+            if not isinstance(fx_model.module.bias, torch.Tensor):
+                fx_model.bias = fx_model.module.bias()
+            else:
+                fx_model.bias = fx_model.module.bias
     for i in org_attr:
         if (
             type(model) in fx_white_list
