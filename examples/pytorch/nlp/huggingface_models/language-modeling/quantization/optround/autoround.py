@@ -105,6 +105,21 @@ def quant_weight_actor(weight, num_bits, scheme, v, min_scale, max_scale):
 
 
 def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", v=0, min_scale=0, max_scale=0):
+    """
+     Quantizes and dequantizes weight, handing the group size issue .
+
+    Args:
+        weight: Tensor containing the weight to be quantized
+        num_bits: Number of bits for quantization (e.g., 2, 3, 4, 8)
+        group_size: The number of elements shares scale and zero point
+        scheme: Sym or asym
+        v: Rounding value perturbation
+        min_scale: Minimum scale coefficient for weight
+        max_scale: Maximum scale coefficient for weight
+
+    Returns:
+        Quantized and dequantized weight, scale, zero-point
+    """
     if group_size == -1 or weight.shape[1] < group_size:
         return quant_weight_actor(weight, num_bits, scheme=scheme, v=v, min_scale=min_scale, max_scale=max_scale)
     orig_shape = weight.shape
