@@ -1,32 +1,26 @@
 import argparse
-import copy
+import sys
+sys.path.insert(0, '/home/wenhuach/neural-compressor')##TODO change the
 
+from neural_compressor.adaptor.torch_utils.autoround.autoround import AutoRound
 parser = argparse.ArgumentParser()
 import torch
 import os
 
+
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 torch.use_deterministic_algorithms(True)
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
-from datasets import load_dataset
-from torch.functional import F
-
-from torch.autograd import Function
-
-from datasets import load_from_disk
-from torch.utils.data import DataLoader
 
 from transformers import set_seed
-from functools import partial
-from torch.amp import autocast
+
 from eval import eval_model
-from collections import UserDict
+
 import re
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 os.environ["HF_HOME"] = "/models/huggingface"
-from signroundv3 import q_dq_weight
 
 if __name__ == '__main__':
 
@@ -73,7 +67,7 @@ if __name__ == '__main__':
     parser.add_argument("--lr", default=0.05, type=float,
                         help="step size")
 
-    parser.add_argument("--min_max_lr", default=0.05, type=float,
+    parser.add_argument("--minmax_lr", default=0.05, type=float,
                         help="step size")
 
     parser.add_argument("--lr_decay_type", default="linear", type=str,
@@ -218,14 +212,14 @@ if __name__ == '__main__':
 
     start_time = time.time()
 
-    from autoround import AutoRound
+
 
     scheme = "asym"
     if args.sym:
         scheme = "sym"
     optq = AutoRound(model, tokenizer, args.num_bits, args.group_size, scheme, bs=args.train_bs,
                              seqlen=seqlen, n_blocks=args.n_blocks, iters=args.iters, lr=args.lr,
-                             minmax_lr=args.min_max_lr, use_quant_input=args.use_quant_input,
+                             minmax_lr=args.minmax_lr, use_quant_input=args.use_quant_input,
                              amp=args.amp)  ##TODO args pass
     optq.quantize()
     end_time = time.time()
