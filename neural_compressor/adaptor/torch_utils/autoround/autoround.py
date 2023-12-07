@@ -713,7 +713,7 @@ class AutoRound(object):
         self.optimizer = self.get_optimizer(None)
 
     def get_optimizer(self, optimizer):
-        from sign_sgd import SGD
+        from .sign_sgd import SGD
 
         return SGD
 
