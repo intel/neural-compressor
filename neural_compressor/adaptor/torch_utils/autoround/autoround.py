@@ -16,7 +16,6 @@ try:
     from neural_compressor.utils.utility import LazyImport
 
     torch = LazyImport("torch")
-
     from neural_compressor.utils import logger
 except:  # pragma: no cover
     import logging
@@ -110,7 +109,6 @@ def quant_weight_actor(weight, num_bits, scheme, v, min_scale, max_scale):
         v: Rounding value perturbation
         min_scale: Minimum scale coefficient for weight
         max_scale: Maximum scale coefficient for weight
-        use_sigmoid: Boolean indicating whether to use sigmoid; found useful in some scenarios for adam
 
     Returns:
         Quantized and dequantized weight, scale, zero-point
@@ -445,15 +443,15 @@ class WrapperLinear(torch.nn.Module):
 
 
 class WrapperTransformerConv1d(torch.nn.Module):
-    def __init__(self, orig_layer, num_bits, group_size, scheme, use_sigmoid, enable_minmax_tuning=True):
-        """A wrapper module for transformers 1D convolutional layers used in transformers, enabling quantization and min-max tuning of weights.
+    def __init__(self, orig_layer, enable_minmax_tuning=True):
+        """A wrapper module for transformers 1D convolutional layers used in transformers,
+        enabling quantization and min-max tuning of weights.
 
         Args:
         - orig_layer (torch.nn.Module): The original 1D convolutional layer to be wrapped.
         - num_bits (int): The number of bits for quantization.
         - group_size (int): The size of the groups for quantization.
         - scheme (str): The quantization scheme to use.
-        - use_sigmoid (bool): Whether to use sigmoid function for quantization.
         - enable_minmax_tuning (bool): Whether to enable min-max scaling tuning. Default is True.
 
         Attributes:
@@ -461,7 +459,6 @@ class WrapperTransformerConv1d(torch.nn.Module):
         - num_bits (int): The number of bits for quantization.
         - group_size (int): The size of the groups for quantization.
         - scheme (str): The quantization scheme to use.
-        - use_sigmoid (bool): Whether to use sigmoid function for quantization.
         - weight_t (torch.Tensor): Transposed weight tensor of the original layer.
         - value (torch.nn.Parameter): The learnable parameter for quantization.
         - enable_minmax_tuning (bool): Whether min-max scaling tuning is enabled.
@@ -470,14 +467,13 @@ class WrapperTransformerConv1d(torch.nn.Module):
         """
         super(WrapperTransformerConv1d, self).__init__()
         self.orig_layer = orig_layer
-        self.num_bits = num_bits
-        self.group_size = group_size
-        self.scheme = scheme
-        self.use_sigmoid = use_sigmoid
+        self.num_bits = self.orig_layer.bits
+        self.group_size = self.orig_layer.group_size
+        self.scheme = self.orig_layer.scheme
         device = self.orig_layer.weight.device
         self.weight_t = self.orig_layer.weight.t()
         self.value = torch.nn.Parameter(torch.zeros(self.weight_t.shape, device=device), requires_grad=True)
-        shape = get_scale_shape(self.weight_t, group_size)
+        shape = get_scale_shape(self.weight_t, self.group_size)
 
         if enable_minmax_tuning:
             self.min_scale = torch.nn.Parameter(torch.zeros(shape, device=device), requires_grad=True)
@@ -553,10 +549,11 @@ def wrapper_block(block, enable_minmax_tuning):
         if isinstance(m, torch.nn.Linear):
             new_m = WrapperLinear(m, enable_minmax_tuning=enable_minmax_tuning)
             set_module(block, n, new_m)
+
         try:
             import transformers
 
-            if isinstance(m, torch.nn.Conv1d):
+            if isinstance(m, transformers.modeling_utils.Conv1D):
                 new_m = WrapperTransformerConv1d(m, enable_minmax_tuning=enable_minmax_tuning)
                 set_module(block, n, new_m)
         except:
@@ -714,6 +711,15 @@ def collect_round_v(block):
 
 
 def collect_minmax_scale(block):
+    """Collects the min-max scaling values for wrapped linear modules in the given block.
+
+    Args:
+    block: The input block.
+
+    Returns:
+    min_scales: A dictionary of minimum scaling values.
+    max_scales: A dictionary of maximum scaling values.
+    """
     min_scales = {}
     max_scales = {}
     for n, m in block.named_modules():
@@ -725,11 +731,25 @@ def collect_minmax_scale(block):
 
 @torch.no_grad()
 def get_batch_dim(input_others):
+    """Gets the batch dimension based on the input positional inputs.
+
+    Args:
+    input_others: A dictionary containing input data.
+
+    Returns:
+    dim: The batch dimension.
+    """
     dim = int(len(input_others["positional_inputs"]) > 0)
     return dim
 
 
 class WrapperMultiblock(torch.nn.Module):
+    """A wrapper for a list of modules to be act as a single block.
+
+    Args:
+    module_list: The list of modules to wrap.
+    """
+
     def __init__(self, module_list):
         super(WrapperMultiblock, self).__init__()
         self.layers = torch.nn.ModuleList(module_list)
@@ -745,14 +765,13 @@ class WrapperMultiblock(torch.nn.Module):
 
 
 def get_block_names(model):
-    """
-    Get the block names for transformers-like networks, this may have issues
+    """Get the block names for transformers-like networks.
+
     Args:
-        model: The model
+    model: The model.
 
     Returns:
-        all the block names
-
+    block_names: A list of block names.
     """
     block_names = []
     target_m = None
@@ -765,6 +784,44 @@ def get_block_names(model):
 
 
 class AutoRound(object):
+    """Class for automatic rounding-based quantization with sign gradient descent of a PyTorch model.
+
+    Args:
+        model: The PyTorch model to be quantized.
+        tokenizer: An optional tokenizer for processing input data.
+        bits (int): Number of bits for quantization (default is 4).
+        group_size (int): Size of the quantization group (default is 128).
+        scheme (str): The quantization scheme to be used (default is "asym").
+        weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
+        enable_full_range (bool): Whether to enable full range quantization (default is False).
+        bs (int): Batch size for training (default is 8).
+        amp (bool): Whether to use automatic mixed precision (default is True).
+        device: The device to be used for training (default is "cuda:0").
+        lr_scheduler: The learning rate scheduler to be used.
+        dataloader: The dataloader for input data (to be supported in future).
+        default_dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
+        dataset_split (str): The split of the dataset to be used (default is "train").
+        use_quant_input (bool): Whether to use quantized input data (default is True).
+        enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
+        lr (float): The learning rate (default is 0.005).
+        minmax_lr (float): The learning rate for min-max tuning (default is 0.005).
+        low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
+        iters (int): Number of iterations (default is 200).
+        seqlen (int): Length of the sequence.
+        n_samples (int): Number of samples (default is 512).
+        sampler (str): The sampling method (default is "rand").
+        seed (int): The random seed (default is 42).
+        n_blocks (int): Number of blocks (default is 1).
+        gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
+        not_use_mse (bool): Whether to use mean squared error (default is False).
+        dynamic_max_gap (int): The dynamic maximum gap (default is -1).
+        data_type (str): The data type to be used (default is "int").
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        The quantized model.
+    """
+
     def __init__(
         self,
         model,
@@ -798,32 +855,6 @@ class AutoRound(object):
         data_type: str = "int",  ##only support data_type
         **kwargs,
     ):
-        """
-        Args:
-            model:
-            data_type:
-            bits:
-            group_size:
-            scheme:
-            weight_config:
-             weight_config={
-                   'layer1':##layer_name
-                   {
-                       'data_type': 'int',
-                       'bits': 4,
-                       'group_size': 32,
-                       'scheme': "sym", ## or asym
-                   }
-                   ...
-               }
-
-            optimizer:
-            lr_scheduler:
-            enable_full_range:
-            **kwargs:
-
-        Returns:
-        """
         self.model = model
         self.model = self.model.to("cpu")
         self.amp = amp
@@ -1217,6 +1248,45 @@ class AutoRound(object):
 
 
 class AutoOPTRound(AutoRound):
+    """Class for automatic rounding-based quantization with optimizers like adamw of a PyTorch model.
+
+    Args:
+        model: The PyTorch model to be quantized.
+        tokenizer: An optional tokenizer for processing input data.
+        optimizer: string or object
+        bits (int): Number of bits for quantization (default is 4).
+        group_size (int): Size of the quantization group (default is 128).
+        scheme (str): The quantization scheme to be used (default is "asym").
+        weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
+        enable_full_range (bool): Whether to enable full range quantization (default is False).
+        bs (int): Batch size for training (default is 8).
+        amp (bool): Whether to use automatic mixed precision (default is True).
+        device: The device to be used for training (default is "cuda:0").
+        lr_scheduler: The learning rate scheduler to be used.
+        dataloader: The dataloader for input data (to be supported in future).
+        default_dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
+        dataset_split (str): The split of the dataset to be used (default is "train").
+        use_quant_input (bool): Whether to use quantized input data (default is True).
+        enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
+        lr (float): The learning rate (default is 0.005).
+        minmax_lr (float): The learning rate for min-max tuning (default is 0.005).
+        low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
+        iters (int): Number of iterations (default is 200).
+        seqlen (int): Length of the sequence.
+        n_samples (int): Number of samples (default is 512).
+        sampler (str): The sampling method (default is "rand").
+        seed (int): The random seed (default is 42).
+        n_blocks (int): Number of blocks (default is 1).
+        gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
+        not_use_mse (bool): Whether to use mean squared error (default is False).
+        dynamic_max_gap (int): The dynamic maximum gap (default is -1).
+        data_type (str): The data type to be used (default is "int").
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        The quantized model.
+    """
+
     def __init__(
         self,
         model,

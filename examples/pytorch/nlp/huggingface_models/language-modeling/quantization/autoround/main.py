@@ -178,7 +178,7 @@ if __name__ == '__main__':
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     if hasattr(tokenizer, "model_max_length"):
         if tokenizer.model_max_length <= seqlen:
-            print(f"change sequence length to {tokenizer.model_max_length} due to the limitation of model_max_length")
+            print(f"change sequence length to {tokenizer.model_max_length} due to the limitation of model_max_length",flush=True)
             seqlen = min(seqlen, tokenizer.model_max_length)
             args.seqlen = seqlen
 
@@ -192,16 +192,16 @@ if __name__ == '__main__':
                    eval_orig_float=True, excel_file=excel_name)
         exit()
 
-    if args.iters <= 0:
-        print("eval rtn", flush=True)
-        excel_name += "_rtn.xlsx"
-        q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)
-        if not args.low_gpu_mem_usage:
-            model = model.to(cuda_device)
-        eval_model(output_dir=args.output_dir, model=model, tokenizer=tokenizer, tasks=args.tasks, \
-                   eval_bs=args.eval_bs, use_accelerate=args.low_gpu_mem_usage, device=cuda_device,
-                   excel_file=excel_name)
-        exit()
+    # if args.iters <= 0:
+    #     print("eval rtn", flush=True)
+    #     excel_name += "_rtn.xlsx"
+    #     q_dq_weight(model, num_bits=args.num_bits, group_size=args.group_size)
+    #     if not args.low_gpu_mem_usage:
+    #         model = model.to(cuda_device)
+    #     eval_model(output_dir=args.output_dir, model=model, tokenizer=tokenizer, tasks=args.tasks, \
+    #                eval_bs=args.eval_bs, use_accelerate=args.low_gpu_mem_usage, device=cuda_device,
+    #                excel_file=excel_name)
+    #     exit()
 
     model = model.to(torch.float32)
 
