@@ -265,7 +265,7 @@ class SaveInputs:
         for data in self.dataloader:
             if data is None:
                 continue
-            if isinstance(data, list):
+            if isinstance(data, torch.Tensor):
                 input_ids = data.to(self.model.device)
             else:
                 input_ids = data["input_ids"].to(self.model.device)
@@ -806,8 +806,50 @@ def get_block_names(model):
     return block_names
 
 
+def get_tokenizer_function(tokenizer, seqlen):
+    def default_tokenizer_function(examples):
+        example = tokenizer(examples["text"], truncation=True, max_length=seqlen)
+        return example
+
+    return default_tokenizer_function
+
+
+def get_dataloader(tokenizer, seqlen, data_name="NeelNanda/pile-10k", split="train", seed=42, bs=4):
+    from datasets import load_dataset
+    from torch.utils.data import DataLoader
+
+    tokenizer_function = get_tokenizer_function(tokenizer, seqlen)
+
+    @torch.no_grad()
+    def collate_batch(batch):
+        input_ids_new = []
+        for text in batch:
+            input_ids = text["input_ids"]
+            if input_ids.shape[0] < seqlen:
+                continue
+            input_ids = input_ids[:seqlen]
+            input_ids_list = input_ids.tolist()
+            if input_ids_list.count(input_ids_list[-1]) > seqlen // 2:
+                continue
+            input_ids_new.append(input_ids)
+        if len(input_ids_new) == 0:
+            return None
+        tmp = torch.vstack(input_ids_new)
+        res = {"input_ids": tmp}
+        return res
+
+    calib_dataset = load_dataset(data_name, split=split)
+    calib_dataset = calib_dataset.shuffle(seed=seed)
+    calib_dataset = calib_dataset.map(tokenizer_function, batched=True)
+    calib_dataset.set_format(type="torch", columns=["input_ids"])
+    calib_dataloader = DataLoader(calib_dataset, batch_size=bs, shuffle=False, collate_fn=collate_batch)
+    return calib_dataloader
+
+
 class AutoRound(object):
-    """Class for automatic rounding-based quantization with sign gradient descent of a PyTorch model.
+    """This is Signround+ which is an advanced version of Signround. For more information, please refer to Cheng, Wenhua,
+    et al. "Optimize weight rounding via signed gradient descent for the quantization of llms." arXiv preprint
+    arXiv:2309.05516 (2023).
 
     Args:
         model: The PyTorch model to be quantized.
@@ -832,7 +874,7 @@ class AutoRound(object):
         device: The device to be used for training (default is "cuda:0").
         lr_scheduler: The learning rate scheduler to be used.
         dataloader: The dataloader for input data (to be supported in future).
-        default_dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
+        dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
         dataset_split (str): The split of the dataset to be used (default is "train").
         use_quant_input (bool): Whether to use quantized input data (default is True).
         enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
@@ -869,7 +911,7 @@ class AutoRound(object):
         device="cuda:0",
         lr_scheduler=None,
         dataloader=None,  ## to support later
-        default_dataset_name: str = "NeelNanda/pile-10k",
+        dataset_name: str = "NeelNanda/pile-10k",
         dataset_split: str = "train",
         use_quant_input: bool = True,
         enable_minmax_tuning: bool = True,
@@ -924,9 +966,17 @@ class AutoRound(object):
         if self.amp:
             self.model = self.model.to(self.amp_dtype)
             logger.info(f"using {self.amp_dtype}")
+        self.dataset_name = dataset_name
 
         if dataloader is None:
-            self.dataloader = self.get_default_dataloader(data_name=default_dataset_name)
+            self.dataloader = get_dataloader(
+                self.tokenizer,
+                self.seqlen,
+                seed=self.seed,
+                bs=self.train_bs,
+                split=self.dataset_split,
+                data_name=self.dataset_name,
+            )
         else:
             self.dataloader = dataloader
         self.lr = lr
@@ -1031,21 +1081,25 @@ class AutoRound(object):
         calib_dataset = calib_dataset.map(self.default_tokenize_function, batched=True)
         calib_dataset.set_format(type="torch", columns=["input_ids"])
         calib_dataloader = DataLoader(calib_dataset, batch_size=self.train_bs, shuffle=False, collate_fn=collate_batch)
-
+        for data in calib_dataloader:
+            if data is not None:
+                print(data["input_ids"].shape)
         return calib_dataloader
 
-    # def get_default_dataloader(self, data_name="NeelNanda/pile-10k"):## keep it as it may be useful
+    # def get_default_dataloader(self, data_name="NeelNanda/pile-10k"):
+    #     logger.info("tokenizing data, this may take several minutes or even a dozen minutes for 7B models ... ")
     #     from datasets import load_dataset
-    #
     #     seqlen = self.seqlen
     #     calib_dataset = load_dataset(data_name, split=self.dataset_split).shuffle(seed=self.seed)
     #     samples = []
     #     cnt = 0
+    #     all_cnt=0
     #     tmp_samples = []
     #     for data in calib_dataset:
     #         line = data["text"]
     #         line = line.strip()
     #         line_tokenized = self.tokenizer.encode(line)
+    #         all_cnt+=1
     #         if len(line_tokenized) < self.seqlen:
     #             continue
     #         index = 0
@@ -1055,13 +1109,15 @@ class AutoRound(object):
     #         sample = torch.tensor(sample)
     #         cnt += 1
     #         tmp_samples.append(sample)
-    #         if cnt % self.train_bs == 0:
+    #         if cnt % 100 == 0:
+    #             logger.info(f"tokenized {all_cnt} data and get{cnt} samples with the sequence length={seqlen}")
+    #         if cnt % self.train_bs == 0 or cnt == self.n_samples:
     #             tmp = torch.vstack(tmp_samples)
     #             samples.append(tmp)
     #             tmp_samples = []
     #         if cnt >= self.n_samples:
     #             break
-    #
+    #     logger.info(f"tokenized {all_cnt} data and get{cnt} samples with the sequence length={seqlen}")
     #     return samples
 
     def get_batch_dim(self, input_others):
@@ -1245,7 +1301,7 @@ class AutoRound(object):
 
     def quantize(self):
         start_time = time.time()
-        logger.info("cache block input")
+        # logger.info("cache block input")
         block_names = get_block_names(self.model)
         if len(block_names) == 0:
             logger.warning("could not find blocks, exit with original model")
@@ -1259,6 +1315,11 @@ class AutoRound(object):
         save_input_actor = SaveInputs(self.model, self.dataloader, self.seqlen, block_names[0])
         inputs = save_input_actor.get_inputs(n_samples=self.n_samples)
         del save_input_actor
+        if "input_ids" in inputs.keys():
+            total_samples = inputs["input_ids"].shape[0]
+            if total_samples < self.train_bs:
+                self.train_bs = total_samples
+                logger.warning(f"force the train batch size to {total_samples} ")
         self.model = self.model.to("cpu")
         torch.cuda.empty_cache()
         self.q_dq_weight_round(
@@ -1306,7 +1367,7 @@ class AutoOPTRound(AutoRound):
         device: The device to be used for training (default is "cuda:0").
         lr_scheduler: The learning rate scheduler to be used.
         dataloader: The dataloader for input data (to be supported in future).
-        default_dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
+        dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
         dataset_split (str): The split of the dataset to be used (default is "train").
         use_quant_input (bool): Whether to use quantized input data (default is True).
         enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
@@ -1344,7 +1405,7 @@ class AutoOPTRound(AutoRound):
         device="cuda:0",
         lr_scheduler=None,
         dataloader=None,
-        default_dataset_name: str = "NeelNanda/pile-10k",
+        dataset_name: str = "NeelNanda/pile-10k",
         dataset_split: str = "train",
         use_quant_input: bool = True,
         enable_minmax_tuning: bool = True,
@@ -1376,7 +1437,7 @@ class AutoOPTRound(AutoRound):
             device,
             lr_scheduler,
             dataloader,
-            default_dataset_name,
+            dataset_name,
             dataset_split,
             use_quant_input,
             enable_minmax_tuning,

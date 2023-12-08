@@ -1,11 +1,12 @@
 import argparse
 import sys
-sys.path.insert(0, '/home/wenhuach/neural-compressor')##TODO change it later
+
+sys.path.insert(0, '/home/wenhuach/neural-compressor')  ##TODO change it later
 from neural_compressor.adaptor.torch_utils.autoround.autoround import AutoRound
+
 parser = argparse.ArgumentParser()
 import torch
 import os
-
 
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 torch.use_deterministic_algorithms(True)
@@ -185,7 +186,8 @@ if __name__ == '__main__':
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     if hasattr(tokenizer, "model_max_length"):
         if tokenizer.model_max_length <= seqlen:
-            print(f"change sequence length to {tokenizer.model_max_length} due to the limitation of model_max_length",flush=True)
+            print(f"change sequence length to {tokenizer.model_max_length} due to the limitation of model_max_length",
+                  flush=True)
             seqlen = min(seqlen, tokenizer.model_max_length)
             args.seqlen = seqlen
 
@@ -213,15 +215,13 @@ if __name__ == '__main__':
     if not args.low_gpu_mem_usage:
         model = model.to(cuda_device)
 
-
-
     scheme = "asym"
     if args.sym:
         scheme = "sym"
     optq = AutoRound(model, tokenizer, args.num_bits, args.group_size, scheme, bs=args.train_bs,
-                             seqlen=seqlen, n_blocks=args.n_blocks, iters=args.iters, lr=args.lr,
-                             minmax_lr=args.minmax_lr, use_quant_input=args.use_quant_input,
-                             amp=args.amp)  ##TODO args pass
+                     seqlen=seqlen, n_blocks=args.n_blocks, iters=args.iters, lr=args.lr,
+                     minmax_lr=args.minmax_lr, use_quant_input=args.use_quant_input,
+                     amp=args.amp, n_samples=args.n_samples)  ##TODO args pass
     optq.quantize()
 
     torch.cuda.empty_cache()
