@@ -905,7 +905,12 @@ class TorchSmoothQuant:
                         module_copy.do_blockwise = True
                         if not (name == block_name and len(self.block_to_module[block_name]) == 1):
                             set_module(block_copy, name, module_copy)
-                    output = block_copy(self.block_inputs[block_name])[0]
+                    try:
+                        output = block_copy(self.block_inputs[block_name])[0]
+                    except:
+                        position_ids = torch.arange(self.block_inputs[block_name].size()[1])
+                        position_ids = position_ids.view(self.block_inputs[block_name].size()[0], -1)
+                        output = block_copy(self.block_inputs[block_name], position_ids=position_ids)[0]
                     loss = self._get_auto_loss(fp32_output[block_name], output)
                     loss_alphas[block_name][str(alpha)] = loss
         return loss_alphas
