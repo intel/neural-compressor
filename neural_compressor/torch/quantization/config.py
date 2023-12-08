@@ -316,7 +316,7 @@ def get_default_gptq_config() -> GPTQConfig:
 
 
 ######################## FP8 Config ###############################
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
+@register_config(framework_name="hpex", algo_name=FP8_QUANT)
 class FP8QConfig(BaseConfig):
     """Config class for FP8 quantization."""
 
@@ -356,7 +356,7 @@ class FP8QConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict):
-        return super(GPTQConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
+        return super(FP8QConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
