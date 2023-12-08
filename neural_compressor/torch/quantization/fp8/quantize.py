@@ -179,6 +179,8 @@ def prepare(model, qconfig_mapping):
 
 
 def convert(model, qconfig_mapping):
+    import habana_frameworks.torch.core as htcore
+
     for (op_name, op_type), qconfig in qconfig_mapping.items():
         if qconfig.weight_dtype not in FP8_DTYPE:
             continue
@@ -190,6 +192,7 @@ def convert(model, qconfig_mapping):
             _remove_observer(module, qconfig)
         module = _replace_module(module, qconfig)
         set_module(model, op_name, module)
+        htcore.mark_step()
     return model
 
 

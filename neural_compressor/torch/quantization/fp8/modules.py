@@ -36,7 +36,7 @@ class FP8DynamicLinear(torch.nn.Module):
         self.dtype_amax = E4M3_AMAX if self.dtype == torch.float8_e4m3fn else E5M2_AMAX
         self.in_features = org_module.in_features
         self.out_features = org_module.out_features
-        self.weight_dtype = torch.int8
+        self.weight_dtype = self.dtype
         self.out_dtype = torch.float32
         self.register_buffer(
             "weight",
@@ -178,7 +178,7 @@ class FP8Linear(torch.nn.Module):
         self.dtype_amax = E4M3_AMAX if self.dtype == torch.float8_e4m3fn else E5M2_AMAX
         self.in_features = org_module.in_features
         self.out_features = org_module.out_features
-        self.weight_dtype = torch.int8
+        self.weight_dtype = self.dtype
         self.out_dtype = torch.float32
         self.register_buffer(
             "weight",
@@ -363,7 +363,7 @@ class FP8LinearLayer(torch.nn.Module):
         self.dtype_amax = E4M3_AMAX if self.dtype == torch.float8_e4m3fn else E5M2_AMAX
         self.in_features = org_module.weight.shape[1]
         self.out_features = org_module.weight.shape[0]
-        self.weight_dtype = torch.int8
+        self.weight_dtype = self.dtype
         self.out_dtype = torch.float32
         self.register_buffer(
             "weight",
@@ -443,7 +443,7 @@ class FP8LinearAllreduce(torch.nn.Module):
         self.dtype_amax = E4M3_AMAX if self.dtype == torch.float8_e4m3fn else E5M2_AMAX
         self.in_features = org_module.weight.shape[1]
         self.out_features = org_module.weight.shape[0]
-        self.weight_dtype = torch.int8
+        self.weight_dtype = self.dtype
         self.out_dtype = torch.float32
         self.register_buffer(
             "weight",
@@ -529,7 +529,7 @@ class FP8LmHeadLinearAllreduce(torch.nn.Module):
         self.dtype_amax = E4M3_AMAX if self.dtype == torch.float8_e4m3fn else E5M2_AMAX
         self.in_features = org_module.weight.shape[1]
         self.out_features = org_module.weight.shape[0]
-        self.weight_dtype = torch.int8
+        self.weight_dtype = self.dtype
         self.out_dtype = torch.float32
         self.register_buffer(
             "weight",
