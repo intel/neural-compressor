@@ -2,7 +2,7 @@ import argparse
 import sys
 
 sys.path.insert(0, '/home/wenhuach/neural-compressor')  ##TODO change it later
-from neural_compressor.adaptor.torch_utils.autoround.autoround import AutoRound
+from neural_compressor.adaptor.torch_utils.autoround import AutoRound, AutoOPTRound
 
 parser = argparse.ArgumentParser()
 import torch
@@ -28,6 +28,7 @@ os.environ["HF_HOME"] = "/models/huggingface"
 ## LaMini-GPT-124M done
 ## QWEN1-8B done,but has random issue
 ## OPT-125M done
+## Mistral-7b Smoke test done
 
 
 if __name__ == '__main__':
@@ -92,6 +93,9 @@ if __name__ == '__main__':
 
     parser.add_argument("--amp", action='store_true',
                         help="amp")
+
+    parser.add_argument("--adam", action='store_true',
+                        help="adam")
 
     parser.add_argument("--not_with_attention", action='store_true',
                         help="tuning with attention_mask input")
@@ -218,10 +222,14 @@ if __name__ == '__main__':
     scheme = "asym"
     if args.sym:
         scheme = "sym"
-    optq = AutoRound(model, tokenizer, args.num_bits, args.group_size, scheme, bs=args.train_bs,
-                     seqlen=seqlen, n_blocks=args.n_blocks, iters=args.iters, lr=args.lr,
-                     minmax_lr=args.minmax_lr, use_quant_input=args.use_quant_input,
-                     amp=args.amp, n_samples=args.n_samples)  ##TODO args pass
+    round = AutoRound
+    if args.adam:
+        round = AutoOPTRound
+
+    optq = round(model, tokenizer, args.num_bits, args.group_size, scheme, bs=args.train_bs,
+                 seqlen=seqlen, n_blocks=args.n_blocks, iters=args.iters, lr=args.lr,
+                 minmax_lr=args.minmax_lr, use_quant_input=args.use_quant_input,
+                 amp=args.amp, n_samples=args.n_samples)  ##TODO args pass
     optq.quantize()
 
     torch.cuda.empty_cache()

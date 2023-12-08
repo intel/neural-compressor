@@ -807,6 +807,16 @@ def get_block_names(model):
 
 
 def get_tokenizer_function(tokenizer, seqlen):
+    """Returns a default tokenizer function.
+
+    Args:
+    tokenizer: The tokenizer to be used for tokenization.
+    seqlen: The maximum sequence length.
+
+    Returns:
+    A default tokenizer function that applies the provided tokenizer with truncation and a maximum length of seqlen to the "text" field of examples.
+    """
+
     def default_tokenizer_function(examples):
         example = tokenizer(examples["text"], truncation=True, max_length=seqlen)
         return example
@@ -815,6 +825,19 @@ def get_tokenizer_function(tokenizer, seqlen):
 
 
 def get_dataloader(tokenizer, seqlen, data_name="NeelNanda/pile-10k", split="train", seed=42, bs=4):
+    """Returns a dataloader for the specified dataset and split.
+
+    Args:
+    tokenizer: The tokenizer to be used for tokenization.
+    seqlen: The maximum sequence length.
+    data_name: The name of the dataset.
+    split: The data split to be used (e.g., "train", "test").
+    seed: The random seed for shuffling the dataset.
+    bs: The batch size for the dataloader.
+
+    Returns:
+    A dataloader for the specified dataset and split, using the provided tokenizer and sequence length.
+    """
     from datasets import load_dataset
     from torch.utils.data import DataLoader
 
@@ -993,24 +1016,57 @@ class AutoRound(object):
         self.optimizer = self.get_optimizer(None)
 
     def get_optimizer(self, optimizer):
+        """Returns the specified optimizer. In SignRound, we fix the optimizer.
+
+        Args:
+        optimizer: The optimizer to be used.
+
+        Returns:
+        The specified optimizer.
+        """
         from .sign_sgd import SGD
 
         return SGD
 
     def get_scaler(self):
+        """Returns scaler, in SignRound, no need to use scaler."""
         return None
 
     def scale_loss_and_backward(self, scaler, loss):
+        """Scales the loss and performs backward pass.
+
+        Args:
+        scaler: The scaler to be used.
+        loss: The loss to be scaled.
+
+        Returns:
+        The scaled loss.
+        """
         scale_loss = loss * 1000
         scale_loss.backward()
         return scale_loss
 
     def step(self, scaler, optimizer, lr_schedule):
+        """Performs a step in the optimization process.
+
+        Args:
+        scaler: The scaler to be used.
+        optimizer: The optimizer for the step.
+        lr_schedule: The learning rate schedule.
+
+        Returns:
+        None
+        """
         optimizer.step()
         optimizer.zero_grad()
         lr_schedule.step()
 
     def check_configs(self):
+        """Checks if the configurations are valid.
+
+        Raises:
+        AssertionError: If any of the configurations are invalid.
+        """
         assert isinstance(self.model, torch.nn.Module)
         assert self.bits > 0, "bits must be positive"
         assert self.group_size == -1 or self.group_size >= 1, "only supports positive group_size or -1(per channel)"
@@ -1021,6 +1077,14 @@ class AutoRound(object):
         assert self.gradient_accumulate_steps > 0, "gradient accumulate step must be positive"
 
     def set_layerwise_config(self, weight_config):
+        """Sets the layer-wise configuration based on the provided weight_config.
+
+        Args:
+        weight_config: The weight configuration.
+
+        Returns:
+        None
+        """
         for n, m in self.model.named_modules():
             is_supported_type = False
             for supported_type in self.supported_types:
@@ -1048,43 +1112,6 @@ class AutoRound(object):
             m.bits = weight_config[n]["bits"]
             m.group_size = weight_config[n]["group_size"]
             m.scheme = weight_config[n]["scheme"]
-
-    def default_tokenize_function(self, examples):
-        example = self.tokenizer(examples["text"], truncation=True, max_length=self.seqlen)
-        return example
-
-    def get_default_dataloader(self, data_name="NeelNanda/pile-10k"):
-        from datasets import load_dataset  # pylint: disable=import-error
-        from torch.utils.data import DataLoader
-
-        @torch.no_grad()
-        def collate_batch(batch):
-            input_ids_new = []
-            for text in batch:
-                input_ids = text["input_ids"]
-                if input_ids.shape[0] < self.seqlen:
-                    continue
-                input_ids = input_ids[:seqlen]
-                input_ids_list = input_ids.tolist()
-                if input_ids_list.count(input_ids_list[-1]) > seqlen // 2:
-                    continue
-                input_ids_new.append(input_ids)
-            if len(input_ids_new) == 0:
-                return None
-            tmp = torch.vstack(input_ids_new)
-            res = {"input_ids": tmp}
-            return res
-
-        seqlen = self.seqlen
-        calib_dataset = load_dataset(data_name, split=self.dataset_split)
-        calib_dataset = calib_dataset.shuffle(seed=self.seed)
-        calib_dataset = calib_dataset.map(self.default_tokenize_function, batched=True)
-        calib_dataset.set_format(type="torch", columns=["input_ids"])
-        calib_dataloader = DataLoader(calib_dataset, batch_size=self.train_bs, shuffle=False, collate_fn=collate_batch)
-        for data in calib_dataloader:
-            if data is not None:
-                print(data["input_ids"].shape)
-        return calib_dataloader
 
     # def get_default_dataloader(self, data_name="NeelNanda/pile-10k"):
     #     logger.info("tokenizing data, this may take several minutes or even a dozen minutes for 7B models ... ")
@@ -1121,11 +1148,34 @@ class AutoRound(object):
     #     return samples
 
     def get_batch_dim(self, input_others):
+        """Get the batch dimension of the input tensor.
+
+        Args:
+        input_others: A dictionary containing input data, including positional_inputs.
+
+        Returns:
+        The batch dimension of the input tensor.
+        """
         dim = int(len(input_others["positional_inputs"]) > 0)
         return dim
 
     @torch.no_grad()
     def get_block_outputs(self, block, input_ids, input_others, bs, device, cache_device, batch_dim):
+        """Compute the output of a given block of the model for a given input.
+
+        Args:
+        block: The block of the model.
+        input_ids: The input tensor containing tokenized input ids.
+        input_others: A dictionary containing additional input data.
+        bs: The batch size for computing the output.
+        device: The device for computation.
+        cache_device: The device for storing the output.
+        batch_dim: The batch dimension of the output tensor.
+
+        Returns:
+        The output tensor of the block.
+        """
+
         output = []
         for i in range(0, self.n_samples, bs):
             indices = torch.arange(i, i + bs).to(torch.long)
@@ -1139,6 +1189,18 @@ class AutoRound(object):
         return output
 
     def quant_block(self, block, input_ids, input_others, q_input=None, device=torch.device("cpu")):
+        """Quantize the weights of a given block of the model.
+
+        Args:
+        block: The block of the model to be quantized.
+        input_ids: The input tensor containing tokenized input ids.
+        input_others: A dictionary containing additional input data.
+        q_input: The quantized input tensor.
+        device: The device for quantization.
+
+        Returns:
+        Tuple: (q_outputs, output) if self.use_quant_input is True, else (None, output)
+        """
         batch_dim = get_batch_dim(input_others)
         if not self.low_gpu_mem_usage and input_ids.device != device:
             input_ids = move_input_to_device(input_ids, device)
@@ -1261,6 +1323,18 @@ class AutoRound(object):
         n_blocks=1,
         device=torch.device("cpu"),
     ):
+        """Quantize and dequantize the weights of the specified blocks in the model.
+
+        Args:
+        model: The PyTorch model to be quantized.
+        inputs: The input data for quantization.
+        block_names: The names of the blocks to be quantized and dequantized.
+        n_blocks: The number of blocks to quantize and dequantize.
+        device: The device for quantization and dequantization.
+
+        Returns:
+        None
+        """
         q_input = None
         torch.cuda.empty_cache()
         for n, m in model.named_parameters():
@@ -1300,6 +1374,11 @@ class AutoRound(object):
         torch.cuda.empty_cache()
 
     def quantize(self):
+        """Quantize the model and return the quantized model along with weight configurations.
+
+        Returns:
+        The quantized model and weight configurations.
+        """
         start_time = time.time()
         # logger.info("cache block input")
         block_names = get_block_names(self.model)
@@ -1356,7 +1435,6 @@ class AutoOPTRound(AutoRound):
     Args:
         model: The PyTorch model to be quantized.
         tokenizer: An optional tokenizer for processing input data.
-        optimizer: string or object
         bits (int): Number of bits for quantization (default is 4).
         group_size (int): Size of the quantization group (default is 128).
         scheme (str): The quantization scheme to be used (default is "asym").
@@ -1384,6 +1462,7 @@ class AutoOPTRound(AutoRound):
         not_use_mse (bool): Whether to use mean squared error (default is False).
         dynamic_max_gap (int): The dynamic maximum gap (default is -1).
         data_type (str): The data type to be used (default is "int").
+        optimizer: string or object
         **kwargs: Additional keyword arguments.
 
     Returns:
@@ -1394,7 +1473,6 @@ class AutoOPTRound(AutoRound):
         self,
         model,
         tokenizer=None,
-        optimizer="AdamW",
         bits: int = 4,
         group_size: int = 128,
         scheme: str = "asym",
@@ -1422,6 +1500,7 @@ class AutoOPTRound(AutoRound):
         not_use_mse: bool = False,
         dynamic_max_gap: int = -1,
         data_type: str = "int",
+        optimizer="AdamW",
         **kwargs,
     ):
         super(AutoOPTRound, self).__init__(
