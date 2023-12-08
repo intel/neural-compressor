@@ -907,7 +907,7 @@ class TorchSmoothQuant:
                             set_module(block_copy, name, module_copy)
                     try:
                         output = block_copy(self.block_inputs[block_name])[0]
-                    except:
+                    except: #Llama model decoder_layer forward requires position_id
                         position_ids = torch.arange(self.block_inputs[block_name].size()[1])
                         position_ids = position_ids.view(self.block_inputs[block_name].size()[0], -1)
                         output = block_copy(self.block_inputs[block_name], position_ids=position_ids)[0]
