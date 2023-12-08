@@ -316,7 +316,7 @@ def get_default_gptq_config() -> GPTQConfig:
 
 
 ######################## FP8 Config ###############################
-@register_config(framework_name="hpex", algo_name=FP8_QUANT)
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8QConfig(BaseConfig):
     """Config class for FP8 quantization."""
 
@@ -387,8 +387,14 @@ class FP8QConfig(BaseConfig):
         return filter_result
 
 
-# TODO(Yi) run `register_supported_configs` for all registered config.
-FP8QConfig.register_supported_configs()
+try:
+    import deepspeed
+    import habana_frameworks.torch.hpex
+
+    # TODO(Yi) run `register_supported_configs` for all registered config.
+    FP8QConfig.register_supported_configs()
+except:
+    pass
 
 
 def get_default_fp8_qconfig() -> FP8QConfig:
