@@ -16,6 +16,7 @@
 import copy
 import os
 
+import habana_frameworks.torch.core as htcore
 import torch
 from deepspeed.module_inject import LinearAllreduce, LinearLayer
 from deepspeed.module_inject.layers import LmHeadLinearAllreduce
@@ -73,6 +74,7 @@ def _replace_module(module, qconfig):
             module = FP8DynamicBatchMatmul(dtype)
         elif isinstance(module, Autocast):
             module = FP8Cast(dtype=dtype)
+    htcore.mark_step()
     return module
 
 
@@ -91,6 +93,7 @@ def quantize_dynamic(model, dtype=torch.float8_e4m3fn, inplace=True):
         elif isinstance(m, Autocast):
             new_m = FP8Cast(dtype=dtype)
             set_module(q_model, n, new_m)
+        htcore.mark_step()
     return q_model
 
 
@@ -180,8 +183,6 @@ def prepare(model, qconfig_mapping):
 
 
 def convert(model, qconfig_mapping):
-    import habana_frameworks.torch.core as htcore
-
     for (op_name, op_type), qconfig in qconfig_mapping.items():
         if qconfig.weight_dtype not in FP8_DTYPE:
             continue

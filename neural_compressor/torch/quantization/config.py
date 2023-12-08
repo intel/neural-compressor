@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# pylint:disable=import-error
 
 from __future__ import annotations
 
@@ -160,7 +161,7 @@ class RTNWeightQuantConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = [torch.nn.Linear]
+        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, white_list):
@@ -292,7 +293,7 @@ class GPTQConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = [torch.nn.Linear]
+        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, white_list):
