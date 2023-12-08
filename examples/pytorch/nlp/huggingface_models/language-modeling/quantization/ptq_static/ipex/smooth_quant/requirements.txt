@@ -1,6 +1,0 @@
-transformers>=4.22.0
-accelerate
-torch>=1.9.0
-datasets
-intel_extension_for_pytorch
-tqdm

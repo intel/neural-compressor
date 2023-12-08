@@ -22,18 +22,17 @@ Export the [nielsr/layoutlmv2-finetuned-funsd](https://huggingface.co/nielsr/lay
  python prepare_model.py  --input_model="nielsr/layoutlmv2-finetuned-funsd" --output_model="layoutlmv2-finetuned-funsd-exported.onnx"
 ```
 
-> Note: To export LayoutLMv2, please install [detectron2](https://github.com/facebookresearch/detectron2) first.
+> Note: To export LayoutLMv2, please install [detectron2](https://github.com/facebookresearch/detectron2) with `python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'` first. Also, you should probably install tesseract with something like: `conda install -c conda-forge tesseract`.
 
 # Run
 
 ## 1. Quantization
 
-Static quantization with QOperator format:
+Dynamic quantization:
 
 ```bash
 bash run_quant.sh --input_model=./layoutlmv2-finetuned-funsd-exported.onnx \ # onnx model path as *.onnx
-                   --output_model=/path/to/model_tune \
-                   --quant_format="QOperator"
+                   --output_model=/path/to/model_tune 
 ```
 
 ## 2. Benchmark

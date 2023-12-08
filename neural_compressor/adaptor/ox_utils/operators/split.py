@@ -74,7 +74,7 @@ class SplitOperator(Operator):
                 else:  # pragma: no cover
                     outputs.append(output)
             else:  # pragma: no cover
-                outputs.append(output + "_quatized")
+                outputs.append(output + "_quantized")
 
         quantized_node = onnx.helper.make_node(node.op_type, quantized_input_names, outputs, node.name, **kwargs)
         self.quantizer.new_nodes.append(quantized_node)

@@ -44,9 +44,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
     g++ \
     git \
     libgl1-mesa-glx \
-    libglib2.0-0
+    libglib2.0-0 \
+    curl
 
-ARG INC_BRANCH=v1.12
+ARG INC_BRANCH=v2.4rc1
 RUN git clone --single-branch --branch=${INC_BRANCH} https://github.com/intel/neural-compressor.git && \
     cd neural-compressor && \
     git submodule sync && \
@@ -57,6 +58,8 @@ RUN git clone --single-branch --branch=${INC_BRANCH} https://github.com/intel/ne
 
 WORKDIR /neural-compressor
 
-ADD https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/third-party-programs.txt /licenses/
-ADD https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/docker/third-party-programs-docker.txt /licenses/
-ADD https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/LICENSE /licenses/
+ARG INC_VER=2.3
+
+RUN curl https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/third-party-programs.txt -o /licenses/third-party-programs.txt && \
+    curl https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/docker/third-party-programs-docker.txt -o /licenses/third-party-programs-docker.txt && \
+    curl https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/LICENSE -o /licenses/LICENSE

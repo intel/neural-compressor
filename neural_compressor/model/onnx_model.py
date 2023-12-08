@@ -40,13 +40,20 @@ class ONNXModel(BaseModel):
 
         Args:
             model (str or ModelProto): path to onnx model or loaded ModelProto model object.
+            ignore_warning (bool): ignore large model warning. Default is False.
+            load_external_data (bool): load external data for large model. Default is True.
         """
-        self._model = model if not isinstance(model, str) else onnx.load(model)
+        self._model = model if not isinstance(model, str) else onnx.load(model, load_external_data=False)
         self._model_path = None if not isinstance(model, str) else model
 
         self.check_is_large_model()
         if self._is_large_model and self._model_path is None and not kwargs.get("ignore_warning", False):
             logger.warning("Model size > 2GB. Please use model path instead of onnx model object to quantize")
+
+        if self._is_large_model and isinstance(model, str) and kwargs.get("load_external_data", True):
+            from onnx.external_data_helper import load_external_data_for_model
+
+            load_external_data_for_model(self._model, os.path.dirname(self._model_path))
 
         self._config = None
         if isinstance(model, str) and os.path.exists(Path(model).parent.joinpath("config.json").as_posix()):
@@ -1037,14 +1044,16 @@ class ONNXModel(BaseModel):
         # infer shape of the model to be split
         if shape_infer:
             try:
-                # need ort.GraphOptimizationLevel <= ORT_ENABLE_BASIC
-                import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
+                from neural_compressor.adaptor.ox_utils.util import infer_shapes
 
-                self._model = symbolic_shape_infer.SymbolicShapeInference.infer_shapes(self._model, auto_merge=True)
+                self._model = infer_shapes(self._model, auto_merge=True, base_dir=os.path.dirname(self._model_path))
             except Exception as e:  # pragma: no cover
-                logger.error("Shape infer fails for layer-wise quantization")
-                if "Incomplete symbolic shape inference" in str(e):
-                    logger.warning("Please set graph optimization level to 'ENABLE_BASIC' for layer-wise quantization.")
+                logger.error(
+                    "Shape infer fails for layer-wise quantization. "
+                    "We would recommend checking the graph optimization level of your model "
+                    "and setting it to 'DISABLE_ALL' or 'ENABLE_BASIC', "
+                    "as this may help avoid this error."
+                )
                 raise e
 
         split_tensor_type, split_tensor_shape = self._get_output_type_shape_by_tensor_name(split_tensor_name)

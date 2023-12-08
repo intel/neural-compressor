@@ -53,6 +53,15 @@ def get_torch_version():
     return version
 
 
+def get_ipex_version():
+    try:
+        ipex_version = ipex.__version__.split("+")[0]
+    except ValueError as e:  # pragma: no cover
+        assert False, "Got an unknown version of intel_extension_for_pytorch: {}".format(e)
+    version = Version(ipex_version)
+    return version
+
+
 def get_torch_white_list(approach):
     version = get_torch_version()
     import torch.quantization as tq
@@ -2603,7 +2612,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
     def __init__(self, framework_specific_info):
         super(PyTorch_IPEXAdaptor, self).__init__(framework_specific_info)
-        self.version = get_torch_version()
+        self.version = get_ipex_version()
         query_config_file = "pytorch_ipex.yaml"
         self.query_handler = PyTorchQuery(
             device=self.device, local_config_file=os.path.join(os.path.dirname(__file__), query_config_file)
@@ -4573,10 +4582,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             enable_full_range = self.recipes["rtn_args"].get("enable_full_range", False)
             enable_mse_search = self.recipes["rtn_args"].get("enable_mse_search", False)
             group_dim = self.recipes["rtn_args"].get("group_dim", 1)
+            return_int = self.recipes["rtn_args"].get("return_int", False)
         else:  # pragma: no cover
             enable_full_range = False
             enable_mse_search = False
             group_dim = 1
+            return_int = False
         from .torch_utils.util import fetch_module, set_module
         from .torch_utils.weight_only import rtn_quantize
 
@@ -4614,7 +4625,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     num_bits,
                     group_size,
                     scheme,
-                    return_int=False,
+                    return_int=return_int,
                     data_type=dtype,
                     enable_full_range=enable_full_range,
                     enable_mse_search=enable_mse_search,

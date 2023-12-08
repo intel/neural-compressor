@@ -1021,7 +1021,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     from onnx.external_data_helper import load_external_data_for_model
 
                     load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
-                    model.model_path = sess_options.optimized_model_filepath
+                model.model_path = sess_options.optimized_model_filepath
         else:
             model.model_path = sess_options.optimized_model_filepath
 

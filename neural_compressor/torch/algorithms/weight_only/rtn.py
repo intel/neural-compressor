@@ -60,7 +60,7 @@ FLOAT_MAPPING = {"nf4": NF4, "fp4": FP4_BNB, "fp4_e2m1_bnb": FP4_BNB, "fp4_e2m1"
 INT_MAPPING = {"nf4": NF4_BIT, "fp4": FP4_BNB_BIT, "fp4_e2m1_bnb": FP4_BNB_BIT, "fp4_e2m1": FP4_E2M1_BIT}
 
 
-def quantize_4bit(tensor, quantile=1.0, data_type="nf4", return_int=False):
+def quantize_4bit(tensor, quantile=1.0, data_type="nf4", return_int=False, **kwargs):
     """Quantize tensor to NF4/FP4 data type.
 
     Args:
@@ -76,8 +76,11 @@ def quantize_4bit(tensor, quantile=1.0, data_type="nf4", return_int=False):
     allow_data = FLOAT_MAPPING[data_type]
     allow_data_bit = INT_MAPPING[data_type]
     # get scale and update tensor
-    scale = tensor.abs().max(1)[0] * quantile / max(allow_data)
-    scale.unsqueeze_(dim=-1)
+    if "scale" in kwargs:
+        scale = kwargs["scale"]
+    else:
+        scale = tensor.abs().max(1)[0] * quantile / max(allow_data)
+        scale.unsqueeze_(dim=-1)
     tensor = tensor / scale
     mid_data = [(allow_data[i] + allow_data[i + 1]) / 2 for i in range(len(allow_data) - 1)]
     q_tensor = torch.zeros_like(tensor)
@@ -89,12 +92,13 @@ def quantize_4bit(tensor, quantile=1.0, data_type="nf4", return_int=False):
             q_tensor += torch.where(tensor > mid_data[i - 1], data, 0)
         else:
             q_tensor += torch.where((mid_data[i - 1] < tensor) & (tensor <= mid_data[i]), data, 0)
-    if return_int:
-        return q_tensor.type(torch.int8), scale.type(torch.float), None
+    double_quant = kwargs.get("double_quant", False)
+    if return_int or double_quant:
+        return q_tensor, scale, None
     return q_tensor * scale
 
 
-def qdq_weight_asym(weight, num_bits=4, quantile=1.0, return_int=False):
+def qdq_weight_asym(weight, num_bits=4, quantile=1.0, return_int=False, **kwargs):
     """Quant and dequant tensor with asym schema.
 
     Args:
@@ -121,12 +125,13 @@ def qdq_weight_asym(weight, num_bits=4, quantile=1.0, return_int=False):
     scale.unsqueeze_(dim=-1)
     zp.unsqueeze_(dim=-1)
     q = torch.clamp(torch.round(weight / scale) + zp, 0, maxq)
-    if return_int:
-        return q.type(torch.uint8), scale.type(torch.float), zp.type(torch.uint8)
+    double_quant = kwargs.get("double_quant", False)
+    if return_int or double_quant:
+        return q, scale, zp
     return scale * (q - zp)
 
 
-def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_range=False):
+def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_range=False, **kwargs):
     """Quant and dequant tensor with sym schema.
 
     Args:
@@ -166,12 +171,15 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_rang
         scale = wmax / maxq
     scale.unsqueeze_(dim=-1)
     q = torch.clamp(torch.round(weight / scale), minq, maxq)
-    if return_int:
-        return q.type(torch.int8), scale.type(torch.float), None
+    double_quant = kwargs.get("double_quant", False)
+    if return_int or double_quant:
+        return q, scale, None
     return scale * q
 
 
-def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, data_type="int", return_int=False, full_range=False):
+def qdq_weight_actor(
+    weight, num_bits, scheme, quantile=1.0, data_type="int", return_int=False, full_range=False, **kwargs
+):
     """Quant and dequant tensor per channel.
 
     Args:
@@ -187,16 +195,25 @@ def qdq_weight_actor(weight, num_bits, scheme, quantile=1.0, data_type="int", re
         output: qdq weight
     """
     assert num_bits > 0, "num_bits should be larger than 0"
-    if "int" not in data_type and num_bits == 4:
-        return quantize_4bit(weight, quantile=quantile, data_type=data_type, return_int=return_int)
+
+    if data_type in FLOAT_MAPPING.keys():
+        return quantize_4bit(weight, quantile=quantile, data_type=data_type, return_int=return_int, **kwargs)
     if scheme == "sym":
-        return qdq_weight_sym(weight, num_bits, quantile, return_int, full_range)
+        return qdq_weight_sym(weight, num_bits, quantile, return_int, full_range, **kwargs)
     else:
-        return qdq_weight_asym(weight, num_bits, quantile, return_int)
+        return qdq_weight_asym(weight, num_bits, quantile, return_int, **kwargs)
 
 
 def quant_weight(
-    weight, num_bits=4, group_size=-1, scheme="asym", quantile=1.0, data_type="int", return_int=False, full_range=False
+    weight,
+    num_bits=4,
+    group_size=-1,
+    scheme="asym",
+    quantile=1.0,
+    data_type="int",
+    return_int=False,
+    full_range=False,
+    **kwargs,
 ):
     """Quant and dequant tensor with group size.
 
@@ -214,10 +231,17 @@ def quant_weight(
     Returns:
         output: qdq weight.
     """
+    double_quant = kwargs.get("double_quant", False)
     if num_bits <= 0:  # pragma: no cover
         return weight
+    # case 1, group size = -1
     if group_size == -1 or weight.shape[1] < group_size:
-        return qdq_weight_actor(
+        group_size = weight.shape[1]
+    # case 2, reshape based on group size
+    orig_shape = weight.shape
+    if weight.shape[1] % group_size == 0:
+        weight = weight.reshape(-1, group_size)
+        weight = qdq_weight_actor(
             weight,
             num_bits,
             scheme=scheme,
@@ -225,76 +249,109 @@ def quant_weight(
             return_int=return_int,
             full_range=full_range,
             data_type=data_type,
+            **kwargs,
         )
-    orig_shape = weight.shape
-    if weight.shape[1] % group_size == 0:
-        weight = weight.reshape(-1, group_size)
-        if return_int:
-            weight, scale, zp = qdq_weight_actor(
-                weight,
-                num_bits,
-                scheme=scheme,
-                quantile=quantile,
-                return_int=True,
-                full_range=full_range,
-                data_type=data_type,
-            )
+        if return_int or double_quant:
+            weight, scale, zp = weight
             weight = weight.reshape(orig_shape)
             scale = scale.reshape(orig_shape[0], -1)
             if zp is not None:
                 zp = zp.reshape(orig_shape[0], -1)
-            return weight, scale, zp
+            q_state = weight, scale, zp
         else:
-            weight = qdq_weight_actor(
-                weight, num_bits, scheme=scheme, data_type=data_type, quantile=quantile, full_range=full_range
-            )
             return weight.reshape(orig_shape)
     else:
+        # case 3, process left part split by group size
         split_index = weight.shape[1] // group_size * group_size
         weight1 = weight[:, :split_index]
         weight1 = weight1.reshape(-1, group_size)
-        if return_int:
-            weight1, scale1, zp1 = qdq_weight_actor(
-                weight1,
-                num_bits,
-                scheme=scheme,
-                data_type=data_type,
-                quantile=quantile,
-                return_int=True,
-                full_range=full_range,
-            )
+        weight1 = qdq_weight_actor(
+            weight1,
+            num_bits,
+            scheme=scheme,
+            quantile=quantile,
+            return_int=return_int,
+            full_range=full_range,
+            data_type=data_type,
+            **kwargs,
+        )
+        if return_int or double_quant:
+            weight1, scale1, zp1 = weight1
             scale1 = scale1.reshape(orig_shape[0], -1)
             if zp1 is not None:
                 zp1 = zp1.reshape(orig_shape[0], -1)
-        else:
-            weight1 = qdq_weight_actor(
-                weight1, num_bits, scheme=scheme, quantile=quantile, data_type=data_type, full_range=full_range
-            )
         weight1 = weight1.reshape(orig_shape[0], split_index)
         weight2 = weight[:, split_index:]
-        if return_int:
-            weight2, scale2, zp2 = qdq_weight_actor(
-                weight2,
-                num_bits,
-                scheme=scheme,
-                data_type=data_type,
-                quantile=quantile,
-                return_int=True,
-                full_range=full_range,
-            )
+        weight2 = qdq_weight_actor(
+            weight2,
+            num_bits,
+            scheme=scheme,
+            data_type=data_type,
+            quantile=quantile,
+            return_int=return_int,
+            full_range=full_range,
+            **kwargs,
+        )
+        if return_int or double_quant:
+            weight2, scale2, zp2 = weight2
             weight = torch.cat([weight1, weight2], dim=1)
             scale = torch.cat([scale1, scale2], dim=1)
-            if zp2 is not None:
-                zp = torch.cat([zp1, zp2], dim=1)
-            else:
-                zp = None
-            return weight, scale, zp
+            zp = None if zp2 is None else torch.cat([zp1, zp2], dim=1)
+            q_state = (weight, scale, zp)
         else:
-            weight2 = qdq_weight_actor(
-                weight2, num_bits, scheme=scheme, data_type=data_type, quantile=quantile, full_range=full_range
-            )
             weight = torch.cat([weight1, weight2], dim=1)
             return weight
+    if double_quant:
+        weight, scale, zp = q_state
+        double_quant_dtype = kwargs.get("double_quant_dtype", "fp32")
+        double_quant_num_bits = kwargs.get("double_quant_num_bits", 8)
+        double_quant_scheme = kwargs.get("double_quant_scheme", "sym")
+        double_quant_group_size = kwargs.get("double_quant_group_size", 256)
+        double_quant_return_int = kwargs.get("double_quant_return_int", return_int)
+        # process scale
+        orig_scale_shape = scale.shape
+        scale = scale.reshape(1, -1)
+        scale = quant_weight(
+            scale,
+            double_quant_num_bits,
+            double_quant_group_size,
+            scheme=double_quant_scheme,
+            quantile=1.0,
+            data_type=double_quant_dtype,
+            return_int=double_quant_return_int,
+            full_range=False,
+            double_quant=False,
+        )
+        if return_int:
+            if double_quant_return_int:
+                scale, hyper_scale, hyper_zp = scale
+                scale = scale.reshape(orig_scale_shape)
+                return weight, (scale, hyper_scale, hyper_zp), zp
+            else:
+                scale = scale.reshape(orig_scale_shape)
+                return weight, scale, zp
+        else:
+            scale = scale.reshape(orig_scale_shape)
+            if weight.shape[1] % group_size != 0:
+                if zp is not None:
+                    weight1 = weight1.reshape(-1, group_size) - zp[:, :-1].reshape(-1, 1)
+                    weight2 = weight2 - zp[:, -1].reshape(-1, 1)
+                else:
+                    weight1 = weight1.reshape(-1, group_size)
+                weight1 = weight1 * scale[:, :-1].reshape(-1, 1)
+                weight1 = weight1.reshape(orig_shape[0], -1)
+                weight2 = weight2 * scale[:, -1].reshape(-1, 1)
+                weight = torch.cat([weight1, weight2], dim=1)
+            else:
+                if zp is not None:
+                    weight = weight.reshape(-1, group_size) - zp.reshape(-1, 1)
+                else:
+                    weight = weight.reshape(-1, group_size)
+                weight = weight * scale.reshape(-1, 1)
+                weight = weight.reshape(orig_shape[0], -1)
+            return weight
+    else:
+        return q_state
 
 
 def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", enable_full_range=False):
@@ -340,205 +397,6 @@ def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", en
     return best_clip_ratio
 
 
-import math
-
-
-class WeightOnlyLinear(torch.nn.Module):
-    def __init__(
-        self,
-        in_features,
-        out_features,
-        bits,
-        groupsize,
-        dtype="int",
-        zp=False,
-        bias=False,
-        scale_dtype=torch.float32,
-        compression_dtype=torch.int32,
-        compression_dim=1,
-        gptq_perm=False,
-        device="cpu",
-    ):
-        super().__init__()
-        self.dtype = dtype
-        if "int" not in self.dtype:  # for nf4, fp4
-            float_list = FLOAT_MAPPING[self.dtype]
-            int_list = INT_MAPPING[self.dtype]
-            self.int2float_mapping = {}
-            for k, v in zip(int_list, float_list):
-                self.int2float_mapping[k] = v
-        self.device = device
-        self.in_features = in_features
-        self.out_features = out_features
-        self.bits = bits
-        self.groupsize = groupsize if groupsize != -1 else in_features
-        self.compression_dim = compression_dim
-        assert compression_dtype in [
-            torch.int8,
-            torch.int16,
-            torch.int32,
-            torch.int64,
-        ], "Only support torch.int8|16|32|64 as compressed dtype."
-        dtype_bits_mapping = {torch.int8: 8, torch.int16: 16, torch.int32: 32, torch.int64: 64}
-        self.compress_bits = dtype_bits_mapping[compression_dtype]
-        self.n_pack = self.compress_bits // self.bits
-        self.compressed_dtype = compression_dtype
-        self.float_type = scale_dtype
-        # K is input channel, N is output channel
-        assert compression_dim in [0, 1], (
-            "Only support 0 or 1 as compression dimension, " + "0 is output channel, 1 is input channel."
-        )
-        self.register_buffer(
-            "scale",
-            torch.zeros(
-                (out_features, math.ceil(in_features / self.groupsize)),
-                dtype=self.float_type,
-            ).to(device),
-        )
-        if compression_dim == 1:
-            self.register_buffer(
-                "packed_weight",
-                torch.zeros(
-                    (out_features, math.ceil(in_features / self.n_pack)),
-                    dtype=self.compressed_dtype,
-                ).to(device),
-            )
-            if zp:
-                self.register_buffer(
-                    "packed_zp",
-                    torch.zeros(
-                        (self.out_features, math.ceil(self.in_features / self.groupsize / self.n_pack)),
-                        dtype=self.compressed_dtype,
-                    ).to(device),
-                )
-        else:
-            self.register_buffer(
-                "packed_weight",
-                torch.zeros(
-                    (math.ceil(out_features / self.n_pack), in_features),
-                    dtype=self.compressed_dtype,
-                ).to(device),
-            )
-            if zp:
-                self.register_buffer(
-                    "packed_zp",
-                    torch.zeros(
-                        (math.ceil(self.out_features / self.n_pack), math.ceil(self.in_features / self.groupsize)),
-                        dtype=self.compressed_dtype,
-                    ).to(device),
-                )
-        if bias:
-            self.register_buffer("bias", torch.zeros(self.out_features, dtype=self.float_type).to(device))
-        else:
-            self.bias = None
-
-    def pack(self, int_weight, scale, zp, bias, gptq_perm=None):
-        int_weight = int_weight.to(self.device)
-        if bias is not None:
-            assert hasattr(self, "bias"), "bias is not set when initializing."
-            self.bias = bias.type(self.float_type).to(self.device)
-        assert (
-            scale.shape == self.scale.shape
-        ), f"Scale shape is mismatched, got self.scale.shape: {self.scale.shape} and scale.shape: {scale.shape}"
-        self.scale = scale.type(self.float_type).to(self.device)
-        if self.compression_dim == 0:
-            int_weight = int_weight.T
-            self.packed_weight = self.packed_weight.T
-        origin_shape = int_weight.shape
-        target_shape = self.packed_weight.shape
-        assert origin_shape[0] == target_shape[0], "output channels mismatch, please check."
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype).to(self.device)
-
-        # pack weight
-        for j in range(target_shape[1]):
-            start = self.n_pack * j
-            end = self.n_pack * (j + 1)
-            tmp = int_weight[:, start:end].type(self.compressed_dtype)
-            for e in range(tmp.shape[1]):
-                tmp[:, e] &= mask
-                tmp[:, e] = tmp[:, e] << (self.bits * e)
-                self.packed_weight[:, j] |= tmp[:, e]
-        if self.compression_dim == 0:
-            self.packed_weight = self.packed_weight.T
-
-        if zp is not None:
-            zp = zp.to(self.device)
-            if self.compression_dim == 0:
-                zp = zp.T
-                self.packed_zp = self.packed_zp.T
-            assert hasattr(self, "packed_zp"), "zp is not set when initializing."
-            target_shape = self.packed_zp.shape
-            for j in range(target_shape[1]):
-                start = self.n_pack * j
-                end = self.n_pack * (j + 1)
-                tmp = zp[:, start:end].type(self.compressed_dtype)
-                for e in range(tmp.shape[1]):
-                    tmp[:, e] &= mask
-                    tmp[:, e] = tmp[:, e] << (self.bits * e)
-                    self.packed_zp[:, j] |= tmp[:, e]
-            if self.compression_dim == 0:
-                self.packed_zp = self.packed_zp.T
-
-    def recover(self):
-        logger.debug(f"Recovering {self} weight")
-        device = self.scale.device
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compressed_dtype).to(device)
-        weight_dtype = torch.int8
-        # unpack weight
-        weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype).to(device)
-        packed_weight = self.packed_weight
-        if self.compression_dim == 0:
-            weight = weight.T
-            packed_weight = packed_weight.T
-        origin_shape = weight.shape
-        target_shape = packed_weight.shape
-        for j in range(target_shape[1]):
-            for e in range(self.n_pack):
-                index = j * self.n_pack + e
-                if index >= origin_shape[1]:
-                    continue
-                tmp = packed_weight[:, j]
-                tmp = tmp << (self.compress_bits - self.bits * (e + 1))
-                tmp = tmp >> self.compress_bits - self.bits
-                if weight_dtype == torch.uint8:
-                    tmp &= mask  # remove sign bit
-                weight[:, index] = tmp.type(weight_dtype)
-        if self.compression_dim == 0:
-            weight = weight.T
-        if "int" not in self.dtype:
-            new_weight = torch.zeros(self.out_features, self.in_features).to(device)
-            for k, v in self.int2float_mapping.items():
-                new_weight += torch.where(weight == k, v, 0)
-            weight = new_weight
-
-        # recover fp32 weight with int_weight, scale
-        left_element = self.in_features % self.groupsize
-        if left_element != 0:
-            split_index = self.in_features // self.groupsize * self.groupsize
-            weight1 = weight[:, :split_index].reshape(-1, self.groupsize)
-            scale1 = self.scale[:, :-1].reshape(-1, 1)
-            weight1 = (weight1 * scale1).reshape(self.out_features, -1)
-            weight2 = weight[:, split_index:]
-            scale2 = self.scale[:, -1:]
-            weight2 = weight2 * scale2
-            fp32_weight = torch.cat((weight1, weight2), dim=1)
-        else:
-            weight = weight.reshape(-1, self.groupsize)
-            scale = self.scale.reshape(-1, 1)
-            fp32_weight = (weight * scale).reshape(self.out_features, -1)
-        return fp32_weight
-
-    def forward(self, input):
-        weight = self.recover()
-        input = input.type(weight.dtype)
-        return F.linear(input, weight, self.bias)
-
-    def extra_repr(self) -> str:
-        return "in_features={}, out_features={}, bits={}, group_size={}, bias={}".format(
-            self.in_features, self.out_features, self.bits, self.groupsize, self.bias is not None
-        )
-
-
 def rtn_quantize(
     model,
     num_bits=4,
@@ -567,6 +425,7 @@ def rtn_quantize(
                 weight_config={
                     'fc2':
                         {
+                            'dtype': 'int',
                             'bits': 4,
                             'group_size': 32,
                             'scheme': 'sym'
@@ -587,6 +446,14 @@ def rtn_quantize(
     """
     assert isinstance(model, torch.nn.Module), "only support torch module"
     supported_layers = ["Linear"]
+    double_quant_dtype = kwargs.get("double_quant_dtype", "fp32")
+    double_quant_config = {
+        "double_quant": False if double_quant_dtype == "fp32" else True,
+        "double_quant_dtype": double_quant_dtype,
+        "double_quant_num_bits": kwargs.get("double_quant_num_bits", 8),
+        "double_quant_scheme": kwargs.get("double_quant_scheme", "sym"),
+        "double_quant_group_size": kwargs.get("double_quant_group_size", 256),
+    }
     if return_int:
         compression_dtype = kwargs.get("compression_dtype", torch.int32)
         compression_dim = kwargs.get("compression_dim", 1)
@@ -596,11 +463,11 @@ def rtn_quantize(
         if m.__class__.__name__ not in supported_layers:
             continue
         if name in weight_config:  # pragma: no cover
+            data_type = weight_config[name].get("dtype", "int")
             num_bits = weight_config[name]["bits"]
             group_size = weight_config[name]["group_size"]
             scheme = weight_config[name]["scheme"]
             quantile = weight_config[name].get("quantile", 1.0)
-        logger.debug(f"RTN quantized module:{name, m}")
         log_msg = (
             f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, "
             + f"scheme={scheme}, quantile={quantile}"
@@ -609,6 +476,9 @@ def rtn_quantize(
             log_msg += f", dtype={data_type}"
         elif scheme == "sym":  # nf4/fp4 is always [-7,7]
             log_msg += f", enable_full_range={enable_full_range}"
+        if data_type == "fp32":
+            continue
+        logger.debug(f"RTN quantized module:{name, m}")
         logger.debug(log_msg)
         weight = m.weight.T if group_dim == 0 else m.weight
         if enable_mse_search:
@@ -623,10 +493,13 @@ def rtn_quantize(
                 data_type=data_type,
                 return_int=True,
                 full_range=enable_full_range,
+                **double_quant_config,
             )
             int_weight = int_weight.T if group_dim == 0 else int_weight
             scale = scale.T if group_dim == 0 else scale
             zp = zp.T if group_dim == 0 and zp is not None else zp
+            from neural_compressor.torch.quantization.modules import WeightOnlyLinear
+
             new_module = WeightOnlyLinear(
                 m.in_features,
                 m.out_features,
@@ -654,10 +527,57 @@ def rtn_quantize(
                 quantile,
                 data_type=data_type,
                 full_range=enable_full_range,
+                **double_quant_config,
             )
             q_weight = q_weight.T if group_dim == 0 else q_weight
             m.weight.data.copy_(q_weight)
     return model
+
+
+def quant_weight_w_scale(weight, scale, zp, group_size=-1, dtype="int"):
+    """Quant and dequant tensor with group size.
+
+    Args:
+        weight: input weight
+        scale: scale
+        zp: zero point
+        group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
+        dtype: data type, for NF4 FP4
+
+    Returns:
+        output: int weight.
+    """
+    device = weight.device
+    scale = scale.to(device)
+    # NF4 FP4
+    if dtype in FLOAT_MAPPING.keys():
+        int_weight = quantize_4bit(
+            weight,
+            quantile=1.0,
+            data_type=dtype,
+            return_int=True,
+            scale=scale,
+        )[0]
+        return int_weight
+    # INT
+    if zp is not None:
+        zp = zp.to(device)
+    if group_size == -1:
+        return torch.round(weight / scale) if zp is None else torch.round(weight / scale + zp)
+    int_weight = torch.zeros(weight.shape).to(device)
+    leng = weight.shape[1] // group_size
+    tail_flag = False if weight.shape[1] % group_size == 0 else True
+    for i in range(leng):
+        int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size] / scale[:, i].unsqueeze(1)
+        if zp is not None:
+            int_weight_tmp += zp[:, i].unsqueeze(1)
+        int_weight[:, i * group_size : (i + 1) * group_size] = torch.round(int_weight_tmp)
+    if tail_flag:
+        int_weight_tmp = weight[:, leng * group_size :] / scale[:, -1].unsqueeze(1)
+        if zp is not None:
+            int_weight_tmp += zp[:, -1].unsqueeze(1)
+        int_weight[:, leng * group_size :] = torch.round(int_weight_tmp)
+    return int_weight
 
 
 from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
@@ -673,6 +593,10 @@ def apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeightQ
     scheme = "sym" if quant_config.weight_sym else "asym"
     group_size = quant_config.weight_group_size
     return_int = quant_config.return_int
+    double_quant_dtype = quant_config.double_quant_dtype
+    double_quant_num_bits = quant_config.double_quant_bits
+    double_quant_scheme = "sym" if quant_config.double_quant_sym else "asym"
+    double_quant_group_size = quant_config.double_quant_group_size
     return rtn_quantize(
         module,
         num_bits,
@@ -683,4 +607,8 @@ def apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeightQ
         enable_full_range=enable_full_range,
         enable_mse_search=enable_mse_search,
         group_dim=group_dim,
+        double_quant_dtype=double_quant_dtype,
+        double_quant_scheme=double_quant_scheme,
+        double_quant_num_bits=double_quant_num_bits,
+        double_quant_group_size=double_quant_group_size,
     )
