@@ -19,6 +19,7 @@ Classes
    neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor
    neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor
    neural_compressor.adaptor.pytorch.PyTorchWeightOnlyAdaptor
+   neural_compressor.adaptor.pytorch.PyTorchQuery
 
 
 
@@ -100,5 +101,15 @@ Functions
 
    :param framework_specific_info: dictionary of tuning configure from yaml file.
    :type framework_specific_info: dict
+
+
+.. py:class:: PyTorchQuery(device='cpu', local_config_file=None)
+
+
+
+
+   Base class that defines Query Interface.
+
+   Each adaption layer should implement the inherited class for specific backend on their own.
 
 
