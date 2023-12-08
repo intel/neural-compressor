@@ -1567,3 +1567,143 @@ class AutoOPTRound(AutoRound):
         optimizer.zero_grad()
         lr_schedule.step()
         scaler.update()
+
+
+class AutoAdamRound(AutoRound):
+    """Class for automatic rounding-based quantization with optimizers like adamw of a PyTorch model.
+
+    Args:
+        model: The PyTorch model to be quantized.
+        tokenizer: An optional tokenizer for processing input data.
+        bits (int): Number of bits for quantization (default is 4).
+        group_size (int): Size of the quantization group (default is 128).
+        scheme (str): The quantization scheme to be used (default is "asym").
+        weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
+        enable_full_range (bool): Whether to enable full range quantization (default is False).
+        bs (int): Batch size for training (default is 8).
+        amp (bool): Whether to use automatic mixed precision (default is True).
+        device: The device to be used for training (default is "cuda:0").
+        lr_scheduler: The learning rate scheduler to be used.
+        dataloader: The dataloader for input data (to be supported in future).
+        dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
+        dataset_split (str): The split of the dataset to be used (default is "train").
+        use_quant_input (bool): Whether to use quantized input data (default is True).
+        enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
+        lr (float): The learning rate (default is 0.005).
+        minmax_lr (float): The learning rate for min-max tuning (default is 0.005).
+        low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
+        iters (int): Number of iterations (default is 200).
+        seqlen (int): Length of the sequence.
+        n_samples (int): Number of samples (default is 512).
+        sampler (str): The sampling method (default is "rand").
+        seed (int): The random seed (default is 42).
+        n_blocks (int): Number of blocks (default is 1).
+        gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
+        not_use_mse (bool): Whether to use mean squared error (default is False).
+        dynamic_max_gap (int): The dynamic maximum gap (default is -1).
+        data_type (str): The data type to be used (default is "int").
+        optimizer: string or object
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        The quantized model.
+    """
+
+    def __init__(
+        self,
+        model,
+        tokenizer=None,
+        bits: int = 4,
+        group_size: int = 128,
+        scheme: str = "asym",
+        weight_config: dict = {},
+        enable_full_range: bool = False,
+        bs: int = 8,
+        amp: bool = True,
+        device="cuda:0",
+        lr_scheduler=None,
+        dataloader=None,
+        dataset_name: str = "NeelNanda/pile-10k",
+        dataset_split: str = "train",
+        use_quant_input: bool = True,
+        enable_minmax_tuning: bool = True,
+        lr: float = 0.01,
+        minmax_lr: float = 0.01,
+        low_gpu_mem_usage: bool = True,
+        iters: int = 200,
+        seqlen: int = 2048,
+        n_samples: int = 512,
+        sampler: str = "rand",
+        seed: int = 42,
+        n_blocks: int = 1,
+        gradient_accumulate_steps: int = 1,
+        not_use_mse: bool = False,
+        dynamic_max_gap: int = -1,
+        data_type: str = "int",
+        optimizer="AdamW",
+        **kwargs,
+    ):
+        super(AutoOPTRound, self).__init__(
+            model,
+            tokenizer,
+            bits,
+            group_size,
+            scheme,
+            weight_config,
+            enable_full_range,
+            bs,
+            amp,
+            device,
+            lr_scheduler,
+            dataloader,
+            dataset_name,
+            dataset_split,
+            use_quant_input,
+            enable_minmax_tuning,
+            lr,
+            minmax_lr,
+            low_gpu_mem_usage,
+            iters,
+            seqlen,
+            n_samples,
+            sampler,
+            seed,
+            n_blocks,
+            gradient_accumulate_steps,
+            not_use_mse,
+            dynamic_max_gap,
+            data_type,
+            **kwargs,
+        )
+
+        self.optimizer = self.get_optimizer(optimizer)
+
+    def get_optimizer(self, optimizer):
+        if optimizer is None:
+            optimizer = torch.optim.AdamW
+            ##TODO need to force set lr to some better candidates
+
+        elif isinstance(optimizer, str):
+            optimizer = getattr(torch.optim, optimizer)
+        else:
+            optimizer = optimizer
+        return optimizer
+
+    def get_scaler(self):
+        scaler = None
+        if self.amp:
+            from torch.cuda.amp import GradScaler
+
+            scaler = GradScaler(init_scale=1024, growth_interval=100000)
+        return scaler
+
+    def scale_loss_and_backward(self, scaler, loss):
+        scale_loss = scaler.scale(loss)
+        scale_loss.backward()
+        return scale_loss
+
+    def step(self, scaler, optimizer, lr_schedule):
+        scaler.step(optimizer)
+        optimizer.zero_grad()
+        lr_schedule.step()
+        scaler.update()

@@ -2,7 +2,7 @@ import argparse
 import sys
 
 sys.path.insert(0, '/home/wenhuach/neural-compressor')  ##TODO change it later
-from neural_compressor.adaptor.torch_utils.autoround import AutoRound, AutoOPTRound
+from neural_compressor.adaptor.torch_utils.autoround import AutoRound, AutoOPTRound, AutoAdamRound
 
 parser = argparse.ArgumentParser()
 import torch
@@ -224,7 +224,7 @@ if __name__ == '__main__':
         scheme = "sym"
     round = AutoRound
     if args.adam:
-        round = AutoOPTRound
+        round = AutoAdamRound
 
     optq = round(model, tokenizer, args.num_bits, args.group_size, scheme, bs=args.train_bs,
                  seqlen=seqlen, n_blocks=args.n_blocks, iters=args.iters, lr=args.lr,

@@ -25,6 +25,10 @@ To run original SignRound, please refer to the following cmd, --enalbe_minmax_tu
 CUDA_VISIBLE_DEVICES=0  python3 signround.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1  --iters 400 --lr 0.0025 --minmax_lr 0.0025 
 ```
 
+## Suggestions
+
+If you have sufficient resources, you can typically achieve better results by increasing the tuning steps and adjusting the learning rate according to a scaling law. For example, at step 800, you could use a learning rate of 0.00125
+
 ## Known issue
 Qwen models have random issue in Auto Rounding
 
