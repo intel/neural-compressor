@@ -1643,7 +1643,7 @@ class AutoAdamRound(AutoRound):
         optimizer="AdamW",
         **kwargs,
     ):
-        super(AutoOPTRound, self).__init__(
+        super(AutoAdamRound, self).__init__(
             model,
             tokenizer,
             bits,
