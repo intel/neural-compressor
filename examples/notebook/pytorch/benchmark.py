@@ -99,13 +99,8 @@ if __name__ == "__main__":
     batch_size = eval_dataloader.batch_size
 
     if args.input_model:
-        from neural_compressor.utils.load_huggingface import OptimizedModel
-        model = OptimizedModel.from_pretrained(
-            args.input_model,
-            from_tf=False,
-            config=config,
-            use_auth_token=None,
-        )
+        from neural_compressor.utils.pytorch import load
+        model = load(args.input_model, model, dataloader=eval_dataloader)
 
     b_conf = BenchmarkConfig(warmup=5,
                         iteration=100,
