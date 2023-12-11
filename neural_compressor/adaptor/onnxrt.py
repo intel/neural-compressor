@@ -219,7 +219,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.sq = ORTSmoothQuant(self.pre_optimized_model, dataloader, self.reduce_range, self.backend)
         self.sq.record_max_info = record_max_info
         self.smooth_quant_model = self.sq.transform(**self.cur_sq_args)
-        logger.info("Updated the pre-optimized model with smooth quant model.")
+        if not record_max_info: # pragma: no cover
+            logger.info("Updated the pre-optimized model with smooth quant model.")
+        else:
+            logger.info("Collected scale information for smooth quant.")
         # TODO double-check the smooth_quant_model and pre_optimized_model to make sure there no two fp32 model replicas
         self.pre_optimized_model = self.smooth_quant_model
         return self.smooth_quant_model
@@ -305,6 +308,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             self.sq.model = tmp_model
             self.sq.record_max_info = False
             tmp_model = self.sq.transform(**self.cur_sq_args)
+            logger.info("Model is smooth quantized.")
 
         iterations = tune_cfg.get("calib_iteration", 1)
         calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
@@ -1129,7 +1133,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         from onnx import numpy_helper
 
         if not isinstance(model, ONNXModel):
-            model = ONNXModel(model)
+            model = ONNXModel(model, ignore_warning=True)
 
         for node in model.nodes():
             if node.op_type == "Gemm":
