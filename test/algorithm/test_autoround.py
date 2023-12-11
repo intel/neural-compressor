@@ -6,17 +6,6 @@ from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
 from neural_compressor.adaptor.torch_utils.autoround.autoround import AutoOPTRound, AutoRound
 
 
-# class DemoModel(torch.nn.Module):
-#     def __init__(self):
-#         super(DemoModel, self).__init__()
-#         self.fc1 = torch.nn.Linear(3, 4)
-#         self.fc2 = torch.nn.Linear(4, 3)
-#         self.layers = torch.nn.ModuleList([self.fc1,self.fc2])
-#
-#     def forward(self, x):
-#         out = self.layers(x)
-#
-#         return out
 class TestAutoRoundLinear(unittest.TestCase):
     @classmethod
     def setUpClass(self):
