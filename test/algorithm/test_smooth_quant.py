@@ -880,6 +880,26 @@ class TestExample(unittest.TestCase):
                 calib_func=calib_func,
             )
             q_model.save("saved")
+            # test recover_model_from_json
+            from neural_compressor.utils.pytorch import recover_model_from_json
+
+            tmp_model = copy.deepcopy(fp32_model)
+
+            ipex_model = recover_model_from_json(tmp_model, "./saved/best_configure.json", example_inputs=input_ids)
+            inc_output = q_model.model(input_ids)
+            ipex_output = ipex_model(input_ids)
+            self.assertTrue(torch.allclose(inc_output, ipex_output, atol=1e-05))
+
+            example_tuple = (input_ids,)
+            ipex_model = recover_model_from_json(tmp_model, "./saved/best_configure.json", example_inputs=example_tuple)
+            ipex_output = ipex_model(input_ids)
+            self.assertTrue(torch.allclose(inc_output, ipex_output, atol=1e-05))
+
+            example_dict = {"x": input_ids}
+            ipex_model = recover_model_from_json(tmp_model, "./saved/best_configure.json", example_inputs=example_dict)
+            ipex_output = ipex_model(input_ids)
+            self.assertTrue(torch.allclose(inc_output, ipex_output, atol=1e-05))
+
             # compare ipex and inc quantization
             with open("saved/best_configure.json", "r") as f:
                 inc_config_json = json.load(f)
@@ -1303,13 +1323,22 @@ class TestPeftModel(unittest.TestCase):
 
         sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
         sq.transform(alpha=0.5, folding=False)
-        self.assertTrue(isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
-        self.assertTrue(
-            isinstance(
-                model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
-                SQLinearWrapper,
-            )
-        )  # Linear in Linear
+        decoder = model.base_model.model.model.decoder
+        if Version(peft.__version__) < Version("0.7.0"):
+            self.assertTrue(isinstance(decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
+            self.assertTrue(
+                isinstance(
+                    decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
+                    SQLinearWrapper,
+                )
+            )  # Linear in Linear
+        else:
+            self.assertTrue(
+                isinstance(
+                    decoder.layers[0].self_attn.v_proj.lora_A.default,
+                    SQLinearWrapper,
+                )
+            )  # Linear in Linear
         self.assertTrue(
             isinstance(model.base_model.model.score.original_module, torch.nn.Linear)
         )  # Linear that is not called in calibration
@@ -1328,13 +1357,22 @@ class TestPeftModel(unittest.TestCase):
         # folding=False
         sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
         sq.transform(alpha="auto", folding=False)
-        self.assertTrue(isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
-        self.assertTrue(
-            isinstance(
-                model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
-                SQLinearWrapper,
-            )
-        )  # Linear in Linear
+        decoder = model.base_model.model.model.decoder
+        if Version(peft.__version__) < Version("0.7.0"):
+            self.assertTrue(isinstance(decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
+            self.assertTrue(
+                isinstance(
+                    decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
+                    SQLinearWrapper,
+                )
+            )  # Linear in Linear
+        else:
+            self.assertTrue(
+                isinstance(
+                    decoder.layers[0].self_attn.v_proj.lora_A.default,
+                    SQLinearWrapper,
+                )
+            )  # Linear in Linear
         self.assertTrue(
             isinstance(model.base_model.model.score.original_module, torch.nn.Linear)
         )  # Linear that is not called in calibration
@@ -1349,7 +1387,16 @@ class TestPeftModel(unittest.TestCase):
 
         sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
         sq.transform(alpha="auto", folding=True)
-        self.assertTrue(isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, torch.nn.Linear))
+        if Version(peft.__version__) < Version("0.7.0"):
+            self.assertTrue(
+                isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, torch.nn.Linear)
+            )
+        else:
+            self.assertTrue(
+                isinstance(
+                    model.base_model.model.model.decoder.layers[0].self_attn.v_proj, peft.tuners.lora.layer.Linear
+                )
+            )
         self.assertTrue(
             isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj.lora_A.default, torch.nn.Linear)
         )  # Linear in Linear
@@ -1381,13 +1428,21 @@ class TestPeftModel(unittest.TestCase):
             calib_func=calib_func,
         )
         decoder = q_model.model.base_model.model.model.decoder
-        self.assertTrue(isinstance(decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
-        self.assertTrue(
-            isinstance(
-                decoder.layers[0].self_attn.v_proj.sq_linear.module.lora_A.default,
-                SQLinearWrapper,
-            )
-        )  # Linear in Linear
+        if Version(peft.__version__) < Version("0.7.0"):
+            self.assertTrue(isinstance(decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
+            self.assertTrue(
+                isinstance(
+                    decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
+                    SQLinearWrapper,
+                )
+            )  # Linear in Linear
+        else:
+            self.assertTrue(
+                isinstance(
+                    decoder.layers[0].self_attn.v_proj.lora_A.default,
+                    SQLinearWrapper,
+                )
+            )  # Linear in Linear
         self.assertTrue(
             isinstance(q_model.model.base_model.model.score.original_module, torch.nn.Linear)
         )  # Linear that is not called in calibration
@@ -1425,6 +1480,72 @@ class TestPeftModel(unittest.TestCase):
             calib_func=calib_func,
         )
         out2 = q_model.model(example_input)[0]
+
+
+class TestInputConfig(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        class RandDataloader:
+            def __init__(self):
+                self.batch_size = 1
+
+            def __iter__(self):
+                yield torch.rand((1, 3))
+
+        self.linear_dl = RandDataloader()
+
+    @classmethod
+    def test_sq_weight_clipping(self):
+        class Model(torch.nn.Module):
+            device = torch.device("cpu")
+
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.norm = LlamaRMSNorm(4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.norm(out)
+                out = self.fc2(out)
+                return out
+
+        model = Model()
+
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha="auto", calib_iter=1, folding=True, weight_clip=False)
+        assert sq.weight_clip is False
+
+    @classmethod
+    def test_sq_auto_alpha_arg(self):
+        class Model(torch.nn.Module):
+            device = torch.device("cpu")
+
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.norm = LlamaRMSNorm(4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.norm(out)
+                out = self.fc2(out)
+                return out
+
+        model = Model()
+
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(
+            alpha="auto",
+            calib_iter=1,
+            folding=False,
+            auto_alpha_args={"alpha_min": 0.5, "alpha_max": 0.9, "alpha_step": 0.1, "shared_criterion": "mean"},
+            default_alpha=0.7,
+        )
+        assert sq.default_alpha == 0.7
+        assert sq.auto_alpha_args["alpha_min"] == 0.5
 
 
 if __name__ == "__main__":

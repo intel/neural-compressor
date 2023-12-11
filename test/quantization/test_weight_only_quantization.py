@@ -54,6 +54,7 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
 
     def test_rtn(self):
         fp32_model = copy.deepcopy(self.model)
+        fp16_model = copy.deepcopy(self.model).to(torch.float16)
         model1 = rtn_quantize(fp32_model, num_bits=3, group_size=-1)
         self.assertTrue(isinstance(model1.fc1, torch.nn.Linear))
         weight_config = {
@@ -67,7 +68,7 @@ class TestAWQWeightOnlyQuant(unittest.TestCase):
             },
         }
         model2 = rtn_quantize(fp32_model, weight_config=weight_config)
-        model2 = rtn_quantize(fp32_model, weight_config=weight_config, return_int=True)
+        model2 = rtn_quantize(fp16_model, weight_config=weight_config, return_int=True)
         self.assertTrue(isinstance(model2.fc1, WeightOnlyLinear))
 
     def test_awq(self):

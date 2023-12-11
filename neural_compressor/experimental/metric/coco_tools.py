@@ -47,11 +47,13 @@ from collections import OrderedDict
 from typing import Any, Dict, List, Set, Union
 
 import numpy as np
+from deprecated import deprecated
 from pycocotools import coco, cocoeval, mask
 
 from neural_compressor.utils import logger
 
 
+@deprecated(version="2.0")
 class COCOWrapper(coco.COCO):
     """Wrapper for the pycocotools COCO class.
 
@@ -139,6 +141,7 @@ class COCOWrapper(coco.COCO):
         return results
 
 
+@deprecated(version="2.0")
 class COCOEvalWrapper(cocoeval.COCOeval):
     """Wrapper for the pycocotools COCOeval class.
 
@@ -460,6 +463,7 @@ class COCOEvalWrapper(cocoeval.COCOeval):
         return summary_metrics, per_category_ap
 
 
+@deprecated(version="2.0")
 def _ConvertBoxToCOCOFormat(box):
     """Convert a box in [ymin, xmin, ymax, xmax] format to COCO format.
 
@@ -476,6 +480,7 @@ def _ConvertBoxToCOCOFormat(box):
     return [float(box[1]), float(box[0]), float(box[3] - box[1]), float(box[2] - box[0])]
 
 
+@deprecated(version="2.0")
 def _RleCompress(masks):
     """Compresses mask using Run-length encoding provided by pycocotools.
 
@@ -489,6 +494,7 @@ def _RleCompress(masks):
     return mask.encode(np.asfortranarray(masks))
 
 
+@deprecated(version="2.0")
 def ExportSingleImageGroundtruthToCoco(
     image_id: Union[int, str],
     next_annotation_id: int,
@@ -571,6 +577,7 @@ def ExportSingleImageGroundtruthToCoco(
     return groundtruth_list
 
 
+@deprecated(version="2.0")
 def ExportSingleImageDetectionBoxesToCoco(
     image_id: Union[int, str],
     category_id_set: Set[int],
@@ -635,6 +642,7 @@ def ExportSingleImageDetectionBoxesToCoco(
     return detections_list
 
 
+@deprecated(version="2.0")
 def ExportSingleImageDetectionMasksToCoco(
     image_id: Union[str, int],
     category_id_set: Set[int],

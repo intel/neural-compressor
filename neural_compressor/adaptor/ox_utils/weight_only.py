@@ -56,7 +56,15 @@ def get_blob_size(group_size, has_zp):  # pragma: no cover
 
 
 def make_matmul_weight_only_node(
-    node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point
+    node,
+    weight_shape,
+    num_bits,
+    group_size,
+    k_blocks,
+    q_weight,
+    scale,
+    zero_point,
+    accuracy_level=0,
 ):  # pragma: no cover
     """Build MatMulFpQ4 node.
 
@@ -69,6 +77,9 @@ def make_matmul_weight_only_node(
         q_weight (array): quantized weight
         scale (array): scale
         zero_point (array): zero point
+        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                              4 (int8 compute type of jblas kernel)
 
     Returns:
         matmul_weight_only_node: MatMulFpQ4 or MatMulNBits node
@@ -125,6 +136,9 @@ def make_matmul_weight_only_node(
         kwargs["N"] = weight_shape[1]
         kwargs["bits"] = num_bits
         kwargs["block_size"] = group_size
+        if accuracy_level > 0:
+            # require onnxruntime > 1.16.2
+            kwargs["accuracy_level"] = accuracy_level
 
     else:
         offset = 5 if zero_point is not None else 4
@@ -274,6 +288,7 @@ def rtn_quantize(
     group_size=32,
     scheme="asym",
     ratios={},
+    accuracy_level=0,
 ):
     """Quant the model with round to nearst method.
 
@@ -294,11 +309,15 @@ def rtn_quantize(
         group_size (int, optional): how many elements share one scale/zp. Default is 32.
         scheme (str, optional): sym or asym. Defaults to "asym".
         ratios (dict, optional): percentile of clip. Defaults to {}.
+        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                              4 (int8 compute type of jblas kernel)
 
     Returns:
         model: fake quantized ONNXModel
     """
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
+    base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
     new_nodes = []
     remove_nodes = []
     for node in model.nodes():
@@ -308,7 +327,7 @@ def rtn_quantize(
             and weight_config.get(node.name, {}) != "fp32"
         ):
             weight_tensor = model.get_initializer(node.input[1])
-            weight = numpy_helper.to_array(weight_tensor, base_dir=os.path.dirname(model.model_path)).copy()
+            weight = numpy_helper.to_array(weight_tensor, base_dir=base_dir).copy()
             if len(weight.shape) != 2:
                 continue
 
@@ -344,6 +363,7 @@ def rtn_quantize(
                     q_weight=q_weight.astype("uint8"),
                     scale=scale,
                     zero_point=zp if scheme == "asym" else None,
+                    accuracy_level=accuracy_level,
                 )
 
                 model.add_initializers(new_inits)
@@ -387,6 +407,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
     new_added_mul_nodes = []
     replace_input = []
     updated_nodes = []
+    base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
 
     for parent, nodes in absorb_pairs.items():
         if any([node.input[0] not in output_dicts for node in nodes]):
@@ -420,7 +441,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 if weight_config.get(node.name, {}) == "fp32":
                     continue
 
-                weight = numpy_helper.to_array(model.get_initializer(node.input[1]), os.path.dirname(model.model_path))
+                weight = numpy_helper.to_array(model.get_initializer(node.input[1]), base_dir)
                 if len(weight.shape) != 2:
                     continue
 
@@ -462,7 +483,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
 
             init_share_num = model.get_initializer_share_num(node.input[1])
             weight_tensor = model.get_initializer(node.input[1])
-            tensor = numpy_helper.to_array(weight_tensor, os.path.dirname(model.model_path))
+            tensor = numpy_helper.to_array(weight_tensor, base_dir)
 
             tensor = tensor.T * best_scale
             tensor = (tensor.T).astype("float32")
@@ -482,9 +503,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             model.input_name_to_nodes[nodes[0].input[0]]
         ) == len(nodes):
             for idx in [1, 2]:
-                tensor = numpy_helper.to_array(
-                    model.get_initializer(parent.input[idx]), os.path.dirname(model.model_path)
-                )
+                tensor = numpy_helper.to_array(model.get_initializer(parent.input[idx]), base_dir)
                 new_tensor = tensor / np.reshape(best_scale, (1, -1))
                 model.set_initializer(parent.input[idx], new_tensor.astype(tensor.dtype), raw=True)
                 updated_nodes.append(parent.name)
@@ -497,7 +516,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
         ):  # pragma: no cover
             for inp in parent.input:
                 if model.get_initializer(inp) is not None:
-                    tensor = numpy_helper.to_array(model.get_initializer(inp), os.path.dirname(model.model_path))
+                    tensor = numpy_helper.to_array(model.get_initializer(inp), base_dir)
                     new_tensor = tensor / np.reshape(best_scale, (1, -1))
                     model.set_initializer(inp, new_tensor.astype(tensor.dtype), raw=True)
             updated_nodes.append(parent.name)
@@ -506,7 +525,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
         elif parent.op_type in ["Conv", "FusedConv"] and len(model.input_name_to_nodes[nodes[0].input[0]]) == len(
             nodes
         ):  # pragma: no cover
-            tensor = numpy_helper.to_array(model.get_initializer(parent.input[2]), os.path.dirname(model.model_path))
+            tensor = numpy_helper.to_array(model.get_initializer(parent.input[2]), base_dir)
             new_tensor = tensor / np.reshape(best_scale, (1, -1))
             model.set_initializer(parent.input[2], new_tensor.astype(tensor.dtype), raw=True)
             updated_nodes.append(parent.name)
@@ -544,6 +563,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
 
 def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, group_size, scheme):
     """Apply clip for weight by checking mse."""
+    base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
     ratios = {}
     for parent, nodes in absorb_pairs.items():
         if any([node.input[0] not in output_dicts for node in nodes]):
@@ -562,9 +582,7 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
                 group_size = weight_config[node.name]["group_size"]
                 scheme = weight_config[node.name]["scheme"]
 
-            org_weight = numpy_helper.to_array(
-                model.get_initializer(node.input[1]), base_dir=os.path.dirname(model.model_path)
-            )
+            org_weight = numpy_helper.to_array(model.get_initializer(node.input[1]), base_dir=base_dir)
             org_w_shape = org_weight.shape  # ic, oc
             group_size = group_size if group_size != -1 else org_w_shape[0]
             org_out = np.matmul(inp, org_weight)  # n_token, oc
@@ -664,6 +682,7 @@ def awq_quantize(
     n_samples=128,
     enable_auto_scale=True,
     enable_mse_search=True,
+    accuracy_level=0,
 ):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
@@ -687,6 +706,9 @@ def awq_quantize(
         n_samples (int, optional): calibration sample number.
         enable_auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
         enable_mse_search (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
+        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                              4 (int8 compute type of jblas kernel)
 
     Returns:
         model: fake quantized ONNXModel
@@ -695,7 +717,7 @@ def awq_quantize(
     output_dicts = {}
     full_ratio = {}
 
-    if enable_mse_search or enable_mse_search:
+    if enable_mse_search:
         inputs, so = prepare_inputs(model, n_samples, dataloader)
         del dataloader
 
@@ -773,7 +795,7 @@ def awq_quantize(
 
         model.remove_tensors_from_outputs(output_names)
         model.model.graph.output.MergeFrom(org_output)
-    model = rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio)
+    model = rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio, accuracy_level)
     return model
 
 
@@ -934,6 +956,7 @@ def gptq_quantize(
     actorder=False,
     mse=False,
     perchannel=True,
+    accuracy_level=0,
 ):
     """Quant the model with GPTQ method.
 
@@ -960,11 +983,15 @@ def gptq_quantize(
         actorder (bool, optional): whether rearrange Hessian matrix considering the diag's value.
         mse (bool, optional): whether get scale and zero point with mse error.
         perchannel (bool, optional): whether quantize weight per-channel.
+        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                              4 (int8 compute type of jblas kernel)
 
     Returns:
         model: fake quantized ONNXModel
     """
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
+    base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
     output_dicts = {}
 
     inputs, so = prepare_inputs(model, n_samples, dataloader)
@@ -1010,7 +1037,7 @@ def gptq_quantize(
                 and weight_config.get(node.name, {}).get("algorithm", "GPTQ") == "GPTQ"
             ):
                 weight = numpy_helper.to_array(
-                    model.get_initializer(model.get_node(node.name).input[1]), os.path.dirname(model.model_path)
+                    model.get_initializer(model.get_node(node.name).input[1]), base_dir
                 ).copy()
                 if len(weight.shape) != 2:
                     continue
@@ -1076,6 +1103,7 @@ def gptq_quantize(
                     q_weight=q_weight.astype("uint8"),
                     scale=scale,
                     zero_point=zp if scheme == "asym" else None,
+                    accuracy_level=accuracy_level,
                 )
 
                 model.add_initializers(new_inits)
@@ -1098,4 +1126,11 @@ def gptq_quantize(
     model.model.graph.output.MergeFrom(org_output)
 
     model.topological_sort()
+
+    # reload external data to prevent external data file path errors
+    if model.is_large_model:
+        from onnx.external_data_helper import load_external_data_for_model
+
+        load_external_data_for_model(model.model, os.path.split(model.model_path)[0])
+
     return model

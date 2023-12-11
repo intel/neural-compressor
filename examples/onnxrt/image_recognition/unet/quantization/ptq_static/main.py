@@ -32,7 +32,7 @@ class Dataloader:
     def __init__(self, batch_size):
         self.batch_size = batch_size
         shape = [[batch_size, 4, 64, 64], [batch_size], [batch_size, 77, 768]]
-        dtype = ['float32', 'int64', 'float32']
+        dtype = ['float32', 'float32', 'float32']
         self.dataset = []
         for idx in range(0, len(shape)):
             tensor = np.random.uniform(size=shape[idx])

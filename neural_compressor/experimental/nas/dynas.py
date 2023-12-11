@@ -16,6 +16,8 @@
 
 import os
 
+from deprecated import deprecated
+
 from neural_compressor.conf.config import Conf, NASConfig
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
@@ -26,6 +28,7 @@ from .nas_utils import nas_registry
 DyNASManager = LazyImport("dynast.dynast_manager.DyNAS")
 
 
+@deprecated(version="2.0")
 @nas_registry("DyNAS")
 class DyNAS(NASBase):
     """DyNAS approach.

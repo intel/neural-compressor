@@ -19,12 +19,15 @@
 
 import random
 
+from deprecated import deprecated
+
 from neural_compressor.strategy.bayesian import BayesianOptimization
 from neural_compressor.utils import logger
 
 from .nas_utils import create_search_space_pool
 
 
+@deprecated(version="2.0")
 class Searcher(object):
     """Base class for defining the common methods of different search algorithms.
 
@@ -64,6 +67,7 @@ class Searcher(object):
         return {k: para_vec[i] for i, k in enumerate(self.search_space_keys)}
 
 
+@deprecated(version="2.0")
 class GridSearcher(Searcher):
     """Grid search.
 
@@ -90,6 +94,7 @@ class GridSearcher(Searcher):
         return self.params_vec2params_dict(res)
 
 
+@deprecated(version="2.0")
 class RandomSearcher(Searcher):
     """Random search.
 
@@ -120,6 +125,7 @@ class RandomSearcher(Searcher):
         return self.params_vec2params_dict(self.search_space_pool[idx])
 
 
+@deprecated(version="2.0")
 class BayesianOptimizationSearcher(Searcher):
     """Bayesian Optimization.
 

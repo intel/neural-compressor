@@ -173,7 +173,7 @@ class JitBasicSearcher(object):
         obtain static graph.
         """
         # if the user already set the dummy inputs, no need to analyze the model
-        if self.placeholder_dtype is not None and self.placeholder_dtype is not None:
+        if self.placeholder_dtype is not None:
             return
         # analyze the model automatically
         first_parameter = None

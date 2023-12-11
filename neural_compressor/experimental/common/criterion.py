@@ -25,6 +25,7 @@ Classes includes:
 from collections import Counter
 
 import numpy as np
+from deprecated import deprecated
 
 from neural_compressor.adaptor.pytorch import pytorch_forward_wrapper
 from neural_compressor.utils import logger
@@ -34,6 +35,7 @@ torch = LazyImport("torch")
 tf = LazyImport("tensorflow")
 
 
+@deprecated(version="2.0")
 @singleton
 class TensorflowCriterions(object):
     """Record criterions in TensorflowCriterions class."""
@@ -44,6 +46,7 @@ class TensorflowCriterions(object):
         self.criterions.update(TENSORFLOW_CRITERIONS)
 
 
+@deprecated(version="2.0")
 @singleton
 class PyTorchCriterions(object):
     """Record criterions in PyTorchCriterions class."""
@@ -71,6 +74,7 @@ registry_criterions = {
 }
 
 
+@deprecated(version="2.0")
 class Criterions(object):
     """Integrate criterions of different framework."""
 
@@ -107,6 +111,7 @@ class Criterions(object):
         self.criterions.update({name: criterion_cls})
 
 
+@deprecated(version="2.0")
 def criterion_registry(criterion_type, framework):
     """Use to register criterion classes in registry_criterions.
 
@@ -131,6 +136,7 @@ def criterion_registry(criterion_type, framework):
     return decorator_criterion
 
 
+@deprecated(version="2.0")
 class KnowledgeDistillationFramework(object):
     """Knowledge Distillation Framework."""
 
@@ -165,6 +171,7 @@ class KnowledgeDistillationFramework(object):
         self._teacher_model = model
 
 
+@deprecated(version="2.0")
 class KnowledgeDistillationLoss(KnowledgeDistillationFramework):
     """Initialize the KnowledgeDistillationLoss class."""
 
@@ -280,6 +287,7 @@ class KnowledgeDistillationLoss(KnowledgeDistillationFramework):
         return self.loss_cal(student_outputs, targets)
 
 
+@deprecated(version="2.0")
 class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
     """The PyTorchKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss."""
 
@@ -387,7 +395,7 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
             if device != model_device:
                 model.to(device)
             with torch.no_grad():
-                outputs = pytorch_forward_wrapper(model, input, device=device)
+                outputs = pytorch_forward_wrapper(model, input)
             self.teacher_outputs = outputs
         return outputs
 
@@ -418,6 +426,7 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
         return self.student_targets_loss(student_outputs, targets)
 
 
+@deprecated(version="2.0")
 @criterion_registry("KnowledgeDistillationLoss", "pytorch")
 class PyTorchKnowledgeDistillationLossWrapper(object):
     """PyTorchKnowledgeDistillationLossWrapper wraps PyTorchKnowledgeDistillationLoss."""
@@ -463,6 +472,7 @@ class PyTorchKnowledgeDistillationLossWrapper(object):
         return PyTorchKnowledgeDistillationLoss, self._param_check()
 
 
+@deprecated(version="2.0")
 class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
     """TensorflowKnowledgeDistillationLossExternal inherits from KnowledgeDistillationLoss."""
 
@@ -560,6 +570,7 @@ class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
         return self.student_targets_loss(targets, student_outputs)
 
 
+@deprecated(version="2.0")
 class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework):
     """The IntermediateLayersKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss."""
 
@@ -704,6 +715,7 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
         return 0
 
 
+@deprecated(version="2.0")
 class PyTorchIntermediateLayersKnowledgeDistillationLoss(IntermediateLayersKnowledgeDistillationLoss):
     """PyTorch Intermediate Layers Knowledge Distillation Loss."""
 
@@ -863,7 +875,7 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(IntermediateLayersKnowl
         if device != model_device:
             model.to(device)
         with torch.no_grad():
-            outputs = pytorch_forward_wrapper(model, input, device=device)
+            outputs = pytorch_forward_wrapper(model, input)
         return outputs
 
     def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
@@ -947,6 +959,7 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(IntermediateLayersKnowl
         return self.loss
 
 
+@deprecated(version="2.0")
 @criterion_registry("IntermediateLayersKnowledgeDistillationLoss", "pytorch")
 class PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(object):
     """PyTorch Intermediate Layers Knowledge Distillation Loss Wrapper."""
@@ -1020,6 +1033,7 @@ class PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(object):
         return PyTorchIntermediateLayersKnowledgeDistillationLoss, self._param_check()
 
 
+@deprecated(version="2.0")
 class SelfKnowledgeDistillationLoss(KnowledgeDistillationFramework):
     """SelfKnowledge Distillation Loss."""
 
