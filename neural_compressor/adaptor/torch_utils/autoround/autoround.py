@@ -283,12 +283,15 @@ class SaveInputs:
             if total_cnt >= n_samples:
                 break
         self._recover_forward()
-        if len(self.inputs) == 0:
+        if total_cnt == 0:
             logger.error(
                 f"no data has been cached, please provide more data with sequence length >={self.seqlen} in the "
                 f"dataloader or decease the sequence length"
             )
             exit()
+        elif total_cnt < n_samples:
+            logger.warning(f"Insufficient number of samples collected may affect the quantification. "
+                           f"Effective samples size:{total_cnt}, Target sample size:{n_samples}")
         res = self.inputs[self.block_name]
         if "input_ids" in res.keys():
             total_samples = res["input_ids"].shape[0]
@@ -690,7 +693,8 @@ def block_forward(block, input_ids, input_others, amp=False, amp_dtype=torch.flo
     if "alibi" in input_others.keys():
         attention_mask = input_others["attention_mask"]
         alibi = input_others["alibi"]
-        alibi = alibi.reshape(-1, alibi.shape[2], alibi.shape[3])
+        if alibi is not None:
+            alibi = alibi.reshape(-1, alibi.shape[2], alibi.shape[3])
         if amp and device != torch.device("cpu"):
             with autocast(device_type="cuda", dtype=amp_dtype):
                 output = block(
@@ -1240,7 +1244,7 @@ class AutoRound(object):
 
         pick_samples = self.train_bs
         if len(input_ids.shape) == 3:
-            n_samples = input_ids.shape[0]
+            n_samples = input_ids.shape[batch_dim]
         else:
             n_samples = input_ids.shape[0] // self.seqlen
         if self.sampler != "rand":
@@ -1707,3 +1711,4 @@ class AutoAdamRound(AutoRound):
         optimizer.zero_grad()
         lr_schedule.step()
         scaler.update()
+
