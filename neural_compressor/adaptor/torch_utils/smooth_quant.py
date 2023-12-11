@@ -90,7 +90,6 @@ def model_forward(model, dataloader, iters, device):
         for idx, (input, label) in enumerate(dataloader):
             output = forward_wrapper(model, input, device)
             cnt += 1
-            logger.info(f"lyt_debug calib model_forward try: {cnt} done")
             if iters != -1 and cnt >= iters:
                 break
     except Exception as e:
@@ -98,7 +97,6 @@ def model_forward(model, dataloader, iters, device):
         for idx, input in enumerate(dataloader):
             output = forward_wrapper(model, input, device)
             cnt += 1
-            logger.info(f"lyt_debug calib model_forward except: {cnt} done")
             if iters != -1 and cnt >= iters:
                 break
 
@@ -265,7 +263,7 @@ class WrapperLayer(torch.nn.Module):
         self.weight_scale = None
         self.input_scale = None
         self.save_q_input = save_q_input
-        self.do_blockwise = False  # lyt_add_1201
+        self.do_blockwise = False
 
     def enable_quant(self):
         self.quant = True
@@ -446,11 +444,9 @@ class TorchSmoothQuant:
         logger.info("Calibrating...")
         if self.q_func:
             self.q_func(self.model)
-            logger.info(f"lyt_debug dump_minmax_q_func: {self.q_func}")
         else:
             assert self.dataloader, "Please set dataloader for calibration."
             model_forward(self.model, self.dataloader, calib_iter, self.device)
-            logger.info(f"lyt_debug dump_minmax_dataloader: {self.dataloader}")
 
     def _reshape_in_channel_to_last(self, layer_name):
         """Move the input channel to the last dim
@@ -484,7 +480,7 @@ class TorchSmoothQuant:
 
         return scale
 
-    def get_blocks(self):  # lyt_add_1128
+    def get_blocks(self):
         block_names = []
         for n, m in self.model.named_modules():
             if hasattr(type(m), "__name__") and "ModuleList" in type(m).__name__:
@@ -795,7 +791,7 @@ class TorchSmoothQuant:
                 weight_scale = self._reshape_scale_for_weight(layer, weight_scale)
                 layer.update_scale(input_scale, weight_scale)  ##FIXME
 
-    def _add_blockwise_observer(self, block_modules):  # lyt_add_1128
+    def _add_blockwise_observer(self, block_modules):
         """
         :param block_modules: the block modules which the observer will insert to
         :return:
@@ -806,7 +802,7 @@ class TorchSmoothQuant:
             hook_handle = block_modules[key].register_forward_hook(hook_func)
             self.blockwise_hook_handles.append(hook_handle)
 
-    def _save_blockwise_hook(self, name):  # lyt_add_1128
+    def _save_blockwise_hook(self, name):
         """A forward hook to save inputs/outputs of a block
         :param name: the block name
         :return: A hook function."""
@@ -819,9 +815,9 @@ class TorchSmoothQuant:
 
     def _get_one_batch_auto_loss(self, input, alpha_space, orig_best_alpha, input_maxes):
         self._change_qdq_for_auto(enable=False)
-        module_names = self._get_sq_layer_names()  # lyt_moved_1139
+        module_names = self._get_sq_layer_names()
 
-        if self.do_blockwise:  # lyt_add_1128
+        if self.do_blockwise:
             block_modules = {}
             for key in self.block_names:
                 block_modules[key] = get_module(self.model, key)
@@ -830,7 +826,7 @@ class TorchSmoothQuant:
         forward_wrapper(self.model, input, self.device)  ##disable quant and get fp32 output
 
         fp32_output = {}
-        if not self.do_blockwise:  # lyt_changed_1130
+        if not self.do_blockwise:
             for name in module_names:
                 module = get_module(self.model, name)
                 fp32_output[name] = module.output
@@ -844,7 +840,7 @@ class TorchSmoothQuant:
         )
         self._update_scales_for_auto(absorb_input_scales, weight_scales)
         forward_wrapper(self.model, input, self.device)  ##save quant_input
-        for mod_name in module_names:  # lyt_add_1205 save fp32 values
+        for mod_name in module_names:  #save fp32 values
             mod = get_module(self.model, mod_name)
             if mod_name in self.fp32_output_val:
                 self.fp32_output_val[mod_name].append(torch.norm(mod.output))
@@ -853,7 +849,7 @@ class TorchSmoothQuant:
         del mod
 
         loss_alphas = {}
-        if not self.do_blockwise:  # lyt_changed_1130
+        if not self.do_blockwise:
             for name in module_names:
                 module = get_module(self.model, name)
                 loss = self._get_auto_loss(fp32_output[name], module.output)
@@ -998,7 +994,7 @@ class TorchSmoothQuant:
         # multiply_factor is used to combine samples to calib_sample_num // 4 before summarizing the best alpha
         tune_cnt = 4
         multiply_factor = calib_sample_num // tune_cnt if calib_sample_num >= tune_cnt else calib_sample_num
-        self.fp32_output_val = {}  # lyt_add_1205
+        self.fp32_output_val = {}
 
         best_alphas = default_alpha
         if not self.dataloader:
@@ -1115,17 +1111,17 @@ class TorchSmoothQuant:
                 max_key = key if ratio > max_ratio else max_key
                 max_ratio = max(ratio, max_ratio)
                 ratio_info[op_name] = ratio
-                logger.info(
-                    f"lyt_debug final loss: {op_name}: {loss_}; \
-                    fp32_output norm: {fp32_norm} @alpha {best_alphas[key]}; ratio: {ratio}"
+                logger.debug(
+                    f"final loss: {op_name}: {loss_}; @alpha {best_alphas[key]}; \
+                    fp32_output norm: {fp32_norm}; ratio: {ratio}"
                 )
         import operator
 
         ratio_info = dict(sorted(ratio_info.items(), key=operator.itemgetter(1), reverse=True))
         for key in list(ratio_info.keys()):
-            logger.info(f"lyt_debug sorted opname-ratio: {key}:  {ratio_info[key]}")
-        logger.info(
-            f"lyt_debug max loss: {max_op}: {loss_alphas[max_op][str(best_alphas[max_key])]}; \
+            logger.debug(f"sorted opname-ratio: {key}:  {ratio_info[key]}")
+        logger.debug(
+            f"max loss: {max_op}: {loss_alphas[max_op][str(best_alphas[max_key])]}; \
             fp32_output norm: {torch.sum(torch.stack(self.fp32_output_val[max_op]))} @alpha {best_alphas[max_key]}; ratio: {max_ratio}"
         )
         self._qdq_model_unwrapper_for_auto()
@@ -1165,9 +1161,7 @@ class TorchSmoothQuant:
         self.do_blockwise = do_blockwise
         if self.do_blockwise:
             self.block_names = self.get_blocks()
-            logger.info(
-                f"lyt_debug INC blockwise: {self.do_blockwise}， {len(self.block_names) if self.do_blockwise else 0}"
-            )
+            logger.info("Blockwise auto-tuning will be performed")
         if not isinstance(self.model, torch.nn.Module):
             logger.warning("smooth quant is ignored since the model is not a torch module")
             return self.model
@@ -1225,7 +1219,7 @@ class TorchSmoothQuant:
                     )
                     return self.model
 
-                if self.do_blockwise:  # lyt_add_1128
+                if self.do_blockwise:
                     module_names = self._get_sq_layer_names()
                     block_names, self.block_to_module = self.block_names, {}
                     for block in block_names:
@@ -1239,7 +1233,8 @@ class TorchSmoothQuant:
                         if not checked:
                             self.block_to_module[module] = [module]
                     self.block_names = list(self.block_to_module.keys())
-                    logger.info(f"lyt_debug B4-calib block num: {len(self.block_names)}, {len(self.block_to_module)}")
+                    logger.info(f"Blockwise auto-tuning: {len(self.block_names)} blocks found")
+                    logger.debug(f"Blockwise auto-tuning blocks info: {self.block_to_module}")
 
                 input_maxes_abs = self._calibrate(self.absorb_to_layer, calib_iter, percentile)
 
