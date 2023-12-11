@@ -1122,8 +1122,8 @@ class TorchSmoothQuant:
             logger.debug(f"sorted opname-ratio: {key}:  {ratio_info[key]}")
         if max_op != "":
             logger.debug(
-                f"max loss: {max_op}: {loss_alphas[max_op][str(best_alphas[max_key])]}; \
-                fp32_output norm: {torch.sum(torch.stack(self.fp32_output_val[max_op]))} @alpha {best_alphas[max_key]}; ratio: {max_ratio}"
+                f"max loss: {max_op}: {loss_alphas[max_op][str(best_alphas[max_key])]} @alpha {best_alphas[max_key]}\
+                fp32_output norm: {torch.sum(torch.stack(self.fp32_output_val[max_op]))}; ratio: {max_ratio}"
             )
         self._qdq_model_unwrapper_for_auto()
         logger.info("auto tuning done")
