@@ -1063,13 +1063,25 @@ class TorchSmoothQuant:
                             best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
                 loss_tmp = self._get_one_batch_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
-                if loss_alphas == {}:
-                    loss_alphas = loss_tmp
+                if self.do_blockwise:
+                    if loss_alphas == {}:
+                        for block_name in self.block_names:
+                            for key in self.block_to_module[block_name]:
+                                loss_alphas[key] = loss_tmp[block_name]
+                    else:
+                        for block_name in self.block_names:
+                            for key in self.block_to_module[block_name]:
+                                cur_loss = loss_alphas[key]
+                                for alpha_key in cur_loss.keys():
+                                    cur_loss[alpha_key] += loss_tmp[block_name][alpha_key]
                 else:
-                    for key in loss_alphas.keys():
-                        cur_loss = loss_alphas[key]
-                        for alpha_key in cur_loss.keys():
-                            cur_loss[alpha_key] += loss_tmp[key][alpha_key]
+                    if loss_alphas == {}:
+                        loss_alphas = loss_tmp
+                    else:
+                        for key in loss_alphas.keys():
+                            cur_loss = loss_alphas[key]
+                            for alpha_key in cur_loss.keys():
+                                cur_loss[alpha_key] += loss_tmp[key][alpha_key]
                 total_cnt += self.dataloader.batch_size
                 tmp_cnt += self.dataloader.batch_size
                 if tmp_cnt // multiply_factor >= 1:
