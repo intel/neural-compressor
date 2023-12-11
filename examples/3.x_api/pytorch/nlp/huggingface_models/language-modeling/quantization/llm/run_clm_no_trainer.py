@@ -190,8 +190,8 @@ def get_user_model():
 if args.quantize:
     # dataset
     user_model, tokenizer = get_user_model()
-    # calib_dataset = load_dataset(args.dataset, split="train")
-    calib_dataset = datasets.load_dataset('/mnt/disk4/modelHub/dataset/pile-10k/', split="train") # use this if trouble with connecting to HF
+    calib_dataset = load_dataset(args.dataset, split="train")
+    # calib_dataset = datasets.load_from_disk('/your/local/dataset/pile-10k/') # use this if trouble with connecting to HF
     calib_dataset = calib_dataset.shuffle(seed=args.seed)
     calib_evaluator = Evaluator(calib_dataset, tokenizer, args.batch_size, pad_max=args.pad_max_length, is_calib=True)
     calib_dataloader = DataLoader(
