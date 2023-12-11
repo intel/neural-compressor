@@ -51,7 +51,7 @@ export MODEL_NAME="CompVis/stable-diffusion-v1-4"
 export INSTANCE_DIR="dog"
 export OUTPUT_DIR="path-to-save-model"
 
-# recommed to use numactl to bind cores in Intel cpus for better performance
+# recommend to use numactl to bind cores in Intel cpus for better performance
 
 OMP_NUM_THREADS=<physic_cores> numactl -m 0 -C 0-<physic_cores-1> python train_dreambooth_ipex.py \
   --pretrained_model_name_or_path=$MODEL_NAME  \
