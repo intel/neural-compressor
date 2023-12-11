@@ -562,19 +562,6 @@ class MXLinearFunction(Function):
             input, mx_specs=mx_specs, round="nearest"
         )
 
-        # element-wise quantize for weight and bias
-        bf_weight = quantize_elemwise_op(
-            weight, mx_specs=mx_specs, round="nearest"
-        )
-
-        if bias is not None:
-            bf_bias = quantize_elemwise_op(
-                bias, mx_specs=mx_specs, round="nearest"
-            )
-        else:
-            bf_bias = None
-
-
         # MX quantize everything along input size
         qis_input = quantize_mx_op(
             bf_in,
@@ -583,22 +570,14 @@ class MXLinearFunction(Function):
             axes=[-1],
             round="nearest",
         )
-        qis_weight = quantize_mx_op(
-            bf_weight,
-            mx_specs,
-            elem_format=mx_specs['weight_dtype'],
-            axes=[-1],
-            round="nearest",
-        )
-
         # compute output
-        output = F.linear(qis_input, qis_weight)
+        output = F.linear(qis_input, weight)
         output = quantize_elemwise_op(
             output, mx_specs=mx_specs, round="nearest"
         )
 
         if bias is not None:
-            output = output + bf_bias
+            output = output + bias
             output = quantize_elemwise_op(
                 output, mx_specs=mx_specs, round="nearest"
             )
@@ -631,9 +610,25 @@ class MXLinear(torch.nn.Linear):
         self.mx_specs = mx_specs
         super().__init__(in_features, out_features, bias)
 
-    def apply_mx_specs(self, mx_specs):
-        self.mx_none = mx_specs is None
-        self.mx_specs = mx_specs
+    def apply_mx_specs(self):
+        if self.mx_specs is not None:
+            self.weight.data = quantize_elemwise_op(
+                self.weight.data, mx_specs=self.mx_specs, round="nearest"
+            )
+
+            if self.bias is not None:
+                self.bias.data = quantize_elemwise_op(
+                    self.bias.data, mx_specs=self.mx_specs, round="nearest"
+                )
+
+            # MX quantize everything along input size
+            self.weight.data = quantize_mx_op(
+                self.weight.data,
+                self.mx_specs,
+                elem_format=self.mx_specs['weight_dtype'],
+                axes=[-1],
+                round="nearest",
+            )
 
     def append_name(self, postfix):
         self.name += postfix
@@ -700,6 +695,7 @@ def mx_quantize(
             name=name,
         )
         new_module.load_state_dict(tmp_stat)
+        new_module.apply_mx_specs()
         if name == "":
             return new_module
         else:
