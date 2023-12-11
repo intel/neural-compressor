@@ -846,7 +846,7 @@ class TorchSmoothQuant:
                 self.fp32_output_val[mod_name].append(torch.norm(mod.output))
             else:
                 self.fp32_output_val[mod_name] = [torch.norm(mod.output)]
-        del mod
+            del mod
 
         loss_alphas = {}
         if not self.do_blockwise:
