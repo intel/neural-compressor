@@ -1,7 +1,5 @@
 import argparse
-import sys
 
-sys.path.insert(0, '/home/wenhuach/neural-compressor')  ##TODO change it later
 from neural_compressor.adaptor.torch_utils.autoround import AutoRound, AutoOPTRound, AutoAdamRound
 
 parser = argparse.ArgumentParser()
@@ -20,15 +18,6 @@ import re
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-os.environ["HF_HOME"] = "/models/huggingface"
-
-##checklist
-## LLaMAV1 done
-## LLaMAv2 done
-## LaMini-GPT-124M done
-## QWEN1-8B done,but has random issue
-## OPT-125M done
-## Mistral-7b Smoke test done
 
 
 if __name__ == '__main__':

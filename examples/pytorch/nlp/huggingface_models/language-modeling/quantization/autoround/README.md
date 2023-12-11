@@ -31,18 +31,18 @@ pip install -r requirements.txt
 ## Usage
 - **Default Settings:**
 ```bash
-CUDA_VISIBLE_DEVICES=0 python3 signround.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1 --enable_minmax_tuning --use_quant_input
+CUDA_VISIBLE_DEVICES=0 python3 main.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1 --enable_minmax_tuning --use_quant_input
 ```
 - **Reduced GPU Memory Usage and Adjusted Training Batch Size:**
 ```bash
-CUDA_VISIBLE_DEVICES=0 python3 signround.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1 --low_gpu_mem_usage --train_bs 1 --gradient_accumulate_steps 8
+CUDA_VISIBLE_DEVICES=0 python3 main.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1 --low_gpu_mem_usage --train_bs 1 --gradient_accumulate_steps 8
 ```
 - **Utilizing the AdamW Optimizer:**
 Include the flag `--adam`. Note that AdamW may be slightly less effective than Sign gradient descent in certain scenarios.
 
 - **Running the Original SignRound:**
 ```bash
-CUDA_VISIBLE_DEVICES=0 python3 signround.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1 --iters 400 --lr 0.0025 --minmax_lr 0.0025 
+CUDA_VISIBLE_DEVICES=0 python3 main.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1 --iters 400 --lr 0.0025 --minmax_lr 0.0025 
 ```
 It's recommended to use `--enable_minmax_tuning`.
 
@@ -51,6 +51,8 @@ Consider increasing tuning steps and adjusting the learning rate based on a scal
 
 ## Known Issues
 Auto Rounding may encounter random issues with Qwen models.
+
+ChatGlm-V1 is not supported
 
 ## Reference
 If you find SignRound useful for your research, please cite our paper:
