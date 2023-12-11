@@ -813,8 +813,8 @@ def get_tokenizer_function(tokenizer, seqlen):
     tokenizer: The tokenizer to be used for tokenization.
     seqlen: The maximum sequence length.
 
-    Returns:
-    A default tokenizer function that applies the provided tokenizer with truncation and a maximum length of seqlen to the "text" field of examples.
+    Returns: A default tokenizer function that applies the provided tokenizer with truncation and a maximum length of
+    seqlen to the "text" field of examples.
     """
 
     def default_tokenizer_function(examples):
@@ -870,9 +870,9 @@ def get_dataloader(tokenizer, seqlen, data_name="NeelNanda/pile-10k", split="tra
 
 
 class AutoRound(object):
-    """This is Signround+ which is an advanced version of Signround. For more information, please refer to Cheng, Wenhua,
-    et al. "Optimize weight rounding via signed gradient descent for the quantization of llms." arXiv preprint
-    arXiv:2309.05516 (2023).
+    """This is Signround+ which is an advanced version of Signround. For more information,
+     please refer to Cheng, Wenhua, et al. "Optimize weight rounding via signed gradient descent
+     for the quantization of llms." arXiv preprint arXiv:2309.05516 (2023).
 
     Args:
         model: The PyTorch model to be quantized.
