@@ -1120,7 +1120,7 @@ class TorchSmoothQuant:
         ratio_info = dict(sorted(ratio_info.items(), key=operator.itemgetter(1), reverse=True))
         for key in list(ratio_info.keys()):
             logger.debug(f"sorted opname-ratio: {key}:  {ratio_info[key]}")
-        if max_op != '':
+        if max_op != "":
             logger.debug(
                 f"max loss: {max_op}: {loss_alphas[max_op][str(best_alphas[max_key])]}; \
                 fp32_output norm: {torch.sum(torch.stack(self.fp32_output_val[max_op]))} @alpha {best_alphas[max_key]}; ratio: {max_ratio}"

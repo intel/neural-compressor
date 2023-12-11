@@ -1516,22 +1516,21 @@ class TestInputConfig(unittest.TestCase):
 class TestAlphaAutoLinearBlockwise(unittest.TestCase):
     @classmethod
     def test_sq_linear_Blockwise_auto(self):
-
         model = transformers.AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
             torchscript=True,
         )
         sq = TorchSmoothQuant(model, LLMCalibDataloader())
         sq.transform(
-            alpha="auto", 
-            calib_iter=1, 
-            folding=False, 
-            do_blockwise=True, 
+            alpha="auto",
+            calib_iter=1,
+            folding=False,
+            do_blockwise=True,
             auto_alpha_args={"alpha_min": 0.45, "alpha_max": 0.55, "alpha_step": 0.01, "shared_criterion": "mean"},
         )
         for i in range(12):
-            op_name1 = 'model.decoder.layers.' + str(i) + '.self_attn.out_proj'
-            op_name2 = 'model.decoder.layers.' + str(i) + '.fc1'
+            op_name1 = "model.decoder.layers." + str(i) + ".self_attn.out_proj"
+            op_name2 = "model.decoder.layers." + str(i) + ".fc1"
             assert sq.alpha_per_layer[op_name1] == sq.alpha_per_layer[op_name2]
         assert len(sq.block_names) == 13
 
