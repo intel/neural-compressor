@@ -1289,9 +1289,7 @@ class AutoRound(object):
                 else:
                     loss = mse_loss(output_q, current_output)
 
-                total_loss += (
-                    loss.item() / self.gradient_accumulate_steps
-                )  ##TODO gradient accumulate step for other optimizer
+                total_loss += loss.item() / self.gradient_accumulate_steps
                 self.scale_loss_and_backward(scaler, loss)
                 # loss.backward()
 
@@ -1394,7 +1392,7 @@ class AutoRound(object):
 
         if self.amp:
             self.model = self.model.to(self.amp_dtype)
-        if not self.low_gpu_mem_usage:  ##TODO automatically detect
+        if not self.low_gpu_mem_usage:
             self.model = self.model.to(self.device)
 
         save_input_actor = SaveInputs(self.model, self.dataloader, self.seqlen, block_names[0])
@@ -1547,8 +1545,6 @@ class AutoOPTRound(AutoRound):
     def get_optimizer(self, optimizer):
         if optimizer is None:
             optimizer = torch.optim.AdamW
-            ##TODO need to force set lr to some better candidates
-
         elif isinstance(optimizer, str):
             optimizer = getattr(torch.optim, optimizer)
         else:
@@ -1687,7 +1683,6 @@ class AutoAdamRound(AutoRound):
     def get_optimizer(self, optimizer):
         if optimizer is None:
             optimizer = torch.optim.AdamW
-            ##TODO need to force set lr to some better candidates
 
         elif isinstance(optimizer, str):
             optimizer = getattr(torch.optim, optimizer)
