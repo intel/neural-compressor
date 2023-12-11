@@ -190,8 +190,8 @@ def get_user_model():
 if args.quantize:
     # dataset
     user_model, tokenizer = get_user_model()
-    calib_dataset = load_dataset(args.dataset, split="train")
-    # calib_dataset = datasets.load_from_disk('/your/local/dataset/pile-10k/') # use this if trouble with connecting to HF
+    # calib_dataset = load_dataset(args.dataset, split="train")
+    calib_dataset = datasets.load_dataset('/mnt/disk4/modelHub/dataset/pile-10k/', split="train") # use this if trouble with connecting to HF
     calib_dataset = calib_dataset.shuffle(seed=args.seed)
     calib_evaluator = Evaluator(calib_dataset, tokenizer, args.batch_size, pad_max=args.pad_max_length, is_calib=True)
     calib_dataloader = DataLoader(
@@ -211,6 +211,7 @@ if args.quantize:
     eval_func = None
     from neural_compressor import PostTrainingQuantConfig, quantization
     # specify the op_type_dict and op_name_dict
+
     if args.approach == 'weight_only':
         op_type_dict = {
             '.*':{ 	# re.match
@@ -310,15 +311,85 @@ if args.quantize:
                 acc = evaluator.evaluate(model)
                 return acc
 
-    q_model = quantization.fit(
-        user_model,
-        conf,
-        calib_dataloader=calib_dataloader,
-        calib_func=calib_func,
-        eval_func=eval_func,
-    )
+    if args.approach == 'weight_only' and args.woq_algo in ['RTN', 'GPTQ']:
+        # use 3.x api
+        from neural_compressor.torch import RTNWeightQuantConfig, GPTQConfig, quantize
+        weight_sym = True if args.woq_scheme == "sym" else False
+        woq_algo_mapping = {
+            "RTN": "rtn_weight_only_quant",
+            "GPTQ": "gptq"
+        }
+        if args.woq_algo == "RTN":
+            quant_config = {
+                woq_algo_mapping[args.woq_algo]: {
+                    "weight_dtype": "int",
+                    "weight_bits": args.woq_bits,
+                    "weight_sym": weight_sym,
+                    "weight_group_size":  args.woq_group_size,
+                },
+            }
+            # quant_config = RTNWeightQuantConfig(weight_bits=args.woq_bits, weight_dtype="int",
+                                                # weight_sym=weight_sym, weight_group_size=args.woq_group_size)
+            q_model = quantize(user_model, quant_config)
+        elif args.woq_algo == "GPTQ":
+            from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
+            dataloaderPreprocessor = DataloaderPreprocessor(
+                dataloader_original=calib_dataloader,
+                use_max_length=args.gptq_use_max_length,
+                pad_max_length=args.gptq_pad_max_length,
+                nsamples=args.gptq_nsamples
+            )
+            dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
+            from neural_compressor.torch.algorithms.weight_only.gptq import move_input_to_device
+            from tqdm import tqdm
+            def run_fn_for_gptq(model, dataloader_for_calibration, *args):
+                for batch in tqdm(dataloader_for_calibration):
+                    batch = move_input_to_device(batch, device=None)
+                    try:
+                        if isinstance(batch, tuple) or isinstance(batch, list):
+                            model(batch[0])
+                        elif isinstance(batch, dict):
+                            model(**batch)
+                        else:
+                            model(batch)
+                    except ValueError:
+                        pass
+                return
+            quant_config = GPTQConfig(
+                weight_dtype="int",
+                weight_bits=args.woq_bits,
+                weight_group_size=args.woq_group_size,
+                weight_sym=weight_sym,
+                dataloader_len=len(dataloader_for_calibration),
+                percdamp=args.gptq_percdamp,
+                act_order=args.gptq_actorder,
+                block_size=args.gptq_block_size, 
+                nsamples=args.gptq_nsamples,
+                use_max_length=args.gptq_use_max_length,
+                pad_max_length=args.gptq_pad_max_length,
+                double_quant_bits=6,
+                double_quant_dtype="int",
+                double_quant_sym=True,
+                double_quant_group_size=8,
+            )
+            quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
 
-    q_model.save(args.output_dir)
+            q_model = quantize(
+                model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=dataloader_for_calibration
+            )
+        # for accuracy
+        user_model = q_model
+    else:
+        q_model = quantization.fit(
+            user_model,
+            conf,
+            calib_dataloader=calib_dataloader,
+            calib_func=calib_func,
+            eval_func=eval_func,
+        )
+
+
+        q_model.save(args.output_dir)
 
 if args.int8 or args.int8_bf16_mixed:
     print("load int8 model")
