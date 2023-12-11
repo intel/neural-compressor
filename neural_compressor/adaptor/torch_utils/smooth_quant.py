@@ -840,7 +840,7 @@ class TorchSmoothQuant:
         )
         self._update_scales_for_auto(absorb_input_scales, weight_scales)
         forward_wrapper(self.model, input, self.device)  ##save quant_input
-        for mod_name in module_names:  #save fp32 values
+        for mod_name in module_names:  # save fp32 values
             mod = get_module(self.model, mod_name)
             if mod_name in self.fp32_output_val:
                 self.fp32_output_val[mod_name].append(torch.norm(mod.output))
