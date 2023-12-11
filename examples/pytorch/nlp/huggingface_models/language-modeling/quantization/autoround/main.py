@@ -35,44 +35,26 @@ if __name__ == '__main__':
     parser.add_argument("--train_bs", default=8, type=int,
                         help="train batch size")
 
-    parser.add_argument("--eval_bs", default=32, type=int,
+    parser.add_argument("--eval_bs", default=4, type=int,
                         help="eval batch size")
 
     parser.add_argument("--device", default=0, type=str,
                         help="device gpu int number, or 'cpu' ")
-
-    parser.add_argument("--sym", action='store_true',
-                        help=" sym quantization")
+    #
+    # parser.add_argument("--sym", action='store_true',
+    #                     help=" sym quantization")
 
     parser.add_argument("--iters", default=400, type=int,
                         help=" iters")
 
-    parser.add_argument("--dynamic_max_gap", default=0, type=int,
-                        help="stop tuning if no best solution found within max_gap steps")
-
-    parser.add_argument("--not_use_mse", action='store_true',
-                        help=" whether use mse to get best grad")
-
     parser.add_argument("--use_quant_input", action='store_true',
                         help="whether to use the output of quantized block to tune the next block")
-
-    parser.add_argument("--sampler", default="rand", type=str,
-                        help="sampling type, rand or fix")
-
-    parser.add_argument("--clip_val", default=0.5, type=float,
-                        help="clip value")
 
     parser.add_argument("--lr", default=0.05, type=float,
                         help="step size")
 
     parser.add_argument("--minmax_lr", default=0.05, type=float,
-                        help="step size")
-
-    parser.add_argument("--lr_decay_type", default="linear", type=str,
-                        help="lr decay type")
-
-    parser.add_argument("--momentum", default=-1, type=float,
-                        help="momentum")
+                        help="minmax learning rate")
 
     parser.add_argument("--seed", default=42, type=int,
                         help="seed")
@@ -86,9 +68,6 @@ if __name__ == '__main__':
     parser.add_argument("--adam", action='store_true',
                         help="adam")
 
-    parser.add_argument("--not_with_attention", action='store_true',
-                        help="tuning with attention_mask input")
-
     parser.add_argument("--seqlen", default=2048, type=int,
                         help="sequence length")
 
@@ -99,26 +78,17 @@ if __name__ == '__main__':
     parser.add_argument("--n_samples", default=512, type=int,
                         help="number of samples")
 
-    parser.add_argument("--lr_wr", default=0.0, type=float,
-                        help="lr warmup ratio")
-
     parser.add_argument("--low_gpu_mem_usage", action='store_true',
                         help="low_gpu_mem_usage")
 
     parser.add_argument("--enable_minmax_tuning", action='store_true',
-                        help="enable_tuning_minmax")
+                        help="whether enable weight minmax tuning")
 
     # parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
     #                     help="lm-eval tasks")
 
     # parser.add_argument("--tasks", default=["lambada_openai"],
     #                     help="lm-eval tasks")
-    #
-    # parser.add_argument("--tasks",
-    #                     default=['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai', 'hellaswag', 'winogrande', 'piqa',
-    #                              'coqa', 'truthfulqa_mc', 'openbookqa', 'boolq', 'rte', 'arc_easy', 'arc_challenge',
-    #                              'hendrycksTest-*', 'wikitext', 'drop', 'gsm8k'],##all
-    #                     help="lm-eval tasks")  # "truthfulqa_gen"
 
     # parser.add_argument("--tasks",
     #                     default=['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai', 'hellaswag', 'winogrande', 'piqa',
@@ -157,7 +127,6 @@ if __name__ == '__main__':
     else:
         model = AutoModelForCausalLM.from_pretrained(
             model_name, low_cpu_mem_usage=True, torch_dtype="auto", trust_remote_code=True
-            ##low_cpu_mem_usage has impact to acc, changed the random seed?
         )
     model = model.eval()
     # align wigh GPTQ to eval ppl
@@ -178,7 +147,7 @@ if __name__ == '__main__':
     else:
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     if hasattr(tokenizer, "model_max_length"):
-        if tokenizer.model_max_length <= seqlen:
+        if tokenizer.model_max_length < seqlen:
             print(f"change sequence length to {tokenizer.model_max_length} due to the limitation of model_max_length",
                   flush=True)
             seqlen = min(seqlen, tokenizer.model_max_length)
@@ -218,7 +187,7 @@ if __name__ == '__main__':
     optq = round(model, tokenizer, args.num_bits, args.group_size, scheme, bs=args.train_bs,
                  seqlen=seqlen, n_blocks=args.n_blocks, iters=args.iters, lr=args.lr,
                  minmax_lr=args.minmax_lr, use_quant_input=args.use_quant_input,
-                 amp=args.amp, n_samples=args.n_samples, low_gpu_mem_usage=args.low_gpu_mem_usage)  ##TODO args pass
+                 amp=args.amp, n_samples=args.n_samples, low_gpu_mem_usage=args.low_gpu_mem_usage, seed=args.seed, gradient_accumulate_steps=args.gradient_accumulate_steps)  ##TODO args pass
     optq.quantize()
 
     torch.cuda.empty_cache()
