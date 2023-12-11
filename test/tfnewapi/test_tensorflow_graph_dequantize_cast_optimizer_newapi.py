@@ -6,7 +6,7 @@ import tensorflow as tf
 import yaml
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer import DequantizeCastOptimizer
+from neural_compressor.adaptor.tf_utils.graph_rewriter.bf16.dequantize_cast_optimizer import DequantizeCastOptimizer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.adaptor.tf_utils.util import disable_random
 
@@ -69,11 +69,12 @@ class TestDequantizeCastOptimizer(unittest.TestCase):
         graph_def = build_fake_graphdef(set_min_first=True)
         converted_graph_def = DequantizeCastOptimizer(graph_def).do_transformation()
         hasCast = False
+        # Remove MIN_FIRST limitation for spr-base, so the "Cast" will be removed now
         for i in converted_graph_def.node:
             if i.op == "Cast":
                 hasCast = True
                 break
-        self.assertEqual(hasCast, True)
+        self.assertEqual(hasCast, False)
 
     @disable_random()
     def test_dequantize_cast_multiple_outputs(self):

@@ -50,10 +50,10 @@ export default function OpList({ selectedWorkload, setSelectedOp, selectedOp, se
           <td className="cell">{opData['OP name']}</td>
           <td className="cell right nowrap">{opData['MSE'].toExponential(3)}</td>
           {typeof opList[0]['Activation Min'] !== 'undefined' &&
-            <td className="cell right">{opData['Activation Min'].toFixed(2)}</td>
+            <td className="cell right">{opData['Activation Min']?.toFixed(2)}</td>
           }
           {typeof opList[0]['Activation Max'] !== 'undefined' &&
-            <td className="cell right">{opData['Activation Max'].toFixed(2)}</td>
+            <td className="cell right">{opData['Activation Max']?.toFixed(2)}</td>
           }
         </tr>
       )

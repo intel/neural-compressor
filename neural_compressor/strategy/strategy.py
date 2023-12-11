@@ -948,6 +948,15 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 if self.framework == "pytorch_ipex":
                     smooth_quant_args["folding"] = None  # will reset it to True if IPEX version < 2.1.
             sq_algo.folding = smooth_quant_args["folding"]
+            sq_algo.weight_clip = smooth_quant_args.get(
+                "weight_clip", True
+            )  # make weight_clipping a default_on option.
+            sq_algo.auto_alpha_args = smooth_quant_args.get(
+                "auto_alpha_args", {"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"}
+            )  # default alpha search space parameters.
+            sq_algo.default_alpha = smooth_quant_args.get(
+                "default_alpha", 0.5
+            )  # default value for alpha in auto-tuning
             logger.debug(f"Set smooth quant with alpha {sq_algo.alpha} as the pre-tuning algo.")
             algo_scheduler.append_algorithm("pre_quantization", sq_algo)
 
@@ -1519,6 +1528,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             elif self.config.backend == "default":
                 framework = "pytorch_fx"
             if self.mixed_precision_mode:
+                framework = "pytorch"
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
             framework_specific_info.update({"recipes": self.config.recipes})
             framework_specific_info.update({"q_dataloader": q_dataloader})
@@ -1683,7 +1693,12 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                 # Pytorch can insert observer to model in this hook.
                 # Tensorflow don't support this mode for now
                 model = self.adaptor._pre_eval_hook(model)
-            val = self.objectives.evaluate(self.eval_func, model if self.framework == "pytorch_ipex" else model.model)
+            if self.framework == "pytorch_ipex":
+                val = self.objectives.evaluate(self.eval_func, model)
+            elif "onnxrt" in self.framework and model.model_path and model.is_large_model:
+                val = self.objectives.evaluate(self.eval_func, model.model_path)
+            else:
+                val = self.objectives.evaluate(self.eval_func, model.model)
             if options.tensorboard:
                 # post_eval_hook to deal the tensor
                 self.adaptor._post_eval_hook(model, accuracy=val[0])

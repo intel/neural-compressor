@@ -459,6 +459,7 @@ class PyTorchModel(PyTorchBaseModel):
         scale_dtype=torch.float32,
         gptq_config_path=None,
         device="cpu",
+        use_optimum_format=True,
     ):
         """Convert Linear to WeightOnlyLinear for low memory inference.
 
@@ -474,6 +475,12 @@ class PyTorchModel(PyTorchBaseModel):
                                                     Defaults to torch.float32.
             gptq_config_path (str, optional): Path of gptq_config.json. Defaults to None.
             device (str, optional): choose device for compression. Defaults to cpu.
+            use_optimum_format (bool, optional): use the popular huggingface compression format.
+                1: compression_dim: weight = 1, zeros = 0 and both are transposed.
+                2: zeros -= 1 before compression. Why we need it?
+                3: g_idx: use same number for one group instead of recording the channel order.
+                4. parameter name changed, such as 'packed_weight' -> 'qweight'.
+                5. zeros is always needed even for sym.
         """
         from ..adaptor.torch_utils.model_wrapper import WeightOnlyLinear
         from ..adaptor.torch_utils.util import collect_weight_info, fetch_module, set_module
@@ -513,6 +520,7 @@ class PyTorchModel(PyTorchBaseModel):
                         compression_dim=compression_dim,
                         scale_dtype=scale_dtype,
                         device=device,
+                        use_optimum_format=use_optimum_format,
                     )
                     set_module(self.model, k, new_module)
                     continue
@@ -523,9 +531,13 @@ class PyTorchModel(PyTorchBaseModel):
                 else:
                     fp32_weight = m.weight.data
                     gptq_perm = None
-                gptq_scale = torch.tensor(gptq_conf["scale"])
-                gptq_zp = None if scheme == "sym" else torch.tensor(gptq_conf["zero"])
+                gptq_scale = torch.tensor(gptq_conf["scale"], dtype=torch.float32)
+                gptq_zp = None if scheme == "sym" else torch.tensor(gptq_conf["zero"], dtype=torch.int32)
                 int_weight = quant_weight_w_scale(fp32_weight, gptq_scale, gptq_zp, group_size)
+                int_weight = int_weight.type(torch.int32)
+                if "perm" in gptq_conf:
+                    invperm = torch.argsort(gptq_perm)
+                    int_weight = int_weight[:, invperm]
                 new_module = WeightOnlyLinear(
                     m.in_features,
                     m.out_features,
@@ -534,11 +546,12 @@ class PyTorchModel(PyTorchBaseModel):
                     dtype=dtype,
                     zp=gptq_zp is not None,
                     bias=m.bias is not None,
-                    gptq_perm=gptq_perm is not None,
+                    g_idx=gptq_perm is not None,
                     compression_dtype=compression_dtype,
                     compression_dim=compression_dim,
                     scale_dtype=scale_dtype,
                     device=device,
+                    use_optimum_format=use_optimum_format,
                 )
                 new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
                 set_module(self.model, k, new_module)
@@ -565,6 +578,7 @@ class PyTorchModel(PyTorchBaseModel):
                     compression_dim=compression_dim,
                     scale_dtype=scale_dtype,
                     device=device,
+                    use_optimum_format=use_optimum_format,
                 )
                 set_module(self.model, k, mod)
         return self.model

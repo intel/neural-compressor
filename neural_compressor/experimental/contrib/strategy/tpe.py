@@ -22,6 +22,7 @@ from functools import partial
 from pathlib import Path
 
 import numpy as np
+from deprecated import deprecated
 
 from neural_compressor.experimental.strategy.strategy import TuneStrategy, strategy_registry
 from neural_compressor.experimental.strategy.utils.tuning_sampler import OpWiseTuningSampler
@@ -38,6 +39,7 @@ except ImportError:
     logger.info("Pandas package is required for best result and CSV files generation.")
 
 
+@deprecated(version="2.0")
 @strategy_registry
 class TpeTuneStrategy(TuneStrategy):
     """The tuning strategy using tpe search in tuning space.

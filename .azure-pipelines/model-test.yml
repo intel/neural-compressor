@@ -11,9 +11,13 @@ pr:
       - neural_compressor
       - setup.py
       - requirements.txt
-      - .azure-pipelines/model-test.yml
       - .azure-pipelines/scripts/models
       - examples/tensorflow/oob_models/quantization/ptq
+    exclude:
+      - test
+      - neural_compressor/common
+      - neural_compressor/torch
+      - neural_compressor/tensorflow
 
 pool: MODEL_PERF_TEST_TF
 

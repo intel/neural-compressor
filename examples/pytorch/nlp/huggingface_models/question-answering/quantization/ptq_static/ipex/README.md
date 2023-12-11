@@ -16,6 +16,8 @@ python -m pip install intel_extension_for_pytorch -f https://software.intel.com/
 > Note: Intel® Extension for PyTorch* has PyTorch version requirement. Please check more detailed information via the URL below.
 
 # Quantization
+
+## 1. Quantization with CPU
 If IPEX version is equal or higher than 1.12, please install transformers 4.19.0.
 ```shell
 python run_qa.py 
@@ -31,6 +33,72 @@ python run_qa.py
 > NOTE
 >
 > /path/to/checkpoint/dir is the path to finetune output_dir
+
+## 2. Quantization with XPU
+Please build an IPEX docker container with following steps. Please also refer to the [official guide](https://github.com/intel/intel-extension-for-pytorch/tree/xpu-master/docker).
+#### 2.1 Build Container and Environment Variables
+```bash
+wget https://raw.githubusercontent.com/intel/intel-extension-for-pytorch/xpu-master/docker/Dockerfile.xpu
+wget https://raw.githubusercontent.com/intel/intel-extension-for-pytorch/xpu-master/docker/build.sh
+./build.sh xpu-flex
+
+export IMAGE_NAME=intel/intel-extension-for-pytorch:xpu-flex
+export VIDEO=$(getent group video | sed -E 's,^video:[^:]*:([^:]*):.*$,\1,')
+export RENDER=$(getent group render | sed -E 's,^render:[^:]*:([^:]*):.*$,\1,')
+test -z "$RENDER" || RENDER_GROUP="--group-add ${RENDER}"
+```
+
+#### 2.2 Run Container
+```bash
+docker run --rm \
+    -v .:/workspace \
+    --group-add ${VIDEO} \
+    ${RENDER_GROUP} \
+    --device=/dev/dri \
+    --ipc=host \
+    -e http_proxy=$http_proxy \
+    -e https_proxy=$https_proxy \
+    -e no_proxy=$no_proxy \
+    -it $IMAGE_NAME bash
+```
+
+#### 2.3 Environment Settings
+Please set basekit configurations as following:
+```bash
+bash l_BaseKit_p_2024.0.0.49261_offline.sh -a -s --eula accept --components intel.oneapi.lin.tbb.devel:intel.oneapi.lin.ccl.devel:intel.oneapi.lin.mkl.devel:intel.oneapi.lin.dpcpp-cpp-compiler --install-dir ${HOME}/intel/oneapi
+source ./20240921_xmainrel/env/vars.sh
+# source ${HOME}/intel/oneapi/compiler/latest/env/vars.sh
+source ${HOME}/intel/oneapi/mkl/latest/env/vars.sh
+source ${HOME}/intel/oneapi/tbb/latest/env/vars.sh
+export MKL_DPCPP_ROOT=${MKLROOT}
+export LD_LIBRARY_PATH=${MKL_DPCPP_ROOT}/lib:${MKL_DPCPP_ROOT}/lib64:${MKL_DPCPP_ROOT}/lib/intel64:${LD_LIBRARY_PATH}
+export LIBRARY_PATH=${MKL_DPCPP_ROOT}/lib:${MKL_DPCPP_ROOT}/lib64:${MKL_DPCPP_ROOT}/lib/intel64:$LIBRARY_PATH
+```
+Prebuilt wheel files are available for Python python 3.8, python 3.9, python 3.10, python 3.11.
+```bash
+conda install intel-extension-for-pytorch=2.0.110 pytorch=2.0.1 -c intel -c conda-forge
+```
+You can run a simple sanity test to double confirm if the correct version is installed, and if the software stack can get correct hardware information onboard your system. The command should return PyTorch and IPEX versions installed, as well as GPU card(s) information detected.
+```bash
+source {DPCPPROOT}/env/vars.sh
+source {MKLROOT}/env/vars.sh
+python -c "import torch; import intel_extension_for_pytorch as ipex; print(torch.__version__); print(ipex.__version__); [print(f'[{i}]: {torch.xpu.get_device_properties(i)}') for i in range(torch.xpu.device_count())];"
+```
+Please also refer to this [tutorial](https://intel.github.io/intel-extension-for-pytorch/index.html#installation?platform=gpu&version=v2.0.110%2Bxpu) to check system requirements and install dependencies.
+
+
+#### 2.4 Quantization Command
+```shell
+python run_qa.py 
+    --model_name_or_path bert-large-uncased-whole-word-masking-finetuned-squad \
+    --dataset_name squad \
+    --do_eval \
+    --max_seq_length 384 \
+    --doc_stride 128 \
+    --xpu \
+    --tune \
+    --output_dir ./savedresult
+```
 
 # Tutorial of How to Enable NLP Model with Intel® Neural Compressor.
 ### Intel® Neural Compressor supports two usages:
@@ -81,5 +149,3 @@ q_model = quantization.fit(model,
                            eval_func=eval_func)
 q_model.save(training_args.output_dir)
 ```
-
-

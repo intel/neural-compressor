@@ -1,0 +1,3 @@
+intel-extension-for-tensorflow[cpu]
+pyyaml
+tensorflow

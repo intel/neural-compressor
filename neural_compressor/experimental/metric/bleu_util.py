@@ -42,6 +42,7 @@ import math
 from typing import List, Sequence, Union
 
 import numpy as np
+from deprecated import deprecated
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
 from neural_compressor.utils.utility import LazyImport
@@ -49,6 +50,7 @@ from neural_compressor.utils.utility import LazyImport
 tf = LazyImport("tensorflow")
 
 
+@deprecated(version="2.0")
 def _get_ngrams_with_counter(segment: Sequence[str], max_order: List[int]) -> collections.Counter:
     """Extract all n-grams up to a given maximum order from an input segment.
 
@@ -69,6 +71,7 @@ def _get_ngrams_with_counter(segment: Sequence[str], max_order: List[int]) -> co
     return ngram_counts
 
 
+@deprecated(version="2.0")
 def compute_bleu(
     reference_corpus: Union[Sequence[str], Sequence[Sequence[str]]],
     translation_corpus: Sequence[str],

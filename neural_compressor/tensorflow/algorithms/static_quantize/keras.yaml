@@ -1,0 +1,121 @@
+## Copyright (c) 2021 Intel Corporation
+##
+## Licensed under the Apache License, Version 2.0 (the "License");
+## you may not use this file except in compliance with the License.
+## You may obtain a copy of the License at
+##
+##    http://www.apache.org/licenses/LICENSE-2.0
+##
+## Unless required by applicable law or agreed to in writing, software
+## distributed under the License is distributed on an "AS IS" BASIS,
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+## See the License for the specific language governing permissions and
+## limitations under the License.
+##
+#
+-
+  version:
+    name: 'default'
+
+  precisions: &common_precisions
+    names: int8, fp32
+    valid_mixed_precisions: []
+
+  ops: &common_ops
+    int8: ['Conv2D', 'SeparableConv2D', 'DepthwiseConv2D', 'Dense', 'AveragePooling2D', 'MaxPooling2D',
+           'AvgPool2D', 'MaxPool2D']
+    bf16: ['Dense', 'Conv1D', 'Conv2D', 'Conv3D', 'SeparableConv1D', 'SeparableConv2D', 'Conv1DTranspose',
+           'Conv2DTranspose', 'Conv3DTranspose', 'DepthwiseConv2D', 'AveragePooling2D', 'MaxPooling2D',
+           'AvgPool2D', 'MaxPool2D', 'MaxPooling1D', 'MaxPooling3D', 'AveragePooling1D', 'AveragePooling3D',
+           'GlobalMaxPooling1D', 'GlobalMaxPooling2D', 'GlobalMaxPooling3D', 'GlobalAveragePooling1D',
+           'GlobalAveragePooling2D', 'GlobalAveragePooling3D','SimpleRNN', 'TimeDistributed', 'ConvLSTM1D',
+           'ConvLSTM2D', 'ConvLSTM3D', 'TextVectorization', 'Discretization', 'CategoryEncoding', 'Hashing',
+           'StringLookup', 'IntegerLookup', 'Resizing', 'Rescaling', 'CenterCrop', 'RandomCrop', 'RandomFlip',
+           'RandomTranslation', 'Activation', 'RandomRotation', 'RandomZoom', 'RandomHeight', 'RandomWidth',
+           'RandomContrast', 'RandomBrightness', 'Normalization', 'BatchNormalization', 'LayerNormalization',
+           'UnitNormalization', 'GroupNormalization', 'Dropout', 'SpatialDropout1D', 'SpatialDropout2D',
+           'SpatialDropout3D', 'GaussianDropout', 'GaussianNoise', 'ActivityRegularization', 'AlphaDropout',
+           'MultiHeadAttention', 'Attention', 'AdditiveAttention', 'Reshape', 'Flatten', 'RepeatVector',
+           'Permute', 'Cropping1D', 'Cropping2D', 'Cropping3D', 'UpSampling1D', 'UpSampling2D', 'UpSampling3D',
+           'ZeroPadding1D', 'ZeroPadding2D', 'ZeroPadding3D', 'Concatenate', 'Average', 'Maximum', 'Minimum',
+           'Add', 'Subtract', 'Multiply', 'Dot', 'LocallyConnected1D', 'LocallyConnected2D', 'Embedding',
+           'Masking', 'Lambda', 'ReLU', 'Softmax', 'LeakyReLU', 'PReLU', 'ELU', 'ThresholdedReLU'
+          ]
+    fp32: ['*'] # '*' means all op types
+
+  capabilities: &common_capabilities
+    int8: {
+          'Conv2D':  {
+            'weight':   {
+                        'dtype': ['int8'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'DepthwiseConv2D':  {
+            'weight':   {
+                        'dtype': ['int8'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'SeparableConv2D':  {
+            'weight':   {
+                        'dtype': ['int8'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'Dense': {
+            'weight':   {
+                        'dtype': ['int8'],
+                        'scheme': ['sym'],
+                        'algorithm': ['minmax'],
+                        'granularity': ['per_tensor'],
+                        },
+            'activation': {
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
+                        'scheme': ['sym'],
+                        'algorithm': ['minmax'],
+                        'granularity': ['per_tensor'],
+                        }
+                    },
+         'default': &ref_default_static {
+             'activation': {
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
+                        'scheme': ['sym'],
+                        'algorithm': ['minmax'],
+                        'granularity': ['per_tensor']
+                        }
+                    },
+          'AveragePooling2D': *ref_default_static,
+          'AvgPool2D': *ref_default_static,
+          'MaxPooling2D': *ref_default_static,
+          'MaxPool2D': *ref_default_static,
+          }

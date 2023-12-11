@@ -24,6 +24,7 @@ import tempfile
 
 import numpy as np
 import yaml
+from deprecated import deprecated
 
 from ..conf.config import Graph_Optimization_Conf
 from ..conf.dotdict import DotDict, deep_get, deep_set
@@ -36,6 +37,7 @@ from .common import Model as NCModel
 from .strategy import EXP_STRATEGIES
 
 
+@deprecated(version="2.0")
 class Graph_Optimization:
     """Graph_Optimization class.
 

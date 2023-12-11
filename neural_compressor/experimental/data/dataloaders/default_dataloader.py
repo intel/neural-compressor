@@ -18,16 +18,17 @@
 """Default dataloader for multiple framework backends."""
 
 import collections
-from abc import abstractmethod
 from math import ceil, floor
 
 import numpy as np
+from deprecated import deprecated
 
 from .base_dataloader import BaseDataLoader
 from .fetcher import FETCHERS
 from .sampler import BatchSampler, IterableSampler, SequentialSampler
 
 
+@deprecated(version="2.0")
 def default_collate(batch):
     """Merge data with outer dimension batch size."""
     elem = batch[0]
@@ -45,6 +46,7 @@ def default_collate(batch):
         return batch
 
 
+@deprecated(version="2.0")
 class DefaultDataLoader(BaseDataLoader):
     """DefaultDataLoader for multiple framework backends."""
 
