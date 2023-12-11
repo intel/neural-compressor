@@ -9,7 +9,7 @@ import torch
 import os
 
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-torch.use_deterministic_algorithms(True)
+torch.use_deterministic_algorithms(True, warn_only=True)
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
 
 from transformers import set_seed
@@ -229,7 +229,7 @@ if __name__ == '__main__':
     optq = round(model, tokenizer, args.num_bits, args.group_size, scheme, bs=args.train_bs,
                  seqlen=seqlen, n_blocks=args.n_blocks, iters=args.iters, lr=args.lr,
                  minmax_lr=args.minmax_lr, use_quant_input=args.use_quant_input,
-                 amp=args.amp, n_samples=args.n_samples)  ##TODO args pass
+                 amp=args.amp, n_samples=args.n_samples, low_gpu_mem_usage=args.low_gpu_mem_usage)  ##TODO args pass
     optq.quantize()
 
     torch.cuda.empty_cache()
