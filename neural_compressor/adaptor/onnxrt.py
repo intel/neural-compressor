@@ -219,7 +219,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.sq = ORTSmoothQuant(self.pre_optimized_model, dataloader, self.reduce_range, self.backend)
         self.sq.record_max_info = record_max_info
         self.smooth_quant_model = self.sq.transform(**self.cur_sq_args)
-        if not record_max_info: # pragma: no cover
+        if not record_max_info:  # pragma: no cover
             logger.info("Updated the pre-optimized model with smooth quant model.")
         else:
             logger.info("Collected scale information for smooth quant.")
