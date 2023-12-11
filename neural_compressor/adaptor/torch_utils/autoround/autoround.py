@@ -290,8 +290,10 @@ class SaveInputs:
             )
             exit()
         elif total_cnt < n_samples:
-            logger.warning(f"Insufficient number of samples collected may affect the quantification. "
-                           f"Effective samples size:{total_cnt}, Target sample size:{n_samples}")
+            logger.warning(
+                f"Insufficient number of samples collected may affect the quantification. "
+                f"Effective samples size:{total_cnt}, Target sample size:{n_samples}"
+            )
         res = self.inputs[self.block_name]
         if "input_ids" in res.keys():
             total_samples = res["input_ids"].shape[0]
@@ -1711,4 +1713,3 @@ class AutoAdamRound(AutoRound):
         optimizer.zero_grad()
         lr_schedule.step()
         scaler.update()
-
