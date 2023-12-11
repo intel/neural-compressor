@@ -33,6 +33,15 @@ from neural_compressor.common.utility import (
 )
 from neural_compressor.torch.utils import logger
 
+try:
+    import deepspeed
+    import habana_frameworks.torch.hpex
+
+    USE_HPEX = True
+except:
+    USE_HPEX = False
+
+
 FRAMEWORK_NAME = "torch"
 DTYPE_RANGE = Union[torch.dtype, List[torch.dtype]]
 
@@ -317,98 +326,90 @@ def get_default_gptq_config() -> GPTQConfig:
 
 
 ######################## FP8 Config ###############################
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
-class FP8QConfig(BaseConfig):
-    """Config class for FP8 quantization."""
+if USE_HPEX:
 
-    name = FP8_QUANT
-    supported_configs: List[OperatorConfig] = []
-    params_list = [
-        "weight_dtype",
-        "act_dtype",
-        "act_algo",
-        "approach",
-        "device",
-    ]
+    @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
+    class FP8QConfig(BaseConfig):
+        """Config class for FP8 quantization."""
 
-    def __init__(
-        self,
-        weight_dtype: DTYPE_RANGE = torch.float8_e4m3fn,
-        act_dtype: DTYPE_RANGE = torch.float8_e4m3fn,
-        act_algo: Union[str, List[str]] = "minmax",
-        approach: Union[str, List[str]] = "static",
-        device: Union[str, List[str]] = "hpu",
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-    ):
-        """Init FP8 config.
+        name = FP8_QUANT
+        supported_configs: List[OperatorConfig] = []
+        params_list = [
+            "weight_dtype",
+            "act_dtype",
+            "act_algo",
+            "approach",
+            "device",
+        ]
 
-        Args:
-        """
-        super().__init__(white_list=white_list)
-        self.weight_dtype = weight_dtype
-        self.act_dtype = act_dtype
-        self.act_algo = act_algo
-        self.approach = approach
-        self.device = device
-        self._post_init()
+        def __init__(
+            self,
+            weight_dtype: DTYPE_RANGE = torch.float8_e4m3fn,
+            act_dtype: DTYPE_RANGE = torch.float8_e4m3fn,
+            act_algo: Union[str, List[str]] = "minmax",
+            approach: Union[str, List[str]] = "static",
+            device: Union[str, List[str]] = "hpu",
+            white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        ):
+            """Init FP8 config.
 
-    def to_dict(self):
-        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
+            Args:
+            """
+            super().__init__(white_list=white_list)
+            self.weight_dtype = weight_dtype
+            self.act_dtype = act_dtype
+            self.act_algo = act_algo
+            self.approach = approach
+            self.device = device
+            self._post_init()
 
-    @classmethod
-    def from_dict(cls, config_dict):
-        return super(FP8QConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
+        def to_dict(self):
+            return super().to_dict(params_list=self.params_list, operator2str=operator2str)
 
-    @classmethod
-    def register_supported_configs(cls) -> List[OperatorConfig]:
-        supported_configs = []
-        fp8_config = FP8QConfig(
-            weight_dtype=[torch.float8_e5m2, torch.float8_e4m3fn],
-            act_dtype=[torch.float8_e5m2, torch.float8_e4m3fn],
-            act_algo=["minmax", "kl"],
-            approach=["static", "dynamic"],
-            device=["hpu"],
-        )
-        from .fp8.quantize import white_list
+        @classmethod
+        def from_dict(cls, config_dict):
+            return super(FP8QConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
 
-        operators = white_list
-        supported_configs.append(OperatorConfig(config=fp8_config, operators=operators, backend=Backend.DEFAULT))
-        cls.supported_configs = supported_configs
+        @classmethod
+        def register_supported_configs(cls) -> List[OperatorConfig]:
+            supported_configs = []
+            fp8_config = FP8QConfig(
+                weight_dtype=[torch.float8_e5m2, torch.float8_e4m3fn],
+                act_dtype=[torch.float8_e5m2, torch.float8_e4m3fn],
+                act_algo=["minmax", "kl"],
+                approach=["static", "dynamic"],
+                device=["hpu"],
+            )
+            from .fp8.quantize import white_list
 
-    @staticmethod
-    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        from .fp8.quantize import white_list
+            operators = white_list
+            supported_configs.append(OperatorConfig(config=fp8_config, operators=operators, backend=Backend.DEFAULT))
+            cls.supported_configs = supported_configs
 
-        filter_result = []
-        for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
-                pair = (op_name, type(module).__name__)
-                filter_result.append(pair)
-        logger.debug(f"Get model info: {filter_result}")
-        return filter_result
+        @staticmethod
+        def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+            from .fp8.quantize import white_list
 
-
-try:
-    import deepspeed
-    import habana_frameworks.torch.hpex
+            filter_result = []
+            for op_name, module in model.named_modules():
+                if isinstance(module, white_list):
+                    pair = (op_name, type(module).__name__)
+                    filter_result.append(pair)
+            logger.debug(f"Get model info: {filter_result}")
+            return filter_result
 
     # TODO(Yi) run `register_supported_configs` for all registered config.
     FP8QConfig.register_supported_configs()
-except:
-    pass
 
+    def get_default_fp8_qconfig() -> FP8QConfig:
+        """Generate the default gptq config.
 
-def get_default_fp8_qconfig() -> FP8QConfig:
-    """Generate the default gptq config.
+        Returns:
+            the default gptq config.
+        """
+        return FP8QConfig()
 
-    Returns:
-        the default gptq config.
-    """
-    return FP8QConfig()
+    ##################### Algo Configs End ###################################
 
-
-##################### Algo Configs End ###################################
-
-
-def get_all_registered_configs() -> Dict[str, BaseConfig]:
-    return registered_configs.get(FRAMEWORK_NAME, {})
+    def get_all_registered_configs() -> Dict[str, BaseConfig]:
+        return registered_configs.get(FRAMEWORK_NAME, {})
