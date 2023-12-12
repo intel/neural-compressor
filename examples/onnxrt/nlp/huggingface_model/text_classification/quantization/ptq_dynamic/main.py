@@ -423,7 +423,7 @@ if __name__ == "__main__":
             specific_quant_config['recipes'] = {'first_conv_or_matmul_quantization': False}
         config = PostTrainingQuantConfig(approach='dynamic',
                                          device=args.device,
-                                         backend=backend
+                                         backend=backend,
                                          **specific_quant_config)
         q_model = quantization.fit(model, 
                                    config,
