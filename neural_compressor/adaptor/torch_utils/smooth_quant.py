@@ -661,9 +661,7 @@ class TorchSmoothQuant:
         :param input_maxes: The channel-wise input max info for layers
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, a float of a dict
         :return:"""
-        absorb_scales_info, weight_scales_info = self._cal_scales(
-            absorb_to_layer, input_maxes, alpha, tuning
-        )
+        absorb_scales_info, weight_scales_info = self._cal_scales(absorb_to_layer, input_maxes, alpha, tuning)
 
         if not absorb_scales_info or not weight_scales_info:
             if self.to_shift_bias:  # lyt_add_1110
@@ -1027,9 +1025,7 @@ class TorchSmoothQuant:
                         for layer_name in layer_names:
                             best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
-                loss_tmp = self._get_one_batch_auto_loss(
-                    input, alpha_space, best_alphas_per_module, input_maxes
-                )
+                loss_tmp = self._get_one_batch_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
                 if loss_alphas == {}:
                     loss_alphas = loss_tmp
                 else:
@@ -1064,9 +1060,7 @@ class TorchSmoothQuant:
                         for layer_name in layer_names:
                             best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
-                loss_tmp = self._get_one_batch_auto_loss(
-                    input, alpha_space, best_alphas_per_module, input_maxes
-                )
+                loss_tmp = self._get_one_batch_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
                 if loss_alphas == {}:
                     loss_alphas = loss_tmp
                 else:
