@@ -264,7 +264,7 @@ if __name__ == "__main__":
     model = onnx.load(args.model_path)
     dataloader = Dataloader(args.dataset_location, args.label_path, args.batch_size)
     top1 = TopK()
-    backend = 'default' if args.device == 'cpu' else 'onnxrt_dml_ep'
+    backend = 'onnxrt_dml_ep' if args.device == 'npu' else 'default'
     def eval(onnx_model):
         return eval_func(onnx_model, dataloader, top1, backend)
 
@@ -289,7 +289,5 @@ if __name__ == "__main__":
                                          device=args.device,
                                          backend=backend)
  
-        q_model = quantization.fit(model, config, calib_dataloader=dataloader,
-			     eval_func=eval)
-
+        q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval)
         q_model.save(args.output_model)

@@ -350,7 +350,16 @@ if __name__ == "__main__":
         choices=["distilbert", "bert", "mobilebert", "roberta"],
         help="model type"
     )
+    parser.add_argument(
+        '--device',
+        type=str,
+        default='cpu',
+        choices=['cpu', 'npu'],
+    )
     args = parser.parse_args()
+
+    # set config for npu test
+    backend = 'onnxrt_dml_ep' if args.device == 'npu' else 'default'
 
     dataset = ONNXRTBertDataset(args.model_path,
                                 data_dir=args.data_path,
@@ -364,8 +373,8 @@ if __name__ == "__main__":
 
     def eval_func(model):
         metric.reset()
-        session = onnxruntime.InferenceSession(model.SerializeToString(), 
-                                               providers=onnxruntime.get_available_providers())
+        provider = 'DmlExecutionProvider' if backend == 'onnxrt_dml_ep' else 'CPUExecutionProvider'
+        session = onnxruntime.InferenceSession(model.SerializeToString(), providers=[provider])
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
@@ -388,6 +397,8 @@ if __name__ == "__main__":
                 iteration=100,
                 cores_per_instance=4,
                 num_of_instance=1,
+                device=args.device,
+                backend=backend
             )
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == "accuracy":
@@ -425,6 +436,8 @@ if __name__ == "__main__":
             quant_format=args.quant_format,
             calibration_sampling_size=[8, 16, 32],
             recipes={"optypes_to_exclude_output_quant": ["MatMul", "Gemm", "Attention", "FusedGemm"]},
+            device=args.device,
+            backend=backend
         )
         q_model = quantization.fit(model, 
                                    config,
