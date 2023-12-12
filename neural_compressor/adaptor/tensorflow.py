@@ -1833,7 +1833,13 @@ class TensorFlowAdaptor(Adaptor):
         scales_per_op=True,
         record_max_info=False,
         weight_clip=True,
-        auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean", "do_blockwise": False},
+        auto_alpha_args={
+            "alpha_min": 0.0,
+            "alpha_max": 1.0,
+            "alpha_step": 0.1,
+            "shared_criterion": "mean",
+            "do_blockwise": False,
+        },
         default_alpha=0.5,
     ):
         """Convert the model by smooth quant.
