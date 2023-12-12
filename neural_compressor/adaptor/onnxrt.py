@@ -1304,14 +1304,15 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         attention_matmul = []
         for _, node in enumerate(self.pre_optimized_model.nodes()):
             if node.op_type in ["Conv", "MatMul", "Attention"]:
-                # get first Conv or MatMul node
-                if len(first_quantizable_node) == 0:
-                    first_quantizable_node.append(node)
+                if node.op_type in optype_wise:
+                    # get first Conv or MatMul node
+                    if len(first_quantizable_node) == 0:
+                        first_quantizable_node.append(node)
 
-                # get last Conv or MatMul node
-                if len(last_quantizable_node) != 0:
-                    last_quantizable_node.pop()
-                last_quantizable_node.append(node)
+                    # get last Conv or MatMul node
+                    if len(last_quantizable_node) != 0:
+                        last_quantizable_node.pop()
+                    last_quantizable_node.append(node)
 
                 all_conv_matmul.append(node)
                 if node.op_type != "Conv":
