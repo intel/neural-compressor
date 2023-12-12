@@ -1167,7 +1167,7 @@ class TorchSmoothQuant:
         """
         self.do_blockwise = auto_alpha_args.get("do_blockwise", False)
         if self.do_blockwise:
-            del auto_alpha_args['blockwise']
+            del auto_alpha_args["blockwise"]
         if self.do_blockwise:
             self.block_names = self.get_blocks()
             logger.info("Blockwise auto-tuning will be performed")
