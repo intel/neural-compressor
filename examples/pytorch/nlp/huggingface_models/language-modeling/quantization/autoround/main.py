@@ -53,8 +53,8 @@ if __name__ == '__main__':
     parser.add_argument("--lr", default=0.05, type=float,
                         help="step size")
 
-    parser.add_argument("--minmax_lr", default=0.05, type=float,
-                        help="minmax learning rate")
+    parser.add_argument("--minmax_lr", default=None, type=float,
+                        help="minmax learning rate, if None,it will set to be the same with lr")
 
     parser.add_argument("--seed", default=42, type=int,
                         help="seed")

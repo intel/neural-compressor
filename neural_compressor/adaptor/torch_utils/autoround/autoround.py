@@ -582,7 +582,7 @@ def wrapper_block(block, enable_minmax_tuning):
                     continue
                 new_m = WrapperTransformerConv1d(m, enable_minmax_tuning=enable_minmax_tuning)
                 set_module(block, n, new_m)
-                names.append(names)
+                names.append(n)
         except:
             pass
     return names
@@ -908,7 +908,7 @@ class AutoRound(object):
         use_quant_input (bool): Whether to use quantized input data (default is True).
         enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
         lr (float): The learning rate (default is 0.005).
-        minmax_lr (float): The learning rate for min-max tuning (default is 0.005).
+        minmax_lr (float): The learning rate for min-max tuning (default is None).
         low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
         iters (int): Number of iterations (default is 200).
         seqlen (int): Length of the sequence.
@@ -945,7 +945,7 @@ class AutoRound(object):
         use_quant_input: bool = True,
         enable_minmax_tuning: bool = True,
         lr: float = 0.005,
-        minmax_lr: float = 0.005,
+        minmax_lr: float = None,
         low_gpu_mem_usage: bool = True,
         iters: int = 200,
         seqlen: int = 2048,
@@ -1010,6 +1010,8 @@ class AutoRound(object):
             self.dataloader = dataloader
         self.lr = lr
         self.minmax_lr = minmax_lr
+        if self.minmax_lr is None:
+            self.minmax_lr = self.lr
         self.iters = iters
         self.sampler = sampler
         self.gradient_accumulate_steps = gradient_accumulate_steps
@@ -1020,6 +1022,7 @@ class AutoRound(object):
         self.lr_scheduler = lr_scheduler
         self.set_layerwise_config(self.weight_config)
         self.optimizer = self.get_optimizer(None)
+        self.check_configs()
 
     def get_optimizer(self, optimizer):
         """Returns the specified optimizer. In SignRound, we fix the optimizer.
@@ -1280,14 +1283,11 @@ class AutoRound(object):
                 output_q = block_forward(
                     block, current_input_ids, current_input_others, self.amp, self.amp_dtype, device
                 )
-                if self.amp and device != torch.device("cpu"):
+                if self.amp and (device != torch.device("cpu") and device != "cpu"):
                     with autocast(device_type="cuda", dtype=self.amp_dtype):
                         loss = mse_loss(output_q, current_output)
-                elif self.amp:
-                    with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
-                        loss = mse_loss(output_q, current_output)
                 else:
-                    loss = mse_loss(output_q, current_output)
+                    loss = mse_loss(output_q.to(torch.float32), current_output.to(torch.float32))
 
                 total_loss += loss.item() / self.gradient_accumulate_steps
                 self.scale_loss_and_backward(scaler, loss)
@@ -1454,7 +1454,7 @@ class AutoOPTRound(AutoRound):
         use_quant_input (bool): Whether to use quantized input data (default is True).
         enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
         lr (float): The learning rate (default is 0.005).
-        minmax_lr (float): The learning rate for min-max tuning (default is 0.005).
+        minmax_lr (float): The learning rate for min-max tuning (default is None).
         low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
         iters (int): Number of iterations (default is 200).
         seqlen (int): Length of the sequence.
@@ -1492,7 +1492,7 @@ class AutoOPTRound(AutoRound):
         use_quant_input: bool = True,
         enable_minmax_tuning: bool = True,
         lr: float = 0.005,
-        minmax_lr: float = 0.005,
+        minmax_lr: float = None,
         low_gpu_mem_usage: bool = True,
         iters: int = 200,
         seqlen: int = 2048,
@@ -1553,26 +1553,36 @@ class AutoOPTRound(AutoRound):
 
     def get_scaler(self):
         scaler = None
-        if self.amp:
+        if self.amp and self.device != torch.device("cpu") and self.device != "cpu":
             from torch.cuda.amp import GradScaler
 
             scaler = GradScaler(init_scale=1024, growth_interval=100000)
         return scaler
 
     def scale_loss_and_backward(self, scaler, loss):
-        scale_loss = scaler.scale(loss)
-        scale_loss.backward()
-        return scale_loss
+        if scaler is not None:
+            scale_loss = scaler.scale(loss)
+            scale_loss.backward()
+            return scale_loss
+        else:
+            loss.backward()
+            return loss
 
     def step(self, scaler, optimizer, lr_schedule):
-        scaler.step(optimizer)
-        optimizer.zero_grad()
-        lr_schedule.step()
-        scaler.update()
+        if scaler is not None:
+            scaler.step(optimizer)
+            optimizer.zero_grad()
+            lr_schedule.step()
+            scaler.update()
+        else:
+            optimizer.step()
+            optimizer.zero_grad()
+            lr_schedule.step()
 
 
-class AutoAdamRound(AutoRound):
+class AutoAdamRound(AutoOPTRound):
     """Class for automatic rounding-based quantization with optimizers like adamw of a PyTorch model.
+    The default lr has been changed.
 
     Args:
         model: The PyTorch model to be quantized.
@@ -1592,7 +1602,7 @@ class AutoAdamRound(AutoRound):
         use_quant_input (bool): Whether to use quantized input data (default is True).
         enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
         lr (float): The learning rate (default is 0.005).
-        minmax_lr (float): The learning rate for min-max tuning (default is 0.005).
+        minmax_lr (float): The learning rate for min-max tuning (default is None).
         low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
         iters (int): Number of iterations (default is 200).
         seqlen (int): Length of the sequence.
@@ -1630,7 +1640,7 @@ class AutoAdamRound(AutoRound):
         use_quant_input: bool = True,
         enable_minmax_tuning: bool = True,
         lr: float = 0.01,
-        minmax_lr: float = 0.01,
+        minmax_lr: float = None,
         low_gpu_mem_usage: bool = True,
         iters: int = 200,
         seqlen: int = 2048,
@@ -1675,36 +1685,6 @@ class AutoAdamRound(AutoRound):
             not_use_mse,
             dynamic_max_gap,
             data_type,
+            optimizer,
             **kwargs,
         )
-
-        self.optimizer = self.get_optimizer(optimizer)
-
-    def get_optimizer(self, optimizer):
-        if optimizer is None:
-            optimizer = torch.optim.AdamW
-
-        elif isinstance(optimizer, str):
-            optimizer = getattr(torch.optim, optimizer)
-        else:
-            optimizer = optimizer
-        return optimizer
-
-    def get_scaler(self):
-        scaler = None
-        if self.amp:
-            from torch.cuda.amp import GradScaler
-
-            scaler = GradScaler(init_scale=1024, growth_interval=100000)
-        return scaler
-
-    def scale_loss_and_backward(self, scaler, loss):
-        scale_loss = scaler.scale(loss)
-        scale_loss.backward()
-        return scale_loss
-
-    def step(self, scaler, optimizer, lr_schedule):
-        scaler.step(optimizer)
-        optimizer.zero_grad()
-        lr_schedule.step()
-        scaler.update()
