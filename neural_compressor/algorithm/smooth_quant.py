@@ -55,7 +55,7 @@ class SmoothQuant(Algorithm):
         self.weight_clip = None
         self.auto_alpha_args = None
         self.default_alpha = None
-        self.shift_bias = False  # lyt_os_debug_1108
+        self.shift_bias = False
 
     def __call__(self, origin_model, q_model, adaptor, dataloader, calib_iter):
         """Return the processed model via SmoothQuant algorithm.
@@ -87,7 +87,7 @@ class SmoothQuant(Algorithm):
         kwargs["weight_clip"] = self.weight_clip
         kwargs["auto_alpha_args"] = self.auto_alpha_args
         kwargs["default_alpha"] = self.default_alpha
-        kwargs["shift_bias"] = self.shift_bias  # lyt_os_debug_1108
+        kwargs["shift_bias"] = self.shift_bias
         q_model = adaptor.smooth_quant(
             origin_model,
             dataloader,

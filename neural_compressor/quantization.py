@@ -221,7 +221,7 @@ def fit(
                         o[k] = update(v)
                 return o
 
-            logger.debug(update(conf_dict))
+            logger.info(update(conf_dict))
             if conf.diagnosis:
                 ni_workload_id = register_neural_insights_workload(
                     workload_location=os.path.abspath(options.workspace),
