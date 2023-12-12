@@ -957,7 +957,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             sq_algo.default_alpha = smooth_quant_args.get(
                 "default_alpha", 0.5
             )  # default value for alpha in auto-tuning
-            shift_bias = smooth_quant_args.get("shift_bias", False) # default option for bias-shifting is False.
+            shift_bias = smooth_quant_args.get("shift_bias", False)  # default option for bias-shifting is False.
             sq_algo.shift_bias = shift_bias
             logger.debug(f"Set smooth quant with alpha {sq_algo.alpha} as the pre-tuning algo.")
             algo_scheduler.append_algorithm("pre_quantization", sq_algo)
