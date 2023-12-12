@@ -1166,7 +1166,7 @@ class TorchSmoothQuant:
         benefit to quantization.
         """
         self.do_blockwise = auto_alpha_args.get("do_blockwise", False)
-        if 'do_blockwise' in auto_alpha_args:
+        if "do_blockwise" in auto_alpha_args:
             del auto_alpha_args["do_blockwise"]
         if self.do_blockwise:
             self.block_names = self.get_blocks()
