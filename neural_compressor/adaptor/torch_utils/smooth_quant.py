@@ -953,7 +953,14 @@ class TorchSmoothQuant:
         return best_alpha
 
     def _auto_tune_alpha(
-        self, input_maxes, calib_sample_num=32, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, shared_criterion="min", do_blockwise=False,
+        self,
+        input_maxes,
+        calib_sample_num=32,
+        alpha_min=0.3,
+        alpha_max=0.7,
+        alpha_step=0.05,
+        shared_criterion="min",
+        do_blockwise=False,
     ):
         """Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
 
