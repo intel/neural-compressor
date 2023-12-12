@@ -318,8 +318,6 @@ def check_cfg_and_qconfig(
         for i, name in enumerate(op_name[0]):
             # to int8
             ipex_op_cfg = op_infos_from_cfgs[name]
-            if op_name[1] == "Linear":  # lyt_add_1205
-                logger.info(f"lyt_debug ipex_op_cfg['fqn'] - op_name {ipex_op_cfg['fqn']}  {op_name}")
             input_tensor_infos = ipex_op_cfg["input_tensor_infos"]
             for index, input_tensor_info in enumerate(input_tensor_infos):
                 if "force_dtype" not in input_tensor_info.keys():
