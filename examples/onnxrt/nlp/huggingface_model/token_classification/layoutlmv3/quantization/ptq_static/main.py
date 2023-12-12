@@ -37,6 +37,8 @@ import onnx
 
 from neural_compressor.data import DataLoader
 
+import pyarrow_hotfix; pyarrow_hotfix.uninstall()
+
 logger = logging.getLogger(__name__)
 
 @dataclass

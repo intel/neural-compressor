@@ -31,7 +31,6 @@ from neural_compressor.data import DataLoader
 
 import pyarrow_hotfix; pyarrow_hotfix.uninstall()
 
-
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.5.0")
 
