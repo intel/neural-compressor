@@ -520,7 +520,7 @@ class TorchSmoothQuant:
                 layer._recover_sq_linear()
                 set_module(self.model, layer_name, layer.sq_linear)  ##recover
             else:
-                new_module = SQLinearWrapper(layer, 1.0 / scale, input_minmax, alpha)  # lyt_os_debug #removed_1110
+                new_module = SQLinearWrapper(layer, 1.0 / scale, input_minmax, alpha)
                 set_module(self.model, layer_name, new_module)
         elif self.allow_absorb:
             scale = self._reshape_scale_for_weight(layer, scale)
@@ -597,7 +597,7 @@ class TorchSmoothQuant:
             if hasattr(layer, "bias") and layer.bias is not None:
                 layer.bias *= scale
 
-    def _cal_scales(self, absorb_to_layer, input_maxes, alpha=0.5, tuning=False):  # lyt_os_debug_0822 #removed_1110
+    def _cal_scales(self, absorb_to_layer, input_maxes, alpha=0.5, tuning=False):
         """Cal the adjust scales
         :param absorb_to_layer: A dict mapping absorb layer to smooth quantized layer
         :param input_maxes: The channel-wise input max info for layers
@@ -655,7 +655,7 @@ class TorchSmoothQuant:
                     self.weight_scale_dict[layer_name][alpha_tmp] = scale
         return absorb_scales_info, weight_scales_info
 
-    def _adjust_parameters(self, absorb_to_layer, input_maxes, alpha=0.5, tuning=False):  # lyt_os_debug #removed_1110
+    def _adjust_parameters(self, absorb_to_layer, input_maxes, alpha=0.5, tuning=False):
         """Adjust the weights and biases
         :param absorb_to_layer: A dict mapping absorb layer to smooth quantized layer
         :param input_maxes: The channel-wise input max info for layers
@@ -663,7 +663,7 @@ class TorchSmoothQuant:
         :return:"""
         absorb_scales_info, weight_scales_info = self._cal_scales(
             absorb_to_layer, input_maxes, alpha, tuning
-        )  # lyt_os_debug_0822 #removed_1110
+        )
 
         if not absorb_scales_info or not weight_scales_info:
             if self.to_shift_bias:  # lyt_add_1110
@@ -923,7 +923,7 @@ class TorchSmoothQuant:
                 output = module.q_dq_forward(module.q_input, module.input_scale, module.weight_scale)
                 loss = self._get_auto_loss(fp32_output[name], output)
                 loss_alphas[name][str(alpha)] = loss
-        return loss_alphas  # lyt_os_debug #removed_1110
+        return loss_alphas
 
     def _get_best_alpha(self, absorb_to_layer, loss_alphas, shared_criterion):
         def dict_to_list(dic):
@@ -1029,7 +1029,7 @@ class TorchSmoothQuant:
 
                 loss_tmp = self._get_one_batch_auto_loss(
                     input, alpha_space, best_alphas_per_module, input_maxes
-                )  # lyt_os_debug #removed_1110
+                )
                 if loss_alphas == {}:
                     loss_alphas = loss_tmp
                 else:
@@ -1066,7 +1066,7 @@ class TorchSmoothQuant:
 
                 loss_tmp = self._get_one_batch_auto_loss(
                     input, alpha_space, best_alphas_per_module, input_maxes
-                )  # lyt_os_debug #removed_1110
+                )
                 if loss_alphas == {}:
                     loss_alphas = loss_tmp
                 else:
@@ -1263,7 +1263,7 @@ class TorchSmoothQuant:
                     logger.info(f"lyt_debug INC auto_alpha_args: {auto_alpha_args}")
                     self.alpha_per_layer = self._auto_tune_alpha(
                         input_maxes_abs, calib_sample_num=32, **auto_alpha_args
-                    )  ##save the alpha #lyt_os_debug_1010 Modified@lyt_os_debug #bias_alphas-removed_1101
+                    )  ##save the alpha
                     bias_alphas = self.bias_shifts  # lyt_os_debug_1101
                     logger.info(f"lyt_debug alpha_per_layer: {len(self.alpha_per_layer)} {self.alpha_per_layer}")
                     logger.info(f"lyt_debug bias_alphas: {len(bias_alphas)}, {bias_alphas.keys()}")
@@ -1284,7 +1284,7 @@ class TorchSmoothQuant:
             if self.record_max_info:
                 # max_info is recorded in self.max_value_info
                 self.absorb_bias_alphas(bias_alphas=bias_alphas)  # lyt_add_1110
-                self._adjust_parameters(self.absorb_to_layer, input_maxes_abs, alpha)  # lyt_os_debug #removed_1110
+                self._adjust_parameters(self.absorb_to_layer, input_maxes_abs, alpha)
                 self.model._smoothquant_optimized = False
                 return self.model
 
