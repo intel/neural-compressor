@@ -261,6 +261,7 @@ if args.quantize:
                     'act_order': args.gptq_actorder,
                 }
             } 
+            # import pdb;pdb.set_trace()
             q_model_gptq_debug, gptq_config = gptq_quantize(
                 user_model, 
                 weight_config=conf, 

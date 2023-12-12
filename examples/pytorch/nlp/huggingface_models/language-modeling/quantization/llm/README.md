@@ -31,6 +31,7 @@ python run_clm_no_trainer.py \
     --alpha 1.0 \
     --output_dir "saved_results" \
     --ipex 
+
 ```
 
 **Notes**: Smooth quantization here is based on torch.jit. Without past key value in example_inputs, the quantized model cannot be used for text-generation. For text-generation task, please go to [link](https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization)
@@ -47,8 +48,24 @@ python run_clm_no_trainer.py \
     --woq_algo RTN \
     --woq_enable_mse_search \
     --output_dir "saved_results"
+
+# "--woq_algo GPTQ" is used to enable GPTQ algorithms
+python run_clm_no_trainer.py \
+    --model EleutherAI/gpt-j-6B \
+    --dataset NeelNanda/pile-10k \
+    --seed 0 \
+    --quantize \
+    --approach weight_only \
+    --woq_algo GPTQ \
+    --woq_bits 4 \
+    --woq_scheme asym \
+    --woq_group_size 128 \
+    --gptq_pad_max_length 2048 \
+    --gptq_use_max_length \
+    --gptq_gpu \
+    --gptq_debug
 ```
-**Notes**: Weight-only quantization based on fake quantization is previewly supported and supports RTN, GPTQ[1], AWQ[2], TEQ algorithms. For more details, please refer to [link](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_weight_only.md)
+**Notes**: Weight-only quantization based on fake quantization is previewly supported and supports RTN, GPTQ[1], AWQ[2], TEQ algorithms. For more details, please refer to [link](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_weight_only.md). Our GPTQ API support various CLMs including GPTJ, OPTs, Blooms, Llamas, Falcons, MPTs, ChatGLMs, etc. Simply replace the "--model" argument with other models to quantize different CLMs with GPTQ.
 
 
 #### Accuracy with lm_eval
@@ -79,6 +96,22 @@ python run_clm_no_trainer.py \
     --ipex \
     --output_dir "saved_results" \
     --int8_bf16_mixed 
+
+# "--woq_algo GPTQ" is used to enable GPTQ algorithms
+python run_clm_no_trainer.py \
+    --model facebook/1.3b \
+    --dataset NeelNanda/pile-10k \
+    --seed 0 \
+    --quantize \
+    --approach weight_only \
+    --woq_algo GPTQ \
+    --woq_bits 4 \
+    --woq_scheme asym \
+    --woq_group_size 128 \
+    --gptq_pad_max_length 2048 \
+    --gptq_use_max_length \
+    --gptq_gpu \
+    --gptq_debug
 ```
 
 #### Accuracy with lm_eval
@@ -108,6 +141,22 @@ python run_clm_no_trainer.py \
     --ipex \
     --output_dir "saved_results" \
     --int8_bf16_mixed 
+
+# "--woq_algo GPTQ" is used to enable GPTQ algorithms
+python run_clm_no_trainer.py \
+    --model meta-llama/Llama-2-7b-hf \
+    --dataset NeelNanda/pile-10k \
+    --seed 0 \
+    --quantize \
+    --approach weight_only \
+    --woq_algo GPTQ \
+    --woq_bits 4 \
+    --woq_scheme asym \
+    --woq_group_size 128 \
+    --gptq_pad_max_length 2048 \
+    --gptq_use_max_length \
+    --gptq_gpu \
+    --gptq_debug
 ```
 
 #### Accuracy with lm_eval
@@ -134,6 +183,22 @@ python run_clm_no_trainer.py \
     --sq \
     --alpha 0.5 \
     --output_dir "saved_results"
+
+# "--woq_algo GPTQ" is used to enable GPTQ algorithms
+python run_clm_no_trainer.py \
+    --model bigscience/bloom-560m \
+    --dataset NeelNanda/pile-10k \
+    --seed 0 \
+    --quantize \
+    --approach weight_only \
+    --woq_algo GPTQ \
+    --woq_bits 4 \
+    --woq_scheme asym \
+    --woq_group_size 128 \
+    --gptq_pad_max_length 2048 \
+    --gptq_use_max_length \
+    --gptq_gpu \
+    --gptq_debug
 ```
 #### Accuracy with lm_eval
 ```bash
@@ -149,6 +214,7 @@ python run_clm_no_trainer.py \
 ```
 
 ### Falcon-7b
+#### Quantization
 ```bash
 # "--sq" is used to enable smooth quant
 python run_clm_no_trainer.py \
@@ -157,6 +223,22 @@ python run_clm_no_trainer.py \
     --sq \
     --alpha 0.5 \
     --output_dir "saved_results"
+
+# "--woq_algo GPTQ" is used to enable GPTQ algorithms
+python run_clm_no_trainer.py \
+    --model tiiuae/falcon-7b-instruct \
+    --dataset NeelNanda/pile-10k \
+    --seed 0 \
+    --quantize \
+    --approach weight_only \
+    --woq_algo GPTQ \
+    --woq_bits 4 \
+    --woq_scheme asym \
+    --woq_group_size 128 \
+    --gptq_pad_max_length 2048 \
+    --gptq_use_max_length \
+    --gptq_gpu \
+    --gptq_debug
 ```
 #### Accuracy with lm_eval
 ```bash
