@@ -179,6 +179,10 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.hub:
         torch.set_flush_denormal(True)
         model = torch.hub.load('facebookresearch/WSL-Images', args.arch)
+    if args.xpu: # xpu examples include resnet50 only for now
+        model = models.resnet50(weights="ResNet50_Weights.DEFAULT")
+        model.eval()
+        model = model.to("xpu")
     else:
         # create model
         if args.pretrained:
@@ -227,8 +231,7 @@ def main_worker(gpu, ngpus_per_node, args):
             model.cuda()
         else:
             model = torch.nn.DataParallel(model)
-    if args.xpu:
-        model = model.to("xpu")
+
     # define loss function (criterion) and optimizer
     criterion = nn.CrossEntropyLoss()
     #criterion = nn.CrossEntropyLoss().cuda(args.gpu)
