@@ -55,7 +55,6 @@ class SmoothQuant(Algorithm):
         self.weight_clip = None
         self.auto_alpha_args = None
         self.default_alpha = None
-        self.do_blockwise = None
 
     def __call__(self, origin_model, q_model, adaptor, dataloader, calib_iter):
         """Return the processed model via SmoothQuant algorithm.
@@ -87,7 +86,6 @@ class SmoothQuant(Algorithm):
         kwargs["weight_clip"] = self.weight_clip
         kwargs["auto_alpha_args"] = self.auto_alpha_args
         kwargs["default_alpha"] = self.default_alpha
-        kwargs["do_blockwise"] = self.do_blockwise
         q_model = adaptor.smooth_quant(
             origin_model,
             dataloader,
