@@ -334,10 +334,10 @@ def sgd(
     if foreach and torch.jit.is_scripting():
         raise RuntimeError("torch.jit.script not supported with foreach optimizers")
 
-    if foreach and not torch.jit.is_scripting():
-        func = _multi_tensor_sgd
-    else:
-        func = _single_tensor_sgd
+    # if foreach and not torch.jit.is_scripting():
+    #     func = _multi_tensor_sgd
+    # else:
+    func = _single_tensor_sgd
 
     func(
         params,
@@ -387,66 +387,3 @@ def _single_tensor_sgd(
                 d_p = buf
 
         param.add_(torch.sign(d_p), alpha=-lr)
-
-
-def _multi_tensor_sgd(
-    params: List[Tensor],
-    grads: List[Tensor],
-    momentum_buffer_list: List[Optional[Tensor]],
-    *,
-    weight_decay: float,
-    momentum: float,
-    lr: float,
-    dampening: float,
-    nesterov: bool,
-    maximize: bool,
-    has_sparse_grad: bool
-):
-    if len(params) == 0:
-        return
-
-    if has_sparse_grad is None:
-        has_sparse_grad = any(grad.is_sparse for grad in grads)
-
-    if maximize:
-        grads = torch._foreach_neg(tuple(grads))  # type: ignore[assignment]
-
-    if weight_decay != 0:
-        grads = torch._foreach_add(grads, params, alpha=weight_decay)
-
-    if momentum != 0:
-        bufs = []
-
-        all_states_with_momentum_buffer = True
-        for i in range(len(momentum_buffer_list)):
-            if momentum_buffer_list[i] is None:
-                all_states_with_momentum_buffer = False
-                break
-            else:
-                bufs.append(momentum_buffer_list[i])
-
-        if all_states_with_momentum_buffer:
-            torch._foreach_mul_(bufs, momentum)
-            torch._foreach_add_(bufs, grads, alpha=1 - dampening)
-        else:
-            bufs = []
-            for i in range(len(momentum_buffer_list)):
-                if momentum_buffer_list[i] is None:
-                    buf = momentum_buffer_list[i] = torch.clone(grads[i]).detach()
-                else:
-                    buf = momentum_buffer_list[i]
-                    buf.mul_(momentum).add_(grads[i], alpha=1 - dampening)
-
-                bufs.append(buf)
-
-        if nesterov:
-            torch._foreach_add_(grads, bufs, alpha=momentum)
-        else:
-            grads = bufs
-
-    if not has_sparse_grad:
-        torch._foreach_add_(params, grads, alpha=-lr)
-    else:
-        # foreach APIs dont support sparse
-        for i in range(len(params)):
-            params[i].add_(torch.sign(grads[i]), alpha=-lr)

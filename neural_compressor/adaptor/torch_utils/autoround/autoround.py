@@ -698,7 +698,7 @@ def block_forward(block, input_ids, input_others, amp=False, amp_dtype=torch.flo
         if alibi is not None:
             alibi = alibi.reshape(-1, alibi.shape[2], alibi.shape[3])
         if amp and device != torch.device("cpu"):
-            with autocast(device_type="cuda", dtype=amp_dtype):
+            with autocast(device_type="cuda", dtype=amp_dtype):  # pragma: no cover
                 output = block(
                     input_ids, attention_mask=attention_mask, alibi=alibi
                 )  ##TODO is this correct for all models with alibi?
@@ -710,7 +710,7 @@ def block_forward(block, input_ids, input_others, amp=False, amp_dtype=torch.flo
     else:
         input_tuple = input_others.pop("positional_inputs", None)
         if amp and device != torch.device("cpu"):
-            with autocast(device_type="cuda", dtype=amp_dtype):
+            with autocast(device_type="cuda", dtype=amp_dtype):  # pragma: no cover
                 output = block.forward(input_ids, *input_tuple, **input_others)
         elif amp and device == torch.device("cpu"):
             with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
@@ -1122,40 +1122,6 @@ class AutoRound(object):
             m.group_size = weight_config[n]["group_size"]
             m.scheme = weight_config[n]["scheme"]
 
-    # def get_default_dataloader(self, data_name="NeelNanda/pile-10k"):
-    #     logger.info("tokenizing data, this may take several minutes or even a dozen minutes for 7B models ... ")
-    #     from datasets import load_dataset
-    #     seqlen = self.seqlen
-    #     calib_dataset = load_dataset(data_name, split=self.dataset_split).shuffle(seed=self.seed)
-    #     samples = []
-    #     cnt = 0
-    #     all_cnt=0
-    #     tmp_samples = []
-    #     for data in calib_dataset:
-    #         line = data["text"]
-    #         line = line.strip()
-    #         line_tokenized = self.tokenizer.encode(line)
-    #         all_cnt+=1
-    #         if len(line_tokenized) < self.seqlen:
-    #             continue
-    #         index = 0
-    #         sample = line_tokenized[index:index + self.seqlen]
-    #         if sample.count(sample[-1]) > seqlen // 2:
-    #             continue
-    #         sample = torch.tensor(sample)
-    #         cnt += 1
-    #         tmp_samples.append(sample)
-    #         if cnt % 100 == 0:
-    #             logger.info(f"tokenized {all_cnt} data and get{cnt} samples with the sequence length={seqlen}")
-    #         if cnt % self.train_bs == 0 or cnt == self.n_samples:
-    #             tmp = torch.vstack(tmp_samples)
-    #             samples.append(tmp)
-    #             tmp_samples = []
-    #         if cnt >= self.n_samples:
-    #             break
-    #     logger.info(f"tokenized {all_cnt} data and get{cnt} samples with the sequence length={seqlen}")
-    #     return samples
-
     def get_batch_dim(self, input_others):
         """Get the batch dimension of the input tensor.
 
@@ -1291,7 +1257,6 @@ class AutoRound(object):
 
                 total_loss += loss.item() / self.gradient_accumulate_steps
                 self.scale_loss_and_backward(scaler, loss)
-                # loss.backward()
 
             if total_loss < best_loss:
                 best_loss = total_loss
