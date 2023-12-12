@@ -106,7 +106,7 @@ def _wrap_lwq_layer(model, lwq_layers, op_cfgs):
 
 
 class SQLinearWrapper(torch.nn.Module):
-    def __init__(self, module, input_scale, input_minmax, alpha=0.5, dtype=torch.quint8):  # lyt_os_debug #removed_1110
+    def __init__(self, module, input_scale, input_minmax, alpha=0.5, dtype=torch.quint8):
         super().__init__()
         self.register_buffer("input_scale", input_scale)
         self.alpha = alpha
