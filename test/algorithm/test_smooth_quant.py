@@ -1525,8 +1525,7 @@ class TestAlphaAutoLinearBlockwise(unittest.TestCase):
             alpha="auto",
             calib_iter=1,
             folding=False,
-            do_blockwise=True,
-            auto_alpha_args={"alpha_min": 0.45, "alpha_max": 0.55, "alpha_step": 0.01, "shared_criterion": "mean"},
+            auto_alpha_args={"alpha_min": 0.45, "alpha_max": 0.55, "alpha_step": 0.01, "shared_criterion": "mean", "do_blockwise": True},
         )
         for i in range(12):
             op_name1 = "model.decoder.layers." + str(i) + ".self_attn.out_proj"

@@ -909,6 +909,7 @@ class TorchSmoothQuant:
                         output = block_copy(self.block_inputs[block_name], position_ids=position_ids)[0]
                     loss = self._get_auto_loss(fp32_output[block_name], output)
                     loss_alphas[block_name][str(alpha)] = loss
+                    del block_copy #release memory
         return loss_alphas
 
     def _get_best_alpha(self, absorb_to_layer, loss_alphas, shared_criterion):
@@ -1137,10 +1138,9 @@ class TorchSmoothQuant:
         op_types=[torch.nn.Linear, torch.nn.Conv2d],
         scales_per_op=False,
         calib_iter=100,
-        auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
+        auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean", "do_blockwise": False},
         weight_clip=True,
         default_alpha=0.5,
-        do_blockwise=False,
     ):
         """The main entry of smooth quant
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
@@ -1159,7 +1159,7 @@ class TorchSmoothQuant:
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
         benefit to quantization.
         """
-        self.do_blockwise = do_blockwise
+        self.do_blockwise = auto_alpha_args.get('do_blockwise', False)
         if self.do_blockwise:
             self.block_names = self.get_blocks()
             logger.info("Blockwise auto-tuning will be performed")

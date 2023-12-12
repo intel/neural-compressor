@@ -1728,9 +1728,8 @@ class TemplateAdaptor(Adaptor):
         force_re_smooth=False,
         record_max_info=False,
         weight_clip=True,
-        auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
+        auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean", "do_blockwise": False},
         default_alpha=0.5,
-        do_blockwise=False,
     ):
         """Convert the model by smooth quant.
 
@@ -1748,8 +1747,8 @@ class TemplateAdaptor(Adaptor):
             weight_clip: Whether to clip weight when calculating scales; by default it is on.
             auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
                             By default the search space is 0.0-1.0 with step_size 0.1.
+                            do_blockwise determines whether to do blockwise auto-tuning.
             default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
-            do_blockwise: Whether to do blockwise auto-tuning.
 
         Returns:
             model: A modified fp32 model, inplace=True.
@@ -1786,7 +1785,6 @@ class TemplateAdaptor(Adaptor):
             weight_clip=weight_clip,
             default_alpha=default_alpha,
             auto_alpha_args=auto_alpha_args,
-            do_blockwise=do_blockwise,
             **kwargs,
         )
         if self.sq.record_max_info:
