@@ -465,7 +465,6 @@ def get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_ids
                     pre_op_names = input_tensor_ids_op_name[input_tensor["id"]]
                     for pre_op_name in pre_op_names:
                         if pre_op_name[1] in ["q_op_infos"]:
-                            logger.info(pre_op_name, "is not the fuse ops first op.")
                             start = False
                             break
             if not start:
