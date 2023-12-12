@@ -1157,17 +1157,17 @@ class TorchSmoothQuant:
         :param scales_per_op: Not supported now
         :param calib_iter: Data size for calibration
         :param weight_clip: Whether to clip weight_max when calculating scales.
-        :param do_blockwise: Whether to do blockwise auto-tuning.
 
         :param auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
             By default the search space is 0.0-1.0 with step_size 0.1.
+            do_blockwise: Whether to do blockwise auto-tuning.
         :param default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
         benefit to quantization.
         """
         self.do_blockwise = auto_alpha_args.get("do_blockwise", False)
-        if self.do_blockwise:
-            del auto_alpha_args["blockwise"]
+        if 'do_blockwise' in auto_alpha_args:
+            del auto_alpha_args["do_blockwise"]
         if self.do_blockwise:
             self.block_names = self.get_blocks()
             logger.info("Blockwise auto-tuning will be performed")
