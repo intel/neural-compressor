@@ -674,6 +674,18 @@ def move_input_to_device(input, device=torch.device("cpu")):
     return input
 
 
+def check_is_cpu(device):
+    """Check if the device is a CPU.
+
+    Args:
+        device: The device to be checked.
+
+    Returns:
+        bool: True if the device is a CPU, False otherwise.
+    """
+    return device == torch.device("cpu") or device == "cpu"
+
+
 def block_forward(block, input_ids, input_others, amp=False, amp_dtype=torch.float16, device=torch.device("cpu")):
     """Performs a forward pass through a block with the given inputs.
 
@@ -697,22 +709,22 @@ def block_forward(block, input_ids, input_others, amp=False, amp_dtype=torch.flo
         alibi = input_others["alibi"]
         if alibi is not None:
             alibi = alibi.reshape(-1, alibi.shape[2], alibi.shape[3])
-        if amp and device != torch.device("cpu"):
+        if amp and not check_is_cpu(device):
             with autocast(device_type="cuda", dtype=amp_dtype):  # pragma: no cover
                 output = block(
                     input_ids, attention_mask=attention_mask, alibi=alibi
                 )  ##TODO is this correct for all models with alibi?
-        elif amp and device == torch.device("cpu"):
+        elif amp and check_is_cpu(device):
             with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
                 output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
         else:
             output = block(input_ids, attention_mask=attention_mask, alibi=alibi)
     else:
         input_tuple = input_others.pop("positional_inputs", None)
-        if amp and device != torch.device("cpu"):
+        if amp and not check_is_cpu(device):
             with autocast(device_type="cuda", dtype=amp_dtype):  # pragma: no cover
                 output = block.forward(input_ids, *input_tuple, **input_others)
-        elif amp and device == torch.device("cpu"):
+        elif amp and check_is_cpu(device):
             with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
                 output = block.forward(input_ids, *input_tuple, **input_others)
         else:
@@ -1249,7 +1261,7 @@ class AutoRound(object):
                 output_q = block_forward(
                     block, current_input_ids, current_input_others, self.amp, self.amp_dtype, device
                 )
-                if self.amp and (device != torch.device("cpu") and device != "cpu"):
+                if self.amp and not check_is_cpu(device):
                     with autocast(device_type="cuda", dtype=self.amp_dtype):
                         loss = mse_loss(output_q, current_output)
                 else:
@@ -1518,7 +1530,7 @@ class AutoOPTRound(AutoRound):
 
     def get_scaler(self):
         scaler = None
-        if self.amp and self.device != torch.device("cpu") and self.device != "cpu":
+        if self.amp and not check_is_cpu(self.device):
             from torch.cuda.amp import GradScaler
 
             scaler = GradScaler(init_scale=1024, growth_interval=100000)
