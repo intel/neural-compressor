@@ -4,7 +4,7 @@ test_case="run basic tf pruning"
 echo "${test_case}"
 
 echo "specify fwk version..."
-export tensorflow_version='2.12.0'
+export tensorflow_version='2.14.0'
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh "${test_case}"
