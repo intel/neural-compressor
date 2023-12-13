@@ -6,6 +6,7 @@ echo "run itrex ut..."
 
 # prepare itrex
 git clone https://github.com/intel/intel-extension-for-transformers.git /intel-extension-for-transformers
+cd /intel-extension-for-transformers && git rev-parse --short HEAD
 bash /intel-extension-for-transformers/.github/workflows/script/prepare_env.sh
 bash /intel-extension-for-transformers/.github/workflows/script/install_binary.sh
 
@@ -16,8 +17,8 @@ mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_itrex.log
 
 # run unit test
-cd /intel-extension-for-transformers/tests
-find . -name "test*.py" | grep -v "test_tf" | sed 's,\.\/,python ,g' | sed 's/$/ --verbose/' >run.sh
+cd /intel-extension-for-transformers/tests/CI
+find . -name "test*.py" | grep -v "test_tf" | sed 's,\.\/,python ,g' | sed 's/$/ --verbose/' > run.sh
 
 # run UT
 $BOLD_YELLOW && echo "cat run.sh..." && $RESET

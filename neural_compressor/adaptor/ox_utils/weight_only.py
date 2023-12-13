@@ -317,6 +317,7 @@ def rtn_quantize(
         model: fake quantized ONNXModel
     """
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
+    base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
     new_nodes = []
     remove_nodes = []
     for node in model.nodes():
@@ -326,7 +327,7 @@ def rtn_quantize(
             and weight_config.get(node.name, {}) != "fp32"
         ):
             weight_tensor = model.get_initializer(node.input[1])
-            weight = numpy_helper.to_array(weight_tensor, base_dir=os.path.dirname(model.model_path)).copy()
+            weight = numpy_helper.to_array(weight_tensor, base_dir=base_dir).copy()
             if len(weight.shape) != 2:
                 continue
 
@@ -406,6 +407,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
     new_added_mul_nodes = []
     replace_input = []
     updated_nodes = []
+    base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
 
     for parent, nodes in absorb_pairs.items():
         if any([node.input[0] not in output_dicts for node in nodes]):
@@ -439,7 +441,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 if weight_config.get(node.name, {}) == "fp32":
                     continue
 
-                weight = numpy_helper.to_array(model.get_initializer(node.input[1]), os.path.dirname(model.model_path))
+                weight = numpy_helper.to_array(model.get_initializer(node.input[1]), base_dir)
                 if len(weight.shape) != 2:
                     continue
 
@@ -481,7 +483,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
 
             init_share_num = model.get_initializer_share_num(node.input[1])
             weight_tensor = model.get_initializer(node.input[1])
-            tensor = numpy_helper.to_array(weight_tensor, os.path.dirname(model.model_path))
+            tensor = numpy_helper.to_array(weight_tensor, base_dir)
 
             tensor = tensor.T * best_scale
             tensor = (tensor.T).astype("float32")
@@ -501,9 +503,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             model.input_name_to_nodes[nodes[0].input[0]]
         ) == len(nodes):
             for idx in [1, 2]:
-                tensor = numpy_helper.to_array(
-                    model.get_initializer(parent.input[idx]), os.path.dirname(model.model_path)
-                )
+                tensor = numpy_helper.to_array(model.get_initializer(parent.input[idx]), base_dir)
                 new_tensor = tensor / np.reshape(best_scale, (1, -1))
                 model.set_initializer(parent.input[idx], new_tensor.astype(tensor.dtype), raw=True)
                 updated_nodes.append(parent.name)
@@ -516,7 +516,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
         ):  # pragma: no cover
             for inp in parent.input:
                 if model.get_initializer(inp) is not None:
-                    tensor = numpy_helper.to_array(model.get_initializer(inp), os.path.dirname(model.model_path))
+                    tensor = numpy_helper.to_array(model.get_initializer(inp), base_dir)
                     new_tensor = tensor / np.reshape(best_scale, (1, -1))
                     model.set_initializer(inp, new_tensor.astype(tensor.dtype), raw=True)
             updated_nodes.append(parent.name)
@@ -525,7 +525,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
         elif parent.op_type in ["Conv", "FusedConv"] and len(model.input_name_to_nodes[nodes[0].input[0]]) == len(
             nodes
         ):  # pragma: no cover
-            tensor = numpy_helper.to_array(model.get_initializer(parent.input[2]), os.path.dirname(model.model_path))
+            tensor = numpy_helper.to_array(model.get_initializer(parent.input[2]), base_dir)
             new_tensor = tensor / np.reshape(best_scale, (1, -1))
             model.set_initializer(parent.input[2], new_tensor.astype(tensor.dtype), raw=True)
             updated_nodes.append(parent.name)
@@ -563,6 +563,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
 
 def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, group_size, scheme):
     """Apply clip for weight by checking mse."""
+    base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
     ratios = {}
     for parent, nodes in absorb_pairs.items():
         if any([node.input[0] not in output_dicts for node in nodes]):
@@ -581,9 +582,7 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
                 group_size = weight_config[node.name]["group_size"]
                 scheme = weight_config[node.name]["scheme"]
 
-            org_weight = numpy_helper.to_array(
-                model.get_initializer(node.input[1]), base_dir=os.path.dirname(model.model_path)
-            )
+            org_weight = numpy_helper.to_array(model.get_initializer(node.input[1]), base_dir=base_dir)
             org_w_shape = org_weight.shape  # ic, oc
             group_size = group_size if group_size != -1 else org_w_shape[0]
             org_out = np.matmul(inp, org_weight)  # n_token, oc
@@ -718,7 +717,7 @@ def awq_quantize(
     output_dicts = {}
     full_ratio = {}
 
-    if enable_mse_search or enable_mse_search:
+    if enable_mse_search:
         inputs, so = prepare_inputs(model, n_samples, dataloader)
         del dataloader
 
@@ -992,6 +991,7 @@ def gptq_quantize(
         model: fake quantized ONNXModel
     """
     model = model if isinstance(model, BaseModel) else ONNXModel(model)
+    base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
     output_dicts = {}
 
     inputs, so = prepare_inputs(model, n_samples, dataloader)
@@ -1037,7 +1037,7 @@ def gptq_quantize(
                 and weight_config.get(node.name, {}).get("algorithm", "GPTQ") == "GPTQ"
             ):
                 weight = numpy_helper.to_array(
-                    model.get_initializer(model.get_node(node.name).input[1]), os.path.dirname(model.model_path)
+                    model.get_initializer(model.get_node(node.name).input[1]), base_dir
                 ).copy()
                 if len(weight.shape) != 2:
                     continue

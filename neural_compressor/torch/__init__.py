@@ -13,12 +13,12 @@
 # limitations under the License.
 
 from neural_compressor.torch.utils import register_algo
-from neural_compressor.torch.algorithms import rtn_quantize_entry
+from neural_compressor.torch.algorithms import rtn_quantize_entry, gptq_quantize_entry
 
 from neural_compressor.torch.quantization import (
     quantize,
     RTNWeightQuantConfig,
     get_default_rtn_config,
-    DummyConfig,
-    get_default_dummy_config,
+    GPTQConfig,
+    get_default_gptq_config,
 )

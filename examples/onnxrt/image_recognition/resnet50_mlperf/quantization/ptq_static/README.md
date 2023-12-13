@@ -19,6 +19,8 @@ pip install -r requirements.txt
 python prepare_model.py --input_model='resnet50_v1.pb' --output_model='resnet50_v1.onnx'
 ```
 
+> Note: For now, use "onnx==1.14.1" in this step in case you get an error `ValueError: Could not infer attribute explicit_paddings type from empty iterator`. Refer to this [link](https://github.com/onnx/tensorflow-onnx/issues/2262) for more details of this error.
+
 ## 3. Prepare Dataset
 
 Download dataset [ILSVR2012 validation Imagenet dataset](http://www.image-net.org/challenges/LSVRC/2012/downloads).

@@ -77,6 +77,8 @@ PKG_INSTALL_CFG = {
                 "neural_compressor.tensorflow.*",
             ],
         ),
+        "package_data": {"": ["*.yaml"]},
+        "install_requires": fetch_requirements("requirements_tf.txt"),
     },
     # 3.x ort binary build config, pip install neural-compressor[ort], install 2.x API + 3.x ONNXRT API.
     "neural_compressor_3x_ort": {

@@ -184,6 +184,11 @@ def append_attr(fx_model, model, fx_white_list=[]):
             fx_model.weight = fx_model.module.weight()
         else:
             fx_model.weight = fx_model.module.weight
+        if hasattr(fx_model.module, "bias"):
+            if not isinstance(fx_model.module.bias, torch.Tensor) and fx_model.module.bias is not None:
+                fx_model.bias = fx_model.module.bias()
+            else:
+                fx_model.bias = fx_model.module.bias
     for i in org_attr:
         if (
             type(model) in fx_white_list
@@ -319,6 +324,8 @@ def check_cfg_and_qconfig(
             # to int8
             ipex_op_cfg = op_infos_from_cfgs[name]
             input_tensor_infos = ipex_op_cfg["input_tensor_infos"]
+            if op_name[1] == "Linear" or op_name[1] == "Linear&add":  # record op_name for possible op-wise fallback
+                logger.debug(f"ipex_op_cfg['fqn'] - op_name {ipex_op_cfg['fqn']}  {op_name}")
             for index, input_tensor_info in enumerate(input_tensor_infos):
                 if "force_dtype" not in input_tensor_info.keys():
                     continue

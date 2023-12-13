@@ -21,6 +21,7 @@ from tensorflow.python.framework import dtypes, tensor_util
 
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
+from neural_compressor.adaptor.tf_utils.util import TF_SPR_BASE_VERSIONS
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
@@ -38,7 +39,7 @@ class ConvertAddToBiasAddOptimizer(GraphRewriterBase):
 
         import tensorflow as tf
 
-        if tf.version.VERSION not in ("2.11.0202242", "2.11.0202250", "2.11.0202317", "2.11.0202323"):
+        if tf.version.VERSION not in TF_SPR_BASE_VERSIONS:
             target_nodes = g.query_fusion_pattern_nodes([["MatMul", "Conv2D"], ["Add", "AddV2"]])
         else:
             target_nodes = g.query_fusion_pattern_nodes([["MatMul"], ["Add", "AddV2"]])

@@ -21,9 +21,17 @@
 # constants for configs
 GLOBAL = "global"
 LOCAL = "local"
+DEFAULT_WHITE_LIST = "*"
+EMPTY_WHITE_LIST = None
 
 # config name
 BASE_CONFIG = "base_config"
 COMPOSABLE_CONFIG = "composable_config"
 RTN_WEIGHT_ONLY_QUANT = "rtn_weight_only_quant"
-DUMMY_CONFIG = "dummy_config"
+STATIC_QUANT = "static_quant"
+GPTQ = "gptq"
+
+
+from typing import Callable, Union
+
+OP_NAME_OR_MODULE_TYPE = Union[str, Callable]

@@ -1323,13 +1323,22 @@ class TestPeftModel(unittest.TestCase):
 
         sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
         sq.transform(alpha=0.5, folding=False)
-        self.assertTrue(isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
-        self.assertTrue(
-            isinstance(
-                model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
-                SQLinearWrapper,
-            )
-        )  # Linear in Linear
+        decoder = model.base_model.model.model.decoder
+        if Version(peft.__version__) < Version("0.7.0"):
+            self.assertTrue(isinstance(decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
+            self.assertTrue(
+                isinstance(
+                    decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
+                    SQLinearWrapper,
+                )
+            )  # Linear in Linear
+        else:
+            self.assertTrue(
+                isinstance(
+                    decoder.layers[0].self_attn.v_proj.lora_A.default,
+                    SQLinearWrapper,
+                )
+            )  # Linear in Linear
         self.assertTrue(
             isinstance(model.base_model.model.score.original_module, torch.nn.Linear)
         )  # Linear that is not called in calibration
@@ -1348,13 +1357,22 @@ class TestPeftModel(unittest.TestCase):
         # folding=False
         sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
         sq.transform(alpha="auto", folding=False)
-        self.assertTrue(isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
-        self.assertTrue(
-            isinstance(
-                model.base_model.model.model.decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
-                SQLinearWrapper,
-            )
-        )  # Linear in Linear
+        decoder = model.base_model.model.model.decoder
+        if Version(peft.__version__) < Version("0.7.0"):
+            self.assertTrue(isinstance(decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
+            self.assertTrue(
+                isinstance(
+                    decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
+                    SQLinearWrapper,
+                )
+            )  # Linear in Linear
+        else:
+            self.assertTrue(
+                isinstance(
+                    decoder.layers[0].self_attn.v_proj.lora_A.default,
+                    SQLinearWrapper,
+                )
+            )  # Linear in Linear
         self.assertTrue(
             isinstance(model.base_model.model.score.original_module, torch.nn.Linear)
         )  # Linear that is not called in calibration
@@ -1369,7 +1387,16 @@ class TestPeftModel(unittest.TestCase):
 
         sq = TorchSmoothQuant(model, example_inputs=example_input, q_func=calib_func)
         sq.transform(alpha="auto", folding=True)
-        self.assertTrue(isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, torch.nn.Linear))
+        if Version(peft.__version__) < Version("0.7.0"):
+            self.assertTrue(
+                isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj, torch.nn.Linear)
+            )
+        else:
+            self.assertTrue(
+                isinstance(
+                    model.base_model.model.model.decoder.layers[0].self_attn.v_proj, peft.tuners.lora.layer.Linear
+                )
+            )
         self.assertTrue(
             isinstance(model.base_model.model.model.decoder.layers[0].self_attn.v_proj.lora_A.default, torch.nn.Linear)
         )  # Linear in Linear
@@ -1401,13 +1428,21 @@ class TestPeftModel(unittest.TestCase):
             calib_func=calib_func,
         )
         decoder = q_model.model.base_model.model.model.decoder
-        self.assertTrue(isinstance(decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
-        self.assertTrue(
-            isinstance(
-                decoder.layers[0].self_attn.v_proj.sq_linear.module.lora_A.default,
-                SQLinearWrapper,
-            )
-        )  # Linear in Linear
+        if Version(peft.__version__) < Version("0.7.0"):
+            self.assertTrue(isinstance(decoder.layers[0].self_attn.v_proj, SQLinearWrapper))
+            self.assertTrue(
+                isinstance(
+                    decoder.layers[0].self_attn.v_proj.sq_linear.lora_A.default,
+                    SQLinearWrapper,
+                )
+            )  # Linear in Linear
+        else:
+            self.assertTrue(
+                isinstance(
+                    decoder.layers[0].self_attn.v_proj.lora_A.default,
+                    SQLinearWrapper,
+                )
+            )  # Linear in Linear
         self.assertTrue(
             isinstance(q_model.model.base_model.model.score.original_module, torch.nn.Linear)
         )  # Linear that is not called in calibration
@@ -1511,6 +1546,33 @@ class TestInputConfig(unittest.TestCase):
         )
         assert sq.default_alpha == 0.7
         assert sq.auto_alpha_args["alpha_min"] == 0.5
+
+
+class TestAlphaAutoLinearBlockwise(unittest.TestCase):
+    @classmethod
+    def test_sq_linear_Blockwise_auto(self):
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+        )
+        sq = TorchSmoothQuant(model, LLMCalibDataloader())
+        sq.transform(
+            alpha="auto",
+            calib_iter=1,
+            folding=False,
+            auto_alpha_args={
+                "alpha_min": 0.45,
+                "alpha_max": 0.55,
+                "alpha_step": 0.01,
+                "shared_criterion": "mean",
+                "do_blockwise": True,
+            },
+        )
+        for i in range(12):
+            op_name1 = "model.decoder.layers." + str(i) + ".self_attn.out_proj"
+            op_name2 = "model.decoder.layers." + str(i) + ".fc1"
+            assert sq.alpha_per_layer[op_name1] == sq.alpha_per_layer[op_name2]
+        assert len(sq.block_names) == 13
 
 
 if __name__ == "__main__":

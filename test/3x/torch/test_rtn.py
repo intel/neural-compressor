@@ -113,7 +113,7 @@ class TestRTNQuant(unittest.TestCase):
         self.assertIsNotNone(recovered_fc1)
 
     def test_weight_only_linear(self):
-        from neural_compressor.torch.algorithms.rtn import rtn_quantize
+        from neural_compressor.torch.algorithms.weight_only.rtn import rtn_quantize
 
         model = build_simple_torch_model()
         options = {

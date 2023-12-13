@@ -88,7 +88,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
-        compressed_model = q_model.export_compressed_model()
+        compressed_model = q_model.export_compressed_model(use_optimum_format=False)
         out3 = compressed_model(input)
         self.assertTrue("fc1.qweight" in compressed_model.state_dict().keys())
         self.assertTrue("fc1.qzeros" not in compressed_model.state_dict().keys())
@@ -99,13 +99,14 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         model = Model()
         new_model = load("saved", model, weight_only=True)
         inc_model = INCModel(new_model)
-        inc_model.export_compressed_model(qweight_config_path="saved/qconfig.json", use_hf_format=True)
+        inc_model.export_compressed_model(qweight_config_path="saved/qconfig.json", use_optimum_format=True)
         out4 = inc_model.model(input)
         self.assertTrue("fc1.qzeros" in inc_model.model.state_dict().keys())
         model = Model()
-        compressed_model = export_compressed_model(model, saved_dir="saved", use_hf_format=True)
+        compressed_model = export_compressed_model(model, saved_dir="saved", use_optimum_format=True)
         self.assertTrue("fc1.qzeros" in inc_model.model.state_dict().keys())
-        self.assertTrue(torch.all(out3 == out4))
+        # output gap is because of torch.float16 is used in hf_format
+        self.assertTrue(torch.allclose(out3, out4, atol=1e-3))
 
         model = Model()
         out1 = model(input)
@@ -120,7 +121,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out2 = q_model(input)
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
-        compressed_model = q_model.export_compressed_model(enable_full_range=True)
+        compressed_model = q_model.export_compressed_model(use_optimum_format=False, enable_full_range=True)
         out3 = compressed_model(input)
         self.assertTrue(torch.all(out3 == out2))
 
@@ -181,6 +182,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model = quantization.fit(model, conf, eval_func=eval_func)
         out2 = q_model(input)
+        self.assertTrue(isinstance(q_model.model.fc1, WeightOnlyLinear))
         self.assertTrue(torch.all(torch.isclose(out1, out2, atol=5e-1)))
         self.assertFalse(torch.all(out1 == out2))
 
@@ -245,7 +247,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         model_size1 = os.path.getsize("saved/best_model.pt") / 1024
         print("FP32 Model size:{:.3f}M".format(model_size1))
         inc_model = INCModel(new_model)
-        inc_model.export_compressed_model(qweight_config_path="saved/qconfig.json")
+        inc_model.export_compressed_model(use_optimum_format=False, qweight_config_path="saved/qconfig.json")
         torch.save(inc_model.state_dict(), "saved/tmp.pt")
         model_size2 = os.path.getsize("saved/tmp.pt") / 1024
         print("WeightOnlyLinear Model size:{:.3f}M".format(model_size2))
@@ -273,7 +275,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             out2 = q_model(self.lm_input)
             self.assertTrue(torch.all(torch.isclose(out1[0], out2[0], atol=1e-1)))
             self.assertFalse(torch.all(out1[0] == out2[0]))
-            compressed_model = q_model.export_compressed_model()
+            compressed_model = q_model.export_compressed_model(use_optimum_format=False)
             out3 = compressed_model(self.lm_input)
             self.assertTrue(torch.all(out3[0] == out2[0]))
 
@@ -324,7 +326,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         fp32_model = copy.deepcopy(self.gptj)
         reload_model = load("saved", fp32_model, weight_only=True)
         out2 = reload_model(input)
-        q_model.export_compressed_model()
+        q_model.export_compressed_model(use_optimum_format=False)
         out3 = q_model(input)
         # no idea about the gap at 1e-08, use allclose instead of out1==out2
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
@@ -428,7 +430,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         out2 = q_model(input)
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
-        compressed_model = q_model.export_compressed_model()
+        compressed_model = q_model.export_compressed_model(use_optimum_format=False)
         out3 = compressed_model(input)
         self.assertTrue(torch.all(out3[0] == out2[0]))
 
@@ -529,7 +531,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         q_model.save("saved")
         out1 = q_model.model(input)
         self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
-        compressed_model = q_model.export_compressed_model()
+        compressed_model = q_model.export_compressed_model(use_optimum_format=False)
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
@@ -554,10 +556,13 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model.save("saved")
         out1 = q_model.model(input)
-        compressed_model = q_model.export_compressed_model(use_hf_format=True)
+        compressed_model = q_model.export_compressed_model(use_optimum_format=True)
         out2 = compressed_model(input)
+        print(out1[0])
+        print(out2[0])
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
+        # hf_format uses fp16 for scale, so output atol is higher.
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=2e-04))
 
         # # case 2: list or tuple
         model_3 = copy.deepcopy(self.gptj)
@@ -569,7 +574,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model.save("saved")
         out1 = q_model.model(input)
-        compressed_model = q_model.export_compressed_model(use_hf_format=True)
+        compressed_model = q_model.export_compressed_model(use_optimum_format=False)
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
@@ -650,7 +655,8 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
+        # hf_format uses fp16 for scale, so output atol is higher.
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=2e-04))
 
         # # case 2: list or tuple
         model_2 = copy.deepcopy(self.gptj)
@@ -662,7 +668,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model.save("saved")
         out1 = q_model.model(input)
-        compressed_model = q_model.export_compressed_model()
+        compressed_model = q_model.export_compressed_model(use_optimum_format=False)
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
@@ -680,7 +686,8 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         compressed_model = q_model.export_compressed_model()
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
+        # hf_format uses fp16 for scale, so output atol is higher.
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=2e-04))
 
         print("GPTQ with unfixed length Done")
 

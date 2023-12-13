@@ -175,7 +175,13 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         scales_per_op=True,
         record_max_info=False,
         weight_clip=True,
-        auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
+        auto_alpha_args={
+            "alpha_min": 0.0,
+            "alpha_max": 1.0,
+            "alpha_step": 0.1,
+            "shared_criterion": "mean",
+            "do_blockwise": False,
+        },
         default_alpha=0.5,
     ):
         """Get augmented model with smooth quant.
@@ -194,6 +200,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             weight_clip: Whether to clip weight when calculating scales; by default it is on.
             auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
                             By default the search space is 0.0-1.0 with step_size 0.1.
+                            do_blockwise: Whether to do blockwise auto-tuning.
             default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
 
         Returns:
@@ -219,7 +226,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.sq = ORTSmoothQuant(self.pre_optimized_model, dataloader, self.reduce_range, self.backend)
         self.sq.record_max_info = record_max_info
         self.smooth_quant_model = self.sq.transform(**self.cur_sq_args)
-        logger.info("Updated the pre-optimized model with smooth quant model.")
+        if not record_max_info:  # pragma: no cover
+            logger.info("Updated the pre-optimized model with smooth quant model.")
+        else:
+            logger.info("Collected scale information for smooth quant.")
         # TODO double-check the smooth_quant_model and pre_optimized_model to make sure there no two fp32 model replicas
         self.pre_optimized_model = self.smooth_quant_model
         return self.smooth_quant_model
@@ -305,6 +315,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             self.sq.model = tmp_model
             self.sq.record_max_info = False
             tmp_model = self.sq.transform(**self.cur_sq_args)
+            logger.info("Model is smooth quantized.")
 
         iterations = tune_cfg.get("calib_iteration", 1)
         calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
@@ -1021,7 +1032,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     from onnx.external_data_helper import load_external_data_for_model
 
                     load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
-                    model.model_path = sess_options.optimized_model_filepath
+                model.model_path = sess_options.optimized_model_filepath
         else:
             model.model_path = sess_options.optimized_model_filepath
 
@@ -1129,7 +1140,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         from onnx import numpy_helper
 
         if not isinstance(model, ONNXModel):
-            model = ONNXModel(model)
+            model = ONNXModel(model, ignore_warning=True)
 
         for node in model.nodes():
             if node.op_type == "Gemm":

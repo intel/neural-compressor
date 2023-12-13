@@ -12,7 +12,6 @@ pr:
       - neural_compressor/torch
       - test/3x/torch
       - setup.py
-      - requirements.txt
       - requirements_pt.txt
 
 pool: ICX-16C
@@ -36,7 +35,7 @@ stages:
           - template: template/ut-template.yml
             parameters:
               dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "run_3x_pt"
+              utScriptFileName: "3x/run_3x_pt"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_coverage_3x"
 
@@ -51,7 +50,7 @@ stages:
           - template: template/ut-template.yml
             parameters:
               dockerConfigName: "gitCloneDockerConfig"
-              utScriptFileName: "run_3x_pt"
+              utScriptFileName: "3x/run_3x_pt"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_coverage_3x_baseline"
               repo: $(REPO)
@@ -87,8 +86,8 @@ stages:
               docker ps
               echo "--- collect logs ---"
               docker exec collectLogs /bin/bash  +x -c "cd /neural-compressor/.azure-pipelines/scripts \
-              && bash install_nc.sh \
-              && bash ut/collect_log_3x.sh pt"
+              && bash install_nc.sh 3x_pt \
+              && bash ut/3x/collect_log_3x.sh 3x_pt"
             displayName: "collect logs"
 
           - task: PublishPipelineArtifact@1

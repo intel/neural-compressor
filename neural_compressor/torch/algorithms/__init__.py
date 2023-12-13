@@ -13,4 +13,5 @@
 # limitations under the License.
 
 
-from neural_compressor.torch.algorithms.rtn_quantize import rtn_quantize_entry
+from neural_compressor.torch.algorithms.weight_only_algos import rtn_quantize_entry
+from neural_compressor.torch.algorithms.weight_only_algos import gptq_quantize_entry

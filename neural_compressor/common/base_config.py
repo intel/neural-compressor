@@ -23,7 +23,15 @@ from collections import OrderedDict
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import BASE_CONFIG, COMPOSABLE_CONFIG, GLOBAL, LOCAL
+from neural_compressor.common.utility import (
+    BASE_CONFIG,
+    COMPOSABLE_CONFIG,
+    DEFAULT_WHITE_LIST,
+    EMPTY_WHITE_LIST,
+    GLOBAL,
+    LOCAL,
+    OP_NAME_OR_MODULE_TYPE,
+)
 
 logger = Logger().get_logger()
 
@@ -59,18 +67,43 @@ class BaseConfig(ABC):
     """The base config for all algorithm configs."""
 
     name = BASE_CONFIG
+    params_list = []
 
-    def __init__(self) -> None:
+    def __init__(self, white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST) -> None:
         self._global_config: Optional[BaseConfig] = None
         # For PyTorch, operator_type is the collective name for module type and functional operation type,
         # for example, `torch.nn.Linear`, and `torch.nn.functional.linear`.
         # local config is the collections of operator_type configs and operator configs
         self._local_config: Dict[str, Optional[BaseConfig]] = {}
+        self._white_list = white_list
+
+    def _post_init(self):
+        if self.white_list == DEFAULT_WHITE_LIST:
+            global_config = self.get_params_dict()
+            self._global_config = self.__class__(**global_config, white_list=None)
+        elif isinstance(self.white_list, list) and len(self.white_list) > 0:
+            for op_name_or_type in self.white_list:
+                global_config = self.get_params_dict()
+                tmp_config = self.__class__(**global_config, white_list=None)
+                self.set_local(op_name_or_type, tmp_config)
+        elif self.white_list == EMPTY_WHITE_LIST:
+            return
+        else:
+            raise NotImplementedError(
+                f"The white list should be one of {DEFAULT_WHITE_LIST}, {EMPTY_WHITE_LIST},"
+                " a not empty list, but got {self.white_list}"
+            )
+
+    @property
+    def white_list(self):
+        return self._white_list
+
+    @white_list.setter
+    def white_list(self, op_name_or_type_list: Optional[List[OP_NAME_OR_MODULE_TYPE]]):
+        self._white_list = op_name_or_type_list
 
     @property
     def global_config(self):
-        if self._global_config is None:
-            self._global_config = self.__class__(**self.to_dict())
         return self._global_config
 
     @global_config.setter
@@ -88,23 +121,26 @@ class BaseConfig(ABC):
     def set_local(self, operator_name: str, config: BaseConfig) -> BaseConfig:
         if operator_name in self.local_config:
             logger.warning("The configuration for %s has already been set, update it.", operator_name)
-        if self.global_config is None:
-            self.global_config = self.__class__(**self.to_dict())
         self.local_config[operator_name] = config
         return self
 
     def to_dict(self, params_list=[], operator2str=None):
         result = {}
-        global_config = {}
-        for param in params_list:
-            global_config[param] = getattr(self, param)
+        global_config = self.get_params_dict()
         if bool(self.local_config):
             result[LOCAL] = {}
             for op_name, config in self.local_config.items():
                 result[LOCAL][op_name] = config.to_dict()
-            result[GLOBAL] = global_config
+            if self.global_config:
+                result[GLOBAL] = global_config
         else:
             result = global_config
+        return result
+
+    def get_params_dict(self):
+        result = dict()
+        for param in self.params_list:
+            result[param] = getattr(self, param)
         return result
 
     @classmethod
@@ -118,12 +154,16 @@ class BaseConfig(ABC):
         Returns:
             The constructed config.
         """
-        config = cls(**config_dict.get(GLOBAL, {}))
-        operator_config = config_dict.get(LOCAL, {})
-        if operator_config:
-            for op_name, op_config in operator_config.items():
-                config.set_local(op_name, cls(**op_config))
-        return config
+        if GLOBAL not in config_dict and LOCAL not in config_dict:
+            config = cls(**config_dict)
+            return config
+        else:
+            config = cls(**config_dict.get(GLOBAL, {}))
+            operator_config = config_dict.get(LOCAL, {})
+            if operator_config:
+                for op_name, op_config in operator_config.items():
+                    config.set_local(op_name, cls(**op_config))
+            return config
 
     @classmethod
     def to_diff_dict(cls, instance) -> Dict[str, Any]:
@@ -201,11 +241,12 @@ class BaseConfig(ABC):
             global_config = config.global_config
             op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
             for op_name, op_type in model_info:
-                config_mapping.setdefault(op_type, OrderedDict())[op_name] = global_config
+                if self.global_config is not None:
+                    config_mapping[(op_type, op_name)] = global_config
                 if op_type in op_type_config_dict:
-                    config_mapping[op_type][op_name] = op_name_config_dict[op_type]
+                    config_mapping[(op_type, op_name)] = op_name_config_dict[op_type]
                 if op_name in op_name_config_dict:
-                    config_mapping[op_type][op_name] = op_name_config_dict[op_name]
+                    config_mapping[(op_type, op_name)] = op_name_config_dict[op_name]
         return config_mapping
 
     @staticmethod
@@ -234,9 +275,15 @@ class ComposableConfig(BaseConfig):
         return result
 
     @classmethod
-    def from_dict(cls, config_dict, str2operator=None):
-        # TODO(Yi)
-        pass
+    def from_dict(cls, config_dict: OrderedDict[str, Dict], config_registry: Dict[str, BaseConfig]):
+        assert len(config_dict) >= 1, "The config dict must include at least one configuration."
+        num_configs = len(config_dict)
+        name, value = next(iter(config_dict.items()))
+        config = config_registry[name].from_dict(value)
+        for _ in range(num_configs - 1):
+            name, value = next(iter(config_dict.items()))
+            config += config_registry[name].from_dict(value)
+        return config
 
     def to_json_string(self, use_diff: bool = False) -> str:
         return json.dumps(self.to_dict(), indent=2) + "\n"

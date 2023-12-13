@@ -44,7 +44,15 @@ from .adaptor import Adaptor, adaptor_registry
 from .query import QueryBackendCapability
 
 tensorflow = LazyImport("tensorflow")
-spr_base_verions = ("2.11.0202242", "2.11.0202250", "2.11.0202317", "2.11.0202323")
+spr_base_verions = (
+    "2.11.0202242",
+    "2.11.0202250",
+    "2.11.0202317",
+    "2.11.0202323",
+    "2.14.0202335",
+    "2.14.dev202335",
+    "2.15.0202341",
+)
 
 
 @adaptor_registry
@@ -1825,7 +1833,13 @@ class TensorFlowAdaptor(Adaptor):
         scales_per_op=True,
         record_max_info=False,
         weight_clip=True,
-        auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
+        auto_alpha_args={
+            "alpha_min": 0.0,
+            "alpha_max": 1.0,
+            "alpha_step": 0.1,
+            "shared_criterion": "mean",
+            "do_blockwise": False,
+        },
         default_alpha=0.5,
     ):
         """Convert the model by smooth quant.
@@ -1844,6 +1858,7 @@ class TensorFlowAdaptor(Adaptor):
             weight_clip: Whether to clip weight when calculating scales; by default it is on.
             auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
                             By default the search space is 0.0-1.0 with step_size 0.1.
+                            do_blockwise: Whether to do blockwise auto-tuning.
             default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
 
         Returns:
@@ -1865,17 +1880,10 @@ class TensorFlowAdaptor(Adaptor):
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
         model.graph_def = self.pre_optimized_model.graph_def
 
-        # Get the nodes list which can't be quantized from tune_cfg
-        tune_cfg = None
-        black_nodes = []
-        if tune_cfg is not None:
-            self._tuning_cfg_to_fw(tune_cfg)
-            black_nodes = [node for node in self.quantize_config if self.quantize_config[node] == "fp32"]
-
         # Run calibration to get max values per channel
         from .tf_utils.smooth_quant_calibration import SmoothQuantCalibration
 
-        calibration = SmoothQuantCalibration(model, dataloader, calib_iter, op_types, percentile, black_nodes)
+        calibration = SmoothQuantCalibration(model, dataloader, calib_iter, op_types, percentile)
         max_vals_per_channel, sq_weight_node_names = calibration()
 
         # Get weight tensors and weight nodes based on the input tensor
@@ -1928,13 +1936,6 @@ class TensorFlowAdaptor(Adaptor):
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
         model.graph_def = self.pre_optimized_model.graph_def
 
-        # Get the nodes list which can't be quantized from tune_cfg
-        tune_cfg = None
-        black_nodes = []
-        if tune_cfg is not None:
-            self._tuning_cfg_to_fw(tune_cfg)
-            black_nodes = [node for node in self.quantize_config if self.quantize_config[node] == "fp32"]
-
         # only support per-tensor MatMul now
         op_types = ["MatMul"]
         llm_temp_dir = self.work_dir + "/temp_saved_model"
@@ -1947,7 +1948,6 @@ class TensorFlowAdaptor(Adaptor):
             calib_iter,
             op_types,
             percentile,
-            black_nodes,
             llm_temp_dir,
             model.weight_name_mapping,
         )
@@ -2146,7 +2146,15 @@ class TensorflowQuery(QueryBackendCapability):
             if self.version in sub_data["version"]["name"]:
                 return sub_data
             else:
-                if sub_data["version"]["name"] == ["2.11.0202242", "2.11.0202250", "2.11.0202317", "2.11.0202323"]:
+                if sub_data["version"]["name"] == [
+                    "2.11.0202242",
+                    "2.11.0202250",
+                    "2.11.0202317",
+                    "2.11.0202323",
+                    "2.14.0202335",
+                    "2.14.dev202335",
+                    "2.15.0202341",
+                ]:
                     continue
                 sorted_list = copy.deepcopy(sub_data["version"]["name"])
                 sorted_list.remove("default") if "default" in sorted_list else None
