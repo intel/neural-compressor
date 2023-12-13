@@ -33,6 +33,7 @@ except:
 from collections import UserDict, defaultdict
 
 from tqdm import tqdm
+import numpy
 
 
 def enough_memo_store_scale(device, need_space):
@@ -976,15 +977,12 @@ class TorchSmoothQuant:
         :return:
         """
         logger.info("start sq auto tuning")
-        alpha_scale = 100
-        alpha_space = list(
-            range(
-                round(alpha_min * alpha_scale),
-                round((alpha_max + alpha_step) * alpha_scale),
-                round(alpha_step * alpha_scale),
-            )
+        round_num = max(
+            len(str(alpha_min).split(".")[1]),
+            len(str(alpha_max).split(".")[1]),
+            len(str(alpha_step).split(".")[1])
         )
-        alpha_space = [alpha / alpha_scale for alpha in alpha_space]
+        alpha_space = numpy.round(numpy.arange(alpha_min, alpha_max + alpha_step, alpha_step), round_num).tolist()
         ##wrapper new module
         self._qdq_model_wrapper_for_auto(save_q_input=True)
         ##set alpha to 0.5 as default
@@ -1189,7 +1187,6 @@ class TorchSmoothQuant:
             self.insert_mul, self.allow_absorb = True, False
         if isinstance(alpha, float) and (alpha < 0 or alpha > 1):
             logger.warning("reset alpha to in range [0.0, 1.0]")
-            import numpy
 
             alpha = numpy.clip(alpha, 0.0, 1.0)
 
