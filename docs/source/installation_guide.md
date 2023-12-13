@@ -47,7 +47,7 @@ The following prerequisites and requirements must be satisfied for a successful 
   ```
   ```Shell
   # [Experimental] install stable basic + 3.x TensorFlow API from pypi 
-  pip install neural-compressor[pt]
+  pip install neural-compressor[tf]
   ```
 
 - Install from test Pypi
