@@ -1,0 +1,34 @@
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+transformation:
+  location:
+    - ["insert_below_dataloader_definition_line", "insert_below_model_definition_line"]
+  content:
+    - |-
+      [+] from neural_compressor.config import PostTrainingQuantConfig
+      [+] from neural_compressor.quantization import fit
+      [+] MODEL_NAME = MODEL_NAME.to("xpu")
+      [+] conf = PostTrainingQuantConfig(backend='ipex', quant_level=1, device="xpu")
+      [+] MODEL_NAME = fit(model=MODEL_NAME, conf=conf, calib_dataloader=DATALOADER_NAME)
+      [+] MODEL_NAME.save("./quantized_model")
+      [+] MODEL_NAME.eval()
+  order:
+    - below:
+      above:
+        - pytorch_jit_script
+        - pytorch_jit_script_ofi
+        - pytorch_jit_trace
+        - pytorch_jit_trace_ofi
+        - pytorch_channels_last
