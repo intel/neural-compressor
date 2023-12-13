@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .quantize import quantize_dynamic, quantize
+from .fp8_quantization_impl import quantize_dynamic, quantize

@@ -24,7 +24,7 @@ from deepspeed.module_inject.layers import LmHeadLinearAllreduce
 from neural_compressor.common.utility import FP8_QUANT
 from neural_compressor.torch.utils import fetch_module, logger, register_algo, set_module
 
-from ..modules import Autocast, BatchMatmul, Matmul
+from ..layers import Autocast, BatchMatmul, Matmul
 from .modules import (
     FP8BatchMatmul,
     FP8Cast,
