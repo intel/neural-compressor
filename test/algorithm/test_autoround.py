@@ -56,3 +56,7 @@ class TestAutoRoundConv1D(unittest.TestCase):
     def test_Adamround(self):
         round = AutoAdamRound(self.model, self.tokenizer, device="cpu", iters=5, seqlen=8, n_samples=1)
         round.quantize()
+
+
+if __name__ == "__main__":
+    unittest.main()
