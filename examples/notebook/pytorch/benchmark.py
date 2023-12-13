@@ -73,7 +73,7 @@ def compute_metrics(p: EvalPrediction):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument("--input_model", type=str, required=True)
+    parser.add_argument("--input_model", type=str, required=False, default=None)
     args = parser.parse_args()
 
     # Initialize our Trainer
@@ -87,9 +87,23 @@ if __name__ == "__main__":
     )
 
     eval_dataloader = trainer.get_eval_dataloader()
+    if eval_dataloader.batch_size is None:
+        def _build_inc_dataloader(dataloader):
+            class INCDataLoader:
+                __iter__ = dataloader.__iter__
+                def __init__(self) -> None:
+                    self.dataloader = dataloader
+                    self.batch_size = dataloader.total_batch_size
+            return INCDataLoader()
+        eval_dataloader = _build_inc_dataloader(eval_dataloader)
+    batch_size = eval_dataloader.batch_size
+
+    if args.input_model:
+        from neural_compressor.utils.pytorch import load
+        model = load(args.input_model, model, dataloader=eval_dataloader)
 
     b_conf = BenchmarkConfig(warmup=5,
                         iteration=100,
                         cores_per_instance=4,
                         num_of_instance=1)
-    benchmark.fit(args.input_model, b_conf, b_dataloader=eval_dataloader)
+    benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)

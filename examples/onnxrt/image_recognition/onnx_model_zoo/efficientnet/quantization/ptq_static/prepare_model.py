@@ -3,7 +3,7 @@ import os
 import sys
 from urllib import request
 
-MODEL_URL = "https://github.com/onnx/models/raw/main/vision/classification/efficientnet-lite4/model/efficientnet-lite4-11.onnx"
+MODEL_URL = "https://github.com/onnx/models/raw/main/archive/vision/classification/efficientnet-lite4/model/efficientnet-lite4-11.onnx"
 MAX_TIMES_RETRY_DOWNLOAD = 5
 
 
