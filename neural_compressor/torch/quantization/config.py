@@ -380,7 +380,7 @@ if USE_HPEX:
                 approach=["static", "dynamic"],
                 device=["hpu"],
             )
-            from .fp8.fp8_quantization_impl import white_list
+            from .fp8.quantization_impl import white_list
 
             operators = white_list
             supported_configs.append(OperatorConfig(config=fp8_config, operators=operators, backend=Backend.DEFAULT))
@@ -388,7 +388,7 @@ if USE_HPEX:
 
         @staticmethod
         def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-            from .fp8.fp8_quantization_impl import white_list
+            from .fp8.quantization_impl import white_list
 
             filter_result = []
             for op_name, module in model.named_modules():
