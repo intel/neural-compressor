@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neural_compressor.common.logger import Logger
+
+logger = Logger().get_logger()
+
 
 class FakeConfig:
     pass
@@ -25,13 +29,16 @@ from neural_compressor.common.base_tune import Runner, Tuner
 
 
 class TorchRunner(Runner):
-    def __init__(self, model, run_fn, run_args, eval_fn, eval_args) -> None:
+    def __init__(self, model, run_fn, run_args) -> None:
         super().__init__()
 
+    def apply(self, quant_config):
+        logger.info(f"apply quant_config: {quant_config}.")
 
-def autotune(model, tune_config, run_fn, run_args, eval_fn, eval_args):
+
+def autotune(model, tune_config, run_fn=None, run_args=None):
     tuner = Tuner(tune_config=tune_config)
-    runner = TorchRunner(model, run_fn, run_args, eval_fn, eval_args)
+    runner = TorchRunner(model, run_fn, run_args)
     best_qmodel = tuner.search(runner=runner)
     return best_qmodel
 
@@ -40,6 +47,11 @@ from neural_compressor.common.base_tune import BaseTuningConfig
 
 
 class TuningConfig(BaseTuningConfig):
-    def __init__(self, tuning_order, timeout=0, max_trials=100):
-        tuning_order = get_default_tuning_config()
+    def __init__(self, tuning_order=None, timeout=0, max_trials=100):
+        if not tuning_order:
+            tuning_order = get_default_tuning_config()
         super().__init__(tuning_order, timeout, max_trials)
+
+
+def get_default_tune_config() -> TuningConfig:
+    return TuningConfig()

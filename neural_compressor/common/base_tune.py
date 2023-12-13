@@ -13,7 +13,11 @@
 # limitations under the License.
 
 from abc import abstractmethod
-from typing import List, Union
+from typing import Any, Callable, List, Union
+
+from neural_compressor.common.logger import Logger
+
+logger = Logger().get_logger()
 
 
 class Runner:
@@ -50,14 +54,45 @@ class Tuner:
         self.tune_config = tune_config
 
     def generate_quant_config(self):
+        return [None]
+
+    def get_best_model(self, q_model, objective_score: Union[float, int]):
         pass
 
-    def get_best_model(self, q_model, eval_res: Union[float, int]):
-        pass
+    def get_objective_score(self, model):
+        eval_result = objective.evaluate(model)
+        return eval_result
 
     def search(self, runner: Runner):
         for config in self.generate_quant_config():
             q_model = runner.apply(quant_config=config)
-            eval_res = runner.evaluate()
-            if self.get_best_model(q_model, eval_res):
+            if self.get_best_model(q_model, self.get_objective_score(q_model)):
                 return q_model
+
+
+class Objective:
+    def __init__(self) -> None:
+        self.eval_fn_registry = []
+
+    def evaluate(self, model):
+        result = 0
+        for eval_pair in self.eval_fn_registry:
+            eval_fn = eval_pair["func"]
+            result += eval_fn(model)
+        return result
+
+
+objective = Objective()
+
+
+def register_tuning_target(algo_name="rtn_weight_only_quant", weight=0.5, mode="max", name=None) -> Callable[..., Any]:
+    def decorator(eval_fn):
+        fn_name = name if name else eval_fn.__name__
+        eval_pair = {"name": fn_name, "algo_name": algo_name, "weight": weight, "mode": mode, "func": eval_fn}
+        objective.eval_fn_registry.append(eval_pair)
+        logger.info(
+            f"Add new tuning target : {eval_pair} to tuning target registry({len(objective.eval_fn_registry)})."
+        )
+        return eval_fn
+
+    return decorator
