@@ -266,7 +266,6 @@ class WrapperLayer(torch.nn.Module):
         self.os_bias = None  # lyt_os
         self.do_blockwise = False
 
-
     def enable_quant(self):
         self.quant = True
 
@@ -953,7 +952,7 @@ class TorchSmoothQuant:
                 self.fp32_output_val[mod_name] = [torch.norm(mod.output)]
             del mod
 
-        if self.to_shift_bias: # lyt_os_debug_1011 #lyt_os_debug_1213 fix conflicts
+        if self.to_shift_bias:  # lyt_os_debug_1011 #lyt_os_debug_1213 fix conflicts
             for name in module_names:
                 module = get_module(self.model, name)
                 os_bias = copy.deepcopy(self.bias_shifts[name])  # lyt_os_debug_0913
