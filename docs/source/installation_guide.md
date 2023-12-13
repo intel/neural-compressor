@@ -162,8 +162,8 @@ The following prerequisites and requirements must be satisfied for a successful 
     <td class="tg-7zrl"> <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.14.0>2.14.0</a><br>
     <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.13.0>2.13.0</a><br>
     <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.12.0>2.12.0</a><br></td>
-    <td class="tg-7zrl"> <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.14.0.1>v2.14.0.1</a><br>
-    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.13.0.0>v2.13.0.0</a><br>
+    <td class="tg-7zrl"> <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.14.0.1>2.14.0.1</a><br>
+    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.13.0.0>2.13.0.0</a><br>
     <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v1.2.0>1.2.0</a><br></td>
     <td class="tg-7zrl"><a href=https://github.com/pytorch/pytorch/tree/v2.1.0>2.1.0+cpu</a><br>
     <a href=https://github.com/pytorch/pytorch/tree/v2.0.1>2.0.1+cpu</a><br>
