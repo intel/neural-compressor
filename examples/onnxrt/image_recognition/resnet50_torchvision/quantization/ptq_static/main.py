@@ -115,6 +115,7 @@ class TopK:
             return 0
         return self.num_correct / self.num_sample
 
+
 class Dataloader:
     def __init__(self, dataset_location, image_list, batch_size):
         self.batch_size = batch_size
@@ -206,14 +207,17 @@ class Dataloader:
             except StopIteration:
                 return
 
+
 def eval_func(model, dataloader, metric):
     metric.reset()
-    sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+    provider = 'DmlExecutionProvider' if backend == 'onnxrt_dml_ep' else 'CPUExecutionProvider'
+    sess = ort.InferenceSession(model.SerializeToString(), providers=[provider])
     input_names = [i.name for i in sess.get_inputs()]
     for input_data, label in dataloader:
         output = sess.run(None, dict(zip(input_names, [input_data])))
         metric.update(output, label)
     return metric.result()
+
 
 if __name__ == "__main__":
     logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")
@@ -275,7 +279,14 @@ if __name__ == "__main__":
         default=1,
         type=int,
     )
+    parser.add_argument(
+        '--device',
+        type=str,
+        default='cpu',
+        choices=['cpu', 'npu'],
+    )
     args = parser.parse_args()
+    backend = 'onnxrt_dml_ep' if args.device == 'npu' else 'default'
 
     model = onnx.load(args.model_path)
     dataloader = Dataloader(args.dataset_location, args.label_path, args.batch_size)
@@ -297,6 +308,8 @@ if __name__ == "__main__":
                 cores_per_instance=4,
                 num_of_instance=1,
                 diagnosis=args.diagnose,
+                device=args.device,
+                backend=backend,
             )
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
@@ -308,9 +321,9 @@ if __name__ == "__main__":
         config = PostTrainingQuantConfig(
             quant_format=args.quant_format,
             diagnosis=args.diagnose,
+            device=args.device,
+            backend=backend
         )
  
-        q_model = quantization.fit(model, config, calib_dataloader=dataloader,
-			     eval_func=eval)
-
+        q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval)
         q_model.save(args.output_model)
