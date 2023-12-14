@@ -757,7 +757,7 @@ class ONNXRTAugment:
             max_vals_per_channel: max values per channel of input tensors
             shape_infos: The shape information of input tensors
         """
-        logger.info("start smooth model calibration.")
+        logger.info("Start smooth model calibration.")
         # add the input tensors of {op_types} to outputs of the model
         tensors_to_node = self._get_input_tensor_of_ops(op_types)
         self.model_wrapper.add_tensors_to_outputs(tensors_to_node.keys())
