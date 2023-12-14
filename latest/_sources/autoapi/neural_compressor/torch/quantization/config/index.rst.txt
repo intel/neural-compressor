@@ -17,6 +17,7 @@ Classes
    neural_compressor.torch.quantization.config.Backend
    neural_compressor.torch.quantization.config.RTNWeightQuantConfig
    neural_compressor.torch.quantization.config.GPTQConfig
+   neural_compressor.torch.quantization.config.FP8QConfig
 
 
 
@@ -71,5 +72,13 @@ Functions
    Generate the default gptq config.
 
    :returns: the default gptq config.
+
+
+.. py:class:: FP8QConfig(weight_dtype: DTYPE_RANGE = torch.float8_e4m3fn, act_dtype: DTYPE_RANGE = torch.float8_e4m3fn, act_algo: Union[str, List[str]] = 'minmax', approach: Union[str, List[str]] = 'static', device: Union[str, List[str]] = 'hpu', white_list: Optional[List[neural_compressor.common.utility.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+
+
+
+
+   Config class for FP8 quantization.
 
 

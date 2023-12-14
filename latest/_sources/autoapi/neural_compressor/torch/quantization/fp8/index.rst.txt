@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.quantization.fp8`
+==================================================
+
+.. py:module:: neural_compressor.torch.quantization.fp8
+
+

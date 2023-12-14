@@ -15,6 +15,7 @@ Classes
 .. autoapisummary::
 
    neural_compressor.adaptor.keras.KerasAdaptor
+   neural_compressor.adaptor.keras.KerasQuery
 
 
 
@@ -25,5 +26,15 @@ Classes
 
 
    The keras class of framework adaptor layer.
+
+
+.. py:class:: KerasQuery(local_config_file=None)
+
+
+
+
+   Base class that defines Query Interface.
+
+   Each adaption layer should implement the inherited class for specific backend on their own.
 
 

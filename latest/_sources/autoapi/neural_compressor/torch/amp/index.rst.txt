@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.amp`
+=====================================
+
+.. py:module:: neural_compressor.torch.amp
+
+

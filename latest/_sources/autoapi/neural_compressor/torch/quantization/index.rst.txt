@@ -12,6 +12,6 @@ Submodules
    :titlesonly:
    :maxdepth: 1
 
-   modules/index.rst
+   layers/index.rst
 
 
