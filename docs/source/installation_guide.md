@@ -1,6 +1,6 @@
 # Installation
 
-1. [Linux Installation](#linux-installation)
+1. [Installation](#installation)
 
     1.1. [Prerequisites](#prerequisites)
 
@@ -10,21 +10,13 @@
 
     1.4. [Install from AI Kit](#install-from-ai-kit)
 
-2. [Windows Installation](#windows-installation)
+2. [System Requirements](#system-requirements)
 
-    2.1. [Prerequisites](#prerequisites-1)
+   2.1. [Validated Hardware Environment](#validated-hardware-environment)
 
-    2.2. [Install from Binary](#install-from-binary-1)
+   2.2. [Validated Software Environment](#validated-software-environment)
 
-    2.3. [Install from Source](#install-from-source-1)
-
-3. [System Requirements](#system-requirements)
-
-   3.1. [Validated Hardware Environment](#validated-hardware-environment)
-
-   3.2. [Validated Software Environment](#validated-software-environment)
-
-## Linux Installation
+## Installation
 ### Prerequisites
 You can install Neural Compressor using one of three options: Install single component from binary or source, or get the Intel-optimized framework together with the library by installing the [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).
 
@@ -62,6 +54,13 @@ The following prerequisites and requirements must be satisfied for a successful 
 
 - Install from Conda 
   ```Shell
+  # install on Linux OS
+  conda install opencv-python-headless -c fastai
+  conda install neural-compressor -c conda-forge -c intel
+  ```
+  ```Shell
+  # install on Windows OS
+  conda install pycocotools -c esri
   conda install opencv-python-headless -c fastai
   conda install neural-compressor -c conda-forge -c intel
   ```
@@ -86,38 +85,6 @@ The AI Kit is distributed through many common channels, including from Intel's w
 |-|-|
 |[Download AI Kit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit/) |[AI Kit Get Started Guide](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html) |
 
-## Windows Installation
-
-### Prerequisites
-
-The following prerequisites and requirements must be satisfied for a successful installation:
-
-- Python version: 3.8 or 3.9 or 3.10 or 3.11
-
-### Install from Binary
-- Install from Pypi
-  ```Shell
-  # install stable basic version from pypi
-  pip install neural-compressor
-  ```
-- Install from Conda
-  ```Shell
-  # install stable basic version from from conda
-  conda install pycocotools -c esri
-  conda install opencv-python-headless -c fastai
-  conda install neural-compressor -c conda-forge -c intel
-  ```
-
-### Install from Source
-
-```Shell
-  git clone https://github.com/intel/neural-compressor.git
-  cd neural-compressor
-  pip install -r requirements.txt
-  # build with basic functionality
-  python setup.py install
-  ```
-
 ## System Requirements
 
 ### Validated Hardware Environment
@@ -137,7 +104,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 
 ### Validated Software Environment
 
-* OS version: CentOS 8.4, Ubuntu 22.04
+* OS version: CentOS 8.4, Ubuntu 22.04, MacOS Ventura 13.5
 * Python version: 3.8, 3.9, 3.10, 3.11
 
 <table class="docutils">
