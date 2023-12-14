@@ -26,7 +26,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
     libgl1-mesa-glx \
     libglib2.0-0 \
     python3 \
-    python3-pip
+    python3-pip \
+    curl
 
 RUN ${PYTHON} -m pip --no-cache-dir install --upgrade \
     pip \
@@ -37,10 +38,10 @@ RUN ln -sf $(which ${PYTHON}) /usr/local/bin/python && \
     ln -sf $(which ${PYTHON}) /usr/bin/python && \
     ln -sf $(which ${PYTHON}) /usr/bin/python3
 
-ARG INC_VER=1.12
+ARG INC_VER=2.3
 
-ADD https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/third-party-programs.txt /licenses/
-ADD https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/docker/third-party-programs-docker.txt /licenses/
-ADD https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/LICENSE /licenses/
+RUN curl https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/third-party-programs.txt -o /licenses/third-party-programs.txt && \
+    curl https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/docker/third-party-programs-docker.txt -o /licenses/third-party-programs-docker.txt && \
+    curl https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/LICENSE -o /licenses/LICENSE
 
 RUN python -m pip install --no-cache-dir neural-compressor${INC_VER:+==${INC_VER}}

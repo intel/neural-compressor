@@ -21,7 +21,7 @@ Supported model identifier from [huggingface.co](https://huggingface.co/):
 |           gpt2          |
 |             distilgpt2           |
 
-Require transformers==3.2.0.
+Require python <=3.8 and transformers==3.2.0.
 
 ```shell
 python prepare_model.py --input_model=gpt2 --output_model=gpt2.onnx  # or other supported model identifier

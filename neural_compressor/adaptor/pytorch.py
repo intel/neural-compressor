@@ -53,6 +53,15 @@ def get_torch_version():
     return version
 
 
+def get_ipex_version():
+    try:
+        ipex_version = ipex.__version__.split("+")[0]
+    except ValueError as e:  # pragma: no cover
+        assert False, "Got an unknown version of intel_extension_for_pytorch: {}".format(e)
+    version = Version(ipex_version)
+    return version
+
+
 def get_torch_white_list(approach):
     version = get_torch_version()
     import torch.quantization as tq
@@ -1728,7 +1737,13 @@ class TemplateAdaptor(Adaptor):
         force_re_smooth=False,
         record_max_info=False,
         weight_clip=True,
-        auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
+        auto_alpha_args={
+            "alpha_min": 0.0,
+            "alpha_max": 1.0,
+            "alpha_step": 0.1,
+            "shared_criterion": "mean",
+            "do_blockwise": False,
+        },
         default_alpha=0.5,
     ):
         """Convert the model by smooth quant.
@@ -1747,6 +1762,7 @@ class TemplateAdaptor(Adaptor):
             weight_clip: Whether to clip weight when calculating scales; by default it is on.
             auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
                             By default the search space is 0.0-1.0 with step_size 0.1.
+                            do_blockwise determines whether to do blockwise auto-tuning.
             default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
 
         Returns:
@@ -2603,7 +2619,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
     def __init__(self, framework_specific_info):
         super(PyTorch_IPEXAdaptor, self).__init__(framework_specific_info)
-        self.version = get_torch_version()
+        self.version = get_ipex_version()
         query_config_file = "pytorch_ipex.yaml"
         self.query_handler = PyTorchQuery(
             device=self.device, local_config_file=os.path.join(os.path.dirname(__file__), query_config_file)
@@ -4573,10 +4589,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             enable_full_range = self.recipes["rtn_args"].get("enable_full_range", False)
             enable_mse_search = self.recipes["rtn_args"].get("enable_mse_search", False)
             group_dim = self.recipes["rtn_args"].get("group_dim", 1)
+            return_int = self.recipes["rtn_args"].get("return_int", False)
         else:  # pragma: no cover
             enable_full_range = False
             enable_mse_search = False
             group_dim = 1
+            return_int = False
         from .torch_utils.util import fetch_module, set_module
         from .torch_utils.weight_only import rtn_quantize
 
@@ -4614,7 +4632,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     num_bits,
                     group_size,
                     scheme,
-                    return_int=False,
+                    return_int=return_int,
                     data_type=dtype,
                     enable_full_range=enable_full_range,
                     enable_mse_search=enable_mse_search,

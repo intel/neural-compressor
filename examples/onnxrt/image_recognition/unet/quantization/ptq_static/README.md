@@ -16,7 +16,7 @@ pip install -r requirements.txt
 ## 2. Prepare Model
 
 ```bash
-python prepare_model.py --input_model='CompVis/stable-diffusion-v1-4' --output_model='.'
+python prepare_model.py --input_model='CompVis/stable-diffusion-v1-4' --output_model='unet-export.onnx'
 ```
 
 # Run

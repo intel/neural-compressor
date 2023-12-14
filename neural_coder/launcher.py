@@ -57,6 +57,8 @@ class Launcher:
                     args.opt = "pytorch_inc_static_quant_fx"
                 if args.approach == "static_ipex":
                     args.opt = "pytorch_inc_static_quant_ipex"
+                if args.approach == "static_ipex_xpu":
+                    args.opt = "pytorch_inc_static_quant_ipex_xpu"
                 if args.approach == "dynamic":
                     args.opt = "pytorch_inc_dynamic_quant"
                 if args.approach == "auto":
