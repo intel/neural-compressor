@@ -67,27 +67,17 @@ class autocast:
         dtype: Optional[_dtype] = None,
         enabled: bool = True,
         cache_enabled: Optional[bool] = None,
-        global_dtype: Optional[_dtype] = None,
     ):
         self.device = device_type
-        self.global_dtype = global_dtype
         if dtype is not None:
             self.fast_dtype = dtype
         if cache_enabled is not None:
             self._cache_enabled = cache_enabled
-        if (
-            not (device_type == "hpu" and dtype in [torch.float8_e4m3fn, torch.float8_e5m2])
-            or self.global_dtype is not None
-        ):
+        if not (device_type == "hpu" and dtype in [torch.float8_e4m3fn, torch.float8_e5m2]):
             self._autocast = torch.autocast(device_type, dtype, enabled, cache_enabled)
 
     def __enter__(self) -> None:
         if self.device == "hpu" and self.fast_dtype in [torch.float8_e4m3, torch.float8_e5m2]:
-            if self.global_dtype is not None:
-                org_dtype = self.fast_dtype
-                self.fast_dtype = self.global_dtype
-                self._autocast.__enter__()  # enable bf16/fp16
-                self.fast_dtype = org_dtype
             from neural_compressor.torch.amp.fp8.functions import replace_func
 
             # This function will replace F.linear and torch.matmul with the fp8 one
@@ -101,10 +91,5 @@ class autocast:
 
             # This function will recover F.linear and torch.matmul with the original one
             recover_func()
-            if self.global_dtype is not None:
-                org_dtype = self.fast_dtype
-                self.fast_dtype = self.global_dtype
-                self._autocast.__exit__(exc_type, exc_value, traceback)  # enable bf16/fp16
-                self.fast_dtype = org_dtype
         else:
             self._autocast.__exit__(exc_type, exc_value, traceback)
