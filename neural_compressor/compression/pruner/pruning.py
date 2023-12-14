@@ -205,7 +205,7 @@ class SparseGPTPruning(BasePruning):
 
         layers = self._layers
         self._model = self._model.cpu()
-        inputs, inp_dict = collect_layer_inputs(
+        inputs, positional_inputs, other_input_infos  = collect_layer_inputs(
             model=self._model, layers=layers, layer_idx=0, layer_inputs=self._dataloader, device=self.dev
         )
 
@@ -218,8 +218,8 @@ class SparseGPTPruning(BasePruning):
                     layer_op_names = [key for key in pruner.modules.keys() if layer_index_str in key]
                     handles_list.append(pruner.register_gpt_hook(layer_op_names))
                 for j in range(len(inputs)):
-                    input_infos = self.gather_single_batch_from_dict(inp_dict, j)
-                    layer(inputs[j], **input_infos)[0]
+                    other_infos = self.gather_single_batch_from_dict(other_input_infos, j)
+                    layer(inputs[j], *positional_inputs, **other_infos)[0]
                 for handles in handles_list:
                     for h in handles:
                         h.remove()
@@ -228,12 +228,13 @@ class SparseGPTPruning(BasePruning):
                     pruner.fasterprune(layer_op_names)
                 for j in range(len(inputs)):
                     # the weights of current layer have been pruned, get the latest outputs as the inputs for next layer
-                    input_infos = self.gather_single_batch_from_dict(inp_dict, j)
-                    inputs[j] = layer(inputs[j], **input_infos)[0]
+                    other_infos = self.gather_single_batch_from_dict(other_input_infos, j)
+                    inputs[j] = layer(inputs[j], *positional_inputs, **other_infos)[0]
                 layers[i] = layer.cpu()
                 if "cuda" in self.dev.type:
                     torch.cuda.empty_cache()
-            del inp_dict
+            del other_infos
+            del positional_inputs
             del inputs
             gc.collect()
         if "cuda" in self.dev.type:
@@ -301,3 +302,4 @@ class RetrainFreePruning(BasePruning):
     #                      "when initializing or calling on_train_begin()")
     #     self._dataloader = dataloader
     #     self._prepare_pruners()
+
