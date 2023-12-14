@@ -1,5 +1,9 @@
 neural-compressor==2.4
 transformers==4.32.0
+datasets
+accelerate
+sentencepiece
+protobuf
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.1.0+cpu
 intel-extension-for-pytorch==2.1.0
