@@ -24,3 +24,8 @@ python download_dataset.py
 ```shell
 python ptq_sam.py
 ```
+
+# Result
+| | Baseline (FP32) | INT8 
+| ------------- | ------------- | -------------
+Dice| 0.7939  | 0.7849
