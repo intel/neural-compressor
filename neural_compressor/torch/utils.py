@@ -109,6 +109,7 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
     return filter_result
 
 
+# pylint:disable=import-error
 try:
     import deepspeed
     import habana_frameworks.torch.hpex
