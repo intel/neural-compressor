@@ -25,7 +25,13 @@ import onnx
 from onnx import helper, numpy_helper
 from onnx import onnx_pb as onnx_proto
 
-from neural_compressor.adaptor.ox_utils.util import _get_qrange_for_qType, is_B_transposed, quantize_data, to_numpy, simple_progress_bar
+from neural_compressor.adaptor.ox_utils.util import (
+    _get_qrange_for_qType,
+    is_B_transposed,
+    quantize_data,
+    simple_progress_bar,
+    to_numpy,
+)
 from neural_compressor.model.model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
 
