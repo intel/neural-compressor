@@ -25,5 +25,5 @@ python run_llama2_sq.py \
     --sq-recipes "llama2-13b"
 ```
 > Notes:  
-> INT8 model will be saved into "./saved_results". 
+> INT8 model will be saved into "./saved_results", the quantized model can be evaluated by IPEX.
 > parameter "--sq-recipes" decides the recipes use to do quantize, details can be found in scripts.
