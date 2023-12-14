@@ -42,11 +42,11 @@ The following prerequisites and requirements must be satisfied for a successful 
   pip install neural-compressor
   ```
   ```Shell
-  # [Experimental] install stable basic + 3.x PyTorch API from pypi 
+  # [Experimental] install stable basic + PyTorch framework extension API from pypi 
   pip install neural-compressor[pt]
   ```
   ```Shell
-  # [Experimental] install stable basic + 3.x TensorFlow API from pypi 
+  # [Experimental] install stable basic + TensorFlow framework extension API from pypi 
   pip install neural-compressor[tf]
   ```
 
