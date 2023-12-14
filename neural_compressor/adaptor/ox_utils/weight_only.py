@@ -29,6 +29,7 @@ from onnx import helper, numpy_helper
 from onnx import onnx_pb as onnx_proto
 from packaging.version import Version
 
+from neural_compressor.adaptor.ox_utils.util import simple_progress_bar
 from neural_compressor.model.model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.utils.utility import LazyImport
@@ -320,7 +321,12 @@ def rtn_quantize(
     base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
     new_nodes = []
     remove_nodes = []
+    total_num = len([i for i in model.nodes() if i.op_type in ["MatMul"]])
+    curr_id = 0
     for node in model.nodes():
+        if node.op_type in ["MatMul"]:
+            curr_id += 1
+            simple_progress_bar(total_num, curr_id)
         if (
             node.op_type in ["MatMul"]
             and model.get_initializer(node.input[1]) is not None
@@ -1025,8 +1031,8 @@ def gptq_quantize(
 
     new_nodes = []
     remove_nodes = []
-
-    for input_name in output_names:
+    for idx, input_name in enumerate(output_names):
+        simple_progress_bar(len(output_names), idx + 1)
         node_list = []
         weights = []
 
