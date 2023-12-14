@@ -32,8 +32,8 @@ except:
     logger = logging.getLogger()
 from collections import UserDict, defaultdict
 
-from tqdm import tqdm
 import numpy
+from tqdm import tqdm
 
 
 def enough_memo_store_scale(device, need_space):
@@ -978,9 +978,7 @@ class TorchSmoothQuant:
         """
         logger.info("start sq auto tuning")
         round_num = max(
-            len(str(alpha_min).split(".")[1]),
-            len(str(alpha_max).split(".")[1]),
-            len(str(alpha_step).split(".")[1])
+            len(str(alpha_min).split(".")[1]), len(str(alpha_max).split(".")[1]), len(str(alpha_step).split(".")[1])
         )
         alpha_space = numpy.round(numpy.arange(alpha_min, alpha_max + alpha_step, alpha_step), round_num).tolist()
         ##wrapper new module
