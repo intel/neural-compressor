@@ -568,7 +568,7 @@ class ORTSmoothQuant:
         Returns:
             the smooth scales for weights, currently one input tensor only have one scale
         """
-        logger.info("Collect scale info for smmoth quant.")
+        logger.info("start to collect scale info for smmoth quant.")
         scales = {}
         for tensor, nodes in self.tensors_to_node.items():
             # if scales_per_op the key of scales is the node name, otherwise the activation of node
