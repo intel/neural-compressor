@@ -101,6 +101,12 @@ if re.search("llama", args.model.lower()) or re.search("bloom", args.model.lower
              checkpoints_json,
              token=None,
         )
+    elif re.search("llama", args.model.lower()):
+        from models.modeling_llama import LlamaForCausalLM
+        user_model = LlamaForCausalLM.from_pretrained(
+            args.model,
+            device_map='hpu',
+        )
     else:
         user_model = AutoModelForCausalLM.from_pretrained(
             args.model,
