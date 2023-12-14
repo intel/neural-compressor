@@ -35,7 +35,6 @@ parser.add_argument("--greedy", action="store_true")
 
 args = parser.parse_args()
 
-# disable
 try:
     ipex._C.disable_jit_linear_repack()
 except Exception:
@@ -194,8 +193,10 @@ user_model = ipex.optimize_transformers(
     deployment_mode=False,
 )
 
+# steps for SmoothQuant with Intel® Neural Compressor
 from neural_compressor import PostTrainingQuantConfig, quantization
 
+# quantization recipes
 if args.sq_recipes == "llama2-7b":
     op_type_dict = {"add": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}}
     excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
