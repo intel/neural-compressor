@@ -31,16 +31,7 @@ from neural_compressor.common.utility import (
     OP_NAME_OR_MODULE_TYPE,
     RTN_WEIGHT_ONLY_QUANT,
 )
-from neural_compressor.torch.utils import logger
-
-try:
-    import deepspeed
-    import habana_frameworks.torch.hpex
-
-    USE_HPEX = True
-except:
-    USE_HPEX = False
-
+from neural_compressor.torch.utils import is_hpex_avaliable, logger
 
 FRAMEWORK_NAME = "torch"
 DTYPE_RANGE = Union[torch.dtype, List[torch.dtype]]
@@ -326,7 +317,7 @@ def get_default_gptq_config() -> GPTQConfig:
 
 
 ######################## FP8 Config ###############################
-if USE_HPEX:
+if is_hpex_avaliable():
 
     @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
     class FP8QConfig(BaseConfig):

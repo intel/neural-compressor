@@ -107,3 +107,16 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
                 filter_result.append(pair)
     logger.debug(f"Get model info: {filter_result}")
     return filter_result
+
+
+try:
+    import deepspeed
+    import habana_frameworks.torch.hpex
+
+    _hpex_avalible = True
+except:
+    _hpex_avalible = False
+
+
+def is_hpex_avaliable():
+    return _hpex_avalible

@@ -3,17 +3,14 @@ import os
 import shutil
 import unittest
 
-try:
-    import habana_frameworks.torch.hpex
-
-    USE_HPEX = True
-except:
-    USE_HPEX = False
-    exit()
 import torch
 
 from neural_compressor.common import logger
 from neural_compressor.torch.amp import autocast
+from neural_compressor.torch.utils import is_hpex_avaliable
+
+if not is_hpex_avaliable():
+    exit()
 
 
 class M(torch.nn.Module):
@@ -31,7 +28,7 @@ class M(torch.nn.Module):
         return x3
 
 
-@unittest.skipIf(not USE_HPEX, "HPEX is required for HPU inference")
+@unittest.skipIf(not is_hpex_avaliable(), "HPEX is required for HPU inference")
 class TestPytorchFP8Adaptor(unittest.TestCase):
     @classmethod
     def setUpClass(self):
