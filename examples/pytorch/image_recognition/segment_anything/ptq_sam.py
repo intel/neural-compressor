@@ -21,22 +21,18 @@ from neural_compressor.data import DataLoader
 from neural_compressor.quantization import fit
 from functools import partial
 
+# Preprocessing codes are adapted from original SAM's implementation
+# Ref: https://github.com/facebookresearch/segment-anything/blob/c1910835a32a05cbb79bdacbec8f25914a7e3a20/segment_anything/modeling/sam.py
 
 def get_preprocess_shape(oldh: int, oldw: int, long_side_length: int) -> Tuple[int, int]:
-    """
-    Compute the output size given input size and target long side length.
-    """
     scale = long_side_length * 1.0 / max(oldh, oldw)
     newh, neww = oldh * scale, oldw * scale
     neww = int(neww + 0.5)
     newh = int(newh + 0.5)
     return (newh, neww)
-    
+
+
 def apply_coords(coords: np.ndarray, original_size: Tuple[int, ...]) -> np.ndarray:
-    """
-    Expects a numpy array of length 2 in the final dimension. Requires the
-    original image size in (H, W) format.
-    """
     target_length = 1024
     old_h, old_w = original_size
     new_h, new_w = get_preprocess_shape(original_size[0], original_size[1], target_length)
@@ -45,36 +41,17 @@ def apply_coords(coords: np.ndarray, original_size: Tuple[int, ...]) -> np.ndarr
     coords[..., 1] = coords[..., 1] * (new_h / old_h)
     return coords
 
+
 def apply_boxes(boxes: np.ndarray, original_size: Tuple[int, ...]) -> np.ndarray:
-    """
-    Expects a numpy array shape Bx4. Requires the original image size
-    in (H, W) format.
-    """
     boxes = apply_coords(boxes.reshape(-1, 2, 2), original_size)
     return boxes.reshape(-1, 4)
 
-# Adapted from SAM's implementation
-# Ref: https://github.com/facebookresearch/segment-anything/blob/c1910835a32a05cbb79bdacbec8f25914a7e3a20/segment_anything/modeling/sam.py#L133
+
 def postprocess_masks(
     masks: torch.Tensor,
     input_size: Tuple[int, ...],
     original_size: Tuple[int, ...],
 ) -> List[torch.Tensor]:
-    """
-    Remove padding and upscale masks to the original image size.
-
-    Arguments:
-        masks (torch.Tensor): Batched masks from the mask_decoder,
-        in BxCxHxW format.
-        input_size (tuple(int, int)): The size of the image input to the
-        model, in (H, W) format. Used to remove padding.
-        original_size (tuple(int, int)): The original size of the image
-        before resizing for input to the model, in (H, W) format.
-
-    Returns:
-        (torch.Tensor): Batched masks in BxCxHxW format, where (H, W)
-        is given by original_size.
-    """
     image_encoder_img_size = 1024
 
     masks = F.interpolate(
@@ -85,11 +62,11 @@ def postprocess_masks(
     )
     
     unpadded_mask = masks[..., : input_size[0],  : input_size[1]]
-    #unpadded_mask = unpadded_mask[None, :, : , :] # Add batch information
     mask = F.interpolate(unpadded_mask, original_size, mode="bilinear", align_corners=False)
     mask = mask[0] #Remove the unnecessary batch dimension
 
     return mask
+
 
 class Sam_INC(nn.Module):
     mask_threshold: float = 0.0
@@ -100,18 +77,6 @@ class Sam_INC(nn.Module):
         pixel_mean: List[float] = [123.675, 116.28, 103.53],
         pixel_std: List[float] = [58.395, 57.12, 57.375],
     ) -> None:
-        """
-        SAM predicts object masks from an image and input prompts.
-
-        Arguments:
-          image_encoder (ImageEncoderViT): The backbone used to encode the
-            image into image embeddings that allow for efficient mask prediction.
-          prompt_encoder (PromptEncoder): Encodes various types of input prompts.
-          mask_decoder (MaskDecoder): Predicts masks from the image embeddings
-            and encoded prompts.
-          pixel_mean (list(float)): Mean values for normalizing pixels in the input image.
-          pixel_std (list(float)): Std values for normalizing pixels in the input image.
-        """
         super().__init__()
 
         # Moved from _build_sam() 
@@ -178,8 +143,6 @@ class Sam_INC(nn.Module):
         original_size,
         input_size,
         ground_truth_mask,
-        #x: Dict[str, Any],
-        #multimask_output: bool,
     ):
         
         #Encode the images
@@ -190,13 +153,11 @@ class Sam_INC(nn.Module):
 
         
         input = np.zeros(4)
-        input[0] = prompt[0] #x['prompt'][0].item()
-        input[1] = prompt[1] #x['prompt'][1].item()
-        input[2] = prompt[2] #x['prompt'][2].item()
-        input[3] = prompt[3] #x['prompt'][3].item()
-        #original_size_tuple = (x['original_size'][0][0].item(), x['original_size'][1][0].item()) # H, W
+        input[0] = prompt[0]
+        input[1] = prompt[1]
+        input[2] = prompt[2]
+        input[3] = prompt[3]
 
-        #import pdb; pdb.set_trace()
         original_size_tuple = (original_size[0].item(), original_size[1].item()) # H, W
         transformed_boxes = apply_boxes(input, original_size_tuple)
         transformed_boxes = torch.as_tensor(transformed_boxes, dtype=torch.float)
@@ -213,7 +174,6 @@ class Sam_INC(nn.Module):
             image_pe=self.prompt_encoder.get_dense_pe(),
             sparse_prompt_embeddings=sparse_embeddings,
             dense_prompt_embeddings=dense_embeddings,
-            #multimask_output=multimask_output,
             multimask_output=False,
         )
 
@@ -225,17 +185,6 @@ class Sam_INC(nn.Module):
         )
 
         masks = masks > self.mask_threshold
-        # outputs.append(
-        #     {
-        #         "masks": masks,
-        #         "iou_predictions": iou_predictions,
-        #         "low_res_logits": low_res_masks,
-        #     }
-        # )
-        #return outputs
-
-        #import pdb; pdb.set_trace()
-        #return masks[0].int() #Output the pred for dataloader to compare
         return masks[0].int() # Output pred for dataloader to comapre
 
     def postprocess_masks(
@@ -244,21 +193,7 @@ class Sam_INC(nn.Module):
         input_size: Tuple[int, ...],
         original_size: Tuple[int, ...],
     ) -> torch.Tensor:
-        """
-        Remove padding and upscale masks to the original image size.
 
-        Arguments:
-          masks (torch.Tensor): Batched masks from the mask_decoder,
-            in BxCxHxW format.
-          input_size (tuple(int, int)): The size of the image input to the
-            model, in (H, W) format. Used to remove padding.
-          original_size (tuple(int, int)): The original size of the image
-            before resizing for input to the model, in (H, W) format.
-
-        Returns:
-          (torch.Tensor): Batched masks in BxCxHxW format, where (H, W)
-            is given by original_size.
-        """
         masks = F.interpolate(
             masks,
             (self.image_encoder.img_size, self.image_encoder.img_size),
@@ -270,7 +205,6 @@ class Sam_INC(nn.Module):
         return masks
 
     def preprocess(self, x: torch.Tensor) -> torch.Tensor:
-        """Normalize pixel values and pad to a square input."""
         # Normalize colors
         x = (x - self.pixel_mean) / self.pixel_std
 
@@ -342,4 +276,3 @@ if __name__ == '__main__':
     }
     config = PostTrainingQuantConfig(op_type_dict=op_type_dict)
     q_model = fit(model, config, calib_dataloader=calib_dataloader, eval_dataloader=eval_dataloader, eval_func=eval_func)
-    import pdb; pdb.set_trace()
