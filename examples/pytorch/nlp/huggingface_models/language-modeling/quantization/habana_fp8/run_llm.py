@@ -156,7 +156,7 @@ if args.approach in ["dynamic", "static"]:
     print("device:", next(user_model.parameters()).device)
     from neural_compressor.torch.quantization.config import FP8QConfig, get_default_fp8_qconfig
     from neural_compressor.torch.quantization.fp8 import quantize_dynamic
-    from neural_compressor.torch.quantization import quantize
+    from neural_compressor.torch.quantization import quantize, quantize_dynamic
     if args.precision == "fp8_e4m3":
         dtype = torch.float8_e4m3fn
     else:
@@ -167,7 +167,7 @@ if args.approach in ["dynamic", "static"]:
         if args.skip_lm_head:
             fp32_config = FP8QConfig(weight_dtype=torch.float32, act_dtype=torch.float32)
             qconfig.set_local("lm_head", fp32_config)
-        user_model = quantize(user_model, qconfig, inplace=True)
+        user_model = quantize_dynamic(user_model, qconfig, inplace=True)
     elif args.approach == "static":
         qconfig = FP8QConfig(weight_dtype=dtype, act_dtype=dtype, approach="static")
         if args.skip_lm_head:
