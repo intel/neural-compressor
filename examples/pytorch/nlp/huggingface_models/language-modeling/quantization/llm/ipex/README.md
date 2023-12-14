@@ -4,7 +4,7 @@ This document describes the step-by-step instructions to run llama2 SmoothQuant 
 
 # Prerequisite
 ```
-# Installation dependecies
+# Installation dependencies
 pip install -r requirements.txt
 ```
 
