@@ -4,8 +4,8 @@ Intel® Neural Compressor
 ===========================
 <h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet)</h3>
 
-[![python](https://img.shields.io/badge/python-3.7%2B-blue)](https://github.com/intel/neural-compressor)
-[![version](https://img.shields.io/badge/release-2.3-green)](https://github.com/intel/neural-compressor/releases)
+[![python](https://img.shields.io/badge/python-3.8%2B-blue)](https://github.com/intel/neural-compressor)
+[![version](https://img.shields.io/badge/release-2.4-green)](https://github.com/intel/neural-compressor/releases)
 [![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/master/LICENSE)
 [![coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/intel/neural-compressor)
 [![Downloads](https://static.pepy.tech/personalized-badge/neural-compressor?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/neural-compressor)
@@ -31,7 +31,7 @@ In particular, the tool provides the key features, typical examples, and open co
 ```Shell
 pip install neural-compressor
 ```
-> [!NOTE]
+> **Note**: 
 > More installation methods can be found at [Installation Guide](https://github.com/intel/neural-compressor/blob/maste./installation_guide.html). Please check out our [FAQ](https://github.com/intel/neural-compressor/blob/maste./faq.html) for more details.
 
 ## Getting Started
@@ -139,7 +139,7 @@ q_model = fit(
   </tbody>
 </table>
 
-> [!NOTE] 
+> **Note**: 
 > More documentations can be found at [User Guide](https://github.com/intel/neural-compressor/blob/maste./user_guide.html).
 
 ## Selected Publications/Events
@@ -150,7 +150,7 @@ q_model = fit(
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 
-> [!NOTE]
+> **Note**: 
 > View [Full Publication List](https://github.com/intel/neural-compressor/blob/maste./publication_list.html).
 
 ## Additional Content
