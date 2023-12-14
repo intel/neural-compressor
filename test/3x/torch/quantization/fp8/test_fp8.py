@@ -24,7 +24,7 @@ from neural_compressor.torch.quantization.fp8.modules import (
     FP8Linear,
     FP8Matmul,
 )
-from neural_compressor.torch.quantization.modules import BatchMatmul, Matmul
+from neural_compressor.torch.quantization.layers import BatchMatmul, Matmul
 
 torch.set_grad_enabled(False)
 
