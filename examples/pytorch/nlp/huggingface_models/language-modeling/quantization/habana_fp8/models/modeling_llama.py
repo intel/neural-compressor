@@ -48,7 +48,7 @@ if is_flash_attn_2_available():
     from flash_attn import flash_attn_func, flash_attn_varlen_func
     from flash_attn.bert_padding import index_first_axis, pad_input, unpad_input  # noqa
 ### INC code ###
-from neural_compressor.torch.quantization import Matmul, BatchMatmul, Autocast
+from neural_compressor.torch.quantization.layers import Matmul, BatchMatmul, Autocast
 
 # This makes `_prepare_4d_causal_attention_mask` a leaf function in the FX graph.
 # It means that the function will not be traced through and simply appear as a node in the graph.
