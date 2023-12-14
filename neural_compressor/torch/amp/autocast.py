@@ -34,7 +34,7 @@ class autocast:
     Backward ops run in the same type that autocast used for corresponding forward ops.
 
         # Enables autocasting for the inference pass
-        with torch.autocast(device_type="hpu", dtype=torch.float8_e4m3):
+        with torch.autocast(device_type="hpu", dtype=torch.float8_e4m3fn):
             output = model(input)
 
     :class:`autocast` can also be used as a decorator, e.g., on the ``forward`` method of your model::
@@ -77,7 +77,7 @@ class autocast:
             self._autocast = torch.autocast(device_type, dtype, enabled, cache_enabled)
 
     def __enter__(self) -> None:
-        if self.device == "hpu" and self.fast_dtype in [torch.float8_e4m3, torch.float8_e5m2]:
+        if self.device == "hpu" and self.fast_dtype in [torch.float8_e4m3fn, torch.float8_e5m2]:
             from neural_compressor.torch.amp.fp8.functions import replace_func
 
             # This function will replace F.linear and torch.matmul with the fp8 one
@@ -86,7 +86,7 @@ class autocast:
             self._autocast.__enter__()
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
-        if self.device == "hpu" and self.fast_dtype in [torch.float8_e4m3, torch.float8_e5m2]:
+        if self.device == "hpu" and self.fast_dtype in [torch.float8_e4m3fn, torch.float8_e5m2]:
             from neural_compressor.torch.amp.fp8.functions import recover_func
 
             # This function will recover F.linear and torch.matmul with the original one
