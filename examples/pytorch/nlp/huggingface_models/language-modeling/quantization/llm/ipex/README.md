@@ -26,5 +26,5 @@ python run_llama2_sq.py \
     --padding
 ```
 > Notes:  
-> - INT8 model will be saved into "./saved_results", and the output model can be loaded and evaluated by IPEX.  
+> - INT8 model will be saved into "./saved_results" including "./saved_results/best_configure.json" and "./saved_results/best_model.pt", which can be loaded and evaluated by IPEX.  
 > - Parameter "--sq-recipes" decides the recipes used to do quantize, details can be found in scripts.

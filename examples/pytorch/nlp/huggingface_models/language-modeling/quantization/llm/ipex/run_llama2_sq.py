@@ -209,16 +209,15 @@ user_model = ipex.optimize_transformers(
 from neural_compressor import PostTrainingQuantConfig, quantization
 
 # quantization recipes
-op_type_dict, op_name_dict = {}, {}
 excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
+op_type_dict = {"add": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}}
+recipes = {}
 if args.sq_recipes == "llama2-7b":
-    op_type_dict = {"add": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}}
     recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': 'auto', 'folding': False, 'default_alpha': 0.8,
                                                            'auto_alpha_args': {"alpha_min": 0.8, "alpha_max": 0.99,
                                                                                "alpha_step": 0.01,
                                                                                "shared_criterion": "mean"}}}
 elif args.sq_recipes == "llama2-13b":
-    op_type_dict = {"add": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}}
     recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': 'auto', 'folding': False, 'default_alpha': 0.8,
                                                         'auto_alpha_args': {"alpha_min": 0.75, "alpha_max": 0.99,
                                                                             "alpha_step": 0.01,
