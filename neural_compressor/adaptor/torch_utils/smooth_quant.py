@@ -55,10 +55,11 @@ def move_input_to_device(input, device=torch.device("cpu")):
             tmp_input[k] = move_input_to_device(inp, device)
         input = tmp_input
     elif isinstance(input, list) or isinstance(input, tuple):
+        is_tuple = isinstance(input, tuple)
         tmp_input = []
         for inp in input:
             tmp_input.append(move_input_to_device(inp, device))
-        input = tmp_input
+        input = tuple(tmp_input) if is_tuple else tmp_input
     elif isinstance(input, torch.Tensor):
         input = input.to(device)  # pylint: disable=no-member
     return input
