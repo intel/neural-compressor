@@ -22,7 +22,8 @@ python run_llama2_sq.py \
 python run_llama2_sq.py \
     --model-id meta-llama/Llama-2-13b-hf \
     --batch-size 56 \
-    --sq-recipes "llama2-13b"
+    --sq-recipes "llama2-13b" \
+    --padding
 ```
 > Notes:  
 > - INT8 model will be saved into "./saved_results", and the output model can be loaded and evaluated by IPEX.  

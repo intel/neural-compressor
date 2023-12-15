@@ -4,6 +4,7 @@ from datasets import load_dataset
 from transformers import LlamaForCausalLM, LlamaTokenizer, AutoConfig
 
 import torch
+from torch.nn.functional import pad
 from torch.utils.data import DataLoader
 
 import intel_extension_for_pytorch as ipex
@@ -29,6 +30,7 @@ parser.add_argument(
 )
 parser.add_argument("--input-tokens", default="32", type=str)
 parser.add_argument("--prompt", default=None, type=str)
+parser.add_argument("--padding", action="store_true", help="whether do padding in calib_dataloader")
 parser.add_argument("--batch-size", default=1, type=int, help="batch size")
 parser.add_argument("--alpha", default=0.8, type=float, help="alpha value for smoothquant")
 parser.add_argument("--greedy", action="store_true")
@@ -128,11 +130,15 @@ class Evaluator:
         attention_mask_padded = []
         for text in batch:
             input_ids = text["input_ids"]
-            input_ids = (
-                input_ids[: int(self.pad_max)]
-                if len(input_ids) > int(self.pad_max)
-                else input_ids
-            )
+            if not args.padding:
+                input_ids = (
+                    input_ids[: int(self.pad_max)]
+                    if len(input_ids) > int(self.pad_max)
+                    else input_ids
+                ) #no_padding
+            else:
+                pad_len = self.pad_max - input_ids.shape[0] 
+                input_ids = pad(input_ids, (0, pad_len), value=self.pad_val)
             last_ind.append(input_ids.shape[0] - 1)
             attention_mask = torch.ones(len(input_ids))
             position_ids = torch.arange(len(input_ids))
@@ -152,7 +158,13 @@ class Evaluator:
 
 calib_dataset = load_dataset(args.dataset, split="train")
 user_model.eval()
-calib_evaluator = Evaluator(calib_dataset, tokenizer, args.batch_size, pad_max=2048)
+if args.sq_recipes == "llama2-7b":
+    pad_max = 2048
+elif args.sq_recipes == "llama2-13b":
+    pad_max = 1024
+else:
+    pad_max = 512
+calib_evaluator = Evaluator(calib_dataset, tokenizer, args.batch_size, pad_max=pad_max)
 calib_dataloader = DataLoader(
     calib_evaluator.dataset,
     batch_size=1,
@@ -205,8 +217,15 @@ if args.sq_recipes == "llama2-7b":
                                                            'auto_alpha_args': {"alpha_min": 0.8, "alpha_max": 0.99,
                                                                                "alpha_step": 0.01,
                                                                                "shared_criterion": "mean"}}}
-else:
-    print("TODO")
+elif args.sq_recipes == "llama2-13b":
+    op_type_dict = {"add": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}}
+    excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
+    op_name_dict = {}
+    recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': 'auto', 'folding': False, 'default_alpha': 0.8,
+                                                        'auto_alpha_args': {"alpha_min": 0.75, "alpha_max": 0.99,
+                                                                            "alpha_step": 0.01,
+                                                                            "shared_criterion": "max"}}}
+
 
 conf = PostTrainingQuantConfig(
     backend="ipex",
