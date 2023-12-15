@@ -672,7 +672,7 @@ def get_layers(model):
     return layers
 
 
-def move_input_to_device(input, device=torch.device("cpu")):
+def move_input_to_device(input, device="cpu"):
     if isinstance(input, torch.Tensor):
         return input.to(device)
     if isinstance(input, dict) or isinstance(input, UserDict):
