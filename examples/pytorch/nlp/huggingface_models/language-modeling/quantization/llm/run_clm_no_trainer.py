@@ -74,7 +74,6 @@ parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calib
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
 parser.add_argument('--gptq_debug', action='store_true', help='Whether to use debug model ')
-parser.add_argument('--gptq_gpu', action='store_true', help='Whether to use gpu')
 # =======================================
 
 args = parser.parse_args()
@@ -274,7 +273,6 @@ if args.quantize:
                 model="hf-causal",
                 model_args='pretrained='+args.model+',tokenizer='+args.model+',dtype=float32',
                 user_model=q_model_gptq_debug, tasks=["lambada_openai"],
-                device=DEV.type,
                 batch_size=4
             )
 
