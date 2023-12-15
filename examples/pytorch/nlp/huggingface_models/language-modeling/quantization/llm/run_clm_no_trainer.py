@@ -52,7 +52,7 @@ parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
 parser.add_argument("--tasks", nargs='+', default=["lambada_openai",
                                                    "hellaswag", "winogrande", "piqa", "wikitext"],
-                    type=str, help="tasks list for accuracy validation")
+                    type=str, help="tasks list for accuracy validation, text-generation and code-generation tasks is different.")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
 parser.add_argument("--sq", action="store_true")
@@ -78,7 +78,40 @@ parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calib
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
 parser.add_argument('--gptq_debug', action='store_true', help='Whether to use debug model ')
-# =======================================
+# ==============code generation args===========
+parser.add_argument("--code_generation", action="store_false")
+parser.add_argument("--n_samples", default=200, type=int)
+parser.add_argument(
+    "--limit", default=None, type=int, help="Limit number of samples to eval"
+)
+parser.add_argument("--allow_code_execution", action="store_true")
+parser.add_argument("--prefix", default="")
+parser.add_argument("--generation_only", action="store_true")
+parser.add_argument("--postprocess", action="store_false")
+parser.add_argument("--save_references", action="store_true")
+parser.add_argument("--save_generations", action="store_true")
+parser.add_argument("--instruction_tokens", default=None)
+parser.add_argument("--save_generations_path", default="generations.json")
+parser.add_argument("--load_generations_path", default=None)
+parser.add_argument("--metric_output_path", default="evaluation_results.json")
+parser.add_argument("--max_length_generation", default=512, type=int)
+parser.add_argument("--temperature", default=0.8, type=float)
+parser.add_argument("--top_p", default=0.8, type=float)
+parser.add_argument("--top_k", default=0, type=int)
+parser.add_argument("--do_sample", action="store_true")
+parser.add_argument("--check_references", action="store_true")
+parser.add_argument("--max_memory_per_gpu", type=str, default=None)
+parser.add_argument(
+    "--modeltype",
+    default="causal",
+    help="AutoModel to use, it can be causal or seq2seq",
+)
+parser.add_argument(
+    "--limit_start",
+    type=int,
+    default=0,
+    help="Optional offset to start from when limiting the number of samples",
+)
 
 args = parser.parse_args()
 if args.ipex:
@@ -278,14 +311,26 @@ if args.quantize:
                 use_max_length=args.gptq_use_max_length,
                 pad_max_length=args.gptq_pad_max_length
             )
-            from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
+            if args.code_generation:
+                from intel_extension_for_transformers.llm.evaluation.lm_code_eval import evaluate
 
-            results = evaluate(
-                model="hf-causal",
-                model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
-                user_model=q_model_gptq_debug, tasks=["lambada_openai"],
-                batch_size=4
-            )
+                results = evaluate(
+                    model=q_model_gptq_debug,
+                    tokenizer=tokenizer,
+                    tasks=args.tasks,
+                    batch_size=args.batch_size,
+                    args=args,
+                )
+                print(results)
+            else:
+                from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
+
+                results = evaluate(
+                    model="hf-causal",
+                    model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+                    user_model=q_model_gptq_debug, tasks=["lambada_openai"],
+                    batch_size=4
+                )
             exit(0)
 
     else:
