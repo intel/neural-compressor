@@ -705,12 +705,13 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"
     with torch.no_grad():
         if layer_idx == 0:
             layer = layers[layer_idx]
+
             def forward(_, hidden_states, *positional_args, **kwargs):
                 nonlocal inputs
                 nonlocal positional_inputs
                 nonlocal other_input_infos
                 # TODO solve the problem of batchsize!=1
-                inputs.append(move_input_to_device(hidden_states,device))
+                inputs.append(move_input_to_device(hidden_states, device))
                 if len(positional_inputs) <= 0:
                     positional_inputs = move_input_to_device(positional_args, device)
                 for key in kwargs.keys():
@@ -744,4 +745,3 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"
                 inputs.append(batch)
 
     return inputs, positional_inputs, other_input_infos
-

@@ -205,7 +205,7 @@ class SparseGPTPruning(BasePruning):
 
         layers = self._layers
         self._model = self._model.cpu()
-        inputs, positional_inputs, other_input_infos  = collect_layer_inputs(
+        inputs, positional_inputs, other_input_infos = collect_layer_inputs(
             model=self._model, layers=layers, layer_idx=0, layer_inputs=self._dataloader, device=self.dev
         )
 
@@ -302,4 +302,3 @@ class RetrainFreePruning(BasePruning):
     #                      "when initializing or calling on_train_begin()")
     #     self._dataloader = dataloader
     #     self._prepare_pruners()
-
