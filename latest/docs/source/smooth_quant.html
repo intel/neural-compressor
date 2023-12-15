@@ -351,7 +351,7 @@ conv2d/linear-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanor
 <p>Neural Compressor: 2.1</p>
 <p>IPEX (Intel Extension for PyTorch): 2.0/2.1</p>
 <p>Dataset: lambada_openai</p>
-<p>Task: text-generation</p>
+<p>Task: text-generation provided by <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization">ITREX</a></p>
 <p>alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper.</p>
 <p>A list of models that achieved a &lt;1% accuracy drop is shown below.</p>
 <table border="1" class="docutils">
@@ -587,7 +587,12 @@ conv2d/linear-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanor
 <td>alpha=0.7, Pytorch</td>
 </tr>
 </tbody>
-</table><p>Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.</p>
+</table><p>The results listed below are achieved using IPEX optimize_transformers in model initialization for better performance. Please refer to the step-by-step <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm/ipex/README.html">instruction</a> for details.
+| Model/Last token accuracy |  FP32 Accuracy   | INT8 (w/ SmoothQuant) | Notes |
+|:———-:|:——:|:——:|———————————–|
+| LLaMa-2-7b-hf* | 0.7392 | 0.7332  | alpha=Auto, Ipex 2.1 |
+| LLaMa-2-13b-hf* | 0.7677 | 0.7632  | alpha=Auto, Ipex 2.1 |</p>
+<p>Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.</p>
 </section>
 <section id="example">
 <h2>Example<a class="headerlink" href="#example" title="Permalink to this heading"></a></h2>
@@ -682,7 +687,7 @@ conf = PostTrainingQuantConfig(
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f54000127d0> 
+   <jinja2.runtime.BlockReference object at 0x7f383c7a1330> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
