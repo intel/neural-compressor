@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+
 sys.path.append('./')
 import time
 import json
@@ -33,7 +34,7 @@ parser.add_argument(
     '--seed',
     type=int, default=42, help='Seed for sampling the calibration data.'
 )
-parser.add_argument("--approach", type=str, default='static', 
+parser.add_argument("--approach", type=str, default='static',
                     help="Select from ['dynamic', 'static', 'weight-only']")
 parser.add_argument("--int8", action="store_true")
 parser.add_argument("--ipex", action="store_true", help="Use intel extension for pytorch.")
@@ -50,14 +51,14 @@ parser.add_argument("--pad_max_length", default=512, type=int,
 parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
 parser.add_argument("--tasks", nargs='+', default=["lambada_openai",
-    "hellaswag","winogrande","piqa","wikitext"],
-    type=str, help="tasks list for accuracy validation")
+                                                   "hellaswag", "winogrande", "piqa", "wikitext"],
+                    type=str, help="tasks list for accuracy validation")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
 parser.add_argument("--sq", action="store_true")
 parser.add_argument("--alpha", default="auto", help="Smooth quant parameter.")
 # ============WeightOnly configs===============
-parser.add_argument("--woq_algo", default="RTN", choices=['RTN', 'AWQ', 'TEQ', 'GPTQ'], 
+parser.add_argument("--woq_algo", default="RTN", choices=['RTN', 'AWQ', 'TEQ', 'GPTQ'],
                     help="Weight-only parameter.")
 parser.add_argument("--woq_bits", type=int, default=8)
 parser.add_argument("--woq_group_size", type=int, default=-1)
@@ -65,11 +66,14 @@ parser.add_argument("--woq_scheme", default="sym")
 parser.add_argument("--woq_enable_mse_search", action="store_true")
 parser.add_argument("--woq_enable_full_range", action="store_true")
 # =============GPTQ configs====================
-parser.add_argument("--gptq_actorder", action="store_true", help="Whether to apply the activation order GPTQ heuristic.")
-parser.add_argument('--gptq_percdamp', type=float, default=.01, help='Percent of the average Hessian diagonal to use for dampening.')
+parser.add_argument("--gptq_actorder", action="store_true",
+                    help="Whether to apply the activation order GPTQ heuristic.")
+parser.add_argument('--gptq_percdamp', type=float, default=.01,
+                    help='Percent of the average Hessian diagonal to use for dampening.')
 parser.add_argument('--gptq_block_size', type=int, default=128, help='Block size. sub weight matrix size to run GPTQ.')
 parser.add_argument('--gptq_nsamples', type=int, default=128, help='Number of calibration data samples.')
-parser.add_argument('--gptq_use_max_length', action="store_true", help='Set all sequence length to be same length of args.gptq_pad_max_length')
+parser.add_argument('--gptq_use_max_length', action="store_true",
+                    help='Set all sequence length to be same length of args.gptq_pad_max_length')
 parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calibration dataset sequence max length, \
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
@@ -80,6 +84,7 @@ args = parser.parse_args()
 if args.ipex:
     import intel_extension_for_pytorch as ipex
 calib_size = 1
+
 
 class Evaluator:
     def __init__(self, dataset, tokenizer, batch_size=8, pad_val=1, pad_max=196, is_calib=False):
@@ -148,7 +153,7 @@ class Evaluator:
             pred = last_token_logits.argmax(dim=-1)
             total += label.size(0)
             hit += (pred == label).sum().item()
-            if (i+1) % 50 == 0:
+            if (i + 1) % 50 == 0:
                 print(hit / total)
                 print("Processed minibatch:", i)
 
@@ -186,6 +191,7 @@ def get_user_model():
     user_model.eval()
     return user_model, tokenizer
 
+
 if args.quantize:
     # dataset
     user_model, tokenizer = get_user_model()
@@ -200,43 +206,46 @@ if args.quantize:
         collate_fn=calib_evaluator.collate_batch,
     )
 
+
     def calib_func(prepared_model):
         for i, calib_input in enumerate(calib_dataloader):
             if i > args.calib_iters:
                 break
             prepared_model(calib_input[0])
 
+
     recipes = {}
     eval_func = None
     from neural_compressor import PostTrainingQuantConfig, quantization
+
     # specify the op_type_dict and op_name_dict
     if args.approach == 'weight_only':
         op_type_dict = {
-            '.*':{ 	# re.match
+            '.*': {  # re.match
                 "weight": {
-                    'bits': args.woq_bits, # 1-8 bits 
+                    'bits': args.woq_bits,  # 1-8 bits
                     'group_size': args.woq_group_size,  # -1 (per-channel)
-                    'scheme': args.woq_scheme, # sym/asym
-                    'algorithm': args.woq_algo, # RTN/AWQ/TEQ
+                    'scheme': args.woq_scheme,  # sym/asym
+                    'algorithm': args.woq_algo,  # RTN/AWQ/TEQ
                 },
             },
         }
-        op_name_dict={
-            'lm_head':{"weight": {'dtype': 'fp32'},},
-            'embed_out':{"weight": {'dtype': 'fp32'},},  # for dolly_v2
+        op_name_dict = {
+            'lm_head': {"weight": {'dtype': 'fp32'}, },
+            'embed_out': {"weight": {'dtype': 'fp32'}, },  # for dolly_v2
         }
         recipes["rtn_args"] = {
             "enable_mse_search": args.woq_enable_mse_search,
             "enable_full_range": args.woq_enable_full_range,
         }
         recipes['gptq_args'] = {
-                'percdamp': args.gptq_percdamp, 
-                'act_order':args.gptq_actorder, 
-                'block_size': args.gptq_block_size, 
-                'nsamples': args.gptq_nsamples, 
-                'use_max_length': args.gptq_use_max_length,
-                'pad_max_length': args.gptq_pad_max_length
-            }
+            'percdamp': args.gptq_percdamp,
+            'act_order': args.gptq_actorder,
+            'block_size': args.gptq_block_size,
+            'nsamples': args.gptq_nsamples,
+            'use_max_length': args.gptq_use_max_length,
+            'pad_max_length': args.gptq_pad_max_length
+        }
         # GPTQ: use assistive functions to modify calib_dataloader and calib_func
         # TEQ: set calib_func=None, use default training func as calib_func
         if args.woq_algo in ["GPTQ", "TEQ"]:
@@ -252,26 +261,28 @@ if args.quantize:
         # for test on various models, keep the code of directly call gptq_quantize
         if args.gptq_debug:
             from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
+
             conf = {
-                ".*":{
-                    'wbits': args.woq_bits, # 1-8 bits 
+                ".*": {
+                    'wbits': args.woq_bits,  # 1-8 bits
                     'group_size': args.woq_group_size,  # -1 (per-channel)
                     'sym': (args.woq_scheme == "sym"),
                     'act_order': args.gptq_actorder,
                 }
-            } 
+            }
             q_model_gptq_debug, gptq_config = gptq_quantize(
-                user_model, 
-                weight_config=conf, 
-                dataloader=calib_dataloader, 
-                nsamples = args.gptq_nsamples, 
-                use_max_length = args.gptq_use_max_length,
-                pad_max_length = args.gptq_pad_max_length
+                user_model,
+                weight_config=conf,
+                dataloader=calib_dataloader,
+                nsamples=args.gptq_nsamples,
+                use_max_length=args.gptq_use_max_length,
+                pad_max_length=args.gptq_pad_max_length
             )
             from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
+
             results = evaluate(
                 model="hf-causal",
-                model_args='pretrained='+args.model+',tokenizer='+args.model+',dtype=float32',
+                model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
                 user_model=q_model_gptq_debug, tasks=["lambada_openai"],
                 batch_size=4
             )
@@ -304,6 +315,8 @@ if args.quantize:
         if isinstance(args.alpha, list):
             eval_dataset = load_dataset('lambada', split='validation')
             evaluator = Evaluator(eval_dataset, tokenizer)
+
+
             def eval_func(model):
                 acc = evaluator.evaluate(model)
                 return acc
@@ -321,6 +334,7 @@ if args.quantize:
 if args.int8 or args.int8_bf16_mixed:
     print("load int8 model")
     from neural_compressor.utils.pytorch import load
+
     if args.ipex:
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
     else:
@@ -333,9 +347,10 @@ else:
 if args.accuracy:
     user_model.eval()
     from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
+
     results = evaluate(
         model="hf-causal",
-        model_args='pretrained='+args.model+',tokenizer='+args.model+',dtype=float32',
+        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
         user_model=user_model,
         batch_size=args.batch_size,
         tasks=args.tasks,
@@ -356,11 +371,12 @@ if args.performance:
     user_model.eval()
     from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
     import time
+
     samples = args.iters * args.batch_size
     start = time.time()
     results = evaluate(
         model="hf-causal",
-        model_args='pretrained='+args.model+',tokenizer='+args.model+',dtype=float32',
+        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
         user_model=user_model,
         batch_size=args.batch_size,
         tasks=args.tasks,
@@ -374,5 +390,5 @@ if args.performance:
             acc = results["results"][task_name]["acc"]
     print("Accuracy: %.5f" % acc)
     print('Throughput: %.3f samples/sec' % (samples / (end - start)))
-    print('Latency: %.3f ms' % ((end - start)*1000 / samples))
+    print('Latency: %.3f ms' % ((end - start) * 1000 / samples))
     print('Batch size = %d' % args.batch_size)
