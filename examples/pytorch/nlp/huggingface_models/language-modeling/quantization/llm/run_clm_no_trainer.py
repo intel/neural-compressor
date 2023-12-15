@@ -286,6 +286,7 @@ if args.quantize:
                 user_model=q_model_gptq_debug, tasks=["lambada_openai"],
                 batch_size=4
             )
+            exit(0)
 
     else:
         if re.search("gpt", user_model.config.model_type):
