@@ -27,9 +27,9 @@ from data_utils import COCORawDataloader, COCORawDataset, COCOmAPv2
 from data_utils import ComposeTransform, ResizeTransform, LabelBalanceCOCORawFilter
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
-                    datefmt = '%m/%d/%Y %H:%M:%S',
-                    level = logging.WARN)
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
+                    datefmt='%m/%d/%Y %H:%M:%S',
+                    level=logging.WARN)
 logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -89,7 +89,14 @@ parser.add_argument(
     default=16,
     help="quantization format"
 )
+parser.add_argument(
+    '--device',
+    type=str,
+    default='cpu',
+    choices=['cpu', 'npu'],
+)
 args = parser.parse_args()
+backend = 'onnxrt_dml_ep' if args.device == 'npu' else 'default'
 
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
@@ -106,8 +113,8 @@ if __name__ == "__main__":
 
     def eval_func(model):
         metric.reset()
-        session = ort.InferenceSession(model.SerializeToString(), 
-                                       providers=ort.get_available_providers())
+        provider = 'DmlExecutionProvider' if backend == 'onnxrt_dml_ep' else 'CPUExecutionProvider'
+        session = ort.InferenceSession(model.SerializeToString(), providers=[provider])
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
@@ -143,6 +150,8 @@ if __name__ == "__main__":
                 cores_per_instance=4,
                 num_of_instance=1,
                 diagnosis=args.diagnose,
+                device=args.device,
+                backend=backend,
             )
             fit(model, conf, b_dataloader=eval_dataloader)
         elif args.mode == 'accuracy':
@@ -161,6 +170,8 @@ if __name__ == "__main__":
             quant_format=args.quant_format,
             calibration_sampling_size=[50],
             diagnosis=args.diagnose,
+            device=args.device,
+            backend=backend,
         )
         q_model = quantization.fit(model, config, calib_dataloader=calib_dataloader, eval_func=eval_func)
         q_model.save(args.output_model)
