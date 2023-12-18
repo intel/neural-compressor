@@ -52,7 +52,7 @@ parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
 parser.add_argument("--tasks", nargs='+', default=["lambada_openai",
                                                    "hellaswag", "winogrande", "piqa", "wikitext"],
-                    type=str, help="tasks list for accuracy validation, text-generation and code-generation tasks is different.")
+                    type=str, help="tasks list for accuracy validation, text-generation and code-generation tasks are different.")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
 parser.add_argument("--sq", action="store_true")
@@ -79,7 +79,7 @@ parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calib
                                                                            and your dataset builder args: args.pad_max_length')
 parser.add_argument('--gptq_debug', action='store_true', help='Whether to use debug model ')
 # ==============code generation args===========
-parser.add_argument("--code_generation", action="store_false")
+parser.add_argument("--code_generation", action="store_true")
 parser.add_argument("--n_samples", default=200, type=int)
 parser.add_argument(
     "--limit", default=None, type=int, help="Limit number of samples to eval"
