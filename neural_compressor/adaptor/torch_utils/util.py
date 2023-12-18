@@ -1359,12 +1359,13 @@ class LlamaRMSNorm_bias(nn.Module):
             return self.weight * hidden_states.to(input_dtype)
 
 
-class MistralRMSNorm(nn.Module):
-    def __init__(self, hidden_size, eps=1e-6):
+class MistralRMSNorm_bias(nn.Module):
+    def __init__(self, hidden_size, eps=1e-6, bias=None):
         """MistralRMSNorm is equivalent to T5LayerNorm."""
         super().__init__()
         self.weight = nn.Parameter(torch.ones(hidden_size))
         self.variance_epsilon = eps
+        self.bias = bias
 
     def forward(self, hidden_states):
         input_dtype = hidden_states.dtype
