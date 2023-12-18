@@ -1277,10 +1277,10 @@ class TorchSmoothQuant:
             "alpha_step": 0.1,
             "shared_criterion": "mean",
             "do_blockwise": False,
+            "shift_bias": False,
         },
         weight_clip=True,
         default_alpha=0.5,
-        shift_bias=False,  # lyt_os_debug_1011
     ):
         """The main entry of smooth quant
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
@@ -1295,6 +1295,7 @@ class TorchSmoothQuant:
         :param auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
             By default the search space is 0.0-1.0 with step_size 0.1.
             do_blockwise: Whether to do blockwise auto-tuning.
+            shift_bias: whether to do bias-shifting.
         :param default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
         benefit to quantization.
@@ -1316,7 +1317,10 @@ class TorchSmoothQuant:
         else:
             self.insert_mul, self.allow_absorb = True, False
 
-        self.to_shift_bias = True if shift_bias is True else False  # lyt_os_debug_1011
+        if isinstance(auto_alpha_args, dict): # lyt_os_debug_1011 #updated_1219
+            self.to_shift_bias = auto_alpha_args.get("shift_bias", False)
+        else:
+            self.to_shift_bias = False
         if isinstance(alpha, float) and (alpha < 0 or alpha > 1):
             logger.warning("reset alpha to in range [0.0, 1.0]")
             import numpy

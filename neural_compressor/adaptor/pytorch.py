@@ -1743,9 +1743,9 @@ class TemplateAdaptor(Adaptor):
             "alpha_step": 0.1,
             "shared_criterion": "mean",
             "do_blockwise": False,
+            "shift_bias": False,
         },
         default_alpha=0.5,
-        shift_bias=False,  # lyt_os_debug_1011
     ):
         """Convert the model by smooth quant.
 
@@ -1764,7 +1764,9 @@ class TemplateAdaptor(Adaptor):
             auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
                             By default the search space is 0.0-1.0 with step_size 0.1.
                             do_blockwise determines whether to do blockwise auto-tuning.
+                            shift_bias determines whether to do bias-shifting.
             default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
+            
 
         Returns:
             model: A modified fp32 model, inplace=True.
@@ -1801,9 +1803,8 @@ class TemplateAdaptor(Adaptor):
             weight_clip=weight_clip,
             default_alpha=default_alpha,
             auto_alpha_args=auto_alpha_args,
-            shift_bias=shift_bias,
             **kwargs,
-        )  # lyt_os_debug_1011
+        )  # lyt_os_debug_1011 #lyt_removed_1219
         if self.sq.record_max_info:
             model.sq_max_info = self.sq.max_value_info
         return model
@@ -2021,14 +2022,15 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
-        if "smooth_quant_args" in recipe_cfgs and "shift_bias" in recipe_cfgs["smooth_quant_args"]:  # lyt_os_debug_1013
-            do_bias_shift = True if recipe_cfgs["smooth_quant_args"]["shift_bias"] is True else False
+        if "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]:  # lyt_os_debug_1012 #updated_1219
+            do_bias_shift = recipe_cfgs["smooth_quant_args"]['auto_alpha_args'].get('shift_bias', False)
+        else:
+            do_bias_shift = False
         if (
             recipe_cfgs
             and recipe_cfgs.get("smooth_quant", False)
             and not recipe_cfgs["smooth_quant_args"]["folding"]
             and self.approach != "post_training_dynamic_quant"
-            and not do_bias_shift  # lyt_os_Debug_1013
         ):
             return self.qdq_quantize(q_model, tune_cfg)
 
@@ -2691,8 +2693,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     folding = False
             else:
                 folding = recipe_cfgs["smooth_quant_args"]["folding"]
-        if "smooth_quant_args" in recipe_cfgs and "shift_bias" in recipe_cfgs["smooth_quant_args"]:  # lyt_os_debug_1012
-            do_bias_shift = True if recipe_cfgs["smooth_quant_args"]["shift_bias"] is True else False
+        if "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]:  # lyt_os_debug_1012 #updated_1219
+            do_bias_shift = recipe_cfgs["smooth_quant_args"]['auto_alpha_args'].get('shift_bias', False)
         else:
             do_bias_shift = False
         logger.info(
@@ -3536,16 +3538,15 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
-        if (
-            "smooth_quant_args" in recipe_cfgs and "shift_bias" in recipe_cfgs["smooth_quant_args"]
-        ):  # lyt_os_debug_1013-2
-            do_bias_shift = True if recipe_cfgs["smooth_quant_args"]["shift_bias"] is True else False
+        if "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]:  # lyt_os_debug_1012 #updated_1219
+            do_bias_shift = recipe_cfgs["smooth_quant_args"]['auto_alpha_args'].get('shift_bias', False)
+        else:
+            do_bias_shift = False
         if (
             recipe_cfgs
             and recipe_cfgs.get("smooth_quant", False)
             and not recipe_cfgs["smooth_quant_args"]["folding"]
             and self.approach != "post_training_dynamic_quant"
-            and not do_bias_shift  # lyt_os_debug_1013-2
         ):
             return self.qdq_quantize(q_model, tune_cfg)
         if (

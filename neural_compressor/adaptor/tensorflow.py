@@ -1839,6 +1839,7 @@ class TensorFlowAdaptor(Adaptor):
             "alpha_step": 0.1,
             "shared_criterion": "mean",
             "do_blockwise": False,
+            "shift_bias": False,
         },
         default_alpha=0.5,
     ):
@@ -1859,6 +1860,7 @@ class TensorFlowAdaptor(Adaptor):
             auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
                             By default the search space is 0.0-1.0 with step_size 0.1.
                             do_blockwise: Whether to do blockwise auto-tuning.
+                            shift_bias: Whether to do bias-shifting.
             default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
 
         Returns:
