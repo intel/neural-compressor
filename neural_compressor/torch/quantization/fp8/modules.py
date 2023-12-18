@@ -99,7 +99,6 @@ class FP8DynamicLinear(torch.nn.Module):
             False,
         )
         out = out.view(-1, *org_middle_shape, out.shape[-1])
-        htcore.mark_step()
         return out
 
     def extra_repr(self) -> str:
@@ -159,7 +158,6 @@ class FP8DynamicMatmul(torch.nn.Module):
             None,
             False,
         )
-        htcore.mark_step()
         return out
 
     def extra_repr(self) -> str:
@@ -238,7 +236,6 @@ class FP8Linear(torch.nn.Module):
             False,
         )
         out = out.view(-1, *org_middle_shape, out.shape[-1])
-        htcore.mark_step()
         return out
 
     def extra_repr(self) -> str:
@@ -305,7 +302,6 @@ class FP8Matmul(torch.nn.Module):
             None,
             False,
         )
-        htcore.mark_step()
         return out
 
     def extra_repr(self) -> str:
@@ -345,7 +341,6 @@ class FP8Cast(torch.nn.Module):
             out = torch.ops.hpu.cast_to_fp8_v2(input, self.scale, False, False, self.dtype)[0]
         else:
             out = input
-        htcore.mark_step()
         return out
 
     def extra_repr(self) -> str:
@@ -504,7 +499,6 @@ class FP8LinearAllreduce(torch.nn.Module):
         )
         from deepspeed import comm as dist
 
-        htcore.mark_step()
         if self.mp_group is not None:
             dist.inference_all_reduce(out, group=self.mp_group)
         if self.bias is not None:
@@ -600,7 +594,6 @@ class FP8LmHeadLinearAllreduce(torch.nn.Module):
         )
         from deepspeed import comm as dist
 
-        htcore.mark_step()
         if self.mp_group is not None:
             dist.inference_all_reduce(out, group=self.mp_group)
         if self.bias is not None:

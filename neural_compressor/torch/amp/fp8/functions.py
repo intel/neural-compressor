@@ -75,7 +75,6 @@ def fp8_linear_forward(input, weight, bias):
         False,
     )
     out = out.view(-1, *org_middle_shape, out.shape[-1])
-    htcore.mark_step()
     return out
 
 
@@ -116,7 +115,6 @@ def fp8_matmul(input1, input2):
         None,
         False,
     )
-    htcore.mark_step()
     return out
 
 
