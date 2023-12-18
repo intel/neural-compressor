@@ -1071,6 +1071,7 @@ class TorchSmoothQuant:
         alpha_step=0.05,
         shared_criterion="min",
         do_blockwise=False,
+        shift_bias=False,
     ):
         """Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
 
@@ -1130,11 +1131,13 @@ class TorchSmoothQuant:
                 if module.__class__.__name__ == "LlamaRMSNorm":
                     module_replace = LlamaRMSNorm_bias(hidden_size=module.weight.size(), eps=module.variance_epsilon)
                     module_replace.weight = module.weight
+                    set_module(self.model, name, module_replace)
+                    logger.info(f"lyt_debug op replaced: {name}, {module.__class__.__name__}")
                 elif module.__class__.__name__ == "MistralRMSNorm":
                     module_replace = MistralRMSNorm_bias(hidden_size=module.weight.size(), eps=module.variance_epsilon)
                     module_replace.weight = module.weight
-                set_module(self.model, name, module_replace)
-                logger.info(f"lyt_debug op replaced: {name}, {module.__class__.__name__}")
+                    set_module(self.model, name, module_replace)
+                    logger.info(f"lyt_debug op replaced: {name}, {module.__class__.__name__}")
 
         try:
             for input, label in bar:
@@ -1442,7 +1445,7 @@ class TorchSmoothQuant:
                             self.input_maxes[key] -= self.bias_shifts[key]  # lyt_os_debug_0915
                     logger.info(f"lyt_debug INC auto_alpha_args: {auto_alpha_args}")
                     self.alpha_per_layer = self._auto_tune_alpha(
-                        input_maxes_abs, calib_sample_num=32, **auto_alpha_args
+                        input_maxes_abs, calib_sample_num=8, **auto_alpha_args
                     )  ##save the alpha
                     bias_alphas = self.bias_shifts  # lyt_os_debug_1101
                     logger.info(f"lyt_debug alpha_per_layer: {len(self.alpha_per_layer)} {self.alpha_per_layer}")
