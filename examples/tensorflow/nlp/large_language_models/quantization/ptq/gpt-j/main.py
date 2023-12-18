@@ -264,7 +264,7 @@ def evaluate(model, tf_eval_dataset=mydata):
     """Evaluate function that inference the model to apply calibration or benchmarking.
 
     Args:
-        model (tf.python.training.tracking.tracking.AutoTrackable): The model to be evaluated.
+        model (tf.python.trackable.autotrackable): The model to be evaluated.
             The object is usually gotten by using tf.saved_model.load(model_dir) API.
 
     Returns:

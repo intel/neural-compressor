@@ -513,7 +513,7 @@ def fit(model, conf, b_dataloader=None, b_func=None):
     assert sys.platform in ["linux", "win32", "darwin"], "platform not supported..."
     # disable multi-instance for running benchmark on GPU device
     set_all_env_var(conf)
-    if conf.device == "gpu" or sys.platform == "darwin":
+    if conf.device == "gpu" or conf.device == "npu" or sys.platform == "darwin":
         set_env_var("NC_ENV_CONF", True, overwrite_existing=True)
 
     if conf.diagnosis and os.environ.get("NC_ENV_CONF", None) in [None, "False"]:

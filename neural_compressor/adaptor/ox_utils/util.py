@@ -93,6 +93,16 @@ ONNXRT_BACKENDS = {
 MAXIMUM_PROTOBUF = 2147483648
 
 
+def simple_progress_bar(total, i):
+    """Progress bar for cases where tqdm can't be used."""
+    progress = i / total
+    bar_length = 20
+    bar = "#" * int(bar_length * progress)
+    spaces = " " * (bar_length - len(bar))
+    percentage = progress * 100
+    print(f"\rProgress: [{bar}{spaces}] {percentage:.2f}%", end="")
+
+
 def dtype_to_name(dtype_mapping, dtype):
     """Map data type and its string representation."""
     return list(dtype_mapping.keys())[list(dtype_mapping.values()).index(dtype)]

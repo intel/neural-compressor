@@ -323,7 +323,7 @@ class TestTensorflowModel(unittest.TestCase):
         model = Model("ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/saved_model")
         center_model = Model("unzip_center_model")
 
-        from tensorflow.python.training.tracking.tracking import AutoTrackable
+        from tensorflow.python.trackable.autotrackable import AutoTrackable
 
         assert isinstance(
             model.model, AutoTrackable
