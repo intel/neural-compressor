@@ -400,7 +400,7 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
         """Evaluate function that inference the model to apply calibration.
 
         Args:
-            model (tf.python.training.tracking.tracking.AutoTrackable): The model to be evaluated.
+            model (tf.python.trackable.autotrackable): The model to be evaluated.
             The object is usually gotten by using tf.saved_model.load(model_dir) API.
 
         Returns:

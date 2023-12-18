@@ -32,6 +32,7 @@ except:
     logger = logging.getLogger()
 from collections import UserDict, defaultdict
 
+import numpy
 from tqdm import tqdm
 
 
@@ -55,10 +56,11 @@ def move_input_to_device(input, device=torch.device("cpu")):
             tmp_input[k] = move_input_to_device(inp, device)
         input = tmp_input
     elif isinstance(input, list) or isinstance(input, tuple):
+        is_tuple = isinstance(input, tuple)
         tmp_input = []
         for inp in input:
             tmp_input.append(move_input_to_device(inp, device))
-        input = tmp_input
+        input = tuple(tmp_input) if is_tuple else tmp_input
     elif isinstance(input, torch.Tensor):
         input = input.to(device)  # pylint: disable=no-member
     return input
@@ -976,15 +978,10 @@ class TorchSmoothQuant:
         :return:
         """
         logger.info("start sq auto tuning")
-        alpha_scale = 100
-        alpha_space = list(
-            range(
-                round(alpha_min * alpha_scale),
-                round((alpha_max + alpha_step) * alpha_scale),
-                round(alpha_step * alpha_scale),
-            )
+        round_num = max(
+            len(str(alpha_min).split(".")[1]), len(str(alpha_max).split(".")[1]), len(str(alpha_step).split(".")[1])
         )
-        alpha_space = [alpha / alpha_scale for alpha in alpha_space]
+        alpha_space = numpy.round(numpy.arange(alpha_min, alpha_max + alpha_step, alpha_step), round_num).tolist()
         ##wrapper new module
         self._qdq_model_wrapper_for_auto(save_q_input=True)
         ##set alpha to 0.5 as default
@@ -1189,7 +1186,6 @@ class TorchSmoothQuant:
             self.insert_mul, self.allow_absorb = True, False
         if isinstance(alpha, float) and (alpha < 0 or alpha > 1):
             logger.warning("reset alpha to in range [0.0, 1.0]")
-            import numpy
 
             alpha = numpy.clip(alpha, 0.0, 1.0)
 
