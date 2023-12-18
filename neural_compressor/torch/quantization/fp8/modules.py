@@ -38,7 +38,7 @@ class FP8DynamicLinear(torch.nn.Module):
         self.in_features = org_module.in_features
         self.out_features = org_module.out_features
         self.weight_dtype = self.dtype
-        self.out_dtype = torch.float32
+        self.out_dtype = org_module.weight.dtype
         self.register_buffer(
             "weight",
             torch.empty(
@@ -178,7 +178,7 @@ class FP8Linear(torch.nn.Module):
         self.in_features = org_module.in_features
         self.out_features = org_module.out_features
         self.weight_dtype = self.dtype
-        self.out_dtype = torch.float32
+        self.out_dtype = org_module.weight.dtype
         self.register_buffer(
             "weight",
             torch.empty(
@@ -202,7 +202,7 @@ class FP8Linear(torch.nn.Module):
             torch.tensor(
                 org_module.scale,
                 device="hpu",
-                dtype=self.out_dtype,
+                dtype=torch.float32,
             ),
         )
         self.scale_inv = torch.reciprocal(self.scale)
@@ -318,7 +318,6 @@ class FP8BatchMatmul(FP8Matmul):
 class FP8Cast(torch.nn.Module):
     def __init__(self, org_module=None, dtype=torch.float8_e4m3fn) -> None:
         super().__init__()
-        self.out_dtype = torch.float32
         self.dtype = dtype
         self.dtype_amax = E4M3_AMAX if self.dtype == torch.float8_e4m3fn else E5M2_AMAX
         if org_module is not None:
@@ -329,7 +328,7 @@ class FP8Cast(torch.nn.Module):
                 torch.tensor(
                     org_module.scale,
                     device="hpu",
-                    dtype=self.out_dtype,
+                    dtype=torch.float32,
                 ),
             )
             self.scale = None  # due to next matmul doesn't know this scale
@@ -360,7 +359,7 @@ class FP8LinearLayer(torch.nn.Module):
         self.in_features = org_module.weight.shape[1]
         self.out_features = org_module.weight.shape[0]
         self.weight_dtype = self.dtype
-        self.out_dtype = torch.float32
+        self.out_dtype = org_module.weight.dtype
         self.register_buffer(
             "weight",
             torch.empty(
@@ -376,7 +375,7 @@ class FP8LinearLayer(torch.nn.Module):
             torch.tensor(
                 org_module.scale,
                 device="hpu",
-                dtype=self.out_dtype,
+                dtype=torch.float32,
             ),
         )
         self.scale_inv = 1.0 / self.scale
@@ -440,7 +439,7 @@ class FP8LinearAllreduce(torch.nn.Module):
         self.in_features = org_module.weight.shape[1]
         self.out_features = org_module.weight.shape[0]
         self.weight_dtype = self.dtype
-        self.out_dtype = torch.float32
+        self.out_dtype = org_module.weight.dtype
         self.register_buffer(
             "weight",
             torch.empty(
@@ -456,7 +455,7 @@ class FP8LinearAllreduce(torch.nn.Module):
             torch.tensor(
                 org_module.scale,
                 device="hpu",
-                dtype=self.out_dtype,
+                dtype=torch.float32,
             ),
         )
         self.scale_inv = 1.0 / self.scale
@@ -525,7 +524,7 @@ class FP8LmHeadLinearAllreduce(torch.nn.Module):
         self.in_features = org_module.weight.shape[1]
         self.out_features = org_module.weight.shape[0]
         self.weight_dtype = self.dtype
-        self.out_dtype = torch.float32
+        self.out_dtype = org_module.weight.dtype
         self.register_buffer(
             "weight",
             torch.empty(
@@ -541,7 +540,7 @@ class FP8LmHeadLinearAllreduce(torch.nn.Module):
             torch.tensor(
                 org_module.scale,
                 device="hpu",
-                dtype=self.out_dtype,
+                dtype=torch.float32,
             ),
         )
         self.scale_inv = 1.0 / self.scale
