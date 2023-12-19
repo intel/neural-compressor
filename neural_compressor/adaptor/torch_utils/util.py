@@ -1342,7 +1342,7 @@ class LlamaRMSNorm_bias(torch.nn.Module):
         Add bias attribute and modify forward function for bias-shifting.
         """
         super().__init__()
-        self.weight = nn.Parameter(torch.ones(hidden_size))
+        self.weight = torch.nn.Parameter(torch.ones(hidden_size))
         self.variance_epsilon = eps
         self.bias = bias
 
@@ -1364,7 +1364,7 @@ class MistralRMSNorm_bias(torch.nn.Module):
         Add bias attribute and modify forward function for bias-shifting.
         """
         super().__init__()
-        self.weight = nn.Parameter(torch.ones(hidden_size))
+        self.weight = torch.nn.Parameter(torch.ones(hidden_size))
         self.variance_epsilon = eps
         self.bias = bias
 
