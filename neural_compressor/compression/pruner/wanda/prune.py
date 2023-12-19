@@ -70,7 +70,7 @@ def prepare_calibration_input(model, dataloader, device):
         def forward(self, inp, **kwargs):
             tmp_other = {}
             for arg in kwargs:
-                if isinstance(kwargs[arg], torch.Tensor) or arg == 'alibi':
+                if isinstance(kwargs[arg], torch.Tensor) or arg == "alibi":
                     tmp_other[arg] = kwargs[arg]
             others.append(tmp_other)
             inps.append(inp)
@@ -112,7 +112,7 @@ def prune_wanda(
     use_cache = model.config.use_cache
     model.config.use_cache = False
 
-    inps, others  = prepare_calibration_input(model, dataloader, device)
+    inps, others = prepare_calibration_input(model, dataloader, device)
     outs = []
 
     layers = get_module_list(model)
