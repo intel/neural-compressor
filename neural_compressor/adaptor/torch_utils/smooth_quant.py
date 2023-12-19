@@ -1124,18 +1124,17 @@ class TorchSmoothQuant:
 
         if self.to_shift_bias:
             from .util import LlamaRMSNorm_bias, MistralRMSNorm_bias
-            for name in self.absorb_biasS_layers.keys(): #Replace layer-norms to enable bias-shifting.
+
+            for name in self.absorb_biasS_layers.keys():  # Replace layer-norms to enable bias-shifting.
                 module = get_module(self.model, name)
                 if module.__class__.__name__ == "LlamaRMSNorm":
                     module_replace = LlamaRMSNorm_bias(hidden_size=module.weight.size(), eps=module.variance_epsilon)
                     module_replace.weight = module.weight
-                elif module.__class__.__name__ == 'MistralRMSNorm':
+                elif module.__class__.__name__ == "MistralRMSNorm":
                     module_replace = MistralRMSNorm_bias(hidden_size=module.weight.size(), eps=module.variance_epsilon)
                     module_replace.weight = module.weight
                 set_module(self.model, name, module_replace)
                 logger.info(f"lyt_debug op replaced: {name}, {module.__class__.__name__}")
-
-
 
         try:
             for input, label in bar:
