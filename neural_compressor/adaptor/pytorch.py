@@ -1766,7 +1766,7 @@ class TemplateAdaptor(Adaptor):
                             do_blockwise determines whether to do blockwise auto-tuning.
                             shift_bias determines whether to do bias-shifting.
             default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
-            
+
 
         Returns:
             model: A modified fp32 model, inplace=True.
@@ -2022,8 +2022,10 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
-        if "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]:  # lyt_os_debug_1012 #updated_1219
-            do_bias_shift = recipe_cfgs["smooth_quant_args"]['auto_alpha_args'].get('shift_bias', False)
+        if (
+            "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]
+        ):  # lyt_os_debug_1012 #updated_1219
+            do_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("shift_bias", False)
         else:
             do_bias_shift = False
         if (
@@ -2693,8 +2695,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     folding = False
             else:
                 folding = recipe_cfgs["smooth_quant_args"]["folding"]
-        if "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]:  # lyt_os_debug_1012 #updated_1219
-            do_bias_shift = recipe_cfgs["smooth_quant_args"]['auto_alpha_args'].get('shift_bias', False)
+        if (
+            "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]
+        ):  # lyt_os_debug_1012 #updated_1219
+            do_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("shift_bias", False)
         else:
             do_bias_shift = False
         logger.info(
@@ -3538,8 +3542,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
-        if "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]:  # lyt_os_debug_1012 #updated_1219
-            do_bias_shift = recipe_cfgs["smooth_quant_args"]['auto_alpha_args'].get('shift_bias', False)
+        if (
+            "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]
+        ):  # lyt_os_debug_1012 #updated_1219
+            do_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("shift_bias", False)
         else:
             do_bias_shift = False
         if (

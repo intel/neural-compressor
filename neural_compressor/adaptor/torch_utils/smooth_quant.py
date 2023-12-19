@@ -1317,7 +1317,7 @@ class TorchSmoothQuant:
         else:
             self.insert_mul, self.allow_absorb = True, False
 
-        if isinstance(auto_alpha_args, dict): # lyt_os_debug_1011 #updated_1219
+        if isinstance(auto_alpha_args, dict):  # lyt_os_debug_1011 #updated_1219
             self.to_shift_bias = auto_alpha_args.get("shift_bias", False)
         else:
             self.to_shift_bias = False
