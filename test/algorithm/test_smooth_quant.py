@@ -1575,5 +1575,41 @@ class TestAlphaAutoLinearBlockwise(unittest.TestCase):
         assert len(sq.block_names) == 13
 
 
+
+class TestAlphaAutoLinearBiasShift(unittest.TestCase):
+    @classmethod
+    def test_sq_linear_bias_shift_auto(self):
+        class Model(torch.nn.Module):
+            device = torch.device("cpu")
+
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.norm = LlamaRMSNorm(4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.norm(out)
+                out = self.fc2(out)
+                return out
+
+        model = Model()
+        sq = TorchSmoothQuant(model, DemoCalibDataloader())       
+        sq.transform(
+            alpha="auto",
+            calib_iter=1,
+            folding=False,
+            auto_alpha_args={
+                "alpha_min": 0.0,
+                "alpha_max": 1.0,
+                "alpha_step": 0.1,
+                "shared_criterion": "mean",
+                "shift_bias": True,
+            },
+        )
+        assert (hasattr(sq.model.norm, 'bias') and sq.model.norm.bias is not None)
+
+
 if __name__ == "__main__":
     unittest.main()

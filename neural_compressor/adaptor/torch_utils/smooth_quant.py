@@ -1441,7 +1441,7 @@ class TorchSmoothQuant:
                             self.input_maxes[key] -= self.bias_shifts[key]  # lyt_os_debug_0915
                     logger.info(f"lyt_debug INC auto_alpha_args: {auto_alpha_args}")
                     self.alpha_per_layer = self._auto_tune_alpha(
-                        input_maxes_abs, calib_sample_num=8, **auto_alpha_args
+                        input_maxes_abs, calib_sample_num=32, **auto_alpha_args
                     )  ##save the alpha
                     bias_alphas = self.bias_shifts  # lyt_os_debug_1101
                     logger.info(f"lyt_debug alpha_per_layer: {len(self.alpha_per_layer)} {self.alpha_per_layer}")
