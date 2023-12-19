@@ -407,7 +407,9 @@ class GPTQuantizer(object):
                 tmp_weight_config[name]["percdamp"] = self.weight_config.get("pecdamp", self.percdamp_default)
                 tmp_weight_config[name]["sym"] = self.weight_config.get("sym", self.sym_default)
                 tmp_weight_config[name]["act_order"] = self.weight_config.get("act_order", self.act_order_default)
-                tmp_weight_config[name]["static_groups"] = self.weight_config.get("static_groups", self.act_order_default)
+                tmp_weight_config[name]["static_groups"] = self.weight_config.get(
+                    "static_groups", self.act_order_default
+                )
                 tmp_weight_config[name]["perchannel"] = self.weight_config.get("perchannel", self.perchannel_default)
                 tmp_weight_config[name]["mse"] = self.weight_config.get("mse", self.mse_default)
             self.weight_config = tmp_weight_config
@@ -634,7 +636,7 @@ class GPTQuantizer(object):
                     percdamp=weight_config_this_layer["percdamp"],
                     groupsize=weight_config_this_layer["group_size"],
                     act_order=weight_config_this_layer["act_order"],
-                    static_groups=weight_config_this_layer['static_groups'],
+                    static_groups=weight_config_this_layer["static_groups"],
                 )
                 if self.layer_wise:
                     from ..torch_utils.layer_wise_quant.utils import (
@@ -749,7 +751,7 @@ class GPTQ:
         # self.H += 2 / self.nsamples * inp.matmul(inp.t())
         self.H += inp.matmul(inp.t())  # H = X*X, which should be a sysm matrix
 
-    def fasterquant(self, W, blocksize=128, percdamp=0.01, groupsize=-1, act_order=False, static_groups = False):
+    def fasterquant(self, W, blocksize=128, percdamp=0.01, groupsize=-1, act_order=False, static_groups=False):
         # W = self.layer.weight.data.clone()
         weight_shape, weight_dtype = W.shape, W.data.dtype
         if isinstance(self.layer, nn.Conv2d):
@@ -772,10 +774,11 @@ class GPTQ:
         # enable static_groups
         if static_groups:
             import copy
+
             groups = []
             for i in range(0, self.columns, groupsize):
                 quantizer = copy.deepcopy(self.quantizer)
-                quantizer.find_params(W[:, i:(i + groupsize)], weight=True)
+                quantizer.find_params(W[:, i : (i + groupsize)], weight=True)
                 groups.append(quantizer)
 
         # rearrange considering the diag's value
@@ -823,7 +826,7 @@ class GPTQ:
                         idx = i1 + i
                         if act_order:
                             idx = perm[idx]
-                        self.quantizer = groups[idx // groupsize]                        
+                        self.quantizer = groups[idx // groupsize]
 
                 q = quantize(w.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq).flatten()
                 Q1[:, i] = q
