@@ -26,7 +26,7 @@ torch = LazyImport("torch")
 nn = LazyImport("torch.nn")
 F = LazyImport("torch.nn.functional")
 
-def find_layers(module, layers=[nn.Linear], name=""):
+def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=""):
     """Recursively find the layers of a certain type in a module.
 
     Args:
