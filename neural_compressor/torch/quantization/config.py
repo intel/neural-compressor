@@ -24,7 +24,7 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
 from neural_compressor.common.utility import DEFAULT_WHITE_LIST, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN_WEIGHT_ONLY_QUANT
-
+from neural_compressor.torch.constant import DOUBLE_QUANT_CONFIGS
 FRAMEWORK_NAME = "torch"
 
 
@@ -193,10 +193,7 @@ class GPTQConfig(BaseConfig):
         "device",
         "layer_wise",
         "return_int",
-        "double_quant_dtype",
-        "double_quant_bits",
-        "double_quant_sym",
-        "double_quant_group_size",
+        "double_quant_config",
     ]
 
     def __init__(
@@ -218,10 +215,7 @@ class GPTQConfig(BaseConfig):
         device=None,
         layer_wise: bool = False,
         return_int: bool = False,
-        double_quant_dtype: str = "fp32",
-        double_quant_bits: int = 8,
-        double_quant_sym: bool = True,
-        double_quant_group_size: int = 256,
+        double_quant_config: Optional[str] = None,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init GPTQ config.
@@ -247,11 +241,17 @@ class GPTQConfig(BaseConfig):
         self.layer_wise = layer_wise
         self.device = device
         self.return_int = return_int
-        self.double_quant_bits = double_quant_bits
-        self.double_quant_dtype = double_quant_dtype
-        self.double_quant_sym = double_quant_sym
-        self.double_quant_group_size = double_quant_group_size
+        self.double_quant_config = double_quant_config
+        self.init_double_quant_config()
         self._post_init()
+
+    def init_double_quant_config(self):
+        # import pdb; pdb.set_trace()
+        if self.double_quant_config is not None:
+            assert self.double_quant_config in DOUBLE_QUANT_CONFIGS, \
+                "Supported double quant configs: {}".format(list(DOUBLE_QUANT_CONFIGS.keys()))
+            for k, v in DOUBLE_QUANT_CONFIGS[self.double_quant_config].items():
+                setattr(self, k, v)
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)
