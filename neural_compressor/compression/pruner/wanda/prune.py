@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .utils import torch, nn, find_layers, logger
+from .utils import torch, nn, find_layers, logger, get_module_list
 
 # Define WrappedGPT class
 class WrappedGPT:
@@ -54,10 +54,10 @@ class WrappedGPT:
 def prepare_calibration_input(model, dataloader, device):
     use_cache = model.config.use_cache
     model.config.use_cache = False
-    layers = model.model.layers
+    layers = get_module_list(model)
 
     # dev = model.hf_device_map["model.embed_tokens"]
-    if "model.embed_tokens" in model.hf_device_map:
+    if hasattr(model, 'hf_device_map') and "model.embed_tokens" in model.hf_device_map:
         device = model.hf_device_map["model.embed_tokens"]
 
     dtype = next(iter(model.parameters())).dtype
@@ -100,17 +100,18 @@ def return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before):
     return W_mask, cur_sparsity
 
 
-def prune_wanda(model, dataloader, sparsity_ratio, device=torch.device("cuda:0"), prune_n=0, prune_m=0, nsamples=128, use_variant=False):
+def prune_wanda(model, dataloader, sparsity_ratio, device=torch.device("cpu"), prune_n=0, prune_m=0, nsamples=128, use_variant=False):
     use_cache = model.config.use_cache 
     model.config.use_cache = False 
 
     with torch.no_grad():
         inps, outs, attention_mask, position_ids = prepare_calibration_input(model, dataloader, device)
 
-    layers = model.model.layers
+    layers = get_module_list(model)
     for i in range(len(layers)):
         layer = layers[i]
         subset = find_layers(layer)
+        logger.info(subset)
 
         if f"model.layers.{i}" in model.hf_device_map:   ## handle the case for llama-30B and llama-65B, when the device map has multiple GPUs;
             dev = model.hf_device_map[f"model.layers.{i}"]
