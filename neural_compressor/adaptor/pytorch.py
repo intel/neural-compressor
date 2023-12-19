@@ -2683,6 +2683,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         # check smoothquant folding value
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
+        if "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]:
+            do_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("shift_bias", False)
+        else:
+            do_bias_shift = False
         if "smooth_quant_args" in recipe_cfgs and "folding" in recipe_cfgs["smooth_quant_args"]:
             if recipe_cfgs["smooth_quant_args"]["folding"] is None:
                 if self.version.release < Version("2.1").release:
@@ -2691,11 +2695,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     folding = False
             else:
                 folding = recipe_cfgs["smooth_quant_args"]["folding"]
-        if "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]:
-            do_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("shift_bias", False)
-        else:
-            do_bias_shift = False
             logger.debug(f"SQ Ipex do_bias_shift: {do_bias_shift}, folding: {folding}")
+
         # Update model parameter when smoothquant folding = False
         if (
             recipe_cfgs
@@ -3151,7 +3152,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
                             if self.version.release >= Version("2.1.1").release:
                                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                                    alpha=0.5, act_observer=MinMaxObserver()
+                                    alpha=0.5, act_observer=MinMaxObserver
                                 )
                             else:
                                 if self.sq_minmax_init:
