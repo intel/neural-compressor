@@ -4726,7 +4726,6 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             use_max_length,
             pad_max_length,
             self.device,
-            static_groups,
             layer_wise,
             model_path,
         )
