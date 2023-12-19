@@ -125,6 +125,7 @@ class FP8DynamicMatmul(torch.nn.Module):
 
         # process input1
         if input1.dtype not in [torch.float8_e4m3fn, torch.float8_e5m2]:
+            self.out_dtype = input1.dtype
             if self.use_amax:
                 input1_scale = self.dtype_amax / input1.data.abs().max()
                 input1_scale_inv = torch.reciprocal(input1_scale)
@@ -136,6 +137,7 @@ class FP8DynamicMatmul(torch.nn.Module):
             input1_scale, input1_scale_inv = None, None
         # process input2
         if input2.dtype not in [torch.float8_e4m3fn, torch.float8_e5m2]:
+            self.out_dtype = input2.dtype
             if self.use_amax:
                 input2_scale = self.dtype_amax / input2.data.abs().max()
                 input2_scale_inv = torch.reciprocal(input2_scale)
@@ -283,10 +285,12 @@ class FP8Matmul(torch.nn.Module):
         assert dim1 == dim2, "GEMM not possible"
 
         if input1.dtype not in [torch.float8_e4m3fn, torch.float8_e5m2]:
+            self.out_dtype = input1.dtype
             input1 = torch.ops.hpu.cast_to_fp8_v2(input1, self.scale, False, False, self.dtype)[0]
         else:
             self.input1_scale_inv = None
         if input2.dtype not in [torch.float8_e4m3fn, torch.float8_e5m2]:
+            self.out_dtype = input2.dtype
             input2 = torch.ops.hpu.cast_to_fp8_v2(input2, self.scale1, False, False, self.dtype)[0]
         else:
             self.input2_scale_inv = None
