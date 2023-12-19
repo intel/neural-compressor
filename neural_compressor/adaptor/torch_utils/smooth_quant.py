@@ -693,21 +693,26 @@ class TorchSmoothQuant:
                         w0_mean = torch.mean(layer.weight)
                         if hasattr(layer, "bias") and layer.bias is not None:
                             logger.info(
-                                f"lyt_debug weight_bias weight check(fold false): {layer_name}, weight_mean: {w0_mean}, bias_mean: {torch.mean(layer.bias)}"
+                                f"lyt_debug weight_bias weight check(fold false): {layer_name}, \
+                                    weight_mean: {w0_mean}, bias_mean: {torch.mean(layer.bias)}"
                             )
                             res = torch.matmul(z, w0.transpose(0, 1)) + layer.bias.data
                             layer.bias.data.copy_(res)
                             logger.info(
-                                f"lyt_debug weight_bias_shifted (fold false){torch.all(layer.bias==res)}: {layer_name}, W:{torch.mean(layer.weight)}, B:{torch.mean(layer.bias)}, {layer.bias.size()}"
+                                f"lyt_debug weight_bias_shifted (fold false){torch.all(layer.bias==res)}: \
+                                    {layer_name}, W:{torch.mean(layer.weight)}, B: {layer.bias.size()}"
                             )
                         else:
                             logger.info(
-                                f"lyt_debug weight_bias weight check: (fold false){layer_name}, weight_mean: {w0_mean}, no_bias"
+                                f"lyt_debug weight_bias weight check: (fold false){layer_name},\
+                                    weight_mean: {w0_mean}, no_bias"
                             )
                             res = torch.matmul(z, w0.transpose(0, 1))
                             layer.bias = torch.nn.Parameter(res, requires_grad=False)
                             logger.info(
-                                f"lyt_debug weight_bias_created (fold false){layer_name}, {torch.mean(layer.bias)}, W:{torch.mean(layer.weight)}, B:{torch.mean(layer.bias)} {layer.bias.size()}, {torch.all(layer.bias==res)}"
+                                f"lyt_debug weight_bias_created (fold false){layer_name}, {torch.mean(layer.bias)},\
+                                    W:{torch.mean(layer.weight)}, B:{torch.mean(layer.bias)} \
+                                    {layer.bias.size()}, {torch.all(layer.bias==res)}"
                             )
 
             return weight_scales_info, absorb_scales_info
@@ -731,12 +736,14 @@ class TorchSmoothQuant:
 
                     if hasattr(layer, "bias") and layer.bias is not None:
                         logger.info(
-                            f"lyt_debug weight_bias weight check: {layer_name}, weight_mean: {w0_mean}, bias_mean: {torch.mean(layer.bias)}"
+                            f"lyt_debug weight_bias weight check: {layer_name}, weight_mean: \
+                                {w0_mean}, bias_mean: {torch.mean(layer.bias)}"
                         )
                         res = torch.matmul(z, w0.transpose(0, 1)) + layer.bias.data
                         layer.bias.data.copy_(res)
                         logger.info(
-                            f"lyt_debug weight_bias_shifted {torch.all(layer.bias==res)}: {layer_name}, W:{torch.mean(layer.weight)}, B:{torch.mean(layer.bias)}, {layer.bias.size()}"
+                            f"lyt_debug weight_bias_shifted {torch.all(layer.bias==res)}: {layer_name}, \
+                                W:{torch.mean(layer.weight)}, B:{torch.mean(layer.bias)}, {layer.bias.size()}"
                         )
                     else:
                         logger.info(
@@ -745,7 +752,9 @@ class TorchSmoothQuant:
                         res = torch.matmul(z, w0.transpose(0, 1))
                         layer.bias = torch.nn.Parameter(res, requires_grad=False)
                         logger.info(
-                            f"lyt_debug weight_bias_created {layer_name}, {torch.mean(layer.bias)}, W:{torch.mean(layer.weight)}, B:{torch.mean(layer.bias)} {layer.bias.size()}, {torch.all(layer.bias==res)}"
+                            f"lyt_debug weight_bias_created {layer_name}, {torch.mean(layer.bias)}, W:\
+                                {torch.mean(layer.weight)}, B:{torch.mean(layer.bias)} {layer.bias.size()}, \
+                                {torch.all(layer.bias==res)}"
                         )
 
                 self._scale_layer_weight(
@@ -1361,7 +1370,8 @@ class TorchSmoothQuant:
                 self.absorb_to_layer.update(self.self_absorb_layers)
 
                 logger.info(
-                    f"lyt_debug len(atl 1194): {len(self.absorb_to_layer)}. {len(self.absorb_biasS_layers)}, {self.absorb_biasS_layers}"
+                    f"lyt_debug len(atl 1194): {len(self.absorb_to_layer)}. {len(self.absorb_biasS_layers)},\
+                    {self.absorb_biasS_layers}"
                 )  # 1107_decoupleSQ&BS
                 if self.absorb_to_layer is None and no_absorb_layers is None:
                     logger.warning(

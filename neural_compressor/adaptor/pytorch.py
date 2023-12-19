@@ -2701,9 +2701,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             do_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("shift_bias", False)
         else:
             do_bias_shift = False
-        logger.info(
-            f"lyt_debug pytorch.py 2690 do_bias_shift: {do_bias_shift}, folding: {folding}"
-        )  # lyt_os_debug_1012
+            logger.info(
+                f"lyt_debug pytorch.py 2690 do_bias_shift: {do_bias_shift}, folding: {folding}"
+            )  # lyt_os_debug_1012
         # Update model parameter when smoothquant folding = False
         if (
             recipe_cfgs

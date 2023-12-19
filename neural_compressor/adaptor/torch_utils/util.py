@@ -1335,11 +1335,8 @@ def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
     return total_block_args, total_block_kwargs
 
 
-import torch
-from torch import nn
 
-
-class LlamaRMSNorm_bias(nn.Module):
+class LlamaRMSNorm_bias(torch.nn.Module):
     def __init__(self, hidden_size, eps=1e-6, bias=None):
         """LlamaRMSNorm is equivalent to T5LayerNorm.
 
@@ -1362,7 +1359,7 @@ class LlamaRMSNorm_bias(nn.Module):
             return self.weight * hidden_states.to(input_dtype)
 
 
-class MistralRMSNorm_bias(nn.Module):
+class MistralRMSNorm_bias(torch.nn.Module):
     def __init__(self, hidden_size, eps=1e-6, bias=None):
         """MistralRMSNorm is equivalent to T5LayerNorm.
 
@@ -1379,7 +1376,6 @@ class MistralRMSNorm_bias(nn.Module):
         variance = hidden_states.pow(2).mean(-1, keepdim=True)
         hidden_states = hidden_states * torch.rsqrt(variance + self.variance_epsilon)
         if hasattr(self, "bias") and self.bias is not None:
-            logger.info(f"lyt_debug transformers modeling_mistral bias_added, {torch.mean(self.bias)}")
             return self.weight * hidden_states.to(input_dtype) + self.bias.to(input_dtype)
         else:
             return self.weight * hidden_states.to(input_dtype)
