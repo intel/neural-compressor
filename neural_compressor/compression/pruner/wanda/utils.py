@@ -1,0 +1,44 @@
+"""wanda utils"""
+# !/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2022 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+from neural_compressor.utils.utility import LazyImport
+from neural_compressor.utils import logger
+
+torch = LazyImport("torch")
+nn = LazyImport("torch.nn")
+F = LazyImport("torch.nn.functional")
+
+def find_layers(module, layers=[nn.Linear], name=''):
+    """
+    Recursively find the layers of a certain type in a module.
+
+    Args:
+        module (nn.Module): PyTorch module.
+        layers (list): List of layer types to find.
+        name (str): Name of the module.
+
+    Returns:
+        dict: Dictionary of layers of the given type(s) within the module.
+    """
+    if type(module) in layers:
+        return {name: module}
+    res = {}
+    for name1, child in module.named_children():
+        res.update(find_layers(
+            child, layers=layers, name=name + '.' + name1 if name != '' else name1
+        ))
+    return res
