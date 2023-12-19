@@ -264,9 +264,9 @@ class ONNXRTAugment:
             for output in session.get_outputs()
         ]
         augment_model_wrapper = (
-            ONNXModel(self.augmented_model)
+            ONNXModel(self.augmented_model, load_external_data=False)
             if not self.model_wrapper.is_large_model
-            else ONNXModel(self.model_wrapper.model_path + "_augment.onnx")
+            else ONNXModel(self.model_wrapper.model_path + "_augment.onnx", load_external_data=False)
         )
         input_name_to_nodes = augment_model_wrapper.input_name_to_nodes
         output_name_to_node = augment_model_wrapper.output_name_to_node
@@ -757,6 +757,7 @@ class ONNXRTAugment:
             max_vals_per_channel: max values per channel of input tensors
             shape_infos: The shape information of input tensors
         """
+        logger.info("Start smooth model calibration.")
         # add the input tensors of {op_types} to outputs of the model
         tensors_to_node = self._get_input_tensor_of_ops(op_types)
         self.model_wrapper.add_tensors_to_outputs(tensors_to_node.keys())

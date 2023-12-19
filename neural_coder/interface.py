@@ -118,6 +118,7 @@ def enable(
         "pytorch_inc_dynamic_quant",
         "pytorch_inc_static_quant_fx",
         "pytorch_inc_static_quant_ipex",
+        "pytorch_inc_static_quant_ipex_xpu",
         "pytorch_inc_bf16",
         "pytorch_inc_huggingface_optimum_static",
         "pytorch_inc_huggingface_optimum_dynamic",
@@ -210,6 +211,7 @@ def enable(
         or "pytorch_jit_trace_ofi" in features
         or "pytorch_inc_static_quant_fx" in features
         or "pytorch_inc_static_quant_ipex" in features
+        or "pytorch_inc_static_quant_ipex_xpu" in features
     ):
         features = ["pytorch_reclaim_inputs"] + features
 
@@ -312,6 +314,7 @@ def enable(
                 "pytorch_inc_dynamic_quant",
                 "pytorch_inc_static_quant_fx",
                 "pytorch_inc_static_quant_ipex",
+                "pytorch_inc_static_quant_ipex_xpu",
                 "pytorch_inc_huggingface_optimum_static",
                 "pytorch_inc_huggingface_optimum_dynamic",
                 "onnx_inc_static_quant_qlinear",
@@ -839,6 +842,7 @@ def superbench(
                 ["pytorch_inc_dynamic_quant"],
                 ["pytorch_inc_static_quant_fx"],
                 ["pytorch_inc_static_quant_ipex"],
+                ["pytorch_inc_static_quant_ipex_xpu"],
                 ["pytorch_inc_bf16"],
             ]
             standalones_pool = []
@@ -857,12 +861,14 @@ def superbench(
                 "pytorch_ipex_bf16",
                 "pytorch_inc_static_quant_fx",
                 "pytorch_inc_static_quant_ipex",
+                "pytorch_inc_static_quant_ipex_xpu",
                 "pytorch_inc_dynamic_quant",
                 "pytorch_ipex_int8_static_quant",
                 "pytorch_ipex_int8_dynamic_quant",
             ]
             # features that can be standalone (either use alone or use with "backend"):
             standalones_pool = [
+                "pytorch_ipex_xpu",
                 "pytorch_mixed_precision_cpu",
                 "pytorch_channels_last",
             ]
@@ -905,6 +911,8 @@ def superbench(
                 if "pytorch_inc_static_quant_fx" in features and "pytorch_mixed_precision_cpu" in features:
                     continue
                 if "pytorch_inc_static_quant_ipex" in features and "pytorch_mixed_precision_cpu" in features:
+                    continue
+                if "pytorch_inc_static_quant_ipex_xpu" in features and "pytorch_mixed_precision_cpu" in features:
                     continue
                 if "pytorch_inc_dynamic_quant" in features and "pytorch_mixed_precision_cpu" in features:
                     continue
@@ -960,6 +968,8 @@ def superbench(
                         features_display = "Intel INT8 (Static)"
                     elif features == ["pytorch_inc_static_quant_ipex"]:
                         features_display = "Intel INT8 (IPEX)"
+                    elif features == ["pytorch_inc_static_quant_ipex_xpu"]:
+                        features_display = "Intel INT8 (IPEX XPU)"
                     elif features == ["pytorch_inc_bf16"]:
                         features_display = "Intel BF16"
                     elif features == []:
@@ -1047,6 +1057,8 @@ def superbench(
                 best_optimization_display = "Intel INT8 (Static)"
             elif list_optimization_set_top3[0] == ["pytorch_inc_static_quant_ipex"]:
                 best_optimization_display = "Intel INT8 (IPEX)"
+            elif list_optimization_set_top3[0] == ["pytorch_inc_static_quant_ipex_xpu"]:
+                best_optimization_display = "Intel INT8 (IPEX XPU)"
             elif list_optimization_set_top3[0] == ["pytorch_inc_bf16"]:
                 best_optimization_display = "Intel BF16"
             elif list_optimization_set_top3[0] == []:

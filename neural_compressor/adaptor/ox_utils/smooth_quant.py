@@ -25,7 +25,13 @@ import onnx
 from onnx import helper, numpy_helper
 from onnx import onnx_pb as onnx_proto
 
-from neural_compressor.adaptor.ox_utils.util import _get_qrange_for_qType, is_B_transposed, quantize_data, to_numpy
+from neural_compressor.adaptor.ox_utils.util import (
+    _get_qrange_for_qType,
+    is_B_transposed,
+    quantize_data,
+    simple_progress_bar,
+    to_numpy,
+)
 from neural_compressor.model.model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
 
@@ -554,6 +560,7 @@ class ORTSmoothQuant:
         Returns:
             the smooth scales for weights, currently one input tensor only have one scale
         """
+        logger.info("Start smooth scales collection.")
         scales = {}
         for tensor, nodes in self.tensors_to_node.items():
             # if scales_per_op the key of scales is the node name, otherwise the activation of node
@@ -665,7 +672,8 @@ class ORTSmoothQuant:
         Args:
             scales (dict): The input scales
         """
-        for tensor_name, nodes in self.tensors_to_node.items():
+        for idx, (tensor_name, nodes) in enumerate(self.tensors_to_node.items()):
+            simple_progress_bar(len(self.tensors_to_node), idx + 1)
             for node_info in nodes:
                 key = node_info[0] if self.scales_per_op else tensor_name
                 if key not in scales:

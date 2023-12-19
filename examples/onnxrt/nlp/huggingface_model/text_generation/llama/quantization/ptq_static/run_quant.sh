@@ -32,6 +32,9 @@ function init_params {
       --tokenizer=*)
           tokenizer=$(echo $var |cut -f2 -d=)
       ;;
+      --layer_wise=*)
+          layer_wise=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -59,6 +62,11 @@ function run_tuning {
 	echo "Created directory $output_model"
     fi
 
+    # check if layer_wise option is set to true (case insensitive)
+    if [ "${layer_wise,,}" = "true" ]; then
+        extra_cmd="--layer_wise"
+    fi
+
     python main.py \
             --quant_format ${quant_format-QOperator} \
             --model_path ${input_model} \
@@ -67,7 +75,8 @@ function run_tuning {
             --batch_size ${batch_size-1} \
             --smooth_quant_alpha ${alpha-0.6} \
             --dataset ${dataset-NeelNanda/pile-10k} \
-            --tune
+            --tune \
+            ${extra_cmd}
 }
 
 main "$@"

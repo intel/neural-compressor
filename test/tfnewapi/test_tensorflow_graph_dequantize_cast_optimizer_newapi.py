@@ -69,11 +69,12 @@ class TestDequantizeCastOptimizer(unittest.TestCase):
         graph_def = build_fake_graphdef(set_min_first=True)
         converted_graph_def = DequantizeCastOptimizer(graph_def).do_transformation()
         hasCast = False
+        # Remove MIN_FIRST limitation for spr-base, so the "Cast" will be removed now
         for i in converted_graph_def.node:
             if i.op == "Cast":
                 hasCast = True
                 break
-        self.assertEqual(hasCast, True)
+        self.assertEqual(hasCast, False)
 
     @disable_random()
     def test_dequantize_cast_multiple_outputs(self):
