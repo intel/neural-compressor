@@ -34,7 +34,8 @@ pip install torch==1.12.0 \
             transformers \
             accelerate \
             flask==2.1.3 \
-            xgboost
+            xgboost \
+            datasets
 
 if [ "${scan_module}" = "neural_solution" ]; then
     cd /neural-compressor

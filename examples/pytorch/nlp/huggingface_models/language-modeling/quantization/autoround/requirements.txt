@@ -1,0 +1,11 @@
+transformers==4.34.1
+torch==2.0.1
+git+https://github.com/EleutherAI/lm-evaluation-harness.git@008fc2a23245c40384f2312718433eeb1e0f87a9
+fsspec==2023.9.2
+##the following is for intel neural compressor
+schema
+py-cpuinfo
+prettytable
+Pillow
+opencv-python-headless
+pycocotools

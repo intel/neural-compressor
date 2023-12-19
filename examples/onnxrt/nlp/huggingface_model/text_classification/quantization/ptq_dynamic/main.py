@@ -340,8 +340,15 @@ if __name__ == "__main__":
         default=768,
         type=int,
     )
+    parser.add_argument(
+        '--device',
+        type=str,
+        default='cpu',
+        choices=['cpu', 'npu'],
+    )
  
     args = parser.parse_args()
+    backend = 'onnxrt_dml_ep' if args.device == 'npu' else 'default'
 
     dataset = ONNXRTBertDataset(args.model_path,
                                 data_dir=args.data_path,
@@ -352,8 +359,8 @@ if __name__ == "__main__":
 
     def eval_func(model, *args):
         metric.reset()
-        session = ort.InferenceSession(model.SerializeToString(), 
-                                       providers=ort.get_available_providers())
+        provider = 'DmlExecutionProvider' if backend == 'onnxrt_dml_ep' else 'CPUExecutionProvider'
+        session = ort.InferenceSession(model.SerializeToString(), providers=[provider])
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
@@ -374,7 +381,9 @@ if __name__ == "__main__":
             from neural_compressor.config import BenchmarkConfig
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=28,
-                                   num_of_instance=1)
+                                   num_of_instance=1,
+                                   device=args.device,
+                                   backend=backend)
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)
@@ -413,6 +422,8 @@ if __name__ == "__main__":
         if args.model_name_or_path == 'Alireza1044/albert-base-v2-sst2':
             specific_quant_config['recipes'] = {'first_conv_or_matmul_quantization': False}
         config = PostTrainingQuantConfig(approach='dynamic',
+                                         device=args.device,
+                                         backend=backend,
                                          **specific_quant_config)
         q_model = quantization.fit(model, 
                                    config,

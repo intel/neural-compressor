@@ -324,7 +324,7 @@ IPEX (Intel Extension for PyTorch): 2.0/2.1
 
 Dataset: lambada_openai
 
-Task: text-generation
+Task: text-generation provided by [ITREX](https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization)
 
 alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper.
 
@@ -369,6 +369,13 @@ A list of models that achieved a <1% accuracy drop is shown below.
 | databricks/dolly-v1-6b* | 0.6866 | 0.6895 | alpha=0.8, Ipex 2.1 |
 | databricks/dolly-v2-3b* | 0.6297 | 0.6247 | alpha=0.5, Ipex 2.1 |
 | tiiuae/falcon-7b-instruct | 0.6437 | 0.6392 | alpha=0.7, Pytorch |
+
+The results listed below are achieved using IPEX optimize_transformers in model initialization for better performance. Please refer to the step-by-step [instruction](../../examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm/ipex/README.md) for details.
+| Model/Last token accuracy |  FP32 Accuracy   | INT8 (w/ SmoothQuant) | Notes |
+|:----------:|:------:|:------:|-----------------------------------|
+| LLaMa-2-7b-hf* | 0.7392 | 0.7332  | alpha=Auto, Ipex 2.1 |
+| LLaMa-2-13b-hf* | 0.7677 | 0.7632  | alpha=Auto, Ipex 2.1 |
+
 
 Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.
 ## Example
