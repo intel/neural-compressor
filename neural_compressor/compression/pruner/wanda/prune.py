@@ -50,19 +50,17 @@ class WrappedGPT:
         self.scaler_row += torch.norm(inp, p=2, dim=1) ** 2 / self.nsamples
 
 
+@torch.no_grad()
 def prepare_calibration_input(model, dataloader, device):
     use_cache = model.config.use_cache
     model.config.use_cache = False
     layers = get_module_list(model)
 
-    # dev = model.hf_device_map["model.embed_tokens"]
     if hasattr(model, "hf_device_map") and "model.embed_tokens" in model.hf_device_map:
         device = model.hf_device_map["model.embed_tokens"]
 
-    dtype = next(iter(model.parameters())).dtype
-    inps = torch.zeros((128, model.seqlen, model.config.hidden_size), dtype=dtype, device=device)
-    inps.requires_grad = False
-    cache = {"i": 0, "attention_mask": None, "position_ids": None}
+    inps = []
+    others = []
 
     class Catcher(nn.Module):
         def __init__(self, module):
@@ -70,10 +68,12 @@ def prepare_calibration_input(model, dataloader, device):
             self.module = module
 
         def forward(self, inp, **kwargs):
-            inps[cache["i"]] = inp
-            cache["i"] += 1
-            cache["attention_mask"] = kwargs["attention_mask"]
-            cache["position_ids"] = kwargs["position_ids"]
+            tmp_other = {}
+            for arg in kwargs:
+                if isinstance(kwargs[arg], torch.Tensor) or arg == 'alibi':
+                    tmp_other[arg] = kwargs[arg]
+            others.append(tmp_other)
+            inps.append(inp)
             raise ValueError
 
     layers[0] = Catcher(layers[0])
@@ -84,12 +84,9 @@ def prepare_calibration_input(model, dataloader, device):
             pass
     layers[0] = layers[0].module
 
-    outs = torch.zeros_like(inps)
-    attention_mask = cache["attention_mask"]
-    position_ids = cache["position_ids"]
     model.config.use_cache = use_cache
 
-    return inps, outs, attention_mask, position_ids
+    return inps, others
 
 
 def return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before):
@@ -101,18 +98,12 @@ def return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before):
     return W_mask, cur_sparsity
 
 
-def prune_wanda(
-    model, dataloader, sparsity_ratio, device=torch.device("cpu"), prune_n=0, prune_m=0, nsamples=128, use_variant=False
-):
-    use_cache = model.config.use_cache
-    model.config.use_cache = False
-
-
+@torch.no_grad()
 def prune_wanda(
     model,
     dataloader,
     sparsity_ratio,
-    device=torch.device("cuda:0"),
+    device=torch.device("cpu"),
     prune_n=0,
     prune_m=0,
     nsamples=128,
@@ -121,25 +112,14 @@ def prune_wanda(
     use_cache = model.config.use_cache
     model.config.use_cache = False
 
-    with torch.no_grad():
-        inps, outs, attention_mask, position_ids = prepare_calibration_input(model, dataloader, device)
+    inps, others  = prepare_calibration_input(model, dataloader, device)
+    outs = []
 
     layers = get_module_list(model)
     for i in range(len(layers)):
         layer = layers[i]
         subset = find_layers(layer)
         logger.info(subset)
-
-        if (
-            f"model.layers.{i}" in model.hf_device_map
-        ):  ## handle the case for llama-30B and llama-65B, when the device map has multiple GPUs;
-            dev = model.hf_device_map[f"model.layers.{i}"]
-            inps, outs, attention_mask, position_ids = (
-                inps.to(dev),
-                outs.to(dev),
-                attention_mask.to(dev),
-                position_ids.to(dev),
-            )
 
         wrapped_layers = {}
         for name in subset:
@@ -156,7 +136,7 @@ def prune_wanda(
             handles.append(subset[name].register_forward_hook(add_batch(name)))
         for j in range(min(nsamples, len(inps))):
             with torch.no_grad():
-                outs[j] = layer(inps[j].unsqueeze(0), attention_mask=attention_mask, position_ids=position_ids)[0]
+                outs.append(layer(inps[j], **others[j])[0])
         for h in handles:
             h.remove()
 
@@ -206,7 +186,7 @@ def prune_wanda(
 
         for j in range(nsamples):
             with torch.no_grad():
-                outs[j] = layer(inps[j].unsqueeze(0), attention_mask=attention_mask, position_ids=position_ids)[0]
+                outs[j] = layer(inps[j], others[j])[0]
         inps, outs = outs, inps
 
     model.config.use_cache = use_cache
