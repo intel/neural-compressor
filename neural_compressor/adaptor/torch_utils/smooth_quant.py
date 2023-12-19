@@ -265,7 +265,7 @@ class WrapperLayer(torch.nn.Module):
         self.weight_scale = None
         self.input_scale = None
         self.save_q_input = save_q_input
-        self.os_bias = None  # lyt_os
+        self.os_bias = None
         self.do_blockwise = False
 
     def enable_quant(self):
@@ -278,21 +278,21 @@ class WrapperLayer(torch.nn.Module):
         self.input_scale = input_scale
         self.weight_scale = weight_scale
 
-    def update_os_bias(self, bias):  # lyt_os
+    def update_os_bias(self, bias):
         self.os_bias = bias
 
     ##TODO better tradeoff performance and memory, currently it's too slow
     def q_dq_forward(self, x, input_scale, weight_scale):
         layer_copy = copy.deepcopy(self.orig_layer)
-        w0 = copy.deepcopy(layer_copy.weight)  # lyt_os
+        w0 = copy.deepcopy(layer_copy.weight)
         if weight_scale is not None:
             layer_copy.weight *= weight_scale
-            if self.os_bias is not None:  # lyt_os
+            if self.os_bias is not None:
                 if hasattr(layer_copy, "bias") and (layer_copy.bias is not None):
                     res = torch.matmul(self.os_bias, w0.transpose(0, 1)) + layer_copy.bias.data
                     layer_copy.bias.data.copy_(res)
                     x = x - self.os_bias
-                else:  # lyt_os_debug_1101:
+                else:
                     res = torch.matmul(self.os_bias, w0.transpose(0, 1))
                     layer_copy.bias = torch.nn.Parameter(res, requires_grad=False)
                     x = x - self.os_bias
@@ -378,13 +378,11 @@ class TorchSmoothQuant:
         self.adjust_alpha_space = False
         self.weight_clip = True
         self.default_alpha = 0.5
-        self.bias_shifts = {}  # lyt_os_debug_0913
-        self.to_shift_bias = False  # lyt_os_debug_1011
-        self.absorb_biasS_layers = {}  # lyt_add_1110
-
+        self.bias_shifts = {}
+        self.to_shift_bias = False
+        self.absorb_biasS_layers = {}
         self._save_scale = False
         self.weight_scale_dict = {}
-
         self.do_blockwise = False
         self.block_inputs = {}
         self.block_outputs = {}
@@ -419,10 +417,8 @@ class TorchSmoothQuant:
                 self.input_maxes[name] = torch.max(self.input_maxes[name], max_tensor)
                 self.input_maxes_abs[name] = torch.max(self.input_maxes_abs[name], res)
 
-            if self.to_shift_bias:  # lyt_os_debug_1013
-                self.bias_shifts[name] = (
-                    self.input_mins[name] + self.input_maxes[name]
-                ) / 2  # lyt_os_debug_1010 Modified@0913_conflict
+            if self.to_shift_bias:
+                self.bias_shifts[name] = (self.input_mins[name] + self.input_maxes[name]) / 2
 
         return save_input_hook
 
@@ -532,8 +528,8 @@ class TorchSmoothQuant:
         return scale
 
     def _scale_layer_weight(
-        self, layer_name, scale, alpha=0.5, input_minmax=None, bias_alphas=None
-    ):  ##input channel #lyt_os_debug
+        self, layer_name, scale, alpha=0.5, input_minmax=None
+    ):  ##input channel
         """Scale the layer weights at input channel, depthwise conv output channel
         :param layer_name: The layer name
         :param scale: The scale to be multiplied
@@ -554,9 +550,6 @@ class TorchSmoothQuant:
         elif self.allow_absorb:
             scale = self._reshape_scale_for_weight(layer, scale)
             layer.weight = torch.nn.Parameter(layer.weight * scale)
-            logger.info(
-                f"lyt_debug PostScaleLayerWeight: {layer_name},W_dim: {layer.weight.size()} W_mean: {torch.mean(layer.weight)} {torch.mean(layer.bias) if layer.bias is not None else {type(layer.bias)}}"
-            )
         return scale
 
     def _absorb_scales(self, layer_name, scale):  ##output channel
@@ -612,9 +605,8 @@ class TorchSmoothQuant:
 
         elif layer.__class__.__name__ == "LlamaRMSNorm" or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
             layer.weight *= scale
-            if hasattr(layer, "bias") and layer.bias is not None:  # lyt_add_1109
+            if hasattr(layer, "bias") and layer.bias is not None:
                 layer.bias *= scale
-                logger.info(f"lyt_debug absorb input LlamaRMSNorm bias absorbed: {layer_name}, {torch.mean(scale)}")
 
         else:
             logger.warning(
@@ -728,7 +720,6 @@ class TorchSmoothQuant:
                 alpha_tmp = alpha[key]
             absorb_scale = absorb_scales_info[key]
             self._absorb_scales(key, absorb_scale)
-            logger.info(f"lyt_debug adjust_param input_absorbed: {key}")
             layer_names = absorb_to_layer[key]
             for layer_name in layer_names:
                 input_minmax = [self.input_mins[layer_names[0]], self.input_maxes[layer_names[0]]]
@@ -957,8 +948,8 @@ class TorchSmoothQuant:
         if self.to_shift_bias:  # lyt_os_debug_1011 #lyt_os_debug_1213 fix conflicts
             for name in module_names:
                 module = get_module(self.model, name)
-                os_bias = copy.deepcopy(self.bias_shifts[name])  # lyt_os_debug_0913
-                module.update_os_bias(os_bias)  # lyt_os  #lyt_comment out to disable bias-shifting.
+                os_bias = copy.deepcopy(self.bias_shifts[name])
+                module.update_os_bias(os_bias)
 
         loss_alphas = {}
         if not self.do_blockwise:
@@ -1100,7 +1091,6 @@ class TorchSmoothQuant:
         if 0.5 in alpha_space:
             default_alpha = 0.5
         default_alpha = self.default_alpha
-        logger.info(f"lyt_debug default_alpha: {default_alpha}")  # lyt_os_debug_1011
         absorb_input_scales, weight_scales = self._cal_scales(
             self.absorb_to_layer, input_maxes, default_alpha, tuning=True
         )
@@ -1353,15 +1343,15 @@ class TorchSmoothQuant:
                     logger.info(
                         f"lyt_debug self_absorb_layers 1042: {len(self.self_absorb_layers)} {self.self_absorb_layers}"
                     )
-                    if self.to_shift_bias:  # lyt_os_add_1110
+                    if self.to_shift_bias:
                         self.absorb_biasS_layers, _ = self._trace(
                             str_op_types, to_shift_bias=self.to_shift_bias
-                        )  # lyt_os_debug_1108
+                        )
                 if self.allow_absorb:
                     if self.to_shift_bias:
                         self.absorb_biasS_layers, _ = self._trace(
                             str_op_types, to_shift_bias=self.to_shift_bias
-                        )  # lyt_os_debug_1108
+                        )
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         str_op_types
                     )  ##TODO we need to insert mul layer for no_absorb_layers later
@@ -1375,10 +1365,6 @@ class TorchSmoothQuant:
                         if i in self.self_absorb_layers:
                             self.self_absorb_layers.pop(i)
                 self.absorb_to_layer.update(self.self_absorb_layers)
-                logger.info(
-                    f"lyt_debug self_absorb_layers 1055: {len(self.self_absorb_layers)} {self.self_absorb_layers}"
-                )
-                logger.info(f"lyt_debug absorb_to_layer 1056: {len(self.absorb_to_layer)} {self.absorb_to_layer}")
 
                 logger.info(
                     f"lyt_debug len(atl 1194): {len(self.absorb_to_layer)}. {len(self.absorb_biasS_layers)}, {self.absorb_biasS_layers}"
@@ -1409,8 +1395,6 @@ class TorchSmoothQuant:
                     logger.debug(f"Blockwise auto-tuning blocks info: {self.block_to_module}")
 
                 input_maxes_abs = self._calibrate(self.absorb_to_layer, calib_iter, percentile)
-                logger.info(f"lyt_debug absorb_to_layer 1068: {len(self.absorb_to_layer)} {self.absorb_to_layer}")
-                logger.info(f"lyt_debug input_maxes abs: {len(input_maxes_abs)}, {input_maxes_abs.keys()}")
 
                 # Check if input_maxes match self.absorb_to_layer
                 # (due to self._get_all_layer_names use layer tree instead of forward_path)
@@ -1430,27 +1414,20 @@ class TorchSmoothQuant:
                     scale_memo_use *= alpha_space
                 self._save_scale = enough_memo_store_scale(self.device, scale_memo_use)
 
-                logger.info(f"lyt_debug auto_alpha_args: {auto_alpha_args}, record_max_info: {self.record_max_info}")
                 if alpha == "auto":
-                    if self.to_shift_bias:  # lyt_os_debug_1011
+                    if self.to_shift_bias:
                         for (
                             key
-                        ) in input_maxes_abs.keys():  # lyt_os_debug_0913  #lyt_comment out to disable bias-shifting.
+                        ) in input_maxes_abs.keys():
                             input_maxes_abs[key] -= self.bias_shifts[key]
-                            self.input_mins[key] -= self.bias_shifts[key]  # lyt_os_debug_0915
-                            self.input_maxes[key] -= self.bias_shifts[key]  # lyt_os_debug_0915
-                    logger.info(f"lyt_debug INC auto_alpha_args: {auto_alpha_args}")
+                            self.input_mins[key] -= self.bias_shifts[key]
+                            self.input_maxes[key] -= self.bias_shifts[key]
                     self.alpha_per_layer = self._auto_tune_alpha(
                         input_maxes_abs, calib_sample_num=32, **auto_alpha_args
                     )  ##save the alpha
-                    bias_alphas = self.bias_shifts  # lyt_os_debug_1101
-                    logger.info(f"lyt_debug alpha_per_layer: {len(self.alpha_per_layer)} {self.alpha_per_layer}")
-                    logger.info(f"lyt_debug bias_alphas: {len(bias_alphas)}, {bias_alphas.keys()}")
 
             if alpha == "auto":
                 alpha = self.alpha_per_layer
-            else:
-                bias_alphas = None
             example_inputs = self._get_example_input()
             if example_inputs is not None:
                 out_pre_sq = model_forward_per_sample(self.model, example_inputs, self.device)
@@ -1462,12 +1439,14 @@ class TorchSmoothQuant:
             logger.info(f"lyt_debug 1164 record_max_info: {self.record_max_info}, to_shift_bias: {self.to_shift_bias}")
             if self.record_max_info:
                 # max_info is recorded in self.max_value_info
-                self.absorb_bias_alphas(bias_alphas=bias_alphas)  # lyt_add_1110
+                if self.to_shift_bias:
+                    self.absorb_bias_alphas(bias_alphas=self.bias_shifts)
                 self._adjust_parameters(self.absorb_to_layer, input_maxes_abs, alpha)
                 self.model._smoothquant_optimized = False
                 return self.model
 
-            self.absorb_bias_alphas(bias_alphas=bias_alphas)  # lyt_os_debug_1031
+            if self.to_shift_bias:
+                self.absorb_bias_alphas(bias_alphas=self.bias_shifts)  # lyt_os_debug_1031
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(
                 self.absorb_to_layer, input_maxes_abs, alpha
             )  # lyt_os_debug #1101 remove bias_alphas
@@ -1542,7 +1521,7 @@ class TorchSmoothQuant:
 
         return self.example_inputs
 
-    def _trace(self, op_types, skip_unsupported_layers=True, to_shift_bias=False):  # Lyt_os_debug_1108
+    def _trace(self, op_types, skip_unsupported_layers=True, to_shift_bias=False):
         """Try the model to find the layers which can be smooth quantized.
 
         :param op_types: The op types to be smooth quantized
@@ -1558,7 +1537,7 @@ class TorchSmoothQuant:
             op_types,
             skip_unsupported_layers=skip_unsupported_layers,
             to_shift_bias=to_shift_bias,
-        )  # Lyt_os_debug_1108
+        )
         if not skip_unsupported_layers:
             return absorb_to_layer
         if absorb_to_layer is None and no_absorb_layers is None and not to_shift_bias:
@@ -1607,7 +1586,7 @@ class GraphTrace:
             "InstanceNorm2d": "aten::instance_norm",
             "LlamaRMSNorm": "aten::mul",
             "T5LayerNorm": "aten::mul",
-            "MistralRMSNorm": "aten::mul",  # lyt_os_debug_1128
+            "MistralRMSNorm": "aten::mul",
             "LPLayerNorm": "aten::layer_norm",  ##mpt_chat
         }
 
@@ -1667,12 +1646,12 @@ class GraphTrace:
                     break
         return nodes
 
-    def get_prev_absorb_layer(self, nodes, to_shift_bias=False):  # Lyt_os_debug_1108
+    def get_prev_absorb_layer(self, nodes, to_shift_bias=False):
         prev_absorb_layer = []
         for node in nodes:
             parent = get_parent(node)
             while 1:
-                if parent.kind() in self.skip_ops_to_find_absorb and not to_shift_bias:  # Lyt_os_debug_1108
+                if parent.kind() in self.skip_ops_to_find_absorb and not to_shift_bias:
                     parent = get_parent(parent)
                     continue
                 if parent.kind() in self.could_absorb_layers:
@@ -1737,7 +1716,7 @@ class GraphTrace:
 
     def get_absorb_to_layer(
         self, model, example_input, op_types, skip_unsupported_layers=True, to_shift_bias=False
-    ):  # Lyt_os_debug_1108
+    ):
         traced_model = self.trace(model, example_input)
         if traced_model is None:
             return None, None
@@ -1745,7 +1724,7 @@ class GraphTrace:
         aten_op_types = self.mapping_torch_module_to_aten(op_types)
         nodes_types = self.get_nodes(traced_model, aten_op_types)
         nodes = [node_type[0] for node_type in nodes_types]
-        nodes_prev_absorb = self.get_prev_absorb_layer(nodes, to_shift_bias)  # Lyt_os_debug_1108
+        nodes_prev_absorb = self.get_prev_absorb_layer(nodes, to_shift_bias)
         absorb_to_layer = {}
         no_absorb_layers = []
         for index, absorb in enumerate(nodes_prev_absorb):
