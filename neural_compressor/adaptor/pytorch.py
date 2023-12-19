@@ -4711,6 +4711,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         nsamples = self.recipes["gptq_args"].get("nsamples", 128)
         use_max_length = self.recipes["gptq_args"].get("use_max_length", False)
         pad_max_length = self.recipes["gptq_args"].get("pad_max_length", 2048)
+        static_groups = self.recipes["gptq_args"].get("static_groups", False)
         if use_max_length and "pad_max_length" not in self.recipes["gptq_args"]:
             logger.warning(
                 "You choose to use unified sequence length for calibration, \
@@ -4725,6 +4726,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             use_max_length,
             pad_max_length,
             self.device,
+            static_groups,
             layer_wise,
             model_path,
         )
