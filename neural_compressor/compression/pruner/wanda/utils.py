@@ -1,4 +1,4 @@
-"""wanda utils"""
+"""Wanda utils."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -15,18 +15,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+<<<<<<< HEAD
 import transformers
 
 from neural_compressor.utils.utility import LazyImport
+=======
+>>>>>>> abdce09f929f07283b78c4ae79de20db5d944dfb
 from neural_compressor.utils import logger
+from neural_compressor.utils.utility import LazyImport
 
 torch = LazyImport("torch")
 nn = LazyImport("torch.nn")
 F = LazyImport("torch.nn.functional")
 
+<<<<<<< HEAD
 def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=''):
     """
     Recursively find the layers of a certain type in a module.
+=======
+
+def find_layers(module, layers=[nn.Linear], name=""):
+    """Recursively find the layers of a certain type in a module.
+>>>>>>> abdce09f929f07283b78c4ae79de20db5d944dfb
 
     Args:
         module (nn.Module): PyTorch module.
@@ -40,6 +50,7 @@ def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Co
         return {name: module}
     res = {}
     for name1, child in module.named_children():
+<<<<<<< HEAD
         res.update(find_layers(
             child, layers=layers, name=name + '.' + name1 if name != '' else name1
         ))
@@ -54,3 +65,7 @@ def get_module_list(model):
             break
     assert module_list is not None, 'cannot find any transformers layers, please check the model.'
     return module_list
+=======
+        res.update(find_layers(child, layers=layers, name=name + "." + name1 if name != "" else name1))
+    return res
+>>>>>>> abdce09f929f07283b78c4ae79de20db5d944dfb
