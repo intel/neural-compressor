@@ -1,4 +1,4 @@
-"""wanda utils"""
+"""Wanda utils."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -15,16 +15,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from neural_compressor.utils.utility import LazyImport
 from neural_compressor.utils import logger
+from neural_compressor.utils.utility import LazyImport
 
 torch = LazyImport("torch")
 nn = LazyImport("torch.nn")
 F = LazyImport("torch.nn.functional")
 
-def find_layers(module, layers=[nn.Linear], name=''):
-    """
-    Recursively find the layers of a certain type in a module.
+
+def find_layers(module, layers=[nn.Linear], name=""):
+    """Recursively find the layers of a certain type in a module.
 
     Args:
         module (nn.Module): PyTorch module.
@@ -38,7 +38,5 @@ def find_layers(module, layers=[nn.Linear], name=''):
         return {name: module}
     res = {}
     for name1, child in module.named_children():
-        res.update(find_layers(
-            child, layers=layers, name=name + '.' + name1 if name != '' else name1
-        ))
+        res.update(find_layers(child, layers=layers, name=name + "." + name1 if name != "" else name1))
     return res
