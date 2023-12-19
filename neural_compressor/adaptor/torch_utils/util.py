@@ -1352,7 +1352,6 @@ class LlamaRMSNorm_bias(torch.nn.Module):
         variance = hidden_states.pow(2).mean(-1, keepdim=True)
         hidden_states = hidden_states * torch.rsqrt(variance + self.variance_epsilon)
         if self.bias is not None:
-            logger.info(f"lyt_debug util modeling_llama bias_added, {torch.mean(self.bias)}")
             return self.weight * hidden_states.to(input_dtype) + self.bias.to(input_dtype)
         else:
             return self.weight * hidden_states.to(input_dtype)

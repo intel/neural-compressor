@@ -1804,7 +1804,7 @@ class TemplateAdaptor(Adaptor):
             default_alpha=default_alpha,
             auto_alpha_args=auto_alpha_args,
             **kwargs,
-        )  # lyt_os_debug_1011 #lyt_removed_1219
+        )
         if self.sq.record_max_info:
             model.sq_max_info = self.sq.max_value_info
         return model
@@ -1893,7 +1893,7 @@ class TemplateAdaptor(Adaptor):
                     module = get_module(q_model, op_name)
                     new_module = SQLinearWrapper(
                         module, 1.0 / scale, input_minmax, alpha
-                    )  # lyt_os_debug_0822 #removed_1110
+                    )
                     set_module(q_model, op_name, new_module)
                     logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
@@ -2024,7 +2024,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
         if (
             "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]
-        ):  # lyt_os_debug_1012 #updated_1219
+        ):
             do_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("shift_bias", False)
         else:
             do_bias_shift = False
@@ -2041,7 +2041,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             and recipe_cfgs.get("smooth_quant", False)
             and recipe_cfgs["smooth_quant_args"]["folding"]
             and not do_bias_shift
-        ):  # lyt_os_debug_1013
+        ):
             self._apply_pre_optimization(q_model, tune_cfg)
 
         # For tensorboard display
@@ -2697,13 +2697,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 folding = recipe_cfgs["smooth_quant_args"]["folding"]
         if (
             "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]
-        ):  # lyt_os_debug_1012 #updated_1219
+        ):
             do_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("shift_bias", False)
         else:
             do_bias_shift = False
-            logger.info(
-                f"lyt_debug pytorch.py 2690 do_bias_shift: {do_bias_shift}, folding: {folding}"
-            )  # lyt_os_debug_1012
+            logger.debug(
+                f"SQ Ipex do_bias_shift: {do_bias_shift}, folding: {folding}"
+            )
         # Update model parameter when smoothquant folding = False
         if (
             recipe_cfgs
@@ -2715,7 +2715,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         # Update model parameter when smoothquant folding = True
         if (
             recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding and not do_bias_shift
-        ):  # lyt_os_debug_1012
+        ):
             self._apply_pre_optimization(model, tune_cfg)
 
         assert (
@@ -3544,7 +3544,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
         if (
             "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]
-        ):  # lyt_os_debug_1012 #updated_1219
+        ):
             do_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("shift_bias", False)
         else:
             do_bias_shift = False
@@ -3560,7 +3560,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             and recipe_cfgs.get("smooth_quant", False)
             and recipe_cfgs["smooth_quant_args"]["folding"]
             and not do_bias_shift
-        ):  # lyt_os_debug_1013-2
+        ):
             self._apply_pre_optimization(q_model, tune_cfg)
 
         self.tune_cfg = tune_cfg
