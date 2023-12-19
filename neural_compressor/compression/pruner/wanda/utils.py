@@ -17,14 +17,13 @@
 # limitations under the License.
 import transformers
 
-from neural_compressor.utils.utility import LazyImport
-
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
 
 torch = LazyImport("torch")
 nn = LazyImport("torch.nn")
 F = LazyImport("torch.nn.functional")
+
 
 def find_layers(module, layers=[nn.Linear], name=""):
     """Recursively find the layers of a certain type in a module.
@@ -41,17 +40,15 @@ def find_layers(module, layers=[nn.Linear], name=""):
         return {name: module}
     res = {}
     for name1, child in module.named_children():
-        res.update(find_layers(
-            child, layers=layers, name=name + '.' + name1 if name != '' else name1
-        ))
+        res.update(find_layers(child, layers=layers, name=name + "." + name1 if name != "" else name1))
     return res
 
 
 def get_module_list(model):
     module_list = None
     for _, module in model.named_modules():
-        if hasattr(type(module), "__name__") and 'ModuleList' in type(module).__name__:
+        if hasattr(type(module), "__name__") and "ModuleList" in type(module).__name__:
             module_list = module
             break
-    assert module_list is not None, 'cannot find any transformers layers, please check the model.'
+    assert module_list is not None, "cannot find any transformers layers, please check the model."
     return module_list
