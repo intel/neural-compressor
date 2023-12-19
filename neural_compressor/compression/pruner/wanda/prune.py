@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .utils import find_layers, logger, get_module_list, nn, torch
+from .utils import find_layers, get_module_list, logger, nn, torch
 
 
 # Define WrappedGPT class
@@ -56,7 +56,7 @@ def prepare_calibration_input(model, dataloader, device):
     layers = get_module_list(model)
 
     # dev = model.hf_device_map["model.embed_tokens"]
-    if hasattr(model, 'hf_device_map') and "model.embed_tokens" in model.hf_device_map:
+    if hasattr(model, "hf_device_map") and "model.embed_tokens" in model.hf_device_map:
         device = model.hf_device_map["model.embed_tokens"]
 
     dtype = next(iter(model.parameters())).dtype
@@ -101,9 +101,13 @@ def return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before):
     return W_mask, cur_sparsity
 
 
-def prune_wanda(model, dataloader, sparsity_ratio, device=torch.device("cpu"), prune_n=0, prune_m=0, nsamples=128, use_variant=False):
-    use_cache = model.config.use_cache 
-    model.config.use_cache = False 
+def prune_wanda(
+    model, dataloader, sparsity_ratio, device=torch.device("cpu"), prune_n=0, prune_m=0, nsamples=128, use_variant=False
+):
+    use_cache = model.config.use_cache
+    model.config.use_cache = False
+
+
 def prune_wanda(
     model,
     dataloader,
@@ -198,7 +202,7 @@ def prune_wanda(
                     indices = sort_res[1][:, : int(W_metric.shape[1] * sparsity_ratio)]
                     W_mask.scatter_(1, indices, True)
 
-            subset[name].weight.data[W_mask] = 0  ## set weights to zero 
+            subset[name].weight.data[W_mask] = 0  ## set weights to zero
 
         for j in range(nsamples):
             with torch.no_grad():
