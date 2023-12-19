@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.adaptor.torch_utils.autoround.autoround &mdash; Intel® Neural Compressor 2.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/adaptor/torch_utils/autoround/autoround/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.adaptor.torch_utils.autoround.autoround">
+<span id="neural-compressor-adaptor-torch-utils-autoround-autoround"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.torch_utils.autoround.autoround" title="neural_compressor.adaptor.torch_utils.autoround.autoround"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.torch_utils.autoround.autoround" title="Permalink to this heading"></a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.SaveInputs" title="neural_compressor.adaptor.torch_utils.autoround.autoround.SaveInputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SaveInputs</span></code></a></p></td>
+<td><p>Cache the inputs of the first block.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.WrapperMultiblock" title="neural_compressor.adaptor.torch_utils.autoround.autoround.WrapperMultiblock"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WrapperMultiblock</span></code></a></p></td>
+<td><p>A wrapper for a list of modules to be act as a single block.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.AutoRound" title="neural_compressor.adaptor.torch_utils.autoround.autoround.AutoRound"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AutoRound</span></code></a></p></td>
+<td><p>This is Signround+ which is an advanced version of Signround. For more information,</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.AutoOPTRound" title="neural_compressor.adaptor.torch_utils.autoround.autoround.AutoOPTRound"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AutoOPTRound</span></code></a></p></td>
+<td><p>Class for automatic rounding-based quantization with optimizers like adamw of a PyTorch model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.AutoAdamRound" title="neural_compressor.adaptor.torch_utils.autoround.autoround.AutoAdamRound"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AutoAdamRound</span></code></a></p></td>
+<td><p>Class for automatic rounding-based quantization with optimizers like adamw of a PyTorch model.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_asym" title="neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_asym"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight_asym</span></code></a>(weight[, num_bits, v, min_scale, ...])</p></td>
+<td><p>Quantizes and dequantizes weight asymmetrically.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_sym" title="neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_sym"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight_sym</span></code></a>(weight[, num_bits, v, min_scale, ...])</p></td>
+<td><p>Quantizes and dequantizes weight symmetrically.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_actor" title="neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_actor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight_actor</span></code></a>(weight, num_bits, scheme, v, ...)</p></td>
+<td><p>Quantizes and dequantizes weight symmetrically or asymmetrically .</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight" title="neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight</span></code></a>(weight[, num_bits, group_size, scheme, ...])</p></td>
+<td><p>Quantizes and dequantizes weight, handing the group size issue .</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.round_ste" title="neural_compressor.adaptor.torch_utils.autoround.autoround.round_ste"><code class="xref py py-obj docutils literal notranslate"><span class="pre">round_ste</span></code></a>(x)</p></td>
+<td><p>Straight-Through Estimator for rounding.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_module" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_module</span></code></a>(model, key)</p></td>
+<td><p>Get module from model by key name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.set_module" title="neural_compressor.adaptor.torch_utils.autoround.autoround.set_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_module</span></code></a>(model, key, new_module)</p></td>
+<td><p>Set new module into model by key name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_scale_shape" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_scale_shape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_scale_shape</span></code></a>(weight, group_size)</p></td>
+<td><p>Computes the shape of the scale tensor for quantization based on the weight tensor and group size.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.wrapper_block" title="neural_compressor.adaptor.torch_utils.autoround.autoround.wrapper_block"><code class="xref py py-obj docutils literal notranslate"><span class="pre">wrapper_block</span></code></a>(block, enable_minmax_tuning)</p></td>
+<td><p>Wraps the layers in the given block with a custom Wrapper module.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.unwrapper_block" title="neural_compressor.adaptor.torch_utils.autoround.autoround.unwrapper_block"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unwrapper_block</span></code></a>(block, vs, min_scales, max_scales)</p></td>
+<td><p>Unwraps the WrapperLinear and WrapperTransformerConv1d modules in the given block.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.sampling_inputs" title="neural_compressor.adaptor.torch_utils.autoround.autoround.sampling_inputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sampling_inputs</span></code></a>(input_ids, input_others, indices, seqlen)</p></td>
+<td><p>Samples inputs based on the given indices and sequence length.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.move_input_to_device" title="neural_compressor.adaptor.torch_utils.autoround.autoround.move_input_to_device"><code class="xref py py-obj docutils literal notranslate"><span class="pre">move_input_to_device</span></code></a>(input[, device])</p></td>
+<td><p>Moves input data to the specified device.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.check_is_cpu" title="neural_compressor.adaptor.torch_utils.autoround.autoround.check_is_cpu"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_is_cpu</span></code></a>(device)</p></td>
+<td><p>Check if the device is a CPU.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.block_forward" title="neural_compressor.adaptor.torch_utils.autoround.autoround.block_forward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">block_forward</span></code></a>(block, input_ids, input_others[, amp, ...])</p></td>
+<td><p>Performs a forward pass through a block with the given inputs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.collect_round_v" title="neural_compressor.adaptor.torch_utils.autoround.autoround.collect_round_v"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_round_v</span></code></a>(block)</p></td>
+<td><p>Collects the round values for wrapped linear modules in the given block.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.collect_minmax_scale" title="neural_compressor.adaptor.torch_utils.autoround.autoround.collect_minmax_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_minmax_scale</span></code></a>(block)</p></td>
+<td><p>Collects the min-max scaling values for wrapped linear modules in the given block.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_batch_dim" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_batch_dim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_batch_dim</span></code></a>(input_others)</p></td>
+<td><p>Gets the batch dimension based on the input positional inputs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_block_names" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_block_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_block_names</span></code></a>(model)</p></td>
+<td><p>Get the block names for transformers-like networks.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_tokenizer_function" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_tokenizer_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_tokenizer_function</span></code></a>(tokenizer, seqlen)</p></td>
+<td><p>Returns a default tokenizer function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_dataloader" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_dataloader"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dataloader</span></code></a>(tokenizer, seqlen[, data_name, split, ...])</p></td>
+<td><p>Returns a dataloader for the specified dataset and split.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_asym">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">quant_weight_asym</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_asym" title="Permalink to this definition"></a></dt>
+<dd><p>Quantizes and dequantizes weight asymmetrically.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weight</strong> – Tensor containing the weight to be quantized</p></li>
+<li><p><strong>num_bits</strong> – Number of bits for quantization (e.g., 2, 3, 4, 8)</p></li>
+<li><p><strong>v</strong> – Rounding value perturbation</p></li>
+<li><p><strong>min_scale</strong> – Minimum scale coefficient for weight</p></li>
+<li><p><strong>max_scale</strong> – Maximum scale coefficient for weight</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Quantized and dequantized weight, scale, zero-point</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_sym">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">quant_weight_sym</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_sym" title="Permalink to this definition"></a></dt>
+<dd><p>Quantizes and dequantizes weight symmetrically.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weight</strong> – Tensor containing the weight to be quantized</p></li>
+<li><p><strong>num_bits</strong> – Number of bits for quantization (e.g., 2, 3, 4, 8)</p></li>
+<li><p><strong>v</strong> – Rounding value perturbation</p></li>
+<li><p><strong>min_scale</strong> – Minimum scale coefficient for weight</p></li>
+<li><p><strong>max_scale</strong> – Maximum scale coefficient for weight</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Quantized and dequantized weight, scale, zero-point</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_actor">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">quant_weight_actor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_scale</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_actor" title="Permalink to this definition"></a></dt>
+<dd><p>Quantizes and dequantizes weight symmetrically or asymmetrically .</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weight</strong> – Tensor containing the weight to be quantized</p></li>
+<li><p><strong>num_bits</strong> – Number of bits for quantization (e.g., 2, 3, 4, 8)</p></li>
+<li><p><strong>scheme</strong> – Sym or asym</p></li>
+<li><p><strong>v</strong> – Rounding value perturbation</p></li>
+<li><p><strong>min_scale</strong> – Minimum scale coefficient for weight</p></li>
+<li><p><strong>max_scale</strong> – Maximum scale coefficient for weight</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Quantized and dequantized weight, scale, zero-point</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">quant_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight" title="Permalink to this definition"></a></dt>
+<dd><p>Quantizes and dequantizes weight, handing the group size issue .</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weight</strong> – Tensor containing the weight to be quantized</p></li>
+<li><p><strong>num_bits</strong> – Number of bits for quantization (e.g., 2, 3, 4, 8)</p></li>
+<li><p><strong>group_size</strong> – The number of elements shares scale and zero point</p></li>
+<li><p><strong>scheme</strong> – Sym or asym</p></li>
+<li><p><strong>v</strong> – Rounding value perturbation</p></li>
+<li><p><strong>min_scale</strong> – Minimum scale coefficient for weight</p></li>
+<li><p><strong>max_scale</strong> – Maximum scale coefficient for weight</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Quantized and dequantized weight, scale, zero-point</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.round_ste">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">round_ste</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.round_ste" title="Permalink to this definition"></a></dt>
+<dd><p>Straight-Through Estimator for rounding.
+This function is adapted from omniquant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> – torch.Tensor</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.SaveInputs">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">SaveInputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seqlen</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.SaveInputs" title="Permalink to this definition"></a></dt>
+<dd><p>Cache the inputs of the first block.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.get_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">get_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_module" title="Permalink to this definition"></a></dt>
+<dd><p>Get module from model by key name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – original model</p></li>
+<li><p><strong>key</strong> (<em>str</em>) – module name to be replaced</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.set_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">set_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_module</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.set_module" title="Permalink to this definition"></a></dt>
+<dd><p>Set new module into model by key name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – original model</p></li>
+<li><p><strong>key</strong> (<em>str</em>) – module name to be replaced</p></li>
+<li><p><strong>new_module</strong> (<em>torch.nn.Module</em>) – new module to be inserted</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.get_scale_shape">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">get_scale_shape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_scale_shape" title="Permalink to this definition"></a></dt>
+<dd><p>Computes the shape of the scale tensor for quantization based on the weight tensor and group size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weight</strong> (<em>torch.Tensor</em>) – The weight tensor of the layer.</p></li>
+<li><p><strong>group_size</strong> (<em>int</em>) – The size of the groups for quantization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The shape of the scale tensor to be used for quantization.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.wrapper_block">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">wrapper_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_minmax_tuning</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.wrapper_block" title="Permalink to this definition"></a></dt>
+<dd><p>Wraps the layers in the given block with a custom Wrapper module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>block</strong> – The input block containing linear and conv1d layers to be wrapped.</p></li>
+<li><p><strong>enable_minmax_tuning</strong> – A boolean indicating whether min-max tuning is enabled.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of names of the wrapped layers.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.unwrapper_block">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">unwrapper_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_scales</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_scales</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.unwrapper_block" title="Permalink to this definition"></a></dt>
+<dd><p>Unwraps the WrapperLinear and WrapperTransformerConv1d modules in the given block.</p>
+<p>Args:
+block: The input block containing wrapped modules to be unwrapped.
+vs: A dictionary of scaling parameters for the wrapped modules.
+min_scales: A dictionary of minimum scaling values for the wrapped modules.
+max_scales: A dictionary of maximum scaling values for the wrapped modules.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.sampling_inputs">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">sampling_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_others</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seqlen</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.sampling_inputs" title="Permalink to this definition"></a></dt>
+<dd><p>Samples inputs based on the given indices and sequence length.</p>
+<p>Args:
+input_ids: The input tensor containing IDs.
+input_others: A dictionary containing other input data.
+indices: The indices to sample from the input.
+seqlen: The sequence length.</p>
+<p>Returns:
+current_input_ids: The sampled input IDs.
+current_input_others: The sampled other input data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.move_input_to_device">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">move_input_to_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.device('cpu')</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.move_input_to_device" title="Permalink to this definition"></a></dt>
+<dd><p>Moves input data to the specified device.</p>
+<p>Args:
+input: The input data to be moved.
+device: The target device.</p>
+<p>Returns:
+The input data on the specified device.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.check_is_cpu">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">check_is_cpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.check_is_cpu" title="Permalink to this definition"></a></dt>
+<dd><p>Check if the device is a CPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>device</strong> – The device to be checked.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the device is a CPU, False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.block_forward">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">block_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_others</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.device('cpu')</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.block_forward" title="Permalink to this definition"></a></dt>
+<dd><p>Performs a forward pass through a block with the given inputs.</p>
+<p>Args:
+block: The block to perform the forward pass on.
+input_ids: The input IDs.
+input_others: A dictionary containing other input data.
+amp: A boolean indicating whether to use automatic mixed precision.
+amp_dtype: The data type for automatic mixed precision.
+device: The target device.</p>
+<p>Returns:
+output: The output of the forward pass.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.collect_round_v">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">collect_round_v</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.collect_round_v" title="Permalink to this definition"></a></dt>
+<dd><p>Collects the round values for wrapped linear modules in the given block.</p>
+<p>Args:
+block: The input block.</p>
+<p>Returns:
+vs: A dictionary of round values for the wrapped linear modules.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.collect_minmax_scale">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">collect_minmax_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.collect_minmax_scale" title="Permalink to this definition"></a></dt>
+<dd><p>Collects the min-max scaling values for wrapped linear modules in the given block.</p>
+<p>Args:
+block: The input block.</p>
+<p>Returns:
+min_scales: A dictionary of minimum scaling values.
+max_scales: A dictionary of maximum scaling values.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.get_batch_dim">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">get_batch_dim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_others</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_batch_dim" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the batch dimension based on the input positional inputs.</p>
+<p>Args:
+input_others: A dictionary containing input data.</p>
+<p>Returns:
+dim: The batch dimension.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.WrapperMultiblock">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">WrapperMultiblock</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_list</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.WrapperMultiblock" title="Permalink to this definition"></a></dt>
+<dd><p>A wrapper for a list of modules to be act as a single block.</p>
+<p>Args:
+module_list: The list of modules to wrap.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.get_block_names">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">get_block_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_block_names" title="Permalink to this definition"></a></dt>
+<dd><p>Get the block names for transformers-like networks.</p>
+<p>Args:
+model: The model.</p>
+<p>Returns:
+block_names: A list of block names.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.get_tokenizer_function">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">get_tokenizer_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seqlen</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_tokenizer_function" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a default tokenizer function.</p>
+<p>Args:
+tokenizer: The tokenizer to be used for tokenization.
+seqlen: The maximum sequence length.</p>
+<p>Returns: A default tokenizer function that applies the provided tokenizer with truncation and a maximum length of
+seqlen to the “text” field of examples.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.get_dataloader">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">get_dataloader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seqlen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'NeelNanda/pile-10k'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'train'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_dataloader" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a dataloader for the specified dataset and split.</p>
+<p>Args:
+tokenizer: The tokenizer to be used for tokenization.
+seqlen: The maximum sequence length.
+data_name: The name of the dataset.
+split: The data split to be used (e.g., “train”, “test”).
+seed: The random seed for shuffling the dataset.
+bs: The batch size for the dataloader.</p>
+<p>Returns:
+A dataloader for the specified dataset and split, using the provided tokenizer and sequence length.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.AutoRound">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">AutoRound</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_full_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cuda:0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr_scheduler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'NeelNanda/pile-10k'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_split</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'train'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_quant_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_minmax_tuning</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minmax_lr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_gpu_mem_usage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seqlen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'rand'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_blocks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gradient_accumulate_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">not_use_mse</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_max_gap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.AutoRound" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>This is Signround+ which is an advanced version of Signround. For more information,</dt><dd><p>please refer to Cheng, Wenhua, et al. “Optimize weight rounding via signed gradient descent
+for the quantization of llms.” arXiv preprint arXiv:2309.05516 (2023).</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – The PyTorch model to be quantized.</p></li>
+<li><p><strong>tokenizer</strong> – An optional tokenizer for processing input data.</p></li>
+<li><p><strong>bits</strong> (<em>int</em>) – Number of bits for quantization (default is 4).</p></li>
+<li><p><strong>group_size</strong> (<em>int</em>) – Size of the quantization group (default is 128).</p></li>
+<li><p><strong>scheme</strong> (<em>str</em>) – The quantization scheme to be used (default is “asym”).</p></li>
+<li><p><strong>weight_config</strong> (<em>dict</em>) – Configuration for weight quantization (default is an empty dictionary).</p></li>
+<li><p><strong>weight_config={</strong> – <dl class="simple">
+<dt>‘layer1’:##layer_name</dt><dd><dl class="simple">
+<dt>{</dt><dd><p>‘data_type’: ‘int’,
+‘bits’: 4,
+‘group_size’: 32,
+‘scheme’: “asym”, ## or sym</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>}</p>
+</p></li>
+<li><p><strong>enable_full_range</strong> (<em>bool</em>) – Whether to enable full range quantization (default is False).</p></li>
+<li><p><strong>bs</strong> (<em>int</em>) – Batch size for training (default is 8).</p></li>
+<li><p><strong>amp</strong> (<em>bool</em>) – Whether to use automatic mixed precision (default is True).</p></li>
+<li><p><strong>device</strong> – The device to be used for training (default is “cuda:0”).</p></li>
+<li><p><strong>lr_scheduler</strong> – The learning rate scheduler to be used.</p></li>
+<li><p><strong>dataloader</strong> – The dataloader for input data (to be supported in future).</p></li>
+<li><p><strong>dataset_name</strong> (<em>str</em>) – The default dataset name (default is “NeelNanda/pile-10k”).</p></li>
+<li><p><strong>dataset_split</strong> (<em>str</em>) – The split of the dataset to be used (default is “train”).</p></li>
+<li><p><strong>use_quant_input</strong> (<em>bool</em>) – Whether to use quantized input data (default is True).</p></li>
+<li><p><strong>enable_minmax_tuning</strong> (<em>bool</em>) – Whether to enable min-max tuning (default is True).</p></li>
+<li><p><strong>lr</strong> (<em>float</em>) – The learning rate (default is 0.005).</p></li>
+<li><p><strong>minmax_lr</strong> (<em>float</em>) – The learning rate for min-max tuning (default is None).</p></li>
+<li><p><strong>low_gpu_mem_usage</strong> (<em>bool</em>) – Whether to use low GPU memory (default is True).</p></li>
+<li><p><strong>iters</strong> (<em>int</em>) – Number of iterations (default is 200).</p></li>
+<li><p><strong>seqlen</strong> (<em>int</em>) – Length of the sequence.</p></li>
+<li><p><strong>n_samples</strong> (<em>int</em>) – Number of samples (default is 512).</p></li>
+<li><p><strong>sampler</strong> (<em>str</em>) – The sampling method (default is “rand”).</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – The random seed (default is 42).</p></li>
+<li><p><strong>n_blocks</strong> (<em>int</em>) – Number of blocks (default is 1).</p></li>
+<li><p><strong>gradient_accumulate_steps</strong> (<em>int</em>) – Number of gradient accumulation steps (default is 1).</p></li>
+<li><p><strong>not_use_mse</strong> (<em>bool</em>) – Whether to use mean squared error (default is False).</p></li>
+<li><p><strong>dynamic_max_gap</strong> (<em>int</em>) – The dynamic maximum gap (default is -1).</p></li>
+<li><p><strong>data_type</strong> (<em>str</em>) – The data type to be used (default is “int”).</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The quantized model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.AutoOPTRound">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">AutoOPTRound</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_full_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cuda:0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr_scheduler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'NeelNanda/pile-10k'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_split</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'train'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_quant_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_minmax_tuning</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minmax_lr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_gpu_mem_usage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seqlen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'rand'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_blocks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gradient_accumulate_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">not_use_mse</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_max_gap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'AdamW'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.AutoOPTRound" title="Permalink to this definition"></a></dt>
+<dd><p>Class for automatic rounding-based quantization with optimizers like adamw of a PyTorch model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – The PyTorch model to be quantized.</p></li>
+<li><p><strong>tokenizer</strong> – An optional tokenizer for processing input data.</p></li>
+<li><p><strong>bits</strong> (<em>int</em>) – Number of bits for quantization (default is 4).</p></li>
+<li><p><strong>group_size</strong> (<em>int</em>) – Size of the quantization group (default is 128).</p></li>
+<li><p><strong>scheme</strong> (<em>str</em>) – The quantization scheme to be used (default is “asym”).</p></li>
+<li><p><strong>weight_config</strong> (<em>dict</em>) – Configuration for weight quantization (default is an empty dictionary).</p></li>
+<li><p><strong>enable_full_range</strong> (<em>bool</em>) – Whether to enable full range quantization (default is False).</p></li>
+<li><p><strong>bs</strong> (<em>int</em>) – Batch size for training (default is 8).</p></li>
+<li><p><strong>amp</strong> (<em>bool</em>) – Whether to use automatic mixed precision (default is True).</p></li>
+<li><p><strong>device</strong> – The device to be used for training (default is “cuda:0”).</p></li>
+<li><p><strong>lr_scheduler</strong> – The learning rate scheduler to be used.</p></li>
+<li><p><strong>dataloader</strong> – The dataloader for input data (to be supported in future).</p></li>
+<li><p><strong>dataset_name</strong> (<em>str</em>) – The default dataset name (default is “NeelNanda/pile-10k”).</p></li>
+<li><p><strong>dataset_split</strong> (<em>str</em>) – The split of the dataset to be used (default is “train”).</p></li>
+<li><p><strong>use_quant_input</strong> (<em>bool</em>) – Whether to use quantized input data (default is True).</p></li>
+<li><p><strong>enable_minmax_tuning</strong> (<em>bool</em>) – Whether to enable min-max tuning (default is True).</p></li>
+<li><p><strong>lr</strong> (<em>float</em>) – The learning rate (default is 0.005).</p></li>
+<li><p><strong>minmax_lr</strong> (<em>float</em>) – The learning rate for min-max tuning (default is None).</p></li>
+<li><p><strong>low_gpu_mem_usage</strong> (<em>bool</em>) – Whether to use low GPU memory (default is True).</p></li>
+<li><p><strong>iters</strong> (<em>int</em>) – Number of iterations (default is 200).</p></li>
+<li><p><strong>seqlen</strong> (<em>int</em>) – Length of the sequence.</p></li>
+<li><p><strong>n_samples</strong> (<em>int</em>) – Number of samples (default is 512).</p></li>
+<li><p><strong>sampler</strong> (<em>str</em>) – The sampling method (default is “rand”).</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – The random seed (default is 42).</p></li>
+<li><p><strong>n_blocks</strong> (<em>int</em>) – Number of blocks (default is 1).</p></li>
+<li><p><strong>gradient_accumulate_steps</strong> (<em>int</em>) – Number of gradient accumulation steps (default is 1).</p></li>
+<li><p><strong>not_use_mse</strong> (<em>bool</em>) – Whether to use mean squared error (default is False).</p></li>
+<li><p><strong>dynamic_max_gap</strong> (<em>int</em>) – The dynamic maximum gap (default is -1).</p></li>
+<li><p><strong>data_type</strong> (<em>str</em>) – The data type to be used (default is “int”).</p></li>
+<li><p><strong>optimizer</strong> – string or object</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The quantized model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.AutoAdamRound">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">AutoAdamRound</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_full_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cuda:0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr_scheduler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'NeelNanda/pile-10k'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_split</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'train'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_quant_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_minmax_tuning</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minmax_lr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_gpu_mem_usage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seqlen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'rand'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_blocks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gradient_accumulate_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">not_use_mse</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_max_gap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'AdamW'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.AutoAdamRound" title="Permalink to this definition"></a></dt>
+<dd><p>Class for automatic rounding-based quantization with optimizers like adamw of a PyTorch model.
+The default lr has been changed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – The PyTorch model to be quantized.</p></li>
+<li><p><strong>tokenizer</strong> – An optional tokenizer for processing input data.</p></li>
+<li><p><strong>bits</strong> (<em>int</em>) – Number of bits for quantization (default is 4).</p></li>
+<li><p><strong>group_size</strong> (<em>int</em>) – Size of the quantization group (default is 128).</p></li>
+<li><p><strong>scheme</strong> (<em>str</em>) – The quantization scheme to be used (default is “asym”).</p></li>
+<li><p><strong>weight_config</strong> (<em>dict</em>) – Configuration for weight quantization (default is an empty dictionary).</p></li>
+<li><p><strong>enable_full_range</strong> (<em>bool</em>) – Whether to enable full range quantization (default is False).</p></li>
+<li><p><strong>bs</strong> (<em>int</em>) – Batch size for training (default is 8).</p></li>
+<li><p><strong>amp</strong> (<em>bool</em>) – Whether to use automatic mixed precision (default is True).</p></li>
+<li><p><strong>device</strong> – The device to be used for training (default is “cuda:0”).</p></li>
+<li><p><strong>lr_scheduler</strong> – The learning rate scheduler to be used.</p></li>
+<li><p><strong>dataloader</strong> – The dataloader for input data (to be supported in future).</p></li>
+<li><p><strong>dataset_name</strong> (<em>str</em>) – The default dataset name (default is “NeelNanda/pile-10k”).</p></li>
+<li><p><strong>dataset_split</strong> (<em>str</em>) – The split of the dataset to be used (default is “train”).</p></li>
+<li><p><strong>use_quant_input</strong> (<em>bool</em>) – Whether to use quantized input data (default is True).</p></li>
+<li><p><strong>enable_minmax_tuning</strong> (<em>bool</em>) – Whether to enable min-max tuning (default is True).</p></li>
+<li><p><strong>lr</strong> (<em>float</em>) – The learning rate (default is 0.005).</p></li>
+<li><p><strong>minmax_lr</strong> (<em>float</em>) – The learning rate for min-max tuning (default is None).</p></li>
+<li><p><strong>low_gpu_mem_usage</strong> (<em>bool</em>) – Whether to use low GPU memory (default is True).</p></li>
+<li><p><strong>iters</strong> (<em>int</em>) – Number of iterations (default is 200).</p></li>
+<li><p><strong>seqlen</strong> (<em>int</em>) – Length of the sequence.</p></li>
+<li><p><strong>n_samples</strong> (<em>int</em>) – Number of samples (default is 512).</p></li>
+<li><p><strong>sampler</strong> (<em>str</em>) – The sampling method (default is “rand”).</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – The random seed (default is 42).</p></li>
+<li><p><strong>n_blocks</strong> (<em>int</em>) – Number of blocks (default is 1).</p></li>
+<li><p><strong>gradient_accumulate_steps</strong> (<em>int</em>) – Number of gradient accumulation steps (default is 1).</p></li>
+<li><p><strong>not_use_mse</strong> (<em>bool</em>) – Whether to use mean squared error (default is False).</p></li>
+<li><p><strong>dynamic_max_gap</strong> (<em>int</em>) – The dynamic maximum gap (default is -1).</p></li>
+<li><p><strong>data_type</strong> (<em>str</em>) – The data type to be used (default is “int”).</p></li>
+<li><p><strong>optimizer</strong> – string or object</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The quantized model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8451a49540> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

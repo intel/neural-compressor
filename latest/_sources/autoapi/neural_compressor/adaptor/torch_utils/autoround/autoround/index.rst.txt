@@ -1,0 +1,525 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.torch_utils.autoround.autoround`
+===================================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.autoround.autoround
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.autoround.autoround.SaveInputs
+   neural_compressor.adaptor.torch_utils.autoround.autoround.WrapperMultiblock
+   neural_compressor.adaptor.torch_utils.autoround.autoround.AutoRound
+   neural_compressor.adaptor.torch_utils.autoround.autoround.AutoOPTRound
+   neural_compressor.adaptor.torch_utils.autoround.autoround.AutoAdamRound
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_asym
+   neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_sym
+   neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_actor
+   neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight
+   neural_compressor.adaptor.torch_utils.autoround.autoround.round_ste
+   neural_compressor.adaptor.torch_utils.autoround.autoround.get_module
+   neural_compressor.adaptor.torch_utils.autoround.autoround.set_module
+   neural_compressor.adaptor.torch_utils.autoround.autoround.get_scale_shape
+   neural_compressor.adaptor.torch_utils.autoround.autoround.wrapper_block
+   neural_compressor.adaptor.torch_utils.autoround.autoround.unwrapper_block
+   neural_compressor.adaptor.torch_utils.autoround.autoround.sampling_inputs
+   neural_compressor.adaptor.torch_utils.autoround.autoround.move_input_to_device
+   neural_compressor.adaptor.torch_utils.autoround.autoround.check_is_cpu
+   neural_compressor.adaptor.torch_utils.autoround.autoround.block_forward
+   neural_compressor.adaptor.torch_utils.autoround.autoround.collect_round_v
+   neural_compressor.adaptor.torch_utils.autoround.autoround.collect_minmax_scale
+   neural_compressor.adaptor.torch_utils.autoround.autoround.get_batch_dim
+   neural_compressor.adaptor.torch_utils.autoround.autoround.get_block_names
+   neural_compressor.adaptor.torch_utils.autoround.autoround.get_tokenizer_function
+   neural_compressor.adaptor.torch_utils.autoround.autoround.get_dataloader
+
+
+
+.. py:function:: quant_weight_asym(weight, num_bits=4, v=0, min_scale=0, max_scale=0)
+
+   Quantizes and dequantizes weight asymmetrically.
+
+   :param weight: Tensor containing the weight to be quantized
+   :param num_bits: Number of bits for quantization (e.g., 2, 3, 4, 8)
+   :param v: Rounding value perturbation
+   :param min_scale: Minimum scale coefficient for weight
+   :param max_scale: Maximum scale coefficient for weight
+
+   :returns: Quantized and dequantized weight, scale, zero-point
+
+
+.. py:function:: quant_weight_sym(weight, num_bits=4, v=0, min_scale=0, max_scale=0)
+
+   Quantizes and dequantizes weight symmetrically.
+
+   :param weight: Tensor containing the weight to be quantized
+   :param num_bits: Number of bits for quantization (e.g., 2, 3, 4, 8)
+   :param v: Rounding value perturbation
+   :param min_scale: Minimum scale coefficient for weight
+   :param max_scale: Maximum scale coefficient for weight
+
+   :returns: Quantized and dequantized weight, scale, zero-point
+
+
+.. py:function:: quant_weight_actor(weight, num_bits, scheme, v, min_scale, max_scale)
+
+   Quantizes and dequantizes weight symmetrically or asymmetrically .
+
+   :param weight: Tensor containing the weight to be quantized
+   :param num_bits: Number of bits for quantization (e.g., 2, 3, 4, 8)
+   :param scheme: Sym or asym
+   :param v: Rounding value perturbation
+   :param min_scale: Minimum scale coefficient for weight
+   :param max_scale: Maximum scale coefficient for weight
+
+   :returns: Quantized and dequantized weight, scale, zero-point
+
+
+.. py:function:: quant_weight(weight, num_bits=4, group_size=-1, scheme='asym', v=0, min_scale=0, max_scale=0)
+
+   Quantizes and dequantizes weight, handing the group size issue .
+
+   :param weight: Tensor containing the weight to be quantized
+   :param num_bits: Number of bits for quantization (e.g., 2, 3, 4, 8)
+   :param group_size: The number of elements shares scale and zero point
+   :param scheme: Sym or asym
+   :param v: Rounding value perturbation
+   :param min_scale: Minimum scale coefficient for weight
+   :param max_scale: Maximum scale coefficient for weight
+
+   :returns: Quantized and dequantized weight, scale, zero-point
+
+
+.. py:function:: round_ste(x: torch.Tensor)
+
+   Straight-Through Estimator for rounding.
+   This function is adapted from omniquant.
+
+   :param x: torch.Tensor
+
+   :returns: torch.Tensor
+
+
+.. py:class:: SaveInputs(model, dataloader, seqlen=256, block_name=None)
+
+
+   Cache the inputs of the first block.
+
+
+.. py:function:: get_module(model, key)
+
+   Get module from model by key name.
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+
+
+.. py:function:: set_module(model, key, new_module)
+
+   Set new module into model by key name.
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+   :param new_module: new module to be inserted
+   :type new_module: torch.nn.Module
+
+
+.. py:function:: get_scale_shape(weight, group_size)
+
+   Computes the shape of the scale tensor for quantization based on the weight tensor and group size.
+
+   :param weight: The weight tensor of the layer.
+   :type weight: torch.Tensor
+   :param group_size: The size of the groups for quantization.
+   :type group_size: int
+
+   :returns: The shape of the scale tensor to be used for quantization.
+
+
+.. py:function:: wrapper_block(block, enable_minmax_tuning)
+
+   Wraps the layers in the given block with a custom Wrapper module.
+
+   :param block: The input block containing linear and conv1d layers to be wrapped.
+   :param enable_minmax_tuning: A boolean indicating whether min-max tuning is enabled.
+
+   :returns: A list of names of the wrapped layers.
+   :rtype: list
+
+
+.. py:function:: unwrapper_block(block, vs, min_scales, max_scales)
+
+   Unwraps the WrapperLinear and WrapperTransformerConv1d modules in the given block.
+
+   Args:
+   block: The input block containing wrapped modules to be unwrapped.
+   vs: A dictionary of scaling parameters for the wrapped modules.
+   min_scales: A dictionary of minimum scaling values for the wrapped modules.
+   max_scales: A dictionary of maximum scaling values for the wrapped modules.
+
+
+.. py:function:: sampling_inputs(input_ids, input_others, indices, seqlen)
+
+   Samples inputs based on the given indices and sequence length.
+
+   Args:
+   input_ids: The input tensor containing IDs.
+   input_others: A dictionary containing other input data.
+   indices: The indices to sample from the input.
+   seqlen: The sequence length.
+
+   Returns:
+   current_input_ids: The sampled input IDs.
+   current_input_others: The sampled other input data.
+
+
+.. py:function:: move_input_to_device(input, device=torch.device('cpu'))
+
+   Moves input data to the specified device.
+
+   Args:
+   input: The input data to be moved.
+   device: The target device.
+
+   Returns:
+   The input data on the specified device.
+
+
+.. py:function:: check_is_cpu(device)
+
+   Check if the device is a CPU.
+
+   :param device: The device to be checked.
+
+   :returns: True if the device is a CPU, False otherwise.
+   :rtype: bool
+
+
+.. py:function:: block_forward(block, input_ids, input_others, amp=False, amp_dtype=torch.float16, device=torch.device('cpu'))
+
+   Performs a forward pass through a block with the given inputs.
+
+   Args:
+   block: The block to perform the forward pass on.
+   input_ids: The input IDs.
+   input_others: A dictionary containing other input data.
+   amp: A boolean indicating whether to use automatic mixed precision.
+   amp_dtype: The data type for automatic mixed precision.
+   device: The target device.
+
+   Returns:
+   output: The output of the forward pass.
+
+
+.. py:function:: collect_round_v(block)
+
+   Collects the round values for wrapped linear modules in the given block.
+
+   Args:
+   block: The input block.
+
+   Returns:
+   vs: A dictionary of round values for the wrapped linear modules.
+
+
+.. py:function:: collect_minmax_scale(block)
+
+   Collects the min-max scaling values for wrapped linear modules in the given block.
+
+   Args:
+   block: The input block.
+
+   Returns:
+   min_scales: A dictionary of minimum scaling values.
+   max_scales: A dictionary of maximum scaling values.
+
+
+.. py:function:: get_batch_dim(input_others)
+
+   Gets the batch dimension based on the input positional inputs.
+
+   Args:
+   input_others: A dictionary containing input data.
+
+   Returns:
+   dim: The batch dimension.
+
+
+.. py:class:: WrapperMultiblock(module_list)
+
+
+
+
+   A wrapper for a list of modules to be act as a single block.
+
+   Args:
+   module_list: The list of modules to wrap.
+
+
+.. py:function:: get_block_names(model)
+
+   Get the block names for transformers-like networks.
+
+   Args:
+   model: The model.
+
+   Returns:
+   block_names: A list of block names.
+
+
+.. py:function:: get_tokenizer_function(tokenizer, seqlen)
+
+   Returns a default tokenizer function.
+
+   Args:
+   tokenizer: The tokenizer to be used for tokenization.
+   seqlen: The maximum sequence length.
+
+   Returns: A default tokenizer function that applies the provided tokenizer with truncation and a maximum length of
+   seqlen to the "text" field of examples.
+
+
+.. py:function:: get_dataloader(tokenizer, seqlen, data_name='NeelNanda/pile-10k', split='train', seed=42, bs=4)
+
+   Returns a dataloader for the specified dataset and split.
+
+   Args:
+   tokenizer: The tokenizer to be used for tokenization.
+   seqlen: The maximum sequence length.
+   data_name: The name of the dataset.
+   split: The data split to be used (e.g., "train", "test").
+   seed: The random seed for shuffling the dataset.
+   bs: The batch size for the dataloader.
+
+   Returns:
+   A dataloader for the specified dataset and split, using the provided tokenizer and sequence length.
+
+
+.. py:class:: AutoRound(model, tokenizer=None, bits: int = 4, group_size: int = 128, scheme: str = 'asym', weight_config: dict = {}, enable_full_range: bool = False, bs: int = 8, amp: bool = True, device='cuda:0', lr_scheduler=None, dataloader=None, dataset_name: str = 'NeelNanda/pile-10k', dataset_split: str = 'train', use_quant_input: bool = True, enable_minmax_tuning: bool = True, lr: float = 0.005, minmax_lr: float = None, low_gpu_mem_usage: bool = True, iters: int = 200, seqlen: int = 2048, n_samples: int = 512, sampler: str = 'rand', seed: int = 42, n_blocks: int = 1, gradient_accumulate_steps: int = 1, not_use_mse: bool = False, dynamic_max_gap: int = -1, data_type: str = 'int', **kwargs)
+
+
+
+
+   This is Signround+ which is an advanced version of Signround. For more information,
+    please refer to Cheng, Wenhua, et al. "Optimize weight rounding via signed gradient descent
+    for the quantization of llms." arXiv preprint arXiv:2309.05516 (2023).
+
+   :param model: The PyTorch model to be quantized.
+   :param tokenizer: An optional tokenizer for processing input data.
+   :param bits: Number of bits for quantization (default is 4).
+   :type bits: int
+   :param group_size: Size of the quantization group (default is 128).
+   :type group_size: int
+   :param scheme: The quantization scheme to be used (default is "asym").
+   :type scheme: str
+   :param weight_config: Configuration for weight quantization (default is an empty dictionary).
+   :type weight_config: dict
+   :param weight_config={:     'layer1':##layer_name
+                               {
+                                   'data_type': 'int',
+                                   'bits': 4,
+                                   'group_size': 32,
+                                   'scheme': "asym", ## or sym
+                               }
+                               ...
+                           }
+   :param enable_full_range: Whether to enable full range quantization (default is False).
+   :type enable_full_range: bool
+   :param bs: Batch size for training (default is 8).
+   :type bs: int
+   :param amp: Whether to use automatic mixed precision (default is True).
+   :type amp: bool
+   :param device: The device to be used for training (default is "cuda:0").
+   :param lr_scheduler: The learning rate scheduler to be used.
+   :param dataloader: The dataloader for input data (to be supported in future).
+   :param dataset_name: The default dataset name (default is "NeelNanda/pile-10k").
+   :type dataset_name: str
+   :param dataset_split: The split of the dataset to be used (default is "train").
+   :type dataset_split: str
+   :param use_quant_input: Whether to use quantized input data (default is True).
+   :type use_quant_input: bool
+   :param enable_minmax_tuning: Whether to enable min-max tuning (default is True).
+   :type enable_minmax_tuning: bool
+   :param lr: The learning rate (default is 0.005).
+   :type lr: float
+   :param minmax_lr: The learning rate for min-max tuning (default is None).
+   :type minmax_lr: float
+   :param low_gpu_mem_usage: Whether to use low GPU memory (default is True).
+   :type low_gpu_mem_usage: bool
+   :param iters: Number of iterations (default is 200).
+   :type iters: int
+   :param seqlen: Length of the sequence.
+   :type seqlen: int
+   :param n_samples: Number of samples (default is 512).
+   :type n_samples: int
+   :param sampler: The sampling method (default is "rand").
+   :type sampler: str
+   :param seed: The random seed (default is 42).
+   :type seed: int
+   :param n_blocks: Number of blocks (default is 1).
+   :type n_blocks: int
+   :param gradient_accumulate_steps: Number of gradient accumulation steps (default is 1).
+   :type gradient_accumulate_steps: int
+   :param not_use_mse: Whether to use mean squared error (default is False).
+   :type not_use_mse: bool
+   :param dynamic_max_gap: The dynamic maximum gap (default is -1).
+   :type dynamic_max_gap: int
+   :param data_type: The data type to be used (default is "int").
+   :type data_type: str
+   :param \*\*kwargs: Additional keyword arguments.
+
+   :returns: The quantized model.
+
+
+.. py:class:: AutoOPTRound(model, tokenizer=None, bits: int = 4, group_size: int = 128, scheme: str = 'asym', weight_config: dict = {}, enable_full_range: bool = False, bs: int = 8, amp: bool = True, device='cuda:0', lr_scheduler=None, dataloader=None, dataset_name: str = 'NeelNanda/pile-10k', dataset_split: str = 'train', use_quant_input: bool = True, enable_minmax_tuning: bool = True, lr: float = 0.005, minmax_lr: float = None, low_gpu_mem_usage: bool = True, iters: int = 200, seqlen: int = 2048, n_samples: int = 512, sampler: str = 'rand', seed: int = 42, n_blocks: int = 1, gradient_accumulate_steps: int = 1, not_use_mse: bool = False, dynamic_max_gap: int = -1, data_type: str = 'int', optimizer='AdamW', **kwargs)
+
+
+
+
+   Class for automatic rounding-based quantization with optimizers like adamw of a PyTorch model.
+
+   :param model: The PyTorch model to be quantized.
+   :param tokenizer: An optional tokenizer for processing input data.
+   :param bits: Number of bits for quantization (default is 4).
+   :type bits: int
+   :param group_size: Size of the quantization group (default is 128).
+   :type group_size: int
+   :param scheme: The quantization scheme to be used (default is "asym").
+   :type scheme: str
+   :param weight_config: Configuration for weight quantization (default is an empty dictionary).
+   :type weight_config: dict
+   :param enable_full_range: Whether to enable full range quantization (default is False).
+   :type enable_full_range: bool
+   :param bs: Batch size for training (default is 8).
+   :type bs: int
+   :param amp: Whether to use automatic mixed precision (default is True).
+   :type amp: bool
+   :param device: The device to be used for training (default is "cuda:0").
+   :param lr_scheduler: The learning rate scheduler to be used.
+   :param dataloader: The dataloader for input data (to be supported in future).
+   :param dataset_name: The default dataset name (default is "NeelNanda/pile-10k").
+   :type dataset_name: str
+   :param dataset_split: The split of the dataset to be used (default is "train").
+   :type dataset_split: str
+   :param use_quant_input: Whether to use quantized input data (default is True).
+   :type use_quant_input: bool
+   :param enable_minmax_tuning: Whether to enable min-max tuning (default is True).
+   :type enable_minmax_tuning: bool
+   :param lr: The learning rate (default is 0.005).
+   :type lr: float
+   :param minmax_lr: The learning rate for min-max tuning (default is None).
+   :type minmax_lr: float
+   :param low_gpu_mem_usage: Whether to use low GPU memory (default is True).
+   :type low_gpu_mem_usage: bool
+   :param iters: Number of iterations (default is 200).
+   :type iters: int
+   :param seqlen: Length of the sequence.
+   :type seqlen: int
+   :param n_samples: Number of samples (default is 512).
+   :type n_samples: int
+   :param sampler: The sampling method (default is "rand").
+   :type sampler: str
+   :param seed: The random seed (default is 42).
+   :type seed: int
+   :param n_blocks: Number of blocks (default is 1).
+   :type n_blocks: int
+   :param gradient_accumulate_steps: Number of gradient accumulation steps (default is 1).
+   :type gradient_accumulate_steps: int
+   :param not_use_mse: Whether to use mean squared error (default is False).
+   :type not_use_mse: bool
+   :param dynamic_max_gap: The dynamic maximum gap (default is -1).
+   :type dynamic_max_gap: int
+   :param data_type: The data type to be used (default is "int").
+   :type data_type: str
+   :param optimizer: string or object
+   :param \*\*kwargs: Additional keyword arguments.
+
+   :returns: The quantized model.
+
+
+.. py:class:: AutoAdamRound(model, tokenizer=None, bits: int = 4, group_size: int = 128, scheme: str = 'asym', weight_config: dict = {}, enable_full_range: bool = False, bs: int = 8, amp: bool = True, device='cuda:0', lr_scheduler=None, dataloader=None, dataset_name: str = 'NeelNanda/pile-10k', dataset_split: str = 'train', use_quant_input: bool = True, enable_minmax_tuning: bool = True, lr: float = 0.01, minmax_lr: float = None, low_gpu_mem_usage: bool = True, iters: int = 200, seqlen: int = 2048, n_samples: int = 512, sampler: str = 'rand', seed: int = 42, n_blocks: int = 1, gradient_accumulate_steps: int = 1, not_use_mse: bool = False, dynamic_max_gap: int = -1, data_type: str = 'int', optimizer='AdamW', **kwargs)
+
+
+
+
+   Class for automatic rounding-based quantization with optimizers like adamw of a PyTorch model.
+   The default lr has been changed.
+
+   :param model: The PyTorch model to be quantized.
+   :param tokenizer: An optional tokenizer for processing input data.
+   :param bits: Number of bits for quantization (default is 4).
+   :type bits: int
+   :param group_size: Size of the quantization group (default is 128).
+   :type group_size: int
+   :param scheme: The quantization scheme to be used (default is "asym").
+   :type scheme: str
+   :param weight_config: Configuration for weight quantization (default is an empty dictionary).
+   :type weight_config: dict
+   :param enable_full_range: Whether to enable full range quantization (default is False).
+   :type enable_full_range: bool
+   :param bs: Batch size for training (default is 8).
+   :type bs: int
+   :param amp: Whether to use automatic mixed precision (default is True).
+   :type amp: bool
+   :param device: The device to be used for training (default is "cuda:0").
+   :param lr_scheduler: The learning rate scheduler to be used.
+   :param dataloader: The dataloader for input data (to be supported in future).
+   :param dataset_name: The default dataset name (default is "NeelNanda/pile-10k").
+   :type dataset_name: str
+   :param dataset_split: The split of the dataset to be used (default is "train").
+   :type dataset_split: str
+   :param use_quant_input: Whether to use quantized input data (default is True).
+   :type use_quant_input: bool
+   :param enable_minmax_tuning: Whether to enable min-max tuning (default is True).
+   :type enable_minmax_tuning: bool
+   :param lr: The learning rate (default is 0.005).
+   :type lr: float
+   :param minmax_lr: The learning rate for min-max tuning (default is None).
+   :type minmax_lr: float
+   :param low_gpu_mem_usage: Whether to use low GPU memory (default is True).
+   :type low_gpu_mem_usage: bool
+   :param iters: Number of iterations (default is 200).
+   :type iters: int
+   :param seqlen: Length of the sequence.
+   :type seqlen: int
+   :param n_samples: Number of samples (default is 512).
+   :type n_samples: int
+   :param sampler: The sampling method (default is "rand").
+   :type sampler: str
+   :param seed: The random seed (default is 42).
+   :type seed: int
+   :param n_blocks: Number of blocks (default is 1).
+   :type n_blocks: int
+   :param gradient_accumulate_steps: Number of gradient accumulation steps (default is 1).
+   :type gradient_accumulate_steps: int
+   :param not_use_mse: Whether to use mean squared error (default is False).
+   :type not_use_mse: bool
+   :param dynamic_max_gap: The dynamic maximum gap (default is -1).
+   :type dynamic_max_gap: int
+   :param data_type: The data type to be used (default is "int").
+   :type data_type: str
+   :param optimizer: string or object
+   :param \*\*kwargs: Additional keyword arguments.
+
+   :returns: The quantized model.
+
+
