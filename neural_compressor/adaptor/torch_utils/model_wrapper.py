@@ -593,3 +593,48 @@ class MulLinear(torch.nn.Module):
         scale = self.input_scale.view(1, self.input_scale.shape[0])
         with torch.no_grad():
             self.linear.weight *= scale
+
+
+class LlamaRMSNorm_bias(torch.nn.Module):
+    def __init__(self, hidden_size, eps=1e-6, bias=None):
+        """LlamaRMSNorm is equivalent to T5LayerNorm.
+
+        Add bias attribute and modify forward function for bias-shifting.
+        """
+        super().__init__()
+        self.weight = torch.nn.Parameter(torch.ones(hidden_size))
+        self.variance_epsilon = eps
+        self.bias = bias
+
+    def forward(self, hidden_states):
+        input_dtype = hidden_states.dtype
+        hidden_states = hidden_states.to(torch.float32)
+        variance = hidden_states.pow(2).mean(-1, keepdim=True)
+        hidden_states = hidden_states * torch.rsqrt(variance + self.variance_epsilon)
+        if self.bias is not None:
+            return self.weight * hidden_states.to(input_dtype) + self.bias.to(input_dtype)
+        else:
+            return self.weight * hidden_states.to(input_dtype)
+
+
+class MistralRMSNorm_bias(torch.nn.Module):
+    def __init__(self, hidden_size, eps=1e-6, bias=None):
+        """MistralRMSNorm is equivalent to T5LayerNorm.
+
+        Add bias attribute and modify forward function for bias-shifting.
+        """
+        super().__init__()
+        self.weight = torch.nn.Parameter(torch.ones(hidden_size))
+        self.variance_epsilon = eps
+        self.bias = bias
+
+    def forward(self, hidden_states):
+        input_dtype = hidden_states.dtype
+        hidden_states = hidden_states.to(torch.float32)
+        variance = hidden_states.pow(2).mean(-1, keepdim=True)
+        hidden_states = hidden_states * torch.rsqrt(variance + self.variance_epsilon)
+        if hasattr(self, "bias") and self.bias is not None:
+            return self.weight * hidden_states.to(input_dtype) + self.bias.to(input_dtype)
+        else:
+            return self.weight * hidden_states.to(input_dtype)
+

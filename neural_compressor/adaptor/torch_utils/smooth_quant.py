@@ -1114,7 +1114,7 @@ class TorchSmoothQuant:
         bar = tqdm(self.dataloader, total=calib_sample_num, desc="auto tune alpha")
 
         if self.to_shift_bias:
-            from .util import LlamaRMSNorm_bias, MistralRMSNorm_bias
+            from .model_wrapper import LlamaRMSNorm_bias, MistralRMSNorm_bias
 
             for name in self.absorb_biasS_layers.keys():  # Replace layer-norms to enable bias-shifting.
                 module = get_module(self.model, name)
