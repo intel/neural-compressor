@@ -527,9 +527,7 @@ class TorchSmoothQuant:
 
         return scale
 
-    def _scale_layer_weight(
-        self, layer_name, scale, alpha=0.5, input_minmax=None
-    ):  ##input channel
+    def _scale_layer_weight(self, layer_name, scale, alpha=0.5, input_minmax=None):  ##input channel
         """Scale the layer weights at input channel, depthwise conv output channel
         :param layer_name: The layer name
         :param scale: The scale to be multiplied
@@ -1344,14 +1342,10 @@ class TorchSmoothQuant:
                         f"lyt_debug self_absorb_layers 1042: {len(self.self_absorb_layers)} {self.self_absorb_layers}"
                     )
                     if self.to_shift_bias:
-                        self.absorb_biasS_layers, _ = self._trace(
-                            str_op_types, to_shift_bias=self.to_shift_bias
-                        )
+                        self.absorb_biasS_layers, _ = self._trace(str_op_types, to_shift_bias=self.to_shift_bias)
                 if self.allow_absorb:
                     if self.to_shift_bias:
-                        self.absorb_biasS_layers, _ = self._trace(
-                            str_op_types, to_shift_bias=self.to_shift_bias
-                        )
+                        self.absorb_biasS_layers, _ = self._trace(str_op_types, to_shift_bias=self.to_shift_bias)
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         str_op_types
                     )  ##TODO we need to insert mul layer for no_absorb_layers later
@@ -1416,9 +1410,7 @@ class TorchSmoothQuant:
 
                 if alpha == "auto":
                     if self.to_shift_bias:
-                        for (
-                            key
-                        ) in input_maxes_abs.keys():
+                        for key in input_maxes_abs.keys():
                             input_maxes_abs[key] -= self.bias_shifts[key]
                             self.input_mins[key] -= self.bias_shifts[key]
                             self.input_maxes[key] -= self.bias_shifts[key]
@@ -1714,9 +1706,7 @@ class GraphTrace:
                 return False
         return True
 
-    def get_absorb_to_layer(
-        self, model, example_input, op_types, skip_unsupported_layers=True, to_shift_bias=False
-    ):
+    def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True, to_shift_bias=False):
         traced_model = self.trace(model, example_input)
         if traced_model is None:
             return None, None
