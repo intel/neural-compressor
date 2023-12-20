@@ -84,7 +84,6 @@ fi
 # install special test env requirements
 # common deps
 pip install cmake
-pip install horovod
 pip install transformers
 
 if [[ $(echo "${test_case}" | grep -c "others") != 0 ]];then
@@ -93,6 +92,12 @@ elif [[ $(echo "${test_case}" | grep -c "nas") != 0 ]]; then
     pip install dynast==1.6.0rc1
 elif [[ $(echo "${test_case}" | grep -c "tf pruning") != 0 ]]; then
     pip install tensorflow-addons
+    # Workaround
+    # horovod can't be install in the env with TF and PT together
+    # so test distribute cases in the env with single fw installed
+    pip install horovod
+elif [[ $(echo "${test_case}" | grep -c "pt pruning") != 0 ]]; then
+    pip install horovod
 fi
 # test deps
 pip install coverage

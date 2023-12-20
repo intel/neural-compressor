@@ -3,15 +3,7 @@ import shutil
 import signal
 import subprocess
 import unittest
-
-import horovod.torch as hvd
-import torch
-import torch.nn as nn
 import torchvision
-
-from neural_compressor.data import Datasets
-from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-
 
 def build_fake_py():
     fake_py = """
