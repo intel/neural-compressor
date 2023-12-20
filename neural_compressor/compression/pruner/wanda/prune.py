@@ -14,7 +14,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import transformers
 
+from neural_compressor.adaptor.torch_utils.util import get_hidden_states
 from .utils import find_layers, get_module_list, logger, nn, torch
 
 
@@ -38,7 +40,8 @@ class WrappedGPT:
         if len(inp.shape) == 2:
             inp = inp.unsqueeze(0)
         tmp = inp.shape[0]
-        if isinstance(self.layer, nn.Linear):
+        import torch
+        if isinstance(self.layer, (nn.Conv1d, nn.Linear, transformers.Conv1D)):
             if len(inp.shape) == 3:
                 inp = inp.reshape((-1, inp.shape[-1]))
             inp = inp.t()
@@ -67,13 +70,13 @@ def prepare_calibration_input(model, dataloader, device):
             super().__init__()
             self.module = module
 
-        def forward(self, inp, **kwargs):
+        def forward(self, *inp, **kwargs):
             tmp_other = {}
             for arg in kwargs:
                 if isinstance(kwargs[arg], torch.Tensor) or arg == "alibi":
                     tmp_other[arg] = kwargs[arg]
             others.append(tmp_other)
-            inps.append(inp)
+            inps.append(list(inp))
             raise ValueError
 
     layers[0] = Catcher(layers[0])
@@ -103,22 +106,30 @@ def prune_wanda(
     model,
     dataloader,
     sparsity_ratio,
-    device=torch.device("cpu"),
     prune_n=0,
     prune_m=0,
     nsamples=128,
     use_variant=False,
+    device=torch.device("cpu"),
 ):
+    """prune the model using wanda
+    Sij = |Wij| · ||Xj||2
+    """
+    model.to(device)
     use_cache = model.config.use_cache
     model.config.use_cache = False
 
-    inps, others = prepare_calibration_input(model, dataloader, device)
+    # get inputs
+    # inps, others = prepare_calibration_input(model, dataloader, device)
+    inps, others = get_hidden_states(model, dataloader)
     outs = []
 
+    # get the module list of the model, blockwise
     layers = get_module_list(model)
     for i in range(len(layers)):
         layer = layers[i]
         subset = find_layers(layer)
+        logger.info(f'prune layer {i}')
         logger.info(subset)
 
         wrapped_layers = {}
@@ -131,17 +142,20 @@ def prune_wanda(
 
             return tmp
 
+        # register hook and foward to gather the activations ||Xj||2
         handles = []
         for name in wrapped_layers:
             handles.append(subset[name].register_forward_hook(add_batch(name)))
         for j in range(min(nsamples, len(inps))):
             with torch.no_grad():
-                outs.append(layer(inps[j], **others[j])[0])
+                outs.append(layer(*inps[j], **others[j])[0])
         for h in handles:
             h.remove()
 
+        # start pruning
         for name in subset:
             logger.info(f"pruning layer {i} name {name}")
+            # Sij = |Wij| · ||Xj||2
             W_metric = torch.abs(subset[name].weight.data) * torch.sqrt(
                 wrapped_layers[name].scaler_row.reshape((1, -1))
             )
@@ -186,7 +200,7 @@ def prune_wanda(
 
         for j in range(nsamples):
             with torch.no_grad():
-                outs[j] = layer(inps[j], others[j])[0]
+                outs[j] = layer(*inps[j], **others[j])[0]
         inps, outs = outs, inps
 
     model.config.use_cache = use_cache
