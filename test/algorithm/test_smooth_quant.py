@@ -383,6 +383,23 @@ class T5LayerNorm(nn.Module):
         return self.weight * hidden_states
 
 
+class MistralRMSNorm(nn.Module):
+    def __init__(self, hidden_size, eps=1e-6):
+        """
+        MistralRMSNorm is equivalent to T5LayerNorm
+        """
+        super().__init__()
+        self.weight = nn.Parameter(torch.ones(hidden_size))
+        self.variance_epsilon = eps
+
+    def forward(self, hidden_states):
+        input_dtype = hidden_states.dtype
+        hidden_states = hidden_states.to(torch.float32)
+        variance = hidden_states.pow(2).mean(-1, keepdim=True)
+        hidden_states = hidden_states * torch.rsqrt(variance + self.variance_epsilon)
+        return self.weight * hidden_states.to(input_dtype)
+
+
 class TestSqListInput(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -1585,12 +1602,16 @@ class TestAlphaAutoLinearBiasShift(unittest.TestCase):
                 super(Model, self).__init__()
                 self.fc1 = torch.nn.Linear(3, 4)
                 self.norm = LlamaRMSNorm(4)
-                self.fc2 = torch.nn.Linear(4, 3)
+                self.fc2 = torch.nn.Linear(4, 4)
+                self.norm2 = MistralRMSNorm(4)
+                self.fc3 = torch.nn.Linear(4,3)
 
             def forward(self, x):
                 out = self.fc1(x)
                 out = self.norm(out)
                 out = self.fc2(out)
+                out = self.norm2(out)
+                out = self.fc3(out)
                 return out
 
         model = Model()
@@ -1607,7 +1628,26 @@ class TestAlphaAutoLinearBiasShift(unittest.TestCase):
                 "shift_bias": True,
             },
         )
+        assert sq.to_shift_bias and len(sq.absorb_biasS_layers) == 2
+        assert getattr(sq.model, list(sq.absorb_biasS_layers.keys())[0]).bias is not None
         assert hasattr(sq.model.norm, "bias") and sq.model.norm.bias is not None
+        assert hasattr(sq.model.norm2, "bias") and sq.model.norm.bias is not None
+
+        sq_fold = TorchSmoothQuant(model, DemoCalibDataloader())
+        sq_fold.transform(
+            alpha="auto",
+            calib_iter=1,
+            folding=True,
+            auto_alpha_args={
+                "alpha_min": 0.0,
+                "alpha_max": 1.0,
+                "alpha_step": 0.1,
+                "shared_criterion": "mean",
+                "shift_bias": True,
+            },
+        )
+        assert hasattr(sq.model.norm, "bias") and sq.model.norm.bias is not None
+        assert hasattr(sq.model.norm2, "bias") and sq.model.norm2.bias is not None
 
 
 if __name__ == "__main__":

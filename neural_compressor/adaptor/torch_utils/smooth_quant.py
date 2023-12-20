@@ -692,28 +692,11 @@ class TorchSmoothQuant:
                         w0 = copy.deepcopy(layer.weight)
                         w0_mean = torch.mean(layer.weight)
                         if hasattr(layer, "bias") and layer.bias is not None:
-                            logger.info(
-                                f"lyt_debug weight_bias weight check(fold false): {layer_name}, \
-                                    weight_mean: {w0_mean}, bias_mean: {torch.mean(layer.bias)}"
-                            )
                             res = torch.matmul(z, w0.transpose(0, 1)) + layer.bias.data
                             layer.bias.data.copy_(res)
-                            logger.info(
-                                f"lyt_debug weight_bias_shifted (fold false){torch.all(layer.bias==res)}: \
-                                    {layer_name}, W:{torch.mean(layer.weight)}, B: {layer.bias.size()}"
-                            )
                         else:
-                            logger.info(
-                                f"lyt_debug weight_bias weight check: (fold false){layer_name},\
-                                    weight_mean: {w0_mean}, no_bias"
-                            )
                             res = torch.matmul(z, w0.transpose(0, 1))
                             layer.bias = torch.nn.Parameter(res, requires_grad=False)
-                            logger.info(
-                                f"lyt_debug weight_bias_created (fold false){layer_name}, {torch.mean(layer.bias)},\
-                                    W:{torch.mean(layer.weight)}, B:{torch.mean(layer.bias)} \
-                                    {layer.bias.size()}, {torch.all(layer.bias==res)}"
-                            )
 
             return weight_scales_info, absorb_scales_info
         for index, key in enumerate(absorb_to_layer.keys()):
@@ -733,27 +716,11 @@ class TorchSmoothQuant:
                     w0_mean = torch.mean(layer.weight)
 
                     if hasattr(layer, "bias") and layer.bias is not None:
-                        logger.info(
-                            f"lyt_debug weight_bias weight check: {layer_name}, weight_mean: \
-                                {w0_mean}, bias_mean: {torch.mean(layer.bias)}"
-                        )
                         res = torch.matmul(z, w0.transpose(0, 1)) + layer.bias.data
                         layer.bias.data.copy_(res)
-                        logger.info(
-                            f"lyt_debug weight_bias_shifted {torch.all(layer.bias==res)}: {layer_name}, \
-                                W:{torch.mean(layer.weight)}, B:{torch.mean(layer.bias)}, {layer.bias.size()}"
-                        )
                     else:
-                        logger.info(
-                            f"lyt_debug weight_bias weight check: {layer_name}, weight_mean: {w0_mean}, no_bias"
-                        )
                         res = torch.matmul(z, w0.transpose(0, 1))
                         layer.bias = torch.nn.Parameter(res, requires_grad=False)
-                        logger.info(
-                            f"lyt_debug weight_bias_created {layer_name}, {torch.mean(layer.bias)}, W:\
-                                {torch.mean(layer.weight)}, B:{torch.mean(layer.bias)} {layer.bias.size()}, \
-                                {torch.all(layer.bias==res)}"
-                        )
 
                 self._scale_layer_weight(layer_name, weight_scales_info[layer_name], alpha_tmp, input_minmax)
         return weight_scales_info, absorb_scales_info
@@ -764,14 +731,10 @@ class TorchSmoothQuant:
             bias_shift = bias_alphas[bias_name]
             module = get_module(self.model, key_name)
             if hasattr(module, "bias") and module.bias is not None:  # update input_shift in preceding module
-                logger.info(f"lyt_debug {key_name} X forward bias before absorb: {torch.mean(module.bias)} ")
                 bias_tmp = module.bias - bias_shift
                 module.bias.data.copy_(bias_tmp)
-                logger.info(f"lyt_debug {key_name} X forward bias after absorb shift: {torch.mean(module.bias)} ")
             else:
-                logger.info(f"lyt_debug {key_name} module bias before absorb create")
                 module.bias = torch.nn.Parameter(-bias_shift, requires_grad=False)
-                logger.info(f"lyt_debug {key_name} module bias after absorb create: {torch.mean(module.bias)}")
 
     def _check_need_calibration(self, alpha, percentile, op_types, scales_per_op, calib_iter):
         """
@@ -1122,12 +1085,12 @@ class TorchSmoothQuant:
                     module_replace = LlamaRMSNorm_bias(hidden_size=module.weight.size(), eps=module.variance_epsilon)
                     module_replace.weight = module.weight
                     set_module(self.model, name, module_replace)
-                    logger.info(f"lyt_debug op replaced: {name}, {module.__class__.__name__}")
+                    logger.debug(f"bias-shifting op replaced: {name}, {module.__class__.__name__}")
                 elif module.__class__.__name__ == "MistralRMSNorm":
                     module_replace = MistralRMSNorm_bias(hidden_size=module.weight.size(), eps=module.variance_epsilon)
                     module_replace.weight = module.weight
                     set_module(self.model, name, module_replace)
-                    logger.info(f"lyt_debug op replaced: {name}, {module.__class__.__name__}")
+                    logger.debug(f"bias-shifting op replaced: {name}, {module.__class__.__name__}")
 
         try:
             for input, label in bar:
@@ -1359,10 +1322,7 @@ class TorchSmoothQuant:
                             self.self_absorb_layers.pop(i)
                 self.absorb_to_layer.update(self.self_absorb_layers)
 
-                logger.info(
-                    f"lyt_debug len(atl 1194): {len(self.absorb_to_layer)}. {len(self.absorb_biasS_layers)},\
-                    {self.absorb_biasS_layers}"
-                )
+                logger.debug(f"1194: {len(self.absorb_biasS_layers)}, {self.absorb_biasS_layers}")
                 if self.absorb_to_layer is None and no_absorb_layers is None:
                     logger.warning(
                         "sorry, could not trace the model, smooth quant is ignored."
