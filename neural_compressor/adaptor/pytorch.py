@@ -1742,8 +1742,8 @@ class TemplateAdaptor(Adaptor):
             "alpha_max": 1.0,
             "alpha_step": 0.1,
             "shared_criterion": "mean",
-            "do_blockwise": False,
-            "shift_bias": False,
+            "enable_blockwise": False,
+            "enable_bias_shift": False,
         },
         default_alpha=0.5,
     ):
@@ -1763,8 +1763,8 @@ class TemplateAdaptor(Adaptor):
             weight_clip: Whether to clip weight when calculating scales; by default it is on.
             auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
                             By default the search space is 0.0-1.0 with step_size 0.1.
-                            do_blockwise determines whether to do blockwise auto-tuning.
-                            shift_bias determines whether to do bias-shifting.
+                            enable_blockwise determines whether to do blockwise auto-tuning.
+                            enable_bias_shift determines whether to do bias-shifting.
             default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
 
 
@@ -2021,9 +2021,9 @@ class PyTorchAdaptor(TemplateAdaptor):
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
         if "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]:
-            do_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("shift_bias", False)
+            enable_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("enable_bias_shift", False)
         else:
-            do_bias_shift = False
+            enable_bias_shift = False
         if (
             recipe_cfgs
             and recipe_cfgs.get("smooth_quant", False)
@@ -2036,7 +2036,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             recipe_cfgs
             and recipe_cfgs.get("smooth_quant", False)
             and recipe_cfgs["smooth_quant_args"]["folding"]
-            and not do_bias_shift
+            and not enable_bias_shift
         ):
             self._apply_pre_optimization(q_model, tune_cfg)
 
@@ -2684,9 +2684,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         # check smoothquant folding value
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
         if "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]:
-            do_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("shift_bias", False)
+            enable_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("enable_bias_shift", False)
         else:
-            do_bias_shift = False
+            enable_bias_shift = False
         if "smooth_quant_args" in recipe_cfgs and "folding" in recipe_cfgs["smooth_quant_args"]:
             if recipe_cfgs["smooth_quant_args"]["folding"] is None:
                 if self.version.release < Version("2.1").release:
@@ -2695,7 +2695,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     folding = False
             else:
                 folding = recipe_cfgs["smooth_quant_args"]["folding"]
-            logger.debug(f"SQ Ipex do_bias_shift: {do_bias_shift}, folding: {folding}")
+            logger.debug(f"SQ Ipex whether to perform bias_shift: {enable_bias_shift}, folding: {folding}")
 
         # Update model parameter when smoothquant folding = False
         if (
@@ -2706,7 +2706,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         ):
             return self.qdq_quantize(model, q_model, tune_cfg, dataloader, q_func)
         # Update model parameter when smoothquant folding = True
-        if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding and not do_bias_shift:
+        if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding and not enable_bias_shift:
             self._apply_pre_optimization(model, tune_cfg)
 
         assert (
@@ -3533,9 +3533,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         # For smoothquant optimized model
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
         if "smooth_quant_args" in recipe_cfgs and "auto_alpha_args" in recipe_cfgs["smooth_quant_args"]:
-            do_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("shift_bias", False)
+            enable_bias_shift = recipe_cfgs["smooth_quant_args"]["auto_alpha_args"].get("enable_bias_shift", False)
         else:
-            do_bias_shift = False
+            enable_bias_shift = False
         if (
             recipe_cfgs
             and recipe_cfgs.get("smooth_quant", False)
@@ -3547,7 +3547,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             recipe_cfgs
             and recipe_cfgs.get("smooth_quant", False)
             and recipe_cfgs["smooth_quant_args"]["folding"]
-            and not do_bias_shift
+            and not enable_bias_shift
         ):
             self._apply_pre_optimization(q_model, tune_cfg)
 

@@ -266,7 +266,7 @@ class WrapperLayer(torch.nn.Module):
         self.input_scale = None
         self.save_q_input = save_q_input
         self.os_bias = None
-        self.do_blockwise = False
+        self.enable_blockwise = False
 
     def enable_quant(self):
         self.quant = True
@@ -322,7 +322,7 @@ class WrapperLayer(torch.nn.Module):
             # self.q_input = x * scale ##save the q_input
             if self.save_q_input:
                 self.q_input = x
-            if not self.do_blockwise:
+            if not self.enable_blockwise:
                 output = self.q_dq_forward(x, self.input_scale, self.weight_scale)
             else:
                 output = self.q_dq_forward_blockwise(x, self.input_scale)
@@ -379,11 +379,11 @@ class TorchSmoothQuant:
         self.weight_clip = True
         self.default_alpha = 0.5
         self.bias_shifts = {}
-        self.to_shift_bias = False
+        self.enable_bias_shift = False
         self.absorb_biasS_layers = {}
         self._save_scale = False
         self.weight_scale_dict = {}
-        self.do_blockwise = False
+        self.enable_blockwise = False
         self.block_inputs = {}
         self.block_outputs = {}
 
@@ -417,7 +417,7 @@ class TorchSmoothQuant:
                 self.input_maxes[name] = torch.max(self.input_maxes[name], max_tensor)
                 self.input_maxes_abs[name] = torch.max(self.input_maxes_abs[name], res)
 
-            if self.to_shift_bias:
+            if self.enable_bias_shift:
                 self.bias_shifts[name] = (self.input_mins[name] + self.input_maxes[name]) / 2
 
         return save_input_hook
@@ -683,7 +683,7 @@ class TorchSmoothQuant:
         absorb_scales_info, weight_scales_info = self._cal_scales(absorb_to_layer, input_maxes, alpha, tuning)
 
         if not absorb_scales_info or not weight_scales_info:
-            if self.to_shift_bias:
+            if self.enable_bias_shift:
                 for key in self.absorb_biasS_layers.keys():
                     layer_names = self.absorb_biasS_layers[key]
                     for layer_name in layer_names:
@@ -709,7 +709,7 @@ class TorchSmoothQuant:
             layer_names = absorb_to_layer[key]
             for layer_name in layer_names:
                 input_minmax = [self.input_mins[layer_names[0]], self.input_maxes[layer_names[0]]]
-                if self.to_shift_bias and key in self.absorb_biasS_layers.keys():
+                if self.enable_bias_shift and key in self.absorb_biasS_layers.keys():
                     z = self.bias_shifts[layer_name]
                     layer = get_module(self.model, layer_name)
                     w0 = copy.deepcopy(layer.weight)
@@ -725,7 +725,7 @@ class TorchSmoothQuant:
                 self._scale_layer_weight(layer_name, weight_scales_info[layer_name], alpha_tmp, input_minmax)
         return weight_scales_info, absorb_scales_info
 
-    def absorb_bias_alphas(self, bias_alphas=None):
+    def absorb_bias_shifts(self, bias_alphas=None):
         for key_name in self.absorb_biasS_layers.keys():
             bias_name = self.absorb_biasS_layers[key_name][0]
             bias_shift = bias_alphas[bias_name]
@@ -880,7 +880,7 @@ class TorchSmoothQuant:
         self._change_qdq_for_auto(enable=False)
         module_names = self._get_sq_layer_names()
 
-        if self.do_blockwise:
+        if self.enable_blockwise:
             block_modules = {}
             for key in self.block_names:
                 block_modules[key] = get_module(self.model, key)
@@ -889,7 +889,7 @@ class TorchSmoothQuant:
         forward_wrapper(self.model, input, self.device)  ##disable quant and get fp32 output
 
         fp32_output = {}
-        if not self.do_blockwise:
+        if not self.enable_blockwise:
             for name in module_names:
                 module = get_module(self.model, name)
                 fp32_output[name] = module.output
@@ -911,14 +911,14 @@ class TorchSmoothQuant:
                 self.fp32_output_val[mod_name] = [torch.norm(mod.output)]
             del mod
 
-        if self.to_shift_bias:
+        if self.enable_bias_shift:
             for name in module_names:
                 module = get_module(self.model, name)
                 os_bias = copy.deepcopy(self.bias_shifts[name])
                 module.update_os_bias(os_bias)
 
         loss_alphas = {}
-        if not self.do_blockwise:
+        if not self.enable_blockwise:
             for name in module_names:
                 module = get_module(self.model, name)
                 loss = self._get_auto_loss(fp32_output[name], module.output)
@@ -941,7 +941,7 @@ class TorchSmoothQuant:
         for alpha in alpha_space:
             absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes, alpha, tuning=True)
             self._update_scales_for_auto(absorb_input_scales, weight_scales)
-            if not self.do_blockwise:
+            if not self.enable_blockwise:
                 for name in module_names:
                     losses = loss_alphas[name]
                     if str(alpha) in losses.keys():
@@ -967,7 +967,7 @@ class TorchSmoothQuant:
                             module_copy.orig_layer.weight *= module.weight_scale
                         q_dq_weight = quant_dequant_w(module_copy.orig_layer)
                         module_copy.orig_layer.weight.data.copy_(q_dq_weight)
-                        module_copy.do_blockwise = True
+                        module_copy.enable_blockwise = True
                         if not (name == block_name and len(self.block_to_module[block_name]) == 1):
                             set_module(block_copy, name, module_copy)
                     try:
@@ -1029,8 +1029,8 @@ class TorchSmoothQuant:
         alpha_max=0.7,
         alpha_step=0.05,
         shared_criterion="min",
-        do_blockwise=False,
-        shift_bias=False,
+        enable_blockwise=False,
+        enable_bias_shift=False,
     ):
         """Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
 
@@ -1076,21 +1076,18 @@ class TorchSmoothQuant:
             return best_alphas
         bar = tqdm(self.dataloader, total=calib_sample_num, desc="auto tune alpha")
 
-        if self.to_shift_bias:
+        if self.enable_bias_shift:
             from .model_wrapper import LlamaRMSNorm_bias, MistralRMSNorm_bias
-
+            replaceable_ops = {"LlamaRMSNorm": LlamaRMSNorm_bias, "MistralRMSNorm": MistralRMSNorm_bias}
             for name in self.absorb_biasS_layers.keys():  # Replace layer-norms to enable bias-shifting.
                 module = get_module(self.model, name)
-                if module.__class__.__name__ == "LlamaRMSNorm":
-                    module_replace = LlamaRMSNorm_bias(hidden_size=module.weight.size(), eps=module.variance_epsilon)
+                module_name = module.__class__.__name__
+                if module_name in replaceable_ops.keys():   
+                    class_replace = replaceable_ops[module_name]
+                    module_replace = class_replace(hidden_size=module.weight.size(), eps=module.variance_epsilon)
                     module_replace.weight = module.weight
                     set_module(self.model, name, module_replace)
-                    logger.debug(f"bias-shifting op replaced: {name}, {module.__class__.__name__}")
-                elif module.__class__.__name__ == "MistralRMSNorm":
-                    module_replace = MistralRMSNorm_bias(hidden_size=module.weight.size(), eps=module.variance_epsilon)
-                    module_replace.weight = module.weight
-                    set_module(self.model, name, module_replace)
-                    logger.debug(f"bias-shifting op replaced: {name}, {module.__class__.__name__}")
+                    logger.debug(f"bias-shifting op replaced: {name}, {module_name}")
 
         try:
             for input, label in bar:
@@ -1103,7 +1100,7 @@ class TorchSmoothQuant:
                             best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
                 loss_tmp = self._get_one_batch_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
-                if self.do_blockwise:
+                if self.enable_blockwise:
                     if loss_alphas == {}:
                         for block_name in self.block_names:
                             for key in self.block_to_module[block_name]:
@@ -1149,7 +1146,7 @@ class TorchSmoothQuant:
                             best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
                 loss_tmp = self._get_one_batch_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
-                if self.do_blockwise:
+                if self.enable_blockwise:
                     if loss_alphas == {}:
                         for block_name in self.block_names:
                             for key in self.block_to_module[block_name]:
@@ -1232,8 +1229,8 @@ class TorchSmoothQuant:
             "alpha_max": 1.0,
             "alpha_step": 0.1,
             "shared_criterion": "mean",
-            "do_blockwise": False,
-            "shift_bias": False,
+            "enable_blockwise": False,
+            "enable_bias_shift": False,
         },
         weight_clip=True,
         default_alpha=0.5,
@@ -1250,17 +1247,17 @@ class TorchSmoothQuant:
 
         :param auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
             By default the search space is 0.0-1.0 with step_size 0.1.
-            do_blockwise: Whether to do blockwise auto-tuning.
-            shift_bias: whether to do bias-shifting.
+            enable_blockwise: Whether to do blockwise auto-tuning.
+            enable_bias_shift: whether to do bias-shifting.
         :param default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
         benefit to quantization.
         """
         if isinstance(auto_alpha_args, dict):
-            self.do_blockwise = auto_alpha_args.get("do_blockwise", False)
+            self.enable_blockwise = auto_alpha_args.get("enable_blockwise", False)
         else:
-            self.do_blockwise = False
-        if self.do_blockwise:
+            self.enable_blockwise = False
+        if self.enable_blockwise:
             self.block_names = self.get_blocks()
             logger.info("Blockwise auto-tuning will be performed")
         if not isinstance(self.model, torch.nn.Module):
@@ -1273,9 +1270,9 @@ class TorchSmoothQuant:
             self.insert_mul, self.allow_absorb = True, False
 
         if isinstance(auto_alpha_args, dict):
-            self.to_shift_bias = auto_alpha_args.get("shift_bias", False)
+            self.enable_bias_shift = auto_alpha_args.get("enable_bias_shift", False)
         else:
-            self.to_shift_bias = False
+            self.enable_bias_shift = False
         if isinstance(alpha, float) and (alpha < 0 or alpha > 1):
             logger.warning("reset alpha to in range [0.0, 1.0]")
 
@@ -1302,11 +1299,11 @@ class TorchSmoothQuant:
                                     self.self_absorb_layers.pop(i)
                             self.self_absorb_layers[v[0]] = v
                         logger.debug(f"self_absorb_layers:{self.self_absorb_layers}")
-                    if self.to_shift_bias:
-                        self.absorb_biasS_layers, _ = self._trace(str_op_types, to_shift_bias=self.to_shift_bias)
+                    if self.enable_bias_shift:
+                        self.absorb_biasS_layers, _ = self._trace(str_op_types, enable_bias_shift=self.enable_bias_shift)
                 if self.allow_absorb:
-                    if self.to_shift_bias:
-                        self.absorb_biasS_layers, _ = self._trace(str_op_types, to_shift_bias=self.to_shift_bias)
+                    if self.enable_bias_shift:
+                        self.absorb_biasS_layers, _ = self._trace(str_op_types, enable_bias_shift=self.enable_bias_shift)
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         str_op_types
                     )  ##TODO we need to insert mul layer for no_absorb_layers later
@@ -1330,7 +1327,7 @@ class TorchSmoothQuant:
                     )
                     return self.model
 
-                if self.do_blockwise:
+                if self.enable_blockwise:
                     module_names = self._get_sq_layer_names()
                     block_names, self.block_to_module = self.block_names, {}
                     for block in block_names:
@@ -1368,7 +1365,7 @@ class TorchSmoothQuant:
                 self._save_scale = enough_memo_store_scale(self.device, scale_memo_use)
 
                 if alpha == "auto":
-                    if self.to_shift_bias:
+                    if self.enable_bias_shift:
                         for key in input_maxes_abs.keys():
                             input_maxes_abs[key] -= self.bias_shifts[key]
                             self.input_mins[key] -= self.bias_shifts[key]
@@ -1385,18 +1382,18 @@ class TorchSmoothQuant:
             if folding:
                 self._save_scale = False
 
-            if self.to_shift_bias and self.allow_absorb:
+            if self.enable_bias_shift and self.allow_absorb:
                 self.record_max_info = False
             if self.record_max_info:
                 # max_info is recorded in self.max_value_info
-                if self.to_shift_bias:
-                    self.absorb_bias_alphas(bias_alphas=self.bias_shifts)
+                if self.enable_bias_shift:
+                    self.absorb_bias_shifts(bias_alphas=self.bias_shifts)
                 self._adjust_parameters(self.absorb_to_layer, input_maxes_abs, alpha)
                 self.model._smoothquant_optimized = False
                 return self.model
 
-            if self.to_shift_bias:
-                self.absorb_bias_alphas(bias_alphas=self.bias_shifts)
+            if self.enable_bias_shift:
+                self.absorb_bias_shifts(bias_alphas=self.bias_shifts)
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(
                 self.absorb_to_layer, input_maxes_abs, alpha
             )
@@ -1471,7 +1468,7 @@ class TorchSmoothQuant:
 
         return self.example_inputs
 
-    def _trace(self, op_types, skip_unsupported_layers=True, to_shift_bias=False):
+    def _trace(self, op_types, skip_unsupported_layers=True, enable_bias_shift=False):
         """Try the model to find the layers which can be smooth quantized.
 
         :param op_types: The op types to be smooth quantized
@@ -1486,24 +1483,24 @@ class TorchSmoothQuant:
             self.example_inputs,
             op_types,
             skip_unsupported_layers=skip_unsupported_layers,
-            to_shift_bias=to_shift_bias,
+            enable_bias_shift=enable_bias_shift,
         )
         if not skip_unsupported_layers:
             return absorb_to_layer
-        if absorb_to_layer is None and no_absorb_layers is None and not to_shift_bias:
+        if absorb_to_layer is None and no_absorb_layers is None and not enable_bias_shift:
             logger.warning(
                 "sorry, could not trace the model, smooth quant is skipped."
                 "If you are using huggingface model,"
                 "you could set torchscript to True "
                 "when loading the model or set the return_dict to False"
             )
-        elif absorb_to_layer == {} and not to_shift_bias:
+        elif absorb_to_layer == {} and not enable_bias_shift:
             logger.warning("could not find any layer to be absorbed")
         else:
             to_absorb_cnt = 0
             for key, item in absorb_to_layer.items():
                 to_absorb_cnt += len(item)
-            if not to_shift_bias:
+            if not enable_bias_shift:
                 logger.info(
                     f" {to_absorb_cnt} out of {to_absorb_cnt + len(no_absorb_layers)} "
                     f"layers could be absorbed in smooth quant"
@@ -1596,12 +1593,12 @@ class GraphTrace:
                     break
         return nodes
 
-    def get_prev_absorb_layer(self, nodes, to_shift_bias=False):
+    def get_prev_absorb_layer(self, nodes, enable_bias_shift=False):
         prev_absorb_layer = []
         for node in nodes:
             parent = get_parent(node)
             while 1:
-                if parent.kind() in self.skip_ops_to_find_absorb and not to_shift_bias:
+                if parent.kind() in self.skip_ops_to_find_absorb and not enable_bias_shift:
                     parent = get_parent(parent)
                     continue
                 if parent.kind() in self.could_absorb_layers:
@@ -1664,7 +1661,7 @@ class GraphTrace:
                 return False
         return True
 
-    def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True, to_shift_bias=False):
+    def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True, enable_bias_shift=False):
         traced_model = self.trace(model, example_input)
         if traced_model is None:
             return None, None
@@ -1672,7 +1669,7 @@ class GraphTrace:
         aten_op_types = self.mapping_torch_module_to_aten(op_types)
         nodes_types = self.get_nodes(traced_model, aten_op_types)
         nodes = [node_type[0] for node_type in nodes_types]
-        nodes_prev_absorb = self.get_prev_absorb_layer(nodes, to_shift_bias)
+        nodes_prev_absorb = self.get_prev_absorb_layer(nodes, enable_bias_shift)
         absorb_to_layer = {}
         no_absorb_layers = []
         for index, absorb in enumerate(nodes_prev_absorb):
