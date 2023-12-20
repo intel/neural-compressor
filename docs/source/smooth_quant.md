@@ -413,7 +413,8 @@ conf = PostTrainingQuantConfig(recipes=recipes)
 Users can search for the best `alpha` at two levels: 1) for the entire model, and 2) for each layer/block.
 
 #### Auto-tune the `alpha` for the entire model
-The tuning process looks for the optimal `alpha` value from a list of `alpha` values provided by the user. Please note that, it may a considerable amount of time as the tuning process applies each `alpha` to the entire model and uses the evaluation result on the entire dataset as the metric to determine the best `alpha`.
+The tuning process looks for the optimal `alpha` value from a list of `alpha` values provided by the user.
+> Please note that, it may a considerable amount of time as the tuning process applies each `alpha` to the entire model and uses the evaluation result on the entire dataset as the metric to determine the best `alpha`.
 Here is an example:
 
 ```python
@@ -427,7 +428,7 @@ conf = PostTrainingQuantConfig(
     }）
 ```
 #### Auto-tune the `alpha` for each layer/block
-In this case, the tuning process searches the optimal `alpha`` of each layer of the block by evaluating the loss with respect to FP32 output on a few batches of data.
+In this case, the tuning process searches the optimal `alpha` of each layer of the block by evaluating the loss with respect to FP32 output on a few batches of data.
 Here is an example:
 
 ```python
