@@ -425,7 +425,7 @@ conf = PostTrainingQuantConfig(
 Below is an example for smoothquant auto-tuning process and obtaining optimal layer-wise/block-wise alpha values.
 ```python
 
-+recipes = {"smooth_quant": True, 
+recipes = {"smooth_quant": True, 
     "default_alpha": 0.7, # Baseline alpha-value for auto-tuning.
     "smooth_quant_args": {"alpha": 'auto', "auto_alpha_args": {
         "alpha_min": 0.0, # min value of auto-tuning alpha search space
