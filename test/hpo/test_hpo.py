@@ -55,14 +55,14 @@ class TestHPO(unittest.TestCase):
             searcher.get_feedback(np.random.random())
         for _ in range(5):
             param = searcher.suggest()
+            if param in params:
+                continue
+            params.append(param)
             searcher.feedback(param, np.random.random())
         hpo_config = HPOConfig(self.search_space, "xgb", higher_is_better=True, min_train_samples=3)
         searcher = prepare_hpo(hpo_config)
         for _ in range(5):
             searcher.suggest()
-            if param in params:
-                continue
-            params.append(param)
             searcher.get_feedback(np.random.random())
         for _ in range(5):
             param = searcher.suggest()
