@@ -307,9 +307,9 @@ In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is 
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
 
 sq = TorchSmoothQuant(model, dataloader)
-alpha = 'auto' ##alpha could be a float number to disable auto-tuning and enable fixed-value alpha smoothquant.
+alpha = "auto"  ##alpha could be a float number to disable auto-tuning and enable fixed-value alpha smoothquant.
 auto_alpha_args = {}
-sq.transform(alpha, auto_alpha_args=auto_alpha_args)  
+sq.transform(alpha, auto_alpha_args=auto_alpha_args)
 ```
 
 please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False"
