@@ -726,9 +726,7 @@ class TorchSmoothQuant:
             layer_names = absorb_to_layer[key]
             for layer_name in layer_names:
                 input_minmax = [self.input_mins[layer_names[0]], self.input_maxes[layer_names[0]]]
-                if (
-                    self.to_shift_bias and key in self.absorb_biasS_layers.keys()
-                ):
+                if self.to_shift_bias and key in self.absorb_biasS_layers.keys():
                     z = self.bias_shifts[layer_name]
                     layer = get_module(self.model, layer_name)
                     w0 = copy.deepcopy(layer.weight)
@@ -757,9 +755,7 @@ class TorchSmoothQuant:
                                 {torch.all(layer.bias==res)}"
                         )
 
-                self._scale_layer_weight(
-                    layer_name, weight_scales_info[layer_name], alpha_tmp, input_minmax
-                )
+                self._scale_layer_weight(layer_name, weight_scales_info[layer_name], alpha_tmp, input_minmax)
         return weight_scales_info, absorb_scales_info
 
     def absorb_bias_alphas(self, bias_alphas=None):
