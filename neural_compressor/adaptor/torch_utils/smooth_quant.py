@@ -1256,7 +1256,6 @@ class TorchSmoothQuant:
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
         benefit to quantization.
         """
-        logger.info("lyt_debug sq_INC lyt/os")
         if isinstance(auto_alpha_args, dict):
             self.do_blockwise = auto_alpha_args.get("do_blockwise", False)
         else:
