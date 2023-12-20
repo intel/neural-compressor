@@ -53,8 +53,8 @@ def get_module_list(model):
     assert module_list is not None, "cannot find any transformers layers, please check the model."
     return module_list
 
+
 def get_tensor_sparsity_ratio(target_tensor):
     zero_cnt = float(torch.sum(target_tensor == 0.0).data.item())
     total_cnt = float(target_tensor.numel())
     return zero_cnt / total_cnt
-

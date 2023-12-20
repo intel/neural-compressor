@@ -18,7 +18,7 @@ import transformers
 
 from neural_compressor.adaptor.torch_utils.util import get_hidden_states
 
-from .utils import find_layers, get_module_list, logger, nn, torch, get_tensor_sparsity_ratio
+from .utils import find_layers, get_module_list, get_tensor_sparsity_ratio, logger, nn, torch
 
 
 # Define WrappedGPT class
@@ -201,7 +201,7 @@ def prune_wanda(
 
             subset[name].weight.data[W_mask] = 0  ## set weights to zero
             ratio = get_tensor_sparsity_ratio(subset[name].weight.data)
-            logger.info(f'finish pruning layer {i} name {name}, sparsity ratio: {ratio}')
+            logger.info(f"finish pruning layer {i} name {name}, sparsity ratio: {ratio}")
 
         for j in range(nsamples):
             with torch.no_grad():
