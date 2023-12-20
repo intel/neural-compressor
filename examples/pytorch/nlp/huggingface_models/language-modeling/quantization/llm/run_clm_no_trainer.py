@@ -50,8 +50,7 @@ parser.add_argument("--pad_max_length", default=512, type=int,
                     help="Pad input ids to max length.")
 parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
-parser.add_argument("--tasks", nargs='+', default=["lambada_openai",
-                                                   "hellaswag", "winogrande", "piqa", "wikitext"],
+parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa", "wikitext"],
                     type=str, help="tasks list for accuracy validation, text-generation and code-generation tasks are different.")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
@@ -295,7 +294,7 @@ if args.quantize:
         if args.gptq_debug:
             from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
 
-            conf = {
+            gptq_conf = {
                 ".*": {
                     'wbits': args.woq_bits,  # 1-8 bits
                     'group_size': args.woq_group_size,  # -1 (per-channel)
@@ -305,33 +304,16 @@ if args.quantize:
             }
             q_model_gptq_debug, gptq_config = gptq_quantize(
                 user_model,
-                weight_config=conf,
+                weight_config=gptq_conf,
                 dataloader=calib_dataloader,
                 nsamples=args.gptq_nsamples,
                 use_max_length=args.gptq_use_max_length,
-                pad_max_length=args.gptq_pad_max_length
+                pad_max_length=args.gptq_pad_max_length,
             )
-            if args.code_generation:
-                from intel_extension_for_transformers.llm.evaluation.lm_code_eval import evaluate
 
-                results = evaluate(
-                    model=q_model_gptq_debug,
-                    tokenizer=tokenizer,
-                    tasks=args.tasks,
-                    batch_size=args.batch_size,
-                    args=args,
-                )
-                print(results)
-            else:
-                from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
-
-                results = evaluate(
-                    model="hf-causal",
-                    model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
-                    user_model=q_model_gptq_debug, tasks=["lambada_openai"],
-                    batch_size=4
-                )
-            exit(0)
+            # save the fake quantized model
+            os.makedirs(args.output_dir, exist_ok = True)
+            torch.save(q_model_gptq_debug, os.path.join(args.output_dir, "gptq_best_model.pt"))
 
     else:
         if re.search("gpt", user_model.config.model_type):
@@ -392,15 +374,46 @@ else:
 
 if args.accuracy:
     user_model.eval()
-    from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
-
-    results = evaluate(
-        model="hf-causal",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
-        user_model=user_model,
-        batch_size=args.batch_size,
-        tasks=args.tasks,
-    )
+    if args.code_generation:
+        from intel_extension_for_transformers.llm.evaluation.lm_code_eval import evaluate
+        results = evaluate(
+            model=user_model,
+            tokenizer=tokenizer,
+            tasks=args.tasks,
+            batch_size=args.batch_size,
+            args=args,
+        )
+        if args.gptq_debug:
+            gptq_best_model = torch.load(os.path.join(args.output_dir, "gptq_best_model.pt"))
+            results = evaluate(
+                model=gptq_best_model,
+                tokenizer=tokenizer,
+                tasks=args.tasks,
+                batch_size=args.batch_size,
+                args=args,
+            )
+        else:
+            pass
+    else:
+        from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
+        results = evaluate(
+            model="hf-causal",
+            model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+            user_model=user_model,
+            batch_size=args.batch_size,
+            tasks=args.tasks,
+        )
+        if args.gptq_debug:
+            gptq_best_model = torch.load(os.path.join(args.output_dir, "gptq_best_model.pt"))
+            results = evaluate(
+                model="hf-causal",
+                model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+                user_model=user_model,
+                batch_size=args.batch_size,
+                tasks=args.tasks,
+            )
+        else:
+            pass
     dumped = json.dumps(results, indent=2)
     if args.save_accuracy_path:
         with open(args.save_accuracy_path, "w") as f:
