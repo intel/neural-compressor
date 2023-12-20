@@ -297,11 +297,11 @@ Our proposed method consists of 8 major steps:
 
 Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block. Both alpha range and criterion could be configured in auto_alpha_args.
 
-In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is found to be well-balanced one for the majority of models.
+In our experiments, an $\alpha$ range of [0.0, 1.0] with a step_size of 0.1 is found to be well-balanced one for the majority of models.
 
 #### Engineering 
 
-*fully automated*: the user only needs to pass a model and dataloader
+*fully automated*: users only need to pass a model and dataloader.
 
 ```python
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
@@ -385,6 +385,7 @@ The results listed below are achieved using IPEX optimize_transformers in model 
 Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.
 ## Example
 
+#### Fixed value alpha.
 User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm) on how to use smooth quant.
 
 ```python
@@ -406,7 +407,7 @@ smooth_quant_args description:
 - False: Allow inserting mul to update the input distribution and no folding. IPEX (version>=2.1) can fuse inserted mul automatically. For Stock PyTorch, setting folding=False will convert the model to a QDQ model.
 
 
-To find the best `alpha`, users can utilize the [auto-tuning]((./tuning_strategies.md)) feature. Compares to setting the alpha to `"auto"`, this tuning process uses the evaluation result on the entire dataset as the metric to find the best `alpha`. To use this feature, users need to provide a list of scalars between 0 and 1 for the `alpha` item. Here is an example:
+To find the best fixed-value `alpha`, users can utilize the [auto-tuning]((./tuning_strategies.md)) feature. Compared to setting the alpha to `"auto"`, this tuning process uses the evaluation result on the entire dataset as the metric to find the best `alpha`. To use this feature, users need to provide a list of scalars between 0 and 1 for the `alpha` item. Here is an example:
 
 ```python
 import numpy as np
@@ -419,6 +420,24 @@ conf = PostTrainingQuantConfig(
     }）
 ```
 
+
+#### Alpha auto-tuning.
+Below is an example for smoothquant auto-tuning process and obtaining optimal layer-wise/block-wise alpha values.
+```python
+
++recipes = {"smooth_quant": True, 
+    "default_alpha": 0.7, # Baseline alpha-value for auto-tuning.
+    "smooth_quant_args": {"alpha": 'auto', "auto_alpha_args": {
+        "alpha_min": 0.0, # min value of auto-tuning alpha search space
+        "alpha_max": 1.0, # max value of auto-tuning alpha search space
+        "alpha_step": 0.1, # step_size of auto-tuning alpha search space
+        "shared_criterion": "mean", # Criterion for input LayerNorm op of a transformer block.
+        "do_blockwise": False, # Whether to enable block-wise auto-tuning.
+        }
+    }
+}
+conf = PostTrainingQuantConfig(recipes=recipes）
+ ```
 ## Supported Framework Matrix
 
 | Framework | Alpha        | Folding    |
