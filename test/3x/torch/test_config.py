@@ -194,8 +194,8 @@ class TestQuantizationConfig(unittest.TestCase):
         logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[(torch.nn.Linear, "fc1")].weight_bits == 6)
-        self.assertTrue(configs_mapping[(torch.nn.Linear, "fc2")].weight_bits == 4)
+        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].weight_bits == 6)
+        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].weight_bits == 4)
 
     def test_config_from_dict(self):
         from neural_compressor.torch import RTNWeightQuantConfig
@@ -315,8 +315,8 @@ class TestQuantizationConfig(unittest.TestCase):
         logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[(torch.nn.Linear, "fc1")].weight_bits == 6)
-        self.assertTrue(configs_mapping[(torch.nn.Linear, "fc2")].weight_bits == 4)
+        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].weight_bits == 6)
+        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].weight_bits == 4)
 
     def test_gptq_config(self):
         from neural_compressor.torch.quantization import GPTQConfig
