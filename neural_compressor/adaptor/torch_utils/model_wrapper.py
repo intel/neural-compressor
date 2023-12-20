@@ -637,4 +637,3 @@ class MistralRMSNorm_bias(torch.nn.Module):
             return self.weight * hidden_states.to(input_dtype) + self.bias.to(input_dtype)
         else:
             return self.weight * hidden_states.to(input_dtype)
-

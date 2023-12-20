@@ -1333,5 +1333,3 @@ def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
     model.forward = model_forward_cache
     first_block.forward = block_forward_cache
     return total_block_args, total_block_kwargs
-
-
