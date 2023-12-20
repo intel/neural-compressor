@@ -276,13 +276,16 @@ For most of the models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced 
 
 ### Our enhancement: 
 
-#### Algorithm: Layer-wise Auto-tuning of $\alpha$.
+#### Algorithm: Auto-tuning of $\alpha$.
 
 SmoothQuant method aims to split the quantization difficulty of weight and activation by using a fixed-value $\alpha$ for an entire model. However, as the distributions of activation outliers vary not only across different models but also across different layers within a model, we hereby propose a method to obtain layer-wise optimal $\alpha$ values with the ability to tune automatically.
+Currently, both layer-wise and block-wise auto-tuning methods are supported and the default option is layer-wise.
+In block-wise auto-tuning, layers within one block (e.g an OPTDecoderLayer) would share the same alpha value; users could set *'do_blockwise': True* in *auto_alpha_args* to enable it.
 
-Our proposed method consists of 7 major steps:
+Our proposed method consists of 8 major steps:
 
 -    Hook input minimum and maximum values of layers to be smoothed using register_forward_hook.
+-    Find a list of layers on which smoothquant could be performed.
 -    Generate a list of $\alpha$ values of a user-defined range and set a default $\alpha$ value.
 -    Calculate smoothing factor using default $\alpha$ value, adjust parameters accordingly and forward the adjusted model given an input sample.
 -    Perform per-channel quantization_dequantization of weights and per-tensor quantization_dequantization of activations to predict output.
@@ -292,7 +295,7 @@ Our proposed method consists of 7 major steps:
 
 
 
-Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block.
+Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block. Both alpha range and criterion could be configured in auto_alpha_args.
 
 In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is found to be well-balanced one for the majority of models.
 
@@ -304,7 +307,9 @@ In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is 
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
 
 sq = TorchSmoothQuant(model, dataloader)
-sq.transform(alpha)  ##alpha could be a float or a string 'auto'
+alpha = 'auto' ##alpha could be a float number to disable auto-tuning and enable fixed-value alpha smoothquant.
+auto_alpha_args = {}
+sq.transform(alpha, auto_alpha_args=auto_alpha_args)  
 ```
 
 please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False"
