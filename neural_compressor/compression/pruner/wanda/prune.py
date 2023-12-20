@@ -17,6 +17,7 @@
 import transformers
 
 from neural_compressor.adaptor.torch_utils.util import get_hidden_states
+
 from .utils import find_layers, get_module_list, logger, nn, torch
 
 
@@ -41,6 +42,7 @@ class WrappedGPT:
             inp = inp.unsqueeze(0)
         tmp = inp.shape[0]
         import torch
+
         if isinstance(self.layer, (nn.Conv1d, nn.Linear, transformers.Conv1D)):
             if len(inp.shape) == 3:
                 inp = inp.reshape((-1, inp.shape[-1]))
@@ -112,9 +114,8 @@ def prune_wanda(
     use_variant=False,
     device=torch.device("cpu"),
 ):
-    """prune the model using wanda
-    Sij = |Wij| · ||Xj||2
-    """
+    """Prune the model using wanda
+    Sij = |Wij| · ||Xj||2."""
     model.to(device)
     use_cache = model.config.use_cache
     model.config.use_cache = False
@@ -129,7 +130,7 @@ def prune_wanda(
     for i in range(len(layers)):
         layer = layers[i]
         subset = find_layers(layer)
-        logger.info(f'prune layer {i}')
+        logger.info(f"prune layer {i}")
         logger.info(subset)
 
         wrapped_layers = {}
