@@ -289,9 +289,9 @@ Our proposed method consists of 8 major steps:
 -    Generate a list of $\alpha$ values of a user-defined range and set a default $\alpha$ value.
 -    Calculate smoothing factor using default $\alpha$ value, adjust parameters accordingly and forward the adjusted model given an input sample.
 -    Perform per-channel quantization_dequantization of weights and per-tensor quantization_dequantization of activations to predict output.
--    Calculate the layer-wise loss with respect to FP32 output, iterate the previous two steps given each $\alpha$ value and save the layer-wise loss per alpha.
--    Apply criterion on input LayerNorm op and obtain the layer-wise optimal alpha values of a single input sample.
--    Iterate the previous three steps over a number of input samples and save the layer-wise optimal $\alpha$ values.
+-    Calculate the layer-wise/block-wise loss with respect to FP32 output, iterate the previous two steps given each $\alpha$ value and save the layer-wise/block-wise loss per alpha.
+-    Apply criterion on input LayerNorm op and obtain the optimal alpha values of a single input sample.
+-    Iterate the previous three steps over a number of input samples and save the layer-wise/block-wise optimal $\alpha$ values.
 
 
 
