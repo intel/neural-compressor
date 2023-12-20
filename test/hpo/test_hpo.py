@@ -25,44 +25,44 @@ class TestHPO(unittest.TestCase):
         "per_device_train_batch_size": SearchSpace((5, 20), 1),
     }
 
-    # def test_searcher(self):
-    #     hpo_config = HPOConfig(
-    #         {
-    #             "num_train_epochs": self.search_space["num_train_epochs"],
-    #             "cooldown_epochs": self.search_space["cooldown_epochs"],
-    #         },
-    #         searcher="grid",
-    #     )
-    #     searcher = GridSearcher(
-    #         {
-    #             "num_train_epochs": self.search_space["num_train_epochs"],
-    #             "cooldown_epochs": self.search_space["cooldown_epochs"],
-    #         }
-    #     )
-    #     conf_searcher = prepare_hpo(hpo_config)
-    #     self.assertEqual(searcher.__class__, conf_searcher.__class__)
-    #     for _ in range(5):
-    #         self.assertEqual(searcher.suggest(), conf_searcher.suggest())
-    #     hpo_config = HPOConfig(self.search_space, "random")
-    #     searcher = prepare_hpo(hpo_config)
-    #     for _ in range(5):
-    #         searcher.suggest()
-    #     hpo_config = HPOConfig(self.search_space, "bo")
-    #     searcher = prepare_hpo(hpo_config)
-    #     for _ in range(5):
-    #         searcher.suggest()
-    #         searcher.get_feedback(np.random.random())
-    #     for _ in range(5):
-    #         param = searcher.suggest()
-    #         searcher.feedback(param, np.random.random())
-    #     hpo_config = HPOConfig(self.search_space, "xgb", higher_is_better=True, min_train_samples=3)
-    #     searcher = prepare_hpo(hpo_config)
-    #     for _ in range(5):
-    #         searcher.suggest()
-    #         searcher.get_feedback(np.random.random())
-    #     for _ in range(5):
-    #         param = searcher.suggest()
-    #         searcher.feedback(param, np.random.random())
+    def test_searcher(self):
+        hpo_config = HPOConfig(
+            {
+                "num_train_epochs": self.search_space["num_train_epochs"],
+                "cooldown_epochs": self.search_space["cooldown_epochs"],
+            },
+            searcher="grid",
+        )
+        searcher = GridSearcher(
+            {
+                "num_train_epochs": self.search_space["num_train_epochs"],
+                "cooldown_epochs": self.search_space["cooldown_epochs"],
+            }
+        )
+        conf_searcher = prepare_hpo(hpo_config)
+        self.assertEqual(searcher.__class__, conf_searcher.__class__)
+        for _ in range(5):
+            self.assertEqual(searcher.suggest(), conf_searcher.suggest())
+        hpo_config = HPOConfig(self.search_space, "random")
+        searcher = prepare_hpo(hpo_config)
+        for _ in range(5):
+            searcher.suggest()
+        hpo_config = HPOConfig(self.search_space, "bo")
+        searcher = prepare_hpo(hpo_config)
+        for _ in range(5):
+            searcher.suggest()
+            searcher.get_feedback(np.random.random())
+        for _ in range(5):
+            param = searcher.suggest()
+            searcher.feedback(param, np.random.random())
+        hpo_config = HPOConfig(self.search_space, "xgb", higher_is_better=True, min_train_samples=3)
+        searcher = prepare_hpo(hpo_config)
+        for _ in range(5):
+            searcher.suggest()
+            searcher.get_feedback(np.random.random())
+        for _ in range(5):
+            param = searcher.suggest()
+            searcher.feedback(param, np.random.random())
 
     def test_search_space(self):
         ds = DiscreteSearchSpace(bound=[0, 10])
