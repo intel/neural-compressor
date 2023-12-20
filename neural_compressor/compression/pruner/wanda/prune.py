@@ -18,7 +18,7 @@ import transformers
 
 from neural_compressor.adaptor.torch_utils.util import get_hidden_states
 
-from .utils import find_layers, get_module_list, logger, nn, torch
+from .utils import find_layers, get_module_list, logger, nn, torch, get_tensor_sparsity_ratio
 
 
 # Define WrappedGPT class
@@ -123,14 +123,15 @@ def prune_wanda(
     # get inputs
     # inps, others = prepare_calibration_input(model, dataloader, device)
     inps, others = get_hidden_states(model, dataloader)
-    outs = []
+    nsamples = min(nsamples, len(inps))
 
     # get the module list of the model, blockwise
     layers = get_module_list(model)
     for i in range(len(layers)):
+        outs = []
         layer = layers[i]
         subset = find_layers(layer)
-        logger.info(f"prune layer {i}")
+        logger.info(f"prune layer {i}, subset list:")
         logger.info(subset)
 
         wrapped_layers = {}
@@ -147,7 +148,7 @@ def prune_wanda(
         handles = []
         for name in wrapped_layers:
             handles.append(subset[name].register_forward_hook(add_batch(name)))
-        for j in range(min(nsamples, len(inps))):
+        for j in range(nsamples):
             with torch.no_grad():
                 outs.append(layer(*inps[j], **others[j])[0])
         for h in handles:
@@ -158,7 +159,8 @@ def prune_wanda(
             logger.info(f"pruning layer {i} name {name}")
             # Sij = |Wij| · ||Xj||2
             W_metric = torch.abs(subset[name].weight.data) * torch.sqrt(
-                wrapped_layers[name].scaler_row.reshape((1, -1))
+                # wrapped_layers[name].scaler_row.reshape((1, -1))
+                wrapped_layers[name].scaler_row.unsqueeze(0)
             )
 
             W_mask = torch.zeros_like(W_metric) == 1  ## initialize a mask to be all False
@@ -191,17 +193,20 @@ def prune_wanda(
 
                         alpha = alpha_new
                         W_mask, cur_sparsity = return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before)
-                    print(f"alpha found {alpha} sparsity {cur_sparsity:.6f}")
+                    logger.info(f"alpha found {alpha} sparsity {cur_sparsity:.6f}")
                 else:
                     # unstructured pruning
                     indices = sort_res[1][:, : int(W_metric.shape[1] * sparsity_ratio)]
                     W_mask.scatter_(1, indices, True)
 
             subset[name].weight.data[W_mask] = 0  ## set weights to zero
+            ratio = get_tensor_sparsity_ratio(subset[name].weight.data)
+            logger.info(f'finish pruning layer {i} name {name}, sparsity ratio: {ratio}')
 
         for j in range(nsamples):
             with torch.no_grad():
-                outs[j] = layer(*inps[j], **others[j])[0]
+                out = layer(*inps[j], **others[j])[0]
+                outs[j] = [out]
         inps, outs = outs, inps
 
     model.config.use_cache = use_cache
