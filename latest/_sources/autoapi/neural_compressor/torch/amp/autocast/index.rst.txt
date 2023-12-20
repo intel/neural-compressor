@@ -36,7 +36,7 @@ Classes
    Backward ops run in the same type that autocast used for corresponding forward ops.
 
        # Enables autocasting for the inference pass
-       with torch.autocast(device_type="hpu", dtype=torch.float8_e4m3):
+       with torch.autocast(device_type="hpu", dtype=torch.float8_e4m3fn):
            output = model(input)
 
    :class:`autocast` can also be used as a decorator, e.g., on the ``forward`` method of your model::
