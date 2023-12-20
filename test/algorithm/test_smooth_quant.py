@@ -385,9 +385,7 @@ class T5LayerNorm(nn.Module):
 
 class MistralRMSNorm(nn.Module):
     def __init__(self, hidden_size, eps=1e-6):
-        """
-        MistralRMSNorm is equivalent to T5LayerNorm
-        """
+        """MistralRMSNorm is equivalent to T5LayerNorm."""
         super().__init__()
         self.weight = nn.Parameter(torch.ones(hidden_size))
         self.variance_epsilon = eps
@@ -1604,7 +1602,7 @@ class TestAlphaAutoLinearBiasShift(unittest.TestCase):
                 self.norm = LlamaRMSNorm(4)
                 self.fc2 = torch.nn.Linear(4, 4)
                 self.norm2 = MistralRMSNorm(4)
-                self.fc3 = torch.nn.Linear(4,3)
+                self.fc3 = torch.nn.Linear(4, 3)
 
             def forward(self, x):
                 out = self.fc1(x)
