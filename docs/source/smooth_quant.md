@@ -4,7 +4,7 @@
 2. [Quantization Fundamentals](#Quantization-Fundamentals)
 3. [SmoothQuant and Our Enhancement](#SmoothQuant-and-Our-Enhancement)
 4. [Validated Models](#Validated-Models)
-5. [Example](#Example)
+5. [Usage](#Usage)
 6. [Supported Framework Matrix](#Supported-Framework-Matrix)
 
 
@@ -383,10 +383,13 @@ The results listed below are achieved using IPEX optimize_transformers in model 
 
 
 Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.
-## Example
 
-#### Fixed value alpha.
-User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm) on how to use smooth quant.
+## Usage
+
+There are two ways to apply smooth quantization: 1) using a fixed `alpha` for the entire model or 2) determining the `alpha` through auto-tuning.
+
+### Using a fixed `alpha`
+To set a fixed alpha for the entire model, users can follow this example:
 
 ```python
 recipes = {
@@ -398,16 +401,20 @@ recipes = {
 }
 conf = PostTrainingQuantConfig(recipes=recipes)
 ```
-smooth_quant_args description:
+`smooth_quant_args` description:
 
-"alpha": "auto", a float value or a list of float values. Default is 0.5. "auto" means automatic tuning.
+"alpha": a float value. Default is 0.5.
 
 "folding": whether to fold mul into the previous layer, where mul is required to update the input distribution during smoothing.
 - True: Fold inserted mul into the previous layer. IPEX will only insert mul for layers can do folding. 
 - False: Allow inserting mul to update the input distribution and no folding. IPEX (version>=2.1) can fuse inserted mul automatically. For Stock PyTorch, setting folding=False will convert the model to a QDQ model.
 
+### Determining the `alpha` through auto-tuning
+Users can search for the best `alpha` at two levels: 1) for the entire model, and 2) for each layer/block.
 
-To find the best fixed-value `alpha`, users can utilize the [auto-tuning]((./tuning_strategies.md)) feature. Compared to setting the alpha to `"auto"`, this tuning process uses the evaluation result on the entire dataset as the metric to find the best `alpha`. To use this feature, users need to provide a list of scalars between 0 and 1 for the `alpha` item. Here is an example:
+#### Auto-tune the `alpha` for the entire model
+The tuning process looks for the optimal `alpha` value from a list of `alpha` values provided by the user. Please note that, it may a considerable amount of time as the tuning process applies each `alpha` to the entire model and uses the evaluation result on the entire dataset as the metric to determine the best `alpha`.
+Here is an example:
 
 ```python
 import numpy as np
@@ -415,16 +422,15 @@ conf = PostTrainingQuantConfig(
     quant_level='auto', # quant_level can also be 1
     ...
     recipes={"smooth_quant": True, 
-            "smooth_quant_args": {"alpha": np.arange(0.1, 0.5, 0.05).tolist(),}
+             "smooth_quant_args": {"alpha": np.arange(0.1, 0.5, 0.05).tolist()}
     ...
     }）
 ```
+#### Auto-tune the `alpha` for each layer/block
+In this case, the tuning process searches the optimal `alpha`` of each layer of the block by evaluating the loss with respect to FP32 output on a few batches of data.
+Here is an example:
 
-
-#### Alpha auto-tuning.
-Below is an example for smoothquant auto-tuning process and obtaining optimal layer-wise/block-wise alpha values.
 ```python
-
 recipes = {"smooth_quant": True, 
     "default_alpha": 0.7, # Baseline alpha-value for auto-tuning.
     "smooth_quant_args": {"alpha": 'auto', "auto_alpha_args": {
@@ -437,7 +443,11 @@ recipes = {"smooth_quant": True,
     }
 }
 conf = PostTrainingQuantConfig(recipes=recipes）
- ```
+```
+
+To get more information, please refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm).
+
+ 
 ## Supported Framework Matrix
 
 | Framework | Alpha        | Folding    |
