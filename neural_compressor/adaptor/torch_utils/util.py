@@ -1335,7 +1335,6 @@ def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
     return total_block_args, total_block_kwargs
 
 
-
 class LlamaRMSNorm_bias(torch.nn.Module):
     def __init__(self, hidden_size, eps=1e-6, bias=None):
         """LlamaRMSNorm is equivalent to T5LayerNorm.
