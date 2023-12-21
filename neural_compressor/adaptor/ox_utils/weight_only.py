@@ -658,9 +658,9 @@ def prepare_inputs(model, n_samples, dataloader):
         )
 
     session = (
-        ort.InferenceSession(model.model.SerializeToString(), so, providers=["CPUExecutionProvider"])
+        ort.InferenceSession(model.model.SerializeToString(), so, providers=ort.get_available_providers())
         if not model.is_large_model
-        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=["CPUExecutionProvider"])
+        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=ort.get_available_providers())
     )
     inputs_names = [i.name for i in session.get_inputs()]
     del session
@@ -755,9 +755,9 @@ def awq_quantize(
             )
 
         session = (
-            ort.InferenceSession(model.model.SerializeToString(), so, providers=["CPUExecutionProvider"])
+            ort.InferenceSession(model.model.SerializeToString(), so, providers=ort.get_available_providers())
             if not model.is_large_model
-            else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=["CPUExecutionProvider"])
+            else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=ort.get_available_providers())
         )
 
         for input_name in output_names:
@@ -769,6 +769,7 @@ def awq_quantize(
                     node.op_type in ["MatMul"]
                     and weight_config.get(node.name, {}) != "fp32"
                     and weight_config.get(node.name, {}).get("algorithm", "AWQ") == "AWQ"
+                    and model.get_initializer(node.input[1]) is not None
                 ):
                     dump_pairs[parent.name].append(model.get_node(node.name))
 
@@ -1029,9 +1030,9 @@ def gptq_quantize(
         )
 
     session = (
-        ort.InferenceSession(model.model.SerializeToString(), so, providers=["CPUExecutionProvider"])
+        ort.InferenceSession(model.model.SerializeToString(), so, providers=ort.get_available_providers())
         if not model.is_large_model
-        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=["CPUExecutionProvider"])
+        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=ort.get_available_providers())
     )
 
     new_nodes = []
@@ -1046,6 +1047,7 @@ def gptq_quantize(
                 node.op_type in ["MatMul"]
                 and weight_config.get(node.name, {}) != "fp32"
                 and weight_config.get(node.name, {}).get("algorithm", "GPTQ") == "GPTQ"
+                and model.get_initializer(node.input[1]) is not None
             ):
                 weight = numpy_helper.to_array(
                     model.get_initializer(model.get_node(node.name).input[1]), base_dir
