@@ -504,7 +504,8 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 data_type=dtype_mapping[str(dtype)],
                 dims=tensor.shape,
                 vals=tensor.tobytes(),
-                raw=True)
+                raw=True,
+            )
             model.add_initializer(new_tensor)
             node.input[1] = new_tensor.name
 
