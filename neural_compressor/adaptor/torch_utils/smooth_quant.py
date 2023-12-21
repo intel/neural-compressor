@@ -266,7 +266,7 @@ class WrapperLayer(torch.nn.Module):
         self.input_scale = None
         self.save_q_input = save_q_input
         self.os_bias = None
-        self.enable_blockwise = False
+        self.do_blockwise = False
 
     def enable_quant(self):
         self.quant = True
@@ -322,7 +322,7 @@ class WrapperLayer(torch.nn.Module):
             # self.q_input = x * scale ##save the q_input
             if self.save_q_input:
                 self.q_input = x
-            if not self.enable_blockwise:
+            if not self.do_blockwise:
                 output = self.q_dq_forward(x, self.input_scale, self.weight_scale)
             else:
                 output = self.q_dq_forward_blockwise(x, self.input_scale)
@@ -383,7 +383,7 @@ class TorchSmoothQuant:
         self.absorb_biasS_layers = {}
         self._save_scale = False
         self.weight_scale_dict = {}
-        self.enable_blockwise = False
+        self.do_blockwise = False
         self.block_inputs = {}
         self.block_outputs = {}
 
@@ -880,7 +880,7 @@ class TorchSmoothQuant:
         self._change_qdq_for_auto(enable=False)
         module_names = self._get_sq_layer_names()
 
-        if self.enable_blockwise:
+        if self.do_blockwise:
             block_modules = {}
             for key in self.block_names:
                 block_modules[key] = get_module(self.model, key)
@@ -889,7 +889,7 @@ class TorchSmoothQuant:
         forward_wrapper(self.model, input, self.device)  ##disable quant and get fp32 output
 
         fp32_output = {}
-        if not self.enable_blockwise:
+        if not self.do_blockwise:
             for name in module_names:
                 module = get_module(self.model, name)
                 fp32_output[name] = module.output
@@ -918,7 +918,7 @@ class TorchSmoothQuant:
                 module.update_os_bias(os_bias)
 
         loss_alphas = {}
-        if not self.enable_blockwise:
+        if not self.do_blockwise:
             for name in module_names:
                 module = get_module(self.model, name)
                 loss = self._get_auto_loss(fp32_output[name], module.output)
@@ -941,7 +941,7 @@ class TorchSmoothQuant:
         for alpha in alpha_space:
             absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes, alpha, tuning=True)
             self._update_scales_for_auto(absorb_input_scales, weight_scales)
-            if not self.enable_blockwise:
+            if not self.do_blockwise:
                 for name in module_names:
                     losses = loss_alphas[name]
                     if str(alpha) in losses.keys():
@@ -967,7 +967,7 @@ class TorchSmoothQuant:
                             module_copy.orig_layer.weight *= module.weight_scale
                         q_dq_weight = quant_dequant_w(module_copy.orig_layer)
                         module_copy.orig_layer.weight.data.copy_(q_dq_weight)
-                        module_copy.enable_blockwise = True
+                        module_copy.do_blockwise = True
                         if not (name == block_name and len(self.block_to_module[block_name]) == 1):
                             set_module(block_copy, name, module_copy)
                     try:
@@ -1029,7 +1029,7 @@ class TorchSmoothQuant:
         alpha_max=0.7,
         alpha_step=0.05,
         shared_criterion="min",
-        enable_blockwise=False,
+        do_blockwise=False,
         enable_bias_shift=False,
     ):
         """Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
@@ -1101,7 +1101,7 @@ class TorchSmoothQuant:
                             best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
                 loss_tmp = self._get_one_batch_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
-                if self.enable_blockwise:
+                if self.do_blockwise:
                     if loss_alphas == {}:
                         for block_name in self.block_names:
                             for key in self.block_to_module[block_name]:
@@ -1147,7 +1147,7 @@ class TorchSmoothQuant:
                             best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
                 loss_tmp = self._get_one_batch_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
-                if self.enable_blockwise:
+                if self.do_blockwise:
                     if loss_alphas == {}:
                         for block_name in self.block_names:
                             for key in self.block_to_module[block_name]:
@@ -1230,7 +1230,7 @@ class TorchSmoothQuant:
             "alpha_max": 1.0,
             "alpha_step": 0.1,
             "shared_criterion": "mean",
-            "enable_blockwise": False,
+            "do_blockwise": False,
             "enable_bias_shift": False,
         },
         weight_clip=True,
@@ -1248,17 +1248,17 @@ class TorchSmoothQuant:
 
         :param auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
             By default the search space is 0.0-1.0 with step_size 0.1.
-            enable_blockwise: Whether to do blockwise auto-tuning.
+            do_blockwise: Whether to do blockwise auto-tuning.
             enable_bias_shift: whether to do bias-shifting.
         :param default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
         benefit to quantization.
         """
         if isinstance(auto_alpha_args, dict):
-            self.enable_blockwise = auto_alpha_args.get("enable_blockwise", False)
+            self.do_blockwise = auto_alpha_args.get("do_blockwise", False)
         else:
-            self.enable_blockwise = False
-        if self.enable_blockwise:
+            self.do_blockwise = False
+        if self.do_blockwise:
             self.block_names = self.get_blocks()
             logger.info("Blockwise auto-tuning will be performed")
         if not isinstance(self.model, torch.nn.Module):
@@ -1332,7 +1332,7 @@ class TorchSmoothQuant:
                     )
                     return self.model
 
-                if self.enable_blockwise:
+                if self.do_blockwise:
                     module_names = self._get_sq_layer_names()
                     block_names, self.block_to_module = self.block_names, {}
                     for block in block_names:
