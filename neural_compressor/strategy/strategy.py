@@ -1153,7 +1153,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
     def tuning_sq_alpha(self, tuning_space, tuning_cfg, recipes):
         """Tuning smooth quant's alpha.
 
-        After trying all alpha values, the sq tuning process will stop early, returning the current best qmodel, even if the current best accuracy does not meet the accuracy criterion.
+        After trying all alpha values, the sq tuning process will stop early, returning the current best qmodel,
+        even if the current best accuracy does not meet the accuracy criterion.
 
         Args:
             tuning_space: tuning space
@@ -1970,7 +1971,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             need_stop = False
         if not need_stop and self.early_stop_sq_tuning_process:
             logger.info(
-                "[Strategy] Tried all alpha values but none met the accuracy criterion. The tuning process was early stopped and the currently best model was returned."
+                "[Strategy] Tried all alpha values but none met the accuracy criterion.",
+                "The tuning process was early stopped and the currently best model was returned.",
             )
 
             need_stop = True
