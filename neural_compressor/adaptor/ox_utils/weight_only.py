@@ -29,7 +29,7 @@ from onnx import helper, numpy_helper
 from onnx import onnx_pb as onnx_proto
 from packaging.version import Version
 
-from neural_compressor.adaptor.ox_utils.util import simple_progress_bar, dtype_mapping
+from neural_compressor.adaptor.ox_utils.util import dtype_mapping, simple_progress_bar
 from neural_compressor.model.model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.utils.utility import LazyImport
