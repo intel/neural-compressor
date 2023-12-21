@@ -144,7 +144,7 @@ def prune_wanda(
 
             return tmp
 
-        # register hook and foward to gather the activations ||Xj||2
+        # register hook and forward to gather the activations ||Xj||2
         handles = []
         for name in wrapped_layers:
             handles.append(subset[name].register_forward_hook(add_batch(name)))
