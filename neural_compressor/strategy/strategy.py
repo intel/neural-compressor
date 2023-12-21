@@ -1971,8 +1971,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             need_stop = False
         if not need_stop and self.early_stop_sq_tuning_process:
             logger.info(
-                "[Strategy] Tried all alpha values but none met the accuracy criterion.",
-                "The tuning process was early stopped and the currently best model was returned.",
+                "[Strategy] Tried all alpha values but none met the accuracy criterion."
+                + "The tuning process was early stopped and the currently best model was returned."
             )
 
             need_stop = True
