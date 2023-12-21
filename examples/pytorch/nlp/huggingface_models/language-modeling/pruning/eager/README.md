@@ -10,7 +10,21 @@ The retraining free pruning feature is still in development, please stay tuned.
 ## 1. Environment
 
 PyTorch 1.8 or higher version is needed with pytorch_fx backend
-The loading of llama models requires transformers version 4.28.0 or higher.
+The transformers version required varies across different types of models. Here, the transformers version used for running models during experiments is provided as a reference.
+    | Model | Transformers version |
+    |  :----: | :----: |
+    | EleutherAI/gpt-j-6b | 4.28/4.30/4.34/4.36 |
+    | huggyllama/llama-7b | 4.28/4.30/4.34/4.36 |
+    | meta-llama/Llama-2-7b-hf | 4.30/4.34/4.36 |
+    | facebook/opt-6.7b | 4.28/4.30/4.34/4.36 |
+    | databricks/dolly-v2-3b | 4.28/4.30/4.34/4.36 |
+    | tiiuae/falcon-7b | 4.28/4.30/4.34/4.36 |
+    | mosaicml/mpt-7b | 4.28/4.30/4.34/4.36 |
+    | bigscience/bloom-7b1 | 4.28/4.30/4.34/4.36 |
+    | baichuan-inc/Baichuan-7B | 4.28/4.30 |
+    | Qwen/Qwen-7B | 4.28/4.30/4.34/4.36 |
+    | THUDM/chatglm3-6b | 4.28/4.30/4.34/4.36 |
+    | mistralai/Mistral-7B-v0.1 | 4.34/4.36 |
 
 
 ```shell

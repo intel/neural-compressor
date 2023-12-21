@@ -272,7 +272,7 @@ def parse_args():
     parser.add_argument("--use_accelerate", action='store_true',
         help="Usually use to accelerate evaluation for large models"
     )
-    parser.add_argument("--eval_dtype", default=None,
+    parser.add_argument("--eval_dtype", default='fp32',
         help="choose in bf16, fp16 and fp32"
     )
     
@@ -577,7 +577,7 @@ def main():
         dtype = 'float32'
         model = model.to(dtype=torch.float32)
         
-    model_args = f'pretrained={model_name},tokenizer={model_name},dtype={dtype},use_accelerate={args.use_accelerate}'
+    model_args = f'pretrained={model_name},tokenizer={model_name},dtype={dtype},use_accelerate={args.use_accelerate},trust_remote_code={args.trust_remote_code}'
     eval_batch = args.per_device_eval_batch_size
     user_model = None if args.use_accelerate else model
     results = evaluate(
