@@ -1078,11 +1078,12 @@ class TorchSmoothQuant:
 
         if self.enable_bias_shift:
             from .model_wrapper import LlamaRMSNorm_bias, MistralRMSNorm_bias
+
             replaceable_ops = {"LlamaRMSNorm": LlamaRMSNorm_bias, "MistralRMSNorm": MistralRMSNorm_bias}
             for name in self.absorb_biasS_layers.keys():  # Replace layer-norms to enable bias-shifting.
                 module = get_module(self.model, name)
                 module_name = module.__class__.__name__
-                if module_name in replaceable_ops.keys():   
+                if module_name in replaceable_ops.keys():
                     class_replace = replaceable_ops[module_name]
                     module_replace = class_replace(hidden_size=module.weight.size(), eps=module.variance_epsilon)
                     module_replace.weight = module.weight
@@ -1300,10 +1301,14 @@ class TorchSmoothQuant:
                             self.self_absorb_layers[v[0]] = v
                         logger.debug(f"self_absorb_layers:{self.self_absorb_layers}")
                     if self.enable_bias_shift:
-                        self.absorb_biasS_layers, _ = self._trace(str_op_types, enable_bias_shift=self.enable_bias_shift)
+                        self.absorb_biasS_layers, _ = self._trace(
+                            str_op_types, enable_bias_shift=self.enable_bias_shift
+                        )
                 if self.allow_absorb:
                     if self.enable_bias_shift:
-                        self.absorb_biasS_layers, _ = self._trace(str_op_types, enable_bias_shift=self.enable_bias_shift)
+                        self.absorb_biasS_layers, _ = self._trace(
+                            str_op_types, enable_bias_shift=self.enable_bias_shift
+                        )
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         str_op_types
                     )  ##TODO we need to insert mul layer for no_absorb_layers later
@@ -1661,7 +1666,9 @@ class GraphTrace:
                 return False
         return True
 
-    def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True, enable_bias_shift=False):
+    def get_absorb_to_layer(
+        self, model, example_input, op_types, skip_unsupported_layers=True, enable_bias_shift=False
+    ):
         traced_model = self.trace(model, example_input)
         if traced_model is None:
             return None, None
