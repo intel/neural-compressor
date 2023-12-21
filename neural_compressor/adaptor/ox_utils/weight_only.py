@@ -29,7 +29,7 @@ from onnx import helper, numpy_helper
 from onnx import onnx_pb as onnx_proto
 from packaging.version import Version
 
-from neural_compressor.adaptor.ox_utils.util import simple_progress_bar
+from neural_compressor.adaptor.ox_utils.util import simple_progress_bar, dtype_mapping
 from neural_compressor.model.model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.utils.utility import LazyImport
@@ -103,9 +103,13 @@ def make_matmul_weight_only_node(
         packed = np.reshape(packed, (-1, k_blocks, blob_size))
 
         # build scale tensor
-        scale = np.reshape(scale, (-1, k_blocks)).astype("float32")
+        scale = np.reshape(scale, (-1, k_blocks))
         scale_tensor = onnx.helper.make_tensor(
-            name=node.input[1] + "_scale", data_type=1, dims=scale.shape, vals=scale.tobytes(), raw=True
+            name=node.input[1] + "_scale",
+            data_type=dtype_mapping[str(scale.dtype)],
+            dims=scale.shape,
+            vals=scale.tobytes(),
+            raw=True,
         )
         input_names.append(scale_tensor.name)
         new_inits.append(scale_tensor)
@@ -138,7 +142,7 @@ def make_matmul_weight_only_node(
         kwargs["bits"] = num_bits
         kwargs["block_size"] = group_size
         if accuracy_level > 0:
-            # require onnxruntime > 1.16.2
+            # require onnxruntime > 1.16.3
             kwargs["accuracy_level"] = accuracy_level
 
     else:
@@ -219,17 +223,17 @@ def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ra
     rmax = np.max(data, axis=1, keepdims=True) * ratio
     if scheme == "sym":
         max_range = np.maximum(np.abs(rmin), np.abs(rmax))
-        scale = np.ones(rmax.shape, dtype="float32")
+        scale = np.ones(rmax.shape, dtype=data.dtype)
         scale[max_range > 0] = np.array(
-            [float(i) / (maxq - minq) for i in (max_range[max_range > 0] * 2.0).flatten().tolist()], dtype="float32"
+            [float(i) / (maxq - minq) for i in (max_range[max_range > 0] * 2.0).flatten().tolist()], dtype=data.dtype
         )
         zero_point = (
             np.zeros(scale.shape) if dtype == "int" else np.ones(rmax.shape, dtype="uint8") * (1 << (num_bits - 1))
         )
     else:
-        scale = np.ones(rmax.shape, dtype="float32")
+        scale = np.ones(rmax.shape, dtype=data.dtype)
         scale[rmin != rmax] = np.array(
-            [float(i) / (maxq - minq) for i in (rmax - rmin)[rmin != rmax].flatten().tolist()], dtype="float32"
+            [float(i) / (maxq - minq) for i in (rmax - rmin)[rmin != rmax].flatten().tolist()], dtype=data.dtype
         )
         zero_point = (
             ((np.zeros(scale.shape) - rmin) / scale).round()
@@ -425,6 +429,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             continue
         inp = np.concatenate(output_dicts[nodes[0].input[0]], axis=0)
         inp_scale = np.mean(np.reshape(np.abs(inp), (-1, inp[0].shape[-1])), axis=0)
+        dtype = inp.dtype
         weight = []
         org_out = []
         for node in nodes:
@@ -492,7 +497,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             tensor = numpy_helper.to_array(weight_tensor, base_dir)
 
             tensor = tensor.T * best_scale
-            tensor = (tensor.T).astype("float32")
+            tensor = (tensor.T).astype(dtype)
 
             new_tensor = onnx.helper.make_tensor(node.input[1] + "_scaled", 1, tensor.shape, tensor.tobytes(), raw=True)
             model.add_initializer(new_tensor)
@@ -511,7 +516,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             for idx in [1, 2]:
                 tensor = numpy_helper.to_array(model.get_initializer(parent.input[idx]), base_dir)
                 new_tensor = tensor / np.reshape(best_scale, (1, -1))
-                model.set_initializer(parent.input[idx], new_tensor.astype(tensor.dtype), raw=True)
+                model.set_initializer(parent.input[idx], new_tensor.astype(dtype), raw=True)
                 updated_nodes.append(parent.name)
             output_dicts[parent.output[0]] = output_dicts[parent.output[0]] / np.reshape(best_scale, (1, -1))
 
@@ -524,7 +529,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 if model.get_initializer(inp) is not None:
                     tensor = numpy_helper.to_array(model.get_initializer(inp), base_dir)
                     new_tensor = tensor / np.reshape(best_scale, (1, -1))
-                    model.set_initializer(inp, new_tensor.astype(tensor.dtype), raw=True)
+                    model.set_initializer(inp, new_tensor.astype(dtype), raw=True)
             updated_nodes.append(parent.name)
             output_dicts[parent.output[0]] = output_dicts[parent.output[0]] / np.reshape(best_scale, (1, -1))
 
@@ -533,7 +538,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
         ):  # pragma: no cover
             tensor = numpy_helper.to_array(model.get_initializer(parent.input[2]), base_dir)
             new_tensor = tensor / np.reshape(best_scale, (1, -1))
-            model.set_initializer(parent.input[2], new_tensor.astype(tensor.dtype), raw=True)
+            model.set_initializer(parent.input[2], new_tensor.astype(dtype), raw=True)
             updated_nodes.append(parent.name)
             output_dicts[parent.output[0]] = output_dicts[parent.output[0]] / np.reshape(best_scale, (1, -1))
 
@@ -541,7 +546,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             # insert mul
             scale_tensor = helper.make_tensor(
                 name=parent.output[0] + "_weight_only_scale",
-                data_type=onnx_proto.TensorProto.FLOAT,
+                data_type=dtype_mapping[str(dtype)],
                 dims=best_scale.shape,
                 vals=(1.0 / best_scale).flatten().tolist(),
             )
