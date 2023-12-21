@@ -95,7 +95,7 @@
 <li><p><a class="reference external" href="#Quantization-Fundamentals">Quantization Fundamentals</a></p></li>
 <li><p><a class="reference external" href="#SmoothQuant-and-Our-Enhancement">SmoothQuant and Our Enhancement</a></p></li>
 <li><p><a class="reference external" href="#Validated-Models">Validated Models</a></p></li>
-<li><p><a class="reference external" href="#Example">Example</a></p></li>
+<li><p><a class="reference external" href="#Usage">Usage</a></p></li>
 <li><p><a class="reference external" href="#Supported-Framework-Matrix">Supported Framework Matrix</a></p></li>
 </ol>
 <section id="introduction">
@@ -311,29 +311,34 @@ $$</p>
 </section>
 <section id="our-enhancement">
 <h3>Our enhancement:<a class="headerlink" href="#our-enhancement" title="Permalink to this heading"></a></h3>
-<section id="algorithm-layer-wise-auto-tuning-of-alpha">
-<h4>Algorithm: Layer-wise Auto-tuning of $\alpha$.<a class="headerlink" href="#algorithm-layer-wise-auto-tuning-of-alpha" title="Permalink to this heading"></a></h4>
-<p>SmoothQuant method aims to split the quantization difficulty of weight and activation by using a fixed-value $\alpha$ for an entire model. However, as the distributions of activation outliers vary not only across different models but also across different layers within a model, we hereby propose a method to obtain layer-wise optimal $\alpha$ values with the ability to tune automatically.</p>
-<p>Our proposed method consists of 7 major steps:</p>
+<section id="algorithm-auto-tuning-of-alpha">
+<h4>Algorithm: Auto-tuning of $\alpha$.<a class="headerlink" href="#algorithm-auto-tuning-of-alpha" title="Permalink to this heading"></a></h4>
+<p>SmoothQuant method aims to split the quantization difficulty of weight and activation by using a fixed-value $\alpha$ for an entire model. However, as the distributions of activation outliers vary not only across different models but also across different layers within a model, we hereby propose a method to obtain layer-wise optimal $\alpha$ values with the ability to tune automatically.
+Currently, both layer-wise and block-wise auto-tuning methods are supported and the default option is layer-wise.
+In block-wise auto-tuning, layers within one block (e.g an OPTDecoderLayer) would share the same alpha value; users could set <em>‘do_blockwise’: True</em> in <em>auto_alpha_args</em> to enable it.</p>
+<p>Our proposed method consists of 8 major steps:</p>
 <ul class="simple">
 <li><p>Hook input minimum and maximum values of layers to be smoothed using register_forward_hook.</p></li>
+<li><p>Find a list of layers on which smoothquant could be performed.</p></li>
 <li><p>Generate a list of $\alpha$ values of a user-defined range and set a default $\alpha$ value.</p></li>
 <li><p>Calculate smoothing factor using default $\alpha$ value, adjust parameters accordingly and forward the adjusted model given an input sample.</p></li>
 <li><p>Perform per-channel quantization_dequantization of weights and per-tensor quantization_dequantization of activations to predict output.</p></li>
-<li><p>Calculate the layer-wise loss with respect to FP32 output, iterate the previous two steps given each $\alpha$ value and save the layer-wise loss per alpha.</p></li>
-<li><p>Apply criterion on input LayerNorm op and obtain the layer-wise optimal alpha values of a single input sample.</p></li>
-<li><p>Iterate the previous three steps over a number of input samples and save the layer-wise optimal $\alpha$ values.</p></li>
+<li><p>Calculate the layer-wise/block-wise loss with respect to FP32 output, iterate the previous two steps given each $\alpha$ value and save the layer-wise/block-wise loss per alpha.</p></li>
+<li><p>Apply criterion on input LayerNorm op and obtain the optimal alpha values of a single input sample.</p></li>
+<li><p>Iterate the previous three steps over a number of input samples and save the layer-wise/block-wise optimal $\alpha$ values.</p></li>
 </ul>
-<p>Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block.</p>
-<p>In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is found to be well-balanced one for the majority of models.</p>
+<p>Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block. Both alpha range and criterion could be configured in auto_alpha_args.</p>
+<p>In our experiments, an $\alpha$ range of [0.0, 1.0] with a step_size of 0.1 is found to be well-balanced one for the majority of models.</p>
 </section>
 <section id="engineering">
 <h4>Engineering<a class="headerlink" href="#engineering" title="Permalink to this heading"></a></h4>
-<p><em>fully automated</em>: the user only needs to pass a model and dataloader</p>
+<p><em>fully automated</em>: users only need to pass a model and dataloader.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.adaptor.torch_utils.smooth_quant</span> <span class="kn">import</span> <span class="n">TorchSmoothQuant</span>
 
 <span class="n">sq</span> <span class="o">=</span> <span class="n">TorchSmoothQuant</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">)</span>
-<span class="n">sq</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>  <span class="c1">##alpha could be a float or a string &#39;auto&#39;</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>  <span class="c1">##alpha could be a float number to disable auto-tuning and enable fixed-value alpha smoothquant.</span>
+<span class="n">auto_alpha_args</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">sq</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">auto_alpha_args</span><span class="o">=</span><span class="n">auto_alpha_args</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False”</p>
@@ -594,9 +599,12 @@ conv2d/linear-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanor
 | LLaMa-2-13b-hf* | 0.7677 | 0.7632  | alpha=Auto, Ipex 2.1 |</p>
 <p>Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.</p>
 </section>
-<section id="example">
-<h2>Example<a class="headerlink" href="#example" title="Permalink to this heading"></a></h2>
-<p>User could refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">examples</a> on how to use smooth quant.</p>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading"></a></h2>
+<p>There are two ways to apply smooth quantization: 1) using a fixed <code class="docutils literal notranslate"><span class="pre">alpha</span></code> for the entire model or 2) determining the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> through auto-tuning.</p>
+<section id="using-a-fixed-alpha">
+<h3>Using a fixed <code class="docutils literal notranslate"><span class="pre">alpha</span></code><a class="headerlink" href="#using-a-fixed-alpha" title="Permalink to this heading"></a></h3>
+<p>To set a fixed alpha for the entire model, users can follow this example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">recipes</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;smooth_quant&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
     <span class="s2">&quot;smooth_quant_args&quot;</span><span class="p">:</span> <span class="p">{</span>
@@ -607,24 +615,56 @@ conv2d/linear-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanor
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">recipes</span><span class="o">=</span><span class="n">recipes</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>smooth_quant_args description:</p>
-<p>“alpha”: “auto”, a float value or a list of float values. Default is 0.5. “auto” means automatic tuning.</p>
+<p><code class="docutils literal notranslate"><span class="pre">smooth_quant_args</span></code> description:</p>
+<p>“alpha”: a float value. Default is 0.5.</p>
 <p>“folding”: whether to fold mul into the previous layer, where mul is required to update the input distribution during smoothing.</p>
 <ul class="simple">
 <li><p>True: Fold inserted mul into the previous layer. IPEX will only insert mul for layers can do folding.</p></li>
 <li><p>False: Allow inserting mul to update the input distribution and no folding. IPEX (version&gt;=2.1) can fuse inserted mul automatically. For Stock PyTorch, setting folding=False will convert the model to a QDQ model.</p></li>
 </ul>
-<p>To find the best <code class="docutils literal notranslate"><span class="pre">alpha</span></code>, users can utilize the <a class="reference external" href="(./tuning_strategies.html)">auto-tuning</a> feature. Compares to setting the alpha to <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>, this tuning process uses the evaluation result on the entire dataset as the metric to find the best <code class="docutils literal notranslate"><span class="pre">alpha</span></code>. To use this feature, users need to provide a list of scalars between 0 and 1 for the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> item. Here is an example:</p>
+</section>
+<section id="determining-the-alpha-through-auto-tuning">
+<h3>Determining the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> through auto-tuning<a class="headerlink" href="#determining-the-alpha-through-auto-tuning" title="Permalink to this heading"></a></h3>
+<p>Users can search for the best <code class="docutils literal notranslate"><span class="pre">alpha</span></code> at two levels: 1) for the entire model, and 2) for each layer/block.</p>
+<section id="auto-tune-the-alpha-for-the-entire-model">
+<h4>Auto-tune the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> for the entire model<a class="headerlink" href="#auto-tune-the-alpha-for-the-entire-model" title="Permalink to this heading"></a></h4>
+<p>The tuning process looks for the optimal <code class="docutils literal notranslate"><span class="pre">alpha</span></code> value from a list of <code class="docutils literal notranslate"><span class="pre">alpha</span></code> values provided by the user.</p>
+<blockquote>
+<div><p>Please note that, it may a considerable amount of time as the tuning process applies each <code class="docutils literal notranslate"><span class="pre">alpha</span></code> to the entire model and uses the evaluation result on the entire dataset as the metric to determine the best <code class="docutils literal notranslate"><span class="pre">alpha</span></code>.
+Here is an example:</p>
+</div></blockquote>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>import numpy as np
 conf = PostTrainingQuantConfig(
     quant_level=&#39;auto&#39;, # quant_level can also be 1
     ...
     recipes={&quot;smooth_quant&quot;: True, 
-            &quot;smooth_quant_args&quot;: {&quot;alpha&quot;: np.arange(0.1, 0.5, 0.05).tolist(),}
+             &quot;smooth_quant_args&quot;: {&quot;alpha&quot;: np.arange(0.1, 0.5, 0.05).tolist()}
     ...
     }）
 </pre></div>
 </div>
+</section>
+<section id="auto-tune-the-alpha-for-each-layer-block">
+<h4>Auto-tune the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> for each layer/block<a class="headerlink" href="#auto-tune-the-alpha-for-each-layer-block" title="Permalink to this heading"></a></h4>
+<p>In this case, the tuning process searches the optimal <code class="docutils literal notranslate"><span class="pre">alpha</span></code> of each layer of the block by evaluating the loss with respect to FP32 output on a few batches of data.
+Here is an example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>recipes = {&quot;smooth_quant&quot;: True, 
+    &quot;default_alpha&quot;: 0.7, # Baseline alpha-value for auto-tuning.
+    &quot;smooth_quant_args&quot;: {&quot;alpha&quot;: &#39;auto&#39;, &quot;auto_alpha_args&quot;: {
+        &quot;alpha_min&quot;: 0.0, # min value of auto-tuning alpha search space
+        &quot;alpha_max&quot;: 1.0, # max value of auto-tuning alpha search space
+        &quot;alpha_step&quot;: 0.1, # step_size of auto-tuning alpha search space
+        &quot;shared_criterion&quot;: &quot;mean&quot;, # Criterion for input LayerNorm op of a transformer block.
+        &quot;do_blockwise&quot;: False, # Whether to enable block-wise auto-tuning.
+        }
+    }
+}
+conf = PostTrainingQuantConfig(recipes=recipes）
+</pre></div>
+</div>
+<p>To get more information, please refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">examples</a>.</p>
+</section>
+</section>
 </section>
 <section id="supported-framework-matrix">
 <h2>Supported Framework Matrix<a class="headerlink" href="#supported-framework-matrix" title="Permalink to this heading"></a></h2>
@@ -687,7 +727,7 @@ conf = PostTrainingQuantConfig(
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f8314f192a0> 
+   <jinja2.runtime.BlockReference object at 0x7f35652a0d90> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
