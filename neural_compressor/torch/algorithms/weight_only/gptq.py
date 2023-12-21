@@ -930,11 +930,16 @@ def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig])
                 "act_order": op_config.act_order,
                 "block_size": op_config.block_size,
                 "mse": op_config.enable_mse_search,
-                "double_quant_dtype": op_config.double_quant_dtype,
-                "double_quant_bits": op_config.double_quant_bits,
-                "double_quant_group_size": op_config.double_quant_group_size,
-                "double_quant_sym": op_config.double_quant_sym,
             }
+            if op_config.double_quant_config is not None:
+                weight_config[op_name].update(
+                    {
+                        "double_quant_dtype": op_config.double_quant_dtype,
+                        "double_quant_bits": op_config.double_quant_bits,
+                        "double_quant_group_size": op_config.double_quant_group_size,
+                        "double_quant_sym": op_config.double_quant_sym,
+                    }
+                )
             nsamples = op_config.nsamples
             dataloader_len = op_config.dataloader_len
             use_max_length = op_config.use_max_length

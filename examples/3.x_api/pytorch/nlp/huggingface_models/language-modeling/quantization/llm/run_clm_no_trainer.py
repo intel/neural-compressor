@@ -374,7 +374,7 @@ if args.quantize:
         nsamples=args.gptq_nsamples,
         use_max_length=args.gptq_use_max_length,
         pad_max_length=args.gptq_pad_max_length,
-        double_quant_config="GGML_TYPE_Q4_K"
+        double_quant_config=args.double_quant
     )
     quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
 
