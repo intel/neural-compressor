@@ -1623,10 +1623,10 @@ class TestAlphaAutoLinearBiasShift(unittest.TestCase):
                 "alpha_max": 1.0,
                 "alpha_step": 0.1,
                 "shared_criterion": "mean",
-                "shift_bias": True,
+                "enable_bias_shift": True,
             },
         )
-        assert sq.to_shift_bias and len(sq.absorb_biasS_layers) == 2
+        assert sq.enable_bias_shift and len(sq.absorb_biasS_layers) == 2
         assert getattr(sq.model, list(sq.absorb_biasS_layers.keys())[0]).bias is not None
         assert hasattr(sq.model.norm, "bias") and sq.model.norm.bias is not None
         assert hasattr(sq.model.norm2, "bias") and sq.model.norm.bias is not None
@@ -1641,7 +1641,7 @@ class TestAlphaAutoLinearBiasShift(unittest.TestCase):
                 "alpha_max": 1.0,
                 "alpha_step": 0.1,
                 "shared_criterion": "mean",
-                "shift_bias": True,
+                "enable_bias_shift": True,
             },
         )
         assert hasattr(sq.model.norm, "bias") and sq.model.norm.bias is not None
