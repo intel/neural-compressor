@@ -7,6 +7,8 @@ import unittest
 import numpy as np
 import onnx
 import onnxruntime as ort
+from onnxruntime.transformers.onnx_model import OnnxModel
+from packaging.version import Version
 from transformers import AutoTokenizer
 
 from neural_compressor import PostTrainingQuantConfig, quantization
@@ -48,6 +50,9 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         p.communicate()
 
         self.gptj_model = onnx.load("gptj/decoder_model.onnx")
+        self.gptj_fp16_model = OnnxModel(copy.deepcopy(self.gptj_model))
+        self.gptj_fp16_model.convert_float_to_float16()
+        self.gptj_fp16_model = self.gptj_fp16_model.model
         self.gptj_dataloader = DummyNLPDataloader("hf-internal-testing/tiny-random-gptj")
 
         cmd = (
@@ -66,6 +71,129 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         shutil.rmtree("nc_workspace", ignore_errors=True)
         shutil.rmtree("gptj", ignore_errors=True)
         shutil.rmtree("tiny-llama", ignore_errors=True)
+
+    @unittest.skipIf(Version(ort.__version__) <= Version("1.16.1"), "Skip onnxruntime MatMulNBits op test")
+    def test_RTN_quant_with_woq_op(self):
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,
+                        "group_size": 32,
+                        "scheme": "sym",
+                        "algorithm": "RTN",
+                    },
+                },
+            },
+        )
+        # test fp32 model
+        q_model = quantization.fit(self.gptj_model, conf)
+        for data, _ in self.gptj_dataloader:
+            q_out = Inference(q_model.model, data)
+            org_out = Inference(self.gptj_model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
+        scale_tensor = [i for i in q_model.initializer() if i.name.endswith("_scale")]
+        self.assertTrue("MatMulNBits" in [i.op_type for i in q_model.nodes()]))
+        self.assertTrue(len(scale_tensor) > 0)
+        self.assertEqual(scale_tensor[0].data_type, 1)
+
+        # test fp16 model
+        q_fp16_model = quantization.fit(self.gptj_fp16_model, conf)
+        self.assertTrue(q_fp16_model.get_initializer().data_type, 10)
+        for data, _ in self.gptj_dataloader:
+            q_out = Inference(q_fp16_model.model, data)
+            org_out = Inference(self.gptj_fp16_model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
+        scale_tensor = [i for i in q_fp16_model.initializer() if i.name.endswith("_scale")]
+        self.assertTrue("MatMulNBits" in [i.op_type for i in q_fp16_model.nodes()]))
+        self.assertTrue(len(scale_tensor) > 0)
+        self.assertEqual(scale_tensor[0].data_type, 10)
+
+    @unittest.skipIf(Version(ort.__version__) <= Version("1.16.1"), "Skip onnxruntime MatMulNBits op test")
+    def test_AWQ_quant_with_woq_op(self):
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,
+                        "group_size": 32,
+                        "scheme": "asym",
+                        "algorithm": "AWQ",
+                    },
+                },
+            },
+            recipes={
+                "awq_args": {"enable_auto_scale": True, "enable_mse_search": False},
+            },
+        )
+        # test fp32 model
+        q_model = quantization.fit(self.gptj_model, conf)
+        for data, _ in self.gptj_dataloader:
+            q_out = Inference(q_model.model, data)
+            org_out = Inference(self.gptj_model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
+        scale_tensor = [i for i in q_model.initializer() if i.name.endswith("_scale")]
+        self.assertTrue("MatMulNBits" in [i.op_type for i in q_model.nodes()]))
+        self.assertTrue(len(scale_tensor) > 0)
+        self.assertEqual(scale_tensor[0].data_type, 1)
+
+        # test fp16 model
+        q_fp16_model = quantization.fit(self.gptj_fp16_model, conf)
+        self.assertTrue(q_fp16_model.get_initializer().data_type, 10)
+        for data, _ in self.gptj_dataloader:
+            q_out = Inference(q_fp16_model.model, data)
+            org_out = Inference(self.gptj_fp16_model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
+        scale_tensor = [i for i in q_fp16_model.initializer() if i.name.endswith("_scale")]
+        self.assertTrue("MatMulNBits" in [i.op_type for i in q_fp16_model.nodes()]))
+        self.assertTrue(len(scale_tensor) > 0)
+        self.assertEqual(scale_tensor[0].data_type, 10)
+
+    @unittest.skipIf(Version(ort.__version__) <= Version("1.16.1"), "Skip onnxruntime MatMulNBits op test")
+    def test_GPTQ_quant_with_woq_op(self):
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,
+                        "group_size": 32,
+                        "scheme": "sym",
+                        "algorithm": "GPTQ",
+                    },
+                },
+            },
+        )
+        # test fp32 model
+        q_model = quantization.fit(self.gptj_model, conf)
+        for data, _ in self.gptj_dataloader:
+            q_out = Inference(q_model.model, data)
+            org_out = Inference(self.gptj_model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
+        scale_tensor = [i for i in q_model.initializer() if i.name.endswith("_scale")]
+        self.assertTrue("MatMulNBits" in [i.op_type for i in q_model.nodes()]))
+        self.assertTrue(len(scale_tensor) > 0)
+        self.assertEqual(scale_tensor[0].data_type, 1)
+
+        # test fp16 model
+        q_fp16_model = quantization.fit(self.gptj_fp16_model, conf)
+        self.assertTrue(q_fp16_model.get_initializer().data_type, 10)
+        for data, _ in self.gptj_dataloader:
+            q_out = Inference(q_fp16_model.model, data)
+            org_out = Inference(self.gptj_fp16_model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
+        scale_tensor = [i for i in q_fp16_model.initializer() if i.name.endswith("_scale")]
+        self.assertTrue("MatMulNBits" in [i.op_type for i in q_fp16_model.nodes()]))
+        self.assertTrue(len(scale_tensor) > 0)
+        self.assertEqual(scale_tensor[0].data_type, 10)
 
     def test_RTN_quant(self):
         conf = PostTrainingQuantConfig(
