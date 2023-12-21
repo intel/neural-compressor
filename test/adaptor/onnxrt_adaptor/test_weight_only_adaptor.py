@@ -95,7 +95,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
         scale_tensor = [i for i in q_model.initializer() if i.name.endswith("_scale")]
-        self.assertTrue("MatMulNBits" in [i.op_type for i in q_model.nodes()]))
+        self.assertTrue("MatMulNBits" in [i.op_type for i in q_model.nodes()])
         self.assertTrue(len(scale_tensor) > 0)
         self.assertEqual(scale_tensor[0].data_type, 1)
 
@@ -108,7 +108,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
         scale_tensor = [i for i in q_fp16_model.initializer() if i.name.endswith("_scale")]
-        self.assertTrue("MatMulNBits" in [i.op_type for i in q_fp16_model.nodes()]))
+        self.assertTrue("MatMulNBits" in [i.op_type for i in q_fp16_model.nodes()])
         self.assertTrue(len(scale_tensor) > 0)
         self.assertEqual(scale_tensor[0].data_type, 10)
 
@@ -138,7 +138,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
         scale_tensor = [i for i in q_model.initializer() if i.name.endswith("_scale")]
-        self.assertTrue("MatMulNBits" in [i.op_type for i in q_model.nodes()]))
+        self.assertTrue("MatMulNBits" in [i.op_type for i in q_model.nodes()])
         self.assertTrue(len(scale_tensor) > 0)
         self.assertEqual(scale_tensor[0].data_type, 1)
 
@@ -151,7 +151,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
         scale_tensor = [i for i in q_fp16_model.initializer() if i.name.endswith("_scale")]
-        self.assertTrue("MatMulNBits" in [i.op_type for i in q_fp16_model.nodes()]))
+        self.assertTrue("MatMulNBits" in [i.op_type for i in q_fp16_model.nodes()])
         self.assertTrue(len(scale_tensor) > 0)
         self.assertEqual(scale_tensor[0].data_type, 10)
 
@@ -178,7 +178,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
         scale_tensor = [i for i in q_model.initializer() if i.name.endswith("_scale")]
-        self.assertTrue("MatMulNBits" in [i.op_type for i in q_model.nodes()]))
+        self.assertTrue("MatMulNBits" in [i.op_type for i in q_model.nodes()])
         self.assertTrue(len(scale_tensor) > 0)
         self.assertEqual(scale_tensor[0].data_type, 1)
 
@@ -191,7 +191,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             for q, org in zip(q_out, org_out):
                 self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
         scale_tensor = [i for i in q_fp16_model.initializer() if i.name.endswith("_scale")]
-        self.assertTrue("MatMulNBits" in [i.op_type for i in q_fp16_model.nodes()]))
+        self.assertTrue("MatMulNBits" in [i.op_type for i in q_fp16_model.nodes()])
         self.assertTrue(len(scale_tensor) > 0)
         self.assertEqual(scale_tensor[0].data_type, 10)
 
