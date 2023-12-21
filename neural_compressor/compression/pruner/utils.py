@@ -771,6 +771,7 @@ import os
 
 USE_DEEPSPEED = os.environ.get("USE_DEEPSPEED", False)
 
+
 def safe_get_shape(param):
     if USE_DEEPSPEED:
         # from deepspeed.utils import safe_get_local_grad, safe_set_local_fp32_param
@@ -779,24 +780,29 @@ def safe_get_shape(param):
     else:
         return param.shape
 
+
 def safe_get_data(param):
     if USE_DEEPSPEED:
-        from deepspeed.utils import safe_get_local_grad, safe_get_local_fp32_param
+        from deepspeed.utils import safe_get_local_fp32_param, safe_get_local_grad
+
         return safe_get_local_fp32_param(param)
     else:
         return param.data
 
+
 def safe_get_grad(param):
     if USE_DEEPSPEED:
         from deepspeed.utils import safe_get_local_grad
+
         return safe_get_local_grad(param)
     else:
         return param.grad
-    
+
+
 def safe_set_data(param, new_val):
     if USE_DEEPSPEED:
         from deepspeed.utils import safe_set_local_fp32_param
+
         safe_set_local_fp32_param(new_val, param)
     else:
         param.data = new_val
-

@@ -17,11 +17,14 @@
 # limitations under the License.
 import numpy as np
 
-from ..utils import nn, tf, torch
-from .base import KerasBasePattern, ProgressivePatternUtils, PytorchBasePattern, SparsityInfo, register_pattern
 from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
 from neural_compressor.utils.logger import Logger
+
+from ..utils import nn, tf, torch
+from .base import KerasBasePattern, ProgressivePatternUtils, PytorchBasePattern, SparsityInfo, register_pattern
+
 logger = Logger().get_logger()
+
 
 @register_pattern("ptNxM")
 class PytorchPatternNxM(PytorchBasePattern):
@@ -159,6 +162,7 @@ class PytorchPatternNxM(PytorchBasePattern):
         """
         # TODO: need to verify whether it's ok for transposed conv
         from neural_compressor.compression.pruner.utils import FLATTEN_DIM2
+
         if len(data.shape) == 2:
             return data
         elif len(data.shape) == 4:
@@ -179,7 +183,6 @@ class PytorchPatternNxM(PytorchBasePattern):
         else:
             raise NotImplementedError(f"Currently only support 1,3,4 reshape, but got shape {data.shape}")
         return data
-
 
     def _reshape_2dims_to_orig(self, data, orig_shape):
         """Recover layers that are not two-dimensional(e.g conv layer).

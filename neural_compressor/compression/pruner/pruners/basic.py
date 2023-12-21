@@ -16,16 +16,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# from ..utils import logger
+from neural_compressor.utils.logger import Logger
+
 from ..criteria import get_criterion
 from ..patterns import get_pattern
 from ..regs import get_reg
 from ..schedulers import get_scheduler
 from ..tf_criteria import get_tf_criterion
-# from ..utils import logger
-from neural_compressor.utils.logger import Logger
 from .base import KerasBasePruner, PytorchBasePruner, register_pruner
 
 logger = Logger().get_logger()
+
 
 @register_pruner("pt_basic")
 class PytorchBasicPruner(PytorchBasePruner):
