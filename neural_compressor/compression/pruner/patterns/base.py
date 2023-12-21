@@ -17,9 +17,10 @@
 # limitations under the License.
 
 from collections import namedtuple
-from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
 
 import numpy as np
+
+from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
 
 from ..utils import tf, torch
 

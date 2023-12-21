@@ -16,9 +16,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .utils import torch
+from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
 from neural_compressor.utils import logger
-from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_shape, safe_get_grad
+
+from .utils import torch
+
 CRITERIA = {}
 
 
@@ -175,7 +177,6 @@ class SnipCriterion(PruningCriterion):
                     self.scores[key] = torch.abs(data * grad)
 
 
-
 @register_criterion("snip_momentum")
 class SnipMomentumCriterion(PruningCriterion):
     """Pruning criterion.
@@ -206,7 +207,9 @@ class SnipMomentumCriterion(PruningCriterion):
                 dtype = torch.bfloat16 if param.device.type == "cpu" else torch.float16
             # self.scores[key] = torch.zeros(p.shape, dtype=dtype).to(p.device)
             if hasattr(self.pattern, "reduce_score"):
-                self.scores[key] = self.pattern.reduce_score(torch.zeros(param_shape, dtype=dtype).to(param.device), key)
+                self.scores[key] = self.pattern.reduce_score(
+                    torch.zeros(param_shape, dtype=dtype).to(param.device), key
+                )
             else:
                 self.scores[key] = torch.zeros(param_shape, dtype=dtype).to(param.device)
 
@@ -221,6 +224,7 @@ class SnipMomentumCriterion(PruningCriterion):
                 p = self.modules[key].weight
                 param = self.modules[key].weight
                 from deepspeed.utils import safe_get_full_fp32_param, safe_get_full_grad
+
                 full_p = safe_get_full_fp32_param(param)
                 full_g = safe_get_full_grad(param)
                 data = safe_get_data(param)

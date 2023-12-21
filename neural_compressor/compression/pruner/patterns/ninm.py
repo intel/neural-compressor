@@ -15,10 +15,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
+
 from ..utils import logger, nn, tf, torch
 from .base import ProgressivePatternUtils, PytorchBasePattern, SparsityInfo, register_pattern
-
-from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
 
 
 @register_pattern("ptN:M")
@@ -148,6 +148,7 @@ class PytorchPatternNInM(PytorchBasePattern):
             Reshaped data.
         """
         from neural_compressor.compression.pruner.utils import FLATTEN_DIM2
+
         if len(data.shape) == 2:
             return data
         elif len(data.shape) == 4:  # TODO: need to verify whether it's ok for transposed conv
@@ -173,7 +174,7 @@ class PytorchPatternNInM(PytorchBasePattern):
         """
         if len(orig_shape) == 2:
             return data
-        
+
         elif len(orig_shape) == 4:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[3], orig_shape[1])
             data = data.permute(0, 3, 1, 2)

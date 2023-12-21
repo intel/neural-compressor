@@ -38,8 +38,9 @@ class Logger(object):
         self._logger = logging.getLogger("neural_compressor")
         self._logger.handlers.clear()
         self._logger.setLevel(LOGLEVEL)
-        formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] "
-                                      "[%(filename)s:%(lineno)d:%(funcName)s] %(message)s")
+        formatter = logging.Formatter(
+            "[%(asctime)s] [%(levelname)s] " "[%(filename)s:%(lineno)d:%(funcName)s] %(message)s"
+        )
         streamHandler = logging.StreamHandler()
         streamHandler.setFormatter(formatter)
         self._logger.addHandler(streamHandler)
