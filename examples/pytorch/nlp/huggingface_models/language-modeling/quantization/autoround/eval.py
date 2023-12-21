@@ -7,6 +7,7 @@ import torch.nn as nn
 from parse_results import result_parser
 import pprint
 import json
+import re
 import shutil
 import transformers
 import time
@@ -158,12 +159,6 @@ def simple_evaluate(
                 + ".db",
             )
 
-    # if isinstance(lm.tokenizer, transformers.LlamaTokenizerFast):
-    #     if lm.tokenizer.pad_token is None:
-    #         lm.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-    #     else:
-    #         lm.tokenizer.pad_token = '[PAD]'
-
     task_dict = lm_eval.tasks.get_task_dict(tasks)
 
     if check_integrity:
@@ -238,14 +233,6 @@ def eval_model(output_dir=None, model=None, tokenizer=None,
         if each in tasks:
             external_tasks.append(each)
             tasks.remove(each)
-    #
-    # lm = lm_eval.models.get_model("hf-causal-experimental").create_from_arg_string(
-    #         model_args,
-    #         {
-    #             "batch_size": eval_bs,
-    #             "max_batch_size": eval_bs,
-    #             "device": device}
-    #         )
 
     results = {}
     model = None
@@ -254,41 +241,23 @@ def eval_model(output_dir=None, model=None, tokenizer=None,
         try:
             num_fewshot = fewshots_dict[mark][tmp_tasks]
             task_names = lm_eval.utils.pattern_match([tmp_tasks], ALL_TASKS)
-            # task_dict = get_task_dict(task_names)
-
-            # for lm-eval internal tasks
             print(f'********* {tmp_tasks} evaluate ************')
             task_s = time.time()
             for shot in num_fewshot:
-                # tmp_results = evaluator.evaluate(
-                #         lm=lm,
-                #         task_dict=task_dict,
-                #         num_fewshot=shot,
-                #         limit=limit,
-                #         bootstrap_iters=100000,
-                #         description_dict=None,
-                #         decontamination_ngrams_path=None,
-                #         write_out=False,
-                #         output_base_path=None,
-                #         )
-                # tmp_results, model = simple_evaluate(model="hf-causal", model_args=model_args, tasks=task_names,
-                #                                      num_fewshot=shot, limit=limit,batch_size=eval_bs,max_batch_size=eval_bs)
-
-                model_args = f'pretrained={output_dir},tokenizer="{output_dir}",dtype={dtype},use_accelerate={use_accelerate},trust_remote_code=True'
-                model_type = "hf-causal-experimental"
-                # else:
-                #     model_args = f'pretrained={output_dir},tokenizer="{output_dir}",dtype={dtype}'
-                #     model_type = "hf-causal"
-
+                if bool(re.search("chatglm", output_dir.lower())):
+                    model_args = f'pretrained={output_dir},tokenizer={output_dir},dtype={dtype},trust_remote_code=True'
+                    model_type = "hf-causal"
+                else:
+                    model_args = f'pretrained={output_dir},tokenizer={output_dir},dtype={dtype},use_accelerate={use_accelerate},trust_remote_code=True'
+                    model_type = "hf-causal-experimental"
+                    
                 if "wikitext" in task_names:
                     tmp_eval_bs = 1
                 else:
                     tmp_eval_bs = eval_bs
-
                 tmp_results, lm = simple_evaluate(model=model_type, model_args=model_args, tasks=task_names,
                                                   num_fewshot=shot, limit=limit, batch_size=tmp_eval_bs,
                                                   max_batch_size=tmp_eval_bs, lm=lm)
-
                 sub_name = f'{tmp_tasks} {shot}-shot'
                 print(f'{sub_name}: ')
                 pprint.pprint(tmp_results["results"])
@@ -299,8 +268,6 @@ def eval_model(output_dir=None, model=None, tokenizer=None,
             print(str(e))
             continue
 
-    # if isinstance(lm.tokenizer, transformers.LlamaTokenizerFast):
-    #     lm.tokenizer = transformers.AutoTokenizer.from_pretrained(output_dir, use_fast=False)
     tokenizer = transformers.AutoTokenizer.from_pretrained(output_dir, use_fast=False, trust_remote_code=True)
     model = lm.model
     # for external tasks
@@ -369,13 +336,8 @@ def eval_model(output_dir=None, model=None, tokenizer=None,
                 new_dict[new_key] = data[sub_key][sub_sub_key]
 
     import pandas as pd
-
     df = pd.DataFrame(data=new_dict, index=[0])
-
     df.to_excel(excel_file)
-
-    # if output_dir == "./tmp_signround":
-    #     shutil.rmtree(output_dir)
 
 
 if __name__ == "__main__":
@@ -392,35 +354,15 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     s = time.time()
-    # 'wikitext2', 'ptb-new', 'c4-new', 'lambada_openai',
-    #               'hellaswag', 'winogrande', 'piqa', 'coqa', 'drop', 'gsm8k','truthfulqa_mc',
-    # "lambada_openai": [0],
-    # "hellaswag": [0],
-    # "winogrande": [0],
-    # "piqa": [0],
-    # "hendrycksTest-*": [0],
-    # "wikitext": [0],
-    # "truthfulqa_mc": [0],
-    # "openbookqa": [0],
-    # "boolq": [0],
-    # "rte": [0],
-    # "arc_easy": [0],
-    # "arc_challenge": [0],
-
-    test_tasks = [
-        "hendrycksTest-*", 'lambada_openai', "wikitext2", "ptb-new", "c4_new"
-
-    ]
 
     test_tasks = ['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai', 'hellaswag', 'winogrande', 'piqa',
      "hendrycksTest-*", "wikitext", "truthfulqa_mc", "openbookqa", "boolq", "rte", "arc_easy", "arc_challenge"]
     test_tasks = ['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai', 'hellaswag', 'winogrande', 'piqa',
   ]
     excel_name = (args.model_name).split('/')[-1] + ".xlsx"
-
-    # test_tasks = ['wikitext2', 'ptb-new', 'c4-new', 'lambada_openai']
     eval_model(output_dir=args.model_name,
                tasks=test_tasks,
                eval_bs=args.bs, eval_orig_float=True, limit=None, excel_file=excel_name)
 
     print("cost time: ", time.time() - s)
+
