@@ -1126,6 +1126,3 @@ def check_key_exist(data, key):
             if check_key_exist(item, key):
                 return True
     return False
-
-
-
