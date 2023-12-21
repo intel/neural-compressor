@@ -223,17 +223,17 @@ def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ra
     rmax = np.max(data, axis=1, keepdims=True) * ratio
     if scheme == "sym":
         max_range = np.maximum(np.abs(rmin), np.abs(rmax))
-        scale = np.ones(rmax.shape, dtype=data.dtype)
+        scale = np.ones(rmax.shape)
         scale[max_range > 0] = np.array(
-            [float(i) / (maxq - minq) for i in (max_range[max_range > 0] * 2.0).flatten().tolist()], dtype=data.dtype
+            [float(i) / (maxq - minq) for i in (max_range[max_range > 0] * 2.0).flatten().tolist()]
         )
         zero_point = (
             np.zeros(scale.shape) if dtype == "int" else np.ones(rmax.shape, dtype="uint8") * (1 << (num_bits - 1))
         )
     else:
-        scale = np.ones(rmax.shape, dtype=data.dtype)
+        scale = np.ones(rmax.shape)
         scale[rmin != rmax] = np.array(
-            [float(i) / (maxq - minq) for i in (rmax - rmin)[rmin != rmax].flatten().tolist()], dtype=data.dtype
+            [float(i) / (maxq - minq) for i in (rmax - rmin)[rmin != rmax].flatten().tolist()]
         )
         zero_point = (
             ((np.zeros(scale.shape) - rmin) / scale).round()
@@ -371,7 +371,7 @@ def rtn_quantize(
                     group_size=group_size,
                     k_blocks=k_blocks,
                     q_weight=q_weight.astype("uint8"),
-                    scale=scale,
+                    scale=scale.astype(dtype),
                     zero_point=zp if scheme == "asym" else None,
                     accuracy_level=accuracy_level,
                 )
@@ -383,10 +383,10 @@ def rtn_quantize(
                 q_weight = qdq_tensor(weight.T, num_bits, group_size, scheme, "int", ratios.get(node.input[1], 1))
                 q_weight = np.reshape(q_weight, (org_w_shape[1], -1))
                 q_weight = np.transpose(q_weight)
-                q_weight = q_weight[: org_w_shape[0], :].astype(weight.dtype)
+                q_weight = q_weight[: org_w_shape[0], :].astype(dtype)
                 q_weight_tensor = onnx.helper.make_tensor(
                     name=node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size)),
-                    data_type=1,
+                    data_type=dtype_mapping[str(dtype)],
                     dims=weight.shape,
                     vals=q_weight.tobytes(),
                     raw=True,
@@ -429,7 +429,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             continue
         inp = np.concatenate(output_dicts[nodes[0].input[0]], axis=0)
         inp_scale = np.mean(np.reshape(np.abs(inp), (-1, inp[0].shape[-1])), axis=0)
-        dtype = inp.dtype
+        dtype = None
         weight = []
         org_out = []
         for node in nodes:
@@ -495,11 +495,16 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             init_share_num = model.get_initializer_share_num(node.input[1])
             weight_tensor = model.get_initializer(node.input[1])
             tensor = numpy_helper.to_array(weight_tensor, base_dir)
-
+            dtype = tensor.dtype
             tensor = tensor.T * best_scale
             tensor = (tensor.T).astype(dtype)
 
-            new_tensor = onnx.helper.make_tensor(node.input[1] + "_scaled", 1, tensor.shape, tensor.tobytes(), raw=True)
+            new_tensor = onnx.helper.make_tensor(
+                name=node.input[1] + "_scaled",
+                data_type=dtype_mapping[str(dtype)],
+                dims=tensor.shape,
+                vals=tensor.tobytes(),
+                raw=True)
             model.add_initializer(new_tensor)
             node.input[1] = new_tensor.name
 
@@ -515,6 +520,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
         ) == len(nodes):
             for idx in [1, 2]:
                 tensor = numpy_helper.to_array(model.get_initializer(parent.input[idx]), base_dir)
+                dtype = tensor.dtype
                 new_tensor = tensor / np.reshape(best_scale, (1, -1))
                 model.set_initializer(parent.input[idx], new_tensor.astype(dtype), raw=True)
                 updated_nodes.append(parent.name)
@@ -528,6 +534,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             for inp in parent.input:
                 if model.get_initializer(inp) is not None:
                     tensor = numpy_helper.to_array(model.get_initializer(inp), base_dir)
+                    dtype = tensor.dtype
                     new_tensor = tensor / np.reshape(best_scale, (1, -1))
                     model.set_initializer(inp, new_tensor.astype(dtype), raw=True)
             updated_nodes.append(parent.name)
@@ -537,6 +544,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             nodes
         ):  # pragma: no cover
             tensor = numpy_helper.to_array(model.get_initializer(parent.input[2]), base_dir)
+            dtype = tensor.dtype
             new_tensor = tensor / np.reshape(best_scale, (1, -1))
             model.set_initializer(parent.input[2], new_tensor.astype(dtype), raw=True)
             updated_nodes.append(parent.name)
@@ -950,7 +958,7 @@ def gptq(
         invperm = np.argsort(perm)
         Q = Q[invperm, :]
 
-    Q = np.reshape(Q, W.shape).astype(dtype)
+    Q = np.reshape(Q, W.shape)
     del W
     return Q
 
@@ -1082,6 +1090,7 @@ def gptq_quantize(
                 group_size = weight_config[node.name]["group_size"]
                 scheme = weight_config[node.name]["scheme"]
             group_size = group_size if group_size != -1 else weight.shape[0]
+            dtype = weight.dtype
 
             q_weight = gptq(
                 weight,
@@ -1114,7 +1123,7 @@ def gptq_quantize(
                     group_size=group_size,
                     k_blocks=k_blocks,
                     q_weight=q_weight.astype("uint8"),
-                    scale=scale,
+                    scale=scale.astype(dtype),
                     zero_point=zp if scheme == "asym" else None,
                     accuracy_level=accuracy_level,
                 )
@@ -1125,9 +1134,9 @@ def gptq_quantize(
             else:
                 q_weight_tensor = onnx.helper.make_tensor(
                     name=node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size)),
-                    data_type=1,
+                    data_type=dtype_mapping[str(dtype)],
                     dims=q_weight.shape,
-                    vals=q_weight.tobytes(),
+                    vals=q_weight.astype(dtype).tobytes(),
                     raw=True,
                 )
                 model.add_initializer(q_weight_tensor)
