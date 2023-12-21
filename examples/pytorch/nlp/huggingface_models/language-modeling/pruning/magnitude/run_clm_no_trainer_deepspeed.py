@@ -811,7 +811,8 @@ def main():
 
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
-        unwrapped_model = accelerator.unwrap_model(model)
+        # fetch the ds model from inc model
+        unwrapped_model = accelerator.unwrap_model(model.model)
         unwrapped_model.save_pretrained(
             args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
         )
