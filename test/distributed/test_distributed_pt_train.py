@@ -3,7 +3,9 @@ import shutil
 import signal
 import subprocess
 import unittest
+
 import torchvision
+
 
 def build_fake_py():
     fake_py = """
