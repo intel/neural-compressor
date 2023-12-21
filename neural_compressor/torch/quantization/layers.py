@@ -20,6 +20,7 @@
 import math
 
 import torch
+import torch.nn as nn
 from packaging.version import Version
 from torch.autograd import Function
 from torch.nn import functional as F
@@ -39,6 +40,30 @@ def get_torch_version():
 
 
 PT_VERSION = get_torch_version().release
+
+
+class Matmul(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x, y):
+        return torch.matmul(x, y)
+
+
+class BatchMatmul(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x, y):
+        return torch.bmm(x, y)
+
+
+class Autocast(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x):
+        return x
 
 
 class QDQLayer(torch.nn.Module):

@@ -197,7 +197,10 @@ class BaseConfig(ABC):
             config_dict = self.to_diff_dict(self)
         else:
             config_dict = self.to_dict()
-        return json.dumps(config_dict, indent=2) + "\n"
+        try:
+            return json.dumps(config_dict, indent=2) + "\n"
+        except:
+            return config_dict
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__} {self.to_json_string()}"
@@ -242,11 +245,11 @@ class BaseConfig(ABC):
             op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
             for op_name, op_type in model_info:
                 if self.global_config is not None:
-                    config_mapping[(op_type, op_name)] = global_config
+                    config_mapping[(op_name, op_type)] = global_config
                 if op_type in op_type_config_dict:
-                    config_mapping[(op_type, op_name)] = op_name_config_dict[op_type]
+                    config_mapping[(op_name, op_type)] = op_name_config_dict[op_type]
                 if op_name in op_name_config_dict:
-                    config_mapping[(op_type, op_name)] = op_name_config_dict[op_name]
+                    config_mapping[(op_name, op_type)] = op_name_config_dict[op_name]
         return config_mapping
 
     @staticmethod
