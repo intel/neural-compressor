@@ -57,7 +57,6 @@ class PytorchPatternNInM(PytorchBasePattern):
             data = datas[key].weight
             data = self._reshape_orig_to_2dims(data)
             shape = data.shape
-            logger.info(data.shape)
             if shape[1] % block_size[1] != 0:
                 self.invalid_layers.append(key)
                 logger.warning(f"{key} shape {shape} cannot be divided by {self.pattern}")

@@ -208,7 +208,6 @@ class PytorchBasePruner(BasePruner):
             module = self.modules[key]
             # TODO: support bias or others
             param_shape = safe_get_shape(module.weight)
-            logger.info(f"init {key}'s mask with shape {param_shape}")
             self.masks[key] = torch.ones(param_shape).to(module.weight.device).bool()
         self._init()
 
@@ -224,28 +223,8 @@ class PytorchBasePruner(BasePruner):
                 module = self.modules[key]
                 param = module.weight
                 param_data = safe_get_data(param)
-                # logger.info(f"start to update the weight for {key}, param_data shape is {param_data.shape}")
-                if (param_data.shape != self.masks[key].shape):
-                    from neural_compressor.utils.utility import ForkedPdb
-                    ForkedPdb().set_trace()
                 new_val = param_data * self.masks[key]
                 safe_set_data(new_val=new_val, param=param)
-                # module.weight.data = module.weight.data * self.masks[key]
-
-
-    # def mask_weights(self):
-    #     """Apply masks to corresponding modules' weights.
-
-    #     Weights are multiplied with masks. This is the formal pruning process.
-    #     """
-    #     with torch.no_grad():
-    #         for key in self.modules.keys():
-    #             module = self.modules[key]
-    #             param = module.weight
-    #             param_data = safe_get_data(param)
-    #             new_val = param_data * self.masks[key]
-    #             safe_set_data(new_val=new_val, param=param)
-    #             # module.weight.data = module.weight.data * self.masks[key]
 
 
 class KerasBasePruner(BasePruner):

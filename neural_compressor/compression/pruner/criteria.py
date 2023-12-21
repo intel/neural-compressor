@@ -18,6 +18,7 @@
 
 from .utils import torch
 from neural_compressor.utils import logger
+from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_shape, safe_get_grad
 CRITERIA = {}
 
 
@@ -94,7 +95,6 @@ class MagnitudeCriterion(PruningCriterion):
 
     def on_step_begin(self):
         """Calculate and store the pruning scores based on a magnitude criterion."""
-        from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_shape, safe_get_grad
         with torch.no_grad():
             for key in self.modules.keys():
                 param = self.modules[key].weight
@@ -162,7 +162,6 @@ class SnipCriterion(PruningCriterion):
 
     def on_before_optimizer_step(self):
         """Calculate and store the pruning scores based on snip criterion."""
-        from neural_compressor.compression.pruner.utils import safe_get_shape, safe_get_grad, safe_get_data
         with torch.no_grad():
             for key in self.modules.keys():
                 # p = self.modules[key].weight
@@ -176,7 +175,6 @@ class SnipCriterion(PruningCriterion):
                     self.scores[key] = torch.abs(data * grad)
 
 
-from neural_compressor.compression.pruner.utils import safe_get_shape, safe_get_grad, safe_get_data
 
 @register_criterion("snip_momentum")
 class SnipMomentumCriterion(PruningCriterion):
@@ -198,13 +196,11 @@ class SnipMomentumCriterion(PruningCriterion):
     def __init__(self, modules, config, pattern):
         """Initialize a snip_momentum pruning criterion."""
         super(SnipMomentumCriterion, self).__init__(modules, config, pattern)
-        from neural_compressor.utils.utility import ForkedPdb
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
         for key in modules.keys():
             param = modules[key].weight
             # p = modules[key].weight
             param_shape = safe_get_shape(param)
-            # ForkedPdb().set_trace()
             dtype = torch.float32
             if self.low_memory_usage:
                 dtype = torch.bfloat16 if param.device.type == "cpu" else torch.float16
@@ -220,13 +216,10 @@ class SnipMomentumCriterion(PruningCriterion):
     def on_before_optimizer_step(self):
         """Calculate and store the pruning scores based on snip_momentum criterion."""
         with torch.no_grad():
-            from neural_compressor.compression.pruner.utils import safe_get_shape, safe_get_grad, safe_get_data
             for key in self.modules.keys():
                 # logger.info(f"[on_before_optimizer_step][start to update the score of {key}]")
                 p = self.modules[key].weight
                 param = self.modules[key].weight
-                # from neural_compressor.utils.utility import ForkedPdb
-                # ForkedPdb().set_trace()
                 from deepspeed.utils import safe_get_full_fp32_param, safe_get_full_grad
                 full_p = safe_get_full_fp32_param(param)
                 full_g = safe_get_full_grad(param)

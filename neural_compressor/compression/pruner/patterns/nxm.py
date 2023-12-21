@@ -68,7 +68,6 @@ class PytorchPatternNxM(PytorchBasePattern):
         """
         datas = self.modules
         block_sizes_dict = {}
-        from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
         for key in datas.keys():
             block_sizes_dict[key] = self.block_size
             if not (self.N == "channel" or self.M == "channel"):
@@ -90,10 +89,7 @@ class PytorchPatternNxM(PytorchBasePattern):
         """Check if a layer is valid for this block_size."""
         block_sizes = self.block_size
         datas = self.modules
-        from neural_compressor.utils.utility import ForkedPdb
         for key in datas.keys():
-            # ForkedPdb().set_trace()
-            from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
             param = datas[key].weight
             data = safe_get_data(param)
             data = self._reshape_orig_to_2dims(data)
