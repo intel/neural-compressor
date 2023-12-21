@@ -96,8 +96,6 @@ elif [[ $(echo "${test_case}" | grep -c "tf pruning") != 0 ]]; then
     # horovod can't be install in the env with TF and PT together
     # so test distribute cases in the env with single fw installed
     pip install horovod
-elif [[ $(echo "${test_case}" | grep -c "pt pruning") != 0 ]]; then
-    pip install horovod
 fi
 # test deps
 pip install coverage

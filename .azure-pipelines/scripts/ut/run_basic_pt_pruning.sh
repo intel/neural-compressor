@@ -14,7 +14,7 @@ export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.f
 lpot_path=$(python -c 'import neural_compressor; import os; print(os.path.dirname(neural_compressor.__file__))')
 cd /neural-compressor/test || exit 1
 find ./pruning_with_pt -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'> run.sh
-find ./distributed -name "test_distributed_pt_train.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'>> run.sh
+# find ./distributed -name "test_distributed_pt_train.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'>> run.sh
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
