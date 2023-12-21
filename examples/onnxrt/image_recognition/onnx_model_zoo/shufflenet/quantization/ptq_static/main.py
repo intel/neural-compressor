@@ -189,9 +189,10 @@ class Dataloader:
             except StopIteration:
                 return
 
-def eval_func(model, dataloader, metric):
+def eval_func(model, dataloader, metric, backend):
     metric.reset()
-    sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+    provider = 'DmlExecutionProvider' if backend == 'onnxrt_dml_ep' else 'CPUExecutionProvider'
+    sess = ort.InferenceSession(model.SerializeToString(), providers=[provider])
     input_names = [i.name for i in sess.get_inputs()]
     for input_data, label in dataloader:
         output = sess.run(None, dict(zip(input_names, [input_data])))
@@ -248,6 +249,12 @@ if __name__ == "__main__":
         help="quantization format"
     )
     parser.add_argument(
+        '--device',
+        type=str,
+        default='cpu',
+        choices=['cpu', 'npu'],
+    )
+    parser.add_argument(
         "--batch_size",
         default=1,
         type=int,
@@ -257,14 +264,20 @@ if __name__ == "__main__":
     model = onnx.load(args.model_path)
     dataloader = Dataloader(args.dataset_location, args.label_path, args.batch_size)
     top1 = TopK()
+    backend = 'onnxrt_dml_ep' if args.device == 'npu' else 'default'
     def eval(onnx_model):
-        return eval_func(onnx_model, dataloader, top1)
+        return eval_func(onnx_model, dataloader, top1, backend)
 
     if args.benchmark:
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig(warmup=10, iteration=1000, cores_per_instance=4, num_of_instance=1)
+            conf = BenchmarkConfig(warmup=10,
+                                   iteration=1000,
+                                   cores_per_instance=4,
+                                   num_of_instance=1,
+                                   device=args.device,
+                                   backend=backend)
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval(model)
@@ -272,9 +285,9 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(quant_format=args.quant_format)
+        config = PostTrainingQuantConfig(quant_format=args.quant_format,
+                                         device=args.device,
+                                         backend=backend)
  
-        q_model = quantization.fit(model, config, calib_dataloader=dataloader,
-			     eval_func=eval)
-
+        q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval)
         q_model.save(args.output_model)

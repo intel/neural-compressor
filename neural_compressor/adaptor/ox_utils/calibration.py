@@ -63,6 +63,7 @@ class ONNXRTAugment:
         iterations=[],
         backend="CPUExecutionProvider",
         reduce_range=False,
+        **kwargs,
     ):
         """Initialization.
 
@@ -93,6 +94,16 @@ class ONNXRTAugment:
         self.dynamically_quantized = False
         self.ort_version = Version(onnxruntime.__version__)
         self.reduce_range = reduce_range
+
+        self.layer_wise = True if len(kwargs.get("split_model_input_names", [])) != 0 else False
+        if self.layer_wise:
+            self.split_model_input_names = kwargs.get("split_model_input_names", [])
+            self._dataloder_for_next_split_model = None
+
+    @property
+    def dataloder_for_next_split_model(self):
+        """Return dataloader for next split model for layer-wise quantization."""
+        return self._dataloder_for_next_split_model
 
     def augment_graph(self, activation_only=False, weight_only=False):
         """Augment_graph.
@@ -245,16 +256,17 @@ class ONNXRTAugment:
 
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+        len_outputs = len(session.get_outputs())
+        outputs_names = [session.get_outputs()[i].name for i in range(len_outputs)]
 
         node_output_names = [
             output.name if output.name not in self.dequantized_output else self.dequantized_output[output.name]
             for output in session.get_outputs()
         ]
-
         augment_model_wrapper = (
-            ONNXModel(self.augmented_model)
+            ONNXModel(self.augmented_model, load_external_data=False)
             if not self.model_wrapper.is_large_model
-            else ONNXModel(self.model_wrapper.model_path + "_augment.onnx")
+            else ONNXModel(self.model_wrapper.model_path + "_augment.onnx", load_external_data=False)
         )
         input_name_to_nodes = augment_model_wrapper.input_name_to_nodes
         output_name_to_node = augment_model_wrapper.output_name_to_node
@@ -271,6 +283,7 @@ class ONNXRTAugment:
         output_dicts = {}
         intermediate_tensor = {}
         name_to_calibrator = {}
+        ort_inputs_for_next_split_model = []
         for idx, (inputs, labels) in enumerate(self.dataloader):
             ort_inputs = {}
 
@@ -281,7 +294,9 @@ class ONNXRTAugment:
                 else:
                     ort_inputs.update({inputs_names[0]: to_numpy(inputs)})
             else:
-                assert len_inputs == len(inputs), "number of input tensors must align with graph inputs"
+                if not self.layer_wise:
+                    # for layer-wise calibration
+                    assert len_inputs == len(inputs), "number of input tensors must align with graph inputs"
 
                 if isinstance(inputs, dict):
                     for name, input in inputs.items():
@@ -289,7 +304,15 @@ class ONNXRTAugment:
                 else:
                     ort_inputs = dict(zip(inputs_names, [to_numpy(i) for i in inputs]))
 
-            def _collect_data():
+            def _collect_data(ort_inputs):
+                if self.layer_wise:
+                    # for layer-wise calibration
+                    ort_inputs = {
+                        input_name: input_tensor
+                        for input_name, input_tensor in ort_inputs.items()
+                        if input_name in self.split_model_input_names
+                    }
+
                 for output_idx, output in enumerate(session.run(None, ort_inputs)):
                     if q_config is not None and output.size != 0:
                         node_name = name_to_node[node_output_names[output_idx]]
@@ -321,13 +344,18 @@ class ONNXRTAugment:
                     elif q_config is None:
                         output_dicts.setdefault(node_output_names[output_idx], []).append(output)
 
+                    if self.layer_wise:
+                        # for layer-wise calibration
+                        ort_inputs.update({outputs_names[output_idx]: output})
+                        ort_inputs_for_next_split_model.append((ort_inputs, labels))
+
             if self.iterations != []:
                 if idx > max(self.iterations):
                     break
                 if idx in self.iterations:
-                    _collect_data()
+                    _collect_data(ort_inputs)
             else:
-                _collect_data()
+                _collect_data(ort_inputs)
 
         # for kl and percentile method, collect calibration range after all tensors are collected.
         merged_dict = intermediate_tensor
@@ -344,6 +372,9 @@ class ONNXRTAugment:
             output_dicts.setdefault(output_name, []).append(list(calibrator.calib_range))
             calibrator.clear()
             del calibrator
+
+        self._dataloder_for_next_split_model = ort_inputs_for_next_split_model
+
         return list(output_dicts.keys()), output_dicts
 
     def _dequantize(self, tensor, scale_tensor, zo_tensor):
@@ -726,6 +757,7 @@ class ONNXRTAugment:
             max_vals_per_channel: max values per channel of input tensors
             shape_infos: The shape information of input tensors
         """
+        logger.info("Start smooth model calibration.")
         # add the input tensors of {op_types} to outputs of the model
         tensors_to_node = self._get_input_tensor_of_ops(op_types)
         self.model_wrapper.add_tensors_to_outputs(tensors_to_node.keys())

@@ -80,7 +80,8 @@ optional arguments:
 - Step 2: Submit the task request to service, and it will return the submit status and task id for future use.
 
 ```shell
-[user@server hf_models_grpc]$ python client.py submit --request="test_task_request.json"
+[user@server hf_models_grpc]$ cd path/to/neural-compressor/neural_solution/frontend/gRPC
+[user@server hf_models_grpc]$ python client.py submit --request="../../examples/hf_models/task_request.json"
 
 # response if submit successfully
 2023-06-20 14:34:55 [INFO] Neural Solution is running.

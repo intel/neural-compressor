@@ -22,6 +22,7 @@ import random
 import sys
 
 import numpy as np
+from deprecated import deprecated
 
 from ..conf.config import MixedPrecision_Conf
 from ..conf.dotdict import deep_get
@@ -34,6 +35,7 @@ from .graph_optimization import GraphOptimization
 from .strategy import EXP_STRATEGIES
 
 
+@deprecated(version="2.0")
 class MixedPrecision(GraphOptimization):
     """Class used for generating low precision model.
 

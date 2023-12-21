@@ -275,6 +275,7 @@ class WrapperLinear(torch.nn.Module):
     def __init__(self, orig_layer, num_bits, group_size, schema, grad=0):
         super(WrapperLinear, self).__init__()
         self.orig_layer = orig_layer
+        self.orig_layer.weight.requires_grad_(True)
         self.tensor_quant = FakeAffineTensorQuantFunction().apply
         self.num_bits = num_bits
         self.group_size = group_size
@@ -551,6 +552,8 @@ class WrapperMultiblock(torch.nn.Module):
 def q_dq_weight_round(model: torch.nn.Module, inputs, block_names, num_bits=4, group_size=128, schema='asym',
                       n_blocks=1,
                       device=torch.device("cpu")):
+    for n,m in model.named_parameters():
+        m.requires_grad_(False)
     q_input = None
     torch.cuda.empty_cache()
     input_ids = inputs["input_ids"]

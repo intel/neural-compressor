@@ -31,6 +31,7 @@ from ..utils.utility import required_libs
 from .common import Model
 
 
+@deprecated(version="2.0")
 class Component(object):
     """This is base class of Neural Compressor Component.
 

@@ -58,9 +58,9 @@ def evaluate(model):
     iteration = -1
     if args.benchmark and args.mode == 'performance':
         iteration = args.iters
-    input_tensor_names = ["image_tensor:0"]
-    output_tensor_names = ["num_detections:0", "detection_boxes:0", \
-                                    "detection_scores:0", "detection_classes:0"]
+    input_tensor_names = ["image_tensor"]
+    output_tensor_names = ["num_detections", "detection_boxes", \
+                                    "detection_scores", "detection_classes"]
     metric = COCOmAPv2(output_index_mapping={'num_detections':0, 'boxes':1, 'scores':2, 'classes':3})
 
     if isinstance(model, AutoTrackable):

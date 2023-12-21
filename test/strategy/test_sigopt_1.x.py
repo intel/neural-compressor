@@ -6,10 +6,7 @@ import unittest
 import numpy as np
 import yaml
 
-if os.getenv("SIGOPT_API_TOKEN") is None or os.getenv("SIGOPT_PROJECT_ID") is None:
-    CONDITION = False
-else:
-    CONDITION = False
+CONDITION = False
 
 
 def build_fake_yaml(sigopt_api_token, sigopt_project_id):

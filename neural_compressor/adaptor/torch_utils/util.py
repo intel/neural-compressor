@@ -31,6 +31,61 @@ tqdm = LazyImport("tqdm")
 torch = LazyImport("torch")
 
 
+def move_input_device(input, device="cpu"):
+    """Auto mapping input to device for all kinds of format.
+
+    Args:
+        input (torch.tensor): input data
+        device (str, optional): target device. Defaults to "cpu".
+
+    Returns:
+        input (torch.tensor): input data on target device
+    """
+    if device == "cpu":
+        return input
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        tmp_input = {}
+        for k, inp in input.items():
+            tmp_input[k] = move_input_device(inp, device)
+        input = tmp_input
+    elif isinstance(input, list) or isinstance(input, tuple):
+        tmp_input = []
+        for inp in input:
+            tmp_input.append(move_input_device(inp, device))
+        input = tmp_input
+    elif isinstance(input, torch.Tensor):
+        input = input.to(device)  # pylint: disable=no-member
+    return input
+
+
+def forward_wrapper(model, input):
+    """Model forward with device auto mapping.
+
+    Args:
+        model (torch.nn.Module): input model
+        input (torch.tensor): input data
+
+    Returns:
+        output: output data
+    """
+    try:
+        device = next(model.parameters()).device
+    except:
+        # for RecursiveScriptModule
+        device = "cpu"
+    input = move_input_device(input, device)
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        output = model(**input)
+    elif isinstance(input, list) or isinstance(input, tuple):
+        try:
+            output = model(*input)
+        except:
+            output = model(input)
+    else:
+        output = model(input)
+    return output
+
+
 def get_embedding_contiguous(model):
     """This is a helper function for nn.Embedding, and it will get input contiguous.
 
@@ -129,6 +184,11 @@ def append_attr(fx_model, model, fx_white_list=[]):
             fx_model.weight = fx_model.module.weight()
         else:
             fx_model.weight = fx_model.module.weight
+        if hasattr(fx_model.module, "bias"):
+            if not isinstance(fx_model.module.bias, torch.Tensor) and fx_model.module.bias is not None:
+                fx_model.bias = fx_model.module.bias()
+            else:
+                fx_model.bias = fx_model.module.bias
     for i in org_attr:
         if (
             type(model) in fx_white_list
@@ -264,6 +324,8 @@ def check_cfg_and_qconfig(
             # to int8
             ipex_op_cfg = op_infos_from_cfgs[name]
             input_tensor_infos = ipex_op_cfg["input_tensor_infos"]
+            if op_name[1] == "Linear" or op_name[1] == "Linear&add":  # record op_name for possible op-wise fallback
+                logger.debug(f"ipex_op_cfg['fqn'] - op_name {ipex_op_cfg['fqn']}  {op_name}")
             for index, input_tensor_info in enumerate(input_tensor_infos):
                 if "force_dtype" not in input_tensor_info.keys():
                     continue
@@ -474,8 +536,6 @@ def update_sq_scale(ipex_config_path, smoothquant_scale_info):
     with open(ipex_config_path, "w") as f1:
         json.dump(ipex_config, f1, indent=4)
         f1.close()
-    print(ipex_config_path)
-    # exit(0)
 
 
 def auto_copy(module):  # pragma: no cover

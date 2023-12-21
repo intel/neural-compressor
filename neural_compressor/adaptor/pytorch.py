@@ -53,6 +53,15 @@ def get_torch_version():
     return version
 
 
+def get_ipex_version():
+    try:
+        ipex_version = ipex.__version__.split("+")[0]
+    except ValueError as e:  # pragma: no cover
+        assert False, "Got an unknown version of intel_extension_for_pytorch: {}".format(e)
+    version = Version(ipex_version)
+    return version
+
+
 def get_torch_white_list(approach):
     version = get_torch_version()
     import torch.quantization as tq
@@ -78,73 +87,37 @@ def get_torch_white_list(approach):
     return white_list
 
 
-def pytorch_forward_wrapper(model, input, device="cpu", conf=None, running_mode="inference"):
+def pytorch_forward_wrapper(
+    model,
+    input,
+    conf=None,
+    backend="default",
+    running_mode="inference",
+):
     version = get_torch_version()
-    if isinstance(input, dict) or isinstance(input, UserDict):
-        if device == "cpu":
-            output = model(**input)
-        elif device == "ipex":
-            # have to split the case to avoid exposing ipex.DEVICE outside
-            # which require intel extension installed
-            if version.release < Version("1.12.0").release:  # pragma: no cover
-                if running_mode == "calibration":
-                    with ipex.quantization.calibrate(conf, default_recipe=True):  # pylint: disable=E1101
-                        output = model(**input)
-                else:
-                    output = model(**input)
-            else:
-                output = model(**input)
-        else:  # pragma: no cover
-            for inp in input.keys():
-                input[inp] = (
-                    input[inp].to("dpcpp" if device == "gpu" else device)
-                    if isinstance(input[inp], torch.Tensor)
-                    else input[inp]
-                )
-            output = model(**input)
-    elif isinstance(input, list) or isinstance(input, tuple):
-        if device == "cpu":
-            output = model(*input)
-        elif device == "ipex":
-            if version.release < Version("1.12.0").release:  # pragma: no cover
-                if running_mode == "calibration":
-                    with ipex.quantization.calibrate(conf, default_recipe=True):  # pylint: disable=E1101
-                        output = model(*input)
-                else:
-                    output = model(*input)
-            else:
-                output = model(*input)
-        else:  # pragma: no cover
-            tmp_device = "dpcpp" if device == "gpu" else device
-            input = [
-                inp.to(tmp_device) if isinstance(inp, torch.Tensor) else inp for inp in input
-            ]  # pylint: disable=E1133
-            output = model(*input)
+    from .torch_utils.util import forward_wrapper
+
+    if (
+        version.release < Version("1.12.0").release and backend == "ipex" and running_mode == "calibration"
+    ):  # pragma: no cover
+        with ipex.quantization.calibrate(conf, default_recipe=True):  # pylint: disable=E1101
+            output = forward_wrapper(model, input)
     else:
-        if device == "cpu" or not isinstance(input, torch.Tensor):
-            output = model(input)
-        elif device == "ipex":
-            if version.release < Version("1.12.0").release:  # pragma: no cover
-                if running_mode == "calibration":
-                    with ipex.quantization.calibrate(conf, default_recipe=True):  # pylint: disable=E1101
-                        output = model(input)
-                else:
-                    output = model(input)
-            else:
-                output = model(input)
-        else:  # pragma: no cover
-            input = input.to("dpcpp" if device == "gpu" else device)  # pylint: disable=no-member
-            output = model(input)
+        output = forward_wrapper(model, input)
     return output
 
 
 def get_example_inputs(model, dataloader):
     version = get_torch_version()
+    from .torch_utils.util import move_input_device
+
     # Suggest set dataloader like calib_dataloader
     if dataloader is None:
         return None
+    device = next(model.parameters()).device
     try:
         for idx, (input, label) in enumerate(dataloader):
+            input = move_input_device(input, device)
             output = pytorch_forward_wrapper(model, input)
             if isinstance(input, (dict, UserDict)):  # pragma: no cover
                 assert version.release >= Version("1.12.0").release, "INC support IPEX version >= 1.12.0"
@@ -162,6 +135,7 @@ def get_example_inputs(model, dataloader):
             break
     except Exception as e:  # pragma: no cover
         for idx, input in enumerate(dataloader):
+            input = move_input_device(input, device)
             output = pytorch_forward_wrapper(model, input)
             if isinstance(input, (dict, UserDict)):  # pragma: no cover
                 assert version.release >= Version("1.12.0").release, "INC support IPEX version >= 1.12.0"
@@ -814,6 +788,7 @@ class TemplateAdaptor(Adaptor):
         self.bf16_ops = []
         self.use_bf16 = framework_specific_info.get("use_bf16", True)
         self.device = framework_specific_info["device"]
+        self.backend = framework_specific_info.get("backend", "default")
         self.q_dataloader = framework_specific_info["q_dataloader"]
         self.q_func = framework_specific_info.get("q_func", None)
         self.benchmark = GLOBAL_STATE.STATE == MODE.BENCHMARK
@@ -881,14 +856,14 @@ class TemplateAdaptor(Adaptor):
         try:
             for idx, (input, label) in enumerate(dataloader):
                 output = pytorch_forward_wrapper(
-                    model, input, device=self.device, conf=conf, running_mode="calibration"
+                    model, input, backend=self.backend, conf=conf, running_mode="calibration"
                 )
                 if idx >= tmp_iterations - 1:
                     break
         except Exception as e:
             for idx, input in enumerate(dataloader):
                 output = pytorch_forward_wrapper(
-                    model, input, device=self.device, conf=conf, running_mode="calibration"
+                    model, input, backend=self.backend, conf=conf, running_mode="calibration"
                 )
                 if idx >= tmp_iterations - 1:
                     break
@@ -936,7 +911,7 @@ class TemplateAdaptor(Adaptor):
                 if measurer is not None:
                     measurer.start()
 
-                output = pytorch_forward_wrapper(model, input, device=self.device, conf=conf)
+                output = pytorch_forward_wrapper(model, input, backend=self.backend, conf=conf)
                 if self.device != "cpu":  # pragma: no cover
                     output = output.to("cpu")
                     label = label.to("cpu")
@@ -978,7 +953,7 @@ class TemplateAdaptor(Adaptor):
                 if measurer is not None:
                     measurer.start()
 
-                output = pytorch_forward_wrapper(model, input, device=self.device, conf=conf)
+                output = pytorch_forward_wrapper(model, input, backend=self.backend, conf=conf)
 
                 if measurer is not None:
                     measurer.end()
@@ -1761,6 +1736,15 @@ class TemplateAdaptor(Adaptor):
         scales_per_op=None,
         force_re_smooth=False,
         record_max_info=False,
+        weight_clip=True,
+        auto_alpha_args={
+            "alpha_min": 0.0,
+            "alpha_max": 1.0,
+            "alpha_step": 0.1,
+            "shared_criterion": "mean",
+            "do_blockwise": False,
+        },
+        default_alpha=0.5,
     ):
         """Convert the model by smooth quant.
 
@@ -1775,6 +1759,11 @@ class TemplateAdaptor(Adaptor):
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
                            False, ops with the same input will share a scale, mainly for performance
             record_max_info: whether record the max info in model for alpha tuning.
+            weight_clip: Whether to clip weight when calculating scales; by default it is on.
+            auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
+                            By default the search space is 0.0-1.0 with step_size 0.1.
+                            do_blockwise determines whether to do blockwise auto-tuning.
+            default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
 
         Returns:
             model: A modified fp32 model, inplace=True.
@@ -1804,7 +1793,15 @@ class TemplateAdaptor(Adaptor):
             kwargs["percentile"] = percentile
         if scales_per_op is not None:
             kwargs["scales_per_op"] = scales_per_op
-        model._model = self.sq.transform(alpha=alpha, folding=folding, calib_iter=calib_iter, **kwargs)
+        model._model = self.sq.transform(
+            alpha=alpha,
+            folding=folding,
+            calib_iter=calib_iter,
+            weight_clip=weight_clip,
+            default_alpha=default_alpha,
+            auto_alpha_args=auto_alpha_args,
+            **kwargs,
+        )
         if self.sq.record_max_info:
             model.sq_max_info = self.sq.max_value_info
         return model
@@ -1833,7 +1830,9 @@ class TemplateAdaptor(Adaptor):
                 absorb_layer = op_name
                 absorbed_layer = info["absorbed_layer"]
                 input_minmax = info["input_minmax"]
-                weight_max = info["weight_max"].clamp(min=1e-5)
+                weight_max = info["weight_max"]
+                if self.sq.weight_clip:
+                    weight_max = weight_max.clamp(min=1e-5)
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
@@ -1877,7 +1876,9 @@ class TemplateAdaptor(Adaptor):
                 alpha = info["alpha"]
                 absorbed_layer = info["absorbed_layer"]
                 input_minmax = info["input_minmax"]
-                weight_max = info["weight_max"].clamp(min=1e-5)
+                weight_max = info["weight_max"]
+                if self.sq.weight_clip:
+                    weight_max = weight_max.clamp(min=1e-5)
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
@@ -2253,7 +2254,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                     on_step_begin(cnt)
                 print(".", end="", flush=True)
                 cnt += 1
-                output = pytorch_forward_wrapper(model_, image, device=device)
+                output = pytorch_forward_wrapper(model_, image)
                 loss = criterion(output, target)
                 if hooks is not None:
                     loss = on_after_compute_loss(image, output, loss)
@@ -2618,9 +2619,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
     def __init__(self, framework_specific_info):
         super(PyTorch_IPEXAdaptor, self).__init__(framework_specific_info)
-        self.version = get_torch_version()
+        self.version = get_ipex_version()
         query_config_file = "pytorch_ipex.yaml"
-        self.query_handler = PyTorchQuery(local_config_file=os.path.join(os.path.dirname(__file__), query_config_file))
+        self.query_handler = PyTorchQuery(
+            device=self.device, local_config_file=os.path.join(os.path.dirname(__file__), query_config_file)
+        )
         self.cfgs = None
         self.fuse_ops = None
         self.op_infos_from_cfgs = None
@@ -2632,7 +2635,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             os.remove(self.ipex_config_path)
         except:
             logger.warning("Fail to remove {}.".format(self.ipex_config_path))
-        self.device = "ipex"
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
@@ -2650,6 +2652,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         # IPEX bug #1: deepcopied prepared model cannot do calibration, need model._model
         # q_model._model is useless, but we need to copy other attributes, and pass the converted
         # model to q_model. Also, sq will collect state_dict to origin_stat for recover
+        if self.device == "xpu":
+            model.to(self.device)
         if self.performance_only:
             q_model = model
         else:
@@ -2703,7 +2707,12 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             if not hasattr(model._model, "save_qconf_summary") or not hasattr(model._model, "load_qconf_summary"):
                 from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
 
-                if self.version.release >= Version("2.1").release:
+                if self.device == "xpu":
+                    static_qconfig = QConfig(
+                        activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                        weight=MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric),
+                    )
+                elif self.version.release >= Version("2.1").release:
                     static_qconfig = ipex.quantization.default_static_qconfig_mapping
                 else:
                     static_qconfig = QConfig(
@@ -3088,7 +3097,12 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     ), "IPEX need q_dataloader or example_inputs to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
 
-                    if self.version.release >= Version("2.1").release:
+                    if self.device == "xpu":
+                        static_qconfig = QConfig(
+                            activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                            weight=MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric),
+                        )
+                    elif self.version.release >= Version("2.1").release:
                         # HistogramObserver will cause a performance issue.
                         # static_qconfig = ipex.quantization.default_static_qconfig_mapping
                         qconfig = QConfig(
@@ -3116,16 +3130,28 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                         smooth_quant_args = self.recipes.get("smooth_quant_args", {})
                         folding = smooth_quant_args.get("folding", False)
                         if not folding:
-                            if self.sq_minmax_init or self.version.release >= Version("2.2").release:
-                                from torch.ao.quantization.observer import MinMaxObserver
+                            from torch.ao.quantization.observer import MinMaxObserver
 
+                            if self.version.release >= Version("2.1.1").release:
                                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                                    alpha=0.5, act_observer=MinMaxObserver()
+                                    alpha=0.5, act_observer=MinMaxObserver
                                 )
                             else:
-                                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+                                if self.sq_minmax_init:
+                                    static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                                        alpha=0.5, act_observer=MinMaxObserver()
+                                    )
+                                    logger.warning(
+                                        "The int8 model accuracy will be close to 0 with MinMaxobserver, "
+                                        + "the suggested IPEX version is higher or equal than 2.1.100."
+                                    )
+                                else:
+                                    static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
                     if self.example_inputs is None:
                         self.example_inputs = get_example_inputs(model, self.q_dataloader)
+                    from neural_compressor.adaptor.torch_utils.util import move_input_device
+
+                    self.example_inputs = move_input_device(self.example_inputs, device=self.device)
                     if isinstance(self.example_inputs, dict):
                         model = ipex.quantization.prepare(
                             model, static_qconfig, example_kwarg_inputs=self.example_inputs, inplace=True
@@ -3279,7 +3305,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 absorbed_layer = info["absorbed_layer"]
                 input_minmax = info["input_minmax"]
                 # for peft model,lora_B weights is 0.
-                weight_max = info["weight_max"].clamp(min=1e-5)
+                weight_max = info["weight_max"]
+                if self.sq.weight_clip:
+                    weight_max = weight_max.clamp(min=1e-5)
                 abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
                 input_power = torch.pow(abs_input_max, alpha)
                 weight_power = torch.pow(weight_max, 1 - alpha)
@@ -3301,14 +3329,23 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         # Check save_qconf_summary part is a workaround for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
         if not hasattr(model._model, "save_qconf_summary") or not hasattr(model._model, "load_qconf_summary"):
-            if self.sq_minmax_init or self.version.release >= Version("2.2").release:
-                from torch.ao.quantization.observer import MinMaxObserver
+            from torch.ao.quantization.observer import MinMaxObserver
 
+            if self.version.release >= Version("2.1.1").release:
                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                    alpha=0.5, act_observer=MinMaxObserver()
+                    alpha=0.5, act_observer=MinMaxObserver
                 )
             else:
-                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+                if self.sq_minmax_init:
+                    static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                        alpha=0.5, act_observer=MinMaxObserver()
+                    )
+                    logger.warning(
+                        "The int8 model accuracy will be close to 0 with MinMaxobserver, "
+                        + "the suggested IPEX version is higher or equal than 2.1.100+cpu."
+                    )
+                else:
+                    static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
             if isinstance(self.example_inputs, dict):
                 model._model = ipex.quantization.prepare(
                     model._model, static_qconfig, example_kwarg_inputs=self.example_inputs, inplace=inplace
@@ -3347,6 +3384,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 + "one iter calibration for other ops."
             )
 
+        model._model.save_qconf_summary(qconf_summary=self.ipex_config_path)
         self._ipex_post_quant_process(model, q_model, dataloader, inplace=inplace)
 
         with open(self.ipex_config_path, "r") as f:
@@ -3378,7 +3416,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         """The function is used for ipex warm-up inference."""
         if self.example_inputs is not None:
             for _ in range(iterations):
-                if isinstance(self.example_inputs, tuple):
+                if isinstance(self.example_inputs, tuple) or isinstance(self.example_inputs, list):
                     q_model(*self.example_inputs)
                 elif isinstance(self.example_inputs, dict):
                     q_model(**self.example_inputs)
@@ -3897,7 +3935,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     on_step_begin(cnt)
                 print(".", end="", flush=True)
                 cnt += 1
-                output = pytorch_forward_wrapper(model._model, input, device=device)
+                output = pytorch_forward_wrapper(model._model, input)
                 loss = criterion(output, target)
                 if hooks is not None:
                     loss = on_after_compute_loss(input, output, loss)
@@ -4551,10 +4589,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             enable_full_range = self.recipes["rtn_args"].get("enable_full_range", False)
             enable_mse_search = self.recipes["rtn_args"].get("enable_mse_search", False)
             group_dim = self.recipes["rtn_args"].get("group_dim", 1)
+            return_int = self.recipes["rtn_args"].get("return_int", False)
         else:  # pragma: no cover
             enable_full_range = False
             enable_mse_search = False
             group_dim = 1
+            return_int = False
         from .torch_utils.util import fetch_module, set_module
         from .torch_utils.weight_only import rtn_quantize
 
@@ -4592,7 +4632,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     num_bits,
                     group_size,
                     scheme,
-                    return_int=False,
+                    return_int=return_int,
                     data_type=dtype,
                     enable_full_range=enable_full_range,
                     enable_mse_search=enable_mse_search,
@@ -4914,10 +4954,11 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
 
 
 class PyTorchQuery(QueryBackendCapability):
-    def __init__(self, local_config_file=None):
+    def __init__(self, device="cpu", local_config_file=None):
         super().__init__()
         self.version = get_torch_version()
         self.cfg = local_config_file
+        self.device = device
         self.cur_config = None
         self._one_shot_query()
 
@@ -4951,6 +4992,10 @@ class PyTorchQuery(QueryBackendCapability):
                 raise ValueError(
                     "Please check if the format of {} follows " "Neural Compressor yaml scheme.".format(self.cfg)
                 )
+        if self.device == "xpu":
+            self.cur_config = self.cur_config[self.device]
+        elif "cpu" in self.cur_config:
+            self.cur_config = self.cur_config["cpu"]
         self._update_cfg_with_usr_definition()
 
     def _update_cfg_with_usr_definition(self):

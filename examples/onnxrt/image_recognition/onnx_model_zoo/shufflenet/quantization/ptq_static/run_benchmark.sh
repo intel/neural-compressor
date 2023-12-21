@@ -24,6 +24,9 @@ function init_params {
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)
       ;;
+      --device=*)
+          device=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -37,6 +40,7 @@ function run_benchmark {
             --dataset_location ${dataset_location} \
             --label_path ${label_path-${dataset_location}/../val.txt} \
             --mode=${mode} \
+            --device=${device-cpu} \
             --batch_size 1\
             --benchmark
             

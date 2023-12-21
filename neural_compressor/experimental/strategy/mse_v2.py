@@ -15,12 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The MSE_V2 tuning strategy."""
-import copy
 from collections import OrderedDict
+from copy import deepcopy
 from time import time
-from typing import Any, Dict, List
 
-import numpy as np
+from deprecated import deprecated
 
 from ...utils import logger
 from .strategy import TuneStrategy, strategy_registry
@@ -28,6 +27,7 @@ from .utils.tuning_sampler import OpTypeWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
 
 
+@deprecated(version="2.0")
 @strategy_registry
 class MSE_V2TuneStrategy(TuneStrategy):
     """The `mse_v2` tuning strategy.
@@ -63,8 +63,6 @@ class MSE_V2TuneStrategy(TuneStrategy):
             best_acc = [
                 float("-inf") if higher_is_better else float("inf") for higher_is_better in self.metric_criterion
             ]
-
-        from copy import deepcopy
 
         tuning_space = self.tuning_space
         initial_op_tuning_cfg = {}

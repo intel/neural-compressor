@@ -143,10 +143,7 @@ def evaluate(model):
     eval_dataset = COCORecordDataset(root=FLAGS.dataset_location, filter=LabelBalanceCOCORecordFilter(size=1), \
         transform=ComposeTransform(transform_list=[ParseDecodeCocoTransform(), 
             TensorflowResizeWithRatio(min_dim=416, max_dim=416, padding=True, constant_value=128)]))
-    if FLAGS.mode == 'accuracy':
-        eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=FLAGS.batch_size)
-    else:
-        eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=FLAGS.batch_size)
+    eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=FLAGS.batch_size)
 
     latency = eval_func(eval_dataloader)
     if FLAGS.benchmark and FLAGS.mode == 'performance':

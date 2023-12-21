@@ -11,6 +11,14 @@ pip install neural-compressor
 pip install -r requirements.txt
 ```
 
+If you want to use npu device with DmlExecutionProvider, please build onnxruntime from source on windows:
+```shell
+git clone https://github.com/microsoft/onnxruntime.git
+cd onnxruntime
+.\build.bat --use_dml --skip_tests --build_wheel --config Release
+pip install build\Windows\Release\Release\your_wheel.whl
+```
+
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare Model
@@ -40,7 +48,8 @@ Quantize model with QLinearOps:
 bash run_quant.sh --input_model=path/to/model \  # model path as *.onnx
                    --dataset_location=/path/to/imagenet \
                    --label_path=/path/to/val.txt \
-                   --output_model=path/to/save
+                   --output_model=path/to/save \
+                   --device=cpu # default is cpu, support cpu and npu
 ```
 
 Quantize model with QDQ mode:
@@ -50,7 +59,8 @@ bash run_quant.sh --input_model=path/to/model \  # model path as *.onnx
                    --dataset_location=/path/to/imagenet \
                    --label_path=/path/to/val.txt \
                    --output_model=path/to/save \
-                   --quant_format=QDQ
+                   --quant_format=QDQ \
+                   --device=cpu # default is cpu, support cpu and npu
 ```
 
 ## 2. Benchmark
@@ -60,4 +70,8 @@ bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
                       --dataset_location=/path/to/imagenet \
                       --label_path=/path/to/val.txt \
                       --mode=performance # or accuracy
+                      --device=cpu # default is cpu, support cpu and npu
 ```
+
+### warning
+npu device requires the batch size of model to be 1.

@@ -466,7 +466,7 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
             <td align="left">IPEX</td>
             <td align="left">OneDNN</td>
             <td align="left">"ipex"</td>
-            <td align="left">cpu</td>
+            <td align="left">cpu | gpu</td>
         </tr>
         <tr>
             <td rowspan="5" align="left">ONNX Runtime</td>
@@ -524,7 +524,11 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
 <br>
 <br>
 
-> Note: DmlExecutionProvider support works as experimental, please expect exceptions.    
+> ***Note***
+> 
+> DmlExecutionProvider support works as experimental, please expect exceptions.
+> 
+> Known limitation: the batch size of onnx models has to be fixed to 1 for DmlExecutionProvider, no multi-batch and dynamic batch support yet.
 
 Examples of configure:
 ```python
@@ -540,6 +544,10 @@ conf = PostTrainingQuantConfig(backend="ipex")
 conf = PostTrainingQuantConfig(backend="onnxrt_cuda_ep", device="gpu")
 ```
 ```python
+# run with ONNXRT DmlExecutionProvider on NPU
+conf = PostTrainingQuantConfig(backend="onnxrt_dml_ep", device="npu")
+```
+```python
 # run with ITEX on GPU
 conf = PostTrainingQuantConfig(backend="itex", device="gpu")
 ```
@@ -547,3 +555,4 @@ conf = PostTrainingQuantConfig(backend="itex", device="gpu")
 ## Examples
 
 User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/README.md) on how to quantize a new model.
+If user wants to quantize an onnx model with npu, please refer to this [example](../../examples/onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq_static/README.md).
