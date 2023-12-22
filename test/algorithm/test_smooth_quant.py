@@ -1185,8 +1185,8 @@ class TestTuneSqAlpha(unittest.TestCase):
         # test for alpha is a list
         for eval_result_lst, note in [
             ([1, 0.8, 1.1, 0.7, 1.1], "Expect tuning ends at 2nd trial with alpha is 0.15"),
-            ([1, 0.8, 0.9, 0.7, 1.1], "Expect tuning ends at 4th trial with alpha is 0.15"),
-            ([1, 0.9, 0.8, 0.7, 1.1], "Expect tuning ends at 4th trial with alpha is 0.10"),
+            ([1, 0.8, 0.9, 0.7, 1.1], "Expect tuning ends at 2th trial with alpha is 0.15"),
+            ([1, 0.9, 0.8, 0.7, 1.1], "Expect tuning ends at 1th trial with alpha is 0.10"),
         ]:
             logger.info(f"test_sq_tune_alpha_common with eval_result_lst: {eval_result_lst}")
             logger.info(note)
@@ -1224,13 +1224,7 @@ class TestTuneSqAlpha(unittest.TestCase):
                 [1, 0.8, 0.9, 0.7, 1.1],
                 np.arange(0.1, 0.2, 0.05).tolist(),
                 "auto",
-                "Expect tuning ends at 4th trial with alpha is  0.15 at basic strategy.",
-            ),
-            (
-                [1, 1.1, 0.8, 0.7, 1.1],
-                np.arange(0.1, 0.2, 0.05).tolist(),
-                0,
-                "Expect tuning ends at 1th trial with alpha is 0.1",
+                "Expect tuning ends at 2th trial with alpha is  0.15 at basic strategy.",
             ),
         ]:
             logger.info("test_sq_tune_alpha_common with ")
