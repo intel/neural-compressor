@@ -1914,6 +1914,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 mse=mse,
                 perchannel=perchannel,
                 accuracy_level=accuracy_level,
+                providers=[self.backend],
             )
         if "AWQ" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
@@ -1931,6 +1932,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 enable_auto_scale=enable_auto_scale,
                 enable_mse_search=enable_mse_search,
                 accuracy_level=accuracy_level,
+                providers=[self.backend],
             )
         elif "RTN" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
@@ -1940,6 +1942,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 tmp_model,
                 quant_config,
                 accuracy_level=accuracy_level,
+                providers=[self.backend],
             )
         tmp_model.q_config = copy.deepcopy(quant_config)
         self._dump_model_op_stats(tmp_model, tune_cfg)

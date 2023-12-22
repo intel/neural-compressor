@@ -294,6 +294,7 @@ def rtn_quantize(
     scheme="asym",
     ratios={},
     accuracy_level=0,
+    providers=["CPUExecutionProvider"],
 ):
     """Quant the model with round to nearst method.
 
@@ -317,6 +318,7 @@ def rtn_quantize(
         accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
                               2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
                               4 (int8 compute type of jblas kernel)
+        providers (list): providers to use
 
     Returns:
         model: fake quantized ONNXModel
@@ -636,13 +638,14 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
     return ratios
 
 
-def prepare_inputs(model, n_samples, dataloader):
+def prepare_inputs(model, n_samples, dataloader, providers):
     """Prepare inputs for weight only quantization.
 
     Args:
         model (ModelProto or ONNXModel): onnx model
         n_samples (int, optional): calibration sample number. -1 means all samples.
         dataloader (object): dataloader for calibration.
+        providers (list): providers to use
 
     Returns:
         inputs: prepared inputs.
@@ -667,9 +670,9 @@ def prepare_inputs(model, n_samples, dataloader):
         )
 
     session = (
-        ort.InferenceSession(model.model.SerializeToString(), so, providers=ort.get_available_providers())
+        ort.InferenceSession(model.model.SerializeToString(), so, providers=providers)
         if not model.is_large_model
-        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=ort.get_available_providers())
+        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=providers)
     )
     inputs_names = [i.name for i in session.get_inputs()]
     del session
@@ -703,6 +706,7 @@ def awq_quantize(
     enable_auto_scale=True,
     enable_mse_search=True,
     accuracy_level=0,
+    providers=["CPUExecutionProvider"],
 ):
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
@@ -729,6 +733,7 @@ def awq_quantize(
         accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
                               2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
                               4 (int8 compute type of jblas kernel)
+        providers (list): providers to use
 
     Returns:
         model: fake quantized ONNXModel
@@ -738,7 +743,7 @@ def awq_quantize(
     full_ratio = {}
 
     if enable_mse_search:
-        inputs, so = prepare_inputs(model, n_samples, dataloader)
+        inputs, so = prepare_inputs(model, n_samples, dataloader, providers)
         del dataloader
 
         org_output = copy.deepcopy(model.model.graph.output)
@@ -764,9 +769,9 @@ def awq_quantize(
             )
 
         session = (
-            ort.InferenceSession(model.model.SerializeToString(), so, providers=ort.get_available_providers())
+            ort.InferenceSession(model.model.SerializeToString(), so, providers=providers)
             if not model.is_large_model
-            else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=ort.get_available_providers())
+            else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=providers)
         )
 
         for input_name in output_names:
@@ -816,7 +821,7 @@ def awq_quantize(
 
         model.remove_tensors_from_outputs(output_names)
         model.model.graph.output.MergeFrom(org_output)
-    model = rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio, accuracy_level)
+    model = rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio, accuracy_level, providers)
     return model
 
 
@@ -905,7 +910,6 @@ def gptq(
 
     scales = []
     zps = []
-    dtype = W.dtype
     shape = W.shape
     scale, zp = find_params(W)
     dead = np.diag(H) == 0
@@ -978,6 +982,7 @@ def gptq_quantize(
     mse=False,
     perchannel=True,
     accuracy_level=0,
+    providers=["CPUExecutionProvider"],
 ):
     """Quant the model with GPTQ method.
 
@@ -1007,6 +1012,7 @@ def gptq_quantize(
         accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
                               2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
                               4 (int8 compute type of jblas kernel)
+        providers (list): providers to use
 
     Returns:
         model: fake quantized ONNXModel
@@ -1015,7 +1021,7 @@ def gptq_quantize(
     base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
     output_dicts = {}
 
-    inputs, so = prepare_inputs(model, n_samples, dataloader)
+    inputs, so = prepare_inputs(model, n_samples, dataloader, providers)
     del dataloader
     org_output = copy.deepcopy(model.model.graph.output)
     model.remove_tensors_from_outputs([i.name for i in org_output])
@@ -1039,9 +1045,9 @@ def gptq_quantize(
         )
 
     session = (
-        ort.InferenceSession(model.model.SerializeToString(), so, providers=ort.get_available_providers())
+        ort.InferenceSession(model.model.SerializeToString(), so, providers=providers)
         if not model.is_large_model
-        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=ort.get_available_providers())
+        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=providers)
     )
 
     new_nodes = []
