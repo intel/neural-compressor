@@ -106,8 +106,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             scale_tensor = [i for i in q_fp16_model.initializer() if i.name.endswith("_scale")]
             self.assertTrue(len(scale_tensor) > 0)
             self.assertEqual(scale_tensor[0].data_type, 10)
-            self.assertTrue("MatMulNBits" in \
-                            set([node.op_type for node in q_fp16_model.model.graph.node]))
+            self.assertTrue("MatMulNBits" in set([node.op_type for node in q_fp16_model.model.graph.node]))
 
     @unittest.skipIf("CUDAExecutionProvider" not in ort.get_available_providers(), "Skip cuda woq test")
     def test_AWQ_quant_with_woq_op(self):
@@ -140,8 +139,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             scale_tensor = [i for i in q_fp16_model.initializer() if i.name.endswith("_scale")]
             self.assertTrue(len(scale_tensor) > 0)
             self.assertEqual(scale_tensor[0].data_type, 10)
-            self.assertTrue("MatMulNBits" in \
-                            set([node.op_type for node in q_fp16_model.model.graph.node]))
+            self.assertTrue("MatMulNBits" in set([node.op_type for node in q_fp16_model.model.graph.node]))
 
     @unittest.skipIf("CUDAExecutionProvider" not in ort.get_available_providers(), "Skip cuda woq test")
     def test_GPTQ_quant_with_woq_op(self):
@@ -170,8 +168,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             scale_tensor = [i for i in q_fp16_model.initializer() if i.name.endswith("_scale")]
             self.assertTrue(len(scale_tensor) > 0)
             self.assertEqual(scale_tensor[0].data_type, 10)
-            self.assertTrue("MatMulNBits" in \
-                            set([node.op_type for node in q_fp16_model.model.graph.node]))
+            self.assertTrue("MatMulNBits" in set([node.op_type for node in q_fp16_model.model.graph.node]))
 
     def test_RTN_quant(self):
         conf = PostTrainingQuantConfig(
