@@ -21,8 +21,10 @@ do
     esac
 done
 
+echo "specify FWs version..."
+source /neural-compressor/.azure-pipelines/scripts/fwk_version.sh 'latest'
 FRAMEWORK="tensorflow"
-FRAMEWORK_VERSION="2.13.0"
+FRAMEWORK_VERSION=${tensorflow_version}
 
 inc_new_api=false
 # ======== set up config for tensorflow models ========

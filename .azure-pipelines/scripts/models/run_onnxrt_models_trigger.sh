@@ -21,8 +21,10 @@ do
     esac
 done
 
+echo "specify FWs version..."
+source /neural-compressor/.azure-pipelines/scripts/fwk_version.sh 'latest'
 FRAMEWORK="onnxrt"
-FRAMEWORK_VERSION="1.15.1"
+FRAMEWORK_VERSION=${onnxruntime_version}
 
 inc_new_api=false
 # ======== set up config for onnxrt models ========
