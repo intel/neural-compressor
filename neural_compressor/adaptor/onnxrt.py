@@ -980,11 +980,11 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         if not model.is_large_model:
             sess = ort.InferenceSession(
-                model.model.SerializeToString(), sess_options, providers=["CPUExecutionProvider"]
+                model.model.SerializeToString(), sess_options, providers=[self.backend]
             )
         elif model.model_path is not None:  # pragma: no cover
             model.model = onnx.ModelProto()  # clean memory for large model
-            sess = ort.InferenceSession(model.model_path, sess_options, providers=["CPUExecutionProvider"])
+            sess = ort.InferenceSession(model.model_path, sess_options, providers=[self.backend])
         else:  # pragma: no cover
             logger.warning("Please use model path instead of onnx model object to quantize")
         del sess
