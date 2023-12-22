@@ -358,11 +358,14 @@ def rtn_quantize(
 
             weight = pad_tensor(weight, group_size, k_blocks)
 
-            if (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (
-                Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
-            ):  # pragma: no cover
-                # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions
-                # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1
+            satisfy_MatMulNBits_condition = Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4
+            satisfy_MatMulFpQ4_condition = Version(ort.__version__) >= ONNXRT116_VERSION and \
+                num_bits == 4 and group_size == 32
+            if ("CUDAExecutionProvider" in providers and satisfy_MatMulNBits_condition) or \
+                ("CUDAExecutionProvider" not in providers and \
+                (satisfy_MatMulFpQ4_condition or satisfy_MatMulNBits_condition)): # pragma: no cover
+                # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions, supoorted by CPU EP
+                # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1, supoorted by CPU EP AND CUDA EP
                 q_weight, scale, zp = quant_tensor(
                     weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
                 )
@@ -1114,11 +1117,15 @@ def gptq_quantize(
 
             weight_tensor = model.get_initializer(node.input[1])
             init_share_num = model.get_initializer_share_num(node.input[1])
-            if (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (
-                Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
-            ):  # pragma: no cover
-                # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions
-                # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1
+
+            satisfy_MatMulNBits_condition = Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4
+            satisfy_MatMulFpQ4_condition = Version(ort.__version__) >= ONNXRT116_VERSION and \
+                num_bits == 4 and group_size == 32
+            if ("CUDAExecutionProvider" in providers and satisfy_MatMulNBits_condition) or \
+                ("CUDAExecutionProvider" not in providers and \
+                (satisfy_MatMulFpQ4_condition or satisfy_MatMulNBits_condition)): # pragma: no cover
+                # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions, supoorted by CPU EP
+                # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1, supoorted by CPU EP AND CUDA EP
                 org_shape = weight.shape
                 k_blocks = (org_shape[0] + group_size - 1) // group_size
                 q_weight = pad_tensor(q_weight, group_size, k_blocks)
