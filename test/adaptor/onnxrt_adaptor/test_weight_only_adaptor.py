@@ -50,7 +50,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
 
         self.gptj_model = onnx.load("gptj/decoder_model.onnx")
         self.gptj_fp16_model = None
-        if Version(ort.__version__) > Version("1.16.1") and "CUDAExecutionProvider" in ort.get_available_providers():
+        if "CUDAExecutionProvider" in ort.get_available_providers():
             cmd = "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation --legacy --fp16 --device cuda gptj_fp16/"
             p = subprocess.Popen(
                 cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
@@ -77,10 +77,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         shutil.rmtree("gptj_fp16", ignore_errors=True)
         shutil.rmtree("tiny-llama", ignore_errors=True)
 
-    @unittest.skipIf(
-        Version(ort.__version__) <= Version("1.16.1") or "CUDAExecutionProvider" not in ort.get_available_providers(),
-        "Skip onnxruntime MatMulNBits op test",
-    )
+    @unittest.skipIf("CUDAExecutionProvider" not in ort.get_available_providers(), "Skip cuda woq test")
     def test_RTN_quant_with_woq_op(self):
         conf = PostTrainingQuantConfig(
             approach="weight_only",
@@ -110,10 +107,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(len(scale_tensor) > 0)
         self.assertEqual(scale_tensor[0].data_type, 10)
 
-    @unittest.skipIf(
-        Version(ort.__version__) <= Version("1.16.1") or "CUDAExecutionProvider" not in ort.get_available_providers(),
-        "Skip onnxruntime MatMulNBits op test",
-    )
+    @unittest.skipIf("CUDAExecutionProvider" not in ort.get_available_providers(), "Skip cuda woq test")
     def test_AWQ_quant_with_woq_op(self):
         conf = PostTrainingQuantConfig(
             approach="weight_only",
@@ -145,10 +139,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(len(scale_tensor) > 0)
         self.assertEqual(scale_tensor[0].data_type, 10)
 
-    @unittest.skipIf(
-        Version(ort.__version__) <= Version("1.16.1") or "CUDAExecutionProvider" not in ort.get_available_providers(),
-        "Skip onnxruntime MatMulNBits op test",
-    )
+    @unittest.skipIf("CUDAExecutionProvider" not in ort.get_available_providers(), "Skip cuda woq test")
     def test_GPTQ_quant_with_woq_op(self):
         conf = PostTrainingQuantConfig(
             approach="weight_only",
