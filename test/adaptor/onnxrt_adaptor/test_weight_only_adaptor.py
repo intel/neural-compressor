@@ -51,9 +51,7 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         self.gptj_model = onnx.load("gptj/decoder_model.onnx")
         self.gptj_fp16_model = None
         if Version(ort.__version__) > Version("1.16.1") and "CUDAExecutionProvider" in ort.get_available_providers():
-            cmd = (
-              "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation --legacy --fp16 --device cuda gptj_fp16/"
-            )
+            cmd = "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation --legacy --fp16 --device cuda gptj_fp16/"
             p = subprocess.Popen(
                 cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
             )  # nosec
@@ -79,9 +77,13 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         shutil.rmtree("gptj_fp16", ignore_errors=True)
         shutil.rmtree("tiny-llama", ignore_errors=True)
 
-    @unittest.skipIf(Version(ort.__version__) <= Version("1.16.1") or "CUDAExecutionProvider" not in ort.get_available_providers(), "Skip onnxruntime MatMulNBits op test")
+    @unittest.skipIf(
+        Version(ort.__version__) <= Version("1.16.1") or "CUDAExecutionProvider" not in ort.get_available_providers(),
+        "Skip onnxruntime MatMulNBits op test",
+    )
     def test_RTN_quant_with_woq_op(self):
         from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
+
         # test fp16 model
         q_fp16_model = rtn_quantize(self.gptj_fp16_model, providers=["CUDAExecutionProvider"])
 
@@ -95,9 +97,13 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(len(scale_tensor) > 0)
         self.assertEqual(scale_tensor[0].data_type, 10)
 
-    @unittest.skipIf(Version(ort.__version__) <= Version("1.16.1") or "CUDAExecutionProvider" not in ort.get_available_providers(), "Skip onnxruntime MatMulNBits op test")
+    @unittest.skipIf(
+        Version(ort.__version__) <= Version("1.16.1") or "CUDAExecutionProvider" not in ort.get_available_providers(),
+        "Skip onnxruntime MatMulNBits op test",
+    )
     def test_AWQ_quant_with_woq_op(self):
         from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
+
         # test fp16 model
         q_fp16_model = awq_quantize(self.gptj_fp16_model, self.gptj_dataloader, providers=["CUDAExecutionProvider"])
         for data, _ in self.gptj_dataloader:
@@ -110,9 +116,13 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(len(scale_tensor) > 0)
         self.assertEqual(scale_tensor[0].data_type, 10)
 
-    @unittest.skipIf(Version(ort.__version__) <= Version("1.16.1") or "CUDAExecutionProvider" not in ort.get_available_providers(), "Skip onnxruntime MatMulNBits op test")
+    @unittest.skipIf(
+        Version(ort.__version__) <= Version("1.16.1") or "CUDAExecutionProvider" not in ort.get_available_providers(),
+        "Skip onnxruntime MatMulNBits op test",
+    )
     def test_GPTQ_quant_with_woq_op(self):
         from neural_compressor.adaptor.ox_utils.weight_only import gptq_quantize
+
         # test fp16 model
         q_fp16_model = gptq_quantize(self.gptj_fp16_model, self.gptj_dataloader, providers=["CUDAExecutionProvider"])
         for data, _ in self.gptj_dataloader:
