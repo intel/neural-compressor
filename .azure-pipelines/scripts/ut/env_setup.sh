@@ -48,19 +48,15 @@ if [[ "${torchvision_version}" != "" ]]; then
     pip install torchvision==${torchvision_version} -f https://download.pytorch.org/whl/torch_stable.html
 fi
 
-if [[ "${ipex_version}" == "1.13.0+cpu" ]]; then
-    ipex_whl="https://github.com/intel/intel-extension-for-pytorch/releases/download/v1.13.0%2Bcpu/intel_extension_for_pytorch-1.13.0-cp310-cp310-manylinux2014_x86_64.whl"
-    pip install $ipex_whl
-elif [[ "${ipex_version}" == "2.0.0+cpu" ]]; then
+if [[ "${ipex_version}" == "2.0.0+cpu" ]]; then
     ipex_whl="https://intel-extension-for-pytorch.s3.amazonaws.com/ipex_stable/cpu/intel_extension_for_pytorch-2.0.0%2Bcpu-cp310-cp310-linux_x86_64.whl"
     pip install $ipex_whl
 elif [[ "${ipex_version}" == "2.0.1+cpu" ]]; then
     ipex_whl="https://intel-extension-for-pytorch.s3.amazonaws.com/ipex_stable/cpu/intel_extension_for_pytorch-2.0.100%2Bcpu-cp310-cp310-linux_x86_64.whl"
     pip install $ipex_whl
-elif [[ "${ipex_version}" == "2.1.0" ]]; then
-    pip install /tf_dataset/pt_binary/ww32/torch-*.whl
-    pip install /tf_dataset/pt_binary/ww32/torchvision-*.whl
-    pip install /tf_dataset/pt_binary/ww32/intel_extension_for_pytorch-*.whl
+elif [[ "${ipex_version}" == "2.1.0+cpu" ]]; then
+    ipex_whl="https://intel-extension-for-pytorch.s3.amazonaws.com/ipex_stable/cpu/intel_extension_for_pytorch-2.1.0%2Bcpu-cp310-cp310-linux_x86_64.whl"
+    pip install $ipex_whl
 fi
 
 if [[ "${onnx_version}" != "" ]]; then
@@ -88,7 +84,6 @@ fi
 # install special test env requirements
 # common deps
 pip install cmake
-pip install horovod
 pip install transformers
 
 if [[ $(echo "${test_case}" | grep -c "others") != 0 ]];then
@@ -97,6 +92,10 @@ elif [[ $(echo "${test_case}" | grep -c "nas") != 0 ]]; then
     pip install dynast==1.6.0rc1
 elif [[ $(echo "${test_case}" | grep -c "tf pruning") != 0 ]]; then
     pip install tensorflow-addons
+    # Workaround
+    # horovod can't be install in the env with TF and PT together
+    # so test distribute cases in the env with single fw installed
+    pip install horovod
 fi
 # test deps
 pip install coverage
@@ -106,3 +105,12 @@ pip list
 echo "[DEBUG] list pipdeptree..."
 pip install pipdeptree
 pipdeptree
+
+# import torch before import tensorflow
+if [[ $(echo "${test_case}" | grep -c "run basic api") != 0 ]] || [[ $(echo "${test_case}" | grep -c "run basic others") != 0 ]] || [[ $(echo "${test_case}" | grep -c "run basic adaptor") != 0 ]]; then
+    cd /neural-compressor/test || exit 1
+    find . -name "test*.py" | xargs sed -i 's/import tensorflow as tf/import torch; import tensorflow as tf/g'
+    find . -name "test*.py" | xargs sed -i 's/import tensorflow.compat.v1 as tf/import torch; import tensorflow.compat.v1 as tf/g'
+    find . -name "test*.py" | xargs sed -i 's/from tensorflow import keras/import torch; from tensorflow import keras/g'
+fi
+
