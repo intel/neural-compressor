@@ -179,7 +179,7 @@ flowchart TD
 
 > `*` INC will detect the block pattern for [transformer-like](https://arxiv.org/abs/1706.03762) model by default.
 
-> For [smooth quantization](./smooth_quant.html), users can tune the smooth quantization alpha by providing a list of scalars for the `alpha` item. The tuning process will take place at the **start stage** of the tuning procedure. For details usage, please refer to the [smooth quantization example](./smooth_quant.html#Example).
+> For [smooth quantization](./smooth_quant.html), users can tune the smooth quantization alpha by providing a list of scalars for the `alpha` item. For details usage, please refer to the [smooth quantization example](./smooth_quant.html#Usage).
 
 > For [weight-only quantization](./quantization_weight_only.html), users can tune the weight-only  algorithms from the available [pre-defined configurations](./quantization_weight_only.html#woq-algorithms-tuning). The tuning process will take place at the **start stage** of the tuning procedure, preceding the smooth quantization alpha tuning. For details usage, please refer to the [weight-only quantization example](./quantization_weight_only.html#woq-algorithms-tuning).
 *Please note that this behavior is specific to the `ONNX Runtime` backend.*
