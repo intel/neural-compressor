@@ -100,7 +100,7 @@ def simple_progress_bar(total, i):
     bar = "#" * int(bar_length * progress)
     spaces = " " * (bar_length - len(bar))
     percentage = progress * 100
-    print(f"\rProgress: [{bar}{spaces}] {percentage:.2f}%", end="")
+    print(f"\rProgress: [{bar}{spaces}] {percentage:.2f}%")
 
 
 def dtype_to_name(dtype_mapping, dtype):

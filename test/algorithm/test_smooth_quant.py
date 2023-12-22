@@ -1150,6 +1150,8 @@ class TestTuneSqAlpha(unittest.TestCase):
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
+        logger.info(f"alpha is: {alpha}")
+
         tuning_criterion = TuningCriterion(max_trials=8)
 
         fp32_model = DemoModel()
