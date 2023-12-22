@@ -23,7 +23,7 @@ steps:
     parameters:
       dockerConfigName: ${{ parameters.dockerConfigName }}
       repoName: "neural-compressor"
-      repoTag: "py38"
+      repoTag: "py310"
       dockerFileName: "Dockerfile"
       containerName: ${{ parameters.utContainerName }}
       repo: ${{ parameters.repo }}

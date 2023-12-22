@@ -1,10 +1,10 @@
 #!/bin/bash
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
-test_case="run basic quantization/benchmark/export/mixed_precision/distillation/scheduler/nas"
+test_case="run basic api quantization/benchmark/export/mixed_precision/distillation/scheduler/nas"
 echo "${test_case}"
 
 echo "specify fwk version..."
-source /neural-compressor/.azure-pipelines/scripts/ut/ut_fwk_version.sh $1
+source /neural-compressor/.azure-pipelines/scripts/fwk_version.sh $1
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh "${test_case}"
