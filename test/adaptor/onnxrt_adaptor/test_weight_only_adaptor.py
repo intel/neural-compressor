@@ -82,10 +82,23 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         "Skip onnxruntime MatMulNBits op test",
     )
     def test_RTN_quant_with_woq_op(self):
-        from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
-
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            device="gpu",
+            backend="onnxrt_cuda_ep",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,
+                        "group_size": 32,
+                        "scheme": "sym",
+                        "algorithm": "RTN",
+                    },
+                },
+            },
+        )
         # test fp16 model
-        q_fp16_model = rtn_quantize(self.gptj_fp16_model, providers=["CUDAExecutionProvider"])
+        q_fp16_model = quantization.fit(self.gptj_fp16_model, conf)
 
         for data, _ in self.gptj_dataloader:
             q_out = Inference(q_fp16_model.model, data)
@@ -102,10 +115,26 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         "Skip onnxruntime MatMulNBits op test",
     )
     def test_AWQ_quant_with_woq_op(self):
-        from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
-
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            device="gpu",
+            backend="onnxrt_cuda_ep",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,
+                        "group_size": 32,
+                        "scheme": "sym",
+                        "algorithm": "AWQ",
+                    },
+                },
+            },
+            recipes={
+                "awq_args": {"enable_auto_scale": True, "enable_mse_search": True},
+            },
+        )
         # test fp16 model
-        q_fp16_model = awq_quantize(self.gptj_fp16_model, self.gptj_dataloader, providers=["CUDAExecutionProvider"])
+        q_fp16_model = quantization.fit(self.gptj_fp16_model, conf)
         for data, _ in self.gptj_dataloader:
             q_out = Inference(q_fp16_model.model, data)
             org_out = Inference(self.gptj_fp16_model, data)
@@ -121,10 +150,21 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         "Skip onnxruntime MatMulNBits op test",
     )
     def test_GPTQ_quant_with_woq_op(self):
-        from neural_compressor.adaptor.ox_utils.weight_only import gptq_quantize
-
-        # test fp16 model
-        q_fp16_model = gptq_quantize(self.gptj_fp16_model, self.gptj_dataloader, providers=["CUDAExecutionProvider"])
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            device="gpu",
+            backend="onnxrt_cuda_ep",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,
+                        "group_size": 32,
+                        "scheme": "sym",
+                        "algorithm": "GPTQ",
+                    },
+                },
+            },
+        )
         for data, _ in self.gptj_dataloader:
             q_out = Inference(q_fp16_model.model, data)
             org_out = Inference(self.gptj_fp16_model, data)
