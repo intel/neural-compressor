@@ -1185,8 +1185,8 @@ class TestTuneSqAlpha(unittest.TestCase):
         # test for alpha is a list
         for eval_result_lst, note in [
             ([1, 0.8, 1.1, 0.7, 1.1], "Expect tuning ends at 2nd trial with alpha is 0.15"),
-            ([1, 0.8, 0.9, 0.7, 1.1], "Expect tuning ends at 2th trial with alpha is 0.15"),
-            ([1, 0.9, 0.8, 0.7, 1.1], "Expect tuning ends at 1th trial with alpha is 0.10"),
+            ([1, 0.8, 0.9, 0.7, 1.1], "Expect tuning ends at 2nd trial with alpha is 0.15"),
+            ([1, 0.9, 0.8, 0.7, 1.1], "Expect tuning ends at 1st trial with alpha is 0.10"),
         ]:
             logger.info(f"test_sq_tune_alpha_common with eval_result_lst: {eval_result_lst}")
             logger.info(note)
