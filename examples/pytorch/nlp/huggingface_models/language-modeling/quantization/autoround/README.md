@@ -6,20 +6,24 @@ AutoRound is an advanced weight-only quantization algorithm, based on SignRound.
 ## Prerequisites
 - Python 3.9 or higher
 
+
 - The transformers version required varies across different types of models. Here, the transformers version used for running models during experiments is provided as a reference.
     | Model | Transformers version |
     |  :----: | :----: |
-    | EleutherAI/gpt-j-6b | 4.28/4.30/4.34 |
-    | huggyllama/llama-7b | 4.28/4.30/4.34 |
-    | meta-llama/Llama-2-7b-hf | 4.30/4.34 |
-    | facebook/opt-6.7b | 4.28/4.30/4.34 |
-    | tiiuae/falcon-7b | 4.28/4.30/4.34 |
-    | mosaicml/mpt-7b | 4.28/4.30/4.34 |
-    | bigscience/bloom-7b1 | 4.28/4.30/4.34 |
+    | EleutherAI/gpt-j-6b | 4.28/4.30/4.34/4.36 |
+    | huggyllama/llama-7b | 4.28/4.30/4.34/4.36 |
+    | meta-llama/Llama-2-7b-hf | 4.30/4.34/4.36 |
+    | facebook/opt-6.7b | 4.28/4.30/4.34/4.36 |
+    | tiiuae/falcon-7b | 4.28/4.30/4.34/4.36 |
+    | mosaicml/mpt-7b | 4.28/4.30/4.34/4.36 |
+    | bigscience/bloom-7b1 | 4.28/4.30/4.34/4.36 |
     | baichuan-inc/Baichuan-7B | 4.28/4.30 |
-    | Qwen/Qwen-7B | 4.28/4.30/4.34 |
-    | THUDM/chatglm2-6b | 4.28/4.30 |
-    | mistralai/Mistral-7B-v0.1 | 4.34 |
+    | Qwen/Qwen-7B | 4.28/4.30/4.34/4.36 |
+    | THUDM/chatglm3-6b | 4.34/4.36 |
+    | mistralai/Mistral-7B-v0.1 | 4.34/4.36 |
+    
+  Please note that all experiments in the SignRound+ technical report were conducted using transformers version 4.34.1.
+
 
 
 ## Installation
@@ -42,7 +46,7 @@ Include the flag `--adam`. Note that AdamW may be slightly less effective than S
 
 - **Running the Original SignRound:**
 ```bash
-CUDA_VISIBLE_DEVICES=0 python3 main.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1 --iters 400 --lr 0.0025 --minmax_lr 0.0025 
+CUDA_VISIBLE_DEVICES=0 python3 main.py --model_name facebook/opt-125m --amp --num_bits 4 --group_size -1 --iters 400 --lr 0.0025 --minmax_lr 0.0025
 ```
 It's recommended to use `--enable_minmax_tuning`.
 
@@ -64,3 +68,4 @@ If you find SignRound useful for your research, please cite our paper:
   year={2023}
 }
 ```
+
