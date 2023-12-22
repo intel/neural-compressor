@@ -653,9 +653,13 @@ def prepare_inputs(model, n_samples, dataloader):
         )
 
     session = (
-        ort.InferenceSession(model.model.SerializeToString(), so, providers=["CPUExecutionProvider"])
+        ort.InferenceSession(
+            model.model.SerializeToString(), so, providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+        )
         if not model.is_large_model
-        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=["CPUExecutionProvider"])
+        else ort.InferenceSession(
+            model.model_path + "_augment.onnx", so, providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+        )
     )
     inputs_names = [i.name for i in session.get_inputs()]
     del session
@@ -750,9 +754,13 @@ def awq_quantize(
             )
 
         session = (
-            ort.InferenceSession(model.model.SerializeToString(), so, providers=["CPUExecutionProvider"])
+            ort.InferenceSession(
+                model.model.SerializeToString(), so, providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+            )
             if not model.is_large_model
-            else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=["CPUExecutionProvider"])
+            else ort.InferenceSession(
+                model.model_path + "_augment.onnx", so, providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+            )
         )
 
         for input_name in output_names:
@@ -1024,9 +1032,13 @@ def gptq_quantize(
         )
 
     session = (
-        ort.InferenceSession(model.model.SerializeToString(), so, providers=["CPUExecutionProvider"])
+        ort.InferenceSession(
+            model.model.SerializeToString(), so, providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+        )
         if not model.is_large_model
-        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=["CPUExecutionProvider"])
+        else ort.InferenceSession(
+            model.model_path + "_augment.onnx", so, providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+        )
     )
 
     new_nodes = []
