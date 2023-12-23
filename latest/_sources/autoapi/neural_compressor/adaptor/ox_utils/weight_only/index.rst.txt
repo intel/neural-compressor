@@ -129,7 +129,7 @@ Functions
    :rtype: weight
 
 
-.. py:function:: rtn_quantize(model, weight_config={}, num_bits=4, group_size=32, scheme='asym', ratios={}, accuracy_level=0)
+.. py:function:: rtn_quantize(model, weight_config={}, num_bits=4, group_size=32, scheme='asym', ratios={}, accuracy_level=0, providers=['CPUExecutionProvider'])
 
    Quant the model with round to nearst method.
 
@@ -159,6 +159,8 @@ Functions
                           2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
                           4 (int8 compute type of jblas kernel)
    :type accuracy_level: int
+   :param providers: providers to use
+   :type providers: list
 
    :returns: fake quantized ONNXModel
    :rtype: model
@@ -179,7 +181,7 @@ Functions
    Apply clip for weight by checking mse.
 
 
-.. py:function:: prepare_inputs(model, n_samples, dataloader)
+.. py:function:: prepare_inputs(model, n_samples, dataloader, providers)
 
    Prepare inputs for weight only quantization.
 
@@ -189,13 +191,15 @@ Functions
    :type n_samples: int, optional
    :param dataloader: dataloader for calibration.
    :type dataloader: object
+   :param providers: providers to use
+   :type providers: list
 
    :returns: prepared inputs.
              so: session options
    :rtype: inputs
 
 
-.. py:function:: awq_quantize(model, dataloader, weight_config={}, num_bits=4, group_size=32, scheme='asym', n_samples=128, enable_auto_scale=True, enable_mse_search=True, accuracy_level=0)
+.. py:function:: awq_quantize(model, dataloader, weight_config={}, num_bits=4, group_size=32, scheme='asym', n_samples=128, enable_auto_scale=True, enable_mse_search=True, accuracy_level=0, providers=['CPUExecutionProvider'])
 
    Quant the model with Activation-aware Weight quantization(AWQ) method.
 
@@ -231,6 +235,8 @@ Functions
                           2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
                           4 (int8 compute type of jblas kernel)
    :type accuracy_level: int
+   :param providers: providers to use
+   :type providers: list
 
    :returns: fake quantized ONNXModel
    :rtype: model
@@ -265,7 +271,7 @@ Functions
    :rtype: Q
 
 
-.. py:function:: gptq_quantize(model, dataloader, weight_config={}, num_bits=4, group_size=32, scheme='asym', n_samples=128, percdamp=0.01, blocksize=128, actorder=False, mse=False, perchannel=True, accuracy_level=0)
+.. py:function:: gptq_quantize(model, dataloader, weight_config={}, num_bits=4, group_size=32, scheme='asym', n_samples=128, percdamp=0.01, blocksize=128, actorder=False, mse=False, perchannel=True, accuracy_level=0, providers=['CPUExecutionProvider'])
 
    Quant the model with GPTQ method.
 
@@ -307,6 +313,8 @@ Functions
                           2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
                           4 (int8 compute type of jblas kernel)
    :type accuracy_level: int
+   :param providers: providers to use
+   :type providers: list
 
    :returns: fake quantized ONNXModel
    :rtype: model
