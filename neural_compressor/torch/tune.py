@@ -32,7 +32,20 @@ class TorchQuantizer(BaseQuantizer):
     def __init__(self, model, run_fn, run_args) -> None:
         super().__init__()
 
-    def apply(self, quant_config):
+    def prepare(self, quant_config):
+        """Prepare a copy of the model for quantization."""
+        pass
+
+    def calibrate(self):
+        """Run the prepared model on the calibration dataset."""
+        pass
+
+    def convert(self):
+        "Convert a calibrated model to quantized model."
+        pass
+
+    def quantize(self, quant_config):
+        """The entry to quantize a model."""
         logger.info(f"apply quant_config: {quant_config}.")
 
 
