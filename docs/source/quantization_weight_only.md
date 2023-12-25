@@ -7,9 +7,7 @@ Weight Only Quantization (WOQ)
 
 3. [Examples](#examples)
 
-4. [Layer Wise Quantization](#layer-wise-quantization)
-
-5. [WOQ Algorithms Tuning](#woq-algorithms-tuning)
+4. [WOQ Algorithms Tuning](#woq-algorithms-tuning)
 
 
 ## Introduction
@@ -93,18 +91,19 @@ To support low memory inference, Neural Compressor implemented WeightOnlyLinear,
 **Export arguments**
 | export args  | default value |                               comments                              |
 |:----------:|:-------------:|:-------------------------------------------------------------------:|
-| qweight_config_path |      None     |  If need to export model with fp32_model and json file, set the path of qconfig.json |
+|  use_optimum_format  |     True       |  Whether to use the popular format used in [Optimum](https://github.com/huggingface/optimum/blob/e0927976d06d163ed09fe5bd80d013e1cfa0c463/docs/source/llm_quantization/usage_guides/quantization.mdx#L5)  |
 |  sym_full_range |      False     | Whether to leverage the full compression range under symmetric quantization |
-|  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8\|16\|32\|64]   |
-|  compression_dim  |       1       |   0 means output channel while 1 means input channel   |
-|  scale_dtype  |       torch.float32       |  Data type for scale and bias   |
-|  use_hf_format  |     False       |  Whether to use the popular format present on HuggingFace hub   |
+|  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8\|16\|32\|64]. It's torch.int32 when use_optimum_format=True |
+|  compression_dim  |       1       |   0 means output channel while 1 means input channel. It's 1 for weight and 0 for zero-point when use_optimum_format=True   |
+|  scale_dtype  |       torch.float32       |  Data type for scale and bias. It's torch.float16 when use_optimum_format=True   |
+| qweight_config_path |      None     |  set the path of qconfig.json if you want to export model with json file |
+| gptq_config_path |      None     |  If need to export model with fp32_model and json file, set the path of gptq_config.json for GPTQ quantized model|
 
-**Note:** HuggingFace format is quite special, the main differences are as follows:
+**Note:** The format used in Optimum is acceptable for transformers, which makes it easy to use. However, this format is rather special, the main differences are as follows:
 
 > 1: Compression Dimension: weight = 1, zero = 0 and both are transposed.   
 > 2: Zero Point: zero_point-= 1 before compression. zero_point is always required even for sym.    
-> 3: Group Index: Use the same number for a group instead of recording channel order.    
+> 3: Group Index: Use the same number for a group instead of recording channel order. 
 
 
 ### **User Code Example**
@@ -142,50 +141,6 @@ compressed_model = export_compressed_model(
 The saved_results folder contains two files: `best_model.pt` and `qconfig.json`, and the generated q_model is a fake quantized model.
 
 To seek the performance of weight-only quantized models, Please go to [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization#1-performance) to quantize and deploy the model.
-
-
-## Layer Wise Quantization
-
-Large language models (LLMs) have shown exceptional performance across various tasks, meanwhile, the substantial parameter size poses significant challenges for deployment. Layer-wise quantization(LWQ) can greatly reduce the memory footprint of LLMs, usually 80-90% reduction, which means that users can quantize LLMs even on single node using GPU or CPU.  We can quantize the model under memory-constrained devices, therefore making the huge-sized LLM quantization possible.
-
-<img src="./imgs/lwq.png">
-
-*Figure 1: The process of layer-wise quantization. The color grey means empty parameters and the color blue represents parameters need to be quantized. Every rectangle inside model represents one layer.*
-
-### Supported Matrix
-
-| Algorithms/Framework |   PyTorch  |
-|:--------------:|:----------:|
-|       RTN      |  &#10004;  | 
-|       AWQ      |  &#10005;  |
-|      GPTQ      | &#10004; | 
-|      TEQ      | &#10005; |
-
-### Example
-```python
-from neural_compressor import PostTrainingQuantConfig, quantization
-from neural_compressor.adaptor.torch_utils.layer_wise_quant import load_empty_model
-
-fp32_model = load_empty_model(model_name_or_path, torchscript=True)
-conf = PostTrainingQuantConfig(
-    approach="weight_only",
-    recipes={
-        "layer_wise_quant": True,
-        "rtn_args": {"enable_full_range": True},
-    },
-)
-
-q_model = quantization.fit(
-    fp32_model,
-    conf,
-    calib_dataloader=eval_dataloader,
-    eval_func=lambda x: 0.1,
-)
-ouput_dir = "./saved_model"
-q_model.save(ouput_dir)
-q_model = load(ouput_dir, fp32_model, weight_only=True, layer_wise=True)
-```
-
 
 ## WOQ Algorithms Tuning
 

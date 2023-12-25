@@ -3,7 +3,7 @@ import os
 import sys
 from urllib import request
 
-MODEL_URL = "https://github.com/onnx/models/raw/main/vision/classification/mnist/model/mnist-12.onnx"
+MODEL_URL = "https://github.com/onnx/models/raw/main/archive/vision/classification/mnist/model/mnist-12.onnx"
 MAX_TIMES_RETRY_DOWNLOAD = 5
 
 

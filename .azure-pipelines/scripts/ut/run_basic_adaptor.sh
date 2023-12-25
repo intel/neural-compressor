@@ -4,7 +4,7 @@ test_case="run basic adaptor"
 echo "${test_case}"
 
 echo "specify fwk version..."
-source /neural-compressor/.azure-pipelines/scripts/ut/ut_fwk_version.sh $1
+source /neural-compressor/.azure-pipelines/scripts/fwk_version.sh $1
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh "${test_case}"

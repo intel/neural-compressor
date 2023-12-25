@@ -450,19 +450,82 @@
       "main_script": "run_clm.py",
       "batch_size": 8
     },
-    "gpt_j_wikitext_weight_only":{
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_weight_only",
-      "dataset_location": "",
-      "input_model": "/tf_dataset2/models/pytorch/gpt-j-6B",
-      "main_script": "run_clm.py",
-      "batch_size": 8
-    },
     "gpt_neox":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new/oscar",
       "input_model": "/tf_dataset2/models/huggingface/gpt-neox-japanese-2.7b",
       "main_script": "run_clm.py",
       "batch_size": 8
+    },
+    "opt_125m_woq_awq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 8
+    },
+    "opt_125m_woq_gptq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 8
+    },
+    "opt_125m_woq_teq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 8
+    },
+    "opt_125m_ipex":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 8
+    },
+    "opt_125m_ipex_sq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 8
+    },
+    "bloom_560m_ipex_sq": {
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
+      "dataset_location": "",
+      "input_model": "bigscience/bloom-560m",
+      "batch_size": 1,
+      "main_script": "run_clm_no_trainer.py"
+    },
+    "llama2_7b_ipex_sq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 1
+    },
+    "gpt_j_ipex_sq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 1
+    },
+    "gpt_j_woq_rtn":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 1
+    },
+    "falcon_7b_sq":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 1
     },
     "xlm-roberta-base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
@@ -582,41 +645,6 @@
       "input_model": "/tf_dataset2/models/huggingface/bert-base-uncased-mrpc",
       "main_script": "run_glue.py",
       "batch_size": 64
-    },
-    "bloom-560m_sq": {
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
-      "dataset_location": "",
-      "input_model": "bigscience/bloom-560m",
-      "batch_size": 1,
-      "main_script": "eval_lambada.py"
-    },
-    "bloom-176b_sq": {
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
-      "dataset_location": "",
-      "input_model": "bigscience/bloom",
-      "batch_size": 1,
-      "main_script": "eval_lambada.py"
-    },
-    "opt-125m_sq": {
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
-      "dataset_location": "",
-      "input_model": "facebook/opt-125m",
-      "batch_size": 1,
-      "main_script": "eval_lambada.py"
-    },
-    "opt-6.7b_sq": {
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
-      "dataset_location": "",
-      "input_model": "facebook/opt-6.7b",
-      "batch_size": 1,
-      "main_script": "eval_lambada.py"
-    },
-    "gpt-j-6B_sq": {
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
-      "dataset_location": "",
-      "input_model": "EleutherAI/gpt-j-6B",
-      "batch_size": 1,
-      "main_script": "eval_lambada.py"
     },
     "wide_resnet101_2_fx": {
       "model_src_dir": "oob_models/gen-efficientnet-pytorch",
