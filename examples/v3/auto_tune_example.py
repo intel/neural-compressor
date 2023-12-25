@@ -20,11 +20,11 @@ best_model = autotune(model=get_fp32_model(), tune_config=get_default_tune_confi
 # case 2. auto-tune with custom tuning config
 from neural_compressor.torch import GPTQConfig, RTNWeightQuantConfig, TuningConfig, autotune, register_tuning_target
 
-@register_tuning_target(weight = 0.5, name="accuracy")
+@register_tuning_target(weight = 0.5, target_name="accuracy")
 def eval_acc_fn(model) -> float:
     return 1.0
 
-@register_tuning_target(algo_name="rtn_weight_only_quant", weight = 0.5, mode = "min")
+@register_tuning_target(algo_name="rtn_weight_only_quant", weight = 0.5)
 def eval_perf_fn(model) -> float:
     return 1.0
 
