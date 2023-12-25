@@ -74,6 +74,7 @@ class ConservativeTuneStrategy(TuneStrategy):
         )
         logger.info("*** Initialize conservative tuning")
         self.acc_meet_flag = False
+        # conv: conv1d, conv2d, conv3d
         self.quant_op_type_lst = ["conv", "matmul", "bmm", "linear"]
         extend_op_type_lst = self._get_extend_op_type_lst()
         self.quant_op_type_lst += extend_op_type_lst
@@ -155,10 +156,9 @@ class ConservativeTuneStrategy(TuneStrategy):
         for op_item, quant_mode in items_lst:
             op_name, op_type = op_item.name
             for target_op_type in self.quant_op_type_lst:
-                if target_op_type in op_type.lower() or op_type.lower() in target_op_type:
-                    if target_op_type not in sorted_items:
-                        sorted_items[target_op_type] = []
-                    sorted_items[target_op_type].append((op_item, quant_mode))
+                # conv: conv1d, conv2d, conv3d
+                if op_type.lower().startswith(target_op_type):
+                    sorted_items.setdefault(target_op_type, []).append((op_item, quant_mode))
         new_sorted_items = COrderedDict(
             (op_type, sorted_items[op_type]) for op_type in self.quant_op_type_lst if op_type in sorted_items
         )
