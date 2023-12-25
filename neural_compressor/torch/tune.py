@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Callable, Optional, Tuple
+
+import torch
+
 from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
@@ -29,8 +33,12 @@ from neural_compressor.common.base_tune import BaseQuantizer, Tuner
 
 
 class TorchQuantizer(BaseQuantizer):
-    def __init__(self, model, run_fn, run_args) -> None:
-        super().__init__()
+    def __init__(
+        self, model: torch.nn.Module, run_fn: Optional[Callable] = None, run_args: Optional[Tuple] = None
+    ) -> None:
+        super().__init__(model)
+        self.run_fn = run_fn
+        self.run_args = run_args
 
     def prepare(self, quant_config):
         """Prepare a copy of the model for quantization."""
@@ -47,6 +55,11 @@ class TorchQuantizer(BaseQuantizer):
     def quantize(self, quant_config):
         """The entry to quantize a model."""
         logger.info(f"apply quant_config: {quant_config}.")
+        # TODO, decompose the quantization process
+        from neural_compressor.torch import quantize
+
+        q_model = quantize(model=self.model, quant_config=quant_config, run_fn=self.run_fn, run_args=self.run_args)
+        return q_model
 
 
 def autotune(model, tune_config, run_fn=None, run_args=None):
