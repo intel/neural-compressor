@@ -20,7 +20,7 @@ from neural_compressor.common.logger import Logger
 logger = Logger().get_logger()
 
 
-class Runner:
+class BaseQuantizer:
     def __init__(self) -> None:
         pass
 
@@ -63,7 +63,7 @@ class Tuner:
         eval_result = objective.evaluate(model)
         return eval_result
 
-    def search(self, runner: Runner):
+    def search(self, runner: BaseQuantizer):
         for config in self.generate_quant_config():
             q_model = runner.apply(quant_config=config)
             if self.get_best_model(q_model, self.get_objective_score(q_model)):

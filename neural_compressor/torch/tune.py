@@ -25,10 +25,10 @@ def get_default_tuning_config():
     return FakeConfig()
 
 
-from neural_compressor.common.base_tune import Runner, Tuner
+from neural_compressor.common.base_tune import BaseQuantizer, Tuner
 
 
-class TorchRunner(Runner):
+class TorchQuantizer(BaseQuantizer):
     def __init__(self, model, run_fn, run_args) -> None:
         super().__init__()
 
@@ -38,7 +38,7 @@ class TorchRunner(Runner):
 
 def autotune(model, tune_config, run_fn=None, run_args=None):
     tuner = Tuner(tune_config=tune_config)
-    runner = TorchRunner(model, run_fn, run_args)
+    runner = TorchQuantizer(model, run_fn, run_args)
     best_qmodel = tuner.search(runner=runner)
     return best_qmodel
 
