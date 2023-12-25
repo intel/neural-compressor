@@ -15,6 +15,7 @@
 from abc import abstractmethod
 from typing import Any, Callable, List, Optional, Union
 
+from neural_compressor.common.base_config import BaseConfig, ComposableConfig
 from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
@@ -26,8 +27,8 @@ class BaseQuantizer:
     This class is designed to be used by a tuner to obtain a quantized model.
     """
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, model) -> None:
+        self.model = model
 
     @abstractmethod
     def prepare(self, quant_config):
@@ -48,43 +49,6 @@ class BaseQuantizer:
     def quantize(self):
         """The entry to quantize a model."""
         raise NotImplementedError
-
-
-class BaseTuningConfig:
-    """Base Class for Tuning Criterion.
-
-    Args:
-        tuning_order: the traverse order.
-        timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
-        max_trials: Max tune times. Default value is 100. Combine with timeout field to decide when to exit.
-    """
-
-    def __init__(self, tuning_order=None, timeout=0, max_trials=100):
-        """Init a TuningCriterion object."""
-        self.tuning_order = tuning_order
-        self.timeout = timeout
-        self.max_trials = max_trials
-
-
-class Tuner:
-    def __init__(self, tune_config: BaseTuningConfig):
-        self.tune_config = tune_config
-
-    def generate_quant_config(self):
-        return [None]
-
-    def get_best_model(self, q_model, objective_score: Union[float, int]):
-        pass
-
-    def get_tuning_target_score(self, model):
-        eval_result = target_manager.evaluate(model)
-        return eval_result
-
-    def search(self, quantizer: BaseQuantizer):
-        for config in self.generate_quant_config():
-            q_model = quantizer.quantize(quant_config=config)
-            if self.get_best_model(q_model, self.get_tuning_target_score(q_model)):
-                return q_model
 
 
 class TargetManager:
@@ -112,6 +76,9 @@ class TargetManager:
     def _update_the_target_score(self, eval_pair, eval_result, overall_result):
         # TODO update the result according to the weight and algo_name
         return overall_result + eval_result * eval_pair["weight"]
+
+    def get_number_of_tuning_targets(self):
+        return len(self.eval_fn_registry)
 
 
 target_manager = TargetManager()
@@ -149,3 +116,62 @@ def register_tuning_target(
         return eval_fn
 
     return decorator
+
+
+class BaseTuningConfig:
+    """Base Class for Tuning Criterion.
+
+    Args:
+        tuning_order: the traverse order.
+        timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
+        max_trials: Max tune times. Default value is 100. Combine with timeout field to decide when to exit.
+    """
+
+    def __init__(self, tuning_order=None, timeout=0, max_trials=100):
+        """Init a TuningCriterion object."""
+        self.tuning_order = tuning_order
+        self.timeout = timeout
+        self.max_trials = max_trials
+
+
+class Tuner:
+    def __init__(self, tune_config: BaseTuningConfig):
+        self.tune_config = tune_config
+        self.tuner_target_manager = target_manager
+        self._post_init()
+
+    def _post_init(self):
+        # check the number of evaluation functions
+        num_tuning_targets = self.tuner_target_manager.get_number_of_tuning_targets()
+        assert num_tuning_targets > 0, "Please ensure that you register at least one evaluation metric for auto-tune."
+        logger.info(f"There are {num_tuning_targets} tuning targets.")
+
+    @staticmethod
+    def generate_quant_config(quant_config: BaseConfig) -> List[BaseConfig]:
+        if isinstance(quant_config, ComposableConfig):
+            result = []
+            for q_config in quant_config.config_list:
+                result += q_config.expand()
+            return result
+        else:
+            return quant_config.expand()
+
+    def generate_quant_config_from_tuning_order(self):
+        quant_config_list = []
+        for quant_config in self.tune_config.tuning_order:
+            quant_config_list.extend(Tuner.generate_quant_config(quant_config))
+        return quant_config_list
+
+    def get_best_model(self, q_model, objective_score: Union[float, int]):
+        pass
+
+    def get_tuning_target_score(self, model):
+        eval_result = self.tuner_target_manager.evaluate(model)
+        return eval_result
+
+    def search(self, quantizer: BaseQuantizer):
+        for config in self.generate_quant_config_from_tuning_order():
+            logger.info(f"config {config}")
+            q_model = quantizer.quantize(quant_config=config)
+            if self.get_best_model(q_model, self.get_tuning_target_score(q_model)):
+                return q_model
