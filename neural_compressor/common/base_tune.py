@@ -80,9 +80,9 @@ class Tuner:
         eval_result = target_manager.evaluate(model)
         return eval_result
 
-    def search(self, runner: BaseQuantizer):
+    def search(self, quantizer: BaseQuantizer):
         for config in self.generate_quant_config():
-            q_model = runner.apply(quant_config=config)
+            q_model = quantizer.quantize(quant_config=config)
             if self.get_best_model(q_model, self.get_tuning_target_score(q_model)):
                 return q_model
 

@@ -51,8 +51,8 @@ class TorchQuantizer(BaseQuantizer):
 
 def autotune(model, tune_config, run_fn=None, run_args=None):
     tuner = Tuner(tune_config=tune_config)
-    runner = TorchQuantizer(model, run_fn, run_args)
-    best_qmodel = tuner.search(runner=runner)
+    quantizer = TorchQuantizer(model, run_fn, run_args)
+    best_qmodel = tuner.search(quantizer=quantizer)
     return best_qmodel
 
 
