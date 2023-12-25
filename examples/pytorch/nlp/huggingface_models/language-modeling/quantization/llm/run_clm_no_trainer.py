@@ -312,8 +312,9 @@ if args.quantize:
             )
 
             # save the fake quantized model
-            os.makedirs(args.output_dir, exist_ok = True)
+            os.makedirs(args.output_dir, exist_ok=True)
             torch.save(q_model_gptq_debug, os.path.join(args.output_dir, "gptq_best_model.pt"))
+            exit(0)
 
     else:
         if re.search("gpt", user_model.config.model_type):
@@ -344,7 +345,6 @@ if args.quantize:
             eval_dataset = load_dataset('lambada', split='validation')
             evaluator = Evaluator(eval_dataset, tokenizer)
 
-
             def eval_func(model):
                 acc = evaluator.evaluate(model)
                 return acc
@@ -374,6 +374,8 @@ else:
 
 if args.accuracy:
     user_model.eval()
+    if args.gptq_debug:
+        user_model = torch.load(os.path.join(args.output_dir, "gptq_best_model.pt"))
     if args.code_generation:
         from intel_extension_for_transformers.llm.evaluation.lm_code_eval import evaluate
         results = evaluate(
@@ -383,17 +385,6 @@ if args.accuracy:
             batch_size=args.batch_size,
             args=args,
         )
-        if args.gptq_debug:
-            gptq_best_model = torch.load(os.path.join(args.output_dir, "gptq_best_model.pt"))
-            results = evaluate(
-                model=gptq_best_model,
-                tokenizer=tokenizer,
-                tasks=args.tasks,
-                batch_size=args.batch_size,
-                args=args,
-            )
-        else:
-            pass
     else:
         from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
         results = evaluate(
@@ -403,17 +394,7 @@ if args.accuracy:
             batch_size=args.batch_size,
             tasks=args.tasks,
         )
-        if args.gptq_debug:
-            gptq_best_model = torch.load(os.path.join(args.output_dir, "gptq_best_model.pt"))
-            results = evaluate(
-                model="hf-causal",
-                model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
-                user_model=user_model,
-                batch_size=args.batch_size,
-                tasks=args.tasks,
-            )
-        else:
-            pass
+
     dumped = json.dumps(results, indent=2)
     if args.save_accuracy_path:
         with open(args.save_accuracy_path, "w") as f:
