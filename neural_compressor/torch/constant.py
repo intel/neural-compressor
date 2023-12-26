@@ -17,12 +17,6 @@
 # double quant params
 
 DOUBLE_QUANT_CONFIGS = {
-    "DEFAULT" : {
-        "double_quant_bits": 8,
-        "double_quant_dtype": "fp32",
-        "double_quant_sym": True,
-        "double_quant_group_size": 256,
-    },
     "GGML_TYPE_Q4_K" : {
         "double_quant_bits": 6,
         "double_quant_dtype": "int",

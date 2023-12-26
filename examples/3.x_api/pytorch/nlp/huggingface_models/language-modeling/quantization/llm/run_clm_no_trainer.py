@@ -80,7 +80,7 @@ parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calib
                                                                            and your dataset builder args: args.pad_max_length')
 parser.add_argument('--gptq_debug', action='store_true', help='Whether to use debug model ')
 # =============DoubleQuant configs====================
-parser.add_argument("--double_quant", type=str, default=None, choices=['DEFAULT', 'GGML_TYPE_Q4_K', 'BNB'],
+parser.add_argument("--double_quant", type=str, default=None, choices=['GGML_TYPE_Q4_K', 'BNB'],
                     help="DoubleQuant parameter")
 # =======================================
 
