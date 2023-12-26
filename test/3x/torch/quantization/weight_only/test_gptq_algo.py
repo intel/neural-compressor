@@ -149,7 +149,7 @@ class TestGPTQ(unittest.TestCase):
             weight_sym=True,
             dataloader_len=len(dataloader_for_calibration),
             pad_max_length=512,
-            double_quant_config="GGML_TYPE_Q4_K"
+            double_quant_config="GGML_TYPE_Q4_K",
         )
         quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
         logger.info(f"Test GPTQ with config {quant_config}")
@@ -168,7 +168,7 @@ class TestGPTQ(unittest.TestCase):
             weight_sym=True,
             dataloader_len=len(dataloader_for_calibration),
             pad_max_length=512,
-            double_quant_config="BNB"
+            double_quant_config="BNB",
         )
         quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
         logger.info(f"Test GPTQ with config {quant_config}")
