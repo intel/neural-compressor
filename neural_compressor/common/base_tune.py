@@ -55,15 +55,14 @@ class TargetManager:
     def __init__(self) -> None:
         self.eval_fn_registry: List[Callable] = []
 
-    def evaluate(self, model, algo_name: Optional[str] = None) -> float:
+    def evaluate(self, model) -> float:
         """Evaluate the model using registered evaluation functions.
 
         Args:
             model: The fp32 model or quantized model.
-            algo_name: _description_. Defaults to None.
 
         Returns:
-            _description_
+            The overall result of all registered evaluation functions.
         """
         result = 0
         for eval_pair in self.eval_fn_registry:
