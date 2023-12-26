@@ -403,18 +403,18 @@ if args.quantize:
         print("Only support WeightOnlyQuant now")
         pass
 
-if args.int8 or args.int8_bf16_mixed:
-    print("load int8 model")
-    from neural_compressor.utils.pytorch import load
+# if args.int8 or args.int8_bf16_mixed:
+#     print("load int8 model")
+#     from neural_compressor.utils.pytorch import load
 
-    if args.ipex:
-        user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
-    else:
-        user_model, _ = get_user_model()
-        kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
-        user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model, **kwargs)
-else:
-    user_model, _ = get_user_model()
+#     if args.ipex:
+#         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
+#     else:
+#         user_model, _ = get_user_model()
+#         kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
+#         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model, **kwargs)
+# else:
+#     user_model, _ = get_user_model()
 
 if args.accuracy:
     user_model.eval()

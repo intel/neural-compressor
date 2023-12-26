@@ -98,10 +98,7 @@ class TestQuantizationConfig(unittest.TestCase):
             weight_dtype="int",
             weight_sym=False,
             weight_group_size=32,
-            double_quant_bits=6,
-            double_quant_dtype="int",
-            double_quant_sym=True,
-            double_quant_group_size=8,
+            double_quant_config="GGML_TYPE_Q4_K",
         )
         quant_config.set_local("lm_head", fp32_config)
         qmodel = quantize(fp32_model, quant_config)
@@ -125,10 +122,7 @@ class TestQuantizationConfig(unittest.TestCase):
             weight_bits=4,
             weight_dtype="nf4",
             weight_group_size=32,
-            double_quant_dtype="int",
-            double_quant_bits=8,
-            double_quant_sym=False,
-            double_quant_group_size=256,
+            double_quant_config="BNB",
         )
         quant_config.set_local("lm_head", fp32_config)
         qmodel = quantize(fp32_model, quant_config)
@@ -274,7 +268,7 @@ class TestQuantizationConfig(unittest.TestCase):
             },
         }
         q_config = RTNWeightQuantConfig.from_dict(quant_config1["rtn_weight_only_quant"])
-        d_config = GPTQConfig(double_quant_bits=4)
+        d_config = GPTQConfig()
         combined_config = q_config + d_config
         combined_config_d = combined_config.to_dict()
         logger.info(combined_config)
@@ -292,7 +286,7 @@ class TestQuantizationConfig(unittest.TestCase):
             },
         }
         q_config = RTNWeightQuantConfig.from_dict(quant_config1["rtn_weight_only_quant"])
-        d_config = GPTQConfig(double_quant_bits=4)
+        d_config = GPTQConfig()
         combined_config = q_config + d_config
         combined_config_d = combined_config.to_dict()
         logger.info(combined_config)
