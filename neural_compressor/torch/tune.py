@@ -16,6 +16,7 @@ from typing import Callable, Optional, Tuple
 
 import torch
 
+from neural_compressor.common.base_tune import BaseQuantizer, BaseTuningConfig, Tuner
 from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
@@ -24,9 +25,6 @@ logger = Logger().get_logger()
 def get_default_tuning_config():
     # TODO (Yi) support it in the next PR
     return None
-
-
-from neural_compressor.common.base_tune import BaseQuantizer, Tuner
 
 
 class TorchQuantizer(BaseQuantizer):
@@ -66,15 +64,6 @@ def autotune(model, tune_config, run_fn=None, run_args=None):
     return best_qmodel
 
 
-from neural_compressor.common.base_tune import BaseTuningConfig
-
-
 class TuningConfig(BaseTuningConfig):
     def __init__(self, tuning_order=None, timeout=0, max_trials=100):
-        if not tuning_order:
-            tuning_order = get_default_tuning_config()
         super().__init__(tuning_order, timeout, max_trials)
-
-
-def get_default_tune_config() -> TuningConfig:
-    return TuningConfig()
