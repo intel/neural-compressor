@@ -349,7 +349,7 @@ if args.quantize:
                 weight_sym=weight_sym,
                 enable_full_range = args.woq_enable_full_range,
                 enable_mse_search = args.woq_enable_mse_search,
-                double_quant_config=args.double_quant,d
+                double_quant_config=args.double_quant,
             )
             quant_config.set_local("lm_head", RTNWeightQuantConfig(weight_dtype="fp32"))
             user_model = quantize(
