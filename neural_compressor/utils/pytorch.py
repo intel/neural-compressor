@@ -507,6 +507,9 @@ def recover_model_from_json(model, json_file_path, example_inputs):
         if isinstance(example_inputs, dict):
             model(**example_inputs)
             model(**example_inputs)
+        elif isinstance(example_inputs, tuple) or isinstance(example_inputs, list):
+            model(*example_inputs)
+            model(*example_inputs)
         else:
             model(example_inputs)
             model(example_inputs)

@@ -917,7 +917,7 @@ def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig])
     #     )
 
     weight_config = {}
-    for (op_type, op_name), op_config in configs_mapping.items():
+    for (op_name, op_type), op_config in configs_mapping.items():
         if op_config.weight_dtype == "fp32":
             continue
         else:

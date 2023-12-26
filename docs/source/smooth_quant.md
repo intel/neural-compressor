@@ -4,7 +4,7 @@
 2. [Quantization Fundamentals](#Quantization-Fundamentals)
 3. [SmoothQuant and Our Enhancement](#SmoothQuant-and-Our-Enhancement)
 4. [Validated Models](#Validated-Models)
-5. [Example](#Example)
+5. [Usage](#Usage)
 6. [Supported Framework Matrix](#Supported-Framework-Matrix)
 
 
@@ -276,35 +276,40 @@ For most of the models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced 
 
 ### Our enhancement: 
 
-#### Algorithm: Layer-wise Auto-tuning of $\alpha$.
+#### Algorithm: Auto-tuning of $\alpha$.
 
 SmoothQuant method aims to split the quantization difficulty of weight and activation by using a fixed-value $\alpha$ for an entire model. However, as the distributions of activation outliers vary not only across different models but also across different layers within a model, we hereby propose a method to obtain layer-wise optimal $\alpha$ values with the ability to tune automatically.
+Currently, both layer-wise and block-wise auto-tuning methods are supported and the default option is layer-wise.
+In block-wise auto-tuning, layers within one block (e.g an OPTDecoderLayer) would share the same alpha value; users could set *'do_blockwise': True* in *auto_alpha_args* to enable it.
 
-Our proposed method consists of 7 major steps:
+Our proposed method consists of 8 major steps:
 
 -    Hook input minimum and maximum values of layers to be smoothed using register_forward_hook.
+-    Find a list of layers on which smoothquant could be performed.
 -    Generate a list of $\alpha$ values of a user-defined range and set a default $\alpha$ value.
 -    Calculate smoothing factor using default $\alpha$ value, adjust parameters accordingly and forward the adjusted model given an input sample.
 -    Perform per-channel quantization_dequantization of weights and per-tensor quantization_dequantization of activations to predict output.
--    Calculate the layer-wise loss with respect to FP32 output, iterate the previous two steps given each $\alpha$ value and save the layer-wise loss per alpha.
--    Apply criterion on input LayerNorm op and obtain the layer-wise optimal alpha values of a single input sample.
--    Iterate the previous three steps over a number of input samples and save the layer-wise optimal $\alpha$ values.
+-    Calculate the layer-wise/block-wise loss with respect to FP32 output, iterate the previous two steps given each $\alpha$ value and save the layer-wise/block-wise loss per alpha.
+-    Apply criterion on input LayerNorm op and obtain the optimal alpha values of a single input sample.
+-    Iterate the previous three steps over a number of input samples and save the layer-wise/block-wise optimal $\alpha$ values.
 
 
 
-Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block.
+Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block. Both alpha range and criterion could be configured in auto_alpha_args.
 
-In our experiments, an $\alpha$ range of [0.3, 0.7] with a step_size of 0.05 is found to be well-balanced one for the majority of models.
+In our experiments, an $\alpha$ range of [0.0, 1.0] with a step_size of 0.1 is found to be well-balanced one for the majority of models.
 
 #### Engineering 
 
-*fully automated*: the user only needs to pass a model and dataloader
+*fully automated*: users only need to pass a model and dataloader.
 
 ```python
 from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
 
 sq = TorchSmoothQuant(model, dataloader)
-sq.transform(alpha)  ##alpha could be a float or a string 'auto'
+alpha = "auto"  ##alpha could be a float number to disable auto-tuning and enable fixed-value alpha smoothquant.
+auto_alpha_args = {}
+sq.transform(alpha, auto_alpha_args=auto_alpha_args)
 ```
 
 please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False"
@@ -378,9 +383,13 @@ The results listed below are achieved using IPEX optimize_transformers in model 
 
 
 Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.
-## Example
 
-User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm) on how to use smooth quant.
+## Usage
+
+There are two ways to apply smooth quantization: 1) using a fixed `alpha` for the entire model or 2) determining the `alpha` through auto-tuning.
+
+### Using a fixed `alpha`
+To set a fixed alpha for the entire model, users can follow this example:
 
 ```python
 recipes = {
@@ -392,16 +401,21 @@ recipes = {
 }
 conf = PostTrainingQuantConfig(recipes=recipes)
 ```
-smooth_quant_args description:
+`smooth_quant_args` description:
 
-"alpha": "auto", a float value or a list of float values. Default is 0.5. "auto" means automatic tuning.
+"alpha": a float value. Default is 0.5.
 
 "folding": whether to fold mul into the previous layer, where mul is required to update the input distribution during smoothing.
 - True: Fold inserted mul into the previous layer. IPEX will only insert mul for layers can do folding. 
 - False: Allow inserting mul to update the input distribution and no folding. IPEX (version>=2.1) can fuse inserted mul automatically. For Stock PyTorch, setting folding=False will convert the model to a QDQ model.
 
+### Determining the `alpha` through auto-tuning
+Users can search for the best `alpha` at two levels: 1) for the entire model, and 2) for each layer/block.
 
-To find the best `alpha`, users can utilize the [auto-tuning]((./tuning_strategies.md)) feature. Compares to setting the alpha to `"auto"`, this tuning process uses the evaluation result on the entire dataset as the metric to find the best `alpha`. To use this feature, users need to provide a list of scalars between 0 and 1 for the `alpha` item. Here is an example:
+#### Auto-tune the `alpha` for the entire model
+The tuning process looks for the optimal `alpha` value from a list of `alpha` values provided by the user.
+> Please note that, it may a considerable amount of time as the tuning process applies each `alpha` to the entire model and uses the evaluation result on the entire dataset as the metric to determine the best `alpha`.
+Here is an example:
 
 ```python
 import numpy as np
@@ -409,11 +423,32 @@ conf = PostTrainingQuantConfig(
     quant_level='auto', # quant_level can also be 1
     ...
     recipes={"smooth_quant": True, 
-            "smooth_quant_args": {"alpha": np.arange(0.1, 0.5, 0.05).tolist(),}
+             "smooth_quant_args": {"alpha": np.arange(0.1, 0.5, 0.05).tolist()}
     ...
     }）
 ```
+#### Auto-tune the `alpha` for each layer/block
+In this case, the tuning process searches the optimal `alpha` of each layer of the block by evaluating the loss with respect to FP32 output on a few batches of data.
+Here is an example:
 
+```python
+recipes = {"smooth_quant": True, 
+    "default_alpha": 0.7, # Baseline alpha-value for auto-tuning.
+    "smooth_quant_args": {"alpha": 'auto', "auto_alpha_args": {
+        "alpha_min": 0.0, # min value of auto-tuning alpha search space
+        "alpha_max": 1.0, # max value of auto-tuning alpha search space
+        "alpha_step": 0.1, # step_size of auto-tuning alpha search space
+        "shared_criterion": "mean", # Criterion for input LayerNorm op of a transformer block.
+        "do_blockwise": False, # Whether to enable block-wise auto-tuning.
+        }
+    }
+}
+conf = PostTrainingQuantConfig(recipes=recipes）
+```
+
+To get more information, please refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm).
+
+ 
 ## Supported Framework Matrix
 
 | Framework | Alpha        | Folding    |

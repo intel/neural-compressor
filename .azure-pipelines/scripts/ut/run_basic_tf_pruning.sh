@@ -4,7 +4,7 @@ test_case="run basic tf pruning"
 echo "${test_case}"
 
 echo "specify fwk version..."
-export tensorflow_version='2.12.0'
+export tensorflow_version='2.14.0'
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh "${test_case}"
@@ -12,6 +12,7 @@ export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.f
 lpot_path=$(python -c 'import neural_compressor; import os; print(os.path.dirname(neural_compressor.__file__))')
 cd /neural-compressor/test || exit 1
 find ./pruning_with_tf -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'> run.sh
+find ./distributed -name "test_distributed_tf_dataloader.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'>> run.sh
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
