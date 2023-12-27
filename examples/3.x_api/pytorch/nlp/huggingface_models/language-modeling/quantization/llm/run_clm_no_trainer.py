@@ -78,7 +78,6 @@ parser.add_argument('--gptq_use_max_length', action="store_true",
 parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calibration dataset sequence max length, \
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
-parser.add_argument('--gptq_debug', action='store_true', help='Whether to use debug model ')
 # =============DoubleQuant configs====================
 parser.add_argument("--double_quant_type", type=str, default=None, choices=['GGML_TYPE_Q4_K', 'BNB'],
                     help="DoubleQuant parameter")
@@ -210,132 +209,6 @@ if args.quantize:
         collate_fn=calib_evaluator.collate_batch,
     )
 
-
-    # def calib_func(prepared_model):
-    #     for i, calib_input in enumerate(calib_dataloader):
-    #         if i > args.calib_iters:
-    #             break
-    #         prepared_model(calib_input[0])
-
-
-    # recipes = {}
-    # eval_func = None
-    # from neural_compressor import PostTrainingQuantConfig, quantization
-
-    # # specify the op_type_dict and op_name_dict
-    # if args.approach == 'weight_only':
-    #     op_type_dict = {
-    #         '.*': {  # re.match
-    #             "weight": {
-    #                 'bits': args.woq_bits,  # 1-8 bits
-    #                 'group_size': args.woq_group_size,  # -1 (per-channel)
-    #                 'scheme': args.woq_scheme,  # sym/asym
-    #                 'algorithm': args.woq_algo,  # RTN/AWQ/TEQ
-    #             },
-    #         },
-    #     }
-    #     op_name_dict = {
-    #         'lm_head': {"weight": {'dtype': 'fp32'}, },
-    #         'embed_out': {"weight": {'dtype': 'fp32'}, },  # for dolly_v2
-    #     }
-    #     recipes["rtn_args"] = {
-    #         "enable_mse_search": args.woq_enable_mse_search,
-    #         "enable_full_range": args.woq_enable_full_range,
-    #     }
-    #     recipes['gptq_args'] = {
-    #         'percdamp': args.gptq_percdamp,
-    #         'act_order': args.gptq_actorder,
-    #         'block_size': args.gptq_block_size,
-    #         'nsamples': args.gptq_nsamples,
-    #         'use_max_length': args.gptq_use_max_length,
-    #         'pad_max_length': args.gptq_pad_max_length
-    #     }
-    #     # GPTQ: use assistive functions to modify calib_dataloader and calib_func
-    #     # TEQ: set calib_func=None, use default training func as calib_func
-    #     if args.woq_algo in ["GPTQ", "TEQ"]:
-    #         calib_func = None
-
-    #     conf = PostTrainingQuantConfig(
-    #         approach=args.approach,
-    #         op_type_dict=op_type_dict,
-    #         op_name_dict=op_name_dict,
-    #         recipes=recipes,
-    #     )
-
-    #     # for test on various models, keep the code of directly call gptq_quantize
-    #     if args.gptq_debug:
-    #         from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
-
-    #         conf = {
-    #             ".*": {
-    #                 'wbits': args.woq_bits,  # 1-8 bits
-    #                 'group_size': args.woq_group_size,  # -1 (per-channel)
-    #                 'sym': (args.woq_scheme == "sym"),
-    #                 'act_order': args.gptq_actorder,
-    #             }
-    #         }
-    #         q_model_gptq_debug, gptq_config = gptq_quantize(
-    #             user_model,
-    #             weight_config=conf,
-    #             dataloader=calib_dataloader,
-    #             nsamples=args.gptq_nsamples,
-    #             use_max_length=args.gptq_use_max_length,
-    #             pad_max_length=args.gptq_pad_max_length
-    #         )
-    #         from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
-
-    #         results = evaluate(
-    #             model="hf-causal",
-    #             model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
-    #             user_model=q_model_gptq_debug, tasks=["lambada_openai"],
-    #             batch_size=4
-    #         )
-    #         exit(0)
-
-    # else:
-    #     if re.search("gpt", user_model.config.model_type):
-    #         op_type_dict = {
-    #             "add": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}},
-    #         }
-    #     else:
-    #         op_type_dict = {}
-    #     excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
-    #     if args.sq:
-    #         # alpha can be a float number of a list of float number.
-    #         args.alpha = args.alpha if args.alpha == "auto" else eval(args.alpha)
-    #         if re.search("falcon", user_model.config.model_type):
-    #             recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha, 'folding': False}}
-    #         else:
-    #             recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
-
-    #     conf = PostTrainingQuantConfig(
-    #         backend="ipex" if args.ipex else "default",
-    #         approach=args.approach,
-    #         excluded_precisions=excluded_precisions,
-    #         op_type_dict=op_type_dict,
-    #         recipes=recipes,
-    #     )
-
-    #     # eval_func should be set when tuning alpha.
-    #     if isinstance(args.alpha, list):
-    #         eval_dataset = load_dataset('lambada', split='validation')
-    #         evaluator = Evaluator(eval_dataset, tokenizer)
-
-
-    #         def eval_func(model):
-    #             acc = evaluator.evaluate(model)
-    #             return acc
-
-    # q_model = quantization.fit(
-    #     user_model,
-    #     conf,
-    #     calib_dataloader=calib_dataloader,
-    #     calib_func=calib_func,
-    #     eval_func=eval_func,
-    # )
-
-    # q_model.save(args.output_dir)
-    
     # 3.x api
     if args.approach == 'weight_only':
         from neural_compressor.torch import RTNWeightQuantConfig, GPTQConfig, quantize
@@ -402,19 +275,6 @@ if args.quantize:
         # sq TODO
         print("Only support WeightOnlyQuant now")
         pass
-
-# if args.int8 or args.int8_bf16_mixed:
-#     print("load int8 model")
-#     from neural_compressor.utils.pytorch import load
-
-#     if args.ipex:
-#         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
-#     else:
-#         user_model, _ = get_user_model()
-#         kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
-#         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model, **kwargs)
-# else:
-#     user_model, _ = get_user_model()
 
 if args.accuracy:
     user_model.eval()
