@@ -21,8 +21,10 @@ do
     esac
 done
 
+echo "specify FWs version..."
+source /neural-compressor/.azure-pipelines/scripts/fwk_version.sh 'latest'
 FRAMEWORK="mxnet"
-FRAMEWORK_VERSION="1.9.1"
+FRAMEWORK_VERSION=${mxnet_version}
 
 inc_new_api=false
 # ======== set up config for mxnet models ========

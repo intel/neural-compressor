@@ -17,6 +17,20 @@
 -
   version:
     name: '1.6.0'
+  weight_only_integer: &cap_weight_only {
+    'MatMul': &cap_weight_only_matmul {
+        'weight': {
+                    'dtype': ['int'], # no need to care uint
+                    'bits': [4, 3, 8], # [1-8]
+                    'group_size': [32, -1, 1, 16, 64, 128, 256, 512, 1024], # [1-inf]
+                    'scheme': ['sym', 'asym'], # sym, no ZP
+                    'algorithm': ['RTN', 'AWQ', 'GPTQ']
+        },
+        'activation': {
+                    'dtype': ['fp32']
+        }
+    },
+  }
   int8: &ref_1_6 {
     'static': &ref_1_6_static {
       'Conv': {
@@ -114,6 +128,7 @@
 -
   version:
     name: '1.7.0'
+  weight_only_integer: *cap_weight_only
   int8: {
     'static': {
       'FusedConv': {
@@ -155,6 +170,7 @@
 -
   version:
     name: '1.8.0'
+  weight_only_integer: *cap_weight_only
   int8: {
     'static': {
       'FusedConv': {
@@ -224,6 +240,7 @@
 -
   version:
     name: '1.9.0'
+  weight_only_integer: *cap_weight_only
   int8: {
     'static': {
       'FusedConv': {
@@ -300,6 +317,7 @@
 -
   version:
     name: '1.10.0'
+  weight_only_integer: *cap_weight_only
   int8: {
     'static': {
       'FusedConv': {
@@ -356,6 +374,7 @@
 -
   version:
     name: '1.11.0'
+  weight_only_integer: *cap_weight_only
   int8: &ref_1_11 {
     'static': {
       'FusedConv': {
@@ -427,6 +446,7 @@
 -
   version:
     name: '1.12.0'
+  weight_only_integer: *cap_weight_only
   int8: *ref_1_11
   fp16: *common_fp16
   bf16: *common_bf16
@@ -436,6 +456,7 @@
 -
   version:
     name: 'default'
+  weight_only_integer: *cap_weight_only
   int8: *ref_1_6
   fp16: *common_fp16
   bf16: *common_bf16

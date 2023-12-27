@@ -7,7 +7,7 @@ parameters:
     default: "neural-compressor"
   - name: repoTag
     type: string
-    default: "py38"
+    default: "py310"
   - name: dockerFileName
     type: string
     default: "Dockerfile"

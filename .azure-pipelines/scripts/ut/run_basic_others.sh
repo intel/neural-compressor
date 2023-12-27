@@ -4,7 +4,7 @@ test_case="run basic others"
 echo "${test_case}"
 
 echo "specify fwk version..."
-source /neural-compressor/.azure-pipelines/scripts/ut/ut_fwk_version.sh $1
+source /neural-compressor/.azure-pipelines/scripts/fwk_version.sh $1
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh "${test_case}"
@@ -26,6 +26,7 @@ sed -i '/ distillation\//d' run.sh
 sed -i '/ scheduler\//d' run.sh
 sed -i '/ nas\//d' run.sh
 sed -i '/ 3x\//d' run.sh
+sed -i '/ distributed\//d' run.sh
 
 echo "copy model for dynas..."
 mkdir -p .torch/ofa_nets || true

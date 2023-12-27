@@ -675,31 +675,17 @@ def get_layers(model):
     return layers
 
 
-def move_input_to_device(input, device):
-    if device is None:
-        device = torch.device("cpu")
-    elif isinstance(device, str):
-        device = torch.device(device)
-
+def move_input_to_device(input, device="cpu"):
+    if isinstance(input, torch.Tensor):
+        return input.to(device)
     if isinstance(input, dict) or isinstance(input, UserDict):
         for inp in input.keys():
-            input[inp] = input[inp].to(device) if isinstance(input[inp], torch.Tensor) else input[inp]
+            input[inp] = move_input_to_device(input[inp], device)
     elif isinstance(input, list) or isinstance(input, tuple):
-        input_res, prev_size = [], None
+        input_res = []
         for inp in input:
-            if prev_size:
-                if isinstance(inp, torch.Tensor):
-                    if inp.size() == prev_size:
-                        input_res.append(inp.to(device))
-                else:
-                    if torch.tensor(inp).size == prev_size:
-                        input_res.append(inp)
-            else:
-                input_res.append(inp.to(device) if isinstance(inp, torch.Tensor) else inp)
-            prev_size = torch.tensor(inp).size()
+            input_res.append(move_input_to_device(inp, device))
         input = input_res
-    else:
-        input = input.to(device)  # pylint: disable=no-member
     return input
 
 
@@ -715,25 +701,26 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"
     Returns: input list.
     """
     inputs = []
+    other_input_infos = {}
+    positional_inputs = []
     model_dev = model.device
-    attention_mask = None
-    # 'alibi' is a necessary attribute for the bloom models
-    inputs_info = {}
 
     with torch.no_grad():
         if layer_idx == 0:
             layer = layers[layer_idx]
 
-            def forward(self, hidden_states, **kwargs):
+            def forward(_, hidden_states, *positional_args, **kwargs):
+                nonlocal inputs
+                nonlocal positional_inputs
+                nonlocal other_input_infos
                 # TODO solve the problem of batchsize!=1
-                inputs.append(hidden_states.to(device))
+                inputs.append(move_input_to_device(hidden_states, device))
+                if len(positional_inputs) <= 0:
+                    positional_inputs = move_input_to_device(positional_args, device)
                 for key in kwargs.keys():
-                    if isinstance(kwargs[key], torch.Tensor) or (key == "alibi"):
-                        if key not in inputs_info.keys():
-                            inputs_info[key] = []
-                        if isinstance(kwargs[key], torch.Tensor):
-                            kwargs[key] = kwargs[key].to(device)
-                        inputs_info[key].append(kwargs[key])
+                    if key not in other_input_infos.keys():
+                        other_input_infos[key] = []
+                    other_input_infos[key].append(move_input_to_device(kwargs[key], device))
                 raise ValueError
 
             forward_cache = layers[layer_idx].forward
@@ -752,7 +739,6 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"
                 except ValueError:
                     pass
             layer.forward = forward_cache
-
         else:
             prev_layer = layers[layer_idx - 1]
 
@@ -761,16 +747,14 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"
                 batch[0] = prev_output[0]
                 inputs.append(batch)
 
-    return inputs, inputs_info
+    return inputs, positional_inputs, other_input_infos
 
 
 ########################################################
 ## Utility for integrate DeepSpeed
 ########################################################
 import os
-
 USE_DEEPSPEED = os.environ.get("USE_DEEPSPEED", False)
-
 
 def safe_get_shape(param):
     if USE_DEEPSPEED:
@@ -783,8 +767,7 @@ def safe_get_shape(param):
 
 def safe_get_data(param):
     if USE_DEEPSPEED:
-        from deepspeed.utils import safe_get_local_fp32_param, safe_get_local_grad
-
+        from deepspeed.utils import safe_get_local_fp32_param
         return safe_get_local_fp32_param(param)
     else:
         return param.data
@@ -802,7 +785,6 @@ def safe_get_grad(param):
 def safe_set_data(param, new_val):
     if USE_DEEPSPEED:
         from deepspeed.utils import safe_set_local_fp32_param
-
         safe_set_local_fp32_param(new_val, param)
     else:
         param.data = new_val
