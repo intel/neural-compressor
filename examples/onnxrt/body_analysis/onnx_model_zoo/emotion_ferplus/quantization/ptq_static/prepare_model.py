@@ -6,7 +6,7 @@ from urllib import request
 import onnx
 from onnx import version_converter
 
-MODEL_URL = "https://github.com/onnx/models/raw/main/archive/vision/body_analysis/emotion_ferplus/model/emotion-ferplus-8.onnx"
+MODEL_URL = "https://github.com/onnx/models/raw/main/validated/vision/body_analysis/emotion_ferplus/model/emotion-ferplus-8.onnx"
 MAX_TIMES_RETRY_DOWNLOAD = 5
 
 
