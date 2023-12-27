@@ -26,7 +26,7 @@ DOUBLE_QUANT_CONFIGS = {
     "BNB": {
         "double_quant_bits": 8,
         "double_quant_dtype": "int",
-        "double_quant_sym": True,
-        "double_quant_group_size": 8,
+        "double_quant_sym": False,
+        "double_quant_group_size": 256,
     },
 }
