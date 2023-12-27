@@ -465,15 +465,13 @@ def get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_ids
             op_info = op_infos_from_cfgs[name]
             output_tensors = op_info["output_tensor_infos"]
             input_tensors = op_info["input_tensor_infos"]
-            for input_tensor in input_tensors:
-                if "inf_dtype" not in input_tensor.keys():
-                    continue
-                if input_tensor["inf_dtype"] == torch.float32:
-                    pre_op_name = input_tensor_ids_op_name[input_tensor["id"]]
-                    if pre_op_name[1] in ["q_op_infos"]:
-                        print(pre_op_name, "is not the fuse ops first op.")
-                        start = False
-                        continue
+            start = any(
+                [
+                    input_tensor["inf_dtype"] != "torch.float32"
+                    for input_tensor in input_tensors
+                    if "inf_dtype" in input_tensor.keys()
+                ]
+            )
             if not start:
                 continue
             # add quantizable ops, include op and fuse ops.
