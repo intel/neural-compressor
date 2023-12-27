@@ -11,20 +11,20 @@ The retraining free pruning feature is still in development, please stay tuned.
 
 PyTorch 1.8 or higher version is needed with pytorch_fx backend
 The transformers version required varies across different types of models. Here, the transformers version used for running models during experiments is provided as a reference.
-    | Model | Transformers version |
-    |  :----: | :----: |
-    | EleutherAI/gpt-j-6b | 4.28/4.30/4.34/4.36 |
-    | huggyllama/llama-7b | 4.28/4.30/4.34/4.36 |
-    | meta-llama/Llama-2-7b-hf | 4.30/4.34/4.36 |
-    | facebook/opt-6.7b | 4.28/4.30/4.34/4.36 |
-    | databricks/dolly-v2-3b | 4.28/4.30/4.34/4.36 |
-    | tiiuae/falcon-7b | 4.28/4.30/4.34/4.36 |
-    | mosaicml/mpt-7b | 4.28/4.30/4.34/4.36 |
-    | bigscience/bloom-7b1 | 4.28/4.30/4.34/4.36 |
-    | baichuan-inc/Baichuan-7B | 4.28/4.30 |
-    | Qwen/Qwen-7B | 4.28/4.30/4.34/4.36 |
-    | THUDM/chatglm3-6b | 4.28/4.30/4.34/4.36 |
-    | mistralai/Mistral-7B-v0.1 | 4.34/4.36 |
+| Model | Transformers version |
+|  :----: | :----: |
+| EleutherAI/gpt-j-6b | 4.28/4.30/4.34/4.36 |
+| huggyllama/llama-7b | 4.28/4.30/4.34/4.36 |
+| meta-llama/Llama-2-7b-hf | 4.30/4.34/4.36 |
+| facebook/opt-6.7b | 4.28/4.30/4.34/4.36 |
+| databricks/dolly-v2-3b | 4.28/4.30/4.34/4.36 |
+| tiiuae/falcon-7b | 4.28/4.30/4.34/4.36 |
+| mosaicml/mpt-7b | 4.28/4.30/4.34/4.36 |
+| bigscience/bloom-7b1 | 4.28/4.30/4.34/4.36 |
+| baichuan-inc/Baichuan-7B | 4.28/4.30 |
+| Qwen/Qwen-7B | 4.28/4.30/4.34/4.36 |
+| THUDM/chatglm3-6b | 4.34/4.36 |
+| mistralai/Mistral-7B-v0.1 | 4.34/4.36 |
 
 
 ```shell
@@ -71,9 +71,11 @@ The last word acc of the channel-wise sparse model is shown in the following tab
 | bigscience/bloom-7b1 | CLM | pile_10k | lambada_openai | BF16 | 0.5723 | 0.5756 | 0.58% |
 
 
+
 ## SparseGPT Results
 
 The last word acc of the 1x1 pattern sparse model using [the sparseGPT script](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager/scripts/run_llm_sparsegpt.sh) is shown in the following table.
+
 | Model | Task | Calibration dataset | Evaluation dataset | Sparsity | Precision | Dense last word accuracy | Sparse last word accuracy | Relative drop |
 |  :----: | :----: | :----: | :----: | :----: | :----: | :----: |:----: |:----:|
 | meta-llama/Llama-2-7b-hf | CLM | wikitext-2-raw-v1 | lambada_openai | 30% | FP32 | 0.7392 | 0.7320 | -0.97% |
@@ -98,6 +100,9 @@ The last word acc of the 1x1 pattern sparse model using [the sparseGPT script](h
 | decapoda-research/llama-13b-hf | CLM | wikitext-2-raw-v1 | lambada_openai | 50% | BF16 | 0.7599 | 0.7559 | -0.89% |
 | meta-llama/Llama-2-70b-hf | CLM | wikitext-2-raw-v1 | lambada_openai | 60% | FP32 | 0.7964 | 0.7951 | -0.16% |
 | meta-llama/Llama-2-70b-hf | CLM | wikitext-2-raw-v1 | lambada_openai | 60% | BF16 | 0.7937 | 0.7943 | -0.26% |
+| Qwen/Qwen-72B | CLM | wikitext-2-raw-v1 | lambada_openai | 60% | FP32 | - | - | - |
+| Qwen/Qwen-72B | CLM | wikitext-2-raw-v1 | lambada_openai | 60% | BF16 | 0.7673 | 0.7813 | - |
+
 
 
 ## References
