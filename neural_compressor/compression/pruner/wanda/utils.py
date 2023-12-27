@@ -57,4 +57,4 @@ def get_module_list(model):
 def get_tensor_sparsity_ratio(target_tensor):
     zero_cnt = float(torch.sum(target_tensor == 0.0).data.item())
     total_cnt = float(target_tensor.numel())
-    return zero_cnt / total_cnt
+    return round(zero_cnt / total_cnt, 6)
