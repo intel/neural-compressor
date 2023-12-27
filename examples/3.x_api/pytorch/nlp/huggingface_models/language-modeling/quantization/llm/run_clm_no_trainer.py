@@ -80,7 +80,7 @@ parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calib
                                                                            and your dataset builder args: args.pad_max_length')
 parser.add_argument('--gptq_debug', action='store_true', help='Whether to use debug model ')
 # =============DoubleQuant configs====================
-parser.add_argument("--double_quant", type=str, default=None, choices=['GGML_TYPE_Q4_K', 'BNB'],
+parser.add_argument("--double_quant_type", type=str, default=None, choices=['GGML_TYPE_Q4_K', 'BNB'],
                     help="DoubleQuant parameter")
 # =======================================
 
@@ -349,7 +349,7 @@ if args.quantize:
                 weight_sym=weight_sym,
                 enable_full_range = args.woq_enable_full_range,
                 enable_mse_search = args.woq_enable_mse_search,
-                double_quant_config=args.double_quant,
+                double_quant_type=args.double_quant_type,
             )
             quant_config.set_local("lm_head", RTNWeightQuantConfig(weight_dtype="fp32"))
             user_model = quantize(
@@ -391,7 +391,7 @@ if args.quantize:
                 nsamples=args.gptq_nsamples,
                 use_max_length=args.gptq_use_max_length,
                 pad_max_length=args.gptq_pad_max_length,
-                double_quant_config=args.double_quant
+                double_quant_type=args.double_quant_type
             )
             quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
 

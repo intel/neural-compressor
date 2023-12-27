@@ -98,7 +98,7 @@ class TestQuantizationConfig(unittest.TestCase):
             weight_dtype="int",
             weight_sym=False,
             weight_group_size=32,
-            double_quant_config="GGML_TYPE_Q4_K",
+            double_quant_type="GGML_TYPE_Q4_K",
         )
         quant_config.set_local("lm_head", fp32_config)
         qmodel = quantize(fp32_model, quant_config)
@@ -122,7 +122,7 @@ class TestQuantizationConfig(unittest.TestCase):
             weight_bits=4,
             weight_dtype="nf4",
             weight_group_size=32,
-            double_quant_config="BNB",
+            double_quant_type="BNB",
         )
         quant_config.set_local("lm_head", fp32_config)
         qmodel = quantize(fp32_model, quant_config)

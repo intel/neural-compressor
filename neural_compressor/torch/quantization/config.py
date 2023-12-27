@@ -74,7 +74,7 @@ class RTNWeightQuantConfig(BaseConfig):
         "enable_mse_search",
         "group_dim",
         "return_int",
-        "double_quant_config",
+        "double_quant_type",
     ]
     name = RTN_WEIGHT_ONLY_QUANT
 
@@ -89,7 +89,7 @@ class RTNWeightQuantConfig(BaseConfig):
         enable_mse_search: bool = False,
         group_dim: int = 1,
         return_int: bool = False,
-        double_quant_config: Optional[str] = None,
+        double_quant_type: Optional[str] = None,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init RTN weight-only quantization config.
@@ -119,7 +119,7 @@ class RTNWeightQuantConfig(BaseConfig):
         self.enable_mse_search = enable_mse_search
         self.group_dim = group_dim
         self.return_int = return_int
-        self.double_quant_config = double_quant_config
+        self.double_quant_type = double_quant_type
         self._post_init()
 
     def to_dict(self):
@@ -141,7 +141,7 @@ class RTNWeightQuantConfig(BaseConfig):
             enable_full_range=[False, True],
             enable_mse_search=[False, True],
             group_dim=[1, 0],
-            double_quant_config=["GGML_TYPE_Q4_K", "BNB"]
+            double_quant_type=["GGML_TYPE_Q4_K", "BNB"]
         )
         operators = [torch.nn.Linear, torch.nn.functional.linear]
         supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT))
@@ -201,7 +201,7 @@ class GPTQConfig(BaseConfig):
         "device",
         "layer_wise",
         "return_int",
-        "double_quant_config",
+        "double_quant_type",
     ]
 
     def __init__(
@@ -223,7 +223,7 @@ class GPTQConfig(BaseConfig):
         device=None,
         layer_wise: bool = False,
         return_int: bool = False,
-        double_quant_config: Optional[str] = None,
+        double_quant_type: Optional[str] = None,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init GPTQ config.
@@ -249,7 +249,7 @@ class GPTQConfig(BaseConfig):
         self.layer_wise = layer_wise
         self.device = device
         self.return_int = return_int
-        self.double_quant_config = double_quant_config
+        self.double_quant_type = double_quant_type
         self._post_init()
 
     def to_dict(self):

@@ -932,7 +932,7 @@ def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig])
                 "block_size": op_config.block_size,
                 "mse": op_config.enable_mse_search,
             }
-            double_quant_config = get_double_quant_config(op_config.double_quant_config)
+            double_quant_config = get_double_quant_config(op_config.double_quant_type)
             weight_config[op_name].update(double_quant_config)
             nsamples = op_config.nsamples
             dataloader_len = op_config.dataloader_len

@@ -24,7 +24,7 @@ Here is how to run the scripts:
 ```bash
 # "--approach weight_only" is used to enable weight only quantization.
 # "--woq_algo GPTQ" is used to enable GPTQ algorithms
-# "--double_quant BNB" is used to enable double quant algorithms
+# "--double_quant_type BNB" is used to enable double quant algorithms
 python run_clm_no_trainer.py \
     --model EleutherAI/gpt-j-6B \
     --dataset NeelNanda/pile-10k \
@@ -38,7 +38,7 @@ python run_clm_no_trainer.py \
     --gptq_use_max_length \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant "BNB"
+    --double_quant_type "BNB"
 
 # "--woq_algo RTN" is used to enable RTN algorithms
 python run_clm_no_trainer.py \
@@ -52,7 +52,7 @@ python run_clm_no_trainer.py \
     --woq_group_size 128 \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant "BNB"
+    --double_quant_type "BNB"
 ```
 **Notes**: Weight-only quantization based on fake quantization is previewly supported and supports RTN, GPTQ[1], AWQ[2], TEQ algorithms. For more details, please refer to [link](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_weight_only.md). Our GPTQ API support various CLMs including GPTJ, OPTs, Blooms, Llamas, Falcons, MPTs, ChatGLMs, etc. Simply replace the "--model" argument with other models to quantize different CLMs with GPTQ.
 
@@ -64,7 +64,7 @@ python run_clm_no_trainer.py \
 ```bash
 # "--approach weight_only" is used to enable weight only quantization.
 # "--woq_algo GPTQ" is used to enable GPTQ algorithms
-# "--double_quant BNB" is used to enable double quant algorithms
+# "--double_quant_type BNB" is used to enable double quant algorithms
 python run_clm_no_trainer.py \
     --model facebook/opt-125m \
     --dataset NeelNanda/pile-10k \
@@ -78,7 +78,7 @@ python run_clm_no_trainer.py \
     --gptq_use_max_length \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant "BNB"
+    --double_quant_type "BNB"
 
 # "--woq_algo RTN" is used to enable RTN algorithms
 python run_clm_no_trainer.py \
@@ -92,7 +92,7 @@ python run_clm_no_trainer.py \
     --woq_group_size 128 \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant "BNB"
+    --double_quant_type "BNB"
 ```
 
 ### LLAMA2-7b/13b/30b
@@ -100,7 +100,7 @@ python run_clm_no_trainer.py \
 
 ```bash
 # "--approach weight_only" is used to enable weight only quantization.
-# "--double_quant BNB" is used to enable double quant algorithms
+# "--double_quant_type BNB" is used to enable double quant algorithms
 # "--woq_algo GPTQ" is used to enable GPTQ algorithms
 python run_clm_no_trainer.py \
     --model meta-llama/Llama-2-7b-hf \
@@ -115,7 +115,7 @@ python run_clm_no_trainer.py \
     --gptq_use_max_length \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant "BNB"
+    --double_quant_type "BNB"
 
 # "--woq_algo RTN" is used to enable RTN algorithms
 python run_clm_no_trainer.py \
@@ -129,7 +129,7 @@ python run_clm_no_trainer.py \
     --woq_group_size 128 \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant "BNB"
+    --double_quant_type "BNB"
 ```
 
 
