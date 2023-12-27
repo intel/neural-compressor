@@ -275,6 +275,13 @@ def parse_args():
         choices=["magnitude", "snip", "snip_momentum"],
     )
     parser.add_argument(
+        "--pruning_scope",
+        type=str,
+        default="global",
+        help="determine layers' scores should be gather together to sort.",
+        choices=["local", "global"],
+    )
+    parser.add_argument(
         "--warm_epochs",
         type=int,
         default=0,
@@ -688,7 +695,7 @@ def main():
     pruning_configs=[
         {
             "pruning_type": args.pruning_type,
-            "pruning_scope": "global",
+            "pruning_scope": args.pruning_scope,
             "sparsity_decay_type": "exp",
             "excluded_op_names": ["pooler"],
             "pruning_op_types": ["Linear"],

@@ -758,7 +758,6 @@ USE_DEEPSPEED = os.environ.get("USE_DEEPSPEED", False)
 
 def safe_get_shape(param):
     if USE_DEEPSPEED:
-        # from deepspeed.utils import safe_get_local_grad, safe_set_local_fp32_param
         logger.info(f"[safe_get_shape][original shape is {param.ds_shape}, return shape is {param.ds_tensor.shape}]")
         return param.ds_tensor.shape
     else:
