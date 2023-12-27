@@ -3365,25 +3365,24 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         self._cfg_to_qconfig(tune_cfg, smooth_quant=True)
         update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
         model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
-
-        # real calibration for other operators
-        try:
-            # IPEX may raise an error on the second iteration.
-            # OverflowError: cannot convert float infinity to integer
-            if q_func is not None:
-                q_func(model._model)
-            else:
-                iterations = tune_cfg.get("calib_iteration", 1)
-                self.model_calibration(
-                    model._model, dataloader, iterations, None, tune_cfg.get("calib_sampling_size", 1)
-                )
-        except:
-            logger.warning(
-                "The calibration failed when calibrating with ipex, "
-                + "using scale info from SmoothQuant for Linear and "
-                + "one iter calibration for other ops."
-            )
-
+        if self.version.release <= Version("2.1.0").release:
+            # real calibration for other operators
+            try:
+                # IPEX may raise an error on the second iteration.
+                # OverflowError: cannot convert float infinity to integer
+                if q_func is not None:
+                    q_func(model._model)
+                else:
+                    iterations = tune_cfg.get("calib_iteration", 1)
+                    self.model_calibration(
+                        model._model, dataloader, iterations, None, tune_cfg.get("calib_sampling_size", 1)
+                    )
+            except:
+                logger.warning(
+                    "The calibration failed when calibrating with ipex, "
+                    + "using scale info from SmoothQuant for Linear and "
+                    + "one iter calibration for other ops."
+                    )
         model._model.save_qconf_summary(qconf_summary=self.ipex_config_path)
         self._ipex_post_quant_process(model, q_model, dataloader, inplace=inplace)
 
