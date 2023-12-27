@@ -800,7 +800,6 @@ if USE_DEEPSPEED:
 
 def safe_get_shape(param):
     if USE_DEEPSPEED:
-        # logger.info(f"[safe_get_shape][original shape is {param.ds_shape}, return shape is {param.ds_tensor.shape}]")
         # param.ds_tensor is the partitioned tensor
         return param.ds_tensor.shape
     else:
