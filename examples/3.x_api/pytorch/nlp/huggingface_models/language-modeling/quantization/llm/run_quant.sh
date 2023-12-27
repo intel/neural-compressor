@@ -107,10 +107,9 @@ function run_tuning {
         --accuracy \
         --approach ${approach} \
         --output_dir ${tuned_checkpoint} \
-        --task ${task} \
+        --tasks "lambada_openai" \
         --batch_size ${batch_size} \
-        ${extra_cmd} ${mode_cmd}
-
+        ${extra_cmd}
 }
 
 main "$@"
