@@ -793,6 +793,7 @@ if USE_DEEPSPEED:
     assert check_deepspeed_version()
     
 
+
 def safe_get_shape(param):
     if USE_DEEPSPEED:
         #logger.info(f"[safe_get_shape][original shape is {param.ds_shape}, return shape is {param.ds_tensor.shape}]")
@@ -805,6 +806,7 @@ def safe_get_shape(param):
 def safe_get_data(param):
     if USE_DEEPSPEED:
         from deepspeed.utils import safe_get_local_fp32_param
+
         return safe_get_local_fp32_param(param)
     else:
         return param.data
@@ -822,6 +824,7 @@ def safe_get_grad(param):
 def safe_set_data(param, new_val):
     if USE_DEEPSPEED:
         from deepspeed.utils import safe_set_local_fp32_param
+
         safe_set_local_fp32_param(new_val, param)
     else:
         param.data = new_val
