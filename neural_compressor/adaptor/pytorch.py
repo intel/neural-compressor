@@ -3382,7 +3382,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                     "The calibration failed when calibrating with ipex, "
                     + "using scale info from SmoothQuant for Linear and "
                     + "one iter calibration for other ops."
-                    )
+                )
         model._model.save_qconf_summary(qconf_summary=self.ipex_config_path)
         self._ipex_post_quant_process(model, q_model, dataloader, inplace=inplace)
 
