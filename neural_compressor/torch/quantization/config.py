@@ -31,7 +31,6 @@ from neural_compressor.common.utility import (
     OP_NAME_OR_MODULE_TYPE,
     RTN_WEIGHT_ONLY_QUANT,
 )
-from neural_compressor.torch.constant import DOUBLE_QUANT_CONFIGS
 from neural_compressor.torch.utils import is_hpex_avaliable, logger
 
 FRAMEWORK_NAME = "torch"
@@ -121,16 +120,7 @@ class RTNWeightQuantConfig(BaseConfig):
         self.group_dim = group_dim
         self.return_int = return_int
         self.double_quant_config = double_quant_config
-        self.init_double_quant_config()
         self._post_init()
-
-    def init_double_quant_config(self):
-        if self.double_quant_config is not None:
-            assert self.double_quant_config in DOUBLE_QUANT_CONFIGS, "Supported double quant configs: {}".format(
-                list(DOUBLE_QUANT_CONFIGS.keys())
-            )
-            for k, v in DOUBLE_QUANT_CONFIGS[self.double_quant_config].items():
-                setattr(self, k, v)
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)
@@ -151,10 +141,7 @@ class RTNWeightQuantConfig(BaseConfig):
             enable_full_range=[False, True],
             enable_mse_search=[False, True],
             group_dim=[1, 0],
-            # double_quant_bits=[4, 1, 2, 3, 5, 6, 7, 8],
-            # double_quant_dtype=["int", "int8", "int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"],
-            # double_quant_sym=[True, False],
-            # double_quant_group_size=[32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024],
+            double_quant_config=["GGML_TYPE_Q4_K", "BNB"]
         )
         operators = [torch.nn.Linear, torch.nn.functional.linear]
         supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT))
@@ -263,17 +250,7 @@ class GPTQConfig(BaseConfig):
         self.device = device
         self.return_int = return_int
         self.double_quant_config = double_quant_config
-        self.init_double_quant_config()
         self._post_init()
-
-    def init_double_quant_config(self):
-        # import pdb; pdb.set_trace()
-        if self.double_quant_config is not None:
-            assert self.double_quant_config in DOUBLE_QUANT_CONFIGS, "Supported double quant configs: {}".format(
-                list(DOUBLE_QUANT_CONFIGS.keys())
-            )
-            for k, v in DOUBLE_QUANT_CONFIGS[self.double_quant_config].items():
-                setattr(self, k, v)
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)

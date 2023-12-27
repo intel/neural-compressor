@@ -108,6 +108,14 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
     logger.debug(f"Get model info: {filter_result}")
     return filter_result
 
+def get_double_quant_config(double_quant_type):
+    from neural_compressor.torch.constant import DOUBLE_QUANT_CONFIGS
+    if double_quant_type is None:
+        return {}
+    assert double_quant_type in DOUBLE_QUANT_CONFIGS, "Supported double quant configs: {}".format(
+        list(DOUBLE_QUANT_CONFIGS.keys())
+    )
+    return DOUBLE_QUANT_CONFIGS[double_quant_type]
 
 # pylint:disable=import-error
 try:

@@ -10,4 +10,4 @@ einops
 neural-compressor
 intel-extension-for-transformers
 git+https://github.com/EleutherAI/lm-evaluation-harness.git@cc9778fbe4fa1a709be2abed9deb6180fd40e7e2
-perf
+peft
