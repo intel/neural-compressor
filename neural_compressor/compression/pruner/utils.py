@@ -550,7 +550,6 @@ def parse_to_prune(config, model):
         config: A string representing the path to the configuration file.
         model: The model to be pruned.
     """
-    # import pdb; pdb.set_trace()
     modules = {}
     # additional function: exclude last layer (often a classifier head and not suitable to be pruned)
     classifier_head_name = parse_last_linear(model)

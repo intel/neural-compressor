@@ -160,7 +160,9 @@ class PytorchPatternNInM(PytorchBasePattern):
         elif len(data.shape) == 1:
             data = data.reshape(-1, FLATTEN_DIM2)
         else:
-            raise NotImplementedError(f"Currently only support 1,3,4 reshape, but got shape {data.shape}")
+            raise NotImplementedError(
+                f"Currently only support reshape data with 1,3,4-dims, but got shape {data.shape}"
+            )
         return data
 
     def _reshape_2dims_to_orig(self, data, orig_shape):
@@ -184,7 +186,9 @@ class PytorchPatternNInM(PytorchBasePattern):
         elif len(orig_shape) == 1:
             data = data.reshape(orig_shape)
         else:
-            raise NotImplementedError(f"Currently only support 1,3,4 reshape, but got shape {data.shape}")
+            raise NotImplementedError(
+                f"Currently only support reshape data with 1,3,4-dims, but got shape {data.shape}"
+            )
         return data
 
     def reshape_orig_to_pattern(self, data, key):
