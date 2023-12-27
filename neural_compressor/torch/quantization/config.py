@@ -141,7 +141,7 @@ class RTNWeightQuantConfig(BaseConfig):
             enable_full_range=[False, True],
             enable_mse_search=[False, True],
             group_dim=[1, 0],
-            double_quant_type=["GGML_TYPE_Q4_K", "BNB"]
+            double_quant_type=["GGML_TYPE_Q4_K", "BNB"],
         )
         operators = [torch.nn.Linear, torch.nn.functional.linear]
         supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT))

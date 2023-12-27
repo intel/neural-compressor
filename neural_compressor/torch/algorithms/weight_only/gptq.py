@@ -30,8 +30,8 @@ import torch.nn as nn
 import transformers
 from tqdm import tqdm
 
-from neural_compressor.torch.utils import get_double_quant_config
 from neural_compressor.common.logger import Logger
+from neural_compressor.torch.utils import get_double_quant_config
 
 logger = Logger().get_logger()
 
