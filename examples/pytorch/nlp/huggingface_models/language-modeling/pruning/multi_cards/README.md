@@ -180,7 +180,7 @@ with the contents of `config/zero_stage3_config.json` being:
 
 ```
 # 2 gpu cards example
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=0,1  USE_DEEPSPEED=1
 bash run_ds_z3.sh \
     --model_name_or_path=facebook/opt-125m \
     --dataset_name=NeelNanda/pile-10k \
