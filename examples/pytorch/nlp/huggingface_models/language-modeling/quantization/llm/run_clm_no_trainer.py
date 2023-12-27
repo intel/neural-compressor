@@ -50,7 +50,8 @@ parser.add_argument("--pad_max_length", default=512, type=int,
                     help="Pad input ids to max length.")
 parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
-parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa", "wikitext"],
+parser.add_argument("--tasks", nargs='+', default=["lambada_openai",
+                                                   "hellaswag", "winogrande", "piqa", "wikitext"],
                     type=str, help="tasks list for accuracy validation, text-generation and code-generation tasks are different.")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
@@ -378,10 +379,12 @@ if args.accuracy:
         user_model = torch.load(os.path.join(args.output_dir, "gptq_best_model.pt"))
     if args.code_generation:
         from intel_extension_for_transformers.llm.evaluation.lm_code_eval import evaluate
+        from transformers import AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(args.model)
         results = evaluate(
             model=user_model,
             tokenizer=tokenizer,
-            tasks=args.tasks,
+            tasks=",".join(args.tasks),
             batch_size=args.batch_size,
             args=args,
         )
