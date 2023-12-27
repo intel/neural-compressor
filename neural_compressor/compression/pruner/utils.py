@@ -795,7 +795,7 @@ def check_deepspeed_version():
 USE_DEEPSPEED = os.environ.get("USE_DEEPSPEED", False)
 if USE_DEEPSPEED:
     assert is_deepspeed_available(), "Deepspeed is required: `pip install deepspeed>0.12.4"
-    assert check_deepspeed_version()
+    check_deepspeed_version()
 
 
 def safe_get_shape(param):
