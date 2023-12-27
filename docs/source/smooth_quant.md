@@ -280,7 +280,7 @@ For most of the models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced 
 
 SmoothQuant method aims to split the quantization difficulty of weight and activation by using a fixed-value $\alpha$ for an entire model. However, as the distributions of activation outliers vary not only across different models but also across different layers within a model, we hereby propose a method to obtain layer-wise optimal $\alpha$ values with the ability to tune automatically.
 Currently, both layer-wise and block-wise auto-tuning methods are supported and the default option is layer-wise.
-In block-wise auto-tuning, layers within one block (e.g an OPTDecoderLayer) would share the same alpha value; users could set *'do_blockwise': True* in *auto_alpha_args* to enable it.
+In block-wise auto-tuning, layers within one block (e.g an OPTDecoderLayer) would share the same alpha value; users could set *'enable_blockwise_loss': True* in *auto_alpha_args* to enable it.
 
 Our proposed method consists of 8 major steps:
 
@@ -433,13 +433,13 @@ Here is an example:
 
 ```python
 recipes = {"smooth_quant": True, 
-    "default_alpha": 0.7, # Baseline alpha-value for auto-tuning.
     "smooth_quant_args": {"alpha": 'auto', "auto_alpha_args": {
+        "init_alpha": 0.7, # Baseline alpha-value for auto-tuning.
         "alpha_min": 0.0, # min value of auto-tuning alpha search space
         "alpha_max": 1.0, # max value of auto-tuning alpha search space
         "alpha_step": 0.1, # step_size of auto-tuning alpha search space
         "shared_criterion": "mean", # Criterion for input LayerNorm op of a transformer block.
-        "do_blockwise": False, # Whether to enable block-wise auto-tuning.
+        "enable_blockwise_loss": False, # Whether to enable block-wise auto-tuning.
         }
     }
 }

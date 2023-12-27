@@ -955,16 +955,14 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             sq_algo.auto_alpha_args = smooth_quant_args.get(
                 "auto_alpha_args",
                 {
+                    "init_alpha": 0.5,
                     "alpha_min": 0.0,
                     "alpha_max": 1.0,
                     "alpha_step": 0.1,
                     "shared_criterion": "mean",
-                    "do_blockwise": False,
+                    "enable_blockwise_loss": False,
                 },
-            )  # default alpha search space parameters. By default, do_blockwise is set to False.
-            sq_algo.default_alpha = smooth_quant_args.get(
-                "default_alpha", 0.5
-            )  # default value for alpha in auto-tuning
+            )  # default alpha search space parameters. By default, enable_blockwise_loss is set to False.
             logger.debug(f"Set smooth quant with alpha {sq_algo.alpha} as the pre-tuning algo.")
             algo_scheduler.append_algorithm("pre_quantization", sq_algo)
 

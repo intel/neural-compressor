@@ -265,7 +265,7 @@ class WrapperLayer(torch.nn.Module):
         self.weight_scale = None
         self.input_scale = None
         self.save_q_input = save_q_input
-        self.do_blockwise = False
+        self.enable_blockwise_loss = False
 
     def enable_quant(self):
         self.quant = True
@@ -307,7 +307,7 @@ class WrapperLayer(torch.nn.Module):
             # self.q_input = x * scale ##save the q_input
             if self.save_q_input:
                 self.q_input = x
-            if not self.do_blockwise:
+            if not self.enable_blockwise_loss:
                 output = self.q_dq_forward(x, self.input_scale, self.weight_scale)
             else:
                 output = self.q_dq_forward_blockwise(x, self.input_scale)
@@ -362,12 +362,12 @@ class TorchSmoothQuant:
         self.absorb_to_layer = {}
         self.adjust_alpha_space = False
         self.weight_clip = True
-        self.default_alpha = 0.5
+        self.init_alpha = 0.5
 
         self._save_scale = False
         self.weight_scale_dict = {}
 
-        self.do_blockwise = False
+        self.enable_blockwise_loss = False
         self.block_inputs = {}
         self.block_outputs = {}
 
@@ -819,7 +819,7 @@ class TorchSmoothQuant:
         self._change_qdq_for_auto(enable=False)
         module_names = self._get_sq_layer_names()
 
-        if self.do_blockwise:
+        if self.enable_blockwise_loss:
             block_modules = {}
             for key in self.block_names:
                 block_modules[key] = get_module(self.model, key)
@@ -828,7 +828,7 @@ class TorchSmoothQuant:
         forward_wrapper(self.model, input, self.device)  ##disable quant and get fp32 output
 
         fp32_output = {}
-        if not self.do_blockwise:
+        if not self.enable_blockwise_loss:
             for name in module_names:
                 module = get_module(self.model, name)
                 fp32_output[name] = module.output
@@ -851,7 +851,7 @@ class TorchSmoothQuant:
             del mod
 
         loss_alphas = {}
-        if not self.do_blockwise:
+        if not self.enable_blockwise_loss:
             for name in module_names:
                 module = get_module(self.model, name)
                 loss = self._get_auto_loss(fp32_output[name], module.output)
@@ -874,7 +874,7 @@ class TorchSmoothQuant:
         for alpha in alpha_space:
             absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes, alpha, tuning=True)
             self._update_scales_for_auto(absorb_input_scales, weight_scales)
-            if not self.do_blockwise:
+            if not self.enable_blockwise_loss:
                 for name in module_names:
                     losses = loss_alphas[name]
                     if str(alpha) in losses.keys():
@@ -900,7 +900,7 @@ class TorchSmoothQuant:
                             module_copy.orig_layer.weight *= module.weight_scale
                         q_dq_weight = quant_dequant_w(module_copy.orig_layer)
                         module_copy.orig_layer.weight.data.copy_(q_dq_weight)
-                        module_copy.do_blockwise = True
+                        module_copy.enable_blockwise_loss = True
                         if not (name == block_name and len(self.block_to_module[block_name]) == 1):
                             set_module(block_copy, name, module_copy)
                     try:
@@ -962,7 +962,7 @@ class TorchSmoothQuant:
         alpha_max=0.7,
         alpha_step=0.05,
         shared_criterion="min",
-        do_blockwise=False,
+        enable_blockwise_loss=False,
     ):
         """Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
 
@@ -985,12 +985,12 @@ class TorchSmoothQuant:
         ##wrapper new module
         self._qdq_model_wrapper_for_auto(save_q_input=True)
         ##set alpha to 0.5 as default
-        default_alpha = alpha_space[len(alpha_space) // 2]
+        init_alpha = alpha_space[len(alpha_space) // 2]
         if 0.5 in alpha_space:
-            default_alpha = 0.5
-        default_alpha = self.default_alpha
+            init_alpha = 0.5
+        init_alpha = self.init_alpha
         absorb_input_scales, weight_scales = self._cal_scales(
-            self.absorb_to_layer, input_maxes, default_alpha, tuning=True
+            self.absorb_to_layer, input_maxes, init_alpha, tuning=True
         )
         self._update_scales_for_auto(absorb_input_scales, weight_scales)
         total_cnt = 0
@@ -1001,7 +1001,7 @@ class TorchSmoothQuant:
         multiply_factor = calib_sample_num // tune_cnt if calib_sample_num >= tune_cnt else calib_sample_num
         self.fp32_output_val = {}
 
-        best_alphas = default_alpha
+        best_alphas = init_alpha
         if not self.dataloader:
             logger.info(f"Auto-tuning failed due to no dataloader, using {best_alphas} instead.")
             self._qdq_model_unwrapper_for_auto()
@@ -1018,7 +1018,7 @@ class TorchSmoothQuant:
                             best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
                 loss_tmp = self._get_one_batch_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
-                if self.do_blockwise:
+                if self.enable_blockwise_loss:
                     if loss_alphas == {}:
                         for block_name in self.block_names:
                             for key in self.block_to_module[block_name]:
@@ -1064,7 +1064,7 @@ class TorchSmoothQuant:
                             best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
                 loss_tmp = self._get_one_batch_auto_loss(input, alpha_space, best_alphas_per_module, input_maxes)
-                if self.do_blockwise:
+                if self.enable_blockwise_loss:
                     if loss_alphas == {}:
                         for block_name in self.block_names:
                             for key in self.block_to_module[block_name]:
@@ -1143,14 +1143,14 @@ class TorchSmoothQuant:
         scales_per_op=False,
         calib_iter=100,
         auto_alpha_args={
+            "init_alpha": 0.5,
             "alpha_min": 0.0,
             "alpha_max": 1.0,
             "alpha_step": 0.1,
             "shared_criterion": "mean",
-            "do_blockwise": False,
+            "enable_blockwise_loss": False,
         },
         weight_clip=True,
-        default_alpha=0.5,
     ):
         """The main entry of smooth quant
         :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
@@ -1164,16 +1164,18 @@ class TorchSmoothQuant:
 
         :param auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
             By default the search space is 0.0-1.0 with step_size 0.1.
-            do_blockwise: Whether to do blockwise auto-tuning.
-        :param default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
+            enable_blockwise_loss: Whether to do blockwise auto-tuning.
+            :param init_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
         :return: A FP32 model with the same architecture as the orig model but with different weight which will be
         benefit to quantization.
         """
         if isinstance(auto_alpha_args, dict):
-            self.do_blockwise = auto_alpha_args.get("do_blockwise", False)
+            self.enable_blockwise_loss = auto_alpha_args.get("enable_blockwise_loss", False)
+            self.init_alpha = auto_alpha_args.get("init_alpha", 0.5)
         else:
-            self.do_blockwise = False
-        if self.do_blockwise:
+            self.enable_blockwise_loss = False
+            self.init_alpha = 0.5
+        if self.enable_blockwise_loss:
             self.block_names = self.get_blocks()
             logger.info("Blockwise auto-tuning will be performed")
         if not isinstance(self.model, torch.nn.Module):
@@ -1190,7 +1192,6 @@ class TorchSmoothQuant:
             alpha = numpy.clip(alpha, 0.0, 1.0)
 
         self.weight_clip = weight_clip
-        self.default_alpha = default_alpha
         self.auto_alpha_args = auto_alpha_args
         self.recover()
         need_calibration = self._check_need_calibration(alpha, percentile, op_types, scales_per_op, calib_iter)
@@ -1232,7 +1233,7 @@ class TorchSmoothQuant:
                     )
                     return self.model
 
-                if self.do_blockwise:
+                if self.enable_blockwise_loss:
                     module_names = self._get_sq_layer_names()
                     block_names, self.block_to_module = self.block_names, {}
                     for block in block_names:

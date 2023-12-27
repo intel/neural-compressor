@@ -54,7 +54,6 @@ class SmoothQuant(Algorithm):
         self.tune_cfg = None
         self.weight_clip = None
         self.auto_alpha_args = None
-        self.default_alpha = None
 
     def __call__(self, origin_model, q_model, adaptor, dataloader, calib_iter):
         """Return the processed model via SmoothQuant algorithm.
@@ -85,7 +84,6 @@ class SmoothQuant(Algorithm):
         kwargs["record_max_info"] = True
         kwargs["weight_clip"] = self.weight_clip
         kwargs["auto_alpha_args"] = self.auto_alpha_args
-        kwargs["default_alpha"] = self.default_alpha
         q_model = adaptor.smooth_quant(
             origin_model,
             dataloader,

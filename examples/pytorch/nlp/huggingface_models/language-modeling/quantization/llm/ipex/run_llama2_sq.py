@@ -213,13 +213,15 @@ excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
 op_type_dict = {"add": {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}}
 recipes = {}
 if args.sq_recipes == "llama2-7b":
-    recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': 'auto', 'folding': False, 'default_alpha': 0.8,
-                                                           'auto_alpha_args': {"alpha_min": 0.8, "alpha_max": 0.99,
+    recipes = {"smooth_quant": True, "smooth_quant_args": {"alpha": "auto", "folding": False, 
+                                                           "auto_alpha_args": {"init_alpha": 0.8,
+                                                                               "alpha_min": 0.8, "alpha_max": 0.99,
                                                                                "alpha_step": 0.01,
                                                                                "shared_criterion": "mean"}}}
 elif args.sq_recipes == "llama2-13b":
-    recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': 'auto', 'folding': False, 'default_alpha': 0.8,
-                                                        'auto_alpha_args': {"alpha_min": 0.75, "alpha_max": 0.99,
+    recipes = {"smooth_quant": True, "smooth_quant_args": {"alpha": "auto", "folding": False,
+                                                        "auto_alpha_args": {"init_alpha": 0.8,
+                                                                            "alpha_min": 0.75, "alpha_max": 0.99,
                                                                             "alpha_step": 0.01,
                                                                             "shared_criterion": "max"}}}
 

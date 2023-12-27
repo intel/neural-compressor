@@ -1537,10 +1537,15 @@ class TestInputConfig(unittest.TestCase):
             alpha="auto",
             calib_iter=1,
             folding=False,
-            auto_alpha_args={"alpha_min": 0.5, "alpha_max": 0.9, "alpha_step": 0.1, "shared_criterion": "mean"},
-            default_alpha=0.7,
+            auto_alpha_args={
+                "init_alpha": 0.7,
+                "alpha_min": 0.5,
+                "alpha_max": 0.9,
+                "alpha_step": 0.1,
+                "shared_criterion": "mean",
+            },
         )
-        assert sq.default_alpha == 0.7
+        assert sq.init_alpha == 0.7
         assert sq.auto_alpha_args["alpha_min"] == 0.5
 
 
@@ -1561,7 +1566,7 @@ class TestAlphaAutoLinearBlockwise(unittest.TestCase):
                 "alpha_max": 0.55,
                 "alpha_step": 0.01,
                 "shared_criterion": "mean",
-                "do_blockwise": True,
+                "enable_blockwise_loss": True,
             },
         )
         for i in range(12):
