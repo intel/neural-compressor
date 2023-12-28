@@ -176,7 +176,7 @@ class TestQuantizationConfig(unittest.TestCase):
 
     def test_config_white_lst2(self):
         from neural_compressor.torch import RTNWeightQuantConfig
-        from neural_compressor.torch.utils import get_model_info
+        from neural_compressor.torch.utils.utility import get_model_info
 
         global_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4")
         # set operator instance
@@ -297,7 +297,7 @@ class TestQuantizationConfig(unittest.TestCase):
 
     def test_config_mapping(self):
         from neural_compressor.torch import RTNWeightQuantConfig
-        from neural_compressor.torch.utils import get_model_info
+        from neural_compressor.torch.utils.utility import get_model_info
 
         quant_config = RTNWeightQuantConfig(weight_bits=4, weight_dtype="nf4")
         # set operator instance
