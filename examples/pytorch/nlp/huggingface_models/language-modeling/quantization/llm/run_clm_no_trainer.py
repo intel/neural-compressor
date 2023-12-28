@@ -52,7 +52,7 @@ parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
 parser.add_argument("--tasks", nargs='+', default=["lambada_openai",
                                                    "hellaswag", "winogrande", "piqa", "wikitext"],
-                    type=str, help="tasks list for accuracy validation")
+                    type=str, help="tasks list for accuracy validation, text-generation and code-generation tasks are different.")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
 parser.add_argument("--sq", action="store_true")
@@ -78,7 +78,40 @@ parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calib
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
 parser.add_argument('--gptq_debug', action='store_true', help='Whether to use debug model ')
-# =======================================
+# ==============code generation args===========
+parser.add_argument("--code_generation", action="store_true")
+parser.add_argument("--n_samples", default=200, type=int)
+parser.add_argument(
+    "--limit", default=None, type=int, help="Limit number of samples to eval"
+)
+parser.add_argument("--allow_code_execution", action="store_true")
+parser.add_argument("--prefix", default="")
+parser.add_argument("--generation_only", action="store_true")
+parser.add_argument("--postprocess", action="store_false")
+parser.add_argument("--save_references", action="store_true")
+parser.add_argument("--save_generations", action="store_true")
+parser.add_argument("--instruction_tokens", default=None)
+parser.add_argument("--save_generations_path", default="generations.json")
+parser.add_argument("--load_generations_path", default=None)
+parser.add_argument("--metric_output_path", default="evaluation_results.json")
+parser.add_argument("--max_length_generation", default=512, type=int)
+parser.add_argument("--temperature", default=0.8, type=float)
+parser.add_argument("--top_p", default=0.8, type=float)
+parser.add_argument("--top_k", default=0, type=int)
+parser.add_argument("--do_sample", action="store_true")
+parser.add_argument("--check_references", action="store_true")
+parser.add_argument("--max_memory_per_gpu", type=str, default=None)
+parser.add_argument(
+    "--modeltype",
+    default="causal",
+    help="AutoModel to use, it can be causal or seq2seq",
+)
+parser.add_argument(
+    "--limit_start",
+    type=int,
+    default=0,
+    help="Optional offset to start from when limiting the number of samples",
+)
 
 args = parser.parse_args()
 if args.ipex:
@@ -262,7 +295,7 @@ if args.quantize:
         if args.gptq_debug:
             from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
 
-            conf = {
+            gptq_conf = {
                 ".*": {
                     'wbits': args.woq_bits,  # 1-8 bits
                     'group_size': args.woq_group_size,  # -1 (per-channel)
@@ -272,20 +305,16 @@ if args.quantize:
             }
             q_model_gptq_debug, gptq_config = gptq_quantize(
                 user_model,
-                weight_config=conf,
+                weight_config=gptq_conf,
                 dataloader=calib_dataloader,
                 nsamples=args.gptq_nsamples,
                 use_max_length=args.gptq_use_max_length,
-                pad_max_length=args.gptq_pad_max_length
+                pad_max_length=args.gptq_pad_max_length,
             )
-            from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
 
-            results = evaluate(
-                model="hf-causal",
-                model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
-                user_model=q_model_gptq_debug, tasks=["lambada_openai"],
-                batch_size=4
-            )
+            # save the fake quantized model
+            os.makedirs(args.output_dir, exist_ok=True)
+            torch.save(q_model_gptq_debug, os.path.join(args.output_dir, "gptq_best_model.pt"))
             exit(0)
 
     else:
@@ -317,7 +346,6 @@ if args.quantize:
             eval_dataset = load_dataset('lambada', split='validation')
             evaluator = Evaluator(eval_dataset, tokenizer)
 
-
             def eval_func(model):
                 acc = evaluator.evaluate(model)
                 return acc
@@ -347,15 +375,29 @@ else:
 
 if args.accuracy:
     user_model.eval()
-    from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
+    if args.gptq_debug:
+        user_model = torch.load(os.path.join(args.output_dir, "gptq_best_model.pt"))
+    if args.code_generation:
+        from intel_extension_for_transformers.llm.evaluation.lm_code_eval import evaluate
+        from transformers import AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(args.model)
+        results = evaluate(
+            model=user_model,
+            tokenizer=tokenizer,
+            tasks=",".join(args.tasks),
+            batch_size=args.batch_size,
+            args=args,
+        )
+    else:
+        from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
+        results = evaluate(
+            model="hf-causal",
+            model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+            user_model=user_model,
+            batch_size=args.batch_size,
+            tasks=args.tasks,
+        )
 
-    results = evaluate(
-        model="hf-causal",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
-        user_model=user_model,
-        batch_size=args.batch_size,
-        tasks=args.tasks,
-    )
     dumped = json.dumps(results, indent=2)
     if args.save_accuracy_path:
         with open(args.save_accuracy_path, "w") as f:
