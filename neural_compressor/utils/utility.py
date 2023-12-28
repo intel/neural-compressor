@@ -276,7 +276,7 @@ class CpuInfo(object):
         cmd = "cat /proc/cpuinfo | grep 'physical id' | sort -u | wc -l"
         if psutil.WINDOWS:
             cmd = r'wmic cpu get DeviceID | C:\Windows\System32\find.exe /C "CPU"'
-        elif psutil.MACOS:
+        elif psutil.MACOS:  # pragma: no cover
             cmd = "sysctl -n machdep.cpu.core_count"
 
         with subprocess.Popen(
@@ -920,7 +920,7 @@ def get_number_of_sockets() -> int:
     cmd = "cat /proc/cpuinfo | grep 'physical id' | sort -u | wc -l"
     if sys.platform == "win32":
         cmd = 'wmic cpu get DeviceID | find /c "CPU"'
-    elif sys.platform == "darwin":
+    elif sys.platform == "darwin":  # pragma: no cover
         cmd = "sysctl -n machdep.cpu.core_count"
 
     proc = subprocess.Popen(
