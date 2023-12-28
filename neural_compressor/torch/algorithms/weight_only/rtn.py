@@ -23,7 +23,7 @@ import torch
 from torch.nn import functional as F
 
 from neural_compressor.common.logger import DEBUG, Logger, level
-from neural_compressor.torch.utils import get_double_quant_config, set_module
+from neural_compressor.torch.utils import set_module
 
 logger = Logger().get_logger()
 
@@ -593,8 +593,10 @@ def apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeightQ
     scheme = "sym" if quant_config.weight_sym else "asym"
     group_size = quant_config.weight_group_size
     return_int = quant_config.return_int
-    double_quant_config = get_double_quant_config(quant_config.double_quant_type)
-
+    double_quant_dtype = quant_config.double_quant_dtype
+    double_quant_num_bits = quant_config.double_quant_bits
+    double_quant_scheme = "sym" if quant_config.double_quant_sym else "asym"
+    double_quant_group_size = quant_config.double_quant_group_size
     return rtn_quantize(
         module,
         num_bits,
@@ -605,5 +607,8 @@ def apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeightQ
         enable_full_range=enable_full_range,
         enable_mse_search=enable_mse_search,
         group_dim=group_dim,
-        **double_quant_config,
+        double_quant_dtype=double_quant_dtype,
+        double_quant_scheme=double_quant_scheme,
+        double_quant_num_bits=double_quant_num_bits,
+        double_quant_group_size=double_quant_group_size,
     )

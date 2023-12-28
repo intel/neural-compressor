@@ -31,7 +31,6 @@ import transformers
 from tqdm import tqdm
 
 from neural_compressor.common.logger import Logger
-from neural_compressor.torch.utils import get_double_quant_config
 
 logger = Logger().get_logger()
 
@@ -931,9 +930,11 @@ def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig])
                 "act_order": op_config.act_order,
                 "block_size": op_config.block_size,
                 "mse": op_config.enable_mse_search,
+                "double_quant_dtype": op_config.double_quant_dtype,
+                "double_quant_bits": op_config.double_quant_bits,
+                "double_quant_group_size": op_config.double_quant_group_size,
+                "double_quant_sym": op_config.double_quant_sym,
             }
-            double_quant_config = get_double_quant_config(op_config.double_quant_type)
-            weight_config[op_name].update(double_quant_config)
             nsamples = op_config.nsamples
             dataloader_len = op_config.dataloader_len
             use_max_length = op_config.use_max_length
