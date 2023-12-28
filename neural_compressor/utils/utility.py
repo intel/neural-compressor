@@ -921,7 +921,7 @@ def get_number_of_sockets() -> int:
     if sys.platform == "win32":
         cmd = 'wmic cpu get DeviceID | find /c "CPU"'
     elif sys.platform == "darwin":
-        cmd = 'sysctl -n machdep.cpu.core_count'
+        cmd = "sysctl -n machdep.cpu.core_count"
 
     proc = subprocess.Popen(
         args=cmd,
