@@ -276,6 +276,8 @@ class CpuInfo(object):
         cmd = "lscpu | grep 'Socket(s)' | cut -d ':' -f 2"
         if psutil.WINDOWS:
             cmd = r'wmic cpu get DeviceID | C:\Windows\System32\find.exe /C "CPU"'
+        elif psutil.MACOS:
+            cmd = "sysctl -n machdep.cpu.core_count"
 
         with subprocess.Popen(
             args=cmd,
@@ -918,6 +920,8 @@ def get_number_of_sockets() -> int:
     cmd = "lscpu | grep 'Socket(s)' | cut -d ':' -f 2"
     if sys.platform == "win32":
         cmd = 'wmic cpu get DeviceID | find /c "CPU"'
+    elif sys.platform == "darwin":
+        cmd = 'sysctl -n machdep.cpu.core_count'
 
     proc = subprocess.Popen(
         args=cmd,
