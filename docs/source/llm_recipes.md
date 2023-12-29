@@ -1,4 +1,4 @@
-LLM Quantization Models and Recipes
+LLMs Quantization Recipes
 ---
 
 Intel® Neural Compressor supported advanced large language models (LLMs) quantization technologies including SmoothQuant (SQ) and Weight-Only Quant (WOQ), 
@@ -21,7 +21,7 @@ This document aims to publish the specific recipes we achieved for the popular L
 | meta-llama/Llama-2-70b-hf |    ✔    |    ✔     |    ✔    |
 |     tiiuae/falcon-40b     |    ✔    |    ✔     |    ✔    |
  
-**Detail recipes can be found [HERE](https://github.com/intel/intel-extension-for-transformers/examples/huggingface/pytorch/text-generation/quantization/llm_quantization_recipes.md).**
+**Detail recipes can be found [HERE](https://github.com/intel/intel-extension-for-transformers/blob/main/examples/huggingface/pytorch/text-generation/quantization/llm_quantization_recipes.md).**
 > Notes: 
 > - This model list comes from [IPEX](https://intel.github.io/intel-extension-for-pytorch/cpu/latest/tutorials/llm.html).  
 > - WOQ INT4 recipes will be published soon.    
