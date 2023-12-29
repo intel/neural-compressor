@@ -93,13 +93,9 @@ class TestQuantizationConfig(unittest.TestCase):
 
         fp32_model = copy.deepcopy(self.gptj)
         # llama.cpp GGML_TYPE_Q4_K setting
-        quant_config = RTNWeightQuantConfig(
-            weight_bits=4,
-            weight_dtype="int",
-            weight_sym=False,
-            weight_group_size=32,
-            double_quant_type="GGML_TYPE_Q4_K",
-        )
+        from neural_compressor.torch.utils.utility import get_double_quant_config
+        double_quant_config_dict = get_double_quant_config("GGML_TYPE_Q4_K", weight_sym=False)
+        quant_config = RTNWeightQuantConfig.from_dict(double_quant_config_dict)
         quant_config.set_local("lm_head", fp32_config)
         qmodel = quantize(fp32_model, quant_config)
         out3 = qmodel(self.lm_input)
@@ -118,12 +114,8 @@ class TestQuantizationConfig(unittest.TestCase):
 
         fp32_model = copy.deepcopy(self.gptj)
         # bitsandbytes double quant setting
-        quant_config = RTNWeightQuantConfig(
-            weight_bits=4,
-            weight_dtype="nf4",
-            weight_group_size=32,
-            double_quant_type="BNB",
-        )
+        double_quant_config_dict = get_double_quant_config("BNB")
+        quant_config = RTNWeightQuantConfig.from_dict(double_quant_config_dict)
         quant_config.set_local("lm_head", fp32_config)
         qmodel = quantize(fp32_model, quant_config)
         out5 = qmodel(self.lm_input)
@@ -268,7 +260,7 @@ class TestQuantizationConfig(unittest.TestCase):
             },
         }
         q_config = RTNWeightQuantConfig.from_dict(quant_config1["rtn_weight_only_quant"])
-        d_config = GPTQConfig()
+        d_config = GPTQConfig(double_quant_bits=4)
         combined_config = q_config + d_config
         combined_config_d = combined_config.to_dict()
         logger.info(combined_config)
@@ -286,7 +278,7 @@ class TestQuantizationConfig(unittest.TestCase):
             },
         }
         q_config = RTNWeightQuantConfig.from_dict(quant_config1["rtn_weight_only_quant"])
-        d_config = GPTQConfig()
+        d_config = GPTQConfig(double_quant_bits=4)
         combined_config = q_config + d_config
         combined_config_d = combined_config.to_dict()
         logger.info(combined_config)

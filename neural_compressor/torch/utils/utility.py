@@ -109,7 +109,7 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
     return filter_result
 
 
-def get_double_quant_config(double_quant_type):
+def get_double_quant_config(double_quant_type, weight_sym=True):
     from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
 
     if double_quant_type is None:
@@ -117,6 +117,7 @@ def get_double_quant_config(double_quant_type):
     assert double_quant_type in DOUBLE_QUANT_CONFIGS, "Supported double quant configs: {}".format(
         list(DOUBLE_QUANT_CONFIGS.keys())
     )
+    DOUBLE_QUANT_CONFIGS[double_quant_type]["weight_sym"] = weight_sym
     return DOUBLE_QUANT_CONFIGS[double_quant_type]
 
 
