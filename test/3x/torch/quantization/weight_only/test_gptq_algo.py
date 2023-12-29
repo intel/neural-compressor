@@ -142,15 +142,10 @@ class TestGPTQ(unittest.TestCase):
 
         # llama.cpp GGML_TYPE_Q4_K setting
         fp32_model = copy.deepcopy(model)
-        quant_config = GPTQConfig(
-            weight_dtype="int",
-            weight_bits=4,
-            weight_group_size=32,
-            weight_sym=True,
-            dataloader_len=len(dataloader_for_calibration),
-            pad_max_length=512,
-            double_quant_type="GGML_TYPE_Q4_K",
-        )
+        from neural_compressor.torch.utils.utility import get_double_quant_config
+        double_quant_config_dict = get_double_quant_config("GGML_TYPE_Q4_K")
+        double_quant_config_dict.update({"dataloader_len": len(dataloader_for_calibration), "pad_max_length": 512})
+        quant_config = GPTQConfig.from_dict(double_quant_config_dict)
         quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
         logger.info(f"Test GPTQ with config {quant_config}")
         q_model = quantize(
@@ -161,15 +156,12 @@ class TestGPTQ(unittest.TestCase):
 
         # bitsandbytes double quant setting
         fp32_model = copy.deepcopy(model)
-        quant_config = GPTQConfig(
-            weight_dtype="nf4",
-            weight_bits=4,
-            weight_group_size=32,
-            weight_sym=True,
-            dataloader_len=len(dataloader_for_calibration),
-            pad_max_length=512,
-            double_quant_type="BNB",
-        )
+
+        from neural_compressor.torch.utils.utility import get_double_quant_config
+        double_quant_config_dict = get_double_quant_config("BNB")
+        double_quant_config_dict.update({"dataloader_len": len(dataloader_for_calibration), "pad_max_length": 512})
+
+        quant_config = GPTQConfig.from_dict(double_quant_config_dict)
         quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
         logger.info(f"Test GPTQ with config {quant_config}")
         q_model = quantize(

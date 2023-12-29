@@ -18,12 +18,20 @@
 
 DOUBLE_QUANT_CONFIGS = {
     "GGML_TYPE_Q4_K": {
+        "weight_dtype": "int",
+        "weight_bits": 4,
+        "weight_group_size": 32,
+        "weight_sym": True,
         "double_quant_bits": 6,
         "double_quant_dtype": "int",
         "double_quant_sym": True,
         "double_quant_group_size": 8,
     },
     "BNB": {
+        "weight_dtype": "nf4",
+        "weight_bits": 4,
+        "weight_group_size": 32,
+        "weight_sym": True,
         "double_quant_bits": 8,
         "double_quant_dtype": "int",
         "double_quant_sym": False,
