@@ -57,9 +57,9 @@ def autotune(
     run_fn=None,
     run_args=None,
 ):
+    tuning_objective.update_eval_fn_registry(eval_fns)
     tuner = Tuner(tune_config=tune_config)
     algo_manager = TorchAlgorithmManager(model, run_fn, run_args)
-    tuning_objective.update_eval_fn_registry(eval_fns)
     best_qmodel = tuner.search(algo_manager=algo_manager)
     return best_qmodel
 
