@@ -54,10 +54,10 @@ def autotune(model, tune_config, run_fn=None, run_args=None):
 
 
 class TuningConfig(BaseTuningConfig):
-    def __init__(self, tuning_order=None, timeout=0, max_trials=100):
-        super().__init__(tuning_order, timeout, max_trials)
+    def __init__(self, quant_configs=None, timeout=0, max_trials=100):
+        super().__init__(quant_configs, timeout, max_trials)
 
 
 def get_default_tune_config():
     # TODO use the registered default tuning config in the next PR
-    return TuningConfig(tuning_order=[GPTQConfig(weight_bits=[4, 8]), RTNWeightQuantConfig(weight_bits=[4, 8])])
+    return TuningConfig(quant_configs=[GPTQConfig(weight_bits=[4, 8]), RTNWeightQuantConfig(weight_bits=[4, 8])])

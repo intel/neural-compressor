@@ -106,14 +106,14 @@ class BaseTuningConfig:
     """Base Class for Tuning Criterion.
 
     Args:
-        tuning_order: the traverse order.
+        quant_configs: quantization configs. Default value is empty.
         timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
         max_trials: Max tune times. Default value is 100. Combine with timeout field to decide when to exit.
     """
 
-    def __init__(self, tuning_order=None, timeout=0, max_trials=100):
+    def __init__(self, quant_configs=None, timeout=0, max_trials=100):
         """Init a TuningCriterion object."""
-        self.tuning_order = tuning_order
+        self.quant_configs = quant_configs
         self.timeout = timeout
         self.max_trials = max_trials
 
@@ -140,9 +140,9 @@ class Tuner:
         else:
             return quant_config.expand()
 
-    def generate_quant_config_from_tuning_order(self):
+    def generate_quant_config_from_quant_configs(self):
         quant_config_list = []
-        for quant_config in self.tune_config.tuning_order:
+        for quant_config in self.tune_config.quant_configs:
             quant_config_list.extend(Tuner.generate_quant_config(quant_config))
         return quant_config_list
 
@@ -154,7 +154,7 @@ class Tuner:
         return eval_result
 
     def search(self, algo_manager: AlgorithmManager):
-        for config in self.generate_quant_config_from_tuning_order():
+        for config in self.generate_quant_config_from_quant_configs():
             logger.info(f"config {config}")
             q_model = algo_manager.apply(quant_config=config)
             if self.get_best_model(q_model, self.get_tuning_target_score(q_model)):
