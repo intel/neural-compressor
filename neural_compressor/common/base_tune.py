@@ -109,7 +109,8 @@ def register_tuning_objective(
         eval_pair = {"name": fn_name, "algo_name": algo_name, "weight": weight, "func": eval_fn}
         tuning_objective.eval_fn_registry.append(eval_pair)
         logger.info(
-            f"Add new tuning objective : {eval_pair} to tuning objective registry({len(tuning_objective.eval_fn_registry)})."
+            f"Add new tuning objective : {eval_pair} to tuning objective registry("
+            f"{tuning_objective.get_number_of_tuning_objectives()})."
         )
         return eval_fn
 
