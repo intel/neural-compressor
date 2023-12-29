@@ -1,4 +1,4 @@
-LLMs Quantization Models and Recipes
+LLMs Quantization Recipes
 ---
 
 Intel® Neural Compressor supported advanced large language models (LLMs) quantization technologies including SmoothQuant (SQ) and Weight-Only Quant (WOQ), 
