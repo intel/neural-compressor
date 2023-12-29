@@ -12,7 +12,7 @@ This document aims to publish the specific recipes we achieved for the popular L
 
 ## IPEX key models
 |          Models           | SQ INT8 | WOQ INT8 | WOQ INT4 |
-|:-------------------------:|---------|:--------:|:--------:|
+|:-------------------------:|:-------:|:--------:|:--------:|
 |    EleutherAI/gpt-j-6b    |    ✔    |    ✔     |    ✔    |
 |   facebook/opt-1.3b       |    ✔    |    ✔     |    ✔    |
 |     facebook/opt-30b      |    ✔    |    ✔     |    ✔    |
