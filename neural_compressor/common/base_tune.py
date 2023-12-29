@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from abc import abstractmethod
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig
 from neural_compressor.common.logger import Logger
@@ -54,48 +54,62 @@ class TuningObjective:
             # eval_pair: {"name": fn_name, "algo_name": algo_name, "weight": weight, "func": eval_fn}
             eval_fn = eval_pair["func"]
             eval_result = eval_fn(model)
-            result = self._update_the_target_score(eval_pair, eval_result, result)
+            result = self._update_the_objective_score(eval_pair, eval_result, result)
         return result
 
-    def _update_the_target_score(self, eval_pair, eval_result, overall_result):
+    def _update_the_objective_score(self, eval_pair, eval_result, overall_result):
         # TODO update the result according to the weight and algo_name
         return overall_result + eval_result * eval_pair["weight"]
 
-    def get_number_of_tuning_targets(self):
+    def get_number_of_tuning_objectives(self):
         return len(self.eval_fn_registry)
 
+    def _update_eval_fn_registry(self, eval_fns: List[Dict]):
+        self.eval_fn_registry = eval_fns
 
-target_manager = TuningObjective()
+    def update_eval_fn_registry(self, eval_fns: Optional[Union[Dict, List[Dict]]] = None) -> None:
+        if eval_fns is None:
+            return
+        elif isinstance(eval_fns, Dict):
+            eval_fns = [eval_fns]
+        elif isinstance(eval_fns, List):
+            assert all([isinstance(eval_fn_pair, Dict) for eval_fn_pair in eval_fns])
+        else:
+            raise NotImplementedError(f"The eval_fns should be a dict or a list of dict, but got {type(eval_fns)}.")
+        self._update_eval_fn_registry(eval_fns)
 
 
-def register_tuning_target(
-    algo_name: Optional[str] = None, weight: float = 0.5, target_name: Optional[str] = None
+tuning_objective = TuningObjective()
+
+
+def register_tuning_objective(
+    algo_name: Optional[str] = None, weight: float = 0.5, objective_name: Optional[str] = None
 ) -> Callable[..., Any]:
-    """Decorator for registering a tuning target evaluation function.
+    """Decorator for registering a tuning objective evaluation function.
 
     Args:
-        algo_name (Optional[str]): Algorithm name associated with the tuning target.
+        algo_name (Optional[str]): Algorithm name associated with the tuning objective.
             The default value is None, which applies to all algorithms.
-        weight (float): Weight assigned to the tuning target.
-        target_name (Optional[str]): Optional name for the tuning target. If no name is provided,
+        weight (float): Weight assigned to the tuning objective.
+        objective_name (Optional[str]): Optional name for the tuning objective. If no name is provided,
             the function's built-in name will be used instead.
 
     Returns:
         Callable[..., Any]: Decorator function for the evaluation function.
 
     Usage:
-        @register_tuning_target(algo_name="rtn_weight_only_quant", weight=0.7, target_name="eval_accuracy")
+        @register_tuning_objective(algo_name="rtn_weight_only_quant", weight=0.7, objective_name="eval_accuracy")
         def eval_accuracy(model):
             # Evaluate the accuracy of the given model.
             return score
     """
 
     def decorator(eval_fn: Callable) -> Callable:
-        fn_name = target_name if target_name else eval_fn.__name__
+        fn_name = objective_name if objective_name else eval_fn.__name__
         eval_pair = {"name": fn_name, "algo_name": algo_name, "weight": weight, "func": eval_fn}
-        target_manager.eval_fn_registry.append(eval_pair)
+        tuning_objective.eval_fn_registry.append(eval_pair)
         logger.info(
-            f"Add new tuning target : {eval_pair} to tuning target registry({len(target_manager.eval_fn_registry)})."
+            f"Add new tuning objective : {eval_pair} to tuning objective registry({len(tuning_objective.eval_fn_registry)})."
         )
         return eval_fn
 
@@ -121,14 +135,16 @@ class BaseTuningConfig:
 class Tuner:
     def __init__(self, tune_config: BaseTuningConfig):
         self.tune_config = tune_config
-        self.tuner_target_manager = target_manager
+        self.tuner_tuning_objective = tuning_objective
         self._post_init()
 
     def _post_init(self):
         # check the number of evaluation functions
-        num_tuning_targets = self.tuner_target_manager.get_number_of_tuning_targets()
-        assert num_tuning_targets > 0, "Please ensure that you register at least one evaluation metric for auto-tune."
-        logger.info(f"There are {num_tuning_targets} tuning targets.")
+        num_tuning_objectives = self.tuner_tuning_objective.get_number_of_tuning_objectives()
+        assert (
+            num_tuning_objectives > 0
+        ), "Please ensure that you register at least one evaluation metric for auto-tune."
+        logger.info(f"There are {num_tuning_objectives} tuning objectives.")
 
     @staticmethod
     def generate_quant_config(quant_config: BaseConfig) -> List[BaseConfig]:
@@ -149,13 +165,13 @@ class Tuner:
     def get_best_model(self, q_model, objective_score: Union[float, int]):
         pass
 
-    def get_tuning_target_score(self, model):
-        eval_result = self.tuner_target_manager.evaluate(model)
+    def get_tuning_objective_score(self, model):
+        eval_result = self.tuner_tuning_objective.evaluate(model)
         return eval_result
 
     def search(self, algo_manager: AlgorithmManager):
         for config in self.generate_quant_config_from_quant_configs():
             logger.info(f"config {config}")
             q_model = algo_manager.apply(quant_config=config)
-            if self.get_best_model(q_model, self.get_tuning_target_score(q_model)):
+            if self.get_best_model(q_model, self.get_tuning_objective_score(q_model)):
                 return q_model

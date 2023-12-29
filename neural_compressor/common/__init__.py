@@ -13,4 +13,4 @@
 # limitations under the License.
 
 from neural_compressor.common.logger import level, log, info, debug, warn, warning, error, fatal
-from neural_compressor.common.base_tune import register_tuning_target
+from neural_compressor.common.base_tune import register_tuning_objective

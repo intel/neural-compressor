@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 
-from neural_compressor.common.base_tune import AlgorithmManager, BaseTuningConfig, Tuner
+from neural_compressor.common.base_tune import AlgorithmManager, BaseTuningConfig, Tuner, tuning_objective
 from neural_compressor.common.logger import Logger
 from neural_compressor.torch.quantization.config import GPTQConfig, RTNWeightQuantConfig
 
@@ -39,23 +39,29 @@ class TorchAlgorithmManager(AlgorithmManager):
     def apply(self, quant_config):
         """The entry to apply quantization algorithms on a given a model."""
         logger.info(f"apply quant_config: {quant_config}.")
-        # TODO, decompose the quantization process
         from neural_compressor.torch import quantize
 
         q_model = quantize(model=self.model, quant_config=quant_config, run_fn=self.run_fn, run_args=self.run_args)
         return q_model
 
 
-def autotune(model, tune_config, run_fn=None, run_args=None):
-    tuner = Tuner(tune_config=tune_config)
-    algo_manager = TorchAlgorithmManager(model, run_fn, run_args)
-    best_qmodel = tuner.search(algo_manager=algo_manager)
-    return best_qmodel
-
-
 class TuningConfig(BaseTuningConfig):
     def __init__(self, quant_configs=None, timeout=0, max_trials=100):
         super().__init__(quant_configs, timeout, max_trials)
+
+
+def autotune(
+    model: torch.nn.Module,
+    tune_config: TuningConfig,
+    eval_fns: Optional[Union[Dict, List[Dict]]] = None,
+    run_fn=None,
+    run_args=None,
+):
+    tuner = Tuner(tune_config=tune_config)
+    algo_manager = TorchAlgorithmManager(model, run_fn, run_args)
+    tuning_objective.update_eval_fn_registry(eval_fns)
+    best_qmodel = tuner.search(algo_manager=algo_manager)
+    return best_qmodel
 
 
 def get_default_tune_config():
