@@ -5,9 +5,9 @@ Intel® Neural Compressor supported advanced large language models (LLMs) quanti
 and verified a list of LLMs on 4th Gen Intel® Xeon® Scalable Processor (codenamed Sapphire Rapids) with [PyTorch](https://pytorch.org/) and [Intel® Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch). 
 This document aims to publish the specific recipes we achieved for the popular LLMs and help users to quickly get an optimized LLM with limited 1% accuracy loss.
 
-> Notes: 
-> The quantization algorithms provide by [Intel® Neural Compressor](https://github.com/intel/neural-compressor) and the evaluate functions provide by [Intel® Extension for Transformers](https://github.com/intel/intel-extension-for-transformers).    
-> The model list are continuing update, please expect to find more LLMs in the future. 
+> Notes:  
+> - The quantization algorithms provide by [Intel® Neural Compressor](https://github.com/intel/neural-compressor) and the evaluate functions provide by [Intel® Extension for Transformers](https://github.com/intel/intel-extension-for-transformers).    
+> - The model list are continuing update, please expect to find more LLMs in the future. 
 
 ## IPEX key models
 |          Models           | SQ INT8 | WOQ INT8 | WOQ INT4 |
