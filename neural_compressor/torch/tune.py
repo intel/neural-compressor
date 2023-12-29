@@ -16,7 +16,7 @@ from typing import Callable, Optional, Tuple
 
 import torch
 
-from neural_compressor.common.base_tune import BaseQuantizer, BaseTuningConfig, Tuner
+from neural_compressor.common.base_tune import AlgorithmManager, BaseTuningConfig, Tuner
 from neural_compressor.common.logger import Logger
 from neural_compressor.torch.quantization.config import GPTQConfig, RTNWeightQuantConfig
 
@@ -28,7 +28,7 @@ def get_default_tuning_config():
     return None
 
 
-class TorchQuantizer(BaseQuantizer):
+class TorchAlgorithmManager(AlgorithmManager):
     def __init__(
         self, model: torch.nn.Module, run_fn: Optional[Callable] = None, run_args: Optional[Tuple] = None
     ) -> None:
@@ -36,20 +36,8 @@ class TorchQuantizer(BaseQuantizer):
         self.run_fn = run_fn
         self.run_args = run_args
 
-    def prepare(self, quant_config):
-        """Prepare a copy of the model for quantization."""
-        pass
-
-    def calibrate(self):
-        """Run the prepared model on the calibration dataset."""
-        pass
-
-    def convert(self):
-        "Convert a calibrated model to quantized model."
-        pass
-
-    def quantize(self, quant_config):
-        """The entry to quantize a model."""
+    def apply(self, quant_config):
+        """The entry to apply quantization algorithms on a given a model."""
         logger.info(f"apply quant_config: {quant_config}.")
         # TODO, decompose the quantization process
         from neural_compressor.torch import quantize
@@ -60,8 +48,8 @@ class TorchQuantizer(BaseQuantizer):
 
 def autotune(model, tune_config, run_fn=None, run_args=None):
     tuner = Tuner(tune_config=tune_config)
-    quantizer = TorchQuantizer(model, run_fn, run_args)
-    best_qmodel = tuner.search(quantizer=quantizer)
+    algo_manager = TorchAlgorithmManager(model, run_fn, run_args)
+    best_qmodel = tuner.search(algo_manager=algo_manager)
     return best_qmodel
 
 

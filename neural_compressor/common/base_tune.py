@@ -21,8 +21,8 @@ from neural_compressor.common.logger import Logger
 logger = Logger().get_logger()
 
 
-class BaseQuantizer:
-    """Abstract base class representing a cross-framework quantizer.
+class AlgorithmManager:
+    """Abstract base class to manage the cross-framework algorithms.
 
     This class is designed to be used by a tuner to obtain a quantized model.
     """
@@ -31,27 +31,12 @@ class BaseQuantizer:
         self.model = model
 
     @abstractmethod
-    def prepare(self, quant_config):
-        """Prepare a copy of the model for quantization."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def calibrate(self):
-        """Run the prepared model on the calibration dataset."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def convert(self):
-        "Convert a calibrated model to quantized model."
-        raise NotImplementedError
-
-    @abstractmethod
-    def quantize(self):
-        """The entry to quantize a model."""
+    def apply(self):
+        """The entry to apply algorithms on a given model."""
         raise NotImplementedError
 
 
-class TargetManager:
+class TuningObjective:
     def __init__(self) -> None:
         self.eval_fn_registry: List[Callable] = []
 
@@ -80,7 +65,7 @@ class TargetManager:
         return len(self.eval_fn_registry)
 
 
-target_manager = TargetManager()
+target_manager = TuningObjective()
 
 
 def register_tuning_target(
@@ -168,9 +153,9 @@ class Tuner:
         eval_result = self.tuner_target_manager.evaluate(model)
         return eval_result
 
-    def search(self, quantizer: BaseQuantizer):
+    def search(self, algo_manager: AlgorithmManager):
         for config in self.generate_quant_config_from_tuning_order():
             logger.info(f"config {config}")
-            q_model = quantizer.quantize(quant_config=config)
+            q_model = algo_manager.apply(quant_config=config)
             if self.get_best_model(q_model, self.get_tuning_target_score(q_model)):
                 return q_model
