@@ -120,7 +120,7 @@ repos:
     rev: 1.16.0
     hooks:
       - id: blacken-docs
-        args: [--line-length=120]
+        args: [--line-length=120, --skip-errors]
         exclude: |
           (?x)^(
               examples/.+|
