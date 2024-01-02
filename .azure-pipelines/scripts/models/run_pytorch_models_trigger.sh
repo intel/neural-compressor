@@ -21,9 +21,11 @@ do
     esac
 done
 
+echo "specify FWs version..."
+source /neural-compressor/.azure-pipelines/scripts/fwk_version.sh 'latest'
 FRAMEWORK="pytorch"
-FRAMEWORK_VERSION="2.0.1+cpu"
-TORCH_VISION_VERSION="0.15.2+cpu"
+FRAMEWORK_VERSION=${pytorch_version}
+TORCH_VISION_VERSION=${torchvision_version}
 
 inc_new_api=false
 # ======== set up config for pytorch models ========

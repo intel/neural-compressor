@@ -979,12 +979,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             sess_options.register_custom_ops_library(get_library_path())
 
         if not model.is_large_model:
-            sess = ort.InferenceSession(
-                model.model.SerializeToString(), sess_options, providers=["CPUExecutionProvider"]
-            )
+            sess = ort.InferenceSession(model.model.SerializeToString(), sess_options, providers=[self.backend])
         elif model.model_path is not None:  # pragma: no cover
             model.model = onnx.ModelProto()  # clean memory for large model
-            sess = ort.InferenceSession(model.model_path, sess_options, providers=["CPUExecutionProvider"])
+            sess = ort.InferenceSession(model.model_path, sess_options, providers=[self.backend])
         else:  # pragma: no cover
             logger.warning("Please use model path instead of onnx model object to quantize")
         del sess
@@ -1914,6 +1912,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 mse=mse,
                 perchannel=perchannel,
                 accuracy_level=accuracy_level,
+                providers=[self.backend],
             )
         if "AWQ" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import awq_quantize
@@ -1931,6 +1930,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 enable_auto_scale=enable_auto_scale,
                 enable_mse_search=enable_mse_search,
                 accuracy_level=accuracy_level,
+                providers=[self.backend],
             )
         elif "RTN" in algos:
             from neural_compressor.adaptor.ox_utils.weight_only import rtn_quantize
@@ -1940,6 +1940,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
                 tmp_model,
                 quant_config,
                 accuracy_level=accuracy_level,
+                providers=[self.backend],
             )
         tmp_model.q_config = copy.deepcopy(quant_config)
         self._dump_model_op_stats(tmp_model, tune_cfg)

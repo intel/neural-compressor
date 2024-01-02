@@ -57,6 +57,7 @@ support_pair = {
 
 dtype_mapping = {
     "fp32": 1,
+    "float32": 1,
     "uint8": 2,
     "int8": 3,
     "uint16": 4,
@@ -66,12 +67,14 @@ dtype_mapping = {
     "string": 8,
     "bool": 9,
     "fp16": 10,
+    "float16": 10,
     "double": 11,
     "uint32": 12,
     "uint64": 13,
     "complex64": 14,
     "complex128": 15,
     "bf16": 16,
+    "bfloat16": 16,
 }
 
 PROVIDERS = {
@@ -91,6 +94,16 @@ ONNXRT_BACKENDS = {
 }
 
 MAXIMUM_PROTOBUF = 2147483648
+
+
+def simple_progress_bar(total, i):
+    """Progress bar for cases where tqdm can't be used."""
+    progress = i / total
+    bar_length = 20
+    bar = "#" * int(bar_length * progress)
+    spaces = " " * (bar_length - len(bar))
+    percentage = progress * 100
+    print(f"\rProgress: [{bar}{spaces}] {percentage:.2f}%", end="")
 
 
 def dtype_to_name(dtype_mapping, dtype):
