@@ -90,85 +90,6 @@
              
   <section id="module-neural_compressor.torch.utils">
 <span id="neural-compressor-torch-utils"></span><h1><a class="reference internal" href="#module-neural_compressor.torch.utils" title="neural_compressor.torch.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.utils</span></code></a><a class="headerlink" href="#module-neural_compressor.torch.utils" title="Permalink to this heading"></a></h1>
-<section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
-<section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.register_algo" title="neural_compressor.torch.utils.register_algo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_algo</span></code></a>(name)</p></td>
-<td><p>Decorator function to register algorithms in the algos_mapping dictionary.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.fetch_module" title="neural_compressor.torch.utils.fetch_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_module</span></code></a>(model, op_name)</p></td>
-<td><p>Get module with a given op name.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.set_module" title="neural_compressor.torch.utils.set_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_module</span></code></a>(model, op_name, new_module)</p></td>
-<td><p>Set module with a given op name.</p></td>
-</tr>
-</tbody>
-</table>
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.torch.utils.register_algo">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.</span></span><span class="sig-name descname"><span class="pre">register_algo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.register_algo" title="Permalink to this definition"></a></dt>
-<dd><p>Decorator function to register algorithms in the algos_mapping dictionary.</p>
-<dl>
-<dt>Usage example:</dt><dd><p>&#64;register_algo(name=example_algo)
-def example_algo(model: torch.nn.Module, quant_config: RTNWeightQuantConfig) -&gt; torch.nn.Module:</p>
-<blockquote>
-<div><p>…</p>
-</div></blockquote>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – The name under which the algorithm function will be registered.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The decorator function to be used with algorithm functions.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>decorator</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.torch.utils.fetch_module">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.</span></span><span class="sig-name descname"><span class="pre">fetch_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.fetch_module" title="Permalink to this definition"></a></dt>
-<dd><p>Get module with a given op name.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>object</em>) – the input model.</p></li>
-<li><p><strong>op_name</strong> (<em>str</em>) – name of op.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>module (object).</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.torch.utils.set_module">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.</span></span><span class="sig-name descname"><span class="pre">set_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_module</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.set_module" title="Permalink to this definition"></a></dt>
-<dd><p>Set module with a given op name.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>object</em>) – the input model.</p></li>
-<li><p><strong>op_name</strong> (<em>str</em>) – name of op.</p></li>
-<li><p><strong>new_module</strong> (<em>object</em>) – the input model.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>module (object).</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-</section>
 </section>
 
 
@@ -185,7 +106,7 @@ def example_algo(model: torch.nn.Module, quant_config: RTNWeightQuantConfig) -&g
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fee77f91360> 
+   <jinja2.runtime.BlockReference object at 0x7f89679bdc00> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
