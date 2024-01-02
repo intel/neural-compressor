@@ -313,7 +313,6 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].weight_bits == 5)
         self.assertTrue(configs_mapping[("fc3", torch.nn.Linear)].weight_bits == 5)
 
-
     def test_gptq_config(self):
         from neural_compressor.torch.quantization import GPTQConfig
 
