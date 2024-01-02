@@ -3,7 +3,7 @@ import os
 import shutil
 import unittest
 
-from neural_compressor.torch.utils import is_hpex_avaliable
+from neural_compressor.torch.utils.utility import is_hpex_avaliable
 
 if not is_hpex_avaliable():
     exit()

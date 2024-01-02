@@ -8,7 +8,7 @@ MODEL_URL = {
     "bert":
     "https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip",
     "BERT-Squad":
-    "https://github.com/onnx/models/raw/main/archive/text/machine_comprehension/bert-squad/model/bertsquad-12.onnx",
+    "https://github.com/onnx/models/raw/main/validated/text/machine_comprehension/bert-squad/model/bertsquad-12.onnx",
 }
 MAX_TIMES_RETRY_DOWNLOAD = 5
 
