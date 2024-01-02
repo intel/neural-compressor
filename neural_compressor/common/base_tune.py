@@ -22,7 +22,7 @@ logger = Logger().get_logger()
 
 
 class AlgorithmWrapper:
-    """Abstract base class of algorithm wrapper.
+    """Abstract base class for wrap algorithm implementation.
 
     AlgorithmWrapper provides a uniform interface for encapsulating algorithm implementation
     across different frameworks.
