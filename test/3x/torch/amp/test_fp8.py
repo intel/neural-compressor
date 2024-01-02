@@ -7,7 +7,7 @@ import torch
 
 from neural_compressor.common import logger
 from neural_compressor.torch.amp import autocast
-from neural_compressor.torch.utils import is_hpex_avaliable
+from neural_compressor.torch.utils.utility import is_hpex_avaliable
 
 if not is_hpex_avaliable():
     exit()

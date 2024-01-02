@@ -20,7 +20,7 @@ import torch
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, registered_configs
 from neural_compressor.common.logger import Logger
 from neural_compressor.torch.quantization.config import FRAMEWORK_NAME
-from neural_compressor.torch.utils import WHITE_MODULE_LIST, algos_mapping, get_model_info
+from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
 logger = Logger().get_logger()
 

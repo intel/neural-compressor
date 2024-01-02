@@ -23,7 +23,7 @@ import torch
 from torch.nn import functional as F
 
 from neural_compressor.common.logger import DEBUG, Logger, level
-from neural_compressor.torch.utils import set_module
+from neural_compressor.torch.utils.utility import set_module
 
 logger = Logger().get_logger()
 

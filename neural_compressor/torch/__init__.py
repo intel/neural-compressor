@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.torch.utils import register_algo
+from neural_compressor.torch.utils.utility import register_algo
 from neural_compressor.torch.algorithms import rtn_quantize_entry, gptq_quantize_entry
 
 from neural_compressor.torch.quantization import (

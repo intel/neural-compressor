@@ -20,7 +20,7 @@ import torch
 from neural_compressor.common.logger import Logger
 from neural_compressor.common.utility import GPTQ, RTN_WEIGHT_ONLY_QUANT
 from neural_compressor.torch.quantization.config import GPTQConfig, RTNWeightQuantConfig
-from neural_compressor.torch.utils import fetch_module, register_algo, set_module
+from neural_compressor.torch.utils.utility import fetch_module, register_algo, set_module
 
 logger = Logger().get_logger()
 
