@@ -33,7 +33,6 @@ from neural_compressor.common.utility import (
     GLOBAL,
     LOCAL,
     OP_NAME_OR_MODULE_TYPE,
-    convert_to_list,
 )
 
 logger = Logger().get_logger()
@@ -266,7 +265,12 @@ class BaseConfig(ABC):
         params_dict = OrderedDict()
         config = self
         for param in params_list:
-            params_dict[param] = convert_to_list(getattr(config, param))
+            param_val = getattr(config, param)
+            # TODO (Yi) to handle param_val itself is a list
+            if isinstance(param_val, list):
+                params_dict[param] = param_val
+            else:
+                params_dict[param] = [param_val]
         for params_values in product(*params_dict.values()):
             new_config = self.__class__(**dict(zip(params_list, params_values)))
             config_list.append(new_config)

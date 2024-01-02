@@ -33,12 +33,12 @@ class AlgorithmWrapper:
         self.model = model
 
     @abstractmethod
-    def apply(self):
+    def apply(self) -> Any:
         """The entry to apply algorithms on a given model."""
         raise NotImplementedError
 
 
-class TuningObjective:
+class TuningObjectives:
     EVAL_FN = "eval_fn"
     WEIGHT = "weight"
     FN_NAME = "name"
@@ -63,14 +63,14 @@ class TuningObjective:
             result = self._update_the_objective_score(eval_pair, eval_result, result)
         return result
 
-    def _update_the_objective_score(self, eval_pair, eval_result, overall_result):
+    def _update_the_objective_score(self, eval_pair, eval_result, overall_result) -> float:
         # TODO update the result according to the weight and algo_name
         return overall_result + eval_result * eval_pair[self.WEIGHT]
 
-    def get_number_of_tuning_objectives(self):
+    def get_number_of_tuning_objectives(self) -> int:
         return len(self.eval_fn_registry)
 
-    def _update_eval_fn_registry(self, user_eval_fns: List[Dict]):
+    def _set_eval_fn_registry(self, user_eval_fns: List[Dict]) -> None:
         self.eval_fn_registry = [
             {
                 self.EVAL_FN: user_eval_fn_pair[self.EVAL_FN],
@@ -80,7 +80,7 @@ class TuningObjective:
             for user_eval_fn_pair in user_eval_fns
         ]
 
-    def update_eval_fn_registry(self, eval_fns: Optional[Union[Dict, List[Dict]]] = None) -> None:
+    def set_eval_fn_registry(self, eval_fns: Optional[Union[Dict, List[Dict]]] = None) -> None:
         if eval_fns is None:
             return
         elif isinstance(eval_fns, Dict):
@@ -89,10 +89,10 @@ class TuningObjective:
             assert all([isinstance(eval_fn_pair, Dict) for eval_fn_pair in eval_fns])
         else:
             raise NotImplementedError(f"The eval_fns should be a dict or a list of dict, but got {type(eval_fns)}.")
-        self._update_eval_fn_registry(eval_fns)
+        self._set_eval_fn_registry(eval_fns)
 
 
-tuning_objective = TuningObjective()
+tuning_objective = TuningObjectives()
 
 
 class BaseTuningConfig:
@@ -104,7 +104,7 @@ class BaseTuningConfig:
         max_trials: Max tune times. Default value is 100. Combine with timeout field to decide when to exit.
     """
 
-    def __init__(self, quant_configs=None, timeout=0, max_trials=100):
+    def __init__(self, quant_configs=None, timeout=0, max_trials=100) -> None:
         """Init a TuningCriterion object."""
         self.quant_configs = quant_configs
         self.timeout = timeout
@@ -112,12 +112,12 @@ class BaseTuningConfig:
 
 
 class Tuner:
-    def __init__(self, tune_config: BaseTuningConfig):
+    def __init__(self, tune_config: BaseTuningConfig) -> None:
         self.tune_config = tune_config
         self.tuner_tuning_objective = tuning_objective
         self._post_init()
 
-    def _post_init(self):
+    def _post_init(self) -> None:
         # check the number of evaluation functions
         num_tuning_objectives = self.tuner_tuning_objective.get_number_of_tuning_objectives()
         assert (
@@ -126,7 +126,7 @@ class Tuner:
         logger.info(f"There are {num_tuning_objectives} tuning objectives.")
 
     @staticmethod
-    def generate_quant_config(quant_config: BaseConfig) -> List[BaseConfig]:
+    def parse_quant_config(quant_config: BaseConfig) -> List[BaseConfig]:
         if isinstance(quant_config, ComposableConfig):
             result = []
             for q_config in quant_config.config_list:
@@ -135,21 +135,21 @@ class Tuner:
         else:
             return quant_config.expand()
 
-    def generate_quant_config_from_quant_configs(self):
+    def parse_quant_configs(self) -> List[BaseConfig]:
         quant_config_list = []
         for quant_config in self.tune_config.quant_configs:
-            quant_config_list.extend(Tuner.generate_quant_config(quant_config))
+            quant_config_list.extend(Tuner.parse_quant_config(quant_config))
         return quant_config_list
 
-    def get_best_model(self, q_model, objective_score: Union[float, int]):
+    def get_best_model(self, q_model, objective_score: Union[float, int]) -> Any:
         pass
 
-    def get_tuning_objective_score(self, model):
+    def get_tuning_objective_score(self, model) -> float:
         eval_result = self.tuner_tuning_objective.evaluate(model)
         return eval_result
 
-    def search(self, algo_manager: AlgorithmWrapper):
-        for config in self.generate_quant_config_from_quant_configs():
+    def search(self, algo_manager: AlgorithmWrapper) -> Any:
+        for config in self.parse_quant_configs():
             logger.info(f"config {config}")
             q_model = algo_manager.apply(quant_config=config)
             if self.get_best_model(q_model, self.get_tuning_objective_score(q_model)):

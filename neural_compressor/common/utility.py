@@ -36,10 +36,3 @@ FP8_QUANT = "fp8_quant"
 from typing import Callable, Union
 
 OP_NAME_OR_MODULE_TYPE = Union[str, Callable]
-
-
-def convert_to_list(value):
-    if isinstance(value, list):
-        return value
-    else:
-        return [value]
