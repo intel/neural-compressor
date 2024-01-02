@@ -304,6 +304,15 @@ class TestQuantizationConfig(unittest.TestCase):
         logger.info(configs_mapping)
         self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].weight_bits == 6)
         self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].weight_bits == 4)
+        # test regular matching
+        fc_config = RTNWeightQuantConfig(weight_bits=5, weight_dtype="int8")
+        quant_config.set_local("fc", fc_config)
+        configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+        logger.info(configs_mapping)
+        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].weight_bits == 5)
+        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].weight_bits == 5)
+        self.assertTrue(configs_mapping[("fc3", torch.nn.Linear)].weight_bits == 5)
+
 
     def test_gptq_config(self):
         from neural_compressor.torch.quantization import GPTQConfig
