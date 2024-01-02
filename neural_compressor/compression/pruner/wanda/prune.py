@@ -112,11 +112,12 @@ def prune_wanda(
     prune_m=0,
     nsamples=128,
     use_variant=False,
-    # device=torch.device("cpu"),
+    device=None,
 ):
     """Prune the model using wanda
     Sij = |Wij| · ||Xj||2."""
-    # model.to(device)
+    if device is not None:
+        model.to(device)
     use_cache = model.config.use_cache
     model.config.use_cache = False
 
