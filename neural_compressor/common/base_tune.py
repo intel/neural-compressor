@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from abc import abstractmethod
+from copy import deepcopy
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig
@@ -37,6 +38,11 @@ class AlgorithmManager:
 
 
 class TuningObjective:
+    EVAL_FN = "eval_fn"
+    WEIGHT = "weight"
+    FN_NAME = "name"
+    EVAL_FN_TEMPLATE: Dict[str, Any] = {EVAL_FN: None, WEIGHT: 1.0, FN_NAME: None}
+
     def __init__(self) -> None:
         self.eval_fn_registry: List[Callable] = []
 
@@ -51,21 +57,27 @@ class TuningObjective:
         """
         result = 0
         for eval_pair in self.eval_fn_registry:
-            # eval_pair: {"name": fn_name, "algo_name": algo_name, "weight": weight, "func": eval_fn}
-            eval_fn = eval_pair["func"]
+            eval_fn = eval_pair[self.EVAL_FN]
             eval_result = eval_fn(model)
             result = self._update_the_objective_score(eval_pair, eval_result, result)
         return result
 
     def _update_the_objective_score(self, eval_pair, eval_result, overall_result):
         # TODO update the result according to the weight and algo_name
-        return overall_result + eval_result * eval_pair["weight"]
+        return overall_result + eval_result * eval_pair[self.WEIGHT]
 
     def get_number_of_tuning_objectives(self):
         return len(self.eval_fn_registry)
 
-    def _update_eval_fn_registry(self, eval_fns: List[Dict]):
-        self.eval_fn_registry = eval_fns
+    def _update_eval_fn_registry(self, user_eval_fns: List[Dict]):
+        self.eval_fn_registry = [
+            {
+                self.EVAL_FN: user_eval_fn_pair[self.EVAL_FN],
+                self.WEIGHT: user_eval_fn_pair.get(self.WEIGHT, 1.0),
+                self.FN_NAME: user_eval_fn_pair.get(self.FN_NAME, user_eval_fn_pair[self.EVAL_FN].__name__),
+            }
+            for user_eval_fn_pair in user_eval_fns
+        ]
 
     def update_eval_fn_registry(self, eval_fns: Optional[Union[Dict, List[Dict]]] = None) -> None:
         if eval_fns is None:
