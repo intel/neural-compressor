@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from abc import abstractmethod
-from copy import deepcopy
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig
@@ -22,10 +21,12 @@ from neural_compressor.common.logger import Logger
 logger = Logger().get_logger()
 
 
-class AlgorithmManager:
-    """Abstract base class to manage the cross-framework algorithms.
+class AlgorithmWrapper:
+    """Abstract base class of algorithm wrapper.
 
-    This class is designed to be used by a tuner to obtain a quantized model.
+    AlgorithmWrapper provides a uniform interface for encapsulating algorithm implementation
+    across different frameworks.
+    This class is intended to be used by a `tuner` to obtain quantized models.
     """
 
     def __init__(self, model) -> None:
@@ -94,41 +95,6 @@ class TuningObjective:
 tuning_objective = TuningObjective()
 
 
-def register_tuning_objective(
-    algo_name: Optional[str] = None, weight: float = 0.5, objective_name: Optional[str] = None
-) -> Callable[..., Any]:
-    """Decorator for registering a tuning objective evaluation function.
-
-    Args:
-        algo_name (Optional[str]): Algorithm name associated with the tuning objective.
-            The default value is None, which applies to all algorithms.
-        weight (float): Weight assigned to the tuning objective.
-        objective_name (Optional[str]): Optional name for the tuning objective. If no name is provided,
-            the function's built-in name will be used instead.
-
-    Returns:
-        Callable[..., Any]: Decorator function for the evaluation function.
-
-    Usage:
-        @register_tuning_objective(algo_name="rtn_weight_only_quant", weight=0.7, objective_name="eval_accuracy")
-        def eval_accuracy(model):
-            # Evaluate the accuracy of the given model.
-            return score
-    """
-
-    def decorator(eval_fn: Callable) -> Callable:
-        fn_name = objective_name if objective_name else eval_fn.__name__
-        eval_pair = {"name": fn_name, "algo_name": algo_name, "weight": weight, "func": eval_fn}
-        tuning_objective.eval_fn_registry.append(eval_pair)
-        logger.info(
-            f"Add new tuning objective : {eval_pair} to tuning objective registry("
-            f"{tuning_objective.get_number_of_tuning_objectives()})."
-        )
-        return eval_fn
-
-    return decorator
-
-
 class BaseTuningConfig:
     """Base Class for Tuning Criterion.
 
@@ -182,7 +148,7 @@ class Tuner:
         eval_result = self.tuner_tuning_objective.evaluate(model)
         return eval_result
 
-    def search(self, algo_manager: AlgorithmManager):
+    def search(self, algo_manager: AlgorithmWrapper):
         for config in self.generate_quant_config_from_quant_configs():
             logger.info(f"config {config}")
             q_model = algo_manager.apply(quant_config=config)
