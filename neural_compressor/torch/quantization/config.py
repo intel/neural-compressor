@@ -31,7 +31,7 @@ from neural_compressor.common.utility import (
     OP_NAME_OR_MODULE_TYPE,
     RTN_WEIGHT_ONLY_QUANT,
 )
-from neural_compressor.torch.utils import is_hpex_avaliable, logger
+from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
 
 FRAMEWORK_NAME = "torch"
 DTYPE_RANGE = Union[torch.dtype, List[torch.dtype]]
