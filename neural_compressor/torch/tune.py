@@ -60,9 +60,9 @@ def autotune(
     run_args=None,
 ):
     tuning_objective.set_eval_fn_registry(eval_fns)
-    tuner = Tuner(tune_config=tune_config)
-    algo_manager = TorchWrapper(model, run_fn, run_args)
-    best_qmodel = tuner.search(algo_manager=algo_manager)
+    torch_wrapper = TorchWrapper(model, run_fn, run_args)
+    tuner = Tuner(tune_config=tune_config, tuning_objectives=tuning_objective, fwk_wrapper=torch_wrapper)
+    best_qmodel = tuner.search()
     return best_qmodel
 
 

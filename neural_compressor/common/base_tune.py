@@ -111,14 +111,17 @@ class BaseTuningConfig:
 
 
 class Tuner:
-    def __init__(self, tune_config: BaseTuningConfig) -> None:
+    def __init__(
+        self, tune_config: BaseTuningConfig, tuning_objectives: TuningObjectives, fwk_wrapper: FrameworkWrapper
+    ) -> None:
         self.tune_config = tune_config
-        self.tuner_tuning_objective = tuning_objective
+        self.tuning_objectives = tuning_objectives
+        self.fwk_wrapper = fwk_wrapper
         self._post_init()
 
     def _post_init(self) -> None:
         # check the number of evaluation functions
-        num_tuning_objectives = self.tuner_tuning_objective.get_number_of_tuning_objectives()
+        num_tuning_objectives = self.tuning_objectives.get_number_of_tuning_objectives()
         assert (
             num_tuning_objectives > 0
         ), "Please ensure that you register at least one evaluation metric for auto-tune."
@@ -144,12 +147,12 @@ class Tuner:
         pass
 
     def get_tuning_objective_score(self, model) -> float:
-        eval_result = self.tuner_tuning_objective.evaluate(model)
+        eval_result = self.tuning_objectives.evaluate(model)
         return eval_result
 
-    def search(self, algo_manager: FrameworkWrapper) -> Any:
+    def search(self) -> Any:
         for config in self.parse_quant_configs():
             logger.info(f"config {config}")
-            q_model = algo_manager.apply(quant_config=config)
+            q_model = self.fwk_wrapper.apply(quant_config=config)
             if self.get_best_model(q_model, self.get_tuning_objective_score(q_model)):
                 return q_model
