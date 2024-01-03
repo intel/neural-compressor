@@ -21,11 +21,10 @@ from neural_compressor.common.logger import Logger
 logger = Logger().get_logger()
 
 
-class AlgorithmWrapper:
-    """Abstract base class for wrap algorithm implementation.
+class FrameworkWrapper:
+    """Abstract base class for wrap framework's APIs.
 
-    AlgorithmWrapper provides a uniform interface for encapsulating algorithm implementation
-    across different frameworks.
+    FrameworkWrapper provides a uniform interface for encapsulating different framework's APIs.
     This class is intended to be used by a `tuner` to obtain quantized models.
     """
 
@@ -148,7 +147,7 @@ class Tuner:
         eval_result = self.tuner_tuning_objective.evaluate(model)
         return eval_result
 
-    def search(self, algo_manager: AlgorithmWrapper) -> Any:
+    def search(self, algo_manager: FrameworkWrapper) -> Any:
         for config in self.parse_quant_configs():
             logger.info(f"config {config}")
             q_model = algo_manager.apply(quant_config=config)

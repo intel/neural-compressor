@@ -16,7 +16,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 
-from neural_compressor.common.base_tune import AlgorithmWrapper, BaseTuningConfig, Tuner, tuning_objective
+from neural_compressor.common.base_tune import BaseTuningConfig, FrameworkWrapper, Tuner, tuning_objective
 from neural_compressor.common.logger import Logger
 from neural_compressor.torch.quantization.config import GPTQConfig, RTNWeightQuantConfig
 
@@ -28,8 +28,8 @@ def get_default_tuning_config():
     return None
 
 
-class TorchAlgorithmWrapper(AlgorithmWrapper):
-    """Concrete implementation of AlgorithmWrapper for PyTorch models."""
+class TorchWrapper(FrameworkWrapper):
+    """Concrete implementation of `FrameworkWrapper` for PyTorch models."""
 
     def __init__(
         self, model: torch.nn.Module, run_fn: Optional[Callable] = None, run_args: Optional[Tuple] = None
@@ -61,7 +61,7 @@ def autotune(
 ):
     tuning_objective.set_eval_fn_registry(eval_fns)
     tuner = Tuner(tune_config=tune_config)
-    algo_manager = TorchAlgorithmWrapper(model, run_fn, run_args)
+    algo_manager = TorchWrapper(model, run_fn, run_args)
     best_qmodel = tuner.search(algo_manager=algo_manager)
     return best_qmodel
 
