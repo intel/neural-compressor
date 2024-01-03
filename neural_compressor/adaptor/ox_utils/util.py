@@ -645,3 +645,14 @@ def infer_shapes(in_mp, int_max=2**31 - 1, auto_merge=False, guess_output_rank=F
         onnx.save_model(symbolic_shape_inference.out_mp_, "sym_shape_infer_temp.onnx", save_as_external_data=True)
         raise Exception("Incomplete symbolic shape inference")
     return symbolic_shape_inference.out_mp_
+
+
+def should_do_static_quant(node, config) -> bool:
+    """Determines whether static quantization should be performed on a given node based on node name and user config."""
+    node_name: str = node.name
+    split_name = node_name.split("_quant")
+    return (
+        node_name.endswith("_quant")  # the node node may includes `_quant`, such as `/post_quant_conv/Conv`
+        and split_name
+        and config.get(split_name[0], {}).get("activation", {}).get("quant_mode") != "dynamic"
+    )

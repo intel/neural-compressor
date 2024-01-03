@@ -50,6 +50,7 @@ from neural_compressor.adaptor.ox_utils.util import (
     make_quant_node,
     quantize_data,
     quantize_data_per_channel,
+    should_do_static_quant,
     support_pair,
 )
 from neural_compressor.model.onnx_model import ONNXModel
@@ -623,7 +624,7 @@ class Quantizer:
                 else:
                     data_found, scale_name, zp_name, _, _ = self._get_quantization_params(tensor_name)
 
-                if self.config[node.name.split("_quant")[0]]["activation"]["quant_mode"] != "dynamic":
+                if should_do_static_quant(node, self.config):
                     if data_found is False:
                         raise ValueError(
                             "Quantization parameters are not specified for param {}."
