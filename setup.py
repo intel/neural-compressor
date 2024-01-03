@@ -159,7 +159,6 @@ if __name__ == "__main__":
 
     setup(
         name=project_name,
-        version=__version__,
         author="Intel AIA Team",
         author_email="feng.tian@intel.com, haihao.shen@intel.com, suyue.chen@intel.com",
         description="Repository of Intel® Neural Compressor",
@@ -182,4 +181,6 @@ if __name__ == "__main__":
             "Topic :: Scientific/Engineering :: Artificial Intelligence",
             "License :: OSI Approved :: Apache Software License",
         ],
+        setup_requires=["setuptools_scm"],
+        use_scm_version={"version_scheme": "post-release"},
     )
