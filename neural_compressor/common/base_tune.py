@@ -91,7 +91,7 @@ class TuningObjectives:
         self._set_eval_fn_registry(eval_fns)
 
 
-tuning_objective = TuningObjectives()
+tuning_objectives = TuningObjectives()
 
 
 class BaseTuningConfig:
