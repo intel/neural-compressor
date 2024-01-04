@@ -100,6 +100,16 @@ QUANT_OP_NAME_SUFFIX = "_quant"
 QUANT_OP_NAME_SUFFIX_LEN = len(QUANT_OP_NAME_SUFFIX)
 
 
+def get_node_original_name(node) -> str:
+    node_name: str = node.name
+    # TODO how to handle the unquantized node with named `conv_quant`
+    if node_name.endswith(QUANT_OP_NAME_SUFFIX):
+        return node_name[:-QUANT_OP_NAME_SUFFIX_LEN]
+    else:
+        # For unquantized nodes
+        return node_name
+
+
 def simple_progress_bar(total, i):
     """Progress bar for cases where tqdm can't be used."""
     progress = i / total

@@ -1035,7 +1035,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                 self.assertTrue(sorted(fp32_tensor["weight"].keys()) == sorted(int8_tensor["weight"].keys()))
 
     def test_set_tensor(self):
-        from neural_compressor.adaptor.ox_utils.util import QUANT_OP_NAME_SUFFIX_LEN, quantize_data_with_scale_zero
+        from neural_compressor.adaptor.ox_utils.util import get_node_original_name, quantize_data_with_scale_zero
 
         config = PostTrainingQuantConfig(
             approach="static", recipes={"gemm_to_matmul": False, "graph_optimization_level": "ENABLE_EXTENDED"}
@@ -1056,7 +1056,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         framework = "onnxrt_qlinearops"
         adaptor = FRAMEWORKS[framework](framework_specific_info)
         q_config = {
-            q_model.nodes()[1].name[:-QUANT_OP_NAME_SUFFIX_LEN]: {
+            get_node_original_name(q_model.nodes()[1]): {
                 "weight": {"granularity": "per_channel", "dtype": onnx_proto.TensorProto.INT8, "scheme": "sym"}
             }
         }
