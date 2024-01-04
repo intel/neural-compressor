@@ -143,12 +143,6 @@ with the contents of `config/zero_stage3_config.json` being:
   },
   "zero_optimization": {
     "stage": 3,
-    "offload_param": {
-      "device": "cpu"
-    },
-    "offload_optimizer": {
-      "device": "cpu"
-    },
     "allgather_partitions": true,
     "allgather_bucket_size": 5e8,
     "contiguous_gradients": true
