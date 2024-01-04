@@ -19,40 +19,7 @@ import transformers
 from neural_compressor.adaptor.torch_utils.util import get_hidden_states
 
 from .utils import find_layers, get_module_list, get_tensor_sparsity_ratio, logger, nn, torch
-
-
-# Define WrappedGPT class
-class WrappedGPT:
-    """This class wraps a GPT layer for specific operations."""
-
-    def __init__(self, layer, layer_id=0, layer_name="none"):
-        self.layer = layer
-        self.dev = self.layer.weight.device
-        self.rows = layer.weight.data.shape[0]
-        self.columns = layer.weight.data.shape[1]
-
-        self.scaler_row = torch.zeros((self.columns), device=self.dev)
-        self.nsamples = 0
-
-        self.layer_id = layer_id
-        self.layer_name = layer_name
-
-    def add_batch(self, inp, out):
-        if len(inp.shape) == 2:
-            inp = inp.unsqueeze(0)
-        tmp = inp.shape[0]
-        import torch
-
-        if isinstance(self.layer, (nn.Conv1d, nn.Linear, transformers.Conv1D)):
-            if len(inp.shape) == 3:
-                inp = inp.reshape((-1, inp.shape[-1]))
-            inp = inp.t()
-
-        self.scaler_row *= self.nsamples / (self.nsamples + tmp)
-        self.nsamples += tmp
-
-        inp = inp.type(torch.float32)
-        self.scaler_row += torch.norm(inp, p=2, dim=1) ** 2 / self.nsamples
+from .wrapper import WrappedGPT
 
 
 @torch.no_grad()
@@ -99,7 +66,7 @@ def return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before):
     sort_mask = tmp_metric <= thres_cumsum.reshape((-1, 1))
     thres = torch.gather(sort_res[0], dim=1, index=sort_mask.sum(dim=1, keepdims=True) - 1)
     W_mask = W_metric <= thres
-    cur_sparsity = (W_mask is True).sum() / W_mask.numel()
+    cur_sparsity = torch.sum(W_mask == True).data.item() / W_mask.numel()
     return W_mask, cur_sparsity
 
 
@@ -132,6 +99,9 @@ def prune_wanda(
         outs = []
         layer = layers[i]
         subset = find_layers(layer)
+        if len(subset) == 0:
+            logger.info(f"skip layer {i}, no op found")
+            continue
         logger.info(f"prune layer {i}, subset list:")
         logger.info(subset)
 
@@ -160,7 +130,10 @@ def prune_wanda(
         for name in subset:
             logger.info(f"pruning layer {i} name {name}")
             # Sij = |Wij| · ||Xj||2
-            W_metric = torch.abs(subset[name].weight.data) * torch.sqrt(
+            W = subset[name].weight.data
+            if isinstance(subset[name], transformers.Conv1D):
+                W = W.t()
+            W_metric = torch.abs(W) * torch.sqrt(
                 # wrapped_layers[name].scaler_row.reshape((1, -1))
                 wrapped_layers[name].scaler_row.unsqueeze(0)
             )
@@ -183,7 +156,7 @@ def prune_wanda(
                     alpha = 0.4
                     alpha_hist = [0.0, 0.8]
                     W_mask, cur_sparsity = return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before)
-                    while (torch.abs(cur_sparsity - sparsity_ratio) > 0.001) and (
+                    while (abs(cur_sparsity - sparsity_ratio) > 0.001) and (
                         alpha_hist[1] - alpha_hist[0] >= 0.001
                     ):
                         if cur_sparsity > sparsity_ratio:
@@ -201,7 +174,10 @@ def prune_wanda(
                     indices = sort_res[1][:, : int(W_metric.shape[1] * sparsity_ratio)]
                     W_mask.scatter_(1, indices, True)
 
-            subset[name].weight.data[W_mask] = 0  ## set weights to zero
+            if isinstance(subset[name], transformers.Conv1D):
+                subset[name].weight.data[W_mask.T] = 0  ## set weights to zero
+            else:
+                subset[name].weight.data[W_mask] = 0  ## set weights to zero
             ratio = get_tensor_sparsity_ratio(subset[name].weight.data)
             logger.info(f"finish pruning layer {i} name {name}, sparsity ratio: {ratio}")
 
