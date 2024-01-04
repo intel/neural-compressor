@@ -95,6 +95,10 @@ ONNXRT_BACKENDS = {
 
 MAXIMUM_PROTOBUF = 2147483648
 
+# The quantized node will be renamed to original_name + QUANT_OP_NAME_SUFFIX, for example `conv1` -> `conv1_quant`.
+QUANT_OP_NAME_SUFFIX = "_quant"
+QUANT_OP_NAME_SUFFIX_LEN = len(QUANT_OP_NAME_SUFFIX)
+
 
 def simple_progress_bar(total, i):
     """Progress bar for cases where tqdm can't be used."""

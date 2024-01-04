@@ -35,6 +35,7 @@ from onnxruntime import GraphOptimizationLevel, InferenceSession, SessionOptions
 
 from neural_compressor.adaptor.ox_utils.operators import OPERATORS
 from neural_compressor.adaptor.ox_utils.util import (
+    QUANT_OP_NAME_SUFFIX_LEN,
     QuantizedInitializer,
     QuantizedValue,
     QuantizedValueType,
@@ -169,8 +170,8 @@ class Quantizer:
         if node.name in self.config and self.config[node.name] not in self.fallback_list:
             return True
         elif (
-            node.name.split("_quant")[0] in self.config
-            and self.config[node.name.split("_quant")[0]] not in self.fallback_list
+            node.name[:-QUANT_OP_NAME_SUFFIX_LEN] in self.config
+            and self.config[node.name[:-QUANT_OP_NAME_SUFFIX_LEN]] not in self.fallback_list
         ):
             return True
         else:
@@ -310,7 +311,7 @@ class Quantizer:
 
     def should_convert(self, node):
         """Check if node should be converted."""
-        name = node.name.split("_quant")[0]
+        name = node.name[:-QUANT_OP_NAME_SUFFIX_LEN]
         if (
             name in self.config
             and self.config[name] not in self.fallback_list
@@ -328,7 +329,7 @@ class Quantizer:
         for node in self.model.nodes():
             if node.op_type not in ["QuantizeLinear", "DequantizeLinear"] and self.should_convert(node):
                 op_converter = OPERATORS[node.op_type](self, node)
-                mode = self.config[node.name.split("_quant")[0]]["activation"]["quant_mode"]
+                mode = self.config[node.name[:-QUANT_OP_NAME_SUFFIX_LEN]]["activation"]["quant_mode"]
                 if op_converter.convert_check(mode):
                     op_converter.convert(mode)
         self.model.graph().node.extend(self.new_nodes)
