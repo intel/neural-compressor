@@ -17,7 +17,7 @@ This document aims to publish the specific recipes we achieved for the popular L
 |   facebook/opt-1.3b       |    ✔    |    ✔     |    ✔    |
 |     facebook/opt-30b      |    ✔    |    ✔     |    ✔    |
 | meta-llama/Llama-2-7b-hf  |    ✔    |    ✔     |    ✔    |
-| meta-llama/Llama-2-13b-hf |   WIP   |    ✔     |    ✔    |
+| meta-llama/Llama-2-13b-hf |    ✔    |    ✔     |    ✔    |
 | meta-llama/Llama-2-70b-hf |    ✔    |    ✔     |    ✔    |
 |     tiiuae/falcon-40b     |    ✔    |    ✔     |    ✔    |
  
