@@ -774,11 +774,12 @@ def is_deepspeed_available():
 
 from packaging.version import Version
 
+
 # pragma: no cover
 # disable the code coverage check as it requires DeepSpeed
 def get_deepspeed_version():
     try:
-        import deepspeed # pylint: disable=E0401
+        import deepspeed  # pylint: disable=E0401
 
         deepspeed_version = deepspeed.__version__.split("+")[0]
     except ValueError as e:  # pragma: no cover
@@ -808,7 +809,7 @@ def safe_get_shape(param):
 
 def safe_get_data(param):
     if USE_DEEPSPEED:
-        from deepspeed.utils import safe_get_local_fp32_param # pylint: disable=E0401
+        from deepspeed.utils import safe_get_local_fp32_param  # pylint: disable=E0401
 
         return safe_get_local_fp32_param(param)
     else:
@@ -817,7 +818,7 @@ def safe_get_data(param):
 
 def safe_get_grad(param):
     if USE_DEEPSPEED:
-        from deepspeed.utils import safe_get_local_grad # pylint: disable=E0401
+        from deepspeed.utils import safe_get_local_grad  # pylint: disable=E0401
 
         return safe_get_local_grad(param)
     else:
@@ -826,9 +827,11 @@ def safe_get_grad(param):
 
 def safe_set_data(param, new_val):
     if USE_DEEPSPEED:
-        from deepspeed.utils import safe_set_local_fp32_param # pylint: disable=E0401
+        from deepspeed.utils import safe_set_local_fp32_param  # pylint: disable=E0401
 
         safe_set_local_fp32_param(new_val, param)
     else:
         param.data = new_val
+
+
 # pragma: cover
