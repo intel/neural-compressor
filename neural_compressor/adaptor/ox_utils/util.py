@@ -102,7 +102,7 @@ QUANT_OP_NAME_SUFFIX = "_quant"
 def get_node_original_name(node) -> str:
     """Get the original name of the given node."""
     node_name: str = node.name
-    # TODO how to handle the unquantized node with named `conv_quant`
+    # TODO how to handle the unquantized node that has the `_quant` suffix, such as `conv_quant`?
     if node_name.endswith(QUANT_OP_NAME_SUFFIX):
         return node_name[: -len(QUANT_OP_NAME_SUFFIX)]
     else:
