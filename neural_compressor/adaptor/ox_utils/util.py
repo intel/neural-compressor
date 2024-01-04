@@ -97,14 +97,14 @@ MAXIMUM_PROTOBUF = 2147483648
 
 # The quantized node will be renamed to original_name + QUANT_OP_NAME_SUFFIX, for example `conv1` -> `conv1_quant`.
 QUANT_OP_NAME_SUFFIX = "_quant"
-QUANT_OP_NAME_SUFFIX_LEN = len(QUANT_OP_NAME_SUFFIX)
 
 
 def get_node_original_name(node) -> str:
+    """Get the original name of the given node."""
     node_name: str = node.name
     # TODO how to handle the unquantized node with named `conv_quant`
     if node_name.endswith(QUANT_OP_NAME_SUFFIX):
-        return node_name[:-QUANT_OP_NAME_SUFFIX_LEN]
+        return node_name[: -len(QUANT_OP_NAME_SUFFIX)]
     else:
         # For unquantized nodes
         return node_name
@@ -659,11 +659,3 @@ def infer_shapes(in_mp, int_max=2**31 - 1, auto_merge=False, guess_output_rank=F
         onnx.save_model(symbolic_shape_inference.out_mp_, "sym_shape_infer_temp.onnx", save_as_external_data=True)
         raise Exception("Incomplete symbolic shape inference")
     return symbolic_shape_inference.out_mp_
-
-
-def should_do_static_quant(node, config) -> bool:
-    """Determines whether static quantization should be performed on a given node based on node name and user config."""
-    node_name: str = node.name
-    # split_name = node_name.split("_quant")
-    # the node name may includes `_quant`, such as `/post_quant_conv/Conv`
-    return config.get(node_name, {}).get("activation", {}).get("quant_mode", None) != "dynamic"
