@@ -156,9 +156,7 @@ def prune_wanda(
                     alpha = 0.4
                     alpha_hist = [0.0, 0.8]
                     W_mask, cur_sparsity = return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before)
-                    while (abs(cur_sparsity - sparsity_ratio) > 0.001) and (
-                        alpha_hist[1] - alpha_hist[0] >= 0.001
-                    ):
+                    while (abs(cur_sparsity - sparsity_ratio) > 0.001) and (alpha_hist[1] - alpha_hist[0] >= 0.001):
                         if cur_sparsity > sparsity_ratio:
                             alpha_new = (alpha + alpha_hist[0]) / 2.0
                             alpha_hist[1] = alpha
