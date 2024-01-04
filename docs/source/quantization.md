@@ -466,7 +466,7 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
             <td align="left">IPEX</td>
             <td align="left">OneDNN</td>
             <td align="left">"ipex"</td>
-            <td align="left">cpu | gpu</td>
+            <td align="left">xpu</td>
         </tr>
         <tr>
             <td rowspan="5" align="left">ONNX Runtime</td>
@@ -538,6 +538,8 @@ conf = PostTrainingQuantConfig()
 ```python
 # run with IPEX on CPU
 conf = PostTrainingQuantConfig(backend="ipex")
+# run with IPEX on XPU
+conf = PostTrainingQuantConfig(backend="ipex", device="xpu")
 ```
 ```python
 # run with ONNXRT CUDAExecutionProvider on GPU
@@ -555,4 +557,4 @@ conf = PostTrainingQuantConfig(backend="itex", device="gpu")
 ## Examples
 
 User could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/README.md) on how to quantize a new model.
-If user wants to quantize an onnx model with npu, please refer to this [example](../../examples/onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq_static/README.md).
+If user wants to quantize an onnx model with npu, please refer to this [example](../../examples/onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq_static/README.md). If user wants to quantize a pytorch model with xpu, please refer to this [example](../../examples/pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex/README.md).
