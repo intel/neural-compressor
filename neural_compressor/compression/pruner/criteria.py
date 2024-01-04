@@ -220,13 +220,8 @@ class SnipMomentumCriterion(PruningCriterion):
         """Calculate and store the pruning scores based on snip_momentum criterion."""
         with torch.no_grad():
             for key in self.modules.keys():
-                # logger.info(f"[on_before_optimizer_step][start to update the score of {key}]")
                 p = self.modules[key].weight
                 param = self.modules[key].weight
-                from deepspeed.utils import safe_get_full_fp32_param, safe_get_full_grad
-
-                full_p = safe_get_full_fp32_param(param)
-                full_g = safe_get_full_grad(param)
                 data = safe_get_data(param)
                 grad = safe_get_grad(param)
                 self.scores[key] *= self.alpha
