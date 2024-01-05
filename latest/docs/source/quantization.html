@@ -666,7 +666,7 @@ This method requires the user to provide training function and evaluation functi
             <td align="left">IPEX</td>
             <td align="left">OneDNN</td>
             <td align="left">"ipex"</td>
-            <td align="left">cpu | gpu</td>
+            <td align="left">cpu | xpu</td>
         </tr>
         <tr>
             <td rowspan="5" align="left">ONNX Runtime</td>
@@ -734,6 +734,8 @@ This method requires the user to provide training function and evaluation functi
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with IPEX on CPU</span>
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;ipex&quot;</span><span class="p">)</span>
+<span class="c1"># run with IPEX on XPU</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;ipex&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;xpu&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with ONNXRT CUDAExecutionProvider on GPU</span>
@@ -753,7 +755,7 @@ This method requires the user to provide training function and evaluation functi
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <p>User could refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/README.html">examples</a> on how to quantize a new model.
-If user wants to quantize an onnx model with npu, please refer to this <a class="reference external" href="../../examples/onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq_static/README.html">example</a>.</p>
+If user wants to quantize an onnx model with npu, please refer to this <a class="reference external" href="../../examples/onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq_static/README.html">example</a>. If user wants to quantize a pytorch model with xpu, please refer to this <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex/README.html">example</a>.</p>
 </section>
 </section>
 
@@ -771,7 +773,7 @@ If user wants to quantize an onnx model with npu, please refer to this <a class=
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fde78ff2530> 
+   <jinja2.runtime.BlockReference object at 0x7f737aa9ba30> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
