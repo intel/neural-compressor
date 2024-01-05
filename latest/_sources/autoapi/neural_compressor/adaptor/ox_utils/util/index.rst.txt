@@ -32,6 +32,7 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.adaptor.ox_utils.util.get_node_original_name
    neural_compressor.adaptor.ox_utils.util.simple_progress_bar
    neural_compressor.adaptor.ox_utils.util.dtype_to_name
    neural_compressor.adaptor.ox_utils.util.make_quant_node
@@ -56,6 +57,11 @@ Functions
    neural_compressor.adaptor.ox_utils.util.to_numpy
    neural_compressor.adaptor.ox_utils.util.infer_shapes
 
+
+
+.. py:function:: get_node_original_name(node) -> str
+
+   Get the original name of the given node.
 
 
 .. py:function:: simple_progress_bar(total, i)
