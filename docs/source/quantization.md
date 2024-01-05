@@ -466,7 +466,7 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
             <td align="left">IPEX</td>
             <td align="left">OneDNN</td>
             <td align="left">"ipex"</td>
-            <td align="left">xpu</td>
+            <td align="left">cpu | xpu</td>
         </tr>
         <tr>
             <td rowspan="5" align="left">ONNX Runtime</td>
