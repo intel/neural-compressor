@@ -500,15 +500,7 @@ class ORTSmoothQuant:
         logger.info("auto tuning alpha")
         import copy
 
-        alpha_scale = 100
-        alpha_space = list(
-            range(
-                round(alpha_min * alpha_scale),
-                round((alpha_max + alpha_step) * alpha_scale),
-                round(alpha_step * alpha_scale),
-            )
-        )
-        alpha_space = [alpha / alpha_scale for alpha in alpha_space]
+        alpha_space = np.arange(alpha_min, alpha_max, alpha_step).tolist()
 
         optimal_alphas = {}
         if self.model.is_large_model:

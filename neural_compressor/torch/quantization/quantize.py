@@ -20,7 +20,7 @@ import torch
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, registered_configs
 from neural_compressor.common.logger import Logger
 from neural_compressor.torch.quantization.config import FRAMEWORK_NAME
-from neural_compressor.torch.utils import WHITE_MODULE_LIST, algos_mapping, get_model_info
+from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
 logger = Logger().get_logger()
 
@@ -54,7 +54,7 @@ def quantize(
     else:
         assert isinstance(
             quant_config, BaseConfig
-        ), "Please pass a dict or config instance as the quantization configuration."
+        ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
     logger.info(f"Quantize model with config: \n {quant_config.to_json_string()} \n")
     # select quantization algo according to config
 
