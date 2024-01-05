@@ -756,7 +756,7 @@ USE_DEEPSPEED = False
 FLATTEN_DIM2 = 8
 
 
-def is_deepspeed_available():
+def is_deepspeed_available(): # pragma: no cover
     import importlib
     import importlib.metadata as importlib_metadata
 
@@ -774,9 +774,8 @@ def is_deepspeed_available():
 
 from packaging.version import Version
 
-# pragma: no cover
-# disable the code coverage check as it requires DeepSpeed
-def get_deepspeed_version():
+
+def get_deepspeed_version(): # pragma: no cover
     try:
         import deepspeed # pylint: disable=E0401
 
@@ -787,18 +786,18 @@ def get_deepspeed_version():
     return version
 
 
-def check_deepspeed_version():
+def check_deepspeed_version(): # pragma: no cover
     version = get_deepspeed_version()
     assert version >= Version("0.12.4"), f"The minimum version requirement of deepspeed is 0.12.4, but got {version}."
 
 
 USE_DEEPSPEED = os.environ.get("USE_DEEPSPEED", False)
-if USE_DEEPSPEED:
+if USE_DEEPSPEED: # pragma: no cover
     assert is_deepspeed_available(), "Deepspeed is required: `pip install deepspeed>0.12.4"
     check_deepspeed_version()
 
 
-def safe_get_shape(param):
+def safe_get_shape(param): # pragma: no cover
     if USE_DEEPSPEED:
         # param.ds_tensor is the partitioned tensor
         return param.ds_tensor.shape
@@ -806,7 +805,7 @@ def safe_get_shape(param):
         return param.shape
 
 
-def safe_get_data(param):
+def safe_get_data(param): # pragma: no cover
     if USE_DEEPSPEED:
         from deepspeed.utils import safe_get_local_fp32_param # pylint: disable=E0401
 
@@ -815,7 +814,7 @@ def safe_get_data(param):
         return param.data
 
 
-def safe_get_grad(param):
+def safe_get_grad(param): # pragma: no cover
     if USE_DEEPSPEED:
         from deepspeed.utils import safe_get_local_grad # pylint: disable=E0401
 
@@ -824,11 +823,10 @@ def safe_get_grad(param):
         return param.grad
 
 
-def safe_set_data(param, new_val):
+def safe_set_data(param, new_val): # pragma: no cover
     if USE_DEEPSPEED:
         from deepspeed.utils import safe_set_local_fp32_param # pylint: disable=E0401
 
         safe_set_local_fp32_param(new_val, param)
     else:
         param.data = new_val
-# pragma: cover
