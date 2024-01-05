@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import json
+import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from copy import deepcopy
@@ -301,8 +302,9 @@ class BaseConfig(ABC):
                     config_mapping[(op_name, op_type)] = global_config
                 if op_type in op_type_config_dict:
                     config_mapping[(op_name, op_type)] = op_name_config_dict[op_type]
-                if op_name in op_name_config_dict:
-                    config_mapping[(op_name, op_type)] = op_name_config_dict[op_name]
+                for op_name_pattern in op_name_config_dict:
+                    if re.match(op_name_pattern, op_name):
+                        config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
         return config_mapping
 
     @staticmethod

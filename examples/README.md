@@ -531,7 +531,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex(xpu)</a></td>
   </tr>
   <tr>
     <td>distilbert-base-uncased-distilled-squad</td>
