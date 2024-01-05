@@ -54,7 +54,7 @@ def quantize(
     else:
         assert isinstance(
             quant_config, BaseConfig
-        ), "Please pass a dict or config instance as the quantization configuration."
+        ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
     logger.info(f"Quantize model with config: \n {quant_config.to_json_string()} \n")
     # select quantization algo according to config
 

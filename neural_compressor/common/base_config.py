@@ -21,6 +21,8 @@ import json
 import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
+from copy import deepcopy
+from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from neural_compressor.common.logger import Logger
@@ -224,6 +226,57 @@ class BaseConfig(ABC):
             return self
         else:
             return ComposableConfig(configs=[self, other])
+
+    def expand(self) -> List[BaseConfig]:
+        """Expand the config.
+
+        case 1
+            {
+                "global": { "weight_bits": [4, 6]}
+            }
+            expand to :
+            1st trial config:
+            {
+                "global": { "weight_bits": 4}
+            }
+            2nd trial config:
+            {
+                "global": { "weight_bits": 6}
+            }
+        case 2
+        # TODO (Yi) to support the expansion of config with `local`
+        {
+            "global": {
+                "weight_bits": [4, 6]
+            },
+            "local":
+            {
+                "fc1":{
+                    "weight_bits": [6, 8]
+                },
+                "fc2":{
+                    "weight_bits": [4]
+                }
+            }
+
+        } -> ?
+        """
+        config_list: List[BaseConfig] = []
+        params_list = self.params_list
+        params_dict = OrderedDict()
+        config = self
+        for param in params_list:
+            param_val = getattr(config, param)
+            # TODO (Yi) to handle param_val itself is a list
+            if isinstance(param_val, list):
+                params_dict[param] = param_val
+            else:
+                params_dict[param] = [param_val]
+        for params_values in product(*params_dict.values()):
+            new_config = self.__class__(**dict(zip(params_list, params_values)))
+            config_list.append(new_config)
+        logger.info(f"Expanded the {self.__class__.name} and got {len(config_list)} configs.")
+        return config_list
 
     def _get_op_name_op_type_config(self):
         op_type_config_dict = dict()
