@@ -17,13 +17,8 @@
 # limitations under the License.
 
 import numpy as np
-
-from neural_compressor.utils import logger
-from neural_compressor.utils.logger import Logger
-
 from ..utils import F, tf, torch
 
-logger = Logger().get_logger()
 PRUNERS = {}
 
 
@@ -223,8 +218,6 @@ class PytorchBasePruner(BasePruner):
         """
         with torch.no_grad():
             for key in self.modules.keys():
-                # logger.info(f"start to update the weight for {key}, mask shape is {self.masks[key].shape}")
-
                 module = self.modules[key]
                 param = module.weight
                 param_data = safe_get_data(param)
