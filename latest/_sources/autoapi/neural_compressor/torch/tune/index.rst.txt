@@ -1,0 +1,29 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.tune`
+======================================
+
+.. py:module:: neural_compressor.torch.tune
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.tune.TorchWrapper
+
+
+
+
+.. py:class:: TorchWrapper(model: torch.nn.Module, run_fn: Optional[Callable] = None, run_args: Optional[Tuple] = None)
+
+
+
+
+   Concrete implementation of `FrameworkWrapper` for PyTorch models.
+
+
