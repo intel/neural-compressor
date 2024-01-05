@@ -44,7 +44,7 @@ class TuningObjectives:
     EVAL_FN_TEMPLATE: Dict[str, Any] = {EVAL_FN: None, WEIGHT: 1.0, FN_NAME: None}
 
     def __init__(self) -> None:
-        self.eval_fn_registry: List[Callable] = []
+        self.eval_fn_registry: List[Dict[str, Any]] = []
 
     def evaluate(self, model) -> float:
         """Evaluate the model using registered evaluation functions.
@@ -144,6 +144,7 @@ class Tuner:
         return quant_config_list
 
     def get_best_model(self, q_model, objective_score: Union[float, int]) -> Any:
+        # TODO(Yi) enable it at the next PR
         pass
 
     def get_tuning_objective_score(self, model) -> float:

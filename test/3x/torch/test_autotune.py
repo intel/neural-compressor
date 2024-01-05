@@ -67,7 +67,7 @@ class TestAutoTune(unittest.TestCase):
         def eval_acc_fn(model) -> float:
             return 1.0
 
-        custom_tune_config = TuningConfig(quant_configs=[RTNWeightQuantConfig(weight_bits=[4, 6])], max_trials=3)
+        custom_tune_config = TuningConfig(quant_configs=[RTNWeightQuantConfig(weight_bits=[4, 6])], max_trials=2)
         best_model = autotune(
             model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
         )
@@ -94,7 +94,7 @@ class TestAutoTune(unittest.TestCase):
             },
         ]
 
-        custom_tune_config = TuningConfig(quant_configs=[RTNWeightQuantConfig(weight_bits=[4, 6])], max_trials=3)
+        custom_tune_config = TuningConfig(quant_configs=[RTNWeightQuantConfig(weight_bits=[4, 6])], max_trials=2)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_fns)
         self.assertIsNone(best_model)
         self.assertEqual(len(tuning_objectives.eval_fn_registry), 2)
@@ -104,7 +104,7 @@ class TestAutoTune(unittest.TestCase):
         logger.info("test_autotune_api")
         from neural_compressor.torch import RTNWeightQuantConfig, TuningConfig, autotune
 
-        custom_tune_config = TuningConfig(quant_configs=[RTNWeightQuantConfig(weight_bits=[4, 6])], max_trials=3)
+        custom_tune_config = TuningConfig(quant_configs=[RTNWeightQuantConfig(weight_bits=[4, 6])], max_trials=2)
 
         # Use assertRaises to check that an AssertionError is raised
         with self.assertRaises(AssertionError) as context:
