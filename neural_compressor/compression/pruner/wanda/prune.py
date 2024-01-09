@@ -121,8 +121,10 @@ def prune_wanda(
             handles.append(subset[name].register_forward_hook(add_batch(name)))
         for j in range(nsamples):
             with torch.no_grad():
-                # print(inps[j], others[j])
-                outs.append(layer(*inps[j], **others[j])[0])
+                out = layer(*inps[j], **others[j])
+                if isinstance(out, (list, tuple)):
+                    out = out[0]
+                outs.append(out)
         for h in handles:
             h.remove()
 
@@ -183,12 +185,18 @@ def prune_wanda(
 
         for j in range(nsamples):
             with torch.no_grad():
-                out = layer(*inps[j], **others[j])[0]
+                out = layer(*inps[j], **others[j])
+                if isinstance(out, (tuple, list)):
+                    out = out[0]
                 if "hidden_states" in others[j]:
                     outs[j] = []
                     others[j]["hidden_states"] = out
                 else:
-                    outs[j] = [out]
+                    if len(inps[j]) > 1:
+                        outs[j] = inps[j]
+                        outs[j][0] = out
+                    else:
+                        outs[j] = [out]
         inps, outs = outs, inps
 
     model.config.use_cache = use_cache
