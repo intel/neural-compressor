@@ -1,6 +1,21 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import transformers
 
-from .utils import torch, nn
+from .utils import nn, torch
+
 
 class WrappedGPT:
     """This class wraps a GPT layer for specific operations."""
@@ -46,8 +61,14 @@ class WrappedGPT:
 
         var_inp = torch.var(inp, dim=1, unbiased=False, keepdim=True)
         num_inp = inp.shape[1]
-        self.var = var_inp if self.ntokens == 0 else (self.var * self.ntokens + var_inp * num_inp) / (self.ntokens + num_inp)
-        self.mean = mean_inp if self.ntokens == 0 else (self.mean * self.ntokens + mean_inp * num_inp) / (self.ntokens + num_inp)
+        self.var = (
+            var_inp if self.ntokens == 0 else (self.var * self.ntokens + var_inp * num_inp) / (self.ntokens + num_inp)
+        )
+        self.mean = (
+            mean_inp
+            if self.ntokens == 0
+            else (self.mean * self.ntokens + mean_inp * num_inp) / (self.ntokens + num_inp)
+        )
         self.ntokens += num_inp
 
         self.scaler_row += torch.norm(inp, p=2, dim=1) ** 2 / self.nsamples
