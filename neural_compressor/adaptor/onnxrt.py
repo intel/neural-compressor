@@ -765,7 +765,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             black_nodes=black_nodes,
             white_nodes=white_nodes,
             iterations=list(range(0, iterations)),
-            backend=self.backend if self.backend != "DmlExecutionProvider" else "CPUExecutionProvider",
+            backend=self.backend,
             reduce_range=self.reduce_range,
             **kwargs,
         )
