@@ -16,6 +16,7 @@ import torchmetrics
 from segment_anything.modeling import ImageEncoderViT, MaskDecoder, PromptEncoder, TwoWayTransformer
 from typing import Dict, Any
 from neural_compressor import quantization, PostTrainingQuantConfig
+from neural_compressor.config import TuningCriterion, AccuracyCriterion
 from inc_dataset_loader import INC_SAMVOC2012Dataset
 from neural_compressor.data import DataLoader
 from neural_compressor.quantization import fit
@@ -265,15 +266,15 @@ if __name__ == '__main__':
                         help='Path of the VOC Dataset')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                         help='path to checkpoint tuned by Neural Compressor (default: ./)')
-    parser.add_argument("--tune", default=False, type=bool,
-                        help='Apply INT8 quantization or not (default: True)')   
-    parser.add_argument('--int8', dest='int8', action='store_true',
-                        help='for benchmarking using quantized model')
-    parser.add_argument('--dice', default=False, type=bool,
+    parser.add_argument("--tune", action='store_true',
+                        help='Apply INT8 quantization or not')   
+    parser.add_argument('--int8', action='store_true',
+                        help='for benchmarking/validation using quantized model')
+    parser.add_argument('--dice', action='store_true',
                         help='For dice score measurements')
     parser.add_argument("--iter", default=0, type=int,
                         help='For dice measurement only.')
-    parser.add_argument("--performance", default=False, type=bool,
+    parser.add_argument("--performance", action='store_true',
                         help='For benchmaking')
 
     args = parser.parse_args()
@@ -320,8 +321,12 @@ if __name__ == '__main__':
                 'activation': {'dtype': 'fp32'},
             },   
         }
-        config = PostTrainingQuantConfig(op_type_dict=op_type_dict)
-        #q_model = fit(model, config, calib_dataloader=calib_dataloader, eval_dataloader=eval_dataloader, eval_func=eval_func)
+
+        accuracy_criterion=AccuracyCriterion(tolerable_loss=0.05)
+        tuning_criterion=TuningCriterion(timeout=0, max_trials=1)
+        config = PostTrainingQuantConfig(op_type_dict=op_type_dict, tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion)
+        config.use_bf16=False
+        
         q_model = fit(model, config, calib_dataloader=calib_dataloader,  eval_func=eval_func)
         q_model.save(args.tuned_checkpoint)
 
@@ -337,7 +342,7 @@ if __name__ == '__main__':
         from neural_compressor import benchmark
         b_conf = BenchmarkConfig(warmup=5,
                                 iteration=args.iter,
-                                cores_per_instance=4,
+                                cores_per_instance=52,
                                 num_of_instance=1)
         benchmark.fit(new_model, b_conf, b_dataloader=eval_dataloader)
     if args.dice:

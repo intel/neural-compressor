@@ -39,8 +39,8 @@ function run_tuning {
     python main.py \
             --pretrained_weight_location ${pretrained_weight_location} \
             --tuned_checkpoint ${output_model} \
-            --voc_dataset ${voc_dataset_location} \
-            --tune True
+            --voc_dataset_location ${voc_dataset_location} \
+            --tune
 }
 
 main "$@"

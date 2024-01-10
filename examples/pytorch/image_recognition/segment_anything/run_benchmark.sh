@@ -12,6 +12,7 @@ function main {
 function init_params {
   iters=100
   tuned_checkpoint=./saved_results
+  voc_dataset_location=./voc_dataset/VOCdevkit/VOC2012/
   for var in "$@"
   do
     case $var in
@@ -43,18 +44,18 @@ function init_params {
 # run_benchmark
 function run_benchmark {
     if [[ ${mode} == "dice" ]]; then
-        mode_cmd=" --dice=True"
+        mode_cmd=" --dice"
     elif [[ ${mode} == "performance" ]]; then
-        mode_cmd=" --iter ${iters} --performance=True "
+        mode_cmd=" --iter ${iters} --performance"
     else
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
 
-    if [[ ${int8} == "true" ]]; then
-        extra_cmd="--int8 ${dataset_location}"
+    if [[ ${int8} == "True" ]]; then
+        extra_cmd=" --int8 --voc_dataset_location ${voc_dataset_location}"
     else
-        extra_cmd="${dataset_location}"
+        extra_cmd=" --voc_dataset_location ${voc_dataset_location} "
     fi
 
     python main.py \
