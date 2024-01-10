@@ -89,10 +89,25 @@ def prune_wanda(
     nsamples=128,
     use_variant=False,
     device=None,
-    low_mem_usage=False 
+    low_mem_usage=None 
 ):
     """Prune the model using wanda
     Sij = |Wij| · ||Xj||2."""
+    # When the model is too large, we can use low memory usage mode to reduce the GPU memory consumption.
+    if low_mem_usage is None:
+        low_mem_usage = False
+        if "cuda" in str(device):
+            current_gpu_index = str(device)
+            total_memory = torch.cuda.get_device_properties(current_gpu_index).total_memory
+            used_memory = torch.cuda.memory_allocated(current_gpu_index)
+            free_space = total_memory - used_memory
+            total_params = sum(p.numel() for p in model.parameters())
+            n = 2 if "16" in str(model.dtype) else 4
+            need_space = total_params * n
+            if free_space < need_space:
+                logger.info('Low memory usage mode is enabled.')
+                low_mem_usage = True
+
     if device is not None and not low_mem_usage:
         model.to(device)
     use_cache = model.config.use_cache
@@ -135,6 +150,7 @@ def prune_wanda(
             handles.append(subset[name].register_forward_hook(add_batch(name)))
         for j in range(nsamples):
             with torch.no_grad():
+                print(layer)
                 out = layer(*inps[j], **others[j])
                 if isinstance(out, (list, tuple)):
                     out = out[0]
