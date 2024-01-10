@@ -104,7 +104,7 @@ class ONNXRTAugment:
     def dataloder_for_next_split_model(self):
         """Return dataloader for next split model for layer-wise quantization."""
         return self._dataloder_for_next_split_model
-            
+
     def augment_graph(self, activation_only=False, weight_only=False):
         """Augment_graph.
 
@@ -163,9 +163,9 @@ class ONNXRTAugment:
             if should_be_dump:
                 if not weight_only and not activation_only:
                     # update input tensors which should be dump
-                    self._update_input_tensor_to_dump([input for input in node.input if len(input) != 0],
-                                                    initializer_tensors_to_dump,
-                                                    tensors_to_dump)
+                    self._update_input_tensor_to_dump(
+                        [input for input in node.input if len(input) != 0], initializer_tensors_to_dump, tensors_to_dump
+                    )
                     # update output tensors which should be dump
                     tensors_to_dump.update([output for output in node.output if len(output) != 0])
                 elif weight_only:
@@ -175,13 +175,9 @@ class ONNXRTAugment:
                             and input.replace("_dequantized", "_quantized") in initializers
                             and len(input) != 0
                         ):
-                            self._update_input_tensor_to_dump(input,
-                                                              initializer_tensors_to_dump,
-                                                              tensors_to_dump)
+                            self._update_input_tensor_to_dump(input, initializer_tensors_to_dump, tensors_to_dump)
                         elif not self.already_quantized and input in initializers and len(input) != 0:
-                            self._update_input_tensor_to_dump(input,
-                                                              initializer_tensors_to_dump,
-                                                              tensors_to_dump)
+                            self._update_input_tensor_to_dump(input, initializer_tensors_to_dump, tensors_to_dump)
                 elif activation_only:
                     if len(node.input[0]) != 0:
                         tensors_to_dump.update([node.input[0]])
@@ -390,7 +386,7 @@ class ONNXRTAugment:
         # step 2: calibrate initializer tensors (like weight & bias) using minmax method
         for initializer_tensor_name in self.initializer_tensors_to_dump:
             initializer_tensor = augment_model_wrapper.get_initializer(initializer_tensor_name)
-            if initializer_tensor is None: # pragma: no cover
+            if initializer_tensor is None:  # pragma: no cover
                 continue
             initializer_tensor = numpy_helper.to_array(initializer_tensor)
             calibrator = CALIBRATOR["minmax"]()
