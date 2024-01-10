@@ -73,12 +73,13 @@ python run_clm_no_trainer.py \
 python run_clm_no_trainer.py \
     --model EleutherAI/gpt-j-6B \
     --accuracy \
+    --approach weight_only \
     --batch_size 112 \
     --tasks "lambada_openai"\
     --int8 \
-    --ipex \
     --output_dir "saved_results"  # load int8 model
 # to validate FP32 model, please remove "--int8" and "--output_dir".
+# to validate the int8 model quantized with ipex, please include "--ipex".
 ```
 ### OPT-1.3b/2.7b/6.7b
 
