@@ -51,7 +51,7 @@ def prepare_calibration_input(model, dataloader, device):
     layers[0] = Catcher(layers[0])
     for batch in dataloader:
         try:
-            model(batch[0].to(device))
+            model(batch[0])
         except ValueError:
             pass
     layers[0] = layers[0].module
@@ -66,9 +66,18 @@ def return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before):
     sort_mask = tmp_metric <= thres_cumsum.reshape((-1, 1))
     thres = torch.gather(sort_res[0], dim=1, index=sort_mask.sum(dim=1, keepdims=True) - 1)
     W_mask = W_metric <= thres
-    cur_sparsity = torch.sum(W_mask == True).data.item() / W_mask.numel()
+    cur_sparsity = torch.sum(W_mask is True).data.item() / W_mask.numel()
     return W_mask, cur_sparsity
 
+
+def move_inps_to_device(inps, others, device):
+    for idx in range(len(inps)):
+        for i in range(len(inps[idx])):
+            inps[idx][i] = inps[idx][i].to(device)
+        for arg in others[idx]:
+            other = others[idx][arg]
+            if isinstance(other, torch.Tensor):
+                others[idx][arg] = other.to(device)
 
 @torch.no_grad()
 def prune_wanda(
@@ -80,10 +89,11 @@ def prune_wanda(
     nsamples=128,
     use_variant=False,
     device=None,
+    low_mem_usage=False 
 ):
     """Prune the model using wanda
     Sij = |Wij| · ||Xj||2."""
-    if device is not None:
+    if device is not None and not low_mem_usage:
         model.to(device)
     use_cache = model.config.use_cache
     model.config.use_cache = False
@@ -91,6 +101,8 @@ def prune_wanda(
     # get inputs
     # inps, others = prepare_calibration_input(model, dataloader, device)
     inps, others = get_hidden_states(model, dataloader)
+    if low_mem_usage:
+        move_inps_to_device(inps, others, device)
     nsamples = min(nsamples, len(inps))
 
     # get the module list of the model, blockwise
@@ -98,6 +110,8 @@ def prune_wanda(
     for i in range(len(layers)):
         outs = []
         layer = layers[i]
+        if low_mem_usage:
+            layer.to(device)
         subset = find_layers(layer)
         if len(subset) == 0:
             logger.info(f"skip layer {i}, no op found")
@@ -196,6 +210,8 @@ def prune_wanda(
                     else:
                         outs[j] = [out]
         inps, outs = outs, inps
+        if low_mem_usage:
+            layer.to(torch.device("cpu"))
 
     model.config.use_cache = use_cache
     torch.cuda.empty_cache()
