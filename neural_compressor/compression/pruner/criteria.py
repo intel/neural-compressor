@@ -16,10 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
-from neural_compressor.utils import logger
-
-from .utils import torch
+from .utils import safe_get_data, safe_get_grad, safe_get_shape, torch
 
 CRITERIA = {}
 
@@ -100,8 +97,7 @@ class MagnitudeCriterion(PruningCriterion):
         with torch.no_grad():
             for key in self.modules.keys():
                 param = self.modules[key].weight
-                data = safe_get_data(param)
-                p = data
+                p = safe_get_data(param)
                 if hasattr(self.pattern, "reduce_score"):
                     self.scores[key] = self.pattern.reduce_score(torch.abs(p), key)
                 else:

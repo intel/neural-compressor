@@ -18,7 +18,7 @@
 
 import numpy as np
 
-from ..utils import F, tf, torch
+from ..utils import F, safe_get_data, safe_get_grad, safe_get_shape, safe_set_data, tf, torch
 
 PRUNERS = {}
 
@@ -171,9 +171,6 @@ class BasePruner:
         if int(step - self.start_step) % self.pruning_frequency == 0:
             return True
         return False
-
-
-from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape, safe_set_data
 
 
 class PytorchBasePruner(BasePruner):

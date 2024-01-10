@@ -17,13 +17,8 @@
 # limitations under the License.
 import numpy as np
 
-from neural_compressor.compression.pruner.utils import safe_get_data, safe_get_grad, safe_get_shape
-from neural_compressor.utils.logger import Logger
-
-from ..utils import nn, tf, torch
+from ..utils import logger, nn, safe_get_data, safe_get_grad, safe_get_shape, tf, torch
 from .base import KerasBasePattern, ProgressivePatternUtils, PytorchBasePattern, SparsityInfo, register_pattern
-
-logger = Logger().get_logger()
 
 
 @register_pattern("ptNxM")
@@ -161,7 +156,7 @@ class PytorchPatternNxM(PytorchBasePattern):
             Reshaped data.
         """
         # TODO: need to verify whether it's ok for transposed conv
-        from neural_compressor.compression.pruner.utils import FLATTEN_DIM2
+        from ..utils import FLATTEN_DIM2
 
         if len(data.shape) == 2:
             return data
@@ -178,7 +173,7 @@ class PytorchPatternNxM(PytorchBasePattern):
                 data = data.permute(0, 2, 1)  # cout,k,cin
             data = data.reshape(data.shape[0], -1)
         # TODO(Yi) support handle 1-dim (flatten param from DeepSpeed or FSDP)
-        elif len(data.shape) == 1:
+        elif len(data.shape) == 1:  # pragma: no cover
             data = data.reshape(-1, FLATTEN_DIM2)
         else:
             raise NotImplementedError(
