@@ -79,6 +79,7 @@ def move_inps_to_device(inps, others, device):
             if isinstance(other, torch.Tensor):
                 others[idx][arg] = other.to(device)
 
+
 @torch.no_grad()
 def prune_wanda(
     model,
@@ -89,7 +90,7 @@ def prune_wanda(
     nsamples=128,
     use_variant=False,
     device=None,
-    low_mem_usage=False 
+    low_mem_usage=False,
 ):
     """Prune the model using wanda
     Sij = |Wij| · ||Xj||2."""
