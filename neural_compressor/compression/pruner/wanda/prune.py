@@ -90,7 +90,7 @@ def prune_wanda(
     nsamples=128,
     use_variant=False,
     device=None,
-    low_mem_usage=None 
+    low_mem_usage=None,
 ):
     """Prune the model using wanda
     Sij = |Wij| · ||Xj||2."""
@@ -106,7 +106,7 @@ def prune_wanda(
             n = 2 if "16" in str(model.dtype) else 4
             need_space = total_params * n
             if free_space < need_space:
-                logger.info('Low memory usage mode is enabled.')
+                logger.info("Low memory usage mode is enabled.")
                 low_mem_usage = True
 
     if device is not None and not low_mem_usage:
