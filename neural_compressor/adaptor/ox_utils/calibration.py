@@ -134,7 +134,7 @@ class ONNXRTAugment:
         added_nodes = []
         added_outputs = []
 
-        # calibrate initializer tensors (like weight & bias) and output tensors seperatly
+        # calibrate initializer tensors (like weight & bias) and output tensors separately
         tensors_to_dump = set()
         initializer_tensors_to_dump = set()
 
@@ -400,7 +400,7 @@ class ONNXRTAugment:
         return list(output_dicts.keys()), output_dicts
 
     def _update_input_tensor_to_dump(self, tensor_names, initializer_tensors_to_dump, tensors_to_dump):
-        """Update input tensor to dump accroding to whether it is in initializer."""
+        """Update input tensor to dump according to whether it is in initializer."""
         if isinstance(tensor_names, str):
             tensor_names = [tensor_names]
         tensor_in_initializer, tensor_not_in_initializer = [], []
