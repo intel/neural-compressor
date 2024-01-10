@@ -481,6 +481,7 @@ def recover_model_from_json(model, json_file_path, example_inputs):
 
     ipex = LazyImport("intel_extension_for_pytorch")
     from torch.ao.quantization.observer import MinMaxObserver
+
     if ipex.__version__ >= "2.1.100":
         qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5, act_observer=MinMaxObserver)
     else:
