@@ -105,7 +105,7 @@ class ONNXRTAugment:
         """Return dataloader for next split model for layer-wise quantization."""
         return self._dataloder_for_next_split_model
 
-    def augment_graph(self, activation_only=False, weight_only=False):
+    def augment_graph(self):
         """Augment_graph.
 
         Adds nodes to all quantization_candidates op type nodes in model and
@@ -118,7 +118,7 @@ class ONNXRTAugment:
         self.dequantized_output.clear()
         onnx_version = Version(onnx.__version__)
         if onnx_version < ONNX18_VERSION:
-            logger.warning("Static quantization for NLP model is supported " "at onnx 1.8.0 and newer.")
+            logger.warning("Static quantization for NLP model is supported at onnx 1.8.0 and newer.")
         if self.already_quantized and any(
             [i.dims in [1, 2] for i in self.model_wrapper.initializer() if i.name.endswith("_scale")]
         ):
@@ -133,15 +133,12 @@ class ONNXRTAugment:
 
         added_nodes = []
         added_outputs = []
-
-        # calibrate initializer tensors (like weight & bias) and output tensors separately
         tensors_to_dump = set()
-        initializer_tensors_to_dump = set()
 
         for augment_node_type in self.augment_nodes:
             if augment_node_type not in ["DequantizeLinear"]:  # pragma: no cover
                 raise ValueError(
-                    "Unexpected augment_node {} only DequantizeLinear is " "supported".format(augment_node_type)
+                    "Unexpected augment_node {} only DequantizeLinear is supported".format(augment_node_type)
                 )
 
         if self.already_quantized:
@@ -149,11 +146,11 @@ class ONNXRTAugment:
             new_white_nodes = []
             for white_node in self.white_nodes:
                 new_white_node = white_node + "_quant"
-                assert new_white_node in model_nodes_names, "no quantized {} in the " "graph".format(white_node)
+                assert new_white_node in model_nodes_names, "no quantized {} in the graph".format(white_node)
                 new_white_nodes.append(new_white_node)
             self.white_nodes = new_white_nodes
 
-        initializers = {i.name: i.data_type for i in model.graph.initializer}
+        # initializers = {i.name: i.data_type for i in model.graph.initializer}
         node_outputs = []
         for node in model.graph.node:  # pylint: disable=no-member
             node_outputs.extend(node.output)
@@ -161,30 +158,42 @@ class ONNXRTAugment:
                 node.name in self.white_nodes
             )
             if should_be_dump:
-                if not weight_only and not activation_only:
-                    # update input tensors which should be dump
-                    self._update_input_tensor_to_dump(
-                        [input for input in node.input if len(input) != 0], initializer_tensors_to_dump, tensors_to_dump
-                    )
-                    # update output tensors which should be dump
-                    tensors_to_dump.update([output for output in node.output if len(output) != 0])
-                elif weight_only:
-                    for input in node.input:
-                        if (
-                            self.already_quantized
-                            and input.replace("_dequantized", "_quantized") in initializers
-                            and len(input) != 0
-                        ):
-                            self._update_input_tensor_to_dump(input, initializer_tensors_to_dump, tensors_to_dump)
-                        elif not self.already_quantized and input in initializers and len(input) != 0:
-                            self._update_input_tensor_to_dump(input, initializer_tensors_to_dump, tensors_to_dump)
-                elif activation_only:
-                    if len(node.input[0]) != 0:
-                        tensors_to_dump.update([node.input[0]])
+                # add input tensors which should be dump
+                for input in node.input:
+                    if len(input) != 0: # to prevent input is ""
+                        initializer_tensor = self.model_wrapper.get_initializer(input)
+                        if initializer_tensor is None:
+                            tensors_to_dump.add(input)
+                # add output tensors which should be dump
+                tensors_to_dump.update([output for output in node.output if len(output) != 0])
+                
+                # # calibrate output tensors 
+                # if not weight_only and not activation_only:
+                #     # update input tensors which should be dump
+                #     for input in node.input:
+                #         if len(input) != 0:
+                #             initializer_tensor = self.model_wrapper.get_initializer(input)
+                #             if initializer_tensor is None:
+                #                 tensors_to_dump.add(input)
+                #     # update output tensors which should be dump
+                #     tensors_to_dump.update([output for output in node.output if len(output) != 0])
+                # elif weight_only:
+                #     for input in node.input:
+                #         if (
+                #             self.already_quantized
+                #             and input.replace("_dequantized", "_quantized") in initializers
+                #             and len(input) != 0
+                #         ):
+                #             initializer_tensor = self.model_wrapper.get_initializer(input)
+                #             if initializer_tensor is None:
+                #                 tensors_to_dump.add(input)
+                # elif activation_only:
+                #     if len(node.input[0]) != 0:
+                #         tensors_to_dump.update([node.input[0]])
 
-        self.initializer_tensors_to_dump = initializer_tensors_to_dump
         model_inputs = [i.name for i in model.graph.input]
-
+        logger.debug("tensors to dump:")
+        logger.debug(tensors_to_dump)
         for tensor in tensors_to_dump:
             if tensor not in node_outputs and tensor not in model_inputs:
                 continue
@@ -246,8 +255,7 @@ class ONNXRTAugment:
                 convert_attribute=False,
             )
 
-    def get_intermediate_outputs(self, q_config=None):
-        """Gather intermediate model outputs after running inference."""
+    def get_activation_tensors_calib_range(self, q_config=None):
         # conduct inference session and get intermediate outputs
         so = onnxruntime.SessionOptions()
         so.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_DISABLE_ALL
@@ -289,8 +297,7 @@ class ONNXRTAugment:
             assert node, "{} is neither an input nor an output of nodes in augmented model.".format(data_name)
             name_to_node[data_name] = node.name
 
-        # step 1: calibrate output tensors
-        output_dicts = {}
+        activation_tensors_calib_range = {}
         intermediate_tensor = {}
         name_to_calibrator = {}
         ort_inputs_for_next_split_model = []
@@ -304,8 +311,8 @@ class ONNXRTAugment:
                 else:
                     ort_inputs.update({inputs_names[0]: to_numpy(inputs)})
             else:
+                # skip check input length for layer-wise calibration
                 if not self.layer_wise:
-                    # for layer-wise calibration
                     assert len_inputs == len(inputs), "number of input tensors must align with graph inputs"
 
                 if isinstance(inputs, dict):
@@ -345,14 +352,15 @@ class ONNXRTAugment:
                         # per iteration in the future.
                         if calibrator.method_name == "minmax":
                             calibrator.collect(output)
-                            output_dicts[node_output_names[output_idx]] = [list(calibrator.calib_range)]
+                            activation_tensors_calib_range[node_output_names[output_idx]] = \
+                                [list(calibrator.calib_range)]
                             name_to_calibrator[node_output_names[output_idx]] = calibrator
                         else:
                             intermediate_tensor.setdefault((node_output_names[output_idx], node_name), []).append(
                                 output
                             )
                     elif q_config is None:
-                        output_dicts.setdefault(node_output_names[output_idx], []).append(output)
+                        activation_tensors_calib_range.setdefault(node_output_names[output_idx], []).append(output)
 
                     if self.layer_wise:
                         # for layer-wise calibration
@@ -379,37 +387,66 @@ class ONNXRTAugment:
             )
             calibrator = CALIBRATOR[calib_method]()
             calibrator.collect(datas)
-            output_dicts.setdefault(output_name, []).append(list(calibrator.calib_range))
+            activation_tensors_calib_range.setdefault(output_name, []).append(list(calibrator.calib_range))
             calibrator.clear()
             del calibrator
 
-        # step 2: calibrate initializer tensors (like weight & bias) using minmax method
-        for initializer_tensor_name in self.initializer_tensors_to_dump:
-            initializer_tensor = augment_model_wrapper.get_initializer(initializer_tensor_name)
-            if initializer_tensor is None:  # pragma: no cover
-                continue
-            initializer_tensor = numpy_helper.to_array(initializer_tensor)
-            calibrator = CALIBRATOR["minmax"]()
-            calibrator.collect(initializer_tensor)
-            output_dicts[initializer_tensor_name] = [list(calibrator.calib_range)]
-            calibrator.clear()
-            del calibrator
-
+        # set for layer-wise quant
         self._dataloder_for_next_split_model = ort_inputs_for_next_split_model
 
-        return list(output_dicts.keys()), output_dicts
+        return activation_tensors_calib_range
+    
+    def get_weight_tensors_calib_range(self):
+        initializer_tensors_to_dump = set()
+        initializers = [init.name for init in self.model.graph.initializer]
+        for node in self.model.graph.node:  # pylint: disable=no-member
+            should_be_dump = ((node.op_type in self.dump_op_types) and (node.name not in self.black_nodes)) or (
+                node.name in self.white_nodes
+            )
+            if should_be_dump:
+                for input in node.input:
+                    if (
+                        self.already_quantized
+                        and input.replace("_dequantized", "_quantized") in initializers
+                        and len(input) != 0
+                    ) or (
+                        not self.already_quantized
+                        and input in initializers
+                        and len(input) != 0
+                    ):
+                        initializer_tensors_to_dump.add(input)
 
-    def _update_input_tensor_to_dump(self, tensor_names, initializer_tensors_to_dump, tensors_to_dump):
-        """Update input tensor to dump according to whether it is in initializer."""
-        if isinstance(tensor_names, str):
-            tensor_names = [tensor_names]
-        tensor_in_initializer, tensor_not_in_initializer = [], []
-        for tensor_name in tensor_names:
-            initializer_tensor = self.model_wrapper.get_initializer(tensor_name)
-            if initializer_tensor is None:
-                tensors_to_dump.update([tensor_name])
-            else:
-                initializer_tensors_to_dump.update([tensor_name])
+        logger.debug("initializer tensors to dump:")
+        logger.debug(initializer_tensors_to_dump)
+        weight_tensors_calib_range = {}
+        for initializer_tensor_name in initializer_tensors_to_dump:
+            initializer_tensor = self.model_wrapper.get_initializer(initializer_tensor_name)
+
+            # double check initializer tensor is not None
+            if initializer_tensor is None:  # pragma: no cover
+                continue
+
+            initializer_tensor = numpy_helper.to_array(initializer_tensor)
+            calibrator = CALIBRATOR["minmax"]() # use minmax method to calibrate initializer tensors
+            calibrator.collect(initializer_tensor)
+            weight_tensors_calib_range[initializer_tensor_name] = [list(calibrator.calib_range)]
+            calibrator.clear()
+            del calibrator
+        return weight_tensors_calib_range
+    
+    def get_intermediate_outputs(self, q_config=None, activation_only=False, weight_only=False):
+        """Gather intermediate model outputs after running inference."""
+        
+        output_dicts = {}
+        if not activation_only and not weight_only:
+            output_dicts = self.get_activation_tensors_calib_range(q_config)
+            output_dicts.update(self.get_weight_tensors_calib_range())
+        elif weight_only:
+            output_dicts = self.get_weight_tensors_calib_range()
+        elif activation_only:
+            output_dicts = self.get_activation_tensors_calib_range(q_config)
+
+        return list(output_dicts.keys()), output_dicts
 
     def _dequantize(self, tensor, scale_tensor, zo_tensor):
         """Helper function to dequantize tensor."""
@@ -587,8 +624,8 @@ class ONNXRTAugment:
             self.already_quantized = True
             self.dynamically_quantized = "DynamicQuantizeLinear" in [node.op_type for node in self.model.graph.node]
             is_qdq = format == "qdq"
-        self.augment_graph(activation_only=not weight, weight_only=not activation)
-        _, output_dicts = self.get_intermediate_outputs()
+        self.augment_graph()
+        _, output_dicts = self.get_intermediate_outputs(activation_only=not weight, weight_only=not activation)
         iters = len(list(output_dicts.values())[-1])
         map_node_activation = [{} for _ in range(iters)]
         map_node_weight = {}
