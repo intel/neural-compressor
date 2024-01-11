@@ -58,32 +58,38 @@ class MXQuantConfig(BaseConfig):
         "weight_dtype",
         "act_dtype",
         "out_dtype",
+        "blocksize",
+        "round_method",
+        "weight_only",
     ]
     name = MX_QUANT
 
     def __init__(
         self,
-        weight_dtype: str = "fp8_e5m2",
-        act_dtype: str = "fp8_e5m2",
+        weight_dtype: str = "int8",
+        act_dtype: str = "int8",
         out_dtype: str = "bfloat16",
+        blocksize: int = 32,
+        round_method: str = "nearest",
+        weight_only: bool = False,
     ):
         """Init RTN weight-only quantization config.
 
         Args:
-            weight_dtype (str): Data type for weights, default is "int".
-            weight_bits (int): Number of bits used to represent weights, default is 4.
-            weight_group_size (int): Size of weight groups, default is 32.
-            weight_sym (bool): Indicates whether weights are symmetric, default is True.
-            act_dtype (str): Data type for activations, default is "fp32".
-            enable_full_range (bool): Enables full range for activations, default is False.
-            enable_mse_search (bool): Enables mean squared error (MSE) search, default is False.
-            group_dim (int): Dimension for grouping, default is 1.
-            return_int (bool): Enables return model in int8/uint8 format or not. Defaults to False.
+            weight_dtype (str): Data type for weights, default is "int8".
+            act_dtype (str): Data type for activations, default is "int8".
+            out_dtype (str): Data type for outputs, default is "bfloat16".
+            blocksize (int): Granularity to share the scale, default is 32.
+            round_method (str): Round method, default is "nearest".
+            weight_only (bool): Whether implement weight_only, default is False.
         """
         super().__init__()
         self.weight_dtype = weight_dtype
         self.act_dtype = act_dtype
         self.out_dtype = out_dtype
+        self.blocksize = blocksize
+        self.round_method = round_method
+        self.weight_only = weight_only
 
     def to_dict(self):
         return super().to_dict(params_list=self.params_list, operator2str=operator2str)
@@ -96,9 +102,12 @@ class MXQuantConfig(BaseConfig):
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         linear_mx_config = MXQuantConfig(
-            weight_dtype=["int8", "int4", "int2", "fp8_e5m2", "fp8_e4m3", "fp6_e3m2", "fp6_e2m3", "fp4", "float16", "bfloat12"],
-            act_dtype=["int8", "int4", "int2", "fp8_e5m2", "fp8_e4m3", "fp6_e3m2", "fp6_e2m3", "fp4", "float16", "bfloat12"],
-            out_dtype=["bfloat16", "float16"]
+            weight_dtype=["int8", "int4", "int2", "fp8_e5m2", "fp8_e4m3", "fp6_e3m2", "fp6_e2m3", "fp4", "float16", "bfloat16"],
+            act_dtype=["int8", "int4", "int2", "fp8_e5m2", "fp8_e4m3", "fp6_e3m2", "fp6_e2m3", "fp4", "float16", "bfloat16"],
+            out_dtype=["bfloat16", "float16"],
+            blocksize=[2, 4, 8, 16, 32, 64, 128, 256, 512],
+            round_method=["nearest", "dither", "floor", "even"],
+            weight_only=[True, False],
         )
         operators = [torch.nn.Linear, torch.nn.functional.linear]
         supported_configs.append(OperatorConfig(config=linear_mx_config, operators=operators, backend=Backend.DEFAULT))

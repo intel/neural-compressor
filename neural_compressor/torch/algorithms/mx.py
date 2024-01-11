@@ -441,20 +441,19 @@ def _quantize_bfloat(A, bfloat, round='nearest', allow_denorm=True):
             A, bits=bfloat-7, exp_bits=8, max_norm=max_norm, round=round,
             allow_denorm=allow_denorm)
 
-def quantize_elemwise_op(A, mx_specs, round="even"):
+def quantize_elemwise_op(A, mx_specs):
     """A function used for element-wise quantization with mx_specs
     Arguments:
       A          {PyTorch tensor} -- a tensor that needs to be quantized
       mx_specs {dictionary}     -- dictionary to specify mx_specs
-      round      {str}            -- Rounding mode, choose from (floor, nearest, even)
-                                     (default: "nearest")
     Returns:
       quantized value {PyTorch tensor} -- a tensor that has been quantized
     """
     if mx_specs is None:
         return A
 
-    out_dtype = mx_specs['out_dtype']
+    out_dtype = mx_specs["out_dtype"]
+    round = mx_specs["round_method"]
     elem_format = ElemFormat.from_str(out_dtype)
     ebits, mbits, _, _, _ = _get_format_params(elem_format)
     if ElemFormat.is_bf(out_dtype):
@@ -534,13 +533,13 @@ def _quantize_mx(
 def quantize_mx_op(
     A,
     mx_specs: dict,
-    elem_format=None,
-    block_size=32,
     scale_bits=8,
     axes=None,
-    round="nearest",
     expand_and_reshape=False,
 ):
+    elem_format = mx_specs["act_dtype"]
+    round = mx_specs["round_method"]
+    block_size = mx_specs["blocksize"]
 
     if elem_format == None:
         return A
@@ -558,29 +557,22 @@ class MXLinearFunction(Function):
     @staticmethod
     def forward(ctx, input, weight, bias=None, mx_specs=None):
         # element-wise quantize for input
-        bf_in = quantize_elemwise_op(
-            input, mx_specs=mx_specs, round="nearest"
-        )
+        input = quantize_elemwise_op(input, mx_specs=mx_specs)
 
-        # MX quantize everything along input size
-        qis_input = quantize_mx_op(
-            bf_in,
-            mx_specs,
-            elem_format=mx_specs['act_dtype'],
-            axes=[-1],
-            round="nearest",
-        )
+        if not mx_specs.get("weight_only", False):
+            # MX quantize everything along input size
+            input = quantize_mx_op(
+                input,
+                mx_specs,
+                axes=[-1],
+            )
         # compute output
-        output = F.linear(qis_input, weight)
-        output = quantize_elemwise_op(
-            output, mx_specs=mx_specs, round="nearest"
-        )
+        output = F.linear(input, weight)
+        output = quantize_elemwise_op(output, mx_specs=mx_specs)
 
         if bias is not None:
             output = output + bias
-            output = quantize_elemwise_op(
-                output, mx_specs=mx_specs, round="nearest"
-            )
+            output = quantize_elemwise_op(output, mx_specs=mx_specs)
 
         return output
 
@@ -613,21 +605,19 @@ class MXLinear(torch.nn.Linear):
     def apply_mx_specs(self):
         if self.mx_specs is not None:
             self.weight.data = quantize_elemwise_op(
-                self.weight.data, mx_specs=self.mx_specs, round="nearest"
+                self.weight.data, mx_specs=self.mx_specs
             )
 
             if self.bias is not None:
                 self.bias.data = quantize_elemwise_op(
-                    self.bias.data, mx_specs=self.mx_specs, round="nearest"
+                    self.bias.data, mx_specs=self.mx_specs
                 )
 
             # MX quantize everything along input size
             self.weight.data = quantize_mx_op(
                 self.weight.data,
                 self.mx_specs,
-                elem_format=self.mx_specs['weight_dtype'],
                 axes=[-1],
-                round="nearest",
             )
 
     def append_name(self, postfix):
@@ -641,9 +631,12 @@ class MXLinear(torch.nn.Linear):
 
 def mx_quantize(
     model,
-    weight_dtype="fp8_e5m2",
-    act_dtype="fp8_e5m2",
+    weight_dtype="int8",
+    act_dtype="int8",
     out_dtype="bfloat16",
+    blocksize=32,
+    round_method="nearest",
+    weight_only=False,
     config={},
     **kwargs,
 ):
@@ -675,6 +668,9 @@ def mx_quantize(
             weight_dtype = config[name]["weight_dtype"]
             act_dtype = config[name]["act_dtype"]
             out_dtype = config[name]["out_dtype"]
+            blocksize = config[name]["blocksize"]
+            round_method = config[name]["round_method"]
+            weight_only = config[name]["weight_only"]
         logger.debug(f"MX quantized module:{name, m}")
         log_msg = (
             f"MX quantization config: weight_dtype={weight_dtype}, act_dtype={act_dtype}, "
@@ -685,6 +681,9 @@ def mx_quantize(
             "weight_dtype": weight_dtype,
             "act_dtype": act_dtype,
             "out_dtype": out_dtype,
+            "blocksize": blocksize,
+            "round_method": round_method,
+            "weight_only": weight_only,
         }
         tmp_stat = m.state_dict()
         new_module = MXLinear(
