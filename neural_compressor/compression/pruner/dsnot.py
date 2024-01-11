@@ -16,8 +16,10 @@
 # limitations under the License.
 import transformers
 
-from .utils import torch
-from .wrapper import WrappedGPT
+from neural_compressor.utils.utility import LazyImport
+
+torch = LazyImport("torch")
+from .wanda.wrapper import WrappedGPT
 
 
 def return_reorder_indice(input_tensor):

@@ -208,7 +208,7 @@ def prune_wanda(
                     W_mask.scatter_(1, indices, True)
 
             if dsnot:
-                from .dsnot import DSnoT
+                from ..dsnot import DSnoT
 
                 logger.info(f"Using dsnot pruning for {name}")
                 W_mask = DSnoT(W_metric, sparsity_ratio, wrapped_layers[name])
