@@ -95,7 +95,8 @@ def prune_wanda(
 ):
     """Prune the model using wanda
     Sij = |Wij| · ||Xj||2.
-     See the original paper: https://arxiv.org/pdf/2306.11695.pdf 
+
+    See the original paper: https://arxiv.org/pdf/2306.11695.pdf
     """
     # When the model is too large, we can use low memory usage mode to reduce the GPU memory consumption.
     if low_mem_usage is None:

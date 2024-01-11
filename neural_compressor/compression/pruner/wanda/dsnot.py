@@ -85,7 +85,7 @@ def DSnoT(
         max_cycle_time: Max cycle time.
         without_same_sign, without same sign, bool, default True.
         update_threshold: update threshold, float, default 0.1.
-    
+
     See the original paper: https://arxiv.org/pdf/2310.08915.pdf
     """
     assert isinstance(wrapped_layer, WrappedGPT)
