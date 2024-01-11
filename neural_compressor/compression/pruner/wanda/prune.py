@@ -210,7 +210,7 @@ def prune_wanda(
             if dsnot:
                 from .dsnot import DSnoT
 
-                logger.info(f'Using dsnot pruning for {name}')
+                logger.info(f"Using dsnot pruning for {name}")
                 W_mask = DSnoT(W_metric, sparsity_ratio, wrapped_layers[name])
             if isinstance(subset[name], transformers.Conv1D):
                 subset[name].weight.data[W_mask.T] = 0  ## set weights to zero
