@@ -107,7 +107,7 @@ def prune_wanda(
             n = 2 if "16" in str(model.dtype) else 4
             need_space = total_params * n
             if free_space < need_space:
-                logger.info('Low memory usage mode is enabled.')
+                logger.info("Low memory usage mode is enabled.")
                 low_mem_usage = True
 
     if device is not None and not low_mem_usage:
