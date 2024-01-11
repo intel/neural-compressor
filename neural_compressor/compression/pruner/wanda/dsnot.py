@@ -32,7 +32,8 @@ def return_reorder_indice(input_tensor):
     [-2., -4.,  2.],
     [-7.,  6.,  5.],
     [-6., -7., -4.]]
-    Description: The relative order in the positive number remains unchanged, and the relative order in the negative number is flipped.
+    Description: The relative order in the positive number remains unchanged,
+    and the relative order in the negative number is flipped.
     """
     positive_tensor = input_tensor.clone()
     negative_tensor = input_tensor.clone()
@@ -73,7 +74,7 @@ def DSnoT(
     wrapped_layer,
     prune_n=0,
     prune_m=0,
-    pow_of_var_regrowing=2.0,
+    pow_of_var_regrowing=1.0,
     max_cycle_time=100,
     without_same_sign=True,
     update_threshold=0.1,
@@ -84,6 +85,8 @@ def DSnoT(
         max_cycle_time: Max cycle time.
         without_same_sign, without same sign, bool, default True.
         update_threshold: update threshold, float, default 0.1.
+    
+    See the original paper: https://arxiv.org/pdf/2310.08915.pdf
     """
     assert isinstance(wrapped_layer, WrappedGPT)
     W = wrapped_layer.layer.weight.data
