@@ -143,7 +143,7 @@ def DSnoT(initial_metric, sparsity_ratio, wrapped_layer,
             reconstruction_error, dtype=torch.bool
         )
         while not (
-            torch.all(update_mask == False)
+            torch.all(update_mask is False)
             or cycle_time > max_cycle_time
         ):
             cycle_time += 1
@@ -183,7 +183,7 @@ def DSnoT(initial_metric, sparsity_ratio, wrapped_layer,
             pruning_indice += recover_block_start_indice
             pruning_metric = DSnoT_metric.gather( 1, pruning_indice.to(torch.int64) )
             reconstruction_error_after = ( reconstruction_error + pruning_metric - regrowing_metric )
-            update_mask = (update_mask & ( initialize_error_sign == torch.sign(reconstruction_error_after) ) & ( abs(reconstruction_error) > args.update_threshold))
+            update_mask = (update_mask & ( initialize_error_sign == torch.sign(reconstruction_error_after) ) & ( abs(reconstruction_error) > update_threshold))
             initial_metric.scatter_(1, pruning_indice, W_metric_max_value)
             weight_mask.scatter_(1, pruning_indice, update_mask)
             weight_mask.scatter_(1, regrowing_indice, ~update_mask)
@@ -209,8 +209,8 @@ def DSnoT(initial_metric, sparsity_ratio, wrapped_layer,
         _, sorted_initial_indice = torch.sort(
             initial_metric, dim=-1, stable=True
         )
-        sparsity_num = int(initial_metric.shape[1] * sparsity_ratio)
-        res_sparsity_num = sorted_initial_indice.shape[1] - sparsity_num
+        sparsity_num = int(initial_metric.shape[-1] * sparsity_ratio)
+        res_sparsity_num = sorted_initial_indice.shape[-1] - sparsity_num
 
         initial_prune_indices, initial_res_indices = torch.split(
             sorted_initial_indice,
@@ -284,7 +284,7 @@ def DSnoT(initial_metric, sparsity_ratio, wrapped_layer,
             reconstruction_error, dtype=torch.bool
         )
         cycle_time = 0
-        while not ( torch.all(update_mask == False) or cycle_time >= max_cycle_time ):
+        while not ( torch.all(update_mask is False) or cycle_time >= max_cycle_time ):
             cycle_time += 1
             
             # regrowing
