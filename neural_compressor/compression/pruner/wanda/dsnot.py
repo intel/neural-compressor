@@ -73,14 +73,14 @@ def DSnoT(
     wrapped_layer,
     prune_n=0,
     prune_m=0,
-    pow_of_var_regrowing=1.0,
+    pow_of_var_regrowing=2.0,
     max_cycle_time=100,
     without_same_sign=True,
     update_threshold=0.1,
 ):
     """
     Args:
-        pow_of_var_regrowing: The power of variance, float type, defaut=1.
+        pow_of_var_regrowing: The power of variance, float type, default=1.
         max_cycle_time: Max cycle time.
         without_same_sign, without same sign, bool, default True.
         update_threshold: update threshold, float, default 0.1.
@@ -153,7 +153,7 @@ def DSnoT(
 
         cycle_time = 1
         update_mask = torch.ones_like(reconstruction_error, dtype=torch.bool)
-        while not (torch.all(update_mask is False) or cycle_time > max_cycle_time):
+        while not (torch.all(update_mask == 0.0) or cycle_time > max_cycle_time):
             cycle_time += 1
 
             # regrowing
@@ -270,7 +270,7 @@ def DSnoT(
 
         update_mask = torch.ones_like(reconstruction_error, dtype=torch.bool)
         cycle_time = 0
-        while not (torch.all(update_mask is False) or cycle_time >= max_cycle_time):
+        while not (torch.all(update_mask == 0.0) or cycle_time >= max_cycle_time):
             cycle_time += 1
 
             # regrowing
