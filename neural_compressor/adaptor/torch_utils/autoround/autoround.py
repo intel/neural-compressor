@@ -19,18 +19,17 @@ try:
     from neural_compressor.utils import logger
 except:  # pragma: no cover
     import logging
-
     import torch
-
     logger = logging.getLogger()
 
 import copy
 import time
 from collections import UserDict
 from functools import partial
-
+from .model_wrapper import WeightOnlyLinear
 from torch.amp import autocast
 from torch.functional import F
+from typing import Union
 
 
 def quant_weight_asym(weight, num_bits=4, v=0, min_scale=0, max_scale=0):
@@ -136,17 +135,31 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", v=0, min_scal
         Quantized and dequantized weight, scale, zero-point
     """
     if group_size == -1 or weight.shape[1] < group_size:
-        return quant_weight_actor(weight, num_bits, scheme=scheme, v=v, min_scale=min_scale, max_scale=max_scale)
+        return quant_weight_actor(
+            weight,
+            num_bits,
+            scheme=scheme,
+            v=v,
+            min_scale=min_scale,
+            max_scale=max_scale
+        )
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
         if isinstance(v, torch.Tensor):
             v = v.reshape(-1, group_size)
-
         weight, scale, zp = quant_weight_actor(
-            weight, num_bits, scheme=scheme, v=v, min_scale=min_scale, max_scale=max_scale
+            weight,
+            num_bits,
+            scheme=scheme,
+            v=v,
+            min_scale=min_scale,
+            max_scale=max_scale
         )
         weight = weight.reshape(orig_shape)
+        scale = scale.reshape(orig_shape[0], -1) #TODO validating the feasibility on conv1d
+        if zp is not None:
+            zp = zp.reshape(orig_shape[0], -1)
         return weight, scale, zp
 
     else:
@@ -157,12 +170,123 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", v=0, min_scal
         if isinstance(v, torch.Tensor):
             v = v.reshape(-1, group_size)
         weight_new, scale, zp = quant_weight_actor(
-            weight_new, num_bits, scheme=scheme, v=v, min_scale=min_scale, max_scale=max_scale
+            weight_new,
+            num_bits,
+            scheme=scheme,
+            v=v,
+            min_scale=min_scale,
+            max_scale=max_scale
         )
         weight_new = weight_new.reshape(orig_shape[0], -1)
-
+        scale = scale.reshape(orig_shape[0], -1)
+        if zp is not None:
+            zp = zp.reshape(orig_shape[0], -1)
         weight_new = weight_new[:, :-pad_len]
+        scale = scale[:, :-pad_len]
+        zp = zp[:, :-pad_len]
         return weight_new, scale, zp
+
+
+def quant_weight_w_scale(weight, scale, zp, group_size=-1):
+    """Quant and dequant tensor with group size.
+
+    Args:
+        weight: input weight
+        scale: scale
+        zp: zero point
+        group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
+
+    Returns:
+        output: int weight.
+    """
+    device = weight.device
+    scale = scale.to(device)
+    if zp is not None:
+        zp = zp.to(device)
+    if group_size == -1:
+        return torch.round(weight / scale) if zp is None else torch.round(weight / scale + zp)
+    int_weight = torch.zeros(weight.shape).to(device)
+    leng = weight.shape[1] // group_size
+    tail_flag = False if weight.shape[1] % group_size == 0 else True
+    for i in range(leng):
+        int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size] / scale[:, i].unsqueeze(1)
+        if zp is not None:
+            int_weight_tmp += zp[:, i].unsqueeze(1)
+        int_weight[:, i * group_size : (i + 1) * group_size] = torch.round(int_weight_tmp)
+    if tail_flag:
+        int_weight_tmp = weight[:, leng * group_size :] / scale[:, -1].unsqueeze(1)
+        if zp is not None:
+            int_weight_tmp += zp[:, -1].unsqueeze(1)
+        int_weight[:, leng * group_size :] = torch.round(int_weight_tmp)
+    return int_weight
+
+
+def export_compressed_model(
+        model,
+        weight_config:Union[str, dict],
+        enable_full_range=False,
+        compression_dtype=torch.int32,
+        compression_dim=1,
+        scale_dtype=torch.float32,
+        device="cpu",
+        use_optimum_format=True,
+    ):
+    """Convert Linear to WeightOnlyLinear for low memory inference.
+
+    Args:
+        weight_config (str|dict): qconfig dict or Path of qconfig.json.
+        enable_full_range (bool, optional): Whether to leverage the full compression range
+                                            under symmetric quantization. Defaults to False.
+        compression_dtype (torch.Tensor, optional): The target dtype after comoression.
+                                                    Defaults to torch.int32.
+        compression_dim (int, optional): Select from [0, 1], 0 is output channel,
+                                            1 is input channel. Defaults to 1.
+        scale_dtype (torch.Tensor, optional): Use float32 or float16.
+                                                Defaults to torch.float32.
+        device (str, optional): choose device for compression. Defaults to cpu.
+        use_optimum_format (bool, optional): use the popular huggingface compression format.
+            1: compression_dim: weight = 1, zeros = 0 and both are transposed.
+            2: zeros -= 1 before compression. Why we need it?
+            3: g_idx: use same number for one group instead of recording the channel order.
+            4. parameter name changed, such as 'packed_weight' -> 'qweight'.
+            5. zeros is always needed even for sym.
+    """
+    from .model_wrapper import WeightOnlyLinear
+    compressed_model = copy.deepcopy(model)
+    if isinstance(weight_config, str):
+        with open(weight_config, "r") as f:
+            q_config = json.load(f)
+    else:
+        q_config = weight_config
+    for k, v in q_config.items():
+        print(f"Compressing {k} on device {device}")
+        if v["data_type"] == "float":
+            continue
+        else:
+            dtype = v["data_type"]
+            num_bits = v["bits"]
+            group_size = v["group_size"]
+            scheme = v["scheme"]
+        m = get_module(compressed_model, k)
+        fp_weight = m.weight.data
+        scale = torch.tensor(v["scale"], dtype=torch.float32) # may exist dtype dismatch problem
+        zp = None if scheme == "sym" else torch.tensor(v["zp"], dtype=torch.int32)
+        int_weight = quant_weight_w_scale(fp_weight, scale, zp, group_size)
+        int_weight = int_weight.type(torch.int32)
+        new_module = WeightOnlyLinear(
+            m.in_features,
+            m.out_features,
+            num_bits,
+            group_size,
+            dtype=dtype,
+            zp=zp is not None,
+            bias=m.bias is not None,
+            device=device,
+            use_optimum_format=True,
+        )
+        new_module.pack(int_weight, scale, zp, m.bias)
+        set_module(compressed_model, k, new_module)
+    return compressed_model
 
 
 def round_ste(x: torch.Tensor):
@@ -976,7 +1100,6 @@ class AutoRound(object):
         self.amp = amp
         self.use_quant_input = use_quant_input
         self.enable_minmax_tuning = enable_minmax_tuning
-        self.n_samples = n_samples
         self.n_blocks = n_blocks
         self.bits = bits
         self.group_size = group_size
@@ -997,6 +1120,7 @@ class AutoRound(object):
         self.tokenizer = tokenizer
         self.seqlen = seqlen
         self.train_bs = bs
+        self.n_samples = bs*(n_samples//bs)
         self.n_blocks = n_blocks
         self.device = device
         self.amp_dtype = torch.float16
@@ -1393,20 +1517,29 @@ class AutoRound(object):
             if n in self.weight_config.keys():
                 if hasattr(m, "scale"):
                     self.weight_config[n]["scale"] = m.scale
+                    # self.weight_config[n]["scale_dtype"] = m.scale.dtype
                     self.weight_config[n]["zp"] = m.zp
+                    # self.weight_config[n]["zp_dtype"] = m.zp.dtype
                     delattr(m, "scale")
                     delattr(m, "zp")
                 else:
                     self.weight_config[n]["data_type"] = "float"
-                    if self.amp_dtype == torch.bfloat16:
-                        self.weight_config[n]["data_type"] = "bfloat"
-                    self.weight_config[n]["bits"] = 16
+                    self.weight_config[n]["bits"] = 32
+                    if self.amp:
+                        self.weight_config[n]["bits"] = 16
+                        if self.amp_dtype == torch.bfloat16:
+                            self.weight_config[n]["data_type"] = "bfloat"
                     self.weight_config[n]["group_size"] = None
                     self.weight_config[n]["sym"] = None
 
+        for k, v in self.weight_config.items():
+            for m, n in v.items():
+                if isinstance(n, torch.Tensor):
+                    self.weight_config[k][m] = n.tolist()
         end_time = time.time()
         cost_time = end_time - start_time
         logger.info(f"quantization runtime {cost_time}")
+        
         return self.model, self.weight_config
 
 
@@ -1665,3 +1798,4 @@ class AutoAdamRound(AutoOPTRound):
             optimizer,
             **kwargs,
         )
+

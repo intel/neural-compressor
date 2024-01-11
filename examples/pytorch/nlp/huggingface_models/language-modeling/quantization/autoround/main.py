@@ -1,20 +1,20 @@
 import argparse
-
-from neural_compressor.adaptor.torch_utils.autoround import AutoRound, AutoOPTRound, AutoAdamRound
+import sys
+from neural_compressor.adaptor.torch_utils.autoround import (AutoRound,
+                                                             AutoOPTRound,
+                                                             AutoAdamRound)
 
 parser = argparse.ArgumentParser()
 import torch
 import os
+import re
+import json
 
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 torch.use_deterministic_algorithms(True, warn_only=True)
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
-
 from transformers import set_seed
-
 from eval import eval_model
-
-import re
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -83,6 +83,9 @@ if __name__ == '__main__':
 
     parser.add_argument("--enable_minmax_tuning", action='store_true',
                         help="whether enable weight minmax tuning")
+    
+    parser.add_argument("--use_optimum_format", default=True,
+                        help="whether use HuggingFace format.")
 
     # parser.add_argument("--tasks", default=["lambada_openai", "hellaswag", "winogrande", "piqa"],
     #                     help="lm-eval tasks")
@@ -186,9 +189,17 @@ if __name__ == '__main__':
 
     optq = round(model, tokenizer, args.num_bits, args.group_size, scheme, bs=args.train_bs,
                  seqlen=seqlen, n_blocks=args.n_blocks, iters=args.iters, lr=args.lr,
-                 minmax_lr=args.minmax_lr, use_quant_input=args.use_quant_input,
-                 amp=args.amp, n_samples=args.n_samples, low_gpu_mem_usage=args.low_gpu_mem_usage, seed=args.seed, gradient_accumulate_steps=args.gradient_accumulate_steps)  ##TODO args pass
-    optq.quantize()
+                 use_quant_input=args.use_quant_input, amp=args.amp, n_samples=args.n_samples,
+                 low_gpu_mem_usage=args.low_gpu_mem_usage, minmax_lr=args.minmax_lr,
+                 seed=args.seed, gradient_accumulate_steps=args.gradient_accumulate_steps)  ##TODO args pass
+    q_model, q_config = optq.quantize()
+    if args.use_optimum_format:
+        output_dir = args.output_dir + "_" + args.model_name.split('/')[-1] + "/"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        q_config_path =  os.path.join(output_dir, "qconfig.json")
+        with open(q_config_path, "w") as f:
+                json.dump(q_config, f, indent=4)
 
     torch.cuda.empty_cache()
     model.eval()
@@ -202,3 +213,4 @@ if __name__ == '__main__':
     eval_model(output_dir=output_dir, model=model, tokenizer=tokenizer, tasks=args.tasks, \
                eval_bs=args.eval_bs, use_accelerate=args.low_gpu_mem_usage, device=cuda_device, excel_file=excel_name,
                limit=None)
+
