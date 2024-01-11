@@ -270,7 +270,7 @@ def DSnoT(
 
         update_mask = torch.ones_like(reconstruction_error, dtype=torch.bool)
         cycle_time = 0
-        while not ( torch.all(update_mask is False) or cycle_time >= max_cycle_time ):
+        while not (torch.all(update_mask is False) or cycle_time >= max_cycle_time):
             cycle_time += 1
 
             # regrowing
