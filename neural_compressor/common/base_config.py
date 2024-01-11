@@ -18,8 +18,11 @@
 from __future__ import annotations
 
 import json
+import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
+from copy import deepcopy
+from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from neural_compressor.common.logger import Logger
@@ -197,7 +200,10 @@ class BaseConfig(ABC):
             config_dict = self.to_diff_dict(self)
         else:
             config_dict = self.to_dict()
-        return json.dumps(config_dict, indent=2) + "\n"
+        try:
+            return json.dumps(config_dict, indent=2) + "\n"
+        except:
+            return config_dict
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__} {self.to_json_string()}"
@@ -221,6 +227,57 @@ class BaseConfig(ABC):
         else:
             return ComposableConfig(configs=[self, other])
 
+    def expand(self) -> List[BaseConfig]:
+        """Expand the config.
+
+        case 1
+            {
+                "global": { "weight_bits": [4, 6]}
+            }
+            expand to :
+            1st trial config:
+            {
+                "global": { "weight_bits": 4}
+            }
+            2nd trial config:
+            {
+                "global": { "weight_bits": 6}
+            }
+        case 2
+        # TODO (Yi) to support the expansion of config with `local`
+        {
+            "global": {
+                "weight_bits": [4, 6]
+            },
+            "local":
+            {
+                "fc1":{
+                    "weight_bits": [6, 8]
+                },
+                "fc2":{
+                    "weight_bits": [4]
+                }
+            }
+
+        } -> ?
+        """
+        config_list: List[BaseConfig] = []
+        params_list = self.params_list
+        params_dict = OrderedDict()
+        config = self
+        for param in params_list:
+            param_val = getattr(config, param)
+            # TODO (Yi) to handle param_val itself is a list
+            if isinstance(param_val, list):
+                params_dict[param] = param_val
+            else:
+                params_dict[param] = [param_val]
+        for params_values in product(*params_dict.values()):
+            new_config = self.__class__(**dict(zip(params_list, params_values)))
+            config_list.append(new_config)
+        logger.info(f"Expanded the {self.__class__.name} and got {len(config_list)} configs.")
+        return config_list
+
     def _get_op_name_op_type_config(self):
         op_type_config_dict = dict()
         op_name_config_dict = dict()
@@ -242,11 +299,12 @@ class BaseConfig(ABC):
             op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
             for op_name, op_type in model_info:
                 if self.global_config is not None:
-                    config_mapping[(op_type, op_name)] = global_config
+                    config_mapping[(op_name, op_type)] = global_config
                 if op_type in op_type_config_dict:
-                    config_mapping[(op_type, op_name)] = op_name_config_dict[op_type]
-                if op_name in op_name_config_dict:
-                    config_mapping[(op_type, op_name)] = op_name_config_dict[op_name]
+                    config_mapping[(op_name, op_type)] = op_name_config_dict[op_type]
+                for op_name_pattern in op_name_config_dict:
+                    if re.match(op_name_pattern, op_name):
+                        config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
         return config_mapping
 
     @staticmethod

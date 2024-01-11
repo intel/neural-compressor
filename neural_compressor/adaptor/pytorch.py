@@ -1737,7 +1737,13 @@ class TemplateAdaptor(Adaptor):
         force_re_smooth=False,
         record_max_info=False,
         weight_clip=True,
-        auto_alpha_args={"alpha_min": 0.0, "alpha_max": 1.0, "alpha_step": 0.1, "shared_criterion": "mean"},
+        auto_alpha_args={
+            "alpha_min": 0.0,
+            "alpha_max": 1.0,
+            "alpha_step": 0.1,
+            "shared_criterion": "mean",
+            "do_blockwise": False,
+        },
         default_alpha=0.5,
     ):
         """Convert the model by smooth quant.
@@ -1756,6 +1762,7 @@ class TemplateAdaptor(Adaptor):
             weight_clip: Whether to clip weight when calculating scales; by default it is on.
             auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
                             By default the search space is 0.0-1.0 with step_size 0.1.
+                            do_blockwise determines whether to do blockwise auto-tuning.
             default_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
 
         Returns:
@@ -3358,7 +3365,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         self._cfg_to_qconfig(tune_cfg, smooth_quant=True)
         update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
         model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
-
         # real calibration for other operators
         try:
             # IPEX may raise an error on the second iteration.
@@ -3376,8 +3382,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                 + "using scale info from SmoothQuant for Linear and "
                 + "one iter calibration for other ops."
             )
-
         model._model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+        if self.version.release > Version("2.1.0").release:
+            update_sq_scale(self.ipex_config_path, smoothquant_scale_info)
+            model._model.load_qconf_summary(qconf_summary=self.ipex_config_path)
         self._ipex_post_quant_process(model, q_model, dataloader, inplace=inplace)
 
         with open(self.ipex_config_path, "r") as f:

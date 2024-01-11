@@ -482,7 +482,10 @@ def recover_model_from_json(model, json_file_path, example_inputs):
     ipex = LazyImport("intel_extension_for_pytorch")
     from torch.ao.quantization.observer import MinMaxObserver
 
-    qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5, act_observer=MinMaxObserver())
+    if ipex.__version__ >= "2.1.100":
+        qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5, act_observer=MinMaxObserver)
+    else:
+        qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5, act_observer=MinMaxObserver())
     if isinstance(example_inputs, dict):
         model = ipex.quantization.prepare(model, qconfig, example_kwarg_inputs=example_inputs, inplace=True)
     else:
@@ -507,6 +510,9 @@ def recover_model_from_json(model, json_file_path, example_inputs):
         if isinstance(example_inputs, dict):
             model(**example_inputs)
             model(**example_inputs)
+        elif isinstance(example_inputs, tuple) or isinstance(example_inputs, list):
+            model(*example_inputs)
+            model(*example_inputs)
         else:
             model(example_inputs)
             model(example_inputs)

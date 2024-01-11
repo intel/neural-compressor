@@ -11,6 +11,8 @@ bash /intel-extension-for-transformers/.github/workflows/script/prepare_env.sh
 bash /intel-extension-for-transformers/.github/workflows/script/install_binary.sh
 
 # prepare test env
+# tmp install transformers for incompatible issue
+pip install transformers==4.34.1
 pip install -r /intel-extension-for-transformers/tests/requirements.txt
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}

@@ -1150,6 +1150,8 @@ class TestTuneSqAlpha(unittest.TestCase):
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
+        logger.info(f"alpha is: {alpha}")
+
         tuning_criterion = TuningCriterion(max_trials=8)
 
         fp32_model = DemoModel()
@@ -1183,8 +1185,8 @@ class TestTuneSqAlpha(unittest.TestCase):
         # test for alpha is a list
         for eval_result_lst, note in [
             ([1, 0.8, 1.1, 0.7, 1.1], "Expect tuning ends at 2nd trial with alpha is 0.15"),
-            ([1, 0.8, 0.9, 0.7, 1.1], "Expect tuning ends at 4th trial with alpha is 0.15"),
-            ([1, 0.9, 0.8, 0.7, 1.1], "Expect tuning ends at 4th trial with alpha is 0.10"),
+            ([1, 0.8, 0.9, 0.7, 1.1], "Expect tuning ends at 2nd trial with alpha is 0.15"),
+            ([1, 0.9, 0.8, 0.7, 1.1], "Expect tuning ends at 1st trial with alpha is 0.10"),
         ]:
             logger.info(f"test_sq_tune_alpha_common with eval_result_lst: {eval_result_lst}")
             logger.info(note)
@@ -1222,13 +1224,7 @@ class TestTuneSqAlpha(unittest.TestCase):
                 [1, 0.8, 0.9, 0.7, 1.1],
                 np.arange(0.1, 0.2, 0.05).tolist(),
                 "auto",
-                "Expect tuning ends at 4th trial with alpha is  0.15 at basic strategy.",
-            ),
-            (
-                [1, 1.1, 0.8, 0.7, 1.1],
-                np.arange(0.1, 0.2, 0.05).tolist(),
-                0,
-                "Expect tuning ends at 1th trial with alpha is 0.1",
+                "Expect tuning ends at 2th trial with alpha is  0.15 at basic strategy.",
             ),
         ]:
             logger.info("test_sq_tune_alpha_common with ")
@@ -1546,6 +1542,33 @@ class TestInputConfig(unittest.TestCase):
         )
         assert sq.default_alpha == 0.7
         assert sq.auto_alpha_args["alpha_min"] == 0.5
+
+
+class TestAlphaAutoLinearBlockwise(unittest.TestCase):
+    @classmethod
+    def test_sq_linear_Blockwise_auto(self):
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+        )
+        sq = TorchSmoothQuant(model, LLMCalibDataloader())
+        sq.transform(
+            alpha="auto",
+            calib_iter=1,
+            folding=False,
+            auto_alpha_args={
+                "alpha_min": 0.45,
+                "alpha_max": 0.55,
+                "alpha_step": 0.01,
+                "shared_criterion": "mean",
+                "do_blockwise": True,
+            },
+        )
+        for i in range(12):
+            op_name1 = "model.decoder.layers." + str(i) + ".self_attn.out_proj"
+            op_name2 = "model.decoder.layers." + str(i) + ".fc1"
+            assert sq.alpha_per_layer[op_name1] == sq.alpha_per_layer[op_name2]
+        assert len(sq.block_names) == 13
 
 
 if __name__ == "__main__":

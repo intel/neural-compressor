@@ -1,7 +1,6 @@
 Examples
 ==========
 Intel® Neural Compressor validated examples with multiple compression techniques, including quantization, pruning, knowledge distillation and orchestration. Part of the validated cases can be found in the example tables, and the release data is available [here](../docs/source/validated_model_list.md).
-> Note: The example marked with `*` means it still use 1.x API.
 
 # Quick Get Started Notebook Examples
 * [Quick Get Started Notebook of Intel® Neural Compressor for ONNXRuntime](/examples/notebook/onnxruntime/Quick_Started_Notebook_of_INC_for_ONNXRuntime.ipynb)
@@ -532,7 +531,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex(xpu)</a></td>
   </tr>
   <tr>
     <td>distilbert-base-uncased-distilled-squad</td>
@@ -1508,7 +1507,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
 # Notebook Examples
 
-* *[BERT Mini SST2 performance boost with INC](/examples/notebook/bert_mini_distillation): train a BERT-Mini model on SST-2 dataset through distillation, and leverage quantization to accelerate the inference while maintaining the accuracy using Intel® Neural Compressor.
 * [Performance of FP32 Vs. INT8 ResNet50 Model](/examples/notebook/perf_fp32_int8_tf): compare existed FP32 & INT8 ResNet50 model directly.
 * [Intel® Neural Compressor Sample for PyTorch*](/examples/notebook/pytorch/alexnet_fashion_mnist): an End-To-End pipeline to build up a CNN model by PyTorch to recognize fashion image and speed up AI model by Intel® Neural Compressor.
 * [Intel® Neural Compressor Sample for TensorFlow*](/examples/notebook/tensorflow/alexnet_mnist): an End-To-End pipeline to build up a CNN model by TensorFlow to recognize handwriting number and speed up AI model by Intel® Neural Compressor.
