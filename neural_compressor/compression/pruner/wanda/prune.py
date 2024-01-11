@@ -91,7 +91,7 @@ def prune_wanda(
     use_variant=False,
     device=None,
     low_mem_usage=None,
-    dsnot=False 
+    dsnot=False,
 ):
     """Prune the model using wanda
     Sij = |Wij| · ||Xj||2."""
@@ -207,6 +207,7 @@ def prune_wanda(
 
             if dsnot:
                 from .dsnot import DSnoT
+
                 W_mask = DSnoT(W_metric, sparsity_ratio, wrapped_layers[name])
             if isinstance(subset[name], transformers.Conv1D):
                 subset[name].weight.data[W_mask.T] = 0  ## set weights to zero
