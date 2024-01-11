@@ -51,7 +51,7 @@ def prepare_calibration_input(model, dataloader, device):
     layers[0] = Catcher(layers[0])
     for batch in dataloader:
         try:
-            model(batch[0])
+            model(batch[0].to(next(model.parameters()).device))
         except ValueError:
             pass
     layers[0] = layers[0].module
@@ -90,7 +90,8 @@ def prune_wanda(
     nsamples=128,
     use_variant=False,
     device=None,
-    low_mem_usage=None 
+    low_mem_usage=None,
+    dsnot=False 
 ):
     """Prune the model using wanda
     Sij = |Wij| · ||Xj||2."""
@@ -151,7 +152,6 @@ def prune_wanda(
             handles.append(subset[name].register_forward_hook(add_batch(name)))
         for j in range(nsamples):
             with torch.no_grad():
-                print(layer)
                 out = layer(*inps[j], **others[j])
                 if isinstance(out, (list, tuple)):
                     out = out[0]
@@ -205,6 +205,9 @@ def prune_wanda(
                     indices = sort_res[1][:, : int(W_metric.shape[1] * sparsity_ratio)]
                     W_mask.scatter_(1, indices, True)
 
+            if dsnot:
+                from .dsnot import DSnoT
+                W_mask = DSnoT(W_metric, sparsity_ratio, wrapped_layers[name])
             if isinstance(subset[name], transformers.Conv1D):
                 subset[name].weight.data[W_mask.T] = 0  ## set weights to zero
             else:
