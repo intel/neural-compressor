@@ -1,6 +1,7 @@
-import unittest
 import sys
-sys.path.insert(0, './')
+import unittest
+
+sys.path.insert(0, "./")
 
 from transformers import AutoModelForCausalLM
 
