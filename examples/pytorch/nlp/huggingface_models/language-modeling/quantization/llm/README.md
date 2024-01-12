@@ -78,6 +78,7 @@ python run_clm_no_trainer.py \
     --tasks "lambada_openai"\
     --int8 \
     --output_dir "saved_results"  # load int8 model
+
 # to validate FP32 model, please remove "--int8" and "--output_dir".
 # to validate int8 model generated with `--sq`, please remove "--approach weight_only".
 # to validate the int8 model quantized with ipex, please include "--ipex".
@@ -124,6 +125,7 @@ python run_clm_no_trainer.py \
     --tasks "lambada_openai" \
     --int8 \
     --output_dir "saved_results"  # load int8 model
+
 # to validate FP32 model, please remove "--int8" and "--output_dir".
 # to validate int8 model generated with `--sq`, please remove "--approach weight_only".
 # to validate the int8 model quantized with ipex, please include "--ipex".
@@ -170,6 +172,7 @@ python run_clm_no_trainer.py \
     --tasks  "lambada_openai" \
     --int8 \
     --output_dir "saved_results"  # load int8 model
+
 # to validate FP32 model, please remove "--int8" and "--output_dir".
 # to validate int8 model generated with `--sq`, please remove "--approach weight_only".
 # to validate the int8 model quantized with ipex, please include "--ipex".
@@ -212,6 +215,7 @@ python run_clm_no_trainer.py \
     --tasks  "lambada_openai" \
     --int8 \
     --output_dir "saved_results"  # load int8 model
+
 # to validate FP32 model, please remove "--int8" and "--output_dir".
 # to validate int8 model generated with `--sq`, please remove "--approach weight_only".
 # to validate the int8 model quantized with ipex, please include "--ipex".
@@ -253,6 +257,7 @@ python run_clm_no_trainer.py \
     --tasks  "lambada_openai" \
     --int8 \
     --output_dir "saved_results"  # load int8 model
+
 # to validate FP32 model, please remove "--int8" and "--output_dir".
 ```
 
