@@ -207,7 +207,7 @@ def get_user_model():
         trust_remote_code=args.trust_remote_code,
         revision=args.revision,
     )
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
     if args.approach == 'weight_only':
         user_model = user_model.float()
 
@@ -380,7 +380,7 @@ if args.accuracy:
     if args.code_generation:
         from intel_extension_for_transformers.llm.evaluation.lm_code_eval import evaluate
         from transformers import AutoTokenizer
-        tokenizer = AutoTokenizer.from_pretrained(args.model)
+        tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
         results = evaluate(
             model=user_model,
             tokenizer=tokenizer,
@@ -419,7 +419,8 @@ if args.performance:
     start = time.time()
     results = evaluate(
         model="hf-causal",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+        model_args='pretrained=' + args.model + ',tokenizer=' + args.model \
+            + ',dtype=float32' + ",trust_remote_code=" + str(args.trust_remote_code),
         user_model=user_model,
         batch_size=args.batch_size,
         tasks=args.tasks,
@@ -429,6 +430,8 @@ if args.performance:
     for task_name in args.tasks:
         if task_name == "wikitext":
             acc = results["results"][task_name]["word_perplexity"]
+        elif task_name == "truthfulqa_mc":
+            acc = results["results"][task_name]["mc1"]
         else:
             acc = results["results"][task_name]["acc"]
     print("Accuracy: %.5f" % acc)
