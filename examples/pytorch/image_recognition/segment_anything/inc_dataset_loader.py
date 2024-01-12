@@ -35,7 +35,7 @@ class INC_SAMVOC2012Dataset(object):
 
         # Read through all the samples and output a dictionary 
         # Key of the dictionary will be idx
-        # Item of the dictioanry will be filename, class id and bounding boxes
+        # Item of the dictionary will be filename, class id and bounding boxes
         annotation_dir = os.path.join(voc_root, "Annotations")
         files = os.listdir(annotation_dir)
         files = [f for f in files if os.path.isfile(annotation_dir+'/'+f)] #Filter directory
@@ -68,7 +68,7 @@ class INC_SAMVOC2012Dataset(object):
             if not(file_name in permitted_files): 
                 continue #skip the file
             
-            if file_name + '.png' in segmentation_files: # check that if there is any related segmentation file for this annoation
+            if file_name + '.png' in segmentation_files: # check that if there is any related segmentation file for this annotation
                 tree = ET.parse(file)
                 root = tree.getroot()
                 for child in root:
@@ -126,7 +126,7 @@ class INC_SAMVOC2012Dataset(object):
 
         return segment_mask_np
 
-    # Preprocess the image to an appropriate foramt for SAM
+    # Preprocess the image to an appropriate format for SAM
     def preprocess_image(self, img):
         # ~= predictor.py - set_image()
         img = np.array(img)

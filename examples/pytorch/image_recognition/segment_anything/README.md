@@ -33,7 +33,7 @@ bash run_benchmark.sh --tuned_checkpoint=./saved_results --voc_dataset_location=
 # Result
 | | Baseline (FP32) | INT8 
 | ------------- | ------------- | -------------
-Dice| 0.7939  | 0.7849
+Accuracy | 0.7939  | 0.7849
 
 # Saving and Loading Model
 

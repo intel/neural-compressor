@@ -43,8 +43,8 @@ function init_params {
 
 # run_benchmark
 function run_benchmark {
-    if [[ ${mode} == "dice" ]]; then
-        mode_cmd=" --dice"
+    if [[ ${mode} == "accuracy" ]]; then
+        mode_cmd=" --accuracy"
     elif [[ ${mode} == "performance" ]]; then
         mode_cmd=" --iter ${iters} --performance"
     else

@@ -187,7 +187,7 @@ class Sam_INC(nn.Module):
         )
 
         masks = masks > self.mask_threshold
-        return masks[0].int() # Output pred for dataloader to comapre
+        return masks[0].int() # Output pred for dataloader to compare
 
     def postprocess_masks(
         self,
@@ -270,8 +270,8 @@ if __name__ == '__main__':
                         help='Apply INT8 quantization or not')   
     parser.add_argument('--int8', action='store_true',
                         help='for benchmarking/validation using quantized model')
-    parser.add_argument('--dice', action='store_true',
-                        help='For dice score measurements')
+    parser.add_argument('--accuracy', action='store_true',
+                        help='For accuracy (dice score) measurements')
     parser.add_argument("--iter", default=0, type=int,
                         help='For dice measurement only.')
     parser.add_argument("--performance", action='store_true',
