@@ -25,8 +25,8 @@ except:  # pragma: no cover
     logger = logging.getLogger()
 
 import copy
-import time
 import json
+import time
 from collections import UserDict
 from functools import partial
 from typing import Union
