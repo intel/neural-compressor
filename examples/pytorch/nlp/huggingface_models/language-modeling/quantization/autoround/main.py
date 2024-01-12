@@ -44,13 +44,13 @@ if __name__ == '__main__':
     parser.add_argument("--sym", action='store_true',
                          help=" sym quantization")
 
-    parser.add_argument("--iters", default=400, type=int,
+    parser.add_argument("--iters", default=200, type=int,
                         help=" iters")
 
     parser.add_argument("--use_quant_input", action='store_true',
                         help="whether to use the output of quantized block to tune the next block")
 
-    parser.add_argument("--lr", default=0.05, type=float,
+    parser.add_argument("--lr", default=0.005, type=float,
                         help="step size")
 
     parser.add_argument("--minmax_lr", default=None, type=float,
