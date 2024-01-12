@@ -1,4 +1,6 @@
 import unittest
+import sys
+sys.path.insert(0, './')
 
 from transformers import AutoModelForCausalLM
 
@@ -7,7 +9,7 @@ from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoa
 
 
 class TestPruning(unittest.TestCase):
-    model = AutoModelForCausalLM.from_pretrained("/facebook/opt-125m")
+    model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
 
     def test_pruning_basic(self):
         from neural_compressor.compression.pruner.wanda import prune_wanda
