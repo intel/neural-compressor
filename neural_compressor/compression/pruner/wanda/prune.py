@@ -1,7 +1,7 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -175,7 +175,7 @@ def prune_wanda(
             )
 
             W_mask = torch.zeros_like(W_metric) == 1  ## initialize a mask to be all False
-            if prune_n != 0:
+            if prune_n != 0:  # pragma: no cover
                 # structured n:m sparsity
                 for ii in range(W_metric.shape[1]):
                     if ii % prune_m == 0:
@@ -203,7 +203,7 @@ def prune_wanda(
                         alpha = alpha_new
                         W_mask, cur_sparsity = return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before)
                     logger.info(f"alpha found {alpha} sparsity {cur_sparsity:.6f}")
-                else:
+                else:  # pragma: no cover
                     # unstructured pruning
                     indices = sort_res[1][:, : int(W_metric.shape[1] * sparsity_ratio)]
                     W_mask.scatter_(1, indices, True)

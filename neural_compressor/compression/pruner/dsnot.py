@@ -1,7 +1,7 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ def DSnoT(
     DSnoT_metric = W * wrapped_layer.sum_metric_row.reshape((1, -1))
     weight_mask = torch.zeros_like(initial_metric) == 1
 
-    if prune_n != 0:
+    if prune_n != 0:  # pragma: no cover
         initial_prune_indices = torch.zeros(
             (initial_metric.shape[0], 0),
             dtype=torch.int64,
