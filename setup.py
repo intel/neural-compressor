@@ -182,5 +182,8 @@ if __name__ == "__main__":
             "License :: OSI Approved :: Apache Software License",
         ],
         setup_requires=["setuptools_scm"],
-        use_scm_version={"version_scheme": "post-release"},
+        use_scm_version=dict(
+            version_scheme="guess-next-dev",
+            local_scheme=lambda version: version.format_choice("+{node}", "+{node}") if version.distance > 0 else "",
+        ),
     )
