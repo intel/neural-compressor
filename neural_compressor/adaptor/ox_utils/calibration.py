@@ -434,8 +434,9 @@ class ONNXRTAugment:
                 continue
 
             initializer_tensor = numpy_helper.to_array(
-                initializer_tensor, base_dir=os.path.dirname(self.model_wrapper.model_path)
-            )
+                initializer_tensor, 
+                base_dir=os.path.dirname(self.model_wrapper.model_path) \
+                    if self.model_wrapper.model_path is not None else "")
             calibrator = CALIBRATOR["minmax"]()  # use minmax method to calibrate initializer tensors
             calibrator.collect(initializer_tensor)
             weight_tensors_calib_range[initializer_tensor_name] = [list(calibrator.calib_range)]
