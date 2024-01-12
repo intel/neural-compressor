@@ -932,6 +932,7 @@ def get_block_names(model):
     for n, m in model.named_modules():
         if hasattr(type(m), "__name__") and "ModuleList" in type(m).__name__:
             target_m = (n, m)
+            break
     for n, m in target_m[1].named_children():
         block_names.append(target_m[0] + "." + n)
     return block_names
