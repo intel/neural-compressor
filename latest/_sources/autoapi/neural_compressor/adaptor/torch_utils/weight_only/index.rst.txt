@@ -108,7 +108,7 @@ Functions
 
 .. py:function:: quant_weight(weight, num_bits=4, group_size=-1, scheme='asym', quantile=1.0, data_type='int', return_int=False, full_range=False)
 
-   Quant and dequant tensor with group size.
+   Quant and dequant tensor with group size. It is an in-place op.
 
    :param weight: input weight
    :param num_bits: num_bits. Defaults to 4.

@@ -109,7 +109,7 @@
 <td><p>Quant and dequant tensor per channel.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.quant_weight" title="neural_compressor.adaptor.torch_utils.weight_only.quant_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight</span></code></a>(weight[, num_bits, group_size, scheme, ...])</p></td>
-<td><p>Quant and dequant tensor with group size.</p></td>
+<td><p>Quant and dequant tensor with group size. It is an in-place op.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.weight_only.search_clip" title="neural_compressor.adaptor.torch_utils.weight_only.search_clip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">search_clip</span></code></a>(m[, num_bits, group_size, scheme, ...])</p></td>
 <td><p>Search best clip range of each linears in current block.</p></td>
@@ -235,7 +235,7 @@ Defaults to False.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.weight_only.quant_weight">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">quant_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_int</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.weight_only.quant_weight" title="Permalink to this definition"></a></dt>
-<dd><p>Quant and dequant tensor with group size.</p>
+<dd><p>Quant and dequant tensor with group size. It is an in-place op.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -447,7 +447,7 @@ Defaults to False.</p></li>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f89e3231a20> 
+   <jinja2.runtime.BlockReference object at 0x7f2ef7726d10> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
