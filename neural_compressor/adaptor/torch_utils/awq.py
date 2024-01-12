@@ -244,7 +244,7 @@ class ActAwareWeightQuant:
             x_max = _get_act_scale(input_val)
             absorbed_modules = {_m: fetch_module(block, _m) for _m in module_name_list}
             # Step 4: collect origin output for MSE and state_dict for recover.
-            org_stat = {_m: module.state_dict() for _m, module in absorbed_modules.items()}
+            org_stat = {_m: copy.deepcopy(module.state_dict()) for _m, module in absorbed_modules.items()}
             if len(module_tuple) > 1:
                 # use block inference for multi-modules
                 org_out = self.block_inference(block)
@@ -364,7 +364,7 @@ class ActAwareWeightQuant:
                 # Step 2: update module name
                 module = fetch_module(self.model, module_name)
                 # Step 3: collect origin output for MSE and state_dict for recover.
-                org_stat = module.state_dict()
+                org_stat = copy.deepcopy(module.state_dict())
                 org_out = self.module_inference(module, input_val)
                 # Step 4:  set different clip range for weight and compare the MSE loss.
                 logger.info("Searching the best clip range with AWQ algorithm")
