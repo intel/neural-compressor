@@ -391,10 +391,8 @@ class TestAugment(unittest.TestCase):
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_node_names = ['attention_quant', 
-                            'attn_output_QuantizeLinear', 
-                            'input_quantized_DequantizeLinear']
-        added_outputs = ['attn_output_quantized', 'input_quantized_output', 'attn_output']
+        added_node_names = ["attention_quant", "attn_output_QuantizeLinear", "input_quantized_DequantizeLinear"]
+        added_outputs = ["attn_output_quantized", "input_quantized_output", "attn_output"]
         self.assertEqual(len(augmented_model_node_names), 3)
         self.assertEqual(len(augmented_model_outputs), 3)
         for name in added_node_names:
@@ -477,9 +475,14 @@ class TestAugment(unittest.TestCase):
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_node_names = ['A_QuantizeLinear', 'conv_quant', 'D_DequantizeLinear', 
-                            'D_quantized_DequantizeLinear', 'A_quantized_DequantizeLinear']
-        added_outputs = ['D', 'D_quantized_output', 'A_quantized_output']
+        added_node_names = [
+            "A_QuantizeLinear",
+            "conv_quant",
+            "D_DequantizeLinear",
+            "D_quantized_DequantizeLinear",
+            "A_quantized_DequantizeLinear",
+        ]
+        added_outputs = ["D", "D_quantized_output", "A_quantized_output"]
         self.assertEqual(len(augmented_model_node_names), 5)
         self.assertEqual(len(augmented_model_outputs), 3)
         for name in added_node_names:

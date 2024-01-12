@@ -159,7 +159,7 @@ class ONNXRTAugment:
             if should_be_dump:
                 # add input tensors which should be dump
                 for input in node.input:
-                    if len(input) != 0: # to prevent input is ""
+                    if len(input) != 0:  # to prevent input is ""
                         initializer_tensor = self.model_wrapper.get_initializer(input)
                         if initializer_tensor is None:
                             tensors_to_dump.add(input)
@@ -174,7 +174,7 @@ class ONNXRTAugment:
                 for augment_node_type in self.augment_nodes:
                     if augment_node_type in ["DequantizeLinear"]:
                         # insert DequantizeLinear node as output
-                        if tensor.endswith("_scale") or tensor.endswith("_zero_point"): # pragma: no cover
+                        if tensor.endswith("_scale") or tensor.endswith("_zero_point"):  # pragma: no cover
                             continue
 
                         if not self.dynamically_quantized:
@@ -333,8 +333,9 @@ class ONNXRTAugment:
                         # per iteration in the future.
                         if calibrator.method_name == "minmax":
                             calibrator.collect(output)
-                            activation_tensors_calib_range[node_output_names[output_idx]] = \
-                                [list(calibrator.calib_range)]
+                            activation_tensors_calib_range[node_output_names[output_idx]] = [
+                                list(calibrator.calib_range)
+                            ]
                             name_to_calibrator[node_output_names[output_idx]] = calibrator
                         else:
                             intermediate_tensor.setdefault((node_output_names[output_idx], node_name), []).append(
@@ -376,7 +377,7 @@ class ONNXRTAugment:
         self._dataloder_for_next_split_model = ort_inputs_for_next_split_model
 
         return activation_tensors_calib_range
-    
+
     def get_weight_tensors_calib_range(self):
         """Get calib ranges of weight tensors.
 
@@ -405,8 +406,10 @@ class ONNXRTAugment:
             )
             if should_be_dump:
                 for input in node.input:
-                    if ((self.already_quantized and input.replace("_dequantized", "_quantized") in initializers) or
-                        (not self.already_quantized and input in initializers)) and len(input) != 0:
+                    if (
+                        (self.already_quantized and input.replace("_dequantized", "_quantized") in initializers)
+                        or (not self.already_quantized and input in initializers)
+                    ) and len(input) != 0:
                         added_outputs.add(input)
 
         for tensor in added_outputs:
@@ -430,15 +433,16 @@ class ONNXRTAugment:
             if initializer_tensor is None:  # pragma: no cover
                 continue
 
-            initializer_tensor = numpy_helper.to_array(initializer_tensor, 
-                                                       base_dir=os.path.dirname(self.model_wrapper.model_path))
-            calibrator = CALIBRATOR["minmax"]() # use minmax method to calibrate initializer tensors
+            initializer_tensor = numpy_helper.to_array(
+                initializer_tensor, base_dir=os.path.dirname(self.model_wrapper.model_path)
+            )
+            calibrator = CALIBRATOR["minmax"]()  # use minmax method to calibrate initializer tensors
             calibrator.collect(initializer_tensor)
             weight_tensors_calib_range[initializer_tensor_name] = [list(calibrator.calib_range)]
             calibrator.clear()
             del calibrator
         return weight_tensors_calib_range
-    
+
     def get_intermediate_outputs(self, q_config=None, activation_only=False, weight_only=False):
         """Gather intermediate model outputs after running inference."""
         output_dicts = {}
@@ -634,7 +638,7 @@ class ONNXRTAugment:
             self.dynamically_quantized = "DynamicQuantizeLinear" in [node.op_type for node in self.model.graph.node]
             is_qdq = format == "qdq"
         if activation:
-            self.augment_graph() # add activation tensors to model output
+            self.augment_graph()  # add activation tensors to model output
         _, output_dicts = self.get_intermediate_outputs(activation_only=not weight, weight_only=not activation)
         iters = len(list(output_dicts.values())[-1])
         map_node_activation = [{} for _ in range(iters)]
