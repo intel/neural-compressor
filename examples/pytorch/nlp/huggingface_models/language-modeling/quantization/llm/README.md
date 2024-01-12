@@ -118,12 +118,13 @@ python run_clm_no_trainer.py \
 python run_clm_no_trainer.py \
     --model facebook/opt-2.7b \
     --accuracy \
+    --approach weight_only \
     --batch_size 112 \
     --tasks "lambada_openai" \
     --int8 \
-    --ipex \
     --output_dir "saved_results"  # load int8 model
 # to validate FP32 model, please remove "--int8" and "--output_dir".
+# to validate the int8 model quantized with ipex, please include "--ipex".
 ```
 ### LLAMA2-7b/13b/30b
 >Note: LLAMA requires IPEX requirements >= 2.1 to get better accuracy.
@@ -162,12 +163,13 @@ python run_clm_no_trainer.py \
 python run_clm_no_trainer.py \
     --model meta-llama/Llama-2-7b-hf \
     --accuracy \
+    --approach weight_only \
     --batch_size 112 \
     --tasks  "lambada_openai" \
     --int8 \
-    --ipex \
     --output_dir "saved_results"  # load int8 model
 # to validate FP32 model, please remove "--int8" and "--output_dir".
+# to validate the int8 model quantized with ipex, please include "--ipex".
 ```
 
 ### BLOOM
@@ -202,12 +204,13 @@ python run_clm_no_trainer.py \
 python run_clm_no_trainer.py \
     --model bigscience/bloom-560m \
     --accuracy \
+    --approach weight_only \
     --batch_size 112 \
     --tasks  "lambada_openai" \
     --int8 \
-    --ipex \
     --output_dir "saved_results"  # load int8 model
 # to validate FP32 model, please remove "--int8" and "--output_dir".
+# to validate the int8 model quantized with ipex, please include "--ipex".
 ```
 
 ### Falcon-7b
@@ -241,6 +244,7 @@ python run_clm_no_trainer.py \
 python run_clm_no_trainer.py \
     --model bigscience/bloom-560m \
     --accuracy \
+    --approach weight_only \
     --batch_size 112 \
     --tasks  "lambada_openai" \
     --int8 \
