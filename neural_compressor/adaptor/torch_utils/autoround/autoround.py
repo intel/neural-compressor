@@ -24,6 +24,7 @@ except:  # pragma: no cover
 
 import copy
 import time
+import json
 from collections import UserDict
 from functools import partial
 from .model_wrapper import WeightOnlyLinear
