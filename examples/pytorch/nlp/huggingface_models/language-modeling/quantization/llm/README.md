@@ -79,6 +79,7 @@ python run_clm_no_trainer.py \
     --int8 \
     --output_dir "saved_results"  # load int8 model
 # to validate FP32 model, please remove "--int8" and "--output_dir".
+# to validate int8 model generated with `--sq`, please remove "--approach weight_only".
 # to validate the int8 model quantized with ipex, please include "--ipex".
 ```
 ### OPT-1.3b/2.7b/6.7b
@@ -124,6 +125,7 @@ python run_clm_no_trainer.py \
     --int8 \
     --output_dir "saved_results"  # load int8 model
 # to validate FP32 model, please remove "--int8" and "--output_dir".
+# to validate int8 model generated with `--sq`, please remove "--approach weight_only".
 # to validate the int8 model quantized with ipex, please include "--ipex".
 ```
 ### LLAMA2-7b/13b/30b
@@ -169,6 +171,7 @@ python run_clm_no_trainer.py \
     --int8 \
     --output_dir "saved_results"  # load int8 model
 # to validate FP32 model, please remove "--int8" and "--output_dir".
+# to validate int8 model generated with `--sq`, please remove "--approach weight_only".
 # to validate the int8 model quantized with ipex, please include "--ipex".
 ```
 
@@ -210,6 +213,7 @@ python run_clm_no_trainer.py \
     --int8 \
     --output_dir "saved_results"  # load int8 model
 # to validate FP32 model, please remove "--int8" and "--output_dir".
+# to validate int8 model generated with `--sq`, please remove "--approach weight_only".
 # to validate the int8 model quantized with ipex, please include "--ipex".
 ```
 
