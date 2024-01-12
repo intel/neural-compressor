@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Torch.nn.Module Class Definition."""
+import logging
+
 # Note: Do not import this file unless you have already imported torch,
 # since the model classes inherit torch.nn.Module.
 import math
@@ -23,7 +25,7 @@ import torch
 from packaging.version import Version
 from torch.autograd import Function
 from torch.nn import functional as F
-import logging
+
 logger = logging.getLogger()
 
 
@@ -58,6 +60,7 @@ FP4_E2M1_BIT = [-1, -2, -3, -4, -5, -6, -7, 0, 1, 2, 3, 4, 5, 6, 7]
 FLOAT_MAPPING = {"nf4": NF4, "fp4": FP4_BNB, "fp4_e2m1_bnb": FP4_BNB, "fp4_e2m1": FP4_E2M1}
 INT_MAPPING = {"nf4": NF4_BIT, "fp4": FP4_BNB_BIT, "fp4_e2m1_bnb": FP4_BNB_BIT, "fp4_e2m1": FP4_E2M1_BIT}
 
+
 def get_torch_version():
     try:
         torch_version = torch.__version__.split("+")[0]
@@ -68,6 +71,7 @@ def get_torch_version():
 
 
 PT_VERSION = get_torch_version().release
+
 
 class WeightOnlyLinear(torch.nn.Module):
     def __init__(
@@ -89,7 +93,6 @@ class WeightOnlyLinear(torch.nn.Module):
         self.use_optimum_format = use_optimum_format
         self.dtype = dtype
         if "int" not in self.dtype:  # for nf4, fp4
-
             float_list = FLOAT_MAPPING[self.dtype]
             int_list = INT_MAPPING[self.dtype]
             self.int2float_mapping = {}
@@ -340,5 +343,3 @@ class WeightOnlyLinear(torch.nn.Module):
         if self.use_optimum_format:
             tmp_str += ", use_optimum_format=True"
         return tmp_str
-
-

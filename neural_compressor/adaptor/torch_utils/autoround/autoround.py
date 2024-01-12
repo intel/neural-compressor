@@ -19,7 +19,9 @@ try:
     from neural_compressor.utils import logger
 except:  # pragma: no cover
     import logging
+
     import torch
+
     logger = logging.getLogger()
 
 import copy
@@ -27,10 +29,12 @@ import time
 import json
 from collections import UserDict
 from functools import partial
-from .model_wrapper import WeightOnlyLinear
+from typing import Union
+
 from torch.amp import autocast
 from torch.functional import F
-from typing import Union
+
+from .model_wrapper import WeightOnlyLinear
 
 
 def quant_weight_asym(weight, num_bits=4, v=0, min_scale=0, max_scale=0):
@@ -136,29 +140,17 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", v=0, min_scal
         Quantized and dequantized weight, scale, zero-point
     """
     if group_size == -1 or weight.shape[1] < group_size:
-        return quant_weight_actor(
-            weight,
-            num_bits,
-            scheme=scheme,
-            v=v,
-            min_scale=min_scale,
-            max_scale=max_scale
-        )
+        return quant_weight_actor(weight, num_bits, scheme=scheme, v=v, min_scale=min_scale, max_scale=max_scale)
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
         if isinstance(v, torch.Tensor):
             v = v.reshape(-1, group_size)
         weight, scale, zp = quant_weight_actor(
-            weight,
-            num_bits,
-            scheme=scheme,
-            v=v,
-            min_scale=min_scale,
-            max_scale=max_scale
+            weight, num_bits, scheme=scheme, v=v, min_scale=min_scale, max_scale=max_scale
         )
         weight = weight.reshape(orig_shape)
-        scale = scale.reshape(orig_shape[0], -1) #TODO validating the feasibility on conv1d
+        scale = scale.reshape(orig_shape[0], -1)  # TODO validating the feasibility on conv1d
         if zp is not None:
             zp = zp.reshape(orig_shape[0], -1)
         return weight, scale, zp
@@ -171,12 +163,7 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", v=0, min_scal
         if isinstance(v, torch.Tensor):
             v = v.reshape(-1, group_size)
         weight_new, scale, zp = quant_weight_actor(
-            weight_new,
-            num_bits,
-            scheme=scheme,
-            v=v,
-            min_scale=min_scale,
-            max_scale=max_scale
+            weight_new, num_bits, scheme=scheme, v=v, min_scale=min_scale, max_scale=max_scale
         )
         weight_new = weight_new.reshape(orig_shape[0], -1)
         scale = scale.reshape(orig_shape[0], -1)
@@ -223,15 +210,15 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1):
 
 
 def export_compressed_model(
-        model,
-        weight_config:Union[str, dict],
-        enable_full_range=False,
-        compression_dtype=torch.int32,
-        compression_dim=1,
-        scale_dtype=torch.float32,
-        device="cpu",
-        use_optimum_format=True,
-    ):
+    model,
+    weight_config: Union[str, dict],
+    enable_full_range=False,
+    compression_dtype=torch.int32,
+    compression_dim=1,
+    scale_dtype=torch.float32,
+    device="cpu",
+    use_optimum_format=True,
+):
     """Convert Linear to WeightOnlyLinear for low memory inference.
 
     Args:
@@ -253,6 +240,7 @@ def export_compressed_model(
             5. zeros is always needed even for sym.
     """
     from .model_wrapper import WeightOnlyLinear
+
     compressed_model = copy.deepcopy(model)
     if isinstance(weight_config, str):
         with open(weight_config, "r") as f:
@@ -270,7 +258,7 @@ def export_compressed_model(
             scheme = v["scheme"]
         m = get_module(compressed_model, k)
         fp_weight = m.weight.data
-        scale = torch.tensor(v["scale"], dtype=torch.float32) # may exist dtype dismatch problem
+        scale = torch.tensor(v["scale"], dtype=torch.float32)  # may exist dtype dismatch problem
         zp = None if scheme == "sym" else torch.tensor(v["zp"], dtype=torch.int32)
         int_weight = quant_weight_w_scale(fp_weight, scale, zp, group_size)
         int_weight = int_weight.type(torch.int32)
@@ -1121,7 +1109,7 @@ class AutoRound(object):
         self.tokenizer = tokenizer
         self.seqlen = seqlen
         self.train_bs = bs
-        self.n_samples = bs*(n_samples//bs)
+        self.n_samples = bs * (n_samples // bs)
         self.n_blocks = n_blocks
         self.device = device
         self.amp_dtype = torch.float16
@@ -1540,7 +1528,7 @@ class AutoRound(object):
         end_time = time.time()
         cost_time = end_time - start_time
         logger.info(f"quantization runtime {cost_time}")
-        
+
         return self.model, self.weight_config
 
 
@@ -1799,4 +1787,3 @@ class AutoAdamRound(AutoOPTRound):
             optimizer,
             **kwargs,
         )
-
