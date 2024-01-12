@@ -17,7 +17,7 @@
 # limitations under the License.
 import numpy as np
 
-from ..utils import logger, nn, tf, torch
+from ..utils import logger, nn, safe_get_data, safe_get_grad, safe_get_shape, tf, torch
 from .base import KerasBasePattern, ProgressivePatternUtils, PytorchBasePattern, SparsityInfo, register_pattern
 
 
@@ -71,7 +71,9 @@ class PytorchPatternNxM(PytorchBasePattern):
             if not (self.N == "channel" or self.M == "channel"):
                 continue
             if isinstance(datas[key], torch.nn.Module):
-                shape = datas[key].weight.shape
+                param = datas[key].weight
+                shape = safe_get_shape(param)
+                # shape = datas[key].weight.shape
             else:
                 shape = datas[key].shape
             if self.N == "channel":  # support "channelxM" format
@@ -86,7 +88,8 @@ class PytorchPatternNxM(PytorchBasePattern):
         block_sizes = self.block_size
         datas = self.modules
         for key in datas.keys():
-            data = datas[key].weight
+            param = datas[key].weight
+            data = safe_get_data(param)
             data = self._reshape_orig_to_2dims(data)
             shape = data.shape
             block_size = block_sizes[key]
@@ -153,18 +156,29 @@ class PytorchPatternNxM(PytorchBasePattern):
             Reshaped data.
         """
         # TODO: need to verify whether it's ok for transposed conv
-        if len(data.shape) == 4:
+        from ..utils import FLATTEN_DIM2
+
+        if len(data.shape) == 2:
+            return data
+        elif len(data.shape) == 4:
             if isinstance(data, np.ndarray):
                 data = np.transpose(data, (0, 2, 3, 1))
             else:
                 data = data.permute(0, 2, 3, 1)  # cout,k,k,cin
             data = data.reshape(data.shape[0], -1)
-        if len(data.shape) == 3:
+        elif len(data.shape) == 3:
             if isinstance(data, np.ndarray):
                 data = np.transpose(data, (0, 2, 1))
             else:
                 data = data.permute(0, 2, 1)  # cout,k,cin
             data = data.reshape(data.shape[0], -1)
+        # TODO(Yi) support handle 1-dim (flatten param from DeepSpeed or FSDP)
+        elif len(data.shape) == 1:  # pragma: no cover
+            data = data.reshape(-1, FLATTEN_DIM2)
+        else:
+            raise NotImplementedError(
+                f"Currently only support reshape data with 1,3,4-dims, but got shape {data.shape}"
+            )
         return data
 
     def _reshape_2dims_to_orig(self, data, orig_shape):
@@ -177,18 +191,26 @@ class PytorchPatternNxM(PytorchBasePattern):
         Returns:
             Reshaped data.
         """
-        if len(orig_shape) == 4:
+        if len(orig_shape) == 2:
+            return data
+        elif len(orig_shape) == 4:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[3], orig_shape[1])
             if isinstance(data, np.ndarray):  # pragma: no cover
                 data = np.transpose(data, (0, 3, 1, 2))
             else:
                 data = data.permute(0, 3, 1, 2)
-        if len(orig_shape) == 3:
+        elif len(orig_shape) == 3:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[1])
             if isinstance(data, np.ndarray):  # pragma: no cover
                 data = np.transpose(data, (0, 2, 1))
             else:
                 data = data.permute(0, 2, 1)
+        elif len(orig_shape) == 1:
+            data = data.reshape(-1)
+        else:
+            raise NotImplementedError(
+                f"Currently only support reshape data with 1,3,4-dims, but got shape {data.shape}"
+            )
         return data
 
     def reshape_orig_to_pattern(self, data, key):
@@ -359,12 +381,14 @@ class PytorchPatternNxM(PytorchBasePattern):
         for key in masks.keys():
             if key in self.invalid_layers:
                 continue
-            orig_shape = self.modules[key].weight.shape
-            if len(orig_shape) == 4 or len(orig_shape) == 3:  # need to permute
-                mask = masks[key]
-                # orig_shape = scores[key].shape
-                mask = self._reshape_2dims_to_orig(mask, orig_shape)
-                masks[key] = mask
+            param = self.modules[key].weight
+            orig_shape = safe_get_shape(param)
+            # orig_shape = self.modules[key].weight.shape
+            # if len(orig_shape) == 4 or len(orig_shape) == 3 :  # need to permute
+            mask = masks[key]
+            # orig_shape = scores[key].shape
+            mask = self._reshape_2dims_to_orig(mask, orig_shape)
+            masks[key] = mask
             layer_ratio = torch.sum(masks[key] == 0.0).data.item() / masks[key].numel()
             logger.info(f"{key} sparsity is {layer_ratio}")
         return masks
@@ -380,13 +404,15 @@ class PytorchPatternNxM(PytorchBasePattern):
         """
         pattern_lock_masks = {}
         for key in modules.keys():
-            weight = modules[key].weight
-            ori_shape = weight.shape
+            param = modules[key].weight
+            data = safe_get_data(param)
+            ori_shape = safe_get_shape(param)
+            # ori_shape = weight.shape
             if key in self.invalid_layers:
-                mask = torch.ones(weight.shape, device=weight.device)
+                mask = torch.ones(ori_shape, device=param.device)
                 pattern_lock_masks[key] = mask
                 continue
-            reduced_mask = self.get_reduced_masks_from_data(weight, key)
+            reduced_mask = self.get_reduced_masks_from_data(data, key)
             mask = self.reshape_reduced_to_orig(reduced_mask, key, ori_shape)
             pattern_lock_masks[key] = mask
 
@@ -424,7 +450,8 @@ class PytorchPatternNxM(PytorchBasePattern):
                 continue
             module = self.modules[key]
             block_size = self.block_size[key]
-            org_shape = module.weight.shape
+            # org_shape = module.weight.shape
+            org_shape = safe_get_shape(module.weight)
             mask = (
                 masks[key]
                 .data.repeat_interleave(block_size[0], dim=0)
@@ -531,7 +558,9 @@ class PytorchPatternNxM(PytorchBasePattern):
 
         if isinstance(module, transformers.Conv1D):
             W = W.t()
-        module.weight.data = W.reshape(module.weight.shape).to(dtype=module.weight.data.dtype)
+        param = module.weight
+        param_shape = safe_get_shape(param)
+        module.weight.data = W.reshape(param_shape).to(dtype=module.weight.data.dtype)
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
