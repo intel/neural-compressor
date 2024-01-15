@@ -66,7 +66,7 @@ def return_given_alpha(alpha, sort_res, W_metric, tmp_metric, sum_before):
     sort_mask = tmp_metric <= thres_cumsum.reshape((-1, 1))
     thres = torch.gather(sort_res[0], dim=1, index=sort_mask.sum(dim=1, keepdims=True) - 1)
     W_mask = W_metric <= thres
-    cur_sparsity = torch.sum(W_mask is True).data.item() / W_mask.numel()
+    cur_sparsity = torch.sum(W_mask == 1.0).data.item() / W_mask.numel()
     return W_mask, cur_sparsity
 
 
