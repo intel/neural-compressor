@@ -324,5 +324,16 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertEqual(gptq_config1.to_dict(), gptq_config2.to_dict())
 
 
+class TestQuantConfigForAutotune(unittest.TestCase):
+    def test_expand_config(self):
+        # test the expand functionalities, the user is not aware it
+        from neural_compressor.torch import RTNWeightQuantConfig
+
+        tune_config = RTNWeightQuantConfig(weight_bits=[4, 6])
+        expand_config_list = RTNWeightQuantConfig.expand(tune_config)
+        self.assertEqual(expand_config_list[0].weight_bits, 4)
+        self.assertEqual(expand_config_list[1].weight_bits, 6)
+
+
 if __name__ == "__main__":
     unittest.main()

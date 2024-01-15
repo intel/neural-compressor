@@ -22,3 +22,5 @@ from neural_compressor.torch.quantization import (
     GPTQConfig,
     get_default_gptq_config,
 )
+
+from neural_compressor.torch.tune import autotune, TuningConfig, get_default_tune_config
