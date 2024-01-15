@@ -1,26 +1,44 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import copy
-from typing import Union
 import json
+from typing import Union
+
 try:
     from neural_compressor.utils.utility import LazyImport
+
     torch = LazyImport("torch")
     from neural_compressor.utils import logger
 except:  # pragma: no cover
-    import torch
     import logging
+
+    import torch
+
     logger = logging.getLogger()
 
+
 def export_compressed_model(
-        model,
-        weight_config:Union[str, dict],
-        enable_full_range=False,
-        compression_dtype=torch.int32,
-        compression_dim=1,
-        scale_dtype=torch.float32,
-        device="cpu",
-        use_optimum_format=True,
-    ):
+    model,
+    weight_config: Union[str, dict],
+    enable_full_range=False,
+    compression_dtype=torch.int32,
+    compression_dim=1,
+    scale_dtype=torch.float32,
+    device="cpu",
+    use_optimum_format=True,
+):
     """Convert Linear to WeightOnlyLinear for low memory inference.
 
     Args:
@@ -41,8 +59,9 @@ def export_compressed_model(
             4. parameter name changed, such as 'packed_weight' -> 'qweight'.
             5. zeros is always needed even for sym.
     """
+    from .autoround import get_module, quant_weight_w_scale, set_module
     from .model_wrapper import WeightOnlyLinear
-    from .autoround import quant_weight_w_scale, get_module, set_module
+
     compressed_model = copy.deepcopy(model)
     if isinstance(weight_config, str):
         with open(weight_config, "r") as f:
@@ -60,7 +79,7 @@ def export_compressed_model(
             scheme = v["scheme"]
         m = get_module(compressed_model, k)
         fp_weight = m.weight.data
-        scale = torch.tensor(v["scale"], dtype=torch.float32) # may exist dtype dismatch problem
+        scale = torch.tensor(v["scale"], dtype=torch.float32)  # may exist dtype dismatch problem
         zp = None if scheme == "sym" else torch.tensor(v["zp"], dtype=torch.int32)
         int_weight = quant_weight_w_scale(fp_weight, scale, zp, group_size)
         int_weight = int_weight.type(torch.int32)
