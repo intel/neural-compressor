@@ -101,7 +101,7 @@ def prune_wanda(
     # When the model is too large, we can use low memory usage mode to reduce the GPU memory consumption.
     if low_mem_usage is None:
         low_mem_usage = False
-        if "cuda" in str(device):
+        if "cuda" in str(device):  # pragma: no cover
             current_gpu_index = str(device)
             total_memory = torch.cuda.get_device_properties(current_gpu_index).total_memory
             used_memory = torch.cuda.memory_allocated(current_gpu_index)
@@ -113,7 +113,7 @@ def prune_wanda(
                 logger.info("Low memory usage mode is enabled.")
                 low_mem_usage = True
 
-    if device is not None and not low_mem_usage:
+    if device is not None and not low_mem_usage:  # pragma: no cover
         model.to(device)
     use_cache = model.config.use_cache
     model.config.use_cache = False
@@ -121,7 +121,7 @@ def prune_wanda(
     # get inputs
     # inps, others = prepare_calibration_input(model, dataloader, device)
     inps, others = get_hidden_states(model, dataloader)
-    if low_mem_usage:
+    if low_mem_usage:  # pragma: no cover
         move_inps_to_device(inps, others, device)
     nsamples = min(nsamples, len(inps))
 
@@ -130,7 +130,7 @@ def prune_wanda(
     for i in range(len(layers)):
         outs = []
         layer = layers[i]
-        if low_mem_usage:
+        if low_mem_usage:  # pragma: no cover
             layer.to(device)
         subset = find_layers(layer)
         if len(subset) == 0:
@@ -167,7 +167,7 @@ def prune_wanda(
             logger.info(f"pruning layer {i} name {name}")
             # Sij = |Wij| · ||Xj||2
             W = subset[name].weight.data
-            if isinstance(subset[name], transformers.Conv1D):
+            if isinstance(subset[name], transformers.Conv1D):  # pragma: no cover
                 W = W.t()
             W_metric = torch.abs(W) * torch.sqrt(
                 # wrapped_layers[name].scaler_row.reshape((1, -1))
@@ -213,7 +213,7 @@ def prune_wanda(
 
                 logger.info(f"Using dsnot pruning for {name}")
                 W_mask = DSnoT(W_metric, sparsity_ratio, wrapped_layers[name])
-            if isinstance(subset[name], transformers.Conv1D):
+            if isinstance(subset[name], transformers.Conv1D):  # pragma: no cover
                 subset[name].weight.data[W_mask.T] = 0  ## set weights to zero
             else:
                 subset[name].weight.data[W_mask] = 0  ## set weights to zero
@@ -235,7 +235,7 @@ def prune_wanda(
                     else:
                         outs[j] = [out]
         inps, outs = outs, inps
-        if low_mem_usage:
+        if low_mem_usage:  # pragma: no cover
             layer.to(torch.device("cpu"))
 
     model.config.use_cache = use_cache

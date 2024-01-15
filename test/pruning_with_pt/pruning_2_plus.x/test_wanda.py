@@ -21,7 +21,7 @@ class TestPruning(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         sparsity_ratio = 0.8
-        prune_wanda(self.model, dummy_dataloader, sparsity_ratio, dsnot=False, use_variant=False)
+        prune_wanda(self.model, dummy_dataloader, sparsity_ratio, dsnot=True, use_variant=True)
         model_list = get_module_list(self.model)
         for block in model_list:
             self.assertAlmostEqual(get_tensor_sparsity_ratio(block.self_attn.q_proj.weight.data), sparsity_ratio, 2)

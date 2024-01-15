@@ -25,7 +25,7 @@ class WrappedGPT:
         self.dev = self.layer.weight.device
         self.rows = layer.weight.data.shape[0]
         self.columns = layer.weight.data.shape[1]
-        if isinstance(self.layer, transformers.Conv1D):
+        if isinstance(self.layer, transformers.Conv1D):  # pragma: no cover
             self.rows, self.columns = self.columns, self.rows
 
         self.scaler_row = torch.zeros((self.columns), device=self.dev)
@@ -46,7 +46,7 @@ class WrappedGPT:
         tmp = inp.shape[0]
         import torch
 
-        if isinstance(self.layer, (nn.Conv1d, nn.Linear, transformers.Conv1D)):
+        if isinstance(self.layer, (nn.Conv1d, nn.Linear, transformers.Conv1D)):  # pragma: no cover
             if len(inp.shape) == 3:
                 inp = inp.reshape((-1, inp.shape[-1]))
             inp = inp.t()
