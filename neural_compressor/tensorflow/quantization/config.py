@@ -22,7 +22,7 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Union
 
 import tensorflow as tf
 
-from neural_compressor.common.base_config import BaseConfig, register_config, config_registry
+from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
 from neural_compressor.common.utility import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, STATIC_QUANT
 
 FRAMEWORK_NAME = "keras"
@@ -159,7 +159,7 @@ def parse_config_from_dict(config_dict: Dict) -> BaseConfig:
     keras_registered_configs = get_all_registered_configs()
     for key, val in config_dict.items():
         if key in keras_registered_configs:
-            config = keras_registered_configs[key]['cls'].from_dict(val)
+            config = keras_registered_configs[key]["cls"].from_dict(val)
             return config
 
 
