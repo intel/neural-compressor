@@ -2,6 +2,7 @@ import unittest
 
 import torch
 from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
+
 from neural_compressor.adaptor.torch_utils.autoround.autoround import AutoAdamRound, AutoOPTRound, AutoRound
 
 
@@ -59,4 +60,3 @@ class TestAutoRoundConv1D(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
