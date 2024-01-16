@@ -32,5 +32,6 @@ def rtn_quantize_entry(
 ) -> onnx.ModelProto:
     """The main entry to apply rtn quantization."""
     from .rtn import apply_rtn_on_model
+
     model = apply_rtn_on_model(model, configs_mapping)
     return model

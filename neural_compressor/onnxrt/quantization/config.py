@@ -19,20 +19,20 @@
 from __future__ import annotations
 
 import re
-from enum import Enum
 from collections import OrderedDict
+from enum import Enum
 from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import onnx
 
 from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
+from neural_compressor.common.logger import Logger
 from neural_compressor.common.utility import (
     DEFAULT_WHITE_LIST,
     EMPTY_WHITE_LIST,
     OP_NAME_OR_MODULE_TYPE,
     RTN_WEIGHT_ONLY_QUANT,
 )
-from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
 
@@ -67,9 +67,7 @@ class RTNWeightQuantConfig(BaseConfig):
         "act_dtype",
         "accuracy_level",
     ]
-    model_params_list = [
-        "providers"
-    ]
+    model_params_list = ["providers"]
     params_list = node_params_list + model_params_list
     name = RTN_WEIGHT_ONLY_QUANT
 
@@ -119,13 +117,13 @@ class RTNWeightQuantConfig(BaseConfig):
                 f"The white list should be one of {DEFAULT_WHITE_LIST}, {EMPTY_WHITE_LIST},"
                 " a not empty list, but got {self.white_list}"
             )
-        
+
     def get_node_params_dict(self):
         result = dict()
         for param in self.node_params_list:
             result[param] = getattr(self, param)
         return result
-    
+
     def get_model_params_dict(self):
         result = dict()
         for param in self.model_params_list:

@@ -1,12 +1,14 @@
-import onnx
 import copy
 import shutil
 import unittest
+
+import onnx
 from optimum.exporters.onnx import main_export
 
 from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
+
 
 class TestRTNQuant(unittest.TestCase):
     @classmethod
@@ -38,7 +40,7 @@ class TestRTNQuant(unittest.TestCase):
         from neural_compressor.onnxrt import quantize
 
         fp32_model = copy.deepcopy(self.gptj)
-        onnx.save(fp32_model, 'fp32_model.onnx')
+        onnx.save(fp32_model, "fp32_model.onnx")
         qmodel = quantize(fp32_model, quant_config)
         self.assertIsNotNone(qmodel)
         return qmodel
@@ -47,7 +49,7 @@ class TestRTNQuant(unittest.TestCase):
         from neural_compressor.onnxrt import RTNWeightQuantConfig
 
         # some tests were skipped to accelerate the CI
-        # TODO: check params combination. 
+        # TODO: check params combination.
         # TODO: Add number check for group_size.
         rtn_options = {
             "weight_dtype": ["int"],
@@ -63,9 +65,8 @@ class TestRTNQuant(unittest.TestCase):
             d = dict(zip(keys, value))
             quant_config = RTNWeightQuantConfig(**d)
             qmodel = self._apply_rtn(quant_config)
-            self.assertEqual(self._count_woq_matmul(qmodel, 
-                                                    bits=value[1],
-                                                    group_size=value[2]), 30)
+            self.assertEqual(self._count_woq_matmul(qmodel, bits=value[1], group_size=value[2]), 30)
+
 
 if __name__ == "__main__":
     unittest.main()

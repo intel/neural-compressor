@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Callable, Dict, List, Tuple
+
 import onnx
 from packaging.version import Version
-from typing import Callable, Dict, List, Tuple
 
 from neural_compressor.common.logger import Logger
 
@@ -53,6 +54,7 @@ dtype_mapping = {
     "bfloat16": 16,
 }
 
+
 def find_by_name(name, item_list):
     """Helper function to find item by name in a list."""
     items = []
@@ -65,6 +67,7 @@ def find_by_name(name, item_list):
     else:
         return None
 
+
 def simple_progress_bar(total, i):
     """Progress bar for cases where tqdm can't be used."""
     progress = i / total
@@ -73,6 +76,7 @@ def simple_progress_bar(total, i):
     spaces = " " * (bar_length - len(bar))
     percentage = progress * 100
     print(f"\rProgress: [{bar}{spaces}] {percentage:.2f}%", end="")
+
 
 def register_algo(name):
     """Decorator function to register algorithms in the algos_mapping dictionary.
@@ -94,6 +98,7 @@ def register_algo(name):
         return algo_func
 
     return decorator
+
 
 def get_model_info(model: onnx.ModelProto, white_op_type_list: List[Callable]) -> List[Tuple[str, Callable]]:
     filter_result = []

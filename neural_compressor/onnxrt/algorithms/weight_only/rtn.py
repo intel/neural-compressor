@@ -20,20 +20,21 @@
 
 
 import os
-import numpy as np
-from packaging.version import Version
 
+import numpy as np
 import onnx
 import onnxruntime as ort
+from packaging.version import Version
 
 from neural_compressor.onnxrt.quantization.config import RTNWeightQuantConfig
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.onnxrt.utils.utility import (
-    dtype_mapping,
-    simple_progress_bar,
     ONNXRT116_VERSION,
     ONNXRT1161_VERSION,
+    dtype_mapping,
+    simple_progress_bar,
 )
+
 from .weight_only_utility import make_matmul_weight_only_node
 
 
@@ -59,6 +60,7 @@ def pad_tensor(weight, group_size, k_blocks):
         weight = np.pad(weight, ((0, pad_len), (0, 0)), "constant")
 
     return weight
+
 
 def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ratio=1.0):
     """Quantize tensor per group.
@@ -107,6 +109,7 @@ def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ra
         )
     return np.clip((data / scale + zero_point).round(), minq, maxq), scale, zero_point
 
+
 def qdq_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ratio=1.0):
     """Quant dequant tensor per group.
 
@@ -124,6 +127,7 @@ def qdq_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", rati
     org_shape = data.shape
     weight, scale, zp = quant_tensor(data, num_bits, group_size, scheme, dtype, ratio)
     return np.reshape(scale * (weight - zp), org_shape)
+
 
 def rtn_quantize(
     model,
@@ -173,15 +177,15 @@ def rtn_quantize(
         if node.op_type in ["MatMul"]:
             curr_id += 1
             simple_progress_bar(total_num, curr_id)
-        
+
         # check op_type of node is MatMul
         # check dim 1 of input is weight tensor
         # check node config is RTNWeightQuantConfig
         # check node weight_dtype config is not fp32
         if (
-            node.op_type in ["MatMul"] # check op_type of node is MatMul
-            and model.get_initializer(node.input[1]) is not None 
-            and isinstance(weight_config.get((node.name, node.op_type), {}), RTNWeightQuantConfig) 
+            node.op_type in ["MatMul"]  # check op_type of node is MatMul
+            and model.get_initializer(node.input[1]) is not None
+            and isinstance(weight_config.get((node.name, node.op_type), {}), RTNWeightQuantConfig)
             and weight_config.get((node.name, node.op_type), {}).weight_dtype.lower() != "fp32"
         ):
             weight_tensor = model.get_initializer(node.input[1])
@@ -257,18 +261,13 @@ def rtn_quantize(
     # reload external data for large model
     if model.is_large_model:
         from onnx.external_data_helper import load_external_data_for_model
+
         load_external_data_for_model(model.model, os.path.dirname(model.model_path))
 
     return model.model
 
-def apply_rtn_on_model(
-    model: onnx.ModelProto, 
-    quant_config: RTNWeightQuantConfig
-) -> onnx.ModelProto:
+
+def apply_rtn_on_model(model: onnx.ModelProto, quant_config: RTNWeightQuantConfig) -> onnx.ModelProto:
     providers = quant_config["providers"]
-    
-    return rtn_quantize(
-        model,
-        quant_config,
-        providers=providers
-    )
+
+    return rtn_quantize(model, quant_config, providers=providers)

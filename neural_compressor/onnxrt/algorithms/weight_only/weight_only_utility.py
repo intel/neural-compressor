@@ -19,16 +19,14 @@
 # limitations under the License.
 
 import struct
-import numpy as np
-from packaging.version import Version
 
+import numpy as np
 import onnx
 import onnxruntime as ort
+from packaging.version import Version
 
-from neural_compressor.onnxrt.utils.utility import (
-    dtype_mapping,
-    ONNXRT1161_VERSION
-)
+from neural_compressor.onnxrt.utils.utility import ONNXRT1161_VERSION, dtype_mapping
+
 
 def get_blob_size(group_size, has_zp):  # pragma: no cover
     """Get blob_size.
@@ -44,6 +42,7 @@ def get_blob_size(group_size, has_zp):  # pragma: no cover
     else:
         blob_size = group_size // 2 + 4
     return blob_size
+
 
 def make_matmul_weight_only_node(
     node,

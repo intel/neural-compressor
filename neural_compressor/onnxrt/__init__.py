@@ -20,4 +20,3 @@ from neural_compressor.onnxrt.quantization import (
     RTNWeightQuantConfig,
     get_default_rtn_config,
 )
-
