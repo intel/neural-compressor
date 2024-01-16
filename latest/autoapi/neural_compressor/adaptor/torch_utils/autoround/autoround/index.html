@@ -130,52 +130,55 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight" title="neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight</span></code></a>(weight[, num_bits, group_size, scheme, ...])</p></td>
 <td><p>Quantizes and dequantizes weight, handing the group size issue .</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.round_ste" title="neural_compressor.adaptor.torch_utils.autoround.autoround.round_ste"><code class="xref py py-obj docutils literal notranslate"><span class="pre">round_ste</span></code></a>(x)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_w_scale" title="neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_w_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight_w_scale</span></code></a>(weight, scale, zp[, group_size])</p></td>
+<td><p>Quant and dequant tensor with group size.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.round_ste" title="neural_compressor.adaptor.torch_utils.autoround.autoround.round_ste"><code class="xref py py-obj docutils literal notranslate"><span class="pre">round_ste</span></code></a>(x)</p></td>
 <td><p>Straight-Through Estimator for rounding.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_module" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_module</span></code></a>(model, key)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_module" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_module</span></code></a>(model, key)</p></td>
 <td><p>Get module from model by key name.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.set_module" title="neural_compressor.adaptor.torch_utils.autoround.autoround.set_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_module</span></code></a>(model, key, new_module)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.set_module" title="neural_compressor.adaptor.torch_utils.autoround.autoround.set_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_module</span></code></a>(model, key, new_module)</p></td>
 <td><p>Set new module into model by key name.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_scale_shape" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_scale_shape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_scale_shape</span></code></a>(weight, group_size)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_scale_shape" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_scale_shape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_scale_shape</span></code></a>(weight, group_size)</p></td>
 <td><p>Computes the shape of the scale tensor for quantization based on the weight tensor and group size.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.wrapper_block" title="neural_compressor.adaptor.torch_utils.autoround.autoround.wrapper_block"><code class="xref py py-obj docutils literal notranslate"><span class="pre">wrapper_block</span></code></a>(block, enable_minmax_tuning)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.wrapper_block" title="neural_compressor.adaptor.torch_utils.autoround.autoround.wrapper_block"><code class="xref py py-obj docutils literal notranslate"><span class="pre">wrapper_block</span></code></a>(block, enable_minmax_tuning)</p></td>
 <td><p>Wraps the layers in the given block with a custom Wrapper module.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.unwrapper_block" title="neural_compressor.adaptor.torch_utils.autoround.autoround.unwrapper_block"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unwrapper_block</span></code></a>(block, vs, min_scales, max_scales)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.unwrapper_block" title="neural_compressor.adaptor.torch_utils.autoround.autoround.unwrapper_block"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unwrapper_block</span></code></a>(block, vs, min_scales, max_scales)</p></td>
 <td><p>Unwraps the WrapperLinear and WrapperTransformerConv1d modules in the given block.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.sampling_inputs" title="neural_compressor.adaptor.torch_utils.autoround.autoround.sampling_inputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sampling_inputs</span></code></a>(input_ids, input_others, indices, seqlen)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.sampling_inputs" title="neural_compressor.adaptor.torch_utils.autoround.autoround.sampling_inputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sampling_inputs</span></code></a>(input_ids, input_others, indices, seqlen)</p></td>
 <td><p>Samples inputs based on the given indices and sequence length.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.move_input_to_device" title="neural_compressor.adaptor.torch_utils.autoround.autoround.move_input_to_device"><code class="xref py py-obj docutils literal notranslate"><span class="pre">move_input_to_device</span></code></a>(input[, device])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.move_input_to_device" title="neural_compressor.adaptor.torch_utils.autoround.autoround.move_input_to_device"><code class="xref py py-obj docutils literal notranslate"><span class="pre">move_input_to_device</span></code></a>(input[, device])</p></td>
 <td><p>Moves input data to the specified device.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.check_is_cpu" title="neural_compressor.adaptor.torch_utils.autoround.autoround.check_is_cpu"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_is_cpu</span></code></a>(device)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.check_is_cpu" title="neural_compressor.adaptor.torch_utils.autoround.autoround.check_is_cpu"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_is_cpu</span></code></a>(device)</p></td>
 <td><p>Check if the device is a CPU.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.block_forward" title="neural_compressor.adaptor.torch_utils.autoround.autoround.block_forward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">block_forward</span></code></a>(block, input_ids, input_others[, amp, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.block_forward" title="neural_compressor.adaptor.torch_utils.autoround.autoround.block_forward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">block_forward</span></code></a>(block, input_ids, input_others[, amp, ...])</p></td>
 <td><p>Performs a forward pass through a block with the given inputs.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.collect_round_v" title="neural_compressor.adaptor.torch_utils.autoround.autoround.collect_round_v"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_round_v</span></code></a>(block)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.collect_round_v" title="neural_compressor.adaptor.torch_utils.autoround.autoround.collect_round_v"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_round_v</span></code></a>(block)</p></td>
 <td><p>Collects the round values for wrapped linear modules in the given block.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.collect_minmax_scale" title="neural_compressor.adaptor.torch_utils.autoround.autoround.collect_minmax_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_minmax_scale</span></code></a>(block)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.collect_minmax_scale" title="neural_compressor.adaptor.torch_utils.autoround.autoround.collect_minmax_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_minmax_scale</span></code></a>(block)</p></td>
 <td><p>Collects the min-max scaling values for wrapped linear modules in the given block.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_batch_dim" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_batch_dim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_batch_dim</span></code></a>(input_others)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_batch_dim" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_batch_dim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_batch_dim</span></code></a>(input_others)</p></td>
 <td><p>Gets the batch dimension based on the input positional inputs.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_block_names" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_block_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_block_names</span></code></a>(model)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_block_names" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_block_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_block_names</span></code></a>(model)</p></td>
 <td><p>Get the block names for transformers-like networks.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_tokenizer_function" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_tokenizer_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_tokenizer_function</span></code></a>(tokenizer, seqlen)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_tokenizer_function" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_tokenizer_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_tokenizer_function</span></code></a>(tokenizer, seqlen)</p></td>
 <td><p>Returns a default tokenizer function.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_dataloader" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_dataloader"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dataloader</span></code></a>(tokenizer, seqlen[, data_name, split, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.get_dataloader" title="neural_compressor.adaptor.torch_utils.autoround.autoround.get_dataloader"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dataloader</span></code></a>(tokenizer, seqlen[, data_name, split, ...])</p></td>
 <td><p>Returns a dataloader for the specified dataset and split.</p></td>
 </tr>
 </tbody>
@@ -259,6 +262,28 @@
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Quantized and dequantized weight, scale, zero-point</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_w_scale">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.autoround.autoround.</span></span><span class="sig-name descname"><span class="pre">quant_weight_w_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/torch_utils/autoround/autoround.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_w_scale" title="Permalink to this definition"></a></dt>
+<dd><p>Quant and dequant tensor with group size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weight</strong> – input weight</p></li>
+<li><p><strong>scale</strong> – scale</p></li>
+<li><p><strong>zp</strong> – zero point</p></li>
+<li><p><strong>group_size</strong> (<em>int</em><em>, </em><em>optional</em>) – how many elements share one scale/zp. Defaults to -1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>int weight.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>output</p>
 </dd>
 </dl>
 </dd></dl>
@@ -665,7 +690,7 @@ The default lr has been changed.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f94d6d2c5b0> 
+   <jinja2.runtime.BlockReference object at 0x7f32da3fba00> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

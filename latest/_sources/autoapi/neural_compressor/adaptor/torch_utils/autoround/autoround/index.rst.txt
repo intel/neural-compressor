@@ -31,6 +31,7 @@ Functions
    neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_sym
    neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_actor
    neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight
+   neural_compressor.adaptor.torch_utils.autoround.autoround.quant_weight_w_scale
    neural_compressor.adaptor.torch_utils.autoround.autoround.round_ste
    neural_compressor.adaptor.torch_utils.autoround.autoround.get_module
    neural_compressor.adaptor.torch_utils.autoround.autoround.set_module
@@ -103,6 +104,20 @@ Functions
    :param max_scale: Maximum scale coefficient for weight
 
    :returns: Quantized and dequantized weight, scale, zero-point
+
+
+.. py:function:: quant_weight_w_scale(weight, scale, zp, group_size=-1)
+
+   Quant and dequant tensor with group size.
+
+   :param weight: input weight
+   :param scale: scale
+   :param zp: zero point
+   :param group_size: how many elements share one scale/zp. Defaults to -1.
+   :type group_size: int, optional
+
+   :returns: int weight.
+   :rtype: output
 
 
 .. py:function:: round_ste(x: torch.Tensor)

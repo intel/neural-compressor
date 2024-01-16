@@ -1,0 +1,50 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.torch_utils.autoround.export`
+================================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.autoround.export
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.autoround.export.export_compressed_model
+
+
+
+.. py:function:: export_compressed_model(model, weight_config: Union[str, dict], enable_full_range=False, compression_dtype=torch.int32, compression_dim=1, scale_dtype=torch.float32, device='cpu', use_optimum_format=True)
+
+   Convert Linear to WeightOnlyLinear for low memory inference.
+
+   :param weight_config: qconfig dict or Path of qconfig.json.
+   :type weight_config: str|dict
+   :param enable_full_range: Whether to leverage the full compression range
+                             under symmetric quantization. Defaults to False.
+   :type enable_full_range: bool, optional
+   :param compression_dtype: The target dtype after comoression.
+                             Defaults to torch.int32.
+   :type compression_dtype: torch.Tensor, optional
+   :param compression_dim: Select from [0, 1], 0 is output channel,
+                           1 is input channel. Defaults to 1.
+   :type compression_dim: int, optional
+   :param scale_dtype: Use float32 or float16.
+                       Defaults to torch.float32.
+   :type scale_dtype: torch.Tensor, optional
+   :param device: choose device for compression. Defaults to cpu.
+   :type device: str, optional
+   :param use_optimum_format: use the popular huggingface compression format.
+                              1: compression_dim: weight = 1, zeros = 0 and both are transposed.
+                              2: zeros -= 1 before compression. Why we need it?
+                              3: g_idx: use same number for one group instead of recording the channel order.
+                              4. parameter name changed, such as 'packed_weight' -> 'qweight'.
+                              5. zeros is always needed even for sym.
+   :type use_optimum_format: bool, optional
+
+

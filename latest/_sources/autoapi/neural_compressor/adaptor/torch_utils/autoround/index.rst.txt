@@ -6,3 +6,12 @@
 .. py:module:: neural_compressor.adaptor.torch_utils.autoround
 
 
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   model_wrapper/index.rst
+
+
