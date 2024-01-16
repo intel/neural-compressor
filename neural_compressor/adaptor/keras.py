@@ -519,6 +519,7 @@ class KerasAdaptor(Adaptor):
     def _restore_model_from_json(self, json_model):
         from keras.src.saving import serialization_lib
         from tensorflow.keras.models import model_from_json
+
         serialization_lib.enable_unsafe_deserialization()
 
         custom_objects = {}
