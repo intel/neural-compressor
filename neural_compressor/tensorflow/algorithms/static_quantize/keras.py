@@ -21,6 +21,8 @@ import math
 import os
 from collections import OrderedDict, UserDict
 
+import yaml
+import keras
 import numpy as np
 import tensorflow as tf
 import yaml
@@ -487,7 +489,7 @@ class KerasAdaptor:
         from tensorflow.keras.models import model_from_json
         from neural_compressor.tensorflow.utils import version1_gte_version2
 
-        if version1_gte_version2(tf.__version__, "2.13.0"):
+        if version1_gte_version2(keras.__version__, "2.13.1"):
             from keras.src.saving import serialization_lib
             serialization_lib.enable_unsafe_deserialization()
 
