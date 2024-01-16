@@ -21,7 +21,6 @@ import math
 import os
 from collections import OrderedDict, UserDict
 
-import keras
 import numpy as np
 import yaml
 
@@ -43,7 +42,7 @@ from .adaptor import Adaptor, adaptor_registry
 from .query import QueryBackendCapability
 
 tf = LazyImport("tensorflow")
-
+keras = LazyImport("keras")
 
 def _add_supported_quantized_objects(custom_objects):
     """Map all the quantized objects."""
