@@ -518,10 +518,12 @@ class KerasAdaptor(Adaptor):
 
     def _restore_model_from_json(self, json_model):
         from tensorflow.keras.models import model_from_json
+
         from neural_compressor.utils import version1_gte_version2
 
         if version1_gte_version2(tf.__version__, "2.13.0"):
             from keras.src.saving import serialization_lib
+
             serialization_lib.enable_unsafe_deserialization()
 
         custom_objects = {}
