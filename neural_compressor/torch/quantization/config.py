@@ -23,7 +23,7 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import torch
 
-from neural_compressor.common.base_config import BaseConfig, register_config, config_registry
+from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
 from neural_compressor.common.utility import (
     DEFAULT_WHITE_LIST,
     FP8_QUANT,

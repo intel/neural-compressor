@@ -41,6 +41,7 @@ logger = Logger().get_logger()
 
 # Dictionary to store registered configurations
 
+
 class ConfigRegistry:
     registered_configs = {}
 
@@ -63,10 +64,7 @@ class ConfigRegistry:
 
         def decorator(config_cls):
             cls.registered_configs.setdefault(framework_name, {})
-            cls.registered_configs[framework_name][algo_name] = {
-                'priority': priority,
-                'cls': config_cls
-            }
+            cls.registered_configs[framework_name][algo_name] = {"priority": priority, "cls": config_cls}
             return config_cls
 
         return decorator
@@ -82,7 +80,7 @@ class ConfigRegistry:
         sorted_configs = OrderedDict()
         for framework_name, algos in sorted(cls.registered_configs.items()):
             sorted_configs[framework_name] = OrderedDict(
-                sorted(algos.items(), key=lambda x: x[1]['priority'], reverse=True)
+                sorted(algos.items(), key=lambda x: x[1]["priority"], reverse=True)
             )
         return sorted_configs
 
@@ -380,10 +378,10 @@ class ComposableConfig(BaseConfig):
         assert len(config_dict) >= 1, "The config dict must include at least one configuration."
         num_configs = len(config_dict)
         name, value = next(iter(config_dict.items()))
-        config = config_registry[name]['cls'].from_dict(value)
+        config = config_registry[name]["cls"].from_dict(value)
         for _ in range(num_configs - 1):
             name, value = next(iter(config_dict.items()))
-            config += config_registry[name]['cls'].from_dict(value)
+            config += config_registry[name]["cls"].from_dict(value)
         return config
 
     def to_json_string(self, use_diff: bool = False) -> str:
