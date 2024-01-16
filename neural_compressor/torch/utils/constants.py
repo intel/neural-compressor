@@ -36,3 +36,7 @@ DOUBLE_QUANT_CONFIGS = {
         "double_quant_group_size": 256,
     },
 }
+
+# Setting priorities for algorithms, a higher number indicates a higher priority.
+PRIORITY_RTN = 80
+PRIORITY_GPTQ = 90
