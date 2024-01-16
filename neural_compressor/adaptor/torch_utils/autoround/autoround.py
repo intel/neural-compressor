@@ -142,11 +142,13 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", v=0, min_scal
         weight = weight.reshape(-1, group_size)
         if isinstance(v, torch.Tensor):
             v = v.reshape(-1, group_size)
-
         weight, scale, zp = quant_weight_actor(
             weight, num_bits, scheme=scheme, v=v, min_scale=min_scale, max_scale=max_scale
         )
         weight = weight.reshape(orig_shape)
+        scale = scale.reshape(orig_shape[0], -1)  # TODO validating the feasibility on conv1d
+        if zp is not None:
+            zp = zp.reshape(orig_shape[0], -1)
         return weight, scale, zp
 
     else:
@@ -160,9 +162,47 @@ def quant_weight(weight, num_bits=4, group_size=-1, scheme="asym", v=0, min_scal
             weight_new, num_bits, scheme=scheme, v=v, min_scale=min_scale, max_scale=max_scale
         )
         weight_new = weight_new.reshape(orig_shape[0], -1)
-
+        scale = scale.reshape(orig_shape[0], -1)
+        if zp is not None:
+            zp = zp.reshape(orig_shape[0], -1)
         weight_new = weight_new[:, :-pad_len]
+        scale = scale[:, :-pad_len]
+        zp = zp[:, :-pad_len]
         return weight_new, scale, zp
+
+
+def quant_weight_w_scale(weight, scale, zp, group_size=-1):
+    """Quant and dequant tensor with group size.
+
+    Args:
+        weight: input weight
+        scale: scale
+        zp: zero point
+        group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
+
+    Returns:
+        output: int weight.
+    """
+    device = weight.device
+    scale = scale.to(device)
+    if zp is not None:
+        zp = zp.to(device)
+    if group_size == -1:
+        return torch.round(weight / scale) if zp is None else torch.round(weight / scale + zp)
+    int_weight = torch.zeros(weight.shape).to(device)
+    leng = weight.shape[1] // group_size
+    tail_flag = False if weight.shape[1] % group_size == 0 else True
+    for i in range(leng):
+        int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size] / scale[:, i].unsqueeze(1)
+        if zp is not None:
+            int_weight_tmp += zp[:, i].unsqueeze(1)
+        int_weight[:, i * group_size : (i + 1) * group_size] = torch.round(int_weight_tmp)
+    if tail_flag:
+        int_weight_tmp = weight[:, leng * group_size :] / scale[:, -1].unsqueeze(1)
+        if zp is not None:
+            int_weight_tmp += zp[:, -1].unsqueeze(1)
+        int_weight[:, leng * group_size :] = torch.round(int_weight_tmp)
+    return int_weight
 
 
 def round_ste(x: torch.Tensor):
@@ -819,6 +859,7 @@ def get_block_names(model):
     for n, m in model.named_modules():
         if hasattr(type(m), "__name__") and "ModuleList" in type(m).__name__:
             target_m = (n, m)
+            break
     for n, m in target_m[1].named_children():
         block_names.append(target_m[0] + "." + n)
     return block_names
@@ -976,7 +1017,6 @@ class AutoRound(object):
         self.amp = amp
         self.use_quant_input = use_quant_input
         self.enable_minmax_tuning = enable_minmax_tuning
-        self.n_samples = n_samples
         self.n_blocks = n_blocks
         self.bits = bits
         self.group_size = group_size
@@ -997,6 +1037,8 @@ class AutoRound(object):
         self.tokenizer = tokenizer
         self.seqlen = seqlen
         self.train_bs = bs
+        self.n_samples = bs * (n_samples // bs)
+        assert self.n_samples > 0, f"Recommend setting an n_samples that is divisible by batch size{self.train_bs}"
         self.n_blocks = n_blocks
         self.device = device
         self.amp_dtype = torch.float16
@@ -1393,20 +1435,29 @@ class AutoRound(object):
             if n in self.weight_config.keys():
                 if hasattr(m, "scale"):
                     self.weight_config[n]["scale"] = m.scale
+                    # self.weight_config[n]["scale_dtype"] = m.scale.dtype
                     self.weight_config[n]["zp"] = m.zp
+                    # self.weight_config[n]["zp_dtype"] = m.zp.dtype
                     delattr(m, "scale")
                     delattr(m, "zp")
                 else:
                     self.weight_config[n]["data_type"] = "float"
-                    if self.amp_dtype == torch.bfloat16:
-                        self.weight_config[n]["data_type"] = "bfloat"
-                    self.weight_config[n]["bits"] = 16
+                    self.weight_config[n]["bits"] = 32
+                    if self.amp:
+                        self.weight_config[n]["bits"] = 16
+                        if self.amp_dtype == torch.bfloat16:
+                            self.weight_config[n]["data_type"] = "bfloat"
                     self.weight_config[n]["group_size"] = None
                     self.weight_config[n]["sym"] = None
 
+        for k, v in self.weight_config.items():
+            for m, n in v.items():
+                if isinstance(n, torch.Tensor):
+                    self.weight_config[k][m] = n.tolist()
         end_time = time.time()
         cost_time = end_time - start_time
         logger.info(f"quantization runtime {cost_time}")
+
         return self.model, self.weight_config
 
 

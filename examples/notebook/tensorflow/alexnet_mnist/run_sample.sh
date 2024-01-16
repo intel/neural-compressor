@@ -6,6 +6,7 @@ echo "Enable Intel Optimized TensorFlow 2.6.0 and newer by setting environment v
 echo "That will accelerate training and inference, and  it's mandatory requirement of running Intel® Neural Compressor quantize Fp32 model or deploying the quantized model."
 
 export TF_ENABLE_ONEDNN_OPTS=1
+export CUDA_VISIBLE_DEVICES=-1
 
 echo "Train Model by Keras/Tensorflow with MNIST"
 python keras_tf_train_mnist.py

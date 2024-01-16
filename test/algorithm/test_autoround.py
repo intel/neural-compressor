@@ -23,12 +23,12 @@ class TestAutoRoundLinear(unittest.TestCase):
 
     @classmethod
     def test_signround(self):
-        round = AutoRound(self.model, self.tokenizer, device="cpu", iters=5, seqlen=8, n_samples=1, group_size=7)
+        round = AutoRound(self.model, self.tokenizer, device="cpu", iters=5, seqlen=8, n_samples=8, group_size=7)
         round.quantize()
 
     @classmethod
     def test_Adamround(self):
-        round = AutoOPTRound(self.model, self.tokenizer, device="cpu", iters=2, seqlen=8, n_samples=1, scheme="sym")
+        round = AutoOPTRound(self.model, self.tokenizer, device="cpu", iters=2, seqlen=8, n_samples=8, scheme="sym")
         round.quantize()
 
 
@@ -49,12 +49,12 @@ class TestAutoRoundConv1D(unittest.TestCase):
 
     @classmethod
     def test_signround(self):
-        round = AutoRound(self.model, self.tokenizer, device="cpu", iters=5, seqlen=8, n_samples=1, n_blocks=2)
+        round = AutoRound(self.model, self.tokenizer, device="cpu", iters=5, seqlen=8, n_samples=8, n_blocks=2)
         round.quantize()
 
     @classmethod
     def test_Adamround(self):
-        round = AutoAdamRound(self.model, self.tokenizer, device="cpu", iters=5, seqlen=8, n_samples=1)
+        round = AutoAdamRound(self.model, self.tokenizer, device="cpu", iters=5, seqlen=8, n_samples=8)
         round.quantize()
 
 
