@@ -345,5 +345,5 @@ if __name__ == '__main__':
                                 cores_per_instance=52,
                                 num_of_instance=1)
         benchmark.fit(new_model, b_conf, b_dataloader=eval_dataloader)
-    if args.dice:
+    if args.accuracy:
         validate(eval_dataloader, new_model, args)
