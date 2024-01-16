@@ -95,6 +95,7 @@ class ConfigRegistry:
                 cls_configs[framework_name][algo_name] = config_data["cls"]
         return cls_configs
 
+
 config_registry = ConfigRegistry()
 
 
