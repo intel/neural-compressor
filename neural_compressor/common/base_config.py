@@ -71,12 +71,12 @@ class ConfigRegistry:
         return decorator
 
     @classmethod
-    def get_all_configs(cls):
+    def get_all_configs(cls) -> Dict[str, Dict[str, Dict[str, object]]]:
         """Get all registered configurations."""
         return cls.registered_configs
 
     @classmethod
-    def get_sorted_configs(cls):
+    def get_sorted_configs(cls) -> Dict[str, OrderedDict[str, Dict[str, object]]]:
         """Get registered configurations sorted by priority."""
         sorted_configs = OrderedDict()
         for framework_name, algos in sorted(cls.registered_configs.items()):
