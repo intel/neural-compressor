@@ -259,7 +259,6 @@ class WeightOnlyLinear(torch.nn.Module):
                     dtype=self.float_type,
                 ).to(device),
             )
-            self.scales = self.scales.T
             self.register_buffer(
                 "qweight",
                 torch.zeros(
@@ -267,7 +266,6 @@ class WeightOnlyLinear(torch.nn.Module):
                     dtype=self.compression_dtype,
                 ).to(device),
             )
-            self.qweight = self.qweight.T
             self.register_buffer(
                 "qzeros",
                 torch.zeros(
@@ -275,7 +273,6 @@ class WeightOnlyLinear(torch.nn.Module):
                     dtype=self.compression_dtype,
                 ).to(device),
             )
-            self.qzeros = self.qzeros.T
             self.register_buffer("bias", torch.zeros(self.out_features, dtype=self.float_type).to(device))
         else:
             self.compression_dtype = compression_dtype
@@ -329,6 +326,10 @@ class WeightOnlyLinear(torch.nn.Module):
             self.g_idx = None
 
     def pack(self, int_weight, scale, zp, bias, g_idx=None):
+        if self.use_optimum_format:
+            self.scales = self.scales.T
+            self.qweight = self.qweight.T
+            self.qzeros = self.qzeros.T
         int_weight = int_weight.to(self.device)
         if self.use_optimum_format and zp is None:
             # to avoid overflow
@@ -468,12 +469,13 @@ class WeightOnlyLinear(torch.nn.Module):
         return fp32_weight
 
     def forward(self, input):
-        weight = self.recover()
-        device = self.scales.device
-        if weight.dtype == torch.float16 and device.type == "cpu":
-            weight = weight.float()
-            self.bias = self.bias.float() if self.bias is not None else None
-        if level == DEBUG:
+        if not hasattr(self, "weight"):
+            weight = self.recover()
+            device = self.scales.device
+            if weight.dtype == torch.float16 and device.type == "cpu":
+                weight = weight.float()
+                self.bias = self.bias.float() if self.bias is not None else None
+        if True:  # keep reusing self.weight due to recover is too slow.
             if not hasattr(self, "weight"):
                 self.weight = weight
             input = input.type(self.weight.dtype)
