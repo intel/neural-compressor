@@ -21,7 +21,6 @@ import math
 import os
 from collections import OrderedDict, UserDict
 
-import yaml
 import keras
 import numpy as np
 import tensorflow as tf

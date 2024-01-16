@@ -21,9 +21,9 @@ import math
 import os
 from collections import OrderedDict, UserDict
 
-import yaml
 import keras
 import numpy as np
+import yaml
 
 from ..conf.dotdict import deep_get
 from ..data.dataloaders.base_dataloader import BaseDataLoader
