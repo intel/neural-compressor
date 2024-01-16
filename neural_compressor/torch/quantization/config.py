@@ -23,7 +23,7 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import torch
 
-from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
+from neural_compressor.common.base_config import BaseConfig, register_config, config_registry
 from neural_compressor.common.utility import (
     DEFAULT_WHITE_LIST,
     FP8_QUANT,
@@ -59,7 +59,7 @@ str2operator = {"Linear": torch.nn.Linear, "linear": torch.nn.functional.linear,
 ######################## RNT Config ###############################
 
 
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN_WEIGHT_ONLY_QUANT)
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN_WEIGHT_ONLY_QUANT, priority=80)
 class RTNWeightQuantConfig(BaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
@@ -185,7 +185,7 @@ def get_default_rtn_config() -> RTNWeightQuantConfig:
 
 
 ######################## GPTQ Config ###############################
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=GPTQ)
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=GPTQ, priority=90)
 class GPTQConfig(BaseConfig):
     """Config class for GPTQ.
 
@@ -403,4 +403,5 @@ if is_hpex_avaliable():
     ##################### Algo Configs End ###################################
 
     def get_all_registered_configs() -> Dict[str, BaseConfig]:
+        registered_configs = config_registry.get_all_configs()
         return registered_configs.get(FRAMEWORK_NAME, {})

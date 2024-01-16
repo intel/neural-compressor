@@ -40,30 +40,73 @@ logger = Logger().get_logger()
 
 
 # Dictionary to store registered configurations
-registered_configs = {}
+
+class ConfigRegistry:
+    registered_configs = {}
+
+    @classmethod
+    def register_config(cls, framework_name="None", algo_name=None, priority=0):
+        """Register config decorator.
+
+        The register the configuration classes for different algorithms within specific frameworks.
+
+        Usage example:
+            @ConfigRegistry.register_config(framework_name=FRAMEWORK_NAME, algo_name=ExampleAlgorithm, priority=100)
+            class ExampleAlgorithmConfig:
+                # Configuration details for the ExampleAlgorithm
+
+        Args:
+            framework_name: the framework name. Defaults to "None".
+            algo_name: the algorithm name. Defaults to None.
+            priority: the priority of the configuration. Defaults to 0.
+        """
+
+        def decorator(config_cls):
+            cls.registered_configs.setdefault(framework_name, {})
+            cls.registered_configs[framework_name][algo_name] = {
+                'priority': priority,
+                'cls': config_cls
+            }
+            return config_cls
+
+        return decorator
+
+    @classmethod
+    def get_all_configs(cls):
+        """Get all registered configurations."""
+        return cls.registered_configs
+
+    @classmethod
+    def get_sorted_configs(cls):
+        """Get registered configurations sorted by priority."""
+        sorted_configs = OrderedDict()
+        for framework_name, algos in sorted(cls.registered_configs.items()):
+            sorted_configs[framework_name] = OrderedDict(
+                sorted(algos.items(), key=lambda x: x[1]['priority'], reverse=True)
+            )
+        return sorted_configs
 
 
-def register_config(framework_name="None", algo_name=None):
+config_registry = ConfigRegistry()
+
+
+def register_config(framework_name="None", algo_name=None, priority=0):
     """Register config decorator.
 
     The register the configuration classes for different algorithms within specific frameworks.
 
     Usage example:
-        @register_config(framework_name="PyTorch", algo_name="ExampleAlgorithm")
+        @register_config(framework_name=FRAMEWORK_NAME, algo_name=ExampleAlgorithm, priority=100)
         class ExampleAlgorithmConfig:
             # Configuration details for the ExampleAlgorithm
 
     Args:
         framework_name: the framework name. Defaults to "None".
         algo_name: the algorithm name. Defaults to None.
+        priority: the priority of the configuration. Defaults to 0.
     """
 
-    def decorator(config_cls):
-        registered_configs.setdefault(framework_name, {})
-        registered_configs[framework_name][algo_name] = config_cls
-        return config_cls
-
-    return decorator
+    return config_registry.register_config(framework_name=framework_name, algo_name=algo_name, priority=priority)
 
 
 class BaseConfig(ABC):
@@ -337,10 +380,10 @@ class ComposableConfig(BaseConfig):
         assert len(config_dict) >= 1, "The config dict must include at least one configuration."
         num_configs = len(config_dict)
         name, value = next(iter(config_dict.items()))
-        config = config_registry[name].from_dict(value)
+        config = config_registry[name]['cls'].from_dict(value)
         for _ in range(num_configs - 1):
             name, value = next(iter(config_dict.items()))
-            config += config_registry[name].from_dict(value)
+            config += config_registry[name]['cls'].from_dict(value)
         return config
 
     def to_json_string(self, use_diff: bool = False) -> str:
