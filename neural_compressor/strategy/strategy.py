@@ -186,6 +186,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         # track tuning cfg with the current best accuracy
         self.cur_best_tuning_cfg = {}
         self.re_quant = False
+        # two cases to stop sq process early
+        # 1) alpha is a scalar, e.g., alpha = 0.5, early stop after the 1st trial
+        # 2) alpha is a list containing more than 1 element, early stop after trying all alpha
         self.early_stop_sq_tuning_process = False
 
         self._trials_count = 0
@@ -591,6 +594,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         logger.info(f"Adaptor has {len(adaptor_recipes)} recipes.")
         logger.debug(adaptor_recipes)
         usr_recipes_cfg = self.config.recipes if self.config.recipes else {}
+        # if smooth quant  is `True`, early stop
+        self.early_stop_sq_tuning_process = usr_recipes_cfg.get("smooth_quant", False)
         for recipe_name, recipe_val in usr_recipes_cfg.items():
             # for not tuning recipes, use the value specified by user.
             if recipe_name in adaptor_recipes and recipe_val != adaptor_recipes[recipe_name][0]:
