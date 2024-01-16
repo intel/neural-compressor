@@ -46,7 +46,7 @@ class ConfigRegistry:
     registered_configs = {}
 
     @classmethod
-    def register_config(cls, framework_name="None", algo_name=None, priority=0):
+    def register_config_impl(cls, framework_name="None", algo_name=None, priority=0):
         """Register config decorator.
 
         The register the configuration classes for different algorithms within specific frameworks.
@@ -59,7 +59,8 @@ class ConfigRegistry:
         Args:
             framework_name: the framework name. Defaults to "None".
             algo_name: the algorithm name. Defaults to None.
-            priority: the priority of the configuration. Defaults to 0.
+            priority: priority: the priority of the configuration. A larger number indicates a higher priority,
+                which will be tried first at the auto-tune stage. Defaults to 0.
         """
 
         def decorator(config_cls):
@@ -84,6 +85,15 @@ class ConfigRegistry:
             )
         return sorted_configs
 
+    @classmethod
+    def get_cls_configs(cls) -> Dict[str, Dict[str, object]]:
+        """Get registered configurations without priority."""
+        cls_configs = {}
+        for framework_name, algos in cls.registered_configs.items():
+            cls_configs[framework_name] = {}
+            for algo_name, config_data in algos.items():
+                cls_configs[framework_name][algo_name] = config_data["cls"]
+        return cls_configs
 
 config_registry = ConfigRegistry()
 
@@ -101,10 +111,11 @@ def register_config(framework_name="None", algo_name=None, priority=0):
     Args:
         framework_name: the framework name. Defaults to "None".
         algo_name: the algorithm name. Defaults to None.
-        priority: the priority of the configuration. Defaults to 0.
+        priority: the priority of the configuration. A larger number indicates a higher priority,
+            which will be tried first at the auto-tune stage. Defaults to 0.
     """
 
-    return config_registry.register_config(framework_name=framework_name, algo_name=algo_name, priority=priority)
+    return config_registry.register_config_impl(framework_name=framework_name, algo_name=algo_name, priority=priority)
 
 
 class BaseConfig(ABC):
@@ -378,10 +389,10 @@ class ComposableConfig(BaseConfig):
         assert len(config_dict) >= 1, "The config dict must include at least one configuration."
         num_configs = len(config_dict)
         name, value = next(iter(config_dict.items()))
-        config = config_registry[name]["cls"].from_dict(value)
+        config = config_registry[name].from_dict(value)
         for _ in range(num_configs - 1):
             name, value = next(iter(config_dict.items()))
-            config += config_registry[name]["cls"].from_dict(value)
+            config += config_registry[name].from_dict(value)
         return config
 
     def to_json_string(self, use_diff: bool = False) -> str:

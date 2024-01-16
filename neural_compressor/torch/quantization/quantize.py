@@ -48,7 +48,7 @@ def quantize(
         The quantized model.
     """
     q_model = model if inplace else copy.deepcopy(model)
-    registered_configs = config_registry.get_all_configs()
+    registered_configs = config_registry.get_cls_configs()
     if isinstance(quant_config, dict):
         quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs[FRAMEWORK_NAME])
         logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
@@ -89,7 +89,7 @@ def quantize_dynamic(
         The quantized model.
     """
     q_model = model if inplace else copy.deepcopy(model)
-    registered_configs = config_registry.get_all_configs()
+    registered_configs = config_registry.get_cls_configs()
     if isinstance(quant_config, dict):
         quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs[FRAMEWORK_NAME])
         logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
