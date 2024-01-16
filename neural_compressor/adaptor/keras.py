@@ -520,7 +520,7 @@ class KerasAdaptor(Adaptor):
     def _restore_model_from_json(self, json_model):
         from tensorflow.keras.models import model_from_json
 
-        from neural_compressor.utils import version1_gte_version2
+        from neural_compressor.utils.utility import version1_gte_version2
 
         if version1_gte_version2(keras.__version__, "2.13.1"):
             from keras.src.saving import serialization_lib
