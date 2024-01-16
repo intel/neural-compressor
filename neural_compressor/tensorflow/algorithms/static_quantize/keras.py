@@ -484,7 +484,9 @@ class KerasAdaptor:
 
     def _restore_model_from_json(self, json_model):
         """Generate a keras model from json files."""
+        from keras.src.saving import serialization_lib
         from tensorflow.keras.models import model_from_json
+        serialization_lib.enable_unsafe_deserialization()
 
         custom_objects = {}
         # We need to keep a dictionary of custom objects as our quantized library
