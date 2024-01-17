@@ -14,6 +14,7 @@
 
 
 import copy
+import uuid
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig
@@ -61,7 +62,7 @@ class Evaluator:
         # TODO update the result according to the weight and algo_name
         return overall_result + eval_result * eval_pair[self.WEIGHT]
 
-    def get_number_of_eval_funtions(self) -> int:
+    def get_number_of_eval_functions(self) -> int:
         return len(self.eval_fn_registry)
 
     def _set_eval_fn_registry(self, user_eval_fns: List[Dict]) -> None:
@@ -93,29 +94,12 @@ class Evaluator:
 
     def self_check(self) -> None:
         # check the number of evaluation functions
-        num_evaluator = self.get_number_of_eval_funtions()
-        assert num_evaluator > 0, "Please ensure that you register at least one evaluation metric for auto-tune."
-        logger.info(f"There are {num_evaluator} tuning objectives.")
+        num_eval_fns = self.get_number_of_eval_functions()
+        assert num_eval_fns > 0, "Please ensure that you register at least one evaluation metric for auto-tune."
+        logger.info("There are %d evaluations functions.", num_eval_fns)
 
 
 evaluator = Evaluator()
-
-
-class TuningConfig:
-    """Base Class for Tuning Criterion.
-
-    Args:
-        quant_configs: quantization configs. Default value is empty.
-        timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
-        max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
-    """
-
-    def __init__(self, quant_configs=None, timeout=0, max_trials=100, sampler: "Sampler" = None) -> None:
-        """Init a TuneCriterion object."""
-        self.quant_configs = quant_configs
-        self.timeout = timeout
-        self.max_trials = max_trials
-        self.sampler = sampler
 
 
 class Sampler:
@@ -146,21 +130,6 @@ class ConfigLoader:
     def __iter__(self):
         for config in self.parse_quant_configs():
             yield config
-
-
-class TuningMonitor:
-    def __init__(self) -> None:
-        # TODO refine the `tuning_history` with a more appropriate data structure
-        self.tuning_history: list = []
-
-    def add_trial_result(self, trial_index: int, eval_result: Union[int, float], quant_config: BaseConfig) -> None:
-        self.tuning_history.append([trial_index, eval_result, quant_config])
-
-    def get_best_quant_config(self) -> BaseConfig:
-        return self.tuning_history[0][2]
-
-    def need_stop(self) -> bool:
-        return True
 
 
 class TuningLogger:
@@ -202,8 +171,65 @@ class TuningLogger:
         logger.info("Tuning completed.")
 
 
+class TuningConfig:
+    """Base Class for Tuning Criterion.
+
+    Args:
+        quant_configs: quantization configs. Default value is empty.
+        timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
+        max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
+    """
+
+    def __init__(self, quant_configs=None, timeout=0, max_trials=100, sampler: Sampler = None) -> None:
+        """Init a TuneCriterion object."""
+        self.quant_configs = quant_configs
+        self.timeout = timeout
+        self.max_trials = max_trials
+        self.sampler = sampler
+
+
+class _TrialRecord:
+    @staticmethod
+    def _generate_unique_id():
+        unique_id = str(uuid.uuid4())
+        return unique_id
+
+    def __init__(self, trial_index: int, trial_result: Union[int, float], quant_config: BaseConfig):
+        # The unique id to refer to one trial
+        self.trial_id = _TrialRecord._generate_unique_id()
+        self.trial_index = trial_index
+        self.trial_result = trial_result
+        self.quant_config = quant_config
+
+
+class TuningMonitor:
+    def __init__(self, tuning_config: TuningConfig) -> None:
+        self.tuning_config = tuning_config
+        self.trial_cnt = 0
+        self.tuning_history: List[_TrialRecord] = []
+
+    def add_trial_result(self, trial_index: int, trial_result: Union[int, float], quant_config: BaseConfig) -> None:
+        self.trial_cnt += 1
+        trial_record = _TrialRecord(trial_index, trial_result, quant_config)
+        self.tuning_history.append(trial_record)
+
+    def get_number_of_trials(self):
+        return len(self.tuning_history)
+
+    def get_best_quant_config(self) -> BaseConfig:
+        assert self.get_number_of_trials() > 0, "Not trial record in tuning monitor."
+        # Put the record with a higher score at the beginning
+        sorted_trials_records: List[_TrialRecord] = sorted(
+            self.tuning_history, key=lambda x: x.trial_result, reverse=True
+        )
+        return sorted_trials_records[0].quant_config
+
+    def need_stop(self) -> bool:
+        return self.trial_cnt >= self.tuning_config.max_trials
+
+
 def init_tuning(tuning_config: TuningConfig) -> Tuple[ConfigLoader, TuningLogger, TuningMonitor]:
     config_loader = ConfigLoader(quant_configs=tuning_config.quant_configs, sampler=tuning_config.sampler)
     tuning_logger = TuningLogger()
-    tuning_monitor = TuningMonitor()
+    tuning_monitor = TuningMonitor(tuning_config)
     return config_loader, tuning_logger, tuning_monitor
