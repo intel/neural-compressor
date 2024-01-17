@@ -15,7 +15,7 @@
 
 import copy
 import uuid
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig
 from neural_compressor.common.logger import Logger
@@ -34,6 +34,25 @@ __all__ = [
 
 
 class Evaluator:
+    """Evaluator is a collection of evaluation functions.
+
+    Examples:
+        def eval_acc(model):
+            ...
+
+        def eval_perf(molde):
+            ...
+
+        # Usage
+        user_eval_fns1 = eval_acc
+        user_eval_fns2 = {"eval_fn": eval_acc}
+        user_eval_fns3 = {"eval_fn": eval_acc, "weight": 1.0, "name": "accuracy"}
+        user_eval_fns4 = [
+            {"eval_fn": eval_acc, "weight": .0.5},
+            {"eval_fn": eval_perf, "weight": 0.5, "name": "accuracy"},
+            ]
+    """
+
     EVAL_FN = "eval_fn"
     WEIGHT = "weight"
     FN_NAME = "name"
@@ -75,7 +94,8 @@ class Evaluator:
             for user_eval_fn_pair in user_eval_fns
         ]
 
-    def set_eval_fn_registry(self, eval_fns: Optional[Union[Dict, List[Dict]]] = None) -> None:
+    def set_eval_fn_registry(self, eval_fns: Optional[Union[Callable, Dict, List[Dict]]] = None) -> None:
+        # About the eval_fns format, refer the class docstring for details.
         if eval_fns is None:
             return
         elif callable(eval_fns):
