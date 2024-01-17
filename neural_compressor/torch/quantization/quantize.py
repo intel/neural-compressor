@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.base_config import BaseConfig, ComposableConfig, registered_configs
+from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.logger import Logger
 from neural_compressor.torch.quantization.config import FRAMEWORK_NAME
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
@@ -48,6 +48,7 @@ def quantize(
         The quantized model.
     """
     q_model = model if inplace else copy.deepcopy(model)
+    registered_configs = config_registry.get_cls_configs()
     if isinstance(quant_config, dict):
         quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs[FRAMEWORK_NAME])
         logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
@@ -88,6 +89,7 @@ def quantize_dynamic(
         The quantized model.
     """
     q_model = model if inplace else copy.deepcopy(model)
+    registered_configs = config_registry.get_cls_configs()
     if isinstance(quant_config, dict):
         quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs[FRAMEWORK_NAME])
         logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")

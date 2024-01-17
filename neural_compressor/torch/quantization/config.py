@@ -23,7 +23,7 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import torch
 
-from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
+from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
 from neural_compressor.common.utility import (
     DEFAULT_WHITE_LIST,
     FP8_QUANT,
@@ -31,6 +31,7 @@ from neural_compressor.common.utility import (
     OP_NAME_OR_MODULE_TYPE,
     RTN_WEIGHT_ONLY_QUANT,
 )
+from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
 from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
 
 FRAMEWORK_NAME = "torch"
@@ -59,7 +60,7 @@ str2operator = {"Linear": torch.nn.Linear, "linear": torch.nn.functional.linear,
 ######################## RNT Config ###############################
 
 
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN_WEIGHT_ONLY_QUANT)
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN_WEIGHT_ONLY_QUANT, priority=PRIORITY_RTN)
 class RTNWeightQuantConfig(BaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
@@ -185,7 +186,7 @@ def get_default_rtn_config() -> RTNWeightQuantConfig:
 
 
 ######################## GPTQ Config ###############################
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=GPTQ)
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=GPTQ, priority=PRIORITY_GPTQ)
 class GPTQConfig(BaseConfig):
     """Config class for GPTQ.
 
@@ -403,4 +404,5 @@ if is_hpex_avaliable():
     ##################### Algo Configs End ###################################
 
     def get_all_registered_configs() -> Dict[str, BaseConfig]:
+        registered_configs = config_registry.get_all_configs()
         return registered_configs.get(FRAMEWORK_NAME, {})
