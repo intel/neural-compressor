@@ -15,7 +15,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from ..utils import logger, nn, tf, torch
+
+from ..utils import logger, nn, safe_get_data, safe_get_grad, safe_get_shape, tf, torch
 from .base import ProgressivePatternUtils, PytorchBasePattern, SparsityInfo, register_pattern
 
 
@@ -145,12 +146,22 @@ class PytorchPatternNInM(PytorchBasePattern):
         Returns:
             Reshaped data.
         """
-        if len(data.shape) == 4:  # TODO: need to verify whether it's ok for transposed conv
+        from ..utils import FLATTEN_DIM2
+
+        if len(data.shape) == 2:
+            return data
+        elif len(data.shape) == 4:  # TODO: need to verify whether it's ok for transposed conv
             data = data.permute(0, 2, 3, 1)  # cout,k,k,cin
             data = data.reshape(data.shape[0], -1)
-        if len(data.shape) == 3:
+        elif len(data.shape) == 3:
             data = data.permute(0, 2, 1)  # cout,k,cin
             data = data.reshape(data.shape[0], -1)
+        elif len(data.shape) == 1:
+            data = data.reshape(-1, FLATTEN_DIM2)
+        else:
+            raise NotImplementedError(
+                f"Currently only support reshape data with 1,3,4-dims, but got shape {data.shape}"
+            )
         return data
 
     def _reshape_2dims_to_orig(self, data, orig_shape):
@@ -162,12 +173,21 @@ class PytorchPatternNInM(PytorchBasePattern):
         Returns:
             Reshaped data.
         """
-        if len(orig_shape) == 4:
+        if len(orig_shape) == 2:
+            return data
+
+        elif len(orig_shape) == 4:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[3], orig_shape[1])
             data = data.permute(0, 3, 1, 2)
-        if len(orig_shape) == 3:
+        elif len(orig_shape) == 3:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[1])
             data = data.permute(0, 2, 1)
+        elif len(orig_shape) == 1:
+            data = data.reshape(orig_shape)
+        else:
+            raise NotImplementedError(
+                f"Currently only support reshape data with 1,3,4-dims, but got shape {data.shape}"
+            )
         return data
 
     def reshape_orig_to_pattern(self, data, key):
@@ -342,11 +362,13 @@ class PytorchPatternNInM(PytorchBasePattern):
         for key in masks.keys():
             if key in self.invalid_layers:
                 continue
-            orig_shape = self.modules[key].weight.shape
-            if len(orig_shape) == 4 or len(orig_shape) == 3:  # need to permute
-                mask = masks[key]
-                mask = self._reshape_2dims_to_orig(mask, orig_shape)
-                masks[key] = mask
+            # orig_shape = self.modules[key].weight.shape
+            param = self.modules[key].weight
+            orig_shape = safe_get_shape(param)
+            # if len(orig_shape) == 4 or len(orig_shape) == 3 or:  # need to permute
+            mask = masks[key]
+            mask = self._reshape_2dims_to_orig(mask, orig_shape)
+            masks[key] = mask
             layer_ratio = torch.sum(masks[key] == 0.0).data.item() / masks[key].numel()
             logger.info(f"layer {key} sparsity_ratio is {layer_ratio}")
         return masks
@@ -362,13 +384,16 @@ class PytorchPatternNInM(PytorchBasePattern):
         """
         pattern_lock_masks = {}
         for key in modules.keys():
-            weight = modules[key].weight
-            orig_shape = weight.shape
+            # weight = modules[key].weight
+            param = modules[key].weight
+            # orig_shape = weight.shape
+            orig_shape = safe_get_shape(param)
+            data = safe_get_data(param)
             if key in self.invalid_layers:
-                mask = torch.ones(orig_shape, device=weight.device)
+                mask = torch.ones(orig_shape, device=param.device)
                 pattern_lock_masks[key] = mask.bool()
                 continue
-            reduced_mask = self.get_reduced_masks_from_data(weight, key)
+            reduced_mask = self.get_reduced_masks_from_data(data, key)
             mask = self.reshape_reduced_to_orig(reduced_mask, key, orig_shape)
             pattern_lock_masks[key] = mask
         return pattern_lock_masks

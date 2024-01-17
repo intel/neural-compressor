@@ -273,7 +273,7 @@ class CpuInfo(object):
 
     def get_number_of_sockets(self) -> int:
         """Get number of sockets in platform."""
-        cmd = "lscpu | grep 'Socket(s)' | cut -d ':' -f 2"
+        cmd = "cat /proc/cpuinfo | grep 'physical id' | sort -u | wc -l"
         if psutil.WINDOWS:
             cmd = r'wmic cpu get DeviceID | C:\Windows\System32\find.exe /C "CPU"'
 
@@ -915,7 +915,7 @@ def dump_table_to_csv(
 
 def get_number_of_sockets() -> int:
     """Get number of sockets in platform."""
-    cmd = "lscpu | grep 'Socket(s)' | cut -d ':' -f 2"
+    cmd = "cat /proc/cpuinfo | grep 'physical id' | sort -u | wc -l"
     if sys.platform == "win32":
         cmd = 'wmic cpu get DeviceID | find /c "CPU"'
 
