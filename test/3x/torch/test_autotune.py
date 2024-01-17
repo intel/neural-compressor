@@ -14,9 +14,9 @@ def reset_tune_target(test_func):
     @wraps(test_func)
     def wrapper(*args, **kwargs):
         # Reset tune targets before running the test
-        from neural_compressor.common.base_tune import tune_objectives
+        from neural_compressor.common.base_tune import evaluator
 
-        tune_objectives.eval_fn_registry = []
+        evaluator.eval_fn_registry = []
         return test_func(*args, **kwargs)
 
     return wrapper
@@ -61,24 +61,24 @@ class TestAutoTune(unittest.TestCase):
     @reset_tune_target
     def test_autotune_api(self):
         logger.info("test_autotune_api")
-        from neural_compressor.common.base_tune import tune_objectives
-        from neural_compressor.torch import RTNWeightQuantConfig, TuneConfig, autotune
+        from neural_compressor.common.base_tune import evaluator
+        from neural_compressor.torch import RTNWeightQuantConfig, TuningConfig, autotune
 
         def eval_acc_fn(model) -> float:
             return 1.0
 
-        custom_tune_config = TuneConfig(quant_configs=[RTNWeightQuantConfig(weight_bits=[4, 6])], max_trials=2)
+        custom_tune_config = TuningConfig(quant_configs=[RTNWeightQuantConfig(weight_bits=[4, 6])], max_trials=2)
         best_model = autotune(
             model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
         )
         self.assertIsNone(best_model)
-        self.assertEqual(len(tune_objectives.eval_fn_registry), 1)
+        self.assertEqual(len(evaluator.eval_fn_registry), 1)
 
     @reset_tune_target
     def test_autotune_api_2(self):
         logger.info("test_autotune_api")
-        from neural_compressor.common.base_tune import tune_objectives
-        from neural_compressor.torch import RTNWeightQuantConfig, TuneConfig, autotune
+        from neural_compressor.common.base_tune import evaluator
+        from neural_compressor.torch import RTNWeightQuantConfig, TuningConfig, autotune
 
         def eval_acc_fn(model) -> float:
             return 1.0
@@ -94,17 +94,17 @@ class TestAutoTune(unittest.TestCase):
             },
         ]
 
-        custom_tune_config = TuneConfig(quant_configs=[RTNWeightQuantConfig(weight_bits=[4, 6])], max_trials=2)
+        custom_tune_config = TuningConfig(quant_configs=[RTNWeightQuantConfig(weight_bits=[4, 6])], max_trials=2)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_fns)
         self.assertIsNone(best_model)
-        self.assertEqual(len(tune_objectives.eval_fn_registry), 2)
+        self.assertEqual(len(evaluator.eval_fn_registry), 2)
 
     @reset_tune_target
     def test_autotune_not_eval_func(self):
         logger.info("test_autotune_api")
-        from neural_compressor.torch import RTNWeightQuantConfig, TuneConfig, autotune
+        from neural_compressor.torch import RTNWeightQuantConfig, TuningConfig, autotune
 
-        custom_tune_config = TuneConfig(quant_configs=[RTNWeightQuantConfig(weight_bits=[4, 6])], max_trials=2)
+        custom_tune_config = TuningConfig(quant_configs=[RTNWeightQuantConfig(weight_bits=[4, 6])], max_trials=2)
 
         # Use assertRaises to check that an AssertionError is raised
         with self.assertRaises(AssertionError) as context:

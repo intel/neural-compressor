@@ -16,7 +16,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 
-from neural_compressor.common.base_tune import BaseTuneConfig, FrameworkWrapper, Tuner, tune_objectives
+from neural_compressor.common.base_tune import FrameworkWrapper, Tuner, TuningConfig, evaluator
 from neural_compressor.common.logger import Logger
 from neural_compressor.torch.quantization.config import GPTQConfig, RTNWeightQuantConfig
 
@@ -42,27 +42,20 @@ class TorchWrapper(FrameworkWrapper):
         return q_model
 
 
-class TuneConfig(BaseTuneConfig):
-    def __init__(self, quant_configs=None, timeout=0, max_trials=100):
-        super().__init__(quant_configs, timeout, max_trials)
-
-
 def autotune(
     model: torch.nn.Module,
-    tune_config: TuneConfig,
+    tune_config: TuningConfig,
     eval_fns: Optional[Union[Dict, List[Dict]]] = None,
     run_fn=None,
     run_args=None,
 ):
-    tune_objectives.set_eval_fn_registry(eval_fns)
+    evaluator.set_eval_fn_registry(eval_fns)
     torch_wrapper = TorchWrapper(model, run_fn, run_args)
-    tuner = Tuner(
-        float_model=model, tune_config=tune_config, tune_objectives=tune_objectives, fwk_wrapper=torch_wrapper
-    )
+    tuner = Tuner(float_model=model, tune_config=tune_config, evaluator=evaluator, fwk_wrapper=torch_wrapper)
     best_qmodel = tuner.search()
     return best_qmodel
 
 
 def get_default_tune_config():
     # TODO use the registered default tune config in the next PR
-    return TuneConfig(quant_configs=[GPTQConfig(weight_bits=[4, 8]), RTNWeightQuantConfig(weight_bits=[4, 8])])
+    return TuningConfig(quant_configs=[GPTQConfig(weight_bits=[4, 8]), RTNWeightQuantConfig(weight_bits=[4, 8])])

@@ -37,7 +37,7 @@ class FrameworkWrapper:
         raise NotImplementedError
 
 
-class TuneObjectives:
+class Evaluator:
     EVAL_FN = "eval_fn"
     WEIGHT = "weight"
     FN_NAME = "name"
@@ -66,7 +66,7 @@ class TuneObjectives:
         # TODO update the result according to the weight and algo_name
         return overall_result + eval_result * eval_pair[self.WEIGHT]
 
-    def get_number_of_tune_objectives(self) -> int:
+    def get_number_of_eval_funtions(self) -> int:
         return len(self.eval_fn_registry)
 
     def _set_eval_fn_registry(self, user_eval_fns: List[Dict]) -> None:
@@ -91,10 +91,10 @@ class TuneObjectives:
         self._set_eval_fn_registry(eval_fns)
 
 
-tune_objectives = TuneObjectives()
+evaluator = Evaluator()
 
 
-class BaseTuneConfig:
+class TuningConfig:
     """Base Class for Tune Criterion.
 
     Args:
@@ -111,9 +111,7 @@ class BaseTuneConfig:
 
 
 class Trial:
-    def __init__(
-        self, float_model, quant_config: BaseConfig, fwk_wrapper: FrameworkWrapper, tune_objectives: TuneObjectives
-    ):
+    def __init__(self, float_model, quant_config: BaseConfig, fwk_wrapper: FrameworkWrapper, evaluator: Evaluator):
         # The unique id to refer to one trial, it's used by the tuner.
         self.trial_id = None
         self._trial_result = None
@@ -122,7 +120,7 @@ class Trial:
         self.quant_model = None
         self.quant_config = quant_config
         self.fwk_wrapper = fwk_wrapper
-        self.tune_objectives = tune_objectives
+        self.evaluator = evaluator
         self._post_init()
 
     def _post_init(self):
@@ -152,7 +150,7 @@ class Trial:
         The evaluation process is triggered by Lazy only when it is needed, and it is called only once.
         """
         if not self.trial_result:
-            eval_score = self.tune_objectives.evaluate(self.quant_model)
+            eval_score = self.evaluator.evaluate(self.quant_model)
             self.trial_result = eval_score
         return self.trial_result
 
@@ -168,19 +166,19 @@ class Trial:
 
 class Tuner:
     def __init__(
-        self, float_model, tune_config: BaseTuneConfig, tune_objectives: TuneObjectives, fwk_wrapper: FrameworkWrapper
+        self, float_model, tune_config: TuningConfig, evaluator: Evaluator, fwk_wrapper: FrameworkWrapper
     ) -> None:
         self.float_model = float_model
         self.tune_config = tune_config
-        self.tune_objectives = tune_objectives
+        self.evaluator = evaluator
         self.fwk_wrapper = fwk_wrapper
         self._post_init()
 
     def _post_init(self) -> None:
         # check the number of evaluation functions
-        num_tune_objectives = self.tune_objectives.get_number_of_tune_objectives()
-        assert num_tune_objectives > 0, "Please ensure that you register at least one evaluation metric for auto-tune."
-        logger.info(f"There are {num_tune_objectives} tune objectives.")
+        num_evaluator = self.evaluator.get_number_of_eval_funtions()
+        assert num_evaluator > 0, "Please ensure that you register at least one evaluation metric for auto-tune."
+        logger.info(f"There are {num_evaluator} tune objectives.")
 
     @staticmethod
     def parse_quant_config(quant_config: BaseConfig) -> List[BaseConfig]:
@@ -211,7 +209,7 @@ class Tuner:
     def search(self) -> Any:
         for config in self.parse_quant_configs():
             logger.info(f"Config {config}")
-            trial = Trial(self.float_model, config, fwk_wrapper=self.fwk_wrapper, tune_objectives=self.tune_objectives)
+            trial = Trial(self.float_model, config, fwk_wrapper=self.fwk_wrapper, evaluator=self.evaluator)
             trial.quantize()
             trial.get_eval_result()
             self.update_tune_history(trial)
