@@ -315,7 +315,7 @@ if args.quantize:
             # save the fake quantized model
             os.makedirs(args.output_dir, exist_ok=True)
             torch.save(q_model_gptq_debug, os.path.join(args.output_dir, "gptq_best_model.pt"))
-            exit(0)
+            # exit(0)
 
     else:
         if re.search("gpt", user_model.config.model_type):
@@ -367,16 +367,17 @@ if args.int8 or args.int8_bf16_mixed:
     if args.ipex:
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
     else:
-        user_model, _ = get_user_model()
-        kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
-        user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model, **kwargs)
+        if args.gptq_debug:
+            user_model = torch.load(os.path.join(args.output_dir, "gptq_best_model.pt"))
+        else:
+            user_model, _ = get_user_model()
+            kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
+            user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model, **kwargs)
 else:
     user_model, _ = get_user_model()
 
 if args.accuracy:
     user_model.eval()
-    if args.gptq_debug:
-        user_model = torch.load(os.path.join(args.output_dir, "gptq_best_model.pt"))
     if args.code_generation:
         from intel_extension_for_transformers.llm.evaluation.lm_code_eval import evaluate
         from transformers import AutoTokenizer
