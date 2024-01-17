@@ -315,7 +315,7 @@ if args.quantize:
             # save the fake quantized model
             os.makedirs(args.output_dir, exist_ok=True)
             torch.save(q_model_gptq_debug, os.path.join(args.output_dir, "gptq_best_model.pt"))
-            # exit(0)
+            exit(0)
 
     else:
         if re.search("gpt", user_model.config.model_type):
