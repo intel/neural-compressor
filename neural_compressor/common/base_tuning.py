@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import copy
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig
@@ -76,6 +77,12 @@ class Evaluator:
     def set_eval_fn_registry(self, eval_fns: Optional[Union[Dict, List[Dict]]] = None) -> None:
         if eval_fns is None:
             return
+        elif callable(eval_fns):
+            # single eval_fn
+            eval_fn_pair = copy.deepcopy(self.EVAL_FN_TEMPLATE)
+            eval_fn_pair[self.EVAL_FN] = eval_fns
+            eval_fn_pair[self.FN_NAME] = eval_fns.__name__
+            eval_fns = [eval_fn_pair]
         elif isinstance(eval_fns, Dict):
             eval_fns = [eval_fns]
         elif isinstance(eval_fns, List):
