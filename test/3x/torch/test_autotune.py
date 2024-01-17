@@ -10,10 +10,10 @@ from functools import wraps
 import torch
 
 
-def reset_tune_target(test_func):
+def reset_tuning_target(test_func):
     @wraps(test_func)
     def wrapper(*args, **kwargs):
-        # Reset tune targets before running the test
+        # Reset tuning targets before running the test
         from neural_compressor.common.base_tune import evaluator
 
         evaluator.eval_fn_registry = []
@@ -58,7 +58,7 @@ class TestAutoTune(unittest.TestCase):
         # print the test name
         logger.info(f"Running TestAutoTune test: {self.id()}")
 
-    @reset_tune_target
+    @reset_tuning_target
     def test_autotune_api(self):
         logger.info("test_autotune_api")
         from neural_compressor.common.base_tune import evaluator
@@ -74,7 +74,7 @@ class TestAutoTune(unittest.TestCase):
         self.assertIsNone(best_model)
         self.assertEqual(len(evaluator.eval_fn_registry), 1)
 
-    @reset_tune_target
+    @reset_tuning_target
     def test_autotune_api_2(self):
         logger.info("test_autotune_api")
         from neural_compressor.common.base_tune import evaluator
@@ -99,7 +99,7 @@ class TestAutoTune(unittest.TestCase):
         self.assertIsNone(best_model)
         self.assertEqual(len(evaluator.eval_fn_registry), 2)
 
-    @reset_tune_target
+    @reset_tuning_target
     def test_autotune_not_eval_func(self):
         logger.info("test_autotune_api")
         from neural_compressor.torch import RTNWeightQuantConfig, TuningConfig, autotune

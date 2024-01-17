@@ -95,12 +95,12 @@ evaluator = Evaluator()
 
 
 class TuningConfig:
-    """Base Class for Tune Criterion.
+    """Base Class for Tuning Criterion.
 
     Args:
         quant_configs: quantization configs. Default value is empty.
-        timeout: Tune timeout (seconds). Default value is 0 which means early stop.
-        max_trials: Max tune times. Default value is 100. Combine with timeout field to decide when to exit.
+        timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
+        max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
     """
 
     def __init__(self, quant_configs=None, timeout=0, max_trials=100) -> None:
@@ -178,7 +178,7 @@ class Tuner:
         # check the number of evaluation functions
         num_evaluator = self.evaluator.get_number_of_eval_funtions()
         assert num_evaluator > 0, "Please ensure that you register at least one evaluation metric for auto-tune."
-        logger.info(f"There are {num_evaluator} tune objectives.")
+        logger.info(f"There are {num_evaluator} tuning objectives.")
 
     @staticmethod
     def parse_quant_config(quant_config: BaseConfig) -> List[BaseConfig]:

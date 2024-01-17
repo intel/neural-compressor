@@ -91,7 +91,7 @@ def init_tuning(tuning_config: TuningConfig) -> Tuple[ConfigLoader, TuningLogger
 
 
 def get_default_tune_config():
-    # TODO use the registered default tune config in the next PR
+    # TODO use the registered default tuning config in the next PR
     return TuningConfig(quant_configs=[GPTQConfig(weight_bits=[4, 8]), RTNWeightQuantConfig(weight_bits=[4, 8])])
 
 
