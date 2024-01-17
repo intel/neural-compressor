@@ -44,6 +44,7 @@ from .query import QueryBackendCapability
 tf = LazyImport("tensorflow")
 keras = LazyImport("keras")
 
+
 def _add_supported_quantized_objects(custom_objects):
     """Map all the quantized objects."""
     from neural_compressor.adaptor.keras_utils.conv2d import QConv2D
