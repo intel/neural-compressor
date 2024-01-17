@@ -20,7 +20,7 @@ from collections import namedtuple
 
 import numpy as np
 
-from ..utils import tf, torch
+from ..utils import safe_get_data, safe_get_grad, safe_get_shape, tf, torch
 
 PATTERNS = {}
 
@@ -75,12 +75,18 @@ class ProgressivePatternUtils(object):
         Returns:
             Reshaped data.
         """
-        if len(orig_shape) == 4:
+        if len(orig_shape) == 2:
+            return data
+        elif len(orig_shape) == 4:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[3], orig_shape[1])
             data = data.permute(0, 3, 1, 2)
-        if len(orig_shape) == 3:
+        elif len(orig_shape) == 3:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[1])
             data = data.permute(0, 2, 1)
+        elif len(orig_shape) == 1:
+            data = data.reshape(orig_shape)
+        else:
+            raise NotImplementedError(f"not support {data.shape}")
         return data
 
     # some util functions which can be used.
@@ -601,12 +607,16 @@ class PytorchBasePattern(BasePattern):
         """
         pattern_lock_masks = {}
         for key in modules.keys():
-            weight = modules[key].weight
-            shape = weight.shape
+            # weight = modules[key].weight
+            # shape = weight.shape
+            param = modules[key].weight
+            data = safe_get_data(param)
+            shape = safe_get_shape(param)
             mask = torch.ones(shape)
-            mask[weight == 0] = 0.0
+            # mask[weight == 0] = 0.0
+            mask[data == 0] = 0.0
             mask = mask.bool()
-            pattern_lock_masks[key] = mask.to(weight.device)
+            pattern_lock_masks[key] = mask.to(param.device)
 
         return pattern_lock_masks
 
