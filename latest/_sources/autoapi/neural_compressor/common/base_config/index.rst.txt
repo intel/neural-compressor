@@ -28,19 +28,21 @@ Functions
 
 
 
-.. py:function:: register_config(framework_name='None', algo_name=None)
+.. py:function:: register_config(framework_name='None', algo_name=None, priority=0)
 
    Register config decorator.
 
    The register the configuration classes for different algorithms within specific frameworks.
 
    Usage example:
-       @register_config(framework_name="PyTorch", algo_name="ExampleAlgorithm")
+       @register_config(framework_name=FRAMEWORK_NAME, algo_name=ExampleAlgorithm, priority=100)
        class ExampleAlgorithmConfig:
            # Configuration details for the ExampleAlgorithm
 
    :param framework_name: the framework name. Defaults to "None".
    :param algo_name: the algorithm name. Defaults to None.
+   :param priority: the priority of the configuration. A larger number indicates a higher priority,
+                    which will be tried first at the auto-tune stage. Defaults to 0.
 
 
 .. py:class:: BaseConfig(white_list: Optional[List[neural_compressor.common.utility.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
