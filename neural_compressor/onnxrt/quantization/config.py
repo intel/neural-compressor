@@ -25,11 +25,7 @@ import onnx
 
 from neural_compressor.common.base_config import BaseConfig, register_config
 from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import (
-    DEFAULT_WHITE_LIST,
-    OP_NAME_OR_MODULE_TYPE,
-    RTN_WEIGHT_ONLY_QUANT,
-)
+from neural_compressor.common.utility import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, RTN_WEIGHT_ONLY_QUANT
 
 logger = Logger().get_logger()
 

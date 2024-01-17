@@ -13,10 +13,10 @@
 # limitations under the License.
 
 from pathlib import Path
-from packaging.version import Version
 from typing import Callable, Dict, List, Tuple, Union
 
 import onnx
+from packaging.version import Version
 
 from neural_compressor.common.logger import Logger
 
@@ -84,7 +84,7 @@ def register_algo(name):
 
     Usage example:
         @register_algo(name=example_algo)
-        def example_algo(model: Union[onnx.ModelProto, Path, str], 
+        def example_algo(model: Union[onnx.ModelProto, Path, str],
                          quant_config: RTNWeightQuantConfig) -> onnx.ModelProto:
             ...
 
@@ -102,7 +102,9 @@ def register_algo(name):
     return decorator
 
 
-def get_model_info(model: Union[onnx.ModelProto, Path, str], white_op_type_list: List[Callable]) -> List[Tuple[str, Callable]]:
+def get_model_info(
+    model: Union[onnx.ModelProto, Path, str], white_op_type_list: List[Callable]
+) -> List[Tuple[str, Callable]]:
     if not isinstance(model, onnx.ModelProto):
         model = onnx.load(model)
     filter_result = []

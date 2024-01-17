@@ -1,16 +1,16 @@
-import os
 import copy
-import onnx
-import numpy as np
-import unittest
+import os
 import shutil
-from optimum.exporters.onnx import main_export
+import unittest
 
+import numpy as np
 import onnx
+from optimum.exporters.onnx import main_export
 
 from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
+
 
 def build_simple_onnx_model():
     A = onnx.helper.make_tensor_value_info("A", onnx.TensorProto.FLOAT, [1, 5, 5])
@@ -60,28 +60,27 @@ class TestQuantizationConfig(unittest.TestCase):
     def _check_model_is_quantized(self, model):
         print([node.op_type for node in model.graph.node])
         node_optypes = [node.op_type for node in model.graph.node]
-        return "MatMulNBits" in node_optypes or \
-               "MatMulFpQ4" in node_optypes
-    
+        return "MatMulNBits" in node_optypes or "MatMulFpQ4" in node_optypes
+
     def _check_node_is_quantized(self, model, node_name):
         print(set([node.op_type for node in model.graph.node]))
         for node in model.graph.node:
             if node.name == node_name and node.op_type in ["MatMulNBits", "MatMulFpQ4"]:
                 return True
         return False
-    
+
     def _count_woq_matmul(self, q_model, bits=4, group_size=32):
         op_names = [
             i.name
             for i in q_model.graph.node
             if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(bits, group_size))
         ]
-        print('_count_woq_matmul',len(op_names))
+        print("_count_woq_matmul", len(op_names))
         return len(op_names)
 
     def test_quantize_rtn_from_dict_default(self):
         logger.info("test_quantize_rtn_from_dict_default")
-        from neural_compressor.onnxrt import get_default_rtn_config, _quantize
+        from neural_compressor.onnxrt import _quantize, get_default_rtn_config
 
         fp32_model = self.simple_onnx_model
         qmodel = _quantize(fp32_model, quant_config=get_default_rtn_config())
@@ -292,6 +291,7 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertTrue(configs_mapping[("/h.3/mlp/fc_out/MatMul", "MatMul")].weight_bits == 3)
         self.assertTrue(configs_mapping[("/h.2/mlp/fc_out/MatMul", "MatMul")].weight_bits == 3)
         self.assertTrue(configs_mapping[("/h.1/mlp/fc_out/MatMul", "MatMul")].weight_bits == 3)
+
 
 class TestQuantConfigForAutotune(unittest.TestCase):
     def test_expand_config(self):

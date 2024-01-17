@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, Tuple
 from pathlib import Path
+from typing import Dict, Tuple
 
 import onnx
 
@@ -27,6 +27,7 @@ logger = Logger().get_logger()
 
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
     return any(config.name == algo_name for config in configs_mapping.values() if hasattr(config, "name"))
+
 
 # only for internal usage now
 def _quantize(
