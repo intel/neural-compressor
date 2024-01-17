@@ -594,7 +594,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         logger.info(f"Adaptor has {len(adaptor_recipes)} recipes.")
         logger.debug(adaptor_recipes)
         usr_recipes_cfg = self.config.recipes if self.config.recipes else {}
-        # if smooth quant  is `True`, early stop
+        # if smooth quant is `True`, early stop
         self.early_stop_sq_tuning_process = usr_recipes_cfg.get("smooth_quant", False)
         for recipe_name, recipe_val in usr_recipes_cfg.items():
             # for not tuning recipes, use the value specified by user.
