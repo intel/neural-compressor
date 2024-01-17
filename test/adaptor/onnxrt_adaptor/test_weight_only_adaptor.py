@@ -64,7 +64,6 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         shutil.rmtree("nc_workspace", ignore_errors=True)
         shutil.rmtree("gptj", ignore_errors=True)
         shutil.rmtree("gptj_fp16", ignore_errors=True)
-        shutil.rmtree("tiny-llama", ignore_errors=True)
 
     @unittest.skipIf("CUDAExecutionProvider" not in ort.get_available_providers(), "Skip cuda woq test")
     def test_RTN_quant_with_woq_op(self):
