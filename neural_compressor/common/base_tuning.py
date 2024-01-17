@@ -14,8 +14,9 @@
 
 
 import copy
+import inspect
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig
 from neural_compressor.common.logger import Logger
@@ -127,6 +128,10 @@ class Sampler:
 
 
 class ConfigLoader:
+    def __init__(self, quant_configs, sampler: Sampler) -> None:
+        self.quant_configs = quant_configs
+        self.sampler = sampler
+
     @staticmethod
     def parse_quant_config(quant_config: BaseConfig) -> List[BaseConfig]:
         if isinstance(quant_config, ComposableConfig):
@@ -138,16 +143,13 @@ class ConfigLoader:
             return quant_config.expand()
 
     def parse_quant_configs(self) -> List[BaseConfig]:
+        # TODO (Yi) separate this functionality into `Sampler` in the next PR
         quant_config_list = []
         for quant_config in self.quant_configs:
             quant_config_list.extend(ConfigLoader.parse_quant_config(quant_config))
         return quant_config_list
 
-    def __init__(self, quant_configs, sampler: Sampler):
-        self.quant_configs = quant_configs
-        self.sampler = sampler
-
-    def __iter__(self):
+    def __iter__(self) -> Generator[BaseConfig, Any, None]:
         for config in self.parse_quant_configs():
             yield config
 
@@ -159,36 +161,48 @@ class TuningLogger:
     """
 
     @classmethod
+    def _log_call_info(cls, message: str) -> str:
+        frame = inspect.currentframe().f_back.f_back
+        # Extract file name and line number
+        file_path = frame.f_code.co_filename
+        file_name = file_path.split("/")[-1]
+        line_number = frame.f_lineno
+        # Log the call position along with the message
+        logger.info(f"[{file_name}:{line_number}(Call position)] {message}")
+
+    @classmethod
     def tuning_start(cls) -> None:
-        logger.info("Tuning started.")
+        cls._log_call_info("Tuning started.")
 
     @classmethod
     def trial_start(cls, trial_index: int = None) -> None:
-        logger.info(" %d-trail started.", trial_index)
+        cls._log_call_info(
+            f" {trial_index}-trail started.",
+        )
 
     @classmethod
     def quantization_start(cls) -> None:
-        logger.info("Quantization started.")
+        cls._log_call_info("Quantization started.")
 
     @classmethod
     def quantization_end(cls) -> None:
-        logger.info("Quantization end.")
+        cls._log_call_info("Quantization end.")
 
     @classmethod
     def evaluation_start(cls) -> None:
-        logger.info("Evaluation started.")
+        cls._log_call_info("Evaluation started.")
 
     @classmethod
     def evaluation_end(cls) -> None:
-        logger.info("Evaluation end.")
+        cls._log_call_info("Evaluation end.")
 
     @classmethod
     def trial_end(cls, trial_index: int = None) -> None:
-        logger.info(" %d-trail end.", trial_index)
+        cls._log_call_info(f" {trial_index}-trail end.")
 
     @classmethod
     def tuning_end(cls) -> None:
-        logger.info("Tuning completed.")
+        cls._log_call_info("Tuning completed.")
 
 
 class TuningConfig:
@@ -245,6 +259,7 @@ class TuningMonitor:
         return sorted_trials_records[0].quant_config
 
     def need_stop(self) -> bool:
+        # TODO Support more stop criteria in the next PR, such as `reach accuracy goal`, `timeout`, and so on.
         return self.trial_cnt >= self.tuning_config.max_trials
 
 

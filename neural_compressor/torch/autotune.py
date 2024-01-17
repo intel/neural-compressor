@@ -56,6 +56,6 @@ def autotune(
             best_quant_config: BaseConfig = tuning_monitor.get_best_quant_config()
             quantize(model, quant_config=best_quant_config, run_fn=run_fn, run_args=run_args, inplace=True)
             best_quant_model = model  # quantize model inplace
-        tuning_logger.trial_end()
+        tuning_logger.trial_end(trial_index)
     tuning_logger.tuning_end()
     return best_quant_model
