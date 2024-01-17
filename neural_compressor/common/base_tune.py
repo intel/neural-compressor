@@ -12,29 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Union
+
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig
 from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
 
-
-class FrameworkWrapper:
-    """Abstract base class for wrap framework's APIs.
-
-    FrameworkWrapper provides a uniform interface for encapsulating different framework's APIs.
-    This class is intended to be used by a `tuner` to obtain quantized models.
-    """
-
-    def __init__(self, model) -> None:
-        self.model = model
-
-    @abstractmethod
-    def apply(self) -> Any:
-        """The entry to apply algorithms on a given model."""
-        raise NotImplementedError
+__all__ = [
+    "Evaluator",
+    "TuningConfig",
+    "Sampler",
+    "ConfigLoader",
+    "TuningMonitor",
+    "TuningLogger",
+    "init_tuning",
+]
 
 
 class Evaluator:
@@ -90,6 +84,12 @@ class Evaluator:
             raise NotImplementedError(f"The eval_fns should be a dict or a list of dict, but got {type(eval_fns)}.")
         self._set_eval_fn_registry(eval_fns)
 
+    def self_check(self) -> None:
+        # check the number of evaluation functions
+        num_evaluator = self.get_number_of_eval_funtions()
+        assert num_evaluator > 0, "Please ensure that you register at least one evaluation metric for auto-tune."
+        logger.info(f"There are {num_evaluator} tuning objectives.")
+
 
 evaluator = Evaluator()
 
@@ -103,83 +103,19 @@ class TuningConfig:
         max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
     """
 
-    def __init__(self, quant_configs=None, timeout=0, max_trials=100) -> None:
+    def __init__(self, quant_configs=None, timeout=0, max_trials=100, sampler: "Sampler" = None) -> None:
         """Init a TuneCriterion object."""
         self.quant_configs = quant_configs
         self.timeout = timeout
         self.max_trials = max_trials
+        self.sampler = sampler
 
 
-class Trial:
-    def __init__(self, float_model, quant_config: BaseConfig, fwk_wrapper: FrameworkWrapper, evaluator: Evaluator):
-        # The unique id to refer to one trial, it's used by the tuner.
-        self.trial_id = None
-        self._trial_result = None
-        self.set_trail_result_cnt = 0
-        self.float_model = float_model
-        self.quant_model = None
-        self.quant_config = quant_config
-        self.fwk_wrapper = fwk_wrapper
-        self.evaluator = evaluator
-        self._post_init()
-
-    def _post_init(self):
-        """Post initialize one trial."""
-        # generate the trial_id
-        pass
-
-    @property
-    def trial_result(self):
-        return self._trial_result
-
-    @trial_result.setter
-    def trial_result(self, result):
-        assert self.set_trail_result_cnt < 1, "The trial result already be set."
-        self._trial_result = result
-        self.set_trail_result_cnt += 1
-
-    def quantize(self):
-        """Quantize the model with given quant_config."""
-        quant_model = self.fwk_wrapper.apply(self.quant_config)
-        self.quant_model = quant_model
-        return quant_model
-
-    def get_eval_result(self) -> float:
-        """Retune the evaluation result.
-
-        The evaluation process is triggered by Lazy only when it is needed, and it is called only once.
-        """
-        if not self.trial_result:
-            eval_score = self.evaluator.evaluate(self.quant_model)
-            self.trial_result = eval_score
-        return self.trial_result
-
-    def recover_quant_model(self):
-        """The quantized model should be destroyed after evaluation to save the memory
-        and recovery it before end the tuning process."""
-        pass
-
-    def destroy_quant_model(self) -> None:
-        """"""
-        pass
+class Sampler:
+    pass
 
 
-class Tuner:
-    def __init__(
-        self, float_model, tune_config: TuningConfig, evaluator: Evaluator, fwk_wrapper: FrameworkWrapper
-    ) -> None:
-        self.float_model = float_model
-        self.tune_config = tune_config
-        self.evaluator = evaluator
-        self.fwk_wrapper = fwk_wrapper
-        self._post_init()
-
-    def _post_init(self) -> None:
-        # check the number of evaluation functions
-        num_evaluator = self.evaluator.get_number_of_eval_funtions()
-        assert num_evaluator > 0, "Please ensure that you register at least one evaluation metric for auto-tune."
-        logger.info(f"There are {num_evaluator} tuning objectives.")
-
+class ConfigLoader:
     @staticmethod
     def parse_quant_config(quant_config: BaseConfig) -> List[BaseConfig]:
         if isinstance(quant_config, ComposableConfig):
@@ -192,26 +128,75 @@ class Tuner:
 
     def parse_quant_configs(self) -> List[BaseConfig]:
         quant_config_list = []
-        for quant_config in self.tune_config.quant_configs:
-            quant_config_list.extend(Tuner.parse_quant_config(quant_config))
+        for quant_config in self.quant_configs:
+            quant_config_list.extend(ConfigLoader.parse_quant_config(quant_config))
         return quant_config_list
 
-    def get_best_model(self) -> Any:
-        # TODO(Yi) enable it at the next PR
-        pass
+    def __init__(self, quant_configs, sampler: Sampler):
+        self.quant_configs = quant_configs
+        self.sampler = sampler
 
-    def needs_stop(self):
-        return False
-
-    def update_tune_history(self, trial: Trial):
-        pass
-
-    def search(self) -> Any:
+    def __iter__(self):
         for config in self.parse_quant_configs():
-            logger.info(f"Config {config}")
-            trial = Trial(self.float_model, config, fwk_wrapper=self.fwk_wrapper, evaluator=self.evaluator)
-            trial.quantize()
-            trial.get_eval_result()
-            self.update_tune_history(trial)
-            if self.needs_stop():
-                return self.get_best_model()
+            yield config
+
+
+class TuningMonitor:
+    def __init__(self) -> None:
+        # TODO refine the `tuning_history` with a more appropriate data structure
+        self.tuning_history: list = []
+
+    def add_trial_result(self, trial_index: int, eval_result: Union[int, float], quant_config: BaseConfig) -> None:
+        self.tuning_history.append([trial_index, eval_result, quant_config])
+
+    def get_best_quant_config(self) -> BaseConfig:
+        return self.tuning_history[0][2]
+
+    def need_stop(self) -> bool:
+        return True
+
+
+class TuningLogger:
+    """A unified logger for the tuning process.
+
+    It assists validation teams in retrieving logs.
+    """
+
+    @classmethod
+    def tuning_start(cls) -> None:
+        logger.info("Tuning started.")
+
+    @classmethod
+    def trial_start(cls, trial_index: int = None) -> None:
+        logger.info(f" {trial_index}-trail started.")
+
+    @classmethod
+    def quantization_start(cls) -> None:
+        logger.info("Quantization started.")
+
+    @classmethod
+    def quantization_end(cls) -> None:
+        logger.info("Quantization end.")
+
+    @classmethod
+    def evaluation_start(cls) -> None:
+        logger.info("Evaluation started.")
+
+    @classmethod
+    def evaluation_end(cls) -> None:
+        logger.info("Evaluation end.")
+
+    @classmethod
+    def trial_end(cls, trial_index: int = None) -> None:
+        logger.info(f" {trial_index}-trail end.")
+
+    @classmethod
+    def tuning_end(cls) -> None:
+        logger.info("Tuning completed.")
+
+
+def init_tuning(tuning_config: TuningConfig) -> Tuple[ConfigLoader, TuningLogger, TuningMonitor]:
+    config_loader = ConfigLoader(quant_configs=tuning_config.quant_configs, sampler=tuning_config.sampler)
+    tuning_logger = TuningLogger()
+    tuning_monitor = TuningMonitor()
+    return config_loader, tuning_logger, tuning_monitor

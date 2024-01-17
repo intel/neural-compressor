@@ -71,7 +71,7 @@ class TestAutoTune(unittest.TestCase):
         best_model = autotune(
             model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
         )
-        self.assertIsNone(best_model)
+        self.assertIsNotNone(best_model)
         self.assertEqual(len(evaluator.eval_fn_registry), 1)
 
     @reset_tuning_target
@@ -96,7 +96,7 @@ class TestAutoTune(unittest.TestCase):
 
         custom_tune_config = TuningConfig(quant_configs=[RTNWeightQuantConfig(weight_bits=[4, 6])], max_trials=2)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_fns)
-        self.assertIsNone(best_model)
+        self.assertIsNotNone(best_model)
         self.assertEqual(len(evaluator.eval_fn_registry), 2)
 
     @reset_tuning_target
