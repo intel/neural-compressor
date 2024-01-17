@@ -25,6 +25,12 @@ from neural_compressor.torch.quantization.config import GPTQConfig, RTNWeightQua
 logger = Logger().get_logger()
 
 
+__all__ = [
+    "get_default_tune_config",
+    "autotune",
+]
+
+
 def get_default_tune_config() -> TuningConfig:
     # TODO use the registered default tuning config in the next PR
     return TuningConfig(quant_configs=[GPTQConfig(weight_bits=[4, 8]), RTNWeightQuantConfig(weight_bits=[4, 8])])
