@@ -293,9 +293,9 @@ def quant_weight(
                 full_range=full_range,
             )
             weight.copy_(torch.cat([weight1, weight2], dim=1))
-            scale.copy_(torch.cat([scale1, scale2], dim=1))
+            scale = torch.cat([scale1, scale2], dim=1)
             if zp2 is not None:
-                zp.copy_(torch.cat([zp1, zp2], dim=1))
+                zp = torch.cat([zp1, zp2], dim=1)
             else:
                 zp = None
             return weight, scale, zp
