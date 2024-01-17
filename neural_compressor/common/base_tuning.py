@@ -144,7 +144,7 @@ class TuningLogger:
 
     @classmethod
     def trial_start(cls, trial_index: int = None) -> None:
-        logger.info(f" {trial_index}-trail started.")
+        logger.info(" %d-trail started.", trial_index)
 
     @classmethod
     def quantization_start(cls) -> None:
@@ -164,7 +164,7 @@ class TuningLogger:
 
     @classmethod
     def trial_end(cls, trial_index: int = None) -> None:
-        logger.info(f" {trial_index}-trail end.")
+        logger.info(" %d-trail end.", trial_index)
 
     @classmethod
     def tuning_end(cls) -> None:
