@@ -292,9 +292,10 @@ def quant_weight(
                 return_int=True,
                 full_range=full_range,
             )
-            scale = torch.cat([scale1, scale2], dim=1)
+            weight.copy_(torch.cat([weight1, weight2], dim=1))
+            scale.copy_(torch.cat([scale1, scale2], dim=1))
             if zp2 is not None:
-                zp = torch.cat([zp1, zp2], dim=1)
+                zp.copy_(torch.cat([zp1, zp2], dim=1))
             else:
                 zp = None
             return weight, scale, zp
@@ -302,6 +303,7 @@ def quant_weight(
             weight2 = qdq_weight_actor(
                 weight2, num_bits, scheme=scheme, data_type=data_type, quantile=quantile, full_range=full_range
             )
+            weight.copy_(torch.cat([weight1, weight2], dim=1))
             return weight
 
 
