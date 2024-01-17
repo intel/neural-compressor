@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.onnxrt.quantization.quantize import quantize
+from neural_compressor.onnxrt.quantization.quantize import _quantize
 from neural_compressor.onnxrt.quantization.config import (
     RTNWeightQuantConfig,
     get_default_rtn_config,

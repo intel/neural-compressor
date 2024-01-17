@@ -133,13 +133,13 @@ class BaseConfig(ABC):
         self._local_config: Dict[str, Optional[BaseConfig]] = {}
         self._white_list = white_list
 
-    def _post_init(self):
+    def _post_init(self, specific_params_dict: Optional[list] = None):
         if self.white_list == DEFAULT_WHITE_LIST:
-            global_config = self.get_params_dict()
+            global_config = self.get_params_dict(specific_params_dict)
             self._global_config = self.__class__(**global_config, white_list=None)
         elif isinstance(self.white_list, list) and len(self.white_list) > 0:
             for op_name_or_type in self.white_list:
-                global_config = self.get_params_dict()
+                global_config = self.get_params_dict(specific_params_dict)
                 tmp_config = self.__class__(**global_config, white_list=None)
                 self.set_local(op_name_or_type, tmp_config)
         elif self.white_list == EMPTY_WHITE_LIST:
@@ -193,9 +193,12 @@ class BaseConfig(ABC):
             result = global_config
         return result
 
-    def get_params_dict(self):
+    def get_params_dict(self, specific_params_dict: Optional[list] = None):
         result = dict()
-        for param in self.params_list:
+        # if specific_params_dict is given, then use it to generate params dict
+        # else use default self.params_list
+        params_list = self.params_list if specific_params_dict is None else specific_params_dict
+        for param in params_list:
             result[param] = getattr(self, param)
         return result
 

@@ -16,7 +16,7 @@ from neural_compressor.onnxrt.utils.utility import register_algo
 from neural_compressor.onnxrt.algorithms import rtn_quantize_entry
 
 from neural_compressor.onnxrt.quantization import (
-    quantize,
+    _quantize,
     RTNWeightQuantConfig,
     get_default_rtn_config,
 )

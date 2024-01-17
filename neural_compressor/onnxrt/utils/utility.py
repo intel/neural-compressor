@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Dict, List, Tuple
+from pathlib import Path
+from packaging.version import Version
+from typing import Callable, Dict, List, Tuple, Union
 
 import onnx
-from packaging.version import Version
 
 from neural_compressor.common.logger import Logger
 
@@ -27,7 +28,7 @@ ONNXRT1161_VERSION = Version("1.16.1")
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
 algos_mapping: Dict[str, Callable] = {}
 
-# All constants for torch
+# All constants for onnxrt
 WHITE_MODULE_LIST = ["MatMul", "Conv"]
 
 MAXIMUM_PROTOBUF = 2147483648
@@ -83,7 +84,8 @@ def register_algo(name):
 
     Usage example:
         @register_algo(name=example_algo)
-        def example_algo(model: onnx.ModelProto, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
+        def example_algo(model: Union[onnx.ModelProto, Path, str], 
+                         quant_config: RTNWeightQuantConfig) -> onnx.ModelProto:
             ...
 
     Args:
@@ -100,7 +102,9 @@ def register_algo(name):
     return decorator
 
 
-def get_model_info(model: onnx.ModelProto, white_op_type_list: List[Callable]) -> List[Tuple[str, Callable]]:
+def get_model_info(model: Union[onnx.ModelProto, Path, str], white_op_type_list: List[Callable]) -> List[Tuple[str, Callable]]:
+    if not isinstance(model, onnx.ModelProto):
+        model = onnx.load(model)
     filter_result = []
     filter_result_set = set()
     for node in model.graph.node:

@@ -1,14 +1,16 @@
+import os
 import copy
-import unittest
-
-import numpy as np
 import onnx
+import numpy as np
+import unittest
+import shutil
 from optimum.exporters.onnx import main_export
+
+import onnx
 
 from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
-
 
 def build_simple_onnx_model():
     A = onnx.helper.make_tensor_value_info("A", onnx.TensorProto.FLOAT, [1, 5, 5])
@@ -40,11 +42,16 @@ class TestQuantizationConfig(unittest.TestCase):
             "hf-internal-testing/tiny-random-gptj",
             output="gptj",
         )
-        self.gptj = onnx.load("gptj/model.onnx")
+        self.gptj = "gptj/model.onnx"
+
+        simple_onnx_model = build_simple_onnx_model()
+        onnx.save(simple_onnx_model, "simple_onnx_model.onnx")
+        self.simple_onnx_model = "simple_onnx_model.onnx"
 
     @classmethod
     def tearDownClass(self):
-        pass
+        shutil.rmtree("gptj", ignore_errors=True)
+        os.remove("simple_onnx_model.onnx")
 
     def setUp(self):
         # print the test name
@@ -53,35 +60,36 @@ class TestQuantizationConfig(unittest.TestCase):
     def _check_model_is_quantized(self, model):
         print([node.op_type for node in model.graph.node])
         node_optypes = [node.op_type for node in model.graph.node]
-        return "MatMulNBits" in node_optypes or "MatMulFpQ4" in node_optypes
-
+        return "MatMulNBits" in node_optypes or \
+               "MatMulFpQ4" in node_optypes
+    
     def _check_node_is_quantized(self, model, node_name):
         print(set([node.op_type for node in model.graph.node]))
         for node in model.graph.node:
             if node.name == node_name and node.op_type in ["MatMulNBits", "MatMulFpQ4"]:
                 return True
         return False
-
+    
     def _count_woq_matmul(self, q_model, bits=4, group_size=32):
         op_names = [
             i.name
             for i in q_model.graph.node
             if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(bits, group_size))
         ]
-        print("_count_woq_matmul", len(op_names))
+        print('_count_woq_matmul',len(op_names))
         return len(op_names)
 
     def test_quantize_rtn_from_dict_default(self):
         logger.info("test_quantize_rtn_from_dict_default")
-        from neural_compressor.onnxrt import get_default_rtn_config, quantize
+        from neural_compressor.onnxrt import get_default_rtn_config, _quantize
 
-        fp32_model = build_simple_onnx_model()
-        qmodel = quantize(fp32_model, quant_config=get_default_rtn_config())
+        fp32_model = self.simple_onnx_model
+        qmodel = _quantize(fp32_model, quant_config=get_default_rtn_config())
         self.assertIsNotNone(qmodel)
         self.assertTrue(self._check_model_is_quantized(qmodel))
 
     def test_quantize_rtn_from_dict_beginner(self):
-        from neural_compressor.onnxrt import quantize
+        from neural_compressor.onnxrt import _quantize
 
         quant_config = {
             "rtn_weight_only_quant": {
@@ -89,25 +97,25 @@ class TestQuantizationConfig(unittest.TestCase):
                 "weight_group_size": 32,
             },
         }
-        fp32_model = build_simple_onnx_model()
-        qmodel = quantize(fp32_model, quant_config)
+        fp32_model = self.simple_onnx_model
+        qmodel = _quantize(fp32_model, quant_config)
         self.assertIsNotNone(qmodel)
         self.assertIsNotNone(qmodel)
         self.assertTrue(self._check_model_is_quantized(qmodel))
 
     def test_quantize_rtn_from_class_beginner(self):
-        from neural_compressor.onnxrt import RTNWeightQuantConfig, quantize
+        from neural_compressor.onnxrt import RTNWeightQuantConfig, _quantize
 
         quant_config = RTNWeightQuantConfig(weight_bits=4, weight_group_size=32)
-        fp32_model = build_simple_onnx_model()
-        qmodel = quantize(fp32_model, quant_config)
+        fp32_model = self.simple_onnx_model
+        qmodel = _quantize(fp32_model, quant_config)
         self.assertIsNotNone(qmodel)
 
     def test_quantize_rtn_fallback_from_class_beginner(self):
-        from neural_compressor.onnxrt import RTNWeightQuantConfig, quantize
+        from neural_compressor.onnxrt import RTNWeightQuantConfig, _quantize
 
         fp32_config = RTNWeightQuantConfig(weight_dtype="fp32")
-        fp32_model = copy.deepcopy(self.gptj)
+        fp32_model = self.gptj
         quant_config = RTNWeightQuantConfig(
             weight_bits=4,
             weight_dtype="int",
@@ -115,15 +123,15 @@ class TestQuantizationConfig(unittest.TestCase):
             weight_group_size=32,
         )
         quant_config.set_local("/h.4/mlp/fc_out/MatMul", fp32_config)
-        qmodel = quantize(fp32_model, quant_config)
+        qmodel = _quantize(fp32_model, quant_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 29)
         self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
     def test_quantize_rtn_from_dict_advance(self):
-        from neural_compressor.onnxrt import quantize
+        from neural_compressor.onnxrt import _quantize
 
-        fp32_model = copy.deepcopy(self.gptj)
+        fp32_model = self.gptj
         quant_config = {
             "rtn_weight_only_quant": {
                 "global": {
@@ -137,12 +145,12 @@ class TestQuantizationConfig(unittest.TestCase):
                 },
             }
         }
-        qmodel = quantize(fp32_model, quant_config)
+        qmodel = _quantize(fp32_model, quant_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 29)
         self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
-        fp32_model = copy.deepcopy(self.gptj)
+        fp32_model = self.gptj
         quant_config = {
             "rtn_weight_only_quant": {
                 "global": {
@@ -157,21 +165,21 @@ class TestQuantizationConfig(unittest.TestCase):
                 },
             }
         }
-        qmodel = quantize(fp32_model, quant_config)
+        qmodel = _quantize(fp32_model, quant_config)
         self.assertIsNotNone(qmodel)
         for node in qmodel.graph.node:
             if node.name == "/h.4/mlp/fc_out/MatMul":
                 self.assertTrue(node.input[1].endswith("Q8G32"))
 
     def test_config_white_lst(self):
-        from neural_compressor.onnxrt import RTNWeightQuantConfig, quantize
+        from neural_compressor.onnxrt import RTNWeightQuantConfig, _quantize
 
         global_config = RTNWeightQuantConfig(weight_bits=4)
         # set operator instance
         fc_out_config = RTNWeightQuantConfig(weight_dtype="fp32", white_list=["/h.4/mlp/fc_out/MatMul"])
         # get model and quantize
-        fp32_model = copy.deepcopy(self.gptj)
-        qmodel = quantize(fp32_model, quant_config=global_config + fc_out_config)
+        fp32_model = self.gptj
+        qmodel = _quantize(fp32_model, quant_config=global_config + fc_out_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 29)
         self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
@@ -185,7 +193,7 @@ class TestQuantizationConfig(unittest.TestCase):
         fc_out_config = RTNWeightQuantConfig(weight_bits=8, white_list=["/h.4/mlp/fc_out/MatMul"])
         quant_config = global_config + fc_out_config
         # get model and quantize
-        fp32_model = copy.deepcopy(self.gptj)
+        fp32_model = self.gptj
         model_info = get_model_info(fp32_model, white_op_type_list=["MatMul"])
         logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
@@ -268,7 +276,7 @@ class TestQuantizationConfig(unittest.TestCase):
         fc_out_config = RTNWeightQuantConfig(weight_bits=8)
         quant_config.set_local("/h.4/mlp/fc_out/MatMul", fc_out_config)
         # get model and quantize
-        fp32_model = copy.deepcopy(self.gptj)
+        fp32_model = self.gptj
         model_info = get_model_info(fp32_model, white_op_type_list=["MatMul"])
         logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
@@ -284,7 +292,6 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertTrue(configs_mapping[("/h.3/mlp/fc_out/MatMul", "MatMul")].weight_bits == 3)
         self.assertTrue(configs_mapping[("/h.2/mlp/fc_out/MatMul", "MatMul")].weight_bits == 3)
         self.assertTrue(configs_mapping[("/h.1/mlp/fc_out/MatMul", "MatMul")].weight_bits == 3)
-
 
 class TestQuantConfigForAutotune(unittest.TestCase):
     def test_expand_config(self):

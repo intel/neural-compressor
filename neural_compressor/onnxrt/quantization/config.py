@@ -14,22 +14,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# pylint:disable=import-error
-
-from __future__ import annotations
 
 import re
 from collections import OrderedDict
 from enum import Enum
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
+from pathlib import Path
+from typing import Callable, List, NamedTuple, Optional, Tuple, Union
 
 import onnx
 
-from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
+from neural_compressor.common.base_config import BaseConfig, register_config
 from neural_compressor.common.logger import Logger
 from neural_compressor.common.utility import (
     DEFAULT_WHITE_LIST,
-    EMPTY_WHITE_LIST,
     OP_NAME_OR_MODULE_TYPE,
     RTN_WEIGHT_ONLY_QUANT,
 )
@@ -99,30 +96,7 @@ class RTNWeightQuantConfig(BaseConfig):
         self.act_dtype = act_dtype
         self.accuracy_level = accuracy_level
         self.providers = providers
-        self._post_init()
-
-    def _post_init(self):
-        if self.white_list == DEFAULT_WHITE_LIST:
-            global_config = self.get_node_params_dict()
-            self._global_config = self.__class__(**global_config, white_list=None)
-        elif isinstance(self.white_list, list) and len(self.white_list) > 0:
-            for op_name_or_type in self.white_list:
-                global_config = self.get_node_params_dict()
-                tmp_config = self.__class__(**global_config, white_list=None)
-                self.set_local(op_name_or_type, tmp_config)
-        elif self.white_list == EMPTY_WHITE_LIST:
-            return
-        else:
-            raise NotImplementedError(
-                f"The white list should be one of {DEFAULT_WHITE_LIST}, {EMPTY_WHITE_LIST},"
-                " a not empty list, but got {self.white_list}"
-            )
-
-    def get_node_params_dict(self):
-        result = dict()
-        for param in self.node_params_list:
-            result[param] = getattr(self, param)
-        return result
+        self._post_init(specific_params_dict=self.node_params_list)
 
     def get_model_params_dict(self):
         result = dict()
@@ -158,9 +132,10 @@ class RTNWeightQuantConfig(BaseConfig):
         if config_list is None:
             config_list = [self]
         for config in config_list:
-            # model level setting
+            # update model level setting
             config_mapping.update(config.get_model_params_dict())
-            # node level setting
+
+            # update node level setting
             global_config = config.global_config
             op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
             for op_name, op_type in model_info:
@@ -174,7 +149,9 @@ class RTNWeightQuantConfig(BaseConfig):
         return config_mapping
 
     @staticmethod
-    def get_model_info(model: onnx.ModelProto) -> List[Tuple[str, Callable]]:
+    def get_model_info(model: Union[onnx.ModelProto, Path, str]) -> List[Tuple[str, Callable]]:
+        if not isinstance(model, onnx.ModelProto):
+            model = onnx.load(model)
         white_list = ["MatMul"]
         filter_result = []
         for node in model.graph.node:

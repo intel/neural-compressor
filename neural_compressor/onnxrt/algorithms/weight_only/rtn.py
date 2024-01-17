@@ -25,6 +25,8 @@ import numpy as np
 import onnx
 import onnxruntime as ort
 from packaging.version import Version
+from typing import Union
+from pathlib import Path
 
 from neural_compressor.onnxrt.quantization.config import RTNWeightQuantConfig
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
@@ -130,7 +132,7 @@ def qdq_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", rati
 
 
 def rtn_quantize(
-    model,
+    model: Union[onnx.ModelProto, ONNXModel, Path, str],
     weight_config={},
     num_bits=4,
     group_size=32,
@@ -142,11 +144,11 @@ def rtn_quantize(
     """Quant the model with round to nearst method.
 
     Args:
-        model (ModelProto or ONNXModel): onnx model
+        model (onnx.ModelProto or ONNXModel or ): onnx model
         weight_config (dict): quantization config
                 For example,
                 weight_config = {
-                    'fc2':
+                    '("/h.0/mlp/fc_out/MatMul", "MatMul")':
                         {
                             'bits': 4,
                             'group_size': 32,
@@ -166,7 +168,7 @@ def rtn_quantize(
     Returns:
         model: fake quantized ONNXModel
     """
-    if isinstance(model, onnx.ModelProto):
+    if not isinstance(model, ONNXModel):
         model = ONNXModel(model)
     base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
     new_nodes = []
@@ -257,13 +259,6 @@ def rtn_quantize(
     model.add_nodes(new_nodes)
     model.remove_nodes(remove_nodes)
     model.topological_sort()
-
-    # reload external data for large model
-    if model.is_large_model:
-        from onnx.external_data_helper import load_external_data_for_model
-
-        load_external_data_for_model(model.model, os.path.dirname(model.model_path))
-
     return model.model
 
 
