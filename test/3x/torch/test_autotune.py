@@ -14,7 +14,7 @@ def reset_tuning_target(test_func):
     @wraps(test_func)
     def wrapper(*args, **kwargs):
         # Reset tuning targets before running the test
-        from neural_compressor.common.base_tune import evaluator
+        from neural_compressor.common.base_tuning import evaluator
 
         evaluator.eval_fn_registry = []
         return test_func(*args, **kwargs)
@@ -61,7 +61,7 @@ class TestAutoTune(unittest.TestCase):
     @reset_tuning_target
     def test_autotune_api(self):
         logger.info("test_autotune_api")
-        from neural_compressor.common.base_tune import evaluator
+        from neural_compressor.common.base_tuning import evaluator
         from neural_compressor.torch import RTNWeightQuantConfig, TuningConfig, autotune
 
         def eval_acc_fn(model) -> float:
@@ -77,7 +77,7 @@ class TestAutoTune(unittest.TestCase):
     @reset_tuning_target
     def test_autotune_api_2(self):
         logger.info("test_autotune_api")
-        from neural_compressor.common.base_tune import evaluator
+        from neural_compressor.common.base_tuning import evaluator
         from neural_compressor.torch import RTNWeightQuantConfig, TuningConfig, autotune
 
         def eval_acc_fn(model) -> float:
