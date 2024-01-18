@@ -43,6 +43,8 @@ PKG_INSTALL_CFG = {
                 "neural_compressor.torch.*",
                 "neural_compressor.tensorflow",
                 "neural_compressor.tensorflow.*",
+                "neural_compressor.onnxrt",
+                "neural_compressor.onnxrt.*",
             ],
         ),
         "package_data": {"": ["*.yaml"]},
