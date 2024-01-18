@@ -91,6 +91,7 @@ PKG_INSTALL_CFG = {
                 "neural_compressor.onnxrt.*",
             ],
         ),
+        "install_requires": fetch_requirements("requirements_ort.txt"),
     },
     "neural_insights": {
         "project_name": "neural_insights",
