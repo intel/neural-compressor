@@ -15,14 +15,15 @@
 
 from typing import Callable, Dict, List, Tuple
 
-from neural_compressor.common.logger import Logger
+import torch
 
-logger = Logger().get_logger()
+from neural_compressor.common.logger import Logger
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
 algos_mapping: Dict[str, Callable] = {}
 
-import torch
+
+logger = Logger().get_logger()
 
 # All constants for torch
 WHITE_MODULE_LIST = [torch.nn.Linear, torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d]
@@ -33,7 +34,7 @@ def register_algo(name):
 
     Usage example:
         @register_algo(name=example_algo)
-        def example_algo(model: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
+        def example_algo(model: torch.nn.Module, quant_config: RTNConfig) -> torch.nn.Module:
             ...
 
     Args:
@@ -119,17 +120,3 @@ def get_double_quant_config(double_quant_type, weight_sym=True):
     )
     DOUBLE_QUANT_CONFIGS[double_quant_type]["weight_sym"] = weight_sym
     return DOUBLE_QUANT_CONFIGS[double_quant_type]
-
-
-# pylint:disable=import-error
-try:
-    import deepspeed
-    import habana_frameworks.torch.hpex
-
-    _hpex_avalible = True
-except:
-    _hpex_avalible = False
-
-
-def is_hpex_avaliable():
-    return _hpex_avalible

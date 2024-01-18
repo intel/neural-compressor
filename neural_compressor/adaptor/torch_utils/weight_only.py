@@ -429,7 +429,7 @@ def rtn_quantize(
             if num_bits <= 0:
                 logger.info(f"Skip {name}")
                 continue
-            weight = m.weight.T if group_dim == 0 else m.weight
+            weight = m.weight.t_().contiguous() if group_dim == 0 else m.weight
             if enable_mse_search:
                 quantile = search_clip(m, num_bits, group_size, scheme, data_type, enable_full_range)
             if return_int:
@@ -447,8 +447,8 @@ def rtn_quantize(
                 )
                 if group_dim == 0:
                     weight.transpose_(0, 1)
-                scale = scale.T if group_dim == 0 else scale
-                zp = zp.T if group_dim == 0 and zp is not None else zp
+                scale = scale.t_().contiguous() if group_dim == 0 else scale
+                zp = zp.t_().contiguous() if group_dim == 0 and zp is not None else zp
                 new_module = WeightOnlyLinear(
                     m.in_features,
                     m.out_features,
@@ -651,18 +651,18 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1):
     if zp is not None:
         zp = zp.to(device)
     if group_size == -1:
-        return torch.round(weight / scale) if zp is None else torch.round(weight / scale + zp)
+        return weight.div_(scale).round_() if zp is None else weight.div_(scale).add_(zp).round_()
     int_weight = torch.zeros(weight.shape).to(device)
     leng = weight.shape[1] // group_size
     tail_flag = False if weight.shape[1] % group_size == 0 else True
     for i in range(leng):
-        int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size] / scale[:, i].unsqueeze(1)
+        int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size].div_(scale[:, i].unsqueeze(1))
         if zp is not None:
-            int_weight_tmp += zp[:, i].unsqueeze(1)
-        int_weight[:, i * group_size : (i + 1) * group_size] = torch.round(int_weight_tmp)
+            int_weight_tmp.add_(zp[:, i].unsqueeze(1))
+        int_weight[:, i * group_size : (i + 1) * group_size].copy_(int_weight_tmp.round_())
     if tail_flag:
-        int_weight_tmp = weight[:, leng * group_size :] / scale[:, -1].unsqueeze(1)
+        int_weight_tmp = weight[:, leng * group_size :].div_(scale[:, -1].unsqueeze(1))
         if zp is not None:
-            int_weight_tmp += zp[:, -1].unsqueeze(1)
-        int_weight[:, leng * group_size :] = torch.round(int_weight_tmp)
+            int_weight_tmp.add_(zp[:, -1].unsqueeze(1))
+        int_weight[:, leng * group_size :].copy_(int_weight_tmp.round_())
     return int_weight

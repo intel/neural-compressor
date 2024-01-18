@@ -180,7 +180,7 @@ class BaseConfig(ABC):
         self.local_config[operator_name] = config
         return self
 
-    def to_dict(self, params_list=[], operator2str=None):
+    def to_dict(self):
         result = {}
         global_config = self.get_params_dict()
         if bool(self.local_config):
@@ -200,7 +200,7 @@ class BaseConfig(ABC):
         return result
 
     @classmethod
-    def from_dict(cls, config_dict, str2operator=None):
+    def from_dict(cls, config_dict):
         """Construct config from a dict.
 
         Args:
