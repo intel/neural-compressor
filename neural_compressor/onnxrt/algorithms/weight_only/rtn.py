@@ -20,14 +20,15 @@
 
 
 import os
+from pathlib import Path
+from typing import Union
 
 import numpy as np
 import onnx
 import onnxruntime as ort
 from packaging.version import Version
-from typing import Union
-from pathlib import Path
 
+from neural_compressor.onnxrt.algorithms.weight_only.utility import make_matmul_weight_only_node
 from neural_compressor.onnxrt.quantization.config import RTNWeightQuantConfig
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.onnxrt.utils.utility import (
@@ -36,8 +37,6 @@ from neural_compressor.onnxrt.utils.utility import (
     dtype_mapping,
     simple_progress_bar,
 )
-
-from neural_compressor.onnxrt.algorithms.weight_only.utility import make_matmul_weight_only_node
 
 
 def pad_tensor(weight, group_size, k_blocks):
