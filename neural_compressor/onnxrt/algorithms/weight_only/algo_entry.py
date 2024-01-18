@@ -13,8 +13,8 @@
 # limitations under the License.
 
 
-from pathlib import Path
 from typing import Dict, Tuple, Union
+from pathlib import Path
 
 import onnx
 
@@ -29,11 +29,10 @@ logger = Logger().get_logger()
 ###################### RTN Algo Entry ##################################
 @register_algo(name=RTN_WEIGHT_ONLY_QUANT)
 def rtn_quantize_entry(
-    model: Union[Path, str],
+    model: Union[Path, str], 
     configs_mapping: Dict[Tuple[str, callable], RTNWeightQuantConfig],
 ) -> onnx.ModelProto:
     """The main entry to apply rtn quantization."""
     from neural_compressor.onnxrt.algorithms.weight_only.rtn import apply_rtn_on_model
-
     model = apply_rtn_on_model(model, configs_mapping)
     return model
