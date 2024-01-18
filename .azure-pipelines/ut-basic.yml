@@ -19,6 +19,7 @@ pr:
       - neural_compressor/common
       - neural_compressor/torch
       - neural_compressor/tensorflow
+      - neural_compressor/onnxrt
 
 pool: ICX-16C
 

@@ -1,0 +1,106 @@
+trigger: none
+
+pr:
+  autoCancel: true
+  drafts: false
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - neural_compressor/common
+      - neural_compressor/onnxrt
+      - test/3x/onnxrt
+      - setup.py
+      - requirements_ort.txt
+
+pool: ICX-16C
+
+variables:
+  IMAGE_NAME: "neural-compressor"
+  IMAGE_TAG: "py310"
+  UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
+  DOWNLOAD_PATH: $(Build.SourcesDirectory)/log_dir
+  ARTIFACT_NAME: "UT_coverage_report_3x_ort"
+  REPO: $(Build.Repository.Uri)
+
+stages:
+  - stage: ONNXRT
+    displayName: Unit Test 3x ONNXRT
+    dependsOn: []
+    jobs:
+      - job:
+        displayName: Unit Test 3x ONNXRT
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              utScriptFileName: "3x/run_3x_ort"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut_coverage_3x"
+
+
+  - stage: ONNXRT_baseline
+    displayName: Unit Test 3x ONNXRT baseline
+    dependsOn: []
+    jobs:
+      - job:
+        displayName: Unit Test 3x ONNXRT baseline
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "gitCloneDockerConfig"
+              utScriptFileName: "3x/run_3x_ort"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut_coverage_3x_baseline"
+              repo: $(REPO)
+
+  - stage: Coverage
+    displayName: "Coverage Combine"
+    pool:
+      vmImage: "ubuntu-latest"
+    dependsOn: [ONNXRT, ONNXRT_baseline]
+    jobs:
+      - job: CollectDatafiles
+        steps:
+          - script: |
+              if [[ ! $(docker images | grep -i ${IMAGE_NAME}:${IMAGE_TAG}) ]]; then
+                docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+              fi
+              docker images | grep -i ${IMAGE_NAME}
+              if [[ $? -ne 0 ]]; then
+                echo "NO Such Repo"
+                exit 1
+              fi
+            displayName: "Build develop docker image"
+
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact:
+              path: $(DOWNLOAD_PATH)
+
+          - script: |
+              echo "--- create container ---"
+              docker run -d -it --name="collectLogs"  -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash
+              echo "--- docker ps ---"
+              docker ps
+              echo "--- collect logs ---"
+              docker exec collectLogs /bin/bash  +x -c "cd /neural-compressor/.azure-pipelines/scripts \
+              && bash install_nc.sh 3x_ort \
+              && bash ut/3x/collect_log_3x.sh 3x_ort"
+            displayName: "collect logs"
+
+          - task: PublishPipelineArtifact@1
+            condition: succeededOrFailed()
+            inputs:
+              targetPath: $(UPLOAD_PATH)
+              artifact: $(ARTIFACT_NAME)
+              publishLocation: "pipeline"
+
+          - task: Bash@3
+            condition: always()
+            inputs:
+              targetType: "inline"
+              script: |
+                docker exec collectLogs bash -c "rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* || true"
+            displayName: "Docker clean up"
