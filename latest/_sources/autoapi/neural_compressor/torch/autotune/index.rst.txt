@@ -1,0 +1,28 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.autotune`
+==========================================
+
+.. py:module:: neural_compressor.torch.autotune
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.autotune.get_default_tune_config
+   neural_compressor.torch.autotune.autotune
+
+
+
+
+.. py:function:: autotune(model: torch.nn.Module, tune_config: neural_compressor.common.base_tuning.TuningConfig, eval_fns: Optional[Union[Dict, List[Dict]]] = None, run_fn=None, run_args=None) -> Optional[torch.nn.Module]
+
+   The main entry of auto-tune.
+
+

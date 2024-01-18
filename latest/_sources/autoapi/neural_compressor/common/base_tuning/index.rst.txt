@@ -1,0 +1,79 @@
+:orphan:
+
+:py:mod:`neural_compressor.common.base_tuning`
+==============================================
+
+.. py:module:: neural_compressor.common.base_tuning
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.common.base_tuning.Evaluator
+   neural_compressor.common.base_tuning.Sampler
+   neural_compressor.common.base_tuning.ConfigLoader
+   neural_compressor.common.base_tuning.TuningLogger
+   neural_compressor.common.base_tuning.TuningConfig
+   neural_compressor.common.base_tuning.TuningMonitor
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.common.base_tuning.init_tuning
+
+
+
+.. py:class:: Evaluator
+
+
+   Evaluator is a collection of evaluation functions.
+
+   .. rubric:: Examples
+
+   def eval_acc(model):
+       ...
+
+   def eval_perf(molde):
+       ...
+
+   # Usage
+   user_eval_fns1 = eval_acc
+   user_eval_fns2 = {"eval_fn": eval_acc}
+   user_eval_fns3 = {"eval_fn": eval_acc, "weight": 1.0, "name": "accuracy"}
+   user_eval_fns4 = [
+       {"eval_fn": eval_acc, "weight": 0.5},
+       {"eval_fn": eval_perf, "weight": 0.5, "name": "accuracy"},
+       ]
+
+
+
+
+.. py:class:: TuningLogger
+
+
+   A unified logger for the tuning process.
+
+   It assists validation teams in retrieving logs.
+
+
+.. py:class:: TuningConfig(quant_configs=None, timeout=0, max_trials=100, sampler: Sampler = None)
+
+
+   Base Class for Tuning Criterion.
+
+   :param quant_configs: quantization configs. Default value is empty.
+   :param timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
+   :param max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
+
+
+
+
