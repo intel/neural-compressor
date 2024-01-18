@@ -63,6 +63,7 @@ class TestAutoTune(unittest.TestCase):
         logger.info("test_autotune_api")
         from neural_compressor.common.base_tuning import evaluator
         from neural_compressor.torch.quantization import RTNConfig, TuningConfig, autotune
+
         def eval_acc_fn(model) -> float:
             return 1.0
 
@@ -79,7 +80,6 @@ class TestAutoTune(unittest.TestCase):
 
         from neural_compressor.common.base_tuning import evaluator
         from neural_compressor.torch.quantization import RTNConfig, TuningConfig, autotune
-
 
         def eval_acc_fn(model) -> float:
             return 1.0
