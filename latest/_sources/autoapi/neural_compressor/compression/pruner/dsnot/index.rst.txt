@@ -1,0 +1,51 @@
+:orphan:
+
+:py:mod:`neural_compressor.compression.pruner.dsnot`
+====================================================
+
+.. py:module:: neural_compressor.compression.pruner.dsnot
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.dsnot.return_reorder_indice
+   neural_compressor.compression.pruner.dsnot.DSnoT
+
+
+
+.. py:function:: return_reorder_indice(input_tensor)
+
+   For instance:
+   [[1., -2., 3.],
+   [-2, 2., -4],
+   [5., 6., -7],
+   [-6, -7, -4]]
+   return indices of
+   [[-2.,  3.,  1.],
+   [-2., -4.,  2.],
+   [-7.,  6.,  5.],
+   [-6., -7., -4.]]
+   Description: The relative order in the positive number remains unchanged,
+   and the relative order in the negative number is flipped.
+
+
+.. py:function:: DSnoT(initial_metric, sparsity_ratio, wrapped_layer, prune_n=0, prune_m=0, pow_of_var_regrowing=1.0, max_cycle_time=100, without_same_sign=True, update_threshold=0.1)
+
+   :param pow_of_var_regrowing: The power of variance, float type, default=1.
+   :param max_cycle_time: Max cycle time.
+   :param without_same_sign:
+   :param without same sign:
+   :param bool:
+   :param default True.:
+   :param update_threshold: update threshold, float, default 0.1.
+
+   See the original paper: https://arxiv.org/pdf/2310.08915.pdf
+
+

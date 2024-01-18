@@ -1,0 +1,27 @@
+:orphan:
+
+:py:mod:`neural_compressor.compression.pruner.wanda.wrapper`
+============================================================
+
+.. py:module:: neural_compressor.compression.pruner.wanda.wrapper
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.wanda.wrapper.WrappedGPT
+
+
+
+
+.. py:class:: WrappedGPT(layer, layer_id=0, layer_name='none')
+
+
+   This class wraps a GPT layer for specific operations.
+
+

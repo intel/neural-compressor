@@ -1,0 +1,29 @@
+:orphan:
+
+:py:mod:`neural_compressor.compression.pruner.wanda.prune`
+==========================================================
+
+.. py:module:: neural_compressor.compression.pruner.wanda.prune
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.wanda.prune.prune_wanda
+
+
+
+.. py:function:: prune_wanda(model, dataloader, sparsity_ratio, prune_n=0, prune_m=0, nsamples=128, use_variant=False, device=None, low_mem_usage=None, dsnot=False)
+
+   Prune the model using wanda
+   Sij = |Wij| · ||Xj||2.
+
+   See the original paper: https://arxiv.org/pdf/2306.11695.pdf
+
+

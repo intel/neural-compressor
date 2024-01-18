@@ -1,0 +1,20 @@
+:py:mod:`neural_compressor.compression.pruner.wanda`
+====================================================
+
+.. py:module:: neural_compressor.compression.pruner.wanda
+
+.. autoapi-nested-parse::
+
+   Wanda init.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   utils/index.rst
+
+

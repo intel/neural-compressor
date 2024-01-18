@@ -18,6 +18,7 @@ Subpackages
    model_slim/index.rst
    patterns/index.rst
    pruners/index.rst
+   wanda/index.rst
 
 
 Submodules
