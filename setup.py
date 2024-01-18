@@ -1,4 +1,5 @@
 import re
+import subprocess
 import sys
 from io import open
 
@@ -8,6 +9,17 @@ from setuptools import find_packages, setup
 def fetch_requirements(path):
     with open(path, "r") as fd:
         return [r.strip() for r in fd.readlines()]
+
+
+def is_commit_on_tag():
+    try:
+        result = subprocess.run(
+            ["git", "describe", "--exact-match", "--tags"], capture_output=True, text=True, check=True
+        )
+        tag_name = result.stdout.strip()
+        return tag_name
+    except subprocess.CalledProcessError:
+        return False
 
 
 try:
@@ -183,7 +195,7 @@ if __name__ == "__main__":
         ],
         setup_requires=["setuptools_scm"],
         use_scm_version=dict(
-            version_scheme=lambda version: f"{__version__}.dev{version.distance}",
-            local_scheme=lambda version: f"+{version.node[1:8]}",
+            version_scheme=lambda version: __version__ + ("" if is_commit_on_tag() else f".dev{version.distance}"),
+            local_scheme="no-local-version" if is_commit_on_tag() else lambda version: f"+{version.node[1:8]}",
         ),
     )
