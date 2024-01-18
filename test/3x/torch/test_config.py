@@ -57,7 +57,7 @@ class TestQuantizationConfig(unittest.TestCase):
         from neural_compressor.torch import quantize
 
         quant_config = {
-            "RTN": {
+            "rtn": {
                 "weight_dtype": "nf4",
                 "weight_bits": 4,
                 "weight_group_size": 32,
@@ -127,7 +127,7 @@ class TestQuantizationConfig(unittest.TestCase):
 
         fp32_model = build_simple_torch_model()
         quant_config = {
-            "RTN": {
+            "rtn": {
                 "global": {
                     "weight_dtype": "nf4",
                     "weight_bits": 4,
@@ -188,7 +188,7 @@ class TestQuantizationConfig(unittest.TestCase):
         from neural_compressor.torch import RTNConfig
 
         quant_config = {
-            "RTN": {
+            "rtn": {
                 "global": {
                     "weight_dtype": "nf4",
                     "weight_bits": 4,
@@ -202,7 +202,7 @@ class TestQuantizationConfig(unittest.TestCase):
                 },
             }
         }
-        config = RTNConfig.from_dict(quant_config["RTN"])
+        config = RTNConfig.from_dict(quant_config["rtn"])
         self.assertIsNotNone(config.local_config)
 
     def test_config_to_dict(self):
@@ -219,15 +219,15 @@ class TestQuantizationConfig(unittest.TestCase):
         from neural_compressor.torch import RTNConfig
 
         quant_config1 = {
-            "RTN": {
+            "rtn": {
                 "weight_dtype": "nf4",
                 "weight_bits": 4,
                 "weight_group_size": 32,
             },
         }
-        q_config = RTNConfig.from_dict(quant_config1["RTN"])
+        q_config = RTNConfig.from_dict(quant_config1["rtn"])
         quant_config2 = {
-            "RTN": {
+            "rtn": {
                 "global": {
                     "weight_bits": 8,
                     "weight_group_size": 32,
@@ -240,48 +240,48 @@ class TestQuantizationConfig(unittest.TestCase):
                 },
             }
         }
-        q_config2 = RTNConfig.from_dict(quant_config2["RTN"])
+        q_config2 = RTNConfig.from_dict(quant_config2["rtn"])
         q_config3 = q_config + q_config2
         q3_dict = q_config3.to_dict()
-        for op_name, op_config in quant_config2["RTN"]["local"].items():
+        for op_name, op_config in quant_config2["rtn"]["local"].items():
             for attr, val in op_config.items():
                 self.assertEqual(q3_dict["local"][op_name][attr], val)
-        self.assertNotEqual(q3_dict["global"]["weight_bits"], quant_config2["RTN"]["global"]["weight_bits"])
+        self.assertNotEqual(q3_dict["global"]["weight_bits"], quant_config2["rtn"]["global"]["weight_bits"])
 
     def test_diff_types_configs_addition(self):
         from neural_compressor.torch import GPTQConfig, RTNConfig
 
         quant_config1 = {
-            "RTN": {
+            "rtn": {
                 "weight_dtype": "nf4",
                 "weight_bits": 4,
                 "weight_group_size": 32,
             },
         }
-        q_config = RTNConfig.from_dict(quant_config1["RTN"])
+        q_config = RTNConfig.from_dict(quant_config1["rtn"])
         d_config = GPTQConfig(double_quant_bits=4)
         combined_config = q_config + d_config
         combined_config_d = combined_config.to_dict()
         logger.info(combined_config)
-        self.assertTrue("RTN" in combined_config_d)
+        self.assertTrue("rtn" in combined_config_d)
         self.assertIn("gptq", combined_config_d)
 
     def test_composable_config_addition(self):
         from neural_compressor.torch import GPTQConfig, RTNConfig
 
         quant_config1 = {
-            "RTN": {
+            "rtn": {
                 "weight_dtype": "nf4",
                 "weight_bits": 4,
                 "weight_group_size": 32,
             },
         }
-        q_config = RTNConfig.from_dict(quant_config1["RTN"])
+        q_config = RTNConfig.from_dict(quant_config1["rtn"])
         d_config = GPTQConfig(double_quant_bits=4)
         combined_config = q_config + d_config
         combined_config_d = combined_config.to_dict()
         logger.info(combined_config)
-        self.assertTrue("RTN" in combined_config_d)
+        self.assertTrue("rtn" in combined_config_d)
         self.assertIn("gptq", combined_config_d)
         combined_config2 = combined_config + d_config
         combined_config3 = combined_config + combined_config2
