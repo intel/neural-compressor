@@ -49,7 +49,7 @@ class Evaluator:
         user_eval_fns2 = {"eval_fn": eval_acc}
         user_eval_fns3 = {"eval_fn": eval_acc, "weight": 1.0, "name": "accuracy"}
         user_eval_fns4 = [
-            {"eval_fn": eval_acc, "weight": .0.5},
+            {"eval_fn": eval_acc, "weight": 0.5},
             {"eval_fn": eval_perf, "weight": 0.5, "name": "accuracy"},
             ]
     """
@@ -124,6 +124,7 @@ evaluator = Evaluator()
 
 
 class Sampler:
+    # TODO Separate sorting functionality of `ConfigLoader` into `Sampler` in the follow-up PR.
     pass
 
 
@@ -251,7 +252,7 @@ class TuningMonitor:
         return len(self.tuning_history)
 
     def get_best_quant_config(self) -> BaseConfig:
-        assert self.get_number_of_trials() > 0, "Not trial record in tuning monitor."
+        assert self.get_number_of_trials() > 0, "No trial record in tuning monitor."
         # Put the record with a higher score at the beginning
         sorted_trials_records: List[_TrialRecord] = sorted(
             self.tuning_history, key=lambda x: x.trial_result, reverse=True
