@@ -22,7 +22,7 @@ from neural_compressor.torch.quantization import (
     GPTQConfig,
     get_default_gptq_config,
     SmoothQuantConfig,
-    get_default_sq_config
+    get_default_sq_config,
 )
 
 from neural_compressor.common.base_tuning import TuningConfig

@@ -1,16 +1,20 @@
-import torch
 import unittest
+
+import torch
+
 from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
 
 try:
     import intel_extension_for_pytorch as ipex
+
     TEST_IPEX = True
 except:
     TEST_IPEX = False
 
 assert TEST_IPEX, "Please install intel extension for pytorch"
+
 
 class TestSQ(unittest.TestCase):
     @classmethod
@@ -43,14 +47,18 @@ class TestSQ(unittest.TestCase):
             model(example_input)
 
         from neural_compressor.torch import SmoothQuantConfig, quantize
+
         quant_config = SmoothQuantConfig(act_algo="minmax")
         q_model = quantize(
-                model=model,
-                quant_config=quant_config,
-                #example_input = example_input,
-                run_fn=calib_func,
-                inplace=True)
-        import pdb; pdb.set_trace()
+            model=model,
+            quant_config=quant_config,
+            # example_input = example_input,
+            run_fn=calib_func,
+            inplace=True,
+        )
+        import pdb
+
+        pdb.set_trace()
 
 
 if __name__ == "__main__":

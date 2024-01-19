@@ -25,10 +25,11 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
 from neural_compressor.common.utility import (
-    DEFAULT_WHITE_LIST, 
-    FP8_QUANT, GPTQ, 
-    OP_NAME_OR_MODULE_TYPE, 
-    RTN, 
+    DEFAULT_WHITE_LIST,
+    FP8_QUANT,
+    GPTQ,
+    OP_NAME_OR_MODULE_TYPE,
+    RTN,
     SMOOTH_QUANT,
 )
 from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
@@ -320,7 +321,7 @@ def get_default_gptq_config() -> GPTQConfig:
 ######################## Smooth Quant Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT)
 class SmoothQuantConfig(BaseConfig):
-    """Config class for smooth quantization. """
+    """Config class for smooth quantization."""
 
     name = SMOOTH_QUANT
     supported_configs: List[OperatorConfig] = []
@@ -391,9 +392,7 @@ class SmoothQuantConfig(BaseConfig):
         # TODO(Yi)
         linear_sq_config = SmoothQuantConfig()
         operators = [torch.nn.Linear, torch.nn.functional.linear]
-        supported_configs.append(
-            OperatorConfig(config=linear_sq_config, operators=operators, backend=Backend.DEFAULT)
-        )
+        supported_configs.append(OperatorConfig(config=linear_sq_config, operators=operators, backend=Backend.DEFAULT))
         cls.supported_configs = supported_configs
 
     @staticmethod
