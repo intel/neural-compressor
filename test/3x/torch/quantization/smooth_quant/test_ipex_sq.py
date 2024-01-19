@@ -56,9 +56,6 @@ class TestSQ(unittest.TestCase):
             run_fn=calib_func,
             inplace=True,
         )
-        import pdb
-
-        pdb.set_trace()
 
 
 if __name__ == "__main__":
