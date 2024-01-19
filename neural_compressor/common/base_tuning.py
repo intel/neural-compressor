@@ -18,8 +18,8 @@ import inspect
 import uuid
 from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
 
-from neural_compressor.common.base_config import BaseConfig, ComposableConfig
 from neural_compressor.common import Logger
+from neural_compressor.common.base_config import BaseConfig, ComposableConfig
 
 logger = Logger().get_logger()
 

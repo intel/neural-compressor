@@ -13,15 +13,37 @@
 # limitations under the License.
 
 from neural_compressor.common.utils import (
-    level, log, info, debug, warn, warning, error, fatal,
-    set_random_seed, set_workspace, set_resume_from, set_tensorboard, Logger,
+    level,
+    log,
+    info,
+    debug,
+    warn,
+    warning,
+    error,
+    fatal,
+    set_random_seed,
+    set_workspace,
+    set_resume_from,
+    set_tensorboard,
+    Logger,
 )
 from neural_compressor.common.base_config import options
 
 
 #  If you edit these imports, please update common/__init__.py.in as well
 __all__ = [
-    "level", "log", "info", "debug", "warn", "warning", "error", "fatal",
+    "level",
+    "log",
+    "info",
+    "debug",
+    "warn",
+    "warning",
+    "error",
+    "fatal",
     "options",
-    "Logger", "set_workspace", "set_random_seed","set_resume_from", "set_tensorboard",
+    "Logger",
+    "set_workspace",
+    "set_random_seed",
+    "set_resume_from",
+    "set_tensorboard",
 ]

@@ -30,11 +30,11 @@ from neural_compressor.common.utils import (
     BASE_CONFIG,
     COMPOSABLE_CONFIG,
     DEFAULT_WHITE_LIST,
+    DEFAULT_WORKSPACE,
     EMPTY_WHITE_LIST,
     GLOBAL,
     LOCAL,
     OP_NAME_OR_MODULE_TYPE,
-    DEFAULT_WORKSPACE,
 )
 
 logger = Logger().get_logger()
@@ -421,6 +421,7 @@ class ComposableConfig(BaseConfig):
         """Add all supported configs."""
         raise NotImplementedError
 
+
 def _check_value(name, src, supported_type, supported_value=[]):
     """Check if the given object is the given supported type and in the given supported value.
 
@@ -450,6 +451,7 @@ def _check_value(name, src, supported_type, supported_value=[]):
             assert False, "{} is not in supported {}: {}. Skip setting it.".format(src, name, str(supported_value))
 
     return True
+
 
 class Options:
     """Option Class for configs.
@@ -534,5 +536,6 @@ class Options:
         """Set tensorboard."""
         if _check_value("tensorboard", tensorboard, bool):
             self._tensorboard = tensorboard
+
 
 options = Options()
