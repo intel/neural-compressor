@@ -26,6 +26,7 @@ from neural_compressor.common.utils import (
     set_resume_from,
     set_tensorboard,
     Logger,
+    logger,
 )
 from neural_compressor.common.base_config import options
 
@@ -41,6 +42,7 @@ __all__ = [
     "fatal",
     "options",
     "Logger",
+    "logger",
     "set_workspace",
     "set_random_seed",
     "set_resume_from",
