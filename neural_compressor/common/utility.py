@@ -29,9 +29,9 @@ BASE_CONFIG = "base_config"
 COMPOSABLE_CONFIG = "composable_config"
 RTN = "rtn"
 STATIC_QUANT = "static_quant"
+SMOOTH_QUANT = "smooth_quant"
 GPTQ = "gptq"
 FP8_QUANT = "fp8_quant"
-SQ = "smooth_quant"
 
 
 from typing import Callable, Union
