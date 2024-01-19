@@ -580,10 +580,10 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1, dtype="int"):
     return int_weight
 
 
-from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
+from neural_compressor.torch.quantization.config import RTNConfig
 
 
-def apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
+def apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNConfig) -> torch.nn.Module:
     # TODO (Yi) remove it
     enable_full_range = quant_config.enable_full_range
     enable_mse_search = quant_config.enable_mse_search

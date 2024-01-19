@@ -20,7 +20,7 @@ from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.base_tuning import TuningConfig, evaluator, init_tuning
 from neural_compressor.common.logger import Logger
 from neural_compressor.torch import quantize
-from neural_compressor.torch.quantization.config import GPTQConfig, RTNWeightQuantConfig
+from neural_compressor.torch.quantization.config import GPTQConfig, RTNConfig
 
 logger = Logger().get_logger()
 
@@ -33,7 +33,7 @@ __all__ = [
 
 def get_default_tune_config() -> TuningConfig:
     # TODO use the registered default tuning config in the next PR
-    return TuningConfig(quant_configs=[GPTQConfig(weight_bits=[4, 8]), RTNWeightQuantConfig(weight_bits=[4, 8])])
+    return TuningConfig(quant_configs=[GPTQConfig(weight_bits=[4, 8]), RTNConfig(weight_bits=[4, 8])])
 
 
 def autotune(
