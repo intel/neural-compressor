@@ -30,6 +30,7 @@ from neural_compressor.common.utility import (
     GPTQ,
     OP_NAME_OR_MODULE_TYPE,
     RTN_WEIGHT_ONLY_QUANT,
+    SQ,
 )
 from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
 from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
@@ -315,6 +316,110 @@ def get_default_gptq_config() -> GPTQConfig:
         the default gptq config.
     """
     return GPTQConfig()
+
+
+######################## Smooth Quant Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=SQ)
+class SmoothQuantConfig(BaseConfig):
+    """Config class for smooth quantization. """
+
+    name = SQ
+    supported_configs: List[OperatorConfig] = []
+    params_list = [
+        "backend",
+        "weight_dtype",
+        "act_sym",
+        "act_algo",
+        "alpha",
+        "folding",
+        "scale_sharing",
+        "auto_alpha_args",
+    ]
+
+    def __init__(
+        self,
+        backend: str = "ipex",
+        weight_dtype: str = "int",
+        act_sym: bool = False,
+        act_algo: str = "minmax",
+        alpha: float = 0.5,
+        folding: bool = False,
+        scale_sharing: bool = False,
+        init_alpha: float = 0.5,
+        alpha_min: float = 0.0,
+        alpha_max: float = 1.0,
+        alpha_step: float = 0.1,
+        shared_criterion: str = "max",
+        enable_blockwise_loss: bool = False,
+        auto_alpha_args: dict = None,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init SmoothQuant Configs."""
+        super().__init__(white_list=white_list)
+        self.backend = backend
+        self.weight_dtype = weight_dtype
+        self.act_sym = act_sym
+        self.act_algo = act_algo
+        self.alpha = alpha
+        self.folding = folding
+        self.scale_sharing = scale_sharing
+        self.init_alpha = init_alpha
+        self.alpha_min = alpha_min
+        self.alpha_max = alpha_max
+        self.alpha_step = alpha_step
+        self.shared_criterion = shared_criterion
+        self.enable_blockwise_loss = enable_blockwise_loss
+        self.auto_alpha_args = {
+            "init_alpha": self.init_alpha,
+            "alpha_min": self.alpha_min,
+            "alpha_max": self.alpha_max,
+            "alpha_step": self.alpha_step,
+            "shared_criterion": self.shared_criterion,
+            "enable_blockwise_loss": self.enable_blockwise_loss,
+        }
+        self._post_init()
+
+    def to_dict(self):
+        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
+
+    @classmethod
+    def from_dict(cls, config_dict):
+        return super(SmoothQuantConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        # TODO(Yi)
+        linear_sq_config = SmoothQuantConfig()
+        operators = [torch.nn.Linear, torch.nn.functional.linear]
+        supported_configs.append(
+            OperatorConfig(config=linear_sq_config, operators=operators, backend=Backend.DEFAULT)
+        )
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = (torch.nn.Linear,)
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+
+# TODO(Yi) run `register_supported_configs` for all registered config.
+SmoothQuantConfig.register_supported_configs()
+
+
+def get_default_sq_config() -> SmoothQuantConfig:
+    """Generate the default smoothquant config.
+
+    Returns:
+        the default smoothquant config.
+    """
+    return SmoothQuantConfig()
 
 
 ######################## FP8 Config ###############################

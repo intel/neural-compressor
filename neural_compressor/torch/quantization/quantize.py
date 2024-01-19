@@ -63,6 +63,7 @@ def quantize(
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
     logger.debug(configs_mapping)
     for algo_name, algo_func in algos_mapping.items():
+        import pdb; pdb.set_trace()
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
             q_model = algo_func(q_model, configs_mapping, run_fn=run_fn, run_args=run_args)

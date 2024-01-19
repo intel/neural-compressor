@@ -31,6 +31,7 @@ RTN_WEIGHT_ONLY_QUANT = "rtn_weight_only_quant"
 STATIC_QUANT = "static_quant"
 GPTQ = "gptq"
 FP8_QUANT = "fp8_quant"
+SQ = "smooth_quant"
 
 
 from typing import Callable, Union
