@@ -22,6 +22,7 @@ __all__ = [
     "set_tensorboard",
 ]
 
+
 def set_random_seed(seed: int):
     """Set the random seed in config."""
     from neural_compressor.common import options
