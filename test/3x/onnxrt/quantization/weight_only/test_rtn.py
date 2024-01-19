@@ -8,6 +8,7 @@ from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
 
+
 def find_onnx_file(folder_path):
     # return first .onnx file path in folder_path
     for root, dirs, files in os.walk(folder_path):
@@ -15,6 +16,7 @@ def find_onnx_file(folder_path):
             if file.endswith(".onnx"):
                 return os.path.join(root, file)
     return None
+
 
 class TestRTNQuant(unittest.TestCase):
     @classmethod

@@ -11,6 +11,7 @@ from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
 
+
 def find_onnx_file(folder_path):
     # return first .onnx file path in folder_path
     for root, dirs, files in os.walk(folder_path):
@@ -18,6 +19,7 @@ def find_onnx_file(folder_path):
             if file.endswith(".onnx"):
                 return os.path.join(root, file)
     return None
+
 
 def build_simple_onnx_model():
     A = onnx.helper.make_tensor_value_info("A", onnx.TensorProto.FLOAT, [1, 5, 5])
@@ -70,8 +72,10 @@ class TestQuantizationConfig(unittest.TestCase):
 
     def _check_node_is_quantized(self, model, node_name):
         for node in model.graph.node:
-            if (node.name == node_name or node.name == node_name + "_Q4") \
-                and node.op_type in ["MatMulNBits", "MatMulFpQ4"]:
+            if (node.name == node_name or node.name == node_name + "_Q4") and node.op_type in [
+                "MatMulNBits",
+                "MatMulFpQ4",
+            ]:
                 return True
         return False
 
@@ -204,7 +208,7 @@ class TestQuantizationConfig(unittest.TestCase):
         qmodel = _quantize(fp32_model, quant_config=global_config + fc_out_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 1)
-        onnx.save(qmodel, 'qmodel.onnx')
+        onnx.save(qmodel, "qmodel.onnx")
         self.assertTrue(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
     def test_config_white_lst3(self):
@@ -286,9 +290,7 @@ class TestQuantizationConfig(unittest.TestCase):
         for op_name, op_config in quant_config2["rtn"]["local"].items():
             for attr, val in op_config.items():
                 self.assertEqual(q3_dict["local"][op_name][attr], val)
-        self.assertNotEqual(
-            q3_dict["global"]["weight_bits"], quant_config2["rtn"]["global"]["weight_bits"]
-        )
+        self.assertNotEqual(q3_dict["global"]["weight_bits"], quant_config2["rtn"]["global"]["weight_bits"])
 
     def test_config_mapping(self):
         from neural_compressor.onnxrt import RTNConfig

@@ -28,12 +28,7 @@ logger = Logger().get_logger()
 
 ###################### RTN Algo Entry ##################################
 @register_algo(name=RTN)
-def rtn_quantize_entry(
-    model: Union[Path, str],
-    quant_config: RTNConfig,
-    *args,
-    **kwargs
-) -> onnx.ModelProto:
+def rtn_quantize_entry(model: Union[Path, str], quant_config: RTNConfig, *args, **kwargs) -> onnx.ModelProto:
     """The main entry to apply rtn quantization."""
     from neural_compressor.onnxrt.algorithms.weight_only.rtn import apply_rtn_on_model
 

@@ -20,14 +20,15 @@
 
 
 import os
+from pathlib import Path
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 import onnx
 import onnxruntime as ort
 from packaging.version import Version
-from typing import Union, Dict, Optional, Tuple
-from pathlib import Path
 
+from neural_compressor.onnxrt.algorithms.weight_only.utility import make_matmul_weight_only_node
 from neural_compressor.onnxrt.quantization.config import RTNConfig
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.onnxrt.utils.utility import (
@@ -36,8 +37,6 @@ from neural_compressor.onnxrt.utils.utility import (
     dtype_mapping,
     simple_progress_bar,
 )
-
-from neural_compressor.onnxrt.algorithms.weight_only.utility import make_matmul_weight_only_node
 
 
 def pad_tensor(weight, group_size, k_blocks):
@@ -130,6 +129,7 @@ def qdq_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", rati
     weight, scale, zp = quant_tensor(data, num_bits, group_size, scheme, dtype, ratio)
     return np.reshape(scale * (weight - zp), org_shape)
 
+
 def rtn_quantize(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
     weight_config: Optional[Dict[tuple, dict]] = {},
@@ -160,7 +160,7 @@ def rtn_quantize(
         group_size (Optional[int], optional): how many elements share one scale/zp. Defaults to 32.
         scheme (Optional[str], optional): sym or asym. Defaults to "asym".
         ratios (Optional[int], optional): percentile of clip. Defaults to {}.
-        accuracy_level (Optional[int], optional): 
+        accuracy_level (Optional[int], optional):
             accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
             2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
             4 (int8 compute type of jblas kernel). Defaults to 0.
@@ -260,10 +260,7 @@ def rtn_quantize(
     return model.model
 
 
-def apply_rtn_on_model(
-    model: onnx.ModelProto, 
-    quant_config: Dict[Tuple[str, callable], RTNConfig]
-) -> onnx.ModelProto:
+def apply_rtn_on_model(model: onnx.ModelProto, quant_config: Dict[Tuple[str, callable], RTNConfig]) -> onnx.ModelProto:
     if "providers" in quant_config:
         providers = quant_config.pop("providers")
 
@@ -272,6 +269,4 @@ def apply_rtn_on_model(
         if isinstance(op_config, RTNConfig):
             quant_config[op_name_type] = op_config.to_dict()
 
-    return rtn_quantize(model,
-                        weight_config=quant_config,
-                        providers=providers)
+    return rtn_quantize(model, weight_config=quant_config, providers=providers)
