@@ -5,9 +5,8 @@ echo "${test_case}"
 
 # install requirements
 echo "set up UT env..."
-pip install optimum
+pip install /neural-compressor/test/3x/onnxrt/requirements.txt
 pip install coverage
-pip install pytest
 pip list
 
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/3x/coverage.3x_ort
