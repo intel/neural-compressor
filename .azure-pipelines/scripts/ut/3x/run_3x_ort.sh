@@ -5,6 +5,7 @@ echo "${test_case}"
 
 # install requirements
 echo "set up UT env..."
+pip install optimum
 pip install coverage
 pip install pytest
 pip list
