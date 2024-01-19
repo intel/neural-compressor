@@ -209,17 +209,17 @@
       "main_script": "main.py",       
       "batch_size": 10
     },
-    "faster_rcnn_inception_resnet_v2": {
-      "model_src_dir": "object_detection/tensorflow_models/faster_rcnn_inception_resnet_v2/quantization/ptq",
+    "faster_rcnn_inception_v2": {
+      "model_src_dir": "object_detection/tensorflow_models/faster_rcnn_inception_v2/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/mini-coco-500.record",
-      "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_inception_resnet_v2/frozen_inference_graph.pb",
+      "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_inception_v2/frozen_inference_graph.pb",
       "main_script": "main.py",       
       "batch_size": 10
     },
-    "faster_rcnn_inception_resnet_v2_saved": {
-      "model_src_dir": "object_detection/tensorflow_models/faster_rcnn_inception_resnet_v2/quantization/ptq",
+    "faster_rcnn_inception_v2_saved": {
+      "model_src_dir": "object_detection/tensorflow_models/faster_rcnn_inception_v2/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/mini-coco-500.record",
-      "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_inception_resnet_v2/saved_model",
+      "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_inception_v2/saved_model",
       "main_script": "main.py",       
       "batch_size": 10
     },

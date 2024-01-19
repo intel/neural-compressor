@@ -92,7 +92,7 @@ class RTNWeightQuantConfig(BaseConfig):
         self.act_dtype = act_dtype
         self.accuracy_level = accuracy_level
         self.providers = providers
-        self._post_init(specific_params_dict=self.node_params_list)
+        self._post_init()
 
     def get_model_params_dict(self):
         result = dict()

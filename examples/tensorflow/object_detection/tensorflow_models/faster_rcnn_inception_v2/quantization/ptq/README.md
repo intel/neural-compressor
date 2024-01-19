@@ -24,7 +24,7 @@ pip install intel-tensorflow
 ```shell
 cd examples/tensorflow/object_detection/tensorflow_models/
 pip install -r requirements.txt
-cd faster_rcnn_inception_resnet_v2/quantization/ptq
+cd faster_rcnn_inception_v2/quantization/ptq
 ```
 
 ### Install Protocol Buffer Compiler
@@ -71,7 +71,7 @@ Usage:
 ```shell
 cd examples/tensorflow/object_detection/tensorflow_models/
 . prepare_dataset.sh
-cd faster_rcnn_inception_resnet_v2/quantization/ptq
+cd faster_rcnn_inception_v2/quantization/ptq
 ```
 
 This script will download the *train*, *validation* and *test* COCO datasets. Furthermore it will convert them to
@@ -102,30 +102,30 @@ Now we support both pb and saved_model formats.
 ### For PB format
   
   ```shell
-  # The cmd of running faster_rcnn_inception_resnet_v2
-  bash run_quant.sh --input_model=./faster_rcnn_inception_v2_coco_2018_01_28/frozen_inference_graph.pb --output_model=./tensorflow-faster_rcnn_inception_resnet_v2-tune.pb --dataset_location=/path/to/dataset/coco_val.record
+  # The cmd of running faster_rcnn_inception_v2
+  bash run_quant.sh --input_model=./faster_rcnn_inception_v2_coco_2018_01_28/frozen_inference_graph.pb --output_model=./tensorflow-faster_rcnn_inception_v2-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
 ### For saved_model format
   
   ```shell
-  # The cmd of running faster_rcnn_inception_resnet_v2
-  bash run_quant.sh --input_model=./faster_rcnn_inception_v2_coco_2018_01_28/saved_model/ --output_model=./tensorflow-faster_rcnn_inception_resnet_v2-tune --dataset_location=/path/to/dataset/coco_val.record
+  # The cmd of running faster_rcnn_inception_v2
+  bash run_quant.sh --input_model=./faster_rcnn_inception_v2_coco_2018_01_28/saved_model/ --output_model=./tensorflow-faster_rcnn_inception_v2-tune --dataset_location=/path/to/dataset/coco_val.record
   ```
 
 ## 2. Benchmark
   ```shell
-  bash run_benchmark.sh --input_model=./tensorflow-faster_rcnn_inception_resnet_v2-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=performance
+  bash run_benchmark.sh --input_model=./tensorflow-faster_rcnn_inception_v2-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=performance
   ```
 
-Details of enabling Intel® Neural Compressor on faster_rcnn_inception_resnet_v2 for Tensorflow.
+Details of enabling Intel® Neural Compressor on faster_rcnn_inception_v2 for Tensorflow.
 =========================
 
-This is a tutorial of how to enable faster_rcnn_inception_resnet_v2 model with Intel® Neural Compressor.
+This is a tutorial of how to enable faster_rcnn_inception_v2 model with Intel® Neural Compressor.
 ## User Code Analysis
 User specifies fp32 *model*, calibration dataset *q_dataloader* and a custom *eval_func* which encapsulates the evaluation dataset and metric by itself.
 
-For faster_rcnn_inception_resnet_v2, we applied the latter one because our philosophy is to enable the model with minimal changes. Hence we need to make two changes on the original code. The first one is to implement the q_dataloader and make necessary changes to *eval_func*.
+For faster_rcnn_inception_v2, we applied the latter one because our philosophy is to enable the model with minimal changes. Hence we need to make two changes on the original code. The first one is to implement the q_dataloader and make necessary changes to *eval_func*.
 
 ### Code update
 

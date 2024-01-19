@@ -220,7 +220,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Faster R-CNN Inception ResNet V2</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/object_detection/tensorflow_models/faster_rcnn_inception_resnet_v2/quantization/ptq">pb</a> / <a href="./tensorflow/object_detection/tensorflow_models/faster_rcnn_inception_resnet_v2/quantization/ptq">SavedModel</a></td>
+    <td><a href="./tensorflow/object_detection/tensorflow_models/faster_rcnn_inception_v2/quantization/ptq">pb</a> / <a href="./tensorflow/object_detection/tensorflow_models/faster_rcnn_inception_v2/quantization/ptq">SavedModel</a></td>
   </tr>
   <tr>
     <td>Faster R-CNN ResNet101</td>
