@@ -26,7 +26,7 @@ from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import (
+from neural_compressor.common.utils import (
     BASE_CONFIG,
     COMPOSABLE_CONFIG,
     DEFAULT_WHITE_LIST,
@@ -34,10 +34,19 @@ from neural_compressor.common.utility import (
     GLOBAL,
     LOCAL,
     OP_NAME_OR_MODULE_TYPE,
+    DEFAULT_WORKSPACE,
 )
 
 logger = Logger().get_logger()
 
+__all__ = [
+    "ConfigRegistry",
+    "register_config",
+    "BaseConfig",
+    "ComposableConfig",
+    "Options",
+    "options",
+]
 
 # Dictionary to store registered configurations
 
@@ -411,3 +420,89 @@ class ComposableConfig(BaseConfig):
     def register_supported_configs(cls):
         """Add all supported configs."""
         raise NotImplementedError
+
+class Options:
+    """Option Class for configs.
+
+    This class is used for configuring global variables. The global variable options is created with this class.
+    If you want to change global variables, you should use functions from utils.utility.py:
+        set_random_seed(seed: int)
+        set_workspace(workspace: str)
+        set_resume_from(resume_from: str)
+        set_tensorboard(tensorboard: bool)
+
+    Args:
+        random_seed(int): Random seed used in neural compressor.
+                          Default value is 1978.
+        workspace(str): The directory where intermediate files and tuning history file are stored.
+                        Default value is:
+                            "./nc_workspace/{}/".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")).
+        resume_from(str): The directory you want to resume tuning history file from.
+                          The tuning history was automatically saved in the workspace directory
+                               during the last tune process.
+                          Default value is None.
+        tensorboard(bool): This flag indicates whether to save the weights of the model and the inputs of each layer
+                               for visual display.
+                           Default value is False.
+
+    Example::
+
+        from neural_compressor import set_random_seed, set_workspace, set_resume_from, set_tensorboard
+        set_random_seed(2022)
+        set_workspace("workspace_path")
+        set_resume_from("workspace_path")
+        set_tensorboard(True)
+    """
+
+    def __init__(self, random_seed=1978, workspace=DEFAULT_WORKSPACE, resume_from=None, tensorboard=False):
+        """Init an Option object."""
+        self.random_seed = random_seed
+        self.workspace = workspace
+        self.resume_from = resume_from
+        self.tensorboard = tensorboard
+
+    @property
+    def random_seed(self):
+        """Get random seed."""
+        return self._random_seed
+
+    @random_seed.setter
+    def random_seed(self, random_seed):
+        """Set random seed."""
+        if _check_value("random_seed", random_seed, int):
+            self._random_seed = random_seed
+
+    @property
+    def workspace(self):
+        """Get workspace."""
+        return self._workspace
+
+    @workspace.setter
+    def workspace(self, workspace):
+        """Set workspace."""
+        if _check_value("workspace", workspace, str):
+            self._workspace = workspace
+
+    @property
+    def resume_from(self):
+        """Get resume_from."""
+        return self._resume_from
+
+    @resume_from.setter
+    def resume_from(self, resume_from):
+        """Set resume_from."""
+        if resume_from is None or _check_value("resume_from", resume_from, str):
+            self._resume_from = resume_from
+
+    @property
+    def tensorboard(self):
+        """Get tensorboard."""
+        return self._tensorboard
+
+    @tensorboard.setter
+    def tensorboard(self, tensorboard):
+        """Set tensorboard."""
+        if _check_value("tensorboard", tensorboard, bool):
+            self._tensorboard = tensorboard
+
+options = Options()

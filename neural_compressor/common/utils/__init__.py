@@ -12,13 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.common.logger import level, log, info, debug, warn, warning, error, fatal
-from neural_compressor.common.base_config import options
-from neural_compressor.common.utils import set_workspace
-
-#  If you edit these imports, please update common/__init__.py.in as well
-__all__ = [
-    "level", "log", "info", "debug", "warn", "warning", "error", "fatal",
-    "options",
-    "set_workspace",
-]
+from .constants import *
+from .utility import *

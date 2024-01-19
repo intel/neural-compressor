@@ -16,23 +16,9 @@
 # limitations under the License.
 
 
-# All constants
+def set_workspace(workspace: str):
+    """Set the workspace in config."""
+    from neural_compressor.common.base_config import options
 
-# constants for configs
-GLOBAL = "global"
-LOCAL = "local"
-DEFAULT_WHITE_LIST = "*"
-EMPTY_WHITE_LIST = None
+    options.workspace = workspace
 
-# config name
-BASE_CONFIG = "base_config"
-COMPOSABLE_CONFIG = "composable_config"
-RTN_WEIGHT_ONLY_QUANT = "rtn_weight_only_quant"
-STATIC_QUANT = "static_quant"
-GPTQ = "gptq"
-FP8_QUANT = "fp8_quant"
-
-
-from typing import Callable, Union
-
-OP_NAME_OR_MODULE_TYPE = Union[str, Callable]
