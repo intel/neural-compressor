@@ -5,7 +5,7 @@ echo "${test_case}"
 
 # install requirements
 echo "set up UT env..."
-pip install /neural-compressor/test/3x/torch/requirements.txt
+pip install -r /neural-compressor/test/3x/torch/requirements.txt
 pip install coverage
 pip list
 
