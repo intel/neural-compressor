@@ -26,7 +26,7 @@ from torch.autograd import Function
 from torch.nn import functional as F
 
 from neural_compressor.common import logger
-from neural_compressor.common.logger import DEBUG, level
+from neural_compressor.common import DEBUG, level
 from neural_compressor.torch.algorithms.weight_only.rtn import quant_weight
 
 

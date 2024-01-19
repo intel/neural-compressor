@@ -25,7 +25,7 @@ from copy import deepcopy
 from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from neural_compressor.common.logger import Logger
+from neural_compressor.common import Logger
 from neural_compressor.common.utils import (
     BASE_CONFIG,
     COMPOSABLE_CONFIG,
@@ -421,6 +421,36 @@ class ComposableConfig(BaseConfig):
         """Add all supported configs."""
         raise NotImplementedError
 
+def _check_value(name, src, supported_type, supported_value=[]):
+    """Check if the given object is the given supported type and in the given supported value.
+
+    Example::
+
+        from neural_compressor.common.base_config import _check_value
+
+        def datatype(self, datatype):
+            if _check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
+                self._datatype = datatype
+    """
+    if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
+        assert False, "Type of {} items should be {} but not {}".format(
+            name, str(supported_type), [type(i) for i in src]
+        )
+    elif not isinstance(src, list) and not isinstance(src, supported_type):
+        assert False, "Type of {} should be {} but not {}".format(name, str(supported_type), type(src))
+
+    if len(supported_value) > 0:
+        if isinstance(src, str) and src not in supported_value:
+            assert False, "{} is not in supported {}: {}. Skip setting it.".format(src, name, str(supported_value))
+        elif (
+            isinstance(src, list)
+            and all([isinstance(i, str) for i in src])
+            and any([i not in supported_value for i in src])
+        ):
+            assert False, "{} is not in supported {}: {}. Skip setting it.".format(src, name, str(supported_value))
+
+    return True
+
 class Options:
     """Option Class for configs.
 
@@ -447,7 +477,7 @@ class Options:
 
     Example::
 
-        from neural_compressor import set_random_seed, set_workspace, set_resume_from, set_tensorboard
+        from neural_compressor.common import set_random_seed, set_workspace, set_resume_from, set_tensorboard
         set_random_seed(2022)
         set_workspace("workspace_path")
         set_resume_from("workspace_path")
