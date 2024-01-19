@@ -16,9 +16,29 @@
 # limitations under the License.
 
 
+def set_random_seed(seed: int):
+    """Set the random seed in config."""
+    from neural_compressor.common import options
+
+    options.random_seed = seed
+
+
 def set_workspace(workspace: str):
     """Set the workspace in config."""
-    from neural_compressor.common.base_config import options
+    from neural_compressor.common import options
 
     options.workspace = workspace
 
+
+def set_resume_from(resume_from: str):
+    """Set the resume_from in config."""
+    from neural_compressor.common import options
+
+    options.resume_from = resume_from
+
+
+def set_tensorboard(tensorboard: bool):
+    """Set the tensorboard in config."""
+    from neural_compressor.common import options
+
+    options.tensorboard = tensorboard
