@@ -258,7 +258,7 @@ stages:
               docker exec collectLogs /bin/bash  +x -c "cd /neural-compressor/.azure-pipelines/scripts \
               && bash install_nc.sh \
               && bash ut/collect_log.sh"
-            displayName: "collect logs"
+            displayName: "Collect UT Coverage"
 
           - task: PublishPipelineArtifact@1
             condition: succeededOrFailed()
