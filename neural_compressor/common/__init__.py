@@ -30,7 +30,6 @@ from neural_compressor.common.utils import (
 from neural_compressor.common.base_config import options
 
 
-#  If you edit these imports, please update common/__init__.py.in as well
 __all__ = [
     "level",
     "log",

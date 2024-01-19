@@ -457,7 +457,7 @@ class Options:
     """Option Class for configs.
 
     This class is used for configuring global variables. The global variable options is created with this class.
-    If you want to change global variables, you should use functions from utils.utility.py:
+    If you want to change global variables, you should use functions from neural_compressor.common.utils.utility.py:
         set_random_seed(seed: int)
         set_workspace(workspace: str)
         set_resume_from(resume_from: str)

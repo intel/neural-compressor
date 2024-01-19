@@ -15,6 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+__all__ = [
+    "set_workspace",
+    "set_random_seed",
+    "set_resume_from",
+    "set_tensorboard",
+]
 
 def set_random_seed(seed: int):
     """Set the random seed in config."""

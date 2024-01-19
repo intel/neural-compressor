@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .constants import *
-from .utility import *
-from .logger import *
+from neural_compressor.common.utils.constants import *
+from neural_compressor.common.utils.utility import *
+from neural_compressor.common.utils.logger import *
