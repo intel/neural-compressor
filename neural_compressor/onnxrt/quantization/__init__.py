@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,6 @@
 
 from neural_compressor.onnxrt.quantization.quantize import _quantize
 from neural_compressor.onnxrt.quantization.config import (
-    RTNWeightQuantConfig,
+    RTNConfig,
     get_default_rtn_config,
 )

@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,21 +19,27 @@ from typing import Dict, Tuple, Union
 import onnx
 
 from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import RTN_WEIGHT_ONLY_QUANT
-from neural_compressor.onnxrt.quantization.config import RTNWeightQuantConfig
+from neural_compressor.common.utility import RTN
+from neural_compressor.onnxrt.quantization.config import RTNConfig
 from neural_compressor.onnxrt.utils.utility import register_algo
 
 logger = Logger().get_logger()
 
 
 ###################### RTN Algo Entry ##################################
-@register_algo(name=RTN_WEIGHT_ONLY_QUANT)
+@register_algo(name=RTN)
 def rtn_quantize_entry(
     model: Union[Path, str],
-    configs_mapping: Dict[Tuple[str, callable], RTNWeightQuantConfig],
+    quant_config: RTNConfig,
+    *args,
+    **kwargs
 ) -> onnx.ModelProto:
     """The main entry to apply rtn quantization."""
     from neural_compressor.onnxrt.algorithms.weight_only.rtn import apply_rtn_on_model
 
+    # map config to each op
+    model_info = quant_config.get_model_info(model=model)
+    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+    logger.debug(configs_mapping)
     model = apply_rtn_on_model(model, configs_mapping)
     return model

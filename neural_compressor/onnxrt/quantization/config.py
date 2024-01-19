@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import onnx
 
 from neural_compressor.common.base_config import BaseConfig, register_config
 from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, RTN_WEIGHT_ONLY_QUANT
+from neural_compressor.common.utility import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, RTN
 
 logger = Logger().get_logger()
 
@@ -47,8 +47,8 @@ class OperatorConfig(NamedTuple):
 ######################## RNT Config ###############################
 
 
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN_WEIGHT_ONLY_QUANT)
-class RTNWeightQuantConfig(BaseConfig):
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN)
+class RTNConfig(BaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
     supported_configs: List[OperatorConfig] = []
@@ -62,7 +62,7 @@ class RTNWeightQuantConfig(BaseConfig):
     ]
     model_params_list = ["providers"]
     params_list = node_params_list + model_params_list
-    name = RTN_WEIGHT_ONLY_QUANT
+    name = RTN
 
     def __init__(
         self,
@@ -105,12 +105,12 @@ class RTNWeightQuantConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict):
-        return super(RTNWeightQuantConfig, cls).from_dict(config_dict=config_dict)
+        return super(RTNConfig, cls).from_dict(config_dict=config_dict)
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
-        linear_rtn_config = RTNWeightQuantConfig(
+        linear_rtn_config = RTNConfig(
             weight_dtype=["int"],
             weight_bits=[4, 3, 8],
             weight_group_size=[32, -1, 1, 16, 64, 128, 256, 512, 1024],
@@ -159,13 +159,13 @@ class RTNWeightQuantConfig(BaseConfig):
 
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
-RTNWeightQuantConfig.register_supported_configs()
+RTNConfig.register_supported_configs()
 
 
-def get_default_rtn_config() -> RTNWeightQuantConfig:
+def get_default_rtn_config() -> RTNConfig:
     """Generate the default rtn config.
 
     Returns:
         the default rtn config.
     """
-    return RTNWeightQuantConfig()
+    return RTNConfig()

@@ -4,7 +4,7 @@
 # Copyright (c) 2023 MIT HAN Lab
 # This source code is licensed under the MIT license
 #
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,16 +20,15 @@
 
 
 import os
-from pathlib import Path
-from typing import Union
 
 import numpy as np
 import onnx
 import onnxruntime as ort
 from packaging.version import Version
+from typing import Union, Dict, Optional, Tuple
+from pathlib import Path
 
-from neural_compressor.onnxrt.algorithms.weight_only.utility import make_matmul_weight_only_node
-from neural_compressor.onnxrt.quantization.config import RTNWeightQuantConfig
+from neural_compressor.onnxrt.quantization.config import RTNConfig
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.onnxrt.utils.utility import (
     ONNXRT116_VERSION,
@@ -37,6 +36,8 @@ from neural_compressor.onnxrt.utils.utility import (
     dtype_mapping,
     simple_progress_bar,
 )
+
+from neural_compressor.onnxrt.algorithms.weight_only.utility import make_matmul_weight_only_node
 
 
 def pad_tensor(weight, group_size, k_blocks):
@@ -129,43 +130,44 @@ def qdq_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", rati
     weight, scale, zp = quant_tensor(data, num_bits, group_size, scheme, dtype, ratio)
     return np.reshape(scale * (weight - zp), org_shape)
 
-
 def rtn_quantize(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
-    weight_config={},
-    num_bits=4,
-    group_size=32,
-    scheme="asym",
-    ratios={},
-    accuracy_level=0,
-    providers=["CPUExecutionProvider"],
-):
-    """Quant the model with round to nearst method.
+    weight_config: Optional[Dict[tuple, dict]] = {},
+    num_bits: Optional[int] = 4,
+    group_size: Optional[int] = 32,
+    scheme: Optional[str] = "asym",
+    ratios: Optional[int] = {},
+    accuracy_level: Optional[int] = 0,
+    providers: Optional[list] = ["CPUExecutionProvider"],
+) -> onnx.ModelProto:
+    """Quantize the model with round to nearst method.
 
     Args:
-        model (onnx.ModelProto or ONNXModel or ): onnx model
-        weight_config (dict): quantization config
-                For example,
-                weight_config = {
-                    '("/h.0/mlp/fc_out/MatMul", "MatMul")':
-                        {
-                            'bits': 4,
-                            'group_size': 32,
-                            'scheme': 'sym',
-                            'algorithm': 'RTN'
-                        }
-                }
-        num_bits (int, optional): num_bits. Default is 4.
-        group_size (int, optional): how many elements share one scale/zp. Default is 32.
-        scheme (str, optional): sym or asym. Defaults to "asym".
-        ratios (dict, optional): percentile of clip. Defaults to {}.
-        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
-                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
-                              4 (int8 compute type of jblas kernel)
-        providers (list): providers to use
+        model (Union[onnx.ModelProto, ONNXModel, Path, str]): onnx model
+        weight_config (Optional[Dict[tuple, dict]], optional): quantization config
+            For example,
+            weight_config = {
+                '(fc2, "MatMul")':
+                    {
+                        'weight_dtype': 'int',
+                        'weight_bits': 4,
+                        'weight_group_size': 32,
+                        'weight_sym': True,
+                        'accuracy_level': 0
+                    }
+            }. Defaults to {}.
+        num_bits (Optional[int], optional): num_bits. Defaults to 4.
+        group_size (Optional[int], optional): how many elements share one scale/zp. Defaults to 32.
+        scheme (Optional[str], optional): sym or asym. Defaults to "asym".
+        ratios (Optional[int], optional): percentile of clip. Defaults to {}.
+        accuracy_level (Optional[int], optional): 
+            accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+            2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+            4 (int8 compute type of jblas kernel). Defaults to 0.
+        providers (Optional[list], optional): providers to use. Defaults to ["CPUExecutionProvider"].
 
     Returns:
-        model: fake quantized ONNXModel
+        onnx.ModelProto: quantized ONNXModel
     """
     if not isinstance(model, ONNXModel):
         model = ONNXModel(model)
@@ -181,13 +183,11 @@ def rtn_quantize(
 
         # check op_type of node is MatMul
         # check dim 1 of input is weight tensor
-        # check node config is RTNWeightQuantConfig
-        # check node weight_dtype config is not fp32
+        # check weight_type is not "fp32"
         if (
             node.op_type in ["MatMul"]  # check op_type of node is MatMul
             and model.get_initializer(node.input[1]) is not None
-            and isinstance(weight_config.get((node.name, node.op_type), {}), RTNWeightQuantConfig)
-            and weight_config.get((node.name, node.op_type), {}).weight_dtype.lower() != "fp32"
+            and weight_config.get((node.name, node.op_type), {}).get("weight_dtype", "fp32") != "fp32"
         ):
             weight_tensor = model.get_initializer(node.input[1])
             weight = onnx.numpy_helper.to_array(weight_tensor, base_dir=base_dir).copy()
@@ -195,12 +195,11 @@ def rtn_quantize(
                 continue
 
             dtype = weight.dtype
-
             if (node.name, node.op_type) in weight_config:
-                num_bits = weight_config[(node.name, node.op_type)].weight_bits
-                group_size = weight_config[(node.name, node.op_type)].weight_group_size
-                scheme = "sym" if weight_config[(node.name, node.op_type)].weight_sym else "asym"
-                accuracy_level = weight_config[(node.name, node.op_type)].accuracy_level
+                num_bits = weight_config[(node.name, node.op_type)].get("weight_bits", 4)
+                group_size = weight_config[(node.name, node.op_type)].get("weight_group_size", 32)
+                scheme = "sym" if weight_config[(node.name, node.op_type)].get("weight_sym", True) else "asym"
+                accuracy_level = weight_config[(node.name, node.op_type)].get("accuracy_level", 0)
 
             org_w_shape = weight.shape  # ic, oc
             group_size = group_size if group_size != -1 else org_w_shape[0]
@@ -261,7 +260,18 @@ def rtn_quantize(
     return model.model
 
 
-def apply_rtn_on_model(model: onnx.ModelProto, quant_config: RTNWeightQuantConfig) -> onnx.ModelProto:
-    providers = quant_config["providers"]
+def apply_rtn_on_model(
+    model: onnx.ModelProto, 
+    quant_config: Dict[Tuple[str, callable], RTNConfig]
+) -> onnx.ModelProto:
+    if "providers" in quant_config:
+        providers = quant_config.pop("providers")
 
-    return rtn_quantize(model, quant_config, providers=providers)
+    # change op config to dict type
+    for op_name_type, op_config in quant_config.items():
+        if isinstance(op_config, RTNConfig):
+            quant_config[op_name_type] = op_config.to_dict()
+
+    return rtn_quantize(model,
+                        weight_config=quant_config,
+                        providers=providers)

@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Optional, Tuple
 
 import onnx
+from onnxruntime.quantization import CalibrationDataReader
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.logger import Logger
@@ -24,15 +25,15 @@ from neural_compressor.onnxrt.utils.utility import algos_mapping
 
 logger = Logger().get_logger()
 
-
-def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
-    return any(config.name == algo_name for config in configs_mapping.values() if hasattr(config, "name"))
+def need_apply(quant_config: BaseConfig, algo_name):
+    return quant_config.name == algo_name if hasattr(quant_config, "name") else False
 
 
 # only for internal usage now
 def _quantize(
     model_input: Tuple[Path, str],
     quant_config: BaseConfig,
+    calibration_data_reader: Optional[CalibrationDataReader] = None,
 ) -> onnx.ModelProto:
     """The main entry to quantize a model.
 
@@ -51,14 +52,11 @@ def _quantize(
         assert isinstance(
             quant_config, BaseConfig
         ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-    logger.info(f"Quantize model with config: \n {quant_config.to_json_string()} \n")
+    logger.info(f"Quantize model with config: \n {quant_config} \n")
 
     # select quantization algo according to config
-    model_info = quant_config.get_model_info(model=model_input)
-    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
-    logger.debug(configs_mapping)
     for algo_name, algo_func in algos_mapping.items():
-        if need_apply(configs_mapping, algo_name):
+        if need_apply(quant_config, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
-            q_model = algo_func(model_input, configs_mapping)
+            q_model = algo_func(model_input, quant_config, calibration_data_reader=calibration_data_reader)
     return q_model

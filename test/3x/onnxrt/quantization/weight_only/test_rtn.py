@@ -1,3 +1,4 @@
+import os
 import shutil
 import unittest
 
@@ -7,6 +8,13 @@ from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
 
+def find_onnx_file(folder_path):
+    # return first .onnx file path in folder_path
+    for root, dirs, files in os.walk(folder_path):
+        for file in files:
+            if file.endswith(".onnx"):
+                return os.path.join(root, file)
+    return None
 
 class TestRTNQuant(unittest.TestCase):
     @classmethod
@@ -15,7 +23,7 @@ class TestRTNQuant(unittest.TestCase):
             "hf-internal-testing/tiny-random-gptj",
             output="gptj",
         )
-        self.gptj = "gptj/model.onnx"
+        self.gptj = find_onnx_file("./gptj")
 
     @classmethod
     def tearDownClass(self):
@@ -35,7 +43,7 @@ class TestRTNQuant(unittest.TestCase):
 
     def _apply_rtn(self, quant_config):
         logger.info(f"Test RTN with config {quant_config}")
-        from neural_compressor.onnxrt import _quantize
+        from neural_compressor.onnxrt.quantization.quantize import _quantize
 
         fp32_model = self.gptj
         qmodel = _quantize(fp32_model, quant_config)
@@ -43,7 +51,7 @@ class TestRTNQuant(unittest.TestCase):
         return qmodel
 
     def test_rtn(self):
-        from neural_compressor.onnxrt import RTNWeightQuantConfig
+        from neural_compressor.onnxrt import RTNConfig
 
         # some tests were skipped to accelerate the CI
         # TODO: check params combination.
@@ -57,10 +65,10 @@ class TestRTNQuant(unittest.TestCase):
         }
         from itertools import product
 
-        keys = RTNWeightQuantConfig.params_list
+        keys = RTNConfig.params_list
         for value in product(*rtn_options.values()):
             d = dict(zip(keys, value))
-            quant_config = RTNWeightQuantConfig(**d)
+            quant_config = RTNConfig(**d)
             qmodel = self._apply_rtn(quant_config)
             self.assertEqual(self._count_woq_matmul(qmodel, bits=value[1], group_size=value[2]), 30)
 

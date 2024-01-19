@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ def register_algo(name):
     Usage example:
         @register_algo(name=example_algo)
         def example_algo(model: Union[onnx.ModelProto, Path, str],
-                         quant_config: RTNWeightQuantConfig) -> onnx.ModelProto:
+                         quant_config: RTNConfig) -> onnx.ModelProto:
             ...
 
     Args:
