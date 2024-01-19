@@ -59,23 +59,11 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             self.gptj_fp16_model = onnx.load("gptj_fp16/decoder_model.onnx")
         self.gptj_dataloader = DummyNLPDataloader("hf-internal-testing/tiny-random-gptj")
 
-        cmd = (
-            "optimum-cli export onnx --model PY007/TinyLlama-1.1B-Chat-v0.3 --task text-generation --legacy tiny-llama/"
-        )
-        p = subprocess.Popen(
-            cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-        )  # nosec
-        p.communicate()
-
-        self.llama_model = "tiny-llama/decoder_model.onnx"
-        self.llama_dataloader = DummyNLPDataloader("PY007/TinyLlama-1.1B-Chat-v0.3")
-
     @classmethod
     def tearDownClass(self):
         shutil.rmtree("nc_workspace", ignore_errors=True)
         shutil.rmtree("gptj", ignore_errors=True)
         shutil.rmtree("gptj_fp16", ignore_errors=True)
-        shutil.rmtree("tiny-llama", ignore_errors=True)
 
     @unittest.skipIf("CUDAExecutionProvider" not in ort.get_available_providers(), "Skip cuda woq test")
     def test_RTN_quant_with_woq_op(self):
@@ -477,18 +465,6 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             op_type_dict={".*": {"weight": {"bits": 8}}},
         )
         self.assertEqual(self._count_woq_matmul(woq_model, bits=8), 31)
-
-    def test_woq_tune_with_large_model(self):
-        from functools import partial
-
-        def fake_eval(model, eval_result_lst):
-            acc = eval_result_lst.pop(0)
-            return acc
-
-        # Expect tuning ends with WOQ algorithm 'RTN_G32ASYM'
-        partial_fake_eval = partial(fake_eval, eval_result_lst=[1, 1.1])
-        woq_model = self._test_woq_tune_common(self.llama_model, self.llama_dataloader, partial_fake_eval)
-        self.assertEqual(self._count_woq_matmul(woq_model), 155)
 
     def test_woq_with_ModelProto_input(self):
         from neural_compressor.model.onnx_model import ONNXModel

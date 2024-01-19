@@ -3846,6 +3846,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     convert_custom_config=self.model.kwargs.get("convert_custom_config_dict", None)
                     if self.model.kwargs is not None
                     else None,
+                    backend_config=self.model.q_config,
                 )
             else:
                 self.model._model = convert_fx(

@@ -25,12 +25,11 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
 from neural_compressor.common.utility import (
-    DEFAULT_WHITE_LIST,
-    FP8_QUANT,
-    GPTQ,
-    OP_NAME_OR_MODULE_TYPE,
-    RTN_WEIGHT_ONLY_QUANT,
-    SQ,
+    DEFAULT_WHITE_LIST, 
+    FP8_QUANT, GPTQ, 
+    OP_NAME_OR_MODULE_TYPE, 
+    RTN, 
+    SMOOTH_QUANT,
 )
 from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
 from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
@@ -61,8 +60,8 @@ str2operator = {"Linear": torch.nn.Linear, "linear": torch.nn.functional.linear,
 ######################## RNT Config ###############################
 
 
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN_WEIGHT_ONLY_QUANT, priority=PRIORITY_RTN)
-class RTNWeightQuantConfig(BaseConfig):
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN, priority=PRIORITY_RTN)
+class RTNConfig(BaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
     supported_configs: List[OperatorConfig] = []
@@ -81,7 +80,7 @@ class RTNWeightQuantConfig(BaseConfig):
         "double_quant_sym",
         "double_quant_group_size",
     ]
-    name = RTN_WEIGHT_ONLY_QUANT
+    name = RTN
 
     def __init__(
         self,
@@ -138,12 +137,12 @@ class RTNWeightQuantConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict):
-        return super(RTNWeightQuantConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
+        return super(RTNConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
-        linear_rtn_config = RTNWeightQuantConfig(
+        linear_rtn_config = RTNConfig(
             weight_dtype=["int", "int8", "int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"],
             weight_bits=[4, 1, 2, 3, 5, 6, 7, 8],
             weight_group_size=[32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024],
@@ -174,16 +173,16 @@ class RTNWeightQuantConfig(BaseConfig):
 
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
-RTNWeightQuantConfig.register_supported_configs()
+RTNConfig.register_supported_configs()
 
 
-def get_default_rtn_config() -> RTNWeightQuantConfig:
+def get_default_rtn_config() -> RTNConfig:
     """Generate the default rtn config.
 
     Returns:
         the default rtn config.
     """
-    return RTNWeightQuantConfig()
+    return RTNConfig()
 
 
 ######################## GPTQ Config ###############################
@@ -319,11 +318,11 @@ def get_default_gptq_config() -> GPTQConfig:
 
 
 ######################## Smooth Quant Config ###############################
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=SQ)
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT)
 class SmoothQuantConfig(BaseConfig):
     """Config class for smooth quantization. """
 
-    name = SQ
+    name = SMOOTH_QUANT
     supported_configs: List[OperatorConfig] = []
     params_list = [
         "backend",
