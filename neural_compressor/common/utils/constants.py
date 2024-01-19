@@ -27,7 +27,7 @@ EMPTY_WHITE_LIST = None
 # config name
 BASE_CONFIG = "base_config"
 COMPOSABLE_CONFIG = "composable_config"
-RTN_WEIGHT_ONLY_QUANT = "rtn_weight_only_quant"
+RTN = "rtn"
 STATIC_QUANT = "static_quant"
 GPTQ = "gptq"
 FP8_QUANT = "fp8_quant"

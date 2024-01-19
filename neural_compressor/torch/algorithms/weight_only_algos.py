@@ -18,17 +18,17 @@ from typing import Dict, Tuple
 import torch
 
 from neural_compressor.common import Logger
-from neural_compressor.common.utils import GPTQ, RTN_WEIGHT_ONLY_QUANT
-from neural_compressor.torch.quantization.config import GPTQConfig, RTNWeightQuantConfig
+from neural_compressor.common.utils import GPTQ, RTN
+from neural_compressor.torch.quantization.config import GPTQConfig, RTNConfig
 from neural_compressor.torch.utils.utility import fetch_module, register_algo, set_module
 
 logger = Logger().get_logger()
 
 
 ###################### RTN Algo Entry ##################################
-@register_algo(name=RTN_WEIGHT_ONLY_QUANT)
+@register_algo(name=RTN)
 def rtn_quantize_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNWeightQuantConfig], *args, **kwargs
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNConfig], *args, **kwargs
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
     from .weight_only.rtn import apply_rtn_on_single_module
