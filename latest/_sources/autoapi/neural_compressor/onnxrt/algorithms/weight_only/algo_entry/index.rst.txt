@@ -1,0 +1,26 @@
+:orphan:
+
+:py:mod:`neural_compressor.onnxrt.algorithms.weight_only.algo_entry`
+====================================================================
+
+.. py:module:: neural_compressor.onnxrt.algorithms.weight_only.algo_entry
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.algorithms.weight_only.algo_entry.rtn_quantize_entry
+
+
+
+.. py:function:: rtn_quantize_entry(model: Union[pathlib.Path, str], quant_config: neural_compressor.onnxrt.quantization.config.RTNConfig, *args, **kwargs) -> onnx.ModelProto
+
+   The main entry to apply rtn quantization.
+
+

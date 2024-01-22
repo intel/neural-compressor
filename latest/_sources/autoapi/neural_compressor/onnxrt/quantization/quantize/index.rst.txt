@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.onnxrt.quantization.quantize`
+========================================================
+
+.. py:module:: neural_compressor.onnxrt.quantization.quantize
+
+

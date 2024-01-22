@@ -1,0 +1,17 @@
+:orphan:
+
+:py:mod:`neural_compressor.onnxrt.utils`
+========================================
+
+.. py:module:: neural_compressor.onnxrt.utils
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   onnx_model/index.rst
+
+

@@ -44,8 +44,6 @@ Attributes
 
    neural_compressor.common.level
    neural_compressor.common.DEBUG
-   neural_compressor.common.options
-
 
 
 

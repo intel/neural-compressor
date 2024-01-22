@@ -1,0 +1,50 @@
+:orphan:
+
+:py:mod:`neural_compressor.onnxrt.utils.utility`
+================================================
+
+.. py:module:: neural_compressor.onnxrt.utils.utility
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.utils.utility.find_by_name
+   neural_compressor.onnxrt.utils.utility.simple_progress_bar
+   neural_compressor.onnxrt.utils.utility.register_algo
+
+
+
+.. py:function:: find_by_name(name, item_list)
+
+   Helper function to find item by name in a list.
+
+
+.. py:function:: simple_progress_bar(total, i)
+
+   Progress bar for cases where tqdm can't be used.
+
+
+.. py:function:: register_algo(name)
+
+   Decorator function to register algorithms in the algos_mapping dictionary.
+
+   Usage example:
+       @register_algo(name=example_algo)
+       def example_algo(model: Union[onnx.ModelProto, Path, str],
+                        quant_config: RTNConfig) -> onnx.ModelProto:
+           ...
+
+   :param name: The name under which the algorithm function will be registered.
+   :type name: str
+
+   :returns: The decorator function to be used with algorithm functions.
+   :rtype: decorator
+
+

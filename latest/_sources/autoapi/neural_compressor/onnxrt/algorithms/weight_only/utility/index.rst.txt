@@ -1,0 +1,60 @@
+:orphan:
+
+:py:mod:`neural_compressor.onnxrt.algorithms.weight_only.utility`
+=================================================================
+
+.. py:module:: neural_compressor.onnxrt.algorithms.weight_only.utility
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.algorithms.weight_only.utility.get_blob_size
+   neural_compressor.onnxrt.algorithms.weight_only.utility.make_matmul_weight_only_node
+
+
+
+.. py:function:: get_blob_size(group_size, has_zp)
+
+   Get blob_size.
+
+   :param group_size: how many elements share one scale/zp
+   :type group_size: int
+   :param has_zp: whether zero_point is None
+   :type has_zp: bool
+
+
+.. py:function:: make_matmul_weight_only_node(node, weight_shape, num_bits, group_size, k_blocks, q_weight, scale, zero_point, accuracy_level=0)
+
+   Build MatMulFpQ4 node.
+
+   :param node: original matmul node
+   :param weight_shape: original weight shape
+   :param num_bits: num_bits
+   :type num_bits: int
+   :param group_size: how many elements share one scale/zp
+   :type group_size: int
+   :param k_blocks: block number
+   :type k_blocks: int
+   :param q_weight: quantized weight
+   :type q_weight: array
+   :param scale: scale
+   :type scale: array
+   :param zero_point: zero point
+   :type zero_point: array
+   :param accuracy_level: accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+                          2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+                          4 (int8 compute type of jblas kernel)
+   :type accuracy_level: int
+
+   :returns: MatMulFpQ4 or MatMulNBits node
+             new_inits: initializers of the new node
+   :rtype: matmul_weight_only_node
+
+

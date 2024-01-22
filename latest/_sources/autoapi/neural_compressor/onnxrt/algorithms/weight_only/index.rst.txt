@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.onnxrt.algorithms.weight_only`
+=========================================================
+
+.. py:module:: neural_compressor.onnxrt.algorithms.weight_only
+
+

@@ -1,0 +1,55 @@
+:orphan:
+
+:py:mod:`neural_compressor.onnxrt.quantization.config`
+======================================================
+
+.. py:module:: neural_compressor.onnxrt.quantization.config
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.quantization.config.Backend
+   neural_compressor.onnxrt.quantization.config.RTNConfig
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.quantization.config.get_default_rtn_config
+
+
+
+.. py:class:: Backend
+
+
+
+
+   Generic enumeration.
+
+   Derive from this class to define new enumerations.
+
+
+.. py:class:: RTNConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, act_dtype: str = 'fp32', accuracy_level: int = 0, providers: list = ['CPUExecutionProvider'], white_list: Optional[List[neural_compressor.common.utility.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+
+
+
+
+   Config class for round-to-nearest weight-only quantization.
+
+
+.. py:function:: get_default_rtn_config() -> RTNConfig
+
+   Generate the default rtn config.
+
+   :returns: the default rtn config.
+
+
