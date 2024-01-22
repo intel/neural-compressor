@@ -26,7 +26,7 @@ import numpy as np
 import tensorflow as tf
 import yaml
 
-from neural_compressor.common.logger import Logger
+from neural_compressor.common import Logger
 from neural_compressor.tensorflow.utils import deep_get, dump_elapsed_time
 
 logger = Logger().get_logger()
