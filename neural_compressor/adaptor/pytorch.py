@@ -2599,7 +2599,8 @@ unify_op_type_mapping_ipex = {
     "<class 'torch.nn.modules.conv.Conv2d'>": "Conv2d",
     "<class 'torch.nn.modules.conv.Conv3d'>": "Conv3d",
     "<class 'torch.nn.modules.activation.ReLU'>": "ReLU",
-    "<method 'add' of 'torch._C._TensorBase' objects>": "add",
+    "<method 'add' of 'torch._C._TensorBase' objects>": "add",  # for IPEX < 2.2
+    "<method 'add' of 'torch._C.TensorBase' objects>": "add",  # for IPEX >= 2.2
     "<class 'torch.nn.modules.pooling.AdaptiveAvgPool2d'>": "AdaptiveAvgPool2d",
     "Linear_Relu": "Linear",
     "<class 'torch.nn.modules.linear.Linear'>": "Linear",
