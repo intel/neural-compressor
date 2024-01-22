@@ -1,0 +1,44 @@
+:orphan:
+
+:py:mod:`neural_compressor.common.utils.utility`
+================================================
+
+.. py:module:: neural_compressor.common.utils.utility
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.common.utils.utility.set_random_seed
+   neural_compressor.common.utils.utility.set_workspace
+   neural_compressor.common.utils.utility.set_resume_from
+   neural_compressor.common.utils.utility.set_tensorboard
+
+
+
+.. py:function:: set_random_seed(seed: int)
+
+   Set the random seed in config.
+
+
+.. py:function:: set_workspace(workspace: str)
+
+   Set the workspace in config.
+
+
+.. py:function:: set_resume_from(resume_from: str)
+
+   Set the resume_from in config.
+
+
+.. py:function:: set_tensorboard(tensorboard: bool)
+
+   Set the tensorboard in config.
+
+

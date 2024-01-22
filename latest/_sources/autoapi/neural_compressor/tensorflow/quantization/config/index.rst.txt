@@ -40,7 +40,7 @@ Functions
    Derive from this class to define new enumerations.
 
 
-.. py:class:: StaticQuantConfig(weight_dtype: str = 'int8', weight_sym: bool = True, weight_granularity: str = 'per_tensor', act_dtype: str = 'int8', act_sym: bool = True, act_granularity: str = 'per_tensor', white_list: Optional[List[neural_compressor.common.utility.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+.. py:class:: StaticQuantConfig(weight_dtype: str = 'int8', weight_sym: bool = True, weight_granularity: str = 'per_tensor', act_dtype: str = 'int8', act_sym: bool = True, act_granularity: str = 'per_tensor', white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
 
 
 
