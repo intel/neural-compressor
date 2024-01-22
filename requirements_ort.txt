@@ -1,0 +1,4 @@
+numpy
+onnx
+onnxruntime
+onnxruntime-extensions
