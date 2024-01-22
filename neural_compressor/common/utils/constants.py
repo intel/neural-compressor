@@ -30,6 +30,7 @@ COMPOSABLE_CONFIG = "composable_config"
 RTN = "rtn"
 STATIC_QUANT = "static_quant"
 GPTQ = "gptq"
+AWQ = "awq"
 FP8_QUANT = "fp8_quant"
 
 # options

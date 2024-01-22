@@ -24,8 +24,8 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
-from neural_compressor.common.utils import DEFAULT_WHITE_LIST, FP8_QUANT, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN
-from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
+from neural_compressor.common.utils import AWQ, DEFAULT_WHITE_LIST, FP8_QUANT, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN
+from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN, PRIORITY_AWQ
 from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
 
 FRAMEWORK_NAME = "torch"
@@ -310,6 +310,132 @@ def get_default_gptq_config() -> GPTQConfig:
     """
     return GPTQConfig()
 
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=AWQ, priority=PRIORITY_AWQ)
+class AWQConfig(BaseConfig):
+    """Config class for AWQ.
+
+    AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.
+    https://arxiv.org/abs/2306.00978
+    """
+
+    supported_configs: List[OperatorConfig] = []
+    params_list = [
+        "weight_dtype",
+        "weight_bits",
+        "weight_group_size",
+        "weight_sym",
+        "act_dtype",
+        "enable_full_range",
+        "enable_mse_search",
+        "group_dim",
+        "return_int",
+        "double_quant_dtype",
+        "double_quant_bits",
+        "double_quant_sym",
+        "double_quant_group_size",
+        # AWQ params
+        "enable_auto_scale",
+        "folding",
+    ]
+    name = AWQ
+
+    def __init__(
+        self,
+        weight_dtype: str = "int",
+        weight_bits: int = 4,
+        weight_group_size: int = 32,
+        weight_sym: bool = True,
+        act_dtype: str = "fp32",
+        enable_full_range: bool = False,
+        enable_mse_search: bool = False,
+        group_dim: int = 1,
+        return_int: bool = False,
+        double_quant_dtype: str = "fp32",
+        double_quant_bits: int = 8,
+        double_quant_sym: bool = True,
+        double_quant_group_size: int = 256,
+        enable_auto_scale: bool = True,
+        folding: bool = False,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init AWQ weight-only quantization config.
+
+        Args:
+            weight_dtype (str): Data type for weights, default is "int".
+            weight_bits (int): Number of bits used to represent weights, default is 4.
+            weight_group_size (int): Size of weight groups, default is 32.
+            weight_sym (bool): Indicates whether weights are symmetric, default is True.
+            act_dtype (str): Data type for activations, default is "fp32".
+            enable_full_range (bool): Enables full range for activations, default is False.
+            enable_mse_search (bool): Enables mean squared error (MSE) search, default is False.
+            group_dim (int): Dimension for grouping, default is 1.
+            return_int (bool): Enables return model in int8/uint8 format or not. Defaults to False.
+            double_quant_dtype (str): Data type for double_quant scale, default is "int".
+            double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
+            double_quant_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
+            double_quant_group_size (int): Size of double_quant groups, default is 32.
+            enable_auto_scale (bool): Enable best scales search based on activation distribution, default is True.
+            folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer, default is False.
+        """
+        super().__init__(white_list=white_list)
+        self.weight_bits = weight_bits
+        self.weight_dtype = weight_dtype
+        self.weight_group_size = weight_group_size
+        self.weight_sym = weight_sym
+        self.act_dtype = act_dtype
+        self.enable_full_range = enable_full_range
+        self.enable_mse_search = enable_mse_search
+        self.group_dim = group_dim
+        self.return_int = return_int
+        self.double_quant_bits = double_quant_bits
+        self.double_quant_dtype = double_quant_dtype
+        self.double_quant_sym = double_quant_sym
+        self.double_quant_group_size = double_quant_group_size
+        self.enable_auto_scale = enable_auto_scale
+        self.folding = folding
+        self._post_init()
+
+    def to_dict(self):
+        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
+
+    @classmethod
+    def from_dict(cls, config_dict):
+        return super(AWQConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        # TODO(Yi)
+        linear_awq_config = AWQConfig()
+        operators = [torch.nn.Linear, torch.nn.functional.linear]
+        supported_configs.append(
+            OperatorConfig(config=linear_awq_config, operators=operators, backend=Backend.DEFAULT)
+        )
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = (torch.nn.Linear,)
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+
+# TODO(Yi) run `register_supported_configs` for all registered config.
+AWQConfig.register_supported_configs()
+
+
+def get_default_awq_config() -> AWQConfig:
+    """Generate the default awq config.
+
+    Returns:
+        the default awq config.
+    """
+    return AWQConfig()
 
 ######################## FP8 Config ###############################
 if is_hpex_avaliable():

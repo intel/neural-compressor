@@ -18,4 +18,6 @@ from neural_compressor.torch.quantization.config import (
     get_default_rtn_config,
     GPTQConfig,
     get_default_gptq_config,
+    AWQConfig,
+    get_default_awq_config
 )
