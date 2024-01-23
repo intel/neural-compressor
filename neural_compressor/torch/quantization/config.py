@@ -25,7 +25,7 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
 from neural_compressor.common.utils import AWQ, DEFAULT_WHITE_LIST, FP8_QUANT, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN
-from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN, PRIORITY_AWQ
+from neural_compressor.torch.utils.constants import PRIORITY_AWQ, PRIORITY_GPTQ, PRIORITY_RTN
 from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
 
 FRAMEWORK_NAME = "torch"
@@ -310,6 +310,7 @@ def get_default_gptq_config() -> GPTQConfig:
     """
     return GPTQConfig()
 
+
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=AWQ, priority=PRIORITY_AWQ)
 class AWQConfig(BaseConfig):
     """Config class for AWQ.
@@ -408,9 +409,7 @@ class AWQConfig(BaseConfig):
         # TODO(Yi)
         linear_awq_config = AWQConfig()
         operators = [torch.nn.Linear, torch.nn.functional.linear]
-        supported_configs.append(
-            OperatorConfig(config=linear_awq_config, operators=operators, backend=Backend.DEFAULT)
-        )
+        supported_configs.append(OperatorConfig(config=linear_awq_config, operators=operators, backend=Backend.DEFAULT))
         cls.supported_configs = supported_configs
 
     @staticmethod
@@ -436,6 +435,7 @@ def get_default_awq_config() -> AWQConfig:
         the default awq config.
     """
     return AWQConfig()
+
 
 ######################## FP8 Config ###############################
 if is_hpex_avaliable():
