@@ -1,5 +1,5 @@
-neural-compressor==2.0
+neural-compressor
 runipy
 notebook
 matplotlib
-tensorflow==2.12.*
+tensorflow

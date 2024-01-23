@@ -15,7 +15,7 @@
 
 from typing import Callable, Dict, List, Tuple
 
-from neural_compressor.common.logger import Logger
+from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
@@ -33,7 +33,7 @@ def register_algo(name):
 
     Usage example:
         @register_algo(name=example_algo)
-        def example_algo(model: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
+        def example_algo(model: torch.nn.Module, quant_config: RTNConfig) -> torch.nn.Module:
             ...
 
     Args:
@@ -107,6 +107,18 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
                 filter_result.append(pair)
     logger.debug(f"Get model info: {filter_result}")
     return filter_result
+
+
+def get_double_quant_config(double_quant_type, weight_sym=True):
+    from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
+
+    if double_quant_type is None:
+        return {}
+    assert double_quant_type in DOUBLE_QUANT_CONFIGS, "Supported double quant configs: {}".format(
+        list(DOUBLE_QUANT_CONFIGS.keys())
+    )
+    DOUBLE_QUANT_CONFIGS[double_quant_type]["weight_sym"] = weight_sym
+    return DOUBLE_QUANT_CONFIGS[double_quant_type]
 
 
 # pylint:disable=import-error

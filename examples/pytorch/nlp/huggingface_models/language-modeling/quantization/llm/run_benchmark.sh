@@ -79,6 +79,10 @@ function run_benchmark {
         model_name_or_path="facebook/opt-125m"
         approach="weight_only"
         extra_cmd=$extra_cmd" --woq_algo GPTQ"
+    elif [ "${topology}" = "opt_125m_woq_gptq_debug_int4" ]; then
+        model_name_or_path="facebook/opt-125m"
+        approach="weight_only"
+        extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_scheme asym --woq_group_size 128 --gptq_use_max_length --gptq_debug"
     elif [ "${topology}" = "opt_125m_woq_teq" ]; then
         model_name_or_path="facebook/opt-125m"
         approach="weight_only"
@@ -98,13 +102,21 @@ function run_benchmark {
     elif [ "${topology}" = "gpt_j_ipex_sq" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
         extra_cmd=$extra_cmd" --ipex --sq --alpha 1.0"
-    elif [ "${topology}" = "gpt_j_woq_rtn" ]; then
+    elif [ "${topology}" = "gpt_j_woq_rtn_int4" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
         approach="weight_only"
         extra_cmd=$extra_cmd" --woq_algo RTN --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_enable_mse_search"
+    elif [ "${topology}" = "gpt_j_woq_gptq_debug_int4" ]; then
+        model_name_or_path="EleutherAI/gpt-j-6b"
+        approach="weight_only"
+        extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --gptq_use_max_length --gptq_debug"
     elif [ "${topology}" = "falcon_7b_sq" ]; then
         model_name_or_path="tiiuae/falcon-7b-instruct"
         extra_cmd=$extra_cmd" --sq --alpha 0.5"
+    elif [ "${topology}" = "falcon_7b_woq_gptq_debug_int4" ]; then
+        model_name_or_path="tiiuae/falcon-7b-instruct"
+        approach="weight_only"
+        extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --gptq_use_max_length --gptq_debug"
     fi
 
     python -u run_clm_no_trainer.py \

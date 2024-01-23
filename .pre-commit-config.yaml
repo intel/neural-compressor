@@ -14,7 +14,7 @@ exclude: |
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: end-of-file-fixer
         files: (.*\.(py|md|rst|yaml|yml))$
@@ -80,7 +80,7 @@ repos:
         name: Unused noqa
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
       - id: isort
         exclude: |
@@ -105,7 +105,7 @@ repos:
           )$
 
   - repo: https://github.com/psf/black.git
-    rev: 23.9.1
+    rev: 23.12.1
     hooks:
       - id: black
         files: (.*\.py)$
@@ -140,7 +140,7 @@ repos:
           )$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.292
+    rev: v0.1.9
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --no-cache]

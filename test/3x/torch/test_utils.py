@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from neural_compressor.common.logger import Logger
+from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
@@ -37,7 +37,7 @@ def build_simple_torch_model():
     return model
 
 
-from neural_compressor.torch.utils import fetch_module, set_module
+from neural_compressor.torch.utils.utility import fetch_module, set_module
 
 
 class TestTorchUtils(unittest.TestCase):
@@ -77,7 +77,7 @@ class TestTorchUtils(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_get_model_info(self):
-        from neural_compressor.torch.utils import get_model_info
+        from neural_compressor.torch.utils.utility import get_model_info
 
         white_module_list = [torch.nn.Linear]
         model_info = get_model_info(build_simple_torch_model(), white_module_list)
