@@ -1,6 +1,6 @@
 #!/bin/bash
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
-test_case="run basic adaptor tfnewapi"
+test_case="run basic tfnewapi"
 echo "${test_case}"
 
 echo "specify fwk version..."

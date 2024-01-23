@@ -3,11 +3,20 @@ This is a sample code for SignRound ([arxiv](https://arxiv.org/abs/2309.05516)),
 ![overview](./overview.png)
 
 
-
 # Prerequisite
-python 3.9 or higher 
+-python 3.9 or higher
 
-pip install -r requirements.txt
+- The transformers version required varies across different types of models. Here, the transformers version used for running models during experiments is provided as a reference.
+    | Model | Transformers version |
+    |  :----: | :----: |
+    | decapoda-research/llama-7b-hf | 4.28 |
+    | huggyllama/llama-7b | 4.28/4.30/4.34/4.36 |
+    | meta-llama/Llama-2-7b-hf | 4.28/4.30/4.34/4.36 |
+    | facebook/opt-6.7b | 4.28/4.30/4.34/4.36 |
+    | bigscience/bloom-7b1 | 4.28/4.30/4.34/4.36 |
+
+Please note that all experimental data in the paper is based on transformer version 3.28.1. the huggingface source for llama-7b-hf mentioned in the paper, 'decapoda-research/llama-7b-hf', is currently unavailable. You may opt for 'huggyllama/llama-7b' as an alternative, but please be aware that this replacement might yield slight differences in results. 
+
 
 
 # Run
@@ -24,7 +33,7 @@ CUDA_VISIBLE_DEVICES=0 python3 signround.py --model_name facebook/opt-125m --amp
 ## Known issue
 To address the original lambada evaluation bug in the old version of lm-eval, we have incorporated the lm-eval from intel extension for transformers(ITREX). This discrepancy may lead to certain variations.
 
-To reproduce our results in the paper, please install ITREX 
+To reproduce our results in the paper, please install ITREX
 
 ```bash
 pip install intel-extension-for-transformers
@@ -40,4 +49,6 @@ If you find SignRound useful or relevant to your research, please kindly cite ou
   year={2023}
 }
 ```
+
+
 

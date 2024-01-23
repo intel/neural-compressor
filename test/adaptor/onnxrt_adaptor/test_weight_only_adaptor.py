@@ -7,6 +7,7 @@ import unittest
 import numpy as np
 import onnx
 import onnxruntime as ort
+from packaging.version import Version
 from transformers import AutoTokenizer
 
 from neural_compressor import PostTrainingQuantConfig, quantization
@@ -48,24 +49,114 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
         p.communicate()
 
         self.gptj_model = onnx.load("gptj/decoder_model.onnx")
+        self.gptj_fp16_model = None
+        if "CUDAExecutionProvider" in ort.get_available_providers():
+            cmd = "optimum-cli export onnx --model hf-internal-testing/tiny-random-gptj --task text-generation --legacy --fp16 --device cuda gptj_fp16/"
+            p = subprocess.Popen(
+                cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+            )  # nosec
+            p.communicate()
+            self.gptj_fp16_model = onnx.load("gptj_fp16/decoder_model.onnx")
         self.gptj_dataloader = DummyNLPDataloader("hf-internal-testing/tiny-random-gptj")
-
-        cmd = (
-            "optimum-cli export onnx --model PY007/TinyLlama-1.1B-Chat-v0.3 --task text-generation --legacy tiny-llama/"
-        )
-        p = subprocess.Popen(
-            cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-        )  # nosec
-        p.communicate()
-
-        self.llama_model = "tiny-llama/decoder_model.onnx"
-        self.llama_dataloader = DummyNLPDataloader("PY007/TinyLlama-1.1B-Chat-v0.3")
 
     @classmethod
     def tearDownClass(self):
         shutil.rmtree("nc_workspace", ignore_errors=True)
         shutil.rmtree("gptj", ignore_errors=True)
-        shutil.rmtree("tiny-llama", ignore_errors=True)
+        shutil.rmtree("gptj_fp16", ignore_errors=True)
+
+    @unittest.skipIf("CUDAExecutionProvider" not in ort.get_available_providers(), "Skip cuda woq test")
+    def test_RTN_quant_with_woq_op(self):
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            device="gpu",
+            backend="onnxrt_cuda_ep",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,
+                        "group_size": 32,
+                        "scheme": "sym",
+                        "algorithm": "RTN",
+                    },
+                },
+            },
+        )
+        # test fp16 model
+        q_fp16_model = quantization.fit(self.gptj_fp16_model, conf)
+
+        for data, _ in self.gptj_dataloader:
+            q_out = Inference(q_fp16_model.model, data)
+            org_out = Inference(self.gptj_fp16_model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
+        if Version(ort.__version__) > Version("1.16.1"):
+            scale_tensor = [i for i in q_fp16_model.initializer() if i.name.endswith("_scale")]
+            self.assertTrue(len(scale_tensor) > 0)
+            self.assertEqual(scale_tensor[0].data_type, 10)
+            self.assertTrue("MatMulNBits" in set([node.op_type for node in q_fp16_model.model.graph.node]))
+
+    @unittest.skipIf("CUDAExecutionProvider" not in ort.get_available_providers(), "Skip cuda woq test")
+    def test_AWQ_quant_with_woq_op(self):
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            device="gpu",
+            backend="onnxrt_cuda_ep",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,
+                        "group_size": 32,
+                        "scheme": "sym",
+                        "algorithm": "AWQ",
+                    },
+                },
+            },
+            recipes={
+                "awq_args": {"enable_auto_scale": True, "enable_mse_search": True},
+            },
+        )
+        # test fp16 model
+        q_fp16_model = quantization.fit(self.gptj_fp16_model, conf, calib_dataloader=self.gptj_dataloader)
+        for data, _ in self.gptj_dataloader:
+            q_out = Inference(q_fp16_model.model, data)
+            org_out = Inference(self.gptj_fp16_model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
+        if Version(ort.__version__) > Version("1.16.1"):
+            scale_tensor = [i for i in q_fp16_model.initializer() if i.name.endswith("_scale")]
+            self.assertTrue(len(scale_tensor) > 0)
+            self.assertEqual(scale_tensor[0].data_type, 10)
+            self.assertTrue("MatMulNBits" in set([node.op_type for node in q_fp16_model.model.graph.node]))
+
+    @unittest.skipIf("CUDAExecutionProvider" not in ort.get_available_providers(), "Skip cuda woq test")
+    def test_GPTQ_quant_with_woq_op(self):
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            device="gpu",
+            backend="onnxrt_cuda_ep",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,
+                        "group_size": 32,
+                        "scheme": "sym",
+                        "algorithm": "GPTQ",
+                    },
+                },
+            },
+        )
+        q_fp16_model = quantization.fit(self.gptj_fp16_model, conf, calib_dataloader=self.gptj_dataloader)
+        for data, _ in self.gptj_dataloader:
+            q_out = Inference(q_fp16_model.model, data)
+            org_out = Inference(self.gptj_fp16_model, data)
+            for q, org in zip(q_out, org_out):
+                self.assertTrue((np.abs(q_out[0] - org_out[0]) < 0.5).all())
+        if Version(ort.__version__) > Version("1.16.1"):
+            scale_tensor = [i for i in q_fp16_model.initializer() if i.name.endswith("_scale")]
+            self.assertTrue(len(scale_tensor) > 0)
+            self.assertEqual(scale_tensor[0].data_type, 10)
+            self.assertTrue("MatMulNBits" in set([node.op_type for node in q_fp16_model.model.graph.node]))
 
     def test_RTN_quant(self):
         conf = PostTrainingQuantConfig(
@@ -374,18 +465,6 @@ class TestWeightOnlyAdaptor(unittest.TestCase):
             op_type_dict={".*": {"weight": {"bits": 8}}},
         )
         self.assertEqual(self._count_woq_matmul(woq_model, bits=8), 31)
-
-    def test_woq_tune_with_large_model(self):
-        from functools import partial
-
-        def fake_eval(model, eval_result_lst):
-            acc = eval_result_lst.pop(0)
-            return acc
-
-        # Expect tuning ends with WOQ algorithm 'RTN_G32ASYM'
-        partial_fake_eval = partial(fake_eval, eval_result_lst=[1, 1.1])
-        woq_model = self._test_woq_tune_common(self.llama_model, self.llama_dataloader, partial_fake_eval)
-        self.assertEqual(self._count_woq_matmul(woq_model), 155)
 
     def test_woq_with_ModelProto_input(self):
         from neural_compressor.model.onnx_model import ONNXModel

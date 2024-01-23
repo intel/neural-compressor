@@ -22,8 +22,8 @@
 import torch
 from torch.nn import functional as F
 
-from neural_compressor.common.logger import DEBUG, Logger, level
-from neural_compressor.torch.utils import set_module
+from neural_compressor.common import DEBUG, Logger, level
+from neural_compressor.torch.utils.utility import set_module
 
 logger = Logger().get_logger()
 
@@ -498,7 +498,7 @@ def rtn_quantize(
             int_weight = int_weight.T if group_dim == 0 else int_weight
             scale = scale.T if group_dim == 0 else scale
             zp = zp.T if group_dim == 0 and zp is not None else zp
-            from neural_compressor.torch.quantization.modules import WeightOnlyLinear
+            from neural_compressor.torch.quantization.layers import WeightOnlyLinear
 
             new_module = WeightOnlyLinear(
                 m.in_features,
@@ -580,10 +580,10 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1, dtype="int"):
     return int_weight
 
 
-from neural_compressor.torch.quantization.config import RTNWeightQuantConfig
+from neural_compressor.torch.quantization.config import RTNConfig
 
 
-def apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNWeightQuantConfig) -> torch.nn.Module:
+def apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNConfig) -> torch.nn.Module:
     # TODO (Yi) remove it
     enable_full_range = quant_config.enable_full_range
     enable_mse_search = quant_config.enable_mse_search

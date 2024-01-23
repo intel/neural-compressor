@@ -256,7 +256,9 @@ class TEQuantizer:
 
         while global_steps <= train_steps:
             for inputs in dataloader:
-                if isinstance(inputs, dict):
+                if isinstance(inputs, torch.Tensor):
+                    input_id = inputs
+                elif isinstance(inputs, dict):
                     input_id = inputs["input_ids"]
                 else:
                     input_id = inputs[0]
@@ -294,7 +296,7 @@ class TEQuantizer:
             group_size = self.weight_config[n]["group_size"]
             scheme = self.weight_config[n]["scheme"]
             if isinstance(m, torch.nn.Linear):  # pragma: no cover
-                m.weight.data.copy_(quant_weight(m.weight, num_bits=num_bits, group_size=group_size, scheme=scheme))
+                quant_weight(m.weight.data, num_bits=num_bits, group_size=group_size, scheme=scheme)
 
     def save(self, save_scale_file="", save_state_dict_file=""):
         """

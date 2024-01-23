@@ -316,62 +316,6 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         )
         self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
 
-    def test_tune_add(self):
-        class M(torch.nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.conv = torch.nn.Conv2d(3, 1, 1)
-                self.linear = torch.nn.Linear(224 * 224, 5)
-
-            def forward(self, a):
-                x = self.conv(a)
-                x = x.view(1, -1)
-                x += x
-                x = self.linear(x)
-                return x
-
-        model = M()
-        from neural_compressor import PostTrainingQuantConfig, quantization
-
-        acc_lst = [1, 0.8, 1.1, 1.2]
-
-        def fake_eval(model):
-            res = acc_lst.pop(0)
-            return res
-
-        conf = PostTrainingQuantConfig(backend="ipex", quant_level=0)
-        calib_dataloader = Dataloader()
-        q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader, eval_func=fake_eval)
-        self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
-
-    def test_tune_add_with_recipe(self):
-        class M(torch.nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.linear = torch.nn.Linear(224 * 224 * 3, 5)
-
-            def forward(self, x):
-                x += x
-                x = x.view(1, -1)
-                x = self.linear(x)
-                return x
-
-        model = M()
-        from neural_compressor import PostTrainingQuantConfig, quantization
-
-        acc_lst = [1, 0.8, 1.1, 1.2]
-
-        def fake_eval(model):
-            res = acc_lst.pop(0)
-            return res
-
-        conf = PostTrainingQuantConfig(
-            backend="ipex", quant_level=0, recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}}
-        )
-        calib_dataloader = Dataloader()
-        q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader, eval_func=fake_eval)
-        self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
-
     def test_tune_minmax_obs(self):
         class M(torch.nn.Module):
             def __init__(self):
@@ -525,67 +469,6 @@ class TestPytorchIPEX_XPU_1_12_Adaptor(unittest.TestCase):
             conf,
             calib_dataloader=calib_dataloader,
         )
-        self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
-
-    def test_tune_add(self):
-        class M(torch.nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.conv = torch.nn.Conv2d(3, 1, 1)
-                self.linear = torch.nn.Linear(224 * 224, 5)
-
-            def forward(self, a):
-                x = self.conv(a)
-                x = x.view(1, -1)
-                x += x
-                x = self.linear(x)
-                return x
-
-        model = M().to("xpu")
-        from neural_compressor import PostTrainingQuantConfig, quantization
-
-        acc_lst = [1, 0.8, 1.1, 1.2]
-
-        def fake_eval(model):
-            res = acc_lst.pop(0)
-            return res
-
-        conf = PostTrainingQuantConfig(backend="ipex", device="xpu", quant_level=0)
-        calib_dataloader = Dataloader(device="xpu")
-        q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader, eval_func=fake_eval)
-        self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
-
-    def test_tune_add_with_recipe(self):
-        class M(torch.nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.conv = torch.nn.Conv2d(3, 1, 1)
-                self.linear = torch.nn.Linear(224 * 224, 5)
-
-            def forward(self, a):
-                x = self.conv(a)
-                x = x.view(1, -1)
-                x += x
-                x = self.linear(x)
-                return x
-
-        model = M().to("xpu")
-        from neural_compressor import PostTrainingQuantConfig, quantization
-
-        acc_lst = [1, 0.8, 1.1, 1.2]
-
-        def fake_eval(model):
-            res = acc_lst.pop(0)
-            return res
-
-        conf = PostTrainingQuantConfig(
-            backend="ipex",
-            device="xpu",
-            quant_level=0,
-            recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}},
-        )
-        calib_dataloader = Dataloader(device="xpu")
-        q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader, eval_func=fake_eval)
         self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
 
 

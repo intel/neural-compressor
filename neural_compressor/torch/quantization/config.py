@@ -14,18 +14,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# pylint:disable=import-error
 
 from __future__ import annotations
 
 from enum import Enum
-from typing import Callable, Dict, List, NamedTuple, Optional, Union
+from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import torch
 
-from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
-from neural_compressor.common.utility import DEFAULT_WHITE_LIST, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN_WEIGHT_ONLY_QUANT
+from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
+from neural_compressor.common.utils import DEFAULT_WHITE_LIST, FP8_QUANT, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN
+from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
+from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
 
 FRAMEWORK_NAME = "torch"
+DTYPE_RANGE = Union[torch.dtype, List[torch.dtype]]
 
 
 class Backend(Enum):
@@ -50,8 +54,8 @@ str2operator = {"Linear": torch.nn.Linear, "linear": torch.nn.functional.linear,
 ######################## RNT Config ###############################
 
 
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN_WEIGHT_ONLY_QUANT)
-class RTNWeightQuantConfig(BaseConfig):
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN, priority=PRIORITY_RTN)
+class RTNConfig(BaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
     supported_configs: List[OperatorConfig] = []
@@ -70,7 +74,7 @@ class RTNWeightQuantConfig(BaseConfig):
         "double_quant_sym",
         "double_quant_group_size",
     ]
-    name = RTN_WEIGHT_ONLY_QUANT
+    name = RTN
 
     def __init__(
         self,
@@ -127,12 +131,12 @@ class RTNWeightQuantConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict):
-        return super(RTNWeightQuantConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
+        return super(RTNConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
-        linear_rtn_config = RTNWeightQuantConfig(
+        linear_rtn_config = RTNConfig(
             weight_dtype=["int", "int8", "int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"],
             weight_bits=[4, 1, 2, 3, 5, 6, 7, 8],
             weight_group_size=[32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024],
@@ -150,22 +154,33 @@ class RTNWeightQuantConfig(BaseConfig):
         supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT))
         cls.supported_configs = supported_configs
 
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = (torch.nn.Linear,)
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
-RTNWeightQuantConfig.register_supported_configs()
+RTNConfig.register_supported_configs()
 
 
-def get_default_rtn_config() -> RTNWeightQuantConfig:
+def get_default_rtn_config() -> RTNConfig:
     """Generate the default rtn config.
 
     Returns:
         the default rtn config.
     """
-    return RTNWeightQuantConfig()
+    return RTNConfig()
 
 
 ######################## GPTQ Config ###############################
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=GPTQ)
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=GPTQ, priority=PRIORITY_GPTQ)
 class GPTQConfig(BaseConfig):
     """Config class for GPTQ.
 
@@ -271,6 +286,17 @@ class GPTQConfig(BaseConfig):
         )
         cls.supported_configs = supported_configs
 
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = (torch.nn.Linear,)
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 GPTQConfig.register_supported_configs()
@@ -285,8 +311,92 @@ def get_default_gptq_config() -> GPTQConfig:
     return GPTQConfig()
 
 
-##################### Algo Configs End ###################################
+######################## FP8 Config ###############################
+if is_hpex_avaliable():
 
+    @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
+    class FP8QConfig(BaseConfig):
+        """Config class for FP8 quantization."""
 
-def get_all_registered_configs() -> Dict[str, BaseConfig]:
-    return registered_configs.get(FRAMEWORK_NAME, {})
+        name = FP8_QUANT
+        supported_configs: List[OperatorConfig] = []
+        params_list = [
+            "weight_dtype",
+            "act_dtype",
+            "act_algo",
+            "approach",
+            "device",
+        ]
+
+        def __init__(
+            self,
+            weight_dtype: DTYPE_RANGE = torch.float8_e4m3fn,
+            act_dtype: DTYPE_RANGE = torch.float8_e4m3fn,
+            act_algo: Union[str, List[str]] = "minmax",
+            approach: Union[str, List[str]] = "static",
+            device: Union[str, List[str]] = "hpu",
+            white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        ):
+            """Init FP8 config.
+
+            Args:
+            """
+            super().__init__(white_list=white_list)
+            self.weight_dtype = weight_dtype
+            self.act_dtype = act_dtype
+            self.act_algo = act_algo
+            self.approach = approach
+            self.device = device
+            self._post_init()
+
+        def to_dict(self):
+            return super().to_dict(params_list=self.params_list, operator2str=operator2str)
+
+        @classmethod
+        def from_dict(cls, config_dict):
+            return super(FP8QConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
+
+        @classmethod
+        def register_supported_configs(cls) -> List[OperatorConfig]:
+            supported_configs = []
+            fp8_config = FP8QConfig(
+                weight_dtype=[torch.float8_e5m2, torch.float8_e4m3fn],
+                act_dtype=[torch.float8_e5m2, torch.float8_e4m3fn],
+                act_algo=["minmax", "kl"],
+                approach=["static", "dynamic"],
+                device=["hpu"],
+            )
+            from .fp8.quantization_impl import white_list
+
+            operators = white_list
+            supported_configs.append(OperatorConfig(config=fp8_config, operators=operators, backend=Backend.DEFAULT))
+            cls.supported_configs = supported_configs
+
+        @staticmethod
+        def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+            from .fp8.quantization_impl import white_list
+
+            filter_result = []
+            for op_name, module in model.named_modules():
+                if isinstance(module, white_list):
+                    pair = (op_name, type(module).__name__)
+                    filter_result.append(pair)
+            logger.debug(f"Get model info: {filter_result}")
+            return filter_result
+
+    # TODO(Yi) run `register_supported_configs` for all registered config.
+    FP8QConfig.register_supported_configs()
+
+    def get_default_fp8_qconfig() -> FP8QConfig:
+        """Generate the default gptq config.
+
+        Returns:
+            the default gptq config.
+        """
+        return FP8QConfig()
+
+    ##################### Algo Configs End ###################################
+
+    def get_all_registered_configs() -> Dict[str, BaseConfig]:
+        registered_configs = config_registry.get_all_configs()
+        return registered_configs.get(FRAMEWORK_NAME, {})

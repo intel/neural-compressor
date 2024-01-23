@@ -1,0 +1,4 @@
+torchvision
+tdqm
+torchmetrics
+neural-compressor

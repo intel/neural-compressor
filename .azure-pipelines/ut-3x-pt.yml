@@ -18,7 +18,7 @@ pool: ICX-16C
 
 variables:
   IMAGE_NAME: "neural-compressor"
-  IMAGE_TAG: "py38"
+  IMAGE_TAG: "py310"
   UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   DOWNLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   ARTIFACT_NAME: "UT_coverage_report_3x_pt"
@@ -88,7 +88,7 @@ stages:
               docker exec collectLogs /bin/bash  +x -c "cd /neural-compressor/.azure-pipelines/scripts \
               && bash install_nc.sh 3x_pt \
               && bash ut/3x/collect_log_3x.sh 3x_pt"
-            displayName: "collect logs"
+            displayName: "Collect UT Coverage"
 
           - task: PublishPipelineArtifact@1
             condition: succeededOrFailed()

@@ -57,6 +57,7 @@ support_pair = {
 
 dtype_mapping = {
     "fp32": 1,
+    "float32": 1,
     "uint8": 2,
     "int8": 3,
     "uint16": 4,
@@ -66,12 +67,14 @@ dtype_mapping = {
     "string": 8,
     "bool": 9,
     "fp16": 10,
+    "float16": 10,
     "double": 11,
     "uint32": 12,
     "uint64": 13,
     "complex64": 14,
     "complex128": 15,
     "bf16": 16,
+    "bfloat16": 16,
 }
 
 PROVIDERS = {
@@ -91,6 +94,20 @@ ONNXRT_BACKENDS = {
 }
 
 MAXIMUM_PROTOBUF = 2147483648
+
+# The quantized node will be renamed to original_name + QUANT_OP_NAME_SUFFIX, for example `conv1` -> `conv1_quant`.
+QUANT_OP_NAME_SUFFIX = "_quant"
+
+
+def get_node_original_name(node) -> str:
+    """Get the original name of the given node."""
+    node_name: str = node.name
+    # TODO how to handle the unquantized node that has the `_quant` suffix, such as `conv_quant`?
+    if node_name.endswith(QUANT_OP_NAME_SUFFIX):
+        return node_name[: -len(QUANT_OP_NAME_SUFFIX)]
+    else:
+        # For unquantized nodes
+        return node_name
 
 
 def simple_progress_bar(total, i):

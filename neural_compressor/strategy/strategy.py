@@ -186,6 +186,10 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         # track tuning cfg with the current best accuracy
         self.cur_best_tuning_cfg = {}
         self.re_quant = False
+        # two cases to stop sq process early
+        # 1) alpha is a scalar, e.g., alpha = 0.5, early stop after the 1st trial
+        # 2) alpha is a list containing more than 1 element, early stop after trying all alpha
+        self.early_stop_sq_tuning_process = False
 
         self._trials_count = 0
         self._capability = None
@@ -590,6 +594,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         logger.info(f"Adaptor has {len(adaptor_recipes)} recipes.")
         logger.debug(adaptor_recipes)
         usr_recipes_cfg = self.config.recipes if self.config.recipes else {}
+        # if smooth quant is `True`, early stop
+        self.early_stop_sq_tuning_process = usr_recipes_cfg.get("smooth_quant", False)
         for recipe_name, recipe_val in usr_recipes_cfg.items():
             # for not tuning recipes, use the value specified by user.
             if recipe_name in adaptor_recipes and recipe_val != adaptor_recipes[recipe_name][0]:
@@ -1152,6 +1158,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
     def tuning_sq_alpha(self, tuning_space, tuning_cfg, recipes):
         """Tuning smooth quant's alpha.
 
+        After trying all alpha values, the sq tuning process will stop early, returning the current best qmodel,
+        even if the current best accuracy does not meet the accuracy criterion.
+
         Args:
             tuning_space: tuning space
             tuning_cfg: the initial tuning config
@@ -1166,8 +1175,12 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         ), "Only tune the smooth quant's alpha when user provide the alpha list,\
             but got alpha_list: {alpha_list}"
         logger.info("[STRATEGY] Start tuning smooth quant'alpha.")
+        number_of_alpha = len(sq_alpha_list)
+        sq_trials_cnt = 0
         sq_sampler = tuning_sampler_dict.get_class("smooth_quant")(tuning_space, [], tuning_cfg, sq_alpha_list)
         for tune_cfg in sq_sampler:
+            sq_trials_cnt += 1
+            self.early_stop_sq_tuning_process = sq_trials_cnt == number_of_alpha
             yield tune_cfg
 
     def _should_tuning_woq_algo(self):
@@ -1961,6 +1974,16 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             need_stop = True
         else:
             need_stop = False
+        if not need_stop and self.early_stop_sq_tuning_process:
+            if self.best_tuning_cfg is None:
+                self.best_tuning_cfg = self._tune_cfg_converter(self.cur_best_tuning_cfg)
+            logger.info(
+                "[Strategy] Tried all alpha values but none met the accuracy criterion. "
+                "The tuning process was early stopped and "
+                f"the currently best model(accuracy: {self.cur_best_acc}) was returned."
+            )
+
+            need_stop = True
 
         return need_stop
 

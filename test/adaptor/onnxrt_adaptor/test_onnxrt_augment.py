@@ -330,7 +330,7 @@ class TestAugment(unittest.TestCase):
         attn_output_scale = generate_input_initializer([1], np.float32, "attn_output_scale")
         Q_zo = helper.make_tensor_value_info("attn_output_zero_point", TensorProto.INT8, [1])
         attn_output_zero_point = generate_input_initializer([1], np.int8, "attn_output_zero_point")
-        Output = helper.make_tensor_value_info("output", TensorProto.INT8, [13, 7])
+        Output = helper.make_tensor_value_info("attn_output_quantized", TensorProto.INT8, [13, 7])
         attention_node = onnx.helper.make_node(
             "QAttention",
             [
@@ -386,15 +386,15 @@ class TestAugment(unittest.TestCase):
         augment.augment_nodes = ["DequantizeLinear"]
         augment.already_quantized = True
 
-        augment.augment_graph(activation_only=True, weight_only=False)
+        augment.augment_graph()
         augmented_model = augment.augmented_model
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_node_names = ["attention_quant", "attn_output_QuantizeLinear"]
-        added_outputs = ["input_quantized_output", "output"]
+        added_node_names = ["attention_quant", "attn_output_QuantizeLinear", "input_quantized_DequantizeLinear"]
+        added_outputs = ["attn_output_quantized", "input_quantized_output", "attn_output"]
         self.assertEqual(len(augmented_model_node_names), 3)
-        self.assertEqual(len(augmented_model_outputs), 2)
+        self.assertEqual(len(augmented_model_outputs), 3)
         for name in added_node_names:
             self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:
@@ -470,15 +470,21 @@ class TestAugment(unittest.TestCase):
         augment = ONNXRTAugment(ONNXModel(model), data_reader, [], white_nodes=["conv"])
         augment.augment_nodes = ["DequantizeLinear"]
         augment.already_quantized = True
-        augment.augment_graph(activation_only=True, weight_only=False)
+        augment.augment_graph()
         augmented_model = augment.augmented_model
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_node_names = ["A_QuantizeLinear", "conv_quant", "D_DequantizeLinear", "A_quantized_DequantizeLinear"]
-        added_outputs = ["D", "A_quantized_output"]
-        self.assertEqual(len(augmented_model_node_names), 4)
-        self.assertEqual(len(augmented_model_outputs), 2)
+        added_node_names = [
+            "A_QuantizeLinear",
+            "conv_quant",
+            "D_DequantizeLinear",
+            "D_quantized_DequantizeLinear",
+            "A_quantized_DequantizeLinear",
+        ]
+        added_outputs = ["D", "D_quantized_output", "A_quantized_output"]
+        self.assertEqual(len(augmented_model_node_names), 5)
+        self.assertEqual(len(augmented_model_outputs), 3)
         for name in added_node_names:
             self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:

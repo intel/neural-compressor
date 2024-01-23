@@ -892,6 +892,7 @@ def main():
         teacher_model.eval()
     else:
         # Prepare everything with our `accelerator`.
+        model.train()
         model, optimizer, train_dataloader, eval_dataloader, lr_scheduler = accelerator.prepare(
             model, optimizer, train_dataloader, eval_dataloader, lr_scheduler
         )

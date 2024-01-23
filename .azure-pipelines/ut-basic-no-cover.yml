@@ -12,18 +12,20 @@ pr:
       - test
       - setup.py
       - requirements.txt
+      - .azure-pipelines/scripts/ut
     exclude:
       - test/neural_coder
       - test/3x
       - neural_compressor/common
       - neural_compressor/torch
       - neural_compressor/tensorflow
+      - neural_compressor/onnxrt
 
 pool: ICX-16C
 
 variables:
   IMAGE_NAME: "neural-compressor"
-  IMAGE_TAG: "py38"
+  IMAGE_TAG: "py310"
   UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   DOWNLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   ARTIFACT_NAME: "UT_report"
@@ -104,18 +106,3 @@ stages:
               utArtifact: "ut-others"
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
-
-#  - stage: IPEX
-#    displayName: Unit Test IPEX 2.1 for SQ algo
-#    dependsOn: []
-#    jobs:
-#      - job:
-#        steps:
-#          - template: template/ut-template.yml
-#            parameters:
-#              dockerConfigName: "commonDockerConfig"
-#              utScriptFileName: "run_basic_v2.1_ipex"
-#              uploadPath: $(UPLOAD_PATH)
-#              utArtifact: "ut-ipex_v2.1"
-#              utTestMode: "no-coverage"
-#              utContainerName: "utTest-no-coverage"

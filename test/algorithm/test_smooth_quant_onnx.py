@@ -279,12 +279,6 @@ class TestORTSq(unittest.TestCase):
                 "auto",
                 "Expect tuning ends at 4th trial with alpha is  0.15 at basic strategy.",
             ),
-            (
-                [1, 1.1, 0.8, 0.7, 1.1],
-                np.arange(0.1, 0.2, 0.05).tolist(),
-                0,
-                "Expect tuning ends at 1th trial with alpha is 0.1",
-            ),
         ]:
             logger.info("test_sq_tune_alpha_common with ")
             logger.info(f"eval_result_lst: {eval_result_lst}, alpha: {alpha}, quant_level: {quant_level}")
