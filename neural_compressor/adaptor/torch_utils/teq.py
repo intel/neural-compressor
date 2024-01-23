@@ -256,7 +256,9 @@ class TEQuantizer:
 
         while global_steps <= train_steps:
             for inputs in dataloader:
-                if isinstance(inputs, dict):
+                if isinstance(inputs, torch.Tensor):
+                    input_id = inputs
+                elif isinstance(inputs, dict):
                     input_id = inputs["input_ids"]
                 else:
                     input_id = inputs[0]

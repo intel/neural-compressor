@@ -43,6 +43,8 @@ PKG_INSTALL_CFG = {
                 "neural_compressor.torch.*",
                 "neural_compressor.tensorflow",
                 "neural_compressor.tensorflow.*",
+                "neural_compressor.onnxrt",
+                "neural_compressor.onnxrt.*",
             ],
         ),
         "package_data": {"": ["*.yaml"]},
@@ -91,6 +93,7 @@ PKG_INSTALL_CFG = {
                 "neural_compressor.onnxrt.*",
             ],
         ),
+        "install_requires": fetch_requirements("requirements_ort.txt"),
     },
     "neural_insights": {
         "project_name": "neural_insights",

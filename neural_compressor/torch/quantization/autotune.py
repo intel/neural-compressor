@@ -16,9 +16,9 @@ from typing import Dict, List, Optional, Union
 
 import torch
 
+from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.base_tuning import TuningConfig, evaluator, init_tuning
-from neural_compressor.common.logger import Logger
 from neural_compressor.torch import quantize
 from neural_compressor.torch.quantization.config import GPTQConfig, RTNConfig
 

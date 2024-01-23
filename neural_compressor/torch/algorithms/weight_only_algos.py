@@ -17,8 +17,8 @@ from typing import Dict, Tuple
 
 import torch
 
-from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import GPTQ, RTN
+from neural_compressor.common import Logger
+from neural_compressor.common.utils import GPTQ, RTN
 from neural_compressor.torch.quantization.config import GPTQConfig, RTNConfig
 from neural_compressor.torch.utils.utility import fetch_module, register_algo, set_module
 
