@@ -17,11 +17,12 @@
 # pylint:disable=import-error
 
 import abc
+
 from onnxruntime.quantization import CalibrationDataReader as ORTCalibrationDataReader
 
 
 class CalibrationDataReader(ORTCalibrationDataReader):
     @abc.abstractmethod
     def rewind(self):
-        """Regenerate data"""
+        """Regenerate data."""
         raise NotImplementedError

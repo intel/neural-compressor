@@ -143,6 +143,7 @@ def _get_qrange_for_qType(qType, reduce_range=False):
     else:
         raise ValueError("unsupported quantization data type")
 
+
 def quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
     """Quantize data with scale and zero point.
 

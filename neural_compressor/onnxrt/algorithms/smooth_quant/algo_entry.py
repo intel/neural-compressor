@@ -12,19 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import onnx
 import tempfile
 from pathlib import Path
 from typing import Union
+
+import onnx
+from onnxruntime.quantization import StaticQuantConfig, quantize
+
 from neural_compressor.common import Logger
 from neural_compressor.common.utils import SMOOTH_QUANT
+from neural_compressor.onnxrt.algorithms.smooth_quant.calibrator import Calibrator
+from neural_compressor.onnxrt.algorithms.smooth_quant.smooth_quant import ORTSmoothQuant
+from neural_compressor.onnxrt.quantization import CalibrationDataReader
 from neural_compressor.onnxrt.quantization.config import SmoohQuantQuantConfig
 from neural_compressor.onnxrt.utils.utility import register_algo
-from neural_compressor.onnxrt.algorithms.smooth_quant.smooth_quant import ORTSmoothQuant
-from neural_compressor.onnxrt.algorithms.smooth_quant.calibrator import Calibrator
-from neural_compressor.onnxrt.quantization import CalibrationDataReader
-from onnxruntime.quantization import quantize, StaticQuantConfig
-from pathlib import Path
 
 logger = Logger().get_logger()
 

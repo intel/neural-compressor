@@ -15,16 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import onnx
-import os
 import glob
+import os
 import shutil
 import unittest
-from optimum.exporters.onnx import main_export
+
 import numpy as np
-from neural_compressor.onnxrt.quantization import CalibrationDataReader
+import onnx
+from optimum.exporters.onnx import main_export
+
 from neural_compressor.common import Logger
-from neural_compressor.onnxrt import get_default_sq_config, SmoohQuantQuantConfig
+from neural_compressor.onnxrt import SmoohQuantQuantConfig, get_default_sq_config
+from neural_compressor.onnxrt.quantization import CalibrationDataReader
 from neural_compressor.onnxrt.quantization.quantize import _quantize
 
 logger = Logger().get_logger()
@@ -36,13 +38,13 @@ class DataReader(CalibrationDataReader):
         batch_size = 1
         past_sequence_length = 1
         self.data = {
-            "input_ids": np.random.randint(10, size=(batch_size, 1)).astype('int64'),
-            "attention_mask": np.zeros((batch_size, past_sequence_length + 1)).astype('int64'),
+            "input_ids": np.random.randint(10, size=(batch_size, 1)).astype("int64"),
+            "attention_mask": np.zeros((batch_size, past_sequence_length + 1)).astype("int64"),
         }
         for inp in model.graph.input:
             if inp.name in self.data:
                 continue
-            self.data[inp.name] = np.random.random((batch_size, 4, past_sequence_length, 8)).astype('float32')
+            self.data[inp.name] = np.random.random((batch_size, 4, past_sequence_length, 8)).astype("float32")
         self.enum_data = None
 
     def get_next(self):
@@ -61,7 +63,7 @@ class TestONNXRT3xSmoothQuant(unittest.TestCase):
             "hf-internal-testing/tiny-random-gptj",
             output="gptj",
         )
-        self.gptj = glob.glob(os.path.join('./gptj', '*.onnx'))[0]
+        self.gptj = glob.glob(os.path.join("./gptj", "*.onnx"))[0]
         self.data_reader = DataReader(self.gptj)
 
     @classmethod
@@ -107,6 +109,7 @@ class TestONNXRT3xSmoothQuant(unittest.TestCase):
         model = _quantize(self.gptj, config, self.data_reader)
         num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
         self.assertEqual(num_muls, 15)
+
 
 if __name__ == "__main__":
     unittest.main()

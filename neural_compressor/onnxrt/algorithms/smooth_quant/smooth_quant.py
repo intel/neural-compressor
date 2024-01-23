@@ -25,13 +25,13 @@ import onnx
 from onnx import helper, numpy_helper
 from onnx import onnx_pb as onnx_proto
 
+from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.onnxrt.utils.utility import (
     _get_qrange_for_qType,
     is_B_transposed,
     quantize_data,
     simple_progress_bar,
 )
-from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 
 logger = logging.getLogger("neural_compressor")
 

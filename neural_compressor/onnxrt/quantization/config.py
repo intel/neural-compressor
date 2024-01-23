@@ -15,13 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import re
 from collections import OrderedDict
 from enum import Enum
 from pathlib import Path
-from typing import Callable, List, NamedTuple, Optional, Tuple, Union, Dict
+from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
+import numpy as np
 import onnx
 
 from neural_compressor.common import Logger
@@ -109,9 +109,7 @@ class RTNConfig(BaseConfig):
         supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators))
         cls.supported_configs = supported_configs
 
-    def to_config_mapping(
-        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
-    ):
+    def to_config_mapping(self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None):
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
@@ -197,8 +195,6 @@ class SmoohQuantQuantConfig(BaseConfig):
 
         Args:
             weight_dtype (str): Data type for weights, default is "int".
-
-
         """
         super().__init__()
         self.alpha = alpha

@@ -22,15 +22,17 @@
 # --------------------------------------------------------------------------
 """Calibration for smooth quant."""
 
+import os
+import sys
+from importlib.util import find_spec
+
 import numpy as np
 import onnx
 import onnx.numpy_helper as numpy_helper
 import onnxruntime
-import os
-import sys
-from importlib.util import find_spec
-from neural_compressor.onnxrt.utils import ONNXModel
+
 from neural_compressor.common import Logger
+from neural_compressor.onnxrt.utils import ONNXModel
 
 logger = Logger().get_logger()
 
