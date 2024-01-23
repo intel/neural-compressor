@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
     setup(
         name=project_name,
-        author="Intel AIA Team",
+        author="Intel AIPT Team",
         version=get_build_version(),
         author_email="feng.tian@intel.com, haihao.shen@intel.com, suyue.chen@intel.com",
         description="Repository of Intel® Neural Compressor",
