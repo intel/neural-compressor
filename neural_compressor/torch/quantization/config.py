@@ -30,8 +30,8 @@ from neural_compressor.common.utils import (
     GPTQ,
     OP_NAME_OR_MODULE_TYPE,
     RTN,
-    STATIC_QUANT,
     SMOOTH_QUANT,
+    STATIC_QUANT,
 )
 from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
 from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
