@@ -123,7 +123,7 @@ class TestAutoTune(unittest.TestCase):
         def eval_acc_fn(model) -> float:
             return 1.0
 
-        custom_tune_config = TuningConfig(quant_configs=[RTNConfig(weight_bits=[4, 6])], max_trials=2)
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6])], max_trials=2)
         best_model = autotune(
             model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
         )
@@ -150,7 +150,7 @@ class TestAutoTune(unittest.TestCase):
             },
         ]
 
-        custom_tune_config = TuningConfig(quant_configs=[RTNConfig(weight_bits=[4, 6])], max_trials=2)
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6])], max_trials=2)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_fns)
         self.assertIsNotNone(best_model)
         self.assertEqual(len(evaluator.eval_fn_registry), 2)
@@ -183,7 +183,7 @@ class TestAutoTune(unittest.TestCase):
                 "weight": 0.5,
             },
         ]
-        custom_tune_config = TuningConfig(quant_configs=get_config_set_for_tuning(), max_trials=4)
+        custom_tune_config = TuningConfig(config_set=get_config_set_for_tuning(), max_trials=4)
         best_model = autotune(
             model=get_gpt_j(),
             tune_config=custom_tune_config,
@@ -198,7 +198,7 @@ class TestAutoTune(unittest.TestCase):
         logger.info("test_autotune_api")
         from neural_compressor.torch import RTNConfig, TuningConfig, autotune
 
-        custom_tune_config = TuningConfig(quant_configs=[RTNConfig(weight_bits=[4, 6])], max_trials=2)
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6])], max_trials=2)
 
         # Use assertRaises to check that an AssertionError is raised
         with self.assertRaises(AssertionError) as context:
