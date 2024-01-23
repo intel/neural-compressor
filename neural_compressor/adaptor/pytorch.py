@@ -4709,6 +4709,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     "percdamp": self.recipes["gptq_args"].get("percdamp", 0.01),
                     "act_order": self.recipes["gptq_args"].get("act_order", False),
                     "block_size": self.recipes["gptq_args"].get("block_size", True),
+                    "static_groups": self.recipes["gptq_args"].get("static_groups", False),
                 }
         nsamples = self.recipes["gptq_args"].get("nsamples", 128)
         use_max_length = self.recipes["gptq_args"].get("use_max_length", False)
