@@ -16,4 +16,7 @@ from neural_compressor.onnxrt.quantization.quantize import _quantize
 from neural_compressor.onnxrt.quantization.config import (
     RTNConfig,
     get_default_rtn_config,
+    SmoohQuantQuantConfig,
+    get_default_sq_config,
 )
+from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader

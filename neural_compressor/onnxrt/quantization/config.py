@@ -25,7 +25,7 @@ import onnx
 
 from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig, register_config, register_supported_configs_for_fwk
-from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, RTN
+from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, RTN, SMOOTH_QUANT
 
 logger = Logger().get_logger()
 
@@ -160,3 +160,93 @@ def get_default_rtn_config() -> RTNConfig:
         the default rtn config.
     """
     return RTNConfig()
+
+
+######################## SmoohQuant Config ###############################
+
+
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT)
+class SmoohQuantQuantConfig(BaseConfig):
+    """Config class for round-to-nearest weight-only quantization."""
+
+    supported_configs: List[OperatorConfig] = []
+    params_list = [
+        "alpha",
+        "folding",
+        "auto_alpha_args",
+        "calib_iter",
+        "scales_per_op",
+        "op_types",
+        "providers",
+    ]
+    name = SMOOTH_QUANT
+
+    def __init__(
+        self,
+        alpha: float = 0.5,
+        folding: bool = True,
+        op_types: list = ["Gemm", "Conv", "MatMul", "FusedConv"],
+        calib_iter: int = 100,
+        scales_per_op: bool = True,
+        auto_alpha_args: Dict = {"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
+        providers: list = ["CPUExecutionProvider"],
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init RTN weight-only quantization config.
+
+        Args:
+            weight_dtype (str): Data type for weights, default is "int".
+
+
+        """
+        super().__init__()
+        self.alpha = alpha
+        self.folding = folding
+        self.op_types = op_types
+        self.calib_iter = calib_iter
+        self.scales_per_op = scales_per_op
+        self.auto_alpha_args = auto_alpha_args
+        self.providers = providers
+        self.white_list = white_list
+        self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        smooth_quant_config = SmoohQuantQuantConfig(
+            alpha=np.arange(0.3, 0.7, 0.05).tolist(),
+            folding=[True, False],
+            op_types=["Gemm", "Conv", "MatMul", "FusedConv"],
+            calib_iter=100,
+            scales_per_op=[True, False],
+            auto_alpha_args={"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
+            providers=["CPUExecutionProvider"],
+        )
+        operators = ["Gemm", "Conv", "MatMul", "FusedConv"]
+        supported_configs.append(
+            OperatorConfig(config=smooth_quant_config, operators=operators)
+        )
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model) -> List[Tuple[str, Callable]]:
+        white_list = ["Gemm", "Conv", "MatMul", "FusedConv"]
+        filter_result = []
+        for node in model.graph.node:
+            if node.op_type in white_list:
+                pair = (node.name, node.op_type)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+
+SmoohQuantQuantConfig.register_supported_configs()
+
+
+def get_default_sq_config() -> SmoohQuantQuantConfig:
+    """Generate the default rtn config.
+
+    Returns:
+        the default smooth quant config.
+    """
+    return SmoohQuantQuantConfig()

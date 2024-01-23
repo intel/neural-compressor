@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,13 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from neural_compressor.onnxrt.utils.utility import register_algo
-from neural_compressor.onnxrt.algorithms import rtn_quantize_entry, smooth_quant_entry
-
-from neural_compressor.onnxrt.quantization import (
-    RTNConfig,
-    get_default_rtn_config,
-    SmoohQuantQuantConfig,
-    get_default_sq_config,
-)
