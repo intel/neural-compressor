@@ -31,6 +31,7 @@ from neural_compressor.common.utils import (
     OP_NAME_OR_MODULE_TYPE,
     RTN,
     SMOOTH_QUANT,
+    STATIC_QUANT
 )
 from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
 from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
@@ -318,6 +319,89 @@ def get_default_gptq_config() -> GPTQConfig:
     return GPTQConfig()
 
 
+######################## Static Quant Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
+class StaticQuantConfig(BaseConfig):
+    """Config class for static quantization."""
+
+    name = STATIC_QUANT
+    supported_configs: List[OperatorConfig] = []
+    params_list = [
+        "w_dtype",
+        "w_sym",
+        "w_granularity",
+        "w_algo",
+        "act_dtype"
+        "act_sym",
+        "act_granularity",
+        "act_algo",
+    ]
+
+    def __init__(
+        self,
+        w_dtype: str = "int8",
+        w_sym: bool = True,
+        w_granularity: str = "per_channel",
+        w_algo: str = "minmax",
+        act_dtype: str = "uint8",
+        act_sym: bool = False,
+        act_granularity: str = "per_tensor",
+        act_algo: str = "minmax",
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init Static Quant Configs."""
+        super().__init__(white_list=white_list)
+        self.w_dtype = w_dtype
+        self.w_sym = w_sym
+        self.w_granularity = w_granularity
+        self.w_algo = w_algo
+        self.act_dtype = act_dtype
+        self.act_sym = act_sym
+        self.act_granularity = act_granularity
+        self.act_algo = act_algo
+        self._post_init()
+
+    def to_dict(self):
+        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
+
+    @classmethod
+    def from_dict(cls, config_dict):
+        return super(StaticQuantConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        # TODO(Yi)
+        linear_static_config = StaticQuantConfig()
+        operators = [torch.nn.Linear, torch.nn.functional.linear]
+        supported_configs.append(OperatorConfig(config=linear_static_config, operators=operators, backend=Backend.DEFAULT))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = (torch.nn.Linear,)
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+
+# TODO(Yi) run `register_supported_configs` for all registered config.
+StaticQuantConfig.register_supported_configs()
+
+
+def get_default_static_config() -> StaticQuantConfig:
+    """Generate the default static quant config.
+
+    Returns:
+        the default static quant config.
+    """
+    return StaticQuantConfig()
+
+
 ######################## Smooth Quant Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT)
 class SmoothQuantConfig(BaseConfig):
@@ -326,9 +410,13 @@ class SmoothQuantConfig(BaseConfig):
     name = SMOOTH_QUANT
     supported_configs: List[OperatorConfig] = []
     params_list = [
-        "backend",
-        "weight_dtype",
+        "w_dtype",
+        "w_sym",
+        "w_granularity",
+        "w_algo",
+        "act_dtype"
         "act_sym",
+        "act_granularity",
         "act_algo",
         "alpha",
         "folding",
@@ -338,12 +426,17 @@ class SmoothQuantConfig(BaseConfig):
 
     def __init__(
         self,
-        backend: str = "ipex",
-        weight_dtype: str = "int",
+        w_dtype: str = "int8",
+        w_sym: bool = True,
+        w_granularity: str = "per_channel",
+        w_algo: str = "minmax",
+        act_dtype: str = "uint8",
         act_sym: bool = False,
+        act_granularity: str = "per_tensor",
         act_algo: str = "minmax",
         alpha: float = 0.5,
         folding: bool = False,
+        # for autotune
         scale_sharing: bool = False,
         init_alpha: float = 0.5,
         alpha_min: float = 0.0,
@@ -356,9 +449,13 @@ class SmoothQuantConfig(BaseConfig):
     ):
         """Init SmoothQuant Configs."""
         super().__init__(white_list=white_list)
-        self.backend = backend
-        self.weight_dtype = weight_dtype
+        self.w_dtype = w_dtype
+        self.w_sym = w_sym
+        self.w_granularity = w_granularity
+        self.w_algo = w_algo
+        self.act_dtype = act_dtype
         self.act_sym = act_sym
+        self.act_granularity = act_granularity
         self.act_algo = act_algo
         self.alpha = alpha
         self.folding = folding
