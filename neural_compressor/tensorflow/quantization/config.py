@@ -27,6 +27,7 @@ from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE
 
 FRAMEWORK_NAME = "keras"
 
+
 class OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
@@ -99,9 +100,7 @@ class StaticQuantConfig(BaseConfig):
             tf.keras.layers.AveragePooling2D,
             tf.keras.layers.MaxPooling2D,
         ]
-        supported_configs.append(
-            OperatorConfig(config=static_quant_config, operators=operators)
-        )
+        supported_configs.append(OperatorConfig(config=static_quant_config, operators=operators))
         cls.supported_configs = supported_configs
 
 
