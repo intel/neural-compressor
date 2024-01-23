@@ -15,9 +15,9 @@
 import onnx
 import tempfile
 from pathlib import Path
-from typing import Dict, Tuple, Union
-from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import SMOOTH_QUANT
+from typing import Union
+from neural_compressor.common import Logger
+from neural_compressor.common.utils import SMOOTH_QUANT
 from neural_compressor.onnxrt.quantization.config import SmoohQuantQuantConfig
 from neural_compressor.onnxrt.utils.utility import register_algo
 from neural_compressor.onnxrt.algorithms.smooth_quant.smooth_quant import ORTSmoothQuant
@@ -25,7 +25,6 @@ from neural_compressor.onnxrt.algorithms.smooth_quant.calibrator import Calibrat
 from neural_compressor.onnxrt.quantization import CalibrationDataReader
 from onnxruntime.quantization import quantize, StaticQuantConfig
 from pathlib import Path
-from typing import Dict, Tuple
 
 logger = Logger().get_logger()
 

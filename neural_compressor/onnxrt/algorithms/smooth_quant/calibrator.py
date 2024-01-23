@@ -30,8 +30,7 @@ import os
 import sys
 from importlib.util import find_spec
 from neural_compressor.onnxrt.utils import ONNXModel
-from neural_compressor.common.logger import Logger
-from packaging.version import Version
+from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 

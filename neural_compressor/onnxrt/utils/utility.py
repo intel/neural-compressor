@@ -15,6 +15,7 @@
 from pathlib import Path
 from typing import Callable, Dict, List, Tuple, Union
 
+import numpy as np
 import onnx
 from packaging.version import Version
 
@@ -123,7 +124,7 @@ def is_B_transposed(node):
     """Whether inuput B is transposed."""
     transB = [attr for attr in node.attribute if attr.name == "transB"]
     if len(transB):
-        return 0 < helper.get_attribute_value(transB[0])
+        return 0 < onnx.helper.get_attribute_value(transB[0])
     return False
 
 
@@ -134,9 +135,9 @@ def _get_qrange_for_qType(qType, reduce_range=False):
         qType (int): data type
         reduce_range (bool, optional): use 7 bit or not. Defaults to False.
     """
-    if qType == onnx_proto.TensorProto.UINT8:
+    if qType == onnx.onnx_pb.TensorProto.UINT8:
         return 127 if reduce_range else 255
-    elif qType == onnx_proto.TensorProto.INT8:
+    elif qType == onnx.onnx_pb.TensorProto.INT8:
         # [-64, 64] for reduce_range, and [-127, 127] full_range.
         return 128 if reduce_range else 254
     else:
@@ -158,10 +159,10 @@ def quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
         zero_point (uint8 or int8): computed zero point of quantized data
     """
     data = np.asarray(data)
-    if qType == onnx_proto.TensorProto.INT8 and scheme == "sym":
+    if qType == onnx.onnx_pb.TensorProto.INT8 and scheme == "sym":
         # signed byte type
         quantized_data = (data.astype(np.float32) / scale).round().astype("b")
-    elif qType == onnx_proto.TensorProto.UINT8 and scheme == "asym":
+    elif qType == onnx.onnx_pb.TensorProto.UINT8 and scheme == "asym":
         quantized_data = ((data.astype(np.float32) / scale).round() + zero_point).astype("B")
     else:
         raise ValueError("Unexpected combination of data type {} and scheme {}.".format(qType, scheme))
@@ -184,15 +185,15 @@ def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
                 [float(i) / quantize_range for i in (rmax - rmin)[rmin != rmax].flatten().tolist()], dtype="float32"
             )
 
-        if scheme == "sym" and qType == onnx_proto.TensorProto.INT8:
+        if scheme == "sym" and qType == onnx.onnx_pb.TensorProto.INT8:
             zero_point = np.zeros(scale.shape, dtype="int8") if isinstance(scale, np.ndarray) else 0
         elif isinstance(scale, np.ndarray) and (scale == 1).all():
             zero_point = (
                 np.zeros(scale.shape, dtype="int8")
-                if qType == onnx_proto.TensorProto.INT8
+                if qType == onnx.onnx_pb.TensorProto.INT8
                 else np.zeros(scale.shape, dtype="uint8")
             )
-        elif qType == onnx_proto.TensorProto.UINT8:
+        elif qType == onnx.onnx_pb.TensorProto.UINT8:
             zero_point = np.maximum(0, np.minimum(255, ((0 - float(rmin)) / scale).round()).round()).astype("uint8")
         else:
             zero_point = (
@@ -206,9 +207,9 @@ def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
         else:
             scale = (float(rmax) - float(rmin)) / quantize_range if rmin != rmax else 1
 
-        if scale == 1 or (scheme == "sym" and qType == onnx_proto.TensorProto.INT8):
+        if scale == 1 or (scheme == "sym" and qType == onnx.onnx_pb.TensorProto.INT8):
             zero_point = 0
-        elif qType == onnx_proto.TensorProto.UINT8:
+        elif qType == onnx.onnx_pb.TensorProto.UINT8:
             zero_point = round((0 - float(rmin)) / scale)
             zero_point = np.uint8(round(max(0, min(255, zero_point))))
         else:
@@ -244,31 +245,3 @@ def quantize_data(data, quantize_range, qType, scheme):
     scale, zero_point = calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
     quantized_data = quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
     return rmin, rmax, zero_point, scale, quantized_data
-
-
-def to_numpy(data):
-    """Convert to numpy ndarrays."""
-    if not isinstance(data, np.ndarray):
-        if not importlib.util.find_spec("torch"):
-            logger.error(
-                "Please install torch to enable subsequent data type check and conversion, "
-                "or reorganize your data format to numpy array."
-            )
-            exit(0)
-        if isinstance(data, torch.Tensor):
-            if data.dtype is torch.bfloat16:  # pragma: no cover
-                return data.detach().cpu().to(torch.float32).numpy()
-            if data.dtype is torch.chalf:  # pragma: no cover
-                return data.detach().cpu().to(torch.cfloat).numpy()
-            return data.detach().cpu().numpy()
-        else:
-            try:
-                return np.array(data)
-            except:
-                assert False, (
-                    "The input data for onnx model is {}, which is not supported "
-                    "to convert to numpy ndarrays.".format(type(data))
-                )
-    else:
-        return data
-

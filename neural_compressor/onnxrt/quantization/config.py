@@ -15,11 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
 import re
 from collections import OrderedDict
 from enum import Enum
 from pathlib import Path
-from typing import Callable, List, NamedTuple, Optional, Tuple, Union
+from typing import Callable, List, NamedTuple, Optional, Tuple, Union, Dict
 
 import onnx
 
@@ -110,7 +111,7 @@ class RTNConfig(BaseConfig):
 
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
-    ) -> OrderedDict[Union[str, Callable], OrderedDict[str, BaseConfig]]:
+    ):
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
@@ -213,18 +214,10 @@ class SmoohQuantQuantConfig(BaseConfig):
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
-        smooth_quant_config = SmoohQuantQuantConfig(
-            alpha=np.arange(0.3, 0.7, 0.05).tolist(),
-            folding=[True, False],
-            op_types=["Gemm", "Conv", "MatMul", "FusedConv"],
-            calib_iter=100,
-            scales_per_op=[True, False],
-            auto_alpha_args={"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
-            providers=["CPUExecutionProvider"],
-        )
+        smooth_quant_config = SmoohQuantQuantConfig()
         operators = ["Gemm", "Conv", "MatMul", "FusedConv"]
         supported_configs.append(
-            OperatorConfig(config=smooth_quant_config, operators=operators)
+            OperatorConfig(config=smooth_quant_config, operators=operators, backend=Backend.DEFAULT)
         )
         cls.supported_configs = supported_configs
 

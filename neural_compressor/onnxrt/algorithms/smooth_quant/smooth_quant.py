@@ -30,7 +30,6 @@ from neural_compressor.onnxrt.utils.utility import (
     is_B_transposed,
     quantize_data,
     simple_progress_bar,
-    to_numpy,
 )
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 

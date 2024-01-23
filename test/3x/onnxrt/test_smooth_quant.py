@@ -23,7 +23,9 @@ import unittest
 from optimum.exporters.onnx import main_export
 import numpy as np
 from neural_compressor.onnxrt.quantization import CalibrationDataReader
-from neural_compressor.common.logger import Logger
+from neural_compressor.common import Logger
+from neural_compressor.onnxrt import get_default_sq_config, SmoohQuantQuantConfig
+from neural_compressor.onnxrt.quantization.quantize import _quantize
 
 logger = Logger().get_logger()
 
@@ -66,22 +68,45 @@ class TestONNXRT3xSmoothQuant(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree("./gptj", ignore_errors=True)
 
-    def test_static_quant_from_dict_default(self):
-        logger.info("test_smooth_quant_from_dict_default")
-        from neural_compressor.onnxrt import get_default_sq_config, SmoohQuantQuantConfig
-        from neural_compressor.onnxrt.quantization.quantize import _quantize
-
+    def test_sq_from_class_beginner(self):
+        self.data_reader.rewind()
         config = get_default_sq_config()
         model = _quantize(self.gptj, config, self.data_reader)
         num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
         self.assertEqual(num_muls, 15)
 
+    def test_sq_auto_tune_from_class_beginner(self):
         self.data_reader.rewind()
         config = SmoohQuantQuantConfig(alpha="auto")
         model = _quantize(self.gptj, config, self.data_reader)
         num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
         self.assertEqual(num_muls, 15)
 
+    def test_sq_from_dict_beginner(self):
+        config = {
+            "smooth_quant": {
+                "global": {
+                    "alpha": 0.5,
+                },
+            }
+        }
+        self.data_reader.rewind()
+        model = _quantize(self.gptj, config, self.data_reader)
+        num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
+        self.assertEqual(num_muls, 15)
+
+    def test_sq_auto_tune_from_dict_beginner(self):
+        config = {
+            "smooth_quant": {
+                "global": {
+                    "alpha": "auto",
+                },
+            }
+        }
+        self.data_reader.rewind()
+        model = _quantize(self.gptj, config, self.data_reader)
+        num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
+        self.assertEqual(num_muls, 15)
 
 if __name__ == "__main__":
     unittest.main()
