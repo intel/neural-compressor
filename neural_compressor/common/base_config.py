@@ -21,9 +21,8 @@ import json
 import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from copy import deepcopy
 from itertools import product
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from neural_compressor.common import Logger
 from neural_compressor.common.utils import (
@@ -47,9 +46,6 @@ __all__ = [
     "get_config_set_from_config_registry",
     "options",
 ]
-
-
-CONFIG_SET_TYPE = Union[None, "BaseConfig", List["BaseConfig"]]
 
 
 # Config registry to store all registered configs.
@@ -107,7 +103,7 @@ class ConfigRegistry:
         return cls_configs
 
     @classmethod
-    def get_all_configs_by_fwk_name(cls, fwk_name: str) -> List[BaseConfig]:
+    def get_all_config_cls_by_fwk_name(cls, fwk_name: str) -> List[Type[BaseConfig]]:
         configs_cls = []
         for algo_name, config_pairs in cls.registered_configs.get(fwk_name, {}).items():
             configs_cls.append(config_pairs["cls"])
@@ -436,12 +432,13 @@ class ComposableConfig(BaseConfig):
         raise NotImplementedError
 
     @classmethod
-    def get_config_set_for_tuning(cls) -> CONFIG_SET_TYPE:
+    def get_config_set_for_tuning(cls) -> None:
+        # TODO (Yi) handle the composable config in `tuning_config`
         return None
 
 
 def get_config_set_from_config_registry(fwk_name: str) -> Union[BaseConfig, List[BaseConfig]]:
-    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_configs_by_fwk_name(fwk_name)
+    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls_by_fwk_name(fwk_name)
     config_set = []
     for config_cls in all_registered_config_cls:
         config_set.append(config_cls.get_config_set_for_tuning())
