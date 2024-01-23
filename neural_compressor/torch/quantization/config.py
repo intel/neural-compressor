@@ -31,7 +31,7 @@ from neural_compressor.common.utils import (
     OP_NAME_OR_MODULE_TYPE,
     RTN,
     SMOOTH_QUANT,
-    STATIC_QUANT
+    STATIC_QUANT,
 )
 from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
 from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
@@ -331,8 +331,7 @@ class StaticQuantConfig(BaseConfig):
         "w_sym",
         "w_granularity",
         "w_algo",
-        "act_dtype"
-        "act_sym",
+        "act_dtype" "act_sym",
         "act_granularity",
         "act_algo",
     ]
@@ -374,7 +373,9 @@ class StaticQuantConfig(BaseConfig):
         # TODO(Yi)
         linear_static_config = StaticQuantConfig()
         operators = [torch.nn.Linear, torch.nn.functional.linear]
-        supported_configs.append(OperatorConfig(config=linear_static_config, operators=operators, backend=Backend.DEFAULT))
+        supported_configs.append(
+            OperatorConfig(config=linear_static_config, operators=operators, backend=Backend.DEFAULT)
+        )
         cls.supported_configs = supported_configs
 
     @staticmethod
@@ -414,8 +415,7 @@ class SmoothQuantConfig(BaseConfig):
         "w_sym",
         "w_granularity",
         "w_algo",
-        "act_dtype"
-        "act_sym",
+        "act_dtype" "act_sym",
         "act_granularity",
         "act_algo",
         "alpha",
