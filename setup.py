@@ -1,4 +1,5 @@
 import re
+import subprocess
 import sys
 from io import open
 
@@ -8,6 +9,28 @@ from setuptools import find_packages, setup
 def fetch_requirements(path):
     with open(path, "r") as fd:
         return [r.strip() for r in fd.readlines()]
+
+
+def is_commit_on_tag():
+    try:
+        result = subprocess.run(
+            ["git", "describe", "--exact-match", "--tags"], capture_output=True, text=True, check=True
+        )
+        tag_name = result.stdout.strip()
+        return tag_name
+    except subprocess.CalledProcessError:
+        return False
+
+
+def get_build_version():
+    if is_commit_on_tag():
+        return __version__
+    try:
+        result = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True, check=True)
+        _, distance, commit = result.stdout.strip().split("-")
+        return f"{__version__}.dev{distance}+{commit}"
+    except subprocess.CalledProcessError:
+        return __version__
 
 
 try:
@@ -162,8 +185,8 @@ if __name__ == "__main__":
 
     setup(
         name=project_name,
-        version=__version__,
-        author="Intel AIA Team",
+        author="Intel AIPT Team",
+        version=get_build_version(),
         author_email="feng.tian@intel.com, haihao.shen@intel.com, suyue.chen@intel.com",
         description="Repository of Intel® Neural Compressor",
         long_description=open("README.md", "r", encoding="utf-8").read(),
