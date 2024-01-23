@@ -21,7 +21,6 @@ from onnxruntime.quantization import StaticQuantConfig, quantize
 
 from neural_compressor.common import Logger
 from neural_compressor.common.utils import SMOOTH_QUANT
-
 from neural_compressor.onnxrt.algorithms.smooth_quant.smooth_quant import ORTSmoothQuant
 from neural_compressor.onnxrt.quantization import CalibrationDataReader
 from neural_compressor.onnxrt.quantization.config import SmoohQuantQuantConfig

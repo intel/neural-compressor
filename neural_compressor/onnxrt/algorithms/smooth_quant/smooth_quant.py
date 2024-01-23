@@ -221,9 +221,7 @@ class ORTSmoothQuant:
             reduce_range=self.reduce_range,
         )
 
-        self.max_vals_per_channel, self.shape_info, self.tensors_to_node = calibrator.calib_smooth(
-            op_types, percentile
-        )
+        self.max_vals_per_channel, self.shape_info, self.tensors_to_node = calibrator.calib_smooth(op_types, percentile)
         for node in self.model.nodes():
             for out in node.output:
                 if (
