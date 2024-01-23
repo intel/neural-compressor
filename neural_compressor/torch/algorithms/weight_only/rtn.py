@@ -20,7 +20,6 @@
 
 
 import torch
-from torch.nn import functional as F
 
 from neural_compressor.torch.utils import logger
 from neural_compressor.torch.utils.utility import set_module
