@@ -100,6 +100,28 @@ class TestAutoTune(unittest.TestCase):
         self.assertEqual(len(evaluator.eval_fn_registry), 2)
 
     @reset_tuning_target
+    def test_autotune_get_config_set_api(self):
+        from neural_compressor.torch import TuningConfig, autotune, get_config_set_for_tuning
+
+        def eval_acc_fn(model) -> float:
+            return 1.0
+
+        def eval_perf_fn(model) -> float:
+            return 1.0
+
+        eval_fns = [
+            {"eval_fn": eval_acc_fn, "weight": 0.5, "name": "accuracy"},
+            {
+                "eval_fn": eval_perf_fn,
+                "weight": 0.5,
+            },
+        ]
+
+        custom_tune_config = TuningConfig(quant_configs=get_config_set_for_tuning(), max_trials=2)
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_fns)
+        self.assertIsNotNone(best_model)
+
+    @reset_tuning_target
     def test_autotune_not_eval_func(self):
         logger.info("test_autotune_api")
         from neural_compressor.torch import RTNConfig, TuningConfig, autotune

@@ -17,23 +17,22 @@ from typing import Dict, List, Optional, Union
 import torch
 
 from neural_compressor.common import Logger
-from neural_compressor.common.base_config import BaseConfig
+from neural_compressor.common.base_config import BaseConfig, get_config_set_from_config_registry
 from neural_compressor.common.base_tuning import TuningConfig, evaluator, init_tuning
 from neural_compressor.torch import quantize
-from neural_compressor.torch.quantization.config import GPTQConfig, RTNConfig
+from neural_compressor.torch.quantization.config import FRAMEWORK_NAME
 
 logger = Logger().get_logger()
 
 
 __all__ = [
-    "get_default_tune_config",
     "autotune",
+    "get_config_set_for_tuning",
 ]
 
 
-def get_default_tune_config() -> TuningConfig:
-    # TODO use the registered default tuning config in the next PR
-    return TuningConfig(quant_configs=[GPTQConfig(weight_bits=[4, 8]), RTNConfig(weight_bits=[4, 8])])
+def get_config_set_for_tuning() -> Union[BaseConfig, List[BaseConfig]]:
+    return get_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
 
 
 def autotune(
@@ -52,7 +51,8 @@ def autotune(
     for trial_index, quant_config in enumerate(config_loader):
         tuning_logger.trial_start(trial_index=trial_index)
         tuning_logger.quantization_start()
-        q_model = quantize(model, quant_config=quant_config, run_fn=run_fn, run_args=run_args)
+        logger.info(f"quant config: {quant_config}")
+        q_model = quantize(model, quant_config=quant_config, run_fn=run_fn, run_args=run_args, inplace=False)
         tuning_logger.quantization_end()
         tuning_logger.evaluation_start()
         eval_result: float = evaluator.evaluate(q_model)

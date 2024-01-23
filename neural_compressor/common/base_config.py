@@ -44,13 +44,15 @@ __all__ = [
     "register_config",
     "BaseConfig",
     "ComposableConfig",
-    "Options",
+    "get_config_set_from_config_registry",
     "options",
 ]
 
-# Dictionary to store registered configurations
+
+CONFIG_SET_TYPE = Union[None, "BaseConfig", List["BaseConfig"]]
 
 
+# Config registry to store all registered configs.
 class ConfigRegistry:
     registered_configs = {}
 
@@ -103,6 +105,13 @@ class ConfigRegistry:
             for algo_name, config_data in algos.items():
                 cls_configs[framework_name][algo_name] = config_data["cls"]
         return cls_configs
+
+    @classmethod
+    def get_all_configs_by_fwk_name(cls, fwk_name: str) -> List[BaseConfig]:
+        configs_cls = []
+        for algo_name, config_pairs in cls.registered_configs.get(fwk_name, {}).items():
+            configs_cls.append(config_pairs["cls"])
+        return configs_cls
 
 
 config_registry = ConfigRegistry()
@@ -374,6 +383,11 @@ class BaseConfig(ABC):
         # TODO (Yi), ort and tf need override it
         return not isinstance(name, str)
 
+    @classmethod
+    @abstractmethod
+    def get_config_set_for_tuning(cls):
+        raise NotImplementedError
+
 
 class ComposableConfig(BaseConfig):
     name = COMPOSABLE_CONFIG
@@ -420,6 +434,23 @@ class ComposableConfig(BaseConfig):
     def register_supported_configs(cls):
         """Add all supported configs."""
         raise NotImplementedError
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> CONFIG_SET_TYPE:
+        return None
+
+
+def get_config_set_from_config_registry(fwk_name: str) -> Union[BaseConfig, List[BaseConfig]]:
+    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_configs_by_fwk_name(fwk_name)
+    config_set = []
+    for config_cls in all_registered_config_cls:
+        config_set.append(config_cls.get_config_set_for_tuning())
+    return config_set
+
+
+#######################################################
+####   Options
+#######################################################
 
 
 def _check_value(name, src, supported_type, supported_value=[]):
