@@ -25,12 +25,13 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
 from neural_compressor.common.utils import (
-    DEFAULT_WHITE_LIST, 
-    FP8_QUANT, 
-    GPTQ, 
-    OP_NAME_OR_MODULE_TYPE, 
+    DEFAULT_WHITE_LIST,
+    FP8_QUANT,
+    GPTQ,
+    OP_NAME_OR_MODULE_TYPE,
     RTN,
-    SMOOTH_QUANT)
+    SMOOTH_QUANT,
+)
 from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
 from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
 
