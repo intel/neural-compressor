@@ -64,8 +64,6 @@ class Calibrator:
             model (str): model path
             dataloader (object): user implemented object to read in and preprocess calibration dataset
             dump_op_types (list): operator types to be calibrated and quantized
-            black_nodes (list, optional): operator names that should not be quantized. Defaults to [].
-            white_nodes (list, optional): operator names that force to be quantized. Defaults to [].
             iterations (list, optional): tensor of which iteration will be collected. Defaults to [].
             providers (list, optional): execution provider for onnxruntime. Defaults to ['CPUExecutionProvider'].
             reduce_range (bool, optional): use 7 bit or not. Defaults to False.
