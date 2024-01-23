@@ -22,7 +22,7 @@ from pathlib import Path
 
 import onnx
 
-from neural_compressor.common.logger import Logger
+from neural_compressor.common import Logger
 from neural_compressor.onnxrt.utils.utility import MAXIMUM_PROTOBUF, find_by_name
 
 logger = Logger().get_logger()

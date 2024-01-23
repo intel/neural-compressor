@@ -18,7 +18,7 @@ from typing import Callable, Dict, List, Tuple, Union
 import onnx
 from packaging.version import Version
 
-from neural_compressor.common.logger import Logger
+from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
