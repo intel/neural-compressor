@@ -157,6 +157,11 @@ class RTNConfig(BaseConfig):
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "RTNConfig", List["RTNConfig"]]:
+        # TODO fwk owner needs to update it.
+        return RTNConfig(weight_bits=[4, 6])
+
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 RTNConfig.register_supported_configs()

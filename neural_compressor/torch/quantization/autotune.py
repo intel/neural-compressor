@@ -53,7 +53,7 @@ def autotune(
         tuning_logger.trial_start(trial_index=trial_index)
         tuning_logger.quantization_start()
         logger.info(f"quant config: {quant_config}")
-        # !!! Make sure to use deepcopy only when inplace is set to True.
+        # !!! Make sure to use deepcopy only when inplace is set to `True`.
         q_model = quantize(deepcopy(model), quant_config=quant_config, run_fn=run_fn, run_args=run_args, inplace=True)
         tuning_logger.quantization_end()
         tuning_logger.evaluation_start()
@@ -62,7 +62,7 @@ def autotune(
         tuning_monitor.add_trial_result(trial_index, eval_result, quant_config)
         if tuning_monitor.need_stop():
             best_quant_config: BaseConfig = tuning_monitor.get_best_quant_config()
-            # !!! Make sure to use deepcopy only when inplace is set to True.
+            # !!! Make sure to use deepcopy only when inplace is set to `True`.
             quantize(deepcopy(model), quant_config=best_quant_config, run_fn=run_fn, run_args=run_args, inplace=True)
             best_quant_model = model  # quantize model inplace
         tuning_logger.trial_end(trial_index)

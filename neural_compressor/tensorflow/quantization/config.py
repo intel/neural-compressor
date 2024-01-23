@@ -143,6 +143,11 @@ class StaticQuantConfig(BaseConfig):
         )
         cls.supported_configs = supported_configs
 
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
+        # TODO fwk owner needs to update it.
+        return StaticQuantConfig(weight_sym=[True, False])
+
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 StaticQuantConfig.register_supported_configs()
