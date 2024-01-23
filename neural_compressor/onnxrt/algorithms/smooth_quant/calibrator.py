@@ -61,14 +61,14 @@ class Calibrator:
         """Initialization.
 
         Args:
-            model (str): model path
+            model (object): ONNXModel object
             dataloader (object): user implemented object to read in and preprocess calibration dataset
             dump_op_types (list): operator types to be calibrated and quantized
             iterations (list, optional): tensor of which iteration will be collected. Defaults to [].
             providers (list, optional): execution provider for onnxruntime. Defaults to ['CPUExecutionProvider'].
             reduce_range (bool, optional): use 7 bit or not. Defaults to False.
         """
-        self.model_wrapper = ONNXModel(model)
+        self.model_wrapper = model
         self.dataloader = dataloader
         self.dump_op_types = dump_op_types
         self.augmented_model = None

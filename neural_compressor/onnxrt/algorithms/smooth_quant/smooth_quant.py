@@ -25,6 +25,7 @@ import onnx
 from onnx import helper, numpy_helper
 from onnx import onnx_pb as onnx_proto
 
+from neural_compressor.onnxrt.algorithms.smooth_quant.calibrator import Calibrator
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.onnxrt.utils.utility import (
     _get_qrange_for_qType,
@@ -117,9 +118,6 @@ class ORTSmoothQuant:
         self,
         model,
         dataloader,
-        max_vals_per_channel,
-        shape_info,
-        tensors_to_node,
         reduce_range=False,
         providers=["CPUExecutionProvider"],
     ):
@@ -136,26 +134,16 @@ class ORTSmoothQuant:
         self.new_added_value_info = []
         self.new_init_tensors = []  # scales_tensor
         self.alpha = None
-        self.percentile = None
         self.op_types = None
         self.scales_per_op = None
         self.calib_iter = None
-        self.max_vals_per_channel = max_vals_per_channel
-        self.shape_info = shape_info
-        self.tensors_to_node = tensors_to_node
         self.replace_input = []
         self.ops_to_absorb = []
         self.record_max_info = False
+        self.max_vals_per_channel = None
+        self.shape_info = None
+        self.tensors_to_node = None
         self._build_absorb_function()
-
-        for node in self.model.nodes():
-            for out in node.output:
-                if (
-                    out in self.tensors_to_node
-                    and node.op_type in self.could_absorb_optype
-                    and self.model.get_initializer(node.input[1]) is not None
-                ):
-                    self.ops_to_absorb.append(node.name)
 
     def transform(
         self,
@@ -165,7 +153,6 @@ class ORTSmoothQuant:
         op_types=["Gemm", "Conv", "MatMul", "FusedConv"],
         scales_per_op=True,
         calib_iter=100,
-        quantize_config=None,
         auto_alpha_args={"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
         *args,
         **kwargs
@@ -180,7 +167,6 @@ class ORTSmoothQuant:
             scales_per_op (bool): True, each op will have an individual scale, mainlyfor accuracy
                                   False, ops with the same input will share a scale, mainly for performance
             calib_iter (int): iteration num for calibration
-            quantize_config (dict): quantize config
 
         Returns:
             A FP32 model with the same architecture as the orig model but with different weight which will be
@@ -195,6 +181,8 @@ class ORTSmoothQuant:
             elif alpha > 1.0:
                 alpha = 1.0
                 logger.warning("reset alpha to 1.0 ")
+
+        self._dump_op_info(percentile, op_types, calib_iter)
 
         if alpha == "auto":
             alpha = self._auto_tune_alpha(calib_iter, **auto_alpha_args)
@@ -215,6 +203,35 @@ class ORTSmoothQuant:
         self.model.topological_sort()
         self.model.remove_unused_nodes()
         return self.model.model
+
+    def _dump_op_info(self, percentile, op_types, iterations):
+        """Dump op info for smooth quant.
+
+        Args:
+            percentile (float): percentile of calibration to remove outliers
+            op_types (list): the op type to be smooth quantized
+            iterations (int): iterations
+        """
+        calibrator = Calibrator(
+            self.model,
+            self.dataloader,
+            [],
+            iterations=list(range(0, iterations)),
+            backend=self.providers,
+            reduce_range=self.reduce_range,
+        )
+
+        self.max_vals_per_channel, self.shape_info, self.tensors_to_node = calibrator.calib_smooth(
+            op_types, percentile
+        )
+        for node in self.model.nodes():
+            for out in node.output:
+                if (
+                    out in self.tensors_to_node
+                    and node.op_type in self.could_absorb_optype
+                    and self.model.get_initializer(node.input[1]) is not None
+                ):
+                    self.ops_to_absorb.append(node.name)
 
     def recover(self):
         """Recover the model weights."""
