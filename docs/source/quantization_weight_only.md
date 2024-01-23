@@ -86,6 +86,7 @@ Notes:
 |  pad_max_length  | 2048 | Whether to align calibration data to a fixed length. This value should not exceed model's acceptable sequence length. Please refer to  model's config json to find out this value.|
 |  use_max_length  | False | Whether to align all calibration data to fixed length, which equals to pad_max_length. |
 |  block_size  | 128 | Execute GPTQ quantization per block, block shape = [$C_{out}$, block_size] |
+|  static_groups  | False | Whether to calculate group wise quantization parameters in advance. This option mitigate actorder's extra computational requirements |
 
 **Note:** Neural compressor provides `Unsigned integer for asymmetric quantization` and `Signed integer for symmetric quantization`. Please follow the below section to compress the low bit data type for saving.
 

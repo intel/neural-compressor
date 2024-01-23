@@ -408,7 +408,7 @@ class GPTQuantizer(object):
                 tmp_weight_config[name]["sym"] = self.weight_config.get("sym", self.sym_default)
                 tmp_weight_config[name]["act_order"] = self.weight_config.get("act_order", self.act_order_default)
                 tmp_weight_config[name]["static_groups"] = self.weight_config.get(
-                    "static_groups", self.act_order_default
+                    "static_groups", self.static_groups_default
                 )
                 tmp_weight_config[name]["perchannel"] = self.weight_config.get("perchannel", self.perchannel_default)
                 tmp_weight_config[name]["mse"] = self.weight_config.get("mse", self.mse_default)
@@ -421,7 +421,7 @@ class GPTQuantizer(object):
                 self.weight_config[layer_name]["percdamp"] = config.get("pecdamp", self.percdamp_default)
                 self.weight_config[layer_name]["sym"] = config.get("sym", self.sym_default)
                 self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
-                self.weight_config[layer_name]["static_groups"] = config.get("static_groups", self.act_order_default)
+                self.weight_config[layer_name]["static_groups"] = config.get("static_groups", self.static_groups_default)
                 self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
                 self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
 
@@ -772,6 +772,7 @@ class GPTQ:
         W[:, dead] = 0  # such channel makes no contribution to quantization computation
 
         # enable static_groups
+        # calculate the quantization parameters for original group in advance. 
         if static_groups:
             import copy
 
