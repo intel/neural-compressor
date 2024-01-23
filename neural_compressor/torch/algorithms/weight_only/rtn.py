@@ -22,12 +22,10 @@
 import torch
 from torch.nn import functional as F
 
-from neural_compressor.common import DEBUG, Logger, level
+from neural_compressor.torch.utils import logger
 from neural_compressor.torch.utils.utility import set_module
 
 from .utility import quant_tensor, search_clip
-
-logger = Logger().get_logger()
 
 
 def rtn_quantize(
@@ -44,7 +42,7 @@ def rtn_quantize(
     group_dim=1,
     **kwargs,
 ):
-    """Quant the model with round to nearst method.
+    """Quant the model with round to nearest method.
 
     Args:
         model: torch module
