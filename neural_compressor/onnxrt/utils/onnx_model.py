@@ -265,6 +265,16 @@ class ONNXModel:
                 return node
         return None
 
+    def get_node_by_weight(self, weight_name):
+        """Get a node by its weight name."""
+        nodes = self._input_name_to_nodes[weight_name]
+        if len(nodes) == 1:
+            return nodes[0]
+        elif len(nodes) == 0:
+            raise ValueError("{} is not used by any node in this model.".format(weight_name))
+        else:
+            raise NotImplementedError("Models with shared weights is not supported.")
+
     def remove_initializer(self, tensor):
         """Remove an initializer from model."""
         if tensor in self._model.graph.initializer:

@@ -506,7 +506,7 @@ class ORTSmoothQuant:
             # if scales_per_op the key of scales is the node name, otherwise the activation of node
             if self.scales_per_op:
                 for node_info in nodes:
-                    node = self.model.input_name_to_nodes[node_info[1][1]][0]
+                    node = self.model.get_node_by_weight(node_info[1][1])
                     if len(target_list) > 0 and node_info[0] not in target_list:
                         continue
                     weight = numpy_helper.to_array(
@@ -524,7 +524,7 @@ class ORTSmoothQuant:
                     continue
                 weights_in_channel_max = []
                 for node_info in nodes:
-                    node = self.model.input_name_to_nodes[node_info[1][1]][0]
+                    node = self.model.get_node_by_weight(node_info[1][1])
                     weight = numpy_helper.to_array(
                         self.model.get_initializer(node_info[1][1]),
                         base_dir=os.path.dirname(self.model.model_path) if self.model.model_path is not None else "",
@@ -619,7 +619,7 @@ class ORTSmoothQuant:
                 if key not in scales:
                     continue
                 input = node_info[1][1]
-                node = self.model.input_name_to_nodes[input][0]
+                node = self.model.get_node_by_weight(input)
                 weight = numpy_helper.to_array(
                     self.model.get_initializer(input),
                     base_dir=os.path.dirname(self.model.model_path) if self.model.model_path is not None else "",
@@ -632,7 +632,7 @@ class ORTSmoothQuant:
                     )
                     new_weight = weight * scale
                 elif len(weight.shape) == 4:  # TODO need to check conv
-                    node = self.model.input_name_to_nodes[input][0]
+                    node = self.model.get_node_by_weight(input)
                     if (
                         weight.shape[1] == 1
                         and "group" in [i.name for i in node.attribute]
