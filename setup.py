@@ -22,6 +22,17 @@ def is_commit_on_tag():
         return False
 
 
+def get_build_version():
+    if is_commit_on_tag():
+        return __version__
+    try:
+        result = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True, check=True)
+        _, distance, commit = result.stdout.strip().split("-")
+        return f"{__version__}.dev{distance}+{commit}"
+    except subprocess.CalledProcessError:
+        return __version__
+
+
 try:
     filepath = "./neural_compressor/version.py"
     with open(filepath) as version_file:
@@ -172,6 +183,7 @@ if __name__ == "__main__":
     setup(
         name=project_name,
         author="Intel AIA Team",
+        version=get_build_version(),
         author_email="feng.tian@intel.com, haihao.shen@intel.com, suyue.chen@intel.com",
         description="Repository of Intel® Neural Compressor",
         long_description=open("README.md", "r", encoding="utf-8").read(),
@@ -193,9 +205,4 @@ if __name__ == "__main__":
             "Topic :: Scientific/Engineering :: Artificial Intelligence",
             "License :: OSI Approved :: Apache Software License",
         ],
-        setup_requires=["setuptools_scm"],
-        use_scm_version=dict(
-            version_scheme=lambda version: __version__ + ("" if is_commit_on_tag() else f".dev{version.distance}"),
-            local_scheme="no-local-version" if is_commit_on_tag() else lambda version: f"+{version.node[1:8]}",
-        ),
     )
