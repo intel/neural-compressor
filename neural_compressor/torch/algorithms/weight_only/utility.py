@@ -13,13 +13,8 @@
 # limitations under the License.
 
 import torch
-from torch.nn import functional as F
 
-from neural_compressor.common.logger import DEBUG, Logger, level
-from neural_compressor.torch.utils.utility import set_module
-
-logger = Logger().get_logger()
-
+from neural_compressor.torch.utils import logger
 
 NF4 = [
     -1.0,
@@ -310,11 +305,11 @@ def quant_tensor(
         scale = scale.reshape(1, -1)
         scale = quant_tensor(
             scale,
-            double_quant_bits,
-            double_quant_group_size,
+            dtype=double_quant_dtype,
+            bits=double_quant_bits,
+            group_size=double_quant_group_size,
             scheme=double_quant_scheme,
             quantile=1.0,
-            dtype=double_quant_dtype,
             return_int=double_quant_return_int,
             full_range=False,
             double_quant=False,
@@ -376,10 +371,10 @@ def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_ful
         ratio = 1 - i_s / n_grid  # 1, 0.805-1.0
         cur_weight = quant_tensor(
             m.weight.data,
+            dtype=dtype,
             bits=bits,
             group_size=group_size,
             scheme=scheme,
-            dtype=dtype,
             full_range=enable_full_range,
             quantile=ratio,
         )

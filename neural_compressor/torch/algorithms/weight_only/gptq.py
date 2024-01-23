@@ -30,10 +30,7 @@ import torch.nn as nn
 import transformers
 from tqdm import tqdm
 
-from neural_compressor.common import Logger
-
-logger = Logger().get_logger()
-
+from neural_compressor.torch.utils import logger
 
 DEBUG = False
 
@@ -758,9 +755,9 @@ class Quantizer(nn.Module):
         self.maxq = self.maxq.to(dev)
         # NF4 FP4
         if self.wdtype != "int":
-            from .rtn import quant_weight
+            from .utility import quant_tensor
 
-            _, scale, zero = quant_weight(
+            _, scale, zero = quant_tensor(
                 x,
                 self.wbits,
                 self.group_size,
@@ -850,11 +847,11 @@ class Quantizer(nn.Module):
             self.zero = self.zero.reshape(shape)
 
             if self.double_quant:
-                from .rtn import quant_weight
+                from .utility import quant_tensor
 
                 orig_scale_shape = self.scale.shape
                 self.scale = self.scale.reshape(1, -1)
-                self.scale = quant_weight(
+                self.scale = quant_tensor(
                     self.scale,
                     self.double_quant_bits,
                     self.double_quant_group_size,
@@ -879,7 +876,7 @@ class Quantizer(nn.Module):
     def quantize(self, x, scale, zero, maxq):
         """Do quantization."""
         if self.wdtype != "int":
-            from .rtn import quantize_4bit
+            from .utility import quantize_4bit
 
             return quantize_4bit(x, data_type=self.wdtype, scale=scale)
         else:
