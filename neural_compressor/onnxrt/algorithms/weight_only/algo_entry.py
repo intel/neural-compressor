@@ -18,8 +18,8 @@ from typing import Dict, Tuple, Union
 
 import onnx
 
-from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import RTN
+from neural_compressor.common import Logger
+from neural_compressor.common.utils import RTN
 from neural_compressor.onnxrt.quantization.config import RTNConfig
 from neural_compressor.onnxrt.utils.utility import register_algo
 
