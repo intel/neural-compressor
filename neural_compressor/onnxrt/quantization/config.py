@@ -31,6 +31,7 @@ logger = Logger().get_logger()
 
 FRAMEWORK_NAME = "onnxrt"
 
+
 class OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
