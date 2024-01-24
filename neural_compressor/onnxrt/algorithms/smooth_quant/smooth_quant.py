@@ -412,9 +412,7 @@ class ORTSmoothQuant:
                         self.model.model.opset_import,
                         self.model.model.ir_version,
                     )
-                loss += get_quant_dequant_output(
-                    model, outputs[0] * scale, outputs[1], self.providers
-                )
+                loss += get_quant_dequant_output(model, outputs[0] * scale, outputs[1], self.providers)
 
             self.model.remove_tensors_from_outputs([i for i in added_tensors if i not in orig_outputs])
             self.model.set_initializer(node.input[1], weight)
