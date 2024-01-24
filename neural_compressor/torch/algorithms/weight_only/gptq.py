@@ -753,6 +753,7 @@ class Quantizer(nn.Module):
     def find_params(self, x, weight=False):
         dev = x.device
         self.maxq = self.maxq.to(dev)
+        x = x.clone()  # make sure x is not replaced
         # NF4 FP4
         if self.wdtype != "int":
             from .utility import quant_tensor

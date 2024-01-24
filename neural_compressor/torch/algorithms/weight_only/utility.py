@@ -198,11 +198,11 @@ def qdq_weight_actor(weight, bits, scheme, quantile=1.0, dtype="int", return_int
 
 def quant_tensor(
     weight,
-    dtype="int",
     bits=4,
     group_size=-1,
     scheme="asym",
     quantile=1.0,
+    dtype="int",
     return_int=False,
     full_range=False,
     **kwargs,
