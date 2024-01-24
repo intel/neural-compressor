@@ -133,7 +133,8 @@ def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Co
         return {name: module}
     else:
         # use string type to find name:
-        if type(module).__name__ in ["Linear"]:
+        # if type(module).__name__ in ["Linear"]:
+        if isinstance(module, (nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D)):
             return {name: module}
         else:
             pass
@@ -158,6 +159,7 @@ def log_quantizable_layers_per_transformer(
 ):
     """Print all layers which will be quantized in GPTQ algorithm."""
     logger.info("* * Layer to be quantized * *")
+
 
     for block_id in range(len(transformer_blocks["transformers"])):
         transformer_block = transformer_blocks["transformers"][block_id]

@@ -77,7 +77,6 @@ parser.add_argument('--gptq_use_max_length', action="store_true",
 parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calibration dataset sequence max length, \
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
-parser.add_argument('--gptq_debug', action='store_true', help='Whether to use debug model ')
 # ==============code generation args===========
 parser.add_argument("--code_generation", action="store_true")
 parser.add_argument("--n_samples", default=200, type=int)
@@ -291,32 +290,6 @@ if args.quantize:
             recipes=recipes,
         )
 
-        # for test on various models, keep the code of directly call gptq_quantize
-        if args.gptq_debug:
-            from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
-
-            gptq_conf = {
-                ".*": {
-                    'wbits': args.woq_bits,  # 1-8 bits
-                    'group_size': args.woq_group_size,  # -1 (per-channel)
-                    'sym': (args.woq_scheme == "sym"),
-                    'act_order': args.gptq_actorder,
-                }
-            }
-            q_model_gptq_debug, gptq_config = gptq_quantize(
-                user_model,
-                weight_config=gptq_conf,
-                dataloader=calib_dataloader,
-                nsamples=args.gptq_nsamples,
-                use_max_length=args.gptq_use_max_length,
-                pad_max_length=args.gptq_pad_max_length,
-            )
-
-            # save the fake quantized model
-            os.makedirs(args.output_dir, exist_ok=True)
-            torch.save(q_model_gptq_debug, os.path.join(args.output_dir, "gptq_best_model.pt"))
-            exit(0)
-
     else:
         if re.search("gpt", user_model.config.model_type):
             op_type_dict = {
@@ -367,12 +340,9 @@ if args.int8 or args.int8_bf16_mixed:
     if args.ipex:
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
     else:
-        if args.gptq_debug:
-            user_model = torch.load(os.path.join(args.output_dir, "gptq_best_model.pt"))
-        else:
-            user_model, _ = get_user_model()
-            kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
-            user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model, **kwargs)
+        user_model, _ = get_user_model()
+        kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
+        user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model, **kwargs)
 else:
     user_model, _ = get_user_model()
 
