@@ -160,7 +160,6 @@ def log_quantizable_layers_per_transformer(
     """Print all layers which will be quantized in GPTQ algorithm."""
     logger.info("* * Layer to be quantized * *")
 
-
     for block_id in range(len(transformer_blocks["transformers"])):
         transformer_block = transformer_blocks["transformers"][block_id]
         layers_for_this_tblock = find_layers_name(transformer_block)
