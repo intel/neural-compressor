@@ -77,6 +77,7 @@ parser.add_argument('--gptq_use_max_length', action="store_true",
 parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calibration dataset sequence max length, \
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
+parser.add_argument('--gptq_static_groups', action='store_true', help='Use determined group to do quantization')
 # ==============code generation args===========
 parser.add_argument("--code_generation", action="store_true")
 parser.add_argument("--n_samples", default=200, type=int)
@@ -276,7 +277,8 @@ if args.quantize:
             'block_size': args.gptq_block_size,
             'nsamples': args.gptq_nsamples,
             'use_max_length': args.gptq_use_max_length,
-            'pad_max_length': args.gptq_pad_max_length
+            'pad_max_length': args.gptq_pad_max_length,
+            'static_groups': args.gptq_static_groups,
         }
         # GPTQ: use assistive functions to modify calib_dataloader and calib_func
         # TEQ: set calib_func=None, use default training func as calib_func
@@ -289,7 +291,6 @@ if args.quantize:
             op_name_dict=op_name_dict,
             recipes=recipes,
         )
-
     else:
         if re.search("gpt", user_model.config.model_type):
             op_type_dict = {

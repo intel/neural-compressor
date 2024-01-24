@@ -23,24 +23,18 @@ from typing import Callable, List, NamedTuple, Optional, Tuple, Union
 
 import onnx
 
+from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig, register_config
-from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, RTN
+from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, RTN
 
 logger = Logger().get_logger()
 
 FRAMEWORK_NAME = "onnxrt"
 
 
-class Backend(Enum):
-    DEFAULT = "onnxrt_cpu"
-    CUDA = "onnxrt_cuda"
-
-
 class OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
-    backend: List[Backend]
     valid_func_list: List[Callable] = []
 
 
@@ -100,13 +94,6 @@ class RTNConfig(BaseConfig):
             result[param] = getattr(self, param)
         return result
 
-    def to_dict(self):
-        return super().to_dict(params_list=self.params_list)
-
-    @classmethod
-    def from_dict(cls, config_dict):
-        return super(RTNConfig, cls).from_dict(config_dict=config_dict)
-
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
@@ -118,7 +105,7 @@ class RTNConfig(BaseConfig):
             act_dtype=["fp32"],
         )
         operators = ["MatMul"]
-        supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT))
+        supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators))
         cls.supported_configs = supported_configs
 
     def to_config_mapping(

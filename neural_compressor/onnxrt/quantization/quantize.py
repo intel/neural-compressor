@@ -18,8 +18,8 @@ from typing import Optional, Tuple
 import onnx
 from onnxruntime.quantization import CalibrationDataReader
 
+from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
-from neural_compressor.common.logger import Logger
 from neural_compressor.onnxrt.quantization.config import FRAMEWORK_NAME
 from neural_compressor.onnxrt.utils.utility import algos_mapping
 

@@ -7,7 +7,7 @@ import numpy as np
 import onnx
 from optimum.exporters.onnx import main_export
 
-from neural_compressor.common.logger import Logger
+from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
@@ -208,7 +208,6 @@ class TestQuantizationConfig(unittest.TestCase):
         qmodel = _quantize(fp32_model, quant_config=global_config + fc_out_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 1)
-        onnx.save(qmodel, "qmodel.onnx")
         self.assertTrue(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
     def test_config_white_lst3(self):

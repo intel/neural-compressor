@@ -20,6 +20,7 @@ pr:
       - neural_compressor/torch
       - neural_compressor/tensorflow
       - neural_compressor/onnxrt
+      - .azure-pipelines/scripts/ut/3x
 
 pool: ICX-16C
 
