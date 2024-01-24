@@ -21,11 +21,12 @@ import math
 import os
 from collections import OrderedDict, UserDict
 
+import keras
 import numpy as np
 import tensorflow as tf
 import yaml
 
-from neural_compressor.common.logger import Logger
+from neural_compressor.common import Logger
 from neural_compressor.tensorflow.utils import deep_get, dump_elapsed_time
 
 logger = Logger().get_logger()
@@ -485,6 +486,13 @@ class KerasAdaptor:
     def _restore_model_from_json(self, json_model):
         """Generate a keras model from json files."""
         from tensorflow.keras.models import model_from_json
+
+        from neural_compressor.tensorflow.utils import version1_gte_version2
+
+        if version1_gte_version2(keras.__version__, "2.13.1"):
+            from keras.src.saving import serialization_lib
+
+            serialization_lib.enable_unsafe_deserialization()
 
         custom_objects = {}
         # We need to keep a dictionary of custom objects as our quantized library

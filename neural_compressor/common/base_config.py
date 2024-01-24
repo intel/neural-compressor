@@ -25,11 +25,12 @@ from copy import deepcopy
 from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from neural_compressor.common.logger import Logger
-from neural_compressor.common.utility import (
+from neural_compressor.common import Logger
+from neural_compressor.common.utils import (
     BASE_CONFIG,
     COMPOSABLE_CONFIG,
     DEFAULT_WHITE_LIST,
+    DEFAULT_WORKSPACE,
     EMPTY_WHITE_LIST,
     GLOBAL,
     LOCAL,
@@ -38,32 +39,93 @@ from neural_compressor.common.utility import (
 
 logger = Logger().get_logger()
 
+__all__ = [
+    "ConfigRegistry",
+    "register_config",
+    "BaseConfig",
+    "ComposableConfig",
+    "Options",
+    "options",
+]
 
 # Dictionary to store registered configurations
-registered_configs = {}
 
 
-def register_config(framework_name="None", algo_name=None):
+class ConfigRegistry:
+    registered_configs = {}
+
+    @classmethod
+    def register_config_impl(cls, framework_name="None", algo_name=None, priority=0):
+        """Register config decorator.
+
+        The register the configuration classes for different algorithms within specific frameworks.
+
+        Usage example:
+            @ConfigRegistry.register_config(framework_name=FRAMEWORK_NAME, algo_name=ExampleAlgorithm, priority=100)
+            class ExampleAlgorithmConfig:
+                # Configuration details for the ExampleAlgorithm
+
+        Args:
+            framework_name: the framework name. Defaults to "None".
+            algo_name: the algorithm name. Defaults to None.
+            priority: priority: the priority of the configuration. A larger number indicates a higher priority,
+                which will be tried first at the auto-tune stage. Defaults to 0.
+        """
+
+        def decorator(config_cls):
+            cls.registered_configs.setdefault(framework_name, {})
+            cls.registered_configs[framework_name][algo_name] = {"priority": priority, "cls": config_cls}
+            return config_cls
+
+        return decorator
+
+    @classmethod
+    def get_all_configs(cls) -> Dict[str, Dict[str, Dict[str, object]]]:
+        """Get all registered configurations."""
+        return cls.registered_configs
+
+    @classmethod
+    def get_sorted_configs(cls) -> Dict[str, OrderedDict[str, Dict[str, object]]]:
+        """Get registered configurations sorted by priority."""
+        sorted_configs = OrderedDict()
+        for framework_name, algos in sorted(cls.registered_configs.items()):
+            sorted_configs[framework_name] = OrderedDict(
+                sorted(algos.items(), key=lambda x: x[1]["priority"], reverse=True)
+            )
+        return sorted_configs
+
+    @classmethod
+    def get_cls_configs(cls) -> Dict[str, Dict[str, object]]:
+        """Get registered configurations without priority."""
+        cls_configs = {}
+        for framework_name, algos in cls.registered_configs.items():
+            cls_configs[framework_name] = {}
+            for algo_name, config_data in algos.items():
+                cls_configs[framework_name][algo_name] = config_data["cls"]
+        return cls_configs
+
+
+config_registry = ConfigRegistry()
+
+
+def register_config(framework_name="None", algo_name=None, priority=0):
     """Register config decorator.
 
     The register the configuration classes for different algorithms within specific frameworks.
 
     Usage example:
-        @register_config(framework_name="PyTorch", algo_name="ExampleAlgorithm")
+        @register_config(framework_name=FRAMEWORK_NAME, algo_name=ExampleAlgorithm, priority=100)
         class ExampleAlgorithmConfig:
             # Configuration details for the ExampleAlgorithm
 
     Args:
         framework_name: the framework name. Defaults to "None".
         algo_name: the algorithm name. Defaults to None.
+        priority: the priority of the configuration. A larger number indicates a higher priority,
+            which will be tried first at the auto-tune stage. Defaults to 0.
     """
 
-    def decorator(config_cls):
-        registered_configs.setdefault(framework_name, {})
-        registered_configs[framework_name][algo_name] = config_cls
-        return config_cls
-
-    return decorator
+    return config_registry.register_config_impl(framework_name=framework_name, algo_name=algo_name, priority=priority)
 
 
 class BaseConfig(ABC):
@@ -358,3 +420,122 @@ class ComposableConfig(BaseConfig):
     def register_supported_configs(cls):
         """Add all supported configs."""
         raise NotImplementedError
+
+
+def _check_value(name, src, supported_type, supported_value=[]):
+    """Check if the given object is the given supported type and in the given supported value.
+
+    Example::
+
+        from neural_compressor.common.base_config import _check_value
+
+        def datatype(self, datatype):
+            if _check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
+                self._datatype = datatype
+    """
+    if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
+        assert False, "Type of {} items should be {} but not {}".format(
+            name, str(supported_type), [type(i) for i in src]
+        )
+    elif not isinstance(src, list) and not isinstance(src, supported_type):
+        assert False, "Type of {} should be {} but not {}".format(name, str(supported_type), type(src))
+
+    if len(supported_value) > 0:
+        if isinstance(src, str) and src not in supported_value:
+            assert False, "{} is not in supported {}: {}. Skip setting it.".format(src, name, str(supported_value))
+        elif (
+            isinstance(src, list)
+            and all([isinstance(i, str) for i in src])
+            and any([i not in supported_value for i in src])
+        ):
+            assert False, "{} is not in supported {}: {}. Skip setting it.".format(src, name, str(supported_value))
+
+    return True
+
+
+class Options:
+    """Option Class for configs.
+
+    This class is used for configuring global variables. The global variable options is created with this class.
+    If you want to change global variables, you should use functions from neural_compressor.common.utils.utility.py:
+        set_random_seed(seed: int)
+        set_workspace(workspace: str)
+        set_resume_from(resume_from: str)
+        set_tensorboard(tensorboard: bool)
+
+    Args:
+        random_seed(int): Random seed used in neural compressor.
+                          Default value is 1978.
+        workspace(str): The directory where intermediate files and tuning history file are stored.
+                        Default value is:
+                            "./nc_workspace/{}/".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")).
+        resume_from(str): The directory you want to resume tuning history file from.
+                          The tuning history was automatically saved in the workspace directory
+                               during the last tune process.
+                          Default value is None.
+        tensorboard(bool): This flag indicates whether to save the weights of the model and the inputs of each layer
+                               for visual display.
+                           Default value is False.
+
+    Example::
+
+        from neural_compressor.common import set_random_seed, set_workspace, set_resume_from, set_tensorboard
+        set_random_seed(2022)
+        set_workspace("workspace_path")
+        set_resume_from("workspace_path")
+        set_tensorboard(True)
+    """
+
+    def __init__(self, random_seed=1978, workspace=DEFAULT_WORKSPACE, resume_from=None, tensorboard=False):
+        """Init an Option object."""
+        self.random_seed = random_seed
+        self.workspace = workspace
+        self.resume_from = resume_from
+        self.tensorboard = tensorboard
+
+    @property
+    def random_seed(self):
+        """Get random seed."""
+        return self._random_seed
+
+    @random_seed.setter
+    def random_seed(self, random_seed):
+        """Set random seed."""
+        if _check_value("random_seed", random_seed, int):
+            self._random_seed = random_seed
+
+    @property
+    def workspace(self):
+        """Get workspace."""
+        return self._workspace
+
+    @workspace.setter
+    def workspace(self, workspace):
+        """Set workspace."""
+        if _check_value("workspace", workspace, str):
+            self._workspace = workspace
+
+    @property
+    def resume_from(self):
+        """Get resume_from."""
+        return self._resume_from
+
+    @resume_from.setter
+    def resume_from(self, resume_from):
+        """Set resume_from."""
+        if resume_from is None or _check_value("resume_from", resume_from, str):
+            self._resume_from = resume_from
+
+    @property
+    def tensorboard(self):
+        """Get tensorboard."""
+        return self._tensorboard
+
+    @tensorboard.setter
+    def tensorboard(self, tensorboard):
+        """Set tensorboard."""
+        if _check_value("tensorboard", tensorboard, bool):
+            self._tensorboard = tensorboard
+
+
+options = Options()

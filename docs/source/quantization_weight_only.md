@@ -28,7 +28,7 @@ There are many excellent works for weight only quantization to improve its accur
 ## Supported Framework Model Matrix
 
 | Algorithms/Framework |   PyTorch  |    ONNX Runtime    |
-|:--------------:|:----------:|:----------:|
+|--------------|----------|----------|
 |       RTN      |  &#10004;  |  &#10004;  |
 |       AWQ      |  &#10004;  | &#10004; |
 |      GPTQ      | &#10004; | &#10004; |
@@ -40,48 +40,53 @@ There are many excellent works for weight only quantization to improve its accur
 
 > **GPTQ:** A new one-shot weight quantization method based on approximate second-order information, that is both highly-accurate and highly efficient[4]. The weights of each column are updated based on the fixed-scale pseudo-quantization error and the inverse of the Hessian matrix calculated from the activations. The updated columns sharing the same scale may generate a new max/min value, so the scale needs to be saved for restoration.
 
-> **AWQ:** Proved that protecting only 1% of salient weights can greatly reduce quantization error. the salient weight channels are selected by observing the distribution of activation and weight per channel. The salient weights are also quantized after multiplying a big scale factor before quantization for preserving. 
+> **AWQ:** Proved that protecting only 1% of salient weights can greatly reduce quantization error. the salient weight channels are selected by observing the distribution of activation and weight per channel. The salient weights are also quantized after multiplying a big scale factor before quantization for preserving.
 
 > **TEQ:** A trainable equivalent transformation that preserves the FP32 precision in weight-only quantization. It is inspired by AWQ while providing a new solution to search for the optimal per-channel scaling factor between activations and weights.
 
 ## Examples
 ### **Quantization Capability**
+
 | Config | Capability |
-| :---: | :---:|
+|---|---|
 | dtype | ['int', 'nf4', 'fp4'] |
 | bits | [1, ..., 8] |
-| group_size | [-1, 1, ..., $C_{in}$] | 
+| group_size | [-1, 1, ..., $C_{in}$] |
 | scheme | ['asym', 'sym'] |
 | algorithm | ['RTN', 'AWQ', 'GPTQ'] |
 
 Notes:
-- *group_size = -1* refers to **per output channel quantization**. Taking a linear layer (input channel = $C_{in}$, output channel = $C_{out}$) for instance, when *group size = -1*, quantization will calculate total $C_{out}$ quantization parameters. Otherwise, when *group_size = gs* quantization parameters are calculate with every $gs$ elements along with the input channel, leading to total $C_{out} \times (C_{in} / gs)$ quantization parameters. 
+- *group_size = -1* refers to **per output channel quantization**. Taking a linear layer (input channel = $C_{in}$, output channel = $C_{out}$) for instance, when *group size = -1*, quantization will calculate total $C_{out}$ quantization parameters. Otherwise, when *group_size = gs* quantization parameters are calculate with every $gs$ elements along with the input channel, leading to total $C_{out} \times (C_{in} / gs)$ quantization parameters.
 - 4-bit NormalFloat(NF4) is proposed in QLoRA[5]. 'fp4' includes [fp4_e2m1](../../neural_compressor/adaptor/torch_utils/weight_only.py#L37) and [fp4_e2m1_bnb](https://github.com/TimDettmers/bitsandbytes/blob/18e827d666fa2b70a12d539ccedc17aa51b2c97c/bitsandbytes/functional.py#L735). By default, fp4 refers to fp4_e2m1_bnb.
 
 **RTN arguments**
+
 |  rtn_args  | default value |                               comments                              |
-|:----------:|:-------------:|:-------------------------------------------------------------------:|
+|----------|-------------|-------------------------------------------------------------------|
 |  enable_full_range |      False     |   Whether to use -2**(bits-1) in sym scheme  |
 |  enable_mse_search |      False     | Whether to search for the best clip range from range [0.805, 1.0, 0.005] |
 |  return_int |      False     | Whether to return compressed model with torch.int32 data type |
 |  group_dim  |       1       |   0 means splitting output channel, 1 means splitting input channel   |
 
 **AWQ arguments**
+
 |  awq_args  | default value |                               comments                              |
-|:----------:|:-------------:|:-------------------------------------------------------------------:|
+|----------|-------------|-------------------------------------------------------------------|
 |  enable_auto_scale |      True     | Whether to search for best scales based on activation distribution   |
 |  enable_mse_search |      True     | Whether to search for the best clip range from range [0.91, 1.0, 0.01] |
 |  folding   |      False    | False will allow insert mul before linear when the scale cannot be absorbed by last layer, else won't |
 
 **GPTQ arguments**
+
 |  gptq_args  | default value |                               comments                              |
-|:----------:|:-------------:|:-------------------------------------------------------------------:|
+|----------|-------------|-------------------------------------------------------------------|
 |  actorder | False |   Whether to sort Hessian's diagonal values to rearrange channel-wise quantization order|
 |  percdamp | 0.01 | Percentage of Hessian's diagonal values' average, which will be added to Hessian's diagonal to increase numerical stability|
 |  nsamples  | 128 |  Calibration samples' size |
 |  pad_max_length  | 2048 | Whether to align calibration data to a fixed length. This value should not exceed model's acceptable sequence length. Please refer to  model's config json to find out this value.|
 |  use_max_length  | False | Whether to align all calibration data to fixed length, which equals to pad_max_length. |
 |  block_size  | 128 | Execute GPTQ quantization per block, block shape = [$C_{out}$, block_size] |
+|  static_groups  | False | Whether to calculate group wise quantization parameters in advance. This option mitigate actorder's extra computational requirements |
 
 **Note:** Neural compressor provides `Unsigned integer for asymmetric quantization` and `Signed integer for symmetric quantization`. Please follow the below section to compress the low bit data type for saving.
 
@@ -89,8 +94,9 @@ Notes:
 To support low memory inference, Neural Compressor implemented WeightOnlyLinear, a torch.nn.Module, to compress the fake quantized fp32 model. Since torch does not provide flexible data type storage, WeightOnlyLinear combines low bits data into a long date type, such as torch.int8 and torch.int32. Low bits data includes weights and zero points. When using WeightOnlyLinear for inference, it will restore the compressed data to float32 and run torch linear function.
 
 **Export arguments**
+
 | export args  | default value |                               comments                              |
-|:----------:|:-------------:|:-------------------------------------------------------------------:|
+|----------|-------------|-------------------------------------------------------------------|
 |  use_optimum_format  |     True       |  Whether to use the popular format used in [Optimum](https://github.com/huggingface/optimum/blob/e0927976d06d163ed09fe5bd80d013e1cfa0c463/docs/source/llm_quantization/usage_guides/quantization.mdx#L5)  |
 |  sym_full_range |      False     | Whether to leverage the full compression range under symmetric quantization |
 |  compression_dtype  |       torch.int32       |  Data type for compressed dtype, select from [torch.int8\|16\|32\|64]. It's torch.int32 when use_optimum_format=True |
@@ -101,9 +107,9 @@ To support low memory inference, Neural Compressor implemented WeightOnlyLinear,
 
 **Note:** The format used in Optimum is acceptable for transformers, which makes it easy to use. However, this format is rather special, the main differences are as follows:
 
-> 1: Compression Dimension: weight = 1, zero = 0 and both are transposed.   
-> 2: Zero Point: zero_point-= 1 before compression. zero_point is always required even for sym.    
-> 3: Group Index: Use the same number for a group instead of recording channel order. 
+> 1: Compression Dimension: weight = 1, zero = 0 and both are transposed.
+> 2: Zero Point: zero_point-= 1 before compression. zero_point is always required even for sym.
+> 3: Group Index: Use the same number for a group instead of recording channel order.
 
 
 ### **User Code Example**
@@ -151,7 +157,7 @@ To find the best algorithm, users can omit specifying a particular algorithm. In
 **Pre-defined configurations**
 
 | WOQ configurations | Comments |
-|:------------------:|:-------:|
+|------------------|-------|
 |RTN_G32ASYM| {"algorithm": "RTN", "group_size": 32, "scheme": "asym"}|
 |GPTQ_G32ASYM| {"algorithm": "GPTQ", "group_size": 32, "scheme": "asym"}|
 |GPTQ_G32ASYM_DISABLE_LAST_MATMUL| {"algorithm": "GPTQ", "group_size": 32, "scheme": "asym"} <br> & disable last MatMul|

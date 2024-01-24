@@ -19,6 +19,8 @@ pr:
       - neural_compressor/common
       - neural_compressor/torch
       - neural_compressor/tensorflow
+      - neural_compressor/onnxrt
+      - .azure-pipelines/scripts/ut/3x
 
 pool: ICX-16C
 
@@ -257,7 +259,7 @@ stages:
               docker exec collectLogs /bin/bash  +x -c "cd /neural-compressor/.azure-pipelines/scripts \
               && bash install_nc.sh \
               && bash ut/collect_log.sh"
-            displayName: "collect logs"
+            displayName: "Collect UT Coverage"
 
           - task: PublishPipelineArtifact@1
             condition: succeededOrFailed()
