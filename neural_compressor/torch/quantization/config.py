@@ -346,7 +346,7 @@ class StaticQuantConfig(BaseConfig):
         act_dtype: str = "uint8",
         act_sym: bool = False,
         act_granularity: str = "per_tensor",
-        act_algo: str = "minmax",
+        act_algo: str = "kl",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init Static Quant Configs."""
@@ -366,7 +366,7 @@ class StaticQuantConfig(BaseConfig):
         supported_configs = []
         # TODO(Yi)
         linear_static_config = StaticQuantConfig()
-        operators = [torch.nn.Linear, torch.nn.functional.linear]
+        operators = [torch.nn.Linear]
         supported_configs.append(OperatorConfig(config=linear_static_config, operators=operators))
         cls.supported_configs = supported_configs
 
@@ -426,7 +426,7 @@ class SmoothQuantConfig(BaseConfig):
         act_dtype: str = "uint8",
         act_sym: bool = False,
         act_granularity: str = "per_tensor",
-        act_algo: str = "minmax",
+        act_algo: str = "kl",
         alpha: float = 0.5,
         folding: bool = False,
         # below for autotune
