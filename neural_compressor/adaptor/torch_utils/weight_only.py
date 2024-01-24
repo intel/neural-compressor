@@ -429,14 +429,17 @@ def rtn_quantize(
             if num_bits <= 0:
                 logger.info(f"Skip {name}")
                 continue
-            weight = m.weight.t_().contiguous() if group_dim == 0 else m.weight
+            # contiguous is not an in-place op and returns Tensor instead of Parameter, so set it back to m.weight.data.
+            # transpose should be executed on Parameter level because Param.data.t_() is not an in-place op.
+            # Parameter.T is an in-place op while Tensor.T is not.
+            m.weight.data = m.weight.t_().data.contiguous() if group_dim == 0 else m.weight.data
             if enable_mse_search:
                 quantile = search_clip(m, num_bits, group_size, scheme, data_type, enable_full_range)
             if return_int:
                 from .model_wrapper import WeightOnlyLinear
 
                 _, scale, zp = quant_weight(
-                    weight,
+                    m.weight.data,
                     num_bits,
                     group_size,
                     scheme,
@@ -446,7 +449,7 @@ def rtn_quantize(
                     full_range=enable_full_range,
                 )
                 if group_dim == 0:
-                    weight.transpose_(0, 1)
+                    m.weight.t_()
                 scale = scale.t_().contiguous() if group_dim == 0 else scale
                 zp = zp.t_().contiguous() if group_dim == 0 and zp is not None else zp
                 new_module = WeightOnlyLinear(
@@ -463,14 +466,14 @@ def rtn_quantize(
                     device=device,
                     use_optimum_format=use_optimum_format,
                 )
-                new_module.pack(weight, scale, zp, m.bias)
+                new_module.pack(m.weight.data, scale, zp, m.bias)
                 if name == "":
                     return new_module
                 else:
                     set_module(model, name, new_module)
             else:
                 quant_weight(
-                    weight,
+                    m.weight.data,
                     num_bits,
                     group_size,
                     scheme,
@@ -479,7 +482,7 @@ def rtn_quantize(
                     full_range=enable_full_range,
                 )
                 if group_dim == 0:
-                    weight.transpose_(0, 1)
+                    m.weight.t_()
             if orig_dtype != torch.float:
                 m = m.to(orig_dtype)
     return model
