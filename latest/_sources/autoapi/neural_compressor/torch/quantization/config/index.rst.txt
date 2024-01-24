@@ -14,7 +14,6 @@ Classes
 
 .. autoapisummary::
 
-   neural_compressor.torch.quantization.config.Backend
    neural_compressor.torch.quantization.config.RTNConfig
    neural_compressor.torch.quantization.config.GPTQConfig
    neural_compressor.torch.quantization.config.FP8QConfig
@@ -29,16 +28,6 @@ Functions
    neural_compressor.torch.quantization.config.get_default_rtn_config
    neural_compressor.torch.quantization.config.get_default_gptq_config
 
-
-
-.. py:class:: Backend
-
-
-
-
-   Generic enumeration.
-
-   Derive from this class to define new enumerations.
 
 
 .. py:class:: RTNConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, act_dtype: str = 'fp32', enable_full_range: bool = False, enable_mse_search: bool = False, group_dim: int = 1, return_int: bool = False, double_quant_dtype: str = 'fp32', double_quant_bits: int = 8, double_quant_sym: bool = True, double_quant_group_size: int = 256, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
