@@ -330,8 +330,8 @@ def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", en
     history = []
     for i_s in range(int(max_shrink * n_grid)):
         ratio = 1 - i_s / n_grid  # 1, 0.805-1.0
-        cur_weight = quant_weight(
-            m.weight.data,
+        quant_weight(
+            m.weight.data,  # in-place mode
             num_bits=num_bits,
             group_size=group_size,
             scheme=scheme,
@@ -339,7 +339,8 @@ def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", en
             full_range=enable_full_range,
             quantile=ratio,
         )
-        loss = (org_weight - cur_weight).float().pow(2).mean().item()
+        loss = (org_weight - m.weight.data).float().pow(2).mean().item()
+        m.weight.data.copy_(org_weight)
         history.append(loss)
         is_best = loss < best_error
         if is_best:
