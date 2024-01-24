@@ -29,7 +29,6 @@ from abc import abstractmethod
 
 from neural_compressor.common.logger import Logger
 from neural_compressor.tensorflow.utils import version1_lt_version2
-from neural_compressor.tensorflow.auto_tune import framework_specific_info
 
 import numpy as np
 import tensorflow as tf
@@ -675,6 +674,13 @@ SESSIONS = {
     "slim": slim_session,
 }
 
+framework_specific_info = {
+    "device": "cpu",
+    "backend": "default",
+    "approach": "post_training_static_quant",
+    "random_seed": 1978,
+}
+
 def set_framework_info(conf, model):
     if conf == "NA":
         return
@@ -695,10 +701,11 @@ def set_framework_info(conf, model):
         framework_specific_info["backend"] = "itex" 
         return 
 
+    from .utils import itex_installed
     if conf.performance_only:
         framework_specific_info["performance_only"] = conf.performance_only
-    if conf.backend:
-        framework_specific_info["backend"] = conf.backend
+    if itex_installed():
+        framework_specific_info["backend"] = "itex"
     if conf.workspace_path:
         framework_specific_info["workspace_path"] = conf.workspace_path
     if conf.recipes:
@@ -724,6 +731,7 @@ class Model(object):
         Returns:
             BaseModel: neural_compressor built-in model
         """
+        from .utils import itex_installed
         if isinstance(root, BaseModel):
             return root
 
@@ -734,7 +742,7 @@ class Model(object):
         else:
             model_type = get_tf_model_type(root)
 
-        if model_type == "keras" and not kwargs.get("backend", None) == "itex":
+        if model_type == "keras" and not itex_installed():
             model_type = "saved_model"
 
         model = TensorflowModel(model_type, root, **kwargs)

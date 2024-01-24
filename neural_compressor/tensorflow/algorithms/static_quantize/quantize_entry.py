@@ -20,10 +20,10 @@ import tensorflow as tf
 from neural_compressor.common.utility import STATIC_QUANT
 from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.tensorflow.utils import register_algo
-from neural_compressor.tensorflow.model import BaseModel, KerasModel
+from neural_compressor.tensorflow.auto_tune import generate_tune_config
 from neural_compressor.tensorflow.algorithms.static_quantize.keras import KerasAdaptor
-from neural_compressor.tensorflow.algorithms.static_quantize.tensorflow import TensorflowAdaptor
-from neural_compressor.tensorflow.auto_tune import framework_specific_info, generate_tune_config
+from neural_compressor.tensorflow.algorithms.static_quantize.tensorflow import TensorFlowAdaptor
+from neural_compressor.tensorflow.model import BaseModel, KerasModel, framework_specific_info
 
 @register_algo(name=STATIC_QUANT)
 def static_quantize_entry(
@@ -43,7 +43,7 @@ def static_quantize_entry(
     Returns:
         q_model: the quantized model.
     """
-    Adaptor = KerasAdaptor if isinstance(model, KerasModel) else TensorflowAdaptor
+    Adaptor = KerasAdaptor if isinstance(model, KerasModel) else TensorFlowAdaptor
     adaptor = Adaptor(framework_specific_info)
     capability = adaptor.query_fw_capability(model)
     tune_cfg = generate_tune_config(model, quant_config, calib_iteration, \

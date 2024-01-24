@@ -77,8 +77,6 @@ class TensorFlowAdaptor:
         Args:
             framework_specific_info: framework specific info passed from strategy.
         """
-        super().__init__(framework_specific_info)
-
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         self.quantize_config = {"op_wise_config": {}}
@@ -2078,7 +2076,6 @@ class TensorflowQuery:
             itex_mode: check if itex mode.
             quant_mode: quantization mode, static or dynamic.
         """
-        super().__init__()
         self.version = tf.version.VERSION
         self.cfg = local_config_file
         self.cur_config = None

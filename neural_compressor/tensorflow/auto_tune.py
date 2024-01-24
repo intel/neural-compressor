@@ -25,17 +25,9 @@ from typing import Dict, List, Tuple, Callable
 from neural_compressor.common.logger import Logger
 from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.tensorflow.model import BaseModel, KerasModel
-from neural_compressor.tensorflow.quantization.config import parse_to_tf_tune_cfg
-from neural_compressor.tensorflow.keras.quantization.config import parse_to_keras_tune_cfg
+from neural_compressor.tensorflow.keras import parse_to_keras_tune_cfg
 
 logger = Logger().get_logger()
-
-framework_specific_info = {
-    "device": "cpu",
-    "backend": "default",
-    "approach": "post_training_static_quant",
-    "random_seed": 1978,
-}
 
 TUNING_ITEMS_LST = [
     ("activation", "scheme"),
@@ -174,7 +166,7 @@ def extract_data_type(data_type: str) -> str:
     """
     return ("signed", data_type) if data_type[0] != "u" else ("unsigned", data_type[1:])
 
-def initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space: TuningSpace) -> OpTuningConfig:
+def initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space):
     """Initialize the tuning cfg.
 
     Args:

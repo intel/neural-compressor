@@ -85,6 +85,14 @@ def deep_get(dictionary, keys, default=None):
     """
     return reduce(lambda d, key: d.get(key, default) if isinstance(d, dict) else default, keys.split("."), dictionary)
 
+def itex_installed():
+    """Check if the Intel® Extension for TensorFlow has been installed."""
+    try:
+        import intel_extension_for_tensorflow
+        return True
+    except:
+        return False
+
 def dump_elapsed_time(customized_msg=""):
     """Get the elapsed time for decorated functions.
 
