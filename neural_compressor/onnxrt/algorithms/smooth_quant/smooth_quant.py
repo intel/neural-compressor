@@ -58,7 +58,7 @@ def get_quant_dequant_output(model, input_data, output_data, providers):
     """
     import onnxruntime as ort
 
-    input_data = quant_dequant_data(input_data, False, 2, "asym")
+    input_data = quant_dequant_data(input_data, 2, "asym")
     sess = ort.InferenceSession(model.SerializeToString(), providers=providers)
     preds = sess.run(None, {model.graph.input[0].name: input_data})
     loss = np.sum(np.abs(output_data - preds) ** 2)

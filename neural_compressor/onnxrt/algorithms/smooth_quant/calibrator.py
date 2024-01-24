@@ -38,15 +38,7 @@ logger = Logger().get_logger()
 
 
 class Calibrator:
-    """Fake input channel quantization.
-
-    For more details please refer to:
-    [1] SmoothQuant: Accurate and Efficient
-    Post-Training Quantization for Large Language Models
-    [2] SPIQ: Data-Free Per-Channel Static Input Quantization
-    We only support inplace mode which means the model weights will be changed,
-    you can call recover function to recover the weights if needed.
-    """
+    """Calibrator for smooth quant."""
 
     def __init__(
         self,
