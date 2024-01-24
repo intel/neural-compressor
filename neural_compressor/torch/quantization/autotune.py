@@ -18,7 +18,7 @@ from typing import Dict, List, Optional, Union
 import torch
 
 from neural_compressor.common import Logger
-from neural_compressor.common.base_config import BaseConfig, get_config_set_from_config_registry
+from neural_compressor.common.base_config import BaseConfig, get_all_config_set_from_config_registry
 from neural_compressor.common.base_tuning import TuningConfig, evaluator, init_tuning
 from neural_compressor.torch import quantize
 from neural_compressor.torch.quantization.config import FRAMEWORK_NAME
@@ -28,12 +28,12 @@ logger = Logger().get_logger()
 
 __all__ = [
     "autotune",
-    "get_config_set_for_tuning",
+    "get_all_config_set",
 ]
 
 
-def get_config_set_for_tuning() -> Union[BaseConfig, List[BaseConfig]]:
-    return get_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
+def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
+    return get_all_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
 
 
 def autotune(

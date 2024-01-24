@@ -24,4 +24,4 @@ from neural_compressor.torch.quantization import (
 )
 
 from neural_compressor.common.base_tuning import TuningConfig
-from neural_compressor.torch.quantization.autotune import autotune, get_config_set_for_tuning
+from neural_compressor.torch.quantization.autotune import autotune, get_all_config_set

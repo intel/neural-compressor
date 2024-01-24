@@ -157,7 +157,7 @@ class TestAutoTune(unittest.TestCase):
 
     @reset_tuning_target
     def test_autotune_get_config_set_api(self):
-        from neural_compressor.torch import TuningConfig, autotune, get_config_set_for_tuning
+        from neural_compressor.torch import TuningConfig, autotune, get_all_config_set
         from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
 
         dataloader = GPTQLLMDataLoader()
@@ -183,7 +183,7 @@ class TestAutoTune(unittest.TestCase):
                 "weight": 0.5,
             },
         ]
-        custom_tune_config = TuningConfig(config_set=get_config_set_for_tuning(), max_trials=4)
+        custom_tune_config = TuningConfig(config_set=get_all_config_set(), max_trials=4)
         best_model = autotune(
             model=get_gpt_j(),
             tune_config=custom_tune_config,

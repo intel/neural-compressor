@@ -317,10 +317,10 @@ class TestQuantConfigForAutotune(unittest.TestCase):
 
     def test_config_set_api(self):
         # *Note: this test is only for improving the code coverage and can be removed once the test_common is enabled.
-        from neural_compressor.common.base_config import config_registry, get_config_set_from_config_registry
+        from neural_compressor.common.base_config import config_registry, get_all_config_set_from_config_registry
         from neural_compressor.tensorflow.quantization.config import FRAMEWORK_NAME
 
-        config_set = get_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
+        config_set = get_all_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
         self.assertEqual(len(config_set), len(config_registry.registered_configs[FRAMEWORK_NAME]))
 
 

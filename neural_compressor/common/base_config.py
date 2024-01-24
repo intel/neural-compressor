@@ -43,7 +43,7 @@ __all__ = [
     "register_config",
     "BaseConfig",
     "ComposableConfig",
-    "get_config_set_from_config_registry",
+    "get_all_config_set_from_config_registry",
     "options",
 ]
 
@@ -436,7 +436,7 @@ class ComposableConfig(BaseConfig):
         return None
 
 
-def get_config_set_from_config_registry(fwk_name: str) -> Union[BaseConfig, List[BaseConfig]]:
+def get_all_config_set_from_config_registry(fwk_name: str) -> Union[BaseConfig, List[BaseConfig]]:
     all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls_by_fwk_name(fwk_name)
     config_set = []
     for config_cls in all_registered_config_cls:
