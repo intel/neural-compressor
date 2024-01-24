@@ -36,15 +36,18 @@ class DataReader(CalibrationDataReader):
     def __init__(self, model):
         model = onnx.load(model)
         batch_size = 1
-        past_sequence_length = 1
+        sequence_length = 1
         self.data = {
-            "input_ids": np.random.randint(10, size=(batch_size, 1)).astype("int64"),
-            "attention_mask": np.zeros((batch_size, past_sequence_length + 1)).astype("int64"),
+            "input_ids": np.random.randint(10, size=(batch_size, sequence_length)).astype("int64"),
+            "attention_mask": np.zeros((batch_size, sequence_length)).astype("int64"),
         }
         for inp in model.graph.input:
             if inp.name in self.data:
                 continue
-            self.data[inp.name] = np.random.random((batch_size, 4, past_sequence_length, 8)).astype("float32")
+            if inp.name == "position_ids":
+                # model is exported with optimum >= 1.14.0 with new input 'position_ids'
+                self.data[inp.name] = np.random.randint(10, size=(batch_size, sequence_length)).astype("int64")
+
         self.enum_data = None
 
     def get_next(self):
