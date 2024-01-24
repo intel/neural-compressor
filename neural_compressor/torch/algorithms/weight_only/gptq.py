@@ -250,7 +250,7 @@ class GPTQuantizer(object):
 
         # device
         self.device = device
-        if str(getattr(self.model, "device", "")).startswith("cuda"):
+        if str(self.model.device).startswith("cuda"):
             self.device = self.model.device
         self.is_ready = False
 
