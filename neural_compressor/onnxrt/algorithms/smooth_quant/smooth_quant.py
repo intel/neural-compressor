@@ -47,26 +47,25 @@ dtype_map = {
 }
 
 
-def get_quant_dequant_output(model, input_data, output_data, reduce_range, providers):
+def get_quant_dequant_output(model, input_data, output_data, providers):
     """Get loss between fp32 output and QDQ output.
 
     Args:
         model (object): model
         input_data (numpy.ndarray): fp32 input
         output_data (numpy.ndarray): fp32 output
-        reduce_range (bool): use 7 bit or not
         providers (list): execution provider
     """
     import onnxruntime as ort
 
-    input_data = quant_dequant_data(input_data, reduce_range, 2, "asym")
+    input_data = quant_dequant_data(input_data, False, 2, "asym")
     sess = ort.InferenceSession(model.SerializeToString(), providers=providers)
     preds = sess.run(None, {model.graph.input[0].name: input_data})
     loss = np.sum(np.abs(output_data - preds) ** 2)
     return loss
 
 
-def make_sub_graph(node, inits, input_data, output_data, reduce_range, opset, ir_version):
+def make_sub_graph(node, inits, input_data, output_data, opset, ir_version):
     """Build a model with the specific node.
 
     Args:
@@ -74,7 +73,6 @@ def make_sub_graph(node, inits, input_data, output_data, reduce_range, opset, ir
         inits (list): initializer inputs of this node
         input_data (numpy.ndarray): fp32 input
         output_data (numpy.ndarray): fp32 output
-        reduce_range (bool): use 7 bit or not
         opset (object): opset of the model
         ir_version (object): ir_version of the model
     """
@@ -88,17 +86,16 @@ def make_sub_graph(node, inits, input_data, output_data, reduce_range, opset, ir
     return model
 
 
-def quant_dequant_data(data, reduce_range=False, qType=3, scheme="sym"):
+def quant_dequant_data(data, qType=3, scheme="sym"):
     """Quantize and then dequantize data.
 
     Args:
         data (numpy.ndarray): target data
-        reduce_range (bool): use 7 bit or not
         qType (int): data type
         scheme (str): sym or asym quantization
     """
     rmin, rmax, zero_point, scale, quantized_data = quantize_data(
-        data.flatten().tolist(), _get_qrange_for_qType(qType, reduce_range), qType, scheme
+        data.flatten().tolist(), _get_qrange_for_qType(qType, False), qType, scheme
     )
     return ((quantized_data - zero_point) * scale).astype(data.dtype).reshape(data.shape)
 
@@ -118,7 +115,6 @@ class ORTSmoothQuant:
         self,
         model,
         dataloader,
-        reduce_range=False,
         providers=["CPUExecutionProvider"],
     ):
         """Initialize the attributes of class."""
@@ -127,19 +123,14 @@ class ORTSmoothQuant:
         self.value_infos.update({ot.name: ot for ot in self.model.model.graph.output})
         self.value_infos.update({it.name: it for it in self.model.model.graph.input})
         self.dataloader = dataloader
-        self.reduce_range = reduce_range
         self.providers = providers
         self.tensor_scales_info = {}
         self.new_added_mul_nodes = []
         self.new_added_value_info = []
         self.new_init_tensors = []  # scales_tensor
-        self.alpha = None
-        self.op_types = None
-        self.scales_per_op = None
-        self.calib_iter = None
+        self.scales_per_op = True
         self.replace_input = []
         self.ops_to_absorb = []
-        self.record_max_info = False
         self.max_vals_per_channel = None
         self.shape_info = None
         self.tensors_to_node = None
@@ -172,6 +163,7 @@ class ORTSmoothQuant:
             A FP32 model with the same architecture as the orig model but with different weight which will be
             benefit to quantization
         """
+        self.scales_per_op = scales_per_op
         self.clean()
         if isinstance(alpha, float) and (alpha < 0 or alpha > 1):
             logger.warning("alpha should be a float value in [0, 1] or 'auto' ")
@@ -218,7 +210,6 @@ class ORTSmoothQuant:
             [],
             iterations=list(range(0, iterations)),
             backend=self.providers,
-            reduce_range=self.reduce_range,
         )
 
         self.max_vals_per_channel, self.shape_info, self.tensors_to_node = calibrator.calib_smooth(op_types, percentile)
@@ -418,12 +409,11 @@ class ORTSmoothQuant:
                         inits,
                         outputs[0],
                         outputs[1],
-                        self.reduce_range,
                         self.model.model.opset_import,
                         self.model.model.ir_version,
                     )
                 loss += get_quant_dequant_output(
-                    model, outputs[0] * scale, outputs[1], self.reduce_range, self.providers
+                    model, outputs[0] * scale, outputs[1], self.providers
                 )
 
             self.model.remove_tensors_from_outputs([i for i in added_tensors if i not in orig_outputs])

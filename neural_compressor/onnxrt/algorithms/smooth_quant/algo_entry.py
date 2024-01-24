@@ -37,15 +37,17 @@ def smooth_quant_entry(
     *args,
     **kwargs
 ) -> onnx.ModelProto:
-    """The main entry to apply rtn quantization."""
+    """The main entry to apply smooth quant."""
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
+    assert isinstance(
+        calibration_data_reader, CalibrationDataReader
+    ), "Please follow neural_compressor/onnxrt/algorithms/smooth_quant/calibrator.py to implement calibration_data_reader"
 
     # smooth operation
     calibration_data_reader.rewind()
     sq = ORTSmoothQuant(
         model,
         calibration_data_reader,
-        reduce_range=False,
         providers=quant_config.providers,
     )
     smooth_quant_model = sq.transform(**quant_config.to_dict())

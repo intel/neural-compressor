@@ -55,7 +55,6 @@ class Calibrator:
         dump_op_types,
         iterations=[],
         providers=["CPUExecutionProvider"],
-        reduce_range=False,
         **kwargs,
     ):
         """Initialization.
@@ -66,7 +65,6 @@ class Calibrator:
             dump_op_types (list): operator types to be calibrated and quantized
             iterations (list, optional): tensor of which iteration will be collected. Defaults to [].
             providers (list, optional): execution provider for onnxruntime. Defaults to ['CPUExecutionProvider'].
-            reduce_range (bool, optional): use 7 bit or not. Defaults to False.
         """
         self.model_wrapper = model
         self.dataloader = dataloader
@@ -74,7 +72,6 @@ class Calibrator:
         self.augmented_model = None
         self.iterations = iterations
         self.providers = providers
-        self.reduce_range = reduce_range
 
     def _check_is_group_conv(self, node):
         """Check the op is group wised or not(depthwise conv is excluded,return false).

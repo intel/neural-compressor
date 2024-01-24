@@ -78,11 +78,11 @@ class TestONNXRT3xSmoothQuant(unittest.TestCase):
         config = get_default_sq_config()
         model = _quantize(self.gptj, config, self.data_reader)
         num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
-        self.assertEqual(num_muls, 15)
+        self.assertEqual(num_muls, 30)
 
     def test_sq_auto_tune_from_class_beginner(self):
         self.data_reader.rewind()
-        config = SmoohQuantQuantConfig(alpha="auto")
+        config = SmoohQuantQuantConfig(alpha="auto", scales_per_op=False)
         model = _quantize(self.gptj, config, self.data_reader)
         num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
         self.assertEqual(num_muls, 15)
@@ -92,6 +92,7 @@ class TestONNXRT3xSmoothQuant(unittest.TestCase):
             "smooth_quant": {
                 "global": {
                     "alpha": 0.5,
+                    "scales_per_op": False,
                 },
             }
         }
@@ -111,7 +112,7 @@ class TestONNXRT3xSmoothQuant(unittest.TestCase):
         self.data_reader.rewind()
         model = _quantize(self.gptj, config, self.data_reader)
         num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
-        self.assertEqual(num_muls, 15)
+        self.assertEqual(num_muls, 30)
 
 
 if __name__ == "__main__":
