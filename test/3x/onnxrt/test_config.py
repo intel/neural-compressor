@@ -208,7 +208,6 @@ class TestQuantizationConfig(unittest.TestCase):
         qmodel = _quantize(fp32_model, quant_config=global_config + fc_out_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 1)
-        onnx.save(qmodel, "qmodel.onnx")
         self.assertTrue(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
     def test_config_white_lst3(self):
