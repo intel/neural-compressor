@@ -16,18 +16,21 @@ from typing import Any, Callable
 
 import tensorflow as tf
 
-from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.logger import Logger
 from neural_compressor.common.utility import STATIC_QUANT
-from neural_compressor.tensorflow.quantization.config import parse_config_from_dict
+from neural_compressor.common.base_config import BaseConfig
+from neural_compressor.tensorflow.model import Model
 from neural_compressor.tensorflow.utils import algos_mapping
+from neural_compressor.tensorflow.model import get_model_type, BaseModel, KerasModel
+from neural_compressor.tensorflow.quantization.config import parse_tf_config_from_dict
+from neural_compressor.tensorflow.keras.quantization.config import parse_keras_config_from_dict
 
 logger = Logger().get_logger()
 
 
 def quantize_model(
-    model: tf.keras.Model, quant_config: BaseConfig, calib_dataloader: Callable = None, calib_iteration: int = 100
-) -> tf.keras.Model:
+    model: (str or tf.keras.Model or BaseModel), quant_config: BaseConfig, calib_dataloader: Callable = None, calib_iteration: int = 100
+):
     """The main entry to quantize model.
 
     Args:
@@ -39,6 +42,10 @@ def quantize_model(
     Returns:
         q_model: the quantized model.
     """
+    model = Model(model)
+    parse_config_from_dict = parse_keras_config_from_dict \
+        if isinstance(model, KerasModel) else parse_tf_config_from_dict
+        
     if isinstance(quant_config, dict):
         quant_config = parse_config_from_dict(quant_config)
         logger.info("Parsed dict to construct the quantization config.")
@@ -48,8 +55,6 @@ def quantize_model(
         ), "Please pass a dict or config instance as the quantization configuration."
     logger.info(f"Quantize model with config: \n {quant_config.to_json_string()} \n")
 
-    # select quantization algo according to config
-    # TODO (Yi) support combine more than one algo
     if quant_config.name == STATIC_QUANT:
         quant_fn = algos_mapping[quant_config.name]
     else:

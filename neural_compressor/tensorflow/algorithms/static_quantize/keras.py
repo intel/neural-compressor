@@ -33,12 +33,12 @@ logger = Logger().get_logger()
 
 def _add_supported_quantized_objects(custom_objects):
     """Map all the quantized objects."""
-    from .keras_utils.conv2d import QConv2D
-    from .keras_utils.dense import QDense
-    from .keras_utils.depthwise_conv2d import QDepthwiseConv2D
-    from .keras_utils.pool2d import QAvgPool2D, QMaxPool2D
-    from .keras_utils.quantizer import DeQuantize, FakeQuant, Quantize
-    from .keras_utils.separable_conv2d import QSeparableConv2D
+    from neural_compressor.tensorflow.keras.keras_utils.conv2d import QConv2D
+    from neural_compressor.tensorflow.keras.keras_utils.dense import QDense
+    from neural_compressor.tensorflow.keras.keras_utils.depthwise_conv2d import QDepthwiseConv2D
+    from neural_compressor.tensorflow.keras.keras_utils.pool2d import QAvgPool2D, QMaxPool2D
+    from neural_compressor.tensorflow.keras.keras_utils.quantizer import DeQuantize, FakeQuant, Quantize
+    from neural_compressor.tensorflow.keras.keras_utils.separable_conv2d import QSeparableConv2D
 
     custom_objects["Quantize"] = Quantize
     custom_objects["DeQuantize"] = DeQuantize

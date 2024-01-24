@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from collections import OrderedDict
 from typing import Callable, Dict, List, NamedTuple, Optional, Union
 
 import tensorflow as tf
@@ -25,11 +26,12 @@ import tensorflow as tf
 from neural_compressor.common.base_config import BaseConfig, register_config, registered_configs
 from neural_compressor.common.utility import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, STATIC_QUANT
 
-FRAMEWORK_NAME = "tensorflow"
+FRAMEWORK_NAME = "keras"
 
 
 class Backend(Enum):
-    DEFAULT = "tensorflow"
+    DEFAULT = "keras"
+    ITEX = "itex"
 
 
 class OperatorConfig(NamedTuple):
@@ -41,53 +43,41 @@ class OperatorConfig(NamedTuple):
 
 # mapping the torch module type and functional operation type to string representations
 operator2str = {
-    tf.nn.conv2d: "Conv2D",
-    tf.raw_ops.FusedBatchNormV3: "FusedBatchNormV3",
-    tf.nn.conv3d: "Conv3D",
-    tf.raw_ops.MatMul: "MatMul",
-    tf.raw_ops.BatchMatMul: "BatchMatMul",
-    tf.raw_ops.BatchMatMulV2: "BatchMatMulV2",
-    tf.nn.depthwise_conv2d: "DepthwiseConv2dNative",
-    tf.raw_ops.ConcatV2: "ConcatV2",
-    tf.compat.v1.nn.fused_batch_norm: "FusedBatchNorm",
-    tf.nn.max_pool: "MaxPool",
-    tf.nn.avg_pool: "AvgPool",
-    tf.compat.v1.nn.conv2d_backprop_input: "Conv2DBackpropInput",
-    tf.raw_ops.Conv3DBackpropInputV2: "Conv3DBackpropInputV2",
+    tf.keras.layers.Dense: "Dense",
+    tf.keras.layers.DepthwiseConv2D: "DepthwiseConv2D",
+    tf.keras.layers.Conv2D: "Conv2D",
+    tf.keras.layers.SeparableConv2D: "SeparableConv2D",
+    tf.keras.layers.AvgPool2D: "AvgPool2D",
+    tf.keras.layers.AveragePooling2D: "AveragePooling2D",
+    tf.keras.layers.MaxPool2D: "MaxPool2D",
+    tf.keras.layers.MaxPooling2D: "MaxPooling2D",
 }
 
 # Mapping from string representations to their corresponding torch operation/module type
 str2operator = {
-    "Conv2D": tf.nn.conv2d,
-    "FusedBatchNormV3": tf.raw_ops.FusedBatchNormV3,
-    "Conv3D": tf.nn.conv3d,
-    "MatMul": tf.raw_ops.MatMul,
-    "BatchMatMul": tf.raw_ops.BatchMatMul,
-    "BatchMatMulV2": tf.raw_ops.BatchMatMulV2,
-    "DepthwiseConv2dNative": tf.nn.depthwise_conv2d,
-    "ConcatV2": tf.raw_ops.ConcatV2,
-    "FusedBatchNorm": tf.compat.v1.nn.fused_batch_norm,
-    "MaxPool": tf.nn.max_pool,
-    "AvgPool": tf.nn.avg_pool,
-    "Conv2DBackpropInput": tf.compat.v1.nn.conv2d_backprop_input,
-    "Conv3DBackpropInputV2": tf.raw_ops.Conv3DBackpropInputV2,
+    "Dense": tf.keras.layers.Dense,
+    "DepthwiseConv2D": tf.keras.layers.DepthwiseConv2D,
+    "Conv2D": tf.keras.layers.Conv2D,
+    "SeparableConv2D": tf.keras.layers.SeparableConv2D,
+    "AvgPool2D": tf.keras.layers.AvgPool2D,
+    "AveragePooling2D": tf.keras.layers.AveragePooling2D,
+    "MaxPool2D": tf.keras.layers.MaxPool2D,
+    "MaxPooling2D": tf.keras.layers.MaxPooling2D,
 }
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
 class StaticQuantConfig(BaseConfig):
-    """Config class for tf static quantization."""
+    """Config class for keras static quantization."""
 
     supported_configs: List[OperatorConfig] = []
     params_list = [
         "weight_dtype",
         "weight_sym",
         "weight_granularity",
-        "weight_algorithm",
         "act_dtype",
         "act_sym",
         "act_granularity",
-        "act_algorithm",
     ]
 
     name = STATIC_QUANT
@@ -97,11 +87,9 @@ class StaticQuantConfig(BaseConfig):
         weight_dtype: str = "int8",
         weight_sym: bool = True,
         weight_granularity: str = "per_tensor",
-        weight_algorithm: str = "minmax",
         act_dtype: str = "int8",
         act_sym: bool = True,
         act_granularity: str = "per_tensor",
-        act_algorithm: str = "minmax",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init static quantization config.
@@ -110,21 +98,17 @@ class StaticQuantConfig(BaseConfig):
             weight_dtype (str): Data type for weights, default is "int".
             weight_sym (bool): Indicates whether weights are symmetric, default is True.
             weight_granularity (str): Calculate tensor-wise scales or channel-wise scales for weights.
-            weight_algorithm (str): Choose quantization algorithms for weights.
             act_dtype (str): Data type for activations, default is "int8".
             act_sym (bool): Indicates whether activations are symmetric, default is True.
             act_granularity (str): Calculate tensor-wise scales or channel-wise scales for activations.
-            act_algorithm (str): Choose quantization algorithms for activations.
         """
         super().__init__(white_list=white_list)
         self.weight_dtype = weight_dtype
         self.weight_sym = weight_sym
         self.weight_granularity = weight_granularity
-        self.weight_algorithm = weight_algorithm
         self.act_dtype = act_dtype
         self.act_sym = act_sym
         self.act_granularity = act_granularity
-        self.act_algorithm = act_algorithm
         self._post_init()
 
     def to_dict(self):
@@ -141,26 +125,19 @@ class StaticQuantConfig(BaseConfig):
             weight_dtype=["int8", "fp32"],
             weight_sym=[True, False],
             weight_granularity=["per_tensor", "per_channel"],
-            weight_algorithm=["minmax", "kl"],
             act_dtype=["int8", "fp32"],
             act_sym=[True, False],
             act_granularity=["per_tensor", "per_channel"],
-            act_algorithm=["minmax", "kl"],
         )
         operators = [
-            tf.nn.conv2d,
-            tf.raw_ops.FusedBatchNormV3,
-            tf.nn.conv3d,
-            tf.raw_ops.MatMul,
-            tf.raw_ops.BatchMatMul,
-            tf.raw_ops.BatchMatMulV2,
-            tf.nn.depthwise_conv2d,
-            tf.raw_ops.ConcatV2,
-            tf.compat.v1.nn.fused_batch_norm,
-            tf.nn.max_pool,
-            tf.nn.avg_pool,
-            tf.compat.v1.nn.conv2d_backprop_input,
-            tf.raw_ops.Conv3DBackpropInputV2,
+            tf.keras.layers.Dense,
+            tf.keras.layers.Conv2D,
+            tf.keras.layers.DepthwiseConv2D,
+            tf.keras.layers.SeparableConv2D,
+            tf.keras.layers.AvgPool2D,
+            tf.keras.layers.MaxPool2D,
+            tf.keras.layers.AveragePooling2D,
+            tf.keras.layers.MaxPooling2D,
         ]
         supported_configs.append(
             OperatorConfig(config=static_quant_config, operators=operators, backend=Backend.DEFAULT)
@@ -173,16 +150,16 @@ StaticQuantConfig.register_supported_configs()
 
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
-    """Get all registered configs for tf framework."""
+    """Get all registered configs for keras framework."""
     return registered_configs.get(FRAMEWORK_NAME, {})
 
 
-def parse_tf_config_from_dict(config_dict: Dict) -> BaseConfig:
+def parse_keras_config_from_dict(config_dict: Dict) -> BaseConfig:
     """Generate a BaseConfig instance from a dict."""
-    tf_registered_configs = get_all_registered_configs()
+    keras_registered_configs = get_all_registered_configs()
     for key, val in config_dict.items():
-        if key in tf_registered_configs:
-            config = tf_registered_configs[key].from_dict(val)
+        if key in keras_registered_configs:
+            config = keras_registered_configs[key].from_dict(val)
             return config
 
 
@@ -190,6 +167,75 @@ def get_default_static_quant_config() -> StaticQuantConfig:
     """Generate the default static quant config.
 
     Returns:
-        the default tf config.
+        the default keras config.
     """
     return StaticQuantConfig()
+
+support_int8_weight = {"Dense", "Conv2d", "DepthwiseConv2D", "SeparableConv2D"}
+
+support_int8_activation = {
+    "Dense",
+    "Conv2d",
+    "DepthwiseConv2D",
+    "SeparableConv2D",
+    "AvgPool2D",
+    "AveragePooling2D",
+    "MaxPool2D",
+    "MaxPooling2D",
+}
+
+
+def update_config(op_value: Dict, quant_config: StaticQuantConfig, layer_class: str):
+    """Update op-wise config from global config or operator name config or operator type config."""
+    op_value["activation"].update(
+        {
+            "dtype": quant_config.act_dtype,
+            "quant_mode": "static",
+            "scheme": ("sym" if quant_config.act_sym else "asym"),
+            "granularity": quant_config.act_granularity,
+            "algorithm": "minmax",
+        }
+    )
+    if layer_class not in support_int8_weight:
+        return
+    op_value["weight"] = {
+        "dtype": quant_config.weight_dtype,
+        "scheme": "sym" if quant_config.weight_sym else "asym",
+        "granularity": quant_config.weight_granularity,
+        "algorithm": "minmax",
+    }
+
+
+def parse_to_keras_tune_cfg(model: tf.keras.Model, quant_config: StaticQuantConfig, calib_iteration: int) -> Dict:
+    """The function that parses StaticQuantConfig to keras tuning config.
+
+    Args:
+        model: a fp32 model to be quantized.
+        quant_config: a quantization configuration.
+        calib_iteration: the iteration of calibration.
+
+    Returns:
+        tune_cfg: the tuning config for keras adaptor.
+    """
+    tune_cfg = {"op": OrderedDict()}
+    for layer in model.layers:
+        layer_class = layer.__class__.__name__
+        if layer_class not in support_int8_activation:
+            continue
+        op_key = (layer.name, layer_class)
+        op_value = {"activation": {}}
+
+        local_config = None
+        # priority local > global
+        if quant_config.local_config and layer.name in quant_config.local_config.keys():
+            local_config = quant_config.local_config[layer.name]
+
+        if local_config:
+            update_config(op_value, local_config, layer_class)
+        else:
+            update_config(op_value, quant_config, layer_class)
+
+        tune_cfg["op"].update({op_key: op_value})
+        tune_cfg["calib_iteration"] = calib_iteration
+
+    return tune_cfg

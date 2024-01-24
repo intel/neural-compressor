@@ -26,7 +26,7 @@ from typing import Dict, List, Tuple
 from ...utils import logger
 from .constant import TUNING_ITEMS_LST, WEIGHT_ONLY_TUNING_ITEMS_LST
 from .tuning_structs import OpTuningConfig
-from .utility import OrderedDefaultDict, preprocess_user_cfg, quant_options
+from .utility import OrderedDefaultDict, quant_options, quant_options
 
 
 class TuningItem:
