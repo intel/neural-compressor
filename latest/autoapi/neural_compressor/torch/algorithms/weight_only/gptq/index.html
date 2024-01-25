@@ -127,7 +127,10 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.gptq.quantize" title="neural_compressor.torch.algorithms.weight_only.gptq.quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize</span></code></a>(x, scale, zero, maxq)</p></td>
 <td><p>Do quantization.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.gptq.apply_gptq_quantize" title="neural_compressor.torch.algorithms.weight_only.gptq.apply_gptq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_gptq_quantize</span></code></a>(model, configs_mapping, *args, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.gptq.gptq_quantize" title="neural_compressor.torch.algorithms.weight_only.gptq.gptq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gptq_quantize</span></code></a>(model[, weight_config, dataloader, ...])</p></td>
+<td><p>Run weight-only quantization with.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.gptq.apply_gptq_quantize" title="neural_compressor.torch.algorithms.weight_only.gptq.apply_gptq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_gptq_quantize</span></code></a>(model, configs_mapping, *args, ...)</p></td>
 <td><p>Apply gptq.</p></td>
 </tr>
 </tbody>
@@ -216,6 +219,12 @@ GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers 
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.gptq.gptq_quantize">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.gptq.</span></span><span class="sig-name descname"><span class="pre">gptq_quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nsamples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_max_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad_max_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_wise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.gptq.gptq_quantize" title="Permalink to this definition"></a></dt>
+<dd><p>Run weight-only quantization with.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.gptq.apply_gptq_quantize">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.gptq.</span></span><span class="sig-name descname"><span class="pre">apply_gptq_quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configs_mapping</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.gptq.apply_gptq_quantize" title="Permalink to this definition"></a></dt>
 <dd><p>Apply gptq.</p>
@@ -239,7 +248,7 @@ GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f45f883ff40> 
+   <jinja2.runtime.BlockReference object at 0x7fd038f6a800> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

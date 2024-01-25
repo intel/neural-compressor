@@ -30,6 +30,7 @@ Functions
    neural_compressor.torch.algorithms.weight_only.gptq.find_layers_name
    neural_compressor.torch.algorithms.weight_only.gptq.log_quantizable_layers_per_transformer
    neural_compressor.torch.algorithms.weight_only.gptq.quantize
+   neural_compressor.torch.algorithms.weight_only.gptq.gptq_quantize
    neural_compressor.torch.algorithms.weight_only.gptq.apply_gptq_quantize
 
 
@@ -99,6 +100,11 @@ Functions
 
    Please refer to:
    GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers (https://arxiv.org/abs/2210.17323)
+
+
+.. py:function:: gptq_quantize(model, weight_config={}, dataloader=None, nsamples=128, use_max_length=True, pad_max_length=2048, device=None, layer_wise=False, model_path=None)
+
+   Run weight-only quantization with.
 
 
 .. py:function:: apply_gptq_quantize(model, configs_mapping, *args, **kwargs)
