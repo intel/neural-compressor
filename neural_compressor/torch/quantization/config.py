@@ -36,6 +36,14 @@ from neural_compressor.common.utils import (
 from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
 from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
 
+__all__ = [
+    "RTNConfig",
+    "get_default_rtn_config",
+    "GPTQConfig",
+    "get_default_gptq_config",
+]
+
+
 FRAMEWORK_NAME = "torch"
 DTYPE_RANGE = Union[torch.dtype, List[torch.dtype]]
 
@@ -152,6 +160,11 @@ class RTNConfig(BaseConfig):
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "RTNConfig", List["RTNConfig"]]:
+        # TODO fwk owner needs to update it.
+        return RTNConfig(weight_bits=[4, 6])
 
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
@@ -276,6 +289,11 @@ class GPTQConfig(BaseConfig):
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "GPTQConfig", List["GPTQConfig"]]:
+        # TODO fwk owner needs to update it.
+        return GPTQConfig(weight_bits=[4, 6])
+
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 GPTQConfig.register_supported_configs()
@@ -351,6 +369,11 @@ class StaticQuantConfig(BaseConfig):
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
+        # TODO fwk owner needs to update it.
+        return StaticQuantConfig(w_sym=[True, False])
 
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
@@ -461,6 +484,11 @@ class SmoothQuantConfig(BaseConfig):
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:
+        # TODO fwk owner needs to update it.
+        return SmoothQuantConfig(alpha=[0.1, 0.5])
+
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 SmoothQuantConfig.register_supported_configs()
@@ -540,6 +568,11 @@ if is_hpex_avaliable():
                     filter_result.append(pair)
             logger.debug(f"Get model info: {filter_result}")
             return filter_result
+
+        @classmethod
+        def get_config_set_for_tuning(cls) -> Union[None, "FP8QConfig", List["FP8QConfig"]]:
+            # TODO fwk owner needs to update it.
+            return FP8QConfig(act_dtype=[torch.float8_e4m3fn])
 
     # TODO(Yi) run `register_supported_configs` for all registered config.
     FP8QConfig.register_supported_configs()
