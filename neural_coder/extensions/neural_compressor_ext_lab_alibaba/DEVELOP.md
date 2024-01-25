@@ -6,22 +6,6 @@ A JupyterLab extension.
 
 - JupyterLab >= 3.0
 
-## Install
-
-To install the extension, execute:
-
-```bash
-pip install neural_compressor_ext_lab_alibaba
-```
-
-## Uninstall
-
-To remove the extension, execute:
-
-```bash
-pip uninstall neural_compressor_ext_lab_alibaba
-```
-
 ## Contributing
 
 ### Development install
