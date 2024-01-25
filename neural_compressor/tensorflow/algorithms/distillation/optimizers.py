@@ -19,7 +19,7 @@
 
 from abc import abstractmethod
 
-from neural_compressor.utils.utility import LazyImport, singleton
+from neural_compressor.tensorflow.utils import LazyImport, singleton
 
 tf = LazyImport("tensorflow")
 tfa = LazyImport("tensorflow_addons")

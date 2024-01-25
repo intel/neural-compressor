@@ -14,9 +14,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""This is an utility file for PyTorch distillation."""
+"""This is an utility file for distillation."""
 
-from neural_compressor.utils.utility import LazyImport
+from neural_compressor.tensorflow.utils import LazyImport
 
 STUDENT_FEATURES = {}
 TEACHER_FEATURES = {}

@@ -26,9 +26,8 @@ from collections import Counter
 
 import numpy as np
 
-from neural_compressor.adaptor.pytorch import pytorch_forward_wrapper
-from neural_compressor.utils import logger
-from neural_compressor.utils.utility import LazyImport, singleton
+from neural_compressor.common import logger
+from neural_compressor.tensorflow.utils import LazyImport, singleton
 
 torch = LazyImport("torch")
 tf = LazyImport("tensorflow")

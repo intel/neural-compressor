@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,68 +29,41 @@ from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
-
 def build_model():
-    # Load MNIST dataset
-    mnist = keras.datasets.mnist
+    import tensorflow as tf
+    from tensorflow.compat.v1 import graph_util
 
-    # 60000 images in train and 10000 images in test, but we don't need so much for ut
-    (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
-    train_images, train_labels = train_images[:1000], train_labels[:1000]
-    test_images, test_labels = test_images[:200], test_labels[:200]
+    try:
+        graph = tf.Graph()
+        graph_def = tf.GraphDef()
+        with tf.Session() as sess:
+            x = tf.placeholder(tf.float64, shape=(1, 3, 3, 1), name="x")
+            y = tf.constant(np.random.random((2, 2, 1, 1)), name="y")
+            op = tf.nn.conv2d(input=x, filter=y, strides=[1, 1, 1, 1], padding="VALID", name="op_to_store")
 
-    # Normalize the input image so that each pixel value is between 0 to 1.
-    train_images = train_images / 255.0
-    test_images = test_images / 255.0
+            sess.run(tf.global_variables_initializer())
+            constant_graph = tf.graph_util.convert_variables_to_constants(sess, sess.graph_def, ["op_to_store"])
 
-    # Define the model architecture.
-    model = keras.Sequential(
-        [
-            keras.layers.InputLayer(input_shape=(28, 28)),
-            keras.layers.Reshape(target_shape=(28, 28, 1)),
-            keras.layers.Conv2D(filters=12, kernel_size=(3, 3), activation="relu"),
-            keras.layers.MaxPooling2D(pool_size=(2, 2)),
-            keras.layers.Flatten(),
-            keras.layers.Dense(10),
-        ]
-    )
-    # Train the digit classification model
-    model.compile(
-        optimizer="adam", loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=["accuracy"]
-    )
+        graph_def.ParseFromString(constant_graph.SerializeToString())
+        with graph.as_default():
+            tf.import_graph_def(graph_def, name="")
+    except:
+        graph = tf.Graph()
+        graph_def = tf.compat.v1.GraphDef()
+        with tf.compat.v1.Session() as sess:
+            x = tf.compat.v1.placeholder(tf.float64, shape=(1, 3, 3, 1), name="x")
+            y = tf.compat.v1.constant(np.random.random((2, 2, 1, 1)), name="y")
+            op = tf.nn.conv2d(input=x, filters=y, strides=[1, 1, 1, 1], padding="VALID", name="op_to_store")
 
-    model.fit(
-        train_images,
-        train_labels,
-        epochs=1,
-        validation_split=0.1,
-    )
+            sess.run(tf.compat.v1.global_variables_initializer())
+            constant_graph = tf.compat.v1.graph_util.convert_variables_to_constants(
+                sess, sess.graph_def, ["op_to_store"]
+            )
 
-    _, baseline_model_accuracy = model.evaluate(test_images, test_labels, verbose=0)
-
-    print("Baseline test accuracy:", baseline_model_accuracy)
-    model.save("baseline_model")
-
-
-class Dataset(object):
-    def __init__(self, batch_size=1):
-        self.batch_size = batch_size
-        mnist = keras.datasets.mnist
-        (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
-        train_images, train_labels = train_images[:1000], train_labels[:1000]
-        test_images, test_labels = test_images[:200], test_labels[:200]
-        # Normalize the input image so that each pixel value is between 0 to 1.
-        self.train_images = train_images / 255.0
-        self.test_images = test_images / 255.0
-        self.train_labels = train_labels
-        self.test_labels = test_labels
-
-    def __len__(self):
-        return len(self.test_images)
-
-    def __getitem__(self, idx):
-        return self.test_images[idx], self.test_labels[idx]
-
+        graph_def.ParseFromString(constant_graph.SerializeToString())
+        with graph.as_default():
+            tf.import_graph_def(graph_def, name="")
+    return graph
 
 class MyDataloader:
     def __init__(self, dataset, batch_size=1):
@@ -107,30 +80,30 @@ class MyDataloader:
     def __len__(self):
         return self.length
 
-
 class TestKeras3xNewApi(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        build_model()
-        os.environ["ITEX_ONEDNN_GRAPH"] = "1"
+        self.graph = build_model()
 
     @classmethod
     def tearDownClass(self):
         shutil.rmtree("baseline_model", ignore_errors=True)
-        shutil.rmtree("int8_model", ignore_errors=True)
 
     def test_static_quant_from_dict_default(self):
         logger.info("test_static_quant_from_dict_default")
         from neural_compressor.tensorflow import get_default_static_quant_config, quantize_model
-
-        calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("./baseline_model")
+        from neural_compressor.tensorflow.data import DummyDataset
+        dataset = DummyDataset(shape=(100, 3, 3, 1), label=True)
+        calib_dataloader = MyDataloader(dataset=dataset)
+        fp32_model = self.graph
         qmodel = quantize_model(fp32_model, get_default_static_quant_config(), calib_dataloader)
         self.assertIsNotNone(qmodel)
 
-        for layer in qmodel.layers:
-            if layer.name == "dense":
-                self.assertEqual(layer.__class__.__name__, "QDense")
+        conv2d_quantized = False
+        for node in qmodel.graph_def.node:
+            if "Quantized" in node.op:
+                conv2d_quantized = True
+        self.assertEqual(conv2d_quantized, True)
 
     def test_static_quant_from_dict_beginner(self):
         logger.info("test_static_quant_from_dict_beginner")
@@ -139,65 +112,68 @@ class TestKeras3xNewApi(unittest.TestCase):
         quant_config = {
             "static_quant": {
                 "global": {
-                    "weight_dtype": "int8",
-                    "weight_sym": True,
-                    "weight_granularity": "per_tensor",
-                    "act_dtype": "int8",
-                    "act_sym": True,
-                    "act_granularity": "per_tensor",
+                    "weight_dtype": "fp32",
+                    "act_dtype": "fp32",
                 },
             }
         }
-        calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("./baseline_model")
+        from neural_compressor.tensorflow.data import DummyDataset
+        dataset = DummyDataset(shape=(100, 3, 3, 1), label=True)
+        calib_dataloader = MyDataloader(dataset=dataset)
+        fp32_model = self.graph
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
-        for layer in qmodel.layers:
-            if layer.name == "dense":
-                self.assertEqual(layer.__class__.__name__, "QDense")
+        quantized = False
+        for node in qmodel.graph_def.node:
+            if "Quantize" in node.op:
+                quantized = True
+        self.assertEqual(quantized, False)
 
     def test_static_quant_from_class_default(self):
         logger.info("test_static_quant_from_class_default")
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
-
-        calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("./baseline_model")
+        from neural_compressor.tensorflow.data import DummyDataset
+        dataset = DummyDataset(shape=(100, 3, 3, 1), label=True)
+        calib_dataloader = MyDataloader(dataset=dataset)
+        fp32_model = self.graph
         quant_config = StaticQuantConfig()
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
-        for layer in qmodel.layers:
-            if layer.name == "dense":
-                self.assertEqual(layer.__class__.__name__, "QDense")
+        conv2d_quantized = False
+        for node in qmodel.graph_def.node:
+            if "Quantized" in node.op:
+                conv2d_quantized = True
+        self.assertEqual(conv2d_quantized, True)
 
     def test_static_quant_from_class_beginner(self):
         logger.info("test_static_quant_from_class_beginner")
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
-
-        calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("./baseline_model")
+        from neural_compressor.tensorflow.data import DummyDataset
+        dataset = DummyDataset(shape=(100, 3, 3, 1), label=True)
+        calib_dataloader = MyDataloader(dataset=dataset)
+        fp32_model = self.graph
         quant_config = StaticQuantConfig(
-            weight_dtype="int8",
-            weight_sym=True,
-            weight_granularity="per_channel",
-            act_dtype="int8",
-            act_sym=True,
-            act_granularity="per_channel",
+            weight_dtype="fp32",
+            act_dtype="fp32",
         )
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
-        for layer in qmodel.layers:
-            if layer.name == "dense":
-                self.assertEqual(layer.__class__.__name__, "QDense")
+        quantized = False
+        for node in qmodel.graph_def.node:
+            if "Quantize" in node.op:
+                quantized = True
+        self.assertEqual(quantized, False)
 
     def test_static_quant_from_dict_advance(self):
         logger.info("test_static_quant_from_dict_advance")
         from neural_compressor.tensorflow import quantize_model
-
-        calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("./baseline_model")
+        from neural_compressor.tensorflow.data import DummyDataset
+        dataset = DummyDataset(shape=(100, 3, 3, 1), label=True)
+        calib_dataloader = MyDataloader(dataset=dataset)
+        fp32_model = self.graph
         quant_config = {
             "static_quant": {
                 "global": {
@@ -209,7 +185,7 @@ class TestKeras3xNewApi(unittest.TestCase):
                     "act_granularity": "per_tensor",
                 },
                 "local": {
-                    "dense": {
+                    "op_to_store": {
                         "weight_dtype": "fp32",
                         "act_dtype": "fp32",
                     }
@@ -219,15 +195,19 @@ class TestKeras3xNewApi(unittest.TestCase):
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
-        for layer in qmodel.layers:
-            if layer.name == "dense":
-                self.assertNotEqual(layer.__class__.__name__, "QDense")
+        conv2d_quantized = True
+        for node in qmodel.graph_def.node:
+            if node.name == "op_to_store" and "Quantize" not in node.op:
+                conv2d_quantized = False
+        self.assertEqual(conv2d_quantized, False)
 
     def test_static_quant_from_class_advance(self):
         logger.info("test_static_quant_from_class_advance")
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
-
-        calib_dataloader = MyDataloader(dataset=Dataset())
+        from neural_compressor.tensorflow.data import DummyDataset
+        dataset = DummyDataset(shape=(100, 3, 3, 1), label=True)
+        calib_dataloader = MyDataloader(dataset=dataset)
+        fp32_model = self.graph
         quant_config = StaticQuantConfig(
             weight_dtype="int8",
             weight_sym=True,
@@ -236,19 +216,19 @@ class TestKeras3xNewApi(unittest.TestCase):
             act_sym=True,
             act_granularity="per_channel",
         )
-        dense_config = StaticQuantConfig(
+        conv2d_config = StaticQuantConfig(
             weight_dtype="fp32",
             act_dtype="fp32",
         )
-        quant_config.set_local("dense", dense_config)
-        # get model and quantize
-        fp32_model = keras.models.load_model("./baseline_model")
+        quant_config.set_local("op_to_store", conv2d_config)
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
-        for layer in qmodel.layers:
-            if layer.name == "dense":
-                self.assertNotEqual(layer.__class__.__name__, "QDense")
+        conv2d_quantized = True
+        for node in qmodel.graph_def.node:
+            if node.name == "op_to_store" and "Quantize" not in node.op:
+                conv2d_quantized = False
+        self.assertEqual(conv2d_quantized, False)
 
     def test_config_from_dict(self):
         logger.info("test_config_from_dict")
@@ -265,7 +245,7 @@ class TestKeras3xNewApi(unittest.TestCase):
                     "act_granularity": "per_tensor",
                 },
                 "local": {
-                    "dense": {
+                    "op_to_store": {
                         "weight_dtype": "fp32",
                         "act_dtype": "fp32",
                     }
@@ -287,11 +267,11 @@ class TestKeras3xNewApi(unittest.TestCase):
             act_sym=True,
             act_granularity="per_channel",
         )
-        dense_config = StaticQuantConfig(
+        conv2d_config = StaticQuantConfig(
             weight_dtype="fp32",
             act_dtype="fp32",
         )
-        quant_config.set_local("dense", dense_config)
+        quant_config.set_local("op_to_store", conv2d_config)
         config_dict = quant_config.to_dict()
         self.assertIn("global", config_dict)
         self.assertIn("local", config_dict)
