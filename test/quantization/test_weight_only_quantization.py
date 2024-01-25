@@ -147,6 +147,7 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
                 "sym": False,
                 "percdamp": 0.01,
                 "act_order": True,
+                "static_groups": True,
             },
             "transformer.h.2.attn.k_proj": {
                 "wbits": 3,

@@ -27,7 +27,7 @@ import tempfile
 import time
 from abc import abstractmethod
 
-from neural_compressor.common.logger import Logger
+from neural_compressor.common import Logger
 from neural_compressor.tensorflow.utils import version1_lt_version2
 
 import numpy as np

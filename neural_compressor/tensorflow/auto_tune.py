@@ -22,7 +22,7 @@ from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from typing import Dict, List, Tuple, Callable
 
-from neural_compressor.common.logger import Logger
+from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.tensorflow.model import BaseModel, KerasModel
 from neural_compressor.tensorflow.keras import parse_to_keras_tune_cfg
