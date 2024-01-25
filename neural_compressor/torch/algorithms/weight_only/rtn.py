@@ -36,7 +36,7 @@ def rtn_quantize(
     quantile=1.0,
     weight_config={},
     return_int=False,
-    data_type="int",
+    dtype="int",
     enable_full_range=False,
     enable_mse_search=False,
     group_dim=1,
@@ -50,7 +50,7 @@ def rtn_quantize(
         group_size (int, optional): how many elements share one scale/zp. Defaults to 32.
         scheme (str, optional): sym or asym. Defaults to "asym".
         quantile (float, optional): percentile of clip. Defaults to 1.0.
-        data_type (str, optional): select from int, nf4, fp4. Defaults to int.
+        dtype (str, optional): select from int, nf4, fp4. Defaults to int.
         weight_config (dict, optional): specific layer wise configurations. Defaults to {}.
             For example,
                 weight_config={
@@ -94,7 +94,7 @@ def rtn_quantize(
         if m.__class__.__name__ not in supported_layers:
             continue
         if name in weight_config:  # pragma: no cover
-            data_type = weight_config[name].get("dtype", "int")
+            dtype = weight_config[name].get("dtype", "int")
             num_bits = weight_config[name]["bits"]
             group_size = weight_config[name]["group_size"]
             scheme = weight_config[name]["scheme"]
@@ -103,17 +103,17 @@ def rtn_quantize(
             f"RTN quantization config: num_bits={num_bits}, group_size={group_size}, "
             + f"scheme={scheme}, quantile={quantile}"
         )
-        if data_type != "int":
-            log_msg += f", dtype={data_type}"
+        if dtype != "int":
+            log_msg += f", dtype={dtype}"
         elif scheme == "sym":  # nf4/fp4 is always [-7,7]
             log_msg += f", enable_full_range={enable_full_range}"
-        if data_type == "fp32":
+        if dtype == "fp32":
             continue
         logger.debug(f"RTN quantized module:{name, m}")
         logger.debug(log_msg)
         weight = m.weight.T if group_dim == 0 else m.weight
         if enable_mse_search:
-            quantile = search_clip(m, num_bits, group_size, scheme, data_type, enable_full_range)
+            quantile = search_clip(m, num_bits, group_size, scheme, dtype, enable_full_range)
         if return_int:
             int_weight, scale, zp = quant_tensor(
                 weight,
@@ -121,7 +121,7 @@ def rtn_quantize(
                 group_size,
                 scheme,
                 quantile,
-                data_type=data_type,
+                dtype=dtype,
                 return_int=True,
                 full_range=enable_full_range,
                 **double_quant_config,
@@ -136,7 +136,7 @@ def rtn_quantize(
                 m.out_features,
                 num_bits,
                 group_size,
-                dtype=data_type,
+                dtype=dtype,
                 zp=zp is not None,
                 bias=m.bias is not None,
                 compression_dtype=compression_dtype,
@@ -156,7 +156,7 @@ def rtn_quantize(
                 group_size,
                 scheme,
                 quantile,
-                data_type=data_type,
+                dtype=dtype,
                 full_range=enable_full_range,
                 **double_quant_config,
             )
@@ -188,7 +188,7 @@ def apply_rtn_on_single_module(module: torch.nn.Module, quant_config: RTNConfig)
         group_size,
         scheme,
         return_int=return_int,
-        data_type=dtype,
+        dtype=dtype,
         enable_full_range=enable_full_range,
         enable_mse_search=enable_mse_search,
         group_dim=group_dim,

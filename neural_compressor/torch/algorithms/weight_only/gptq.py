@@ -763,7 +763,7 @@ class Quantizer(nn.Module):
                 self.wbits,
                 self.group_size,
                 scheme=self.scheme,
-                data_type=self.wdtype,
+                dtype=self.wdtype,
                 quantile=1.0,
                 return_int=True,
                 full_range=False,
@@ -857,7 +857,7 @@ class Quantizer(nn.Module):
                     self.double_quant_bits,
                     self.double_quant_group_size,
                     scheme=self.double_quant_scheme,
-                    data_type=self.double_quant_dtype,
+                    dtype=self.double_quant_dtype,
                     quantile=1.0,
                     return_int=False,
                     full_range=False,
@@ -881,7 +881,7 @@ class Quantizer(nn.Module):
 
             tmp = x.clone()
 
-            return quantize_4bit(tmp, data_type=self.wdtype, scale=scale)
+            return quantize_4bit(tmp, dtype=self.wdtype, scale=scale)
         else:
             if maxq < 0:
                 return (x > scale / 2).float() * scale + (x < zero / 2).float() * zero
