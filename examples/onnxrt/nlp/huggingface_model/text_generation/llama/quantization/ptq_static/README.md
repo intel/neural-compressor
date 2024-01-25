@@ -43,7 +43,7 @@ bash run_quant.sh --input_model=/path/to/model \ # folder path of onnx model
                   --output_model=/path/to/model_tune \ # folder path to save onnx model
                   --batch_size=batch_size # optional \
                   --dataset NeelNanda/pile-10k \
-                  --alpha 0.6 \ 
+                  --alpha 0.75 \ 
                   --tokenizer=meta-llama/Llama-2-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
                   --quant_format="QOperator" # or QDQ, optional
 ```
