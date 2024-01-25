@@ -718,8 +718,9 @@ class TestTFTransorm(unittest.TestCase):
 
     def testSquadV1(self):
         import json
-        import urllib
         import ssl
+        import urllib
+
         ssl._create_default_https_context = ssl._create_unverified_context
 
         vocab_url = (
