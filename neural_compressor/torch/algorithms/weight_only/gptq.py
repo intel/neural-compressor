@@ -757,13 +757,14 @@ class Quantizer(nn.Module):
         if self.wdtype != "int":
             from .utility import quant_tensor
 
-            tmp = x.clone()  # make sure x is not replaced
+            tmp = x.clone()  # tmp will be replaced after quant_tensor
+
             _, scale, zero = quant_tensor(
                 tmp,
-                self.wbits,
-                self.group_size,
-                scheme=self.scheme,
                 dtype=self.wdtype,
+                bits=self.wbits,
+                group_size=self.group_size,
+                scheme=self.scheme,
                 quantile=1.0,
                 return_int=True,
                 full_range=False,
@@ -854,10 +855,10 @@ class Quantizer(nn.Module):
                 self.scale = self.scale.reshape(1, -1)
                 quant_tensor(
                     self.scale,
-                    self.double_quant_bits,
-                    self.double_quant_group_size,
-                    scheme=self.double_quant_scheme,
                     dtype=self.double_quant_dtype,
+                    bits=self.double_quant_bits,
+                    group_size=self.double_quant_group_size,
+                    scheme=self.double_quant_scheme,
                     quantile=1.0,
                     return_int=False,
                     full_range=False,
@@ -879,8 +880,7 @@ class Quantizer(nn.Module):
         if self.wdtype != "int":
             from .utility import quantize_4bit
 
-            tmp = x.clone()
-
+            tmp = x.clone()  # tmp will be replaced after quant_tensor
             return quantize_4bit(tmp, dtype=self.wdtype, scale=scale)
         else:
             if maxq < 0:

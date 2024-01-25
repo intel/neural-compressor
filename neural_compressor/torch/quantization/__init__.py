@@ -23,3 +23,13 @@ from neural_compressor.torch.quantization.config import (
     SmoothQuantConfig,
     get_default_sq_config,
 )
+
+# TODO(Yi): move config to config.py
+from neural_compressor.torch.quantization.autotune import autotune, TuningConfig, get_default_tune_config
+
+### Quantization Function Registration ###
+import neural_compressor.torch.quantization.weight_only
+from neural_compressor.torch.utils import is_hpex_available
+
+if is_hpex_available():
+    import neural_compressor.torch.quantization.fp8

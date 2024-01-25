@@ -26,7 +26,7 @@ DOUBLE_QUANT_CONFIGS = {
         "double_quant_sym": True,
         "double_quant_group_size": 8,
     },
-    "BNB": {
+    "BNB_NF4": {
         "weight_dtype": "nf4",
         "weight_bits": 4,
         "weight_group_size": 32,
