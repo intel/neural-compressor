@@ -65,12 +65,12 @@ Functions
    It assists validation teams in retrieving logs.
 
 
-.. py:class:: TuningConfig(quant_configs=None, timeout=0, max_trials=100, sampler: Sampler = None)
+.. py:class:: TuningConfig(config_set=None, timeout=0, max_trials=100, sampler: Sampler = None)
 
 
    Base Class for Tuning Criterion.
 
-   :param quant_configs: quantization configs. Default value is empty.
+   :param config_set: quantization configs. Default value is empty.
    :param timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
    :param max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
 

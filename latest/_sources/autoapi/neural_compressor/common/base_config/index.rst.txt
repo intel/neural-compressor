@@ -17,7 +17,6 @@ Classes
    neural_compressor.common.base_config.ConfigRegistry
    neural_compressor.common.base_config.BaseConfig
    neural_compressor.common.base_config.ComposableConfig
-   neural_compressor.common.base_config.Options
 
 
 
@@ -27,6 +26,7 @@ Functions
 .. autoapisummary::
 
    neural_compressor.common.base_config.register_config
+   neural_compressor.common.base_config.get_all_config_set_from_config_registry
 
 
 
@@ -71,44 +71,6 @@ Attributes
 
    The base config for all algorithm configs.
 
-
-.. py:class:: Options(random_seed=1978, workspace=DEFAULT_WORKSPACE, resume_from=None, tensorboard=False)
-
-
-   Option Class for configs.
-
-   This class is used for configuring global variables. The global variable options is created with this class.
-   If you want to change global variables, you should use functions from neural_compressor.common.utils.utility.py:
-       set_random_seed(seed: int)
-       set_workspace(workspace: str)
-       set_resume_from(resume_from: str)
-       set_tensorboard(tensorboard: bool)
-
-   :param random_seed: Random seed used in neural compressor.
-                       Default value is 1978.
-   :type random_seed: int
-   :param workspace: The directory where intermediate files and tuning history file are stored.
-                     Default value is:
-                         "./nc_workspace/{}/".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")).
-   :type workspace: str
-   :param resume_from: The directory you want to resume tuning history file from.
-                       The tuning history was automatically saved in the workspace directory
-                            during the last tune process.
-                       Default value is None.
-   :type resume_from: str
-   :param tensorboard:
-                       This flag indicates whether to save the weights of the model and the inputs of each layer
-                           for visual display.
-                       Default value is False.
-   :type tensorboard: bool
-
-   Example::
-
-       from neural_compressor.common import set_random_seed, set_workspace, set_resume_from, set_tensorboard
-       set_random_seed(2022)
-       set_workspace("workspace_path")
-       set_resume_from("workspace_path")
-       set_tensorboard(True)
 
 
 

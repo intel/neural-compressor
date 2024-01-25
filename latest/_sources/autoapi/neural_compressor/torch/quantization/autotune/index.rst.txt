@@ -15,7 +15,7 @@ Functions
 
 .. autoapisummary::
 
-   neural_compressor.torch.quantization.autotune.get_default_tune_config
+   neural_compressor.torch.quantization.autotune.get_all_config_set
    neural_compressor.torch.quantization.autotune.autotune
 
 
