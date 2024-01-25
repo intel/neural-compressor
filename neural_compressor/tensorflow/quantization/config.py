@@ -28,41 +28,10 @@ from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE
 FRAMEWORK_NAME = "keras"
 
 
-class Backend(Enum):
-    DEFAULT = "keras"
-    ITEX = "itex"
-
-
 class OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
-    backend: List[Backend]
     valid_func_list: List[Callable] = []
-
-
-# mapping the torch module type and functional operation type to string representations
-operator2str = {
-    tf.keras.layers.Dense: "Dense",
-    tf.keras.layers.DepthwiseConv2D: "DepthwiseConv2D",
-    tf.keras.layers.Conv2D: "Conv2d",
-    tf.keras.layers.SeparableConv2D: "SeparableConv2D",
-    tf.keras.layers.AvgPool2D: "AvgPool2D",
-    tf.keras.layers.AveragePooling2D: "AveragePooling2D",
-    tf.keras.layers.MaxPool2D: "MaxPool2D",
-    tf.keras.layers.MaxPooling2D: "MaxPooling2D",
-}
-
-# Mapping from string representations to their corresponding torch operation/module type
-str2operator = {
-    "Dense": tf.keras.layers.Dense,
-    "DepthwiseConv2D": tf.keras.layers.DepthwiseConv2D,
-    "Conv2d": tf.keras.layers.Conv2D,
-    "SeparableConv2D": tf.keras.layers.SeparableConv2D,
-    "AvgPool2D": tf.keras.layers.AvgPool2D,
-    "AveragePooling2D": tf.keras.layers.AveragePooling2D,
-    "MaxPool2D": tf.keras.layers.MaxPool2D,
-    "MaxPooling2D": tf.keras.layers.MaxPooling2D,
-}
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
@@ -110,13 +79,6 @@ class StaticQuantConfig(BaseConfig):
         self.act_granularity = act_granularity
         self._post_init()
 
-    def to_dict(self):
-        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
-
-    @classmethod
-    def from_dict(cls, config_dict):
-        return super(StaticQuantConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
-
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
@@ -138,9 +100,7 @@ class StaticQuantConfig(BaseConfig):
             tf.keras.layers.AveragePooling2D,
             tf.keras.layers.MaxPooling2D,
         ]
-        supported_configs.append(
-            OperatorConfig(config=static_quant_config, operators=operators, backend=Backend.DEFAULT)
-        )
+        supported_configs.append(OperatorConfig(config=static_quant_config, operators=operators))
         cls.supported_configs = supported_configs
 
 

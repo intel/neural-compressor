@@ -40,23 +40,10 @@ FRAMEWORK_NAME = "torch"
 DTYPE_RANGE = Union[torch.dtype, List[torch.dtype]]
 
 
-class Backend(Enum):
-    DEFAULT = "stock_pytorch"
-    IPEX = "ipex"
-
-
 class OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
-    backend: List[Backend]
     valid_func_list: List[Callable] = []
-
-
-# mapping the torch module type and functional operation type to string representations
-operator2str = {torch.nn.Linear: "Linear", torch.nn.functional.linear: "linear", torch.nn.Conv2d: "Conv2d"}
-
-# Mapping from string representations to their corresponding torch operation/module type
-str2operator = {"Linear": torch.nn.Linear, "linear": torch.nn.functional.linear, "Conv2d": torch.nn.Conv2d}
 
 
 ######################## RNT Config ###############################
@@ -134,13 +121,6 @@ class RTNConfig(BaseConfig):
         self.double_quant_group_size = double_quant_group_size
         self._post_init()
 
-    def to_dict(self):
-        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
-
-    @classmethod
-    def from_dict(cls, config_dict):
-        return super(RTNConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
-
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
@@ -159,7 +139,7 @@ class RTNConfig(BaseConfig):
             double_quant_group_size=[32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024],
         )
         operators = [torch.nn.Linear, torch.nn.functional.linear]
-        supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT))
+        supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
@@ -276,22 +256,13 @@ class GPTQConfig(BaseConfig):
         self.double_quant_group_size = double_quant_group_size
         self._post_init()
 
-    def to_dict(self):
-        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
-
-    @classmethod
-    def from_dict(cls, config_dict):
-        return super(GPTQConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
-
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         # TODO(Yi)
         linear_gptq_config = GPTQConfig()
         operators = [torch.nn.Linear, torch.nn.functional.linear]
-        supported_configs.append(
-            OperatorConfig(config=linear_gptq_config, operators=operators, backend=Backend.DEFAULT)
-        )
+        supported_configs.append(OperatorConfig(config=linear_gptq_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
@@ -542,13 +513,6 @@ if is_hpex_avaliable():
             self.device = device
             self._post_init()
 
-        def to_dict(self):
-            return super().to_dict(params_list=self.params_list, operator2str=operator2str)
-
-        @classmethod
-        def from_dict(cls, config_dict):
-            return super(FP8QConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
-
         @classmethod
         def register_supported_configs(cls) -> List[OperatorConfig]:
             supported_configs = []
@@ -562,7 +526,7 @@ if is_hpex_avaliable():
             from .fp8.quantization_impl import white_list
 
             operators = white_list
-            supported_configs.append(OperatorConfig(config=fp8_config, operators=operators, backend=Backend.DEFAULT))
+            supported_configs.append(OperatorConfig(config=fp8_config, operators=operators))
             cls.supported_configs = supported_configs
 
         @staticmethod
@@ -590,6 +554,7 @@ if is_hpex_avaliable():
 
     ##################### Algo Configs End ###################################
 
-    def get_all_registered_configs() -> Dict[str, BaseConfig]:
-        registered_configs = config_registry.get_all_configs()
-        return registered_configs.get(FRAMEWORK_NAME, {})
+
+def get_all_registered_configs() -> Dict[str, BaseConfig]:
+    registered_configs = config_registry.get_all_configs()
+    return registered_configs.get(FRAMEWORK_NAME, {})
