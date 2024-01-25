@@ -155,23 +155,6 @@ class TestGPTQ(unittest.TestCase):
         out1 = q_model(input)
         self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
 
-        # bitsandbytes double quant setting
-        fp32_model = copy.deepcopy(model)
-
-        from neural_compressor.torch.utils.utility import get_double_quant_config
-
-        double_quant_config_dict = get_double_quant_config("BNB")
-        double_quant_config_dict.update({"dataloader_len": len(dataloader_for_calibration), "pad_max_length": 512})
-
-        quant_config = GPTQConfig.from_dict(double_quant_config_dict)
-        quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
-        logger.info(f"Test GPTQ with config {quant_config}")
-        q_model = quantize(
-            model=fp32_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=dataloader_for_calibration
-        )
-        out2 = q_model(input)
-        self.assertTrue(torch.allclose(out2[0], out0[0], atol=1e-02))
-
     def test_gptq_advance(self):
         # Ported from test/adaptor/pytorch_adaptor/test_weight_only_adaptor.py
         # TestPytorchWeightOnlyAdaptor.test_GPTQ_fixed_length_quant

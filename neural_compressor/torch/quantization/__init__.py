@@ -16,6 +16,7 @@ from neural_compressor.torch.quantization.quantize import quantize, quantize_dyn
 from neural_compressor.torch.quantization.config import (
     RTNConfig,
     get_default_rtn_config,
+    get_default_double_quant_config,
     GPTQConfig,
     get_default_gptq_config,
     StaticQuantConfig,
@@ -25,7 +26,7 @@ from neural_compressor.torch.quantization.config import (
 )
 
 # TODO(Yi): move config to config.py
-from neural_compressor.torch.quantization.autotune import autotune, TuningConfig, get_default_tune_config
+from neural_compressor.torch.quantization.autotune import autotune, TuningConfig
 
 ### Quantization Function Registration ###
 import neural_compressor.torch.quantization.weight_only

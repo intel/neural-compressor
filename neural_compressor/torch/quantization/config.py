@@ -183,6 +183,13 @@ def get_default_rtn_config() -> RTNConfig:
     return RTNConfig()
 
 
+def get_default_double_quant_config(type="BNB_NF4"):
+    from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
+
+    assert type in DOUBLE_QUANT_CONFIGS, "Supported double quant configs: {}".format(list(DOUBLE_QUANT_CONFIGS.keys()))
+    return RTNConfig.from_dict(DOUBLE_QUANT_CONFIGS[type])
+
+
 ######################## GPTQ Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=GPTQ, priority=PRIORITY_GPTQ)
 class GPTQConfig(BaseConfig):
