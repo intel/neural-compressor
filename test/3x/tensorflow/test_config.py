@@ -25,7 +25,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from neural_compressor.common.logger import Logger
+from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
@@ -295,6 +295,25 @@ class TestKeras3xNewApi(unittest.TestCase):
         config_dict = quant_config.to_dict()
         self.assertIn("global", config_dict)
         self.assertIn("local", config_dict)
+
+
+class TestQuantConfigForAutotune(unittest.TestCase):
+    def test_expand_config(self):
+        # test the expand functionalities, the user is not aware it
+        from neural_compressor.tensorflow import StaticQuantConfig
+
+        quant_configs = StaticQuantConfig(
+            weight_dtype="int8",
+            weight_sym=True,
+            weight_granularity=["per_channel", "per_tensor"],
+            act_dtype="int8",
+            act_sym=True,
+            act_granularity="per_channel",
+        )
+
+        expand_config_list = StaticQuantConfig.expand(quant_configs)
+        self.assertEqual(expand_config_list[0].weight_granularity, "per_channel")
+        self.assertEqual(expand_config_list[1].weight_granularity, "per_tensor")
 
 
 if __name__ == "__main__":

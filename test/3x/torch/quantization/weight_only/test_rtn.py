@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from neural_compressor.common.logger import Logger
+from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
@@ -60,7 +60,7 @@ class TestRTNQuant(unittest.TestCase):
         return qmodel
 
     def test_rtn(self):
-        from neural_compressor.torch import RTNWeightQuantConfig
+        from neural_compressor.torch import RTNConfig
 
         # some tests were skipped to accelerate the CI
         rnt_options = {
@@ -76,7 +76,7 @@ class TestRTNQuant(unittest.TestCase):
         }
         from itertools import product
 
-        keys = RTNWeightQuantConfig.params_list
+        keys = RTNConfig.params_list
         for value in product(*rnt_options.values()):
             d = dict(zip(keys, value))
             if (d["weight_dtype"] == "int" and d["weight_bits"] != 8) or (
@@ -85,26 +85,26 @@ class TestRTNQuant(unittest.TestCase):
                 or (d["return_int"] and (d["group_dim"] != 1 or d["weight_bits"] != 8))
             ):
                 continue
-            quant_config = RTNWeightQuantConfig(**d)
+            quant_config = RTNConfig(**d)
             self._apply_rtn(quant_config)
 
     def test_rtn_return_type(self):
-        from neural_compressor.torch import RTNWeightQuantConfig
+        from neural_compressor.torch import RTNConfig
 
         for return_int in [True, False]:
-            quant_config = RTNWeightQuantConfig(return_int=return_int)
+            quant_config = RTNConfig(return_int=return_int)
             qmodel = self._apply_rtn(quant_config)
 
     def test_rtn_mse_search(self):
-        from neural_compressor.torch import RTNWeightQuantConfig
+        from neural_compressor.torch import RTNConfig
 
-        quant_config = RTNWeightQuantConfig(enable_mse_search=True)
+        quant_config = RTNConfig(enable_mse_search=True)
         qmodel = self._apply_rtn(quant_config)
 
     def test_rtn_recover(self):
-        from neural_compressor.torch import RTNWeightQuantConfig
+        from neural_compressor.torch import RTNConfig
 
-        quant_config = RTNWeightQuantConfig(return_int=True)
+        quant_config = RTNConfig(return_int=True)
         qmodel = self._apply_rtn(quant_config)
         input = torch.randn(4, 8)
         # test forward

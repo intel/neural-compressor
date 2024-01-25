@@ -14,6 +14,7 @@ print("tensorflow {}".format(tf.__version__))
 from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion, TuningCriterion
 from neural_compressor.data import DataLoader
 from neural_compressor.quantization import fit
+from neural_compressor import Metric
 
 import mnist_dataset
 
@@ -58,11 +59,15 @@ def auto_tune(input_graph_path, batch_size):
                                          criterion='relative',  
                                          tolerable_loss=0.01  )
                                     )
+    top1 = Metric(name="topk", k=1)
+
     q_model = fit(
         model=input_graph_path,
         conf=config,
         calib_dataloader=dataloader,
-        eval_dataloader=dataloader)
+        eval_dataloader=dataloader,
+        eval_metric=top1
+        )
     
 
     return q_model

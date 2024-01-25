@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .utils import torch
+from .utils import safe_get_data, safe_get_grad, safe_get_shape, torch
 
 CRITERIA = {}
 
@@ -96,7 +96,8 @@ class MagnitudeCriterion(PruningCriterion):
         """Calculate and store the pruning scores based on a magnitude criterion."""
         with torch.no_grad():
             for key in self.modules.keys():
-                p = self.modules[key].weight.data
+                param = self.modules[key].weight
+                p = safe_get_data(param)
                 if hasattr(self.pattern, "reduce_score"):
                     self.scores[key] = self.pattern.reduce_score(torch.abs(p), key)
                 else:
@@ -161,12 +162,15 @@ class SnipCriterion(PruningCriterion):
         """Calculate and store the pruning scores based on snip criterion."""
         with torch.no_grad():
             for key in self.modules.keys():
-                p = self.modules[key].weight
+                # p = self.modules[key].weight
+                param = self.modules[key].weight
+                data = safe_get_data(param)
+                grad = safe_get_grad(param)
                 # self.scores[key] = torch.abs(p * p.grad)
                 if hasattr(self.pattern, "reduce_score"):
-                    self.scores[key] = self.pattern.reduce_score(torch.abs(p * p.grad), key)
+                    self.scores[key] = self.pattern.reduce_score(torch.abs(data * grad), key)
                 else:
-                    self.scores[key] = torch.abs(p * p.grad)
+                    self.scores[key] = torch.abs(data * grad)
 
 
 @register_criterion("snip_momentum")
@@ -191,15 +195,19 @@ class SnipMomentumCriterion(PruningCriterion):
         super(SnipMomentumCriterion, self).__init__(modules, config, pattern)
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
         for key in modules.keys():
-            p = modules[key].weight
+            param = modules[key].weight
+            # p = modules[key].weight
+            param_shape = safe_get_shape(param)
             dtype = torch.float32
             if self.low_memory_usage:
-                dtype = torch.bfloat16 if p.device.type == "cpu" else torch.float16
+                dtype = torch.bfloat16 if param.device.type == "cpu" else torch.float16
             # self.scores[key] = torch.zeros(p.shape, dtype=dtype).to(p.device)
             if hasattr(self.pattern, "reduce_score"):
-                self.scores[key] = self.pattern.reduce_score(torch.zeros(p.shape, dtype=dtype).to(p.device), key)
+                self.scores[key] = self.pattern.reduce_score(
+                    torch.zeros(param_shape, dtype=dtype).to(param.device), key
+                )
             else:
-                self.scores[key] = torch.zeros(p.shape, dtype=dtype).to(p.device)
+                self.scores[key] = torch.zeros(param_shape, dtype=dtype).to(param.device)
 
         self.alpha = 0.9
         self.beta = 1.0
@@ -209,8 +217,11 @@ class SnipMomentumCriterion(PruningCriterion):
         with torch.no_grad():
             for key in self.modules.keys():
                 p = self.modules[key].weight
+                param = self.modules[key].weight
+                data = safe_get_data(param)
+                grad = safe_get_grad(param)
                 self.scores[key] *= self.alpha
-                tmp = torch.abs(p * p.grad)
+                tmp = torch.abs(data * grad)
                 if hasattr(self.pattern, "reduce_score"):
                     tmp = self.pattern.reduce_score(tmp, key, force=True)
                 if self.low_memory_usage:

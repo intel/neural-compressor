@@ -49,9 +49,8 @@ from transformers import (
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 from timers import CPUTimer, GPUTimer
-from neural_compressor.training import WeightPruningConfig
-from neural_compressor.compression.pruner import (prepare_pruning,
-                                                    parse_auto_slim_config)
+from neural_compressor.training import WeightPruningConfig, prepare_pruning
+from neural_compressor.compression.pruner import (parse_auto_slim_config)
 from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
 
 check_min_version("4.27.0.dev0")
@@ -70,7 +69,7 @@ def parse_args():
     parser.add_argument(
         "--calibration_dataset_name",
         type=str,
-        default="wikitext-2-raw-v1",
+        default="NeelNanda/pile-10k", # e.g. wikitext-2-raw-v1
         help="The name of the pruning dataset to use (via the datasets library).",
     )
     parser.add_argument(
@@ -128,6 +127,12 @@ def parse_args():
         type=int,
         default=16,
         help="Batch size (per device) for the evaluation dataloader.",
+    )
+    parser.add_argument(
+        "--calib_size",
+        type=int,
+        default=128,
+        help="sample size for the calibration dataset.",
     )
     parser.add_argument(
         "--learning_rate",
@@ -403,8 +408,9 @@ def main():
                     from_tf=bool(".ckpt" in args.model_name_or_path),
                     config=config,
                     trust_remote_code=args.trust_remote_code,
-                    low_cpu_mem_usage=args.low_cpu_mem_usage,
+                    low_cpu_mem_usage=args.low_cpu_mem_usage
                     )
+                
 
     else:
         logger.info("Training new model from scratch")
@@ -493,7 +499,7 @@ def main():
     train_dataset = lm_datasets["train"]
     
     # DataLoaders creation:
-    train_dataset = train_dataset.shuffle(seed=42).select(range(128))
+    train_dataset = train_dataset.shuffle(seed=42).select(range(args.calib_size))
     total_batch_size = args.per_device_train_batch_size
     if local_rank != -1:
         total_batch_size *= WORLD_SIZE
@@ -544,8 +550,10 @@ def main():
         torch.backends.cudnn.allow_tf32 = False
         use_cache = model.config.use_cache
         model.config.use_cache = False
-       
+        import time
+        s = time.time()
         pruning = prepare_pruning(model, configs, dataloader=train_dataloader, device=device)
+        logger.info(f"cost time: {time.time() - s}")
         model.config.use_cache = use_cache
         
     if args.output_dir is not None:

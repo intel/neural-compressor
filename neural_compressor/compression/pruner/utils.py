@@ -745,3 +745,88 @@ def collect_layer_inputs(model, layers, layer_idx, layer_inputs, device="cuda:0"
                 inputs.append(batch)
 
     return inputs, positional_inputs, other_input_infos
+
+
+########################################################
+## Utility for integrate DeepSpeed
+########################################################
+import os
+
+USE_DEEPSPEED = False
+FLATTEN_DIM2 = 8
+
+
+def is_deepspeed_available():  # pragma: no cover
+    import importlib
+    import importlib.metadata as importlib_metadata
+
+    package_exists = importlib.util.find_spec("deepspeed") is not None
+
+    # Check we're not importing a "deepspeed" directory somewhere but the actual library by trying to grab the version
+    # AND checking it has an author field in the metadata that is HuggingFace.
+    if package_exists:
+        try:
+            _ = importlib_metadata.metadata("deepspeed")
+            return True
+        except importlib_metadata.PackageNotFoundError:
+            return False
+
+
+from packaging.version import Version
+
+
+def get_deepspeed_version():  # pragma: no cover
+    try:
+        import deepspeed  # pylint: disable=E0401
+
+        deepspeed_version = deepspeed.__version__.split("+")[0]
+    except ValueError as e:  # pragma: no cover
+        assert False, "Got an unknown version of torch: {}".format(e)
+    version = Version(deepspeed_version)
+    return version
+
+
+def check_deepspeed_version():  # pragma: no cover
+    version = get_deepspeed_version()
+    assert version >= Version("0.12.4"), f"The minimum version requirement of deepspeed is 0.12.4, but got {version}."
+
+
+USE_DEEPSPEED = os.environ.get("USE_DEEPSPEED", False)
+if USE_DEEPSPEED:  # pragma: no cover
+    assert is_deepspeed_available(), "Deepspeed is required: `pip install deepspeed>0.12.4"
+    check_deepspeed_version()
+
+
+def safe_get_shape(param):  # pragma: no cover
+    if USE_DEEPSPEED:
+        # param.ds_tensor is the partitioned tensor
+        return param.ds_tensor.shape
+    else:
+        return param.shape
+
+
+def safe_get_data(param):  # pragma: no cover
+    if USE_DEEPSPEED:
+        from deepspeed.utils import safe_get_local_fp32_param  # pylint: disable=E0401
+
+        return safe_get_local_fp32_param(param)
+    else:
+        return param.data
+
+
+def safe_get_grad(param):  # pragma: no cover
+    if USE_DEEPSPEED:
+        from deepspeed.utils import safe_get_local_grad  # pylint: disable=E0401
+
+        return safe_get_local_grad(param)
+    else:
+        return param.grad
+
+
+def safe_set_data(param, new_val):  # pragma: no cover
+    if USE_DEEPSPEED:
+        from deepspeed.utils import safe_set_local_fp32_param  # pylint: disable=E0401
+
+        safe_set_local_fp32_param(new_val, param)
+    else:
+        param.data = new_val

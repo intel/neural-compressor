@@ -41,6 +41,7 @@ class DemoModel(torch.nn.Module):
     def forward(self, x):
         out = self.fc1(x)
         out = self.fc2(out)
+        out = out + out
         return out
 
 
@@ -1198,7 +1199,7 @@ class TestTuneSqAlpha(unittest.TestCase):
             (
                 [1, 0.8, 1.1, 0.7, 1.1],
                 0.5,
-                "Expect tuning ends at 2nd trial with alpha is 0.5 and not tune sq's alpha.",
+                "Expect tuning ends at 1st trial with alpha is 0.5 and not tune sq's alpha.",
             ),
             (
                 [1, 0.8, 0.9, 0.7, 1.1],

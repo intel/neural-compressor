@@ -78,6 +78,7 @@ parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calib
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
 parser.add_argument('--gptq_debug', action='store_true', help='Whether to use debug model ')
+parser.add_argument('--gptq_static_groups', action='store_true', help='Use determined group to do quantization')
 # ==============code generation args===========
 parser.add_argument("--code_generation", action="store_true")
 parser.add_argument("--n_samples", default=200, type=int)
@@ -207,7 +208,7 @@ def get_user_model():
         trust_remote_code=args.trust_remote_code,
         revision=args.revision,
     )
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
     if args.approach == 'weight_only':
         user_model = user_model.float()
 
@@ -277,7 +278,8 @@ if args.quantize:
             'block_size': args.gptq_block_size,
             'nsamples': args.gptq_nsamples,
             'use_max_length': args.gptq_use_max_length,
-            'pad_max_length': args.gptq_pad_max_length
+            'pad_max_length': args.gptq_pad_max_length,
+            'static_groups': args.gptq_static_groups,
         }
         # GPTQ: use assistive functions to modify calib_dataloader and calib_func
         # TEQ: set calib_func=None, use default training func as calib_func
@@ -293,6 +295,7 @@ if args.quantize:
 
         # for test on various models, keep the code of directly call gptq_quantize
         if args.gptq_debug:
+
             from neural_compressor.adaptor.torch_utils.weight_only import gptq_quantize
 
             gptq_conf = {
@@ -301,6 +304,7 @@ if args.quantize:
                     'group_size': args.woq_group_size,  # -1 (per-channel)
                     'sym': (args.woq_scheme == "sym"),
                     'act_order': args.gptq_actorder,
+                    'static_groups': args.gptq_static_groups,
                 }
             }
             q_model_gptq_debug, gptq_config = gptq_quantize(
@@ -367,20 +371,21 @@ if args.int8 or args.int8_bf16_mixed:
     if args.ipex:
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
     else:
-        user_model, _ = get_user_model()
-        kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
-        user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model, **kwargs)
+        if args.gptq_debug:
+            user_model = torch.load(os.path.join(args.output_dir, "gptq_best_model.pt"))
+        else:
+            user_model, _ = get_user_model()
+            kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
+            user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model, **kwargs)
 else:
     user_model, _ = get_user_model()
 
 if args.accuracy:
     user_model.eval()
-    if args.gptq_debug:
-        user_model = torch.load(os.path.join(args.output_dir, "gptq_best_model.pt"))
     if args.code_generation:
         from intel_extension_for_transformers.llm.evaluation.lm_code_eval import evaluate
         from transformers import AutoTokenizer
-        tokenizer = AutoTokenizer.from_pretrained(args.model)
+        tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
         results = evaluate(
             model=user_model,
             tokenizer=tokenizer,
@@ -419,7 +424,8 @@ if args.performance:
     start = time.time()
     results = evaluate(
         model="hf-causal",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+        model_args='pretrained=' + args.model + ',tokenizer=' + args.model \
+            + ',dtype=float32' + ",trust_remote_code=" + str(args.trust_remote_code),
         user_model=user_model,
         batch_size=args.batch_size,
         tasks=args.tasks,
@@ -429,6 +435,8 @@ if args.performance:
     for task_name in args.tasks:
         if task_name == "wikitext":
             acc = results["results"][task_name]["word_perplexity"]
+        elif task_name == "truthfulqa_mc":
+            acc = results["results"][task_name]["mc1"]
         else:
             acc = results["results"][task_name]["acc"]
     print("Accuracy: %.5f" % acc)

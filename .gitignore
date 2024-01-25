@@ -13,6 +13,8 @@
 *.onnx
 *.so
 *.egg-info/
+.eggs/
+dist/
 tags
 build/
 _build
