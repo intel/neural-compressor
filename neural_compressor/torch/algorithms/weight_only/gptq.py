@@ -753,13 +753,13 @@ class Quantizer(nn.Module):
     def find_params(self, x, weight=False):
         dev = x.device
         self.maxq = self.maxq.to(dev)
-        x = x.clone()  # make sure x is not replaced
         # NF4 FP4
         if self.wdtype != "int":
             from .utility import quant_tensor
 
+            tmp = x.clone()  # make sure x is not replaced
             _, scale, zero = quant_tensor(
-                x,
+                tmp,
                 self.wbits,
                 self.group_size,
                 scheme=self.scheme,
@@ -852,7 +852,7 @@ class Quantizer(nn.Module):
 
                 orig_scale_shape = self.scale.shape
                 self.scale = self.scale.reshape(1, -1)
-                self.scale = quant_tensor(
+                quant_tensor(
                     self.scale,
                     self.double_quant_bits,
                     self.double_quant_group_size,
@@ -879,7 +879,9 @@ class Quantizer(nn.Module):
         if self.wdtype != "int":
             from .utility import quantize_4bit
 
-            return quantize_4bit(x, data_type=self.wdtype, scale=scale)
+            tmp = x.clone()
+
+            return quantize_4bit(tmp, data_type=self.wdtype, scale=scale)
         else:
             if maxq < 0:
                 return (x > scale / 2).float() * scale + (x < zero / 2).float() * zero

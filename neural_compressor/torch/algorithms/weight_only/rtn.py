@@ -27,6 +27,7 @@ from neural_compressor.torch.utils.utility import set_module
 from .utility import quant_tensor, search_clip
 
 
+@torch.no_grad()
 def rtn_quantize(
     model,
     num_bits=4,

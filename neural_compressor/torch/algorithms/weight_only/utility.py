@@ -287,8 +287,8 @@ def quant_tensor(
         if return_int or double_quant:
             weight2, scale2, zp2 = weight2
             weight.copy_(torch.cat([weight1, weight2], dim=1))
-            scale.copy_(torch.cat([scale1, scale2], dim=1))
-            zp = None if zp2 is None else zp.copy_(torch.cat([zp1, zp2], dim=1))
+            scale = torch.cat([scale1, scale2], dim=1)
+            zp = None if zp2 is None else torch.cat([zp1, zp2], dim=1)
             q_state = (weight, scale, zp)
         else:
             weight.copy_(torch.cat([weight1, weight2], dim=1))
