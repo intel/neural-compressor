@@ -34,10 +34,10 @@ async function highLight () {
 
 export async function activate(context: vscode.ExtensionContext) {  
   // init
-  const key = "neuralCoder.pythonPath";
+  const pythonPath = "neuralCoder.pythonPath";
   let config: vscode.WorkspaceConfiguration =
     vscode.workspace.getConfiguration();
-  let currentCondaName = config.get<string>(key);
+  let currentCondaName = config.get<string>(pythonPath);
 
   if (!currentCondaName) {
     vscode.window.showErrorMessage("Please input python Path!");
@@ -46,7 +46,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // conda Env
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(() => {
-      const currentCondaName = vscode.workspace.getConfiguration().get(key);
+      const currentCondaName = vscode.workspace.getConfiguration().get(pythonPath);
       if (!currentCondaName) {
         vscode.window.showErrorMessage("Please input python Path!");
         return;
