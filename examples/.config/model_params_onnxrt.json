@@ -770,7 +770,7 @@
       "main_script": "main.py",
       "batch_size": 1
     },
-    "llama-2-7b-lwq": {
+    "llama-2-7b-hf-lwq": {
       "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/ptq_static",
       "dataset_location": "",
       "input_model": "/tf_dataset2/models/onnx/llama-2-7b-hf",
