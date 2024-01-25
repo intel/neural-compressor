@@ -315,7 +315,7 @@ if __name__ == '__main__':
                 'percdamp': 0.01, 
                 'act_order':args.act_order,
                 'block_size': args.block_size, 
-                'nsampeles': args.nsamples,
+                'nsamples': args.nsamples,
                 'use_max_length': args.use_max_length,
                 'pad_max_length': args.pad_max_length
             },
