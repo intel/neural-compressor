@@ -300,6 +300,8 @@ def download_url(url, root, filename=None, md5=None):  # pragma: no cover
         md5 (str): the md5 string.
     """
     import urllib
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
 
     root = os.path.expanduser(root)
     if not filename:
