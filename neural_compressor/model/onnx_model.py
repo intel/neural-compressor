@@ -57,9 +57,9 @@ class ONNXModel(BaseModel):
 
         self._config = None
         if isinstance(model, str) and os.path.exists(Path(model).parent.joinpath("config.json").as_posix()):
-            from transformers import PretrainedConfig
+            from transformers import AutoConfig
 
-            self._config = PretrainedConfig.from_pretrained(Path(model).parent.as_posix())
+            self._config = AutoConfig.from_pretrained(Path(model).parent.as_posix())
 
         self.node_name_counter = {}
         self._output_name_to_node = {}
