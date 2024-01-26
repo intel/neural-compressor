@@ -166,8 +166,9 @@ class RTNConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "RTNConfig", List["RTNConfig"]]:
-        # TODO fwk owner needs to update it.
-        return RTNConfig(weight_bits=[4, 6])
+        return RTNConfig(
+            dtype=["int4", "nf4"], use_sym=[True, False], group_size=[32, 128], use_mse_search=[False, True]
+        )
 
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
