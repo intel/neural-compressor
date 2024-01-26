@@ -26,7 +26,7 @@ from neural_compressor.torch.quantization.config import (
 )
 
 # TODO(Yi): move config to config.py
-from neural_compressor.torch.quantization.autotune import autotune, TuningConfig
+from neural_compressor.torch.quantization.autotune import autotune, TuningConfig, get_all_config_set
 
 ### Quantization Function Registration ###
 import neural_compressor.torch.quantization.weight_only

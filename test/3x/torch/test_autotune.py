@@ -4,6 +4,7 @@ from functools import wraps
 import torch
 import transformers
 
+from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
 from neural_compressor.torch.quantization import RTNConfig, TuningConfig, autotune, get_all_config_set
 from neural_compressor.torch.utils import logger
 
@@ -120,7 +121,7 @@ class TestAutoTune(unittest.TestCase):
         def eval_acc_fn(model) -> float:
             return 1.0
 
-        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6])], max_trials=2)
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6])], max_trials=2)
         best_model = autotune(
             model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
         )
@@ -146,15 +147,13 @@ class TestAutoTune(unittest.TestCase):
             },
         ]
 
-        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6])], max_trials=2)
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6])], max_trials=2)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_fns)
         self.assertIsNotNone(best_model)
         self.assertEqual(len(evaluator.eval_fn_registry), 2)
 
     @reset_tuning_target
     def test_autotune_get_config_set_api(self):
-        from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
-
         dataloader = GPTQLLMDataLoader()
 
         model = get_gpt_j()
@@ -192,7 +191,7 @@ class TestAutoTune(unittest.TestCase):
     def test_autotune_not_eval_func(self):
         logger.info("test_autotune_api")
 
-        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6])], max_trials=2)
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6])], max_trials=2)
 
         # Use assertRaises to check that an AssertionError is raised
         with self.assertRaises(AssertionError) as context:

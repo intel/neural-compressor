@@ -61,9 +61,9 @@ class TestQuantizationConfig(unittest.TestCase):
     def test_quantize_rtn_from_dict_beginner(self):
         quant_config = {
             "rtn": {
-                "weight_dtype": "nf4",
-                "weight_bits": 4,
-                "weight_group_size": 32,
+                "dtype": "nf4",
+                "bits": 4,
+                "group_size": 32,
             },
         }
         fp32_model = build_simple_torch_model()
@@ -71,20 +71,20 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(qmodel)
 
     def test_quantize_rtn_from_class_beginner(self):
-        quant_config = RTNConfig(weight_bits=4, weight_dtype="nf4", weight_group_size=32)
+        quant_config = RTNConfig(bits=4, dtype="nf4", group_size=32)
         fp32_model = build_simple_torch_model()
         qmodel = quantize(fp32_model, quant_config)
         self.assertIsNotNone(qmodel)
 
     def test_quantize_rtndq_from_class_beginner(self):
-        fp32_config = RTNConfig(weight_dtype="fp32")
+        fp32_config = RTNConfig(dtype="fp32")
 
         fp32_model = copy.deepcopy(self.gptj)
         quant_config = RTNConfig(
-            weight_bits=4,
-            weight_dtype="int",
-            weight_sym=False,
-            weight_group_size=32,
+            bits=4,
+            dtype="int",
+            use_sym=False,
+            group_size=32,
         )
         quant_config.set_local("lm_head", fp32_config)
         qmodel = quantize(fp32_model, quant_config)
@@ -97,14 +97,14 @@ class TestQuantizationConfig(unittest.TestCase):
         quant_config = {
             "rtn": {
                 "global": {
-                    "weight_dtype": "nf4",
-                    "weight_bits": 4,
-                    "weight_group_size": 32,
+                    "dtype": "nf4",
+                    "bits": 4,
+                    "group_size": 32,
                 },
                 "local": {
                     "fc1": {
-                        "weight_dtype": "int8",
-                        "weight_bits": 4,
+                        "dtype": "int8",
+                        "bits": 4,
                     }
                 },
             }
@@ -113,9 +113,9 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(qmodel)
 
     def test_quantize_rtn_from_class_advance(self):
-        quant_config = RTNConfig(weight_bits=4, weight_dtype="nf4")
+        quant_config = RTNConfig(bits=4, dtype="nf4")
         # set operator instance
-        fc1_config = RTNConfig(weight_bits=4, weight_dtype="int8")
+        fc1_config = RTNConfig(bits=4, dtype="int8")
         quant_config.set_local("model.fc1", fc1_config)
         # get model and quantize
         fp32_model = build_simple_torch_model()
@@ -123,18 +123,18 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(qmodel)
 
     def test_config_white_lst(self):
-        global_config = RTNConfig(weight_bits=4, weight_dtype="nf4")
+        global_config = RTNConfig(bits=4, dtype="nf4")
         # set operator instance
-        fc1_config = RTNConfig(weight_bits=4, weight_dtype="int8", white_list=["model.fc1"])
+        fc1_config = RTNConfig(bits=4, dtype="int8", white_list=["model.fc1"])
         # get model and quantize
         fp32_model = build_simple_torch_model()
         qmodel = quantize(fp32_model, quant_config=global_config + fc1_config)
         self.assertIsNotNone(qmodel)
 
     def test_config_white_lst2(self):
-        global_config = RTNConfig(weight_bits=4, weight_dtype="nf4")
+        global_config = RTNConfig(bits=4, dtype="nf4")
         # set operator instance
-        fc1_config = RTNConfig(weight_bits=6, weight_dtype="int8", white_list=["fc1"])
+        fc1_config = RTNConfig(bits=6, dtype="int8", white_list=["fc1"])
         quant_config = global_config + fc1_config
         # get model and quantize
         fp32_model = build_simple_torch_model()
@@ -142,21 +142,21 @@ class TestQuantizationConfig(unittest.TestCase):
         logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].weight_bits == 6)
-        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].weight_bits == 4)
+        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].bits == 6)
+        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].bits == 4)
 
     def test_config_from_dict(self):
         quant_config = {
             "rtn": {
                 "global": {
-                    "weight_dtype": "nf4",
-                    "weight_bits": 4,
-                    "weight_group_size": 32,
+                    "dtype": "nf4",
+                    "bits": 4,
+                    "group_size": 32,
                 },
                 "local": {
                     "fc1": {
-                        "weight_dtype": "int8",
-                        "weight_bits": 4,
+                        "dtype": "int8",
+                        "bits": 4,
                     }
                 },
             }
@@ -165,8 +165,8 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(config.local_config)
 
     def test_config_to_dict(self):
-        quant_config = RTNConfig(weight_bits=4, weight_dtype="nf4")
-        fc1_config = RTNConfig(weight_bits=4, weight_dtype="int8")
+        quant_config = RTNConfig(bits=4, dtype="nf4")
+        fc1_config = RTNConfig(bits=4, dtype="int8")
         quant_config.set_local("model.fc1", fc1_config)
         config_dict = quant_config.to_dict()
         self.assertIn("global", config_dict)
@@ -175,22 +175,22 @@ class TestQuantizationConfig(unittest.TestCase):
     def test_same_type_configs_addition(self):
         quant_config1 = {
             "rtn": {
-                "weight_dtype": "nf4",
-                "weight_bits": 4,
-                "weight_group_size": 32,
+                "dtype": "nf4",
+                "bits": 4,
+                "group_size": 32,
             },
         }
         q_config = RTNConfig.from_dict(quant_config1["rtn"])
         quant_config2 = {
             "rtn": {
                 "global": {
-                    "weight_bits": 8,
-                    "weight_group_size": 32,
+                    "bits": 8,
+                    "group_size": 32,
                 },
                 "local": {
                     "fc1": {
-                        "weight_dtype": "int8",
-                        "weight_bits": 4,
+                        "dtype": "int8",
+                        "bits": 4,
                     }
                 },
             }
@@ -201,14 +201,14 @@ class TestQuantizationConfig(unittest.TestCase):
         for op_name, op_config in quant_config2["rtn"]["local"].items():
             for attr, val in op_config.items():
                 self.assertEqual(q3_dict["local"][op_name][attr], val)
-        self.assertNotEqual(q3_dict["global"]["weight_bits"], quant_config2["rtn"]["global"]["weight_bits"])
+        self.assertNotEqual(q3_dict["global"]["bits"], quant_config2["rtn"]["global"]["bits"])
 
     def test_diff_types_configs_addition(self):
         quant_config1 = {
             "rtn": {
-                "weight_dtype": "nf4",
-                "weight_bits": 4,
-                "weight_group_size": 32,
+                "dtype": "nf4",
+                "bits": 4,
+                "group_size": 32,
             },
         }
         q_config = RTNConfig.from_dict(quant_config1["rtn"])
@@ -222,9 +222,9 @@ class TestQuantizationConfig(unittest.TestCase):
     def test_composable_config_addition(self):
         quant_config1 = {
             "rtn": {
-                "weight_dtype": "nf4",
-                "weight_bits": 4,
-                "weight_group_size": 32,
+                "dtype": "nf4",
+                "bits": 4,
+                "group_size": 32,
             },
         }
         q_config = RTNConfig.from_dict(quant_config1["rtn"])
@@ -238,9 +238,9 @@ class TestQuantizationConfig(unittest.TestCase):
         combined_config3 = combined_config + combined_config2
 
     def test_config_mapping(self):
-        quant_config = RTNConfig(weight_bits=4, weight_dtype="nf4")
+        quant_config = RTNConfig(bits=4, dtype="nf4")
         # set operator instance
-        fc1_config = RTNConfig(weight_bits=6, weight_dtype="int8")
+        fc1_config = RTNConfig(bits=6, dtype="int8")
         quant_config.set_local("fc1", fc1_config)
         # get model and quantize
         fp32_model = build_simple_torch_model()
@@ -248,16 +248,16 @@ class TestQuantizationConfig(unittest.TestCase):
         logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].weight_bits == 6)
-        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].weight_bits == 4)
+        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].bits == 6)
+        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].bits == 4)
         # test regular matching
-        fc_config = RTNConfig(weight_bits=5, weight_dtype="int8")
+        fc_config = RTNConfig(bits=5, dtype="int8")
         quant_config.set_local("fc", fc_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].weight_bits == 5)
-        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].weight_bits == 5)
-        self.assertTrue(configs_mapping[("fc3", torch.nn.Linear)].weight_bits == 5)
+        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].bits == 5)
+        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].bits == 5)
+        self.assertTrue(configs_mapping[("fc3", torch.nn.Linear)].bits == 5)
 
     def test_gptq_config(self):
         gptq_config1 = GPTQConfig(weight_bits=8, pad_max_length=512)
@@ -284,10 +284,10 @@ class TestQuantConfigForAutotune(unittest.TestCase):
     def test_expand_config(self):
         # test the expand functionalities, the user is not aware it
 
-        tune_config = RTNConfig(weight_bits=[4, 6])
+        tune_config = RTNConfig(bits=[4, 6])
         expand_config_list = RTNConfig.expand(tune_config)
-        self.assertEqual(expand_config_list[0].weight_bits, 4)
-        self.assertEqual(expand_config_list[1].weight_bits, 6)
+        self.assertEqual(expand_config_list[0].bits, 4)
+        self.assertEqual(expand_config_list[1].bits, 6)
 
 
 if __name__ == "__main__":

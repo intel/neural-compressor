@@ -61,7 +61,7 @@ def gptq_entry(
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
 
-    model, quantization_perm = gptq_quantize(model=model, weight_config=configs_mapping, *args, **kwargs)
+    model, quantization_perm = gptq_quantize(model=model, configs_mapping=configs_mapping, *args, **kwargs)
     # Assign the gptq config as an attribute of model
     model._gptq_quantization_perm = quantization_perm
     return model
