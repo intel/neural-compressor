@@ -213,14 +213,19 @@ class TuningConfig:
         config_set: quantization configs. Default value is empty.
         timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
         max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
+        tolerable_loss: The metric loss is absolute, it can be both positive and negative. Default is 0.01.
     """
 
-    def __init__(self, config_set=None, timeout=0, max_trials=100, sampler: Sampler = None) -> None:
+    def __init__(self, config_set=None, timeout=0, max_trials=100, sampler: Sampler = None, tolerable_loss=0.01) -> None:
         """Init a TuneCriterion object."""
         self.config_set = config_set
         self.timeout = timeout
         self.max_trials = max_trials
         self.sampler = sampler
+        self.tolerable_loss = tolerable_loss
+
+    def set_tolerable_loss(self, tolerable_loss: int):
+        self.tolerable_loss = tolerable_loss
 
 
 class _TrialRecord:
@@ -242,11 +247,16 @@ class TuningMonitor:
         self.tuning_config = tuning_config
         self.trial_cnt = 0
         self.tuning_history: List[_TrialRecord] = []
+        self.baseline = None
 
     def add_trial_result(self, trial_index: int, trial_result: Union[int, float], quant_config: BaseConfig) -> None:
         self.trial_cnt += 1
         trial_record = _TrialRecord(trial_index, trial_result, quant_config)
         self.tuning_history.append(trial_record)
+
+    def set_baseline(self, baseline:float):
+        self.baseline = baseline
+        logger.info(f"Fp32 baseline is {self.baseline}")
 
     def get_number_of_trials(self):
         return len(self.tuning_history)
@@ -260,8 +270,16 @@ class TuningMonitor:
         return sorted_trials_records[0].quant_config
 
     def need_stop(self) -> bool:
-        # TODO Support more stop criteria in the next PR, such as `reach accuracy goal`, `timeout`, and so on.
-        return self.trial_cnt >= self.tuning_config.max_trials
+        # TODO Support more stop criteria in the next PR, such as `timeout`, and so on.
+        # reach max trials
+        reach_max_trials = self.trial_cnt >= self.tuning_config.max_trials
+        # reach accuracy goal
+        meet_accuracy_goal = False
+        if self.baseline is not None:
+            meet_accuracy_goal = self.tuning_history[-1].trial_result \
+                >= (self.baseline * (1 - self.tuning_config.tolerable_loss))
+                # [-1] is the last element representing the latest trail record.
+        return reach_max_trials or meet_accuracy_goal
 
 
 def init_tuning(tuning_config: TuningConfig) -> Tuple[ConfigLoader, TuningLogger, TuningMonitor]:
