@@ -206,7 +206,7 @@ class TestAutoTune(unittest.TestCase):
         self.assertEqual(
             str(context.exception), "Please ensure that you register at least one evaluation metric for auto-tune."
         )
-    
+
     def test_autotune_baseline(self):
         logger.info("test_autotune_api")
         from neural_compressor.common.base_tuning import evaluator
@@ -226,14 +226,14 @@ class TestAutoTune(unittest.TestCase):
         custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6, 5, 8])], max_trials=6)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_fns)
         self.assertIsNotNone(best_model)
-        
+
         acc_res_lst = baseline + [0.9] * 2 + [0.99] + [1.01]
-        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6, 5, 8])],  tolerable_loss=0.1)
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6, 5, 8])], tolerable_loss=0.1)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_acc_fn)
         self.assertIsNotNone(best_model)
 
         acc_res_lst = baseline + [0.9] * 2 + [0.99] + [1.01]
-        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6, 5, 8])],  tolerable_loss=-0.01)
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6, 5, 8])], tolerable_loss=-0.01)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_acc_fn)
         self.assertIsNotNone(best_model)
 

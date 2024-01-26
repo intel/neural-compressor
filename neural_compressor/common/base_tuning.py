@@ -216,7 +216,9 @@ class TuningConfig:
         tolerable_loss: The metric loss is absolute, it can be both positive and negative. Default is 0.01.
     """
 
-    def __init__(self, config_set=None, timeout=0, max_trials=100, sampler: Sampler = None, tolerable_loss=0.01) -> None:
+    def __init__(
+        self, config_set=None, timeout=0, max_trials=100, sampler: Sampler = None, tolerable_loss=0.01
+    ) -> None:
         """Init a TuneCriterion object."""
         self.config_set = config_set
         self.timeout = timeout
@@ -254,7 +256,7 @@ class TuningMonitor:
         trial_record = _TrialRecord(trial_index, trial_result, quant_config)
         self.tuning_history.append(trial_record)
 
-    def set_baseline(self, baseline:float):
+    def set_baseline(self, baseline: float):
         self.baseline = baseline
         logger.info(f"Fp32 baseline is {self.baseline}")
 
@@ -276,9 +278,10 @@ class TuningMonitor:
         # reach accuracy goal
         meet_accuracy_goal = False
         if self.baseline is not None:
-            meet_accuracy_goal = self.tuning_history[-1].trial_result \
-                >= (self.baseline * (1 - self.tuning_config.tolerable_loss))
-                # [-1] is the last element representing the latest trail record.
+            meet_accuracy_goal = self.tuning_history[-1].trial_result >= (
+                self.baseline * (1 - self.tuning_config.tolerable_loss)
+            )
+            # [-1] is the last element representing the latest trail record.
         return reach_max_trials or meet_accuracy_goal
 
 
