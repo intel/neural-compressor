@@ -229,23 +229,24 @@ class TestAutoTune(unittest.TestCase):
         # case 2
         # Where tolerable_loss is 0.1, we expect the tuning to end with a "0-trail end" output logged.
         acc_res_lst = baseline + [0.9] * 2 + [0.99] + [1.01]
-        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6, 5, 8])],  tolerable_loss=0.1)
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6, 5, 8])], tolerable_loss=0.1)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_acc_fn)
         self.assertIsNotNone(best_model)
 
         # case 3
         # Where tolerable_loss is -0.01, we expect the tuning to end with a "3-trail end" output logged.
         acc_res_lst = baseline + [0.9] * 2 + [0.99] + [1.01]
-        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6, 5, 8])],  tolerable_loss=-0.01)
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6, 5, 8])], tolerable_loss=-0.01)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_acc_fn)
         self.assertIsNotNone(best_model)
 
         # case 4
         # Where tolerable_loss is 0.01 and accuracy meets the goal, we expect best model is None.
         acc_res_lst = baseline + [0.9] * 2 + [0.9] + [0.9]
-        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6, 5, 8])],  tolerable_loss=0.01)
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6, 5, 8])], tolerable_loss=0.01)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_acc_fn)
         self.assertIsNone(best_model)
+
 
 if __name__ == "__main__":
     unittest.main()
