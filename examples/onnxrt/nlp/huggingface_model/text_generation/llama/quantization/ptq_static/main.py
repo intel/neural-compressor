@@ -210,7 +210,7 @@ def eval_func(model):
     if isinstance(model, str) and model.endswith(".onnx"):
         model_dir = os.path.dirname(model)
 
-    # replace_architectures(os.path.join(model_dir, "config.json"))
+    replace_architectures(os.path.join(model_dir, "config.json"))
 
     results = evaluate(
         model="hf-causal",
@@ -317,13 +317,13 @@ if __name__ == "__main__":
 
         if args.layer_wise:
             # layer-wise quantization for ONNX models is still under development and only support W8A8 quantization now
-            config = PostTrainingQuantConfig(
+            ptq_config = PostTrainingQuantConfig(
                 calibration_sampling_size=[8],
                 recipes={'optypes_to_exclude_output_quant': ['MatMul'],
                          'layer_wise_quant': True},
                 op_type_dict={'^((?!(MatMul|Gather|Conv)).)*$': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
         else:
-            config = PostTrainingQuantConfig(
+            ptq_config = PostTrainingQuantConfig(
                 calibration_sampling_size=[8],
                 recipes={'optypes_to_exclude_output_quant': ['MatMul'],
                          'smooth_quant': True,
@@ -332,7 +332,7 @@ if __name__ == "__main__":
 
         q_model = quantization.fit(
                 model_path,
-                config,
+                ptq_config,
                 calib_dataloader=KVDataloader(model_path, pad_max=args.pad_max, batch_size=1))
         q_model.save(os.path.join(args.output_model, model_name))
         
