@@ -124,8 +124,9 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-# load model
+# load model tokenize and config
 tokenizer = LlamaTokenizer.from_pretrained(args.tokenizer)
+config = LlamaConfig.from_pretrained(args.model_path)
 
 def tokenize_function(examples):
     example = tokenizer(examples['text'])
@@ -134,7 +135,6 @@ def tokenize_function(examples):
 def benchmark(model):
     import json
     import time
-    config = LlamaConfig.from_pretrained(args.model_path)
     sess_options = ort.SessionOptions()
     sess_options.intra_op_num_threads = args.intra_op_num_threads
     
@@ -210,7 +210,7 @@ def eval_func(model):
     if isinstance(model, str) and model.endswith(".onnx"):
         model_dir = os.path.dirname(model)
 
-    replace_architectures(os.path.join(model_dir, "config.json"))
+    # replace_architectures(os.path.join(model_dir, "config.json"))
 
     results = evaluate(
         model="hf-causal",
