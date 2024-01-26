@@ -272,6 +272,12 @@ class TuningMonitor:
         return sorted_trials_records[0].quant_config
 
     def need_stop(self) -> bool:
+        """Check if need to stop tuning. Either accuracy goal is met, max trials is reached or timeout is reached.
+
+        Returns:
+            bool: True if need to stop, otherwise False.
+        """
+
         # TODO Support more stop criteria in the next PR, such as `timeout`, and so on.
         # reach max trials
         reach_max_trials = self.trial_cnt >= self.tuning_config.max_trials
