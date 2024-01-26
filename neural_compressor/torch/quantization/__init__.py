@@ -29,8 +29,4 @@ from neural_compressor.torch.quantization.config import (
 from neural_compressor.torch.quantization.autotune import autotune, TuningConfig, get_all_config_set
 
 ### Quantization Function Registration ###
-import neural_compressor.torch.quantization.weight_only
-from neural_compressor.torch.utils import is_hpex_available
-
-if is_hpex_available():
-    import neural_compressor.torch.quantization.fp8
+import neural_compressor.torch.quantization.algorithm_entry

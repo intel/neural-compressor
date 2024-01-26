@@ -562,7 +562,7 @@ if is_hpex_available():
                 approach=["static", "dynamic"],
                 device=["hpu"],
             )
-            from .fp8.quantization_impl import white_list
+            from neural_compressor.torch.algorithms.habana_fp8 import white_list
 
             operators = white_list
             supported_configs.append(OperatorConfig(config=fp8_config, operators=operators))
@@ -570,7 +570,7 @@ if is_hpex_available():
 
         @staticmethod
         def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-            from .fp8.quantization_impl import white_list
+            from neural_compressor.torch.algorithms.habana_fp8 import white_list
 
             filter_result = []
             for op_name, module in model.named_modules():

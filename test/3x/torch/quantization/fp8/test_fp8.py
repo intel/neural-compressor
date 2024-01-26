@@ -9,11 +9,8 @@ if not is_hpex_avaliable():
     exit()
 import torch
 
-from neural_compressor.common import logger
-from neural_compressor.torch.quantization import quantize
-from neural_compressor.torch.quantization.config import FP8QConfig, get_default_fp8_qconfig
-from neural_compressor.torch.quantization.fp8 import quantize_dynamic
-from neural_compressor.torch.quantization.fp8.modules import (
+from neural_compressor.torch.algorithms.habana_fp8 import quantize_dynamic
+from neural_compressor.torch.algorithms.habana_fp8.modules import (
     FP8BatchMatmul,
     FP8DynamicBatchMatmul,
     FP8DynamicLinear,
@@ -21,7 +18,10 @@ from neural_compressor.torch.quantization.fp8.modules import (
     FP8Linear,
     FP8Matmul,
 )
+from neural_compressor.torch.quantization import quantize
+from neural_compressor.torch.quantization.config import FP8QConfig, get_default_fp8_qconfig
 from neural_compressor.torch.quantization.layers import BatchMatmul, Matmul
+from neural_compressor.torch.utils import logger
 
 torch.set_grad_enabled(False)
 

@@ -198,7 +198,6 @@ def convert(model, qconfig_mapping):
     return model
 
 
-@register_algo(name=FP8_QUANT)
 def quantize(model, qconfig_mapping, run_fn=None, run_args=None, inplace=True):
     q_model = model if inplace else copy.deepcopy(model)
     q_model = prepare(q_model, qconfig_mapping)
@@ -209,7 +208,3 @@ def quantize(model, qconfig_mapping, run_fn=None, run_args=None, inplace=True):
             run_fn(q_model)
     q_model = convert(q_model, qconfig_mapping)
     return q_model
-
-
-# def autotune(fp32_model, quant_config, tune_config, eval_func, ...):
-#     pass

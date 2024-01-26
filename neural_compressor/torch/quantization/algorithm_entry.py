@@ -16,14 +16,14 @@ from typing import Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import GPTQ, RTN  # unified namespace
+from neural_compressor.common.utils import FP8_QUANT, GPTQ, RTN  # unified namespace
 from neural_compressor.torch.algorithms.weight_only import gptq_quantize, rtn_quantize
 from neural_compressor.torch.quantization import GPTQConfig, RTNConfig
 from neural_compressor.torch.utils import logger, register_algo
 
 
 ###################### RTN Algo Entry ##################################
-@register_algo(name=RTN)
+@register_algo(RTN)
 @torch.no_grad()
 def rtn_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNConfig], *args, **kwargs
@@ -54,7 +54,7 @@ def rtn_entry(
 
 
 ###################### GPTQ Algo Entry ##################################
-@register_algo(name=GPTQ)
+@register_algo(GPTQ)
 @torch.no_grad()
 def gptq_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], *args, **kwargs
@@ -65,3 +65,14 @@ def gptq_entry(
     # Assign the gptq config as an attribute of model
     model._gptq_quantization_perm = quantization_perm
     return model
+
+
+###################### Habana FP8 Algo Entry ##################################
+from neural_compressor.torch.utils import is_hpex_available
+
+if is_hpex_available():
+    from neural_compressor.torch.algorithms.habana_fp8 import quantize
+
+    @register_algo(FP8_QUANT)
+    def fp8_quant_entry(model, qconfig_mapping, run_fn=None, run_args=None, inplace=True):
+        return quantize(model, qconfig_mapping, run_fn=run_fn, run_args=run_args, inplace=inplace)
