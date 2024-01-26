@@ -23,3 +23,4 @@ from neural_compressor.torch.quantization.config import (
     SmoothQuantConfig,
     get_default_sq_config,
 )
+from neural_compressor.torch.quantization.autotune import get_rtn_double_quant_config_set, get_all_config_set

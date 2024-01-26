@@ -207,6 +207,23 @@ class TestAutoTune(unittest.TestCase):
             str(context.exception), "Please ensure that you register at least one evaluation metric for auto-tune."
         )
 
+    @reset_tuning_target
+    def test_rtn_double_quant_config_set(self) -> None:
+        from neural_compressor.torch import RTNConfig, TuningConfig, autotune, get_rtn_double_quant_config_set
+        from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
+
+        rtn_double_quant_config_set = get_rtn_double_quant_config_set()
+        self.assertEqual(len(rtn_double_quant_config_set), len(DOUBLE_QUANT_CONFIGS))
+
+        def eval_acc_fn(model) -> float:
+            return 1.0
+
+        custom_tune_config = TuningConfig(config_set=get_rtn_double_quant_config_set(), max_trials=2)
+        best_model = autotune(
+            model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
+        )
+        self.assertIsNotNone(best_model)
+
 
 if __name__ == "__main__":
     unittest.main()
