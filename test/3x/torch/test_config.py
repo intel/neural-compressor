@@ -1,12 +1,18 @@
 import copy
 import unittest
 
+import torch
 import transformers
 
-from neural_compressor.common import Logger
-
-logger = Logger().get_logger()
-import torch
+from neural_compressor.torch.quantization import (
+    GPTQConfig,
+    RTNConfig,
+    SmoothQuantConfig,
+    StaticQuantConfig,
+    get_default_rtn_config,
+    quantize,
+)
+from neural_compressor.torch.utils import get_model_info, logger
 
 
 def build_simple_torch_model():
@@ -47,15 +53,12 @@ class TestQuantizationConfig(unittest.TestCase):
 
     def test_quantize_rtn_from_dict_default(self):
         logger.info("test_quantize_rtn_from_dict_default")
-        from neural_compressor.torch import get_default_rtn_config, quantize
 
         fp32_model = build_simple_torch_model()
         qmodel = quantize(fp32_model, quant_config=get_default_rtn_config())
         self.assertIsNotNone(qmodel)
 
     def test_quantize_rtn_from_dict_beginner(self):
-        from neural_compressor.torch import quantize
-
         quant_config = {
             "rtn": {
                 "weight_dtype": "nf4",
@@ -68,16 +71,12 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(qmodel)
 
     def test_quantize_rtn_from_class_beginner(self):
-        from neural_compressor.torch import RTNConfig, quantize
-
         quant_config = RTNConfig(weight_bits=4, weight_dtype="nf4", weight_group_size=32)
         fp32_model = build_simple_torch_model()
         qmodel = quantize(fp32_model, quant_config)
         self.assertIsNotNone(qmodel)
 
     def test_quantize_rtndq_from_class_beginner(self):
-        from neural_compressor.torch import RTNConfig, quantize
-
         fp32_config = RTNConfig(weight_dtype="fp32")
 
         fp32_model = copy.deepcopy(self.gptj)
@@ -94,8 +93,6 @@ class TestQuantizationConfig(unittest.TestCase):
         fp32_model = copy.deepcopy(self.gptj)
 
     def test_quantize_rtn_from_dict_advance(self):
-        from neural_compressor.torch import quantize
-
         fp32_model = build_simple_torch_model()
         quant_config = {
             "rtn": {
@@ -116,8 +113,6 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(qmodel)
 
     def test_quantize_rtn_from_class_advance(self):
-        from neural_compressor.torch import RTNConfig, quantize
-
         quant_config = RTNConfig(weight_bits=4, weight_dtype="nf4")
         # set operator instance
         fc1_config = RTNConfig(weight_bits=4, weight_dtype="int8")
@@ -128,8 +123,6 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(qmodel)
 
     def test_config_white_lst(self):
-        from neural_compressor.torch import RTNConfig, quantize
-
         global_config = RTNConfig(weight_bits=4, weight_dtype="nf4")
         # set operator instance
         fc1_config = RTNConfig(weight_bits=4, weight_dtype="int8", white_list=["model.fc1"])
@@ -139,9 +132,6 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(qmodel)
 
     def test_config_white_lst2(self):
-        from neural_compressor.torch import RTNConfig
-        from neural_compressor.torch.utils.utility import get_model_info
-
         global_config = RTNConfig(weight_bits=4, weight_dtype="nf4")
         # set operator instance
         fc1_config = RTNConfig(weight_bits=6, weight_dtype="int8", white_list=["fc1"])
@@ -156,8 +146,6 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].weight_bits == 4)
 
     def test_config_from_dict(self):
-        from neural_compressor.torch import RTNConfig
-
         quant_config = {
             "rtn": {
                 "global": {
@@ -177,8 +165,6 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(config.local_config)
 
     def test_config_to_dict(self):
-        from neural_compressor.torch import RTNConfig
-
         quant_config = RTNConfig(weight_bits=4, weight_dtype="nf4")
         fc1_config = RTNConfig(weight_bits=4, weight_dtype="int8")
         quant_config.set_local("model.fc1", fc1_config)
@@ -187,8 +173,6 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIn("local", config_dict)
 
     def test_same_type_configs_addition(self):
-        from neural_compressor.torch import RTNConfig
-
         quant_config1 = {
             "rtn": {
                 "weight_dtype": "nf4",
@@ -220,8 +204,6 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertNotEqual(q3_dict["global"]["weight_bits"], quant_config2["rtn"]["global"]["weight_bits"])
 
     def test_diff_types_configs_addition(self):
-        from neural_compressor.torch import GPTQConfig, RTNConfig
-
         quant_config1 = {
             "rtn": {
                 "weight_dtype": "nf4",
@@ -238,8 +220,6 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIn("gptq", combined_config_d)
 
     def test_composable_config_addition(self):
-        from neural_compressor.torch import GPTQConfig, RTNConfig
-
         quant_config1 = {
             "rtn": {
                 "weight_dtype": "nf4",
@@ -258,9 +238,6 @@ class TestQuantizationConfig(unittest.TestCase):
         combined_config3 = combined_config + combined_config2
 
     def test_config_mapping(self):
-        from neural_compressor.torch import RTNConfig
-        from neural_compressor.torch.utils.utility import get_model_info
-
         quant_config = RTNConfig(weight_bits=4, weight_dtype="nf4")
         # set operator instance
         fc1_config = RTNConfig(weight_bits=6, weight_dtype="int8")
@@ -283,8 +260,6 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertTrue(configs_mapping[("fc3", torch.nn.Linear)].weight_bits == 5)
 
     def test_gptq_config(self):
-        from neural_compressor.torch.quantization import GPTQConfig
-
         gptq_config1 = GPTQConfig(weight_bits=8, pad_max_length=512)
         quant_config_dict = {
             "gptq": {"weight_bits": 8, "pad_max_length": 512},
@@ -293,16 +268,12 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertEqual(gptq_config1.to_dict(), gptq_config2.to_dict())
 
     def test_static_quant_config(self):
-        from neural_compressor.torch.quantization import StaticQuantConfig
-
         static_config1 = StaticQuantConfig(w_dtype="int8", act_sym=True, act_algo="minmax")
         quant_config_dict = {"static": {"w_dtype": "int8", "act_sym": True, "act_algo": "minmax"}}
         static_config2 = StaticQuantConfig.from_dict(quant_config_dict["static"])
         self.assertEqual(static_config1.to_dict(), static_config2.to_dict())
 
     def test_smooth_quant_config(self):
-        from neural_compressor.torch.quantization import SmoothQuantConfig
-
         sq_config1 = SmoothQuantConfig(alpha=0.8, folding=True)
         quant_config_dict = {"sq": {"alpha": 0.8, "folding": True}}
         sq_config2 = SmoothQuantConfig.from_dict(quant_config_dict["sq"])
@@ -312,7 +283,6 @@ class TestQuantizationConfig(unittest.TestCase):
 class TestQuantConfigForAutotune(unittest.TestCase):
     def test_expand_config(self):
         # test the expand functionalities, the user is not aware it
-        from neural_compressor.torch import RTNConfig
 
         tune_config = RTNConfig(weight_bits=[4, 6])
         expand_config_list = RTNConfig.expand(tune_config)

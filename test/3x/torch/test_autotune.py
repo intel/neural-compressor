@@ -1,13 +1,11 @@
 import unittest
-
-import transformers
-
-from neural_compressor.common import Logger
-
-logger = Logger().get_logger()
 from functools import wraps
 
 import torch
+import transformers
+
+from neural_compressor.torch.quantization import RTNConfig, TuningConfig, autotune, get_all_config_set
+from neural_compressor.torch.utils import logger
 
 
 def reset_tuning_target(test_func):
@@ -118,7 +116,6 @@ class TestAutoTune(unittest.TestCase):
     def test_autotune_api(self):
         logger.info("test_autotune_api")
         from neural_compressor.common.base_tuning import evaluator
-        from neural_compressor.torch import RTNConfig, TuningConfig, autotune
 
         def eval_acc_fn(model) -> float:
             return 1.0
@@ -134,7 +131,6 @@ class TestAutoTune(unittest.TestCase):
     def test_autotune_api_2(self):
         logger.info("test_autotune_api")
         from neural_compressor.common.base_tuning import evaluator
-        from neural_compressor.torch import RTNConfig, TuningConfig, autotune
 
         def eval_acc_fn(model) -> float:
             return 1.0
@@ -157,7 +153,6 @@ class TestAutoTune(unittest.TestCase):
 
     @reset_tuning_target
     def test_autotune_get_config_set_api(self):
-        from neural_compressor.torch import TuningConfig, autotune, get_all_config_set
         from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
 
         dataloader = GPTQLLMDataLoader()
@@ -196,7 +191,6 @@ class TestAutoTune(unittest.TestCase):
     @reset_tuning_target
     def test_autotune_not_eval_func(self):
         logger.info("test_autotune_api")
-        from neural_compressor.torch import RTNConfig, TuningConfig, autotune
 
         custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=[4, 6])], max_trials=2)
 
