@@ -213,7 +213,7 @@ class TuningConfig:
         config_set: quantization configs. Default value is empty.
         timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
         max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
-        tolerable_loss: The metric loss is absolute, it can be both positive and negative. Default is 0.01.
+        tolerable_loss: The metric loss is relative, it can be both positive and negative. Default is 0.01.
     """
 
     def __init__(self, config_set=None, timeout=0, max_trials=100, sampler: Sampler = None, tolerable_loss=0.01) -> None:
