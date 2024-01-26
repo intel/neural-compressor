@@ -763,7 +763,7 @@
       "main_script": "main.py",
       "batch_size": 1
     },
-    "llama-2-7b-with-past-sq": {
+    "llama-2-7b-sq-with-past": {
       "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/ptq_static",
       "dataset_location": "",
       "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf-with-past",
@@ -777,7 +777,7 @@
       "main_script": "main.py",
       "batch_size": 1
     },
-    "llama-2-7b-with-past-lwq": {
+    "llama-2-7b-lwq-with-past": {
       "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/ptq_static",
       "dataset_location": "",
       "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf-with-past",
@@ -791,7 +791,7 @@
       "main_script": "main.py",
       "batch_size": 1
     },
-    "llama-2-7b-with-past-rtn": {
+    "llama-2-7b-rtn-with-past": {
       "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
       "dataset_location": "",
       "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf-with-past",
@@ -805,7 +805,7 @@
       "main_script": "main.py",
       "batch_size": 1
     },
-    "llama-2-7b-with-past-awq": {
+    "llama-2-7b-awq-with-past": {
       "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
       "dataset_location": "",
       "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf-with-past",
@@ -819,7 +819,7 @@
       "main_script": "main.py",
       "batch_size": 1
     },
-    "llama-2-7b-with-past-gptq": {
+    "llama-2-7b-gptq-with-past": {
       "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
       "dataset_location": "",
       "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf-with-past",
@@ -833,7 +833,7 @@
       "main_script": "main.py",
       "batch_size": 1
     },
-    "llama-2-7b-with-past-woq_tune": {
+    "llama-2-7b-woq_tune-with-past": {
       "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
       "dataset_location": "",
       "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf-with-past",
