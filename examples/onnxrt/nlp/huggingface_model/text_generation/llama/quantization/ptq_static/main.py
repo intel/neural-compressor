@@ -137,26 +137,19 @@ def benchmark(model):
     import time
     sess_options = ort.SessionOptions()
     sess_options.intra_op_num_threads = args.intra_op_num_threads
-    
-    if os.path.exists(os.path.join(model, "decoder_with_past_model.onnx")):
-        sessions = ORTModelForCausalLM.load_model(  # pylint: disable=E1123
-            os.path.join(model, "decoder_model.onnx"),
-            os.path.join(model, "decoder_with_past_model.onnx"),
-            session_options=sess_options)
-        model = ORTModelForCausalLM(sessions[0],  # pylint: disable=E1121
-                                    config,
-                                    model,
-                                    sessions[1],
-                                    use_cache=True)
-    else:
-        sessions = ORTModelForCausalLM.load_model(  # pylint: disable=E1123
-            os.path.join(model, "decoder_model.onnx"),
-            session_options=sess_options)
-        model = ORTModelForCausalLM(sessions[0],  # pylint: disable=E1121
-                                    config,
-                                    model,
-                                    use_cache=False,
-                                    use_io_binding=False)
+
+    sessions = ORTModelForCausalLM.load_model(  # pylint: disable=E1123
+                os.path.join(model, "model.onnx"),
+                session_options=sess_options)
+    inputs_names = sessions.get_inputs()
+    key_value_input_names = [key for key in inputs_names if (".key" in key) or (".value" in key)]
+    use_cache = len(key_value_input_names) > 0
+
+    model = ORTModelForCausalLM(sessions[0],  # pylint: disable=E1121
+                                config,
+                                model,
+                                use_cache=True if use_cache else False,
+                                use_io_binding=True if use_cache else False,)
 
     input_tokens = '32'
     max_new_tokens = 32
