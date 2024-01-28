@@ -241,8 +241,8 @@ def smooth_quant_entry():
 
 
 
-### Recommend VS Code settings.json
-
+### Recommend VS Code `settings.json`
+- `settings.json` filepath: `neural-compressor/.vscode/settings.json`
 
 
 ### Reference
