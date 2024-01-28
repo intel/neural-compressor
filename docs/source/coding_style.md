@@ -86,7 +86,7 @@ def xx_func(cls) -> Dict[str, OrderedDict[str, Dict[str, object]]]: # Can't impr
 ```python
 from neural_compressor.common import logger
 
-logger.info("Current TensorFlow Version is: %s", tf.__version__)
+logger.info("Current TensorFlow Version is: %s", tf.__version__)  # Use a pattern-string (with %-placeholders)
 
 logging.info("Current $PAGER is: %s", os.getenv("PAGER", default=""))  # Better readability
 ```
@@ -100,7 +100,7 @@ info(
     "some log ..."
 )  # The `filename` is always `logger.py`, like `2024-01-28 10:03:56 [INFO][logger.py:116] some log ...`
 
-logger.info(f"Current TensorFlow Version is: {tf.__version__}")
+logger.info(f"Current TensorFlow Version is: {tf.__version__}")  # Not use f-string
 
 logging.info("Current $PAGER is:")  # One sentence in two lines
 logging.info(os.getenv("PAGER", default=""))
@@ -234,10 +234,9 @@ def smooth_quant_entry():
 
 
 
-### Modules Tags
+### Module Tags
 
 - Better categorize the PRs and issues.
-
 - Tags list:`INC3.X`, `Auto-Tune`, `PyTorch`,`OnnxRuntime`,`Tensorflow`
 
 
