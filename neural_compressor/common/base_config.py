@@ -39,12 +39,13 @@ from neural_compressor.common.utils import (
 logger = Logger().get_logger()
 
 __all__ = [
-    "ConfigRegistry",
-    "register_config",
-    "BaseConfig",
-    "ComposableConfig",
-    "get_all_config_set_from_config_registry",
     "options",
+    "register_config",
+    "get_all_config_set_from_config_registry",
+    "register_supported_configs_for_fwk",
+    "BaseConfig",
+    "ConfigRegistry",
+    "ComposableConfig",
 ]
 
 
@@ -442,6 +443,17 @@ def get_all_config_set_from_config_registry(fwk_name: str) -> Union[BaseConfig, 
     for config_cls in all_registered_config_cls:
         config_set.append(config_cls.get_config_set_for_tuning())
     return config_set
+
+
+def register_supported_configs_for_fwk(fwk_name: str):
+    """Register supported configs for specific framework.
+
+    Args:
+        fwk_name: the framework name.
+    """
+    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls_by_fwk_name(fwk_name)
+    for config_cls in all_registered_config_cls:
+        config_cls.register_supported_configs()
 
 
 #######################################################

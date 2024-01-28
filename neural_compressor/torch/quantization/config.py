@@ -23,7 +23,12 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import torch
 
-from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
+from neural_compressor.common.base_config import (
+    BaseConfig,
+    config_registry,
+    register_config,
+    register_supported_configs_for_fwk,
+)
 from neural_compressor.common.utils import (
     DEFAULT_WHITE_LIST,
     FP8_QUANT,
@@ -167,10 +172,6 @@ class RTNConfig(BaseConfig):
         return RTNConfig(weight_bits=[4, 6])
 
 
-# TODO(Yi) run `register_supported_configs` for all registered config.
-RTNConfig.register_supported_configs()
-
-
 def get_default_rtn_config() -> RTNConfig:
     """Generate the default rtn config.
 
@@ -295,10 +296,6 @@ class GPTQConfig(BaseConfig):
         return GPTQConfig(weight_bits=[4, 6])
 
 
-# TODO(Yi) run `register_supported_configs` for all registered config.
-GPTQConfig.register_supported_configs()
-
-
 def get_default_gptq_config() -> GPTQConfig:
     """Generate the default gptq config.
 
@@ -374,10 +371,6 @@ class StaticQuantConfig(BaseConfig):
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
         # TODO fwk owner needs to update it.
         return StaticQuantConfig(w_sym=[True, False])
-
-
-# TODO(Yi) run `register_supported_configs` for all registered config.
-StaticQuantConfig.register_supported_configs()
 
 
 def get_default_static_config() -> StaticQuantConfig:
@@ -490,10 +483,6 @@ class SmoothQuantConfig(BaseConfig):
         return SmoothQuantConfig(alpha=[0.1, 0.5])
 
 
-# TODO(Yi) run `register_supported_configs` for all registered config.
-SmoothQuantConfig.register_supported_configs()
-
-
 def get_default_sq_config() -> SmoothQuantConfig:
     """Generate the default smoothquant config.
 
@@ -574,9 +563,6 @@ if is_hpex_avaliable():
             # TODO fwk owner needs to update it.
             return FP8QConfig(act_dtype=[torch.float8_e4m3fn])
 
-    # TODO(Yi) run `register_supported_configs` for all registered config.
-    FP8QConfig.register_supported_configs()
-
     def get_default_fp8_qconfig() -> FP8QConfig:
         """Generate the default gptq config.
 
@@ -586,6 +572,9 @@ if is_hpex_avaliable():
         return FP8QConfig()
 
     ##################### Algo Configs End ###################################
+
+
+register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
