@@ -45,12 +45,15 @@ class TestLogger(unittest.TestCase):
         inc_logger.debug({"msg": "call logger debug function."})
 
     def test_logger_func(self):
-        from neural_compressor.common.utils import debug, info, log
+        from neural_compressor.common import debug, error, fatal, info, level, log, warning
 
         for msg in msg_lst:
-            debug(msg)
             log(level=1, msg=msg)
-            info(msg)
+            info(msg=msg)
+            debug(msg=msg)
+            warning(msg=msg)
+            error(msg=msg)
+            fatal(msg=msg)
 
 
 if __name__ == "__main__":

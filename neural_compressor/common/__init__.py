@@ -13,6 +13,12 @@
 # limitations under the License.
 
 from neural_compressor.common.utils import (
+    log,
+    info,
+    debug,
+    warning,
+    error,
+    fatal,
     level,
     logger,
     Logger,
@@ -25,8 +31,15 @@ from neural_compressor.common.base_config import options
 
 
 __all__ = [
+    "debug",
+    "error",
+    "fatal",
+    "info",
     "level",
     "logger",
+    "log",
+    "warning",
+    "Logger",
     "options",
     "set_workspace",
     "set_random_seed",

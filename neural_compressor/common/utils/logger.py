@@ -20,18 +20,14 @@ import logging
 import os
 
 __all__ = [
-    "level",
-    "logger",
     "debug",
-    "log",
-    "info",
-    "log",
-    "info",
-    "debug",
-    "warning",
     "error",
     "fatal",
-    "Logger",
+    "info",
+    "level",
+    "logger",
+    "log",
+    "warning",
     "Logger",
 ]
 
