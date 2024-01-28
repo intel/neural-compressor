@@ -14,6 +14,7 @@
 
 from copy import deepcopy
 
+import pytest
 import torch
 from hqq.core.common.utils import compare_two_tensor, is_divisible
 from hqq_utils import HQQLinear, HQQModuleConfig, HQQTensorHandle, QuantTensorConfig
@@ -92,23 +93,7 @@ def create_hqq_quant_config_from_hqq_official_api(
     return hqq_quant_config, hqq_offical_config
 
 
-import pytest
-
-
-@pytest.mark.parametrize(
-    "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
-    [
-        (4, 64, True, False, 128),
-        (4, 64, False, False, 128),
-        (4, 64, True, True, 128),
-        (4, 64, False, True, 128),
-        (8, 64, True, False, 128),
-        (8, 64, False, False, 128),
-        (8, 64, True, True, 128),
-        (8, 64, False, True, 128),
-    ],
-)
-def test_api(
+def common_test(
     nbits=4,
     group_size=64,
     quant_zero=True,
@@ -116,7 +101,7 @@ def test_api(
     scale_quant_group_size=128,
 ):
     hqq_quant_config, hqq_offical_config = create_hqq_quant_config_from_hqq_official_api(
-        nbis=nbits,
+        nbits=nbits,
         group_size=group_size,
         quant_zero=quant_zero,
         quant_scale=quant_scale,
@@ -134,12 +119,23 @@ def test_api(
     hqq_linear_official = HQQLinear_official(float_linear_copy, quant_config=hqq_offical_config)
 
     compare_two_tensor(hqq_linear.q_weight.val, hqq_linear_official.W_q, msg="The quantized weight")
-    compare_two_tensor(hqq_linear.q_weight.scale, hqq_linear_official.meta["scale"], msg="float scale")
-    compare_two_tensor(
-        hqq_linear.q_weight.zero.val,
-        hqq_linear_official.meta["zero_q"],
-        msg="The quantized zero",
-    )
+
+    if quant_scale:
+        compare_two_tensor(
+            hqq_linear.q_weight.scale.val,
+            hqq_linear_official.meta["scale_q"],
+            msg="The quantized scale",
+        )
+    else:
+        compare_two_tensor(hqq_linear.q_weight.scale, hqq_linear_official.meta["scale"], msg="float scale")
+    if quant_zero:
+        compare_two_tensor(
+            hqq_linear.q_weight.zero.val,
+            hqq_linear_official.meta["zero_q"],
+            msg="The quantized zero",
+        )
+    else:
+        compare_two_tensor(hqq_linear.q_weight.zero, hqq_linear_official.meta["zero"], msg="float zero")
 
     input = torch.randn(1, in_features)
     float_output = float_linear(input)
@@ -150,3 +146,45 @@ def test_api(
     hqq_output_2 = hqq_linear(input_half)
     print(hqq_linear.q_weight)
     hqq_offical_output = hqq_linear_official(input_half)
+
+
+@pytest.mark.parametrize(
+    "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
+    [
+        (4, 64, True, False, 128),
+        (4, 64, False, False, 128),
+        (4, 64, True, True, 128),
+        (4, 64, False, True, 128),
+        (8, 64, True, False, 128),
+        (8, 64, False, False, 128),
+        (8, 64, True, True, 128),
+        (8, 64, False, True, 128),
+        (4, 64, True, False, 64),
+        (4, 64, False, False, 64),
+        (4, 64, True, True, 64),
+        (4, 64, False, True, 64),
+    ],
+)
+def test_api(
+    nbits,
+    group_size,
+    quant_zero,
+    quant_scale,
+    scale_quant_group_size,
+):
+    common_test(
+        nbits=nbits,
+        group_size=group_size,
+        quant_zero=quant_zero,
+        quant_scale=quant_scale,
+        scale_quant_group_size=scale_quant_group_size,
+    )
+
+
+# # Test single case
+# common_test(
+#     nbits=4,
+#     group_size=64,
+#     quant_zero=True,
+#     quant_scale=True,
+#     scale_quant_group_size=128,)

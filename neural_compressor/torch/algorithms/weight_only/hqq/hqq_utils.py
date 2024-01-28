@@ -272,6 +272,7 @@ class HQQTensorHandle:
 
     # Main dequantization: bit_unpacking > (W_q - z)*s > reshape
     @classmethod
+    @inspect_function
     def dequantize(cls, W_q, meta):
         if meta["packing"]:
             raise NotImplementedError("bitpack is not implemented yet")
@@ -280,7 +281,11 @@ class HQQTensorHandle:
             #     W_r = W_r[:meta['group_size']] if (meta['axis']==0) else W_r[:,:meta['group_size']]
         else:
             W_r = W_q.half()
+        # custom_print(f"W_r dtype: {W_r.dtype}, zero dtype: {meta['zero'].dtype}, scale dtype: {meta['scale'].dtype}")
+
         W_r = ((W_r - meta["zero"]) * meta["scale"]).reshape(meta["shape"])
+        W_r = W_r.half()  # TODO: double check the correctness, the official impl is also error...
+        # custom_print(f"After dq .... W_r dtype: {W_r.dtype}, zero dtype: {meta['zero'].dtype}, scale dtype: {meta['scale'].dtype}")
         return W_r
 
     @classmethod
@@ -360,10 +365,12 @@ class HQQLinear(torch.nn.Linear):
         if self.q_weight.is_scale_quantized():
             scale_qdq = HQQTensorHandle.dequantize_q_tensor(self.q_weight.scale)
             self.q_weight.scale = scale_qdq
+            custom_print(f"scale_qdq dtype: {scale_qdq.dtype}")
 
         if self.q_weight.is_zero_quantized():
             zero_qdq = HQQTensorHandle.dequantize_q_tensor(self.q_weight.zero)
             self.q_weight.zero = zero_qdq
+            custom_print(f"zero_qdq dtype: {zero_qdq.dtype}")
 
         W_qdq = HQQTensorHandle.dequantize_q_tensor(self.q_weight)
         return W_qdq
