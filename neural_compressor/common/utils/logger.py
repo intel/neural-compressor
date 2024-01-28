@@ -22,6 +22,7 @@ import os
 __all__ = [
     "level",
     "logger",
+    "Logger",
 ]
 
 

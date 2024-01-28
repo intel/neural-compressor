@@ -15,6 +15,7 @@
 from neural_compressor.common.utils import (
     level,
     logger,
+    Logger,
     set_random_seed,
     set_workspace,
     set_resume_from,
