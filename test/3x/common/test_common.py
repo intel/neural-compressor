@@ -1,5 +1,4 @@
 """Tests for common components.
-Owner(s): ["module: common | auto-tune"]
 
 !!! Please do not import any framework-specific modules in this file. !!!
 * Note, we may need to add some auto check mechanisms to ensure this.
