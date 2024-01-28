@@ -10,9 +10,7 @@
 
 To improve the quality and maintainability of INC code, we summarized some common coding standards and conventions.
 
-There are many popular programming conventions, and they may conflict with each other. To avoid overly arguing formatting, we make decisions based on the following priorities.
-
-Priority: 
+There are many popular programming conventions, and they may conflict with each other. To avoid overly arguing formatting, we make decisions based on the following priorities:
 
 - [Google Python Style](https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings), [PEP 8](https://peps.python.org/pep-0008/)
 - Framework Style
@@ -43,7 +41,9 @@ import copy  # May import local copy.py
 
 
 
-### Public Interface 
+### Public Interface
+
+Use `__all__` to help the developer and user know the supported interface and components.
 
 ```python
 __all__ = [
@@ -138,7 +138,7 @@ logger.info("extraneous leading spaces.")
 # TODO: crbug.com/192795 - Investigate cpufreq optimizations.
 ```
 
-> A `TODO` comment begins with the word `TODO:`  for more easily searchability.
+> A `TODO` comment begins with the word `TODO:` for more easily searchability.
 
 
 
@@ -240,7 +240,7 @@ def smooth_quant_entry():
 
 - Tags list:`INC3.X`, `Auto-Tune`, `PyTorch`,`OnnxRuntime`,`Tensorflow`
 
-  
+
 
 ### Recommend VS Code settings.json
 
