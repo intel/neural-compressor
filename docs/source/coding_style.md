@@ -96,7 +96,9 @@ logging.info("Current $PAGER is: %s", os.getenv("PAGER", default=""))  # Better 
 ```python
 from neural_compressor.common.utils import info
 
-info("some log ...")  # The filename always `logger.py`, like `2024-01-28 10:03:56 [INFO][logger.py:116] some log ...`
+info(
+    "some log ..."
+)  # The `filename` is always `logger.py`, like `2024-01-28 10:03:56 [INFO][logger.py:116] some log ...`
 
 logger.info(f"Current TensorFlow Version is: {tf.__version__}")
 
