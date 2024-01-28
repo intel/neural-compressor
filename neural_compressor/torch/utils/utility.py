@@ -15,9 +15,7 @@
 
 from typing import Callable, Dict, List, Tuple
 
-from neural_compressor.common import Logger
-
-logger = Logger().get_logger()
+from neural_compressor.common import logger
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
 algos_mapping: Dict[str, Callable] = {}

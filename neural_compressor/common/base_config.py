@@ -24,7 +24,7 @@ from collections import OrderedDict
 from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
-from neural_compressor.common import Logger
+from neural_compressor.common import logger
 from neural_compressor.common.utils import (
     BASE_CONFIG,
     COMPOSABLE_CONFIG,
@@ -35,8 +35,6 @@ from neural_compressor.common.utils import (
     LOCAL,
     OP_NAME_OR_MODULE_TYPE,
 )
-
-logger = Logger().get_logger()
 
 __all__ = [
     "ConfigRegistry",
