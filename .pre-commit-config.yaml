@@ -23,6 +23,10 @@ repos:
               examples/.+
           )$
       - id: check-json
+        exclude: |
+          (?x)^(
+              .vscode/settings.json
+          )$
       - id: check-yaml
         exclude: |
           (?x)^(
