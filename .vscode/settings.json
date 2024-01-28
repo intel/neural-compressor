@@ -1,11 +1,11 @@
 {
 
-    /* ========== Editor ========== */
+    // ========== Editor ==========
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
     "files.trimTrailingWhitespace": true,
 
-    /* ========== Anylysis ========== */
+    // ========== Anylysis ==========
     // It is a placeholder to let you know that we can include the extra paths for the better analysis(like go to definition of an extra package).
     "python.analysis.extraPaths":[
     ],
