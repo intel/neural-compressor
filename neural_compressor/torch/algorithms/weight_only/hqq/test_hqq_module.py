@@ -92,33 +92,61 @@ def create_hqq_quant_config_from_hqq_official_api(
     return hqq_quant_config, hqq_offical_config
 
 
-hqq_quant_config, hqq_offical_config = create_hqq_quant_config_from_hqq_official_api()
-in_features = 64
-out_features = 128
-float_linear = torch.nn.Linear(in_features, out_features)
-float_linear_copy = deepcopy(float_linear)
-
-hqq_linear = HQQLinear.from_float(float_linear, quant_config=hqq_quant_config)
-
-from hqq.core.common.modules import HQQLinear as HQQLinear_official
-
-hqq_linear_official = HQQLinear_official(float_linear_copy, quant_config=hqq_offical_config)
+import pytest
 
 
-compare_two_tensor(hqq_linear.q_weight.val, hqq_linear_official.W_q, msg="The quantized weight")
-compare_two_tensor(hqq_linear.q_weight.scale, hqq_linear_official.meta["scale"], msg="float scale")
-compare_two_tensor(
-    hqq_linear.q_weight.zero.val,
-    hqq_linear_official.meta["zero_q"],
-    msg="The quantized zero",
+@pytest.mark.parametrize(
+    "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
+    [
+        (4, 64, True, False, 128),
+        (4, 64, False, False, 128),
+        (4, 64, True, True, 128),
+        (4, 64, False, True, 128),
+        (8, 64, True, False, 128),
+        (8, 64, False, False, 128),
+        (8, 64, True, True, 128),
+        (8, 64, False, True, 128),
+    ],
 )
+def test_api(
+    nbits=4,
+    group_size=64,
+    quant_zero=True,
+    quant_scale=False,
+    scale_quant_group_size=128,
+):
+    hqq_quant_config, hqq_offical_config = create_hqq_quant_config_from_hqq_official_api(
+        nbis=nbits,
+        group_size=group_size,
+        quant_zero=quant_zero,
+        quant_scale=quant_scale,
+        scale_quant_group_size=scale_quant_group_size,
+    )
+    in_features = 64
+    out_features = 128
+    float_linear = torch.nn.Linear(in_features, out_features)
+    float_linear_copy = deepcopy(float_linear)
 
-input = torch.randn(1, in_features)
-float_output = float_linear(input)
-print(hqq_linear.q_weight)
-input_half = deepcopy(input).half()
-hqq_output = hqq_linear(input_half)
-print(hqq_linear.q_weight)
-hqq_output_2 = hqq_linear(input_half)
-print(hqq_linear.q_weight)
-hqq_offical_output = hqq_linear_official(input_half)
+    hqq_linear = HQQLinear.from_float(float_linear, quant_config=hqq_quant_config)
+
+    from hqq.core.common.modules import HQQLinear as HQQLinear_official
+
+    hqq_linear_official = HQQLinear_official(float_linear_copy, quant_config=hqq_offical_config)
+
+    compare_two_tensor(hqq_linear.q_weight.val, hqq_linear_official.W_q, msg="The quantized weight")
+    compare_two_tensor(hqq_linear.q_weight.scale, hqq_linear_official.meta["scale"], msg="float scale")
+    compare_two_tensor(
+        hqq_linear.q_weight.zero.val,
+        hqq_linear_official.meta["zero_q"],
+        msg="The quantized zero",
+    )
+
+    input = torch.randn(1, in_features)
+    float_output = float_linear(input)
+    print(hqq_linear.q_weight)
+    input_half = deepcopy(input).half()
+    hqq_output = hqq_linear(input_half)
+    print(hqq_linear.q_weight)
+    hqq_output_2 = hqq_linear(input_half)
+    print(hqq_linear.q_weight)
+    hqq_offical_output = hqq_linear_official(input_half)
