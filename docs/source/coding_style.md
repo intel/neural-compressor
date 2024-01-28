@@ -85,7 +85,7 @@ from neural_compressor.common import logger
 
 logger.info("Current TensorFlow Version is: %s", tf.__version__)  # Use a pattern-string (with %-placeholders)
 
-logging.info("Current $PAGER is: %s", os.getenv("PAGER", default=""))  # Better readability
+logger.info("Current $PAGER is: %s", os.getenv("PAGER", default=""))  # Better readability
 ```
 
 - Not recommend
@@ -99,8 +99,8 @@ info(
 
 logger.info(f"Current TensorFlow Version is: {tf.__version__}")  # Not use f-string
 
-logging.info("Current $PAGER is:")  # One sentence in two lines
-logging.info(os.getenv("PAGER", default=""))
+logger.info("Current $PAGER is:")  # One sentence in two lines
+logger.info(os.getenv("PAGER", default=""))
 ```
 
 
