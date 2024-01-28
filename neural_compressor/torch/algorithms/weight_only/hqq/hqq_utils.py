@@ -45,7 +45,7 @@ class QuantTensorConfig:
         channel_wise: bool = True,
         group_size: int = 128,
         optimize: bool = True,
-        round_zero: Optional[bool] = True,
+        round_zero: Optional[bool] = False,
         pack: bool = False,
     ) -> None:
         self.nbits = nbits

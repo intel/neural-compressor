@@ -1,8 +1,22 @@
-from hqq_utils import HQQTensorHandle, HQQModuleConfig, QuantTensorConfig, HQQLinear
-import torch
-from hqq.core.common.utils import is_divisible, compare_two_tensor
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from copy import deepcopy
 
+import torch
+from hqq.core.common.utils import compare_two_tensor, is_divisible
+from hqq_utils import HQQLinear, HQQModuleConfig, HQQTensorHandle, QuantTensorConfig
 
 ######################
 #### Test
@@ -16,13 +30,9 @@ def hqq_base_quant_config(
     quant_scale=False,
     scale_quant_group_size=128,
 ):
-    assert (
-        nbits in HQQTensorHandle.SUPPORTED_BITS
-    ), "nbits value not supported. Check Quantizer.SUPPORTED_BITS."
+    assert nbits in HQQTensorHandle.SUPPORTED_BITS, "nbits value not supported. Check Quantizer.SUPPORTED_BITS."
     if group_size is not None:
-        assert is_divisible(
-            group_size, 8
-        ), "Invalid group_size param: the value should be a multiple of 8."
+        assert is_divisible(group_size, 8), "Invalid group_size param: the value should be a multiple of 8."
     weight_quant_params = {
         "nbits": nbits,
         "channel_wise": True,
@@ -41,9 +51,7 @@ def hqq_base_quant_config(
         else None
     )
     zero_quant_params = (
-        {"nbits": 8, "channel_wise": False, "group_size": None, "optimize": False}
-        if (quant_zero)
-        else None
+        {"nbits": 8, "channel_wise": False, "group_size": None, "optimize": False} if (quant_zero) else None
     )
     return {
         "weight_quant_params": weight_quant_params,
@@ -79,15 +87,9 @@ def create_hqq_quant_config_from_hqq_official_api(
         if hqq_offical_config["zero_quant_params"] is not None
         else None,
     )
-    print(
-        f"[create_hqq_quant_config_from_hqq_official_api] hqq_quant_config: {hqq_quant_config}"
-    )
-    print(
-        f"[create_hqq_quant_config_from_hqq_official_api] hqq_offical_config: {hqq_offical_config}"
-    )
+    print(f"[create_hqq_quant_config_from_hqq_official_api] hqq_quant_config: {hqq_quant_config}")
+    print(f"[create_hqq_quant_config_from_hqq_official_api] hqq_offical_config: {hqq_offical_config}")
     return hqq_quant_config, hqq_offical_config
-
-
 
 
 hqq_quant_config, hqq_offical_config = create_hqq_quant_config_from_hqq_official_api()
@@ -100,21 +102,14 @@ hqq_linear = HQQLinear.from_float(float_linear, quant_config=hqq_quant_config)
 
 from hqq.core.common.modules import HQQLinear as HQQLinear_official
 
-hqq_linear_official = HQQLinear_official(
-    float_linear_copy, quant_config=hqq_offical_config
-)
+hqq_linear_official = HQQLinear_official(float_linear_copy, quant_config=hqq_offical_config)
 
 
-compare_two_tensor(
-    hqq_linear.q_weight.val, hqq_linear_official.W_q, msg="The quantized weight"
-)
-compare_two_tensor(
-    hqq_linear.q_weight.scale, hqq_linear_official.meta["scale"], msg="float scale"
-)
+compare_two_tensor(hqq_linear.q_weight.val, hqq_linear_official.W_q, msg="The quantized weight")
+compare_two_tensor(hqq_linear.q_weight.scale, hqq_linear_official.meta["scale"], msg="float scale")
 compare_two_tensor(
     hqq_linear.q_weight.zero.val,
     hqq_linear_official.meta["zero_q"],
-    rtol=1,  # TODO: to solve it !!!
     msg="The quantized zero",
 )
 
@@ -127,4 +122,3 @@ print(hqq_linear.q_weight)
 hqq_output_2 = hqq_linear(input_half)
 print(hqq_linear.q_weight)
 hqq_offical_output = hqq_linear_official(input_half)
-
