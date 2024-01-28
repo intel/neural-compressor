@@ -5,6 +5,15 @@ from neural_compressor.common import Logger, logger
 
 inc_logger = Logger().get_logger()  # `inc_logger` is the same as `logger`
 
+msg_lst = [
+    "call logger log function.",
+    {"msg": "call logger warning function"},
+    ["call logger warning function", "done"],
+    {"msg": {("bert", "embedding"): {"weight": {"dtype": ["unint8", "int8"]}}}},
+    {"msg": [{"sub_msg": "call logger"}, {"sub_msg2": "call warning function"}]},
+    {"msg2": "done"},
+]
+
 
 class TestLogger(unittest.TestCase):
     def test_logger(self):
@@ -34,6 +43,14 @@ class TestLogger(unittest.TestCase):
         inc_logger.log(1, {"msg": "call logger log function."})
         inc_logger.debug("call logger debug function.")
         inc_logger.debug({"msg": "call logger debug function."})
+
+    def test_logger_func(self):
+        from neural_compressor.common.utils import debug, info, log
+
+        for msg in msg_lst:
+            debug(msg)
+            log(level=1, msg=msg)
+            info(msg)
 
 
 if __name__ == "__main__":

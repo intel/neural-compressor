@@ -14,4 +14,5 @@
 
 from neural_compressor.common.utils.constants import *
 from neural_compressor.common.utils.utility import *
-from neural_compressor.common.utils.logger import *
+from neural_compressor.common.utils.logger import Logger
+from neural_compressor.common.utils.logger import logger, debug, log, info, warning, error, fatal
