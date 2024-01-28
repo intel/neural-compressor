@@ -330,8 +330,8 @@ def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", en
     history = []
     for i_s in range(int(max_shrink * n_grid)):
         ratio = 1 - i_s / n_grid  # 1, 0.805-1.0
-        cur_weight = quant_weight(
-            m.weight.data,
+        quant_weight(
+            m.weight.data,  # in-place mode
             num_bits=num_bits,
             group_size=group_size,
             scheme=scheme,
@@ -339,7 +339,8 @@ def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", en
             full_range=enable_full_range,
             quantile=ratio,
         )
-        loss = (org_weight - cur_weight).float().pow(2).mean().item()
+        loss = (org_weight - m.weight.data).float().pow(2).mean().item()
+        m.weight.data.copy_(org_weight)
         history.append(loss)
         is_best = loss < best_error
         if is_best:
@@ -429,14 +430,17 @@ def rtn_quantize(
             if num_bits <= 0:
                 logger.info(f"Skip {name}")
                 continue
-            weight = m.weight.T if group_dim == 0 else m.weight
+            # contiguous is not an in-place op and returns Tensor instead of Parameter, so set it back to m.weight.data.
+            # transpose should be executed on Parameter level because Param.data.t_() is not an in-place op.
+            # Parameter.T is an in-place op while Tensor.T is not.
+            m.weight.data = m.weight.t_().data.contiguous() if group_dim == 0 else m.weight.data
             if enable_mse_search:
                 quantile = search_clip(m, num_bits, group_size, scheme, data_type, enable_full_range)
             if return_int:
                 from .model_wrapper import WeightOnlyLinear
 
                 _, scale, zp = quant_weight(
-                    weight,
+                    m.weight.data,
                     num_bits,
                     group_size,
                     scheme,
@@ -446,9 +450,9 @@ def rtn_quantize(
                     full_range=enable_full_range,
                 )
                 if group_dim == 0:
-                    weight.transpose_(0, 1)
-                scale = scale.T if group_dim == 0 else scale
-                zp = zp.T if group_dim == 0 and zp is not None else zp
+                    m.weight.t_()
+                scale = scale.t_().contiguous() if group_dim == 0 else scale
+                zp = zp.t_().contiguous() if group_dim == 0 and zp is not None else zp
                 new_module = WeightOnlyLinear(
                     m.in_features,
                     m.out_features,
@@ -463,14 +467,14 @@ def rtn_quantize(
                     device=device,
                     use_optimum_format=use_optimum_format,
                 )
-                new_module.pack(weight, scale, zp, m.bias)
+                new_module.pack(m.weight.data, scale, zp, m.bias)
                 if name == "":
                     return new_module
                 else:
                     set_module(model, name, new_module)
             else:
                 quant_weight(
-                    weight,
+                    m.weight.data,
                     num_bits,
                     group_size,
                     scheme,
@@ -479,7 +483,7 @@ def rtn_quantize(
                     full_range=enable_full_range,
                 )
                 if group_dim == 0:
-                    weight.transpose_(0, 1)
+                    m.weight.t_()
             if orig_dtype != torch.float:
                 m = m.to(orig_dtype)
     return model
@@ -651,18 +655,18 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1):
     if zp is not None:
         zp = zp.to(device)
     if group_size == -1:
-        return torch.round(weight / scale) if zp is None else torch.round(weight / scale + zp)
+        return weight.div_(scale).round_() if zp is None else weight.div_(scale).add_(zp).round_()
     int_weight = torch.zeros(weight.shape).to(device)
     leng = weight.shape[1] // group_size
     tail_flag = False if weight.shape[1] % group_size == 0 else True
     for i in range(leng):
-        int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size] / scale[:, i].unsqueeze(1)
+        int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size].div_(scale[:, i].unsqueeze(1))
         if zp is not None:
-            int_weight_tmp += zp[:, i].unsqueeze(1)
-        int_weight[:, i * group_size : (i + 1) * group_size] = torch.round(int_weight_tmp)
+            int_weight_tmp.add_(zp[:, i].unsqueeze(1))
+        int_weight[:, i * group_size : (i + 1) * group_size].copy_(int_weight_tmp.round_())
     if tail_flag:
-        int_weight_tmp = weight[:, leng * group_size :] / scale[:, -1].unsqueeze(1)
+        int_weight_tmp = weight[:, leng * group_size :].div_(scale[:, -1].unsqueeze(1))
         if zp is not None:
-            int_weight_tmp += zp[:, -1].unsqueeze(1)
-        int_weight[:, leng * group_size :] = torch.round(int_weight_tmp)
+            int_weight_tmp.add_(zp[:, -1].unsqueeze(1))
+        int_weight[:, leng * group_size :].copy_(int_weight_tmp.round_())
     return int_weight
