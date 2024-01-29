@@ -215,6 +215,11 @@ class TuningConfig:
         max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
         tolerable_loss: This float indicates how much metric loss we can accept. \
             The metric loss is relative, it can be both positive and negative. Default is 0.01.
+            # tolerable_loss example
+            tolerable_loss = 0.01
+            baseline = 100
+            eval_result_of_nth_trial = 99.1
+            eval_result_of_nth_trial > baseline * (1 - tolerable_loss ) , reached target.
     """
 
     def __init__(
