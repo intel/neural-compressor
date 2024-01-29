@@ -4,6 +4,7 @@ import unittest
 import torch
 
 from neural_compressor.common import Logger
+from neural_compressor.torch.quantization import GPTQConfig, quantize
 
 logger = Logger().get_logger()
 
@@ -80,7 +81,6 @@ class TestGPTQ(unittest.TestCase):
     def test_gptq(self):
         # Ported from test/adaptor/pytorch_adaptor/test_weight_only_adaptor.py
         # TestPytorchWeightOnlyAdaptor.test_GPTQ_fixed_length_quant
-        from neural_compressor.torch import GPTQConfig, quantize
 
         dataloader = GPTQLLMDataLoader()
 
@@ -121,44 +121,9 @@ class TestGPTQ(unittest.TestCase):
         out1 = q_model(input)
         self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
 
-    def test_dq_gptq(self):
-        # Ported from test/adaptor/pytorch_adaptor/test_weight_only_adaptor.py
-        # TestPytorchWeightOnlyAdaptor.test_GPTQ_fixed_length_quant
-        from neural_compressor.torch import GPTQConfig, quantize
-
-        dataloader = GPTQLLMDataLoader()
-
-        # case 1: tensor
-        model = get_gpt_j()
-        input = torch.ones([1, 512], dtype=torch.long)
-        out0 = model(input)
-        device = None
-        from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
-
-        dataloaderPreprocessor = DataloaderPreprocessor(
-            dataloader_original=dataloader, use_max_length=False, pad_max_length=512, nsamples=128
-        )
-        dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
-
-        # llama.cpp GGML_TYPE_Q4_K setting
-        fp32_model = copy.deepcopy(model)
-        from neural_compressor.torch.utils.utility import get_double_quant_config
-
-        double_quant_config_dict = get_double_quant_config("GGML_TYPE_Q4_K")
-        double_quant_config_dict.update({"dataloader_len": len(dataloader_for_calibration), "pad_max_length": 512})
-        quant_config = GPTQConfig.from_dict(double_quant_config_dict)
-        quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
-        logger.info(f"Test GPTQ with config {quant_config}")
-        q_model = quantize(
-            model=fp32_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=dataloader_for_calibration
-        )
-        out1 = q_model(input)
-        self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
-
     def test_gptq_advance(self):
         # Ported from test/adaptor/pytorch_adaptor/test_weight_only_adaptor.py
         # TestPytorchWeightOnlyAdaptor.test_GPTQ_fixed_length_quant
-        from neural_compressor.torch import GPTQConfig, quantize
 
         dataloader = GPTQLLMDataLoader()
         model_1 = get_gpt_j()
@@ -190,8 +155,6 @@ class TestGPTQ(unittest.TestCase):
 
     def _apply_gptq(self, input, model, quant_config, run_fn, run_args):
         logger.info(f"Test GPTQ with config {quant_config}")
-        from neural_compressor.torch import quantize
-
         out0 = model(input)
         q_model = quantize(model=model, quant_config=quant_config, run_fn=run_fn, run_args=run_args)
         out1 = q_model(input)
@@ -200,8 +163,6 @@ class TestGPTQ(unittest.TestCase):
     def test_more_gptq(self):
         import random
         from itertools import product
-
-        from neural_compressor.torch import GPTQConfig
 
         # some tests were skipped to accelerate the CI
         input = torch.ones([1, 512], dtype=torch.long)

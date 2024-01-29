@@ -893,12 +893,7 @@ class Quantizer(nn.Module):
 
 
 # TODO (Yi) remove it after unifying the algo config parser
-from typing import Callable, Dict, Tuple
-
-from neural_compressor.torch.quantization.config import GPTQConfig
-
-
-def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig]):
+def gptq_config_mapping(configs_mapping):
     # convert GPTQ_CONFIG to gptq_quantize's weight config
     # convert tune_cfg to gptq_quantize's weight config
     # for layer_wise quant mode
