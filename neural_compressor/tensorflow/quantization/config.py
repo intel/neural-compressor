@@ -18,60 +18,30 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Callable, Dict, List, NamedTuple, Optional, Union
+from typing import Callable, Dict, List, NamedTuple, Optional, Union, Tuple
 
 import tensorflow as tf
 
-from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
-from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, STATIC_QUANT
+from neural_compressor.common import Logger
+from neural_compressor.common.utils import STATIC_QUANT, SMOOTH_QUANT
+from neural_compressor.common.base_config import(
+    BaseConfig,
+    config_registry,
+    register_config,
+    DEFAULT_WHITE_LIST, 
+    OP_NAME_OR_MODULE_TYPE, 
+)
+from neural_compressor.tensorflow.algorithms.smooth_quant import default_alpha_args
+
+logger = Logger().get_logger()
 
 FRAMEWORK_NAME = "tensorflow"
-
-
-class Backend(Enum):
-    DEFAULT = "tensorflow"
 
 
 class OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
-    backend: List[Backend]
     valid_func_list: List[Callable] = []
-
-
-# mapping the torch module type and functional operation type to string representations
-operator2str = {
-    tf.nn.conv2d: "Conv2D",
-    tf.raw_ops.FusedBatchNormV3: "FusedBatchNormV3",
-    tf.nn.conv3d: "Conv3D",
-    tf.raw_ops.MatMul: "MatMul",
-    tf.raw_ops.BatchMatMul: "BatchMatMul",
-    tf.raw_ops.BatchMatMulV2: "BatchMatMulV2",
-    tf.nn.depthwise_conv2d: "DepthwiseConv2dNative",
-    tf.raw_ops.ConcatV2: "ConcatV2",
-    tf.compat.v1.nn.fused_batch_norm: "FusedBatchNorm",
-    tf.nn.max_pool: "MaxPool",
-    tf.nn.avg_pool: "AvgPool",
-    tf.compat.v1.nn.conv2d_backprop_input: "Conv2DBackpropInput",
-    tf.raw_ops.Conv3DBackpropInputV2: "Conv3DBackpropInputV2",
-}
-
-# Mapping from string representations to their corresponding torch operation/module type
-str2operator = {
-    "Conv2D": tf.nn.conv2d,
-    "FusedBatchNormV3": tf.raw_ops.FusedBatchNormV3,
-    "Conv3D": tf.nn.conv3d,
-    "MatMul": tf.raw_ops.MatMul,
-    "BatchMatMul": tf.raw_ops.BatchMatMul,
-    "BatchMatMulV2": tf.raw_ops.BatchMatMulV2,
-    "DepthwiseConv2dNative": tf.nn.depthwise_conv2d,
-    "ConcatV2": tf.raw_ops.ConcatV2,
-    "FusedBatchNorm": tf.compat.v1.nn.fused_batch_norm,
-    "MaxPool": tf.nn.max_pool,
-    "AvgPool": tf.nn.avg_pool,
-    "Conv2DBackpropInput": tf.compat.v1.nn.conv2d_backprop_input,
-    "Conv3DBackpropInputV2": tf.raw_ops.Conv3DBackpropInputV2,
-}
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
@@ -127,13 +97,6 @@ class StaticQuantConfig(BaseConfig):
         self.act_algorithm = act_algorithm
         self._post_init()
 
-    def to_dict(self):
-        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
-
-    @classmethod
-    def from_dict(cls, config_dict):
-        return super(StaticQuantConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
-
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
@@ -163,7 +126,7 @@ class StaticQuantConfig(BaseConfig):
             tf.raw_ops.Conv3DBackpropInputV2,
         ]
         supported_configs.append(
-            OperatorConfig(config=static_quant_config, operators=operators, backend=Backend.DEFAULT)
+            OperatorConfig(config=static_quant_config, operators=operators)
         )
         cls.supported_configs = supported_configs
 
@@ -194,3 +157,83 @@ def get_default_static_quant_config() -> StaticQuantConfig:
         the default tf config.
     """
     return StaticQuantConfig()
+
+
+
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT)
+class SmoohQuantConfig(BaseConfig):
+    """Config class for tf smooth quantization."""
+
+    supported_configs: List[OperatorConfig] = []
+    params_list = [
+        "alpha",
+        "folding",
+        "percentile",
+        "op_types",
+        "scales_per_op"
+        "record_max_info",
+        "weight_clip",
+        "auto_alpha_args",
+        "white_list",
+    ]
+    name = SMOOTH_QUANT
+
+    def __init__(
+        self,
+        alpha: float = 0.5,
+        folding: bool = False,
+        percentile: float = 99.999,
+        op_types: list = ["MatMul", "Conv2D"],
+        scales_per_op: bool = True,
+        record_max_info: bool = False,
+        weight_clip: bool = True,
+        auto_alpha_args: Dict = default_alpha_args,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init RTN weight-only quantization config.
+        Args:
+            weight_dtype (str): Data type for weights, default is "int".
+        """
+        super().__init__()
+        self.alpha = alpha
+        self.folding = folding
+        self.percentile = percentile
+        self.op_types = op_types
+        self.scales_per_op = scales_per_op
+        self.record_max_info = record_max_info
+        self.weight_clip = weight_clip
+        self.auto_alpha_args = auto_alpha_args
+        self.white_list = white_list
+        self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        smooth_quant_config = SmoohQuantConfig()
+        operators = ["MatMul", "Conv2D"]
+        supported_configs.append(
+            OperatorConfig(config=smooth_quant_config, operators=operators)
+        )
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model) -> List[Tuple[str, Callable]]:
+        white_list = ["MatMul", "Conv2D"]
+        filter_result = []
+        for node in model.graph_def.node:
+            if node.op_type in white_list:
+                pair = (node.name, node.op_type)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+
+SmoohQuantConfig.register_supported_configs()
+
+
+def get_default_sq_config() -> SmoohQuantConfig:
+    """Generate the default rtn config.
+    Returns:
+        the default smooth quant config.
+    """
+    return SmoohQuantConfig()

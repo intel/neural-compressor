@@ -92,7 +92,7 @@ class Dataset(object):
         return self.test_images[idx], self.test_labels[idx]
 
 
-class MyDataloader:
+class MyDataLoader:
     def __init__(self, dataset, batch_size=1):
         self.dataset = dataset
         self.batch_size = batch_size
@@ -123,7 +123,7 @@ class TestKeras3xNewApi(unittest.TestCase):
         from neural_compressor.tensorflow import  quantize_model
         from neural_compressor.tensorflow.keras import get_default_static_quant_config
 
-        calib_dataloader = MyDataloader(dataset=Dataset())
+        calib_dataloader = MyDataLoader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         qmodel = quantize_model(fp32_model, get_default_static_quant_config(), calib_dataloader)
         self.assertIsNotNone(qmodel)
@@ -148,7 +148,7 @@ class TestKeras3xNewApi(unittest.TestCase):
                 },
             }
         }
-        calib_dataloader = MyDataloader(dataset=Dataset())
+        calib_dataloader = MyDataLoader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
@@ -161,7 +161,7 @@ class TestKeras3xNewApi(unittest.TestCase):
         logger.info("test_static_quant_from_class_default")
         from neural_compressor.tensorflow import quantize_model
         from neural_compressor.tensorflow.keras import StaticQuantConfig
-        calib_dataloader = MyDataloader(dataset=Dataset())
+        calib_dataloader = MyDataLoader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         quant_config = StaticQuantConfig()
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
@@ -176,7 +176,7 @@ class TestKeras3xNewApi(unittest.TestCase):
         from neural_compressor.tensorflow import quantize_model
         from neural_compressor.tensorflow.keras import StaticQuantConfig
 
-        calib_dataloader = MyDataloader(dataset=Dataset())
+        calib_dataloader = MyDataLoader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         quant_config = StaticQuantConfig(
             weight_dtype="int8",
@@ -197,7 +197,7 @@ class TestKeras3xNewApi(unittest.TestCase):
         logger.info("test_static_quant_from_dict_advance")
         from neural_compressor.tensorflow import quantize_model
 
-        calib_dataloader = MyDataloader(dataset=Dataset())
+        calib_dataloader = MyDataLoader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         quant_config = {
             "static_quant": {
@@ -229,7 +229,7 @@ class TestKeras3xNewApi(unittest.TestCase):
         from neural_compressor.tensorflow import quantize_model
         from neural_compressor.tensorflow.keras import StaticQuantConfig
 
-        calib_dataloader = MyDataloader(dataset=Dataset())
+        calib_dataloader = MyDataLoader(dataset=Dataset())
         quant_config = StaticQuantConfig(
             weight_dtype="int8",
             weight_sym=True,

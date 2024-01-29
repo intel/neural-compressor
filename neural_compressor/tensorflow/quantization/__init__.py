@@ -12,5 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.tensorflow.quantization.quantize import quantize_model
-from neural_compressor.tensorflow.quantization.config import StaticQuantConfig, get_default_static_quant_config
+from .quantize import quantize_model
+from .config import (
+    StaticQuantConfig, 
+    SmoohQuantConfig,
+    get_default_sq_config,
+    get_default_static_quant_config,
+)

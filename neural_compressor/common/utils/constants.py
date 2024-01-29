@@ -31,6 +31,7 @@ RTN = "rtn"
 STATIC_QUANT = "static_quant"
 GPTQ = "gptq"
 FP8_QUANT = "fp8_quant"
+SMOOTH_QUANT = "smooth_quant"
 
 # options
 import datetime

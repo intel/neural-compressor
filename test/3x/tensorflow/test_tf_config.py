@@ -33,39 +33,37 @@ def build_model():
     import tensorflow as tf
     from tensorflow.compat.v1 import graph_util
 
-    try:
-        graph = tf.Graph()
-        graph_def = tf.GraphDef()
-        with tf.Session() as sess:
-            x = tf.placeholder(tf.float64, shape=(1, 3, 3, 1), name="x")
-            y = tf.constant(np.random.random((2, 2, 1, 1)), name="y")
-            op = tf.nn.conv2d(input=x, filter=y, strides=[1, 1, 1, 1], padding="VALID", name="op_to_store")
+    tf.compat.v1.disable_eager_execution()
+    tf.compat.v1.reset_default_graph()
+    tf.compat.v1.set_random_seed(1)
 
-            sess.run(tf.global_variables_initializer())
-            constant_graph = tf.graph_util.convert_variables_to_constants(sess, sess.graph_def, ["op_to_store"])
+    graph = tf.Graph()
+    graph_def = tf.compat.v1.GraphDef()
 
-        graph_def.ParseFromString(constant_graph.SerializeToString())
-        with graph.as_default():
-            tf.import_graph_def(graph_def, name="")
-    except:
-        graph = tf.Graph()
-        graph_def = tf.compat.v1.GraphDef()
-        with tf.compat.v1.Session() as sess:
-            x = tf.compat.v1.placeholder(tf.float64, shape=(1, 3, 3, 1), name="x")
-            y = tf.compat.v1.constant(np.random.random((2, 2, 1, 1)), name="y")
-            op = tf.nn.conv2d(input=x, filters=y, strides=[1, 1, 1, 1], padding="VALID", name="op_to_store")
+    x = tf.compat.v1.placeholder(tf.float32, [1, 32, 32, 3], name="x")
+    top_relu = tf.nn.relu(x)
+    paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
+    x_pad = tf.pad(top_relu, paddings, "CONSTANT")
+    conv_weights = tf.compat.v1.get_variable(
+        "weight", [3, 3, 3, 3], initializer=tf.compat.v1.random_normal_initializer()
+    )
+    conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID", name="conv1")
+    relu = tf.nn.relu(conv)
+    relu6 = tf.nn.relu6(relu, name="op_to_store")
+    out_name = relu6.name.split(":")[0]
+    with tf.compat.v1.Session() as sess:
+        sess.run(tf.compat.v1.global_variables_initializer())
+        output_graph_def = graph_util.convert_variables_to_constants(
+            sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
+        )
 
-            sess.run(tf.compat.v1.global_variables_initializer())
-            constant_graph = tf.compat.v1.graph_util.convert_variables_to_constants(
-                sess, sess.graph_def, ["op_to_store"]
-            )
-
-        graph_def.ParseFromString(constant_graph.SerializeToString())
-        with graph.as_default():
-            tf.import_graph_def(graph_def, name="")
+    graph_def.ParseFromString(output_graph_def.SerializeToString())
+    with graph.as_default():
+        tf.import_graph_def(graph_def, name="")
     return graph
 
-class MyDataloader:
+
+class MyDataLoader:
     def __init__(self, dataset, batch_size=1):
         self.dataset = dataset
         self.batch_size = batch_size
@@ -80,7 +78,8 @@ class MyDataloader:
     def __len__(self):
         return self.length
 
-class TestKeras3xNewApi(unittest.TestCase):
+
+class TestTF3xNewApi(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.graph = build_model()
@@ -92,9 +91,9 @@ class TestKeras3xNewApi(unittest.TestCase):
     def test_static_quant_from_dict_default(self):
         logger.info("test_static_quant_from_dict_default")
         from neural_compressor.tensorflow import get_default_static_quant_config, quantize_model
-        from neural_compressor.tensorflow.data import DummyDataset
-        dataset = DummyDataset(shape=(100, 3, 3, 1), label=True)
-        calib_dataloader = MyDataloader(dataset=dataset)
+        from neural_compressor.tensorflow.utils import DummyDataset
+        dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
+        calib_dataloader = MyDataLoader(dataset=dataset)
         fp32_model = self.graph
         qmodel = quantize_model(fp32_model, get_default_static_quant_config(), calib_dataloader)
         self.assertIsNotNone(qmodel)
@@ -117,9 +116,9 @@ class TestKeras3xNewApi(unittest.TestCase):
                 },
             }
         }
-        from neural_compressor.tensorflow.data import DummyDataset
-        dataset = DummyDataset(shape=(100, 3, 3, 1), label=True)
-        calib_dataloader = MyDataloader(dataset=dataset)
+        from neural_compressor.tensorflow.utils import DummyDataset
+        dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
+        calib_dataloader = MyDataLoader(dataset=dataset)
         fp32_model = self.graph
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
@@ -133,9 +132,9 @@ class TestKeras3xNewApi(unittest.TestCase):
     def test_static_quant_from_class_default(self):
         logger.info("test_static_quant_from_class_default")
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
-        from neural_compressor.tensorflow.data import DummyDataset
-        dataset = DummyDataset(shape=(100, 3, 3, 1), label=True)
-        calib_dataloader = MyDataloader(dataset=dataset)
+        from neural_compressor.tensorflow.utils import DummyDataset
+        dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
+        calib_dataloader = MyDataLoader(dataset=dataset)
         fp32_model = self.graph
         quant_config = StaticQuantConfig()
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
@@ -150,9 +149,9 @@ class TestKeras3xNewApi(unittest.TestCase):
     def test_static_quant_from_class_beginner(self):
         logger.info("test_static_quant_from_class_beginner")
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
-        from neural_compressor.tensorflow.data import DummyDataset
-        dataset = DummyDataset(shape=(100, 3, 3, 1), label=True)
-        calib_dataloader = MyDataloader(dataset=dataset)
+        from neural_compressor.tensorflow.utils import DummyDataset
+        dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
+        calib_dataloader = MyDataLoader(dataset=dataset)
         fp32_model = self.graph
         quant_config = StaticQuantConfig(
             weight_dtype="fp32",
@@ -170,22 +169,22 @@ class TestKeras3xNewApi(unittest.TestCase):
     def test_static_quant_from_dict_advance(self):
         logger.info("test_static_quant_from_dict_advance")
         from neural_compressor.tensorflow import quantize_model
-        from neural_compressor.tensorflow.data import DummyDataset
-        dataset = DummyDataset(shape=(100, 3, 3, 1), label=True)
-        calib_dataloader = MyDataloader(dataset=dataset)
+        from neural_compressor.tensorflow.utils import DummyDataset
+        dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
+        calib_dataloader = MyDataLoader(dataset=dataset)
         fp32_model = self.graph
         quant_config = {
             "static_quant": {
                 "global": {
                     "weight_dtype": "int8",
                     "weight_sym": True,
-                    "weight_granularity": "per_tensor",
+                    "weight_granularity": "per_channel",
                     "act_dtype": "int8",
                     "act_sym": True,
-                    "act_granularity": "per_tensor",
+                    "act_granularity": "per_channel",
                 },
                 "local": {
-                    "op_to_store": {
+                    "conv1": {
                         "weight_dtype": "fp32",
                         "act_dtype": "fp32",
                     }
@@ -197,16 +196,16 @@ class TestKeras3xNewApi(unittest.TestCase):
 
         conv2d_quantized = True
         for node in qmodel.graph_def.node:
-            if node.name == "op_to_store" and "Quantize" not in node.op:
+            if node.name == "conv1" and "Quantize" not in node.op:
                 conv2d_quantized = False
         self.assertEqual(conv2d_quantized, False)
 
     def test_static_quant_from_class_advance(self):
         logger.info("test_static_quant_from_class_advance")
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
-        from neural_compressor.tensorflow.data import DummyDataset
-        dataset = DummyDataset(shape=(100, 3, 3, 1), label=True)
-        calib_dataloader = MyDataloader(dataset=dataset)
+        from neural_compressor.tensorflow.utils import DummyDataset
+        dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
+        calib_dataloader = MyDataLoader(dataset=dataset)
         fp32_model = self.graph
         quant_config = StaticQuantConfig(
             weight_dtype="int8",
@@ -220,13 +219,13 @@ class TestKeras3xNewApi(unittest.TestCase):
             weight_dtype="fp32",
             act_dtype="fp32",
         )
-        quant_config.set_local("op_to_store", conv2d_config)
+        quant_config.set_local("conv1", conv2d_config)
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
         conv2d_quantized = True
         for node in qmodel.graph_def.node:
-            if node.name == "op_to_store" and "Quantize" not in node.op:
+            if node.name == "conv1" and "Quantize" not in node.op:
                 conv2d_quantized = False
         self.assertEqual(conv2d_quantized, False)
 
@@ -245,7 +244,7 @@ class TestKeras3xNewApi(unittest.TestCase):
                     "act_granularity": "per_tensor",
                 },
                 "local": {
-                    "op_to_store": {
+                    "conv1": {
                         "weight_dtype": "fp32",
                         "act_dtype": "fp32",
                     }
@@ -271,7 +270,7 @@ class TestKeras3xNewApi(unittest.TestCase):
             weight_dtype="fp32",
             act_dtype="fp32",
         )
-        quant_config.set_local("op_to_store", conv2d_config)
+        quant_config.set_local("conv1", conv2d_config)
         config_dict = quant_config.to_dict()
         self.assertIn("global", config_dict)
         self.assertIn("local", config_dict)

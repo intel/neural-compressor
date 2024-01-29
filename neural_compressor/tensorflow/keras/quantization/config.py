@@ -151,6 +151,7 @@ StaticQuantConfig.register_supported_configs()
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
     """Get all registered configs for keras framework."""
+    registered_configs = config_registry.get_cls_configs()
     return registered_configs.get(FRAMEWORK_NAME, {})
 
 
