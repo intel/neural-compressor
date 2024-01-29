@@ -1,13 +1,10 @@
 import unittest
-
-import transformers
-
-from neural_compressor.common import Logger
-
-logger = Logger().get_logger()
 from functools import wraps
 
 import torch
+import transformers
+
+from neural_compressor.common import logger
 
 
 def reset_tuning_target(test_func):

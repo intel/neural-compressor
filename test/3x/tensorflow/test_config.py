@@ -25,9 +25,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from neural_compressor.common import Logger
-
-logger = Logger().get_logger()
+from neural_compressor.common import logger
 
 
 def build_model():

@@ -18,9 +18,7 @@ from typing import Callable, Dict, List, Tuple, Union
 import onnx
 from packaging.version import Version
 
-from neural_compressor.common import Logger
-
-logger = Logger().get_logger()
+from neural_compressor.common import logger
 
 ONNXRT116_VERSION = Version("1.16.0")
 ONNXRT1161_VERSION = Version("1.16.1")

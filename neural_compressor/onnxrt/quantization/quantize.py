@@ -18,12 +18,10 @@ from typing import Optional, Tuple
 import onnx
 from onnxruntime.quantization import CalibrationDataReader
 
-from neural_compressor.common import Logger
+from neural_compressor.common import logger
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.onnxrt.quantization.config import FRAMEWORK_NAME
 from neural_compressor.onnxrt.utils.utility import algos_mapping
-
-logger = Logger().get_logger()
 
 
 def need_apply(quant_config: BaseConfig, algo_name):

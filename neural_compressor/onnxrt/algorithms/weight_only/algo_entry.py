@@ -18,12 +18,10 @@ from typing import Dict, Tuple, Union
 
 import onnx
 
-from neural_compressor.common import Logger
+from neural_compressor.common import logger
 from neural_compressor.common.utils import RTN
 from neural_compressor.onnxrt.quantization.config import RTNConfig
 from neural_compressor.onnxrt.utils.utility import register_algo
-
-logger = Logger().get_logger()
 
 
 ###################### RTN Algo Entry ##################################
