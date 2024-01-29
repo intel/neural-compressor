@@ -2,7 +2,9 @@ import unittest
 
 import torch
 
-from neural_compressor.common import logger
+from neural_compressor.common import Logger
+
+logger = Logger().get_logger()
 
 
 def get_gpt_j():

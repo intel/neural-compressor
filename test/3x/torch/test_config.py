@@ -1,10 +1,12 @@
 import copy
 import unittest
 
-import torch
 import transformers
 
-from neural_compressor.common import logger
+from neural_compressor.common import Logger
+
+logger = Logger().get_logger()
+import torch
 
 
 def build_simple_torch_model():

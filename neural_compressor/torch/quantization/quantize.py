@@ -17,10 +17,12 @@ from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common import logger
+from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.torch.quantization.config import FRAMEWORK_NAME
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
+
+logger = Logger().get_logger()
 
 
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):

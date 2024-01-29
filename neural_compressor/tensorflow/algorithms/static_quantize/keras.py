@@ -26,8 +26,10 @@ import numpy as np
 import tensorflow as tf
 import yaml
 
-from neural_compressor.common import logger
+from neural_compressor.common import Logger
 from neural_compressor.tensorflow.utils import deep_get, dump_elapsed_time
+
+logger = Logger().get_logger()
 
 
 def _add_supported_quantized_objects(custom_objects):

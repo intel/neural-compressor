@@ -23,9 +23,11 @@ from typing import Callable, List, NamedTuple, Optional, Tuple, Union
 
 import onnx
 
-from neural_compressor.common import logger
+from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig, register_config, register_supported_configs_for_fwk
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, RTN
+
+logger = Logger().get_logger()
 
 FRAMEWORK_NAME = "onnxrt"
 
