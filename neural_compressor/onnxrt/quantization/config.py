@@ -24,7 +24,7 @@ from typing import Callable, List, NamedTuple, Optional, Tuple, Union
 import onnx
 
 from neural_compressor.common import logger
-from neural_compressor.common.base_config import BaseConfig, register_config
+from neural_compressor.common.base_config import BaseConfig, register_config, register_supported_configs_for_fwk
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, RTN
 
 FRAMEWORK_NAME = "onnxrt"
@@ -148,8 +148,7 @@ class RTNConfig(BaseConfig):
         return RTNConfig(weight_bits=[4, 6])
 
 
-# TODO(Yi) run `register_supported_configs` for all registered config.
-RTNConfig.register_supported_configs()
+register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 
 
 def get_default_rtn_config() -> RTNConfig:
