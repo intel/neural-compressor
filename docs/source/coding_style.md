@@ -46,7 +46,7 @@ import copy  # May import local copy.py
 
 ```python
 long_string = """This is fine if your use case can accept
-	extraneous leading spaces."""
+    extraneous leading spaces."""
 
 long_string = "And this is fine if you cannot accept\n" "extraneous leading spaces."
 ```
@@ -71,17 +71,13 @@ logger.info("Current $PAGER is: %s", os.getenv("PAGER", default=""))  # Better r
 
 # Handle long string
 logger.warning(
-    (
-        "All tuning options for the current strategy have been tried. \n"
-        "If the quantized model does not seem to work well, it might be worth considering other strategies."
-    )
+    "All tuning options for the current strategy have been tried. \n"
+    "If the quantized model does not seem to work well, it might be worth considering other strategies."
 )
 
 logger.warning(
-    (
-        "This is a long string, this is a long string,"
-        "override the user config's smooth quant alpha into the best alpha(%.4f) found in pre-strategy."
-    ),
+    "This is a long string, this is a long string,"
+    "override the user config's smooth quant alpha into the best alpha(%.4f) found in pre-strategy.",
     0.65421,
 )
 ```
@@ -115,9 +111,8 @@ def xx_func(cls) -> Dict[str, OrderedDict[str, Dict[str, object]]]: # Can't impr
 ```
 
 - Plugs
-  - python
-  - pylance
-
+  - [python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+  - [pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance)
 
 ### Comments
 
