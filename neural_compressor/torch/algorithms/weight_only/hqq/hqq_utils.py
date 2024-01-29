@@ -22,11 +22,13 @@ from collections import namedtuple
 from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
-from accelerator import auto_detect_accelerator
+from inc_accelerator import auto_detect_accelerator
 
-# from hqq
-from hqq.core.common.optim_utils import optimize_weights_proximal
-from hqq.core.common.utils import custom_print, inspect_function, is_divisible
+auto_accelerator = auto_detect_accelerator()
+
+# from hqq.core.common.optim_utils import optimize_weights_proximal
+from hqq_optmizer import optimize_weights_proximal
+from utility import custom_print, dump_elapsed_time, inspect_function, is_divisible
 
 __all__ = [
     "QuantTensorConfig",
@@ -206,6 +208,7 @@ class HQQTensorHandle:
         return QTensor(weight, scale, zero, meta_info)
 
     @classmethod
+    @dump_elapsed_time("HQQTensorHandle.quantize_to_q_tensor")
     def quantize_to_q_tensor(cls, float_tensor, tensor_quant_config: QuantTensorConfig = None):
         q_weight, q_tensor_meta = cls.quantize(
             tensor=float_tensor,
@@ -215,7 +218,7 @@ class HQQTensorHandle:
         return q_weight
 
     @classmethod
-    @inspect_function
+    # @inspect_function
     def quantize(cls, tensor, tensor_quant_config: QuantTensorConfig = None):
         (
             nbits,
@@ -302,7 +305,7 @@ class HQQTensorHandle:
 
     # Main dequantization: bit_unpacking > (W_q - z)*s > reshape
     @classmethod
-    @inspect_function
+    # @inspect_function
     def dequantize(cls, W_q, meta):
         if meta["packing"]:
             raise NotImplementedError("bitpack is not implemented yet")

@@ -16,8 +16,8 @@ from copy import deepcopy
 
 import pytest
 import torch
-from hqq.core.common.utils import compare_two_tensor, is_divisible
 from hqq_utils import HQQLinear, HQQModuleConfig, HQQTensorHandle, QuantTensorConfig
+from utility import compare_two_tensor, is_divisible
 
 ######################
 #### Test
@@ -101,7 +101,7 @@ def common_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False, scal
         quant_scale=quant_scale,
         scale_quant_group_size=scale_quant_group_size,
     )
-    test_on_cuda = device == torch.device("cuda:0")
+    test_on_cuda = "cuda" in str(device)
     in_features = 64
     out_features = 128
     float_linear = torch.nn.Linear(in_features=in_features, out_features=out_features)
@@ -159,6 +159,25 @@ def common_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False, scal
         see_memory_usage("At the end of test")
 
 
+OS_ACCELERATOR = None
+
+
+def force_set_accelerator_to_cpu():
+    import os
+
+    OS_ACCELERATOR = os.environ.get("ACCELERATOR", None)
+    os.environ["ACCELERATOR"] = "cpu"
+
+
+def revert_force_set_accelerator_to_cpu():
+    import os
+
+    if OS_ACCELERATOR is not None:
+        os.environ["ACCELERATOR"] = OS_ACCELERATOR
+    else:
+        del os.environ["ACCELERATOR"]
+
+
 @pytest.mark.parametrize(
     "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
     [
@@ -183,6 +202,7 @@ def test_api_cpu(
     quant_scale,
     scale_quant_group_size,
 ):
+    force_set_accelerator_to_cpu()
     common_test(
         nbits=nbits,
         group_size=group_size,
@@ -191,6 +211,7 @@ def test_api_cpu(
         scale_quant_group_size=scale_quant_group_size,
         device=torch.device("cpu"),
     )
+    revert_force_set_accelerator_to_cpu()
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
@@ -228,7 +249,9 @@ def test_api_cuda(
     )
 
 
-# # Test single case
-common_test(
-    nbits=4, group_size=64, quant_zero=True, quant_scale=False, scale_quant_group_size=128, device=torch.device("cpu")
-)
+# Test single case
+# force_set_accelerator_to_cpu()
+# common_test(
+#     nbits=4, group_size=64, quant_zero=False, quant_scale=False, scale_quant_group_size=128, device=torch.device(device="cpu")
+# )
+# revert_force_set_accelerator_to_cpu()
