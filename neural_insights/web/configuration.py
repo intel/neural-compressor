@@ -227,7 +227,7 @@ class Configuration:
         token_filepath = os.path.join(WORKDIR_LOCATION, "token")
         os.makedirs(os.path.dirname(token_filepath), exist_ok=True)
         with open(token_filepath, "w") as token_file:
-            token_file.write(self.token)
+            token_file.write("")
 
         if sys.platform == "win32":
             import ntsecuritycon as con  # pylint: disable=import-error
@@ -254,6 +254,10 @@ class Configuration:
         else:
             os.chown(token_filepath, uid=os.geteuid(), gid=os.getgid())
             os.chmod(token_filepath, 0o600)
+
+        with open(token_filepath, "w") as token_file:
+            token_file.write(self.token)
+
         log.debug(f"Token has been dumped to {token_filepath}.")
 
     def _ensure_valid_port(self, port: int) -> None:
