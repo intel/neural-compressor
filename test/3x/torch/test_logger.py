@@ -9,9 +9,11 @@ msg_lst = [
     "call logger log function.",
     {"msg": "call logger warning function"},
     ["call logger warning function", "done"],
+    ({"msg": "call logger warning function"}, {"msg2": "done"}),
     {"msg": {("bert", "embedding"): {"weight": {"dtype": ["unint8", "int8"]}}}},
     {"msg": [{"sub_msg": "call logger"}, {"sub_msg2": "call warning function"}]},
     {"msg2": "done"},
+    {("bert", "embedding"): {"op": ("a", "b")}},
 ]
 
 
