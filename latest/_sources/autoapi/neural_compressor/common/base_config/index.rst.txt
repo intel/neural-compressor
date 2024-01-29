@@ -27,6 +27,7 @@ Functions
 
    neural_compressor.common.base_config.register_config
    neural_compressor.common.base_config.get_all_config_set_from_config_registry
+   neural_compressor.common.base_config.register_supported_configs_for_fwk
 
 
 
@@ -71,6 +72,13 @@ Attributes
 
    The base config for all algorithm configs.
 
+
+
+.. py:function:: register_supported_configs_for_fwk(fwk_name: str)
+
+   Register supported configs for specific framework.
+
+   :param fwk_name: the framework name.
 
 
 
