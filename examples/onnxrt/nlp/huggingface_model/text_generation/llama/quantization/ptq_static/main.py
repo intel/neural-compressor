@@ -203,7 +203,7 @@ def eval_func(model):
     if isinstance(model, str) and model.endswith(".onnx"):
         model_dir = os.path.dirname(model)
 
-    replace_architectures(os.path.join(model_dir, "config.json"))
+    # replace_architectures(os.path.join(model_dir, "config.json"))
 
     results = evaluate(
         model="hf-causal",
@@ -240,12 +240,11 @@ class KVDataloader:
             shuffle=False,
             collate_fn=self.collate_batch,
         )
-
         session = ort.InferenceSession(model_path)
         inputs_names = [input.name for input in session.get_inputs()]
         self.key_value_input_names = [key for key in inputs_names if (".key" in key) or (".value" in key)]
         self.use_cache = len(self.key_value_input_names) > 0
-
+        self.session = session if self.use_cache else None
 
     def collate_batch(self, batch):
 
@@ -264,29 +263,33 @@ class KVDataloader:
             attention_mask_padded.append(attention_mask)
         return (torch.vstack(input_ids_padded), torch.vstack(attention_mask_padded)), torch.tensor(last_ind)
 
-
     def __iter__(self):
         try:
             for (input_ids, attention_mask), last_ind in self.dataloader:
                 ort_input = {}
-                if not self.use_cache:
-                    ort_input["input_ids"] = input_ids[:, :-1].detach().cpu().numpy().astype("int64")
-                    ort_input["attention_mask"] = attention_mask[:, :-1].detach().cpu().numpy().astype("int64")
-                else:
+                ort_input["input_ids"] = input_ids[:, :-1].detach().cpu().numpy().astype("int64")
+                ort_input["attention_mask"] = attention_mask[:, :-1].detach().cpu().numpy().astype("int64")
+                input_shape = ort_input["input_ids"].shape
+                position_ids = torch.arange(0, input_shape[-1], dtype=torch.long).unsqueeze(0).view(-1, input_shape[-1])
+                ort_input["position_ids"] = position_ids.numpy()
+                if self.use_cache:
+                    # create dummy past_key_values for decoder first generation step
                     num_attention_heads = config.num_key_value_heads
                     embed_size_per_head = config.hidden_size // config.num_attention_heads
                     shape = (self.batch_size, num_attention_heads, 0, embed_size_per_head)
                     key_or_value = np.zeros(shape, dtype=np.float32)
-
                     for key_value_input_name in self.key_value_input_names:
                         ort_input[key_value_input_name] = key_or_value
 
-                    ort_input["input_ids"] = input_ids[:, -1].unsqueeze(0).detach().cpu().numpy().astype("int64")
-                    ort_input["attention_mask"] =  np.zeros([self.batch_size, ort_input["past_key_values.0.key"].shape[2]+1], dtype="int64")
+                    outputs = self.session.run(None, ort_input)
 
-                input_shape = ort_input["input_ids"].shape
-                position_ids = torch.arange(0, input_shape[-1], dtype=torch.long).unsqueeze(0).view(-1, input_shape[-1])
-                ort_input["position_ids"] = position_ids.numpy()
+                    # regenerate input
+                    ort_input['input_ids'] = input_ids[:, -1].unsqueeze(0).detach().cpu().numpy().astype('int64')
+                    for i in range(int((len(outputs) - 1) / 2)):
+                        ort_input['past_key_values.{}.key'.format(i)] = outputs[i*2+1]
+                        ort_input['past_key_values.{}.value'.format(i)] = outputs[i*2+2]
+                    ort_input['attention_mask'] =  np.zeros([self.batch_size, ort_input['past_key_values.0.key'].shape[2]+1], dtype='int64')
+
                 yield ort_input, last_ind.detach().cpu().numpy()
                 
         except StopIteration:
