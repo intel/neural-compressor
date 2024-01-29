@@ -10,7 +10,7 @@ from neural_compressor.torch.quantization import (
     get_default_rtn_config,
     quantize,
 )
-from neural_compressor.torch.quantization.layers import WeightOnlyLinear
+from neural_compressor.torch.quantization.modules import WeightOnlyLinear
 
 
 class TestRTNQuant:

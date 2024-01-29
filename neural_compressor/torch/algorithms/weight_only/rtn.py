@@ -140,7 +140,7 @@ def rtn_quantize(
             int_weight = int_weight.t_().contiguous() if group_dim == 0 else int_weight
             scale = scale.t_().contiguous() if group_dim == 0 else scale
             zp = zp.t_().contiguous() if group_dim == 0 and zp is not None else zp
-            from neural_compressor.torch.quantization.layers import WeightOnlyLinear
+            from neural_compressor.torch.quantization.modules import WeightOnlyLinear
 
             new_module = WeightOnlyLinear(
                 m.in_features,
