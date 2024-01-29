@@ -51,9 +51,20 @@ bash run_quant.sh --input_model=/path/to/model \ # folder path of onnx model
 
 ## 2. Benchmark
 
+Accuracy:
+
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
                       --batch_size=batch_size \ # optional 
+                      --mode=accuracy \
                       --tokenizer=meta-llama/Llama-2-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
                       --tasks=lambada_openai
+```
+
+Performance:
+```bash
+bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
+                      --mode=performance \
+                      --batch_size=batch_size # optional \
+                      --tokenizer=meta-llama/Llama-2-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
 ```

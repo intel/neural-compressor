@@ -108,6 +108,11 @@ parser.add_argument(
     default="NeelNanda/pile-10k",
     const="NeelNanda/pile-10k"
 )
+parser.add_argument(
+    '--mode',
+    type=str,
+    help="benchmark mode of performance or accuracy"
+)
 args = parser.parse_args()
 
 # load model
@@ -292,7 +297,22 @@ if __name__ == "__main__":
     set_workspace(args.workspace)
 
     if args.benchmark:
-        eval_func(args.model_path)
+        if args.mode == 'performance':            
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            model_name = "model.onnx" # require optimum >= 1.14.0
+            model_path = os.path.join(args.model_path, model_name)
+            dataloader = KVDataloader(model_path, pad_max=args.pad_max, batch_size=1)
+            conf = BenchmarkConfig(iteration=100,
+                                   cores_per_instance=28,
+                                   num_of_instance=1)
+            fit(model_path, conf, b_dataloader=dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval_func(args.model_path)
+            print("Batch size = %d" % args.batch_size)
+            print("Accuracy: %.5f" % acc_result)
+
+        
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
