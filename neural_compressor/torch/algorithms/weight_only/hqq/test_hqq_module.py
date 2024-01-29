@@ -93,13 +93,7 @@ def create_hqq_quant_config_from_hqq_official_api(
     return hqq_quant_config, hqq_offical_config
 
 
-def common_test(
-    nbits=4,
-    group_size=64,
-    quant_zero=True,
-    quant_scale=False,
-    scale_quant_group_size=128,
-):
+def common_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False, scale_quant_group_size=128, device=None):
     hqq_quant_config, hqq_offical_config = create_hqq_quant_config_from_hqq_official_api(
         nbits=nbits,
         group_size=group_size,
@@ -107,16 +101,28 @@ def common_test(
         quant_scale=quant_scale,
         scale_quant_group_size=scale_quant_group_size,
     )
+    test_on_cuda = device == torch.device("cuda:0")
     in_features = 64
     out_features = 128
-    float_linear = torch.nn.Linear(in_features, out_features)
+    float_linear = torch.nn.Linear(in_features=in_features, out_features=out_features)
+    float_linear.to(device)
     float_linear_copy = deepcopy(float_linear)
 
     hqq_linear = HQQLinear.from_float(float_linear, quant_config=hqq_quant_config)
 
     from hqq.core.common.modules import HQQLinear as HQQLinear_official
 
+    if test_on_cuda:
+        from hqq.core.common.config import option
+
+        option.use_cuda = True
+        option.use_half = True
+        from hqq.core.common.cuda_utils import see_memory_usage
+
+        see_memory_usage("At the end of test")
     hqq_linear_official = HQQLinear_official(float_linear_copy, quant_config=hqq_offical_config)
+    if test_on_cuda:
+        hqq_linear_official.cuda(device_n=0)
 
     compare_two_tensor(hqq_linear.q_weight.val, hqq_linear_official.W_q, msg="The quantized weight")
 
@@ -138,6 +144,7 @@ def common_test(
         compare_two_tensor(hqq_linear.q_weight.zero, hqq_linear_official.meta["zero"], msg="float zero")
 
     input = torch.randn(1, in_features)
+    input = input.to(device)
     float_output = float_linear(input)
     print(hqq_linear.q_weight)
     input_half = deepcopy(input).half()
@@ -146,6 +153,10 @@ def common_test(
     hqq_output_2 = hqq_linear(input_half)
     print(hqq_linear.q_weight)
     hqq_offical_output = hqq_linear_official(input_half)
+    del float_linear, hqq_linear, hqq_linear_official
+    del float_output, hqq_output, hqq_output_2, hqq_offical_output
+    if test_on_cuda:
+        see_memory_usage("At the end of test")
 
 
 @pytest.mark.parametrize(
@@ -165,7 +176,7 @@ def common_test(
         (4, 64, False, True, 64),
     ],
 )
-def test_api(
+def test_api_cpu(
     nbits,
     group_size,
     quant_zero,
@@ -178,13 +189,46 @@ def test_api(
         quant_zero=quant_zero,
         quant_scale=quant_scale,
         scale_quant_group_size=scale_quant_group_size,
+        device=torch.device("cpu"),
+    )
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+@pytest.mark.parametrize(
+    "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
+    [
+        (4, 64, True, False, 128),
+        (4, 64, False, False, 128),
+        (4, 64, True, True, 128),
+        (4, 64, False, True, 128),
+        (8, 64, True, False, 128),
+        (8, 64, False, False, 128),
+        (8, 64, True, True, 128),
+        (8, 64, False, True, 128),
+        (4, 64, True, False, 64),
+        (4, 64, False, False, 64),
+        (4, 64, True, True, 64),
+        (4, 64, False, True, 64),
+    ],
+)
+def test_api_cuda(
+    nbits,
+    group_size,
+    quant_zero,
+    quant_scale,
+    scale_quant_group_size,
+):
+    common_test(
+        nbits=nbits,
+        group_size=group_size,
+        quant_zero=quant_zero,
+        quant_scale=quant_scale,
+        scale_quant_group_size=scale_quant_group_size,
+        device=torch.device("cuda:0"),
     )
 
 
 # # Test single case
-# common_test(
-#     nbits=4,
-#     group_size=64,
-#     quant_zero=True,
-#     quant_scale=True,
-#     scale_quant_group_size=128,)
+common_test(
+    nbits=4, group_size=64, quant_zero=True, quant_scale=False, scale_quant_group_size=128, device=torch.device("cpu")
+)

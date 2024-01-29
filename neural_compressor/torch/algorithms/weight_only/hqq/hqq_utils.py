@@ -16,7 +16,7 @@ import sys
 
 # TODO: remove it before merge
 hqq_offical_path = "/home/yliu7/workspace/hqq"
-sys.path.insert(1, hqq_offical_path)
+sys.path.insert(0, hqq_offical_path)
 
 from collections import namedtuple
 from typing import Any, Dict, Optional, Tuple, Union
@@ -136,11 +136,41 @@ class QTensor:
     def is_zero_quantized(self) -> bool:
         return isinstance(self.zero, QTensor)
 
+    def _get_scale_repr(self) -> str:
+        if not self.is_scale_quantized():
+            if self.scale is not None:
+                return f"scale_shape={self.scale.shape}, scale_dtype={self.scale.dtype}, scale_device={self.scale.device}\n"
+            else:
+                return "scale is None\n"
+        else:
+            return self.scale.__repr__() + "\n"
+
+    def _get_zero_repr(self) -> str:
+        if not self.is_zero_quantized():
+            if self.zero is not None:
+                return f"zero_shape={self.zero.shape}, zero_dtype={self.zero.dtype}, zero_device={self.zero.device}\n"
+            else:
+                return "zero is None\n"
+        else:
+            return self.zero.__repr__() + "\n"
+
     def __repr__(self) -> str:
+        # TODO: refine it later
         return (
-            f"QTensor(shape={self.val.shape}, scale_quantized={self.is_scale_quantized()}, "
-            f"zero_quantized={self.is_zero_quantized()}, meta_info={self.meta_info}"
+            f"QTensor(\n"
+            f"val_shape={self.val.shape}, val_dtype={self.val.dtype}, val_device={self.val.device}\n"
+            f"scale_quantized={self.is_scale_quantized()},\n"
+            f"zero_quantized={self.is_zero_quantized()},\n"
+            f"zero=({self._get_zero_repr()})"
+            f"scale=({self._get_scale_repr()})"
+            f"meta_info={self.meta_info}\n)"
         )
+
+    def to(self, *args, **kwargs):
+        self.val = self.val.to(*args, **kwargs)
+        self.scale = self.scale.to(*args, **kwargs)
+        self.zero = self.zero.to(*args, **kwargs)
+        return self
 
 
 class HQQTensorHandle:
@@ -361,7 +391,7 @@ class HQQLinear(torch.nn.Linear):
 
     def dequantize_weight(self):
         assert self.quantized, "model was not quantized"
-        # TODO: Should we delete the q_weight and q_weight_meta?
+        # TODO: move below logic into `HQQTensorHandle`
         if self.q_weight.is_scale_quantized():
             scale_qdq = HQQTensorHandle.dequantize_q_tensor(self.q_weight.scale)
             self.q_weight.scale = scale_qdq
@@ -405,5 +435,6 @@ class HQQLinear(torch.nn.Linear):
         # TODO: refine it to support cuda/hpu/cpu
         device_to_use = next(float_module.parameters()).device
         new_mod.to(device_to_use)
+        new_mod.q_weight.to(device_to_use)
         # TODO: should we delete the float_module explicitly?
         return new_mod
