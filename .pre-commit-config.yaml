@@ -25,7 +25,7 @@ repos:
       - id: check-json
         exclude: |
           (?x)^(
-              .vscode/settings.json
+              .vscode/settings_recommended.json
           )$
       - id: check-yaml
         exclude: |
