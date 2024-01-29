@@ -1,10 +1,11 @@
-## INC Coding Conventions
+# INC Coding Conventions
 
  (Mostly for Version 3 and later)
 
-### Goal
+## Background
 
 To improve the quality and maintainability of INC code, we summarized some common coding standards and conventions.
+
 There are many popular programming conventions, and they may conflict with each other. To avoid overly arguing formatting, we make decisions based on the following priorities:
 
 - [Google Python Style](https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings), [PEP 8](https://peps.python.org/pep-0008/)
@@ -12,7 +13,10 @@ There are many popular programming conventions, and they may conflict with each 
 - INC Internal Style
 - Sub-module specific Style
 
-> Note: The sub-tile naming follows the [Google Python Style](https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings). For further information, go to the corresponding section.
+## Rules
+
+> Note: The sub-tile naming follows the [Google Python Style](https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings) and [PEP 8](https://peps.python.org/pep-0008/). For further information, go to the corresponding section.
+
 
 ### Import
 
@@ -36,25 +40,63 @@ import os, sys  # Import on separate lines
 import copy  # May import local copy.py
 ```
 
+### Strings
 
-
-### Public Interface
-
-Use `__all__` to help the developer and user know the supported interface and components.
+- Recommend
 
 ```python
-__all__ = [
-    "register_config",
-    "BaseConfig",
-    "ComposableConfig",
-    "get_all_config_set_from_config_registry",
-    "options",
-]
+long_string = """This is fine if your use case can accept
+	extraneous leading spaces."""
+
+long_string = "And this is fine if you cannot accept\n" "extraneous leading spaces."
+```
+
+- Not recommend
+
+```python
+logger.info("This is fine if your use case can accept")
+logger.info("extraneous leading spaces.")
+```
+
+### Logger
+
+- Recommend
+
+```python
+from neural_compressor.common import logger
+
+logger.info("Current TensorFlow Version is: %s", tf.__version__)  # Use a pattern-string (with %-placeholders)
+
+logger.info("Current $PAGER is: %s", os.getenv("PAGER", default=""))  # Better readability
+
+# Handle long string
+logger.warning(
+    (
+        "All tuning options for the current strategy have been tried. \n"
+        "If the quantized model does not seem to work well, it might be worth considering other strategies."
+    )
+)
+
+logger.warning(
+    (
+        "This is a long string, this is a long string,"
+        "override the user config's smooth quant alpha into the best alpha(%.4f) found in pre-strategy."
+    ),
+    0.65421,
+)
+```
+
+- Not recommend
+
+```python
+logger.info(f"Current TensorFlow Version is: {tf.__version__}")  # Not use f-string
+
+logger.info("Current $PAGER is:")  # One sentence in two lines
+logger.info(os.getenv("PAGER", default=""))
 ```
 
 
-
-### Type Annotated Code
+### Type Annotations
 
 - Recommend
 
@@ -72,71 +114,9 @@ eval_result: float = evaluator.eval(model)
 def xx_func(cls) -> Dict[str, OrderedDict[str, Dict[str, object]]]: # Can't improve the readability
 ```
 
-- Tools
+- Plugs
   - python
   - pylance
-
-### Logger
-
-- Recommend
-
-```python
-from neural_compressor.common import logger
-
-logger.info("Current TensorFlow Version is: %s", tf.__version__)  # Use a pattern-string (with %-placeholders)
-
-logger.info("Current $PAGER is: %s", os.getenv("PAGER", default=""))  # Better readability
-```
-
-- Not recommend
-
-```python
-from neural_compressor.common.utils import info
-
-info(
-    "some log ..."
-)  # The `filename` is always `logger.py`, like `2024-01-28 10:03:56 [INFO][logger.py:116] some log ...`
-
-logger.info(f"Current TensorFlow Version is: {tf.__version__}")  # Not use f-string
-
-logger.info("Current $PAGER is:")  # One sentence in two lines
-logger.info(os.getenv("PAGER", default=""))
-```
-
-
-
-### Strings
-
-- Recommend
-
-```python
-long_string = """This is fine if your use case can accept
-	extraneous leading spaces."""
-
-long_string = "And this is fine if you cannot accept\n" "extraneous leading spaces."
-```
-
-
-
-- Not recommend
-
-```python
-logger.info("This is fine if your use case can accept")
-logger.info("extraneous leading spaces.")
-```
-
-
-
-### TODO Comments
-
-- Recommend
-
-```python
-# TODO: crbug.com/192795 - Investigate cpufreq optimizations.
-```
-
-> A `TODO` comment begins with the word `TODO:` for more easily searchability.
-
 
 
 ### Comments
@@ -149,8 +129,6 @@ logger.info("extraneous leading spaces.")
 # ? Need decision
 # ! Deprecated method, do not use
 ```
-
-
 
 - Recommend
 
@@ -181,8 +159,33 @@ class OutOfCheeseError(Exception):
 ```
 
 
+### TODO Comments
 
-### Folder structure
+- Recommend
+
+```python
+# TODO: crbug.com/192795 - Investigate cpufreq optimizations.
+```
+
+> A `TODO` comment begins with the word `TODO:` for more easily searchability.
+
+
+### Public Interface
+
+Use `__all__` to help the developer and user know the supported interface and components.
+
+```python
+__all__ = [
+    "register_config",
+    "BaseConfig",
+    "ComposableConfig",
+    "get_all_config_set_from_config_registry",
+    "options",
+]
+```
+
+
+## Folder structure
 
 ```shell
 ├── fwk_name
@@ -230,19 +233,11 @@ def smooth_quant_entry():
 ```
 
 
-
-### Module Tags
-
-- Better categorize the PRs and issues.
-- Tags list:`INC3.X`, `Auto-Tune`, `PyTorch`,`OnnxRuntime`,`Tensorflow`
+## Recommend VS Code `settings.json`
+To keep the coding style consistent, we suggest you replace `.vscode/settings.json` with `neural-compressor/.vscode/settings_recommended.json`.
 
 
-
-### Recommend VS Code `settings.json`
-- `settings.json` filepath: `neural-compressor/.vscode/settings.json`
-
-
-### Reference
+## Reference
 
 - [Google Python Style](https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings)
 - [PEP 8](https://peps.python.org/pep-0008/)
