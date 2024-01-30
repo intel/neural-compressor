@@ -142,7 +142,7 @@ def benchmark(model):
                 os.path.join(model, "model.onnx"),
                 session_options=sess_options)
     inputs_names = sessions.get_inputs()
-    key_value_input_names = [key for key in inputs_names if (".key" in key) or (".value" in key)]
+    key_value_input_names = [key.name for key in inputs_names if (".key" in key.name) or (".value" in key.name)]
     use_cache = len(key_value_input_names) > 0
 
     model = ORTModelForCausalLM(sessions[0],  # pylint: disable=E1121
