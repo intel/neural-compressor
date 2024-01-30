@@ -221,6 +221,9 @@ class KVDataloader:
 
                     # regenerate input
                     ort_input['input_ids'] = input_ids[:, -1].unsqueeze(0).detach().cpu().numpy().astype('int64')
+                    input_shape = ort_input["input_ids"].shape
+                    position_ids = torch.arange(0, input_shape[-1], dtype=torch.long).unsqueeze(0).view(-1, input_shape[-1])
+                    ort_input["position_ids"] = position_ids.numpy()
                     for i in range(int((len(outputs) - 1) / 2)):
                         ort_input['past_key_values.{}.key'.format(i)] = outputs[i*2+1]
                         ort_input['past_key_values.{}.value'.format(i)] = outputs[i*2+2]

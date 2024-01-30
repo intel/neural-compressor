@@ -246,8 +246,6 @@ class KVDataloader:
         self.key_value_input_names = [key for key in inputs_names if (".key" in key) or (".value" in key)]
         self.use_cache = len(self.key_value_input_names) > 0
         self.session = session if self.use_cache else None
-        self.origin_session_with_past = ort.InferenceSession("./llama-2-tiny-3layers-random-with-past-origin/decoder_with_past_model.onnx")
-        self.origin_session = ort.InferenceSession("./llama-2-tiny-3layers-random-with-past-origin/decoder_model.onnx")
 
     def collate_batch(self, batch):
 
