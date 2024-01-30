@@ -3,6 +3,21 @@ import unittest
 
 from neural_compressor.common.utils import logger
 
+log_msg_lst = [
+    "call logger log function.",
+    {"msg": "call logger log function."},
+    ["call logger warning function", "done"],
+    ("call logger warning function", "done"),
+    # the following log will be prettified
+    {"msg": "call logger warning function"},
+    {"msg": {("bert", "embedding"): {"weight": {"dtype": ["unint8", "int8"]}}}},
+    {"msg": {("bert", "embedding"): {"op": ("a", "b")}}},
+    # the following log will not be prettified
+    [{"msg": "call logger warning function"}, {"msg2": "done"}],
+    ({"msg": "call logger warning function"}, {"msg2": "done"}),
+    ({"msg": [{"sub_msg": "call logger"}, {"sub_msg2": "call warning function"}]}, {"msg2": "done"}),
+]
+
 
 class TestLogger(unittest.TestCase):
     def test_logger(self):
@@ -16,8 +31,6 @@ class TestLogger(unittest.TestCase):
         logger.fatal({"msg": "call logger fatal function"})
         logger.info("call logger info function")
         logger.info({"msg": "call logger info function."})
-        logger.warn("call logger warn function")
-        logger.warn({"msg": "call logger warn function"})
         logger.warning("call logger warning function")
         logger.warning({"msg": "call logger warning function"})
         logger.warning(["call logger warning function", "done"])
@@ -28,6 +41,18 @@ class TestLogger(unittest.TestCase):
         logger.warning([{"msg": "call logger warning function"}, {"msg2": "done"}])
         logger.warning(({"msg": "call logger warning function"}, {"msg2": "done"}))
         logger.warning(({"msg": [{"sub_msg": "call logger"}, {"sub_msg2": "call warning function"}]}, {"msg2": "done"}))
+
+    def test_logger_func_and_pretty_dict(self):
+        from neural_compressor.common.utils import debug, error, fatal, info, log, warning
+
+        for msg in log_msg_lst:
+            log(0, msg)
+            log(1, msg)
+            debug(msg)
+            error(msg)
+            fatal(msg)
+            info(msg)
+            warning(msg)
 
 
 if __name__ == "__main__":
