@@ -244,8 +244,8 @@ class Configuration:
     def create_secured_token_file_win(token_filepath: str):
         import ntsecuritycon as con  # pylint: disable=import-error
         import win32api  # pylint: disable=import-error
-        import win32security  # pylint: disable=import-error
         import win32file
+        import win32security  # pylint: disable=import-error
 
         username = win32api.GetUserName()
         os.makedirs(os.path.dirname(token_filepath), exist_ok=True)
@@ -270,7 +270,7 @@ class Configuration:
             security_attributes,
             win32file.CREATE_NEW,
             win32file.FILE_ATTRIBUTE_NORMAL,
-            None
+            None,
         )
 
         win32file.CloseHandle(handle)
