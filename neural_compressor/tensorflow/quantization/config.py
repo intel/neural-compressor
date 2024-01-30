@@ -258,6 +258,7 @@ class SmoothQuantConfig(BaseConfig):
         # TODO fwk owner needs to update it.
         return SmoothQuantConfig(alpha=0.5)
 
+
 SmoothQuantConfig.register_supported_configs()
 
 
