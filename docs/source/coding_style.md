@@ -18,7 +18,7 @@ There are many style guides, and they may conflict with each other. To avoid ove
 > Note: The sub-tile naming is following [Google Python Style](https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings) and [PEP 8](https://peps.python.org/pep-0008/). See the relevant section for more details.
 
 
-### Import
+### Imports
 
 - Recommend
 
@@ -163,7 +163,7 @@ class OutOfCheeseError(Exception):
     [Better Comments](https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments)
 
 
-### Public Interface
+### Public and Internal Interfaces
 
 Use `__all__` to help the developer and user know the supported interface and components.
 
