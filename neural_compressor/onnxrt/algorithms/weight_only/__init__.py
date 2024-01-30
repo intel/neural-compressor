@@ -11,8 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-<<<<<<<< HEAD:neural_compressor/tensorflow/keras/quantization/__init__.py
-
-from .config import StaticQuantConfig, get_default_static_quant_config, parse_to_keras_tune_cfg
-========
->>>>>>>> master:neural_compressor/onnxrt/algorithms/weight_only/__init__.py

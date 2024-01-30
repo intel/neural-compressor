@@ -142,6 +142,12 @@ class StaticQuantConfig(BaseConfig):
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
+        # TODO fwk owner needs to update it.
+        return StaticQuantConfig(weight_sym=[True, False])
+
+
 # TODO(Yi) run `register_supported_configs` for all registered config.
 StaticQuantConfig.register_supported_configs()
 
@@ -172,7 +178,7 @@ def get_default_static_quant_config() -> StaticQuantConfig:
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT)
-class SmoohQuantConfig(BaseConfig):
+class SmoothQuantConfig(BaseConfig):
     """Config class for tf smooth quantization."""
 
     supported_configs: List[OperatorConfig] = []
@@ -219,7 +225,7 @@ class SmoohQuantConfig(BaseConfig):
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
-        smooth_quant_config = SmoohQuantConfig()
+        smooth_quant_config = SmoothQuantConfig()
         operators = ["MatMul", "Conv2D"]
         supported_configs.append(
             OperatorConfig(config=smooth_quant_config, operators=operators)
@@ -237,13 +243,17 @@ class SmoohQuantConfig(BaseConfig):
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:
+        # TODO fwk owner needs to update it.
+        return SmoothQuantConfig(alpha=0.5)
 
-SmoohQuantConfig.register_supported_configs()
+SmoothQuantConfig.register_supported_configs()
 
 
-def get_default_sq_config() -> SmoohQuantConfig:
+def get_default_sq_config() -> SmoothQuantConfig:
     """Generate the default rtn config.
     Returns:
         the default smooth quant config.
     """
-    return SmoohQuantConfig()
+    return SmoothQuantConfig()
