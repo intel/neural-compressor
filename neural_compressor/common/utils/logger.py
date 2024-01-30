@@ -19,6 +19,18 @@
 import logging
 import os
 
+__all__ = [
+    "level",
+    "log",
+    "info",
+    "debug",
+    "warning",
+    "error",
+    "fatal",
+    "Logger",  # TODO: not expose it
+    "logger",
+]
+
 
 class Logger(object):
     """Logger class."""
@@ -68,7 +80,8 @@ def _pretty_dict(value, indent=0):
 
 
 level = Logger().get_logger().level
-DEBUG = logging.DEBUG
+
+logger = Logger().get_logger()
 
 
 def log(level, msg, *args, **kwargs):
@@ -114,15 +127,6 @@ def info(msg, *args, **kwargs):
             Logger().get_logger().info(line, *args, **kwargs, stacklevel=2)
     else:
         Logger().get_logger().info(msg, *args, **kwargs, stacklevel=2)
-
-
-def warn(msg, *args, **kwargs):
-    """Output log with the warning level."""
-    if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split("\n")):
-            Logger().get_logger().warning(line, *args, **kwargs, stacklevel=2)
-    else:
-        Logger().get_logger().warning(msg, *args, **kwargs, stacklevel=2)
 
 
 def warning(msg, *args, **kwargs):
