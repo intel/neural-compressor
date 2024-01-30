@@ -22,23 +22,31 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Union
 
 import tensorflow as tf
 
-from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
+from neural_compressor.common.base_config import (
+    BaseConfig,
+    config_registry,
+    register_config,
+    register_supported_configs_for_fwk,
+)
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, STATIC_QUANT
 
 FRAMEWORK_NAME = "tensorflow"
 
 
+<<<<<<< HEAD
 class Backend(Enum):
     DEFAULT = "tensorflow"
 
 
+=======
+>>>>>>> 02233fb484996bdce5a8b73eec623ed3b5fd1e47
 class OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
-    backend: List[Backend]
     valid_func_list: List[Callable] = []
 
 
+<<<<<<< HEAD
 # mapping the torch module type and functional operation type to string representations
 operator2str = {
     tf.nn.conv2d: "Conv2D",
@@ -74,6 +82,8 @@ str2operator = {
 }
 
 
+=======
+>>>>>>> 02233fb484996bdce5a8b73eec623ed3b5fd1e47
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
 class StaticQuantConfig(BaseConfig):
     """Config class for tf static quantization."""
@@ -127,13 +137,6 @@ class StaticQuantConfig(BaseConfig):
         self.act_algorithm = act_algorithm
         self._post_init()
 
-    def to_dict(self):
-        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
-
-    @classmethod
-    def from_dict(cls, config_dict):
-        return super(StaticQuantConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
-
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
@@ -162,14 +165,18 @@ class StaticQuantConfig(BaseConfig):
             tf.compat.v1.nn.conv2d_backprop_input,
             tf.raw_ops.Conv3DBackpropInputV2,
         ]
-        supported_configs.append(
-            OperatorConfig(config=static_quant_config, operators=operators, backend=Backend.DEFAULT)
-        )
+        supported_configs.append(OperatorConfig(config=static_quant_config, operators=operators))
         cls.supported_configs = supported_configs
 
+    @classmethod
+    def get_config_set_for_tuning(
+        cls,
+    ) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:  # pragma: no cover
+        # TODO fwk owner needs to update it.
+        return StaticQuantConfig(weight_sym=[True, False])
 
-# TODO(Yi) run `register_supported_configs` for all registered config.
-StaticQuantConfig.register_supported_configs()
+
+register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:

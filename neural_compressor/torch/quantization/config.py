@@ -23,32 +23,40 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import torch
 
-from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
-from neural_compressor.common.utils import DEFAULT_WHITE_LIST, FP8_QUANT, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN
+from neural_compressor.common.base_config import (
+    BaseConfig,
+    config_registry,
+    register_config,
+    register_supported_configs_for_fwk,
+)
+from neural_compressor.common.utils import (
+    DEFAULT_WHITE_LIST,
+    FP8_QUANT,
+    GPTQ,
+    OP_NAME_OR_MODULE_TYPE,
+    RTN,
+    SMOOTH_QUANT,
+    STATIC_QUANT,
+)
 from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
 from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
+
+__all__ = [
+    "RTNConfig",
+    "get_default_rtn_config",
+    "GPTQConfig",
+    "get_default_gptq_config",
+]
+
 
 FRAMEWORK_NAME = "torch"
 DTYPE_RANGE = Union[torch.dtype, List[torch.dtype]]
 
 
-class Backend(Enum):
-    DEFAULT = "stock_pytorch"
-    IPEX = "ipex"
-
-
 class OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
-    backend: List[Backend]
     valid_func_list: List[Callable] = []
-
-
-# mapping the torch module type and functional operation type to string representations
-operator2str = {torch.nn.Linear: "Linear", torch.nn.functional.linear: "linear", torch.nn.Conv2d: "Conv2d"}
-
-# Mapping from string representations to their corresponding torch operation/module type
-str2operator = {"Linear": torch.nn.Linear, "linear": torch.nn.functional.linear, "Conv2d": torch.nn.Conv2d}
 
 
 ######################## RNT Config ###############################
@@ -126,13 +134,6 @@ class RTNConfig(BaseConfig):
         self.double_quant_group_size = double_quant_group_size
         self._post_init()
 
-    def to_dict(self):
-        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
-
-    @classmethod
-    def from_dict(cls, config_dict):
-        return super(RTNConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
-
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
@@ -151,7 +152,7 @@ class RTNConfig(BaseConfig):
             double_quant_group_size=[32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024],
         )
         operators = [torch.nn.Linear, torch.nn.functional.linear]
-        supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators, backend=Backend.DEFAULT))
+        supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
@@ -165,9 +166,10 @@ class RTNConfig(BaseConfig):
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
-
-# TODO(Yi) run `register_supported_configs` for all registered config.
-RTNConfig.register_supported_configs()
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "RTNConfig", List["RTNConfig"]]:
+        # TODO fwk owner needs to update it.
+        return RTNConfig(weight_bits=[4, 6])
 
 
 def get_default_rtn_config() -> RTNConfig:
@@ -268,22 +270,13 @@ class GPTQConfig(BaseConfig):
         self.double_quant_group_size = double_quant_group_size
         self._post_init()
 
-    def to_dict(self):
-        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
-
-    @classmethod
-    def from_dict(cls, config_dict):
-        return super(GPTQConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
-
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         # TODO(Yi)
         linear_gptq_config = GPTQConfig()
         operators = [torch.nn.Linear, torch.nn.functional.linear]
-        supported_configs.append(
-            OperatorConfig(config=linear_gptq_config, operators=operators, backend=Backend.DEFAULT)
-        )
+        supported_configs.append(OperatorConfig(config=linear_gptq_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
@@ -297,9 +290,10 @@ class GPTQConfig(BaseConfig):
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
-
-# TODO(Yi) run `register_supported_configs` for all registered config.
-GPTQConfig.register_supported_configs()
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "GPTQConfig", List["GPTQConfig"]]:
+        # TODO fwk owner needs to update it.
+        return GPTQConfig(weight_bits=[4, 6])
 
 
 def get_default_gptq_config() -> GPTQConfig:
@@ -309,6 +303,193 @@ def get_default_gptq_config() -> GPTQConfig:
         the default gptq config.
     """
     return GPTQConfig()
+
+
+######################## Static Quant Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
+class StaticQuantConfig(BaseConfig):
+    """Config class for static quantization."""
+
+    name = STATIC_QUANT
+    params_list = [
+        "w_dtype",
+        "w_sym",
+        "w_granularity",
+        "w_algo",
+        "act_dtype",
+        "act_sym",
+        "act_granularity",
+        "act_algo",
+    ]
+    supported_configs: List[OperatorConfig] = []
+
+    def __init__(
+        self,
+        w_dtype: str = "int8",
+        w_sym: bool = True,
+        w_granularity: str = "per_channel",
+        w_algo: str = "minmax",
+        act_dtype: str = "uint8",
+        act_sym: bool = False,
+        act_granularity: str = "per_tensor",
+        act_algo: str = "kl",
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init Static Quant Configs."""
+        super().__init__(white_list=white_list)
+        self.w_dtype = w_dtype
+        self.w_sym = w_sym
+        self.w_granularity = w_granularity
+        self.w_algo = w_algo
+        self.act_dtype = act_dtype
+        self.act_sym = act_sym
+        self.act_granularity = act_granularity
+        self.act_algo = act_algo
+        self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        # TODO(Yi)
+        linear_static_config = StaticQuantConfig()
+        operators = [torch.nn.Linear]
+        supported_configs.append(OperatorConfig(config=linear_static_config, operators=operators))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = (torch.nn.Linear,)
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
+        # TODO fwk owner needs to update it.
+        return StaticQuantConfig(w_sym=[True, False])
+
+
+def get_default_static_config() -> StaticQuantConfig:
+    """Generate the default static quant config.
+
+    Returns:
+        the default static quant config.
+    """
+    return StaticQuantConfig()
+
+
+######################## Smooth Quant Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT)
+class SmoothQuantConfig(BaseConfig):
+    """Config class for smooth quantization."""
+
+    name = SMOOTH_QUANT
+    params_list = [
+        "w_dtype",
+        "w_sym",
+        "w_granularity",
+        "w_algo",
+        "act_dtype",
+        "act_sym",
+        "act_granularity",
+        "act_algo",
+        "alpha",
+        "folding",
+        "scale_sharing",
+        "auto_alpha_args",
+    ]
+    supported_configs: List[OperatorConfig] = []
+
+    def __init__(
+        self,
+        w_dtype: str = "int8",
+        w_sym: bool = True,
+        w_granularity: str = "per_channel",
+        w_algo: str = "minmax",
+        act_dtype: str = "uint8",
+        act_sym: bool = False,
+        act_granularity: str = "per_tensor",
+        act_algo: str = "kl",
+        alpha: float = 0.5,
+        folding: bool = False,
+        # below for autotune
+        scale_sharing: bool = False,
+        init_alpha: float = 0.5,
+        alpha_min: float = 0.0,
+        alpha_max: float = 1.0,
+        alpha_step: float = 0.1,
+        shared_criterion: str = "max",
+        enable_blockwise_loss: bool = False,
+        auto_alpha_args: dict = None,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init SmoothQuant Configs."""
+        super().__init__(white_list=white_list)
+        self.w_dtype = w_dtype
+        self.w_sym = w_sym
+        self.w_granularity = w_granularity
+        self.w_algo = w_algo
+        self.act_dtype = act_dtype
+        self.act_sym = act_sym
+        self.act_granularity = act_granularity
+        self.act_algo = act_algo
+        self.alpha = alpha
+        self.folding = folding
+        # below for autotune
+        self.scale_sharing = scale_sharing
+        self.init_alpha = init_alpha
+        self.alpha_min = alpha_min
+        self.alpha_max = alpha_max
+        self.alpha_step = alpha_step
+        self.shared_criterion = shared_criterion
+        self.enable_blockwise_loss = enable_blockwise_loss
+        self.auto_alpha_args = {
+            "init_alpha": self.init_alpha,
+            "alpha_min": self.alpha_min,
+            "alpha_max": self.alpha_max,
+            "alpha_step": self.alpha_step,
+            "shared_criterion": self.shared_criterion,
+            "enable_blockwise_loss": self.enable_blockwise_loss,
+        }
+        self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        # TODO(Yi)
+        linear_sq_config = SmoothQuantConfig()
+        operators = [torch.nn.Linear]
+        supported_configs.append(OperatorConfig(config=linear_sq_config, operators=operators))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = (torch.nn.Linear,)
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:
+        # TODO fwk owner needs to update it.
+        return SmoothQuantConfig(alpha=[0.1, 0.5])
+
+
+def get_default_sq_config() -> SmoothQuantConfig:
+    """Generate the default smoothquant config.
+
+    Returns:
+        the default smoothquant config.
+    """
+    return SmoothQuantConfig()
 
 
 ######################## FP8 Config ###############################
@@ -349,13 +530,6 @@ if is_hpex_avaliable():
             self.device = device
             self._post_init()
 
-        def to_dict(self):
-            return super().to_dict(params_list=self.params_list, operator2str=operator2str)
-
-        @classmethod
-        def from_dict(cls, config_dict):
-            return super(FP8QConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
-
         @classmethod
         def register_supported_configs(cls) -> List[OperatorConfig]:
             supported_configs = []
@@ -369,7 +543,7 @@ if is_hpex_avaliable():
             from .fp8.quantization_impl import white_list
 
             operators = white_list
-            supported_configs.append(OperatorConfig(config=fp8_config, operators=operators, backend=Backend.DEFAULT))
+            supported_configs.append(OperatorConfig(config=fp8_config, operators=operators))
             cls.supported_configs = supported_configs
 
         @staticmethod
@@ -384,8 +558,10 @@ if is_hpex_avaliable():
             logger.debug(f"Get model info: {filter_result}")
             return filter_result
 
-    # TODO(Yi) run `register_supported_configs` for all registered config.
-    FP8QConfig.register_supported_configs()
+        @classmethod
+        def get_config_set_for_tuning(cls) -> Union[None, "FP8QConfig", List["FP8QConfig"]]:
+            # TODO fwk owner needs to update it.
+            return FP8QConfig(act_dtype=[torch.float8_e4m3fn])
 
     def get_default_fp8_qconfig() -> FP8QConfig:
         """Generate the default gptq config.
@@ -397,6 +573,10 @@ if is_hpex_avaliable():
 
     ##################### Algo Configs End ###################################
 
-    def get_all_registered_configs() -> Dict[str, BaseConfig]:
-        registered_configs = config_registry.get_all_configs()
-        return registered_configs.get(FRAMEWORK_NAME, {})
+
+register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
+
+
+def get_all_registered_configs() -> Dict[str, BaseConfig]:
+    registered_configs = config_registry.get_all_configs()
+    return registered_configs.get(FRAMEWORK_NAME, {})

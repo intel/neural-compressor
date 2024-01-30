@@ -492,13 +492,6 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 8
     },
-    "opt_125m_woq_gptq_debug_int4":{
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
-      "dataset_location": "",
-      "input_model": "",
-      "main_script": "run_clm_no_trainer.py",
-      "batch_size": 8
-    },
     "opt_125m_woq_teq":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
       "dataset_location": "",
@@ -583,13 +576,6 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 1
     },
-    "gpt_j_woq_gptq_debug_int4":{
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
-      "dataset_location": "",
-      "input_model": "",
-      "main_script": "run_clm_no_trainer.py",
-      "batch_size": 1
-    },
     "gpt_j_woq_gptq_int4":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
       "dataset_location": "",
@@ -618,7 +604,7 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 1
     },
-    "falcon_7b_woq_gptq_debug_int4":{
+    "falcon_7b_woq_gptq_int4":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
       "dataset_location": "",
       "input_model": "",

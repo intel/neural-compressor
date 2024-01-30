@@ -129,8 +129,8 @@ class Sampler:
 
 
 class ConfigLoader:
-    def __init__(self, quant_configs, sampler: Sampler) -> None:
-        self.quant_configs = quant_configs
+    def __init__(self, config_set, sampler: Sampler) -> None:
+        self.config_set = config_set
         self.sampler = sampler
 
     @staticmethod
@@ -146,7 +146,7 @@ class ConfigLoader:
     def parse_quant_configs(self) -> List[BaseConfig]:
         # TODO (Yi) separate this functionality into `Sampler` in the next PR
         quant_config_list = []
-        for quant_config in self.quant_configs:
+        for quant_config in self.config_set:
             quant_config_list.extend(ConfigLoader.parse_quant_config(quant_config))
         return quant_config_list
 
@@ -210,14 +210,14 @@ class TuningConfig:
     """Base Class for Tuning Criterion.
 
     Args:
-        quant_configs: quantization configs. Default value is empty.
+        config_set: quantization configs. Default value is empty.
         timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
         max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
     """
 
-    def __init__(self, quant_configs=None, timeout=0, max_trials=100, sampler: Sampler = None) -> None:
+    def __init__(self, config_set=None, timeout=0, max_trials=100, sampler: Sampler = None) -> None:
         """Init a TuneCriterion object."""
-        self.quant_configs = quant_configs
+        self.config_set = config_set
         self.timeout = timeout
         self.max_trials = max_trials
         self.sampler = sampler
@@ -265,7 +265,7 @@ class TuningMonitor:
 
 
 def init_tuning(tuning_config: TuningConfig) -> Tuple[ConfigLoader, TuningLogger, TuningMonitor]:
-    config_loader = ConfigLoader(quant_configs=tuning_config.quant_configs, sampler=tuning_config.sampler)
+    config_loader = ConfigLoader(config_set=tuning_config.config_set, sampler=tuning_config.sampler)
     tuning_logger = TuningLogger()
     tuning_monitor = TuningMonitor(tuning_config)
     return config_loader, tuning_logger, tuning_monitor
