@@ -79,11 +79,6 @@ def _pretty_dict(value, indent=0):
         return repr(value)
 
 
-level = Logger().get_logger().level
-
-logger = Logger().get_logger()
-
-
 def log(level, msg, *args, **kwargs):
     """Output log with the level as a parameter."""
     if isinstance(msg, dict):
@@ -136,3 +131,8 @@ def warning(msg, *args, **kwargs):
             Logger().get_logger().warning(line, *args, **kwargs, stacklevel=2)
     else:
         Logger().get_logger().warning(msg, *args, **kwargs, stacklevel=2)
+
+
+level = Logger().get_logger().level
+
+logger = Logger().get_logger()
