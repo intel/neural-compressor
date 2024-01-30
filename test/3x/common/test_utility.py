@@ -18,20 +18,41 @@ class TestOptions(unittest.TestCase):
         set_random_seed(seed)
         self.assertEqual(options.random_seed, seed)
 
+        # non int type
+        seed = "12345"
+        with self.assertRaises(AssertionError):
+            set_random_seed(seed)
+
     def test_set_workspace(self):
         workspace = "/path/to/workspace"
         set_workspace(workspace)
         self.assertEqual(options.workspace, workspace)
+
+        # non String type
+        workspace = 12345
+        with self.assertRaises(AssertionError):
+            set_workspace(workspace)
 
     def test_set_resume_from(self):
         resume_from = "/path/to/resume"
         set_resume_from(resume_from)
         self.assertEqual(options.resume_from, resume_from)
 
+        # non String type
+        resume_from = 12345
+        with self.assertRaises(AssertionError):
+            set_resume_from(resume_from)
+
     def test_set_tensorboard(self):
         tensorboard = True
         set_tensorboard(tensorboard)
         self.assertEqual(options.tensorboard, tensorboard)
+
+        # non bool type
+        tensorboard = 123
+        with self.assertRaises(AssertionError):
+            set_tensorboard(tensorboard)
+
 
 
 if __name__ == "__main__":
