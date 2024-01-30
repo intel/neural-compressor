@@ -42,9 +42,14 @@ logger = Logger().get_logger()
 
 from typing import Any, Callable, List, Optional, Tuple, Union
 
-from neural_compressor.common.base_config import BaseConfig, ComposableConfig, get_all_config_set_from_config_registry, register_config
-from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE
+from neural_compressor.common.base_config import (
+    BaseConfig,
+    ComposableConfig,
+    get_all_config_set_from_config_registry,
+    register_config,
+)
 from neural_compressor.common.base_tuning import ConfigLoader, Sampler
+from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE
 
 PRIORITY_FAKE_ALGO = 100
 FAKE_CONFIG_NAME = "fake"
@@ -168,6 +173,7 @@ class ConfigLoaderTest(unittest.TestCase):
         self.loader.parse_quant_configs = lambda: quant_configs
         result = list(self.loader)
         self.assertEqual(result, quant_configs)
+
 
 if __name__ == "__main__":
     unittest.main()
