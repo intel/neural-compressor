@@ -65,7 +65,7 @@ Functions
    It assists validation teams in retrieving logs.
 
 
-.. py:class:: TuningConfig(config_set=None, timeout=0, max_trials=100, sampler: Sampler = None)
+.. py:class:: TuningConfig(config_set=None, timeout=0, max_trials=100, sampler: Sampler = None, tolerable_loss=0.01)
 
 
    Base Class for Tuning Criterion.
@@ -73,6 +73,46 @@ Functions
    :param config_set: quantization configs. Default value is empty.
    :param timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
    :param max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
+   :param tolerable_loss: This float indicates how much metric loss we can accept.             The metric loss is relative, it can be both positive and negative. Default is 0.01.
+
+   .. rubric:: Examples
+
+   from neural_compressor import TuningConfig
+   tune_config = TuningConfig(
+       config_set=[config1, config2, ...],
+       max_trials=3,
+       tolerable_loss=0.01
+   )
+
+   # Case 1: Tolerable Loss
+   fp32_baseline = 100
+   config1_metric, config2_metric, ... = 98, 99, ...
+
+   # Tuning result of case 1:
+   # The best tuning config is config2, because config2_metric >= fp32_baseline * (1 - tolerable_loss)
+
+   # Case 2: Maximum Trials
+   fp32_baseline = 100
+   config1_metric, config2_metric, config3_metric, ... = 98, 98, 97, ...
+
+   # Tuning result of case 2:
+   # The best tuning config is config2, because of the following:
+   # 1. Not achieving the set goal. (config_metric < fp32_baseline * (1 - tolerable_loss))
+   # 2. Reached maximum tuning times.
+
+   # Case 3: Timeout
+   tune_config = TuningConfig(
+       config_set=[config1, config2, ...],
+       timeout=10, # seconds
+       max_trials=3,
+       tolerable_loss=0.01
+   )
+   config1_tuning_time, config2_tuning_time, config3_tuning_time, ... = 4, 5, 6, ... # seconds
+   fp32_baseline = 100
+   config1_metric, config2_metric, config3_metric, ... = 98, 98, 97, ...
+
+   # Tuning result of case 3:
+   # The best tuning config is config2, due to timeout, the third trial was forced to exit.
 
 
 

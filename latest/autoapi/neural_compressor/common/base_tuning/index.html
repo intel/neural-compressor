@@ -158,7 +158,7 @@ user_eval_fns4 = [</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.common.base_tuning.TuningConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.base_tuning.</span></span><span class="sig-name descname"><span class="pre">TuningConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../data/dataloaders/sampler/index.html#neural_compressor.data.dataloaders.sampler.Sampler" title="neural_compressor.data.dataloaders.sampler.Sampler"><span class="pre">Sampler</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.TuningConfig" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.base_tuning.</span></span><span class="sig-name descname"><span class="pre">TuningConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../data/dataloaders/sampler/index.html#neural_compressor.data.dataloaders.sampler.Sampler" title="neural_compressor.data.dataloaders.sampler.Sampler"><span class="pre">Sampler</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerable_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.TuningConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Base Class for Tuning Criterion.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -166,9 +166,45 @@ user_eval_fns4 = [</p>
 <li><p><strong>config_set</strong> – quantization configs. Default value is empty.</p></li>
 <li><p><strong>timeout</strong> – Tuning timeout (seconds). Default value is 0 which means early stop.</p></li>
 <li><p><strong>max_trials</strong> – Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.</p></li>
+<li><p><strong>tolerable_loss</strong> – This float indicates how much metric loss we can accept.             The metric loss is relative, it can be both positive and negative. Default is 0.01.</p></li>
 </ul>
 </dd>
 </dl>
+<p class="rubric">Examples</p>
+<p>from neural_compressor import TuningConfig
+tune_config = TuningConfig(</p>
+<blockquote>
+<div><p>config_set=[config1, config2, …],
+max_trials=3,
+tolerable_loss=0.01</p>
+</div></blockquote>
+<p>)</p>
+<p># Case 1: Tolerable Loss
+fp32_baseline = 100
+config1_metric, config2_metric, … = 98, 99, …</p>
+<p># Tuning result of case 1:
+# The best tuning config is config2, because config2_metric &gt;= fp32_baseline * (1 - tolerable_loss)</p>
+<p># Case 2: Maximum Trials
+fp32_baseline = 100
+config1_metric, config2_metric, config3_metric, … = 98, 98, 97, …</p>
+<p># Tuning result of case 2:
+# The best tuning config is config2, because of the following:
+# 1. Not achieving the set goal. (config_metric &lt; fp32_baseline * (1 - tolerable_loss))
+# 2. Reached maximum tuning times.</p>
+<p># Case 3: Timeout
+tune_config = TuningConfig(</p>
+<blockquote>
+<div><p>config_set=[config1, config2, …],
+timeout=10, # seconds
+max_trials=3,
+tolerable_loss=0.01</p>
+</div></blockquote>
+<p>)
+config1_tuning_time, config2_tuning_time, config3_tuning_time, … = 4, 5, 6, … # seconds
+fp32_baseline = 100
+config1_metric, config2_metric, config3_metric, … = 98, 98, 97, …</p>
+<p># Tuning result of case 3:
+# The best tuning config is config2, due to timeout, the third trial was forced to exit.</p>
 </dd></dl>
 
 </section>
@@ -189,7 +225,7 @@ user_eval_fns4 = [</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f48505535e0> 
+   <jinja2.runtime.BlockReference object at 0x7fa49d2dd990> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
