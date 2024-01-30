@@ -232,9 +232,6 @@ class TuningConfig:
         self.sampler = sampler
         self.tolerable_loss = tolerable_loss
 
-    def set_tolerable_loss(self, tolerable_loss: int):
-        self.tolerable_loss = tolerable_loss
-
 
 class _TrialRecord:
     @staticmethod
@@ -288,9 +285,8 @@ class TuningMonitor:
         # reach max trials
         reach_max_trials = self.trial_cnt >= self.tuning_config.max_trials
         # reach accuracy goal
-        meet_accuracy_goal = False
-        if self.baseline is not None:
-            meet_accuracy_goal = self.tuning_history[-1].trial_result >= (
+        meet_accuracy_goal = False if self.baseline is None else \
+            self.tuning_history[-1].trial_result >= (
                 self.baseline * (1 - self.tuning_config.tolerable_loss)
             )
             # [-1] is the last element representing the latest trail record.
