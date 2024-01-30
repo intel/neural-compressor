@@ -161,8 +161,8 @@ user_model.eval()
 if args.approach in ["dynamic", "static"]:
     print("device:", next(user_model.parameters()).device)
     from neural_compressor.torch.quantization.config import FP8QConfig, get_default_fp8_qconfig
-    from neural_compressor.torch.quantization.fp8 import quantize_dynamic
-    from neural_compressor.torch.quantization import quantize, quantize_dynamic
+    from neural_compressor.torch.algorithms.habana_fp8 import quantize_dynamic
+    from neural_compressor.torch.quantization import quantize
     if args.precision == "fp8_e4m3":
         dtype = torch.float8_e4m3fn
     else:
