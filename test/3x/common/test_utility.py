@@ -54,6 +54,5 @@ class TestOptions(unittest.TestCase):
             set_tensorboard(tensorboard)
 
 
-
 if __name__ == "__main__":
     unittest.main()
