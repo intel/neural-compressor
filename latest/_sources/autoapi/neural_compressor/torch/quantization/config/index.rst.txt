@@ -29,7 +29,7 @@ Functions
 
 
 
-.. py:class:: RTNConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, act_dtype: str = 'fp32', enable_full_range: bool = False, enable_mse_search: bool = False, group_dim: int = 1, return_int: bool = False, double_quant_dtype: str = 'fp32', double_quant_bits: int = 8, double_quant_sym: bool = True, double_quant_group_size: int = 256, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+.. py:class:: RTNConfig(dtype: str = 'int', bits: int = 4, use_sym: bool = True, group_size: int = 32, group_dim: int = 1, use_full_range: bool = False, use_mse_search: bool = False, use_layer_wise: bool = False, export_compressed_model: bool = False, use_double_quant: bool = False, double_quant_dtype: str = 'int', double_quant_bits: int = 8, double_quant_use_sym: bool = True, double_quant_group_size: int = 256, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
 
 
 

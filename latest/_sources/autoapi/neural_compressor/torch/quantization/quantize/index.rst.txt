@@ -16,7 +16,6 @@ Functions
 .. autoapisummary::
 
    neural_compressor.torch.quantization.quantize.quantize
-   neural_compressor.torch.quantization.quantize.quantize_dynamic
 
 
 
@@ -28,19 +27,6 @@ Functions
    :param quant_config: a quantization configuration.
    :param run_fn: a calibration function for calibrating the model. Defaults to None.
    :param run_args: positional arguments for `run_fn`. Defaults to None.
-
-   :returns: The quantized model.
-
-
-.. py:function:: quantize_dynamic(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig, run_fn: Callable = None, run_args: Any = None, inplace: bool = True) -> torch.nn.Module
-
-   The main entry to quantize model with dynamic mode.
-
-   :param model: a float model to be quantized.
-   :param quant_config: a quantization configuration.
-   :param run_fn: a calibration function for calibrating the model. Defaults to None.
-   :param run_args: positional arguments for `run_fn`. Defaults to None.
-   :param inplace: carry out model transformations in-place, the original module is mutated. Default is True.
 
    :returns: The quantized model.
 

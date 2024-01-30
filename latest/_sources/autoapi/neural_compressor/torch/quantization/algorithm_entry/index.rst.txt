@@ -1,0 +1,26 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.quantization.algorithm_entry`
+==============================================================
+
+.. py:module:: neural_compressor.torch.quantization.algorithm_entry
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.quantization.algorithm_entry.rtn_entry
+
+
+
+.. py:function:: rtn_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], neural_compressor.torch.quantization.RTNConfig], *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply rtn quantization.
+
+

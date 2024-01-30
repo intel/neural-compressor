@@ -184,13 +184,11 @@
 </li>
       <li><a href="autoapi/neural_compressor/adaptor/torch_utils/util/index.html#neural_compressor.adaptor.torch_utils.util.append_attr">append_attr() (in module neural_compressor.adaptor.torch_utils.util)</a>
 </li>
-      <li><a href="autoapi/neural_compressor/adaptor/ox_utils/weight_only/index.html#neural_compressor.adaptor.ox_utils.weight_only.apply_awq_clip">apply_awq_clip() (in module neural_compressor.adaptor.ox_utils.weight_only)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="autoapi/neural_compressor/adaptor/ox_utils/weight_only/index.html#neural_compressor.adaptor.ox_utils.weight_only.apply_awq_scale">apply_awq_scale() (in module neural_compressor.adaptor.ox_utils.weight_only)</a>
+      <li><a href="autoapi/neural_compressor/adaptor/ox_utils/weight_only/index.html#neural_compressor.adaptor.ox_utils.weight_only.apply_awq_clip">apply_awq_clip() (in module neural_compressor.adaptor.ox_utils.weight_only)</a>
 </li>
-      <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/gptq/index.html#neural_compressor.torch.algorithms.weight_only.gptq.apply_gptq_quantize">apply_gptq_quantize() (in module neural_compressor.torch.algorithms.weight_only.gptq)</a>
+      <li><a href="autoapi/neural_compressor/adaptor/ox_utils/weight_only/index.html#neural_compressor.adaptor.ox_utils.weight_only.apply_awq_scale">apply_awq_scale() (in module neural_compressor.adaptor.ox_utils.weight_only)</a>
 </li>
       <li><a href="autoapi/neural_compressor/adaptor/tf_utils/util/index.html#neural_compressor.adaptor.tf_utils.util.apply_inlining">apply_inlining() (in module neural_compressor.adaptor.tf_utils.util)</a>
 </li>
@@ -1076,7 +1074,7 @@
       <li><a href="autoapi/neural_compressor/adaptor/torch_utils/model_wrapper/index.html#neural_compressor.adaptor.torch_utils.model_wrapper.FakeAffineTensorQuantFunction">FakeAffineTensorQuantFunction (class in neural_compressor.adaptor.torch_utils.model_wrapper)</a>
 
       <ul>
-        <li><a href="autoapi/neural_compressor/torch/quantization/layers/index.html#neural_compressor.torch.quantization.layers.FakeAffineTensorQuantFunction">(class in neural_compressor.torch.quantization.layers)</a>
+        <li><a href="autoapi/neural_compressor/torch/quantization/modules/index.html#neural_compressor.torch.quantization.modules.FakeAffineTensorQuantFunction">(class in neural_compressor.torch.quantization.modules)</a>
 </li>
       </ul></li>
       <li><a href="autoapi/neural_compressor/adaptor/tf_utils/quantize_graph/qat/fake_quantize/index.html#neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantize">FakeQuantize (class in neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize)</a>
@@ -3175,6 +3173,14 @@
 </li>
         <li><a href="autoapi/neural_compressor/torch/algorithms/index.html#module-neural_compressor.torch.algorithms">neural_compressor.torch.algorithms</a>
 </li>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/habana_fp8/index.html#module-neural_compressor.torch.algorithms.habana_fp8">neural_compressor.torch.algorithms.habana_fp8</a>
+</li>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/habana_fp8/fp8_quant/index.html#module-neural_compressor.torch.algorithms.habana_fp8.fp8_quant">neural_compressor.torch.algorithms.habana_fp8.fp8_quant</a>
+</li>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/habana_fp8/modules/index.html#module-neural_compressor.torch.algorithms.habana_fp8.modules">neural_compressor.torch.algorithms.habana_fp8.modules</a>
+</li>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/habana_fp8/observer/index.html#module-neural_compressor.torch.algorithms.habana_fp8.observer">neural_compressor.torch.algorithms.habana_fp8.observer</a>
+</li>
         <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/index.html#module-neural_compressor.torch.algorithms.weight_only">neural_compressor.torch.algorithms.weight_only</a>
 </li>
         <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/gptq/index.html#module-neural_compressor.torch.algorithms.weight_only.gptq">neural_compressor.torch.algorithms.weight_only.gptq</a>
@@ -3182,8 +3188,6 @@
         <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/rtn/index.html#module-neural_compressor.torch.algorithms.weight_only.rtn">neural_compressor.torch.algorithms.weight_only.rtn</a>
 </li>
         <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/utility/index.html#module-neural_compressor.torch.algorithms.weight_only.utility">neural_compressor.torch.algorithms.weight_only.utility</a>
-</li>
-        <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only_algos/index.html#module-neural_compressor.torch.algorithms.weight_only_algos">neural_compressor.torch.algorithms.weight_only_algos</a>
 </li>
         <li><a href="autoapi/neural_compressor/torch/amp/index.html#module-neural_compressor.torch.amp">neural_compressor.torch.amp</a>
 </li>
@@ -3195,25 +3199,21 @@
 </li>
         <li><a href="autoapi/neural_compressor/torch/quantization/index.html#module-neural_compressor.torch.quantization">neural_compressor.torch.quantization</a>
 </li>
+        <li><a href="autoapi/neural_compressor/torch/quantization/algorithm_entry/index.html#module-neural_compressor.torch.quantization.algorithm_entry">neural_compressor.torch.quantization.algorithm_entry</a>
+</li>
         <li><a href="autoapi/neural_compressor/torch/quantization/autotune/index.html#module-neural_compressor.torch.quantization.autotune">neural_compressor.torch.quantization.autotune</a>
 </li>
         <li><a href="autoapi/neural_compressor/torch/quantization/config/index.html#module-neural_compressor.torch.quantization.config">neural_compressor.torch.quantization.config</a>
 </li>
-        <li><a href="autoapi/neural_compressor/torch/quantization/fp8/index.html#module-neural_compressor.torch.quantization.fp8">neural_compressor.torch.quantization.fp8</a>
-</li>
-        <li><a href="autoapi/neural_compressor/torch/quantization/fp8/modules/index.html#module-neural_compressor.torch.quantization.fp8.modules">neural_compressor.torch.quantization.fp8.modules</a>
-</li>
-        <li><a href="autoapi/neural_compressor/torch/quantization/fp8/observer/index.html#module-neural_compressor.torch.quantization.fp8.observer">neural_compressor.torch.quantization.fp8.observer</a>
-</li>
-        <li><a href="autoapi/neural_compressor/torch/quantization/fp8/quantization_impl/index.html#module-neural_compressor.torch.quantization.fp8.quantization_impl">neural_compressor.torch.quantization.fp8.quantization_impl</a>
-</li>
-        <li><a href="autoapi/neural_compressor/torch/quantization/layers/index.html#module-neural_compressor.torch.quantization.layers">neural_compressor.torch.quantization.layers</a>
+        <li><a href="autoapi/neural_compressor/torch/quantization/modules/index.html#module-neural_compressor.torch.quantization.modules">neural_compressor.torch.quantization.modules</a>
 </li>
         <li><a href="autoapi/neural_compressor/torch/quantization/quantize/index.html#module-neural_compressor.torch.quantization.quantize">neural_compressor.torch.quantization.quantize</a>
 </li>
         <li><a href="autoapi/neural_compressor/torch/utils/index.html#module-neural_compressor.torch.utils">neural_compressor.torch.utils</a>
 </li>
         <li><a href="autoapi/neural_compressor/torch/utils/constants/index.html#module-neural_compressor.torch.utils.constants">neural_compressor.torch.utils.constants</a>
+</li>
+        <li><a href="autoapi/neural_compressor/torch/utils/environ/index.html#module-neural_compressor.torch.utils.environ">neural_compressor.torch.utils.environ</a>
 </li>
         <li><a href="autoapi/neural_compressor/torch/utils/utility/index.html#module-neural_compressor.torch.utils.utility">neural_compressor.torch.utils.utility</a>
 </li>
@@ -3301,7 +3301,7 @@
       <li><a href="autoapi/neural_compressor/adaptor/torch_utils/model_wrapper/index.html#neural_compressor.adaptor.torch_utils.model_wrapper.MulLinear">MulLinear (class in neural_compressor.adaptor.torch_utils.model_wrapper)</a>
 
       <ul>
-        <li><a href="autoapi/neural_compressor/torch/quantization/layers/index.html#neural_compressor.torch.quantization.layers.MulLinear">(class in neural_compressor.torch.quantization.layers)</a>
+        <li><a href="autoapi/neural_compressor/torch/quantization/modules/index.html#neural_compressor.torch.quantization.modules.MulLinear">(class in neural_compressor.torch.quantization.modules)</a>
 </li>
       </ul></li>
       <li><a href="autoapi/neural_compressor/objective/index.html#neural_compressor.objective.MultiObjective">MultiObjective (class in neural_compressor.objective)</a>
@@ -5168,8 +5168,6 @@
         <li><a href="autoapi/neural_compressor/data/datasets/coco_dataset/index.html#module-neural_compressor.data.datasets.coco_dataset">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     neural_compressor.data.datasets.dataset
 
@@ -5177,6 +5175,8 @@
         <li><a href="autoapi/neural_compressor/data/datasets/dataset/index.html#module-neural_compressor.data.datasets.dataset">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     neural_compressor.data.datasets.dummy_dataset
 
@@ -6613,6 +6613,34 @@
 </li>
       </ul></li>
       <li>
+    neural_compressor.torch.algorithms.habana_fp8
+
+      <ul>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/habana_fp8/index.html#module-neural_compressor.torch.algorithms.habana_fp8">module</a>
+</li>
+      </ul></li>
+      <li>
+    neural_compressor.torch.algorithms.habana_fp8.fp8_quant
+
+      <ul>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/habana_fp8/fp8_quant/index.html#module-neural_compressor.torch.algorithms.habana_fp8.fp8_quant">module</a>
+</li>
+      </ul></li>
+      <li>
+    neural_compressor.torch.algorithms.habana_fp8.modules
+
+      <ul>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/habana_fp8/modules/index.html#module-neural_compressor.torch.algorithms.habana_fp8.modules">module</a>
+</li>
+      </ul></li>
+      <li>
+    neural_compressor.torch.algorithms.habana_fp8.observer
+
+      <ul>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/habana_fp8/observer/index.html#module-neural_compressor.torch.algorithms.habana_fp8.observer">module</a>
+</li>
+      </ul></li>
+      <li>
     neural_compressor.torch.algorithms.weight_only
 
       <ul>
@@ -6638,13 +6666,6 @@
 
       <ul>
         <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/utility/index.html#module-neural_compressor.torch.algorithms.weight_only.utility">module</a>
-</li>
-      </ul></li>
-      <li>
-    neural_compressor.torch.algorithms.weight_only_algos
-
-      <ul>
-        <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only_algos/index.html#module-neural_compressor.torch.algorithms.weight_only_algos">module</a>
 </li>
       </ul></li>
       <li>
@@ -6683,6 +6704,13 @@
 </li>
       </ul></li>
       <li>
+    neural_compressor.torch.quantization.algorithm_entry
+
+      <ul>
+        <li><a href="autoapi/neural_compressor/torch/quantization/algorithm_entry/index.html#module-neural_compressor.torch.quantization.algorithm_entry">module</a>
+</li>
+      </ul></li>
+      <li>
     neural_compressor.torch.quantization.autotune
 
       <ul>
@@ -6697,38 +6725,10 @@
 </li>
       </ul></li>
       <li>
-    neural_compressor.torch.quantization.fp8
+    neural_compressor.torch.quantization.modules
 
       <ul>
-        <li><a href="autoapi/neural_compressor/torch/quantization/fp8/index.html#module-neural_compressor.torch.quantization.fp8">module</a>
-</li>
-      </ul></li>
-      <li>
-    neural_compressor.torch.quantization.fp8.modules
-
-      <ul>
-        <li><a href="autoapi/neural_compressor/torch/quantization/fp8/modules/index.html#module-neural_compressor.torch.quantization.fp8.modules">module</a>
-</li>
-      </ul></li>
-      <li>
-    neural_compressor.torch.quantization.fp8.observer
-
-      <ul>
-        <li><a href="autoapi/neural_compressor/torch/quantization/fp8/observer/index.html#module-neural_compressor.torch.quantization.fp8.observer">module</a>
-</li>
-      </ul></li>
-      <li>
-    neural_compressor.torch.quantization.fp8.quantization_impl
-
-      <ul>
-        <li><a href="autoapi/neural_compressor/torch/quantization/fp8/quantization_impl/index.html#module-neural_compressor.torch.quantization.fp8.quantization_impl">module</a>
-</li>
-      </ul></li>
-      <li>
-    neural_compressor.torch.quantization.layers
-
-      <ul>
-        <li><a href="autoapi/neural_compressor/torch/quantization/layers/index.html#module-neural_compressor.torch.quantization.layers">module</a>
+        <li><a href="autoapi/neural_compressor/torch/quantization/modules/index.html#module-neural_compressor.torch.quantization.modules">module</a>
 </li>
       </ul></li>
       <li>
@@ -6750,6 +6750,13 @@
 
       <ul>
         <li><a href="autoapi/neural_compressor/torch/utils/constants/index.html#module-neural_compressor.torch.utils.constants">module</a>
+</li>
+      </ul></li>
+      <li>
+    neural_compressor.torch.utils.environ
+
+      <ul>
+        <li><a href="autoapi/neural_compressor/torch/utils/environ/index.html#module-neural_compressor.torch.utils.environ">module</a>
 </li>
       </ul></li>
       <li>
@@ -7793,8 +7800,6 @@
 </li>
       <li><a href="autoapi/neural_compressor/adaptor/ox_utils/util/index.html#neural_compressor.adaptor.ox_utils.util.quantize_data_with_scale_zero">quantize_data_with_scale_zero() (in module neural_compressor.adaptor.ox_utils.util)</a>
 </li>
-      <li><a href="autoapi/neural_compressor/torch/quantization/quantize/index.html#neural_compressor.torch.quantization.quantize.quantize_dynamic">quantize_dynamic() (in module neural_compressor.torch.quantization.quantize)</a>
-</li>
       <li><a href="autoapi/neural_compressor/tensorflow/quantization/quantize/index.html#neural_compressor.tensorflow.quantization.quantize.quantize_model">quantize_model() (in module neural_compressor.tensorflow.quantization.quantize)</a>
 </li>
       <li><a href="autoapi/neural_compressor/adaptor/ox_utils/util/index.html#neural_compressor.adaptor.ox_utils.util.quantize_nparray">quantize_nparray() (in module neural_compressor.adaptor.ox_utils.util)</a>
@@ -8103,6 +8108,8 @@
       </ul></li>
       <li><a href="autoapi/neural_compressor/adaptor/torch_utils/autoround/autoround/index.html#neural_compressor.adaptor.torch_utils.autoround.autoround.round_ste">round_ste() (in module neural_compressor.adaptor.torch_utils.autoround.autoround)</a>
 </li>
+      <li><a href="autoapi/neural_compressor/torch/quantization/algorithm_entry/index.html#neural_compressor.torch.quantization.algorithm_entry.rtn_entry">rtn_entry() (in module neural_compressor.torch.quantization.algorithm_entry)</a>
+</li>
       <li><a href="autoapi/neural_compressor/adaptor/ox_utils/weight_only/index.html#neural_compressor.adaptor.ox_utils.weight_only.rtn_quantize">rtn_quantize() (in module neural_compressor.adaptor.ox_utils.weight_only)</a>
 
       <ul>
@@ -8114,11 +8121,7 @@
 </li>
       </ul></li>
       <li><a href="autoapi/neural_compressor/onnxrt/algorithms/weight_only/algo_entry/index.html#neural_compressor.onnxrt.algorithms.weight_only.algo_entry.rtn_quantize_entry">rtn_quantize_entry() (in module neural_compressor.onnxrt.algorithms.weight_only.algo_entry)</a>
-
-      <ul>
-        <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only_algos/index.html#neural_compressor.torch.algorithms.weight_only_algos.rtn_quantize_entry">(in module neural_compressor.torch.algorithms.weight_only_algos)</a>
 </li>
-      </ul></li>
       <li><a href="autoapi/neural_compressor/onnxrt/quantization/config/index.html#neural_compressor.onnxrt.quantization.config.RTNConfig">RTNConfig (class in neural_compressor.onnxrt.quantization.config)</a>
 
       <ul>
@@ -8768,7 +8771,7 @@
       <li><a href="autoapi/neural_compressor/adaptor/torch_utils/model_wrapper/index.html#neural_compressor.adaptor.torch_utils.model_wrapper.TEQLinearFakeQuant">TEQLinearFakeQuant (class in neural_compressor.adaptor.torch_utils.model_wrapper)</a>
 
       <ul>
-        <li><a href="autoapi/neural_compressor/torch/quantization/layers/index.html#neural_compressor.torch.quantization.layers.TEQLinearFakeQuant">(class in neural_compressor.torch.quantization.layers)</a>
+        <li><a href="autoapi/neural_compressor/torch/quantization/modules/index.html#neural_compressor.torch.quantization.modules.TEQLinearFakeQuant">(class in neural_compressor.torch.quantization.modules)</a>
 </li>
       </ul></li>
       <li><a href="autoapi/neural_compressor/adaptor/torch_utils/teq/index.html#neural_compressor.adaptor.torch_utils.teq.TEQuantizer">TEQuantizer (class in neural_compressor.adaptor.torch_utils.teq)</a>
@@ -9121,7 +9124,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fb0538ec130> 
+   <jinja2.runtime.BlockReference object at 0x7f4850d71cc0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

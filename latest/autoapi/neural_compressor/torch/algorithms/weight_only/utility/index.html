@@ -109,10 +109,10 @@
 <td><p>Quant and dequant tensor per channel. It is an in-place op.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.quant_tensor" title="neural_compressor.torch.algorithms.weight_only.utility.quant_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_tensor</span></code></a>(weight[, bits, group_size, scheme, ...])</p></td>
-<td><p>Quant and dequant tensor with group size.</p></td>
+<td><p>Quant and dequant tensor with group size. It's an in-place function.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.search_clip" title="neural_compressor.torch.algorithms.weight_only.utility.search_clip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">search_clip</span></code></a>(m[, bits, group_size, scheme, dtype, ...])</p></td>
-<td><p>Search best clip range of each linear in current block.</p></td>
+<td><p>Search best clip range of each linear in current block. It's not an in-place function.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.quant_weight_w_scale" title="neural_compressor.torch.algorithms.weight_only.utility.quant_weight_w_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight_w_scale</span></code></a>(weight, scale, zp[, group_size, ...])</p></td>
 <td><p>Quant and dequant tensor with group size.</p></td>
@@ -223,7 +223,7 @@ Defaults to False.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.quant_tensor">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">quant_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_int</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.quant_tensor" title="Permalink to this definition"></a></dt>
-<dd><p>Quant and dequant tensor with group size.</p>
+<dd><p>Quant and dequant tensor with group size. It’s an in-place function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -250,7 +250,7 @@ Defaults to False.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.search_clip">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">search_clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.search_clip" title="Permalink to this definition"></a></dt>
-<dd><p>Search best clip range of each linear in current block.</p>
+<dd><p>Search best clip range of each linear in current block. It’s not an in-place function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -312,7 +312,7 @@ Defaults to False.</p></li>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fb0526bc070> 
+   <jinja2.runtime.BlockReference object at 0x7f485070d360> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

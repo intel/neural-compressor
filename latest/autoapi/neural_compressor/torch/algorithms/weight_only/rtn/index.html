@@ -96,22 +96,22 @@
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.rtn.rtn_quantize" title="neural_compressor.torch.algorithms.weight_only.rtn.rtn_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rtn_quantize</span></code></a>(model[, num_bits, group_size, scheme, ...])</p></td>
-<td><p>Quant the model with round to nearest method.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.rtn.rtn_quantize" title="neural_compressor.torch.algorithms.weight_only.rtn.rtn_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rtn_quantize</span></code></a>(model[, dtype, bits, scheme, group_size, ...])</p></td>
+<td><p>Quant the model with round to nearest method and inplace is True.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.rtn.rtn_quantize">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.rtn.</span></span><span class="sig-name descname"><span class="pre">rtn_quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_int</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_mse_search</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/rtn.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.rtn.rtn_quantize" title="Permalink to this definition"></a></dt>
-<dd><p>Quant the model with round to nearest method.</p>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.rtn.</span></span><span class="sig-name descname"><span class="pre">rtn_quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">export_compressed_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_mse_search</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/rtn.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.rtn.rtn_quantize" title="Permalink to this definition"></a></dt>
+<dd><p>Quant the model with round to nearest method and inplace is True.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> – torch module</p></li>
-<li><p><strong>num_bits</strong> – num bits. Defaults to 4.</p></li>
+<li><p><strong>bits</strong> – num bits. Defaults to 4.</p></li>
 <li><p><strong>group_size</strong> (<em>int</em><em>, </em><em>optional</em>) – how many elements share one scale/zp. Defaults to 32.</p></li>
-<li><p><strong>scheme</strong> (<em>str</em><em>, </em><em>optional</em>) – sym or asym. Defaults to “asym”.</p></li>
+<li><p><strong>scheme</strong> (<em>str</em><em>, </em><em>optional</em>) – sym or asym. Defaults to “sym”.</p></li>
 <li><p><strong>quantile</strong> (<em>float</em><em>, </em><em>optional</em>) – percentile of clip. Defaults to 1.0.</p></li>
 <li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – select from int, nf4, fp4. Defaults to int.</p></li>
 <li><p><strong>weight_config</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>specific layer wise configurations. Defaults to {}.
@@ -123,8 +123,7 @@ For example,</p>
 <dt>{</dt><dd><p>‘dtype’: ‘int’,
 ‘bits’: 4,
 ‘group_size’: 32,
-‘scheme’: ‘sym’
-‘gptq_perm’: [1, 1, …] # for gptq perm</p>
+‘scheme’: ‘sym’</p>
 </dd>
 </dl>
 <p>}</p>
@@ -135,11 +134,11 @@ For example,</p>
 <p>}</p>
 </div></blockquote>
 </p></li>
-<li><p><strong>return_int</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose return fp32 or int32 model.
+<li><p><strong>export_compressed_model</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose return fp32 or int32 model.
 Defaults to False.</p></li>
-<li><p><strong>enable_full_range</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose sym range whether use -2**(bits-1).
+<li><p><strong>use_full_range</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose sym range whether use -2**(bits-1).
 Defaults to False.</p></li>
-<li><p><strong>enable_mse_search</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether search clip range.
+<li><p><strong>use_mse_search</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether search clip range.
 Defaults to True.</p></li>
 <li><p><strong>group_dim</strong> (<em>int</em><em>, </em><em>optional</em>) – 0 means splitting output channel,
 1 means splitting input channel. Defaults to 1.</p></li>
@@ -172,7 +171,7 @@ Defaults to True.</p></li>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fb05254d450> 
+   <jinja2.runtime.BlockReference object at 0x7f48506d1570> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

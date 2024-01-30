@@ -104,7 +104,7 @@ Functions
 
 .. py:function:: quant_tensor(weight, bits=4, group_size=-1, scheme='asym', quantile=1.0, dtype='int', return_int=False, full_range=False, **kwargs)
 
-   Quant and dequant tensor with group size.
+   Quant and dequant tensor with group size. It's an in-place function.
 
    :param weight: input weight
    :param bits: bits. Defaults to 4.
@@ -129,7 +129,7 @@ Functions
 
 .. py:function:: search_clip(m, bits=4, group_size=32, scheme='asym', dtype='int', enable_full_range=False)
 
-   Search best clip range of each linear in current block.
+   Search best clip range of each linear in current block. It's not an in-place function.
 
    :param m: torch module.
    :type m: torch.nn.Module
