@@ -43,7 +43,6 @@ class TestRTNQuant:
         ],
     )
     def test_int_params(self, bits, use_sym, group_size, group_dim):
-        print(bits, use_sym, group_size, group_dim)
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = RTNConfig(
             bits=bits,

@@ -15,8 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Copied from neural_compressor/adaptor/torch_utils/gptq.py
-
 import gc
 import math
 import random
@@ -193,12 +191,13 @@ class GPTQuantizer(object):
         self,
         model,
         weight_config={},
+        dataloader=None,
         nsamples=128,
-        dataloader_len=10,
         use_max_length=True,
-        pad_max_length=2048,
+        max_seq_length=2048,
         device=None,
-        layer_wise=False,
+        use_layer_wise=False,
+        run_fn=None,
         *args,
         **kwargs,
     ):
@@ -218,6 +217,7 @@ class GPTQuantizer(object):
                 ...
             }
             dataloader: an iterable containing calibration datasets, contains (inputs, targets)
+            run_fn: a function to run model inference for collecting input information.
             device: cpu or cuda
         """
         # model
@@ -230,13 +230,14 @@ class GPTQuantizer(object):
         # weight config
         self.weight_config = weight_config
         # default settings, check configs
-        self.wdtype_default = "int"
-        self.wbits_default = 4
+        self.dtype_default = "int"
+        self.bits_default = 4
         self.group_size_default = 128
         self.block_size_default = 128
         self.percdamp_default = 0.01
         self.sym_default = False
         self.act_order_default = False
+        self.static_groups_default = False
         self.perchannel_default = True
         self.mse_default = False
         self.double_quant_dtype_default = "fp32"
@@ -251,31 +252,146 @@ class GPTQuantizer(object):
             self.device = self.model.device
         self.is_ready = False
 
-        self.layer_wise = layer_wise
+        self.use_layer_wise = use_layer_wise
 
         # dataloader
         self.use_max_length = use_max_length
-        self.pad_max_length = pad_max_length
-        self.dataloader_original = None
+        self.max_seq_length = max_seq_length
+        self.dataloader_original = dataloader
         self.dataloader = []
-        self.dataloader_len = dataloader_len
         self.nsamples = nsamples
-        self.args = args
-        self.kwargs = kwargs
-        self.run_fn = self.kwargs.get("run_fn", None)
-        self.run_args = self.kwargs.get("run_args", None)
-        self.dataloader_len = dataloader_len
-        # compare 2.x, use run_fn to calibration
-        # self.prepare_dataloader()
-        self._post_init()
+        self.run_fn = run_fn
+        self.run_args = kwargs.get("run_args", None)
+        if run_fn is None:
+            self.prepare_dataloader()
 
-    def _post_init(self):
-        self.cache_key_arguments = {
-            "i": 0
-        }  # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
-        # Note that the first elements in cache_positional_arguments is main input: hidden_states
-        self.cache_positional_arguments = []  # a list of list, positional arguments ("rotary_pos_emb" in chatglm)
-        self.is_ready = True
+    def prepare_dataloader(self):
+        if self.use_max_length:
+            # (Recommend) only take sequence whose length exceeds self.max_seq_length,
+            # which preserves calibration's tokens are all valid
+            # This is GPTQ official dataloader implementation
+            self.obtain_first_n_samples_fulllength()
+        else:
+            # general selection, no padding, not GPTQ original implementation.
+            self.obtain_first_n_samples()
+
+    def obtain_first_n_samples(self, seed=0):
+        """Get first nsample data as the real calibration dataset."""
+        self.dataloader.clear()
+        random.seed(seed)
+        for batch in self.dataloader_original:
+            # process data, depends on its data type.
+            if len(self.dataloader) == self.nsamples:
+                logger.info(f"Successfully collect {self.nsamples} calibration samples.")
+                break
+            # list, tuple
+            if isinstance(batch, list) or isinstance(batch, tuple):
+                if batch[0].shape[-1] > self.max_seq_length:
+                    i = random.randint(0, batch[0].shape[-1] - self.max_seq_length - 1)
+                    j = i + self.max_seq_length
+                    batch_final = []
+                    for item in batch:
+                        if isinstance(item, torch.Tensor) and item.shape.__len__() == 2:
+                            batch_final.append(item[:, i:j])
+                        else:
+                            batch_final.append(item)
+                else:
+                    batch_final = batch[:]
+            # dict
+            elif isinstance(batch, dict):
+                try:
+                    length = batch["input_ids"].shape[-1]
+                except:
+                    logger.warning("Please make sure your dict'like data contains key of 'input_ids'.")
+                    continue
+                batch_final = {}
+                if length > self.max_seq_length:
+                    i = random.randint(0, length - self.max_seq_length - 1)
+                    j = i + self.max_seq_length
+                    # may have to slice every sequence related data
+                    for key in batch.keys():
+                        if isinstance(batch[key], torch.Tensor):
+                            batch_final[key] = batch[key][:, i:j]  # slice on sequence length dim
+                        else:
+                            batch_final[key] = batch[key]
+                else:
+                    batch_final = batch
+            # tensor
+            else:
+                if batch.shape[-1] > self.max_seq_length:
+                    i = random.randint(0, batch.shape[-1] - self.max_seq_length - 1)
+                    j = i + self.max_seq_length
+                    batch_final = batch[:, i:j]
+                else:
+                    batch_final = batch
+            self.dataloader.append(batch_final)
+
+        if len(self.dataloader) < self.nsamples:
+            logger.warning(f"Try to use {self.nsamples} data, but entire dataset size is {len(self.dataloader)}.")
+
+    def obtain_first_n_samples_fulllength(self, seed=0):
+        self.dataloader.clear()
+        random.seed(seed)
+        unified_length = self.max_seq_length
+        for batch in self.dataloader_original:
+            if len(self.dataloader) == self.nsamples:
+                logger.info(f"Successfully collect {self.nsamples} calibration samples.")
+                break
+            # list & tuple, gpt-j-6b mlperf, etc.
+            if isinstance(batch, list) or isinstance(batch, tuple):
+                if batch[0].shape[-1] == unified_length:
+                    batch_final = batch[:]
+                elif batch[0].shape[-1] > unified_length:
+                    i = random.randint(0, batch[0].shape[-1] - unified_length - 1)
+                    j = i + unified_length
+                    batch_final = []
+                    for item in batch:
+                        if isinstance(item, torch.Tensor) and item.shape.__len__() == 2:
+                            batch_final.append(item[:, i:j])
+                        else:
+                            batch_final.append(item)
+                else:
+                    # not match max length, not include in target dataset
+                    continue
+            # dict
+            elif isinstance(batch, dict):
+                try:
+                    length = batch["input_ids"].shape[-1]
+                except:
+                    logger.warning("Please make sure your dict'like data contains key of 'input_ids'.")
+                    continue
+                batch_final = {}
+                if length == self.max_seq_length:
+                    batch_final = batch
+                elif length > self.max_seq_length:
+                    i = random.randint(0, length - self.max_seq_length - 1)
+                    j = i + self.max_seq_length
+                    # may have to slice every sequence related data
+                    for key in batch.keys():
+                        if isinstance(batch[key], torch.Tensor):
+                            batch_final[key] = batch[key][:, i:j]  # slice on sequence length dim with same position
+                        else:
+                            batch_final[key] = batch[key]
+                else:
+                    # not match max length, not include in target dataset
+                    continue
+            # tensor
+            else:
+                if batch.shape[-1] == unified_length:
+                    batch_final = batch
+                elif batch.shape[-1] > unified_length:
+                    i = random.randint(0, batch.shape[-1] - unified_length - 1)
+                    j = i + unified_length
+                    batch_final = batch[:, i:j]
+                else:
+                    # not match max length, not include in target dataset
+                    continue
+            self.dataloader.append(batch_final)
+        if len(self.dataloader) < self.nsamples:  # pragma: no cover
+            logger.warning(
+                f"Trying to allocate {self.nsamples} data with fixed length {unified_length}, \
+            but only {len(self.dataloader)} samples are found. Please use smaller 'self.max_seq_length' value."
+            )
 
     def get_full_layer_name(self, sub_layer_name, block_idx):
         transformer_name = self.gptq_related_blocks["transformers_name"]
@@ -283,17 +399,20 @@ class GPTQuantizer(object):
 
     def check_layer_config(self):
         """Copy arguments from weight_config to built-in attributes."""
-        if "wbits" in self.weight_config:
+        if "bits" in self.weight_config:
             tmp_weight_config = {}
             for name, module in self.model.named_modules():
                 tmp_weight_config[name] = {}
-                tmp_weight_config[name]["wdtype"] = self.weight_config.get("wdtype", self.wdtype_default)
-                tmp_weight_config[name]["wbits"] = self.weight_config.get("wbits", self.wbits_default)
+                tmp_weight_config[name]["dtype"] = self.weight_config.get("dtype", self.dtype_default)
+                tmp_weight_config[name]["bits"] = self.weight_config.get("bits", self.bits_default)
                 tmp_weight_config[name]["group_size"] = self.weight_config.get("group_size", self.group_size_default)
                 tmp_weight_config[name]["block_size"] = self.weight_config.get("block_size", self.group_size_default)
                 tmp_weight_config[name]["percdamp"] = self.weight_config.get("pecdamp", self.percdamp_default)
                 tmp_weight_config[name]["sym"] = self.weight_config.get("sym", self.sym_default)
                 tmp_weight_config[name]["act_order"] = self.weight_config.get("act_order", self.act_order_default)
+                tmp_weight_config[name]["static_groups"] = self.weight_config.get(
+                    "static_groups", self.static_groups_default
+                )
                 tmp_weight_config[name]["perchannel"] = self.weight_config.get("perchannel", self.perchannel_default)
                 tmp_weight_config[name]["mse"] = self.weight_config.get("mse", self.mse_default)
                 tmp_weight_config[name]["double_quant_dtype"] = self.weight_config.get(
@@ -311,13 +430,16 @@ class GPTQuantizer(object):
             self.weight_config = tmp_weight_config
         else:
             for layer_name, config in self.weight_config.items():
-                self.weight_config[layer_name]["wdtype"] = config.get("wdtype", self.wdtype_default)
-                self.weight_config[layer_name]["wbits"] = config.get("wbits", self.wbits_default)
+                self.weight_config[layer_name]["dtype"] = config.get("dtype", self.dtype_default)
+                self.weight_config[layer_name]["bits"] = config.get("bits", self.bits_default)
                 self.weight_config[layer_name]["group_size"] = config.get("group_size", self.group_size_default)
                 self.weight_config[layer_name]["block_size"] = config.get("block_size", self.group_size_default)
                 self.weight_config[layer_name]["percdamp"] = config.get("pecdamp", self.percdamp_default)
                 self.weight_config[layer_name]["sym"] = config.get("sym", self.sym_default)
                 self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
+                self.weight_config[layer_name]["static_groups"] = config.get(
+                    "static_groups", self.static_groups_default
+                )
                 self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
                 self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
                 self.weight_config[layer_name]["double_quant_dtype"] = config.get(
@@ -359,6 +481,16 @@ class GPTQuantizer(object):
     @torch.no_grad()
     def pre_quantization(self):
         """Prepare input calibration data and other attributes which are critical for gptq execution."""
+        try:
+            self.cache_key_arguments = {
+                "i": 0
+            }  # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
+            # Note that the first elements in cache_positional_arguments is main input: hidden_states
+            self.cache_positional_arguments = []  # a list of list, positional arguments ("rotary_pos_emb" in chatglm)
+            self.is_ready = True
+        except:
+            logger.warning("GPTQ Quantizer initialization failed!")
+            pass
 
         # critical: hooker function which collects inputs
         def forward(layer, *args, **kwargs):
@@ -383,12 +515,12 @@ class GPTQuantizer(object):
             raise ValueError
 
         # Step1: fetch the embeddings and other layers before the transformer stack.
-        if not self.layer_wise:
+        if not self.use_layer_wise:
             for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
                 embedding_layer = embedding_layer.to(self.device)
 
         # Step2: modify the first transformer block's forward function to obtain inputs for calibration
-        if not self.layer_wise:
+        if not self.use_layer_wise:
             self.gptq_related_blocks["transformers"][0] = self.gptq_related_blocks["transformers"][0].to(self.device)
         forward_cache = self.gptq_related_blocks["transformers"][0].forward
         self.gptq_related_blocks["transformers"][0].forward = partial(
@@ -398,23 +530,24 @@ class GPTQuantizer(object):
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
         logger.info("Collecting calibration inputs by running the run_fn provided by user.")
-        if self.run_args:
-            self.run_fn(self.model, self.run_args)
+        if self.run_fn:
+            if self.run_args:
+                self.run_fn(self.model, *self.run_args)
+            else:
+                self.run_fn(self.model)
         else:
-            self.run_fn(self.model)
-
-        # for batch in tqdm(self.dataloader):
-        #     if not self.layer_wise:
-        #         batch = move_input_to_device(batch, self.device)
-        #     try:
-        #         if isinstance(batch, tuple) or isinstance(batch, list):
-        #             self.model(batch[0])
-        #         elif isinstance(batch, dict):
-        #             self.model(**batch)
-        #         else:
-        #             self.model(batch)
-        #     except ValueError:
-        #         pass
+            for batch in tqdm(self.dataloader):
+                if not self.use_layer_wise:
+                    batch = move_input_to_device(batch, self.device)
+                try:
+                    if isinstance(batch, tuple) or isinstance(batch, list):
+                        self.model(batch[0])
+                    elif isinstance(batch, dict):
+                        self.model(**batch)
+                    else:
+                        self.model(batch)
+                except ValueError:
+                    pass
         # output inp data shape
         logger.info("All calibration data's shape =>")
         # check all hidden_states shape
@@ -427,7 +560,7 @@ class GPTQuantizer(object):
 
         # Step 4: restore original forward function, relocate layers back to cpu.
         self.gptq_related_blocks["transformers"][0].forward = forward_cache
-        if not self.layer_wise:
+        if not self.use_layer_wise:
             self.gptq_related_blocks["transformers"][0] = self.gptq_related_blocks["transformers"][0].cpu()
             for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
                 embedding_layer.to(self.device)
@@ -468,8 +601,11 @@ class GPTQuantizer(object):
         tblock_length = len(self.gptq_related_blocks["transformers"])
         for block_idx in range(tblock_length):
             logger.info(f"Quantizing layer {block_idx + 1} / {tblock_length}..")
-            # if we do not apply layer-wise feature, we still place the entire block on the GPU
-            transformer_block = self.gptq_related_blocks["transformers"][block_idx].to(self.device)
+            if not self.use_layer_wise:
+                # if we do not apply layer-wise feature, we still place the entire block on the GPU
+                transformer_block = self.gptq_related_blocks["transformers"][block_idx].to(self.device)
+            else:
+                transformer_block = self.gptq_related_blocks["transformers"][block_idx]  # .to(self.device)
             # Step2.1: obtain all layers (Linear, Conv2d, etc) in the block which can be quantized.
             sub_layers = find_layers(transformer_block)
             sub_layers_to_quant = {}
@@ -492,10 +628,21 @@ class GPTQuantizer(object):
                 # )
                 full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                 weight_config_this_layer = self.get_layer_config(full_layer_name)
-                W = sub_layers[layer_name].weight.data.clone()
+                if self.use_layer_wise:
+                    from neural_compressor.torch.algorithms.use_layer_wise import load_value
+
+                    W = load_value(self.model, full_layer_name + ".weight", model_path)
+                else:
+                    W = sub_layers[layer_name].weight.data.clone()
+
                 gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name], W, self.device)
                 # gptq_for_this_block[layer_name].quantizer = Quantizer()
-                gptq_for_this_block[layer_name].quantizer.configure(weight_config_this_layer)
+                gptq_for_this_block[layer_name].quantizer.configure(
+                    weight_config_this_layer["bits"],
+                    weight_config_this_layer["perchannel"],
+                    weight_config_this_layer["sym"],
+                    weight_config_this_layer["mse"],
+                )
 
             # Step 2.3: modify forward functions to hook inputs data (used in gptq execution)
             def add_batch(_name):
@@ -508,7 +655,7 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache_key_arguments.pop("i")
-            for j in range(self.dataloader_len):
+            for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
@@ -523,15 +670,45 @@ class GPTQuantizer(object):
                 # )
                 weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
                 logger.info(f"Quantizing layer {layer_name}")
-                W = sub_layers[layer_name].weight.data.clone()
+                if self.use_layer_wise:
+                    from neural_compressor.torch.algorithms.use_layer_wise import load_value
+
+                    full_layer_name = self.get_full_layer_name(layer_name, block_idx)
+                    W = load_value(self.model, full_layer_name + ".weight", model_path)
+                else:
+                    W = sub_layers[layer_name].weight.data.clone()
                 scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(
                     W,
                     blocksize=weight_config_this_layer["block_size"],
                     percdamp=weight_config_this_layer["percdamp"],
                     groupsize=weight_config_this_layer["group_size"],
                     act_order=weight_config_this_layer["act_order"],
+                    static_groups=weight_config_this_layer["static_groups"],
                 )
-                sub_layers[layer_name].weight.data = Q
+                if self.use_layer_wise:
+                    from neural_compressor.torch.algorithms.use_layer_wise import (
+                        LWQ_WORKSPACE,
+                        clean_module_weight,
+                        load_value,
+                        set_module_tensor_to_device,
+                    )
+
+                    sub_layer = sub_layers[layer_name]
+                    full_layer_name = self.get_full_layer_name(layer_name, block_idx)
+                    for n, p in sub_layer.named_parameters():
+                        param_name = full_layer_name + "." + n
+                        if n == "weight":
+                            set_module_tensor_to_device(self.model, param_name, self.device, Q)
+                        else:
+                            value = load_value(self.model, param_name, model_path)
+                            set_module_tensor_to_device(self.model, param_name, self.device, value)
+                    # sub_layer.weight.data = Q
+                    torch.save(sub_layer.state_dict(), LWQ_WORKSPACE + f"/{full_layer_name}.pt")
+                    clean_module_weight(sub_layer)
+                    del Q
+                    gc.collect()
+                else:
+                    sub_layers[layer_name].weight.data = Q
                 gptq_config[self.get_full_layer_name(layer_name, block_idx)] = {"scale": scale}
                 if not weight_config_this_layer["sym"]:
                     gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"] = zp
@@ -544,14 +721,17 @@ class GPTQuantizer(object):
             # Step 2.5: replace output data with quantized weights
             outs = []
             idx = self.cache_key_arguments.pop("i")
-            for j in range(self.dataloader_len):
+            for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                 out = self.track_hidden_states(out)
                 outs.append(out)
             self.cache_key_arguments["i"] = idx
-            self.gptq_related_blocks["transformers"][block_idx] = transformer_block.cpu()
+            if self.use_layer_wise:
+                self.gptq_related_blocks["transformers"][block_idx] = transformer_block
+            else:
+                self.gptq_related_blocks["transformers"][block_idx] = transformer_block.cpu()
             del gptq_for_this_block
             torch.cuda.empty_cache()
             # iteratively replace the input with output, thus layerwise quantization can continue.
@@ -618,7 +798,7 @@ class GPTQ:
         # self.H += 2 / self.nsamples * inp.matmul(inp.t())
         self.H += inp.matmul(inp.t())  # H = X*X, which should be a sysm matrix
 
-    def fasterquant(self, W, blocksize=128, percdamp=0.01, groupsize=-1, act_order=False):
+    def fasterquant(self, W, blocksize=128, percdamp=0.01, groupsize=-1, act_order=False, static_groups=False):
         # W = self.layer.weight.data.clone()
         weight_shape, weight_dtype = W.shape, W.data.dtype
         if isinstance(self.layer, nn.Conv2d):
@@ -637,6 +817,17 @@ class GPTQ:
         dead = torch.diag(H) == 0
         H[dead, dead] = 1
         W[:, dead] = 0  # such channel makes no contribution to quantization computation
+
+        # enable static_groups
+        # calculate the quantization parameters for original group in advance.
+        if static_groups:
+            import copy
+
+            groups = []
+            for i in range(0, self.columns, groupsize):
+                quantizer = copy.deepcopy(self.quantizer)
+                quantizer.find_params(W[:, i : (i + groupsize)], weight=True)
+                groups.append(quantizer)
 
         # rearrange considering the diag's value
         if act_order:
@@ -674,14 +865,18 @@ class GPTQ:
                 d = Hinv1[i, i]
 
                 if groupsize != -1:
-                    if (i1 + i) % groupsize == 0:
-                        self.quantizer.find_params(W[:, (i1 + i) : (i1 + i + groupsize)], weight=True)
-                        scale.append(self.quantizer.scale)
-                        zero.append(self.quantizer.zero)
+                    if not static_groups:
+                        if (i1 + i) % groupsize == 0:
+                            self.quantizer.find_params(W[:, (i1 + i) : (i1 + i + groupsize)], weight=True)
+                            scale.append(self.quantizer.scale)
+                            zero.append(self.quantizer.zero)
+                    else:
+                        idx = i1 + i
+                        if act_order:
+                            idx = perm[idx]
+                        self.quantizer = groups[idx // groupsize]
 
-                q = self.quantizer.quantize(
-                    w.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq
-                ).flatten()
+                q = quantize(w.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq).flatten()
                 Q1[:, i] = q
                 Losses1[:, i] = (w - q) ** 2 / d**2
 
@@ -724,6 +919,9 @@ class GPTQ:
         return scale, zero, Q
 
     def free(self):
+        if DEBUG:
+            self.inp1 = None
+            self.out1 = None
         self.H = None
         self.Losses = None
         self.Trace = None
@@ -740,7 +938,7 @@ class Quantizer(nn.Module):
     def configure(self, weight_config_this_layer, norm=2.4, grid=100, maxshrink=0.8, trits=False):
         for k, v in weight_config_this_layer.items():
             setattr(self, k, v)
-        self.maxq = torch.tensor(2**self.wbits - 1)
+        self.maxq = torch.tensor(2**self.bits - 1)
         self.scheme = "sym" if self.sym else "asym"
         self.double_quant = self.double_quant_dtype != "fp32"
         self.double_quant_scheme = "sym" if self.double_quant_sym else "asym"
@@ -754,15 +952,15 @@ class Quantizer(nn.Module):
         dev = x.device
         self.maxq = self.maxq.to(dev)
         # NF4 FP4
-        if self.wdtype != "int":
+        if self.dtype != "int":
             from .utility import quant_tensor
 
             tmp = x.clone()  # tmp will be replaced after quant_tensor
 
             _, scale, zero = quant_tensor(
                 tmp,
-                dtype=self.wdtype,
-                bits=self.wbits,
+                dtype=self.dtype,
+                bits=self.bits,
                 group_size=self.group_size,
                 scheme=self.scheme,
                 quantile=1.0,
@@ -877,11 +1075,11 @@ class Quantizer(nn.Module):
 
     def quantize(self, x, scale, zero, maxq):
         """Do quantization."""
-        if self.wdtype != "int":
+        if self.dtype != "int":
             from .utility import quantize_4bit
 
             tmp = x.clone()  # tmp will be replaced after quant_tensor
-            return quantize_4bit(tmp, dtype=self.wdtype, scale=scale)
+            return quantize_4bit(tmp, dtype=self.dtype, scale=scale)
         else:
             if maxq < 0:
                 return (x > scale / 2).float() * scale + (x < zero / 2).float() * zero
@@ -892,226 +1090,38 @@ class Quantizer(nn.Module):
         return torch.all(self.scale != 0)
 
 
-# TODO (Yi) remove it after unifying the algo config parser
-def gptq_config_mapping(configs_mapping):
-    # convert GPTQ_CONFIG to gptq_quantize's weight config
-    # convert tune_cfg to gptq_quantize's weight config
-    # for layer_wise quant mode
-    # TODO (Yi) uncomment it when port layer-wise
-    # if recipe_cfgs.get("layer_wise_quant", False):
-    #     layer_wise = True
-    #     from .torch_utils.layer_wise_quant.utils import LWQ_WORKSPACE, _get_path, register_weight_hooks
-
-    #     os.makedirs(LWQ_WORKSPACE, exist_ok=True)
-    #     # model_path = recipe_cfgs["layer_wise_quant_args"].get("model_path", None)
-    #     model_path = model.path
-    #     assert model_path, "model_path should not be None."
-    #     model_path = _get_path(model_path)
-    #     lwq_handles = register_weight_hooks(
-    #         model, model_path, device=self.device, clean_weight=True, saved_path=LWQ_WORKSPACE
-    #     )
-
-    weight_config = {}
-    for (op_name, op_type), op_config in configs_mapping.items():
-        if op_config.weight_dtype == "fp32":
-            continue
-        else:
-            weight_config[op_name] = {
-                "wdtype": op_config.weight_dtype,
-                "wbits": op_config.weight_bits,
-                "group_size": op_config.weight_group_size,
-                "sym": op_config.weight_sym,
-                "percdamp": op_config.percdamp,
-                "act_order": op_config.act_order,
-                "block_size": op_config.block_size,
-                "mse": op_config.enable_mse_search,
-                "double_quant_dtype": op_config.double_quant_dtype,
-                "double_quant_bits": op_config.double_quant_bits,
-                "double_quant_group_size": op_config.double_quant_group_size,
-                "double_quant_sym": op_config.double_quant_sym,
-            }
-            nsamples = op_config.nsamples
-            dataloader_len = op_config.dataloader_len
-            use_max_length = op_config.use_max_length
-            pad_max_length = op_config.pad_max_length
-            device = op_config.device
-
-    if use_max_length and op_config.pad_max_length == 2048:
-        logger.warning(
-            "You choose to use unified sequence length for calibration, \
-        but you have not set length value. Default sequence length is 2048 and this might cause inference error!"
-        )
-
-    return weight_config, nsamples, use_max_length, pad_max_length, device, dataloader_len
-
-
-def gptq_quantize(model, configs_mapping, *args, **kwargs):
-    """Apply gptq."""
+def gptq_quantize(
+    model,
+    weight_config={},
+    dataloader=None,
+    nsamples=128,
+    max_seq_length=2048,
+    use_max_length=True,
+    device=None,
+    use_layer_wise=False,
+    model_path=None,
+    run_fn=None,
+    run_args=None,
+):
+    """Run weight-only quantization with."""
     # TODO: unify weight_config keys, add docstring, and support default config
-    weight_config, nsamples, use_max_length, pad_max_length, device, dataloader_len = gptq_config_mapping(
-        configs_mapping
-    )
     assert isinstance(model, torch.nn.Module), "only support torch module"
-    # TODO (Yi) disable layer-wise and model_path first
-    layer_wise = False
-    model_path = None
+    if use_layer_wise:
+        assert model_path is not None, "model_path should not be None when use layer wise mode"
+    from .gptq import GPTQuantizer
 
     gptq_quantizer = GPTQuantizer(
         model,
         weight_config,
+        dataloader,
         nsamples,
-        dataloader_len,
         use_max_length,
-        pad_max_length,
+        max_seq_length,
         device,
-        layer_wise=layer_wise,
-        *args,
-        **kwargs,
+        use_layer_wise=use_layer_wise,
+        run_fn=run_fn,
+        run_args=run_args,
     )
     fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
-    logger.info("GPTQ quantization done.")
+    logger.info("GPTQ quantizing done.")
     return fp32_modified_model, gptq_config
-
-
-class DataloaderPreprocessor:
-    def __init__(self, dataloader_original, use_max_length=False, pad_max_length=2048, nsamples=128) -> None:
-        self.dataloader_original = dataloader_original
-        self.use_max_length = use_max_length
-        self.pad_max_length = pad_max_length
-        self.nsamples = nsamples
-        self.dataloader = []
-        self.is_ready = False
-
-    def get_prepared_dataloader(self):
-        if not self.is_ready:
-            self.prepare_dataloader()
-        return self.dataloader
-
-    def prepare_dataloader(self):
-        if self.use_max_length:
-            # (Recommend) only take sequence whose length exceeds self.pad_max_length,
-            # which preserves calibration's tokens are all valid
-            # This is GPTQ official dataloader implementation
-            self.obtain_first_n_samples_fulllength()
-        else:
-            # general selection, no padding, not GPTQ original implementation.
-            self.obtain_first_n_samples()
-        self.is_ready = True
-
-    def obtain_first_n_samples(self, seed=0):
-        """Get first nsample data as the real calibration dataset."""
-        self.dataloader.clear()
-        random.seed(seed)
-        for batch in self.dataloader_original:
-            # process data, depends on its data type.
-            if len(self.dataloader) == self.nsamples:
-                logger.info(f"Successfully collect {self.nsamples} calibration samples.")
-                break
-            # list, tuple
-            if isinstance(batch, list) or isinstance(batch, tuple):
-                if batch[0].shape[-1] > self.pad_max_length:
-                    i = random.randint(0, batch[0].shape[-1] - self.pad_max_length - 1)
-                    j = i + self.pad_max_length
-                    batch_final = []
-                    for item in batch:
-                        if isinstance(item, torch.Tensor) and item.shape.__len__() == 2:
-                            batch_final.append(item[:, i:j])
-                        else:
-                            batch_final.append(item)
-                else:
-                    batch_final = batch[:]
-            # dict
-            elif isinstance(batch, dict):
-                try:
-                    length = batch["input_ids"].shape[-1]
-                except:
-                    logger.warning("Please make sure your dict'like data contains key of 'input_ids'.")
-                    continue
-                batch_final = {}
-                if length > self.pad_max_length:
-                    i = random.randint(0, length - self.pad_max_length - 1)
-                    j = i + self.pad_max_length
-                    # may have to slice every sequence related data
-                    for key in batch.keys():
-                        if isinstance(batch[key], torch.Tensor):
-                            batch_final[key] = batch[key][:, i:j]  # slice on sequence length dim
-                        else:
-                            batch_final[key] = batch[key]
-                else:
-                    batch_final = batch
-            # tensor
-            else:
-                if batch.shape[-1] > self.pad_max_length:
-                    i = random.randint(0, batch.shape[-1] - self.pad_max_length - 1)
-                    j = i + self.pad_max_length
-                    batch_final = batch[:, i:j]
-                else:
-                    batch_final = batch
-            self.dataloader.append(batch_final)
-
-        if len(self.dataloader) < self.nsamples:
-            logger.warning(f"Try to use {self.nsamples} data, but entire dataset size is {len(self.dataloader)}.")
-
-    def obtain_first_n_samples_fulllength(self, seed=0):
-        self.dataloader.clear()
-        random.seed(seed)
-        unified_length = self.pad_max_length
-        for batch in self.dataloader_original:
-            if len(self.dataloader) == self.nsamples:
-                logger.info(f"Successfully collect {self.nsamples} calibration samples.")
-                break
-            # list & tuple, gpt-j-6b mlperf, etc.
-            if isinstance(batch, list) or isinstance(batch, tuple):
-                if batch[0].shape[-1] == unified_length:
-                    batch_final = batch[:]
-                elif batch[0].shape[-1] > unified_length:
-                    i = random.randint(0, batch[0].shape[-1] - unified_length - 1)
-                    j = i + unified_length
-                    batch_final = []
-                    for item in batch:
-                        if isinstance(item, torch.Tensor) and item.shape.__len__() == 2:
-                            batch_final.append(item[:, i:j])
-                        else:
-                            batch_final.append(item)
-                else:
-                    # not match max length, not include in target dataset
-                    continue
-            # dict
-            elif isinstance(batch, dict):
-                try:
-                    length = batch["input_ids"].shape[-1]
-                except:
-                    logger.warning("Please make sure your dict'like data contains key of 'input_ids'.")
-                    continue
-                batch_final = {}
-                if length == self.pad_max_length:
-                    batch_final = batch
-                elif length > self.pad_max_length:
-                    i = random.randint(0, length - self.pad_max_length - 1)
-                    j = i + self.pad_max_length
-                    # may have to slice every sequence related data
-                    for key in batch.keys():
-                        if isinstance(batch[key], torch.Tensor):
-                            batch_final[key] = batch[key][:, i:j]  # slice on sequence length dim with same position
-                        else:
-                            batch_final[key] = batch[key]
-                else:
-                    # not match max length, not include in target dataset
-                    continue
-            # tensor
-            else:
-                if batch.shape[-1] == unified_length:
-                    batch_final = batch
-                elif batch.shape[-1] > unified_length:
-                    i = random.randint(0, batch.shape[-1] - unified_length - 1)
-                    j = i + unified_length
-                    batch_final = batch[:, i:j]
-                else:
-                    # not match max length, not include in target dataset
-                    continue
-            self.dataloader.append(batch_final)
-        if len(self.dataloader) < self.nsamples:  # pragma: no cover
-            logger.warning(
-                f"Trying to allocate {self.nsamples} data with fixed length {unified_length}, \
-            but only {len(self.dataloader)} samples are found. Please use smaller 'self.pad_max_length' value."
-            )

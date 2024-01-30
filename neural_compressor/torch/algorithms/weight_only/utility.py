@@ -441,3 +441,100 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1, dtype="int"):
             int_weight_tmp.add_(zp[:, -1].unsqueeze(1))
         int_weight[:, leng * group_size :].copy_(int_weight_tmp.round_())
     return int_weight
+
+
+####################### block-wise utility #############################
+def get_block_prefix(model):
+    """Get prefix and number of blocks.
+
+    Args:
+        model (torch.nn.Module): input model
+
+    Returns:
+        block_prefix(str): block_list name in model
+        block_num(int): number of block in block_list
+    """
+    module_types = [torch.nn.ModuleList]
+    for n, m in model.named_modules():
+        if type(m) in module_types:
+            block_prefix = n
+            block_num = len(m)
+            logger.debug(f"block_prefix: {block_prefix}, block_num: {block_num} ")
+            break
+    assert block_num > 0, "block num shouldn't be zero!"
+    return block_prefix, block_num
+
+
+def fetch_module(model, op_name):
+    """Get module with a given op name.
+
+    Args:
+        model (object): the input model.
+        op_name (str): name of op.
+
+    Returns:
+        module (object).
+    """
+    module = model
+    name_list = op_name.split(".")
+    for name in name_list:
+        if hasattr(module, name):
+            module = getattr(module, name)
+        else:
+            logger.warning(f"The {op_name} is not present in the model.")
+            return None
+    return module
+
+
+def get_first_block_hidden_states(model, calib_func=None):
+    """Get the input args and kwargs of first block.
+
+    Args:
+        model (torch.nn.Module): input model
+        calib_func (func, optional): a calib func to replace dataloader. Defaults to None.
+
+    Raises:
+        ValueError: to avoid inference of rest parts in model
+
+    Returns:
+        total_block_args(list): a list of input args of each batch
+        total_block_kwargs(list):  a list of input kwargs of each batch
+    """
+    from functools import partial
+
+    # Step 1: replace block_forward to collect block inputs and avoid entire inference
+    total_block_args = []
+    total_block_kwargs = []
+
+    def forward(layer, *args, **kwargs):
+        # update total_hidden_states, total_block_kwargs, per batch
+        total_block_args.append(list(args))
+        total_block_kwargs.append(kwargs)
+        raise ValueError
+
+    block_prefix, block_num = get_block_prefix(model)
+    block_list = fetch_module(model, block_prefix)
+    first_block = block_list[0]
+    block_forward_cache = first_block.forward
+    first_block.forward = partial(forward, first_block)
+
+    # Step 2: replace model_forward to avoid ValueError
+    model_forward_cache = model.forward
+
+    def model_forward(model, *args, **kwargs):
+        nonlocal model_forward_cache
+        try:
+            model_forward_cache(*args, **kwargs)
+        except ValueError:
+            pass
+
+    model.forward = partial(model_forward, model)
+
+    # Step 3: execute calibration
+    calib_func(model)
+    logger.info("The hidden_states collection is done.")
+
+    # Step 4: recover model and block forward
+    model.forward = model_forward_cache
+    first_block.forward = block_forward_cache
+    return total_block_args, total_block_kwargs
