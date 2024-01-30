@@ -22,9 +22,9 @@ from deepspeed.module_inject import LinearAllreduce, LinearLayer
 from deepspeed.module_inject.layers import LmHeadLinearAllreduce
 
 from neural_compressor.common.utils import FP8_QUANT
+from neural_compressor.torch.quantization.modules import Autocast, BatchMatmul, Matmul
 from neural_compressor.torch.utils.utility import fetch_module, logger, register_algo, set_module
 
-from ..layers import Autocast, BatchMatmul, Matmul
 from .modules import (
     FP8BatchMatmul,
     FP8Cast,
@@ -198,7 +198,6 @@ def convert(model, qconfig_mapping):
     return model
 
 
-@register_algo(name=FP8_QUANT)
 def quantize(model, qconfig_mapping, run_fn=None, run_args=None, inplace=True):
     q_model = model if inplace else copy.deepcopy(model)
     q_model = prepare(q_model, qconfig_mapping)
@@ -209,7 +208,3 @@ def quantize(model, qconfig_mapping, run_fn=None, run_args=None, inplace=True):
             run_fn(q_model)
     q_model = convert(q_model, qconfig_mapping)
     return q_model
-
-
-# def autotune(fp32_model, quant_config, tune_config, eval_func, ...):
-#     pass
