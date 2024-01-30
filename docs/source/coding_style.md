@@ -102,6 +102,12 @@ def register_config(framework_name: str, algo_name: str, priority: int = 0) -> C
 
 
 eval_result: float = evaluator.eval(model)
+
+# Declare aliases of complex types
+from typing import TypeAlias
+
+_LossAndGradient: TypeAlias = tuple[tf.Tensor, tf.Tensor]
+ComplexTFMap: TypeAlias = Mapping[str, _LossAndGradient]
 ```
 
 - Not recommend
@@ -113,6 +119,7 @@ def xx_func(cls) -> Dict[str, OrderedDict[str, Dict[str, object]]]: # Can't impr
 - Plugs:
   - [python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
   - [pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance)
+
 
 ### Comments
 
