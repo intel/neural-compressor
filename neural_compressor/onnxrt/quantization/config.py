@@ -212,9 +212,7 @@ class SmoohQuantConfig(BaseConfig):
         supported_configs = []
         smooth_quant_config = SmoohQuantConfig()
         operators = ["Gemm", "Conv", "MatMul", "FusedConv"]
-        supported_configs.append(
-            OperatorConfig(config=smooth_quant_config, operators=operators, backend=Backend.DEFAULT)
-        )
+        supported_configs.append(OperatorConfig(config=smooth_quant_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
@@ -227,6 +225,11 @@ class SmoohQuantConfig(BaseConfig):
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "SmoohQuantConfig", List["SmoohQuantConfig"]]:  # pragma: no cover
+        # TODO fwk owner needs to update it.
+        return SmoohQuantConfig(alpha=np.arange(0.3, 0.7, 0.05))
 
 
 SmoohQuantConfig.register_supported_configs()
