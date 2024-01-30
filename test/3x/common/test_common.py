@@ -146,8 +146,7 @@ class TestBaseConfig(unittest.TestCase):
 class TestConfigLoader(unittest.TestCase):
     def setUp(self):
         self.config_set = [get_default_fake_config(), get_default_fake_config()]
-        self.sampler = get_default_fake_config()
-        self.loader = ConfigLoader(self.config_set, self.sampler)
+        self.loader = ConfigLoader(self.config_set, Sampler())
 
     def test_parse_quant_config_single(self):
         quant_config = get_default_fake_config()
