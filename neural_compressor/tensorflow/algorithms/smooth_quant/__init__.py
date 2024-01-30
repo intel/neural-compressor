@@ -15,6 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .smooth_quant import SmoothQuant, default_alpha_args
+from .smooth_quant import SmoothQuant
 from .smooth_quant_scaler import SmoothQuantScaler, SmoothQuantScalerLLM
 from .smooth_quant_calibration import SmoothQuantCalibration, SmoothQuantCalibrationLLM

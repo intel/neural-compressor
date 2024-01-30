@@ -19,51 +19,20 @@ from __future__ import annotations
 
 from enum import Enum
 from collections import OrderedDict
-from typing import Callable, Dict, List, NamedTuple, Optional, Union
+from typing import Callable, Dict, List, NamedTuple, Optional, Union, Tuple
 
 import tensorflow as tf
 
 from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, STATIC_QUANT
+from neural_compressor.common import logger
 
 FRAMEWORK_NAME = "keras"
-
-
-class Backend(Enum):
-    DEFAULT = "keras"
-    ITEX = "itex"
-
 
 class OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
-    backend: List[Backend]
     valid_func_list: List[Callable] = []
-
-
-# mapping the torch module type and functional operation type to string representations
-operator2str = {
-    tf.keras.layers.Dense: "Dense",
-    tf.keras.layers.DepthwiseConv2D: "DepthwiseConv2D",
-    tf.keras.layers.Conv2D: "Conv2D",
-    tf.keras.layers.SeparableConv2D: "SeparableConv2D",
-    tf.keras.layers.AvgPool2D: "AvgPool2D",
-    tf.keras.layers.AveragePooling2D: "AveragePooling2D",
-    tf.keras.layers.MaxPool2D: "MaxPool2D",
-    tf.keras.layers.MaxPooling2D: "MaxPooling2D",
-}
-
-# Mapping from string representations to their corresponding torch operation/module type
-str2operator = {
-    "Dense": tf.keras.layers.Dense,
-    "DepthwiseConv2D": tf.keras.layers.DepthwiseConv2D,
-    "Conv2D": tf.keras.layers.Conv2D,
-    "SeparableConv2D": tf.keras.layers.SeparableConv2D,
-    "AvgPool2D": tf.keras.layers.AvgPool2D,
-    "AveragePooling2D": tf.keras.layers.AveragePooling2D,
-    "MaxPool2D": tf.keras.layers.MaxPool2D,
-    "MaxPooling2D": tf.keras.layers.MaxPooling2D,
-}
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
@@ -111,13 +80,6 @@ class StaticQuantConfig(BaseConfig):
         self.act_granularity = act_granularity
         self._post_init()
 
-    def to_dict(self):
-        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
-
-    @classmethod
-    def from_dict(cls, config_dict):
-        return super(StaticQuantConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
-
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
@@ -140,10 +102,22 @@ class StaticQuantConfig(BaseConfig):
             tf.keras.layers.MaxPooling2D,
         ]
         supported_configs.append(
-            OperatorConfig(config=static_quant_config, operators=operators, backend=Backend.DEFAULT)
+            OperatorConfig(config=static_quant_config, operators=operators)
         )
         cls.supported_configs = supported_configs
 
+    @staticmethod
+    def get_model_info(model) -> List[Tuple[str, Callable]]:
+        white_list = ["Dense", "Conv2d", "DepthwiseConv2D", "SeparableConv2D",
+                      "AvgPool2D", "AveragePooling2D", "MaxPool2D", "MaxPooling2D"]
+        filter_result = []
+
+        for layer in model.model.layers:
+            if layer.__class__.__name__ in white_list:
+                pair = (layer.name, layer.__class__.__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 StaticQuantConfig.register_supported_configs()
@@ -186,7 +160,7 @@ support_int8_activation = {
 }
 
 
-def update_config(op_value: Dict, quant_config: StaticQuantConfig, layer_class: str):
+def update_config(op_value: Dict, quant_config: StaticQuantConfig, op_key: Tuple):
     """Update op-wise config from global config or operator name config or operator type config."""
     op_value["activation"].update(
         {
@@ -197,7 +171,7 @@ def update_config(op_value: Dict, quant_config: StaticQuantConfig, layer_class: 
             "algorithm": "minmax",
         }
     )
-    if layer_class not in support_int8_weight:
+    if op_key[1] not in support_int8_weight:
         return
     op_value["weight"] = {
         "dtype": quant_config.weight_dtype,
@@ -219,22 +193,10 @@ def parse_to_keras_tune_cfg(model: tf.keras.Model, quant_config: StaticQuantConf
         tune_cfg: the tuning config for keras adaptor.
     """
     tune_cfg = {"op": OrderedDict()}
-    for layer in model.layers:
-        layer_class = layer.__class__.__name__
-        if layer_class not in support_int8_activation:
-            continue
-        op_key = (layer.name, layer_class)
+    for op_key, config in quant_config.items():
         op_value = {"activation": {}}
 
-        local_config = None
-        # priority local > global
-        if quant_config.local_config and layer.name in quant_config.local_config.keys():
-            local_config = quant_config.local_config[layer.name]
-
-        if local_config:
-            update_config(op_value, local_config, layer_class)
-        else:
-            update_config(op_value, quant_config, layer_class)
+        update_config(op_value, config, op_key)
 
         tune_cfg["op"].update({op_key: op_value})
         tune_cfg["calib_iteration"] = calib_iteration

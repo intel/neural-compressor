@@ -62,15 +62,19 @@ class SmoothQuant:
         self.new_api = adaptor.new_api
         self.device = adaptor.device
         self.itex_mode = adaptor.itex_mode
+        
+        for key, value in self.config.items():
+            single_config = value
+            break
 
-        self.alpha = self.config.alpha
-        self.folding = self.config.folding
-        self.percentile = self.config.percentile
-        self.op_types = self.config.op_types
-        self.scales_per_op = self.config.scales_per_op
-        self.record_max_info = self.config.record_max_info
-        self.weight_clip = self.config.weight_clip
-        self.auto_alpha_args = self.config.auto_alpha_args
+        self.alpha = single_config.alpha
+        self.folding = single_config.folding
+        self.percentile = single_config.percentile
+        self.op_types = single_config.op_types
+        self.scales_per_op = single_config.scales_per_op
+        self.record_max_info = single_config.record_max_info
+        self.weight_clip = single_config.weight_clip
+        self.auto_alpha_args = single_config.auto_alpha_args
 
     def apply_smooth_quant(self):
         """Apply smooth quant to the model."""
@@ -136,7 +140,7 @@ class SmoothQuant:
         return self.model
 
     def __call__(self):
-        apply_func = self.apply_smooth_quant if isinstance(self.model, TensorflowLLMModel) \
-                        else self.apply_smooth_quant_LLM
+        apply_func = self.apply_smooth_quant_LLM if isinstance(self.model, TensorflowLLMModel) \
+                        else self.apply_smooth_quant
 
         return apply_func()

@@ -27,14 +27,13 @@ import tempfile
 import time
 from abc import abstractmethod
 
-from neural_compressor.common import Logger
+from neural_compressor.common import logger
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.tensorflow.utils.utility import version1_lt_version2, framework_specific_info
+from neural_compressor.tensorflow.utils.utility import version1_lt_version2
 
 import numpy as np
 import tensorflow as tf
 
-logger = Logger().get_logger()
 tensor_to_node = lambda s: list(set([x.split(":")[0] for x in s]))
 
 def get_tf_model_type(model):

@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Callable, Dict, Tuple, Union
 
 import tensorflow as tf
 
-from neural_compressor.common import Logger
+from neural_compressor.common import logger
 from neural_compressor.common.utils import STATIC_QUANT
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.tensorflow.quantization.config import parse_tf_config_from_dict
@@ -29,13 +29,11 @@ from neural_compressor.tensorflow.utils import (
 )
 
 
-logger = Logger().get_logger()
-
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
     return any(config.name == algo_name for config in configs_mapping.values())
 
 def quantize_model(
-    model: (str or tf.keras.Model or BaseModel), quant_config: BaseConfig, calib_dataloader: Callable = None, calib_iteration: int = 100
+    model: Union[str, tf.keras.Model, BaseModel], quant_config: BaseConfig, calib_dataloader: Callable = None, calib_iteration: int = 100
 ):
     """The main entry to quantize model.
 

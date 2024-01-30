@@ -22,12 +22,10 @@ from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from typing import Dict, List, Tuple, Callable
 
-from neural_compressor.common import Logger
+from neural_compressor.common import logger
 from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.tensorflow.utils import BaseModel, KerasModel
 from neural_compressor.tensorflow.keras import parse_to_keras_tune_cfg
-
-logger = Logger().get_logger()
 
 TUNING_ITEMS_LST = [
     ("activation", "scheme"),
@@ -411,26 +409,14 @@ class TuningSpace:
     def _init_usr_cfg(self):
         """Init user config."""
         usr_cfg = {"quantization": {}}
-        usr_cfg["quantization"]["model_wise"] = self._parse_model_wise_config()
+        usr_cfg["quantization"]["model_wise"] = None
         usr_cfg["quantization"]["optype_wise"] = None
         usr_cfg["quantization"]["op_wise"] = self._parse_op_wise_config()
         return usr_cfg
 
-    def _parse_model_wise_config(self):
-        model_wise_config = {"weight": {}, "activation": {}}
-        model_wise_config["weight"]["dtype"] = self.conf.weight_dtype
-        model_wise_config["weight"]["scheme"] = "sym" if self.conf.weight_sym  else "asym"
-        model_wise_config["weight"]["granularity"] = self.conf.weight_granularity
-        model_wise_config["weight"]["algorithm"] = self.conf.weight_algorithm
-        model_wise_config["activation"]["dtype"] = self.conf.act_dtype
-        model_wise_config["activation"]["scheme"] = "sym" if self.conf.act_sym else "asym"
-        model_wise_config["activation"]["granularity"] = self.conf.act_granularity
-        model_wise_config["activation"]["algorithm"] = self.conf.act_algorithm
-        return model_wise_config
-
     def _parse_op_wise_config(self):
         op_name_dict = {}
-        for op_name, op_config in self.conf.local_config.items():
+        for op_name, op_config in self.conf.items():
             op_wise_config = {"weight": {}, "activation": {}}
             op_wise_config["weight"]["dtype"] = op_config.weight_dtype
             op_wise_config["weight"]["sym"] = "sym" if op_config.weight_sym else "asym"
@@ -440,7 +426,7 @@ class TuningSpace:
             op_wise_config["activation"]["sym"] = "sym" if op_config.act_sym else "asym"
             op_wise_config["activation"]["granularity"] = op_config.act_granularity
             op_wise_config["activation"]["algorithm"] = op_config.act_algorithm
-            op_name_dict.update({op_name: op_wise_config})
+            op_name_dict.update({op_name[0]: op_wise_config})
         
         return op_name_dict if op_name_dict else None
 

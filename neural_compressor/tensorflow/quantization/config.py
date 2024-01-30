@@ -22,7 +22,7 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Union, Tuple
 
 import tensorflow as tf
 
-from neural_compressor.common import Logger
+from neural_compressor.common import logger
 from neural_compressor.common.utils import STATIC_QUANT, SMOOTH_QUANT
 from neural_compressor.common.base_config import(
     BaseConfig,
@@ -32,8 +32,6 @@ from neural_compressor.common.base_config import(
     OP_NAME_OR_MODULE_TYPE, 
 )
 from neural_compressor.tensorflow.utils import DEFAULT_SQ_ALPHA_ARGS
-
-logger = Logger().get_logger()
 
 FRAMEWORK_NAME = "tensorflow"
 

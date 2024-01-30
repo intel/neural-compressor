@@ -68,12 +68,14 @@ def smooth_quant_entry(
     from neural_compressor.tensorflow.algorithms import SmoothQuant
     adaptor = TensorFlowAdaptor(framework_specific_info)
     model = SmoothQuant(model, smooth_quant_config, \
-                        calib_dataloader, adaptor, calib_iteration)
+                        adaptor, calib_dataloader, calib_iteration)()
 
     quant_config = StaticQuantConfig()
-    capability = adaptor.query_fw_capability(model)
+    model_info = quant_config.get_model_info(model=model)
+    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
 
-    tune_cfg = generate_tune_config(model, quant_config, calib_dataloader, \
+    capability = adaptor.query_fw_capability(model)
+    tune_cfg = generate_tune_config(model, configs_mapping, calib_dataloader, \
                                         calib_iteration, capability)
     q_model = adaptor.quantize(tune_cfg, model, calib_dataloader)
     return q_model

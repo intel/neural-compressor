@@ -18,10 +18,17 @@ class MyDataLoader:
         self.length = math.ceil(len(dataset) / self.batch_size)
 
     def __iter__(self):
+        images_list = []
+        labels_list = []
         for _, (images, labels) in enumerate(self.dataset):
             images = np.expand_dims(images, axis=0)
             labels = np.expand_dims(labels, axis=0)
-            yield (images, labels)
+            images_list.append(images[0])
+            labels_list.append(labels[0])
+            if self.batch_size == len(images_list):
+                yield (images_list, labels_list)
+                images_list = []
+                labels_list = []
 
     def __len__(self):
         return self.length
@@ -98,12 +105,12 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
         set_random_seed(9527)
         quant_config = SmoohQuantConfig(alpha=0.5)
         dataset = DummyDataset(shape=(1024, 1024), label=True)
-        calib_dataloader = MyDataLoader(dataset=dataset, batch_size=1)
-        output_graph = quantize_model(output_graph_def, quant_config, \
-                                      calib_dataloader, calib_iteration=1024)
+        calib_dataloader = MyDataLoader(dataset=dataset, batch_size=1024)
+        q_model = quantize_model(output_graph_def, quant_config, \
+                                      calib_dataloader, calib_iteration=1)
 
         mul_count = 0
-        for i in output_graph.graph_def.node:
+        for i in q_model.graph_def.node:
             if i.op == "Mul":
                 mul_count += 1
 
