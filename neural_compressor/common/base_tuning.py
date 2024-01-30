@@ -314,7 +314,7 @@ class TuningMonitor:
             bool: True if need to stop, otherwise False.
         """
 
-        # TODO Support more stop criteria in the next PR, such as `timeout`, and so on.
+        # TODO: Support more stop criteria in the next PR, such as `timeout`, and so on.
         # reach max trials
         reach_max_trials = self.trial_cnt >= self.tuning_config.max_trials
         # reach accuracy goal
