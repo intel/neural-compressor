@@ -6,7 +6,7 @@ import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
 from neural_compressor.common import set_random_seed
-from neural_compressor.tensorflow import SmoohQuantConfig, quantize_model
+from neural_compressor.tensorflow import SmoothQuantConfig, quantize_model
 from neural_compressor.tensorflow.quantization.tf_utils.util import disable_random
 from neural_compressor.tensorflow.utils import DummyDataset
 
@@ -72,7 +72,7 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
             )
 
         set_random_seed(9527)
-        quant_config = SmoohQuantConfig(alpha=0.5)
+        quant_config = SmoothQuantConfig(alpha=0.5)
         dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset, batch_size=1)
         output_graph = quantize_model(output_graph_def, quant_config, calib_dataloader, calib_iteration=500)
@@ -102,7 +102,7 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
             output_graph_def = sess.graph.as_graph_def()
 
         set_random_seed(9527)
-        quant_config = SmoohQuantConfig(alpha=0.5)
+        quant_config = SmoothQuantConfig(alpha=0.5)
         dataset = DummyDataset(shape=(1024, 1024), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset, batch_size=1024)
         q_model = quantize_model(output_graph_def, quant_config, calib_dataloader, calib_iteration=1)
@@ -144,7 +144,7 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
             )
 
         set_random_seed(9527)
-        quant_config = SmoohQuantConfig(alpha=0.6)
+        quant_config = SmoothQuantConfig(alpha=0.6)
         dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset, batch_size=1)
         output_graph = quantize_model(output_graph_def, quant_config, calib_dataloader, calib_iteration=500)

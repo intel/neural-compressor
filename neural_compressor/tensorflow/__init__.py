@@ -16,7 +16,7 @@ from .utils import register_algo, Model
 from .quantization import (
     quantize_model,
     StaticQuantConfig,
-    SmoohQuantConfig,
+    SmoothQuantConfig,
     get_default_sq_config,
     get_default_static_quant_config,
 )

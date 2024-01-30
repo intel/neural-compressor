@@ -16,7 +16,7 @@ from .quantize import quantize_model
 from .algorithm_entry import static_quantize_entry, smooth_quant_entry
 from .config import (
     StaticQuantConfig,
-    SmoohQuantConfig,
+    SmoothQuantConfig,
     get_default_sq_config,
     get_default_static_quant_config,
 )

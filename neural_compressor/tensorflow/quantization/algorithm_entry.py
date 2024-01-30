@@ -21,7 +21,7 @@ from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.tensorflow.algorithms import KerasAdaptor, TensorFlowAdaptor
 from neural_compressor.tensorflow.quantization.auto_tune import generate_tune_config
-from neural_compressor.tensorflow.quantization.config import SmoohQuantConfig, StaticQuantConfig
+from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig, StaticQuantConfig
 from neural_compressor.tensorflow.utils import BaseModel, KerasModel, framework_specific_info, register_algo
 
 
@@ -54,7 +54,7 @@ def static_quantize_entry(
 @register_algo(name=SMOOTH_QUANT)
 def smooth_quant_entry(
     model: BaseModel,
-    smooth_quant_config: SmoohQuantConfig,
+    smooth_quant_config: SmoothQuantConfig,
     calib_dataloader: Callable = None,
     calib_iteration: int = 100,
 ):

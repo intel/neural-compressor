@@ -28,7 +28,7 @@ from neural_compressor.tensorflow.algorithms.smooth_quant.smooth_quant_scaler im
     SmoothQuantScalerLLM,
 )
 from neural_compressor.tensorflow.algorithms.static_quant import TensorFlowAdaptor
-from neural_compressor.tensorflow.quantization.config import SmoohQuantConfig
+from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig
 from neural_compressor.tensorflow.utils import BaseModel, TensorflowLLMModel
 
 
@@ -38,7 +38,7 @@ class SmoothQuant:
     def __init__(
         self,
         model: BaseModel,
-        config: SmoohQuantConfig,
+        config: SmoothQuantConfig,
         adaptor: TensorFlowAdaptor,
         calib_dataloader: Callable,
         calib_iteration: int = 1,
@@ -47,7 +47,7 @@ class SmoothQuant:
 
         Args:
             model: original model
-            config: the SmoohQuantConfig class used to set this class
+            config: the SmoothQuantConfig class used to set this class
             adaptor: the TensorFlowAdaptor class from which this class copy some parameters
             calibdataloader: the calibration dataloader
             calib_iteration: how many steps of iterations on the dataloader to move forward
