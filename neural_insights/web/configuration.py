@@ -245,7 +245,7 @@ class Configuration:
         """Create secured file on Windows OS."""
         import ntsecuritycon as con  # pylint: disable=import-error
         import win32api  # pylint: disable=import-error
-        import win32file
+        import win32file  # pylint: disable=import-error
         import win32security  # pylint: disable=import-error
 
         username = win32api.GetUserName()
