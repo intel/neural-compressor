@@ -215,11 +215,44 @@ class TuningConfig:
         max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
         tolerable_loss: This float indicates how much metric loss we can accept. \
             The metric loss is relative, it can be both positive and negative. Default is 0.01.
-            # tolerable_loss example
-            tolerable_loss = 0.01
-            baseline = 100
-            eval_result_of_nth_trial = 99.1
-            eval_result_of_nth_trial > baseline * (1 - tolerable_loss ) , reached target.
+
+    Examples:
+        from neural_compressor import TuningConfig
+        tune_config = TuningConfig(
+            config_set=[config1, config2, ...],
+            max_trials=3,
+            tolerable_loss=0.01
+        )
+
+        # Case 1: Tolerable Loss
+        fp32_baseline = 100
+        config1_metric, config2_metric, ... = 98, 99, ...
+
+        # Tuning result of case 1:
+        # The best tuning config is config2, because config2_metric >= fp32_baseline * (1 - tolerable_loss)
+
+        # Case 2: Maximum Trials
+        fp32_baseline = 100
+        config1_metric, config2_metric, config3_metric, ... = 98, 98, 97, ...
+
+        # Tuning result of case 2:
+        # The best tuning config is config2, because of the following:
+        # 1. Not achieving the set goal. (config_metric < fp32_baseline * (1 - tolerable_loss))
+        # 2. Reached maximum tuning times.
+
+        # Case 3: Timeout
+        tune_config = TuningConfig(
+            config_set=[config1, config2, ...],
+            timeout=10, # seconds
+            max_trials=3,
+            tolerable_loss=0.01
+        )
+        config1_tuning_time, config2_tuning_time, config3_tuning_time, ... = 4, 5, 6, ... # seconds
+        fp32_baseline = 100
+        config1_metric, config2_metric, config3_metric, ... = 98, 98, 97, ...
+        # Tuning result of case 3:
+        # The best tuning config is config2, due to timeout, the third trial was forced to exit.
+
     """
 
     def __init__(
@@ -285,12 +318,11 @@ class TuningMonitor:
         # reach max trials
         reach_max_trials = self.trial_cnt >= self.tuning_config.max_trials
         # reach accuracy goal
-        meet_accuracy_goal = (
-            False
-            if self.baseline is None
-            else self.tuning_history[-1].trial_result >= (self.baseline * (1 - self.tuning_config.tolerable_loss))
-        )
-        # [-1] is the last element representing the latest trail record.
+        meet_accuracy_goal = False if self.baseline is None else \
+            self.tuning_history[-1].trial_result >= (
+                self.baseline * (1 - self.tuning_config.tolerable_loss)
+            )
+            # [-1] is the last element representing the latest trail record.
         return reach_max_trials or meet_accuracy_goal
 
 
