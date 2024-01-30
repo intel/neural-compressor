@@ -757,13 +757,14 @@ class Quantizer(nn.Module):
         if self.wdtype != "int":
             from .utility import quant_tensor
 
-            tmp = x.clone()  # make sure x is not replaced
+            tmp = x.clone()  # tmp will be replaced after quant_tensor
+
             _, scale, zero = quant_tensor(
                 tmp,
-                self.wbits,
-                self.group_size,
-                scheme=self.scheme,
                 dtype=self.wdtype,
+                bits=self.wbits,
+                group_size=self.group_size,
+                scheme=self.scheme,
                 quantile=1.0,
                 return_int=True,
                 full_range=False,
@@ -854,10 +855,10 @@ class Quantizer(nn.Module):
                 self.scale = self.scale.reshape(1, -1)
                 quant_tensor(
                     self.scale,
-                    self.double_quant_bits,
-                    self.double_quant_group_size,
-                    scheme=self.double_quant_scheme,
                     dtype=self.double_quant_dtype,
+                    bits=self.double_quant_bits,
+                    group_size=self.double_quant_group_size,
+                    scheme=self.double_quant_scheme,
                     quantile=1.0,
                     return_int=False,
                     full_range=False,
@@ -879,8 +880,7 @@ class Quantizer(nn.Module):
         if self.wdtype != "int":
             from .utility import quantize_4bit
 
-            tmp = x.clone()
-
+            tmp = x.clone()  # tmp will be replaced after quant_tensor
             return quantize_4bit(tmp, dtype=self.wdtype, scale=scale)
         else:
             if maxq < 0:
@@ -893,12 +893,7 @@ class Quantizer(nn.Module):
 
 
 # TODO (Yi) remove it after unifying the algo config parser
-from typing import Callable, Dict, Tuple
-
-from neural_compressor.torch.quantization.config import GPTQConfig
-
-
-def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig]):
+def gptq_config_mapping(configs_mapping):
     # convert GPTQ_CONFIG to gptq_quantize's weight config
     # convert tune_cfg to gptq_quantize's weight config
     # for layer_wise quant mode
@@ -950,33 +945,7 @@ def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig])
     return weight_config, nsamples, use_max_length, pad_max_length, device, dataloader_len
 
 
-def gptq_quantize(
-    model,
-    weight_config={},
-    dataloader=None,
-    nsamples=128,
-    use_max_length=True,
-    pad_max_length=2048,
-    device=None,
-    layer_wise=False,
-    model_path=None,
-):
-    """Run weight-only quantization with."""
-    # TODO: unify weight_config keys, add docstring, and support default config
-    assert isinstance(model, torch.nn.Module), "only support torch module"
-    if layer_wise:
-        assert model_path is not None, "model_path should not be None when use layer_wise mode"
-    from .gptq import GPTQuantizer
-
-    gptq_quantizer = GPTQuantizer(
-        model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise
-    )
-    fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
-    logger.info("GPTQ quantizing done.")
-    return fp32_modified_model, gptq_config
-
-
-def apply_gptq_quantize(model, configs_mapping, *args, **kwargs):
+def gptq_quantize(model, configs_mapping, *args, **kwargs):
     """Apply gptq."""
     # TODO: unify weight_config keys, add docstring, and support default config
     weight_config, nsamples, use_max_length, pad_max_length, device, dataloader_len = gptq_config_mapping(
