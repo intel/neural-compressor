@@ -18,16 +18,12 @@ from typing import Callable, Dict
 import tensorflow as tf
 
 from neural_compressor.common.base_config import BaseConfig
-from neural_compressor.common.utils import STATIC_QUANT, SMOOTH_QUANT
+from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.tensorflow.algorithms import KerasAdaptor, TensorFlowAdaptor
 from neural_compressor.tensorflow.quantization.auto_tune import generate_tune_config
 from neural_compressor.tensorflow.quantization.config import SmoohQuantConfig, StaticQuantConfig
-from neural_compressor.tensorflow.utils import (
-    register_algo,
-    BaseModel,
-    KerasModel,
-    framework_specific_info,
-)
+from neural_compressor.tensorflow.utils import BaseModel, KerasModel, framework_specific_info, register_algo
+
 
 @register_algo(name=STATIC_QUANT)
 def static_quantize_entry(
@@ -50,10 +46,10 @@ def static_quantize_entry(
     Adaptor = KerasAdaptor if isinstance(model, KerasModel) else TensorFlowAdaptor
     adaptor = Adaptor(framework_specific_info)
     capability = adaptor.query_fw_capability(model)
-    tune_cfg = generate_tune_config(model, quant_config, calib_dataloader, \
-                                        calib_iteration, capability)
+    tune_cfg = generate_tune_config(model, quant_config, calib_dataloader, calib_iteration, capability)
     q_model = adaptor.quantize(tune_cfg, model, calib_dataloader)
     return q_model
+
 
 @register_algo(name=SMOOTH_QUANT)
 def smooth_quant_entry(
@@ -62,20 +58,18 @@ def smooth_quant_entry(
     calib_dataloader: Callable = None,
     calib_iteration: int = 100,
 ):
-    assert not isinstance(model, KerasModel), \
-        "INC don't support smooth quantization for Keras models now."
+    assert not isinstance(model, KerasModel), "INC don't support smooth quantization for Keras models now."
 
     from neural_compressor.tensorflow.algorithms import SmoothQuant
+
     adaptor = TensorFlowAdaptor(framework_specific_info)
-    model = SmoothQuant(model, smooth_quant_config, \
-                        adaptor, calib_dataloader, calib_iteration)()
+    model = SmoothQuant(model, smooth_quant_config, adaptor, calib_dataloader, calib_iteration)()
 
     quant_config = StaticQuantConfig()
     model_info = quant_config.get_model_info(model=model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
 
     capability = adaptor.query_fw_capability(model)
-    tune_cfg = generate_tune_config(model, configs_mapping, calib_dataloader, \
-                                        calib_iteration, capability)
+    tune_cfg = generate_tune_config(model, configs_mapping, calib_dataloader, calib_iteration, capability)
     q_model = adaptor.quantize(tune_cfg, model, calib_dataloader)
     return q_model

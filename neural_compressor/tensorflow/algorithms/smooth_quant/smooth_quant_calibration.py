@@ -29,12 +29,15 @@ from tensorflow.core.framework import attr_value_pb2, graph_pb2
 from tensorflow.python.framework import dtypes, tensor_util
 from tensorflow.python.saved_model import load, tag_constants
 
-from neural_compressor.tensorflow.utils import Model, CaptureOutputToFile
-
 from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.tensorflow.quantization.tf_utils.quantize_graph_common import QuantizeGraphHelper
-from neural_compressor.tensorflow.quantization.tf_utils.util import iterator_sess_run, parse_saved_model, reconstruct_saved_model
+from neural_compressor.tensorflow.quantization.tf_utils.util import (
+    iterator_sess_run,
+    parse_saved_model,
+    reconstruct_saved_model,
+)
+from neural_compressor.tensorflow.utils import CaptureOutputToFile, Model
 
 logger = logging.getLogger("neural_compressor")
 debug = bool(logger.level == logging.DEBUG)
@@ -276,8 +279,9 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
             [key, value] = activation.rsplit(":")
             activation_name = key[1:-9]
             import json
-            value = value.replace(' ', ',')
-            value = value.replace('][', '],[')
+
+            value = value.replace(" ", ",")
+            value = value.replace("][", "],[")
             data = json.loads(value)
             if activation_name not in self._sq_output_tensor_dict:
                 self._sq_output_tensor_dict[activation_name] = [np.array(data)]
@@ -414,13 +418,12 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
 
         Args:
             sampling_graph_def: The temporary graph_def for inference.
-
         """
         logger.info("Start sampling on calibration dataset for Smooth Quantization.")
         # reconstruct graph_def that inserted print node to saved_model
         reconstruct_saved_model(sampling_graph_def, self.func, self.frozen_func, self._saved_model, self.temp_path)
         model = Model(self.temp_path, modelType="llm_saved_model")
-        
+
         input_tensor_names = model.input_tensor_names
         auto_trackable = model.model
         infer = auto_trackable.signatures["serving_default"]

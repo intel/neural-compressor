@@ -16,15 +16,15 @@ from .model import Model, framework_specific_info
 from .data import BaseDataLoader, DummyDataset, DummyDatasetV2
 from .constants import SPR_BASE_VERSIONS, DEFAULT_SQ_ALPHA_ARGS
 from .tensorflow_models import (
-    BaseModel, 
-    KerasModel, 
-    TensorflowLLMModel, 
+    BaseModel,
+    KerasModel,
+    TensorflowLLMModel,
     TensorflowBaseModel,
     TensorflowSavedModelModel,
 )
 from .utility import (
     algos_mapping,
-    version1_lt_version2, 
+    version1_lt_version2,
     version1_gt_version2,
     version1_eq_version2,
     version1_gte_version2,

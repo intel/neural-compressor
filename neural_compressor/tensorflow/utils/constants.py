@@ -22,10 +22,10 @@ SPR_BASE_VERSIONS = (
     "2.15.0202341",
 )
 
-DEFAULT_SQ_ALPHA_ARGS={
-        "alpha_min": 0.0,
-        "alpha_max": 1.0,
-        "alpha_step": 0.1,
-        "shared_criterion": "mean",
-        "do_blockwise": False,
+DEFAULT_SQ_ALPHA_ARGS = {
+    "alpha_min": 0.0,
+    "alpha_max": 1.0,
+    "alpha_step": 0.1,
+    "shared_criterion": "mean",
+    "do_blockwise": False,
 }

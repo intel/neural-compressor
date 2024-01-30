@@ -1,14 +1,14 @@
+import math
 import unittest
 
-import math
 import numpy as np
 import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
 from neural_compressor.common import set_random_seed
-from neural_compressor.tensorflow.utils import DummyDataset
-from neural_compressor.tensorflow import quantize_model, SmoohQuantConfig
+from neural_compressor.tensorflow import SmoohQuantConfig, quantize_model
 from neural_compressor.tensorflow.quantization.tf_utils.util import disable_random
+from neural_compressor.tensorflow.utils import DummyDataset
 
 
 class MyDataLoader:
@@ -75,8 +75,7 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
         quant_config = SmoohQuantConfig(alpha=0.5)
         dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset, batch_size=1)
-        output_graph = quantize_model(output_graph_def, quant_config, \
-                                      calib_dataloader, calib_iteration=500)
+        output_graph = quantize_model(output_graph_def, quant_config, calib_dataloader, calib_iteration=500)
 
         mul_count = 0
         for i in output_graph.graph_def.node:
@@ -106,8 +105,7 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
         quant_config = SmoohQuantConfig(alpha=0.5)
         dataset = DummyDataset(shape=(1024, 1024), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset, batch_size=1024)
-        q_model = quantize_model(output_graph_def, quant_config, \
-                                      calib_dataloader, calib_iteration=1)
+        q_model = quantize_model(output_graph_def, quant_config, calib_dataloader, calib_iteration=1)
 
         mul_count = 0
         for i in q_model.graph_def.node:
@@ -149,9 +147,8 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
         quant_config = SmoohQuantConfig(alpha=0.6)
         dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset, batch_size=1)
-        output_graph = quantize_model(output_graph_def, quant_config, \
-                                      calib_dataloader, calib_iteration=500)
-        
+        output_graph = quantize_model(output_graph_def, quant_config, calib_dataloader, calib_iteration=500)
+
         mul_count = 0
         for i in output_graph.graph_def.node:
             if i.op == "Mul":

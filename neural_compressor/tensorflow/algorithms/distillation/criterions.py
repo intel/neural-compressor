@@ -612,4 +612,3 @@ class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
         """
         assert self.student_targets_loss, "student_targets_loss not specified."
         return self.student_targets_loss(targets, student_outputs)
-

@@ -15,17 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
-import math
 import itertools
+import math
+import re
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from typing import Dict, List, Tuple, Callable
+from typing import Callable, Dict, List, Tuple
 
 from neural_compressor.common import logger
 from neural_compressor.common.base_config import BaseConfig
-from neural_compressor.tensorflow.utils import BaseModel, KerasModel
 from neural_compressor.tensorflow.keras import parse_to_keras_tune_cfg
+from neural_compressor.tensorflow.utils import BaseModel, KerasModel
 
 TUNING_ITEMS_LST = [
     ("activation", "scheme"),
@@ -39,12 +39,14 @@ TUNING_ITEMS_LST = [
 
 PRECISION_LIST = ["bf16", "fp32"]
 
-def generate_tune_config( 
+
+def generate_tune_config(
     model: BaseModel,
     quant_config: BaseConfig,
     calib_dataloader: Callable = None,
     calib_iteration: int = 100,
-    fwk_capability: dict = {}):
+    fwk_capability: dict = {},
+):
     """The main entry to apply static quantization.
 
     Args:
@@ -60,9 +62,8 @@ def generate_tune_config(
     if isinstance(model, KerasModel):
         return parse_to_keras_tune_cfg(model.model, quant_config, calib_iteration)
 
-    calib_sampling_size = calib_dataloader.batch_size*calib_iteration
-    adaptor_cap = {"calib": {"calib_sampling_size": calib_sampling_size}, \
-                   "op": fwk_capability["opwise"]}
+    calib_sampling_size = calib_dataloader.batch_size * calib_iteration
+    adaptor_cap = {"calib": {"calib_sampling_size": calib_sampling_size}, "op": fwk_capability["opwise"]}
     tuning_space = TuningSpace(adaptor_cap, conf=quant_config, framework="tensorflow")
     auto_query_order = ["static", "bf16", "fp32"]
     quant_mode_wise_items = OrderedDict()
@@ -84,9 +85,7 @@ def generate_tune_config(
 
     initial_op_tuning_cfg = {}
     for op_name_type, quant_mode in op_item_dtype_dict.items():
-        initial_op_tuning_cfg[op_name_type] = initial_tuning_cfg_with_quant_mode(
-            op_name_type, quant_mode, tuning_space
-        )
+        initial_op_tuning_cfg[op_name_type] = initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space)
 
     tune_cfg = {"op": OrderedDict()}
     for op_name_type, op_config in initial_op_tuning_cfg.items():
@@ -106,14 +105,15 @@ def generate_tune_config(
                     tune_cfg["op"][op_name_type]["pattern"] = op_pattern
         else:
             tune_cfg[op_name_type] = op_config
-    
+
     tune_cfg["calib_sampling_size"] = calib_sampling_size
     tune_cfg["calib_iteration"] = calib_iteration
     tune_cfg["approach"] = "post_training_static_quant"
     tune_cfg["recipe_cfgs"] = tune_cfg.get("recipe_cfgs", {})
     tune_cfg["trial_number"] = 1
-    
+
     return tune_cfg
+
 
 def pattern_to_internal(pattern, default_dtype="int8"):
     """Convert pattern to internal format.
@@ -135,11 +135,13 @@ def pattern_to_internal(pattern, default_dtype="int8"):
     internal_pattern = (pattern[0], ((pattern[1],), (pattern[1],)))
     return internal_pattern
 
+
 def pattern_to_path(pattern):
     """Convert pattern to path."""
     act_path = (pattern[0], "activation", *pattern[1][0])
     weight_path = (pattern[0], "weight", *pattern[1][1])
     return act_path, weight_path
+
 
 def extract_data_type(data_type: str) -> str:
     """Extract data type and signed from data type.
@@ -151,6 +153,7 @@ def extract_data_type(data_type: str) -> str:
         (signed or unsigned, data type without signed)
     """
     return ("signed", data_type) if data_type[0] != "u" else ("unsigned", data_type[1:])
+
 
 def initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space):
     """Initialize the tuning cfg.
@@ -192,6 +195,7 @@ def initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space):
     # set the first option as the default for each tuning item
     op_tuning_config = OpTuningConfig(op_name_type[0], op_name_type[1], quant_mode, tuning_space, kwargs=config_args)
     return op_tuning_config
+
 
 class OrderedDefaultDict(OrderedDict):
     """Ordered default dict."""
@@ -382,6 +386,7 @@ class TuningSpace:
 
     1) capability -> internal format -> merge -> tuning space (tree)
     """
+
     def __init__(self, capability, conf, framework=None):
         """Init the tuning space.
 
@@ -427,7 +432,7 @@ class TuningSpace:
             op_wise_config["activation"]["granularity"] = op_config.act_granularity
             op_wise_config["activation"]["algorithm"] = op_config.act_algorithm
             op_name_dict.update({op_name[0]: op_wise_config})
-        
+
         return op_name_dict if op_name_dict else None
 
     def _parse_capability(self, capability: Dict) -> None:
@@ -565,7 +570,6 @@ class TuningSpace:
             )
 
     def _merge_op_wise_cfg(self, cap: Dict, op_wise_usr_cfg: Dict, fw_cap: Dict):
-
         op_name_types = {key[0]: key for key in cap["op"].keys()}
         for op_name_pattern, op_user_cfg in op_wise_usr_cfg.items():
             if isinstance(op_name_pattern, str):
@@ -685,7 +689,7 @@ class TuningSpace:
         :param user_cfg:
         :return:
         """
-        
+
         fw_capability = deepcopy(capability)
         if user_cfg["model_wise"] is not None:
             self._merge_model_wise_cfg(capability, user_cfg["model_wise"], fw_capability)

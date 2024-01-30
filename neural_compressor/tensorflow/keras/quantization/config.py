@@ -17,17 +17,18 @@
 
 from __future__ import annotations
 
-from enum import Enum
 from collections import OrderedDict
-from typing import Callable, Dict, List, NamedTuple, Optional, Union, Tuple
+from enum import Enum
+from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import tensorflow as tf
 
+from neural_compressor.common import logger
 from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, STATIC_QUANT
-from neural_compressor.common import logger
 
 FRAMEWORK_NAME = "keras"
+
 
 class OperatorConfig(NamedTuple):
     config: BaseConfig
@@ -101,15 +102,21 @@ class StaticQuantConfig(BaseConfig):
             tf.keras.layers.AveragePooling2D,
             tf.keras.layers.MaxPooling2D,
         ]
-        supported_configs.append(
-            OperatorConfig(config=static_quant_config, operators=operators)
-        )
+        supported_configs.append(OperatorConfig(config=static_quant_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
     def get_model_info(model) -> List[Tuple[str, Callable]]:
-        white_list = ["Dense", "Conv2d", "DepthwiseConv2D", "SeparableConv2D",
-                      "AvgPool2D", "AveragePooling2D", "MaxPool2D", "MaxPooling2D"]
+        white_list = [
+            "Dense",
+            "Conv2d",
+            "DepthwiseConv2D",
+            "SeparableConv2D",
+            "AvgPool2D",
+            "AveragePooling2D",
+            "MaxPool2D",
+            "MaxPooling2D",
+        ]
         filter_result = []
 
         for layer in model.model.layers:
@@ -118,6 +125,7 @@ class StaticQuantConfig(BaseConfig):
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
+
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 StaticQuantConfig.register_supported_configs()
@@ -145,6 +153,7 @@ def get_default_static_quant_config() -> StaticQuantConfig:
         the default keras config.
     """
     return StaticQuantConfig()
+
 
 support_int8_weight = {"Dense", "Conv2d", "DepthwiseConv2D", "SeparableConv2D"}
 

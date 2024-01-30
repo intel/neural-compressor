@@ -25,8 +25,8 @@ from onnx import helper
 from packaging.version import Version
 from tensorflow.core.framework import node_def_pb2, tensor_pb2
 
-from neural_compressor.tensorflow.utils import LazyImport, dump_elapsed_time
 from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.tensorflow.utils import LazyImport, dump_elapsed_time
 
 from .graph_rewriter.onnx import tf2onnx_utils as utils
 from .graph_rewriter.onnx.onnx_graph import OnnxGraph

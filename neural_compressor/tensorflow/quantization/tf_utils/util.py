@@ -34,9 +34,9 @@ from tensorflow.python.saved_model import load, save, signature_constants, tag_c
 from tensorflow.python.training import saver
 from tensorflow.python.util import nest
 
-from neural_compressor.utils import logger
-from neural_compressor.tensorflow.utils import SPR_BASE_VERSIONS
 from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer, GraphRewriterHelper
+from neural_compressor.tensorflow.utils import SPR_BASE_VERSIONS
+from neural_compressor.utils import logger
 
 TF_SPR_BASE_VERSIONS = SPR_BASE_VERSIONS
 

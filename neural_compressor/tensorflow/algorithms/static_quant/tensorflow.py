@@ -16,31 +16,33 @@
 # limitations under the License.
 """Tensorflow Adaptor Classes."""
 
-import os
 import copy
 import math
-import yaml
-import numpy as np
+import os
 from collections import OrderedDict, UserDict
+
+import numpy as np
+import tensorflow as tf
+import yaml
 from pkg_resources import parse_version
+
 from neural_compressor.common import logger
 from neural_compressor.tensorflow.utils import (
+    SPR_BASE_VERSIONS,
+    BaseDataLoader,
     CpuInfo,
-    deep_get,
     Dequantize,
     Statistics,
+    deep_get,
     dump_elapsed_time,
     singleton,
-    BaseDataLoader,
-    SPR_BASE_VERSIONS,
     version1_eq_version2,
     version1_gte_version2,
     version1_lt_version2,
 )
 
-import tensorflow as tf
-
 spr_base_verions = SPR_BASE_VERSIONS
+
 
 class TensorFlowAdaptor:
     """Adaptor Layer for stock tensorflow and spr-base."""
@@ -950,7 +952,9 @@ class TensorFlowAdaptor:
             [dict]: model-wise & op-wise configuration for quantization.
         """
         if self.pre_optimized_model is None:
-            from neural_compressor.tensorflow.quantization.tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
+            from neural_compressor.tensorflow.quantization.tf_utils.graph_rewriter.generic.pre_optimize import (
+                PreOptimization,
+            )
 
             self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
             self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
@@ -1112,8 +1116,10 @@ class TensorFlowAdaptor:
 
     def inspect_weight_and_bias(self, node_list, graph_def, graph_info, graph_node_name_mapping):
         """Inspect the weights and biases."""
-        from neural_compressor.tensorflow.quantization.tf_utils.util import int8_node_name_reverse
-        from neural_compressor.tensorflow.quantization.tf_utils.util import get_tensor_val_from_graph_node
+        from neural_compressor.tensorflow.quantization.tf_utils.util import (
+            get_tensor_val_from_graph_node,
+            int8_node_name_reverse,
+        )
         from neural_compressor.tensorflow.utils import dequantize_weight
 
         weights_result = {}
@@ -1313,10 +1319,9 @@ class TensorFlowAdaptor:
                  ]
                }
         """
-        from neural_compressor.tensorflow.utils import TensorflowBaseModel
-        from neural_compressor.tensorflow.utils import dump_data_to_local, load_data_from_pkl
         from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer
         from neural_compressor.tensorflow.quantization.tf_utils.util import int8_node_name_reverse
+        from neural_compressor.tensorflow.utils import TensorflowBaseModel, dump_data_to_local, load_data_from_pkl
 
         if isinstance(model, TensorflowBaseModel):
             model = model.graph_def
@@ -1568,7 +1573,10 @@ class TensorFlowAdaptor:
         ], "Only `Functional` or `Sequential` keras model is supported for QAT."
 
         from neural_compressor.tensorflow.quantization.tf_utils.quantize_graph.qat.quantize_config import global_config
-        from neural_compressor.tensorflow.quantization.tf_utils.quantize_graph.qat.quantize_helper import init_quantize_config, qat_clone_function
+        from neural_compressor.tensorflow.quantization.tf_utils.quantize_graph.qat.quantize_helper import (
+            init_quantize_config,
+            qat_clone_function,
+        )
 
         config = init_quantize_config(model, quantize_recipe)
         q_model = tf.keras.models.clone_model(model, input_tensors=None, clone_function=qat_clone_function)
@@ -1594,7 +1602,9 @@ class TensorFlowAdaptor:
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
         model.graph_def = self.pre_optimized_model.graph_def
 
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_converter_without_calib import GraphConverterWithoutCalib
+        from neural_compressor.tensorflow.quantization.tf_utils.graph_converter_without_calib import (
+            GraphConverterWithoutCalib,
+        )
 
         converter = GraphConverterWithoutCalib(
             model,

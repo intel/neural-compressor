@@ -18,9 +18,12 @@
 """BaseDataloder of all dataloaders."""
 
 import sys
-import numpy as np
 from abc import abstractmethod
+
+import numpy as np
+
 from neural_compressor.common import logger
+
 
 class BaseDataLoader:  # pragma: no cover
     """Base class for all DataLoaders.
@@ -263,7 +266,7 @@ class DummyDataset:  # pragma: no cover
         else:
             return sample
 
-        
+
 class DummyDatasetV2:  # pragma: no cover
     """Dataset used for dummy_v2 data generation.
 

@@ -15,9 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 import os
 import shutil
-import math
 import time
 import unittest
 
@@ -122,7 +122,7 @@ class TestBigSavedModel(unittest.TestCase):
             name = name.replace("kernel:0", "ReadVariableOp")
             return name
 
-        from neural_compressor.tensorflow import Model, quantize_model, SmoohQuantConfig
+        from neural_compressor.tensorflow import Model, SmoohQuantConfig, quantize_model
 
         model = Model("baseline_model", modelType="llm_saved_model")
         model.weight_name_mapping = weight_name_mapping
@@ -132,8 +132,7 @@ class TestBigSavedModel(unittest.TestCase):
 
         quant_config = SmoohQuantConfig(alpha=0.6)
         calib_dataloader = MyDataLoader(dataset=Dataset(), batch_size=1)
-        q_model = quantize_model(model, quant_config, \
-                                      calib_dataloader, calib_iteration=500)
+        q_model = quantize_model(model, quant_config, calib_dataloader, calib_iteration=500)
 
         q_model.save("int8_model")
         quant_count = 0
