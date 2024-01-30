@@ -110,7 +110,7 @@ eval_result: float = evaluator.eval(model)
 def xx_func(cls) -> Dict[str, OrderedDict[str, Dict[str, object]]]: # Can't improve the readability
 ```
 
-- Plugs
+- Plugs:
   - [python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
   - [pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance)
 
@@ -159,8 +159,8 @@ class OutOfCheeseError(Exception):
 
 > A `TODO` comment begins with the word `TODO:` for facilitate searching.
 
-- Plug
-    -[Better Comments](https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments)
+- Plug:
+    [Better Comments](https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments)
 
 
 ### Public Interface
