@@ -191,10 +191,17 @@ class SmoohQuantConfig(BaseConfig):
         providers: list = ["CPUExecutionProvider"],
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
-        """Init RTN weight-only quantization config.
+        """Init smooth quant quantization config.
 
         Args:
-            weight_dtype (str): Data type for weights, default is "int".
+            alpha (float or str): alpha value to balance the quantization difficulty of activation and weight.
+            folding (bool): whether fold those foldable Mul which are inserted for smooth quant.
+            op_types (list): the op type to be smooth quantized.
+            calib_iter (int): iteration num for calibration.
+            scales_per_op (bool): True, each op will have an individual scale, mainlyfor accuracy.
+                                  False, ops with the same input will share a scale, mainly for performance.
+            auto_alpha_args (dict): settings for alpha tuning.
+            providers (list): providers used for inference.
         """
         super().__init__()
         self.alpha = alpha
@@ -232,11 +239,8 @@ class SmoohQuantConfig(BaseConfig):
         return SmoohQuantConfig(alpha=np.arange(0.3, 0.7, 0.05))
 
 
-SmoohQuantConfig.register_supported_configs()
-
-
 def get_default_sq_config() -> SmoohQuantConfig:
-    """Generate the default rtn config.
+    """Generate the default smooth quant config.
 
     Returns:
         the default smooth quant config.

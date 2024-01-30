@@ -28,7 +28,7 @@ from neural_compressor.common import Logger
 from neural_compressor.onnxrt.algorithms.smoother.calibrator import Calibrator
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.onnxrt.utils.utility import (
-    _get_qrange_for_qType,
+    get_qrange_for_qType,
     is_B_transposed,
     quantize_data,
     simple_progress_bar,
@@ -95,7 +95,7 @@ def quant_dequant_data(data, qType=3, scheme="sym"):
         scheme (str): sym or asym quantization
     """
     rmin, rmax, zero_point, scale, quantized_data = quantize_data(
-        data.flatten().tolist(), _get_qrange_for_qType(qType, False), qType, scheme
+        data.flatten().tolist(), get_qrange_for_qType(qType, False), qType, scheme
     )
     return ((quantized_data - zero_point) * scale).astype(data.dtype).reshape(data.shape)
 

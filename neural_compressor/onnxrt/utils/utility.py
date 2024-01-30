@@ -128,7 +128,7 @@ def is_B_transposed(node):
     return False
 
 
-def _get_qrange_for_qType(qType, reduce_range=False):
+def get_qrange_for_qType(qType, reduce_range=False):
     """Helper function to get the quantization range for a type.
 
     Args:

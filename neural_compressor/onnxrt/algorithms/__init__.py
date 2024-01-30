@@ -14,7 +14,9 @@
 
 
 from neural_compressor.onnxrt.algorithms.smoother import Smoother
+from neural_compressor.onnxrt.algorithms.weight_only.rtn import apply_rtn_on_model
 
 __all__ = [
     "Smoother",
+    "apply_rtn_on_model",
 ]

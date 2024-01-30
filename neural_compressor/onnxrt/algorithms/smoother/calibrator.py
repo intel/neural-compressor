@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-#
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# -------------------------------------------------------------------------
-# Copyright (c) Microsoft, Intel Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for
-# license information.
-# --------------------------------------------------------------------------
 """Calibration for smooth quant."""
 
 import sys
@@ -92,7 +83,7 @@ class Calibrator:
                     self.model_wrapper.initializer()[name_to_indices[weight_name]]
                 ).shape
                 input_channel = weight_shape[1]
-                if input_channel != 1:  # TODO need to double check
+                if input_channel != 1:  # TODO: need to double check
                     return True
         return False
 
@@ -100,7 +91,7 @@ class Calibrator:
         """Traverse the graph and get all the data tensors flowing into layers of {op_types}.
 
         Group conv is excluded.
-        TODO the tensors could be set/filtered in configuration.
+        # TODO: the tensors could be set/filtered in configuration.
 
         Args:
             op_types: The op types whose input tensor will be dumped
@@ -132,7 +123,7 @@ class Calibrator:
         """
         permute_datas = []
         for data in datas:
-            if len(data.shape) == 3:  # TODO  mammul batchsize*seq*inchannel, conv:batchsize*inchannle*f*f
+            if len(data.shape) == 3:  # TODO: mammul batchsize*seq*inchannel, conv:batchsize*inchannle*f*f
                 tensor = np.abs(np.reshape(data, (-1, data.shape[-1])))
                 permute_datas.append(tensor)
             elif len(data.shape) == 4:
