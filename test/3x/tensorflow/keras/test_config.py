@@ -120,7 +120,7 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_dict_default(self):
         logger.info("test_static_quant_from_dict_default")
-        from neural_compressor.tensorflow import  quantize_model
+        from neural_compressor.tensorflow import quantize_model
         from neural_compressor.tensorflow.keras import get_default_static_quant_config
 
         calib_dataloader = MyDataLoader(dataset=Dataset())
@@ -161,6 +161,7 @@ class TestKeras3xNewApi(unittest.TestCase):
         logger.info("test_static_quant_from_class_default")
         from neural_compressor.tensorflow import quantize_model
         from neural_compressor.tensorflow.keras import StaticQuantConfig
+
         calib_dataloader = MyDataLoader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
         quant_config = StaticQuantConfig()

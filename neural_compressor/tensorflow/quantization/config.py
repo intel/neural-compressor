@@ -18,19 +18,19 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Callable, Dict, List, NamedTuple, Optional, Union, Tuple
+from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import tensorflow as tf
 
 from neural_compressor.common import logger
-from neural_compressor.common.utils import STATIC_QUANT, SMOOTH_QUANT
-from neural_compressor.common.base_config import(
+from neural_compressor.common.base_config import (
+    DEFAULT_WHITE_LIST,
+    OP_NAME_OR_MODULE_TYPE,
     BaseConfig,
     config_registry,
     register_config,
-    DEFAULT_WHITE_LIST, 
-    OP_NAME_OR_MODULE_TYPE, 
 )
+from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.tensorflow.utils import DEFAULT_SQ_ALPHA_ARGS
 
 FRAMEWORK_NAME = "tensorflow"
@@ -123,17 +123,29 @@ class StaticQuantConfig(BaseConfig):
             tf.compat.v1.nn.conv2d_backprop_input,
             tf.raw_ops.Conv3DBackpropInputV2,
         ]
-        supported_configs.append(
-            OperatorConfig(config=static_quant_config, operators=operators)
-        )
+        supported_configs.append(OperatorConfig(config=static_quant_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
     def get_model_info(model) -> List[Tuple[str, Callable]]:
-        white_list = ["MatMul", "Conv2D", "Conv3D", "_MklFusedInstanceNorm",
-        "BatchMatMul", "BatchMatMulV2", "DepthwiseConv2dNative", "ConcatV2",
-        "FusedBatchNorm", "FusedBatchNormV2", "MaxPool", "MaxPool3D", "AvgPool",
-        "_MklFusedInstanceNorm", "Conv2DBackpropInput", "Conv2DBackpropInputV2"]
+        white_list = [
+            "MatMul",
+            "Conv2D",
+            "Conv3D",
+            "_MklFusedInstanceNorm",
+            "BatchMatMul",
+            "BatchMatMulV2",
+            "DepthwiseConv2dNative",
+            "ConcatV2",
+            "FusedBatchNorm",
+            "FusedBatchNormV2",
+            "MaxPool",
+            "MaxPool3D",
+            "AvgPool",
+            "_MklFusedInstanceNorm",
+            "Conv2DBackpropInput",
+            "Conv2DBackpropInputV2",
+        ]
         filter_result = []
         for node in model.graph_def.node:
             if node.op in white_list:
@@ -141,6 +153,7 @@ class StaticQuantConfig(BaseConfig):
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
+
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 StaticQuantConfig.register_supported_configs()
@@ -168,7 +181,6 @@ def get_default_static_quant_config() -> StaticQuantConfig:
         the default tf config.
     """
     return StaticQuantConfig()
-
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT)
@@ -201,6 +213,7 @@ class SmoohQuantConfig(BaseConfig):
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init RTN weight-only quantization config.
+
         Args:
             weight_dtype (str): Data type for weights, default is "int".
         """
@@ -221,9 +234,7 @@ class SmoohQuantConfig(BaseConfig):
         supported_configs = []
         smooth_quant_config = SmoohQuantConfig()
         operators = ["MatMul", "Conv2D"]
-        supported_configs.append(
-            OperatorConfig(config=smooth_quant_config, operators=operators)
-        )
+        supported_configs.append(OperatorConfig(config=smooth_quant_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
@@ -243,6 +254,7 @@ SmoohQuantConfig.register_supported_configs()
 
 def get_default_sq_config() -> SmoohQuantConfig:
     """Generate the default rtn config.
+
     Returns:
         the default smooth quant config.
     """

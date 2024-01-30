@@ -17,24 +17,25 @@
 """Class for Tensorflow model."""
 
 import copy
+import datetime
 import importlib
 import json
 import os
 import shutil
 import sys
-import datetime
 import tempfile
 import time
 from abc import abstractmethod
+
+import numpy as np
+import tensorflow as tf
 
 from neural_compressor.common import logger
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
 from neural_compressor.tensorflow.utils.utility import version1_lt_version2
 
-import numpy as np
-import tensorflow as tf
-
 tensor_to_node = lambda s: list(set([x.split(":")[0] for x in s]))
+
 
 def get_tf_model_type(model):
     try:
@@ -44,10 +45,13 @@ def get_tf_model_type(model):
     except:
         os.environ.pop("CUDA_DEVICE_ORDER")
         os.environ.pop("CUDA_VISIBLE_DEVICES")
-        raise TypeError("Tensorflow model format is not correctly detected. This could be \
-        caused by unsupported model or inappropriate framework installation.")
+        raise TypeError(
+            "Tensorflow model format is not correctly detected. This could be \
+        caused by unsupported model or inappropriate framework installation."
+        )
     else:
         return model_type
+
 
 def get_model_type(model):
     """Get Tensorflow mode type.
@@ -1573,6 +1577,7 @@ class KerasModel(BaseModel):
         """Return output node names."""
         return self.model.output_names
 
+
 TENSORFLOW_MODELS = {
     "frozen_pb": TensorflowBaseModel,
     "graph_def": TensorflowBaseModel,
@@ -1584,7 +1589,7 @@ TENSORFLOW_MODELS = {
     "AutoTrackable": TensorflowSavedModelModel,
     "llm_saved_model": TensorflowLLMModel,
     "keras": KerasModel,
-    "keras_qat": TensorflowQATModel
+    "keras_qat": TensorflowQATModel,
 }
 
 

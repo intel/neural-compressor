@@ -573,9 +573,10 @@ class KerasAdaptor:
             model (object): The model to query quantization tuning capability.
         """
         from neural_compressor.tensorflow.utils import BaseModel
+
         if isinstance(model, BaseModel):
             model = model.model
-            
+
         fp32_config = {"weight": {"dtype": "fp32"}, "activation": {"dtype": "fp32"}}
         bf16_config = {"weight": {"dtype": "bf16"}, "activation": {"dtype": "bf16"}}
         int8_type = self.query_handler.get_op_types_by_precision(precision="int8")

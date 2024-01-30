@@ -27,16 +27,18 @@ import tensorflow as tf
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
 
-from neural_compressor.tensorflow.quantization.tf_utils.graph_rewriter.generic.insert_print_node import InsertPrintMinMaxNode
+from neural_compressor.tensorflow.quantization.tf_utils.graph_rewriter.generic.insert_print_node import (
+    InsertPrintMinMaxNode,
+)
 from neural_compressor.tensorflow.utils import (
-    Model,
-    deep_get,
     CaptureOutputToFile,
     CpuInfo,
+    Model,
+    TensorflowSavedModelModel,
     combine_histogram,
+    deep_get,
     get_all_fp32_data,
     get_tensor_histogram,
-    TensorflowSavedModelModel,
 )
 
 from .graph_rewriter.bf16.bf16_convert import BF16Convert

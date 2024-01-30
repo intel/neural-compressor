@@ -21,6 +21,7 @@ from neural_compressor.tensorflow.utils import LazyImport
 STUDENT_FEATURES = {}
 TEACHER_FEATURES = {}
 
+
 def get_activation(name, output_process="", student=False):
     """Get a hook for getting activation."""
 

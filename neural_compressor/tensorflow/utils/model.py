@@ -23,7 +23,6 @@ from neural_compressor.tensorflow.utils.tensorflow_models import (
     get_tf_model_type,
 )
 
-
 framework_specific_info = {
     "device": "cpu",
     "backend": "default",
@@ -48,6 +47,7 @@ class Model(object):
             BaseModel: neural_compressor built-in model
         """
         from neural_compressor.tensorflow.utils import itex_installed
+
         if isinstance(root, BaseModel):
             return root
 
@@ -85,10 +85,11 @@ class Model(object):
             framework_specific_info["outputs"] = conf.outputs
 
         if framework == "keras":
-            framework_specific_info["backend"] = "itex" 
-            return 
+            framework_specific_info["backend"] = "itex"
+            return
 
         from neural_compressor.tensorflow.utils import itex_installed
+
         if conf.performance_only:
             framework_specific_info["performance_only"] = conf.performance_only
         if itex_installed():
@@ -97,7 +98,7 @@ class Model(object):
             framework_specific_info["workspace_path"] = conf.workspace_path
         if conf.recipes:
             framework_specific_info["recipes"] = conf.recipes
-        
+
         framework_specific_info["use_bf16"] = conf.use_bf16 if conf.use_bf16 else False
 
         for item in ["scale_propagation_max_pooling", "scale_propagation_concat"]:

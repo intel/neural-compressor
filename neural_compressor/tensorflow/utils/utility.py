@@ -12,20 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib
+import logging
 import os
+import pickle
+import subprocess
 import sys
 import time
-import pickle
-import psutil
-import cpuinfo
-import logging
-import importlib
-import subprocess
-
-import numpy as np
-import prettytable as pt
 from functools import reduce
 from typing import Callable, Dict
+
+import cpuinfo
+import numpy as np
+import prettytable as pt
+import psutil
 from pkg_resources import parse_version
 
 from neural_compressor.common import logger
@@ -38,21 +38,26 @@ def version1_lt_version2(version1, version2):
     """Check whether version1 is less than version2."""
     return parse_version(version1) < parse_version(version2)
 
+
 def version1_gt_version2(version1, version2):
     """Check whether version1 is greater than version2."""
     return parse_version(version1) > parse_version(version2)
+
 
 def version1_eq_version2(version1, version2):
     """Check whether version1 is equal to version2."""
     return parse_version(version1) == parse_version(version2)
 
+
 def version1_gte_version2(version1, version2):
     """Check whether version1 is greater than version2 or is equal to it."""
     return parse_version(version1) > parse_version(version2) or parse_version(version1) == parse_version(version2)
 
+
 def version1_lte_version2(version1, version2):
     """Check whether version1 is less than version2 or is equal to it."""
     return parse_version(version1) < parse_version(version2) or parse_version(version1) == parse_version(version2)
+
 
 def register_algo(name):
     """Decorator function to register algorithms in the algos_mapping dictionary.
@@ -73,6 +78,7 @@ def register_algo(name):
 
     return decorator
 
+
 def deep_get(dictionary, keys, default=None):
     """Get the dot key's item in nested dict
        eg person = {'person':{'name':{'first':'John'}}}
@@ -87,13 +93,16 @@ def deep_get(dictionary, keys, default=None):
     """
     return reduce(lambda d, key: d.get(key, default) if isinstance(d, dict) else default, keys.split("."), dictionary)
 
+
 def itex_installed():
     """Check if the Intel® Extension for TensorFlow has been installed."""
     try:
         import intel_extension_for_tensorflow
+
         return True
     except:
         return False
+
 
 def dump_elapsed_time(customized_msg=""):
     """Get the elapsed time for decorated functions.
@@ -117,6 +126,7 @@ def dump_elapsed_time(customized_msg=""):
 
     return f
 
+
 def combine_histogram(old_hist, arr):
     """Collect layer histogram for arr and combine it with old histogram."""
     new_max = np.max(arr)
@@ -136,9 +146,11 @@ def combine_histogram(old_hist, arr):
         hist[half_increased_bins : new_num_bins - half_increased_bins] += old_hist
         return (hist, hist_edges, min(old_min, new_min), max(old_max, new_max), new_th)
 
+
 def get_all_fp32_data(data):
     """Get all the fp32 data."""
     return [float(i) for i in data.replace("[", " ").replace("]", " ").split(" ") if i.strip() and len(i) < 32]
+
 
 def get_tensor_histogram(tensor_data, bins=2048):
     """Get the histogram of the tensor data."""
@@ -148,6 +160,7 @@ def get_tensor_histogram(tensor_data, bins=2048):
     hist, hist_edges = np.histogram(tensor_data, bins=2048, range=(-th, th))
     return (hist, hist_edges, min_val, max_val, th)
 
+
 def Dequantize(data, scale_info):
     """Dequantize the data with the scale_info."""
     original_shape = data.shape
@@ -156,6 +169,7 @@ def Dequantize(data, scale_info):
     de_scale = np.ones(original_shape) * _scale
     de_data = np.multiply(data, de_scale).astype(np.float32)
     return de_data
+
 
 def dequantize_weight(weight_tensor, min_filter_tensor, max_filter_tensor):
     """Dequantize the weight with min-max filter tensors."""
@@ -169,6 +183,7 @@ def dequantize_weight(weight_tensor, min_filter_tensor, max_filter_tensor):
                 (max_filter_tensor[i] - min_filter_tensor[i]) / 127.0
             )
     return weight_tensor
+
 
 def dump_data_to_local(data, path, filename):
     """Dump data to local as pkl file.
@@ -190,6 +205,7 @@ def dump_data_to_local(data, path, filename):
         pickle.dump(data, fp)
         logging.getLogger("neural_compressor").info("Dumped data to %s" % file_path)
 
+
 def load_data_from_pkl(path, filename):
     """Load data from local pkl file.
 
@@ -205,6 +221,7 @@ def load_data_from_pkl(path, filename):
     except FileExistsError:
         logging.getLogger("neural_compressor").info("Can not open %s." % path)
 
+
 def singleton(cls):
     """Not displayed in API Docs.
 
@@ -219,6 +236,7 @@ def singleton(cls):
         return instances[cls]
 
     return _singleton
+
 
 @singleton
 class CpuInfo(object):
@@ -339,8 +357,9 @@ class TensorFlowConfig:
     def precisions(self, precisions):
         if not isinstance(precisions, list):
             precisions = [precisions]
-        if _check_value('precisions', precisions, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16']):
+        if _check_value("precisions", precisions, str, ["int8", "uint8", "fp32", "bf16", "fp16"]):
             self._precisions = precisions
+
 
 tensorflow_config = TensorFlowConfig()
 

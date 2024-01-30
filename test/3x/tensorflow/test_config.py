@@ -29,6 +29,7 @@ from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
+
 def build_model():
     import tensorflow as tf
     from tensorflow.compat.v1 import graph_util
@@ -92,6 +93,7 @@ class TestTF3xNewApi(unittest.TestCase):
         logger.info("test_static_quant_from_dict_default")
         from neural_compressor.tensorflow import get_default_static_quant_config, quantize_model
         from neural_compressor.tensorflow.utils import DummyDataset
+
         dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset)
         fp32_model = self.graph
@@ -117,6 +119,7 @@ class TestTF3xNewApi(unittest.TestCase):
             }
         }
         from neural_compressor.tensorflow.utils import DummyDataset
+
         dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset)
         fp32_model = self.graph
@@ -133,6 +136,7 @@ class TestTF3xNewApi(unittest.TestCase):
         logger.info("test_static_quant_from_class_default")
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
         from neural_compressor.tensorflow.utils import DummyDataset
+
         dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset)
         fp32_model = self.graph
@@ -150,6 +154,7 @@ class TestTF3xNewApi(unittest.TestCase):
         logger.info("test_static_quant_from_class_beginner")
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
         from neural_compressor.tensorflow.utils import DummyDataset
+
         dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset)
         fp32_model = self.graph
@@ -170,6 +175,7 @@ class TestTF3xNewApi(unittest.TestCase):
         logger.info("test_static_quant_from_dict_advance")
         from neural_compressor.tensorflow import quantize_model
         from neural_compressor.tensorflow.utils import DummyDataset
+
         dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset)
         fp32_model = self.graph
@@ -204,6 +210,7 @@ class TestTF3xNewApi(unittest.TestCase):
         logger.info("test_static_quant_from_class_advance")
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
         from neural_compressor.tensorflow.utils import DummyDataset
+
         dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset)
         fp32_model = self.graph

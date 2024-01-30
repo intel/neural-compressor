@@ -16,8 +16,8 @@
 # limitations under the License.
 """Strip Equivalent Nodes Graph Rewriter."""
 
-from neural_compressor.tensorflow.quantization.tf_utils.util import fix_ref_type_of_graph_def, strip_equivalent_nodes
 from neural_compressor.common import logger
+from neural_compressor.tensorflow.quantization.tf_utils.util import fix_ref_type_of_graph_def, strip_equivalent_nodes
 from neural_compressor.tensorflow.utils import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
