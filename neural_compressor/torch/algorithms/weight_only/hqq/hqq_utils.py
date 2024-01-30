@@ -22,13 +22,14 @@ from collections import namedtuple
 from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
+from bitpack import BitPack
 from inc_accelerator import auto_detect_accelerator
 
 auto_accelerator = auto_detect_accelerator()
 
 # from hqq.core.common.optim_utils import optimize_weights_proximal
 from hqq_optmizer import optimize_weights_proximal
-from utility import custom_print, dump_elapsed_time, inspect_function, is_divisible
+from utility import custom_print, dump_elapsed_time, get_tensor_size, inspect_function, is_divisible
 
 __all__ = [
     "QuantTensorConfig",
@@ -48,7 +49,7 @@ class QuantTensorConfig:
         group_size: int = 128,
         optimize: bool = True,
         round_zero: Optional[bool] = False,
-        pack: bool = False,
+        pack: bool = True,
     ) -> None:
         self.nbits = nbits
         self.channel_wise = channel_wise
@@ -61,7 +62,7 @@ class QuantTensorConfig:
         return (
             f"QuantTensorConfig(nbits={self.nbits}, channel_wise={self.channel_wise}, "
             f"group_size={self.group_size}, optimize={self.optimize}, "
-            f"round_zero={self.round_zero}, pack={self.pack})"
+            f"round_zero={self.round_pwdzero}, pack={self.pack})"
         )
 
 
@@ -74,6 +75,30 @@ default_scale_quant_config = QuantTensorConfig(
 default_zero_quant_config = QuantTensorConfig(
     nbits=8, channel_wise=False, group_size=None, optimize=False, round_zero=None
 )
+
+
+# def hqq_base_quant_config(nbits=4, group_size=64, quant_zero=True, quant_scale=False, scale_quant_group_size=128):
+#    assert nbits in Quantizer.SUPPORTED_BITS, "nbits value not supported. Check Quantizer.SUPPORTED_BITS."
+#    if(group_size is not None):
+#       assert is_divisible(group_size, 8), "Invalid group_size param: the value should be a multiple of 8."
+#    weight_quant_params = {'nbits':nbits,'channel_wise':True,  'group_size':group_size, 'optimize':True, 'round_zero':True if nbits==4 else False}
+#    scale_quant_params  = {'nbits':8,    'channel_wise':True,  'group_size':scale_quant_group_size,        'optimize':False} if (quant_scale) else None
+#    zero_quant_params   = {'nbits':8,    'channel_wise':False, 'group_size':None,       'optimize':False} if (quant_zero)  else None
+#    return {'weight_quant_params':weight_quant_params, 'scale_quant_params':scale_quant_params, 'zero_quant_params':zero_quant_params}
+
+
+def convert_offical_config_into_hqq_config(quant_config_offical):
+    weight_quant_params = quant_config_offical["weight_quant_params"]
+    scale_quant_params = quant_config_offical["scale_quant_params"]
+    zero_quant_params = quant_config_offical["zero_quant_params"]
+    weight_quant_config = QuantTensorConfig(**weight_quant_params)
+    scale_quant_config = None
+    zero_quant_config = None
+    if scale_quant_params:
+        scale_quant_config = QuantTensorConfig(**scale_quant_params)
+    if zero_quant_params:
+        zero_quant_config = QuantTensorConfig(**zero_quant_params)
+    return HQQModuleConfig(weight_quant_config, scale_quant_config, zero_quant_config)
 
 
 class HQQModuleConfig(
@@ -174,14 +199,44 @@ class QTensor:
         self.zero = self.zero.to(*args, **kwargs)
         return self
 
+    def get_size(self) -> int:
+        result = 0
+        result += get_tensor_size(self.val)
+        if isinstance(self.scale, QTensor):
+            result += get_tensor_size(self.scale.val)
+        else:
+            result += get_tensor_size(self.scale)
+        if isinstance(self.zero, QTensor):
+            result += get_tensor_size(self.zero.val)
+        else:
+            result += get_tensor_size(self.zero)
+        return result
+
 
 class HQQTensorHandle:
-    # The mostly copied from https://github.com/mobiusml/hqq.
+    # Refactor the code from https://github.com/mobiusml/hqq.
 
     # Store meta-data (we invert the scale for dequantization)
     SUPPORTED_BITS = [8, 4, 3, 2]
     optimize_weights = optimize_weights_proximal
     accelerator = auto_detect_accelerator()
+
+    # TODO: Refine the packer
+    bit_to_packing = {8: "8bit_u8", 4: "4bit_u8", 3: "3bit_32", 2: "2bit_u8"}
+
+    pack = {
+        "8bit_u8": BitPack.pack_8bit_u8,
+        "4bit_u8": BitPack.pack_4bit_u8,
+        "3bit_32": BitPack.pack_3bit_32,
+        "2bit_u8": BitPack.pack_2bit_u8,
+    }
+
+    unpack = {
+        "8bit_u8": BitPack.unpack_8bit_u8,
+        "4bit_u8": BitPack.unpack_4bit_u8,
+        "3bit_32": BitPack.unpack_3bit_32,
+        "2bit_u8": BitPack.unpack_2bit_u8,
+    }
 
     @classmethod
     def _convert_tensor_quant_config(cls, tensor_quant_config: QuantTensorConfig):
@@ -286,13 +341,14 @@ class HQQTensorHandle:
             "scale": 1.0 / scale,
             "zero": zero,
             "axis": axis,
-            "packing": None,
+            "packing": cls.bit_to_packing[nbits],
         }
 
         # Pack bits
         if bitpack:
-            raise NotImplementedError("bitpack is not implemented yet")
-            # W_q = Quantizer.pack[meta["packing"]](W_q)
+            # raise NotImplementedError("bitpack is not implemented yet")
+            W_q = cls.pack[meta["packing"]](W_q)
+            print("packing: weight...")
         else:
             W_q = W_q.to(tensor.dtype)
             meta["packing"] = None
@@ -308,10 +364,9 @@ class HQQTensorHandle:
     # @inspect_function
     def dequantize(cls, W_q, meta):
         if meta["packing"]:
-            raise NotImplementedError("bitpack is not implemented yet")
-            # W_r = Quantizer.unpack[meta['packing']](W_q).half()
-            # if((meta['group_size'] is not None) and (meta['nbits']==3)):
-            #     W_r = W_r[:meta['group_size']] if (meta['axis']==0) else W_r[:,:meta['group_size']]
+            W_r = cls.unpack[meta["packing"]](W_q).half()
+            if (meta["group_size"] is not None) and (meta["nbits"] == 3):
+                W_r = W_r[: meta["group_size"]] if (meta["axis"] == 0) else W_r[:, : meta["group_size"]]
         else:
             W_r = W_q.half()
         # custom_print(f"W_r dtype: {W_r.dtype}, zero dtype: {meta['zero'].dtype}, scale dtype: {meta['scale'].dtype}")
@@ -355,6 +410,14 @@ class HQQLinear(torch.nn.Linear):
         super().__init__(in_features, out_features, bias, device, dtype)
         self.q_weight = q_weight
         self.quantized = q_weight is not None
+
+    def get_size(self):
+        # TODO: for debug only, remove it before merge
+        result = 0
+        weight = self.weight
+        result += get_tensor_size(weight)
+        result += self.q_weight.get_size()
+        return result
 
     def quantize_weight(
         self,
@@ -439,5 +502,6 @@ class HQQLinear(torch.nn.Linear):
         device_to_use = next(float_module.parameters()).device
         new_mod.to(device_to_use)
         new_mod.q_weight.to(device_to_use)
-        # TODO: should we delete the float_module explicitly?
+        # !!! Delete the float explicitly to save memory
+        del float_module
         return new_mod

@@ -75,14 +75,14 @@ BaseQuantizeConfig = hqq_base_quant_config
 
 def create_hqq_module(float_linear, config):
     hqq_linear = HQQLinear.from_float(float_linear, quant_config=config)
-    del hqq_linear
+    return hqq_linear
 
 
 def create_hqq_module_official(float_linear, config):
     from hqq.core.common.modules import HQQLinear as HQQLinear_official
 
     hqq_linear_official = HQQLinear_official(float_linear, config)
-    del hqq_linear_official
+    return hqq_linear_official
 
 
 def create_hqq_quant_config_from_hqq_official_api(
@@ -137,3 +137,41 @@ res_hqq_official = benchmark_cpu(create_hqq_module_official, hqq_offical_config)
 # res_hqq = benchmark_cpu(create_hqq_module, hqq_quant_config)
 # print(f"[benchmark_cpu] res_hqq: {res_hqq}")
 print(f"[benchmark_cpu] res_hqq_official: {res_hqq_official}")
+
+
+########################################
+## Benchmarking the memory usage
+#########################################
+
+from tqdm import tqdm
+
+MB = 2**20
+
+
+@torch.no_grad()
+def benchmark_cuda(f, config):
+    from utility import see_cuda_memory_usage
+
+    in_feats = 4096
+    out_feats = 32000
+
+    runs = 10
+    float_linear_list = []
+    hqq_linear_module_lst = []
+    for i in tqdm(range(runs)):
+        see_cuda_memory_usage("Before create float_linear")
+        float_linear = torch.nn.Linear(in_features=in_feats, out_features=out_feats, device=torch.device(0))
+        see_cuda_memory_usage("After create float_linear")
+        hqq_linear = f(float_linear, config)
+        hqq_size = hqq_linear.get_size()
+        print(f"hqq size: {hqq_size / MB}")
+        see_cuda_memory_usage(f"After create {i + 1} hqq_module")
+        float_linear_list.append(float_linear)
+        hqq_linear_module_lst.append(hqq_linear)
+        # hqq_linear_module_lst.append(hqq_linear)
+        torch.cuda.empty_cache()
+
+
+# float_linear = torch.nn.Linear(in_features=256, out_features=1024)
+hqq_quant_config, hqq_offical_config = create_hqq_quant_config_from_hqq_official_api()
+res_hqq_mem = benchmark_cuda(create_hqq_module, hqq_quant_config)
