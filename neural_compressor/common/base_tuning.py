@@ -250,6 +250,7 @@ class TuningConfig:
         config1_tuning_time, config2_tuning_time, config3_tuning_time, ... = 4, 5, 6, ... # seconds
         fp32_baseline = 100
         config1_metric, config2_metric, config3_metric, ... = 98, 98, 97, ...
+
         # Tuning result of case 3:
         # The best tuning config is config2, due to timeout, the third trial was forced to exit.
 
