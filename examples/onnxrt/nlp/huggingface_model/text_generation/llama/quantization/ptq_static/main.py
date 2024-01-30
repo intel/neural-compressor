@@ -314,7 +314,8 @@ if __name__ == "__main__":
                 calibration_sampling_size=[8],
                 recipes={'optypes_to_exclude_output_quant': ['MatMul'],
                          'smooth_quant': True,
-                         'smooth_quant_args': {'alpha': args.smooth_quant_alpha},},
+                         'smooth_quant_args': {'alpha': args.smooth_quant_alpha},
+                         'graph_optimization_level': 'ENABLE_EXTENDED'},
                 op_type_dict={'^((?!(MatMul|Gather|Conv)).)*$': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
 
         q_model = quantization.fit(
