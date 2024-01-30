@@ -131,6 +131,7 @@ class StaticQuantConfig(BaseConfig):
         # TODO fwk owner needs to update it.
         return StaticQuantConfig(weight_sym=[True, False])
 
+
 # TODO(Yi) run `register_supported_configs` for all registered config.
 StaticQuantConfig.register_supported_configs()
 
