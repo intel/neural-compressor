@@ -1,7 +1,7 @@
 """Tests for logging utilities."""
 import unittest
 
-from neural_compressor.torch.utils import logger
+from neural_compressor.common.utils import logger
 
 
 class TestLogger(unittest.TestCase):

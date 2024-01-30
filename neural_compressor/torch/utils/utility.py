@@ -17,13 +17,10 @@ from typing import Callable, Dict, List, Tuple
 
 import torch
 
-from neural_compressor.common.utils import Logger
+from neural_compressor.common.utils import logger
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
 algos_mapping: Dict[str, Callable] = {}
-
-
-logger = Logger().get_logger()
 
 
 # All constants for torch
