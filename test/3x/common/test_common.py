@@ -138,7 +138,7 @@ class TestBaseConfig(unittest.TestCase):
         self.assertEqual(config_set[0].weight_bits, DEFAULT_WEIGHT_BITS)
 
 
-class ConfigLoaderTest(unittest.TestCase):
+class TestConfigLoader(unittest.TestCase):
     def setUp(self):
         self.config_set = [get_default_fake_config(), get_default_fake_config()]
         self.sampler = get_default_fake_config()
