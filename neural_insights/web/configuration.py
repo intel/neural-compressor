@@ -242,6 +242,7 @@ class Configuration:
 
     @staticmethod
     def create_secured_token_file_win(token_filepath: str):
+        """Create secured file on Windows OS."""
         import ntsecuritycon as con  # pylint: disable=import-error
         import win32api  # pylint: disable=import-error
         import win32security  # pylint: disable=import-error
