@@ -133,7 +133,8 @@ def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Co
         return {name: module}
     else:
         # use string type to find name:
-        if type(module).__name__ in ["Linear"]:
+        # if type(module).__name__ in ["Linear"]:
+        if isinstance(module, (nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D)):
             return {name: module}
         else:
             pass
