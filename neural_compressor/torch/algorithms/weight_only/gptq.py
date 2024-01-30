@@ -30,10 +30,7 @@ import torch.nn as nn
 import transformers
 from tqdm import tqdm
 
-from neural_compressor.common import Logger
-
-logger = Logger().get_logger()
-
+from neural_compressor.torch.utils import logger
 
 DEBUG = False
 
@@ -758,14 +755,15 @@ class Quantizer(nn.Module):
         self.maxq = self.maxq.to(dev)
         # NF4 FP4
         if self.wdtype != "int":
-            from .rtn import quant_weight
+            from .utility import quant_tensor
 
-            _, scale, zero = quant_weight(
-                x,
+            tmp = x.clone()  # make sure x is not replaced
+            _, scale, zero = quant_tensor(
+                tmp,
                 self.wbits,
                 self.group_size,
                 scheme=self.scheme,
-                data_type=self.wdtype,
+                dtype=self.wdtype,
                 quantile=1.0,
                 return_int=True,
                 full_range=False,
@@ -850,16 +848,16 @@ class Quantizer(nn.Module):
             self.zero = self.zero.reshape(shape)
 
             if self.double_quant:
-                from .rtn import quant_weight
+                from .utility import quant_tensor
 
                 orig_scale_shape = self.scale.shape
                 self.scale = self.scale.reshape(1, -1)
-                self.scale = quant_weight(
+                quant_tensor(
                     self.scale,
                     self.double_quant_bits,
                     self.double_quant_group_size,
                     scheme=self.double_quant_scheme,
-                    data_type=self.double_quant_dtype,
+                    dtype=self.double_quant_dtype,
                     quantile=1.0,
                     return_int=False,
                     full_range=False,
@@ -879,9 +877,11 @@ class Quantizer(nn.Module):
     def quantize(self, x, scale, zero, maxq):
         """Do quantization."""
         if self.wdtype != "int":
-            from .rtn import quantize_4bit
+            from .utility import quantize_4bit
 
-            return quantize_4bit(x, data_type=self.wdtype, scale=scale)
+            tmp = x.clone()
+
+            return quantize_4bit(tmp, dtype=self.wdtype, scale=scale)
         else:
             if maxq < 0:
                 return (x > scale / 2).float() * scale + (x < zero / 2).float() * zero
@@ -948,6 +948,32 @@ def gptq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], GPTQConfig])
         )
 
     return weight_config, nsamples, use_max_length, pad_max_length, device, dataloader_len
+
+
+def gptq_quantize(
+    model,
+    weight_config={},
+    dataloader=None,
+    nsamples=128,
+    use_max_length=True,
+    pad_max_length=2048,
+    device=None,
+    layer_wise=False,
+    model_path=None,
+):
+    """Run weight-only quantization with."""
+    # TODO: unify weight_config keys, add docstring, and support default config
+    assert isinstance(model, torch.nn.Module), "only support torch module"
+    if layer_wise:
+        assert model_path is not None, "model_path should not be None when use layer_wise mode"
+    from .gptq import GPTQuantizer
+
+    gptq_quantizer = GPTQuantizer(
+        model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise
+    )
+    fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
+    logger.info("GPTQ quantizing done.")
+    return fp32_modified_model, gptq_config
 
 
 def apply_gptq_quantize(model, configs_mapping, *args, **kwargs):

@@ -321,6 +321,22 @@ class TestQuantizationConfig(unittest.TestCase):
         gptq_config2 = GPTQConfig.from_dict(quant_config_dict["gptq"])
         self.assertEqual(gptq_config1.to_dict(), gptq_config2.to_dict())
 
+    def test_static_quant_config(self):
+        from neural_compressor.torch.quantization import StaticQuantConfig
+
+        static_config1 = StaticQuantConfig(w_dtype="int8", act_sym=True, act_algo="minmax")
+        quant_config_dict = {"static": {"w_dtype": "int8", "act_sym": True, "act_algo": "minmax"}}
+        static_config2 = StaticQuantConfig.from_dict(quant_config_dict["static"])
+        self.assertEqual(static_config1.to_dict(), static_config2.to_dict())
+
+    def test_smooth_quant_config(self):
+        from neural_compressor.torch.quantization import SmoothQuantConfig
+
+        sq_config1 = SmoothQuantConfig(alpha=0.8, folding=True)
+        quant_config_dict = {"sq": {"alpha": 0.8, "folding": True}}
+        sq_config2 = SmoothQuantConfig.from_dict(quant_config_dict["sq"])
+        self.assertEqual(sq_config1.to_dict(), sq_config2.to_dict())
+
 
 class TestQuantConfigForAutotune(unittest.TestCase):
     def test_expand_config(self):
