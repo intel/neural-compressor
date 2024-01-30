@@ -22,8 +22,8 @@ import numpy as np
 from tensorflow.core.framework import attr_value_pb2, node_def_pb2
 from tensorflow.python.framework import tensor_util
 
-from neural_compressor.tensorflow.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.tensorflow.tf_utils.graph_util import GraphRewriterHelper as Helper
+from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.tensorflow.utils import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase

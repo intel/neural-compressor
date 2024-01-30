@@ -20,8 +20,8 @@ import tensorflow as tf
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.tensorflow.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
-from neural_compressor.tensorflow.tf_utils.util import version1_eq_version2, version1_gt_version2, version1_lt_version2
+from neural_compressor.tensorflow.quantization.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
+from neural_compressor.tensorflow.quantization.tf_utils.util import version1_eq_version2, version1_gt_version2, version1_lt_version2
 
 from .quantize_graph_base import QuantizeNodeBase
 

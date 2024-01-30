@@ -57,7 +57,7 @@ def register_algo(name):
 
     Usage example:
         @register_algo(name=example_algo)
-        def example_algo(model: torch.nn.Module, quant_config: RTNConfig) -> torch.nn.Module:
+        def example_algo(model: tf.keras.Model, quant_config: StaticQuantConfig) -> tf.keras.Model:
             ...
     Args:
         name (str): The name under which the algorithm function will be registered.

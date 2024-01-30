@@ -19,8 +19,8 @@
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
 
-from neural_compressor.tensorflow.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.tensorflow.tf_utils.quantize_graph_common import QuantizeGraphHelper
+from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.tensorflow.quantization.tf_utils.quantize_graph_common import QuantizeGraphHelper
 from neural_compressor.tensorflow.utils import dump_elapsed_time
 
 from .quantize_graph_base import QuantizeGraphBase

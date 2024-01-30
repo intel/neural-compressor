@@ -21,7 +21,7 @@ from tensorflow.core.protobuf import config_pb2, meta_graph_pb2
 from tensorflow.python.grappler import tf_optimizer
 from tensorflow.python.training import saver
 
-from neural_compressor.tensorflow.tf_utils.util import version1_gt_version2
+from neural_compressor.tensorflow.quantization.tf_utils.util import version1_gt_version2
 from neural_compressor.tensorflow.utils import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase

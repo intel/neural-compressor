@@ -20,22 +20,16 @@ from typing import Callable, Dict
 from neural_compressor.common import logger
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
 from neural_compressor.tensorflow.utils import BaseModel, TensorflowLLMModel
-from neural_compressor.tensorflow.algorithms import TensorFlowAdaptor
 from neural_compressor.tensorflow.quantization.config import SmoohQuantConfig
-from neural_compressor.tensorflow.algorithms.smooth_quant import (
+from neural_compressor.tensorflow.algorithms.static_quant import TensorFlowAdaptor
+from neural_compressor.tensorflow.algorithms.smooth_quant.smooth_quant_scaler import (
     SmoothQuantScaler, 
     SmoothQuantScalerLLM,
+)
+from neural_compressor.tensorflow.algorithms.smooth_quant.smooth_quant_calibration import (
     SmoothQuantCalibration, 
     SmoothQuantCalibrationLLM,
 )
-
-default_alpha_args={
-        "alpha_min": 0.0,
-        "alpha_max": 1.0,
-        "alpha_step": 0.1,
-        "shared_criterion": "mean",
-        "do_blockwise": False,
-    }
 
 class SmoothQuant:
     """The class that performs smooth quantization."""

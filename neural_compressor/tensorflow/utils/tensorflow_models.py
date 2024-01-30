@@ -29,7 +29,7 @@ from abc import abstractmethod
 
 from neural_compressor.common import Logger
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.tensorflow.utils import version1_lt_version2, framework_specific_info
+from neural_compressor.tensorflow.utils.utility import version1_lt_version2, framework_specific_info
 
 import numpy as np
 import tensorflow as tf

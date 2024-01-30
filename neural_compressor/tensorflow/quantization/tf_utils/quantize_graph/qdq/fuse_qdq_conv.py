@@ -21,7 +21,7 @@ import tensorflow as tf
 from tensorflow.core.framework import graph_pb2, node_def_pb2
 from tensorflow.python.framework import dtypes, tensor_util
 
-from neural_compressor.tensorflow.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
+from neural_compressor.tensorflow.quantization.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
 
 from ..quantize_graph_base import QuantizeNodeBase
 
@@ -146,7 +146,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         if op_a_node.op == "Const" and op_b_node.op != "Const":
             pass
         else:
-            from neural_compressor.tensorflow.tf_utils.graph_util import GraphAnalyzer
+            from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer
 
             g = GraphAnalyzer()
             g.graph = self.input_graph

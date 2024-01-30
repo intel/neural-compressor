@@ -33,7 +33,7 @@ class StripUnusedNodesOptimizer(GraphRewriterBase):
     @dump_elapsed_time("Pass StripUnusedNodesOptimizer")
     def do_transformation(self):
         """Execute stripping unused nodes."""
-        from neural_compressor.tensorflow.tf_utils.util import fix_ref_type_of_graph_def, strip_unused_nodes
+        from neural_compressor.tensorflow.quantization.tf_utils.util import fix_ref_type_of_graph_def, strip_unused_nodes
 
         self.model = fix_ref_type_of_graph_def(self.model)
         return strip_unused_nodes(self.model, self.input_node_names, self.output_node_names)

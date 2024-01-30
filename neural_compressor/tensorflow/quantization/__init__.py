@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from .quantize import quantize_model
+from .algorithm_entry import static_quantize_entry, smooth_quant_entry
 from .config import (
     StaticQuantConfig, 
     SmoohQuantConfig,

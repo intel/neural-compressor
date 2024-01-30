@@ -32,7 +32,7 @@ from neural_compressor.tensorflow.utils import (
     dump_elapsed_time,
     singleton,
     BaseDataLoader,
-    spr_base_verions,
+    SPR_BASE_VERSIONS,
     version1_eq_version2,
     version1_gte_version2,
     version1_lt_version2,
@@ -40,6 +40,7 @@ from neural_compressor.tensorflow.utils import (
 
 import tensorflow as tf
 
+spr_base_verions = SPR_BASE_VERSIONS
 
 class TensorFlowAdaptor:
     """Adaptor Layer for stock tensorflow and spr-base."""

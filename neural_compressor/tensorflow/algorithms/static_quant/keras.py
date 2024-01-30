@@ -574,7 +574,7 @@ class KerasAdaptor:
         Args:
             model (object): The model to query quantization tuning capability.
         """
-        from neural_compressor. import BaseModel
+        from neural_compressor.tensorflow.utils import BaseModel
         if isinstance(model, BaseModel):
             model = model.model
             

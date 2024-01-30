@@ -21,8 +21,8 @@ import logging
 
 import tensorflow as tf
 
-from neural_compressor.tensorflow.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.tensorflow.tf_utils.util import version1_eq_version2, version1_gte_version2, version1_lt_version2
+from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.tensorflow.quantization.tf_utils.util import version1_eq_version2, version1_gte_version2, version1_lt_version2
 from neural_compressor.tensorflow.utils import dump_elapsed_time
 
 from .convert_add_to_biasadd import ConvertAddToBiasAddOptimizer

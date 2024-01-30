@@ -31,7 +31,7 @@ from neural_compressor.common.base_config import(
     DEFAULT_WHITE_LIST, 
     OP_NAME_OR_MODULE_TYPE, 
 )
-from neural_compressor.tensorflow.algorithms.smooth_quant import default_alpha_args
+from neural_compressor.tensorflow.utils import DEFAULT_SQ_ALPHA_ARGS
 
 logger = Logger().get_logger()
 
@@ -130,6 +130,19 @@ class StaticQuantConfig(BaseConfig):
         )
         cls.supported_configs = supported_configs
 
+    @staticmethod
+    def get_model_info(model) -> List[Tuple[str, Callable]]:
+        white_list = ["MatMul", "Conv2D", "Conv3D", "_MklFusedInstanceNorm",
+        "BatchMatMul", "BatchMatMulV2", "DepthwiseConv2dNative", "ConcatV2",
+        "FusedBatchNorm", "FusedBatchNormV2", "MaxPool", "MaxPool3D", "AvgPool",
+        "_MklFusedInstanceNorm", "Conv2DBackpropInput", "Conv2DBackpropInputV2"]
+        filter_result = []
+        for node in model.graph_def.node:
+            if node.op in white_list:
+                pair = (node.name, node.op)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 StaticQuantConfig.register_supported_configs()
@@ -170,11 +183,10 @@ class SmoohQuantConfig(BaseConfig):
         "folding",
         "percentile",
         "op_types",
-        "scales_per_op"
+        "scales_per_op",
         "record_max_info",
         "weight_clip",
         "auto_alpha_args",
-        "white_list",
     ]
     name = SMOOTH_QUANT
 
@@ -187,7 +199,7 @@ class SmoohQuantConfig(BaseConfig):
         scales_per_op: bool = True,
         record_max_info: bool = False,
         weight_clip: bool = True,
-        auto_alpha_args: Dict = default_alpha_args,
+        auto_alpha_args: Dict = DEFAULT_SQ_ALPHA_ARGS,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init RTN weight-only quantization config.
@@ -221,8 +233,8 @@ class SmoohQuantConfig(BaseConfig):
         white_list = ["MatMul", "Conv2D"]
         filter_result = []
         for node in model.graph_def.node:
-            if node.op_type in white_list:
-                pair = (node.name, node.op_type)
+            if node.op in white_list:
+                pair = (node.name, node.op)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result

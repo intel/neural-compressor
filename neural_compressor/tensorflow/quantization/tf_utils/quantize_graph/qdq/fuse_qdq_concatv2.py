@@ -22,7 +22,7 @@ import re
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.tensorflow.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
+from neural_compressor.tensorflow.quantization.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
 
 from ..quantize_graph_base import QuantizeNodeBase
 

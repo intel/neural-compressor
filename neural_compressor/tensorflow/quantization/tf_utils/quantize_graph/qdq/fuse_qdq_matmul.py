@@ -20,7 +20,7 @@ import numpy as np
 from tensorflow.core.framework import graph_pb2, node_def_pb2
 from tensorflow.python.framework import dtypes, tensor_util
 
-from neural_compressor.tensorflow.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
+from neural_compressor.tensorflow.quantization.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
 
 from ..quantize_graph_base import QuantizeNodeBase
 

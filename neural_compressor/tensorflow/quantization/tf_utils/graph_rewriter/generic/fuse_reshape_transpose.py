@@ -18,8 +18,8 @@
 
 from tensorflow.python.framework import dtypes, tensor_util
 
-from neural_compressor.tensorflow.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.tensorflow.tf_utils.graph_util import GraphRewriterHelper as Helper
+from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.tensorflow.utils import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
