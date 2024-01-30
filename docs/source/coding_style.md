@@ -6,7 +6,7 @@
 
 To improve the quality and maintainability of INC code, we summarized some common coding standards and conventions.
 
-There are many popular programming conventions, and they may conflict with each other. To avoid overly arguing formatting, we make decisions based on the following priorities:
+There are many style guides, and they may conflict with each other. To avoid overly arguing formatting, we make decisions based on the following priorities:
 
 - [Google Python Style](https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings), [PEP 8](https://peps.python.org/pep-0008/)
 - Framework Style
@@ -15,7 +15,7 @@ There are many popular programming conventions, and they may conflict with each 
 
 ## Rules
 
-> Note: The sub-tile naming follows the [Google Python Style](https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings) and [PEP 8](https://peps.python.org/pep-0008/). For further information, go to the corresponding section.
+> Note: The sub-tile naming is following [Google Python Style](https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings) and [PEP 8](https://peps.python.org/pep-0008/). See the relevant section for more details.
 
 
 ### Import
@@ -35,7 +35,7 @@ from subprocess import Popen, PIPE
 - Not recommend
 
 ```python
-from modde import *  # May lead to namespace pollution
+from sub_module import *  # May lead to namespace pollution
 import os, sys  # Import on separate lines
 import copy  # May import local copy.py
 ```
@@ -119,15 +119,6 @@ def xx_func(cls) -> Dict[str, OrderedDict[str, Dict[str, object]]]: # Can't impr
 - Recommend
 
 ```python
-# TODO: crbug.com/192795 - Investigate cpufreq optimizations.
-# * Important information
-# ? Need decision
-# ! Deprecated method, do not use
-```
-
-- Recommend
-
-```python
 class CheeseShopAddress:
     """The address of a cheese shop.
 
@@ -160,9 +151,16 @@ class OutOfCheeseError(Exception):
 
 ```python
 # TODO: crbug.com/192795 - Investigate cpufreq optimizations.
+
+# * Important information
+# ? Need decision
+# ! Deprecated method, do not use
 ```
 
-> A `TODO` comment begins with the word `TODO:` for more easily searchability.
+> A `TODO` comment begins with the word `TODO:` for facilitate searching.
+
+- Plug
+    -[Better Comments](https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments)
 
 
 ### Public Interface
@@ -171,11 +169,11 @@ Use `__all__` to help the developer and user know the supported interface and co
 
 ```python
 __all__ = [
+    "options",
     "register_config",
+    "get_all_config_set_from_config_registry",
     "BaseConfig",
     "ComposableConfig",
-    "get_all_config_set_from_config_registry",
-    "options",
 ]
 ```
 
@@ -213,8 +211,8 @@ __all__ = [
 ```
 
 ```python
-# * Note some code snippets
-# neural_compressor/fwk_name/quantization/algorithm_entry.py
+# * Note: some code snippets about register algorithm entry
+# filepath: neural_compressor/fwk_name/quantization/algorithm_entry.py
 @register_algo(RTN)
 def rtn_algo_entry()
     from neural_compressor.fwk_name.algorithms import rtn
