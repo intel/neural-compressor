@@ -227,6 +227,7 @@ def eval_func(model):
 
     return eval_acc
 
+
 class KVDataloader:
     def __init__(self, model_path, pad_max=196, batch_size=1, sub_folder='train'):
         self.pad_max = pad_max
@@ -245,6 +246,8 @@ class KVDataloader:
         self.key_value_input_names = [key for key in inputs_names if (".key" in key) or (".value" in key)]
         self.use_cache = len(self.key_value_input_names) > 0
         self.session = session if self.use_cache else None
+        self.origin_session_with_past = ort.InferenceSession("./llama-2-tiny-3layers-random-with-past-origin/decoder_with_past_model.onnx")
+        self.origin_session = ort.InferenceSession("./llama-2-tiny-3layers-random-with-past-origin/decoder_model.onnx")
 
     def collate_batch(self, batch):
 
@@ -282,14 +285,17 @@ class KVDataloader:
                         ort_input[key_value_input_name] = key_or_value
 
                     outputs = self.session.run(None, ort_input)
-
+                    
                     # regenerate input
                     ort_input['input_ids'] = input_ids[:, -1].unsqueeze(0).detach().cpu().numpy().astype('int64')
+                    input_shape = ort_input["input_ids"].shape
+                    position_ids = torch.arange(0, input_shape[-1], dtype=torch.long).unsqueeze(0).view(-1, input_shape[-1])
+                    ort_input["position_ids"] = position_ids.numpy()
                     for i in range(int((len(outputs) - 1) / 2)):
                         ort_input['past_key_values.{}.key'.format(i)] = outputs[i*2+1]
                         ort_input['past_key_values.{}.value'.format(i)] = outputs[i*2+2]
                     ort_input['attention_mask'] =  np.zeros([self.batch_size, ort_input['past_key_values.0.key'].shape[2]+1], dtype='int64')
-
+                
                 yield ort_input, last_ind.detach().cpu().numpy()
                 
         except StopIteration:
