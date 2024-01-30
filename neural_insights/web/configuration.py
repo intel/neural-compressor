@@ -226,39 +226,54 @@ class Configuration:
         """Dump token to file."""
         token_filepath = os.path.join(WORKDIR_LOCATION, "token")
         os.makedirs(os.path.dirname(token_filepath), exist_ok=True)
-        with open(token_filepath, "w") as token_file:
-            token_file.write("")
 
         if sys.platform == "win32":
-            import ntsecuritycon as con  # pylint: disable=import-error
-            import win32api  # pylint: disable=import-error
-            import win32security  # pylint: disable=import-error
+            self.create_secured_token_file_win(token_filepath)
 
-            user, _, _ = win32security.LookupAccountName("", win32api.GetUserName())
-            security_descriptor = win32security.GetFileSecurity(
-                token_filepath,
-                win32security.DACL_SECURITY_INFORMATION,
-            )
-            dacl = win32security.ACL()
-            dacl.AddAccessAllowedAce(
-                win32security.ACL_REVISION,
-                con.FILE_GENERIC_READ | con.FILE_GENERIC_WRITE,
-                user,
-            )
-            security_descriptor.SetSecurityDescriptorDacl(1, dacl, 0)
-            win32security.SetFileSecurity(
-                token_filepath,
-                win32security.DACL_SECURITY_INFORMATION,
-                security_descriptor,
-            )
-        else:
-            os.chown(token_filepath, uid=os.geteuid(), gid=os.getgid())
-            os.chmod(token_filepath, 0o600)
-
-        with open(token_filepath, "w") as token_file:
-            token_file.write(self.token)
+        try:
+            token_file = os.open(token_filepath, flags=os.O_WRONLY | os.O_CREAT, mode=0o600)
+            os.write(token_file, self.token.encode())
+        except Exception as err:
+            raise err
+        finally:
+            os.close(token_file)
 
         log.debug(f"Token has been dumped to {token_filepath}.")
+
+    @staticmethod
+    def create_secured_token_file_win(token_filepath: str):
+        import ntsecuritycon as con  # pylint: disable=import-error
+        import win32api  # pylint: disable=import-error
+        import win32security  # pylint: disable=import-error
+        import win32file
+
+        username = win32api.GetUserName()
+        os.makedirs(os.path.dirname(token_filepath), exist_ok=True)
+
+        security_descriptor = win32security.SECURITY_DESCRIPTOR()
+        user_sid, _, _ = win32security.LookupAccountName("", username)
+
+        access_rights = con.FILE_GENERIC_READ | con.FILE_GENERIC_WRITE
+
+        dacl = win32security.ACL()
+        dacl.AddAccessAllowedAce(win32security.ACL_REVISION, access_rights, user_sid)
+
+        security_descriptor.SetSecurityDescriptorDacl(1, dacl, 0)
+
+        security_attributes = win32security.SECURITY_ATTRIBUTES()
+        security_attributes.SECURITY_DESCRIPTOR = security_descriptor
+
+        handle = win32file.CreateFile(
+            token_filepath,
+            win32file.GENERIC_WRITE,
+            win32file.FILE_SHARE_READ,
+            security_attributes,
+            win32file.CREATE_NEW,
+            win32file.FILE_ATTRIBUTE_NORMAL,
+            None
+        )
+
+        win32file.CloseHandle(handle)
 
     def _ensure_valid_port(self, port: int) -> None:
         """Validate if proposed port number is allowed by TCP/IP."""
