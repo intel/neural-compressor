@@ -23,6 +23,7 @@ from .tensorflow_models import (
     TensorflowSavedModelModel,
 )
 from .utility import (
+    algos_mapping,
     version1_lt_version2, 
     version1_gt_version2,
     version1_eq_version2,
@@ -42,7 +43,6 @@ from .utility import (
     singleton,
     CpuInfo,
     Statistics,
-    tensorflow_config,
     CaptureOutputToFile,
     LazyImport,
 )

@@ -1904,6 +1904,59 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
         return converted_model
 
 
+class TensorFlowConfig:
+    """Base config class for TensorFlow."""
+
+    def __init__(self, precisions=None):
+        """Init an TF object."""
+        self._precisions = precisions
+
+    @property
+    def precisions(self):
+        """Get precision."""
+        return self._precisions
+
+    @precisions.setter
+    def precisions(self, precisions):
+        """Set precision."""
+        if not isinstance(precisions, list):
+            precisions = [precisions]
+        for pr in precisions:
+            self.check_value("precisions", pr, str, ["int8", "uint8", "fp32", "bf16", "fp16"])
+        self._precisions = precisions
+
+    @staticmethod
+    def check_value(name, src, supported_type, supported_value=[]):
+        """Check if the given object is the given supported type and in the given supported value.
+
+        Example::
+
+            from neural_compressor.config import _check_value
+
+            def datatype(self, datatype):
+                if _check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
+                    self._datatype = datatype
+        """
+        if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
+            assert False, "Type of {} items should be {} but not {}".format(
+                name, str(supported_type), [type(i) for i in src]
+            )
+        elif not isinstance(src, list) and not isinstance(src, supported_type):
+            assert False, "Type of {} should be {} but not {}".format(name, str(supported_type), type(src))
+
+        if len(supported_value) > 0:
+            if isinstance(src, str) and src not in supported_value:
+                assert False, "{} is not in supported {}: {}. Skip setting it.".format(src, name, str(supported_value))
+            elif (
+                isinstance(src, list)
+                and all([isinstance(i, str) for i in src])
+                and any([i not in supported_value for i in src])
+            ):
+                assert False, "{} is not in supported {}: {}. Skip setting it.".format(src, name, str(supported_value))
+
+        return True
+
+
 class TensorflowQuery:
     """Tensorflow Query Capability Class."""
 
@@ -2019,8 +2072,7 @@ class TensorflowQuery:
 
     def _update_cfg_with_usr_definition(self):
         """Add user defined precision configuration."""
-        from neural_compressor.tensorflow.utils import tensorflow_config
-
+        tensorflow_config = TensorFlowConfig()
         if tensorflow_config.precisions is not None:
             self.cur_config["precisions"]["names"] = ",".join(tensorflow_config.precisions)
 
