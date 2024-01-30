@@ -109,9 +109,7 @@ class RTNConfig(BaseConfig):
         supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators))
         cls.supported_configs = supported_configs
 
-    def to_config_mapping(
-        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
-    ) -> OrderedDict[Union[str, Callable], OrderedDict[str, BaseConfig]]:
+    def to_config_mapping(self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None):
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
@@ -167,8 +165,8 @@ def get_default_rtn_config() -> RTNConfig:
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT)
-class SmoohQuantQuantConfig(BaseConfig):
-    """Config class for round-to-nearest weight-only quantization."""
+class SmoohQuantConfig(BaseConfig):
+    """Smooth quant quantization config."""
 
     supported_configs: List[OperatorConfig] = []
     params_list = [
@@ -212,7 +210,7 @@ class SmoohQuantQuantConfig(BaseConfig):
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
-        smooth_quant_config = SmoohQuantQuantConfig()
+        smooth_quant_config = SmoohQuantConfig()
         operators = ["Gemm", "Conv", "MatMul", "FusedConv"]
         supported_configs.append(
             OperatorConfig(config=smooth_quant_config, operators=operators, backend=Backend.DEFAULT)
@@ -231,13 +229,13 @@ class SmoohQuantQuantConfig(BaseConfig):
         return filter_result
 
 
-SmoohQuantQuantConfig.register_supported_configs()
+SmoohQuantConfig.register_supported_configs()
 
 
-def get_default_sq_config() -> SmoohQuantQuantConfig:
+def get_default_sq_config() -> SmoohQuantConfig:
     """Generate the default rtn config.
 
     Returns:
         the default smooth quant config.
     """
-    return SmoohQuantQuantConfig()
+    return SmoohQuantConfig()

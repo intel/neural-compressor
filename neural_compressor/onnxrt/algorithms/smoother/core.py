@@ -14,10 +14,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""SmoothQuant for onnxrt."""
+"""Smoother for onnxrt."""
 
 import copy
-import logging
 import os
 
 import numpy as np
@@ -25,7 +24,8 @@ import onnx
 from onnx import helper, numpy_helper
 from onnx import onnx_pb as onnx_proto
 
-from neural_compressor.onnxrt.algorithms.smooth_quant.calibrator import Calibrator
+from neural_compressor.common import Logger
+from neural_compressor.onnxrt.algorithms.smoother.calibrator import Calibrator
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.onnxrt.utils.utility import (
     _get_qrange_for_qType,
@@ -34,7 +34,7 @@ from neural_compressor.onnxrt.utils.utility import (
     simple_progress_bar,
 )
 
-logger = logging.getLogger("neural_compressor")
+logger = Logger().get_logger()
 
 dtype_map = {
     np.dtype("float32"): 1,
@@ -100,7 +100,7 @@ def quant_dequant_data(data, qType=3, scheme="sym"):
     return ((quantized_data - zero_point) * scale).astype(data.dtype).reshape(data.shape)
 
 
-class ORTSmoothQuant:
+class Smoother:
     """Fake input channel quantization.
 
     For more details please refer to:
@@ -118,7 +118,7 @@ class ORTSmoothQuant:
         providers=["CPUExecutionProvider"],
     ):
         """Initialize the attributes of class."""
-        self.model = model if isinstance(model, ONNXModel) else ONNXModel(model)
+        self.model = model if isinstance(model, ONNXModel) else ONNXModel(model, load_external_data=True)
         self.value_infos = {vi.name: vi for vi in self.model.model.graph.value_info}
         self.value_infos.update({ot.name: ot for ot in self.model.model.graph.output})
         self.value_infos.update({it.name: it for it in self.model.model.graph.input})

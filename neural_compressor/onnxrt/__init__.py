@@ -13,11 +13,24 @@
 # limitations under the License.
 
 from neural_compressor.onnxrt.utils.utility import register_algo
-from neural_compressor.onnxrt.algorithms import rtn_quantize_entry, smooth_quant_entry
 
 from neural_compressor.onnxrt.quantization import (
+    rtn_quantize_entry,
+    smooth_quant_entry,
     RTNConfig,
     get_default_rtn_config,
-    SmoohQuantQuantConfig,
+    SmoohQuantConfig,
     get_default_sq_config,
+    CalibrationDataReader,
 )
+
+__all__ = [
+    "register_algo",
+    "rtn_quantize_entry",
+    "smooth_quant_entry",
+    "RTNConfig",
+    "get_default_rtn_config",
+    "SmoohQuantConfig",
+    "get_default_sq_config",
+    "CalibrationDataReader",
+]

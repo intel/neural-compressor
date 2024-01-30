@@ -13,5 +13,8 @@
 # limitations under the License.
 
 
-from neural_compressor.onnxrt.algorithms.weight_only.algo_entry import rtn_quantize_entry
-from neural_compressor.onnxrt.algorithms.smooth_quant.algo_entry import smooth_quant_entry
+from neural_compressor.onnxrt.algorithms.smoother import Smoother
+
+__all__ = [
+    "Smoother",
+]

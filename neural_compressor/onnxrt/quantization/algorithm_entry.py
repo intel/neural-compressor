@@ -20,24 +20,25 @@ import onnx
 from onnxruntime.quantization import StaticQuantConfig, quantize
 
 from neural_compressor.common import Logger
-from neural_compressor.common.utils import SMOOTH_QUANT
-from neural_compressor.onnxrt.algorithms.smooth_quant.smooth_quant import ORTSmoothQuant
-from neural_compressor.onnxrt.quantization import CalibrationDataReader
-from neural_compressor.onnxrt.quantization.config import SmoohQuantQuantConfig
+from neural_compressor.common.utils import RTN, SMOOTH_QUANT
+from neural_compressor.onnxrt.algorithms import Smoother
+from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
+from neural_compressor.onnxrt.quantization.config import RTNConfig, SmoohQuantConfig
 from neural_compressor.onnxrt.utils.utility import register_algo
 
 logger = Logger().get_logger()
 
 
+###################### SmoothQuant Entry ##################################
 @register_algo(name=SMOOTH_QUANT)
 def smooth_quant_entry(
     model: Union[Path, str],
-    quant_config: SmoohQuantQuantConfig,
+    quant_config: SmoohQuantConfig,
     calibration_data_reader: CalibrationDataReader,
     *args,
     **kwargs
 ) -> onnx.ModelProto:
-    """The main entry to apply smooth quant."""
+    """Apply smooth quant."""
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(
         calibration_data_reader, CalibrationDataReader
@@ -45,16 +46,16 @@ def smooth_quant_entry(
 
     # smooth operation
     calibration_data_reader.rewind()
-    sq = ORTSmoothQuant(
+    smoother = Smoother(
         model,
         calibration_data_reader,
         providers=quant_config.providers,
     )
-    smooth_quant_model = sq.transform(**quant_config.to_dict())
+    smoothed_model = smoother.transform(**quant_config.to_dict())
     with tempfile.TemporaryDirectory(prefix="ort.quant.") as tmp_dir:
         # ORT quant API requires str input
         onnx.save_model(
-            smooth_quant_model,
+            smoothed_model,
             Path(tmp_dir).joinpath("smooth.onnx").as_posix(),
             save_as_external_data=True,
             all_tensors_to_one_file=True,
@@ -67,10 +68,11 @@ def smooth_quant_entry(
         calibration_data_reader.rewind()
 
         # exclude Mul operations which are inserted during smooth operation
-        excluded_nodes = [i.name for i in smooth_quant_model.graph.node if i.name.endswith("_smooth_mul")]
+        excluded_nodes = [i.name for i in smoothed_model.graph.node if i.name.endswith("_smooth_mul")]
         config = StaticQuantConfig(
             calibration_data_reader=calibration_data_reader,
             nodes_to_exclude=excluded_nodes,
+            use_external_data_format=True,
         )
 
         quantize(
@@ -80,4 +82,18 @@ def smooth_quant_entry(
         )
         model = onnx.load(Path(tmp_dir).joinpath("quant_model.onnx").as_posix())
 
+    return model
+
+
+###################### RTN Algo Entry ##################################
+@register_algo(name=RTN)
+def rtn_quantize_entry(model: Union[Path, str], quant_config: RTNConfig, *args, **kwargs) -> onnx.ModelProto:
+    """The main entry to apply rtn quantization."""
+    from neural_compressor.onnxrt.algorithms.weight_only.rtn import apply_rtn_on_model
+
+    # map config to each op
+    model_info = quant_config.get_model_info(model=model)
+    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+    logger.debug(configs_mapping)
+    model = apply_rtn_on_model(model, configs_mapping)
     return model

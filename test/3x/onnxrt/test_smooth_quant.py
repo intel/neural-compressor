@@ -25,8 +25,7 @@ import onnx
 from optimum.exporters.onnx import main_export
 
 from neural_compressor.common import Logger
-from neural_compressor.onnxrt import SmoohQuantQuantConfig, get_default_sq_config
-from neural_compressor.onnxrt.quantization import CalibrationDataReader
+from neural_compressor.onnxrt import CalibrationDataReader, SmoohQuantConfig, get_default_sq_config
 from neural_compressor.onnxrt.quantization.quantize import _quantize
 
 logger = Logger().get_logger()
@@ -82,7 +81,7 @@ class TestONNXRT3xSmoothQuant(unittest.TestCase):
 
     def test_sq_auto_tune_from_class_beginner(self):
         self.data_reader.rewind()
-        config = SmoohQuantQuantConfig(alpha="auto", scales_per_op=False)
+        config = SmoohQuantConfig(alpha="auto", scales_per_op=False)
         model = _quantize(self.gptj, config, self.data_reader)
         num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
         self.assertEqual(num_muls, 15)

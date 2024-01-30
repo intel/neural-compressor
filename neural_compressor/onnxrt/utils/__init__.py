@@ -13,3 +13,5 @@
 # limitations under the License.
 
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
+
+__all__ = ["ONNXModel"]

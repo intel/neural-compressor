@@ -22,6 +22,12 @@ from onnxruntime.quantization import CalibrationDataReader as ORTCalibrationData
 
 
 class CalibrationDataReader(ORTCalibrationDataReader):
+    """Get data for calibration.
+
+    We define our CalibrationDataReader based on the class in below link:
+    https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/python/tools/quantization/calibrate.py#L139
+    """
+
     @abc.abstractmethod
     def rewind(self):
         """Regenerate data."""

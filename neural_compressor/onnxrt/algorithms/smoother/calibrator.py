@@ -22,9 +22,10 @@
 # --------------------------------------------------------------------------
 """Calibration for smooth quant."""
 
-import os
 import sys
+import tempfile
 from importlib.util import find_spec
+from pathlib import Path
 
 import numpy as np
 import onnx
@@ -32,13 +33,12 @@ import onnx.numpy_helper as numpy_helper
 import onnxruntime
 
 from neural_compressor.common import Logger
-from neural_compressor.onnxrt.utils import ONNXModel
 
 logger = Logger().get_logger()
 
 
 class Calibrator:
-    """Calibrator for smooth quant."""
+    """Dump information for smooth quant."""
 
     def __init__(
         self,
@@ -157,20 +157,29 @@ class Calibrator:
             so.register_custom_ops_library(get_library_path())
 
         providers = self.providers if "TensorrtExecutionProvider" not in self.providers else ["CUDAExecutionProvider"]
-        session = (
-            onnxruntime.InferenceSession(self.augmented_model.SerializeToString(), so, providers=providers)
-            if not self.model_wrapper.is_large_model
-            else onnxruntime.InferenceSession(self.model_wrapper.model_path + "_augment.onnx", so, providers=providers)
-        )
+        if self.model_wrapper.is_large_model:  # pragma: no cover
+            with tempfile.TemporaryDirectory(prefix="ort.calib.") as tmp_dir:
+                onnx.save_model(
+                    self.model_wrapper.model,
+                    Path(tmp_dir).joinpath("augment.onnx").as_posix(),
+                    save_as_external_data=True,
+                    all_tensors_to_one_file=True,
+                    convert_attribute=False,
+                )
+                session = onnxruntime.InferenceSession(
+                    Path(tmp_dir).joinpath("augment.onnx").as_posix(), so, providers=providers
+                )
+                from onnx.external_data_helper import load_external_data_for_model
+
+                load_external_data_for_model(self.model_wrapper.model, Path(tmp_dir).as_posix())
+        else:
+            session = onnxruntime.InferenceSession(
+                self.model_wrapper.model.SerializeToString(), so, providers=providers
+            )
         node_output_names = [output.name for output in session.get_outputs()]
         output_dicts = {}
-        augment_model_wrapper = (
-            ONNXModel(self.augmented_model, load_external_data=False)
-            if not self.model_wrapper.is_large_model
-            else ONNXModel(self.model_wrapper.model_path + "_augment.onnx", load_external_data=False)
-        )
-        input_name_to_nodes = augment_model_wrapper.input_name_to_nodes
-        output_name_to_node = augment_model_wrapper.output_name_to_node
+        input_name_to_nodes = self.model_wrapper.input_name_to_nodes()
+        output_name_to_node = self.model_wrapper.output_name_to_node()
         name_to_node = {}
         for data_name in node_output_names:
             node = None
@@ -217,16 +226,6 @@ class Calibrator:
         # add the input tensors of {op_types} to outputs of the model
         tensors_to_node = self._get_input_tensor_of_ops(op_types)
         self.model_wrapper.add_tensors_to_outputs(tensors_to_node.keys())
-        self.augmented_model = self.model_wrapper.model
-        if self.model_wrapper.is_large_model:  # pragma: no cover
-            onnx.save_model(
-                self.augmented_model,
-                self.model_wrapper.model_path + "_augment.onnx",
-                save_as_external_data=True,
-                all_tensors_to_one_file=True,
-                convert_attribute=False,
-            )
-
         output_dicts = self.get_intermediate_outputs()
 
         # remove the input tensors of {op_types} to outputs of the model
@@ -239,10 +238,5 @@ class Calibrator:
             max_vals_per_channel[key] = max_val_per_channel
             shape_infos[key] = output_dicts[key][0].shape
             for item in val:
-                shape_infos[item[1][1]] = numpy_helper.to_array(
-                    self.model_wrapper.get_initializer(item[1][1]),
-                    base_dir=os.path.dirname(self.model_wrapper.model_path)
-                    if self.model_wrapper.model_path is not None
-                    else "",
-                ).shape
+                shape_infos[item[1][1]] = self.model_wrapper.get_initializer(item[1][1]).dims
         return max_vals_per_channel, shape_infos, tensors_to_node
