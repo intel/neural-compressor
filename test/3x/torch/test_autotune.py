@@ -203,7 +203,6 @@ class TestAutoTune(unittest.TestCase):
     def test_autotune_baseline(self):
         logger.info("test_autotune_api")
         from neural_compressor.common.base_tuning import evaluator
-        from neural_compressor.torch import RTNConfig, TuningConfig, autotune
 
         baseline = [1.0]
 
