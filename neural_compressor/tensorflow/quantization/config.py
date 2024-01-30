@@ -154,14 +154,11 @@ class StaticQuantConfig(BaseConfig):
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
-<<<<<<< HEAD
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
         # TODO fwk owner needs to update it.
         return StaticQuantConfig(weight_sym=[True, False])
 
-=======
->>>>>>> c109df52484867a0489034343ec51c5660bae178
 
 # TODO(Yi) run `register_supported_configs` for all registered config.
 StaticQuantConfig.register_supported_configs()
