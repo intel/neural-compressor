@@ -30,7 +30,7 @@ from onnxruntime.quantization.quantize import StaticQuantConfig
 from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig, register_config, register_supported_configs_for_fwk
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, RTN, SMOOTH_QUANT
-from neural_compressor.onnxrt.utils import PRIORITY_SQ
+from neural_compressor.onnxrt.utils import PRIORITY_SMOOTH_QUANT
 
 logger = Logger().get_logger()
 
@@ -168,7 +168,7 @@ def get_default_rtn_config() -> RTNConfig:
 ######################## SmoohQuant Config ###############################
 
 
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT, priority=PRIORITY_SQ)
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT, priority=PRIORITY_SMOOTH_QUANT)
 class SmoohQuantConfig(BaseConfig, StaticQuantConfig):
     """Smooth quant quantization config."""
 

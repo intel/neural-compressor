@@ -13,9 +13,9 @@
 # limitations under the License.
 
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
-from neural_compressor.onnxrt.utils.utility import PRIORITY_SQ
+from neural_compressor.onnxrt.utils.utility import PRIORITY_SMOOTH_QUANT
 
 __all__ = [
     "ONNXModel",
-    "PRIORITY_SQ",
+    "PRIORITY_SMOOTH_QUANT",
 ]
