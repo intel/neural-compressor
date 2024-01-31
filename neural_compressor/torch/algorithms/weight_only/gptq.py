@@ -483,7 +483,7 @@ class GPTQuantizer(object):
         """Prepare input calibration data and other attributes which are critical for gptq execution."""
         try:
             self.cache_key_arguments = {
-                "i": 0
+                "batch_num": 0
             }  # a dict of list, keyword arguments ("attention_masks", "position_ids", etc.)
             # Note that the first elements in cache_positional_arguments is main input: hidden_states
             self.cache_positional_arguments = []  # a list of list, positional arguments ("rotary_pos_emb" in chatglm)
@@ -495,7 +495,7 @@ class GPTQuantizer(object):
         # critical: hooker function which collects inputs
         def forward(layer, *args, **kwargs):
             # inputs[inputs_info['idx']] = input_ids # TODO solve the problem of batchsize!=1
-            self.cache_key_arguments["i"] += 1
+            self.cache_key_arguments["batch_num"] += 1
             for arg in kwargs:
                 # TODO: investigate include parameters
                 # each outputs can be different shape, hence also use list to store
@@ -629,7 +629,7 @@ class GPTQuantizer(object):
                 full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                 weight_config_this_layer = self.get_layer_config(full_layer_name)
                 if self.use_layer_wise:
-                    from neural_compressor.torch.algorithms.use_layer_wise import load_value
+                    from neural_compressor.torch.algorithms.layer_wise import load_value
 
                     W = load_value(self.model, full_layer_name + ".weight", model_path)
                 else:
@@ -637,12 +637,7 @@ class GPTQuantizer(object):
 
                 gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name], W, self.device)
                 # gptq_for_this_block[layer_name].quantizer = Quantizer()
-                gptq_for_this_block[layer_name].quantizer.configure(
-                    weight_config_this_layer["bits"],
-                    weight_config_this_layer["perchannel"],
-                    weight_config_this_layer["sym"],
-                    weight_config_this_layer["mse"],
-                )
+                gptq_for_this_block[layer_name].quantizer.configure(weight_config_this_layer)
 
             # Step 2.3: modify forward functions to hook inputs data (used in gptq execution)
             def add_batch(_name):
@@ -654,13 +649,13 @@ class GPTQuantizer(object):
             handles = []  # register handles which add inputs and outputs to gptq object
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
-            idx = self.cache_key_arguments.pop("i")
-            for j in range(len(self.dataloader)):
+            batch_num = self.cache_key_arguments.pop("batch_num")
+            for j in range(batch_num):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                 out = self.track_hidden_states(out)
-            self.cache_key_arguments["i"] = idx
+            self.cache_key_arguments["batch_num"] = batch_num
             for h in handles:
                 h.remove()
             # Step 2.4: everything is prepared, so start quantization!
@@ -671,7 +666,7 @@ class GPTQuantizer(object):
                 weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
                 logger.info(f"Quantizing layer {layer_name}")
                 if self.use_layer_wise:
-                    from neural_compressor.torch.algorithms.use_layer_wise import load_value
+                    from neural_compressor.torch.algorithms.layer_wise import load_value
 
                     full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                     W = load_value(self.model, full_layer_name + ".weight", model_path)
@@ -686,7 +681,7 @@ class GPTQuantizer(object):
                     static_groups=weight_config_this_layer["static_groups"],
                 )
                 if self.use_layer_wise:
-                    from neural_compressor.torch.algorithms.use_layer_wise import (
+                    from neural_compressor.torch.algorithms.layer_wise import (
                         LWQ_WORKSPACE,
                         clean_module_weight,
                         load_value,
@@ -720,14 +715,14 @@ class GPTQuantizer(object):
 
             # Step 2.5: replace output data with quantized weights
             outs = []
-            idx = self.cache_key_arguments.pop("i")
-            for j in range(len(self.dataloader)):
+            batch_num = self.cache_key_arguments.pop("batch_num")
+            for j in range(batch_num):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                 out = self.track_hidden_states(out)
                 outs.append(out)
-            self.cache_key_arguments["i"] = idx
+            self.cache_key_arguments["batch_num"] = batch_num
             if self.use_layer_wise:
                 self.gptq_related_blocks["transformers"][block_idx] = transformer_block
             else:
@@ -796,7 +791,7 @@ class GPTQ:
         # inp = inp.float()
         inp = math.sqrt(2 / self.nsamples) * inp.float()
         # self.H += 2 / self.nsamples * inp.matmul(inp.t())
-        self.H += inp.matmul(inp.t())  # H = X*X, which should be a sysm matrix
+        self.H += inp.matmul(inp.t())  # H = X*X, which should be a sym matrix
 
     def fasterquant(self, W, blocksize=128, percdamp=0.01, groupsize=-1, act_order=False, static_groups=False):
         # W = self.layer.weight.data.clone()
@@ -875,8 +870,9 @@ class GPTQ:
                         if act_order:
                             idx = perm[idx]
                         self.quantizer = groups[idx // groupsize]
-
-                q = quantize(w.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq).flatten()
+                q = self.quantizer.quantize(
+                    w.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq
+                ).flatten()
                 Q1[:, i] = q
                 Losses1[:, i] = (w - q) ** 2 / d**2
 
