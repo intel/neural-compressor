@@ -189,15 +189,6 @@ class CUDA_Accelerator(Auto_Accelerator):
         torch.cuda.empty_cache()
 
 
-cuda_accelerator = CUDA_Accelerator()
-cpu_accelerator = CPU_Accelerator()
-
-accelerator_mapping = {
-    "cuda": cuda_accelerator,
-    "cpu": cpu_accelerator,
-}
-
-
 class RuntimeAccelerator:
     accelerator = None
 
