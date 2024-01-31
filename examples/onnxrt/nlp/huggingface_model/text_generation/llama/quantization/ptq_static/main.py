@@ -84,7 +84,7 @@ parser.add_argument(
 parser.add_argument(
     '--quant_format',
     type=str,
-    default='QOperator', 
+    default='QOperator',
     choices=['QOperator', 'QDQ'],
     help="quantization format"
 )
@@ -147,7 +147,6 @@ def benchmark(model):
 
     model = ORTModelForCausalLM(session,  # pylint: disable=E1121
                                 config,
-                                model,
                                 use_cache=True if use_cache else False,
                                 use_io_binding=True if use_cache else False,)
 
@@ -185,7 +184,7 @@ def benchmark(model):
     print(args)
     throughput = (num_iter - num_warmup) / total_time
     print("Throughput: {} samples/s".format(throughput))
-    
+
 
 def replace_architectures(json_path):
     # replace 'LLaMATokenizer' to lowercase 'LlamaTokenizer'
@@ -194,7 +193,7 @@ def replace_architectures(json_path):
     with open(json_path, "r") as file:
         data = json.load(file)
         data["architectures"] = ["LlamaForCausalLM"]
-        
+
     with open(json_path, 'w') as file:
         json.dump(data, file, indent=4)
 
@@ -283,7 +282,7 @@ class KVDataloader:
                         ort_input[key_value_input_name] = key_or_value
 
                 yield ort_input, last_ind.detach().cpu().numpy()
-                
+
         except StopIteration:
             return
 
@@ -292,7 +291,7 @@ if __name__ == "__main__":
     set_workspace(args.workspace)
 
     if args.benchmark:
-        if args.mode == 'performance':            
+        if args.mode == 'performance':
             benchmark(args.model_path)
         elif args.mode == 'accuracy':
             eval_func(args.model_path)
@@ -324,5 +323,5 @@ if __name__ == "__main__":
                 ptq_config,
                 calib_dataloader=KVDataloader(model_path, pad_max=args.pad_max, batch_size=1))
         q_model.save(os.path.join(args.output_model, model_name))
-        
+
         tokenizer.save_pretrained(args.output_model)
