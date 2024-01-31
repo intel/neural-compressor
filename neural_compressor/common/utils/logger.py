@@ -21,15 +21,25 @@ import os
 
 __all__ = [
     "level",
-    "log",
-    "info",
-    "debug",
-    "warning",
-    "error",
-    "fatal",
     "Logger",  # TODO: not expose it
     "logger",
 ]
+
+
+def _pretty_dict(value, indent=0):
+    """Make the logger dict pretty."""
+    prefix = "\n" + " " * (indent + 4)
+    if isinstance(value, dict):
+        items = [prefix + repr(key) + ": " + _pretty_dict(value[key], indent + 4) for key in value]
+        return "{%s}" % (",".join(items) + "\n" + " " * indent)
+    elif isinstance(value, list):
+        items = [prefix + _pretty_dict(item, indent + 4) for item in value]
+        return "[%s]" % (",".join(items) + "\n" + " " * indent)
+    elif isinstance(value, tuple):
+        items = [prefix + _pretty_dict(item, indent + 4) for item in value]
+        return "(%s)" % (",".join(items) + "\n" + " " * indent)
+    else:
+        return repr(value)
 
 
 class Logger(object):
@@ -62,77 +72,61 @@ class Logger(object):
         """Get the logger."""
         return self._logger
 
+    @staticmethod
+    def log(level, msg, *args, **kwargs):
+        """Output log with the level as a parameter."""
+        if isinstance(msg, dict):
+            for _, line in enumerate(_pretty_dict(msg).split("\n")):
+                Logger().get_logger().log(level, line, *args, **kwargs, stacklevel=2)
+        else:
+            Logger().get_logger().log(level, msg, *args, **kwargs, stacklevel=2)
 
-def _pretty_dict(value, indent=0):
-    """Make the logger dict pretty."""
-    prefix = "\n" + " " * (indent + 4)
-    if isinstance(value, dict):
-        items = [prefix + repr(key) + ": " + _pretty_dict(value[key], indent + 4) for key in value]
-        return "{%s}" % (",".join(items) + "\n" + " " * indent)
-    elif isinstance(value, list):
-        items = [prefix + _pretty_dict(item, indent + 4) for item in value]
-        return "[%s]" % (",".join(items) + "\n" + " " * indent)
-    elif isinstance(value, tuple):
-        items = [prefix + _pretty_dict(item, indent + 4) for item in value]
-        return "(%s)" % (",".join(items) + "\n" + " " * indent)
-    else:
-        return repr(value)
+    @staticmethod
+    def debug(msg, *args, **kwargs):
+        """Output log with the debug level."""
+        if isinstance(msg, dict):
+            for _, line in enumerate(_pretty_dict(msg).split("\n")):
+                Logger().get_logger().debug(line, *args, **kwargs, stacklevel=2)
+        else:
+            Logger().get_logger().debug(msg, *args, **kwargs, stacklevel=2)
 
+    @staticmethod
+    def error(msg, *args, **kwargs):
+        """Output log with the error level."""
+        if isinstance(msg, dict):
+            for _, line in enumerate(_pretty_dict(msg).split("\n")):
+                Logger().get_logger().error(line, *args, **kwargs, stacklevel=2)
+        else:
+            Logger().get_logger().error(msg, *args, **kwargs, stacklevel=2)
 
-def log(level, msg, *args, **kwargs):
-    """Output log with the level as a parameter."""
-    if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split("\n")):
-            Logger().get_logger().log(level, line, *args, **kwargs, stacklevel=2)
-    else:
-        Logger().get_logger().log(level, msg, *args, **kwargs, stacklevel=2)
+    @staticmethod
+    def fatal(msg, *args, **kwargs):
+        """Output log with the fatal level."""
+        if isinstance(msg, dict):
+            for _, line in enumerate(_pretty_dict(msg).split("\n")):
+                Logger().get_logger().fatal(line, *args, **kwargs, stacklevel=2)
+        else:
+            Logger().get_logger().fatal(msg, *args, **kwargs, stacklevel=2)
 
+    @staticmethod
+    def info(msg, *args, **kwargs):
+        """Output log with the info level."""
+        if isinstance(msg, dict):
+            for _, line in enumerate(_pretty_dict(msg).split("\n")):
+                Logger().get_logger().info(line, *args, **kwargs, stacklevel=2)
+        else:
+            Logger().get_logger().info(msg, *args, **kwargs, stacklevel=2)
 
-def debug(msg, *args, **kwargs):
-    """Output log with the debug level."""
-    if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split("\n")):
-            Logger().get_logger().debug(line, *args, **kwargs, stacklevel=2)
-    else:
-        Logger().get_logger().debug(msg, *args, **kwargs, stacklevel=2)
-
-
-def error(msg, *args, **kwargs):
-    """Output log with the error level."""
-    if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split("\n")):
-            Logger().get_logger().error(line, *args, **kwargs, stacklevel=2)
-    else:
-        Logger().get_logger().error(msg, *args, **kwargs, stacklevel=2)
-
-
-def fatal(msg, *args, **kwargs):
-    """Output log with the fatal level."""
-    if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split("\n")):
-            Logger().get_logger().fatal(line, *args, **kwargs, stacklevel=2)
-    else:
-        Logger().get_logger().fatal(msg, *args, **kwargs, stacklevel=2)
-
-
-def info(msg, *args, **kwargs):
-    """Output log with the info level."""
-    if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split("\n")):
-            Logger().get_logger().info(line, *args, **kwargs, stacklevel=2)
-    else:
-        Logger().get_logger().info(msg, *args, **kwargs, stacklevel=2)
-
-
-def warning(msg, *args, **kwargs):
-    """Output log with the warning level (Alias of the method warn)."""
-    if isinstance(msg, dict):
-        for _, line in enumerate(_pretty_dict(msg).split("\n")):
-            Logger().get_logger().warning(line, *args, **kwargs, stacklevel=2)
-    else:
-        Logger().get_logger().warning(msg, *args, **kwargs, stacklevel=2)
+    @staticmethod
+    def warning(msg, *args, **kwargs):
+        """Output log with the warning level (Alias of the method warn)."""
+        if isinstance(msg, dict):
+            for _, line in enumerate(_pretty_dict(msg).split("\n")):
+                Logger().get_logger().warning(line, *args, **kwargs, stacklevel=2)
+        else:
+            Logger().get_logger().warning(msg, *args, **kwargs, stacklevel=2)
 
 
 level = Logger().get_logger().level
 
-logger = Logger().get_logger()
+logger = Logger

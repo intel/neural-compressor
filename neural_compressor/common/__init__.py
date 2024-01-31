@@ -14,33 +14,21 @@
 
 from neural_compressor.common.utils import (
     level,
-    log,
-    info,
-    debug,
-    warning,
-    error,
-    fatal,
-    set_random_seed,
-    set_workspace,
-    set_resume_from,
-    set_tensorboard,
-    Logger,
     logger,
+    Logger,
+    set_random_seed,
+    set_resume_from,
+    set_workspace,
+    set_tensorboard,
 )
 from neural_compressor.common.base_config import options
 
 
 __all__ = [
-    "level",
-    "log",
-    "info",
-    "debug",
-    "warning",
-    "error",
-    "fatal",
     "options",
-    "Logger",
+    "level",
     "logger",
+    "Logger",
     "set_workspace",
     "set_random_seed",
     "set_resume_from",
