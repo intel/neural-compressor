@@ -23,7 +23,6 @@ from neural_compressor.torch.quantization.config import (
     get_default_static_config,
     SmoothQuantConfig,
     get_default_sq_config,
-    SmoothConfig,
 )
 
 # TODO(Yi): move config to config.py

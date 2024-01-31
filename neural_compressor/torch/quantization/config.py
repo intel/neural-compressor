@@ -503,10 +503,6 @@ def get_default_sq_config() -> SmoothQuantConfig:
     return SmoothQuantConfig()
 
 
-class SmoothConfig:
-    pass
-
-
 ######################## FP8 Config ###############################
 if is_hpex_available():
 
