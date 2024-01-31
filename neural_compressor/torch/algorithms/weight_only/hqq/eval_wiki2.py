@@ -17,9 +17,10 @@ import time
 
 import numpy as np
 import torch
+from auto_accelerator import auto_detect_accelerator
 from datasets import load_dataset
-from hqq.core.common.utils import dump_elapsed_time
 from tqdm import tqdm
+from utility import dump_elapsed_time
 
 
 def cleanup():
@@ -38,7 +39,7 @@ def eval_wikitext2(model, tokenizer, max_length=1024, stride=512, verbose=True):
     dataset = load_dataset("wikitext", "wikitext-2-raw-v1", split="test")
     encodings = tokenizer("\n\n".join(dataset["text"]), return_tensors="pt")
 
-    encodings["input_ids"] = encodings["input_ids"].to("cuda")
+    encodings["input_ids"] = encodings["input_ids"].to(auto_detect_accelerator().current_device())
 
     lls, t = [], []
     for i in tqdm(range(0, encodings["input_ids"].size(1), stride), disable=not verbose):
