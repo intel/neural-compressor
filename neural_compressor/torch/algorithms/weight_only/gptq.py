@@ -240,7 +240,9 @@ class GPTQuantizer(object):
         self.static_groups_default = False
         self.perchannel_default = True
         self.mse_default = False
-        self.double_quant_dtype_default = "fp32"
+        self.export_compressed_model_default = False
+        self.use_double_quant_default = False
+        self.double_quant_dtype_default = "int"
         self.double_quant_bits_default = 4
         self.double_quant_group_size_default = 128
         self.double_quant_sym_default = False
@@ -399,42 +401,33 @@ class GPTQuantizer(object):
 
     def check_layer_config(self):
         """Copy arguments from weight_config to built-in attributes."""
-        if "bits" in self.weight_config:
-            tmp_weight_config = {}
+        if not self.weight_config:
             for name, module in self.model.named_modules():
-                tmp_weight_config[name] = {}
-                tmp_weight_config[name]["dtype"] = self.weight_config.get("dtype", self.dtype_default)
-                tmp_weight_config[name]["bits"] = self.weight_config.get("bits", self.bits_default)
-                tmp_weight_config[name]["group_size"] = self.weight_config.get("group_size", self.group_size_default)
-                tmp_weight_config[name]["block_size"] = self.weight_config.get("block_size", self.group_size_default)
-                tmp_weight_config[name]["percdamp"] = self.weight_config.get("pecdamp", self.percdamp_default)
-                tmp_weight_config[name]["sym"] = self.weight_config.get("sym", self.sym_default)
-                tmp_weight_config[name]["act_order"] = self.weight_config.get("act_order", self.act_order_default)
-                tmp_weight_config[name]["static_groups"] = self.weight_config.get(
-                    "static_groups", self.static_groups_default
-                )
-                tmp_weight_config[name]["perchannel"] = self.weight_config.get("perchannel", self.perchannel_default)
-                tmp_weight_config[name]["mse"] = self.weight_config.get("mse", self.mse_default)
-                tmp_weight_config[name]["double_quant_dtype"] = self.weight_config.get(
-                    "double_quant_dtype", self.double_quant_dtype_default
-                )
-                tmp_weight_config[name]["double_quant_bits"] = self.weight_config.get(
-                    "double_quant_bits", self.double_quant_bits_default
-                )
-                tmp_weight_config[name]["double_quant_group_size"] = self.weight_config.get(
-                    "double_quant_group_size", self.double_quant_group_size_default
-                )
-                tmp_weight_config[name]["double_quant_sym"] = self.weight_config.get(
-                    "double_quant_sym", self.double_quant_sym_default
-                )
-            self.weight_config = tmp_weight_config
+                self.weight_config[name] = {
+                    "dtype": self.dtype_default,
+                    "bits": self.bits_default,
+                    "sym": self.sym_default,
+                    "group_size": self.group_size_default,
+                    "mse": self.mse_default,
+                    "perchannel": self.perchannel_default,
+                    "act_order": self.act_order_default,
+                    "percdamp": self.percdamp_default,
+                    "block_size": self.block_size_default,
+                    "static_groups": self.static_groups_default,
+                    "export_compressed_model": self.export_compressed_model_default,
+                    "use_double_quant": self.use_double_quant_default,
+                    "double_quant_dtype": self.double_quant_dtype_default,
+                    "double_quant_bits": self.double_quant_bits_default,
+                    "double_quant_sym": self.double_quant_sym_default,
+                    "double_quant_group_size": self.double_quant_group_size_default,
+                }
         else:
             for layer_name, config in self.weight_config.items():
                 self.weight_config[layer_name]["dtype"] = config.get("dtype", self.dtype_default)
                 self.weight_config[layer_name]["bits"] = config.get("bits", self.bits_default)
                 self.weight_config[layer_name]["group_size"] = config.get("group_size", self.group_size_default)
                 self.weight_config[layer_name]["block_size"] = config.get("block_size", self.group_size_default)
-                self.weight_config[layer_name]["percdamp"] = config.get("pecdamp", self.percdamp_default)
+                self.weight_config[layer_name]["percdamp"] = config.get("percdamp", self.percdamp_default)
                 self.weight_config[layer_name]["sym"] = config.get("sym", self.sym_default)
                 self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
                 self.weight_config[layer_name]["static_groups"] = config.get(
@@ -442,6 +435,9 @@ class GPTQuantizer(object):
                 )
                 self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
                 self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
+                self.weight_config[layer_name]["use_double_quant"] = config.get(
+                    "double_quant_dtype", self.use_double_quant_default
+                )
                 self.weight_config[layer_name]["double_quant_dtype"] = config.get(
                     "double_quant_dtype", self.double_quant_dtype_default
                 )
@@ -454,6 +450,20 @@ class GPTQuantizer(object):
                 self.weight_config[layer_name]["double_quant_sym"] = config.get(
                     "double_quant_sym", self.double_quant_sym_default
                 )
+                if (
+                    self.weight_config[layer_name]["dtype"] != "int"
+                    and "int" in self.weight_config[layer_name]["dtype"]
+                ):
+                    self.weight_config[layer_name]["bits"] = int(self.weight_config[layer_name]["dtype"].lstrip("int"))
+                    self.weight_config[layer_name]["dtype"] = "int"
+                if (
+                    self.weight_config[layer_name]["double_quant_dtype"] != "int"
+                    and "int" in self.weight_config[layer_name]["double_quant_dtype"]
+                ):
+                    self.weight_config[layer_name]["double_quant_bits"] = int(
+                        self.weight_config[layer_name]["double_quant_dtype"].lstrip("int")
+                    )
+                    self.weight_config[layer_name]["double_quant_dtype"] = "int"
 
     def get_layer_config(self, layer_name):
         """Obtain config for one layer, since GPTQ supports layer-wise config."""
@@ -936,7 +946,7 @@ class Quantizer(nn.Module):
             setattr(self, k, v)
         self.maxq = torch.tensor(2**self.bits - 1)
         self.scheme = "sym" if self.sym else "asym"
-        self.double_quant = self.double_quant_dtype != "fp32"
+        self.double_quant = self.use_double_quant
         self.double_quant_scheme = "sym" if self.double_quant_sym else "asym"
         self.norm = norm
         self.grid = grid

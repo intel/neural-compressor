@@ -238,7 +238,6 @@ class GPTQConfig(BaseConfig):
         bits: int = 4,
         use_sym: bool = True,
         group_size: int = 32,
-        group_dim: int = 1,
         use_mse_search: bool = False,
         export_compressed_model: bool = False,
         # layer wise
@@ -265,7 +264,6 @@ class GPTQConfig(BaseConfig):
             bits (int): Number of bits used to represent weights. Default is 4.
             use_sym (bool): Indicates whether weights are symmetric. Default is True.
             group_size (int): Size of weight groups. Default is 32.
-            group_dim (int): Dimension for grouping. Default is 1.
             use_mse_search (bool): Enables mean squared error (MSE) search. Default is False.
             export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
@@ -285,7 +283,6 @@ class GPTQConfig(BaseConfig):
         self.bits = bits
         self.use_sym = use_sym
         self.group_size = group_size
-        self.group_dim = group_dim
         self.use_mse_search = use_mse_search
         self.export_compressed_model = export_compressed_model
         # layer wise
