@@ -16,5 +16,11 @@
 # limitations under the License.
 
 from neural_compressor.tensorflow.algorithms.smooth_quant.smooth_quant import SmoothQuant
-from neural_compressor.tensorflow.algorithms.smooth_quant.smooth_quant_scaler import SmoothQuantScaler, SmoothQuantScalerLLM
-from neural_compressor.tensorflow.algorithms.smooth_quant.smooth_quant_calibration import SmoothQuantCalibration, SmoothQuantCalibrationLLM
+from neural_compressor.tensorflow.algorithms.smooth_quant.smooth_quant_scaler import (
+    SmoothQuantScaler,
+    SmoothQuantScalerLLM,
+)
+from neural_compressor.tensorflow.algorithms.smooth_quant.smooth_quant_calibration import (
+    SmoothQuantCalibration,
+    SmoothQuantCalibrationLLM,
+)
