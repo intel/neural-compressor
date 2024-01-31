@@ -24,7 +24,8 @@ from utility import dump_elapsed_time
 
 
 def cleanup():
-    torch.cuda.empty_cache()
+    # torch.cuda.empty_cache()
+    auto_detect_accelerator().empty_cache()
     gc.collect()
 
 
@@ -53,7 +54,8 @@ def eval_wikitext2(model, tokenizer, max_length=1024, stride=512, verbose=True):
         t1 = time.time()
         with torch.no_grad():
             log_likelihood = model(input_ids, labels=target_ids).loss * trg_len
-        torch.cuda.synchronize()
+        # torch.cuda.synchronize()
+        auto_detect_accelerator().synchronize()
         t2 = time.time()
         t.append((t2 - t1))
         lls.append(log_likelihood)

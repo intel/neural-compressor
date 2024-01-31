@@ -43,7 +43,7 @@ def _replace_with_custom_fn_if_matches_filter(
             new_child = replacement_fn(child.to(auto_detect_accelerator().current_device()), new_fqn, config_mapping)
             print(f'quantized {new_fqn}, device: {getattr(new_child, "device", None)}')
             setattr(model, name, new_child)
-        elif not _has_child(child) and hqq_global_option:  # TODO: merge it into `filter_fn`
+        elif not _has_child(child) and hqq_global_option.use_half:  # TODO: merge it into `filter_fn`
             print(f"halfing {new_fqn}")
             new_child = child.half().to(auto_detect_accelerator().current_device())
             print(f'halfing {new_fqn}, device: {getattr(new_child, "device", None)}')

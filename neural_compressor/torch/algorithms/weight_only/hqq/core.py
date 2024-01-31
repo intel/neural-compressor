@@ -24,7 +24,7 @@ from typing import Any, Dict, Tuple, Union
 import torch
 from auto_accelerator import auto_detect_accelerator
 from bitpack import BitPack
-from config import HQQModuleConfig, QTensorConfig, default_hqq_module_config
+from config import HQQModuleConfig, QTensorConfig, default_hqq_module_config, hqq_global_option
 from optimizer import optimize_weights_proximal
 from utility import custom_print, dump_elapsed_time, get_tensor_size, inspect_function, is_divisible
 
@@ -267,11 +267,15 @@ class HQQTensorHandle:
             if (meta["group_size"] is not None) and (meta["nbits"] == 3):
                 W_r = W_r[: meta["group_size"]] if (meta["axis"] == 0) else W_r[:, : meta["group_size"]]
         else:
-            W_r = W_q.half()
+            if hqq_global_option.use_half:
+                W_r = W_q.half()
         # custom_print(f"W_r dtype: {W_r.dtype}, zero dtype: {meta['zero'].dtype}, scale dtype: {meta['scale'].dtype}")
+        # !!! TODO: There may cause the accuracy regression issue !!!!!!!!!!
 
         W_r = ((W_r - meta["zero"]) * meta["scale"]).reshape(meta["shape"])
-        W_r = W_r.half()  # TODO: double check the correctness, the official impl is also error...
+        if hqq_global_option.use_half:
+            W_r = W_r.half()
+        # W_r = W_r.half()  # TODO: double check the correctness, the official impl is also error...
         # custom_print(f"After dq .... W_r dtype: {W_r.dtype}, zero dtype: {meta['zero'].dtype}, scale dtype: {meta['scale'].dtype}")
         return W_r
 

@@ -114,4 +114,4 @@ if __name__ == "__main__":
 # python quant_model.py --model_id /models/Llama-2-7b-hf --nbits 4 --group_size 128 --quant_zero --quant_scale --scale_quant_group_size 64 --eval
 
 
-# python quant_model.py --model_id /mnt/disk4/modelHub/opt-125m --nbits 4 --group_size 128 --quant_zero --quant_scale --scale_quant_group_size 64
+# python quant_model.py --model_id /mnt/disk4/modelHub/opt-125m --nbits 4 --group_size 128 --quant_zero --quant_scale --scale_quant_group_size 64  --eval

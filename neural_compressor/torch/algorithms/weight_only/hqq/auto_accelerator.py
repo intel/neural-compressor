@@ -124,6 +124,10 @@ class Auto_Accelerator(ABC):
     def empty_cache(self):
         pass
 
+    @abstractmethod
+    def synchronize(self):
+        pass
+
 
 @register_accelerator(name="cpu", priority=PRIORITY_CPU)
 class CPU_Accelerator(Auto_Accelerator):
@@ -155,6 +159,9 @@ class CPU_Accelerator(Auto_Accelerator):
     def empty_cache(self):
         pass
 
+    def synchronize(self):
+        pass
+
 
 @register_accelerator(name="cuda", priority=PRIORITY_CUDA)
 class CUDA_Accelerator(Auto_Accelerator):
@@ -173,6 +180,9 @@ class CUDA_Accelerator(Auto_Accelerator):
             return "cuda"
         return f"cuda:{device_indx}"
 
+    def synchronize(self):
+        return torch.cuda.synchronize()
+
     def set_device(self, device_index):
         return torch.cuda.set_device(device_index)
 
@@ -183,10 +193,10 @@ class CUDA_Accelerator(Auto_Accelerator):
         return "cuda:{}".format(torch.cuda.current_device())
 
     def device(self, device_index=None):
-        torch.cuda.device(device_index)
+        return torch.cuda.device(device_index)
 
     def empty_cache(self):
-        torch.cuda.empty_cache()
+        return torch.cuda.empty_cache()
 
 
 class RuntimeAccelerator:
@@ -212,3 +222,4 @@ def auto_detect_accelerator() -> Auto_Accelerator:
 
 # Force use cpu accelerator even if cuda is available.
 # FORCE_DEVICE = "cpu" python ...
+# CUDA_VISIBLE_DEVICES="" python ...

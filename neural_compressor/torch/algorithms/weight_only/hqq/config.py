@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import os
 import sys
 
 # TODO: remove it before merge
@@ -36,7 +37,7 @@ __all__ = [
 
 
 class HQQGlobalOptions:
-    use_half = True
+    use_half = os.getenv("HQQ_NOT_USE_HALF", "0") == "0"
 
 
 hqq_global_option = HQQGlobalOptions()
