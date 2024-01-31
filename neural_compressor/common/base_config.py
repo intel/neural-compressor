@@ -21,9 +21,8 @@ import json
 import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from copy import deepcopy
 from itertools import product
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from neural_compressor.common import Logger
 from neural_compressor.common.utils import (
@@ -40,17 +39,17 @@ from neural_compressor.common.utils import (
 logger = Logger().get_logger()
 
 __all__ = [
-    "ConfigRegistry",
-    "register_config",
-    "BaseConfig",
-    "ComposableConfig",
-    "Options",
     "options",
+    "register_config",
+    "get_all_config_set_from_config_registry",
+    "register_supported_configs_for_fwk",
+    "BaseConfig",
+    "ConfigRegistry",
+    "ComposableConfig",
 ]
 
-# Dictionary to store registered configurations
 
-
+# Config registry to store all registered configs.
 class ConfigRegistry:
     registered_configs = {}
 
@@ -103,6 +102,13 @@ class ConfigRegistry:
             for algo_name, config_data in algos.items():
                 cls_configs[framework_name][algo_name] = config_data["cls"]
         return cls_configs
+
+    @classmethod
+    def get_all_config_cls_by_fwk_name(cls, fwk_name: str) -> List[Type[BaseConfig]]:
+        configs_cls = []
+        for algo_name, config_pairs in cls.registered_configs.get(fwk_name, {}).items():
+            configs_cls.append(config_pairs["cls"])
+        return configs_cls
 
 
 config_registry = ConfigRegistry()
@@ -373,6 +379,11 @@ class BaseConfig(ABC):
         # TODO (Yi), ort and tf need override it
         return not isinstance(name, str)
 
+    @classmethod
+    @abstractmethod
+    def get_config_set_for_tuning(cls):
+        raise NotImplementedError
+
 
 class ComposableConfig(BaseConfig):
     name = COMPOSABLE_CONFIG
@@ -419,6 +430,35 @@ class ComposableConfig(BaseConfig):
     def register_supported_configs(cls):
         """Add all supported configs."""
         raise NotImplementedError
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> None:
+        # TODO (Yi) handle the composable config in `tuning_config`
+        return None
+
+
+def get_all_config_set_from_config_registry(fwk_name: str) -> Union[BaseConfig, List[BaseConfig]]:
+    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls_by_fwk_name(fwk_name)
+    config_set = []
+    for config_cls in all_registered_config_cls:
+        config_set.append(config_cls.get_config_set_for_tuning())
+    return config_set
+
+
+def register_supported_configs_for_fwk(fwk_name: str):
+    """Register supported configs for specific framework.
+
+    Args:
+        fwk_name: the framework name.
+    """
+    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls_by_fwk_name(fwk_name)
+    for config_cls in all_registered_config_cls:
+        config_cls.register_supported_configs()
+
+
+#######################################################
+####   Options
+#######################################################
 
 
 def _check_value(name, src, supported_type, supported_value=[]):

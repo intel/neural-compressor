@@ -22,7 +22,12 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Union
 
 import tensorflow as tf
 
-from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
+from neural_compressor.common.base_config import (
+    BaseConfig,
+    config_registry,
+    register_config,
+    register_supported_configs_for_fwk,
+)
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, STATIC_QUANT
 
 FRAMEWORK_NAME = "keras"
@@ -103,9 +108,15 @@ class StaticQuantConfig(BaseConfig):
         supported_configs.append(OperatorConfig(config=static_quant_config, operators=operators))
         cls.supported_configs = supported_configs
 
+    @classmethod
+    def get_config_set_for_tuning(
+        cls,
+    ) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:  # pragma: no cover
+        # TODO fwk owner needs to update it.
+        return StaticQuantConfig(weight_sym=[True, False])
 
-# TODO(Yi) run `register_supported_configs` for all registered config.
-StaticQuantConfig.register_supported_configs()
+
+register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:

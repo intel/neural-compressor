@@ -11,17 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from neural_compressor.torch.utils.utility import register_algo
-from neural_compressor.torch.algorithms import rtn_quantize_entry, gptq_quantize_entry
-
-from neural_compressor.torch.quantization import (
-    quantize,
-    RTNConfig,
-    get_default_rtn_config,
-    GPTQConfig,
-    get_default_gptq_config,
-)
-
-from neural_compressor.common.base_tuning import TuningConfig
-from neural_compressor.torch.quantization.autotune import autotune, get_default_tune_config

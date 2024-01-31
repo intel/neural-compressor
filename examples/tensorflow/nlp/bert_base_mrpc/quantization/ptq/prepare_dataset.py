@@ -39,18 +39,20 @@ import argparse
 import tempfile
 import urllib.request
 import zipfile
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 TASKS = ["CoLA", "SST", "MRPC", "QQP", "STS", "MNLI", "QNLI", "RTE", "WNLI", "diagnostic"]
-TASK2PATH = {"CoLA":'https://dl.fbaipublicfiles.com/glue/data/CoLA.zip',
-             "SST":'https://dl.fbaipublicfiles.com/glue/data/SST-2.zip',
-             "QQP":'https://dl.fbaipublicfiles.com/glue/data/STS-B.zip',
-             "STS":'https://dl.fbaipublicfiles.com/glue/data/QQP-clean.zip',
-             "MNLI":'https://dl.fbaipublicfiles.com/glue/data/MNLI.zip',
-             "QNLI":'https://dl.fbaipublicfiles.com/glue/data/QNLIv2.zip',
-             "RTE":'https://dl.fbaipublicfiles.com/glue/data/RTE.zip',
-             "WNLI":'https://dl.fbaipublicfiles.com/glue/data/WNLI.zip',
-             "MRPC":"https://raw.githubusercontent.com/MegEngine/Models/master/official/nlp/bert/glue_data/MRPC/dev_ids.tsv",
-             "diagnostic":'https://dl.fbaipublicfiles.com/glue/data/AX.tsv'}
+TASK2PATH = {"CoLA": 'https://dl.fbaipublicfiles.com/glue/data/CoLA.zip',
+             "SST": 'https://dl.fbaipublicfiles.com/glue/data/SST-2.zip',
+             "QQP": 'https://dl.fbaipublicfiles.com/glue/data/STS-B.zip',
+             "STS": 'https://dl.fbaipublicfiles.com/glue/data/QQP-clean.zip',
+             "MNLI": 'https://dl.fbaipublicfiles.com/glue/data/MNLI.zip',
+             "QNLI": 'https://dl.fbaipublicfiles.com/glue/data/QNLIv2.zip',
+             "RTE": 'https://dl.fbaipublicfiles.com/glue/data/RTE.zip',
+             "WNLI": 'https://dl.fbaipublicfiles.com/glue/data/WNLI.zip',
+             "MRPC": "https://raw.githubusercontent.com/MegEngine/Models/master/official/nlp/bert/glue_data/MRPC/dev_ids.tsv",
+             "diagnostic": 'https://dl.fbaipublicfiles.com/glue/data/AX.tsv'}
 
 MRPC_TRAIN = 'https://dl.fbaipublicfiles.com/senteval/senteval_data/msr_paraphrase_train.txt'
 MRPC_TEST = 'https://dl.fbaipublicfiles.com/senteval/senteval_data/msr_paraphrase_test.txt'
