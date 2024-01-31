@@ -326,9 +326,9 @@ if __name__ == "__main__":
             config = PostTrainingQuantConfig(
                 approach="weight_only",
                 calibration_sampling_size=[8],
-                recipes={"awq_args": {"enable_mse_search": False}},
+                recipes={"awq_args": {"enable_mse_search": False},
+                         'graph_optimization_level': 'ENABLE_EXTENDED'},
                 op_type_dict={".*": {"weight": {"algorithm": ["AWQ"]}}},
-                recipes={'graph_optimization_level': 'ENABLE_EXTENDED'},
                 )
             q_model = quantization.fit(
                 model_path,
