@@ -68,9 +68,7 @@ def gptq_entry(
             "bits": quant_config.bits,
             "sym": quant_config.use_sym,
             "group_size": quant_config.group_size,
-            "group_dim": quant_config.group_dim,
             "mse": quant_config.use_mse_search,
-            "export_compressed_model": quant_config.export_compressed_model,
             "use_double_quant": quant_config.use_double_quant,
             "double_quant_dtype": quant_config.double_quant_dtype,
             "double_quant_bits": quant_config.double_quant_bits,
@@ -83,10 +81,13 @@ def gptq_entry(
         }
     kwargs.update(
         {
+            "export_compressed_model": quant_config.export_compressed_model,
             "use_layer_wise": quant_config.use_layer_wise,
             "model_path": quant_config.model_path,
         }
     )
+
+    logger.warning("lm_head in transformer model is skipped by GPTQ")
     model, quantization_perm = gptq_quantize(model=model, weight_config=weight_config, *args, **kwargs)
     # Assign the gptq config as an attribute of model
     model._gptq_quantization_perm = quantization_perm

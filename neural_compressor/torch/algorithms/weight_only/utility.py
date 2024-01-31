@@ -73,7 +73,7 @@ def quantize_4bit(tensor, quantile=1.0, dtype="nf4", return_int=False, **kwargs)
     mid_data = [(allow_data[i] + allow_data[i + 1]) / 2 for i in range(len(allow_data) - 1)]
     q_tensor = torch.zeros_like(tensor)
     for i in range(len(allow_data)):
-        data = allow_data_bit[i] if return_int else allow_data[i]
+        data = allow_data_bit[i] if return_int or "cast_int" in kwargs else allow_data[i]
         if i == 0:
             q_tensor += torch.where(tensor <= mid_data[i], data, 0)
         elif i == len(allow_data) - 1:
@@ -295,9 +295,9 @@ def quant_tensor(
             return weight
     if quant_scale:
         weight, scale, zp = q_state
-        scale_dtype = kwargs.get("double_quant_dtype", "fp32")
+        scale_dtype = kwargs.get("double_quant_dtype", "int")
         scale_bits = kwargs.get("double_quant_bits", 8)
-        scale_scheme = kwargs.get("double_quant_scheme", "sym")
+        scale_scheme = kwargs.get("double_quant_scheme", "asym")
         scale_group_size = kwargs.get("double_quant_group_size", 256)
         scale_return_int = kwargs.get("double_quant_return_int", return_int)
         orig_scale_shape = scale.shape
@@ -308,7 +308,7 @@ def quant_tensor(
             scale.sub_(scale_mean)
             scale_scheme = "sym"
         # process: scale
-        quant_tensor(
+        scale = quant_tensor(
             scale,
             dtype=scale_dtype,
             bits=scale_bits,
@@ -397,8 +397,8 @@ def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_ful
     return best_clip_ratio
 
 
-def quant_weight_w_scale(weight, scale, zp, group_size=-1, dtype="int"):
-    """Quant and dequant tensor with group size.
+def quant_weight_w_scale(weight, scale, zp=None, group_size=-1, dtype="int"):
+    """Quant and dequant tensor with group size. It's an in-place function.
 
     Args:
         weight: input weight
@@ -412,129 +412,34 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1, dtype="int"):
     """
     device = weight.device
     scale = scale.to(device)
-    # NF4 FP4
-    if dtype in FLOAT_MAPPING.keys():
-        int_weight = quantize_4bit(
-            weight,
-            quantile=1.0,
-            dtype=dtype,
-            return_int=True,
-            scale=scale,
-        )[0]
-        return int_weight
-    # INT
     if zp is not None:
         zp = zp.to(device)
+    # group_size = -1
     if group_size == -1:
+        if dtype in FLOAT_MAPPING.keys():  # NF4 FP4
+            return quantize_4bit(weight, scale=scale, dtype=dtype, return_int=True)[0]
         return weight.div_(scale).round_() if zp is None else weight.div_(scale).add_(zp).round_()
     int_weight = torch.zeros(weight.shape).to(device)
     leng = weight.shape[1] // group_size
     tail_flag = False if weight.shape[1] % group_size == 0 else True
+    # group_size != -1
     for i in range(leng):
-        int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size].div_(scale[:, i].unsqueeze(1))
-        if zp is not None:
-            int_weight_tmp.add_(zp[:, i].unsqueeze(1))
-        int_weight[:, i * group_size : (i + 1) * group_size].copy_(int_weight_tmp.round_())
-    if tail_flag:
-        int_weight_tmp = weight[:, leng * group_size :].div_(scale[:, -1].unsqueeze(1))
-        if zp is not None:
-            int_weight_tmp.add_(zp[:, -1].unsqueeze(1))
-        int_weight[:, leng * group_size :].copy_(int_weight_tmp.round_())
-    return int_weight
-
-
-####################### block-wise utility #############################
-def get_block_prefix(model):
-    """Get prefix and number of blocks.
-
-    Args:
-        model (torch.nn.Module): input model
-
-    Returns:
-        block_prefix(str): block_list name in model
-        block_num(int): number of block in block_list
-    """
-    module_types = [torch.nn.ModuleList]
-    for n, m in model.named_modules():
-        if type(m) in module_types:
-            block_prefix = n
-            block_num = len(m)
-            logger.debug(f"block_prefix: {block_prefix}, block_num: {block_num} ")
-            break
-    assert block_num > 0, "block num shouldn't be zero!"
-    return block_prefix, block_num
-
-
-def fetch_module(model, op_name):
-    """Get module with a given op name.
-
-    Args:
-        model (object): the input model.
-        op_name (str): name of op.
-
-    Returns:
-        module (object).
-    """
-    module = model
-    name_list = op_name.split(".")
-    for name in name_list:
-        if hasattr(module, name):
-            module = getattr(module, name)
+        if dtype in FLOAT_MAPPING.keys():  # NF4 FP4
+            int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size]
+            quantize_4bit(int_weight_tmp, scale=scale[:, i].unsqueeze(1), dtype=dtype, return_int=True)[0]
         else:
-            logger.warning(f"The {op_name} is not present in the model.")
-            return None
-    return module
-
-
-def get_first_block_hidden_states(model, calib_func=None):
-    """Get the input args and kwargs of first block.
-
-    Args:
-        model (torch.nn.Module): input model
-        calib_func (func, optional): a calib func to replace dataloader. Defaults to None.
-
-    Raises:
-        ValueError: to avoid inference of rest parts in model
-
-    Returns:
-        total_block_args(list): a list of input args of each batch
-        total_block_kwargs(list):  a list of input kwargs of each batch
-    """
-    from functools import partial
-
-    # Step 1: replace block_forward to collect block inputs and avoid entire inference
-    total_block_args = []
-    total_block_kwargs = []
-
-    def forward(layer, *args, **kwargs):
-        # update total_hidden_states, total_block_kwargs, per batch
-        total_block_args.append(list(args))
-        total_block_kwargs.append(kwargs)
-        raise ValueError
-
-    block_prefix, block_num = get_block_prefix(model)
-    block_list = fetch_module(model, block_prefix)
-    first_block = block_list[0]
-    block_forward_cache = first_block.forward
-    first_block.forward = partial(forward, first_block)
-
-    # Step 2: replace model_forward to avoid ValueError
-    model_forward_cache = model.forward
-
-    def model_forward(model, *args, **kwargs):
-        nonlocal model_forward_cache
-        try:
-            model_forward_cache(*args, **kwargs)
-        except ValueError:
-            pass
-
-    model.forward = partial(model_forward, model)
-
-    # Step 3: execute calibration
-    calib_func(model)
-    logger.info("The hidden_states collection is done.")
-
-    # Step 4: recover model and block forward
-    model.forward = model_forward_cache
-    first_block.forward = block_forward_cache
-    return total_block_args, total_block_kwargs
+            int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size].div_(scale[:, i].unsqueeze(1))
+            if zp is not None:
+                int_weight_tmp.add_(zp[:, i].unsqueeze(1))
+            int_weight[:, i * group_size : (i + 1) * group_size].copy_(int_weight_tmp.round_())
+    # tail_flag
+    if tail_flag:
+        if dtype in FLOAT_MAPPING.keys():  # NF4 FP4
+            int_weight_tmp = weight[:, leng * group_size :]
+            quantize_4bit(int_weight_tmp, scale=scale[:, -1].unsqueeze(1), dtype=dtype, return_int=True)[0]
+        else:
+            int_weight_tmp = weight[:, leng * group_size :].div_(scale[:, -1].unsqueeze(1))
+            if zp is not None:
+                int_weight_tmp.add_(zp[:, -1].unsqueeze(1))
+            int_weight[:, leng * group_size :].copy_(int_weight_tmp.round_())
+    return int_weight

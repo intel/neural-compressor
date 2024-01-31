@@ -28,7 +28,8 @@ import torch.nn as nn
 import transformers
 from tqdm import tqdm
 
-from neural_compressor.torch.utils import logger
+from neural_compressor.torch.quantization.modules import WeightOnlyLinear
+from neural_compressor.torch.utils import fetch_module, logger, set_module
 
 DEBUG = False
 
@@ -196,7 +197,9 @@ class GPTQuantizer(object):
         use_max_length=True,
         max_seq_length=2048,
         device=None,
+        export_compressed_model=False,
         use_layer_wise=False,
+        model_path="",
         run_fn=None,
         *args,
         **kwargs,
@@ -217,6 +220,9 @@ class GPTQuantizer(object):
                 ...
             }
             dataloader: an iterable containing calibration datasets, contains (inputs, targets)
+            export_compressed_model (bool, optional): Choose return fp32 or int32 model. Defaults to False.
+            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            model_path (str): Model path that is used to load state_dict per layer.
             run_fn: a function to run model inference for collecting input information.
             device: cpu or cuda
         """
@@ -240,7 +246,6 @@ class GPTQuantizer(object):
         self.static_groups_default = False
         self.perchannel_default = True
         self.mse_default = False
-        self.export_compressed_model_default = False
         self.use_double_quant_default = False
         self.double_quant_dtype_default = "int"
         self.double_quant_bits_default = 4
@@ -254,7 +259,9 @@ class GPTQuantizer(object):
             self.device = self.model.device
         self.is_ready = False
 
+        self.export_compressed_model = export_compressed_model
         self.use_layer_wise = use_layer_wise
+        self.model_path = model_path
 
         # dataloader
         self.use_max_length = use_max_length
@@ -414,7 +421,6 @@ class GPTQuantizer(object):
                     "percdamp": self.percdamp_default,
                     "block_size": self.block_size_default,
                     "static_groups": self.static_groups_default,
-                    "export_compressed_model": self.export_compressed_model_default,
                     "use_double_quant": self.use_double_quant_default,
                     "double_quant_dtype": self.double_quant_dtype_default,
                     "double_quant_bits": self.double_quant_bits_default,
@@ -436,11 +442,11 @@ class GPTQuantizer(object):
                 self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
                 self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
                 self.weight_config[layer_name]["use_double_quant"] = config.get(
-                    "double_quant_dtype", self.use_double_quant_default
+                    "use_double_quant", self.use_double_quant_default
                 )
                 self.weight_config[layer_name]["double_quant_dtype"] = config.get(
                     "double_quant_dtype", self.double_quant_dtype_default
-                )
+                )  # only support int
                 self.weight_config[layer_name]["double_quant_bits"] = config.get(
                     "double_quant_bits", self.double_quant_bits_default
                 )
@@ -456,14 +462,6 @@ class GPTQuantizer(object):
                 ):
                     self.weight_config[layer_name]["bits"] = int(self.weight_config[layer_name]["dtype"].lstrip("int"))
                     self.weight_config[layer_name]["dtype"] = "int"
-                if (
-                    self.weight_config[layer_name]["double_quant_dtype"] != "int"
-                    and "int" in self.weight_config[layer_name]["double_quant_dtype"]
-                ):
-                    self.weight_config[layer_name]["double_quant_bits"] = int(
-                        self.weight_config[layer_name]["double_quant_dtype"].lstrip("int")
-                    )
-                    self.weight_config[layer_name]["double_quant_dtype"] = "int"
 
     def get_layer_config(self, layer_name):
         """Obtain config for one layer, since GPTQ supports layer-wise config."""
@@ -599,12 +597,13 @@ class GPTQuantizer(object):
             self.cache_positional_arguments[0] = outs[:]
 
     @torch.no_grad()
-    def execute_quantization(self, means=None, stds=None, model_path=None):
+    def execute_quantization(self, means=None, stds=None):
         """Run quantization."""
         # Step1: prepare quantization (calibration datasets)
 
         logger.info("Begin ====>")
         self.pre_quantization()
+        model_path = self.model_path
 
         # Step2: run gptq quantization in a transformer block-wise manner.
         gptq_config = {}
@@ -690,6 +689,42 @@ class GPTQuantizer(object):
                     act_order=weight_config_this_layer["act_order"],
                     static_groups=weight_config_this_layer["static_groups"],
                 )
+                if self.export_compressed_model:
+                    m = fetch_module(transformer_block, layer_name)
+                    gptq_scale = scale
+                    gptq_zp = None if weight_config_this_layer["sym"] else torch.tensor(zp, dtype=torch.int32)
+                    # recover INT weight
+                    gptq_perm = gptq_for_this_block[layer_name].perm if weight_config_this_layer["act_order"] else None
+                    if weight_config_this_layer["act_order"]:
+                        Q.copy_(Q[:, gptq_perm])
+                    from .utility import quant_weight_w_scale
+
+                    quant_weight_w_scale(
+                        Q,
+                        gptq_scale,
+                        gptq_zp,
+                        weight_config_this_layer["group_size"],
+                        dtype=weight_config_this_layer["dtype"],
+                    )
+                    # import pdb;pdb.set_trace()
+                    if weight_config_this_layer["act_order"]:
+                        invperm = torch.argsort(gptq_perm)
+                        Q.copy_(Q[:, invperm])
+                    int_weight = Q.type(torch.int32)  # copy_ is not workable for different types.
+                    # replace module
+                    new_module = WeightOnlyLinear(
+                        m.in_features,
+                        m.out_features,
+                        dtype=weight_config_this_layer["dtype"],
+                        bits=weight_config_this_layer["bits"],
+                        group_size=weight_config_this_layer["group_size"],
+                        zp=gptq_zp is not None,
+                        bias=m.bias is not None,
+                        g_idx=gptq_perm is not None,
+                        device=self.device,
+                    )
+                    new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias)
+                    set_module(transformer_block, layer_name, new_module)
                 if self.use_layer_wise:
                     from neural_compressor.torch.algorithms.layer_wise import (
                         LWQ_WORKSPACE,
@@ -946,7 +981,6 @@ class Quantizer(nn.Module):
             setattr(self, k, v)
         self.maxq = torch.tensor(2**self.bits - 1)
         self.scheme = "sym" if self.sym else "asym"
-        self.double_quant = self.use_double_quant
         self.double_quant_scheme = "sym" if self.double_quant_sym else "asym"
         self.norm = norm
         self.grid = grid
@@ -962,7 +996,6 @@ class Quantizer(nn.Module):
             from .utility import quant_tensor
 
             tmp = x.clone()  # tmp will be replaced after quant_tensor
-
             _, scale, zero = quant_tensor(
                 tmp,
                 dtype=self.dtype,
@@ -972,7 +1005,7 @@ class Quantizer(nn.Module):
                 quantile=1.0,
                 return_int=True,
                 full_range=False,
-                double_quant=self.double_quant,
+                double_quant=self.use_double_quant,
                 double_quant_dtype=self.double_quant_dtype,
                 double_quant_bits=self.double_quant_bits,
                 double_quant_scheme=self.double_quant_scheme,
@@ -1052,7 +1085,8 @@ class Quantizer(nn.Module):
             self.scale = self.scale.reshape(shape)
             self.zero = self.zero.reshape(shape)
 
-            if self.double_quant:
+            if self.use_double_quant:
+                # for INT
                 from .utility import quant_tensor
 
                 orig_scale_shape = self.scale.shape
@@ -1104,6 +1138,7 @@ def gptq_quantize(
     max_seq_length=2048,
     use_max_length=True,
     device=None,
+    export_compressed_model=False,
     use_layer_wise=False,
     model_path=None,
     run_fn=None,
@@ -1124,10 +1159,12 @@ def gptq_quantize(
         use_max_length,
         max_seq_length,
         device,
+        export_compressed_model=export_compressed_model,
         use_layer_wise=use_layer_wise,
+        model_path=model_path,
         run_fn=run_fn,
         run_args=run_args,
     )
-    fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
+    fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization()
     logger.info("GPTQ quantizing done.")
     return fp32_modified_model, gptq_config

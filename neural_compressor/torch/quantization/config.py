@@ -99,7 +99,7 @@ class RTNConfig(BaseConfig):
         use_double_quant: bool = False,
         double_quant_dtype: str = "int",
         double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
-        double_quant_use_sym: bool = True,
+        double_quant_use_sym: bool = False,
         double_quant_group_size: int = 256,
         # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
@@ -247,7 +247,7 @@ class GPTQConfig(BaseConfig):
         use_double_quant: bool = False,
         double_quant_dtype: str = "int",
         double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
-        double_quant_use_sym: bool = True,
+        double_quant_use_sym: bool = False,
         double_quant_group_size: int = 256,
         # gptq params
         act_order: bool = False,

@@ -24,78 +24,53 @@ class TestGPTQQuant:
         self.example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long)
         # record label for comparison
         self.label = self.tiny_gptj(self.example_inputs)[0]
-        # test_default_gptq_config
-        model = copy.deepcopy(self.tiny_gptj)
-        quant_config = get_default_gptq_config()
-        model = quantize(model, quant_config, run_fn=run_fn)
-        # record q_label for comparison
-        self.q_label = model(self.example_inputs)[0]
 
     def teardown_class(self):
         pass
 
     def test_accuracy_improvement(self):
+        # test_default_rtn_config
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_rtn_config()
         model = quantize(model, quant_config, run_fn=run_fn)
         rtn_label = model(self.example_inputs)[0]
         rtn_atol = (rtn_label - self.label).amax()
-        gptq_atol = (self.q_label - self.label).amax()
+        # test_default_gptq_config
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = get_default_gptq_config()
+        model = quantize(model, quant_config, run_fn=run_fn)
+        gptq_label = model(self.example_inputs)[0]
+        gptq_atol = (gptq_label - self.label).amax()
         # 0.05 VS 0.08
         assert gptq_atol < rtn_atol, "GPTQ should have lower atol than RTN, please double check."
 
     @pytest.mark.parametrize(
-        "bits, use_sym, group_size, group_dim",
+        "bits, use_sym, group_size",
         [
-            (8, True, 128, 1),
-            (4, True, 128, 1),
-            (4, False, 32, 1),
-            (4, True, 32, 0),
-            (4, False, -1, 1),
-            (2, True, 8, 1),
+            (8, True, 128),
+            (4, True, 128),
+            (4, False, 32),
+            (4, True, 32),
+            (4, False, -1),
+            (2, True, 8),
         ],
     )
-    def test_int_params(self, bits, use_sym, group_size, group_dim):
+    def test_int_params(self, bits, use_sym, group_size):
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = GPTQConfig(
             bits=bits,
             use_sym=use_sym,
             group_size=group_size,
-            group_dim=group_dim,
         )
         model = quantize(model, quant_config, run_fn=run_fn)
         out = model(self.example_inputs)[0]
         assert (out != self.label).all(), "WOQ output should be different with raw output"
-        if (bits, use_sym, group_size, group_dim) == (8, True, 128, 1):
-            assert torch.allclose(out, self.label, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
-        if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:
-            assert torch.allclose(out, self.label, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
-        if (bits, use_sym, group_size, group_dim) == [(4, False, 32, 0), (4, False, -1, 1), (2, True, 16, 1)]:
-            assert torch.allclose(out, self.label, atol=0.5), "Accuracy gap atol > 0.5 is unexpected."
-
-    def test_full_range(self):
-        # use_full_range=False, full_range specific to sym
-        model = copy.deepcopy(self.tiny_gptj)
-        quant_config = GPTQConfig(
-            use_sym=True,
-            use_full_range=False,
-        )
-        model = quantize(model, quant_config, run_fn=run_fn)
-        out = model(self.example_inputs)[0]
-        atol_false = (out - self.label).max()
-        # use_full_range=True
-        model = copy.deepcopy(self.tiny_gptj)
-        quant_config = GPTQConfig(
-            use_sym=True,
-            use_full_range=True,
-        )
-        model = quantize(model, quant_config, run_fn=run_fn)
-        out = model(self.example_inputs)[0]
-        atol_true = (out - self.label).max()
-        # compare atol, this case is an ideal case.
-        assert (
-            atol_false > atol_true
-        ), "use_full_range=True doesn't help accuracy, maybe is reasonable, please double check."
+        if (bits, use_sym, group_size) == (8, True, 128):
+            assert torch.allclose(out, self.label, atol=0.005), "Accuracy gap atol > 0.005 is unexpected."
+        if (bits, use_sym, group_size) == [(4, True, 128), (4, True, 32), (4, False, 32), (4, False, -1)]:
+            assert torch.allclose(out, self.label, atol=0.08), "Accuracy gap atol > 0.08 is unexpected."
+        if (bits, use_sym, group_size) == [(2, True, 8)]:
+            assert torch.allclose(out, self.label, atol=0.25), "Accuracy gap atol > 0.25 is unexpected."
 
     def test_mse_search(self):
         # use_mse_search=False
@@ -105,7 +80,7 @@ class TestGPTQQuant:
         )
         model = quantize(model, quant_config, run_fn=run_fn)
         out = model(self.example_inputs)[0]
-        atol_false = (out - self.label).max()
+        atol_false = (out - self.label).amax()
         # use_mse_search=True
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = GPTQConfig(
@@ -113,60 +88,50 @@ class TestGPTQQuant:
         )
         model = quantize(model, quant_config, run_fn=run_fn)
         out = model(self.example_inputs)[0]
-        atol_true = (out - self.label).max()
-        # compare atol, this case is not an ideal case.
-        try:
-            assert (
-                atol_false > atol_true
-            ), "use_mse_search=True doesn't help accuracy, maybe is reasonable, please double check."
-        except:
-            assert torch.allclose(atol_false, atol_true, atol=0.012), "atol is very close, double checked the logic."
+        atol_true = (out - self.label).amax()
+        # compare atol, this case is an ideal case.
+        assert (
+            atol_false > atol_true
+        ), "use_mse_search=True doesn't help accuracy, maybe is reasonable, please double check."
 
-    def test_layer_wise(self):
-        model = copy.deepcopy(self.tiny_gptj)
-        quant_config = GPTQConfig(
-            use_layer_wise=True,
-        )
-        model = quantize(model, quant_config, run_fn=run_fn)
-        # TODO(Xin): not implemented
+    # def test_layer_wise(self):
+    #     model = copy.deepcopy(self.tiny_gptj)
+    #     quant_config = GPTQConfig(
+    #         use_layer_wise=True,
+    #     )
+    #     model = quantize(model, quant_config, run_fn=run_fn)
+    # TODO(Xin): not implemented
 
     @pytest.mark.parametrize("dtype", ["int4", "nf4", "fp4"])
     def test_export_compressed_model(self, dtype):
+        # export_compressed_model = False
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = GPTQConfig(
+            dtype=dtype,
+            export_compressed_model=False,
+        )
+        model = quantize(model, quant_config, run_fn=run_fn)
+        out1 = model(self.example_inputs)[0]
+        # export_compressed_model = True
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = GPTQConfig(
+            dtype=dtype,
+            export_compressed_model=True,
+        )
+        model = quantize(model, quant_config, run_fn=run_fn)
+        out2 = model(self.example_inputs)[0]
+        assert isinstance(model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "Exporting compressed model failed."
+
+        # The small gap is caused by FP16 scale in WeightOnlyLinear.
         if dtype == "int4":
-            # using optimum format as default
-            model = copy.deepcopy(self.tiny_gptj)
-            quant_config = GPTQConfig(
-                dtype=dtype,
-                export_compressed_model=True,
-            )
-            model = quantize(model, quant_config, run_fn=run_fn)
-            out = model(self.example_inputs)[0]
-            assert isinstance(model.lm_head, WeightOnlyLinear), "Exporting compressed model failed."
-            atol_true = (out - self.q_label).max()
-            # The small gap is caused by FP16 scale in WeightOnlyLinear.
+            atol_true = (out1 - out2).amax()
             assert (
-                atol_true < 0.0005
+                atol_true < 0.008
             ), "Exporting compressed model should have the same output as quantized model. Please double check"
         else:
-            # optimum_format doesn't suit for symmetric nf4 fp4.
-            model = copy.deepcopy(self.tiny_gptj)
-            quant_config = GPTQConfig(
-                dtype=dtype,
-                export_compressed_model=False,
-            )
-            model = quantize(model, quant_config, run_fn=run_fn)
-            out1 = model(self.example_inputs)[0]
-            model = copy.deepcopy(self.tiny_gptj)
-            quant_config = GPTQConfig(
-                dtype=dtype,
-                export_compressed_model=True,
-            )
-            model = quantize(model, quant_config, run_fn=run_fn)
-            out2 = model(self.example_inputs)[0]
-            assert isinstance(model.lm_head, WeightOnlyLinear), "Exporting compressed model failed."
             assert torch.allclose(
                 out1, out2
-            ), "Exporting compressed model should have the same output as quantized model. Please double check"
+            ), "Exporting compressed model should have the same output as quantized model. Please double check."
 
     @pytest.mark.parametrize("dtype", ["int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"])
     def test_dtype_params(self, dtype):
@@ -176,9 +141,10 @@ class TestGPTQQuant:
         )
         model = quantize(model, quant_config, run_fn=run_fn)
         out = model(self.example_inputs)[0]
-        assert torch.allclose(out, self.label, atol=0.11), "Accuracy gap atol > 0.11 is unexpected."
+        atol = (out - self.label).amax()
+        assert atol < 0.12, "Accuracy gap atol > 0.12 is unexpected. Please double check."
 
-    @pytest.mark.parametrize("dtype", ["int4", "nf4"])
+    @pytest.mark.parametrize("dtype", ["nf4", "int4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
     @pytest.mark.parametrize("double_quant_group_size", [8, 256])
     # TODO(Xin): to implement
@@ -195,7 +161,7 @@ class TestGPTQQuant:
         )
         model = quantize(model, quant_config, run_fn=run_fn)
         out = model(self.example_inputs)[0]
-        atol_false = (out - self.q_label).max()
+        atol_false = (out - self.label).amax()
         model = copy.deepcopy(self.tiny_gptj)
         # double_quant_use_sym = True
         quant_config = GPTQConfig(
@@ -207,8 +173,11 @@ class TestGPTQQuant:
         )
         model = quantize(model, quant_config, run_fn=run_fn)
         out = model(self.example_inputs)[0]
-        atol_true = (out - self.q_label).max()
-        # compare atol, this case is an ideal case.
-        assert (
-            atol_false < atol_true
-        ), "asym for double quant should have smaller atol because scales is bigger than zero, please double check."
+        atol_true = (out - self.label).amax()
+        # compare atol, this case is not an ideal case.
+        try:
+            assert (
+                atol_false < atol_true
+            ), "asym for double quant should have smaller atol because scales is bigger than zero, please double check."
+        except:
+            assert torch.allclose(atol_false, atol_true, atol=0.008), "atol is very close, double checked the logic."

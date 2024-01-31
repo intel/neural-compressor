@@ -111,6 +111,9 @@ def rtn_quantize(
                 "double_quant_scheme": weight_config[name]["double_quant_scheme"],
                 "double_quant_group_size": weight_config[name]["double_quant_group_size"],
             }
+            if dtype != "int" and "int" in dtype:
+                bits = int(dtype.lstrip("int"))
+                dtype = "int"
         log_msg = (
             f"RTN quantization config: bits={bits}, group_size={group_size}, " + f"scheme={scheme}, quantile={quantile}"
         )
@@ -145,9 +148,9 @@ def rtn_quantize(
             new_module = WeightOnlyLinear(
                 m.in_features,
                 m.out_features,
+                dtype=dtype,
                 bits=bits,
                 group_size=group_size,
-                dtype=dtype,
                 zp=zp is not None,
                 bias=m.bias is not None,
                 use_optimum_format=use_optimum_format,

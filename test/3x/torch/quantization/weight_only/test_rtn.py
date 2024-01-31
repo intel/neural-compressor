@@ -57,7 +57,7 @@ class TestRTNQuant:
             assert torch.allclose(out, self.label, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:
             assert torch.allclose(out, self.label, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
-        if (bits, use_sym, group_size, group_dim) == [(4, False, 32, 0), (4, False, -1, 1), (2, True, 16, 1)]:
+        if (bits, use_sym, group_size, group_dim) == [(4, False, 32, 0), (4, False, -1, 1), (2, True, 8, 1)]:
             assert torch.allclose(out, self.label, atol=0.5), "Accuracy gap atol > 0.5 is unexpected."
 
     def test_full_range(self):
@@ -69,7 +69,7 @@ class TestRTNQuant:
         )
         model = quantize(model, quant_config)
         out = model(self.example_inputs)[0]
-        atol_false = (out - self.label).max()
+        atol_false = (out - self.label).amax()
         # use_full_range=True
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = RTNConfig(
@@ -78,7 +78,7 @@ class TestRTNQuant:
         )
         model = quantize(model, quant_config)
         out = model(self.example_inputs)[0]
-        atol_true = (out - self.label).max()
+        atol_true = (out - self.label).amax()
         # compare atol, this case is an ideal case.
         assert (
             atol_false > atol_true
@@ -92,7 +92,7 @@ class TestRTNQuant:
         )
         model = quantize(model, quant_config)
         out = model(self.example_inputs)[0]
-        atol_false = (out - self.label).max()
+        atol_false = (out - self.label).amax()
         # use_mse_search=True
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = RTNConfig(
@@ -100,7 +100,7 @@ class TestRTNQuant:
         )
         model = quantize(model, quant_config)
         out = model(self.example_inputs)[0]
-        atol_true = (out - self.label).max()
+        atol_true = (out - self.label).amax()
         # compare atol, this case is not an ideal case.
         try:
             assert (
@@ -129,7 +129,7 @@ class TestRTNQuant:
             model = quantize(model, quant_config)
             out = model(self.example_inputs)[0]
             assert isinstance(model.lm_head, WeightOnlyLinear), "Exporting compressed model failed."
-            atol_true = (out - self.q_label).max()
+            atol_true = (out - self.q_label).amax()
             # The small gap is caused by FP16 scale in WeightOnlyLinear.
             assert (
                 atol_true < 0.0005
@@ -182,7 +182,7 @@ class TestRTNQuant:
         )
         model = quantize(model, quant_config)
         out = model(self.example_inputs)[0]
-        atol_false = (out - self.q_label).max()
+        atol_false = (out - self.q_label).amax()
         model = copy.deepcopy(self.tiny_gptj)
         # double_quant_use_sym = True
         quant_config = RTNConfig(
@@ -194,7 +194,7 @@ class TestRTNQuant:
         )
         model = quantize(model, quant_config)
         out = model(self.example_inputs)[0]
-        atol_true = (out - self.q_label).max()
+        atol_true = (out - self.q_label).amax()
         # compare atol, this case is an ideal case.
         assert (
             atol_false < atol_true

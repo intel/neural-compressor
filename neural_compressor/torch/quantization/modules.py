@@ -148,9 +148,9 @@ class WeightOnlyLinear(torch.nn.Module):
         self,
         in_features,
         out_features,
-        bits,
-        group_size,
         dtype="int",
+        bits=4,
+        group_size=32,
         zp=False,
         bias=False,
         scale_dtype=torch.float32,
@@ -163,6 +163,9 @@ class WeightOnlyLinear(torch.nn.Module):
         super().__init__()
         self.use_optimum_format = use_optimum_format
         self.dtype = dtype
+        if self.dtype != "int" and "int" in self.dtype:  # for nf4, fp4
+            bits = self.dtype.lstrip("int")
+            self.dtype = "int"
         if "int" not in self.dtype:  # for nf4, fp4
             from neural_compressor.torch.algorithms.weight_only import FLOAT_MAPPING, INT_MAPPING
 
@@ -172,10 +175,10 @@ class WeightOnlyLinear(torch.nn.Module):
             self.int2float_mapping = {}
             for k, v in zip(int_list, float_list):
                 self.int2float_mapping[k] = v
+        self.bits = bits
         self.device = device
         self.in_features = in_features
         self.out_features = out_features
-        self.bits = bits
         self.group_size = group_size if group_size != -1 else in_features
         self.compression_dim = compression_dim
         assert compression_dtype in [
