@@ -251,7 +251,7 @@ class Configuration:
         username = win32api.GetUserName()
         os.makedirs(os.path.dirname(token_filepath), exist_ok=True)
 
-        if (os.path.exists(token_filepath)):
+        if os.path.exists(token_filepath):
             os.remove(token_filepath)
 
         security_descriptor = win32security.SECURITY_DESCRIPTOR()
