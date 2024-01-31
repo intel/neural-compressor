@@ -18,7 +18,7 @@ from copy import deepcopy
 
 import pytest
 import torch
-from config import HQQModuleConfig, QuantTensorConfig
+from config import HQQModuleConfig, QTensorConfig
 from core import HQQLinear, HQQTensorHandle
 from utility import compare_two_tensor, is_divisible
 
@@ -101,11 +101,11 @@ def create_hqq_quant_config_from_hqq_official_api(
         scale_quant_group_size=scale_quant_group_size,
     )
     hqq_quant_config = HQQModuleConfig(
-        weight_quant_config=QuantTensorConfig(**hqq_offical_config["weight_quant_params"]),
-        scale_quant_config=QuantTensorConfig(**hqq_offical_config["scale_quant_params"])
+        weight=QTensorConfig(**hqq_offical_config["weight_quant_params"]),
+        scale=QTensorConfig(**hqq_offical_config["scale_quant_params"])
         if hqq_offical_config["scale_quant_params"] is not None
         else None,
-        zero_quant_config=QuantTensorConfig(**hqq_offical_config["zero_quant_params"])
+        zero=QTensorConfig(**hqq_offical_config["zero_quant_params"])
         if hqq_offical_config["zero_quant_params"] is not None
         else None,
     )

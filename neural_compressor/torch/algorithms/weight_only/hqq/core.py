@@ -18,23 +18,19 @@ import sys
 hqq_offical_path = "/home/yliu7/workspace/hqq"
 sys.path.insert(0, hqq_offical_path)
 
-from collections import namedtuple
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Tuple, Union
 
 import torch
 from auto_accelerator import auto_detect_accelerator
 from bitpack import BitPack
-
-auto_accelerator = auto_detect_accelerator()
-
-from config import HQQModuleConfig, QTensorMetaInfo, QuantTensorConfig, default_hqq_quant_config
+from config import HQQModuleConfig, QTensorConfig, QTensorMetaInfo, default_hqq_module_config
 from optimizer import optimize_weights_proximal
 from utility import custom_print, dump_elapsed_time, get_tensor_size, inspect_function, is_divisible
 
 __all__ = [
-    "QTensor",
     "HQQTensorHandle",
     "HQQLinear",
+    "QTensor",
 ]
 
 
@@ -112,7 +108,6 @@ class HQQTensorHandle:
     # Store meta-data (we invert the scale for dequantization)
     SUPPORTED_BITS = [8, 4, 3, 2]
     optimize_weights = optimize_weights_proximal
-    accelerator = auto_detect_accelerator()
 
     # TODO: Refine the packer
     bit_to_packing = {8: "8bit_u8", 4: "4bit_u8", 3: "3bit_32", 2: "2bit_u8"}
@@ -132,7 +127,7 @@ class HQQTensorHandle:
     }
 
     @classmethod
-    def _convert_tensor_quant_config(cls, tensor_quant_config: QuantTensorConfig):
+    def _convert_tensor_quant_config(cls, tensor_quant_config: QTensorConfig):
         nbits = tensor_quant_config.nbits
         channel_wise = tensor_quant_config.channel_wise
         group_size = tensor_quant_config.group_size
@@ -157,7 +152,7 @@ class HQQTensorHandle:
 
     @classmethod
     @dump_elapsed_time("HQQTensorHandle.quantize_to_q_tensor")
-    def quantize_to_q_tensor(cls, float_tensor, tensor_quant_config: QuantTensorConfig = None):
+    def quantize_to_q_tensor(cls, float_tensor, tensor_quant_config: QTensorConfig = None):
         q_weight, q_tensor_meta = cls.quantize(
             tensor=float_tensor,
             tensor_quant_config=tensor_quant_config,
@@ -167,7 +162,7 @@ class HQQTensorHandle:
 
     @classmethod
     # @inspect_function
-    def quantize(cls, tensor, tensor_quant_config: QuantTensorConfig = None):
+    def quantize(cls, tensor, tensor_quant_config: QTensorConfig = None):
         (
             nbits,
             channel_wise,
@@ -248,7 +243,7 @@ class HQQTensorHandle:
 
         # cleanup
         del W, _min, _max
-        cls.accelerator.empty_cache()
+        auto_detect_accelerator().empty_cache()
 
         return W_q, meta
 
@@ -315,20 +310,20 @@ class HQQLinear(torch.nn.Linear):
     def quantize_weight(
         self,
         W: torch.Tensor,
-        quant_config: HQQModuleConfig = default_hqq_quant_config,
+        quant_config: HQQModuleConfig = default_hqq_module_config,
     ) -> Tuple[torch.Tensor, Dict[str, Any]]:
-        weight_quant_config, scale_quant_config, zero_quant_config = (
-            quant_config.weight_quant_config,
-            quant_config.scale_quant_config,
-            quant_config.zero_quant_config,
+        weight, scale, zero = (
+            quant_config.weight,
+            quant_config.scale,
+            quant_config.zero,
         )
-        need_quant_scale = scale_quant_config is not None
-        need_quant_zero = zero_quant_config is not None
+        need_quant_scale = scale is not None
+        need_quant_zero = zero is not None
 
         self.in_features, self.out_features = W.t().shape
 
         # Quantize weight
-        q_weight = HQQTensorHandle.quantize_to_q_tensor(float_tensor=W, tensor_quant_config=weight_quant_config)
+        q_weight = HQQTensorHandle.quantize_to_q_tensor(float_tensor=W, tensor_quant_config=weight)
         self.q_weight = q_weight
 
         # * The dequantization process only happens in the first forward pass.
@@ -336,14 +331,14 @@ class HQQLinear(torch.nn.Linear):
         if need_quant_scale:  # Quantize scale
             custom_print(message=f"need_quant_scale: {need_quant_scale}")
             q_scale_tensor = HQQTensorHandle.quantize_to_q_tensor(
-                float_tensor=self.q_weight.scale, tensor_quant_config=scale_quant_config
+                float_tensor=self.q_weight.scale, tensor_quant_config=scale
             )
             self.q_weight.scale = q_scale_tensor
         if need_quant_zero:  # Quantize zero
             custom_print(f"need_quant_zero: {need_quant_zero}")
             q_zero_tensor = HQQTensorHandle.quantize_to_q_tensor(
                 float_tensor=self.q_weight.zero,
-                tensor_quant_config=zero_quant_config,
+                tensor_quant_config=zero,
             )
             self.q_weight.zero = q_zero_tensor
         self.quantized = True
@@ -374,9 +369,9 @@ class HQQLinear(torch.nn.Linear):
     def from_float(
         cls,
         float_module: torch.nn.Linear,
-        quant_config: HQQModuleConfig = default_hqq_quant_config,
+        quant_config: HQQModuleConfig = default_hqq_module_config,
     ):
-        # create the new module with a toy size to ensure initialization is fast
+        # Create the new module with a toy size to ensure initialization is fast
         fake_in_features, fake_out_features = 8, 8
         new_mod = cls(
             fake_in_features,

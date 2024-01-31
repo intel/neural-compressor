@@ -12,7 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Callable, Dict, List, Optional, Tuple
+
 import torch
+from auto_accelerator import auto_detect_accelerator
+from config import ConfigMappingType, HQQModuleConfig, default_hqq_module_config, hqq_global_option
+from core import HQQLinear
 
 
 class EagerModeQuantizer:
@@ -32,12 +37,7 @@ class EagerModeQuantizer:
         pass
 
 
-from typing import Dict
-
-from config import *
-
-
-class HQQutizer(EagerModeQuantizer):
+class HQQuantizer(EagerModeQuantizer):
     def prepare(self, qconfig_mapping: Dict[str, HQQModuleConfig]):
         # Replace `Linear` with `HQQLinear`
         pass
@@ -46,26 +46,8 @@ class HQQutizer(EagerModeQuantizer):
         pass
 
 
-class HQQGlobalOptions:
-    use_half = True
-
-
-from typing import Any, Callable, Dict, List, Optional, Tuple
-
-from typing_extensions import TypeAlias
-
-ConfigMappingType: TypeAlias = Dict[str, str]
-algos_mapping: Dict[str, Callable] = {}
-config_mapping: Dict[str, Any] = {}
-
-from auto_accelerator import auto_detect_accelerator
-
-
-def has_child(module: torch.nn.Module) -> bool:
+def _has_child(module: torch.nn.Module) -> bool:
     return len(list(module.named_children())) > 0
-
-
-hqq_global_option = HQQGlobalOptions()
 
 
 def _replace_with_custom_fn_if_matches_filter(
@@ -87,7 +69,7 @@ def _replace_with_custom_fn_if_matches_filter(
             new_child = replacement_fn(child.to(auto_detect_accelerator().current_device()), new_fqn, config_mapping)
             print(f'quantized {new_fqn}, device: {getattr(new_child, "device", None)}')
             setattr(model, name, new_child)
-        elif not has_child(child) and hqq_global_option:  # TODO: merge it into `filter_fn`
+        elif not _has_child(child) and hqq_global_option:  # TODO: merge it into `filter_fn`
             print(f"halfing {new_fqn}")
             new_child = child.half().to(auto_detect_accelerator().current_device())
             print(f'halfing {new_fqn}, device: {getattr(new_child, "device", None)}')
@@ -100,9 +82,6 @@ def _replace_with_custom_fn_if_matches_filter(
                 cur_fqn=new_fqn,
                 config_mapping=config_mapping,
             )
-
-
-from core import HQQLinear
 
 
 def patch_hqq(mod, config):
@@ -130,14 +109,11 @@ def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
     return filter_result
 
 
-from config import default_hqq_quant_config
-
-
 def get_default_hqq_config_mapping(model):
     mode_info = get_model_info(model)
     config_mapping = {}
     for name, _ in mode_info:
-        config_mapping[name] = default_hqq_quant_config
+        config_mapping[name] = default_hqq_module_config
     return config_mapping
 
 

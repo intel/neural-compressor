@@ -14,8 +14,8 @@
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-model_id = "/models/opt-125m"
-# model_id = "/models/Llama-2-7b-hf"
+# model_id = "/models/opt-125m"
+model_id = "/models/Llama-2-7b-hf"
 model = AutoModelForCausalLM.from_pretrained(model_id)
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model.eval()
