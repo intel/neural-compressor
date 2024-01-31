@@ -507,8 +507,7 @@ For example, user can implement an `Abc` strategy like below:
 ```python
 @strategy_registry
 class AbcTuneStrategy(TuneStrategy):
-    def __init__(self, model, conf, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
-        ...
+    def __init__(self, model, conf, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None): ...
 
     def next_tune_cfg(self):
         # generate the next tuning config
