@@ -81,8 +81,8 @@ def quantize_4bit(tensor, quantile=1.0, dtype="nf4", return_int=False, **kwargs)
         else:
             q_tensor += torch.where((mid_data[i - 1] < tensor) & (tensor <= mid_data[i]), data, 0)
     tensor.copy_(q_tensor)
-    double_quant = kwargs.get("double_quant", False)
-    if return_int or double_quant:
+    keep_scale = kwargs.get("double_quant", False)
+    if return_int or keep_scale:
         return tensor, scale, None
     return tensor.mul_(scale)
 
@@ -116,8 +116,8 @@ def qdq_weight_asym(weight, bits=4, quantile=1.0, return_int=False, **kwargs):
     weight.div_(scale)
     weight.round_()
     weight.clamp_(0, maxq)
-    double_quant = kwargs.get("double_quant", False)
-    if return_int or double_quant:
+    keep_scale = kwargs.get("double_quant", False)
+    if return_int or keep_scale:
         return weight, scale, zp
     weight.sub_(zp)
     return weight.mul_(scale)
@@ -158,15 +158,15 @@ def qdq_weight_sym(weight, bits=4, quantile=1.0, return_int=False, full_range=Fa
         # use -8, 8 to make sure amax is not changed after fake quant
         scale = wmax / (-minq)
         tmp = scale * flip_flag.int()
-        scale -= 2 * tmp  # set negetive scale with flip_flag
+        scale -= 2 * tmp  # set negative scale with flip_flag
     else:
         scale = wmax / maxq
     scale.unsqueeze_(dim=-1)
     weight.div_(scale)
     weight.round_()
     weight.clamp_(minq, maxq)
-    double_quant = kwargs.get("double_quant", False)
-    if return_int or double_quant:
+    keep_scale = kwargs.get("double_quant", False)
+    if return_int or keep_scale:
         return weight, scale, None
     return weight.mul_(scale)
 
@@ -207,7 +207,7 @@ def quant_tensor(
     full_range=False,
     **kwargs,
 ):
-    """Quant and dequant tensor with group size.
+    """Quant and dequant tensor with group size. It's an in-place function.
 
     Args:
         weight: input weight
@@ -223,7 +223,7 @@ def quant_tensor(
     Returns:
         output: qdq weight.
     """
-    double_quant = kwargs.get("double_quant", False)
+    quant_scale = kwargs.get("double_quant", False)
     if bits <= 0:  # pragma: no cover
         return weight
     # case 1, group size = -1
@@ -243,7 +243,7 @@ def quant_tensor(
             dtype=dtype,
             **kwargs,
         )
-        if return_int or double_quant:
+        if return_int or quant_scale:
             weight, scale, zp = weight
             weight = weight.reshape(orig_shape)
             scale = scale.reshape(orig_shape[0], -1)
@@ -267,7 +267,7 @@ def quant_tensor(
             dtype=dtype,
             **kwargs,
         )
-        if return_int or double_quant:
+        if return_int or quant_scale:
             weight1, scale1, zp1 = weight1
             scale1 = scale1.reshape(orig_shape[0], -1)
             if zp1 is not None:
@@ -284,7 +284,7 @@ def quant_tensor(
             full_range=full_range,
             **kwargs,
         )
-        if return_int or double_quant:
+        if return_int or quant_scale:
             weight2, scale2, zp2 = weight2
             weight.copy_(torch.cat([weight1, weight2], dim=1))
             scale = torch.cat([scale1, scale2], dim=1)
@@ -293,37 +293,44 @@ def quant_tensor(
         else:
             weight.copy_(torch.cat([weight1, weight2], dim=1))
             return weight
-    if double_quant:
+    if quant_scale:
         weight, scale, zp = q_state
-        double_quant_dtype = kwargs.get("double_quant_dtype", "fp32")
-        double_quant_bits = kwargs.get("double_quant_bits", 8)
-        double_quant_scheme = kwargs.get("double_quant_scheme", "sym")
-        double_quant_group_size = kwargs.get("double_quant_group_size", 256)
-        double_quant_return_int = kwargs.get("double_quant_return_int", return_int)
-        # process scale
+        scale_dtype = kwargs.get("double_quant_dtype", "fp32")
+        scale_bits = kwargs.get("double_quant_bits", 8)
+        scale_scheme = kwargs.get("double_quant_scheme", "sym")
+        scale_group_size = kwargs.get("double_quant_group_size", 256)
+        scale_return_int = kwargs.get("double_quant_return_int", return_int)
         orig_scale_shape = scale.shape
         scale = scale.reshape(1, -1)
-        scale = quant_tensor(
+        # pre-process: scale_mean
+        if scale_scheme == "asym":
+            scale_mean = scale.mean()
+            scale.sub_(scale_mean)
+            scale_scheme = "sym"
+        # process: scale
+        quant_tensor(
             scale,
-            dtype=double_quant_dtype,
-            bits=double_quant_bits,
-            group_size=double_quant_group_size,
-            scheme=double_quant_scheme,
+            dtype=scale_dtype,
+            bits=scale_bits,
+            group_size=scale_group_size,
+            scheme=scale_scheme,
             quantile=1.0,
-            return_int=double_quant_return_int,
+            return_int=scale_return_int,
             full_range=False,
-            double_quant=False,
         )
-        if return_int:
-            if double_quant_return_int:
-                scale, hyper_scale, hyper_zp = scale
-                scale = scale.reshape(orig_scale_shape)
-                return weight, (scale, hyper_scale, hyper_zp), zp
-            else:
-                scale = scale.reshape(orig_scale_shape)
-                return weight, scale, zp
-        else:
+        # post-process: scale_mean
+        if scale_return_int:
+            scale, hyper_scale, hyper_zp = scale
             scale = scale.reshape(orig_scale_shape)
+            scale = (scale, hyper_scale, scale_mean)
+        else:
+            if kwargs.get("double_quant_scheme", "sym") == "asym":
+                scale.add_(scale_mean)
+            scale = scale.reshape(orig_scale_shape)
+        # post-process: weight * scale
+        if return_int:
+            return weight, scale, zp
+        else:
             if weight.shape[1] % group_size != 0:
                 if zp is not None:
                     weight1 = weight1.reshape(-1, group_size).sub_(zp[:, :-1].reshape(-1, 1))
@@ -333,7 +340,7 @@ def quant_tensor(
                 weight1 = weight1.mul_(scale[:, :-1].reshape(-1, 1))
                 weight1 = weight1.reshape(orig_shape[0], -1)
                 weight2 = weight2.mul_(scale[:, -1].reshape(-1, 1))
-                weight = torch.cat([weight1, weight2], dim=1)
+                weight.copy_(torch.cat([weight1, weight2], dim=1))
             else:
                 if zp is not None:
                     weight = weight.reshape(-1, group_size) - zp.reshape(-1, 1)
@@ -347,7 +354,7 @@ def quant_tensor(
 
 
 def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_full_range=False):
-    """Search best clip range of each linear in current block.
+    """Search best clip range of each linear in current block. It's not an in-place function.
 
     Args:
         m (torch.nn.Module): torch module.
@@ -361,7 +368,7 @@ def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_ful
         best_clip_ratio (float): best percentile of clip
     """
     org_weight = m.weight.data.clone()
-    logger.info("Searching the best clip range with RTN algorithm")
+    logger.debug("Searching the best clip range with RTN algorithm")
     best_error = float("inf")
     best_clip_ratio = None
     n_grid = 200
@@ -369,8 +376,8 @@ def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_ful
     history = []
     for i_s in range(int(max_shrink * n_grid)):
         ratio = 1 - i_s / n_grid  # 1, 0.805-1.0
-        cur_weight = quant_tensor(
-            m.weight.data,
+        quant_tensor(
+            m.weight.data,  # in-place mode
             dtype=dtype,
             bits=bits,
             group_size=group_size,
@@ -378,7 +385,8 @@ def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_ful
             full_range=enable_full_range,
             quantile=ratio,
         )
-        loss = (org_weight - cur_weight).float().pow(2).mean().item()
+        loss = (org_weight - m.weight.data).float().pow(2).mean().item()
+        m.weight.data.copy_(org_weight)
         history.append(loss)
         is_best = loss < best_error
         if is_best:

@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.torch.quantization.quantize import quantize, quantize_dynamic
+from neural_compressor.torch.quantization.quantize import quantize
 from neural_compressor.torch.quantization.config import (
     RTNConfig,
     get_default_rtn_config,
+    get_default_double_quant_config,
     GPTQConfig,
     get_default_gptq_config,
     StaticQuantConfig,
@@ -23,3 +24,9 @@ from neural_compressor.torch.quantization.config import (
     SmoothQuantConfig,
     get_default_sq_config,
 )
+
+# TODO(Yi): move config to config.py
+from neural_compressor.torch.quantization.autotune import autotune, TuningConfig, get_all_config_set
+
+### Quantization Function Registration ###
+import neural_compressor.torch.quantization.algorithm_entry

@@ -97,7 +97,8 @@ logger.info(os.getenv("PAGER", default=""))
 - Recommend
 
 ```python
-def register_config(framework_name: str, algo_name: str, priority: int = 0) -> Callable[..., Any]: ...
+def register_config(framework_name: str, algo_name: str, priority: int = 0) -> Callable[..., Any]:
+    ...
 
 
 eval_result: float = evaluator.eval(model)
