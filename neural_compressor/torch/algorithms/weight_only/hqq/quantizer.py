@@ -34,7 +34,7 @@ class EagerModeQuantizer:
 
 from typing import Dict
 
-from hqq_config import *
+from config import *
 
 
 class HQQutizer(EagerModeQuantizer):
@@ -58,7 +58,7 @@ ConfigMappingType: TypeAlias = Dict[str, str]
 algos_mapping: Dict[str, Callable] = {}
 config_mapping: Dict[str, Any] = {}
 
-from inc_accelerator import auto_detect_accelerator
+from auto_accelerator import auto_detect_accelerator
 
 
 def has_child(module: torch.nn.Module) -> bool:
@@ -102,7 +102,7 @@ def _replace_with_custom_fn_if_matches_filter(
             )
 
 
-from hqq_utils import HQQLinear
+from core import HQQLinear
 
 
 def patch_hqq(mod, config):
@@ -130,7 +130,7 @@ def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
     return filter_result
 
 
-from hqq_utils import default_hqq_quant_config
+from config import default_hqq_quant_config
 
 
 def get_default_hqq_config_mapping(model):

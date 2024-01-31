@@ -16,10 +16,10 @@
 
 import numpy as np
 import torch
-from inc_accelerator import INC_Accelerator, auto_detect_accelerator
+from auto_accelerator import Auto_Accelerator, auto_detect_accelerator
 from utility import dump_elapsed_time
 
-auto_acceleartor: INC_Accelerator = auto_detect_accelerator()
+auto_acceleartor: Auto_Accelerator = auto_detect_accelerator()
 
 
 # Proximal solver || W - dequantize(quantize(W))||_p^p

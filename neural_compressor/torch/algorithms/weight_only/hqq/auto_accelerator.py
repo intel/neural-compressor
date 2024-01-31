@@ -23,7 +23,7 @@ from abc import ABC, abstractmethod
 import torch
 
 
-class INC_Accelerator(ABC):
+class Auto_Accelerator(ABC):
     @abstractmethod
     def is_available(self) -> bool:
         pass
@@ -57,7 +57,7 @@ class INC_Accelerator(ABC):
         pass
 
 
-class CPU_Accelerator(INC_Accelerator):
+class CPU_Accelerator(Auto_Accelerator):
     def __init__(self) -> None:
         self._name = "cpu"
 
@@ -86,7 +86,7 @@ class CPU_Accelerator(INC_Accelerator):
         pass
 
 
-class CUDA_Accelerator(INC_Accelerator):
+class CUDA_Accelerator(Auto_Accelerator):
     def __init__(self) -> None:
         self._name = "cuda"
 
@@ -126,7 +126,7 @@ accelerator_mapping = {
 }
 
 
-def auto_detect_accelerator() -> INC_Accelerator:
+def auto_detect_accelerator() -> Auto_Accelerator:
     FORCE_DEVICE = os.environ.get("FORCE_DEVICE", None)
     if FORCE_DEVICE and FORCE_DEVICE in accelerator_mapping:
         print(f"!!! Force use {FORCE_DEVICE} accelerator.")

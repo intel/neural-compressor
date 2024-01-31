@@ -25,7 +25,7 @@ float_out = model(**encoded_input)
 print(float_out)
 
 
-from hqq_quantizer_api import get_default_hqq_config_mapping, hqq_entry
+from quantizer import get_default_hqq_config_mapping, hqq_entry
 
 default_hqq_config_mapping = get_default_hqq_config_mapping(model)
 default_hqq_config_mapping.pop("lm_head")

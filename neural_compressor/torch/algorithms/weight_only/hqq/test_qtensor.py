@@ -13,7 +13,8 @@
 # limitations under the License.
 
 import torch
-from hqq_utils import QTensor, QTensorMetaInfo
+from config import QTensorMetaInfo
+from core import QTensor
 
 in_feats = 3
 out_feats = 4

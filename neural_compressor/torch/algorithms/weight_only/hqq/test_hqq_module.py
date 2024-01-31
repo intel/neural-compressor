@@ -16,7 +16,8 @@ from copy import deepcopy
 
 import pytest
 import torch
-from hqq_utils import HQQLinear, HQQModuleConfig, HQQTensorHandle, QuantTensorConfig
+from config import HQQModuleConfig, QuantTensorConfig
+from core import HQQLinear, HQQTensorHandle
 from utility import compare_two_tensor, is_divisible
 
 ######################
