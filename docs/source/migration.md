@@ -41,7 +41,8 @@ val_dataloader = torch.utils.data.Dataloader(
 )
 
 
-def eval_func(model): ...
+def eval_func(model):
+    ...
 
 
 # Quantization code
@@ -114,7 +115,8 @@ val_dataloader = torch.utils.data.Dataloader(
 )
 
 
-def eval_func(model): ...
+def eval_func(model):
+    ...
 
 
 # Quantization code
@@ -145,10 +147,12 @@ model = AutoModelForSequenceClassification.from_pretrained(model_name_or_path)
 tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
 
-def eval_func(model): ...
+def eval_func(model):
+    ...
 
 
-def train_func(model): ...
+def train_func(model):
+    ...
 
 
 trainer = Trainer(...)
@@ -209,10 +213,12 @@ model = AutoModelForSequenceClassification.from_pretrained(model_name_or_path)
 tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
 
-def eval_func(model): ...
+def eval_func(model):
+    ...
 
 
-def train_func(model): ...
+def train_func(model):
+    ...
 
 
 trainer = Trainer(...)
