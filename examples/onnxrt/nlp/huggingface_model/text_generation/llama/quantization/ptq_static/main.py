@@ -138,14 +138,14 @@ def benchmark(model):
     sess_options = ort.SessionOptions()
     sess_options.intra_op_num_threads = args.intra_op_num_threads
 
-    sessions = ORTModelForCausalLM.load_model(  # pylint: disable=E1123
+    session = ORTModelForCausalLM.load_model(  # pylint: disable=E1123
                 os.path.join(model, "model.onnx"),
                 session_options=sess_options)
-    inputs_names = sessions.get_inputs()
+    inputs_names = session.get_inputs()
     key_value_input_names = [key.name for key in inputs_names if (".key" in key.name) or (".value" in key.name)]
     use_cache = len(key_value_input_names) > 0
 
-    model = ORTModelForCausalLM(sessions[0],  # pylint: disable=E1121
+    model = ORTModelForCausalLM(session,  # pylint: disable=E1121
                                 config,
                                 model,
                                 use_cache=True if use_cache else False,
@@ -203,7 +203,7 @@ def eval_func(model):
     if isinstance(model, str) and model.endswith(".onnx"):
         model_dir = os.path.dirname(model)
 
-    # replace_architectures(os.path.join(model_dir, "config.json"))
+    replace_architectures(os.path.join(model_dir, "config.json"))
 
     results = evaluate(
         model="hf-causal",
@@ -274,6 +274,7 @@ class KVDataloader:
                 position_ids.masked_fill_(attention_mask == 0, 1)
                 ort_input["position_ids"] = position_ids[:,:-1].detach().cpu().numpy().astype("int64")
                 if self.use_cache:
+                    # Create dummy past_key_values for decoder
                     num_attention_heads = config.num_key_value_heads
                     embed_size_per_head = config.hidden_size // config.num_attention_heads
                     shape = (self.batch_size, num_attention_heads, 0, embed_size_per_head)
