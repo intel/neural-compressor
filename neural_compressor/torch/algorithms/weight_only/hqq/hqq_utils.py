@@ -62,7 +62,7 @@ class QuantTensorConfig:
         return (
             f"QuantTensorConfig(nbits={self.nbits}, channel_wise={self.channel_wise}, "
             f"group_size={self.group_size}, optimize={self.optimize}, "
-            f"round_zero={self.round_pwdzero}, pack={self.pack})"
+            f"round_zero={self.round_zero}, pack={self.pack})"
         )
 
 
