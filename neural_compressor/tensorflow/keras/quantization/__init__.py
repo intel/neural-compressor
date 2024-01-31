@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from neural_compressor.tensorflow.keras.quantization.config import (
-    StaticQuantConfig, 
-    get_default_static_quant_config, 
+    StaticQuantConfig,
+    get_default_static_quant_config,
     parse_to_keras_tune_cfg,
 )

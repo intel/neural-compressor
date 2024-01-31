@@ -503,6 +503,7 @@ def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):  # p
     """
     assert version1_lt_version2(tf.version.VERSION, "2.0.0"), "slim model only used in tensorflow 1.x"
     from neural_compressor.tensorflow.utils.nets_factory import TFSlimNetsFactory
+
     factory = TFSlimNetsFactory()
     assert "name" in kwargs, "model name should be set in slim checkpoint...."
     assert kwargs["name"] in factory.default_slim_models, "only support topology {}".format(factory.default_slim_models)

@@ -1596,7 +1596,9 @@ class TensorFlowAdaptor:
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
+        from neural_compressor.tensorflow.quantization.tf_utils.graph_rewriter.generic.pre_optimize import (
+            PreOptimization,
+        )
 
         self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
