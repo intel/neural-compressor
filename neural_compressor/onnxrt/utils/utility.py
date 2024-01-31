@@ -34,6 +34,8 @@ WHITE_MODULE_LIST = ["MatMul", "Conv"]
 
 MAXIMUM_PROTOBUF = 2147483648
 
+PRIORITY_SQ = 80
+
 dtype_mapping = {
     "fp32": 1,
     "float32": 1,

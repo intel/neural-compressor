@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Union
 
 import onnx
-from onnxruntime.quantization import StaticQuantConfig, quantize
+from onnxruntime.quantization import quantize
 
 from neural_compressor.common import Logger
 from neural_compressor.common.utils import RTN, SMOOTH_QUANT
@@ -69,16 +69,14 @@ def smooth_quant_entry(
 
         # exclude Mul operations which are inserted during smooth operation
         excluded_nodes = [i.name for i in smoothed_model.graph.node if i.name.endswith("_smooth_mul")]
-        config = StaticQuantConfig(
-            calibration_data_reader=calibration_data_reader,
-            nodes_to_exclude=excluded_nodes,
-            use_external_data_format=True,
-        )
+        quant_config.calibration_data_reader = calibration_data_reader
+        quant_config.nodes_to_exclude.extend(excluded_nodes)
+        quant_config.convert_to_ort_config()
 
         quantize(
             Path(tmp_dir).joinpath("smooth.onnx").as_posix(),
             Path(tmp_dir).joinpath("quant_model.onnx").as_posix(),
-            config,
+            quant_config,
         )
         model = onnx.load(Path(tmp_dir).joinpath("quant_model.onnx").as_posix())
 

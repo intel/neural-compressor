@@ -26,6 +26,7 @@ from neural_compressor.onnxrt.quantization.config import (
 
 __all__ = [
     "smooth_quant_entry",
+    "rtn_quantize_entry",
     "RTNConfig",
     "get_default_rtn_config",
     "SmoohQuantConfig",

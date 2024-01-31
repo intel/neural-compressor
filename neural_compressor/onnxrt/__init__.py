@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from onnxruntime.quantization.calibrate import CalibrationMethod
+from onnxruntime.quantization.quant_utils import QuantType, QuantFormat
 from neural_compressor.onnxrt.utils.utility import register_algo
-
 from neural_compressor.onnxrt.quantization import (
     rtn_quantize_entry,
     smooth_quant_entry,
@@ -33,4 +34,7 @@ __all__ = [
     "SmoohQuantConfig",
     "get_default_sq_config",
     "CalibrationDataReader",
+    "QuantType",
+    "QuantFormat",
+    "CalibrationMethod",
 ]
