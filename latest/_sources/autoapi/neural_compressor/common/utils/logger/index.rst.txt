@@ -21,19 +21,14 @@ Classes
 
 
 
-Functions
-~~~~~~~~~
+
+Attributes
+~~~~~~~~~~
 
 .. autoapisummary::
 
-   neural_compressor.common.utils.logger.log
-   neural_compressor.common.utils.logger.debug
-   neural_compressor.common.utils.logger.error
-   neural_compressor.common.utils.logger.fatal
-   neural_compressor.common.utils.logger.info
-   neural_compressor.common.utils.logger.warn
-   neural_compressor.common.utils.logger.warning
-
+   neural_compressor.common.utils.logger.level
+   neural_compressor.common.utils.logger.logger
 
 
 .. py:class:: Logger
@@ -44,38 +39,5 @@ Functions
    Logger class.
 
 
-.. py:function:: log(level, msg, *args, **kwargs)
-
-   Output log with the level as a parameter.
-
-
-.. py:function:: debug(msg, *args, **kwargs)
-
-   Output log with the debug level.
-
-
-.. py:function:: error(msg, *args, **kwargs)
-
-   Output log with the error level.
-
-
-.. py:function:: fatal(msg, *args, **kwargs)
-
-   Output log with the fatal level.
-
-
-.. py:function:: info(msg, *args, **kwargs)
-
-   Output log with the info level.
-
-
-.. py:function:: warn(msg, *args, **kwargs)
-
-   Output log with the warning level.
-
-
-.. py:function:: warning(msg, *args, **kwargs)
-
-   Output log with the warning level (Alias of the method warn).
 
 

@@ -149,22 +149,17 @@ and registering this adaptor by the <code class="docutils literal notranslate"><
 <p>For example, a user can implement an <code class="docutils literal notranslate"><span class="pre">Abc</span></code> adaptor like below:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@adaptor_registry</span>
 <span class="k">class</span> <span class="nc">AbcAdaptor</span><span class="p">(</span><span class="n">Adaptor</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">framework_specific_info</span><span class="p">):</span>
-        <span class="o">...</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">framework_specific_info</span><span class="p">):</span> <span class="o">...</span>
 
-    <span class="k">def</span> <span class="nf">quantize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tune_cfg</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">q_func</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="o">...</span>
+    <span class="k">def</span> <span class="nf">quantize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tune_cfg</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">q_func</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span> <span class="o">...</span>
 
     <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">postprocess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">measurer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">tensorboard</span><span class="o">=</span><span class="kc">False</span>
-    <span class="p">):</span>
-        <span class="o">...</span>
+    <span class="p">):</span> <span class="o">...</span>
 
-    <span class="k">def</span> <span class="nf">query_fw_capability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="o">...</span>
+    <span class="k">def</span> <span class="nf">query_fw_capability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span> <span class="o">...</span>
 
-    <span class="k">def</span> <span class="nf">query_fused_patterns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="o">...</span>
+    <span class="k">def</span> <span class="nf">query_fused_patterns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span> <span class="o">...</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -282,7 +277,7 @@ Onnxruntime already has <a class="reference external" href="https://github.com/m
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fa49d3ad360> 
+   <jinja2.runtime.BlockReference object at 0x7f85eb5b4ac0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

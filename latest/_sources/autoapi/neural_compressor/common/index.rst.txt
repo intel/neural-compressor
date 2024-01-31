@@ -23,16 +23,9 @@ Functions
 
 .. autoapisummary::
 
-   neural_compressor.common.log
-   neural_compressor.common.info
-   neural_compressor.common.debug
-   neural_compressor.common.warn
-   neural_compressor.common.warning
-   neural_compressor.common.error
-   neural_compressor.common.fatal
    neural_compressor.common.set_random_seed
-   neural_compressor.common.set_workspace
    neural_compressor.common.set_resume_from
+   neural_compressor.common.set_workspace
    neural_compressor.common.set_tensorboard
 
 
@@ -43,16 +36,7 @@ Attributes
 .. autoapisummary::
 
    neural_compressor.common.level
-   neural_compressor.common.DEBUG
    neural_compressor.common.options
-
-
-
-
-
-
-
-
 
 
 

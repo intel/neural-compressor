@@ -342,6 +342,7 @@ The following section exemplifies how to use hooks in user pass-in training func
   on_after_optimizer_step() # Update weights' criteria, mask weights
   on_train_end() # End of pruner, print sparse information
   """
+
   from neural_compressor.training import prepare_compression, WeightPruningConfig
 
   config = WeightPruningConfig(configs)
