@@ -25,6 +25,7 @@ import numpy as np
 
 from neural_compressor.common import logger
 
+
 def build_model():
     import tensorflow as tf
     from tensorflow.compat.v1 import graph_util

@@ -6,9 +6,10 @@ import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
 from neural_compressor.common import set_random_seed
-from neural_compressor.tensorflow.utils import DummyDataset
+from neural_compressor.tensorflow import SmoothQuantConfig, get_default_sq_config, quantize_model
 from neural_compressor.tensorflow.quantization.tf_utils.util import disable_random
-from neural_compressor.tensorflow import SmoothQuantConfig, quantize_model, get_default_sq_config
+from neural_compressor.tensorflow.utils import DummyDataset
+
 
 def build_conv_graph():
     tf.compat.v1.disable_eager_execution()
@@ -38,6 +39,7 @@ def build_conv_graph():
             sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
         )
         return output_graph_def
+
 
 class MyDataLoader:
     def __init__(self, dataset, batch_size=1):
@@ -85,7 +87,7 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
                 mul_count += 1
 
         self.assertEqual(mul_count, 2)
-    
+
     def test_sq_from_class_beginner(self):
         set_random_seed(9527)
         quant_config = get_default_sq_config()
