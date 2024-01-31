@@ -11,7 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
-from neural_compressor.torch.algorithms.weight_only_algos import rtn_quantize_entry
-from neural_compressor.torch.algorithms.weight_only_algos import gptq_quantize_entry

@@ -253,6 +253,6 @@ def test_api_cuda(
 # Test single case
 # force_set_accelerator_to_cpu()
 # common_test(
-#     nbits=4, group_size=64, quant_zero=False, quant_scale=False, scale_quant_group_size=128, device=torch.device(device="cpu")
+#     nbits=4, group_size=64, quant_zero=False, quant_scale=False, scale_quant_group_size=128, device=torch.device(device="cuda:0")
 # )
 # revert_force_set_accelerator_to_cpu()

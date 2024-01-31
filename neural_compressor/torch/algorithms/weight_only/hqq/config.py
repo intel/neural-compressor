@@ -29,7 +29,6 @@ __all__ = [
     "ConfigMappingType",
     "HQQModuleConfig",
     "QTensorConfig",
-    "QTensorMetaInfo",
     "hqq_global_option",
     "default_hqq_module_config",
     "convert_offical_config_into_hqq_config",
@@ -90,15 +89,6 @@ default_hqq_module_config = HQQModuleConfig(
     scale=default_scale_quant_config,
     zero=default_zero_quant_config,
 )
-
-
-@dataclass
-class QTensorMetaInfo:
-    nbits: int
-    group_size: int
-    shape: Tuple
-    axis: int
-    packing: bool
 
 
 def convert_offical_config_into_hqq_config(quant_config_offical) -> HQQModuleConfig:

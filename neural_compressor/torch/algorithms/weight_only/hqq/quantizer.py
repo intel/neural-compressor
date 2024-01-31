@@ -20,32 +20,6 @@ from config import ConfigMappingType, HQQModuleConfig, default_hqq_module_config
 from core import HQQLinear
 
 
-class EagerModeQuantizer:
-    def prepare(self):
-        pass
-
-    def calibrate(self):
-        pass
-
-    def convert(self):
-        pass
-
-    def save(self):
-        pass
-
-    def load(self):
-        pass
-
-
-class HQQuantizer(EagerModeQuantizer):
-    def prepare(self, qconfig_mapping: Dict[str, HQQModuleConfig]):
-        # Replace `Linear` with `HQQLinear`
-        pass
-
-    def convert(self):
-        pass
-
-
 def _has_child(module: torch.nn.Module) -> bool:
     return len(list(module.named_children())) > 0
 
@@ -122,3 +96,34 @@ def hqq_entry(model, config_mapping):
         model, replacement_fn=replacement_fn, filter_fn=filter_fn, config_mapping=config_mapping
     )
     return model
+
+
+class EagerModeQuantizer:
+    def __init__(self, config_mapping) -> None:
+        self.config_mapping = config_mapping
+
+    def prepare(self, model: torch.nn.Module, inplace=True) -> Optional[torch.nn.Module]:
+        pass
+
+    def calibrate(self):
+        pass
+
+    def convert(self, model: torch.nn.Module, inplace=True) -> Optional[torch.nn.Module]:
+        pass
+
+    def save(self):
+        pass
+
+    def load(self):
+        pass
+
+
+class HQQuantizer(EagerModeQuantizer):
+    def __init__(self, config_mapping: ConfigMappingType) -> None:
+        super().__init__(config_mapping)
+
+    def prepare(self, model: torch.nn.Module, inplace=True) -> Optional[torch.nn.Module]:
+        return hqq_entry(model, self.config_mapping)
+
+    def convert(self):
+        pass

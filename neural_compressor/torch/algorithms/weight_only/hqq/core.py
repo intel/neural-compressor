@@ -18,12 +18,13 @@ import sys
 hqq_offical_path = "/home/yliu7/workspace/hqq"
 sys.path.insert(0, hqq_offical_path)
 
+from dataclasses import dataclass
 from typing import Any, Dict, Tuple, Union
 
 import torch
 from auto_accelerator import auto_detect_accelerator
 from bitpack import BitPack
-from config import HQQModuleConfig, QTensorConfig, QTensorMetaInfo, default_hqq_module_config
+from config import HQQModuleConfig, QTensorConfig, default_hqq_module_config
 from optimizer import optimize_weights_proximal
 from utility import custom_print, dump_elapsed_time, get_tensor_size, inspect_function, is_divisible
 
@@ -31,7 +32,17 @@ __all__ = [
     "HQQTensorHandle",
     "HQQLinear",
     "QTensor",
+    "QTensorMetaInfo",
 ]
+
+
+@dataclass
+class QTensorMetaInfo:
+    nbits: int
+    group_size: int
+    shape: Tuple
+    axis: int
+    packing: bool
 
 
 class QTensor:
