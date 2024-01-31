@@ -251,10 +251,13 @@ class Configuration:
         username = win32api.GetUserName()
         os.makedirs(os.path.dirname(token_filepath), exist_ok=True)
 
+        if (os.path.exists(token_filepath)):
+            os.remove(token_filepath)
+
         security_descriptor = win32security.SECURITY_DESCRIPTOR()
         user_sid, _, _ = win32security.LookupAccountName("", username)
 
-        access_rights = con.FILE_GENERIC_READ | con.FILE_GENERIC_WRITE
+        access_rights = con.FILE_ALL_ACCESS
 
         dacl = win32security.ACL()
         dacl.AddAccessAllowedAce(win32security.ACL_REVISION, access_rights, user_sid)
