@@ -147,124 +147,124 @@ class TensorFlowAdaptor:
         self.hvd = hvd
         self.hvd.init()
 
-    @dump_elapsed_time(customized_msg="Model training")
-    def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, postprocess, **kwargs):
-        """Model training API.
+    # @dump_elapsed_time(customized_msg="Model training")
+    # def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, postprocess, **kwargs):
+    #     """Model training API.
 
-        Args:
-            model ([Graph, GraphDef or Path String]): The model could be the graph,
-                        graph_def object, the frozen pb or ckpt/savedmodel folder path.
-            dataloader (generator): generate the data and labels.
-            optimizer_tuple (tuple): optimizers for model training.
-            criterion_tuple (tuple): criterions for model training.
-            hooks (callback): on_epoch_begin hook on_epoch_end hook.
-            postprocess (object): process the result from the model.
+    #     Args:
+    #         model ([Graph, GraphDef or Path String]): The model could be the graph,
+    #                     graph_def object, the frozen pb or ckpt/savedmodel folder path.
+    #         dataloader (generator): generate the data and labels.
+    #         optimizer_tuple (tuple): optimizers for model training.
+    #         criterion_tuple (tuple): criterions for model training.
+    #         hooks (callback): on_epoch_begin hook on_epoch_end hook.
+    #         postprocess (object): process the result from the model.
 
-        Returns:
-            None.
-        """
-        # check model is savedmodel or not
+    #     Returns:
+    #         None.
+    #     """
+    #     # check model is savedmodel or not
 
-        from neural_compressor.tensorflow.utils import get_model_type
+    #     from neural_compressor.tensorflow.utils import get_model_type
 
-        tf.random.set_seed(1)
-        self.model_type = get_model_type(model._model)
-        optimizer = optimizer_tuple[0](**optimizer_tuple[1])
-        criterion = criterion_tuple[0](**criterion_tuple[1])
-        start_epochs = kwargs["kwargs"].get("start_epoch", None)
-        end_epochs = kwargs["kwargs"].get("end_epoch", None)
-        epochs = kwargs["kwargs"].get("epoch", None)
-        iters = kwargs["kwargs"].get("iteration", None)
-        callbacks = kwargs["kwargs"].get("callbacks", None)
-        execution_mode = kwargs["kwargs"].get("execution_mode", None)
-        distributed = getattr(dataloader, "distributed", False)
-        from neural_compressor.tensorflow.algorithms.distillation.criterions import TensorflowKnowledgeDistillationLoss
+    #     tf.random.set_seed(1)
+    #     self.model_type = get_model_type(model._model)
+    #     optimizer = optimizer_tuple[0](**optimizer_tuple[1])
+    #     criterion = criterion_tuple[0](**criterion_tuple[1])
+    #     start_epochs = kwargs["kwargs"].get("start_epoch", None)
+    #     end_epochs = kwargs["kwargs"].get("end_epoch", None)
+    #     epochs = kwargs["kwargs"].get("epoch", None)
+    #     iters = kwargs["kwargs"].get("iteration", None)
+    #     callbacks = kwargs["kwargs"].get("callbacks", None)
+    #     execution_mode = kwargs["kwargs"].get("execution_mode", None)
+    #     distributed = getattr(dataloader, "distributed", False)
+    #     from neural_compressor.tensorflow.algorithms.distillation.criterions import TensorflowKnowledgeDistillationLoss
 
-        if isinstance(criterion, TensorflowKnowledgeDistillationLoss):
-            input_model = model._model
-        else:
-            input_model = tf.keras.models.load_model(model._model)
-            hooks = callbacks["tf_pruning"](model, input_model, hooks)
-        hooks["on_train_begin"]()  # on_train_begin hook
-        train_loss_results = []
-        if distributed:
-            try:
-                len_dataloader = len(dataloader)
-            except:
-                logger.info(
-                    "The length of the distributed training dataloader is unknown."
-                    "When the iteration of training dataloader in each process is "
-                    "inconsistent, an error may occur."
-                )
-            else:
-                list_len_dataloader = self.hvd.allgather_object(len_dataloader)
-                if self.hvd.rank() == 0:
-                    for i in range(len(list_len_dataloader) - 1):
-                        if list_len_dataloader[i] != list_len_dataloader[i + 1]:
-                            raise AttributeError(
-                                "The training dataloader's iteration is"
-                                "different between processes, please reset dataloader's batch_size."
-                            )
+    #     if isinstance(criterion, TensorflowKnowledgeDistillationLoss):
+    #         input_model = model._model
+    #     else:
+    #         input_model = tf.keras.models.load_model(model._model)
+    #         hooks = callbacks["tf_pruning"](model, input_model, hooks)
+    #     hooks["on_train_begin"]()  # on_train_begin hook
+    #     train_loss_results = []
+    #     if distributed:
+    #         try:
+    #             len_dataloader = len(dataloader)
+    #         except:
+    #             logger.info(
+    #                 "The length of the distributed training dataloader is unknown."
+    #                 "When the iteration of training dataloader in each process is "
+    #                 "inconsistent, an error may occur."
+    #             )
+    #         else:
+    #             list_len_dataloader = self.hvd.allgather_object(len_dataloader)
+    #             if self.hvd.rank() == 0:
+    #                 for i in range(len(list_len_dataloader) - 1):
+    #                     if list_len_dataloader[i] != list_len_dataloader[i + 1]:
+    #                         raise AttributeError(
+    #                             "The training dataloader's iteration is"
+    #                             "different between processes, please reset dataloader's batch_size."
+    #                         )
 
-        def training_step(x, y, first_batch):
-            with tf.GradientTape() as tape:
-                tape.watch(input_model.trainable_variables)
-                y_ = input_model(x, training=True)
-                loss_value = criterion(y, y_)
-                loss_value = hooks["on_after_compute_loss"](x, y_, loss_value)
-            tape = self.hvd.DistributedGradientTape(tape) if distributed else tape
-            # Get gradient
-            grads = tape.gradient(loss_value, input_model.trainable_variables)  # pylint: disable=no-member
-            # Optimize the model
-            optimizer.apply_gradients(zip(grads, input_model.trainable_variables))  # pylint: disable=no-member
-            if distributed and first_batch:
-                self.hvd.broadcast_variables(input_model.variables, root_rank=0)
-                self.hvd.broadcast_variables(optimizer.variables(), root_rank=0)
-            return loss_value
+    #     def training_step(x, y, first_batch):
+    #         with tf.GradientTape() as tape:
+    #             tape.watch(input_model.trainable_variables)
+    #             y_ = input_model(x, training=True)
+    #             loss_value = criterion(y, y_)
+    #             loss_value = hooks["on_after_compute_loss"](x, y_, loss_value)
+    #         tape = self.hvd.DistributedGradientTape(tape) if distributed else tape
+    #         # Get gradient
+    #         grads = tape.gradient(loss_value, input_model.trainable_variables)  # pylint: disable=no-member
+    #         # Optimize the model
+    #         optimizer.apply_gradients(zip(grads, input_model.trainable_variables))  # pylint: disable=no-member
+    #         if distributed and first_batch:
+    #             self.hvd.broadcast_variables(input_model.variables, root_rank=0)
+    #             self.hvd.broadcast_variables(optimizer.variables(), root_rank=0)
+    #         return loss_value
 
-        training_step = training_step if execution_mode == "eager" else tf.function(training_step)
-        if start_epochs is not None and end_epochs is not None:
-            epochs = end_epochs - start_epochs
-        for epoch in range(epochs):
-            cnt = 0
-            epoch_loss_avg = tf.keras.metrics.Mean()
-            hooks["on_epoch_begin"](epoch)  # on_epoch_begin hook
-            # Training loop
-            for iter, data in enumerate(dataloader):
-                x, y = postprocess(data) if postprocess is not None else data
-                hooks["on_step_begin"](iter)  # on_step_begin hook
-                cnt += 1
-                loss_value = training_step(x, y, iter == 0)
-                # Track progress
-                epoch_loss_avg.update_state(loss_value)  # Add current batch loss
-                hooks["on_step_end"]()  # on_step_end hook
-                if iters is not None and cnt >= iters:
-                    break
-            model._sess = None
-            hooks["on_epoch_end"]()  # on_epoch_end hook
-            # End epoch
-            train_loss_results.append(epoch_loss_avg.result())
-            if distributed:
-                logger.info(
-                    "Epoch-{:03d} training on rank {!s} have been done.".format(
-                        epoch + 1, self.hvd.allgather_object(self.hvd.rank())
-                    )
-                )
-            logger.info("Epoch {:03d}: Loss: {:.3f}".format(epoch + 1, epoch_loss_avg.result()))
+    #     training_step = training_step if execution_mode == "eager" else tf.function(training_step)
+    #     if start_epochs is not None and end_epochs is not None:
+    #         epochs = end_epochs - start_epochs
+    #     for epoch in range(epochs):
+    #         cnt = 0
+    #         epoch_loss_avg = tf.keras.metrics.Mean()
+    #         hooks["on_epoch_begin"](epoch)  # on_epoch_begin hook
+    #         # Training loop
+    #         for iter, data in enumerate(dataloader):
+    #             x, y = postprocess(data) if postprocess is not None else data
+    #             hooks["on_step_begin"](iter)  # on_step_begin hook
+    #             cnt += 1
+    #             loss_value = training_step(x, y, iter == 0)
+    #             # Track progress
+    #             epoch_loss_avg.update_state(loss_value)  # Add current batch loss
+    #             hooks["on_step_end"]()  # on_step_end hook
+    #             if iters is not None and cnt >= iters:
+    #                 break
+    #         model._sess = None
+    #         hooks["on_epoch_end"]()  # on_epoch_end hook
+    #         # End epoch
+    #         train_loss_results.append(epoch_loss_avg.result())
+    #         if distributed:
+    #             logger.info(
+    #                 "Epoch-{:03d} training on rank {!s} have been done.".format(
+    #                     epoch + 1, self.hvd.allgather_object(self.hvd.rank())
+    #                 )
+    #             )
+    #         logger.info("Epoch {:03d}: Loss: {:.3f}".format(epoch + 1, epoch_loss_avg.result()))
 
-        hooks["on_train_end"]()  # on_train_end hook
-        model._sess = None
-        if not isinstance(criterion, TensorflowKnowledgeDistillationLoss):
-            if distributed:
-                if self.hvd.rank() == 0:
-                    # Update the input model with pruned weights manually due to keras API limitation.
-                    input_model.save(model._model)
-                rank_list = self.hvd.allgather_object(self.hvd.rank())
-                logger.info(f"rank 0 has saved the pruned model to '{model._model}'," f"all ranks {rank_list} ready.")
-            else:
-                input_model.save(model._model)
-        else:
-            input_model.save("distillation_model")
+    #     hooks["on_train_end"]()  # on_train_end hook
+    #     model._sess = None
+    #     if not isinstance(criterion, TensorflowKnowledgeDistillationLoss):
+    #         if distributed:
+    #             if self.hvd.rank() == 0:
+    #                 # Update the input model with pruned weights manually due to keras API limitation.
+    #                 input_model.save(model._model)
+    #             rank_list = self.hvd.allgather_object(self.hvd.rank())
+    #             logger.info(f"rank 0 has saved the pruned model to '{model._model}'," f"all ranks {rank_list} ready.")
+    #         else:
+    #             input_model.save(model._model)
+    #     else:
+    #         input_model.save("distillation_model")
 
     @dump_elapsed_time(customized_msg="Model inference")
     def evaluate(
@@ -1452,10 +1452,10 @@ class TensorFlowAdaptor:
         # remove QuantizeV2 node
         graph_def.node.remove(quantize_node)
 
-        graph = tensorflow.Graph()
+        graph = tf.Graph()
         with graph.as_default():
             # use name='' to avoid 'import/' to name scope
-            tensorflow.import_graph_def(graph_def, name="")
+            tf.import_graph_def(graph_def, name="")
         return graph, scale
 
     def get_optype_wise_ability(self):
@@ -1596,7 +1596,7 @@ class TensorFlowAdaptor:
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
-        from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
+        from neural_compressor.tensorflow.quantization.tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
         self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
@@ -1940,11 +1940,8 @@ class TensorFlowConfig:
         """Check if the given object is the given supported type and in the given supported value.
 
         Example::
-
-            from neural_compressor.config import _check_value
-
             def datatype(self, datatype):
-                if _check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
+                if self.check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
                     self._datatype = datatype
         """
         if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):

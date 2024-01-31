@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .quantize import quantize_model
-from .algorithm_entry import static_quantize_entry, smooth_quant_entry
-from .config import (
+from neural_compressor.tensorflow.quantization.quantize import quantize_model
+from neural_compressor.tensorflow.quantization.algorithm_entry import static_quantize_entry, smooth_quant_entry
+from neural_compressor.tensorflow.quantization.config import (
     StaticQuantConfig,
     SmoothQuantConfig,
     get_default_sq_config,

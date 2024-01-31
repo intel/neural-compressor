@@ -44,7 +44,7 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
         pass
 
     @disable_random()
-    def test_newapi_conv_sq(self):
+    def test_conv(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
@@ -75,17 +75,17 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
         quant_config = SmoothQuantConfig(alpha=0.5)
         dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset, batch_size=1)
-        output_graph = quantize_model(output_graph_def, quant_config, calib_dataloader, calib_iteration=500)
+        q_model = quantize_model(output_graph_def, quant_config, calib_dataloader, calib_iteration=500)
 
         mul_count = 0
-        for i in output_graph.graph_def.node:
+        for i in q_model.graph_def.node:
             if i.op == "Mul":
                 mul_count += 1
 
         self.assertEqual(mul_count, 2)
 
     @disable_random()
-    def test_newapi_sq_matmul(self):
+    def test_matmul(self):
         x_data = np.random.rand(1024, 1024).astype(np.float32)
         y_data = np.random.rand(1024, 1024).astype(np.float32)
         import tensorflow.compat.v1 as tf
@@ -115,7 +115,7 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
         self.assertEqual(mul_count, 1)
 
     @disable_random()
-    def test_newapi_sq_conv_matmul(self):
+    def test_conv_matmul(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
@@ -147,10 +147,10 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
         quant_config = SmoothQuantConfig(alpha=0.6)
         dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset, batch_size=1)
-        output_graph = quantize_model(output_graph_def, quant_config, calib_dataloader, calib_iteration=500)
+        q_model = quantize_model(output_graph_def, quant_config, calib_dataloader, calib_iteration=500)
 
         mul_count = 0
-        for i in output_graph.graph_def.node:
+        for i in q_model.graph_def.node:
             if i.op == "Mul":
                 mul_count += 1
 

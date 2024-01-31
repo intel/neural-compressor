@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .utils import register_algo, Model
-from .quantization import (
+from neural_compressor.tensorflow.utils import register_algo, Model
+from neural_compressor.tensorflow.quantization import (
     quantize_model,
     StaticQuantConfig,
     SmoothQuantConfig,

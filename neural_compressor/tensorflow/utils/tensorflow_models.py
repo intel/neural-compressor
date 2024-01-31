@@ -502,8 +502,7 @@ def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):  # p
         output_tensor_names (list of string): validated output_tensor_names.
     """
     assert version1_lt_version2(tf.version.VERSION, "2.0.0"), "slim model only used in tensorflow 1.x"
-    from .nets_factory import TFSlimNetsFactory
-
+    from neural_compressor.tensorflow.utils.nets_factory import TFSlimNetsFactory
     factory = TFSlimNetsFactory()
     assert "name" in kwargs, "model name should be set in slim checkpoint...."
     assert kwargs["name"] in factory.default_slim_models, "only support topology {}".format(factory.default_slim_models)
@@ -685,9 +684,6 @@ class BaseModel:
         Args:
             model (object): raw model format. For Tensorflow model, could be path to frozen pb file,
                 path to ckpt or savedmodel folder, loaded estimator/graph_def/graph/keras model object.
-                For PyTorch model, it's torch.nn.model instance. For MXNet model, it's mxnet.symbol.Symbol
-                or gluon.HybirdBlock instance. For ONNX model, it's path to onnx model or loaded ModelProto
-                model object.
         """
         self.component = None
 
@@ -1520,6 +1516,21 @@ class KerasModel(BaseModel):
                 names.append(index)
         return names
 
+    def compute_sparsity(self, tensor):
+        """Compute the sparsity.
+
+        Args:
+            tensor: Tensorflow tensor
+
+        Return:
+            (the original tensor size, number of zero elements, number of non-zero elements)
+        """
+        mask = np.ones_like(tensor)
+        tensor_size = tensor.size
+        dense_mask = tensor != 0
+        dense_size = dense_mask.sum()
+        return tensor_size, tensor_size - dense_size, dense_size
+
     def report_sparsity(self):
         """Get sparsity of the model.
 
@@ -1543,7 +1554,7 @@ class KerasModel(BaseModel):
             # as its "type"
             weights = layer.get_weights()[0]
             if weights.ndim in param_dims:
-                param_size, sparse_param_size, dense_param_size = compute_sparsity(weights)
+                param_size, sparse_param_size, dense_param_size = self.compute_sparsity(weights)
                 density = dense_param_size / param_size
                 params_size += param_size
                 sparse_params_size += sparse_param_size

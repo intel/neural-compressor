@@ -37,7 +37,7 @@ from neural_compressor.tensorflow.quantization.tf_utils.util import (
     parse_saved_model,
     reconstruct_saved_model,
 )
-from neural_compressor.tensorflow.utils import CaptureOutputToFile, Model
+from neural_compressor.tensorflow.utils import CaptureOutputToFile, TensorflowLLMModel
 
 logger = logging.getLogger("neural_compressor")
 debug = bool(logger.level == logging.DEBUG)
@@ -422,7 +422,7 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
         logger.info("Start sampling on calibration dataset for Smooth Quantization.")
         # reconstruct graph_def that inserted print node to saved_model
         reconstruct_saved_model(sampling_graph_def, self.func, self.frozen_func, self._saved_model, self.temp_path)
-        model = Model(self.temp_path, modelType="llm_saved_model")
+        model = TensorflowLLMModel(self.temp_path)
 
         input_tensor_names = model.input_tensor_names
         auto_trackable = model.model

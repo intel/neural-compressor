@@ -12,17 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .model import Model, framework_specific_info
-from .data import BaseDataLoader, DummyDataset, DummyDatasetV2
-from .constants import SPR_BASE_VERSIONS, DEFAULT_SQ_ALPHA_ARGS
-from .tensorflow_models import (
+from neural_compressor.tensorflow.utils.model import Model, framework_specific_info
+from neural_compressor.tensorflow.utils.data import BaseDataLoader, DummyDataset, DummyDatasetV2
+from neural_compressor.tensorflow.utils.constants import SPR_BASE_VERSIONS, DEFAULT_SQ_ALPHA_ARGS
+from neural_compressor.tensorflow.utils.tensorflow_models import (
+    get_tf_model_type,
     BaseModel,
     KerasModel,
     TensorflowLLMModel,
     TensorflowBaseModel,
     TensorflowSavedModelModel,
 )
-from .utility import (
+from neural_compressor.tensorflow.utils.utility import (
     algos_mapping,
     version1_lt_version2,
     version1_gt_version2,

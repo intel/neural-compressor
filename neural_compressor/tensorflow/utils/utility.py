@@ -345,25 +345,6 @@ class Statistics:
             self.output_handle(i)
 
 
-class TensorFlowConfig:
-    def __init__(self, precisions=None):
-        self._precisions = precisions
-
-    @property
-    def precisions(self):
-        return self._precisions
-
-    @precisions.setter
-    def precisions(self, precisions):
-        if not isinstance(precisions, list):
-            precisions = [precisions]
-        if _check_value("precisions", precisions, str, ["int8", "uint8", "fp32", "bf16", "fp16"]):
-            self._precisions = precisions
-
-
-tensorflow_config = TensorFlowConfig()
-
-
 class CaptureOutputToFile(object):
     """Not displayed in API Docs.
 
