@@ -269,8 +269,6 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertEqual(gptq_config1.to_dict(), gptq_config2.to_dict())
 
     def test_awq_config(self):
-        from neural_compressor.torch.quantization import AWQConfig
-
         awq_config1 = AWQConfig(bits=8, use_auto_scale=True, folding=False)
         quant_config_dict = {
             "awq": {"bits": 8, "use_auto_scale": True, "folding": False},
