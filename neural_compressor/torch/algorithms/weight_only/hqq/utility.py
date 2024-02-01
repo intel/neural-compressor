@@ -107,9 +107,6 @@ import psutil
 
 
 def see_cuda_memory_usage(message, force=False):
-    # if dist.is_initialized() and not dist.get_rank() == 0:
-    #     return
-
     # python doesn't do real-time garbage collection so do it explicitly to get the correct RAM reports
     gc.collect()
 
@@ -121,11 +118,6 @@ def see_cuda_memory_usage(message, force=False):
         CA {round(torch.cuda.memory_reserved() / (1024 * 1024 * 1024),2)} GB \
         Max_CA {round(torch.cuda.max_memory_reserved() / (1024 * 1024 * 1024))} GB "
     )
-    # MA return torch.cuda.memory_allocated(device_index)
-    # Max_MA return torch.cuda.max_memory_allocated(device_index)
-    # CA return torch.cuda.memory_reserved(device_index)
-    # Max_CA return torch.cuda.max_memory_reserved(device_index)
-
     vm_stats = psutil.virtual_memory()
     used_GB = round(((vm_stats.total - vm_stats.available) / (1024**3)), 2)
     logger.info(f"CPU Virtual Memory:  used = {used_GB} GB, percent = {vm_stats.percent}%")

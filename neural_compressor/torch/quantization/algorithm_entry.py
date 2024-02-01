@@ -93,7 +93,7 @@ def _convert_hqq_module_config(config: HQQConfig) -> HQQModuleConfig:
     if quant_scale:
         scale_qconfig = QTensorConfig(nbits=8, channel_wise=True, group_size=scale_quant_group_size, optimize=False)
     hqq_module_config = HQQModuleConfig(weight=weight_qconfig, scale=scale_qconfig, zero=zero_qconfig)
-    print(hqq_module_config)
+    logger.debug(hqq_module_config)
     return hqq_module_config
 
 
@@ -101,7 +101,7 @@ def _parse_hqq_configs_mapping(configs_mapping: Dict[OP_NAME_AND_TYPE_TUPLE_TYPE
     qconfig_mapping = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
         if quant_config.skip_lm_head and "lm_head" in op_name:
-            logger.info("Skip quantizing %s due to `skip_lm_head` is True.", op_name)
+            logger.warning("Skip quantizing %s due to `skip_lm_head` is True.", op_name)
             continue
         qconfig_mapping[op_name] = _convert_hqq_module_config(quant_config)
     return qconfig_mapping

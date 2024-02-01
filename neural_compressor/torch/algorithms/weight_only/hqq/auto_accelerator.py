@@ -201,25 +201,25 @@ class CUDA_Accelerator(Auto_Accelerator):
         return torch.cuda.empty_cache()
 
 
-class RuntimeAccelerator:
-    accelerator = None
+# class RuntimeAccelerator:
+#     accelerator = None
 
 
-runtime_accelerator = RuntimeAccelerator()
+# runtime_accelerator = RuntimeAccelerator()
 
 
 def auto_detect_accelerator() -> Auto_Accelerator:
-    if runtime_accelerator.accelerator:
-        return runtime_accelerator.accelerator
+    # if runtime_accelerator.accelerator:
+    #     return runtime_accelerator.accelerator
     FORCE_DEVICE = os.environ.get("FORCE_DEVICE", None)
     if FORCE_DEVICE and accelerator_registry.get_accelerator_cls_by_name(FORCE_DEVICE) is not None:
-        logger.info(f"!!! Force use {FORCE_DEVICE} accelerator.")
+        logger.warning("Force use %s accelerator.", FORCE_DEVICE)
         return accelerator_registry.get_accelerator_cls_by_name(FORCE_DEVICE)()
     for accelerator_cls in accelerator_registry.get_sorted_accelerators():
         if accelerator_cls.is_available():
-            logger.info(f"!!! Auto detect accelerator: {accelerator_cls.__name__}")
-            runtime_accelerator.accelerator = accelerator_cls()
-            return runtime_accelerator.accelerator
+            logger.debug("Auto detect accelerator: %s.", accelerator_cls.__name__)
+            accelerator = accelerator_cls()
+            return accelerator
 
 
 # Force use cpu accelerator even if cuda is available.

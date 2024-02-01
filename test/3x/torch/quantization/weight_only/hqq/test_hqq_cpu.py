@@ -1,69 +1,112 @@
-import contextlib
-import copy
 import os
+from copy import deepcopy
 
 import pytest
 import torch
-import transformers
 from transformers import AutoModelForCausalLM
 
-from neural_compressor.torch.algorithms.weight_only.hqq.auto_accelerator import auto_detect_accelerator
-from neural_compressor.torch.quantization import HQQConfig, get_default_hqq_config, quantize
+from neural_compressor.torch.algorithms.weight_only.hqq.config import HQQModuleConfig, QTensorConfig, hqq_global_option
+from neural_compressor.torch.algorithms.weight_only.hqq.core import HQQLinear
 
 
-def override_envs(**kwargs):
-    """Decorator to temporarily override environment variables before entering a function.
+def _common_cpu_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False, scale_quant_group_size=128):
+    # Parse config
+    weight_qconfig = QTensorConfig(
+        nbits=nbits, channel_wise=True, group_size=group_size, optimize=True, round_zero=True if nbits == 4 else False
+    )
+    zero_qconfig = None
+    if quant_zero:
+        zero_qconfig = QTensorConfig(nbits=8, channel_wise=False, group_size=None, optimize=False)
+    scale_qconfig = None
+    if quant_scale:
+        scale_qconfig = QTensorConfig(nbits=8, channel_wise=True, group_size=scale_quant_group_size, optimize=False)
+    hqq_quant_config = HQQModuleConfig(weight=weight_qconfig, scale=scale_qconfig, zero=zero_qconfig)
+    device = "cpu"
 
-    # Example Usage:
-    @override_envs(CUDA_VISIBLE_DEVICES="")
-    def my_function():
-        print("Environment variable MY_VAR:", os.environ.get("CUDA_VISIBLE_DEVICES", "not set"))
+    # Create HQQ Linear
+    bs = 4
+    in_features = 64
+    out_features = 128
+    float_linear = torch.nn.Linear(in_features=in_features, out_features=out_features)
+    if hqq_global_option.use_half:
+        print(f"hqq_global_option use half: {hqq_global_option.use_half}")
+        float_linear = float_linear.half()
+    float_linear.to(device)
+    float_linear_copy = deepcopy(float_linear)
+    hqq_linear = HQQLinear.from_float(float_linear_copy, quant_config=hqq_quant_config)
 
-    # The decorator temporarily overrides MY_VAR for the duration of my_function
-    my_function()
-
-    # Outside the decorated function, MY_VAR is back to its original value
-    print("Outside function MY_VAR:", os.environ.get("CUDA_VISIBLE_DEVICES", "not set"))
-    """
-
-    def decorator(func):
-        @contextlib.wraps(func)
-        def wrapper(*args, **kwds):
-            # Save the current environment variables
-            original_envs = {key: os.environ.get(key) for key in kwargs}
-
-            try:
-                # Override environment variables with the provided values
-                os.environ.update(kwargs)
-                result = func(*args, **kwds)
-            finally:
-                # Revert environment variables to their original values
-                for key, value in original_envs.items():
-                    if value is not None:
-                        os.environ[key] = value
-                    else:
-                        os.environ.pop(key, None)
-
-            return result
-
-        return wrapper
-
-    return decorator
+    # Forward
+    input = torch.randn(bs, in_features, device=device)
+    if hqq_global_option.use_half:
+        print(f"hqq_global_option use half: {hqq_global_option.use_half}")
+        input = input.half()
+    float_output = float_linear(input)
+    input_for_hqq = deepcopy(input)
+    hqq_output = hqq_linear(input_for_hqq)
+    hqq_output_2 = hqq_linear(input_for_hqq)
+    torch.allclose(float_output, hqq_output, atol=0.1)
+    torch.allclose(hqq_output, hqq_output_2)
+    del float_linear, hqq_linear
+    del float_output, hqq_output, hqq_output_2
 
 
 class TestHQQCPU:
-    @override_envs(CUDA_VISIBLE_DEVICES="")
-    def test_hqq_cpu(self):
-        model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
-        example_inputs = torch.tensor(
-            [[10, 20, 30, 40, 50, 60]], dtype=torch.long, device=auto_detect_accelerator().current_device()
-        )
-        if auto_detect_accelerator().name == "cpu":
-            from neural_compressor.torch.algorithms.weight_only.hqq.config import hqq_global_option
+    @classmethod
+    def setup_class(cls):
+        torch.manual_seed(0)
+        # Force disable CUDA
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        hqq_global_option.use_half = False
 
-            hqq_global_option.use_half = False
+    def test_hqq_quant(self):
+        from neural_compressor.torch.quantization import get_default_hqq_config, quantize
+
+        model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
+        example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long, device="cpu")
+        # test_default_config
         quant_config = get_default_hqq_config()
-        print(f"Current accelerator {auto_detect_accelerator().current_device()}")
         model = quantize(model, quant_config)
         q_label = model(example_inputs)[0]
         print(q_label)
+
+    @pytest.mark.parametrize(
+        "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
+        [
+            (4, 64, True, False, 128),
+            (4, 64, False, False, 128),
+            (4, 64, True, True, 128),
+            (4, 64, False, True, 128),
+            (8, 64, True, False, 128),
+            (8, 64, False, False, 128),
+            (8, 64, True, True, 128),
+            (8, 64, False, True, 128),
+            (4, 64, True, False, 64),
+            (4, 64, False, False, 64),
+            (4, 64, True, True, 64),
+            (4, 64, False, True, 64),
+        ],
+    )
+    def test_hqq_module_cpu(
+        self,
+        nbits,
+        group_size,
+        quant_zero,
+        quant_scale,
+        scale_quant_group_size,
+    ):
+        _common_cpu_test(
+            nbits=nbits,
+            group_size=group_size,
+            quant_zero=quant_zero,
+            quant_scale=quant_scale,
+            scale_quant_group_size=scale_quant_group_size,
+        )
+
+
+# _common_cpu_test(
+#     nbits=4,
+#     group_size=64,
+#     quant_zero=False,
+#     quant_scale=False,
+#     scale_quant_group_size=128
+# )

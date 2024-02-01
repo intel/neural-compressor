@@ -272,6 +272,8 @@ class HQQLinear(torch.nn.Linear):
         new_mod.bias = float_module.bias
         # TODO: refine it to support cuda/hpu/cpu
         device_to_use = next(float_module.parameters()).device
+        if hqq_global_option.use_half:
+            new_mod.q_weight = new_mod.q_weight.half()
         new_mod.to(device_to_use)
         new_mod.q_weight.to(device_to_use)
         # !!! Delete the float explicitly to save memory

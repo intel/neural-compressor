@@ -98,8 +98,6 @@ class QTensor:
         self.val = self.val.to(*args, **kwargs)
         self.scale = self.scale.to(*args, **kwargs)
         self.zero = self.zero.to(*args, **kwargs)
-        if hqq_global_option.use_half:
-            return self.half()
         return self
 
     def half(self):

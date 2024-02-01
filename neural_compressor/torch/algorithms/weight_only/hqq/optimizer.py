@@ -22,8 +22,6 @@ from neural_compressor.common import logger
 from .auto_accelerator import Auto_Accelerator, auto_detect_accelerator
 from .utility import dump_elapsed_time
 
-auto_acceleartor: Auto_Accelerator = auto_detect_accelerator()
-
 
 # Proximal solver || W - dequantize(quantize(W))||_p^p
 @torch.inference_mode()
@@ -43,9 +41,9 @@ def optimize_weights_proximal_legacy(
         opt_params["kappa"],
         opt_params["iters"],
     )
-    device = auto_acceleartor.current_device_name()
+    device = auto_detect_accelerator().current_device()
 
-    if auto_acceleartor.name() == "cuda":
+    if auto_detect_accelerator().name() == "cuda":
         dtype = torch.float16
     else:
         dtype = torch.float32
@@ -79,7 +77,7 @@ def optimize_weights_proximal_legacy(
     scale = scale.to(tensor.device)
     zero = zero.to(tensor.device)
     del W_f, W_q, W_r, W_e
-    auto_acceleartor.empty_cache()
+    auto_detect_accelerator().empty_cache()
 
     return scale, zero
 
