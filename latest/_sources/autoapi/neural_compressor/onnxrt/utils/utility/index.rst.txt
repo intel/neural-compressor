@@ -18,6 +18,11 @@ Functions
    neural_compressor.onnxrt.utils.utility.find_by_name
    neural_compressor.onnxrt.utils.utility.simple_progress_bar
    neural_compressor.onnxrt.utils.utility.register_algo
+   neural_compressor.onnxrt.utils.utility.is_B_transposed
+   neural_compressor.onnxrt.utils.utility.get_qrange_for_qType
+   neural_compressor.onnxrt.utils.utility.quantize_data_with_scale_zero
+   neural_compressor.onnxrt.utils.utility.calculate_scale_zp
+   neural_compressor.onnxrt.utils.utility.quantize_data
 
 
 
@@ -46,5 +51,71 @@ Functions
 
    :returns: The decorator function to be used with algorithm functions.
    :rtype: decorator
+
+
+.. py:function:: is_B_transposed(node)
+
+   Whether inuput B is transposed.
+
+
+.. py:function:: get_qrange_for_qType(qType, reduce_range=False)
+
+   Helper function to get the quantization range for a type.
+
+   :param qType: data type
+   :type qType: int
+   :param reduce_range: use 7 bit or not. Defaults to False.
+   :type reduce_range: bool, optional
+
+
+.. py:function:: quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
+
+   Quantize data with scale and zero point.
+
+   To pack weights, we compute a linear transformation
+       - when data type == uint8 mode, from [rmin, rmax] -> [0, 2^{b-1}] and
+       - when data type == int8, from [-m , m] -> [-(2^{b-1}-1), 2^{b-1}-1] where
+           m = max(abs(rmin), abs(rmax))
+
+   :param data: data to quantize
+   :type data: np.array
+   :param qType: data type to quantize to. Supported types UINT8 and INT8
+   :type qType: int
+   :param scheme: sym or asym quantization.
+   :type scheme: string
+   :param scale: computed scale of quantized data
+   :type scale: float
+   :param zero_point: computed zero point of quantized data
+   :type zero_point: uint8 or int8
+
+
+.. py:function:: calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
+
+   Calculate scale and zero point.
+
+
+.. py:function:: quantize_data(data, quantize_range, qType, scheme)
+
+   Quantize data.
+
+   To pack weights, we compute a linear transformation
+       - when data type == uint8 mode, from [rmin, rmax] -> [0, 2^{b-1}] and
+       - when data type == int8, from [-m , m] -> [-(2^{b-1}-1), 2^{b-1}-1] where
+           m = max(abs(rmin), abs(rmax))
+   and add necessary intermediate nodes to transform quantized weight to full weight
+   using the equation r = S(q-z), where
+       r: real original value
+       q: quantized value
+       S: scale
+       z: zero point
+
+   :param data: data to quantize
+   :type data: array
+   :param quantize_range: list of data to weight pack.
+   :type quantize_range: list
+   :param qType: data type to quantize to. Supported types UINT8 and INT8
+   :type qType: int
+   :param scheme: sym or asym quantization.
+   :type scheme: string
 
 

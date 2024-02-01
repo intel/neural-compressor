@@ -1,0 +1,32 @@
+:orphan:
+
+:py:mod:`neural_compressor.onnxrt.quantization.calibrate`
+=========================================================
+
+.. py:module:: neural_compressor.onnxrt.quantization.calibrate
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader
+
+
+
+
+.. py:class:: CalibrationDataReader
+
+
+
+
+   Get data for calibration.
+
+   We define our CalibrationDataReader based on the class in below link:
+   https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/python/tools/quantization/calibrate.py#L139
+
+

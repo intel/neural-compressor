@@ -90,6 +90,47 @@
              
   <section id="module-neural_compressor.onnxrt">
 <span id="neural-compressor-onnxrt"></span><h1><a class="reference internal" href="#module-neural_compressor.onnxrt" title="neural_compressor.onnxrt"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.onnxrt</span></code></a><a class="headerlink" href="#module-neural_compressor.onnxrt" title="Permalink to this heading"></a></h1>
+<section id="package-contents">
+<h2>Package Contents<a class="headerlink" href="#package-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">RTNConfig</span></code></p></td>
+<td><p>Config class for round-to-nearest weight-only quantization.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">SmoohQuantConfig</span></code></p></td>
+<td><p>Smooth quant quantization config.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">CalibrationDataReader</span></code></p></td>
+<td><p>Get data for calibration.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_algo</span></code>(name)</p></td>
+<td><p>Decorator function to register algorithms in the algos_mapping dictionary.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rtn_quantize_entry</span></code>(→ onnx.ModelProto)</p></td>
+<td><p>The main entry to apply rtn quantization.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">smooth_quant_entry</span></code>(→ onnx.ModelProto)</p></td>
+<td><p>Apply smooth quant.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_rtn_config</span></code>(→ RTNConfig)</p></td>
+<td><p>Generate the default rtn config.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_sq_config</span></code>(→ SmoohQuantConfig)</p></td>
+<td><p>Generate the default smooth quant config.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
 </section>
 
 
@@ -106,7 +147,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f85eb738430> 
+   <jinja2.runtime.BlockReference object at 0x7f31868521d0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

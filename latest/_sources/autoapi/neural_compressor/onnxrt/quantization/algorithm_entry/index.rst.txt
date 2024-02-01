@@ -1,0 +1,32 @@
+:orphan:
+
+:py:mod:`neural_compressor.onnxrt.quantization.algorithm_entry`
+===============================================================
+
+.. py:module:: neural_compressor.onnxrt.quantization.algorithm_entry
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.quantization.algorithm_entry.smooth_quant_entry
+   neural_compressor.onnxrt.quantization.algorithm_entry.rtn_quantize_entry
+
+
+
+.. py:function:: smooth_quant_entry(model: Union[pathlib.Path, str], quant_config: neural_compressor.onnxrt.quantization.config.SmoohQuantConfig, calibration_data_reader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader, *args, **kwargs) -> onnx.ModelProto
+
+   Apply smooth quant.
+
+
+.. py:function:: rtn_quantize_entry(model: Union[pathlib.Path, str], quant_config: neural_compressor.onnxrt.quantization.config.RTNConfig, *args, **kwargs) -> onnx.ModelProto
+
+   The main entry to apply rtn quantization.
+
+

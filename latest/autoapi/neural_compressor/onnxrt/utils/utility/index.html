@@ -105,6 +105,21 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.onnxrt.utils.utility.register_algo" title="neural_compressor.onnxrt.utils.utility.register_algo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_algo</span></code></a>(name)</p></td>
 <td><p>Decorator function to register algorithms in the algos_mapping dictionary.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.onnxrt.utils.utility.is_B_transposed" title="neural_compressor.onnxrt.utils.utility.is_B_transposed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_B_transposed</span></code></a>(node)</p></td>
+<td><p>Whether inuput B is transposed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.onnxrt.utils.utility.get_qrange_for_qType" title="neural_compressor.onnxrt.utils.utility.get_qrange_for_qType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_qrange_for_qType</span></code></a>(qType[, reduce_range])</p></td>
+<td><p>Helper function to get the quantization range for a type.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.onnxrt.utils.utility.quantize_data_with_scale_zero" title="neural_compressor.onnxrt.utils.utility.quantize_data_with_scale_zero"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_data_with_scale_zero</span></code></a>(data, qType, scheme, ...)</p></td>
+<td><p>Quantize data with scale and zero point.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.onnxrt.utils.utility.calculate_scale_zp" title="neural_compressor.onnxrt.utils.utility.calculate_scale_zp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_scale_zp</span></code></a>(rmin, rmax, quantize_range, qType, ...)</p></td>
+<td><p>Calculate scale and zero point.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.onnxrt.utils.utility.quantize_data" title="neural_compressor.onnxrt.utils.utility.quantize_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_data</span></code></a>(data, quantize_range, qType, scheme)</p></td>
+<td><p>Quantize data.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -147,6 +162,95 @@ def example_algo(model: Union[onnx.ModelProto, Path, str],</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.onnxrt.utils.utility.is_B_transposed">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.onnxrt.utils.utility.</span></span><span class="sig-name descname"><span class="pre">is_B_transposed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/onnxrt/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.onnxrt.utils.utility.is_B_transposed" title="Permalink to this definition"></a></dt>
+<dd><p>Whether inuput B is transposed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.onnxrt.utils.utility.get_qrange_for_qType">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.onnxrt.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_qrange_for_qType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/onnxrt/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.onnxrt.utils.utility.get_qrange_for_qType" title="Permalink to this definition"></a></dt>
+<dd><p>Helper function to get the quantization range for a type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qType</strong> (<em>int</em>) – data type</p></li>
+<li><p><strong>reduce_range</strong> (<em>bool</em><em>, </em><em>optional</em>) – use 7 bit or not. Defaults to False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.onnxrt.utils.utility.quantize_data_with_scale_zero">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.onnxrt.utils.utility.</span></span><span class="sig-name descname"><span class="pre">quantize_data_with_scale_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_point</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/onnxrt/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.onnxrt.utils.utility.quantize_data_with_scale_zero" title="Permalink to this definition"></a></dt>
+<dd><p>Quantize data with scale and zero point.</p>
+<dl class="simple">
+<dt>To pack weights, we compute a linear transformation</dt><dd><ul class="simple">
+<li><p>when data type == uint8 mode, from [rmin, rmax] -&gt; [0, 2^{b-1}] and</p></li>
+<li><dl class="simple">
+<dt>when data type == int8, from [-m , m] -&gt; [-(2^{b-1}-1), 2^{b-1}-1] where</dt><dd><p>m = max(abs(rmin), abs(rmax))</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>np.array</em>) – data to quantize</p></li>
+<li><p><strong>qType</strong> (<em>int</em>) – data type to quantize to. Supported types UINT8 and INT8</p></li>
+<li><p><strong>scheme</strong> (<em>string</em>) – sym or asym quantization.</p></li>
+<li><p><strong>scale</strong> (<em>float</em>) – computed scale of quantized data</p></li>
+<li><p><strong>zero_point</strong> (<em>uint8</em><em> or </em><em>int8</em>) – computed zero point of quantized data</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.onnxrt.utils.utility.calculate_scale_zp">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.onnxrt.utils.utility.</span></span><span class="sig-name descname"><span class="pre">calculate_scale_zp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/onnxrt/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.onnxrt.utils.utility.calculate_scale_zp" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate scale and zero point.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.onnxrt.utils.utility.quantize_data">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.onnxrt.utils.utility.</span></span><span class="sig-name descname"><span class="pre">quantize_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/onnxrt/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.onnxrt.utils.utility.quantize_data" title="Permalink to this definition"></a></dt>
+<dd><p>Quantize data.</p>
+<dl class="simple">
+<dt>To pack weights, we compute a linear transformation</dt><dd><ul class="simple">
+<li><p>when data type == uint8 mode, from [rmin, rmax] -&gt; [0, 2^{b-1}] and</p></li>
+<li><dl class="simple">
+<dt>when data type == int8, from [-m , m] -&gt; [-(2^{b-1}-1), 2^{b-1}-1] where</dt><dd><p>m = max(abs(rmin), abs(rmax))</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<p>and add necessary intermediate nodes to transform quantized weight to full weight
+using the equation r = S(q-z), where</p>
+<blockquote>
+<div><p>r: real original value
+q: quantized value
+S: scale
+z: zero point</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>array</em>) – data to quantize</p></li>
+<li><p><strong>quantize_range</strong> (<em>list</em>) – list of data to weight pack.</p></li>
+<li><p><strong>qType</strong> (<em>int</em>) – data type to quantize to. Supported types UINT8 and INT8</p></li>
+<li><p><strong>scheme</strong> (<em>string</em>) – sym or asym quantization.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 </section>
@@ -165,7 +269,7 @@ def example_algo(model: Union[onnx.ModelProto, Path, str],</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f85eb734580> 
+   <jinja2.runtime.BlockReference object at 0x7f31868997e0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

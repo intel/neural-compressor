@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.onnxrt.algorithms.smoother.core &mdash; Intel® Neural Compressor 2.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.onnxrt.algorithms.smoother.core</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/onnxrt/algorithms/smoother/core/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.onnxrt.algorithms.smoother.core">
+<span id="neural-compressor-onnxrt-algorithms-smoother-core"></span><h1><a class="reference internal" href="#module-neural_compressor.onnxrt.algorithms.smoother.core" title="neural_compressor.onnxrt.algorithms.smoother.core"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.onnxrt.algorithms.smoother.core</span></code></a><a class="headerlink" href="#module-neural_compressor.onnxrt.algorithms.smoother.core" title="Permalink to this heading"></a></h1>
+<p>Smoother for onnxrt.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.onnxrt.algorithms.smoother.core.Smoother" title="neural_compressor.onnxrt.algorithms.smoother.core.Smoother"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Smoother</span></code></a></p></td>
+<td><p>Fake input channel quantization.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.onnxrt.algorithms.smoother.core.get_quant_dequant_output" title="neural_compressor.onnxrt.algorithms.smoother.core.get_quant_dequant_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quant_dequant_output</span></code></a>(model, input_data, ...)</p></td>
+<td><p>Get loss between fp32 output and QDQ output.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.onnxrt.algorithms.smoother.core.make_sub_graph" title="neural_compressor.onnxrt.algorithms.smoother.core.make_sub_graph"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_sub_graph</span></code></a>(node, inits, input_data, output_data, ...)</p></td>
+<td><p>Build a model with the specific node.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.onnxrt.algorithms.smoother.core.quant_dequant_data" title="neural_compressor.onnxrt.algorithms.smoother.core.quant_dequant_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_dequant_data</span></code></a>(data[, qType, scheme])</p></td>
+<td><p>Quantize and then dequantize data.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.onnxrt.algorithms.smoother.core.get_quant_dequant_output">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.onnxrt.algorithms.smoother.core.</span></span><span class="sig-name descname"><span class="pre">get_quant_dequant_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">providers</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/onnxrt/algorithms/smoother/core.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.onnxrt.algorithms.smoother.core.get_quant_dequant_output" title="Permalink to this definition"></a></dt>
+<dd><p>Get loss between fp32 output and QDQ output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – model</p></li>
+<li><p><strong>input_data</strong> (<em>numpy.ndarray</em>) – fp32 input</p></li>
+<li><p><strong>output_data</strong> (<em>numpy.ndarray</em>) – fp32 output</p></li>
+<li><p><strong>providers</strong> (<em>list</em>) – execution provider</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.onnxrt.algorithms.smoother.core.make_sub_graph">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.onnxrt.algorithms.smoother.core.</span></span><span class="sig-name descname"><span class="pre">make_sub_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ir_version</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/onnxrt/algorithms/smoother/core.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.onnxrt.algorithms.smoother.core.make_sub_graph" title="Permalink to this definition"></a></dt>
+<dd><p>Build a model with the specific node.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> (<em>object</em>) – node</p></li>
+<li><p><strong>inits</strong> (<em>list</em>) – initializer inputs of this node</p></li>
+<li><p><strong>input_data</strong> (<em>numpy.ndarray</em>) – fp32 input</p></li>
+<li><p><strong>output_data</strong> (<em>numpy.ndarray</em>) – fp32 output</p></li>
+<li><p><strong>opset</strong> (<em>object</em>) – opset of the model</p></li>
+<li><p><strong>ir_version</strong> (<em>object</em>) – ir_version of the model</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.onnxrt.algorithms.smoother.core.quant_dequant_data">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.onnxrt.algorithms.smoother.core.</span></span><span class="sig-name descname"><span class="pre">quant_dequant_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sym'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/onnxrt/algorithms/smoother/core.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.onnxrt.algorithms.smoother.core.quant_dequant_data" title="Permalink to this definition"></a></dt>
+<dd><p>Quantize and then dequantize data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>numpy.ndarray</em>) – target data</p></li>
+<li><p><strong>qType</strong> (<em>int</em>) – data type</p></li>
+<li><p><strong>scheme</strong> (<em>str</em>) – sym or asym quantization</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.onnxrt.algorithms.smoother.core.Smoother">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.onnxrt.algorithms.smoother.core.</span></span><span class="sig-name descname"><span class="pre">Smoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">providers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['CPUExecutionProvider']</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/onnxrt/algorithms/smoother/core.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.onnxrt.algorithms.smoother.core.Smoother" title="Permalink to this definition"></a></dt>
+<dd><p>Fake input channel quantization.</p>
+<p>For more details please refer to:
+[1] SmoothQuant: Accurate and Efficient
+Post-Training Quantization for Large Language Models
+[2] SPIQ: Data-Free Per-Channel Static Input Quantization
+We only support inplace mode which means the model weights will be changed,
+you can call recover function to recover the weights if needed.</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f318663f220> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

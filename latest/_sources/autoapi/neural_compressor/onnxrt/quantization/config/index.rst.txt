@@ -15,6 +15,7 @@ Classes
 .. autoapisummary::
 
    neural_compressor.onnxrt.quantization.config.RTNConfig
+   neural_compressor.onnxrt.quantization.config.SmoohQuantConfig
 
 
 
@@ -24,6 +25,7 @@ Functions
 .. autoapisummary::
 
    neural_compressor.onnxrt.quantization.config.get_default_rtn_config
+   neural_compressor.onnxrt.quantization.config.get_default_sq_config
 
 
 
@@ -40,5 +42,20 @@ Functions
    Generate the default rtn config.
 
    :returns: the default rtn config.
+
+
+.. py:class:: SmoohQuantConfig(alpha: float = 0.5, folding: bool = True, op_types: list = ['Gemm', 'Conv', 'MatMul', 'FusedConv'], calib_iter: int = 100, scales_per_op: bool = True, auto_alpha_args: Dict = {'alpha_min': 0.3, 'alpha_max': 0.7, 'alpha_step': 0.05, 'attn_method': 'min'}, providers: list = ['CPUExecutionProvider'], white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST, **kwargs)
+
+
+
+
+   Smooth quant quantization config.
+
+
+.. py:function:: get_default_sq_config() -> SmoohQuantConfig
+
+   Generate the default smooth quant config.
+
+   :returns: the default smooth quant config.
 
 

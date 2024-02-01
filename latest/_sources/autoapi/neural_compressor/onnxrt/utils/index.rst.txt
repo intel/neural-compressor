@@ -15,3 +15,26 @@ Submodules
    onnx_model/index.rst
 
 
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.utils.ONNXModel
+
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.utils.PRIORITY_SMOOTH_QUANT
+
+
+
+
