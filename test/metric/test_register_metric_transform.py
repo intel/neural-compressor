@@ -1,4 +1,5 @@
 """Tests for neural_compressor register metric and postprocess."""
+
 import os
 import platform
 import re

@@ -1,4 +1,5 @@
 """Scheduler module."""
+
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -162,9 +163,7 @@ class IterativeScheduler(PruningScheduler):
             target_dense_change_ratio = ((1.0 - aggressive_ratio) / (1.0 - init_sparsity_ratio)) ** (
                 1 / total_prune_steps
             )
-            current_target_sparsity = (
-                1.0 - (1.0 - init_sparsity_ratio) * target_dense_change_ratio**current_prune_step
-            )
+            current_target_sparsity = 1.0 - (1.0 - init_sparsity_ratio) * target_dense_change_ratio**current_prune_step
 
         elif decay_type == "linear":
             current_target_sparsity = (aggressive_ratio - init_sparsity_ratio) * float(

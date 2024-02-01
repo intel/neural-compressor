@@ -119,9 +119,9 @@ def get_tls_args(configuration: Configuration) -> dict:
 def block_iframe(response: WebResponse) -> WebResponse:
     """Block iframe and set others CSP."""
     response.headers["X-Frame-Options"] = "DENY"
-    response.headers[
-        "Content-Security-Policy"
-    ] = "frame-ancestors 'none'; font-src 'self'; img-src 'self'; script-src 'self'"
+    response.headers["Content-Security-Policy"] = (
+        "frame-ancestors 'none'; font-src 'self'; img-src 'self'; script-src 'self'"
+    )
     response.headers["Access-Control-Max-Age"] = "-1"
     return response
 
