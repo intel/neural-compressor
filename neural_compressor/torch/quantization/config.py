@@ -30,19 +30,22 @@ from neural_compressor.common.utils import (
     DEFAULT_WHITE_LIST,
     FP8_QUANT,
     GPTQ,
+    HQQ,
     OP_NAME_OR_MODULE_TYPE,
     RTN,
     SMOOTH_QUANT,
     STATIC_QUANT,
 )
 from neural_compressor.torch.utils import is_hpex_available, logger
-from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
+from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_HQQ, PRIORITY_RTN
 
 __all__ = [
     "RTNConfig",
     "get_default_rtn_config",
     "GPTQConfig",
     "get_default_gptq_config",
+    "HQQConfig",
+    "get_default_hqq_config",
 ]
 
 
@@ -501,6 +504,76 @@ def get_default_sq_config() -> SmoothQuantConfig:
         the default smoothquant config.
     """
     return SmoothQuantConfig()
+
+
+######################## HQQ Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=HQQ, priority=PRIORITY_HQQ)
+class HQQConfig(BaseConfig):
+    # Half-Quadratic Quantization (HQQ), more details:
+    # https://mobiusml.github.io/hqq_blog/
+    # Ported from https://github.com/mobiusml/hqq
+
+    name = HQQ
+    params_list = [
+        "nbits",
+        "group_size",
+        "quant_zero",
+        "quant_scale",
+        "scale_quant_group_size",
+        "skip_lm_head",
+    ]
+    supported_configs: List[OperatorConfig] = []
+
+    def __init__(
+        self,
+        nbits: int = 4,
+        group_size: int = 64,
+        quant_zero: bool = True,
+        quant_scale: bool = False,
+        scale_quant_group_size: int = 128,
+        skip_lm_head: bool = True,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        super().__init__(white_list=white_list)
+        self.nbits = nbits
+        self.group_size = group_size
+        self.quant_zero = quant_zero
+        self.quant_scale = quant_scale
+        self.scale_quant_group_size = scale_quant_group_size
+        self.skip_lm_head = skip_lm_head
+        self._post_init()
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = (torch.nn.Linear,)
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        return filter_result
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        # TODO: to be refined
+        supported_configs = []
+        linear_hqq_config = HQQConfig()
+        operators = [torch.nn.Linear]
+        supported_configs.append(OperatorConfig(config=linear_hqq_config, operators=operators))
+        cls.supported_configs = supported_configs
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "HQQConfig", List["HQQConfig"]]:
+        return HQQConfig(nbits=[4, 8])
+
+
+def get_default_hqq_config() -> HQQConfig:
+    """Generate the default HQQ config.
+
+    Returns:
+        the default HQQ config.
+    """
+    return HQQConfig()
 
 
 ######################## FP8 Config ###############################
