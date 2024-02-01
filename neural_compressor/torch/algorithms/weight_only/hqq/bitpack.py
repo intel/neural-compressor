@@ -20,6 +20,8 @@ import numpy as np
 import torch
 from utility import is_divisible
 
+__all__ = ["Packer"]
+
 
 # Bit packing logic. format: pack/unpack_nBits_target-<uint8 or int32>
 class BitPack:
@@ -180,3 +182,30 @@ class BitPack:
             ],
             axis=0,
         )
+
+
+class Packer:
+    # TODO: Refine the packer
+    bit_to_packing = {8: "8bit_u8", 4: "4bit_u8", 3: "3bit_32", 2: "2bit_u8"}
+
+    pack_fn_mapping = {
+        "8bit_u8": BitPack.pack_8bit_u8,
+        "4bit_u8": BitPack.pack_4bit_u8,
+        "3bit_32": BitPack.pack_3bit_32,
+        "2bit_u8": BitPack.pack_2bit_u8,
+    }
+
+    unpack_fn_mapping = {
+        "8bit_u8": BitPack.unpack_8bit_u8,
+        "4bit_u8": BitPack.unpack_4bit_u8,
+        "3bit_32": BitPack.unpack_3bit_32,
+        "2bit_u8": BitPack.unpack_2bit_u8,
+    }
+
+    @staticmethod
+    def get_pack_fn(nbits: int):
+        return Packer.pack_fn_mapping[Packer.bit_to_packing[nbits]]
+
+    @staticmethod
+    def get_unpack_fn(nbits: int):
+        return Packer.unpack_fn_mapping[Packer.bit_to_packing[nbits]]

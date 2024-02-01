@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Tuple, Union
 
 import torch
@@ -32,6 +32,9 @@ class QTensorMetaInfo:
     shape: Tuple
     axis: int
     packing: bool
+
+    def to_dict(self):
+        return asdict(self)
 
 
 class QTensor:

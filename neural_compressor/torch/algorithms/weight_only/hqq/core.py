@@ -18,12 +18,12 @@ import sys
 hqq_offical_path = "/home/yliu7/workspace/hqq"
 sys.path.insert(0, hqq_offical_path)
 
-from dataclasses import dataclass
-from typing import Any, Dict, Tuple, Union
+
+from typing import Any, Dict, Tuple
 
 import torch
 from auto_accelerator import auto_detect_accelerator
-from bitpack import BitPack
+from bitpack import Packer
 from config import HQQModuleConfig, QTensorConfig, default_hqq_module_config, hqq_global_option
 from optimizer import optimize_weights_proximal
 from qtensor import QTensor, QTensorMetaInfo
@@ -41,23 +41,6 @@ class HQQTensorHandle:
     # Store meta-data (we invert the scale for dequantization)
     SUPPORTED_BITS = [8, 4, 3, 2]
     optimize_weights = optimize_weights_proximal
-
-    # TODO: Refine the packer
-    bit_to_packing = {8: "8bit_u8", 4: "4bit_u8", 3: "3bit_32", 2: "2bit_u8"}
-
-    pack = {
-        "8bit_u8": BitPack.pack_8bit_u8,
-        "4bit_u8": BitPack.pack_4bit_u8,
-        "3bit_32": BitPack.pack_3bit_32,
-        "2bit_u8": BitPack.pack_2bit_u8,
-    }
-
-    unpack = {
-        "8bit_u8": BitPack.unpack_8bit_u8,
-        "4bit_u8": BitPack.unpack_4bit_u8,
-        "3bit_32": BitPack.unpack_3bit_32,
-        "2bit_u8": BitPack.unpack_2bit_u8,
-    }
 
     @classmethod
     def _convert_tensor_quant_config(cls, tensor_quant_config: QTensorConfig):
@@ -84,7 +67,6 @@ class HQQTensorHandle:
         return QTensor(weight, scale, zero, meta_info)
 
     @classmethod
-    @dump_elapsed_time("HQQTensorHandle.quantize_to_q_tensor")
     def quantize_to_q_tensor(cls, float_tensor, tensor_quant_config: QTensorConfig = None):
         q_weight, q_tensor_meta = cls.quantize(
             tensor=float_tensor,
@@ -94,7 +76,6 @@ class HQQTensorHandle:
         return q_weight
 
     @classmethod
-    # @inspect_function
     def quantize(cls, tensor, tensor_quant_config: QTensorConfig = None):
         (
             nbits,
@@ -162,14 +143,12 @@ class HQQTensorHandle:
             "scale": 1.0 / scale,
             "zero": zero,
             "axis": axis,
-            "packing": cls.bit_to_packing[nbits],
+            "packing": bitpack,
         }
 
         # Pack bits
         if bitpack:
-            # raise NotImplementedError("bitpack is not implemented yet")
-            W_q = cls.pack[meta["packing"]](W_q)
-            print("packing: weight...")
+            W_q = Packer.get_pack_fn(meta["nbits"])(W_q)
         else:
             W_q = W_q.to(tensor.dtype)
             meta["packing"] = None
@@ -180,41 +159,25 @@ class HQQTensorHandle:
 
         return W_q, meta
 
-    # Main dequantization: bit_unpacking > (W_q - z)*s > reshape
     @classmethod
-    # @inspect_function
     def dequantize(cls, W_q, meta):
+        # Main dequantization: bit_unpacking > (W_q - z)*s > reshape
         if meta["packing"]:
-            W_r = cls.unpack[meta["packing"]](W_q).half()
+            W_r = Packer.get_unpack_fn(meta["nbits"])(W_q).half()
             if (meta["group_size"] is not None) and (meta["nbits"] == 3):
                 W_r = W_r[: meta["group_size"]] if (meta["axis"] == 0) else W_r[:, : meta["group_size"]]
         else:
             if hqq_global_option.use_half:
                 W_r = W_q.half()
-        # custom_print(f"W_r dtype: {W_r.dtype}, zero dtype: {meta['zero'].dtype}, scale dtype: {meta['scale'].dtype}")
-        # !!! TODO: There may cause the accuracy regression issue !!!!!!!!!!
+        # !!! TODO: There may cause the accuracy regression issue
         W_r = ((W_r - meta["zero"]) * meta["scale"]).reshape(meta["shape"])
-        if hqq_global_option.use_half:
-            W_r = W_r.half()
         # W_r = W_r.half()  # TODO: double check the correctness, the official impl is also error...
-        # custom_print(f"After dq .... W_r dtype: {W_r.dtype}, zero dtype: {meta['zero'].dtype}, scale dtype: {meta['scale'].dtype}")
         return W_r
-
-    @classmethod
-    def _convert_meta_info_to_dict(cls, meta_info: "QTensorMetaInfo"):
-        # TODO: to refine it
-        return {
-            "nbits": meta_info.nbits,
-            "group_size": meta_info.group_size,
-            "shape": meta_info.shape,
-            "axis": meta_info.axis,
-            "packing": meta_info.packing,
-        }
 
     @classmethod
     def dequantize_q_tensor(cls, q_weight: "QTensor") -> torch.Tensor:
         # Dequantized the Qtensor into float tensor
-        meta = cls._convert_meta_info_to_dict(q_weight.meta_info)
+        meta = q_weight.meta_info.to_dict()
         meta["zero"] = q_weight.zero
         meta["scale"] = q_weight.scale
         return cls.dequantize(q_weight.val, meta)
@@ -263,7 +226,8 @@ class HQQLinear(torch.nn.Linear):
         self.q_weight = q_weight
 
         # * The dequantization process only happens in the first forward pass.
-        # * It will change the `q_weight` but faster, so we should not save the state after doing the forward.
+        # * It will change the `q_weight` but faster.
+        # * we should not save the state after doing the forward.
         if need_quant_scale:  # Quantize scale
             custom_print(message=f"need_quant_scale: {need_quant_scale}")
             q_scale_tensor = HQQTensorHandle.quantize_to_q_tensor(

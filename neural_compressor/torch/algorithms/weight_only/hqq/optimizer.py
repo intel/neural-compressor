@@ -24,7 +24,6 @@ auto_acceleartor: Auto_Accelerator = auto_detect_accelerator()
 
 # Proximal solver || W - dequantize(quantize(W))||_p^p
 @torch.inference_mode()
-@dump_elapsed_time("Optimize weights ....")
 def optimize_weights_proximal_legacy(
     tensor,
     scale,

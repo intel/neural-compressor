@@ -41,12 +41,13 @@ def _replace_with_custom_fn_if_matches_filter(
             new_fqn = f"{cur_fqn}.{name}"
         if filter_fn(child, new_fqn, config_mapping):
             new_child = replacement_fn(child.to(auto_detect_accelerator().current_device()), new_fqn, config_mapping)
-            print(f'quantized {new_fqn}, device: {getattr(new_child, "device", None)}')
+            print(f"quantized {new_fqn}")
             setattr(model, name, new_child)
-        elif not _has_child(child) and hqq_global_option.use_half:  # TODO: merge it into `filter_fn`
+        elif not _has_child(child):  # TODO: merge it into `filter_fn`
             print(f"halfing {new_fqn}")
-            new_child = child.half().to(auto_detect_accelerator().current_device())
-            print(f'halfing {new_fqn}, device: {getattr(new_child, "device", None)}')
+            if hqq_global_option.use_half:
+                child = child.half()
+            new_child = child.to(auto_detect_accelerator().current_device())
             setattr(model, name, new_child)
         else:
             _replace_with_custom_fn_if_matches_filter(
@@ -58,7 +59,7 @@ def _replace_with_custom_fn_if_matches_filter(
             )
 
 
-def patch_hqq(mod, config):
+def patch_hqq_moduile(mod, config):
     new_mod = HQQLinear.from_float(mod, config)
     return new_mod
 
@@ -70,7 +71,7 @@ def filter_fn(mod: torch.nn.Module, name: str, config_mapping: ConfigMappingType
 def replacement_fn(mod: torch.nn.Module, name: str, config_mapping: ConfigMappingType) -> torch.nn.Module:
     config = config_mapping.get(name, None)
     print(f"Replace module {name}")
-    return patch_hqq(mod, config)
+    return patch_hqq_moduile(mod, config)
 
 
 def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
@@ -123,7 +124,14 @@ class HQQuantizer(EagerModeQuantizer):
         super().__init__(config_mapping)
 
     def prepare(self, model: torch.nn.Module, inplace=True) -> Optional[torch.nn.Module]:
-        return hqq_entry(model, self.config_mapping)
+        _replace_with_custom_fn_if_matches_filter(
+            model, replacement_fn=replacement_fn, filter_fn=filter_fn, config_mapping=self.config_mapping
+        )
+        return model
 
     def convert(self):
+        pass
+
+    def save(self, model, path):
+        # TODO: to implement it in the next PR
         pass

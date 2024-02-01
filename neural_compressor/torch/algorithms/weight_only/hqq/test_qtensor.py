@@ -53,3 +53,8 @@ check_cuda()
 # lin = torch.nn.Linear(in_feats, out_feats)
 # lin.to(torch.device("cuda:0"))
 # print(lin.weight.device)
+
+
+meta_config = QTensorMetaInfo(nbits=4, group_size=64, shape=(out_feats, in_feats), axis=0, packing=False)
+print(meta_config)
+print(meta_config.to_dict())
