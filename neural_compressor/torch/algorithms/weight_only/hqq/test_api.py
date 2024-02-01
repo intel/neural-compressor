@@ -25,14 +25,14 @@ float_out = model(**encoded_input)
 print(float_out)
 
 
-from quantizer import get_default_hqq_config_mapping, hqq_entry
+from quantizer import _hqq_entry, get_default_hqq_config_mapping
 
 default_hqq_config_mapping = get_default_hqq_config_mapping(model)
 default_hqq_config_mapping.pop("lm_head")
 print(default_hqq_config_mapping)
 
 
-q_model = hqq_entry(model, default_hqq_config_mapping)
+q_model = _hqq_entry(model, default_hqq_config_mapping)
 encoded_input.to("cuda:0")
 out_qdq = q_model(**encoded_input)
 print(out_qdq)
