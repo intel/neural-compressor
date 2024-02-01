@@ -26,91 +26,13 @@ from auto_accelerator import auto_detect_accelerator
 from bitpack import BitPack
 from config import HQQModuleConfig, QTensorConfig, default_hqq_module_config, hqq_global_option
 from optimizer import optimize_weights_proximal
+from qtensor import QTensor, QTensorMetaInfo
 from utility import custom_print, dump_elapsed_time, get_tensor_size, inspect_function, is_divisible
 
 __all__ = [
     "HQQTensorHandle",
     "HQQLinear",
-    "QTensor",
-    "QTensorMetaInfo",
 ]
-
-
-@dataclass
-class QTensorMetaInfo:
-    nbits: int
-    group_size: int
-    shape: Tuple
-    axis: int
-    packing: bool
-
-
-class QTensor:
-    val: torch.Tensor
-    scale: Union[torch.Tensor, "QTensor"] = None
-    zero: Union[torch.Tensor, "QTensor"] = None
-    meta_info: QTensorMetaInfo = None
-
-    def __init__(self, val, scale=None, zero=None, meta_info=None):
-        self.val = val
-        self.scale = scale
-        self.zero = zero
-        self.meta_info = meta_info
-
-    def is_scale_quantized(self) -> bool:
-        return isinstance(self.scale, QTensor)
-
-    def is_zero_quantized(self) -> bool:
-        return isinstance(self.zero, QTensor)
-
-    def _get_scale_repr(self) -> str:
-        if not self.is_scale_quantized():
-            if self.scale is not None:
-                return f"scale_shape={self.scale.shape}, scale_dtype={self.scale.dtype}, scale_device={self.scale.device}\n"
-            else:
-                return "scale is None\n"
-        else:
-            return self.scale.__repr__() + "\n"
-
-    def _get_zero_repr(self) -> str:
-        if not self.is_zero_quantized():
-            if self.zero is not None:
-                return f"zero_shape={self.zero.shape}, zero_dtype={self.zero.dtype}, zero_device={self.zero.device}\n"
-            else:
-                return "zero is None\n"
-        else:
-            return self.zero.__repr__() + "\n"
-
-    def __repr__(self) -> str:
-        # TODO: refine it later
-        return (
-            f"QTensor(\n"
-            f"val_shape={self.val.shape}, val_dtype={self.val.dtype}, val_device={self.val.device}\n"
-            f"scale_quantized={self.is_scale_quantized()},\n"
-            f"zero_quantized={self.is_zero_quantized()},\n"
-            f"zero=({self._get_zero_repr()})"
-            f"scale=({self._get_scale_repr()})"
-            f"meta_info={self.meta_info}\n)"
-        )
-
-    def to(self, *args, **kwargs):
-        self.val = self.val.to(*args, **kwargs)
-        self.scale = self.scale.to(*args, **kwargs)
-        self.zero = self.zero.to(*args, **kwargs)
-        return self
-
-    def get_size(self) -> int:
-        result = 0
-        result += get_tensor_size(self.val)
-        if isinstance(self.scale, QTensor):
-            result += get_tensor_size(self.scale.val)
-        else:
-            result += get_tensor_size(self.scale)
-        if isinstance(self.zero, QTensor):
-            result += get_tensor_size(self.zero.val)
-        else:
-            result += get_tensor_size(self.zero)
-        return result
 
 
 class HQQTensorHandle:
@@ -271,7 +193,6 @@ class HQQTensorHandle:
                 W_r = W_q.half()
         # custom_print(f"W_r dtype: {W_r.dtype}, zero dtype: {meta['zero'].dtype}, scale dtype: {meta['scale'].dtype}")
         # !!! TODO: There may cause the accuracy regression issue !!!!!!!!!!
-
         W_r = ((W_r - meta["zero"]) * meta["scale"]).reshape(meta["shape"])
         if hqq_global_option.use_half:
             W_r = W_r.half()
@@ -327,18 +248,18 @@ class HQQLinear(torch.nn.Linear):
         W: torch.Tensor,
         quant_config: HQQModuleConfig = default_hqq_module_config,
     ) -> Tuple[torch.Tensor, Dict[str, Any]]:
-        weight, scale, zero = (
+        weight_quant_config, scale_quant_config, zero_quant_config = (
             quant_config.weight,
             quant_config.scale,
             quant_config.zero,
         )
-        need_quant_scale = scale is not None
-        need_quant_zero = zero is not None
+        need_quant_scale = scale_quant_config is not None
+        need_quant_zero = zero_quant_config is not None
 
         self.in_features, self.out_features = W.t().shape
 
         # Quantize weight
-        q_weight = HQQTensorHandle.quantize_to_q_tensor(float_tensor=W, tensor_quant_config=weight)
+        q_weight = HQQTensorHandle.quantize_to_q_tensor(float_tensor=W, tensor_quant_config=weight_quant_config)
         self.q_weight = q_weight
 
         # * The dequantization process only happens in the first forward pass.
@@ -346,14 +267,14 @@ class HQQLinear(torch.nn.Linear):
         if need_quant_scale:  # Quantize scale
             custom_print(message=f"need_quant_scale: {need_quant_scale}")
             q_scale_tensor = HQQTensorHandle.quantize_to_q_tensor(
-                float_tensor=self.q_weight.scale, tensor_quant_config=scale
+                float_tensor=self.q_weight.scale, tensor_quant_config=scale_quant_config
             )
             self.q_weight.scale = q_scale_tensor
         if need_quant_zero:  # Quantize zero
             custom_print(f"need_quant_zero: {need_quant_zero}")
             q_zero_tensor = HQQTensorHandle.quantize_to_q_tensor(
                 float_tensor=self.q_weight.zero,
-                tensor_quant_config=zero,
+                tensor_quant_config=zero_quant_config,
             )
             self.q_weight.zero = q_zero_tensor
         self.quantized = True
