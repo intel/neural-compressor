@@ -239,6 +239,42 @@ class TestAutoTune(unittest.TestCase):
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_acc_fn)
         self.assertIsNone(best_model)
 
+    @reset_tuning_target
+    def test_rtn_double_quant_config_set(self) -> None:
+        from neural_compressor.torch.quantization import TuningConfig, autotune, get_rtn_double_quant_config_set
+        from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
+
+        rtn_double_quant_config_set = get_rtn_double_quant_config_set()
+        self.assertEqual(len(rtn_double_quant_config_set), len(DOUBLE_QUANT_CONFIGS))
+
+        def eval_acc_fn(model) -> float:
+            return 1.0
+
+        custom_tune_config = TuningConfig(config_set=get_rtn_double_quant_config_set(), max_trials=10)
+        best_model = autotune(
+            model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
+        )
+        self.assertIsNotNone(best_model)
+
+    @reset_tuning_target
+    def test_rtn_double_quant_config_set2(self) -> None:
+        from neural_compressor.torch.quantization import TuningConfig, autotune, get_rtn_double_quant_config_set
+        from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
+
+        rtn_double_quant_config_set = get_rtn_double_quant_config_set()
+        self.assertEqual(len(rtn_double_quant_config_set), len(DOUBLE_QUANT_CONFIGS))
+
+        def eval_acc_fn(model) -> float:
+            return 1.0
+
+        custom_tune_config = TuningConfig(
+            config_set=get_rtn_double_quant_config_set(), max_trials=10, tolerable_loss=-1
+        )
+        best_model = autotune(
+            model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
+        )
+        self.assertIsNone(best_model)
+
 
 if __name__ == "__main__":
     unittest.main()

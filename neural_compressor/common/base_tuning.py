@@ -317,12 +317,22 @@ class TuningMonitor:
         # TODO: Support more stop criteria in the next PR, such as `timeout`, and so on.
         # reach max trials
         reach_max_trials = self.trial_cnt >= self.tuning_config.max_trials
+        if reach_max_trials:
+            logger.info(
+                "Current trial count is %d, reached max trials(%s).", self.trial_cnt, self.tuning_config.max_trials
+            )
         # reach accuracy goal
         meet_accuracy_goal = (
             False
             if self.baseline is None
             else self.tuning_history[-1].trial_result >= (self.baseline * (1 - self.tuning_config.tolerable_loss))
         )
+        if meet_accuracy_goal:
+            logger.info(
+                "Current trial result is %s, reached accuracy goal(%s).",
+                self.tuning_history[-1].trial_result,
+                self.baseline * (1 - self.tuning_config.tolerable_loss),
+            )
         # [-1] is the last element representing the latest trail record.
         return reach_max_trials or meet_accuracy_goal
 
