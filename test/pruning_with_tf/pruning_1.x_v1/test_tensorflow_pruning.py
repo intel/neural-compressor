@@ -1,4 +1,5 @@
 """Tests for the TensorFlow pruning."""
+
 from __future__ import print_function
 
 import hashlib

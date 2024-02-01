@@ -7,6 +7,7 @@ test_tensorflow_inspect_tensor.py: test inspect_tensor API
 Note:
     use '-s' to disable pytest capturing the sys.stderr which will be used in quantization process
 """
+
 import logging
 import os
 import pickle
