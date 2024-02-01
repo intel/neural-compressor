@@ -81,7 +81,7 @@ class HQQModuleConfig(
 
     def __repr__(self) -> str:
         return (
-            f"HQQModuleConfig( \nweight_quant_config={self.weight}, \n" f"scale={self.scale}, \n" f"zero={self.zero})"
+            f"HQQModuleConfig(\n" f"    weight={self.weight},\n" f"    scale={self.scale},\n" f"    zero={self.zero}\n)"
         )
 
 

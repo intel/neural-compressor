@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Dict, Tuple
+from typing import Any, Callable, Dict, Tuple
 
 import torch
 
@@ -25,7 +25,7 @@ from neural_compressor.torch.algorithms.weight_only import (
     rtn_quantize,
 )
 from neural_compressor.torch.quantization import GPTQConfig, HQQConfig, RTNConfig
-from neural_compressor.torch.utils import logger, register_algo
+from neural_compressor.torch.utils import OP_NAME_AND_TYPE_TUPLE_TYPE, logger, register_algo
 
 
 ###################### RTN Algo Entry ##################################
@@ -97,9 +97,12 @@ def _convert_hqq_module_config(config: HQQConfig) -> HQQModuleConfig:
     return hqq_module_config
 
 
-def _parse_hqq_configs_mapping(configs_mapping):
+def _parse_hqq_configs_mapping(configs_mapping: Dict[OP_NAME_AND_TYPE_TUPLE_TYPE, HQQConfig]):
     qconfig_mapping = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
+        if quant_config.skip_lm_head and "lm_head" in op_name:
+            logger.info("Skip quantizing %s due to `skip_lm_head` is True.", op_name)
+            continue
         qconfig_mapping[op_name] = _convert_hqq_module_config(quant_config)
     return qconfig_mapping
 
