@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neural_compressor.onnxrt.algorithms.smoother.core import Smoother
 
-from neural_compressor.onnxrt.algorithms.smoother import Smoother
-from neural_compressor.onnxrt.algorithms.weight_only.rtn import apply_rtn_on_model
-
-__all__ = [
-    "Smoother",
-    "apply_rtn_on_model",
-]
+__all__ = ["Smoother"]
