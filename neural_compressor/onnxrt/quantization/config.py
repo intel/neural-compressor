@@ -29,8 +29,8 @@ from onnxruntime.quantization.quantize import StaticQuantConfig
 
 from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig, register_config, register_supported_configs_for_fwk
-from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, RTN, GPTQ, AWQ, SMOOTH_QUANT
-from neural_compressor.onnxrt.utils import PRIORITY_RTN, PRIORITY_GPTQ, PRIORITY_AWQ, PRIORITY_SMOOTH_QUANT
+from neural_compressor.common.utils import AWQ, DEFAULT_WHITE_LIST, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN, SMOOTH_QUANT
+from neural_compressor.onnxrt.utils import PRIORITY_AWQ, PRIORITY_GPTQ, PRIORITY_RTN, PRIORITY_SMOOTH_QUANT
 
 logger = Logger().get_logger()
 
@@ -203,7 +203,8 @@ class GPTQConfig(BaseConfig):
         "actorder",
         "mse",
         "perchannel",
-        "providers",]
+        "providers",
+    ]
     params_list: list = node_params_list + model_params_list
     name: str = GPTQ
 
@@ -283,9 +284,7 @@ class GPTQConfig(BaseConfig):
         supported_configs.append(OperatorConfig(config=linear_gptq_config, operators=operators))
         cls.supported_configs = supported_configs
 
-    def to_config_mapping(
-        self, config_list: list = None, model_info: list = None
-    ) -> OrderedDict:
+    def to_config_mapping(self, config_list: list = None, model_info: list = None) -> OrderedDict:
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
@@ -322,11 +321,13 @@ class GPTQConfig(BaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "GPTQConfig", List["GPTQConfig"]]:  # pragma: no cover
         # TODO fwk owner needs to update it.
-        return GPTQConfig(weight_bits=[4, 8],
-                          weight_sym=[True, False],
-                          actorder=[True, False],
-                          mse=[True, False],
-                          perchannel=[True, False])
+        return GPTQConfig(
+            weight_bits=[4, 8],
+            weight_sym=[True, False],
+            actorder=[True, False],
+            mse=[True, False],
+            perchannel=[True, False],
+        )
 
 
 def get_default_gptq_config() -> GPTQConfig:
@@ -357,7 +358,8 @@ class AWQConfig(BaseConfig):
     model_params_list: list = [
         "enable_auto_scale",
         "enable_mse_search",
-        "providers",]
+        "providers",
+    ]
     params_list: list = node_params_list + model_params_list
     name: str = AWQ
 
@@ -427,9 +429,7 @@ class AWQConfig(BaseConfig):
         supported_configs.append(OperatorConfig(config=linear_awq_config, operators=operators))
         cls.supported_configs = supported_configs
 
-    def to_config_mapping(
-        self, config_list: list = None, model_info: list = None
-    ) -> OrderedDict:
+    def to_config_mapping(self, config_list: list = None, model_info: list = None) -> OrderedDict:
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
@@ -466,10 +466,12 @@ class AWQConfig(BaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "AWQConfig", List["AWQConfig"]]:  # pragma: no cover
         # TODO fwk owner needs to update it.
-        return AWQConfig(weight_bits=[4, 8],
-                          weight_sym=[True, False],
-                          enable_auto_scale=[True, False],
-                          enable_mse_search=[True, False],)
+        return AWQConfig(
+            weight_bits=[4, 8],
+            weight_sym=[True, False],
+            enable_auto_scale=[True, False],
+            enable_mse_search=[True, False],
+        )
 
 
 def get_default_awq_config() -> AWQConfig:
@@ -605,6 +607,7 @@ def get_default_sq_config() -> SmoohQuantConfig:
         the default smooth quant config.
     """
     return SmoohQuantConfig()
+
 
 ##################### Algo Configs End ###################################
 

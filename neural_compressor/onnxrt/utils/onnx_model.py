@@ -29,6 +29,7 @@ __all__ = [
     "ONNXModel",
 ]
 
+
 class ONNXModel(ORTONNXModel):
     """Build ONNX model."""
 

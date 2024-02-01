@@ -130,9 +130,7 @@ def register_algo(name):
     return decorator
 
 
-def get_model_info(
-    model: Union[onnx.ModelProto, Path, str], white_op_type_list: list
-) -> list:
+def get_model_info(model: Union[onnx.ModelProto, Path, str], white_op_type_list: list) -> list:
     if not isinstance(model, onnx.ModelProto):
         model = onnx.load(model)
     filter_result = []

@@ -18,8 +18,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 import struct
+import sys
+
 import numpy as np
 import onnx
 import onnxruntime as ort
@@ -35,6 +36,7 @@ __all__ = [
     "quant_tensor",
     "qdq_tensor",
 ]
+
 
 def get_blob_size(group_size, has_zp):  # pragma: no cover
     """Get blob_size.
@@ -263,12 +265,14 @@ def pad_tensor(weight, group_size, k_blocks):
     return weight
 
 
-def quant_tensor(data: np.array,
-                 num_bits: int = 4,
-                 group_size: int = 32,
-                 scheme: str = "asym",
-                 dtype: str = "int",
-                 ratio: float = 1.0):
+def quant_tensor(
+    data: np.array,
+    num_bits: int = 4,
+    group_size: int = 32,
+    scheme: str = "asym",
+    dtype: str = "int",
+    ratio: float = 1.0,
+):
     """Quantize tensor per group.
 
     Args:
@@ -316,12 +320,14 @@ def quant_tensor(data: np.array,
     return np.clip((data / scale + zero_point).round(), minq, maxq), scale, zero_point
 
 
-def qdq_tensor(data: np.array,
-               num_bits: int = 4,
-               group_size: int =32,
-               scheme: str = "asym",
-               dtype: str = "int",
-               ratio: float = 1.0):
+def qdq_tensor(
+    data: np.array,
+    num_bits: int = 4,
+    group_size: int = 32,
+    scheme: str = "asym",
+    dtype: str = "int",
+    ratio: float = 1.0,
+):
     """Quant dequant tensor per group.
 
     Args:

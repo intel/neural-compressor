@@ -16,31 +16,23 @@
 # limitations under the License.
 
 
-import os
 import copy
+import os
 from pathlib import Path
-from typing import Dict, Tuple, Union, Optional
-from packaging.version import Version
-import numpy as np
+from typing import Dict, Optional, Tuple, Union
 
+import numpy as np
 import onnx
 import onnxruntime as ort
-from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
+from packaging.version import Version
 
+from neural_compressor.common import Logger
+from neural_compressor.onnxrt.algorithms.weight_only.rtn import rtn_quantize
+from neural_compressor.onnxrt.algorithms.weight_only.utility import pad_tensor, prepare_inputs, qdq_tensor
+from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
 from neural_compressor.onnxrt.quantization.config import AWQConfig
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
-from neural_compressor.common import Logger
-from neural_compressor.onnxrt.utils.utility import (
-    ONNXRT116_VERSION,
-    ONNXRT1161_VERSION,
-    dtype_mapping,
-)
-from neural_compressor.onnxrt.algorithms.weight_only.utility import (
-    prepare_inputs,
-    pad_tensor,
-    qdq_tensor,
-)
-from neural_compressor.onnxrt.algorithms.weight_only.rtn import rtn_quantize
+from neural_compressor.onnxrt.utils.utility import ONNXRT116_VERSION, ONNXRT1161_VERSION, dtype_mapping
 
 logger = Logger().get_logger()
 
@@ -59,6 +51,7 @@ def get_weight_scale(weight, group_size):
     weight = np.reshape(weight, (-1, group_size)) if group_size != -1 else weight
     scale = np.mean(np.reshape(np.abs(weight) / np.max(np.abs(weight), axis=1, keepdims=True), org_shape), axis=0)
     return scale
+
 
 def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, group_size, scheme):
     """Apply scale for salient weight."""
@@ -230,6 +223,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
 
     return model, output_dicts
 
+
 def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, group_size, scheme):
     """Apply clip for weight by checking mse."""
     base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
@@ -283,6 +277,7 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
                     best_ratio = ratio
             ratios[node.input[1]] = best_ratio
     return ratios
+
 
 def awq_quantize(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
@@ -380,7 +375,6 @@ def awq_quantize(
                     node.op_type in ["MatMul"]
                     and model.get_initializer(node.input[1]) is not None
                     and weight_config.get((node.name, node.op_type), {}).get("weight_dtype", "fp32") != "fp32"
-
                 ):
                     dump_pairs[parent.name].append(model.get_node(node.name))
 
@@ -421,6 +415,7 @@ def awq_quantize(
     model = rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio, accuracy_level, providers)
     return model
 
+
 def apply_awq_on_model(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
     quant_config: dict,
@@ -445,7 +440,4 @@ def apply_awq_on_model(
         if isinstance(op_config, AWQConfig):
             quant_config[op_name_type] = op_config.to_dict()
 
-    return awq_quantize(model,
-                        dataloader=calibration_data_reader,
-                        weight_config=quant_config,
-                        **kwargs)
+    return awq_quantize(model, dataloader=calibration_data_reader, weight_config=quant_config, **kwargs)

@@ -16,16 +16,22 @@
 # limitations under the License.
 
 
-import os
 import copy
+import os
 from pathlib import Path
 from typing import Union
-from packaging.version import Version
-import numpy as np
 
+import numpy as np
 import onnx
 import onnxruntime as ort
+from packaging.version import Version
 
+from neural_compressor.onnxrt.algorithms.weight_only.utility import (
+    make_matmul_weight_only_node,
+    pad_tensor,
+    prepare_inputs,
+    quant_tensor,
+)
 from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
 from neural_compressor.onnxrt.quantization.config import GPTQConfig
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
@@ -34,12 +40,6 @@ from neural_compressor.onnxrt.utils.utility import (
     ONNXRT1161_VERSION,
     dtype_mapping,
     simple_progress_bar,
-)
-from neural_compressor.onnxrt.algorithms.weight_only.utility import (
-    make_matmul_weight_only_node,
-    prepare_inputs,
-    pad_tensor,
-    quant_tensor,
 )
 
 __all__ = [
@@ -191,6 +191,7 @@ def gptq(
     del W
     return Q
 
+
 def gptq_quantize(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
     dataloader: CalibrationDataReader,
@@ -289,7 +290,6 @@ def gptq_quantize(
                 node.op_type in ["MatMul"]
                 and model.get_initializer(node.input[1]) is not None
                 and weight_config.get((node.name, node.op_type), {}).get("weight_dtype", "fp32") != "fp32"
-
             ):
                 weight = onnx.numpy_helper.to_array(
                     model.get_initializer(model.get_node(node.name).input[1]), base_dir
@@ -398,6 +398,7 @@ def gptq_quantize(
 
     return model.model
 
+
 def apply_gptq_on_model(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
     quant_config: dict,
@@ -422,7 +423,4 @@ def apply_gptq_on_model(
         if isinstance(op_config, GPTQConfig):
             quant_config[op_name_type] = op_config.to_dict()
 
-    return gptq_quantize(model,
-                         dataloader=calibration_data_reader,
-                         weight_config=quant_config,
-                         **kwargs)
+    return gptq_quantize(model, dataloader=calibration_data_reader, weight_config=quant_config, **kwargs)

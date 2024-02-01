@@ -27,8 +27,9 @@ logger = Logger().get_logger()
 
 __all__ = [
     "need_apply",
-    "_quantize", # * only for internal usage now
+    "_quantize",  # * only for internal usage now
 ]
+
 
 def need_apply(quant_config: BaseConfig, algo_name):
     return quant_config.name == algo_name if hasattr(quant_config, "name") else False

@@ -20,10 +20,10 @@ import onnx
 from onnxruntime.quantization import quantize
 
 from neural_compressor.common import Logger
-from neural_compressor.common.utils import RTN, GPTQ, AWQ, SMOOTH_QUANT
+from neural_compressor.common.utils import AWQ, GPTQ, RTN, SMOOTH_QUANT
 from neural_compressor.onnxrt.algorithms import Smoother
 from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
-from neural_compressor.onnxrt.quantization.config import RTNConfig, GPTQConfig, AWQConfig, SmoohQuantConfig
+from neural_compressor.onnxrt.quantization.config import AWQConfig, GPTQConfig, RTNConfig, SmoohQuantConfig
 from neural_compressor.onnxrt.utils.utility import register_algo
 
 logger = Logger().get_logger()
@@ -34,6 +34,7 @@ __all__ = [
     "gptq_quantize_entry",
     "awq_quantize_entry",
 ]
+
 
 ###################### SmoothQuant Entry ##################################
 @register_algo(name=SMOOTH_QUANT)
@@ -105,11 +106,9 @@ def rtn_quantize_entry(model: Union[Path, str], quant_config: RTNConfig, *args, 
 
 ###################### GPTQ Algo Entry ##################################
 @register_algo(name=GPTQ)
-def gptq_quantize_entry(model: Union[Path, str],
-                       quant_config: GPTQConfig,
-                       calibration_data_reader: CalibrationDataReader,
-                       *args,
-                       **kwargs) -> onnx.ModelProto:
+def gptq_quantize_entry(
+    model: Union[Path, str], quant_config: GPTQConfig, calibration_data_reader: CalibrationDataReader, *args, **kwargs
+) -> onnx.ModelProto:
     """The main entry to apply gptq quantization."""
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(
@@ -131,11 +130,9 @@ def gptq_quantize_entry(model: Union[Path, str],
 
 ###################### AWQ Algo Entry ##################################
 @register_algo(name=AWQ)
-def awq_quantize_entry(model: Union[Path, str],
-                       quant_config: AWQConfig,
-                       calibration_data_reader: CalibrationDataReader,
-                       *args,
-                       **kwargs) -> onnx.ModelProto:
+def awq_quantize_entry(
+    model: Union[Path, str], quant_config: AWQConfig, calibration_data_reader: CalibrationDataReader, *args, **kwargs
+) -> onnx.ModelProto:
     """The main entry to apply awq quantization."""
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(

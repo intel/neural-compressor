@@ -23,15 +23,16 @@ import onnx
 import onnx.numpy_helper as numpy_helper
 import onnxruntime
 
+from neural_compressor.common import Logger
 from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
-from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
 __all__ = [
     "Calibrator",
 ]
+
 
 class Calibrator:
     """Dump information for smooth quant."""
@@ -42,7 +43,7 @@ class Calibrator:
         dataloader: CalibrationDataReader,
         dump_op_types: list,
         iterations: list = [],
-        providers: list =["CPUExecutionProvider"],
+        providers: list = ["CPUExecutionProvider"],
         **kwargs,
     ):
         """Initialize a Calibrator to dump information.

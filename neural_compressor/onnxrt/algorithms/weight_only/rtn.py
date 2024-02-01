@@ -28,6 +28,12 @@ import onnx
 import onnxruntime as ort
 from packaging.version import Version
 
+from neural_compressor.onnxrt.algorithms.weight_only.utility import (
+    make_matmul_weight_only_node,
+    pad_tensor,
+    qdq_tensor,
+    quant_tensor,
+)
 from neural_compressor.onnxrt.quantization.config import RTNConfig
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.onnxrt.utils.utility import (
@@ -36,17 +42,12 @@ from neural_compressor.onnxrt.utils.utility import (
     dtype_mapping,
     simple_progress_bar,
 )
-from neural_compressor.onnxrt.algorithms.weight_only.utility import (
-    make_matmul_weight_only_node,
-    pad_tensor,
-    quant_tensor,
-    qdq_tensor,
-)
 
 __all__ = [
     "rtn_quantize",
     "apply_rtn_on_model",
 ]
+
 
 def rtn_quantize(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
@@ -185,8 +186,7 @@ def rtn_quantize(
     return model.model
 
 
-def apply_rtn_on_model(model: onnx.ModelProto,
-                       quant_config: dict) -> onnx.ModelProto:
+def apply_rtn_on_model(model: onnx.ModelProto, quant_config: dict) -> onnx.ModelProto:
     """Apply RTN on onnx model.
 
     Args:

@@ -23,6 +23,7 @@ __all__ = [
     "CalibrationDataReader",
 ]
 
+
 class CalibrationDataReader(ORTCalibrationDataReader):
     """Get data for calibration.
 
