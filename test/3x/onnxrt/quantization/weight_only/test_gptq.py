@@ -1,13 +1,12 @@
 import os
+import torch
 import shutil
 import unittest
 
-import torch
 from optimum.exporters.onnx import main_export
 from transformers import AutoTokenizer
-
-from neural_compressor.common import Logger
 from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
+from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
@@ -20,7 +19,6 @@ def find_onnx_file(folder_path):
                 return os.path.join(root, file)
     return None
 
-
 class DummyNLPDataloader(CalibrationDataReader):
     def __init__(self, model_name):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -30,11 +28,9 @@ class DummyNLPDataloader(CalibrationDataReader):
         self.encoded_list = []
         encoded_input = dict(self.tokenizer(self.sequence_a, self.sequence_b, return_tensors="pt"))
         input_shape = encoded_input["input_ids"].shape
-        encoded_input["position_ids"] = (
-            torch.arange(0, input_shape[-1], dtype=torch.long).unsqueeze(0).view(-1, input_shape[-1])
-        )
+        encoded_input['position_ids'] = torch.arange(0, input_shape[-1], dtype=torch.long).unsqueeze(0).view(-1, input_shape[-1])
 
-        # change torch tensor to numpy
+        # convert torch tensor to numpy
         for input_name, input_value in encoded_input.items():
             if isinstance(input_value, torch.Tensor):
                 encoded_input[input_name] = input_value.numpy()
@@ -47,7 +43,6 @@ class DummyNLPDataloader(CalibrationDataReader):
 
     def rewind(self):
         self.iter_next = iter(self.encoded_list)
-
 
 class TestGPTQQuant(unittest.TestCase):
     @classmethod
@@ -93,7 +88,9 @@ class TestGPTQQuant(unittest.TestCase):
         from neural_compressor.onnxrt.quantization.quantize import _quantize
 
         fp32_model = self.gptj
-        qmodel = _quantize(fp32_model, quant_config, calibration_data_reader=self.calibration_data_reader)
+        qmodel = _quantize(fp32_model,
+                           quant_config,
+                           calibration_data_reader=self.calibration_data_reader)
         self.assertIsNotNone(qmodel)
         return qmodel
 
