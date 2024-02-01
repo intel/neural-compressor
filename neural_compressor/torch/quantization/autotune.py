@@ -21,8 +21,7 @@ from neural_compressor.common.base_config import BaseConfig, get_all_config_set_
 from neural_compressor.common.base_tuning import TuningConfig, evaluator, init_tuning
 from neural_compressor.torch.quantization import quantize
 from neural_compressor.torch.quantization.config import FRAMEWORK_NAME, RTNConfig
-from neural_compressor.torch.utils import logger
-from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
+from neural_compressor.torch.utils import constants, logger
 
 __all__ = [
     "autotune",
@@ -33,7 +32,7 @@ __all__ = [
 
 def get_rtn_double_quant_config_set() -> List[RTNConfig]:
     rtn_double_quant_config_set = []
-    for double_quant_type, double_quant_config in DOUBLE_QUANT_CONFIGS.items():
+    for double_quant_type, double_quant_config in constants.DOUBLE_QUANT_CONFIGS.items():
         rtn_double_quant_config_set.append(RTNConfig.from_dict(double_quant_config))
     return rtn_double_quant_config_set
 

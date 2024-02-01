@@ -1,12 +1,37 @@
 import unittest
 from functools import wraps
+from unittest.mock import patch
 
 import torch
 import transformers
 
 from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
 from neural_compressor.torch.quantization import RTNConfig, TuningConfig, autotune, get_all_config_set
-from neural_compressor.torch.utils import logger
+from neural_compressor.torch.utils import constants, logger
+
+FAKE_DOUBLE_QUANT_CONFIGS = {
+    "BNB_NF4": {
+        "dtype": "nf4",
+        "bits": 4,
+        "group_size": 32,
+        "use_double_quant": True,
+        "double_quant_bits": 8,
+        "double_quant_dtype": "int",
+        "double_quant_use_sym": False,
+        "double_quant_group_size": 256,
+    },
+    "GGML_TYPE_Q4_K": {
+        "dtype": "int",
+        "bits": 4,
+        "use_sym": False,
+        "group_size": 32,
+        "use_double_quant": True,
+        "double_quant_bits": 6,
+        "double_quant_dtype": "int",
+        "double_quant_use_sym": True,
+        "double_quant_group_size": 8,
+    },
+}
 
 
 def reset_tuning_target(test_func):
@@ -270,6 +295,23 @@ class TestAutoTune(unittest.TestCase):
         custom_tune_config = TuningConfig(
             config_set=get_rtn_double_quant_config_set(), max_trials=10, tolerable_loss=-1
         )
+        best_model = autotune(
+            model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
+        )
+        self.assertIsNone(best_model)
+
+    @patch("neural_compressor.torch.utils.constants.DOUBLE_QUANT_CONFIGS", FAKE_DOUBLE_QUANT_CONFIGS)
+    def test_rtn_double_quant_config_set3(self) -> None:
+        from neural_compressor.torch.quantization import get_rtn_double_quant_config_set
+
+        rtn_double_quant_config_set = get_rtn_double_quant_config_set()
+        print(len(rtn_double_quant_config_set))
+        self.assertEqual(len(constants.DOUBLE_QUANT_CONFIGS), len(FAKE_DOUBLE_QUANT_CONFIGS))
+
+        def eval_acc_fn(model) -> float:
+            return 1.0
+
+        custom_tune_config = TuningConfig(config_set=get_rtn_double_quant_config_set(), tolerable_loss=-1)
         best_model = autotune(
             model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
         )
