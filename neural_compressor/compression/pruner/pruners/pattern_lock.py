@@ -1,4 +1,5 @@
 """Pattern lock pruner."""
+
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #

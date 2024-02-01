@@ -8,6 +8,7 @@ test inspect_tensor API called by mse tuning strategy
 Note:
     use '-s' to disable pytest capturing the sys.stderr which will be used in quantization process
 """
+
 import logging
 import os
 import pickle

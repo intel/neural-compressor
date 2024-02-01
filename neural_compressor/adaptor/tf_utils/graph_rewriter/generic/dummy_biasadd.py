@@ -114,9 +114,11 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
                 bias_node_name,
                 [
                     i[0],
-                    bias_const_enter_node.name
-                    if i[0] in g.parent_frame_details and g.parent_frame_details[i[0]]
-                    else bias_const_node_name,
+                    (
+                        bias_const_enter_node.name
+                        if i[0] in g.parent_frame_details and g.parent_frame_details[i[0]]
+                        else bias_const_node_name
+                    ),
                 ],
             )
             Helper.set_attr_dtype(bias_node, "T", dtypes.float32)

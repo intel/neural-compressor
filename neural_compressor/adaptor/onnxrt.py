@@ -417,15 +417,21 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 self.quantizable_op_types,
                 self.query_handler.get_fallback_list(),
                 self.reduce_range,
-                options.onnxrt.qdq_setting.AddQDQPairToWeight
-                if "add_qdq_pair_to_weight" not in self.recipes
-                else self.recipes.get("add_qdq_pair_to_weight", False),
-                options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin
-                if "optypes_to_exclude_output_quant" not in self.recipes
-                else self.recipes.get("optypes_to_exclude_output_quant", []),
-                options.onnxrt.qdq_setting.DedicatedQDQPair
-                if "dedicated_qdq_pair" not in self.recipes
-                else self.recipes.get("dedicated_qdq_pair", False),
+                (
+                    options.onnxrt.qdq_setting.AddQDQPairToWeight
+                    if "add_qdq_pair_to_weight" not in self.recipes
+                    else self.recipes.get("add_qdq_pair_to_weight", False)
+                ),
+                (
+                    options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin
+                    if "optypes_to_exclude_output_quant" not in self.recipes
+                    else self.recipes.get("optypes_to_exclude_output_quant", [])
+                ),
+                (
+                    options.onnxrt.qdq_setting.DedicatedQDQPair
+                    if "dedicated_qdq_pair" not in self.recipes
+                    else self.recipes.get("dedicated_qdq_pair", False)
+                ),
                 self.backend,
             )
             quantizer.quantize_model()
@@ -502,15 +508,21 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             self.quantizable_op_types,
             self.query_handler.get_fallback_list(),
             self.reduce_range,
-            options.onnxrt.qdq_setting.AddQDQPairToWeight
-            if "add_qdq_pair_to_weight" not in self.recipes
-            else self.recipes.get("add_qdq_pair_to_weight", False),
-            options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin
-            if "optypes_to_exclude_output_quant" not in self.recipes
-            else self.recipes.get("optypes_to_exclude_output_quant", []),
-            options.onnxrt.qdq_setting.DedicatedQDQPair
-            if "dedicated_qdq_pair" not in self.recipes
-            else self.recipes.get("dedicated_qdq_pair", False),
+            (
+                options.onnxrt.qdq_setting.AddQDQPairToWeight
+                if "add_qdq_pair_to_weight" not in self.recipes
+                else self.recipes.get("add_qdq_pair_to_weight", False)
+            ),
+            (
+                options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin
+                if "optypes_to_exclude_output_quant" not in self.recipes
+                else self.recipes.get("optypes_to_exclude_output_quant", [])
+            ),
+            (
+                options.onnxrt.qdq_setting.DedicatedQDQPair
+                if "dedicated_qdq_pair" not in self.recipes
+                else self.recipes.get("dedicated_qdq_pair", False)
+            ),
             self.backend,
         )
         quantizer.quantize_model()
@@ -657,15 +669,21 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             self.quantizable_op_types,
             self.query_handler.get_fallback_list(),
             self.reduce_range,
-            options.onnxrt.qdq_setting.AddQDQPairToWeight
-            if not options.onnxrt.qdq_setting.AddQDQPairToWeight
-            else self.recipes.get("add_qdq_pair_to_weight", False),
-            options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin
-            if options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin is not None
-            else self.recipes.get("optypes_to_exclude_output_quant", []),
-            options.onnxrt.qdq_setting.DedicatedQDQPair
-            if not options.onnxrt.qdq_setting.DedicatedQDQPair
-            else self.recipes.get("dedicated_qdq_pair", False),
+            (
+                options.onnxrt.qdq_setting.AddQDQPairToWeight
+                if not options.onnxrt.qdq_setting.AddQDQPairToWeight
+                else self.recipes.get("add_qdq_pair_to_weight", False)
+            ),
+            (
+                options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin
+                if options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin is not None
+                else self.recipes.get("optypes_to_exclude_output_quant", [])
+            ),
+            (
+                options.onnxrt.qdq_setting.DedicatedQDQPair
+                if not options.onnxrt.qdq_setting.DedicatedQDQPair
+                else self.recipes.get("dedicated_qdq_pair", False)
+            ),
         )
 
         quantizer.quantize_model()
