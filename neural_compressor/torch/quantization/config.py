@@ -20,7 +20,6 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import torch
 
-<<<<<<< HEAD
 from neural_compressor.common.base_config import (
     BaseConfig,
     config_registry,
@@ -38,13 +37,7 @@ from neural_compressor.common.utils import (
     STATIC_QUANT,
 )
 from neural_compressor.torch.utils import is_hpex_available, logger
-from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN, PRIORITY_AWQ
-=======
-from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
-from neural_compressor.common.utils import AWQ, DEFAULT_WHITE_LIST, FP8_QUANT, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN
 from neural_compressor.torch.utils.constants import PRIORITY_AWQ, PRIORITY_GPTQ, PRIORITY_RTN
-from neural_compressor.torch.utils.utility import is_hpex_avaliable, logger
->>>>>>> 8baa79755fe9bddb23b97e41ecbaacd4a65c0663
 
 __all__ = [
     "RTNConfig",

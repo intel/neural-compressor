@@ -5,6 +5,7 @@ import torch
 import transformers
 
 from neural_compressor.torch.quantization import (
+    AWQConfig,
     GPTQConfig,
     RTNConfig,
     SmoothQuantConfig,
