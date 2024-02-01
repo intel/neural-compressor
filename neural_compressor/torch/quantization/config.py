@@ -324,21 +324,20 @@ class AWQConfig(BaseConfig):
     AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.
     https://arxiv.org/abs/2306.00978
     """
-
     supported_configs: List[OperatorConfig] = []
     params_list = [
-        "weight_dtype",
-        "weight_bits",
-        "weight_group_size",
-        "weight_sym",
-        "act_dtype",
-        "enable_full_range",
-        "enable_mse_search",
-        "group_dim",
-        "return_int",
+        "dtype",
+        "bits",
+        "group_size",
+        "use_sym",
+        "use_full_range",
+        "use_mse_search",
+        "use_layer_wise",
+        "export_compressed_model",
+        "use_double_quant",
         "double_quant_dtype",
         "double_quant_bits",
-        "double_quant_sym",
+        "double_quant_use_sym",
         "double_quant_group_size",
         # AWQ params
         "enable_auto_scale",
@@ -349,19 +348,22 @@ class AWQConfig(BaseConfig):
 
     def __init__(
         self,
-        weight_dtype: str = "int",
-        weight_bits: int = 4,
-        weight_group_size: int = 32,
-        weight_sym: bool = True,
-        act_dtype: str = "fp32",
-        enable_full_range: bool = False,
-        enable_mse_search: bool = False,
+        dtype: str = "int",
+        bits: int = 4,
+        use_sym: bool = True,
+        group_size: int = 32,
         group_dim: int = 1,
-        return_int: bool = False,
-        double_quant_dtype: str = "fp32",
-        double_quant_bits: int = 8,
-        double_quant_sym: bool = True,
+        use_full_range: bool = False,
+        use_mse_search: bool = False,
+        use_layer_wise: bool = False,
+        export_compressed_model: bool = False,
+        # double quant
+        use_double_quant: bool = False,
+        double_quant_dtype: str = "int",
+        double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
+        double_quant_use_sym: bool = True,
         double_quant_group_size: int = 256,
+        # awq
         enable_auto_scale: bool = True,
         folding: bool = False,
         nsamples: int = 128,
@@ -370,35 +372,38 @@ class AWQConfig(BaseConfig):
         """Init AWQ weight-only quantization config.
 
         Args:
-            weight_dtype (str): Data type for weights, default is "int".
-            weight_bits (int): Number of bits used to represent weights, default is 4.
-            weight_group_size (int): Size of weight groups, default is 32.
-            weight_sym (bool): Indicates whether weights are symmetric, default is True.
-            act_dtype (str): Data type for activations, default is "fp32".
-            enable_full_range (bool): Enables full range for activations, default is False.
-            enable_mse_search (bool): Enables mean squared error (MSE) search, default is False.
+            dtype (str): Data type for weights, default is "int".
+            bits (int): Number of bits used to represent weights, default is 4.
+            use_sym (bool): Indicates whether weights are symmetric, default is True.
+            group_size (int): Size of weight groups, default is 32.
             group_dim (int): Dimension for grouping, default is 1.
-            return_int (bool): Enables return model in int8/uint8 format or not. Defaults to False.
+            use_full_range (bool): Enables full range for activations, default is False.
+            use_mse_search (bool): Enables mean squared error (MSE) search, default is False.
+            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
+            use_double_quant (bool): Enables double quantization, default is False.
             double_quant_dtype (str): Data type for double_quant scale, default is "int".
             double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
-            double_quant_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
+            double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
             double_quant_group_size (int): Size of double_quant groups, default is 32.
             enable_auto_scale (bool): Enable best scales search based on activation distribution, default is True.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer, default is False.
         """
         super().__init__(white_list=white_list)
-        self.weight_bits = weight_bits
-        self.weight_dtype = weight_dtype
-        self.weight_group_size = weight_group_size
-        self.weight_sym = weight_sym
-        self.act_dtype = act_dtype
-        self.enable_full_range = enable_full_range
-        self.enable_mse_search = enable_mse_search
+        self.dtype = dtype
+        self.bits = bits
+        self.use_sym = use_sym
+        self.group_size = group_size
         self.group_dim = group_dim
-        self.return_int = return_int
+        self.use_full_range = use_full_range
+        self.use_mse_search = use_mse_search
+        self.use_layer_wise = use_layer_wise
+        self.export_compressed_model = export_compressed_model
+        # double quant
+        self.use_double_quant = use_double_quant
         self.double_quant_bits = double_quant_bits
         self.double_quant_dtype = double_quant_dtype
-        self.double_quant_sym = double_quant_sym
+        self.double_quant_use_sym = double_quant_use_sym
         self.double_quant_group_size = double_quant_group_size
         self.enable_auto_scale = enable_auto_scale
         self.folding = folding
