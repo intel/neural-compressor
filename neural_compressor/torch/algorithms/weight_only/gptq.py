@@ -28,8 +28,9 @@ import torch.nn as nn
 import transformers
 from tqdm import tqdm
 
-from neural_compressor.torch.quantization.modules import WeightOnlyLinear
 from neural_compressor.torch.utils import fetch_module, logger, set_module
+
+from .modules import WeightOnlyLinear
 
 DEBUG = False
 
