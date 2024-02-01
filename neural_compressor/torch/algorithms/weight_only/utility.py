@@ -16,7 +16,6 @@ import torch
 
 from neural_compressor.torch.utils import logger
 
-
 NF4 = [
     -1.0,
     -0.6961928009986877,
@@ -443,9 +442,11 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1, dtype="int"):
         int_weight[:, leng * group_size :].copy_(int_weight_tmp.round_())
     return int_weight
 
+
 # -------------- AWQ ---------------------------
 from collections import UserDict
 from functools import partial
+
 
 # AWQ Required, copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 def model_forward(model, dataloader, iters, device):
@@ -463,6 +464,7 @@ def model_forward(model, dataloader, iters, device):
             cnt += 1
             if iters != -1 and cnt >= iters:
                 break
+
 
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 ##TODO potential bug, data typeR
@@ -484,6 +486,7 @@ def forward_wrapper(model, input, device=torch.device("cpu")):
         output = model(input)
     return output
 
+
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 def move_input_to_device(input, device=torch.device("cpu")):
     if isinstance(input, dict) or isinstance(input, UserDict):
@@ -500,6 +503,7 @@ def move_input_to_device(input, device=torch.device("cpu")):
     elif isinstance(input, torch.Tensor):
         input = input.to(device)  # pylint: disable=no-member
     return input
+
 
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 def set_module(model, key, new_module):
@@ -530,6 +534,7 @@ def set_module(model, key, new_module):
         module = getattr(module, "orig_layer")
     setattr(module, name_list[-1], new_module)
 
+
 # copy from neural_compressor/adaptor/torch_utils/util.py
 def fetch_module(model, op_name):
     """Get module with a given op name.
@@ -549,6 +554,7 @@ def fetch_module(model, op_name):
         else:
             module = module
     return module
+
 
 # copy from neural_compressor/adaptor/torch_utils/util.py
 def get_absorb_layers(model, example_inputs, supported_layers=["Linear"], folding=False):
@@ -583,6 +589,7 @@ def get_absorb_layers(model, example_inputs, supported_layers=["Linear"], foldin
                         no_absorb_layers.append(name)
     return absorb_to_layer, no_absorb_layers
 
+
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 def get_parent(node, all_parents=False):
     if node.inputs() is None:
@@ -593,6 +600,7 @@ def get_parent(node, all_parents=False):
         return list(node.inputs())[0].node()
     else:
         return list(node.inputs())
+
 
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 def get_module(model, key):
@@ -616,6 +624,7 @@ def get_module(model, key):
         else:
             module = module
     return module
+
 
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 class GraphTrace:
@@ -807,6 +816,7 @@ class GraphTrace:
                 res[key] = absorb_to_layer[key]
         return res
 
+
 # copy from neural_compressor/adaptor/torch_utils/util.py
 def get_block_prefix(model):
     """Get prefix and number of blocks.
@@ -827,6 +837,7 @@ def get_block_prefix(model):
             break
     assert block_num > 0, "block num shouldn't be zero!"
     return block_prefix, block_num
+
 
 # copy from neural_compressor/adaptor/torch_utils/util.py
 def get_example_input(dataloader, i=1):
@@ -852,6 +863,7 @@ def get_example_input(dataloader, i=1):
             else:
                 iter += 1
     return example_inp
+
 
 # copy from neural_compressor/adaptor/torch_utils/util.py
 def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
@@ -907,6 +919,7 @@ def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
     first_block.forward = block_forward_cache
     return total_block_args, total_block_kwargs
 
+
 # copy from neural_compressor/adaptor/torch_utils/util.py
 def calibration(model, dataloader=None, n_samples=128, calib_func=None):
     """Calibration with dataloader or calib_func.
@@ -936,6 +949,7 @@ def calibration(model, dataloader=None, n_samples=128, calib_func=None):
                 )
             )
         model_forward(model, dataloader, iters, next(model.parameters()).device)
+
 
 # copy from neural_compressor/adaptor/torch_utils/util.py
 def get_module_input_output(
@@ -1019,7 +1033,9 @@ def get_module_input_output(
         h.remove()
     return total_values
 
+
 # -------------- Model Wrapper ---------------------------
+
 
 class MulLinear(torch.nn.Module):
     """Linear wrapper to apply scale to input."""
