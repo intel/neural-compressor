@@ -325,6 +325,7 @@ class AWQConfig(BaseConfig):
     AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.
     https://arxiv.org/abs/2306.00978
     """
+
     supported_configs: List[OperatorConfig] = []
     params_list = [
         "dtype",
@@ -445,6 +446,7 @@ def get_default_awq_config() -> AWQConfig:
         the default awq config.
     """
     return AWQConfig()
+
 
 ######################## Static Quant Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
