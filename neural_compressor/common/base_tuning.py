@@ -129,8 +129,8 @@ class Sampler:
 
 
 class ConfigLoader:
-    def __init__(self, quant_configs, sampler: Sampler) -> None:
-        self.quant_configs = quant_configs
+    def __init__(self, config_set, sampler: Sampler) -> None:
+        self.config_set = config_set
         self.sampler = sampler
 
     @staticmethod
@@ -146,7 +146,7 @@ class ConfigLoader:
     def parse_quant_configs(self) -> List[BaseConfig]:
         # TODO (Yi) separate this functionality into `Sampler` in the next PR
         quant_config_list = []
-        for quant_config in self.quant_configs:
+        for quant_config in self.config_set:
             quant_config_list.extend(ConfigLoader.parse_quant_config(quant_config))
         return quant_config_list
 
@@ -210,17 +210,60 @@ class TuningConfig:
     """Base Class for Tuning Criterion.
 
     Args:
-        quant_configs: quantization configs. Default value is empty.
+        config_set: quantization configs. Default value is empty.
         timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
         max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
+        tolerable_loss: This float indicates how much metric loss we can accept. \
+            The metric loss is relative, it can be both positive and negative. Default is 0.01.
+
+    Examples:
+        from neural_compressor import TuningConfig
+        tune_config = TuningConfig(
+            config_set=[config1, config2, ...],
+            max_trials=3,
+            tolerable_loss=0.01
+        )
+
+        # Case 1: Tolerable Loss
+        fp32_baseline = 100
+        config1_metric, config2_metric, ... = 98, 99, ...
+
+        # Tuning result of case 1:
+        # The best tuning config is config2, because config2_metric >= fp32_baseline * (1 - tolerable_loss)
+
+        # Case 2: Maximum Trials
+        fp32_baseline = 100
+        config1_metric, config2_metric, config3_metric, ... = 98, 98, 97, ...
+
+        # Tuning result of case 2:
+        # The best tuning config is config2, because of the following:
+        # 1. Not achieving the set goal. (config_metric < fp32_baseline * (1 - tolerable_loss))
+        # 2. Reached maximum tuning times.
+
+        # Case 3: Timeout
+        tune_config = TuningConfig(
+            config_set=[config1, config2, ...],
+            timeout=10, # seconds
+            max_trials=3,
+            tolerable_loss=0.01
+        )
+        config1_tuning_time, config2_tuning_time, config3_tuning_time, ... = 4, 5, 6, ... # seconds
+        fp32_baseline = 100
+        config1_metric, config2_metric, config3_metric, ... = 98, 98, 97, ...
+
+        # Tuning result of case 3:
+        # The best tuning config is config2, due to timeout, the third trial was forced to exit.
     """
 
-    def __init__(self, quant_configs=None, timeout=0, max_trials=100, sampler: Sampler = None) -> None:
+    def __init__(
+        self, config_set=None, timeout=0, max_trials=100, sampler: Sampler = None, tolerable_loss=0.01
+    ) -> None:
         """Init a TuneCriterion object."""
-        self.quant_configs = quant_configs
+        self.config_set = config_set
         self.timeout = timeout
         self.max_trials = max_trials
         self.sampler = sampler
+        self.tolerable_loss = tolerable_loss
 
 
 class _TrialRecord:
@@ -242,11 +285,16 @@ class TuningMonitor:
         self.tuning_config = tuning_config
         self.trial_cnt = 0
         self.tuning_history: List[_TrialRecord] = []
+        self.baseline = None
 
     def add_trial_result(self, trial_index: int, trial_result: Union[int, float], quant_config: BaseConfig) -> None:
         self.trial_cnt += 1
         trial_record = _TrialRecord(trial_index, trial_result, quant_config)
         self.tuning_history.append(trial_record)
+
+    def set_baseline(self, baseline: float):
+        self.baseline = baseline
+        logger.info(f"Fp32 baseline is {self.baseline}")
 
     def get_number_of_trials(self):
         return len(self.tuning_history)
@@ -260,12 +308,27 @@ class TuningMonitor:
         return sorted_trials_records[0].quant_config
 
     def need_stop(self) -> bool:
-        # TODO Support more stop criteria in the next PR, such as `reach accuracy goal`, `timeout`, and so on.
-        return self.trial_cnt >= self.tuning_config.max_trials
+        """Check if need to stop tuning. Either accuracy goal is met, max trials is reached or timeout is reached.
+
+        Returns:
+            bool: True if need to stop, otherwise False.
+        """
+
+        # TODO: Support more stop criteria in the next PR, such as `timeout`, and so on.
+        # reach max trials
+        reach_max_trials = self.trial_cnt >= self.tuning_config.max_trials
+        # reach accuracy goal
+        meet_accuracy_goal = (
+            False
+            if self.baseline is None
+            else self.tuning_history[-1].trial_result >= (self.baseline * (1 - self.tuning_config.tolerable_loss))
+        )
+        # [-1] is the last element representing the latest trail record.
+        return reach_max_trials or meet_accuracy_goal
 
 
 def init_tuning(tuning_config: TuningConfig) -> Tuple[ConfigLoader, TuningLogger, TuningMonitor]:
-    config_loader = ConfigLoader(quant_configs=tuning_config.quant_configs, sampler=tuning_config.sampler)
+    config_loader = ConfigLoader(config_set=tuning_config.config_set, sampler=tuning_config.sampler)
     tuning_logger = TuningLogger()
     tuning_monitor = TuningMonitor(tuning_config)
     return config_loader, tuning_logger, tuning_monitor

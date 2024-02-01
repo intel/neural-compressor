@@ -11,8 +11,10 @@ pr:
       - neural_compressor/common
       - neural_compressor/torch
       - test/3x/torch
+      - test/3x/common
       - setup.py
       - requirements_pt.txt
+      - .azure-pipelines/scripts/ut/3x/collect_log_3x.sh
 
 pool: ICX-16C
 
@@ -88,7 +90,7 @@ stages:
               docker exec collectLogs /bin/bash  +x -c "cd /neural-compressor/.azure-pipelines/scripts \
               && bash install_nc.sh 3x_pt \
               && bash ut/3x/collect_log_3x.sh 3x_pt"
-            displayName: "collect logs"
+            displayName: "Collect UT Coverage"
 
           - task: PublishPipelineArtifact@1
             condition: succeededOrFailed()

@@ -25,8 +25,8 @@ from packaging.version import Version
 from torch.autograd import Function
 from torch.nn import functional as F
 
-from neural_compressor.common import DEBUG, level, logger
-from neural_compressor.torch.algorithms.weight_only.rtn import quant_weight
+from neural_compressor.common import logger
+from neural_compressor.torch.algorithms.weight_only import quant_tensor
 
 
 def get_torch_version():
@@ -149,7 +149,7 @@ class WeightOnlyLinear(torch.nn.Module):
         in_features,
         out_features,
         bits,
-        groupsize,
+        group_size,
         dtype="int",
         zp=False,
         bias=False,
@@ -164,8 +164,9 @@ class WeightOnlyLinear(torch.nn.Module):
         self.use_optimum_format = use_optimum_format
         self.dtype = dtype
         if "int" not in self.dtype:  # for nf4, fp4
-            from neural_compressor.torch.algorithms.weight_only.rtn import FLOAT_MAPPING, INT_MAPPING
+            from neural_compressor.torch.algorithms.weight_only import FLOAT_MAPPING, INT_MAPPING
 
+            self.use_optimum_format = False  # optimum_format doesn't suit for symmetric nf4 fp4.
             float_list = FLOAT_MAPPING[self.dtype]
             int_list = INT_MAPPING[self.dtype]
             self.int2float_mapping = {}
@@ -175,7 +176,7 @@ class WeightOnlyLinear(torch.nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.bits = bits
-        self.groupsize = groupsize if groupsize != -1 else in_features
+        self.group_size = group_size if group_size != -1 else in_features
         self.compression_dim = compression_dim
         assert compression_dtype in [
             torch.int8,
@@ -196,11 +197,10 @@ class WeightOnlyLinear(torch.nn.Module):
             self.register_buffer(
                 "scales",
                 torch.zeros(
-                    (math.ceil(in_features / self.groupsize), out_features),
+                    (math.ceil(in_features / self.group_size), out_features),
                     dtype=self.float_type,
                 ).to(device),
             )
-            self.scales = self.scales.T
             self.register_buffer(
                 "qweight",
                 torch.zeros(
@@ -208,15 +208,13 @@ class WeightOnlyLinear(torch.nn.Module):
                     dtype=self.compression_dtype,
                 ).to(device),
             )
-            self.qweight = self.qweight.T
             self.register_buffer(
                 "qzeros",
                 torch.zeros(
-                    (math.ceil(self.in_features / self.groupsize), math.ceil(self.out_features / self.n_pack)),
+                    (math.ceil(self.in_features / self.group_size), math.ceil(self.out_features / self.n_pack)),
                     dtype=self.compression_dtype,
                 ).to(device),
             )
-            self.qzeros = self.qzeros.T
             self.register_buffer("bias", torch.zeros(self.out_features, dtype=self.float_type).to(device))
         else:
             self.compression_dtype = compression_dtype
@@ -224,7 +222,7 @@ class WeightOnlyLinear(torch.nn.Module):
             self.register_buffer(
                 "scales",
                 torch.zeros(
-                    (out_features, math.ceil(in_features / self.groupsize)),
+                    (out_features, math.ceil(in_features / self.group_size)),
                     dtype=self.float_type,
                 ).to(device),
             )
@@ -240,7 +238,7 @@ class WeightOnlyLinear(torch.nn.Module):
                     self.register_buffer(
                         "qzeros",
                         torch.zeros(
-                            (self.out_features, math.ceil(self.in_features / self.groupsize / self.n_pack)),
+                            (self.out_features, math.ceil(self.in_features / self.group_size / self.n_pack)),
                             dtype=self.compression_dtype,
                         ).to(device),
                     )
@@ -256,7 +254,7 @@ class WeightOnlyLinear(torch.nn.Module):
                     self.register_buffer(
                         "qzeros",
                         torch.zeros(
-                            (math.ceil(self.out_features / self.n_pack), math.ceil(self.in_features / self.groupsize)),
+                            (math.ceil(self.out_features / self.n_pack), math.ceil(self.in_features / self.group_size)),
                             dtype=self.compression_dtype,
                         ).to(device),
                     )
@@ -270,6 +268,10 @@ class WeightOnlyLinear(torch.nn.Module):
             self.g_idx = None
 
     def pack(self, int_weight, scale, zp, bias, g_idx=None):
+        if self.use_optimum_format:
+            self.scales = self.scales.t_().contiguous()
+            self.qweight = self.qweight.t_().contiguous()
+            self.qzeros = self.qzeros.t_().contiguous()
         int_weight = int_weight.to(self.device)
         if self.use_optimum_format and zp is None:
             # to avoid overflow
@@ -285,13 +287,13 @@ class WeightOnlyLinear(torch.nn.Module):
             self.g_idx = g_idx.type(torch.int32).to(self.device)
             if self.use_optimum_format:
                 invperm = torch.argsort(self.g_idx)
-                self.g_idx = invperm // self.groupsize
+                self.g_idx = invperm // self.group_size
                 self.g_idx = self.g_idx.type(torch.int32).to(self.device)
         assert scale.shape == self.scales.shape, "Scale shape is mismatched."
         self.scales = scale.type(self.float_type).to(self.device)
         if not self.use_optimum_format and self.compression_dim == 0:
-            int_weight = int_weight.T
-            self.qweight = self.qweight.T
+            int_weight = int_weight.t_().contiguous()
+            self.qweight = self.qweight.t_().contiguous()
         origin_shape = int_weight.shape
         target_shape = self.qweight.shape
         assert origin_shape[0] == target_shape[0], "output channels mismatch, please check."
@@ -307,15 +309,15 @@ class WeightOnlyLinear(torch.nn.Module):
                 tmp[:, e] = tmp[:, e] << (self.bits * e)
                 self.qweight[:, j] |= tmp[:, e]
         if not self.use_optimum_format and self.compression_dim == 0:
-            self.qweight = self.qweight.T
+            self.qweight = self.qweight.t_().contiguous()
 
         if zp is not None:
             zp = zp.to(self.device)
             if self.use_optimum_format:
                 zp -= 1
             if self.use_optimum_format or self.compression_dim == 0:
-                zp = zp.T
-                self.qzeros = self.qzeros.T
+                zp = zp.t_().contiguous()
+                self.qzeros = self.qzeros.t_().contiguous()
             assert hasattr(self, "qzeros"), "zp is not set when initializing."
             target_shape = self.qzeros.shape
             for j in range(target_shape[1]):
@@ -327,22 +329,22 @@ class WeightOnlyLinear(torch.nn.Module):
                     tmp[:, e] = tmp[:, e] << (self.bits * e)
                     self.qzeros[:, j] |= tmp[:, e]
             if self.use_optimum_format or self.compression_dim == 0:
-                self.qzeros = self.qzeros.T
+                self.qzeros = self.qzeros.t_().contiguous()
         if self.use_optimum_format:
-            self.scales = self.scales.T
-            self.qweight = self.qweight.T
-            self.qzeros = self.qzeros.T
+            self.scales = self.scales.t_().contiguous()
+            self.qweight = self.qweight.t_().contiguous()
+            self.qzeros = self.qzeros.t_().contiguous()
 
     def recover(self):
         logger.debug(f"Recovering {self} weight")
-        scales = self.scales.T if self.use_optimum_format else self.scales
-        qweight = self.qweight.T if self.use_optimum_format else self.qweight
+        scales = self.scales.t_().contiguous() if self.use_optimum_format else self.scales
+        qweight = self.qweight.t_().contiguous() if self.use_optimum_format else self.qweight
 
         device = scales.device
         fp32_weight = torch.zeros(self.out_features, self.in_features, dtype=self.float_type).to(device)
         if self.g_idx is None:
             # used for recovering fp32_weight
-            self.g_idx = torch.tensor([i // self.groupsize for i in range(self.in_features)], dtype=torch.int32)
+            self.g_idx = torch.tensor([i // self.group_size for i in range(self.in_features)], dtype=torch.int32)
         mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(device)
         if hasattr(self, "qzeros"):
             weight_dtype = torch.uint8
@@ -351,8 +353,8 @@ class WeightOnlyLinear(torch.nn.Module):
         # unpack weight
         weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype).to(device)
         if not self.use_optimum_format and self.compression_dim == 0:
-            weight = weight.T
-            qweight = qweight.T
+            weight = weight.t_().contiguous()
+            qweight = qweight.t_().contiguous()
         origin_shape = weight.shape
         target_shape = qweight.shape
         for j in range(target_shape[1]):
@@ -367,7 +369,7 @@ class WeightOnlyLinear(torch.nn.Module):
                     tmp &= mask  # remove sign bit
                 weight[:, index] = tmp.type(weight_dtype)
         if not self.use_optimum_format and self.compression_dim == 0:
-            weight = weight.T
+            weight = weight.t_().contiguous()
         if "int" not in self.dtype:
             new_weight = torch.zeros(self.out_features, self.in_features).to(device)
             for k, v in self.int2float_mapping.items():
@@ -377,10 +379,10 @@ class WeightOnlyLinear(torch.nn.Module):
         if hasattr(self, "qzeros"):
             zp_dtype = self.compression_dtype  # to avoid overflow when weight-zp
             zp = torch.zeros(scales.shape, dtype=zp_dtype).to(device)
-            qzeros = self.qzeros.T if self.use_optimum_format else self.qzeros
+            qzeros = self.qzeros.t_().contiguous() if self.use_optimum_format else self.qzeros
             if self.use_optimum_format or self.compression_dim == 0:
-                zp = zp.T
-                qzeros = qzeros.T
+                zp = zp.t_().contiguous()
+                qzeros = qzeros.t_().contiguous()
             origin_shape = zp.shape
             target_shape = qzeros.shape
             for j in range(target_shape[1]):
@@ -394,7 +396,7 @@ class WeightOnlyLinear(torch.nn.Module):
                     tmp &= mask
                     zp[:, index] = tmp.type(zp_dtype)
             if self.use_optimum_format or self.compression_dim == 0:
-                zp = zp.T
+                zp = zp.t_().contiguous()
             if self.use_optimum_format:
                 # zp -= 1 may cause zp == -1, after recover it becomes 2**self.bits - 1
                 zp += 1
@@ -409,12 +411,13 @@ class WeightOnlyLinear(torch.nn.Module):
         return fp32_weight
 
     def forward(self, input):
-        weight = self.recover()
-        device = self.scales.device
-        if weight.dtype == torch.float16 and device.type == "cpu":
-            weight = weight.float()
-            self.bias = self.bias.float() if self.bias is not None else None
-        if level == DEBUG:
+        if not hasattr(self, "weight"):
+            weight = self.recover()
+            device = self.scales.device
+            if weight.dtype == torch.float16 and device.type == "cpu":
+                weight = weight.float()
+                self.bias = self.bias.float() if self.bias is not None else None
+        if True:  # keep reusing self.weight due to recover is too slow.
             if not hasattr(self, "weight"):
                 self.weight = weight
             input = input.type(self.weight.dtype)
@@ -429,7 +432,7 @@ class WeightOnlyLinear(torch.nn.Module):
             self.in_features,
             self.out_features,
             self.bits,
-            self.groupsize,
+            self.group_size,
             self.bias is not None,
         )
         if self.use_optimum_format:
@@ -454,7 +457,7 @@ class FakeAffineTensorQuantFunction(Function):
         Returns:
             outputs: A Tensor of type output_dtype
         """
-        return quant_weight(inputs, num_bits, group_size, scheme)
+        return quant_tensor(inputs, num_bits, group_size, scheme)
 
     @staticmethod
     def backward(ctx, grad_outputs):

@@ -2599,7 +2599,8 @@ unify_op_type_mapping_ipex = {
     "<class 'torch.nn.modules.conv.Conv2d'>": "Conv2d",
     "<class 'torch.nn.modules.conv.Conv3d'>": "Conv3d",
     "<class 'torch.nn.modules.activation.ReLU'>": "ReLU",
-    "<method 'add' of 'torch._C._TensorBase' objects>": "add",
+    "<method 'add' of 'torch._C._TensorBase' objects>": "add",  # for IPEX < 2.2
+    "<method 'add' of 'torch._C.TensorBase' objects>": "add",  # for IPEX >= 2.2
     "<class 'torch.nn.modules.pooling.AdaptiveAvgPool2d'>": "AdaptiveAvgPool2d",
     "Linear_Relu": "Linear",
     "<class 'torch.nn.modules.linear.Linear'>": "Linear",
@@ -4708,6 +4709,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     "percdamp": self.recipes["gptq_args"].get("percdamp", 0.01),
                     "act_order": self.recipes["gptq_args"].get("act_order", False),
                     "block_size": self.recipes["gptq_args"].get("block_size", True),
+                    "static_groups": self.recipes["gptq_args"].get("static_groups", False),
                 }
         nsamples = self.recipes["gptq_args"].get("nsamples", 128)
         use_max_length = self.recipes["gptq_args"].get("use_max_length", False)
