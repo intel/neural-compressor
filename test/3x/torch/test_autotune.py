@@ -4,7 +4,6 @@ from functools import wraps
 import torch
 import transformers
 
-from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
 from neural_compressor.torch.quantization import RTNConfig, TuningConfig, autotune, get_all_config_set
 from neural_compressor.torch.utils import logger
 
@@ -79,7 +78,7 @@ from tqdm import tqdm
 from neural_compressor.torch.algorithms.weight_only.gptq import move_input_to_device
 
 
-def run_fn_for_gptq(model, dataloader_for_calibration, *args):
+def run_fn_for_gptq(model, dataloader_for_calibration, calibration_mode=False):
     logger.info("Collecting calibration inputs...")
     for batch in tqdm(dataloader_for_calibration):
         batch = move_input_to_device(batch, device=None)
@@ -92,7 +91,8 @@ def run_fn_for_gptq(model, dataloader_for_calibration, *args):
                 model(batch)
         except ValueError:
             pass
-    return
+    if not calibration_mode:
+        print("Accuracy: 1.0")  # demo the usage
 
 
 class TestAutoTune(unittest.TestCase):
@@ -154,38 +154,31 @@ class TestAutoTune(unittest.TestCase):
 
     @reset_tuning_target
     def test_autotune_get_config_set_api(self):
-        dataloader = GPTQLLMDataLoader()
+        for dataloader in [GPTQLLMDataLoader(), GPTQLLMDataLoaderList(), GPTQLLMDataLoaderDict()]:
+            model = get_gpt_j()
 
-        model = get_gpt_j()
-        input = torch.ones([1, 512], dtype=torch.long)
+            def eval_acc_fn(model) -> float:
+                return 1.0
 
-        dataloaderPreprocessor = DataloaderPreprocessor(
-            dataloader_original=dataloader, use_max_length=False, pad_max_length=512, nsamples=128
-        )
-        dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
+            def eval_perf_fn(model) -> float:
+                return 1.0
 
-        def eval_acc_fn(model) -> float:
-            return 1.0
-
-        def eval_perf_fn(model) -> float:
-            return 1.0
-
-        eval_fns = [
-            {"eval_fn": eval_acc_fn, "weight": 0.5, "name": "accuracy"},
-            {
-                "eval_fn": eval_perf_fn,
-                "weight": 0.5,
-            },
-        ]
-        custom_tune_config = TuningConfig(config_set=get_all_config_set(), max_trials=4)
-        best_model = autotune(
-            model=get_gpt_j(),
-            tune_config=custom_tune_config,
-            eval_fns=eval_fns,
-            run_fn=run_fn_for_gptq,
-            run_args=dataloader_for_calibration,
-        )
-        self.assertIsNotNone(best_model)
+            eval_fns = [
+                {"eval_fn": eval_acc_fn, "weight": 0.5, "name": "accuracy"},
+                {
+                    "eval_fn": eval_perf_fn,
+                    "weight": 0.5,
+                },
+            ]
+            custom_tune_config = TuningConfig(config_set=get_all_config_set(), max_trials=4)
+            best_model = autotune(
+                model=model,
+                tune_config=custom_tune_config,
+                eval_fns=eval_fns,
+                run_fn=run_fn_for_gptq,
+                run_args=(dataloader, True),  # run_args should be a tuple
+            )
+            self.assertIsNotNone(best_model)
 
     @reset_tuning_target
     def test_autotune_not_eval_func(self):

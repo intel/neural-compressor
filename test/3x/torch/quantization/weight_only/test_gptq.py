@@ -100,7 +100,7 @@ class TestGPTQQuant:
     #         use_layer_wise=True,
     #     )
     #     model = quantize(model, quant_config, run_fn=run_fn)
-    # TODO(Xin): not implemented
+    # TODO: (Xin) not implemented
 
     @pytest.mark.parametrize("dtype", ["int4", "nf4", "fp4"])
     def test_export_compressed_model(self, dtype):
@@ -147,7 +147,7 @@ class TestGPTQQuant:
     @pytest.mark.parametrize("dtype", ["nf4", "int4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
     @pytest.mark.parametrize("double_quant_group_size", [8, 256])
-    # TODO(Xin): to implement
+    # TODO: (Xin) to implement
     # @pytest.mark.parametrize('export_compressed_model', [False, True])
     def test_double_quant_params(self, dtype, double_quant_bits, double_quant_group_size):
         model = copy.deepcopy(self.tiny_gptj)

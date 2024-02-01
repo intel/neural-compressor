@@ -273,10 +273,15 @@ class GPTQConfig(BaseConfig):
             double_quant_bits (int): Number of bits used to represent double_quant scale. Default is 4.
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric. Default is True.
             double_quant_group_size (int): Size of double_quant groups. Default is 32.
-            act_order (bool): Whether to sort Hessian's diagonal values to rearrange channel-wise quantization order. Default is False.
-            percdamp (float): Percentage of Hessian's diagonal values' average, which will be added to Hessian's diagonal to increase numerical stability. Default is 0.01.
-            block_size (int): Execute GPTQ quantization per block, block shape = [C_out, block_size]. Default is 128.
-            static_groups (bool): Whether to calculate group wise quantization parameters in advance. This option mitigate actorder's extra computational requirements. Default is False.
+            act_order (bool): Whether to sort Hessian's diagonal values to rearrange channel-wise
+                              quantization order. Default is False.
+            percdamp (float): Percentage of Hessian's diagonal values' average, which will be added to
+                              Hessian's diagonal to increase numerical stability. Default is 0.01.
+            block_size (int): Execute GPTQ quantization per block, block shape = [C_out, block_size].
+                              Default is 128.
+            static_groups (bool): Whether to calculate group wise quantization parameters in advance.
+                                  This option mitigate actorder's extra computational requirements.
+                                  Default is False.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype

@@ -28,7 +28,7 @@ from transformers.models.auto.auto_factory import _BaseAutoModelClass
 
 from neural_compressor.common import options
 
-from .torch_load import load
+from .load import load
 
 LWQ_WORKSPACE = os.path.join(options.workspace, "layer_wise_tmp")
 

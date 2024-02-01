@@ -27,7 +27,7 @@ DOUBLE_QUANT_CONFIGS = {
         "double_quant_use_sym": False,
         "double_quant_group_size": 256,
     },
-    # TODO(Xin): current implementation is not the same as GGML.
+    # TODO: (Xin) current implementation is not the same as GGML.
     # "GGML_TYPE_Q4_K": {
     #     "dtype": "int",
     #     "bits": 4,
