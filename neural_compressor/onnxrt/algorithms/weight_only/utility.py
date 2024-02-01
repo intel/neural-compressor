@@ -18,8 +18,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 import struct
-
 import numpy as np
 import onnx
 import onnxruntime as ort
@@ -181,3 +181,141 @@ def make_matmul_weight_only_node(
         **kwargs,
     )
     return matmul_weight_only_node, new_inits
+
+
+def prepare_inputs(model, data_reader, providers):
+    """Prepare inputs for weight only quantization.
+
+    Args:
+        model (ModelProto or ONNXModel): onnx model.
+        data_reader (CalibrationDataReader): a calibration data reader.
+        providers (list): providers to use.
+
+    Returns:
+        inputs: prepared inputs.
+        so: session options
+    """
+    from importlib.util import find_spec
+
+    from neural_compressor.adaptor.ox_utils.util import to_numpy
+
+    so = ort.SessionOptions()
+    if sys.version_info < (3, 11) and find_spec("onnxruntime_extensions"):  # pragma: no cover
+        from onnxruntime_extensions import get_library_path
+
+        so.register_custom_ops_library(get_library_path())
+    if model.is_large_model:
+        onnx.save_model(
+            model.model,
+            model.model_path + "_augment.onnx",
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            convert_attribute=False,
+        )
+
+    session = (
+        ort.InferenceSession(model.model.SerializeToString(), so, providers=providers)
+        if not model.is_large_model
+        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=providers)
+    )
+    inputs_names = [i.name for i in session.get_inputs()]
+    del session
+
+    inputs_list = []
+    while True:
+        inputs = data_reader.get_next()
+        if not inputs:
+            break
+        inputs_list.append(inputs)
+    return inputs_list, so
+
+
+def pad_tensor(weight, group_size, k_blocks):
+    """Pad tensor rowi so that it can be is divisible by group_size.
+
+    Args:
+        weight (array): weight
+        group_size (int): how many elements share one scale/zp
+        k_blocks (int): the number of block
+
+    Returns:
+        weight: paded weight
+    """
+    if group_size == -1:
+        return weight
+
+    org_w_shape = weight.shape
+    padded_rows = k_blocks * group_size
+    pad_len = padded_rows - org_w_shape[0]
+
+    if pad_len > 0:
+        weight = np.pad(weight, ((0, pad_len), (0, 0)), "constant")
+
+    return weight
+
+
+def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ratio=1.0):
+    """Quantize tensor per group.
+
+    Args:
+        data : input weight
+        num_bits (int, optional): num_bits. Defaults to 4.
+        group_size (int, optional): how many elements share one scale/zp. Defaults to 4.
+        scheme (str, optional): quantization scheme. Defaults to "asym".
+        dtype (str, optional): data type. Defaults to "int".
+        ratio (float, optional): percentile of clip. Defaults to 1.0.
+
+    Returns:
+        output: quantized weight
+        scale: scale
+        zero_point: zero point
+    """
+    data = np.reshape(data, (-1, group_size))
+    if scheme == "asym" or dtype == "uint":
+        maxq = 2**num_bits - 1
+        minq = 0
+    elif scheme == "sym":
+        maxq = 2 ** (num_bits - 1) - 1 if num_bits != 1 else 0
+        minq = -(2 ** (num_bits - 1)) if num_bits != 1 else -1
+
+    rmin = np.min(data, axis=1, keepdims=True) * ratio
+    rmax = np.max(data, axis=1, keepdims=True) * ratio
+    if scheme == "sym":
+        max_range = np.maximum(np.abs(rmin), np.abs(rmax))
+        scale = np.ones(rmax.shape)
+        scale[max_range > 0] = np.array(
+            [float(i) / (maxq - minq) for i in (max_range[max_range > 0] * 2.0).flatten().tolist()]
+        )
+        zero_point = (
+            np.zeros(scale.shape) if dtype == "int" else np.ones(rmax.shape, dtype="uint8") * (1 << (num_bits - 1))
+        )
+    else:
+        scale = np.ones(rmax.shape)
+        scale[rmin != rmax] = np.array(
+            [float(i) / (maxq - minq) for i in (rmax - rmin)[rmin != rmax].flatten().tolist()]
+        )
+        zero_point = (
+            ((np.zeros(scale.shape) - rmin) / scale).round()
+            if dtype == "int"
+            else np.maximum(0, np.minimum(maxq, ((np.zeros(scale.shape) - rmin) / scale).round())).astype("uint8")
+        )
+    return np.clip((data / scale + zero_point).round(), minq, maxq), scale, zero_point
+
+
+def qdq_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ratio=1.0):
+    """Quant dequant tensor per group.
+
+    Args:
+        data : input weight
+        num_bits (int, optional): num_bits. Defaults to 4.
+        group_size (int, optional): how many elements share one scale/zp. Defaults to 4.
+        scheme (str, optional): quantization scheme. Defaults to "asym".
+        dtype (str, optional): data type. Defaults to "int".
+        ratio (float, optional): percentile of clip. Defaults to 1.0.
+
+    Returns:
+        output: quant-dequant weight
+    """
+    org_shape = data.shape
+    weight, scale, zp = quant_tensor(data, num_bits, group_size, scheme, dtype, ratio)
+    return np.reshape(scale * (weight - zp), org_shape)

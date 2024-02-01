@@ -21,14 +21,13 @@
 
 import os
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
+from typing import Union
 
 import numpy as np
 import onnx
 import onnxruntime as ort
 from packaging.version import Version
 
-from neural_compressor.onnxrt.algorithms.weight_only.utility import make_matmul_weight_only_node
 from neural_compressor.onnxrt.quantization.config import RTNConfig
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.onnxrt.utils.utility import (
@@ -37,114 +36,29 @@ from neural_compressor.onnxrt.utils.utility import (
     dtype_mapping,
     simple_progress_bar,
 )
-
-
-def pad_tensor(weight, group_size, k_blocks):
-    """Pad tensor rowi so that it can be is divisible by group_size.
-
-    Args:
-        weight (array): weight
-        group_size (int): how many elements share one scale/zp
-        k_blocks (int): the number of block
-
-    Returns:
-        weight: paded weight
-    """
-    if group_size == -1:
-        return weight
-
-    org_w_shape = weight.shape
-    padded_rows = k_blocks * group_size
-    pad_len = padded_rows - org_w_shape[0]
-
-    if pad_len > 0:
-        weight = np.pad(weight, ((0, pad_len), (0, 0)), "constant")
-
-    return weight
-
-
-def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ratio=1.0):
-    """Quantize tensor per group.
-
-    Args:
-        data : input weight
-        num_bits (int, optional): num_bits. Defaults to 4.
-        group_size (int, optional): how many elements share one scale/zp. Defaults to 4.
-        scheme (str, optional): quantization scheme. Defaults to "asym".
-        dtype (str, optional): data type. Defaults to "int".
-        ratio (float, optional): percentile of clip. Defaults to 1.0.
-
-    Returns:
-        output: quantized weight
-        scale: scale
-        zero_point: zero point
-    """
-    data = np.reshape(data, (-1, group_size))
-    if scheme == "asym" or dtype == "uint":
-        maxq = 2**num_bits - 1
-        minq = 0
-    elif scheme == "sym":
-        maxq = 2 ** (num_bits - 1) - 1 if num_bits != 1 else 0
-        minq = -(2 ** (num_bits - 1)) if num_bits != 1 else -1
-
-    rmin = np.min(data, axis=1, keepdims=True) * ratio
-    rmax = np.max(data, axis=1, keepdims=True) * ratio
-    if scheme == "sym":
-        max_range = np.maximum(np.abs(rmin), np.abs(rmax))
-        scale = np.ones(rmax.shape)
-        scale[max_range > 0] = np.array(
-            [float(i) / (maxq - minq) for i in (max_range[max_range > 0] * 2.0).flatten().tolist()]
-        )
-        zero_point = (
-            np.zeros(scale.shape) if dtype == "int" else np.ones(rmax.shape, dtype="uint8") * (1 << (num_bits - 1))
-        )
-    else:
-        scale = np.ones(rmax.shape)
-        scale[rmin != rmax] = np.array(
-            [float(i) / (maxq - minq) for i in (rmax - rmin)[rmin != rmax].flatten().tolist()]
-        )
-        zero_point = (
-            ((np.zeros(scale.shape) - rmin) / scale).round()
-            if dtype == "int"
-            else np.maximum(0, np.minimum(maxq, ((np.zeros(scale.shape) - rmin) / scale).round())).astype("uint8")
-        )
-    return np.clip((data / scale + zero_point).round(), minq, maxq), scale, zero_point
-
-
-def qdq_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ratio=1.0):
-    """Quant dequant tensor per group.
-
-    Args:
-        data : input weight
-        num_bits (int, optional): num_bits. Defaults to 4.
-        group_size (int, optional): how many elements share one scale/zp. Defaults to 4.
-        scheme (str, optional): quantization scheme. Defaults to "asym".
-        dtype (str, optional): data type. Defaults to "int".
-        ratio (float, optional): percentile of clip. Defaults to 1.0.
-
-    Returns:
-        output: quant-dequant weight
-    """
-    org_shape = data.shape
-    weight, scale, zp = quant_tensor(data, num_bits, group_size, scheme, dtype, ratio)
-    return np.reshape(scale * (weight - zp), org_shape)
+from neural_compressor.onnxrt.algorithms.weight_only.utility import (
+    make_matmul_weight_only_node,
+    pad_tensor,
+    quant_tensor,
+    qdq_tensor,
+)
 
 
 def rtn_quantize(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
-    weight_config: Optional[Dict[tuple, dict]] = {},
-    num_bits: Optional[int] = 4,
-    group_size: Optional[int] = 32,
-    scheme: Optional[str] = "asym",
-    ratios: Optional[int] = {},
-    accuracy_level: Optional[int] = 0,
-    providers: Optional[list] = ["CPUExecutionProvider"],
+    weight_config: dict = {},
+    num_bits: int = 4,
+    group_size: int = 32,
+    scheme: str = "asym",
+    ratios: dict = {},
+    accuracy_level: int = 0,
+    providers: list = ["CPUExecutionProvider"],
 ) -> onnx.ModelProto:
     """Quantize the model with round to nearst method.
 
     Args:
         model (Union[onnx.ModelProto, ONNXModel, Path, str]): onnx model
-        weight_config (Optional[Dict[tuple, dict]], optional): quantization config
+        weight_config (dict, optional): quantization config
             For example,
             weight_config = {
                 '(fc2, "MatMul")':
@@ -156,18 +70,18 @@ def rtn_quantize(
                         'accuracy_level': 0
                     }
             }. Defaults to {}.
-        num_bits (Optional[int], optional): num_bits. Defaults to 4.
-        group_size (Optional[int], optional): how many elements share one scale/zp. Defaults to 32.
-        scheme (Optional[str], optional): sym or asym. Defaults to "asym".
-        ratios (Optional[int], optional): percentile of clip. Defaults to {}.
-        accuracy_level (Optional[int], optional):
+        num_bits (int, optional): number of bits used to represent weights. Defaults to 4.
+        group_size (int, optional): size of weight groups. Defaults to 32.
+        scheme (str, optional): indicates whether weights are symmetric. Defaults to "asym".
+        ratios (dict, optional): percentile of clip. Defaults to {}.
+        accuracy_level (int, optional):
             accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
             2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
             4 (int8 compute type of jblas kernel). Defaults to 0.
-        providers (Optional[list], optional): providers to use. Defaults to ["CPUExecutionProvider"].
+        providers (list, optional): providers to use. Defaults to ["CPUExecutionProvider"].
 
     Returns:
-        onnx.ModelProto: quantized ONNXModel
+        onnx.ModelProto: quantized onnx model.
     """
     if not isinstance(model, ONNXModel):
         model = ONNXModel(model)
@@ -257,10 +171,27 @@ def rtn_quantize(
     model.add_nodes(new_nodes)
     model.remove_nodes(remove_nodes)
     model.topological_sort()
+
+    # reload external data to prevent external data file path errors
+    if model.is_large_model:
+        from onnx.external_data_helper import load_external_data_for_model
+
+        load_external_data_for_model(model.model, os.path.split(model.model_path)[0])
+
     return model.model
 
 
-def apply_rtn_on_model(model: onnx.ModelProto, quant_config: Dict[Tuple[str, callable], RTNConfig]) -> onnx.ModelProto:
+def apply_rtn_on_model(model: onnx.ModelProto,
+                       quant_config: dict) -> onnx.ModelProto:
+    """Apply RTN on onnx model.
+
+    Args:
+        model (onnx.ModelProto): onnx model.
+        quant_config (dict): quantization config.
+
+    Returns:
+        onnx.ModelProto: quantized onnx model.
+    """
     if "providers" in quant_config:
         providers = quant_config.pop("providers")
 

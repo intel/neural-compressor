@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Union
 
 import onnx
 
@@ -32,15 +32,17 @@ def need_apply(quant_config: BaseConfig, algo_name):
 
 # only for internal usage now
 def _quantize(
-    model_input: Tuple[Path, str],
+    model_input: Union[Path, str],
     quant_config: BaseConfig,
-    calibration_data_reader: Optional[CalibrationDataReader] = None,
+    calibration_data_reader: CalibrationDataReader = None,
 ) -> onnx.ModelProto:
     """The main entry to quantize a model.
 
     Args:
-        model_input (Tuple[Path, str]): Path or str to the model to quantize.
+        model_input (Union[Path, str]): Path or str to the model to quantize.
         quant_config (BaseConfig): a quantization configuration.
+        calibration_data_reader (CalibrationDataReader, optional): dataloader for calibration.
+            Defaults to None.
 
     Returns:
         onnx.ModelProto: The quantized model.

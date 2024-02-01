@@ -31,6 +31,7 @@ RTN = "rtn"
 STATIC_QUANT = "static_quant"
 SMOOTH_QUANT = "smooth_quant"
 GPTQ = "gptq"
+AWQ = "awq"
 FP8_QUANT = "fp8_quant"
 
 # options

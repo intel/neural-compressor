@@ -23,6 +23,8 @@ import onnx
 import onnx.numpy_helper as numpy_helper
 import onnxruntime
 
+from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
+from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
@@ -33,21 +35,21 @@ class Calibrator:
 
     def __init__(
         self,
-        model,
-        dataloader,
-        dump_op_types,
-        iterations=[],
-        providers=["CPUExecutionProvider"],
+        model: ONNXModel,
+        dataloader: CalibrationDataReader,
+        dump_op_types: list,
+        iterations: list = [],
+        providers: list =["CPUExecutionProvider"],
         **kwargs,
     ):
-        """Initialization.
+        """Initialize a Calibrator to dump information.
 
         Args:
-            model (object): ONNXModel object
-            dataloader (object): user implemented object to read in and preprocess calibration dataset
-            dump_op_types (list): operator types to be calibrated and quantized
+            model (ONNXModel): ONNXModel object.
+            dataloader (CalibrationDataReader): user implemented object to read in and preprocess calibration dataset.
+            dump_op_types (list): operator types to be calibrated and quantized.
             iterations (list, optional): tensor of which iteration will be collected. Defaults to [].
-            providers (list, optional): execution provider for onnxruntime. Defaults to ['CPUExecutionProvider'].
+            providers (list, optional): execution provider for onnxruntime. Defaults to ["CPUExecutionProvider"].
         """
         self.model_wrapper = model
         self.dataloader = dataloader
@@ -87,17 +89,18 @@ class Calibrator:
                     return True
         return False
 
-    def _get_input_tensor_of_ops(self, op_types=["MatMul", "Gemm", "Conv", "FusedConv"]):
+    def _get_input_tensor_of_ops(self, op_types: list = ["MatMul", "Gemm", "Conv", "FusedConv"]):
         """Traverse the graph and get all the data tensors flowing into layers of {op_types}.
 
         Group conv is excluded.
         # TODO: the tensors could be set/filtered in configuration.
 
         Args:
-            op_types: The op types whose input tensor will be dumped
+            op_types (list, optional): The op types whose input tensor will be dumped.
+                Defaults to ["MatMul", "Gemm", "Conv", "FusedConv"].
 
         Returns:
-            A dict of dumped tensor: node info
+            dict: A dict of dumped tensor to node info
         """
         tensors_to_node = {}
         initializers = {i.name: i for i in self.model_wrapper.initializer()}
@@ -200,14 +203,15 @@ class Calibrator:
             idx += 1
         return output_dicts
 
-    def calib_smooth(self, op_types, percentile=99.999):
+    def calib_smooth(self, op_types, percentile: float = 99.999):
         """Smooth model calibration.
 
         Mainly get the max info per channel of input tensors.
 
         Args:
-            percentile:Percentile of calibration to remove outliers
-            op_types: The op types whose input tensor will be dumped
+            op_types (_type_): The op types whose input tensor will be dumped.
+            percentile (float, optional): Percentile of calibration to remove outliers.
+                Defaults to 99.999.
 
         Returns:
             max_vals_per_channel: max values per channel of input tensors

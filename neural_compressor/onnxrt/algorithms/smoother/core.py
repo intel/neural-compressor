@@ -18,6 +18,7 @@
 
 import copy
 import os
+from typing import Union
 
 import numpy as np
 import onnx
@@ -138,29 +139,36 @@ class Smoother:
 
     def transform(
         self,
-        alpha=0.5,
-        folding=True,
-        percentile=99.999,
-        op_types=["Gemm", "Conv", "MatMul", "FusedConv"],
-        scales_per_op=True,
-        calib_iter=100,
-        auto_alpha_args={"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
+        alpha: Union[float, str] = 0.5,
+        folding: bool = True,
+        percentile: float = 99.999,
+        op_types: list = ["Gemm", "Conv", "MatMul", "FusedConv"],
+        scales_per_op: bool = True,
+        calib_iter: int = 100,
+        auto_alpha_args: dict = {"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
         *args,
         **kwargs
     ):
         """The main entry of smooth quant.
 
         Args:
-            alpha (float or str): alpha value to balance the quantization difficulty of activation and weight.
-            folding (bool): whether fold those foldable Mul which are inserted for smooth quant
-            percentile (float): percentile of calibration to remove outliers
-            op_types (list): the op type to be smooth quantized
-            scales_per_op (bool): True, each op will have an individual scale, mainlyfor accuracy
-                                  False, ops with the same input will share a scale, mainly for performance
-            calib_iter (int): iteration num for calibration
+            alpha (float, optional): alpha value to balance the quantization difficulty of activation and weight.
+                Defaults to 0.5.
+            folding (bool, optional): whether fold those foldable Mul which are inserted for smooth quant.
+                Defaults to True.
+            percentile (float, optional): percentile of calibration to remove outliers.
+                Defaults to 99.999.
+            op_types (list, optional): the op type to be smooth quantized.
+                Defaults to ["Gemm", "Conv", "MatMul", "FusedConv"].
+            scales_per_op (bool, optional): True, each op will have an individual scale, mainlyfor accuracy
+                False, ops with the same input will share a scale, mainly for performance.
+                Defaults to True.
+            calib_iter (int, optional): iteration num for calibration. Defaults to 100.
+            auto_alpha_args (_type_, optional): alpha args for auto smooth.
+                Defaults to {"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"}.
 
         Returns:
-            A FP32 model with the same architecture as the orig model but with different weight which will be
+            onnx.ModelProto: A FP32 model with the same architecture as the orig model but with different weight which will be
             benefit to quantization
         """
         self.scales_per_op = scales_per_op
