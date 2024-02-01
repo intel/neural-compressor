@@ -435,9 +435,9 @@ class ONNXRTAugment:
 
             initializer_tensor = numpy_helper.to_array(
                 initializer_tensor,
-                base_dir=os.path.dirname(self.model_wrapper.model_path)
-                if self.model_wrapper.model_path is not None
-                else "",
+                base_dir=(
+                    os.path.dirname(self.model_wrapper.model_path) if self.model_wrapper.model_path is not None else ""
+                ),
             )
             calibrator = CALIBRATOR["minmax"]()  # use minmax method to calibrate initializer tensors
             calibrator.collect(initializer_tensor)
@@ -876,8 +876,10 @@ class ONNXRTAugment:
             for item in val:
                 shape_infos[item[1][1]] = numpy_helper.to_array(
                     self.model_wrapper.get_initializer(item[1][1]),
-                    base_dir=os.path.dirname(self.model_wrapper.model_path)
-                    if self.model_wrapper.model_path is not None
-                    else "",
+                    base_dir=(
+                        os.path.dirname(self.model_wrapper.model_path)
+                        if self.model_wrapper.model_path is not None
+                        else ""
+                    ),
                 ).shape
         return max_vals_per_channel, shape_infos, tensors_to_node

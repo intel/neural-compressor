@@ -1,4 +1,5 @@
 """Intel® Neural Compressor: An open-source Python library supporting common model."""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #

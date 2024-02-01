@@ -1,4 +1,5 @@
 """Tile pattern classes."""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
