@@ -1,4 +1,5 @@
 """Block mask pruner."""
+
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #

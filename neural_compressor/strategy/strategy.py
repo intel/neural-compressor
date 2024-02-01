@@ -1915,15 +1915,21 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         output_data = [
             [
                 info_type,
-                "{:.4f} ".format(self.tune_data[info_type][0])
-                if not isinstance(self.tune_data[info_type][0], str)
-                else self.tune_data[info_type][0],
-                "{:.4f} ".format(self.tune_data[info_type][1])
-                if not isinstance(self.tune_data[info_type][1], str)
-                else self.tune_data[info_type][1],
-                "{:.4f} ".format(self.tune_data[info_type][2])
-                if not isinstance(self.tune_data[info_type][2], str)
-                else self.tune_data[info_type][2],
+                (
+                    "{:.4f} ".format(self.tune_data[info_type][0])
+                    if not isinstance(self.tune_data[info_type][0], str)
+                    else self.tune_data[info_type][0]
+                ),
+                (
+                    "{:.4f} ".format(self.tune_data[info_type][1])
+                    if not isinstance(self.tune_data[info_type][1], str)
+                    else self.tune_data[info_type][1]
+                ),
+                (
+                    "{:.4f} ".format(self.tune_data[info_type][2])
+                    if not isinstance(self.tune_data[info_type][2], str)
+                    else self.tune_data[info_type][2]
+                ),
             ]
             for info_type in self.tune_data.keys()
             if info_type != "baseline"

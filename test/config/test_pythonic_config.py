@@ -1,4 +1,5 @@
 """Tests for pythonic config file."""
+
 import copy
 import os
 import shutil

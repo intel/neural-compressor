@@ -1,4 +1,5 @@
 """Tests for 1.x config file."""
+
 import os
 import unittest
 

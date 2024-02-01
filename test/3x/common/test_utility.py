@@ -6,6 +6,7 @@
 These tests aim to assess the fundamental functionalities of common utils and enhance code coverage.
 All tests will be included for each framework CI.
 """
+
 import unittest
 
 from neural_compressor.common import options
