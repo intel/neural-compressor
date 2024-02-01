@@ -22,7 +22,7 @@ sys.path.insert(0, hqq_offical_path)
 
 from collections import namedtuple
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 
 from typing_extensions import TypeAlias
 
