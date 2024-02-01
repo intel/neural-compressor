@@ -48,7 +48,6 @@ def optimize_weights_proximal_legacy(
         dtype = torch.float16
     else:
         dtype = torch.float32
-    print(f"[optimize_weights_proximal_legacy] dtype: {dtype}, accelerator: {auto_acceleartor.name}")
     W_f = tensor.to(dtype).to(device)
     scale = scale.to(dtype).to(device)
     zero = zero.to(dtype).to(device)
