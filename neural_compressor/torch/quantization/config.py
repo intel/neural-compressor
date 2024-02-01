@@ -342,6 +342,7 @@ class AWQConfig(BaseConfig):
         # AWQ params
         "enable_auto_scale",
         "folding",
+        "nsamples",
     ]
     name = AWQ
 
@@ -362,6 +363,7 @@ class AWQConfig(BaseConfig):
         double_quant_group_size: int = 256,
         enable_auto_scale: bool = True,
         folding: bool = False,
+        nsamples: int = 128,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AWQ weight-only quantization config.
@@ -399,14 +401,8 @@ class AWQConfig(BaseConfig):
         self.double_quant_group_size = double_quant_group_size
         self.enable_auto_scale = enable_auto_scale
         self.folding = folding
+        self.nsamples = nsamples
         self._post_init()
-
-    def to_dict(self):
-        return super().to_dict(params_list=self.params_list, operator2str=operator2str)
-
-    @classmethod
-    def from_dict(cls, config_dict):
-        return super(AWQConfig, cls).from_dict(config_dict=config_dict, str2operator=str2operator)
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
@@ -414,9 +410,7 @@ class AWQConfig(BaseConfig):
         # TODO(Yi)
         linear_awq_config = AWQConfig()
         operators = [torch.nn.Linear, torch.nn.functional.linear]
-        supported_configs.append(
-            OperatorConfig(config=linear_awq_config, operators=operators, backend=Backend.DEFAULT)
-        )
+        supported_configs.append(OperatorConfig(config=linear_awq_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
@@ -430,9 +424,10 @@ class AWQConfig(BaseConfig):
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
-
-# TODO(Yi) run `register_supported_configs` for all registered config.
-AWQConfig.register_supported_configs()
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "AWQConfig", List["AWQConfig"]]:
+        # TODO fwk owner needs to update it.
+        return AWQConfig(weight_bits=[4, 6])
 
 
 def get_default_awq_config() -> AWQConfig:
