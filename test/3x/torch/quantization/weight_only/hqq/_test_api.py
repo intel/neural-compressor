@@ -38,6 +38,6 @@ encoded_input.to("cuda:0")
 out_qdq = q_model(**encoded_input)
 logger.info(out_qdq)
 
-from .eval_wiki2 import eval_wikitext2
+from eval_wiki2 import eval_wikitext2
 
 eval_wikitext2(q_model, tokenizer, verbose=True)

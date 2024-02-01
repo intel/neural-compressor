@@ -14,7 +14,7 @@
 import torch
 
 from neural_compressor.common import logger
-from neural_compressor.torch.algorithms.weight_only.qtensor import QTensor, QTensorMetaInfo
+from neural_compressor.torch.algorithms.weight_only.hqq.qtensor import QTensor, QTensorMetaInfo
 
 in_feats = 3
 out_feats = 4
