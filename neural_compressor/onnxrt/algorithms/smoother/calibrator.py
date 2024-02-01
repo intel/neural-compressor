@@ -29,6 +29,9 @@ from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
+__all__ = [
+    "Calibrator",
+]
 
 class Calibrator:
     """Dump information for smooth quant."""

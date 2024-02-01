@@ -42,6 +42,13 @@ from neural_compressor.onnxrt.algorithms.weight_only.utility import (
     quant_tensor,
 )
 
+__all__ = [
+    "gptq",
+    "gptq_quantize",
+    "apply_gptq_on_model",
+]
+
+
 def gptq(
     W,
     H,
@@ -390,7 +397,6 @@ def gptq_quantize(
         load_external_data_for_model(model.model, os.path.split(model.model_path)[0])
 
     return model.model
-
 
 def apply_gptq_on_model(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],

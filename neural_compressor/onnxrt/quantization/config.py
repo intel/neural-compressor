@@ -34,13 +34,26 @@ from neural_compressor.onnxrt.utils import PRIORITY_RTN, PRIORITY_GPTQ, PRIORITY
 
 logger = Logger().get_logger()
 
+__all__ = [
+    "FRAMEWORK_NAME",
+    "OperatorConfig",
+    "RTNConfig",
+    "get_default_rtn_config",
+    "GPTQConfig",
+    "get_default_gptq_config",
+    "AWQConfig",
+    "get_default_awq_config",
+    "SmoohQuantConfig",
+    "get_default_sq_config",
+]
+
 FRAMEWORK_NAME = "onnxrt"
 
 
 class OperatorConfig(NamedTuple):
     config: BaseConfig
-    operators: list
-    valid_func_list: list = []
+    operators: List[Union[str, Callable]]
+    valid_func_list: List[Callable] = []
 
 
 ######################## RNT Config ###############################
@@ -50,7 +63,7 @@ class OperatorConfig(NamedTuple):
 class RTNConfig(BaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
-    supported_configs: list = []
+    supported_configs: list[OperatorConfig] = []
     node_params_list: list = [
         "weight_dtype",
         "weight_bits",
@@ -72,7 +85,7 @@ class RTNConfig(BaseConfig):
         act_dtype: str = "fp32",
         accuracy_level: int = 0,
         providers: list = ["CPUExecutionProvider"],
-        white_list: list = DEFAULT_WHITE_LIST,
+        white_list: list[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST,
     ):
         """Init RTN weight-only quantization config.
 
@@ -106,7 +119,7 @@ class RTNConfig(BaseConfig):
         return result
 
     @classmethod
-    def register_supported_configs(cls) -> list:
+    def register_supported_configs(cls) -> list[OperatorConfig]:
         supported_configs = []
         linear_rtn_config = RTNConfig(
             weight_dtype=["int"],
@@ -119,7 +132,7 @@ class RTNConfig(BaseConfig):
         supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators))
         cls.supported_configs = supported_configs
 
-    def to_config_mapping(self, config_list: list = None, model_info: list = None):
+    def to_config_mapping(self, config_list: list[BaseConfig] = None, model_info: list = None):
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
@@ -175,7 +188,7 @@ def get_default_rtn_config() -> RTNConfig:
 class GPTQConfig(BaseConfig):
     """Config class for gptq weight-only quantization."""
 
-    supported_configs: list = []
+    supported_configs: list[OperatorConfig] = []
     node_params_list: list = [
         "weight_dtype",
         "weight_bits",
@@ -208,7 +221,7 @@ class GPTQConfig(BaseConfig):
         mse: bool = False,
         perchannel: bool = True,
         providers: list = ["CPUExecutionProvider"],
-        white_list: list = DEFAULT_WHITE_LIST,
+        white_list: list[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST,
     ):
         """Init GPTQ weight-only quantization config.
 
@@ -254,7 +267,7 @@ class GPTQConfig(BaseConfig):
         return result
 
     @classmethod
-    def register_supported_configs(cls) -> list:
+    def register_supported_configs(cls) -> list[OperatorConfig]:
         supported_configs = []
         linear_gptq_config = GPTQConfig(
             weight_dtype=["int"],
@@ -332,7 +345,7 @@ def get_default_gptq_config() -> GPTQConfig:
 class AWQConfig(BaseConfig):
     """Config class for awq weight-only quantization."""
 
-    supported_configs: list = []
+    supported_configs: list[OperatorConfig] = []
     node_params_list: list = [
         "weight_dtype",
         "weight_bits",
@@ -359,7 +372,7 @@ class AWQConfig(BaseConfig):
         enable_auto_scale: bool = True,
         enable_mse_search: bool = True,
         providers: list = ["CPUExecutionProvider"],
-        white_list: list = DEFAULT_WHITE_LIST,
+        white_list: list[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST,
     ):
         """Init AWQ weight-only quantization config.
 
@@ -399,7 +412,7 @@ class AWQConfig(BaseConfig):
         return result
 
     @classmethod
-    def register_supported_configs(cls) -> list:
+    def register_supported_configs(cls) -> list[OperatorConfig]:
         supported_configs = []
         linear_awq_config = AWQConfig(
             weight_dtype=["int"],
@@ -459,7 +472,6 @@ class AWQConfig(BaseConfig):
                           enable_mse_search=[True, False],)
 
 
-
 def get_default_awq_config() -> AWQConfig:
     """Generate the default awq config.
 
@@ -476,7 +488,7 @@ def get_default_awq_config() -> AWQConfig:
 class SmoohQuantConfig(BaseConfig, StaticQuantConfig):
     """Smooth quant quantization config."""
 
-    supported_configs: list = []
+    supported_configs: List[OperatorConfig] = []
     params_list: list = [
         # smooth parameters
         "alpha",
@@ -510,7 +522,7 @@ class SmoohQuantConfig(BaseConfig, StaticQuantConfig):
         scales_per_op: bool = True,
         auto_alpha_args: Dict = {"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
         providers: list = ["CPUExecutionProvider"],
-        white_list: list = DEFAULT_WHITE_LIST,
+        white_list: list[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST,
         **kwargs,
     ):
         """Init smooth quant config.
@@ -555,7 +567,7 @@ class SmoohQuantConfig(BaseConfig, StaticQuantConfig):
         self._post_init()
 
     @classmethod
-    def register_supported_configs(cls) -> list:
+    def register_supported_configs(cls) -> list[OperatorConfig]:
         supported_configs = []
         smooth_quant_config = SmoohQuantConfig()
         operators = ["Gemm", "Conv", "MatMul", "FusedConv"]

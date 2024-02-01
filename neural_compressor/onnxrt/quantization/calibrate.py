@@ -19,6 +19,9 @@ import abc
 
 from onnxruntime.quantization import CalibrationDataReader as ORTCalibrationDataReader
 
+__all__ = [
+    "CalibrationDataReader",
+]
 
 class CalibrationDataReader(ORTCalibrationDataReader):
     """Get data for calibration.

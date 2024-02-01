@@ -44,6 +44,15 @@ from neural_compressor.onnxrt.algorithms.weight_only.rtn import rtn_quantize
 
 logger = Logger().get_logger()
 
+__all__ = [
+    "get_weight_scale",
+    "apply_awq_scale",
+    "apply_awq_clip",
+    "awq_quantize",
+    "apply_awq_on_model",
+]
+
+
 def get_weight_scale(weight, group_size):
     """Get the scale of weight."""
     org_shape = weight.shape
@@ -411,7 +420,6 @@ def awq_quantize(
         model.model.graph.output.MergeFrom(org_output)
     model = rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio, accuracy_level, providers)
     return model
-
 
 def apply_awq_on_model(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],

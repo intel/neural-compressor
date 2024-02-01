@@ -34,6 +34,14 @@ from neural_compressor.onnxrt.utils.utility import (
 
 logger = Logger().get_logger()
 
+__all__ = [
+    "dtype_map",
+    "get_quant_dequant_output",
+    "make_sub_graph",
+    "quant_dequant_data",
+    "Smoother",
+]
+
 dtype_map = {
     np.dtype("float32"): 1,
     np.dtype("uint8"): 2,

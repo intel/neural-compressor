@@ -43,6 +43,10 @@ from neural_compressor.onnxrt.algorithms.weight_only.utility import (
     qdq_tensor,
 )
 
+__all__ = [
+    "rtn_quantize",
+    "apply_rtn_on_model",
+]
 
 def rtn_quantize(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],

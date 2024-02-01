@@ -27,6 +27,14 @@ from packaging.version import Version
 
 from neural_compressor.onnxrt.utils.utility import ONNXRT1161_VERSION, dtype_mapping
 
+__all__ = [
+    "get_blob_size",
+    "make_matmul_weight_only_node",
+    "prepare_inputs",
+    "pad_tensor",
+    "quant_tensor",
+    "qdq_tensor",
+]
 
 def get_blob_size(group_size, has_zp):  # pragma: no cover
     """Get blob_size.

@@ -28,6 +28,12 @@ from neural_compressor.onnxrt.utils.utility import register_algo
 
 logger = Logger().get_logger()
 
+__all__ = [
+    "smooth_quant_entry",
+    "rtn_quantize_entry",
+    "gptq_quantize_entry",
+    "awq_quantize_entry",
+]
 
 ###################### SmoothQuant Entry ##################################
 @register_algo(name=SMOOTH_QUANT)
