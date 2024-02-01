@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 MIT HAN Lab
 # This source code is licensed under the MIT license
 #

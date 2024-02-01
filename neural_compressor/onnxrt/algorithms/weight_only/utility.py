@@ -45,30 +45,31 @@ def get_blob_size(group_size, has_zp):  # pragma: no cover
 
 
 def make_matmul_weight_only_node(
-    node,
-    weight_shape,
-    num_bits,
-    group_size,
-    k_blocks,
-    q_weight,
-    scale,
-    zero_point,
-    accuracy_level=0,
-):  # pragma: no cover
-    """Build MatMulFpQ4 node.
+    node: onnx.NodeProto,
+    weight_shape: tuple,
+    num_bits: int,
+    group_size: int,
+    k_blocks: int,
+    q_weight: np.array,
+    scale: np.array,
+    zero_point: np.array,
+    accuracy_level: int = 0,
+):
+    """Build MatMulFpQ4/MatMulNBits node.
 
     Args:
-        node: original matmul node
-        weight_shape: original weight shape
-        num_bits (int): num_bits
+        node (onnx.NodeProto): original matmul node
+        weight_shape (tuple): original weight shape
+        num_bits (int): number of bits used to represent weights.
         group_size (int): how many elements share one scale/zp
         k_blocks (int): block number
-        q_weight (array): quantized weight
-        scale (array): scale
-        zero_point (array): zero point
-        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
-                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
-                              4 (int8 compute type of jblas kernel)
+        q_weight (np.array): quantized weight
+        scale (np.array): scale
+        zero_point (np.array): zero point
+        accuracy_level (int, optional): accuracy level.
+            Support 0 (unset), 1(fp32 compute type of jblas kernel),
+            2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+            4 (int8 compute type of jblas kernel) Defaults to 0.
 
     Returns:
         matmul_weight_only_node: MatMulFpQ4 or MatMulNBits node
@@ -254,14 +255,19 @@ def pad_tensor(weight, group_size, k_blocks):
     return weight
 
 
-def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ratio=1.0):
+def quant_tensor(data: np.array,
+                 num_bits: int = 4,
+                 group_size: int = 32,
+                 scheme: str = "asym",
+                 dtype: str = "int",
+                 ratio: float = 1.0):
     """Quantize tensor per group.
 
     Args:
-        data : input weight
-        num_bits (int, optional): num_bits. Defaults to 4.
+        data (np.array): input weight
+        num_bits (int, optional): number of bits used to represent weights. Defaults to 4.
         group_size (int, optional): how many elements share one scale/zp. Defaults to 4.
-        scheme (str, optional): quantization scheme. Defaults to "asym".
+        scheme (str, optional): _quantization scheme. Defaults to "asym".
         dtype (str, optional): data type. Defaults to "int".
         ratio (float, optional): percentile of clip. Defaults to 1.0.
 
@@ -302,13 +308,18 @@ def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ra
     return np.clip((data / scale + zero_point).round(), minq, maxq), scale, zero_point
 
 
-def qdq_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ratio=1.0):
+def qdq_tensor(data: np.array,
+               num_bits: int = 4,
+               group_size: int =32,
+               scheme: str = "asym",
+               dtype: str = "int",
+               ratio: float = 1.0):
     """Quant dequant tensor per group.
 
     Args:
-        data : input weight
-        num_bits (int, optional): num_bits. Defaults to 4.
-        group_size (int, optional): how many elements share one scale/zp. Defaults to 4.
+        data (np.array): input weight
+        num_bits (int, optional): number of bits used to represent weights. Defaults to 4.
+        group_size (int, optional):  how many elements share one scale/zp. Defaults to 32.
         scheme (str, optional): quantization scheme. Defaults to "asym".
         dtype (str, optional): data type. Defaults to "int".
         ratio (float, optional): percentile of clip. Defaults to 1.0.
