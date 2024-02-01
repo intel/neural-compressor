@@ -11,3 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
+from neural_compressor.onnxrt.utils.utility import PRIORITY_SMOOTH_QUANT
+
+__all__ = [
+    "ONNXModel",
+    "PRIORITY_SMOOTH_QUANT",
+]

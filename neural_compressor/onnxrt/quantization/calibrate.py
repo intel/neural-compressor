@@ -1,9 +1,7 @@
-"""Intel® Neural Compressor: An open-source Python library supporting common model."""
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,11 +15,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .model import Model
-from .dataloader import DataLoader, _generate_common_dataloader
-from .postprocess import Postprocess
-from .metric import Metric
-from .criterion import Criterions
-from .optimizer import Optimizers
+import abc
 
-__all__ = ["Model", "DataLoader", "Postprocess", "Metric", "_generate_common_dataloader"]
+from onnxruntime.quantization import CalibrationDataReader as ORTCalibrationDataReader
+
+
+class CalibrationDataReader(ORTCalibrationDataReader):
+    """Get data for calibration.
+
+    We define our CalibrationDataReader based on the class in below link:
+    https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/python/tools/quantization/calibrate.py#L139
+    """
+
+    @abc.abstractmethod
+    def rewind(self):
+        """Regenerate data."""
+        raise NotImplementedError
