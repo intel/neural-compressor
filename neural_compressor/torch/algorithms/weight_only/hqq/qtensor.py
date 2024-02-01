@@ -18,7 +18,6 @@ from typing import Tuple, Union
 import torch
 
 from .config import hqq_global_option
-from .utility import get_tensor_size
 
 __all__ = [
     "QTensor",
@@ -112,16 +111,3 @@ class QTensor:
         if self.zero is not None:
             self.zero = self.zero.half()
         return self
-
-    def get_size(self) -> int:
-        result = 0
-        result += get_tensor_size(self.val)
-        if isinstance(self.scale, QTensor):
-            result += get_tensor_size(self.scale.val)
-        else:
-            result += get_tensor_size(self.scale)
-        if isinstance(self.zero, QTensor):
-            result += get_tensor_size(self.zero.val)
-        else:
-            result += get_tensor_size(self.zero)
-        return result

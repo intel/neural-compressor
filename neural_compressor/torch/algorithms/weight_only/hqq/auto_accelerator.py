@@ -23,6 +23,8 @@ from typing import Any, Callable, Dict, List
 
 import torch
 
+from neural_compressor.common import logger
+
 PRIORITY_CUDA = 100
 PRIORITY_CPU = 90
 
@@ -211,11 +213,11 @@ def auto_detect_accelerator() -> Auto_Accelerator:
         return runtime_accelerator.accelerator
     FORCE_DEVICE = os.environ.get("FORCE_DEVICE", None)
     if FORCE_DEVICE and accelerator_registry.get_accelerator_cls_by_name(FORCE_DEVICE) is not None:
-        print(f"!!! Force use {FORCE_DEVICE} accelerator.")
+        logger.info(f"!!! Force use {FORCE_DEVICE} accelerator.")
         return accelerator_registry.get_accelerator_cls_by_name(FORCE_DEVICE)()
     for accelerator_cls in accelerator_registry.get_sorted_accelerators():
         if accelerator_cls.is_available():
-            print(f"!!! Auto detect accelerator: {accelerator_cls.__name__}")
+            logger.info(f"!!! Auto detect accelerator: {accelerator_cls.__name__}")
             runtime_accelerator.accelerator = accelerator_cls()
             return runtime_accelerator.accelerator
 

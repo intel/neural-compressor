@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import torch
-from qtensor import QTensor, QTensorMetaInfo
+
+from neural_compressor.common import logger
+from neural_compressor.torch.algorithms.weight_only.qtensor import QTensor, QTensorMetaInfo
 
 in_feats = 3
 out_feats = 4
@@ -23,9 +24,9 @@ scale = torch.randn(out_feats)
 zero = torch.randint(1, 10, (out_feats,))
 q_tensor_meta = QTensorMetaInfo(nbits=4, group_size=64, shape=(out_feats, in_feats), axis=0, packing=False)
 q_tensor = QTensor(val, scale, zero, q_tensor_meta)
-print(q_tensor)
+logger.info(q_tensor)
 # q_tensor.to(torch.device("cuda:0"))
-# print(q_tensor)
+# logger.info(q_tensor)
 
 
 val = torch.randn(out_feats, in_feats)
@@ -33,16 +34,16 @@ scale = q_tensor
 zero = q_tensor
 q_tensor_meta = QTensorMetaInfo(nbits=4, group_size=64, shape=(out_feats, in_feats), axis=0, packing=False)
 q_tensor_2 = QTensor(val, scale, zero, q_tensor_meta)
-print(q_tensor_2)
+logger.info(q_tensor_2)
 q_tensor_2.to(torch.device("cuda:0"))
-print(q_tensor_2)
+logger.info(q_tensor_2)
 
 
 def check_cuda():
     if torch.cuda.is_available():
-        print("[check_cuda] cuda is available")
+        logger.info("[check_cuda] cuda is available")
     else:
-        print("[check_cuda] cuda is not available")
+        logger.info("[check_cuda] cuda is not available")
 
 
 check_cuda()
@@ -52,9 +53,9 @@ check_cuda()
 
 # lin = torch.nn.Linear(in_feats, out_feats)
 # lin.to(torch.device("cuda:0"))
-# print(lin.weight.device)
+# logger.info(lin.weight.device)
 
 
 meta_config = QTensorMetaInfo(nbits=4, group_size=64, shape=(out_feats, in_feats), axis=0, packing=False)
-print(meta_config)
-print(meta_config.to_dict())
+logger.info(meta_config)
+logger.info(meta_config.to_dict())

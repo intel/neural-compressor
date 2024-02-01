@@ -12,13 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+# TODO: remove it before merge
+import sys
+
+hqq_offical_path = "/home/yliu7/workspace/hqq"
+sys.path.insert(0, hqq_offical_path)
+
 from copy import deepcopy
 
 import pytest
 import torch
-from config import HQQModuleConfig, QTensorConfig
-from core import HQQLinear, HQQTensorHandle
-from utility import compare_two_tensor, is_divisible
+
+from neural_compressor.common import logger
+from neural_compressor.torch.algorithms.weight_only.hqq.config import HQQModuleConfig, QTensorConfig
+from neural_compressor.torch.algorithms.weight_only.hqq.core import HQQLinear, HQQTensorHandle
+from neural_compressor.torch.algorithms.weight_only.hqq.utility import compare_two_tensor, is_divisible
 
 ######################
 #### Test
@@ -89,8 +98,8 @@ def create_hqq_quant_config_from_hqq_official_api(
         if hqq_offical_config["zero_quant_params"] is not None
         else None,
     )
-    print(f"[create_hqq_quant_config_from_hqq_official_api] hqq_quant_config: {hqq_quant_config}")
-    print(f"[create_hqq_quant_config_from_hqq_official_api] hqq_offical_config: {hqq_offical_config}")
+    logger.info(f"[create_hqq_quant_config_from_hqq_official_api] hqq_quant_config: {hqq_quant_config}")
+    logger.info(f"[create_hqq_quant_config_from_hqq_official_api] hqq_offical_config: {hqq_offical_config}")
     return hqq_quant_config, hqq_offical_config
 
 
@@ -147,12 +156,12 @@ def common_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False, scal
     input = torch.randn(1, in_features)
     input = input.to(device)
     float_output = float_linear(input)
-    print(hqq_linear.q_weight)
+    logger.info(hqq_linear.q_weight)
     input_half = deepcopy(input).half()
     hqq_output = hqq_linear(input_half)
-    print(hqq_linear.q_weight)
+    logger.info(hqq_linear.q_weight)
     hqq_output_2 = hqq_linear(input_half)
-    print(hqq_linear.q_weight)
+    logger.info(hqq_linear.q_weight)
     hqq_offical_output = hqq_linear_official(input_half)
     del float_linear, hqq_linear, hqq_linear_official
     del float_output, hqq_output, hqq_output_2, hqq_offical_output

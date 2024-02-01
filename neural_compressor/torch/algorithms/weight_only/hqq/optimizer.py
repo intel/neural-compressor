@@ -17,6 +17,8 @@
 import numpy as np
 import torch
 
+from neural_compressor.common import logger
+
 from .auto_accelerator import Auto_Accelerator, auto_detect_accelerator
 from .utility import dump_elapsed_time
 
@@ -42,7 +44,6 @@ def optimize_weights_proximal_legacy(
         opt_params["iters"],
     )
     device = auto_acceleartor.current_device_name()
-    # TODO: how about xpu?
 
     if auto_acceleartor.name() == "cuda":
         dtype = torch.float16
@@ -69,7 +70,7 @@ def optimize_weights_proximal_legacy(
 
         current_error = float(torch.abs(W_f - W_r).mean())
         if verbose:
-            print(i, np.round(current_error, 6))
+            logger.info(i, np.round(current_error, 6))
         if current_error < best_error:
             best_error = current_error
         else:

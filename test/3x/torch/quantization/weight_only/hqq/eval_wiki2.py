@@ -17,10 +17,11 @@ import time
 
 import numpy as np
 import torch
-from auto_accelerator import auto_detect_accelerator
 from datasets import load_dataset
 from tqdm import tqdm
-from utility import dump_elapsed_time
+
+from neural_compressor.torch.algorithms.weight_only.hqq.auto_accelerator import auto_detect_accelerator
+from neural_compressor.torch.algorithms.weight_only.hqq.utility import dump_elapsed_time
 
 
 def cleanup():

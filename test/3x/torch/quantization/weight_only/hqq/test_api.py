@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from neural_compressor.common import logger
 
 # model_id = "/models/opt-125m"
 model_id = "/models/Llama-2-7b-hf"
@@ -22,21 +23,21 @@ model.eval()
 input_str = "Hello HQQ.."
 encoded_input = tokenizer(input_str, return_tensors="pt")
 float_out = model(**encoded_input)
-print(float_out)
+logger.info(float_out)
 
 
-from quantizer import _hqq_entry, get_default_hqq_config_mapping
+from neural_compressor.torch.algorithms.weight_only.hqq.quantizer import _hqq_entry, get_default_hqq_config_mapping
 
 default_hqq_config_mapping = get_default_hqq_config_mapping(model)
 default_hqq_config_mapping.pop("lm_head")
-print(default_hqq_config_mapping)
+logger.info(default_hqq_config_mapping)
 
 
 q_model = _hqq_entry(model, default_hqq_config_mapping)
 encoded_input.to("cuda:0")
 out_qdq = q_model(**encoded_input)
-print(out_qdq)
+logger.info(out_qdq)
 
-from eval_wiki2 import eval_wikitext2
+from .eval_wiki2 import eval_wikitext2
 
 eval_wikitext2(q_model, tokenizer, verbose=True)

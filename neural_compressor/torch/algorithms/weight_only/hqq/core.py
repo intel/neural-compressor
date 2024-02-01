@@ -13,22 +13,18 @@
 # limitations under the License.
 
 import sys
-
-# TODO: remove it before merge
-hqq_offical_path = "/home/yliu7/workspace/hqq"
-sys.path.insert(0, hqq_offical_path)
-
-
 from typing import Any, Dict, Tuple
 
 import torch
+
+from neural_compressor.common import logger
 
 from .auto_accelerator import auto_detect_accelerator
 from .bitpack import Packer
 from .config import HQQModuleConfig, QTensorConfig, default_hqq_module_config, hqq_global_option
 from .optimizer import optimize_weights_proximal
 from .qtensor import QTensor, QTensorMetaInfo
-from .utility import custom_print, dump_elapsed_time, get_tensor_size, inspect_function, is_divisible
+from .utility import is_divisible
 
 __all__ = [
     "HQQTensorHandle",
@@ -87,7 +83,6 @@ class HQQTensorHandle:
             axis,
             bitpack,
         ) = cls._convert_tensor_quant_config(tensor_quant_config)
-        custom_print("start quantize ..... ")
         assert nbits in cls.SUPPORTED_BITS, "nbits=" + str(nbits) + " not supported."
         assert axis in [0, 1], "axis should be either 0 or 1, but got {}".format(axis)
         if group_size is not None:
@@ -170,7 +165,7 @@ class HQQTensorHandle:
         else:
             if hqq_global_option.use_half:
                 W_r = W_q.half()
-        # !!! TODO: There may cause the accuracy regression issue
+        # TODO: double check it
         W_r = ((W_r - meta["zero"]) * meta["scale"]).reshape(meta["shape"])
         # W_r = W_r.half()  # TODO: double check the correctness, the official impl is also error...
         return W_r
@@ -199,14 +194,6 @@ class HQQLinear(torch.nn.Linear):
         self.q_weight = q_weight
         self.quantized = q_weight is not None
 
-    def get_size(self):
-        # TODO: for debug only, remove it before merge
-        result = 0
-        weight = self.weight
-        result += get_tensor_size(weight)
-        result += self.q_weight.get_size()
-        return result
-
     def quantize_weight(
         self,
         W: torch.Tensor,
@@ -230,13 +217,11 @@ class HQQLinear(torch.nn.Linear):
         # * It will change the `q_weight` but faster.
         # * we should not save the state after doing the forward.
         if need_quant_scale:  # Quantize scale
-            custom_print(message=f"need_quant_scale: {need_quant_scale}")
             q_scale_tensor = HQQTensorHandle.quantize_to_q_tensor(
                 float_tensor=self.q_weight.scale, tensor_quant_config=scale_quant_config
             )
             self.q_weight.scale = q_scale_tensor
         if need_quant_zero:  # Quantize zero
-            custom_print(f"need_quant_zero: {need_quant_zero}")
             q_zero_tensor = HQQTensorHandle.quantize_to_q_tensor(
                 float_tensor=self.q_weight.zero,
                 tensor_quant_config=zero_quant_config,
@@ -250,12 +235,10 @@ class HQQLinear(torch.nn.Linear):
         if self.q_weight.is_scale_quantized():
             scale_qdq = HQQTensorHandle.dequantize_q_tensor(self.q_weight.scale)
             self.q_weight.scale = scale_qdq
-            custom_print(f"scale_qdq dtype: {scale_qdq.dtype}")
 
         if self.q_weight.is_zero_quantized():
             zero_qdq = HQQTensorHandle.dequantize_q_tensor(self.q_weight.zero)
             self.q_weight.zero = zero_qdq
-            custom_print(f"zero_qdq dtype: {zero_qdq.dtype}")
 
         W_qdq = HQQTensorHandle.dequantize_q_tensor(self.q_weight)
         return W_qdq

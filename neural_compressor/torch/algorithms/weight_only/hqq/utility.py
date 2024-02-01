@@ -18,22 +18,12 @@ import time
 import numpy as np
 import torch
 
-
-def custom_print(message):
-    return
-    # Get the caller's frame information
-    frame = inspect.currentframe()
-    caller_frame = inspect.getouterframes(frame)[1]
-
-    # Extract function name from the frame
-    func_name = caller_frame[3]
-
-    print(f"[custom_print - {func_name}]: {message}")
+from neural_compressor.common import logger
 
 
 def compare_two_tensor(a, b, rtol=1e-05, msg=""):
     #
-    print(f"[compare_two_tensor] {msg}")
+    logger.info(f"[compare_two_tensor] {msg}")
     assert a.shape == b.shape, "The shape of the two tensor is not the same, got a: {} and b: {}".format(
         a.shape, b.shape
     )
@@ -59,28 +49,28 @@ def make_multiple(val, multiple):
 # decorator to dump function name and args and args value
 def inspect_function(func):
     def wrapper(*args, **kwargs):
-        print(f"Function Name: {func.__name__}")
-        print("Argument Names and Values:")
+        logger.info(f"Function Name: {func.__name__}")
+        logger.info("Argument Names and Values:")
 
-        # Print positional arguments and values
+        # logger.info positional arguments and values
         for arg_name, arg_value in zip(func.__code__.co_varnames, args):
             if isinstance(arg_value, torch.Tensor):
-                print(f"  {arg_name}: {arg_value.shape}")
+                logger.info(f"  {arg_name}: {arg_value.shape}")
             else:
-                print(f"  {arg_name}: {arg_value}")
+                logger.info(f"  {arg_name}: {arg_value}")
 
-        # Print keyword arguments and values
+        # logger.info keyword arguments and values
         for arg_name, arg_value in kwargs.items():
             if isinstance(arg_value, torch.Tensor):
-                print(f"  {arg_name}: {arg_value.shape}")
+                logger.info(f"  {arg_name}: {arg_value.shape}")
             else:
-                print(f"  {arg_name}: {arg_value}")
+                logger.info(f"  {arg_name}: {arg_value}")
 
         # Call the original function
         result = func(*args, **kwargs)
 
-        # Optionally, you can print the result
-        # print(f"Result: {result}")
+        # Optionally, you can logger.info the result
+        # logger.info(f"Result: {result}")
 
         return result
 
@@ -99,7 +89,7 @@ def dump_elapsed_time(customized_msg=""):
             start = time.time()
             res = func(*args, **kwargs)
             end = time.time()
-            print(
+            logger.info(
                 "%s elapsed time: %s ms"
                 % (
                     customized_msg if customized_msg else func.__qualname__,
@@ -123,9 +113,9 @@ def see_cuda_memory_usage(message, force=False):
     # python doesn't do real-time garbage collection so do it explicitly to get the correct RAM reports
     gc.collect()
 
-    # Print message except when distributed but not rank 0
-    print(message)
-    print(
+    # logger.info message except when distributed but not rank 0
+    logger.info(message)
+    logger.info(
         f"MA {round(torch.cuda.memory_allocated() / (1024 * 1024 * 1024),2 )} GB \
         Max_MA {round(torch.cuda.max_memory_allocated() / (1024 * 1024 * 1024),2)} GB \
         CA {round(torch.cuda.memory_reserved() / (1024 * 1024 * 1024),2)} GB \
@@ -138,24 +128,7 @@ def see_cuda_memory_usage(message, force=False):
 
     vm_stats = psutil.virtual_memory()
     used_GB = round(((vm_stats.total - vm_stats.available) / (1024**3)), 2)
-    print(f"CPU Virtual Memory:  used = {used_GB} GB, percent = {vm_stats.percent}%")
+    logger.info(f"CPU Virtual Memory:  used = {used_GB} GB, percent = {vm_stats.percent}%")
 
     # get the peak memory to report correct data, so reset the counter for the next call
     torch.cuda.reset_peak_memory_stats()
-
-
-MB = 2**20
-GB = 2**30
-
-
-def get_tensor_size(tensor_lst):
-    # bytes
-    if tensor_lst is None:
-        return 0
-    result = 0
-    if isinstance(tensor_lst, torch.Tensor):
-        tensor_lst = [tensor_lst]
-    for tensor in tensor_lst:
-        if tensor is not None:
-            result += tensor.numel() * tensor.element_size()
-    return result

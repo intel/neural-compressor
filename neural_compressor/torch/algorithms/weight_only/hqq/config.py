@@ -15,11 +15,6 @@
 
 import os
 import sys
-
-# TODO: remove it before merge
-hqq_offical_path = "/home/yliu7/workspace/hqq"
-sys.path.insert(0, hqq_offical_path)
-
 from collections import namedtuple
 from dataclasses import dataclass
 from typing import Dict, Optional
