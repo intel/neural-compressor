@@ -15,3 +15,4 @@
 from .utility import *
 from .rtn import rtn_quantize
 from .gptq import gptq_quantize
+from .awq import awq_quantize

@@ -16,9 +16,9 @@ from typing import Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import FP8_QUANT, GPTQ, RTN  # unified namespace
-from neural_compressor.torch.algorithms.weight_only import gptq_quantize, rtn_quantize
-from neural_compressor.torch.quantization import GPTQConfig, RTNConfig
+from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, RTN  # unified namespace
+from neural_compressor.torch.algorithms.weight_only import gptq_quantize, rtn_quantize, awq_quantize
+from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, RTNConfig
 from neural_compressor.torch.utils import logger, register_algo
 
 
@@ -66,6 +66,22 @@ def gptq_entry(
     model._gptq_quantization_perm = quantization_perm
     return model
 
+###################### AWQ Algo Entry ##################################
+@register_algo(name=AWQ)
+def awq_quantize_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AWQConfig], example_inputs=None, *args, **kwargs
+) -> torch.nn.Module:
+    logger.info("Quantize model with the AWQ algorithm.")
+
+    assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
+    model = awq_quantize(
+        model=model,
+        configs_mapping=configs_mapping,
+        example_inputs=example_inputs,
+        *args,
+        **kwargs
+    )
+    return model
 
 ###################### Habana FP8 Algo Entry ##################################
 from neural_compressor.torch.utils import is_hpex_available

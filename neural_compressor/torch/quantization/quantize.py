@@ -31,6 +31,7 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
 def quantize(
     model: torch.nn.Module,
     quant_config: BaseConfig,
+    example_inputs=None,
     run_fn: Callable = None,
     run_args: Any = None,
     inplace: bool = True,
@@ -64,5 +65,5 @@ def quantize(
     for algo_name, algo_func in algos_mapping.items():
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
-            q_model = algo_func(q_model, configs_mapping, run_fn=run_fn, run_args=run_args)
+            q_model = algo_func(q_model, configs_mapping, example_inputs=example_inputs, run_fn=run_fn, run_args=run_args)
     return q_model
