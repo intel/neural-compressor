@@ -57,7 +57,7 @@ class SmoothQuantScaler:
             output_node_name: the concrete output weight node name
             w_i: distinguish between different output weight nodes on different branches when naming
         """
-        from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
+        from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphRewriterHelper as Helper
 
         node_suffix = str(w_i)
         mul_const_node = Helper.create_constant_node(input_node_name + "/scale_mul" + node_suffix, scale, tf.float32)

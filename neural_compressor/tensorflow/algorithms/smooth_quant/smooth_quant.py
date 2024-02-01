@@ -21,7 +21,6 @@ import tensorflow as tf
 
 from neural_compressor.common import logger
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig
 from neural_compressor.tensorflow.algorithms.smooth_quant.smooth_quant_calibration import (
     SmoothQuantCalibration,
     SmoothQuantCalibrationLLM,
@@ -30,12 +29,9 @@ from neural_compressor.tensorflow.algorithms.smooth_quant.smooth_quant_scaler im
     SmoothQuantScaler,
     SmoothQuantScalerLLM,
 )
-from neural_compressor.tensorflow.utils import (
-    BaseModel, 
-    TensorflowLLMModel, 
-    SPR_BASE_VERSIONS,
-    framework_specific_info,
-)
+from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig
+from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.tensorflow.utils import SPR_BASE_VERSIONS, BaseModel, TensorflowLLMModel, framework_specific_info
 
 
 class SmoothQuant:
@@ -126,13 +122,13 @@ class SmoothQuant:
         logger.info("Start Smoothing process for Smooth Quantization.")
 
         # Do a pre-optimization before smooth quant
-        # from neural_compressor.tensorflow.quantization.tf_utils.graph_rewriter.generic.pre_optimize import (
-        #     PreOptimization,
-        # )
+        from neural_compressor.tensorflow.quantization.tf_utils.graph_rewriter.generic.pre_optimize import (
+            PreOptimization,
+        )
 
-        # pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
-        # pre_optimized_model = pre_optimizer_handle.get_optimized_model(self.itex_mode)
-        # model.graph_def = pre_optimized_model.graph_def
+        pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
+        pre_optimized_model = pre_optimizer_handle.get_optimized_model(self.itex_mode)
+        model.graph_def = pre_optimized_model.graph_def
 
         # Run calibration to get max values per channel
 
@@ -142,9 +138,7 @@ class SmoothQuant:
         max_vals_per_channel, sq_weight_node_names = calibration()
 
         # Get weight tensors and weight nodes based on the input tensor
-        sq_weight_tensors, sq_weights_nodes = self.get_weight_from_input_tensor(
-            model, max_vals_per_channel.keys(), self.op_types
-        )
+        sq_weight_tensors, sq_weights_nodes = self.get_weight_from_input_tensor(model, max_vals_per_channel.keys())
 
         # Calculate the smooth quant scaler and insert Mul op into the graph
         scaler = SmoothQuantScaler(model, self.calib_dataloader, self.alpha, self.scales_per_op)
@@ -157,13 +151,13 @@ class SmoothQuant:
     def apply_smooth_quant_LLM(self, model: BaseModel):
         """Apply smooth quant to the LLM model."""
         # Do a pre-optimization before smooth quant
-        # from neural_compressor.tensorflow.quantization.tf_utils.graph_rewriter.generic.pre_optimize import (
-        #     PreOptimization,
-        # )
+        from neural_compressor.tensorflow.quantization.tf_utils.graph_rewriter.generic.pre_optimize import (
+            PreOptimization,
+        )
 
-        # pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
-        # pre_optimized_model = pre_optimizer_handle.get_optimized_model(self.itex_mode)
-        # model.graph_def = pre_optimized_model.graph_def
+        pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
+        pre_optimized_model = pre_optimizer_handle.get_optimized_model(self.itex_mode)
+        model.graph_def = pre_optimized_model.graph_def
 
         llm_temp_dir = DEFAULT_WORKSPACE + "/temp_saved_model"
         # Run calibration to get max values per channel
@@ -199,8 +193,6 @@ class SmoothQuant:
         Returns:
             model: A smoothed Tensorflow model
         """
-        apply_func = (
-            self.apply_smooth_quant_LLM if isinstance(model, TensorflowLLMModel) else self.apply_smooth_quant
-        )
+        apply_func = self.apply_smooth_quant_LLM if isinstance(model, TensorflowLLMModel) else self.apply_smooth_quant
 
         return apply_func(model)

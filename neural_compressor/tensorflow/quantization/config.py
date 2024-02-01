@@ -23,7 +23,6 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 import tensorflow as tf
 
 from neural_compressor.common import logger
-from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.common.base_config import (
     DEFAULT_WHITE_LIST,
     OP_NAME_OR_MODULE_TYPE,
@@ -31,6 +30,7 @@ from neural_compressor.common.base_config import (
     config_registry,
     register_config,
 )
+from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.tensorflow.utils import DEFAULT_SQ_ALPHA_ARGS
 
 
@@ -144,6 +144,7 @@ def get_all_registered_configs() -> Dict[str, BaseConfig]:
     """Get all registered configs for keras framework."""
     registered_configs = config_registry.get_cls_configs()
     return registered_configs.get("keras", {})
+
 
 def get_default_static_quant_config() -> StaticQuantConfig:
     """Generate the default static quant config.

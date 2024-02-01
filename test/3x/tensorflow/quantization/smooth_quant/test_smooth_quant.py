@@ -7,7 +7,7 @@ from tensorflow.compat.v1 import graph_util
 
 from neural_compressor.common import set_random_seed
 from neural_compressor.tensorflow import SmoothQuantConfig, get_default_sq_config, quantize_model
-from neural_compressor.tensorflow.utils import DummyDataset
+from neural_compressor.tensorflow.utils import DummyDataset, disable_random
 
 
 def build_conv_graph():
@@ -72,7 +72,6 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
     def tearDownClass(self):
         pass
 
-
     def test_conv(self):
         set_random_seed(9527)
         quant_config = SmoothQuantConfig(alpha=0.5)
@@ -120,9 +119,11 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
 
         self.assertEqual(mul_count, 2)
 
+    @disable_random()
     def test_matmul(self):
         x_data = np.random.rand(1024, 1024).astype(np.float32)
         y_data = np.random.rand(1024, 1024).astype(np.float32)
+        import tensorflow.compat.v1 as tf
 
         x = tf.placeholder(tf.float32, shape=[1024, 1024], name="x")
         y = tf.constant(y_data, dtype=tf.float32, shape=[1024, 1024])
@@ -148,6 +149,7 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
 
         self.assertEqual(mul_count, 1)
 
+    @disable_random()
     def test_conv_matmul(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)

@@ -12,20 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Dict
 from collections import OrderedDict
+from typing import Callable, Dict
 
 import tensorflow as tf
 
 from neural_compressor.tensorflow.quantization.config import StaticQuantConfig
 
+
 class ParseKerasConfig:
-    """The class that parse StaticQuantConfig to tunning config"""
+    """The class that parse StaticQuantConfig to tuning config."""
+
     support_int8_weight = {"Dense", "Conv2d", "DepthwiseConv2D", "SeparableConv2D"}
 
-    def __init__(self,
-                 quant_config: StaticQuantConfig, 
-                 calib_iteration: int):
+    def __init__(self, quant_config: StaticQuantConfig, calib_iteration: int):
         """Init parser for keras static quant config.
 
         Args:
@@ -37,10 +37,10 @@ class ParseKerasConfig:
 
     def update_config(self, quant_config, op_key):
         """Update op-wise config.
-        
-            Args:
-                quant_config: the keras static quant config.
-                op_key: a tuple such as (layer type, layer name).
+
+        Args:
+            quant_config: the keras static quant config.
+            op_key: a tuple such as (layer type, layer name).
         """
         op_value = {"activation": {}}
         op_value["activation"].update(
@@ -53,7 +53,8 @@ class ParseKerasConfig:
             }
         )
         if op_key[1] not in self.support_int8_weight:
-            return
+            return op_value
+
         op_value["weight"] = {
             "dtype": quant_config.weight_dtype,
             "scheme": "sym" if quant_config.weight_sym else "asym",

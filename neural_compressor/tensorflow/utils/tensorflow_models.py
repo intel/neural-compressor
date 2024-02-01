@@ -72,7 +72,7 @@ def get_model_type(model):
             or (os.path.isdir(model) and is_saved_model_format(model))
         ):
             if version1_lt_version2(tf.version.VERSION, "2.10.0"):  # pragma: no cover
-                logger.warn("keras model running on tensorflow 2.10.0 and" " lower not support intel ITEX.")
+                logger.warning("keras model running on tensorflow 2.10.0 and" " lower not support intel ITEX.")
             try:
                 model = tf.keras.models.load_model(model)
                 if isinstance(model, tf.keras.Model) and hasattr(model, "to_json"):
@@ -125,7 +125,7 @@ def validate_graph_node(graph_def, node_names):
     all_node_name = [node.name for node in graph_def.node]
     for user_name in node_names:
         if user_name not in all_node_name:
-            logger.warn(str("Node name {} specified in yaml doesn't exist in the model.").format(user_name))
+            logger.warning(str("Node name {} specified in yaml doesn't exist in the model.").format(user_name))
             return False
     return True
 
@@ -885,7 +885,7 @@ class TensorflowBaseModel(BaseModel):
     def input_tensor_names(self, tensor_names):
         """Set input tensor names."""
         if len(tensor_names) == 0:
-            logger.warn("Input tensor names is empty.")
+            logger.warning("Input tensor names is empty.")
             return
         if self._sess is not None:
             assert validate_graph_node(
@@ -904,7 +904,7 @@ class TensorflowBaseModel(BaseModel):
     def output_tensor_names(self, tensor_names):
         """Set output tensor names."""
         if len(tensor_names) == 0:
-            logger.warn("Output tensor names should not be empty.")
+            logger.warning("Output tensor names should not be empty.")
             return
         if self._sess is not None:
             assert validate_graph_node(
@@ -1152,11 +1152,11 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
             g = tf.compat.v1.get_default_graph()
             inp = [get_tensor_by_name(g, x) for x in self._input_tensor_names]
             out = [get_tensor_by_name(g, x) for x in self._output_tensor_names]
-            sigs[
-                signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY
-            ] = tf.compat.v1.saved_model.signature_def_utils.predict_signature_def(
-                {k: v for k, v in zip(self._input_tensor_names, inp)},
-                {k: v for k, v in zip(self._output_tensor_names, out)},
+            sigs[signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY] = (
+                tf.compat.v1.saved_model.signature_def_utils.predict_signature_def(
+                    {k: v for k, v in zip(self._input_tensor_names, inp)},
+                    {k: v for k, v in zip(self._output_tensor_names, out)},
+                )
             )
             builder.add_meta_graph_and_variables(sess, [tag_constants.SERVING], signature_def_map=sigs)
         return root, builder
@@ -1276,7 +1276,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     def input_tensor_names(self, tensor_names):
         """Set input tensor names."""
         if len(tensor_names) == 0:  # pragma: no cover
-            logger.warn("Input tensor names is empty.")
+            logger.warning("Input tensor names is empty.")
             return
 
         assert validate_graph_node(
@@ -1293,7 +1293,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     def output_tensor_names(self, tensor_names):
         """Set output tensor names."""
         if len(tensor_names) == 0:  # pragma: no cover
-            logger.warn("Output tensor names is empty.")
+            logger.warning("Output tensor names is empty.")
             return
         if self._graph_def is not None:
             assert validate_graph_node(

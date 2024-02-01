@@ -24,6 +24,7 @@ from neural_compressor.tensorflow.utils.tensorflow_models import (
     TensorflowSavedModelModel,
 )
 from neural_compressor.tensorflow.utils.utility import (
+    disable_random,
     algos_mapping,
     version1_lt_version2,
     version1_gt_version2,

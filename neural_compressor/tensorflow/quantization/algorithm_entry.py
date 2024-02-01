@@ -21,12 +21,7 @@ from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.tensorflow.algorithms import KerasAdaptor
 from neural_compressor.tensorflow.quantization.auto_tune import ParseKerasConfig
 from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig, StaticQuantConfig
-from neural_compressor.tensorflow.utils import (
-    BaseModel, 
-    KerasModel,
-    register_algo, 
-    framework_specific_info,
-)
+from neural_compressor.tensorflow.utils import BaseModel, KerasModel, framework_specific_info, register_algo
 
 
 @register_algo(name=STATIC_QUANT)
@@ -68,6 +63,5 @@ def smooth_quant_entry(
 
     converter = SmoothQuant(smooth_quant_config, calib_dataloader, calib_iteration)
     sq_model = converter(model)
-    
-    return sq_model
 
+    return sq_model
