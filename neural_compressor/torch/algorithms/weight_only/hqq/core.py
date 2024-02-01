@@ -22,12 +22,13 @@ sys.path.insert(0, hqq_offical_path)
 from typing import Any, Dict, Tuple
 
 import torch
-from auto_accelerator import auto_detect_accelerator
-from bitpack import Packer
-from config import HQQModuleConfig, QTensorConfig, default_hqq_module_config, hqq_global_option
-from optimizer import optimize_weights_proximal
-from qtensor import QTensor, QTensorMetaInfo
-from utility import custom_print, dump_elapsed_time, get_tensor_size, inspect_function, is_divisible
+
+from .auto_accelerator import auto_detect_accelerator
+from .bitpack import Packer
+from .config import HQQModuleConfig, QTensorConfig, default_hqq_module_config, hqq_global_option
+from .optimizer import optimize_weights_proximal
+from .qtensor import QTensor, QTensorMetaInfo
+from .utility import custom_print, dump_elapsed_time, get_tensor_size, inspect_function, is_divisible
 
 __all__ = [
     "HQQTensorHandle",

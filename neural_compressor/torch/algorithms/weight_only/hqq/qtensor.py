@@ -16,8 +16,9 @@ from dataclasses import asdict, dataclass
 from typing import Tuple, Union
 
 import torch
-from config import hqq_global_option
-from utility import get_tensor_size
+
+from .config import hqq_global_option
+from .utility import get_tensor_size
 
 __all__ = [
     "QTensor",

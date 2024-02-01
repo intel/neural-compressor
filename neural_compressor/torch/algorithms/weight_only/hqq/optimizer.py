@@ -16,8 +16,9 @@
 
 import numpy as np
 import torch
-from auto_accelerator import Auto_Accelerator, auto_detect_accelerator
-from utility import dump_elapsed_time
+
+from .auto_accelerator import Auto_Accelerator, auto_detect_accelerator
+from .utility import dump_elapsed_time
 
 auto_acceleartor: Auto_Accelerator = auto_detect_accelerator()
 

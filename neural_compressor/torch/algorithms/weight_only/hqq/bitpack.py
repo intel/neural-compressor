@@ -18,7 +18,8 @@
 
 import numpy as np
 import torch
-from utility import is_divisible
+
+from .utility import is_divisible
 
 __all__ = ["Packer"]
 

@@ -12,13 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, Tuple
+from typing import Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import FP8_QUANT, GPTQ, RTN  # unified namespace
-from neural_compressor.torch.algorithms.weight_only import gptq_quantize, rtn_quantize
-from neural_compressor.torch.quantization import GPTQConfig, RTNConfig
+from neural_compressor.common.utils import FP8_QUANT, GPTQ, HQQ, RTN  # unified namespace
+from neural_compressor.torch.algorithms.weight_only import (
+    HQQModuleConfig,
+    HQQuantizer,
+    QTensorConfig,
+    gptq_quantize,
+    rtn_quantize,
+)
+from neural_compressor.torch.quantization import GPTQConfig, HQQConfig, RTNConfig
 from neural_compressor.torch.utils import logger, register_algo
 
 
@@ -65,6 +71,49 @@ def gptq_entry(
     # Assign the gptq config as an attribute of model
     model._gptq_quantization_perm = quantization_perm
     return model
+
+
+###################### HHQ Algo Entry ##################################
+
+
+def _convert_hqq_module_config(config: HQQConfig) -> HQQModuleConfig:
+    nbits = config.nbits
+    group_size = config.group_size
+    quant_zero = config.quant_zero
+    quant_scale = config.quant_scale
+    scale_quant_group_size = config.scale_quant_group_size
+
+    weight_qconfig = QTensorConfig(
+        nbits=nbits, channel_wise=True, group_size=group_size, optimize=True, round_zero=True if nbits == 4 else False
+    )
+    zero_qconfig = None
+    if quant_zero:
+        zero_qconfig = QTensorConfig(nbits=8, channel_wise=False, group_size=None, optimize=False)
+    scale_qconfig = None
+    if quant_scale:
+        scale_qconfig = QTensorConfig(nbits=8, channel_wise=True, group_size=scale_quant_group_size, optimize=False)
+    hqq_module_config = HQQModuleConfig(weight=weight_qconfig, scale=scale_qconfig, zero=zero_qconfig)
+    print(hqq_module_config)
+    return hqq_module_config
+
+
+def _parse_hqq_configs_mapping(configs_mapping):
+    qconfig_mapping = {}
+    for (op_name, op_type), quant_config in configs_mapping.items():
+        qconfig_mapping[op_name] = _convert_hqq_module_config(quant_config)
+    return qconfig_mapping
+
+
+@register_algo(name=HQQ)
+@torch.no_grad()
+def hqq_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, Callable], HQQConfig], *args, **kwargs
+) -> torch.nn.Module:
+    logger.info("Quantize model with the HQQ algorithm.")
+    qconfig_mapping = _parse_hqq_configs_mapping(configs_mapping)
+    hqq_quantizer = HQQuantizer(qconfig_mapping)
+    q_model = hqq_quantizer.prepare(model)
+    return q_model
 
 
 ###################### Habana FP8 Algo Entry ##################################

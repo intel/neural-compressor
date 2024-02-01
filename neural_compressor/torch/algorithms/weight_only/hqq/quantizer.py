@@ -15,9 +15,10 @@
 from typing import Callable, Dict, List, Optional, Tuple
 
 import torch
-from auto_accelerator import auto_detect_accelerator
-from config import ConfigMappingType, HQQModuleConfig, default_hqq_module_config, hqq_global_option
-from core import HQQLinear
+
+from .auto_accelerator import auto_detect_accelerator
+from .config import ConfigMappingType, HQQModuleConfig, default_hqq_module_config, hqq_global_option
+from .core import HQQLinear
 
 
 def _has_child(module: torch.nn.Module) -> bool:

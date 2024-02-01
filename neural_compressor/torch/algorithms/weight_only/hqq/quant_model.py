@@ -15,8 +15,9 @@
 import argparse
 
 import torch
-from config import HQQModuleConfig, QTensorConfig
-from quantizer import HQQuantizer, get_model_info
+
+from .config import HQQModuleConfig, QTensorConfig
+from .quantizer import HQQuantizer, get_model_info
 
 
 def get_hqq_module_config(
