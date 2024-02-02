@@ -23,7 +23,7 @@ from .bitpack import Packer
 from .config import HQQModuleConfig, QTensorConfig, default_hqq_module_config, hqq_global_option
 from .optimizer import optimize_weights_proximal
 from .qtensor import QTensor, QTensorMetaInfo
-from .utility import is_divisible
+from .utility import dump_elapsed_time, is_divisible
 
 __all__ = [
     "HQQTensorHandle",
@@ -69,6 +69,7 @@ class HQQTensorHandle:
         return QTensor(weight, scale, zero, meta_info)
 
     @classmethod
+    @dump_elapsed_time("Quantize linear module into HQQ module.")
     def quantize(cls, tensor, tensor_quant_config: QTensorConfig = None):
         nbits = tensor_quant_config.nbits
         channel_wise = tensor_quant_config.channel_wise
