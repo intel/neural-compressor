@@ -30,6 +30,7 @@ from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 
 logger = Logger().get_logger()
 
+
 class Calibrator:
     """Dump information for smooth quant."""
 

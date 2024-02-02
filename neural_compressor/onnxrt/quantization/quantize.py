@@ -25,6 +25,7 @@ from neural_compressor.onnxrt.utils.utility import algos_mapping
 
 logger = Logger().get_logger()
 
+
 def need_apply(quant_config: BaseConfig, algo_name):
     return quant_config.name == algo_name if hasattr(quant_config, "name") else False
 
