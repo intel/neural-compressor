@@ -10,7 +10,13 @@ All tests will be included for each framework CI.
 import unittest
 
 from neural_compressor.common import options
-from neural_compressor.common.utils import set_random_seed, set_resume_from, set_tensorboard, set_workspace
+from neural_compressor.common.utils import (
+    dump_elapsed_time,
+    set_random_seed,
+    set_resume_from,
+    set_tensorboard,
+    set_workspace,
+)
 
 
 class TestOptions(unittest.TestCase):
@@ -24,6 +30,7 @@ class TestOptions(unittest.TestCase):
         with self.assertRaises(AssertionError):
             set_random_seed(seed)
 
+    @dump_elapsed_time("test_set_workspace")
     def test_set_workspace(self):
         workspace = "/path/to/workspace"
         set_workspace(workspace)

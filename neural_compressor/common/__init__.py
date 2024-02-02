@@ -33,4 +33,5 @@ __all__ = [
     "set_random_seed",
     "set_resume_from",
     "set_tensorboard",
+    "dump_elapsed_time",
 ]
