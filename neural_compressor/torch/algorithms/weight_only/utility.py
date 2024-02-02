@@ -1037,6 +1037,7 @@ def get_module_input_output(
 
 # -------------- Model Wrapper ---------------------------
 
+
 class FakeAffineTensorQuantFunction(Function):
     """Fake version of affine quantization."""
 
