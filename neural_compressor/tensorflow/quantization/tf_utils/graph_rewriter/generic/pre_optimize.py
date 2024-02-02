@@ -120,7 +120,7 @@ class PreOptimization:
         Returns:
             [graphdef]: the optimized graphdef object.
         """
-        from neural_compressor.model import Model
+        from neural_compressor.tensorflow.utils import Model
 
         origin_model = Model(self.model._model, **self.model.kwargs, backend="itex" if itex_mode else "default")
         origin_model.name = self.model.name

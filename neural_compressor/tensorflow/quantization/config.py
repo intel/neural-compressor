@@ -29,6 +29,7 @@ from neural_compressor.common.base_config import (
     BaseConfig,
     config_registry,
     register_config,
+     register_supported_configs_for_fwk,
 )
 from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.tensorflow.utils import DEFAULT_SQ_ALPHA_ARGS
@@ -136,8 +137,7 @@ class StaticQuantConfig(BaseConfig):
         return StaticQuantConfig(weight_sym=[True, False])
 
 
-# TODO(Yi) run `register_supported_configs` for all registered config.
-StaticQuantConfig.register_supported_configs()
+register_supported_configs_for_fwk(fwk_name="keras")
 
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
