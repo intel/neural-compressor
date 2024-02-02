@@ -29,7 +29,7 @@ from neural_compressor.common.base_config import (
     BaseConfig,
     config_registry,
     register_config,
-     register_supported_configs_for_fwk,
+    register_supported_configs_for_fwk,
 )
 from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.tensorflow.utils import DEFAULT_SQ_ALPHA_ARGS
