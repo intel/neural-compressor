@@ -309,6 +309,7 @@ class TEQuantizer:
         if save_state_dict_file:  # pragma: no cover
             torch.save(self.model.state_dict(), save_state_dict_file)
 
+
 def teq_quantize(
     model, weight_config={}, absorb_to_layer={}, extra_config={}, dataloader=None, calib_func=None, example_inputs=None
 ):

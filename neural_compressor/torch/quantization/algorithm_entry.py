@@ -78,6 +78,7 @@ def awq_quantize_entry(
     model = awq_quantize(model=model, configs_mapping=configs_mapping, example_inputs=example_inputs, *args, **kwargs)
     return model
 
+
 ###################### TEQ Algo Entry ##################################
 @register_algo(name=TEQ)
 def teq_quantize_entry(
