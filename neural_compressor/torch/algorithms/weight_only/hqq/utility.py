@@ -12,37 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import inspect
-import time
+
+import gc
 
 import numpy as np
+import psutil
 import torch
 
 from neural_compressor.common import logger
 
 
-def compare_two_tensor(a, b, rtol=1e-05, msg=""):
-    #
-    logger.info(f"[compare_two_tensor] {msg}")
-    assert a.shape == b.shape, "The shape of the two tensor is not the same, got a: {} and b: {}".format(
-        a.shape, b.shape
-    )
-    assert torch.allclose(a, b, rtol=rtol), "The two tensor is not the same, got a: {} and b: {}".format(a, b)
-
-
-import gc
-
-
-def cleanup():
-    torch.cuda.empty_cache()
-    gc.collect()
-
-
 def is_divisible(val1, val2):
     return int(val2 * np.ceil(val1 / val2)) == val1
-
-
-import psutil
 
 
 def see_cuda_memory_usage(message, force=False):
