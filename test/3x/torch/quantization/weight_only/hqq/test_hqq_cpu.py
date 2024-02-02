@@ -51,12 +51,21 @@ def _common_cpu_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False,
 
 
 class TestHQQCPU:
+    ORIG_CUDA_VISIBLE_DEVICES = os.environ.get("CUDA_VISIBLE_DEVICES", None)
+    ORIG_HQQ_GLOBAL_OPTION = hqq_global_option.use_half
+
     @classmethod
     def setup_class(cls):
         torch.manual_seed(0)
         # Force disable CUDA
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
         hqq_global_option.use_half = False
+
+    @classmethod
+    def teardown_class(cls):
+        if cls.ORIG_CUDA_VISIBLE_DEVICES:
+            os.environ["CUDA_VISIBLE_DEVICES"] = cls.ORIG_CUDA_VISIBLE_DEVICES
+        hqq_global_option.use_half = cls.ORIG_HQQ_GLOBAL_OPTION
 
     def test_hqq_quant(self):
         from neural_compressor.torch.quantization import get_default_hqq_config, quantize
