@@ -351,6 +351,7 @@ def teq_quantize_impl(
     logger.info("TEQ quantizing done.")
     return teq_quantizer.model
 
+
 def teq_quantize(model, configs_mapping, example_inputs, *args, **kwargs):
     """Apply awq."""
     weight_config = {}
