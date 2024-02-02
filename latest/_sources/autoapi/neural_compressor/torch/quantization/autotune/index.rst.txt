@@ -15,8 +15,10 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.torch.quantization.autotune.get_rtn_double_quant_config_set
    neural_compressor.torch.quantization.autotune.get_all_config_set
    neural_compressor.torch.quantization.autotune.autotune
+
 
 
 
