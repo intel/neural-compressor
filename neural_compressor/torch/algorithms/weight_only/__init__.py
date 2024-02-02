@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .utility import *
 from .rtn import rtn_quantize
 from .gptq import gptq_quantize
-from modules import WeightOnlyLinear
+from .modules import WeightOnlyLinear
+from .utility import *

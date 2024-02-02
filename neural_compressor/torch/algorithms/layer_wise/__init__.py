@@ -15,5 +15,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Torch layer-wise quantization module."""
-from .quantize import LayerWiseQuant
 from .utils import *
