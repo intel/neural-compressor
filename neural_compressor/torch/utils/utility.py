@@ -125,7 +125,7 @@ def get_double_quant_config(double_quant_type, weight_sym=True):
     return DOUBLE_QUANT_CONFIGS[double_quant_type]
 
 
-def see_cuda_memory_usage(message, force=False):
+def see_cuda_memory_usage(message, force=False):  # pragma: no cover
     # Copied from https://github.com/microsoft/DeepSpeed
     # python doesn't do real-time garbage collection so do it explicitly to get the correct RAM reports
     gc.collect()

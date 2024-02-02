@@ -7,6 +7,7 @@ from transformers import AutoModelForCausalLM
 
 from neural_compressor.torch.algorithms.weight_only.hqq.config import HQQModuleConfig, QTensorConfig, hqq_global_option
 from neural_compressor.torch.algorithms.weight_only.hqq.core import HQQLinear
+from neural_compressor.torch.algorithms.weight_only.utility import dump_elapsed_time
 
 
 def _common_cpu_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False, scale_quant_group_size=128):
@@ -64,6 +65,7 @@ class TestHQQCPU:
     def force_not_half(self, monkeypatch):
         monkeypatch.setattr(hqq_global_option, "use_half", False)
 
+    @dump_elapsed_time("Test HQQ CPU")
     def test_hqq_quant(self, force_use_cpu, force_not_half):
         from neural_compressor.torch.quantization import get_default_hqq_config, quantize
 

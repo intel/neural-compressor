@@ -27,6 +27,8 @@ class TestQTensor:
         q_tensor_meta = QTensorMetaInfo(nbits=4, group_size=64, shape=(out_feats, in_feats), axis=0, packing=False)
         q_tensor = QTensor(val, scale, zero, q_tensor_meta)
         print(q_tensor)
+        q_tensor_half = q_tensor.half()
+        print(q_tensor_half)
 
     def test_qtensor_meta_info(self):
         in_feats = 3

@@ -7,18 +7,12 @@ from neural_compressor.torch.algorithms.weight_only.hqq.auto_accelerator import 
 
 
 class Test_CPU_Accelerator:
-    ORIG_FORCE_DEVICE = os.environ.get("FORCE_DEVICE", None)
+    @pytest.fixture
+    def force_use_cpu(self, monkeypatch):
+        # Force use CPU
+        monkeypatch.setenv("FORCE_DEVICE", "cpu")
 
-    @classmethod
-    def setup_class(cls):
-        os.environ["FORCE_DEVICE"] = "cpu"
-
-    @classmethod
-    def teardown_class(cls):
-        if cls.ORIG_FORCE_DEVICE:
-            os.environ["FORCE_DEVICE"] = cls.ORIG_FORCE_DEVICE
-
-    def test_cpu_accelerator(self):
+    def test_cpu_accelerator(self, force_use_cpu):
         print(f"FORCE_DEVICE: {os.environ.get('FORCE_DEVICE', None)}")
         accelerator = auto_detect_accelerator()
         assert accelerator.current_device() == "cpu", f"{accelerator.current_device()}"
@@ -30,18 +24,13 @@ class Test_CPU_Accelerator:
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is not available")
 class Test_CUDA_Accelerator:
-    ORIG_FORCE_DEVICE = os.environ.get("FORCE_DEVICE", None)
 
-    @classmethod
-    def setup_class(cls):
-        os.environ["FORCE_DEVICE"] = "cuda"
+    @pytest.fixture
+    def force_use_cuda(self, monkeypatch):
+        # Force use CUDA
+        monkeypatch.setenv("FORCE_DEVICE", "cuda")
 
-    @classmethod
-    def teardown_class(cls):
-        if cls.ORIG_FORCE_DEVICE:
-            os.environ["FORCE_DEVICE"] = cls.ORIG_FORCE_DEVICE
-
-    def test_cuda_accelerator(self):
+    def test_cuda_accelerator(self, force_use_cuda):
         print(f"FORCE_DEVICE: {os.environ.get('FORCE_DEVICE', None)}")
         accelerator = auto_detect_accelerator()
         assert accelerator.current_device() == 0, f"{accelerator.current_device()}"
