@@ -17,6 +17,7 @@ import sys
 import tempfile
 from importlib.util import find_spec
 from pathlib import Path
+from typing import List
 
 import numpy as np
 import onnx
@@ -29,11 +30,6 @@ from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 
 logger = Logger().get_logger()
 
-__all__ = [
-    "Calibrator",
-]
-
-
 class Calibrator:
     """Dump information for smooth quant."""
 
@@ -41,9 +37,8 @@ class Calibrator:
         self,
         model: ONNXModel,
         dataloader: CalibrationDataReader,
-        dump_op_types: list,
-        iterations: list = [],
-        providers: list = ["CPUExecutionProvider"],
+        iterations: List[int] = [],
+        providers: List[str] = ["CPUExecutionProvider"],
         **kwargs,
     ):
         """Initialize a Calibrator to dump information.
@@ -51,13 +46,11 @@ class Calibrator:
         Args:
             model (ONNXModel): ONNXModel object.
             dataloader (CalibrationDataReader): user implemented object to read in and preprocess calibration dataset.
-            dump_op_types (list): operator types to be calibrated and quantized.
-            iterations (list, optional): tensor of which iteration will be collected. Defaults to [].
-            providers (list, optional): execution provider for onnxruntime. Defaults to ["CPUExecutionProvider"].
+            iterations (List[int], optional): tensor of which iteration will be collected. Defaults to [].
+            providers (List[str], optional): execution provider for onnxruntime. Defaults to ["CPUExecutionProvider"].
         """
         self.model_wrapper = model
         self.dataloader = dataloader
-        self.dump_op_types = dump_op_types
         self.augmented_model = None
         self.iterations = iterations
         self.providers = providers
@@ -93,14 +86,14 @@ class Calibrator:
                     return True
         return False
 
-    def _get_input_tensor_of_ops(self, op_types: list = ["MatMul", "Gemm", "Conv", "FusedConv"]):
+    def _get_input_tensor_of_ops(self, op_types: List[str] = ["MatMul", "Gemm", "Conv", "FusedConv"]):
         """Traverse the graph and get all the data tensors flowing into layers of {op_types}.
 
         Group conv is excluded.
         # TODO: the tensors could be set/filtered in configuration.
 
         Args:
-            op_types (list, optional): The op types whose input tensor will be dumped.
+            op_types (List[str], optional): The op types whose input tensor will be dumped.
                 Defaults to ["MatMul", "Gemm", "Conv", "FusedConv"].
 
         Returns:
@@ -118,7 +111,7 @@ class Calibrator:
                     tensors_to_node.setdefault(node.input[0], []).append([node.name, node.input, node.output])
         return tensors_to_node
 
-    def _get_max_per_channel(self, datas: list, percentile):
+    def _get_max_per_channel(self, datas, percentile):
         """Get the max values per input channel.
 
         Args:

@@ -19,9 +19,7 @@ import abc
 
 from onnxruntime.quantization import CalibrationDataReader as ORTCalibrationDataReader
 
-__all__ = [
-    "CalibrationDataReader",
-]
+__all__ = ["CalibrationDataReader"]
 
 
 class CalibrationDataReader(ORTCalibrationDataReader):

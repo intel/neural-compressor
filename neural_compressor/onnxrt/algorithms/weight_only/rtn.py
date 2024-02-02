@@ -21,7 +21,7 @@
 
 import os
 from pathlib import Path
-from typing import Union
+from typing import Union, List
 
 import numpy as np
 import onnx
@@ -43,10 +43,7 @@ from neural_compressor.onnxrt.utils.utility import (
     simple_progress_bar,
 )
 
-__all__ = [
-    "rtn_quantize",
-    "apply_rtn_on_model",
-]
+__all__ = ["apply_rtn_on_model"]
 
 
 def rtn_quantize(
@@ -57,7 +54,7 @@ def rtn_quantize(
     scheme: str = "asym",
     ratios: dict = {},
     accuracy_level: int = 0,
-    providers: list = ["CPUExecutionProvider"],
+    providers: List[str] = ["CPUExecutionProvider"],
 ) -> onnx.ModelProto:
     """Quantize the model with round to nearst method.
 

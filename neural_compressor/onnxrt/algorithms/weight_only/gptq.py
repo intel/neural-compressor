@@ -19,7 +19,7 @@
 import copy
 import os
 from pathlib import Path
-from typing import Union
+from typing import Union, List
 
 import numpy as np
 import onnx
@@ -42,30 +42,26 @@ from neural_compressor.onnxrt.utils.utility import (
     simple_progress_bar,
 )
 
-__all__ = [
-    "gptq",
-    "gptq_quantize",
-    "apply_gptq_on_model",
-]
+__all__ = ["apply_gptq_on_model"]
 
 
 def gptq(
-    W,
-    H,
-    num_bits=4,
-    group_size=32,
-    scheme="asym",
-    blocksize=128,
-    percdamp=0.01,
-    actorder=False,
-    mse=False,
-    perchannel=True,
+    W: np.array,
+    H: np.array,
+    num_bits: int = 4,
+    group_size: int = 32,
+    scheme: str = "asym",
+    blocksize: int = 128,
+    percdamp: float = 0.01,
+    actorder: bool = False,
+    mse: bool = False,
+    perchannel: bool = True,
 ):
     """Quant the weight with GPTQ method.
 
     Args:
-        W (array): weight.
-        H (array): Hessian matrix.
+        W (np.array): weight.
+        H (np.array): Hessian matrix.
         num_bits (int, optional): num_bits. Default is 4.
         group_size (int, optional): how many elements share one scale/zp. Default is 32.
         scheme (str, optional): sym or asym. Defaults to "asym".
@@ -205,7 +201,7 @@ def gptq_quantize(
     mse: bool = False,
     perchannel: bool = True,
     accuracy_level: int = 0,
-    providers: list = ["CPUExecutionProvider"],
+    providers: List[str] = ["CPUExecutionProvider"],
 ) -> onnx.ModelProto:
     """Quant the model with GPTQ method.
 

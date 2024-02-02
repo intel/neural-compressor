@@ -15,7 +15,8 @@
 
 import copy
 import os
-from typing import Union
+from typing import Union, List
+from pathlib import Path
 
 import numpy as np
 import onnx
@@ -24,6 +25,7 @@ from onnx import onnx_pb as onnx_proto
 
 from neural_compressor.common import Logger
 from neural_compressor.onnxrt.algorithms.smoother.calibrator import Calibrator
+from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.onnxrt.utils.utility import (
     get_qrange_for_qType,
@@ -34,13 +36,7 @@ from neural_compressor.onnxrt.utils.utility import (
 
 logger = Logger().get_logger()
 
-__all__ = [
-    "dtype_map",
-    "get_quant_dequant_output",
-    "make_sub_graph",
-    "quant_dequant_data",
-    "Smoother",
-]
+__all__ = ["Smoother"]
 
 dtype_map = {
     np.dtype("float32"): 1,
@@ -119,9 +115,9 @@ class Smoother:
 
     def __init__(
         self,
-        model,
-        dataloader,
-        providers=["CPUExecutionProvider"],
+        model: Union[onnx.ModelProto, ONNXModel, Path, str],
+        dataloader: CalibrationDataReader,
+        providers: List[str] = ["CPUExecutionProvider"],
     ):
         """Initialize the attributes of class."""
         self.model = model if isinstance(model, ONNXModel) else ONNXModel(model, load_external_data=True)
@@ -147,7 +143,7 @@ class Smoother:
         alpha: Union[float, str] = 0.5,
         folding: bool = True,
         percentile: float = 99.999,
-        op_types: list = ["Gemm", "Conv", "MatMul", "FusedConv"],
+        op_types: List[str] = ["Gemm", "Conv", "MatMul", "FusedConv"],
         scales_per_op: bool = True,
         calib_iter: int = 100,
         auto_alpha_args: dict = {"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
@@ -173,8 +169,8 @@ class Smoother:
                 Defaults to {"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"}.
 
         Returns:
-            onnx.ModelProto: A FP32 model with the same architecture as the orig model but with different weight which will be
-            benefit to quantization
+            onnx.ModelProto: A FP32 model with the same architecture as the orig model
+                but with different weight which will be benefit to quantization
         """
         self.scales_per_op = scales_per_op
         self.clean()
@@ -225,7 +221,8 @@ class Smoother:
             backend=self.providers,
         )
 
-        self.max_vals_per_channel, self.shape_info, self.tensors_to_node = calibrator.calib_smooth(op_types, percentile)
+        self.max_vals_per_channel, self.shape_info, self.tensors_to_node = \
+            calibrator.calib_smooth(op_types, percentile)
         for node in self.model.nodes():
             for out in node.output:
                 if (
@@ -444,7 +441,14 @@ class Smoother:
             scale = np.reshape(self.tensor_scales_info[key], (1, self.tensor_scales_info[key].shape[0]))
         return scale
 
-    def _auto_tune_alpha(self, calib_iter, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, attn_method="min"):
+    def _auto_tune_alpha(
+            self,
+            calib_iter,
+            alpha_min: float = 0.3,
+            alpha_max: float = 0.7,
+            alpha_step: float = 0.05,
+            attn_method: str = "min"
+        ):
         """Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
 
         Args:
