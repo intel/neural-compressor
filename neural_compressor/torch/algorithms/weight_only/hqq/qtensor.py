@@ -65,7 +65,11 @@ class QTensor:
     def _get_scale_repr(self) -> str:
         if not self.is_scale_quantized():
             if self.scale is not None:
-                return f"scale_shape={self.scale.shape}, scale_dtype={self.scale.dtype}, scale_device={self.scale.device}\n"
+                return (
+                    f"scale_shape={self.scale.shape}, "
+                    f"scale_dtype={self.scale.dtype}, "
+                    f"scale_device={self.scale.device}\n"
+                )
             else:
                 return "scale is None\n"
         else:
@@ -74,7 +78,11 @@ class QTensor:
     def _get_zero_repr(self) -> str:
         if not self.is_zero_quantized():
             if self.zero is not None:
-                return f"zero_shape={self.zero.shape}, zero_dtype={self.zero.dtype}, zero_device={self.zero.device}\n"
+                return (
+                    f"zero_shape={self.zero.shape}, "
+                    f"zero_dtype={self.zero.dtype}, "
+                    f"zero_device={self.zero.device}\n"
+                )
             else:
                 return "zero is None\n"
         else:

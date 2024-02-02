@@ -105,7 +105,8 @@ class HQQTensorHandle:
         min_v = 0
         min_max = [min_v, max_v]
 
-        # Note: here we work with the inverse of the scale to avoid division and quantize instead via W*scale + zero, the scale is inverted later on.
+        # Note: here we work with the inverse of the scale to avoid division and quantize instead via W*scale + zero,
+        # the scale is inverted later on.
         scale = (max_v / (_max - _min)).clamp(max=2e4)  # clamp to avoid half-precision problems
         zero = -_min * scale
 
