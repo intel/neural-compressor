@@ -65,8 +65,9 @@ class RTNConfig(BaseConfig):
     params_list = [
         "dtype",
         "bits",
-        "group_size",
         "use_sym",
+        "group_size",
+        "group_dim",
         "use_full_range",
         "use_mse_search",
         "export_compressed_model",
@@ -213,8 +214,8 @@ class GPTQConfig(BaseConfig):
     params_list = [
         "dtype",
         "bits",
-        "group_size",
         "use_sym",
+        "group_size",
         "use_mse_search",
         "export_compressed_model",
         "use_double_quant",
