@@ -15,8 +15,8 @@
 
 import copy
 import os
-from typing import Union, List
 from pathlib import Path
+from typing import List, Union
 
 import numpy as np
 import onnx
@@ -220,8 +220,7 @@ class Smoother:
             backend=self.providers,
         )
 
-        self.max_vals_per_channel, self.shape_info, self.tensors_to_node = \
-            calibrator.calib_smooth(op_types, percentile)
+        self.max_vals_per_channel, self.shape_info, self.tensors_to_node = calibrator.calib_smooth(op_types, percentile)
         for node in self.model.nodes():
             for out in node.output:
                 if (
@@ -441,13 +440,13 @@ class Smoother:
         return scale
 
     def _auto_tune_alpha(
-            self,
-            calib_iter,
-            alpha_min: float = 0.3,
-            alpha_max: float = 0.7,
-            alpha_step: float = 0.05,
-            attn_method: str = "min"
-        ):
+        self,
+        calib_iter,
+        alpha_min: float = 0.3,
+        alpha_max: float = 0.7,
+        alpha_step: float = 0.05,
+        attn_method: str = "min",
+    ):
         """Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
 
         Args:

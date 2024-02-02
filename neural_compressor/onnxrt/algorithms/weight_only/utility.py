@@ -34,7 +34,8 @@ __all__ = [
     "pad_tensor",
     "quant_tensor",
     "qdq_tensor",
-    ]
+]
+
 
 def _get_blob_size(group_size, has_zp):  # pragma: no cover
     """Get blob_size.
