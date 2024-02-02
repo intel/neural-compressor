@@ -16,8 +16,8 @@
 # limitations under the License.
 # pylint:disable=import-error
 
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 from collections import OrderedDict
+from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import torch
 
@@ -371,11 +371,12 @@ class StaticQuantConfig(BaseConfig):
     @staticmethod
     def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
         from neural_compressor.torch.algorithms.static_quant import _get_quantizable_ops_recursively
+
         return _get_quantizable_ops_recursively(model, example_inputs=example_inputs)
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
-        return StaticQuantConfig(act_sym=[True, False], act_algo = ["kl", "minmax"])
+        return StaticQuantConfig(act_sym=[True, False], act_algo=["kl", "minmax"])
 
 
 def get_default_static_config() -> StaticQuantConfig:

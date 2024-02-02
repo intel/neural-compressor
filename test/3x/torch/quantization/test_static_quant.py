@@ -1,12 +1,10 @@
-import unittest
 import copy
-import torch
+import unittest
+
 import intel_extension_for_pytorch as ipex
-from neural_compressor.torch.quantization import (
-    StaticQuantConfig,
-    get_default_static_config,
-    quantize,
-)
+import torch
+
+from neural_compressor.torch.quantization import StaticQuantConfig, get_default_static_config, quantize
 from neural_compressor.torch.utils import get_model_info, logger
 
 
@@ -51,10 +49,7 @@ class TestStaticQuant(unittest.TestCase):
         quant_config = get_default_static_config()
         example_inputs = self.input
         out1 = fp32_model(example_inputs)
-        qmodel = quantize(fp32_model,
-                        quant_config=quant_config, 
-                        run_fn=run_fn, 
-                        example_inputs=example_inputs)
+        qmodel = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         out2 = qmodel(example_inputs)
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
         self.assertIsNotNone(qmodel)

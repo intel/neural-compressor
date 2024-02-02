@@ -12,18 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
 from collections import UserDict
 from typing import Dict, List, Union
-from packaging.version import Version
-import prettytable as pt
+
 import intel_extension_for_pytorch as ipex
+import prettytable as pt
+import torch
+from packaging.version import Version
+
 from neural_compressor.torch.utils import (
-    logger, 
-    get_torch_version, 
-    get_depth, 
-    get_dict_at_depth, 
-    get_element_under_depth
+    get_depth,
+    get_dict_at_depth,
+    get_element_under_depth,
+    get_torch_version,
+    logger,
 )
 
 version = get_torch_version()
@@ -194,6 +196,7 @@ def _simple_inference(q_model, example_inputs, iterations=1):
         else:
             q_model(example_inputs)
 
+
 '''
 def _cfg_to_qconfig(tune_cfg, smooth_quant=False):
         """Convert tune configure to quantization config for each op.
@@ -265,57 +268,58 @@ def _cfg_to_qconfig(tune_cfg, smooth_quant=False):
             return None
 '''
 
+
 def _dump_model_op_stats(tune_cfg):
-        """This is a function to dump quantizable ops of model to user.
+    """This is a function to dump quantizable ops of model to user.
 
-        Args:
-            tune_cfg (dict): quantization config
-        Returns:
-            None
-        """
-        res = dict()
-        for k, v in tune_cfg["op"].items():
-            op_type_list = k[-1].split("><")
-            op_type = ""
-            for op in op_type_list:
-                if "class" in op:
+    Args:
+        tune_cfg (dict): quantization config
+    Returns:
+        None
+    """
+    res = dict()
+    for k, v in tune_cfg["op"].items():
+        op_type_list = k[-1].split("><")
+        op_type = ""
+        for op in op_type_list:
+            if "class" in op:
+                op_type = (
+                    op[op.rfind(".") + 1 : op.rfind("'")]
+                    if op_type == ""
+                    else op_type + "&" + op[op.rfind(".") + 1 : op.rfind("'")]
+                )
+            elif "method" in op:
+                start = op.find("'") + 1
+                if start > 1:
                     op_type = (
-                        op[op.rfind(".") + 1 : op.rfind("'")]
+                        op[start : op.find("'", start)]
                         if op_type == ""
-                        else op_type + "&" + op[op.rfind(".") + 1 : op.rfind("'")]
+                        else op_type + "&" + op[start : op.find("'", start)]
                     )
-                elif "method" in op:
-                    start = op.find("'") + 1
-                    if start > 1:
-                        op_type = (
-                            op[start : op.find("'", start)]
-                            if op_type == ""
-                            else op_type + "&" + op[start : op.find("'", start)]
-                        )
-                    else:
-                        start = op.find("method") + 7
-                        op_type = (
-                            op[start : op.find(" ", start)]
-                            if op_type == ""
-                            else op_type + "&" + op[start : op.find(" ", start)]
-                        )
                 else:
-                    op_type = op if op_type == "" else op_type + "&" + op
-            if op_type not in res.keys():
-                res[op_type] = {"INT8": 0, "BF16": 0, "FP32": 0}
-            if v["weight"]["dtype"] == "int8":
-                res[op_type]["INT8"] += 1
-            elif v["weight"]["dtype"] == "fp32":
-                res[op_type]["FP32"] += 1
+                    start = op.find("method") + 7
+                    op_type = (
+                        op[start : op.find(" ", start)]
+                        if op_type == ""
+                        else op_type + "&" + op[start : op.find(" ", start)]
+                    )
+            else:
+                op_type = op if op_type == "" else op_type + "&" + op
+        if op_type not in res.keys():
+            res[op_type] = {"INT8": 0, "BF16": 0, "FP32": 0}
+        if v["weight"]["dtype"] == "int8":
+            res[op_type]["INT8"] += 1
+        elif v["weight"]["dtype"] == "fp32":
+            res[op_type]["FP32"] += 1
 
-        output_data = [
-            [op_type, sum(res[op_type].values()), res[op_type]["INT8"], res[op_type]["BF16"], res[op_type]["FP32"]]
-            for op_type in res.keys()
-        ]
+    output_data = [
+        [op_type, sum(res[op_type].values()), res[op_type]["INT8"], res[op_type]["BF16"], res[op_type]["FP32"]]
+        for op_type in res.keys()
+    ]
 
-        Statistics(
-            output_data, header="Mixed Precision Statistics", field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]
-        ).print_stat()
+    Statistics(
+        output_data, header="Mixed Precision Statistics", field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]
+    ).print_stat()
 
 
 class TransformerBasedModelBlockPatternDetector:
@@ -446,7 +450,7 @@ class TransformerBasedModelBlockPatternDetector:
                     if ffn_block:
                         ffn_block_lst.append(ffn_block)
         return attention_block_lst, ffn_block_lst
-    
+
 
 class Statistics:
     """The statistics printer."""

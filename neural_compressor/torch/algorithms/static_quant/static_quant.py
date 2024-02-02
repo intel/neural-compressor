@@ -21,43 +21,37 @@ import copy
 import json
 import os
 import re
+
+import intel_extension_for_pytorch as ipex
+import torch
 from packaging.version import Version
 
-import torch
-from .utility import (
-    get_example_inputs,
-    _simple_inference, 
-    _dump_model_op_stats,
-)
-import intel_extension_for_pytorch as ipex
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.torch.utils import (
-    logger,
-    get_ipex_version, 
-    paser_cfgs, 
-    get_quantizable_ops_from_cfgs,
-)
+from neural_compressor.torch.utils import get_ipex_version, get_quantizable_ops_from_cfgs, logger, paser_cfgs
+
+from .utility import _dump_model_op_stats, _simple_inference, get_example_inputs
 
 ipex_ver = get_ipex_version()
 ipex_config_path = os.path.join(DEFAULT_WORKSPACE, "ipex_config_tmp.json")
 
+
 def static_config_mapping(configs_mapping):
     tune_cfg = {}
-    tune_cfg['op'] = configs_mapping
+    tune_cfg["op"] = configs_mapping
     for (op_name, op_type), cfg in configs_mapping.items():
-        tune_cfg['op'][(op_name, op_type)] = {
-            'weight': {
-                'dtype': cfg.w_dtype, 
-                'scheme': 'sym', 
-                'granularity': cfg.w_granularity, 
-                'algorithm': cfg.w_algo
-            }, 
-            'activation': {
-                'dtype': cfg.act_dtype, 
-                'scheme': 'sym' if cfg.act_sym else 'asym', 
-                'granularity': cfg.act_granularity,
-                'algorithm': cfg.act_algo
-            }
+        tune_cfg["op"][(op_name, op_type)] = {
+            "weight": {
+                "dtype": cfg.w_dtype,
+                "scheme": "sym",
+                "granularity": cfg.w_granularity,
+                "algorithm": cfg.w_algo,
+            },
+            "activation": {
+                "dtype": cfg.act_dtype,
+                "scheme": "sym" if cfg.act_sym else "asym",
+                "granularity": cfg.act_granularity,
+                "algorithm": cfg.act_algo,
+            },
         }
     return tune_cfg
 
@@ -93,7 +87,7 @@ def quantize(model, tune_cfg, run_fn, example_inputs, inplace):
             logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(repr(e)))
             q_model = model
 
-    #qscheme = _cfg_to_qconfig(tune_cfg)  # Update json file in self.ipex_config_path
+    # qscheme = _cfg_to_qconfig(tune_cfg)  # Update json file in self.ipex_config_path
     iterations = 1
     model.eval()
 
@@ -108,23 +102,19 @@ def quantize(model, tune_cfg, run_fn, example_inputs, inplace):
             else:
                 static_qconfig = QConfig(
                     activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                    weight=PerChannelMinMaxObserver.with_args(
-                        dtype=torch.qint8, qscheme=torch.per_channel_symmetric
-                    ),
+                    weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
                 )
             if isinstance(example_inputs, dict):
                 model = ipex.quantization.prepare(
                     model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=inplace
                 )
             else:
-                model = ipex.quantization.prepare(
-                    model, static_qconfig, example_inputs=example_inputs, inplace=inplace
-                )
+                model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
         model.load_qconf_summary(qconf_summary=ipex_config_path)
         run_fn(model)
         model.save_qconf_summary(qconf_summary=ipex_config_path)
         _ipex_post_quant_process(model, q_model, example_inputs, inplace=inplace)
-    '''
+    """
     else:
         # for IPEX version < 1.12
         ipex_conf = ipex.quantization.QuantConf(
@@ -136,7 +126,7 @@ def quantize(model, tune_cfg, run_fn, example_inputs, inplace):
         q_model = ipex.quantization.convert(
             q_model, ipex_conf, example_inputs, inplace=True
         )  # pylint: disable=E1121
-    '''
+    """
     with open(ipex_config_path, "r") as f:
         q_model.tune_cfg = json.load(f)
     q_model.ipex_config_path = ipex_config_path
@@ -156,9 +146,7 @@ def _ipex_post_quant_process(model, q_model, example_inputs, inplace=False):
             q_model = torch.jit.freeze(q_model.eval())
         except:
             if isinstance(example_inputs, dict):
-                q_model = torch.jit.trace(
-                    q_model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False
-                )
+                q_model = torch.jit.trace(q_model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False)
             else:
                 q_model = torch.jit.trace(q_model, example_inputs, strict=False)
             q_model = torch.jit.freeze(q_model.eval())
@@ -166,7 +154,9 @@ def _ipex_post_quant_process(model, q_model, example_inputs, inplace=False):
     # At the 2nd run, the llga pass will be triggered and the model is turned into
     # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
     _simple_inference(q_model, example_inputs, iterations=2)
-    import pdb; pdb.set_trace()
+    import pdb
+
+    pdb.set_trace()
 
 
 def _get_quantizable_ops_recursively(model, example_inputs):
@@ -181,6 +171,7 @@ def _get_quantizable_ops_recursively(model, example_inputs):
     quantizable_ops = []
     # group ops by position for transform-based model
     from .utility import TransformerBasedModelBlockPatternDetector
+
     detector = TransformerBasedModelBlockPatternDetector(model)
     detect_result = detector.detect_block()
     attention_block = detect_result.get("attention_blocks", None)
@@ -198,9 +189,7 @@ def _get_quantizable_ops_recursively(model, example_inputs):
 
         # create a quantization config file for intel pytorch extension model
         os.makedirs(os.path.dirname(ipex_config_path), exist_ok=True)
-        assert (
-            example_inputs is not None
-        ), "IPEX need q_dataloader or example_inputs to prepare the model"
+        assert example_inputs is not None, "IPEX need q_dataloader or example_inputs to prepare the model"
         from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
 
         if ipex_ver.release >= Version("2.1").release:
@@ -208,9 +197,7 @@ def _get_quantizable_ops_recursively(model, example_inputs):
             # static_qconfig = ipex.quantization.default_static_qconfig_mapping
             qconfig = QConfig(
                 activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                weight=PerChannelMinMaxObserver.with_args(
-                    dtype=torch.qint8, qscheme=torch.per_channel_symmetric
-                ),
+                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
             )
             from torch.ao.quantization import QConfigMapping
 
@@ -218,19 +205,13 @@ def _get_quantizable_ops_recursively(model, example_inputs):
         else:
             static_qconfig = QConfig(
                 activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                weight=PerChannelMinMaxObserver.with_args(
-                    dtype=torch.qint8, qscheme=torch.per_channel_symmetric
-                ),
+                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
             )
-        
+
         if isinstance(example_inputs, dict):
-            model = ipex.quantization.prepare(
-                model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=True
-            )
+            model = ipex.quantization.prepare(model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=True)
         else:
-            model = ipex.quantization.prepare(
-                model, static_qconfig, example_inputs=example_inputs, inplace=True
-            )
+            model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=True)
         _simple_inference(model, example_inputs, iterations=1)
         model.save_qconf_summary(qconf_summary=ipex_config_path)
 
@@ -239,6 +220,7 @@ def _get_quantizable_ops_recursively(model, example_inputs):
         cfgs = json.load(f)
 
         from .utility import unify_op_type_mapping_ipex
+
         if ipex_ver.release < Version("1.12.0").release:  # pragma: no cover
             for op_cfg in cfgs:
                 if op_cfg["name"] in unify_op_type_mapping_ipex:
@@ -259,9 +241,7 @@ def _get_quantizable_ops_recursively(model, example_inputs):
                 input_tensor_id_op_name,
                 output_tensor_id_op_name,
             ) = paser_cfgs(cfgs)
-            quantizable_op_names = get_quantizable_ops_from_cfgs(
-                ops_name, op_infos_from_cfgs, input_tensor_id_op_name
-            )
+            quantizable_op_names = get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_id_op_name)
             for name in quantizable_op_names:
                 # name : list
                 if len(name) == 1:

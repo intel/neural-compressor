@@ -18,7 +18,7 @@ from typing import Any, Callable, Dict, Tuple
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
-from neural_compressor.torch.utils import logger, is_ipex_available
+from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
 FRAMEWORK_NAME = "torch"
@@ -71,7 +71,9 @@ def quantize(
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
             if is_ipex_available:
-                q_model = algo_func(q_model, configs_mapping, run_fn=run_fn, run_args=run_args, example_inputs=example_inputs)
+                q_model = algo_func(
+                    q_model, configs_mapping, run_fn=run_fn, run_args=run_args, example_inputs=example_inputs
+                )
             else:
                 q_model = algo_func(q_model, configs_mapping, run_fn=run_fn, run_args=run_args)
     return q_model
