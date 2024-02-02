@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import torch
+from packaging.version import Version
 
 # pylint:disable=import-error
 try:
@@ -38,3 +40,21 @@ except:
 
 def is_ipex_available():
     return _ipex_available
+
+
+def get_ipex_version():
+    try:
+        ipex_version = ipex.__version__.split("+")[0]
+    except ValueError as e:  # pragma: no cover
+        assert False, "Got an unknown version of intel_extension_for_pytorch: {}".format(e)
+    version = Version(ipex_version)
+    return version
+
+
+def get_torch_version():
+    try:
+        torch_version = torch.__version__.split("+")[0]
+    except ValueError as e:  # pragma: no cover
+        assert False, "Got an unknown version of torch: {}".format(e)
+    version = Version(torch_version)
+    return version

@@ -16,9 +16,10 @@ from typing import Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import FP8_QUANT, GPTQ, RTN  # unified namespace
+from neural_compressor.common.utils import FP8_QUANT, GPTQ, RTN, STATIC_QUANT  # unified namespace
 from neural_compressor.torch.algorithms.weight_only import gptq_quantize, rtn_quantize
-from neural_compressor.torch.quantization import GPTQConfig, RTNConfig
+from neural_compressor.torch.algorithms.static_quant import static_quantize
+from neural_compressor.torch.quantization import GPTQConfig, RTNConfig, StaticQuantConfig
 from neural_compressor.torch.utils import logger, register_algo
 
 
@@ -65,6 +66,23 @@ def gptq_entry(
     # Assign the gptq config as an attribute of model
     model._gptq_quantization_perm = quantization_perm
     return model
+
+
+###################### Static Quant Algo Entry ##################################
+@register_algo(STATIC_QUANT)
+@torch.no_grad()
+def static_quant_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig],
+      run_fn=None, run_args=None, example_inputs=None, inplace=True) -> torch.nn.Module:
+    logger.info("Quantize model with the static quant algorithm.")
+
+    q_model = static_quantize(model=model,
+                           configs_mapping=configs_mapping,
+                           run_fn=run_fn,
+                           run_args=run_args,
+                           example_inputs=example_inputs,
+                           inplace=inplace)
+    return q_model
 
 
 ###################### Habana FP8 Algo Entry ##################################
