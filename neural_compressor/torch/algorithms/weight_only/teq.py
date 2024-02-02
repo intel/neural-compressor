@@ -39,7 +39,7 @@ class TEQuantizer:
     def __init__(self, model, weight_config={}, absorb_to_layer={}, folding=True, example_inputs=None):
         """
         :param model: the model for quantization
-        :param weight_config (dict, optional): contains all info required by GPTQ. Defaults to {}.
+        :param weight_config (dict, optional): contains all info required by RTN. Defaults to {}.
         :param example_inputs: inputs for trace
         """
         self.model = model
