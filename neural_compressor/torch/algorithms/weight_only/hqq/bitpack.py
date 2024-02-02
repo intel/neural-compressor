@@ -44,10 +44,6 @@ class BitPack:
         _step = int(len(W_q) / 2)
         return (W_q[:_step] << 4) | W_q[_step:]
 
-    @staticmethod
-    def unpack_4bit_u8_cat(W_q):  # uint8/2 > uint8
-        return torch.cat([(W_q & 0b11110000) >> 4, W_q & 0b00001111], axis=0)
-
     # A bit faster than the _cat version
     @staticmethod
     def unpack_4bit_u8(W_q):  # uint8/2 > uint8
@@ -64,12 +60,6 @@ class BitPack:
         W_q = W_q.to(torch.uint8)
         _step = int(len(W_q) / 4)
         return W_q[:_step] << 6 | W_q[_step : 2 * _step] << 4 | W_q[2 * _step : 3 * _step] << 2 | W_q[3 * _step :]
-
-    @staticmethod
-    def unpack_2bit_u8_cat(W_q):
-        return torch.cat(
-            [(W_q & 0b11000000) >> 6, (W_q & 0b00110000) >> 4, (W_q & 0b00001100) >> 2, W_q & 0b00000011], axis=0
-        )
 
     # A bit faster than the _cat version
     @staticmethod
@@ -105,24 +95,6 @@ class BitPack:
         )
         return W_q
 
-    @staticmethod
-    def unpack_3bit_32_cat(W_q):
-        return torch.cat(
-            [
-                ((W_q & 0b00111000000000000000000000000000) >> 27),
-                ((W_q & 0b00000111000000000000000000000000) >> 24),
-                ((W_q & 0b00000000111000000000000000000000) >> 21),
-                ((W_q & 0b00000000000111000000000000000000) >> 18),
-                ((W_q & 0b00000000000000111000000000000000) >> 15),
-                ((W_q & 0b00000000000000000111000000000000) >> 12),
-                ((W_q & 0b00000000000000000000111000000000) >> 9),
-                ((W_q & 0b00000000000000000000000111000000) >> 6),
-                ((W_q & 0b00000000000000000000000000111000) >> 3),
-                ((W_q & 0b00000000000000000000000000000111)),
-            ],
-            axis=0,
-        )
-
     # A bit faster than _cat version
     @staticmethod
     def unpack_3bit_32(W_q):
@@ -139,50 +111,6 @@ class BitPack:
         tmp[8 * _step : 9 * _step] = (W_q & 0b00000000000000000000000000111000) >> 3
         tmp[9 * _step :] = W_q & 0b00000000000000000000000000000111
         return tmp
-
-    # Experimental
-    ################################################################################################################
-    @staticmethod
-    def pack_3bit2bit_u8(W_q):
-        assert is_divisible(len(W_q), 3), "Input should have shape[0] divisible by 3 to use mixed 3-2bit bit packing"
-        _step = int(len(W_q) / 3)
-        return W_q[:_step] << 6 | W_q[1 * _step : 2 * _step] << 3 | W_q[2 * _step :]
-
-    @staticmethod
-    def unpack_3bit2bit_u8(W_q):
-        return torch.cat([(W_q & 0b11100000) >> 6, (W_q & 0b00011100) >> 3, W_q & 0b00000011], axis=0)
-
-    @staticmethod
-    def pack_4bit_32(W_q):
-        W_q = W_q.to(torch.int32)
-        _step = int(len(W_q) / 8)
-        W_q = (
-            (W_q[:_step] << 28)
-            | (W_q[_step : _step * 2] << 24)
-            | (W_q[_step * 2 : _step * 3] << 20)
-            | (W_q[_step * 3 : _step * 4] << 16)
-            | (W_q[_step * 4 : _step * 5] << 12)
-            | (W_q[_step * 5 : _step * 6] << 8)
-            | (W_q[_step * 6 : _step * 7] << 4)
-            | (W_q[_step * 7 :])
-        )
-        return W_q
-
-    @staticmethod
-    def unpack_4bit_32(W_q):
-        return torch.cat(
-            [
-                ((W_q & 0b11110000000000000000000000000000) >> 28),
-                ((W_q & 0b00001111000000000000000000000000) >> 24),
-                ((W_q & 0b00000000111100000000000000000000) >> 20),
-                ((W_q & 0b00000000000011110000000000000000) >> 16),
-                ((W_q & 0b00000000000000001111000000000000) >> 12),
-                ((W_q & 0b00000000000000000000111100000000) >> 8),
-                ((W_q & 0b00000000000000000000000011110000) >> 4),
-                ((W_q & 0b00000000000000000000000000001111)),
-            ],
-            axis=0,
-        )
 
 
 class Packer:

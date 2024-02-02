@@ -7,7 +7,7 @@ from transformers import AutoModelForCausalLM
 from neural_compressor.torch.algorithms.weight_only.hqq.auto_accelerator import auto_detect_accelerator
 from neural_compressor.torch.algorithms.weight_only.hqq.config import HQQModuleConfig, QTensorConfig, hqq_global_option
 from neural_compressor.torch.algorithms.weight_only.hqq.core import HQQLinear
-from neural_compressor.torch.utils import see_cuda_memory_usage
+from neural_compressor.torch.algorithms.weight_only.hqq.utility import see_cuda_memory_usage
 
 
 def _common_cuda_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False, scale_quant_group_size=128):
