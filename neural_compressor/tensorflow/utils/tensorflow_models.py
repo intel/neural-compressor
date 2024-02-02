@@ -957,6 +957,7 @@ class TensorflowBaseModel(BaseModel):
         f.write(self.graph_def.SerializeToString())
         logger.info("Save quantized model to {}.".format(pb_file))
 
+
 class TensorflowSavedModelModel(TensorflowBaseModel):
     """Build Tensorflow saved model."""
 
