@@ -224,7 +224,8 @@ class SmoohQuantConfig(BaseConfig, StaticQuantConfig):
                            https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/python/tools/quantization/quantize.py#L78
         """
         BaseConfig.__init__(self)
-        StaticQuantConfig.__init__(self, calibration_data_reader=None, **kwargs)
+        kwargs.update({"calibration_data_reader": None})
+        StaticQuantConfig.__init__(self, **kwargs)
         self.alpha = alpha
         self.folding = folding
         self.op_types = op_types
