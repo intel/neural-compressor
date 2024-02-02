@@ -37,7 +37,7 @@ from .utility import get_module, set_module, quant_tensor
 class TEQuantizer:
     """Weight-only quantization, Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input."""
 
-    def __init__(self, model, weight_config={}, absorb_to_layer={}, extra_config={}, example_inputs=None):
+    def __init__(self, model, weight_config={}, absorb_to_layer={}, folding=True, example_inputs=None):
         """
         :param model: the model for quantization
         :param weight_config (dict, optional): contains all info required by GPTQ. Defaults to {}.
@@ -45,7 +45,7 @@ class TEQuantizer:
         """
         self.model = model
         self.weight_config = weight_config
-        self.folding = extra_config.get("folding", True)
+        self.folding = folding
         self.example_inputs = example_inputs
         self.device, self.dtype = self._get_device()
         self.model.eval()
@@ -310,8 +310,8 @@ class TEQuantizer:
             torch.save(self.model.state_dict(), save_state_dict_file)
 
 
-def teq_quantize(
-    model, weight_config={}, absorb_to_layer={}, extra_config={}, dataloader=None, calib_func=None, example_inputs=None
+def teq_quantize_impl(
+    model, weight_config={}, absorb_to_layer={}, folding=True, dataloader=None, calib_func=None, example_inputs=None
 ):
     """Run weight-only quantization with."""
     assert isinstance(model, torch.nn.Module), "only support torch module"
@@ -328,9 +328,7 @@ def teq_quantize(
                 example_inputs = input
                 break
 
-    from .teq import TEQuantizer
-
-    teq_quantizer = TEQuantizer(model, weight_config, absorb_to_layer, extra_config, example_inputs)
+    teq_quantizer = TEQuantizer(model, weight_config, absorb_to_layer, folding, example_inputs)
 
     # 1. wrapper tuning scale to model
     teq_quantizer.add_tuning_scale()
@@ -353,3 +351,48 @@ def teq_quantize(
     # quantization_data = gptq_quantizer.execute_quantization()
     logger.info("TEQ quantizing done.")
     return teq_quantizer.model
+
+def teq_quantize(model, configs_mapping, example_inputs, *args, **kwargs):
+    """Apply awq."""
+    weight_config = {}
+    absorb_to_layer = {}
+    folding = True
+    for (op_name, op_type), quant_config in configs_mapping.items():
+        if quant_config.dtype == "fp32":
+            continue
+        else:
+            weight_config[op_name] = {
+                "dtype": quant_config.dtype,
+                "bits": quant_config.bits,
+                "scheme": "sym" if quant_config.use_sym else "asym",
+                "group_size": quant_config.group_size,
+                "group_dim": quant_config.group_dim,
+                "use_full_range": quant_config.use_full_range,
+                "use_mse_search": quant_config.use_mse_search,
+                "use_layer_wise": quant_config.use_layer_wise,
+                "export_compressed_model": quant_config.export_compressed_model,
+                "use_double_quant": quant_config.use_double_quant,
+                "double_quant_dtype": quant_config.double_quant_dtype,
+                "double_quant_bits": quant_config.double_quant_bits,
+                "double_quant_scheme": "sym" if quant_config.double_quant_use_sym else "asym",
+                "double_quant_group_size": quant_config.double_quant_group_size,
+            }
+            absorb_to_layer = quant_config.absorb_to_config
+            folding = quant_config.folding
+    assert isinstance(model, torch.nn.Module), "only support torch module"
+
+    calib_func = kwargs.get("run_fn", None)
+    dataloader = kwargs.get("run_args", None)
+
+    quantized_model = teq_quantize_impl(
+        model,
+        bits=-1,  # no quantize for op not in weight_config
+        example_inputs=example_inputs,
+        folding=folding,
+        absorb_to_layer=absorb_to_layer,
+        calib_func=calib_func,
+        dataloader=dataloader,
+        weight_config=weight_config,
+    )
+    logger.info("TEQ quantization done.")
+    return quantized_model
