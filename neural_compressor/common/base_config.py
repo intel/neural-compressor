@@ -210,8 +210,9 @@ class BaseConfig(ABC):
 
     def get_params_dict(self):
         result = dict()
-        for param in self.params_list:
-            result[param] = getattr(self, param)
+        for param, value in self.__dict__.items():
+            if param not in ["_global_config", "_local_config", "_white_list"]:
+                result[param] = value
         return result
 
     @classmethod
