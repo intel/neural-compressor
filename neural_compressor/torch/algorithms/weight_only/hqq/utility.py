@@ -32,7 +32,8 @@ def is_divisible(val1, val2):
     return int(val2 * np.ceil(val1 / val2)) == val1
 
 
-def see_cuda_memory_usage(message, force=False):
+def see_cuda_memory_usage(message, force=False):  # pragma: no cover
+    # Copied from https://github.com/microsoft/DeepSpeed
     # python doesn't do real-time garbage collection so do it explicitly to get the correct RAM reports
     gc.collect()
 

@@ -56,11 +56,6 @@ class AcceleratorRegistry:
         return decorator
 
     @classmethod
-    def get_all_accelerators(cls) -> ["Auto_Accelerator"]:
-        """Get all registered accelerators."""
-        return [pair[0] for pair in cls.registered_accelerators.values()]
-
-    @classmethod
     def get_sorted_accelerators(cls) -> List["Auto_Accelerator"]:
         """Get registered accelerators sorted by priority."""
         accelerator_pairs = cls.registered_accelerators.values()
@@ -201,13 +196,6 @@ class CUDA_Accelerator(Auto_Accelerator):
 
     def empty_cache(self):
         return torch.cuda.empty_cache()
-
-
-# class RuntimeAccelerator:
-#     accelerator = None
-
-
-# runtime_accelerator = RuntimeAccelerator()
 
 
 def auto_detect_accelerator() -> Auto_Accelerator:

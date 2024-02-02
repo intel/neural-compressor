@@ -30,9 +30,26 @@ class TestQTensor:
         q_tensor_half = q_tensor.half()
         print(q_tensor_half)
 
+    def test_q_tensor2(self):
+        in_feats = 64
+        out_feats = 64
+
+        val = torch.randn(out_feats, in_feats)
+        scale = torch.randn(out_feats)
+        zero = torch.randint(1, 10, (out_feats,))
+        q_tensor_meta = QTensorMetaInfo(nbits=4, group_size=64, shape=(out_feats, in_feats), axis=0, packing=False)
+        q_tensor = QTensor(val, scale, zero, q_tensor_meta)
+        q_scale_meta = QTensorMetaInfo(nbits=8, group_size=64, shape=(out_feats,), axis=0, packing=False)
+        q_scale_scale = torch.randn(out_feats)
+        q_scale_zero = torch.randint(1, 10, (1,))
+        q_scale = QTensor(scale, q_scale_scale, q_scale_zero, q_tensor_meta)
+        q_tensor.scale = q_scale
+        print(q_tensor)
+        print(q_tensor.half())
+
     def test_qtensor_meta_info(self):
-        in_feats = 3
-        out_feats = 4
+        in_feats = 64
+        out_feats = 64
         meta_config = QTensorMetaInfo(nbits=4, group_size=64, shape=(out_feats, in_feats), axis=0, packing=False)
         print(meta_config)
         print(meta_config.to_dict)

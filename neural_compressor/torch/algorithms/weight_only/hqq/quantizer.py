@@ -77,24 +77,6 @@ def replacement_fn(mod: torch.nn.Module, name: str, config_mapping: ConfigMappin
     return patch_hqq_moduile(mod, config)
 
 
-def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-    white_list = (torch.nn.Linear,)
-    filter_result = []
-    for op_name, module in model.named_modules():
-        if isinstance(module, white_list):
-            pair = (op_name, type(module).__name__)
-            filter_result.append(pair)
-    return filter_result
-
-
-def get_default_hqq_config_mapping(model):
-    mode_info = get_model_info(model)
-    config_mapping = {}
-    for name, _ in mode_info:
-        config_mapping[name] = default_hqq_module_config
-    return config_mapping
-
-
 class EagerModeQuantizer:
     def __init__(self, config_mapping) -> None:
         self.config_mapping = config_mapping
@@ -102,16 +84,10 @@ class EagerModeQuantizer:
     def prepare(self, model: torch.nn.Module, inplace=True) -> Optional[torch.nn.Module]:
         pass
 
-    def calibrate(self):
-        pass
-
     def convert(self, model: torch.nn.Module, inplace=True) -> Optional[torch.nn.Module]:
         pass
 
     def save(self):
-        pass
-
-    def load(self):
         pass
 
 

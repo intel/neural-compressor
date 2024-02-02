@@ -3,7 +3,10 @@ import os
 import pytest
 import torch
 
-from neural_compressor.torch.algorithms.weight_only.hqq.auto_accelerator import auto_detect_accelerator
+from neural_compressor.torch.algorithms.weight_only.hqq.auto_accelerator import (
+    accelerator_registry,
+    auto_detect_accelerator,
+)
 
 
 class Test_CPU_Accelerator:
@@ -17,6 +20,8 @@ class Test_CPU_Accelerator:
         accelerator = auto_detect_accelerator()
         assert accelerator.current_device() == "cpu", f"{accelerator.current_device()}"
         assert accelerator.current_device_name() == "cpu"
+        assert accelerator.is_available()
+        assert accelerator.set_device(1) is None
         assert accelerator.device() is None
         assert accelerator.empty_cache() is None
         assert accelerator.synchronize() is None
@@ -49,3 +54,15 @@ class Test_CUDA_Accelerator:
         assert accelerator.current_device_name() == "cuda:1"
         assert accelerator.synchronize() is None
         assert accelerator.empty_cache() is None
+
+
+class TestAutoAccelerator:
+
+    @pytest.fixture
+    def set_cuda_available(self, monkeypatch):
+        monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+
+    def test_auto_accelerator(self, set_cuda_available):
+        accelerator = auto_detect_accelerator()
+        all_accelerators = accelerator_registry.get_sorted_accelerators()
+        assert accelerator.name() == all_accelerators[0]().name()
