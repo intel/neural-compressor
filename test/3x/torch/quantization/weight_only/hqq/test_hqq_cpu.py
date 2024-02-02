@@ -60,6 +60,7 @@ class TestHQQCPU:
         # Force disable CUDA
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
         hqq_global_option.use_half = False
+        # TODO: some issues when run all test on machine has GPU
 
     @classmethod
     def teardown_class(cls):

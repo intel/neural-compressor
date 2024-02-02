@@ -27,7 +27,9 @@ __all__ = [
     "QTensorConfig",
     "hqq_global_option",
     "default_hqq_module_config",
-    "convert_offical_config_into_hqq_config",
+    "default_weight_quant_config",
+    "default_scale_quant_config",
+    "default_zero_quant_config",
 ]
 
 
@@ -85,29 +87,6 @@ default_hqq_module_config = HQQModuleConfig(
     scale=default_scale_quant_config,
     zero=default_zero_quant_config,
 )
-
-
-def convert_offical_config_into_hqq_config(quant_config_offical) -> HQQModuleConfig:
-    # def hqq_base_quant_config(nbits=4, group_size=64, quant_zero=True, quant_scale=False, scale_quant_group_size=128):
-    #    assert nbits in Quantizer.SUPPORTED_BITS, "nbits value not supported. Check Quantizer.SUPPORTED_BITS."
-    #    if(group_size is not None):
-    #       assert is_divisible(group_size, 8), "Invalid group_size param: the value should be a multiple of 8."
-    #    weight_quant_params = {'nbits':nbits,'channel_wise':True,  'group_size':group_size, 'optimize':True, 'round_zero':True if nbits==4 else False}
-    #    scale_quant_params  = {'nbits':8,    'channel_wise':True,  'group_size':scale_quant_group_size,        'optimize':False} if (quant_scale) else None
-    #    zero_quant_params   = {'nbits':8,    'channel_wise':False, 'group_size':None,       'optimize':False} if (quant_zero)  else None
-    #    return {'weight_quant_params':weight_quant_params, 'scale_quant_params':scale_quant_params, 'zero_quant_params':zero_quant_params}
-
-    weight_quant_params = quant_config_offical["weight_quant_params"]
-    scale_quant_params = quant_config_offical["scale_quant_params"]
-    zero_quant_params = quant_config_offical["zero_quant_params"]
-    weight = QTensorConfig(**weight_quant_params)
-    scale = None
-    zero = None
-    if scale_quant_params:
-        scale = QTensorConfig(**scale_quant_params)
-    if zero_quant_params:
-        zero = QTensorConfig(**zero_quant_params)
-    return HQQModuleConfig(weight, scale, zero)
 
 
 ConfigMappingType: TypeAlias = Dict[str, HQQModuleConfig]
