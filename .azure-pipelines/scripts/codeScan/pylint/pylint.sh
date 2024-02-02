@@ -20,10 +20,12 @@ apt-get install -y --no-install-recommends --fix-missing \
         build-essential
 
 pip install -r /neural-compressor/requirements.txt
+pip install -r /neural-compressor/requirements_tf.txt
+pip install -r /neural-compressor/requirements_pt.txt
+pip install -r /neural-compressor/requirements_ort.txt
 pip install cmake
 
-pip install torch==1.12.0 \
-            horovod \
+pip install horovod \
             google \
             autograd \
             ofa \
