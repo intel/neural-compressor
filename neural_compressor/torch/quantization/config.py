@@ -449,6 +449,7 @@ def get_default_awq_config() -> AWQConfig:
     """
     return AWQConfig()
 
+
 ######################## TEQ Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=TEQ, priority=PRIORITY_TEQ)
 class TEQConfig(BaseConfig):
@@ -576,6 +577,7 @@ def get_default_teq_config() -> TEQConfig:
         the default teq config.
     """
     return TEQConfig()
+
 
 ######################## Static Quant Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)

@@ -276,7 +276,7 @@ class TestQuantizationConfig(unittest.TestCase):
         }
         awq_config2 = AWQConfig.from_dict(quant_config_dict["awq"])
         self.assertEqual(awq_config1.to_dict(), awq_config2.to_dict())
-        
+
     def test_teq_config(self):
         absorb_dict = {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]}
         teq_config1 = TEQConfig(bits=8, absorb_to_layer=absorb_dict, folding=False)
