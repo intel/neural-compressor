@@ -19,7 +19,7 @@
 import copy
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import Union, List
 
 import numpy as np
 import onnx
@@ -422,4 +422,4 @@ def apply_gptq_on_model(
         if isinstance(op_config, GPTQConfig):
             quant_config[op_name_type] = op_config.to_dict()
 
-    return _gptq_quantize(model, dataloader=calibration_data_reader, weight_config=quant_config, **kwargs)
+    return gptq_quantize(model, dataloader=calibration_data_reader, weight_config=quant_config, **kwargs)

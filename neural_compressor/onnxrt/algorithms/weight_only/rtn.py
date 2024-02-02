@@ -21,7 +21,7 @@
 
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import Union, List
 
 import numpy as np
 import onnx
@@ -43,7 +43,10 @@ from neural_compressor.onnxrt.utils.utility import (
     simple_progress_bar,
 )
 
-__all__ = ["apply_rtn_on_model", "rtn_quantize"]
+__all__ = [
+    "apply_rtn_on_model",
+    "rtn_quantize"
+]
 
 
 def rtn_quantize(
@@ -201,4 +204,4 @@ def apply_rtn_on_model(model: onnx.ModelProto, quant_config: dict) -> onnx.Model
         if isinstance(op_config, RTNConfig):
             quant_config[op_name_type] = op_config.to_dict()
 
-    return _rtn_quantize(model, weight_config=quant_config, providers=providers)
+    return rtn_quantize(model, weight_config=quant_config, providers=providers)
