@@ -21,7 +21,6 @@ import json
 import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from copy import deepcopy
 from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
@@ -151,11 +150,12 @@ class BaseConfig(ABC):
 
     def _post_init(self):
         if self.white_list == DEFAULT_WHITE_LIST:
-            self._global_config = self
+            global_config = self.get_params_dict()
+            self._global_config = self.__class__(**global_config, white_list=None)
         elif isinstance(self.white_list, list) and len(self.white_list) > 0:
             for op_name_or_type in self.white_list:
-                tmp_config = deepcopy(self)
-                tmp_config.white_list = None
+                global_config = self.get_params_dict()
+                tmp_config = self.__class__(**global_config, white_list=None)
                 self.set_local(op_name_or_type, tmp_config)
         elif self.white_list == EMPTY_WHITE_LIST:
             return
