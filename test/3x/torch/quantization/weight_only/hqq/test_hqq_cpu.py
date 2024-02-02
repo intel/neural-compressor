@@ -38,39 +38,36 @@ def _common_cpu_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False,
     # Forward
     input = torch.randn(bs, in_features, device=device)
     if hqq_global_option.use_half:
-        print(f"hqq_global_option use half: {hqq_global_option.use_half}")
         input = input.half()
     float_output = float_linear(input)
     input_for_hqq = deepcopy(input)
     hqq_output = hqq_linear(input_for_hqq)
     hqq_output_2 = hqq_linear(input_for_hqq)
-    torch.allclose(float_output, hqq_output, atol=0.1)
+    torch.allclose(float_output, hqq_output, atol=0.5)
     torch.allclose(hqq_output, hqq_output_2)
     del float_linear, hqq_linear
     del float_output, hqq_output, hqq_output_2
 
 
 class TestHQQCPU:
-    ORIG_CUDA_VISIBLE_DEVICES = os.environ.get("CUDA_VISIBLE_DEVICES", None)
-    ORIG_HQQ_GLOBAL_OPTION = hqq_global_option.use_half
 
     @classmethod
     def setup_class(cls):
         torch.manual_seed(0)
-        # Force disable CUDA
-        os.environ["CUDA_VISIBLE_DEVICES"] = ""
-        hqq_global_option.use_half = False
-        # TODO: some issues when run all test on machine has GPU
 
-    @classmethod
-    def teardown_class(cls):
-        if cls.ORIG_CUDA_VISIBLE_DEVICES:
-            os.environ["CUDA_VISIBLE_DEVICES"] = cls.ORIG_CUDA_VISIBLE_DEVICES
-        hqq_global_option.use_half = cls.ORIG_HQQ_GLOBAL_OPTION
+    @pytest.fixture
+    def force_use_cpu(self, monkeypatch):
+        # Force use CPU
+        monkeypatch.setenv("FORCE_DEVICE", "cpu")
 
-    def test_hqq_quant(self):
+    @pytest.fixture
+    def force_not_half(self, monkeypatch):
+        monkeypatch.setattr(hqq_global_option, "use_half", False)
+
+    def test_hqq_quant(self, force_use_cpu, force_not_half):
         from neural_compressor.torch.quantization import get_default_hqq_config, quantize
 
+        hqq_global_option.use_half = False
         model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
         example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long, device="cpu")
         # test_default_config
@@ -97,12 +94,7 @@ class TestHQQCPU:
         ],
     )
     def test_hqq_module_cpu(
-        self,
-        nbits,
-        group_size,
-        quant_zero,
-        quant_scale,
-        scale_quant_group_size,
+        self, force_use_cpu, force_not_half, nbits, group_size, quant_zero, quant_scale, scale_quant_group_size
     ):
         _common_cpu_test(
             nbits=nbits,

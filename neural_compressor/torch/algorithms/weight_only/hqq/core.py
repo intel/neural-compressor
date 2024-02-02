@@ -16,6 +16,8 @@ from typing import Any, Dict, Tuple
 
 import torch
 
+from neural_compressor.common import logger
+
 from .auto_accelerator import auto_detect_accelerator
 from .bitpack import Packer
 from .config import HQQModuleConfig, QTensorConfig, default_hqq_module_config, hqq_global_option
@@ -153,15 +155,16 @@ class HQQTensorHandle:
     def dequantize(cls, W_q, meta):
         # Main dequantization: bit_unpacking > (W_q - z)*s > reshape
         if meta["packing"]:
-            W_r = Packer.get_unpack_fn(meta["nbits"])(W_q).half()
+            W_r = Packer.get_unpack_fn(meta["nbits"])(W_q)
+            if hqq_global_option.use_half:
+                W_r = W_r.half()
             if (meta["group_size"] is not None) and (meta["nbits"] == 3):
                 W_r = W_r[: meta["group_size"]] if (meta["axis"] == 0) else W_r[:, : meta["group_size"]]
         else:
             if hqq_global_option.use_half:
                 W_r = W_q.half()
-        # TODO: double check it
+        # TODO: double check the correctness, the official impl is also error...
         W_r = ((W_r - meta["zero"]) * meta["scale"]).reshape(meta["shape"])
-        # W_r = W_r.half()  # TODO: double check the correctness, the official impl is also error...
         return W_r
 
 

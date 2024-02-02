@@ -47,7 +47,8 @@ def _common_cuda_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False
     input_for_hqq = deepcopy(input)
     hqq_output = hqq_linear(input_for_hqq)
     hqq_output_2 = hqq_linear(input_for_hqq)
-    torch.allclose(float_output, hqq_output, atol=0.1)
+    float_qdq_diff = 0.1  # hard code it first
+    torch.allclose(float_output, hqq_output, atol=float_qdq_diff)
     torch.allclose(hqq_output, hqq_output_2)
     del float_linear, hqq_linear
     del float_output, hqq_output, hqq_output_2

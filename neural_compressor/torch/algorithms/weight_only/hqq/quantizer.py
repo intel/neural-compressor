@@ -95,13 +95,6 @@ def get_default_hqq_config_mapping(model):
     return config_mapping
 
 
-def _hqq_entry(model, config_mapping):
-    _replace_with_custom_fn_if_matches_filter(
-        model, replacement_fn=replacement_fn, filter_fn=filter_fn, config_mapping=config_mapping
-    )
-    return model
-
-
 class EagerModeQuantizer:
     def __init__(self, config_mapping) -> None:
         self.config_mapping = config_mapping

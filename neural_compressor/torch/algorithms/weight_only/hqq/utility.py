@@ -14,12 +14,19 @@
 
 
 import gc
+import time
 
 import numpy as np
 import psutil
 import torch
 
 from neural_compressor.common import logger
+
+__all__ = [
+    "dump_elapsed_time",
+    "is_divisible",
+    "dump_elapsed_time",
+]
 
 
 def is_divisible(val1, val2):
@@ -44,3 +51,26 @@ def see_cuda_memory_usage(message, force=False):
 
     # get the peak memory to report correct data, so reset the counter for the next call
     torch.cuda.reset_peak_memory_stats()
+
+
+def dump_elapsed_time(customized_msg=""):
+    """Get the elapsed time for decorated functions.
+
+    Args:
+        customized_msg (string, optional): The parameter passed to decorator. Defaults to None.
+    """
+
+    def f(func):
+        def fi(*args, **kwargs):
+            start = time.time()
+            res = func(*args, **kwargs)
+            end = time.time()
+            logger.info(
+                "%s elapsed time: %s ms"
+                % (customized_msg if customized_msg else func.__qualname__, round((end - start) * 1000, 2))
+            )
+            return res
+
+        return fi
+
+    return f
