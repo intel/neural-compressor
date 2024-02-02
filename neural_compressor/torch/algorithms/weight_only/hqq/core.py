@@ -40,15 +40,21 @@ class HQQTensorHandle:
     optimize_weights = optimize_weights_proximal
 
     @classmethod
-    def _convert_tensor_quant_config(cls, tensor_quant_config: QTensorConfig):
-        nbits = tensor_quant_config.nbits
-        channel_wise = tensor_quant_config.channel_wise
-        group_size = tensor_quant_config.group_size
-        optimize = tensor_quant_config.optimize
-        round_zero = tensor_quant_config.round_zero
-        axis = 0  # *Note did not exposed to the user
-        bitpack = tensor_quant_config.pack
-        return nbits, channel_wise, group_size, optimize, round_zero, axis, bitpack
+    def quantize_to_q_tensor(cls, float_tensor, tensor_quant_config: QTensorConfig = None):
+        q_weight, q_tensor_meta = cls.quantize(
+            tensor=float_tensor,
+            tensor_quant_config=tensor_quant_config,
+        )
+        q_weight = cls._create_q_tensor_from_q_weight_and_meta(q_weight, q_tensor_meta)
+        return q_weight
+
+    @classmethod
+    def dequantize_q_tensor(cls, q_weight: "QTensor") -> torch.Tensor:
+        # Dequantized the Qtensor into float tensor
+        meta = q_weight.meta_info.to_dict()
+        meta["zero"] = q_weight.zero
+        meta["scale"] = q_weight.scale
+        return cls.dequantize(q_weight.val, meta)
 
     @classmethod
     def _create_q_tensor_from_q_weight_and_meta(cls, weight, meta) -> "QTensor":
@@ -64,25 +70,15 @@ class HQQTensorHandle:
         return QTensor(weight, scale, zero, meta_info)
 
     @classmethod
-    def quantize_to_q_tensor(cls, float_tensor, tensor_quant_config: QTensorConfig = None):
-        q_weight, q_tensor_meta = cls.quantize(
-            tensor=float_tensor,
-            tensor_quant_config=tensor_quant_config,
-        )
-        q_weight = cls._create_q_tensor_from_q_weight_and_meta(q_weight, q_tensor_meta)
-        return q_weight
-
-    @classmethod
     def quantize(cls, tensor, tensor_quant_config: QTensorConfig = None):
-        (
-            nbits,
-            channel_wise,
-            group_size,
-            optimize,
-            round_zero,
-            axis,
-            bitpack,
-        ) = cls._convert_tensor_quant_config(tensor_quant_config)
+        nbits = tensor_quant_config.nbits
+        channel_wise = tensor_quant_config.channel_wise
+        group_size = tensor_quant_config.group_size
+        optimize = tensor_quant_config.optimize
+        round_zero = tensor_quant_config.round_zero
+        axis = 0  # *Note did not exposed to the user
+        bitpack = tensor_quant_config.pack
+
         assert nbits in cls.SUPPORTED_BITS, "nbits=" + str(nbits) + " not supported."
         assert axis in [0, 1], "axis should be either 0 or 1, but got {}".format(axis)
         if group_size is not None:
@@ -169,14 +165,6 @@ class HQQTensorHandle:
         W_r = ((W_r - meta["zero"]) * meta["scale"]).reshape(meta["shape"])
         # W_r = W_r.half()  # TODO: double check the correctness, the official impl is also error...
         return W_r
-
-    @classmethod
-    def dequantize_q_tensor(cls, q_weight: "QTensor") -> torch.Tensor:
-        # Dequantized the Qtensor into float tensor
-        meta = q_weight.meta_info.to_dict()
-        meta["zero"] = q_weight.zero
-        meta["scale"] = q_weight.scale
-        return cls.dequantize(q_weight.val, meta)
 
 
 class HQQLinear(torch.nn.Linear):
