@@ -1,7 +1,1 @@
-<<<<<<< HEAD
-=======
 intel-extension-for-tensorflow[cpu]
-pkg_resources
-prettytable
-psutil
-py-cpuinfo

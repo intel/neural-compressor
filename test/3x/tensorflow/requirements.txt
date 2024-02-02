@@ -1,5 +1,1 @@
-pkg_resources
-prettytable
-psutil
-py-cpuinfo
 pytest

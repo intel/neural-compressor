@@ -46,8 +46,8 @@ def get_tf_model_type(model):
         os.environ.pop("CUDA_DEVICE_ORDER")
         os.environ.pop("CUDA_VISIBLE_DEVICES")
         raise TypeError(
-            "Tensorflow model format is not correctly detected. This could be \
-        caused by unsupported model or inappropriate framework installation."
+            "Tensorflow model format is not correctly detected. This could be"
+            + "caused by unsupported model or inappropriate framework installation."
         )
     else:
         return model_type
@@ -62,7 +62,7 @@ def get_model_type(model):
     Returns:
         string: model type
     """
-    from neural_compressor.adaptor.tf_utils.util import is_ckpt_format, is_saved_model_format
+    from neural_compressor.tensorflow.quantization.tf_utils.util import is_ckpt_format, is_saved_model_format
 
     if isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
@@ -142,7 +142,7 @@ def validate_and_inference_input_output(graph_def, input_tensor_names, output_te
         input_tensor_names (list of string): validated input_tensor_names.
         output_tensor_names (list of string): validated output_tensor_names.
     """
-    from neural_compressor.adaptor.tf_utils.util import get_input_output_node_names
+    from neural_compressor.tensorflow.quantization.tf_utils.util import get_input_output_node_names
 
     temp_output_tensor_names = []
     if validate_graph_node(graph_def, tensor_to_node(input_tensor_names)):
@@ -214,7 +214,10 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
         input_tensor_names, output_tensor_names = validate_and_inference_input_output(
             model, input_tensor_names, output_tensor_names
         )
-        from neural_compressor.adaptor.tf_utils.util import fix_ref_type_of_graph_def, strip_unused_nodes
+        from neural_compressor.tensorflow.quantization.tf_utils.util import (
+            fix_ref_type_of_graph_def,
+            strip_unused_nodes,
+        )
 
         model = fix_ref_type_of_graph_def(model)
         input_node_names = tensor_to_node(input_tensor_names)
@@ -323,7 +326,7 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
 def _get_graph_from_saved_model_v2(saved_model_dir, input_tensor_names, output_tensor_names):
     from tensorflow.python.saved_model import signature_constants, tag_constants
 
-    from neural_compressor.adaptor.tf_utils.util import parse_saved_model
+    from neural_compressor.tensorflow.quantization.tf_utils.util import parse_saved_model
 
     saved_model_exported_names = [signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY]
     saved_model_tags = set([tag_constants.SERVING])
@@ -585,7 +588,7 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
         sess.run(tf.compat.v1.global_variables_initializer())
         saver.restore(sess, os.path.join(model, ckpt_prefix))
 
-    from neural_compressor.adaptor.tf_utils.util import get_input_output_node_names
+    from neural_compressor.tensorflow.quantization.tf_utils.util import get_input_output_node_names
 
     if validate_graph_node(sess.graph.as_graph_def(), tensor_to_node(input_tensor_names)):
         input_tensor_names = input_tensor_names
@@ -931,14 +934,14 @@ class TensorflowBaseModel(BaseModel):
     @property
     def input_tensor(self):
         """Return input tensor."""
-        from neural_compressor.adaptor.tf_utils.util import get_tensor_by_name
+        from neural_compressor.tensorflow.quantization.tf_utils.util import get_tensor_by_name
 
         return [get_tensor_by_name(self.graph, x) for x in self.input_tensor_names]
 
     @property
     def output_tensor(self):
         """Return output tensor."""
-        from neural_compressor.adaptor.tf_utils.util import get_tensor_by_name
+        from neural_compressor.tensorflow.quantization.tf_utils.util import get_tensor_by_name
 
         return [get_tensor_by_name(self.graph, x) for x in self.output_tensor_names]
 
@@ -1142,7 +1145,7 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
 
         from tensorflow.python.saved_model import signature_constants, tag_constants
 
-        from neural_compressor.adaptor.tf_utils.util import get_tensor_by_name
+        from neural_compressor.tensorflow.quantization.tf_utils.util import get_tensor_by_name
 
         builder = tf.compat.v1.saved_model.builder.SavedModelBuilder(root)
         sigs = {}
@@ -1185,7 +1188,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         self._weight_tensor_minmax_dict = {}
         self._model_type = "llm_saved_model"
 
-        from neural_compressor.adaptor.tf_utils.util import parse_saved_model
+        from neural_compressor.tensorflow.quantization.tf_utils.util import parse_saved_model
 
         (
             self._graph_def,
@@ -1311,7 +1314,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         """Adjust weight of LLM saved_model by scale."""
         from tensorflow.python.saved_model import load, tag_constants
 
-        from neural_compressor.adaptor.tf_utils.util import reconstruct_saved_model
+        from neural_compressor.tensorflow.quantization.tf_utils.util import reconstruct_saved_model
 
         reconstruct_saved_model(graph_def, self.func, self.frozen_func, self._saved_model, self.model_path)
         model = load.load(self.model_path, [tag_constants.SERVING])
@@ -1334,7 +1337,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         """Save the model to the root path."""
         import shutil
 
-        from neural_compressor.adaptor.tf_utils.util import parse_saved_model, reconstruct_saved_model
+        from neural_compressor.tensorflow.quantization.tf_utils.util import parse_saved_model, reconstruct_saved_model
 
         if not root:
             root = DEFAULT_WORKSPACE
@@ -1422,7 +1425,7 @@ class TensorflowCheckpointModel(TensorflowBaseModel):
             return self.sess.graph.as_graph_def()
         from tensorflow.compat.v1 import graph_util
 
-        from neural_compressor.adaptor.tf_utils.util import _parse_ckpt_bn_input
+        from neural_compressor.tensorflow.quantization.tf_utils.util import _parse_ckpt_bn_input
 
         graph_def = self.sess.graph.as_graph_def()
         graph_def = _parse_ckpt_bn_input(graph_def)
