@@ -51,7 +51,7 @@ class TestStaticQuant(unittest.TestCase):
         out1 = fp32_model(example_inputs)
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         out2 = q_model(example_inputs)
-        #self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
+        # self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-05))
         self.assertIsNotNone(q_model)
 
 
