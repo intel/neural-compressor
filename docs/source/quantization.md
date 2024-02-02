@@ -319,8 +319,7 @@ criterion = ...
 
 
 # Quantization code
-def train_func(model):
-    ...
+def train_func(model): ...
 
 
 from neural_compressor import QuantizationAwareTrainingConfig

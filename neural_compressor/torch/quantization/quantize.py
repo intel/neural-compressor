@@ -57,7 +57,8 @@ def quantize(
         assert isinstance(
             quant_config, BaseConfig
         ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-    logger.info(f"Quantize model with config: \n {quant_config.to_json_string()} \n")
+    logger.info("Quantize model with config:")
+    logger.info(quant_config.to_dict())
     # select quantization algo according to config
 
     if is_ipex_available:
