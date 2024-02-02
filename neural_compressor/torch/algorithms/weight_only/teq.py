@@ -30,9 +30,8 @@ except:  # pragma: no cover
 
 import transformers
 
-from .model_wrapper import MulLinear, TEQLinearFakeQuant
-from .smooth_quant import GraphTrace, get_module, set_module
-from .weight_only import quant_weight
+from .utility import MulLinear, TEQLinearFakeQuant
+from .utility import get_module, set_module, quant_tensor
 
 
 class TEQuantizer:
@@ -296,7 +295,7 @@ class TEQuantizer:
             group_size = self.weight_config[n]["group_size"]
             scheme = self.weight_config[n]["scheme"]
             if isinstance(m, torch.nn.Linear):  # pragma: no cover
-                quant_weight(m.weight.data, num_bits=num_bits, group_size=group_size, scheme=scheme)
+                quant_tensor(m.weight.data, num_bits=num_bits, group_size=group_size, scheme=scheme)
 
     def save(self, save_scale_file="", save_state_dict_file=""):
         """

@@ -1037,6 +1037,65 @@ def get_module_input_output(
 
 # -------------- Model Wrapper ---------------------------
 
+class FakeAffineTensorQuantFunction(Function):
+    """Fake version of affine quantization."""
+
+    @staticmethod
+    def forward(ctx, inputs, num_bits=4, group_size=1024, scheme="asym"):
+        """As it will be only applied on activation with per tensor granularity, broadcast is not needed.
+
+        Args:
+            ctx: Pytorch convention.
+            inputs: A Tensor of type float32.
+            min_range: A float.
+            max_range: A float.
+            num_bits: An integer
+
+        Returns:
+            outputs: A Tensor of type output_dtype
+        """
+        return quant_tensor(inputs, num_bits, group_size, scheme)
+
+    @staticmethod
+    def backward(ctx, grad_outputs):
+        """
+        Args:
+            ctx: Pytorch convention.
+            grad_output: A tensor of gradient of outputs
+
+        Returns:
+            grad_inputs: A tensor of gradient
+        """
+        return grad_outputs, None, None, None
+
+
+class TEQLinearFakeQuant(torch.nn.Module):
+    """Wrapper quantization linear."""
+
+    def __init__(self, orig_layer, alpha=None, num_bits=4, group_size=-1, scheme="asym"):
+        """A forward hook to linear module
+        :param orig_layer: the original module
+        :param alpha: trainable alpha/scale
+        :param num_bits: quantization level
+        :param group_size: for fine-grained quantization."""
+        super(TEQLinearFakeQuant, self).__init__()
+        self.orig_layer = orig_layer
+        self.alpha = alpha
+
+        self.num_bits = num_bits
+        self.group_size = group_size
+        self.scheme = scheme
+
+    def forward(self, x):
+        alpha = torch.clip(self.alpha, 1e-5)
+        shape_len = len(x.shape) - 1
+        shape = (1,) * shape_len + (-1,)
+        x = x / alpha.view(shape)
+        weight = self.orig_layer.weight
+        weight = weight * alpha.unsqueeze(dim=0)
+        weight_q = FakeAffineTensorQuantFunction().apply(weight, self.num_bits, self.group_size, self.scheme)
+        return F.linear(x, weight_q, self.orig_layer.bias)
+
 
 class MulLinear(torch.nn.Module):
     """Linear wrapper to apply scale to input."""
