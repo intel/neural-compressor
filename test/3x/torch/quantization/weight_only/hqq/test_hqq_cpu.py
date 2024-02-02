@@ -7,7 +7,7 @@ from transformers import AutoModelForCausalLM
 
 from neural_compressor.torch.algorithms.weight_only.hqq.config import HQQModuleConfig, QTensorConfig, hqq_global_option
 from neural_compressor.torch.algorithms.weight_only.hqq.core import HQQLinear
-from neural_compressor.torch.algorithms.weight_only.utility import dump_elapsed_time
+from neural_compressor.torch.algorithms.weight_only.hqq.utility import dump_elapsed_time
 
 
 def _common_cpu_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False, scale_quant_group_size=128):

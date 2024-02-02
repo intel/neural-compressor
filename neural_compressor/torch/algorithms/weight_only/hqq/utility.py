@@ -23,7 +23,6 @@ import torch
 from neural_compressor.common import logger
 
 __all__ = [
-    "dump_elapsed_time",
     "is_divisible",
     "dump_elapsed_time",
 ]
