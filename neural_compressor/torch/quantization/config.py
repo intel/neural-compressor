@@ -390,7 +390,7 @@ class AWQConfig(BaseConfig):
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
             double_quant_group_size (int): Size of double_quant groups, default is 32.
             use_auto_scale (bool): Enable best scales search based on activation distribution, default is True.
-            folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer, 
+            folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
         """
         super().__init__(white_list=white_list)
