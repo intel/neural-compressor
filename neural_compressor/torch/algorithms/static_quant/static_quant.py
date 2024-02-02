@@ -113,7 +113,7 @@ def quantize(model, tune_cfg, run_fn, example_inputs, inplace):
         model.load_qconf_summary(qconf_summary=ipex_config_path)
         run_fn(model)
         model.save_qconf_summary(qconf_summary=ipex_config_path)
-        _ipex_post_quant_process(model, q_model, example_inputs, inplace=inplace)
+        q_model = _ipex_post_quant_process(model, q_model, example_inputs, inplace=inplace)
     """
     else:
         # for IPEX version < 1.12
@@ -154,9 +154,7 @@ def _ipex_post_quant_process(model, q_model, example_inputs, inplace=False):
     # At the 2nd run, the llga pass will be triggered and the model is turned into
     # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
     _simple_inference(q_model, example_inputs, iterations=2)
-    import pdb
-
-    pdb.set_trace()
+    return q_model
 
 
 def _get_quantizable_ops_recursively(model, example_inputs):
