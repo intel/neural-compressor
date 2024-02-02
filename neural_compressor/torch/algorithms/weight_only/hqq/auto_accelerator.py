@@ -14,12 +14,14 @@
 
 # The design copied from
 # https://github.com/microsoft/DeepSpeed/blob/master/accelerator/abstract_accelerator.py.
+# TODO: move it into torch/utils
+
 
 # To keep it simply, only add the APIs we need.
 
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, List
 
 import torch
 

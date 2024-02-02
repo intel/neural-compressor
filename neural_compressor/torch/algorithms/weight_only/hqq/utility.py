@@ -42,67 +42,6 @@ def is_divisible(val1, val2):
     return int(val2 * np.ceil(val1 / val2)) == val1
 
 
-def make_multiple(val, multiple):
-    return int(multiple * np.ceil(val / float(multiple)))
-
-
-# decorator to dump function name and args and args value
-def inspect_function(func):
-    def wrapper(*args, **kwargs):
-        logger.info(f"Function Name: {func.__name__}")
-        logger.info("Argument Names and Values:")
-
-        # logger.info positional arguments and values
-        for arg_name, arg_value in zip(func.__code__.co_varnames, args):
-            if isinstance(arg_value, torch.Tensor):
-                logger.info(f"  {arg_name}: {arg_value.shape}")
-            else:
-                logger.info(f"  {arg_name}: {arg_value}")
-
-        # logger.info keyword arguments and values
-        for arg_name, arg_value in kwargs.items():
-            if isinstance(arg_value, torch.Tensor):
-                logger.info(f"  {arg_name}: {arg_value.shape}")
-            else:
-                logger.info(f"  {arg_name}: {arg_value}")
-
-        # Call the original function
-        result = func(*args, **kwargs)
-
-        # Optionally, you can logger.info the result
-        # logger.info(f"Result: {result}")
-
-        return result
-
-    return wrapper
-
-
-def dump_elapsed_time(customized_msg=""):
-    """Get the elapsed time for decorated functions.
-
-    Args:
-        customized_msg (string, optional): The parameter passed to decorator. Defaults to None.
-    """
-
-    def f(func):
-        def fi(*args, **kwargs):
-            start = time.time()
-            res = func(*args, **kwargs)
-            end = time.time()
-            logger.info(
-                "%s elapsed time: %s ms"
-                % (
-                    customized_msg if customized_msg else func.__qualname__,
-                    round((end - start) * 1000, 2),
-                )
-            )
-            return res
-
-        return fi
-
-    return f
-
-
 import psutil
 
 

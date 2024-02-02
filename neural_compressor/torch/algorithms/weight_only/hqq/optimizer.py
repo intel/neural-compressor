@@ -19,8 +19,7 @@ import torch
 
 from neural_compressor.common import logger
 
-from .auto_accelerator import Auto_Accelerator, auto_detect_accelerator
-from .utility import dump_elapsed_time
+from .auto_accelerator import auto_detect_accelerator
 
 
 # Proximal solver || W - dequantize(quantize(W))||_p^p
