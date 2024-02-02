@@ -435,10 +435,10 @@ def strip_equivalent_nodes(graph_def, output_node_names):
 # THIS API IS TO BE DEPRECATED!
 def get_graph_def(model, outputs=[], auto_input_output=False):
     """Get the model's graph_def."""
-    from neural_compressor.model import Model as NCModel
+    from neural_compressor.tensorflow.utils import Model, BaseModel
 
-    if not isinstance(model, NCModel):
-        model = NCModel(model)
+    if not isinstance(model, BaseModel):
+        model =  Model(model)
         model.output_tensor_names = outputs
     return model.graph_def
 
