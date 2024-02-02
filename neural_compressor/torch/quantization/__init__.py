@@ -25,8 +25,12 @@ from neural_compressor.torch.quantization.config import (
     get_default_sq_config,
 )
 
-# TODO: (Yi) move config to config.py
-from neural_compressor.torch.quantization.autotune import autotune, TuningConfig, get_all_config_set
+from neural_compressor.torch.quantization.autotune import (
+    autotune,
+    TuningConfig,
+    get_all_config_set,
+    get_rtn_double_quant_config_set,
+)
 
 ### Quantization Function Registration ###
 import neural_compressor.torch.quantization.algorithm_entry
