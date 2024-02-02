@@ -12,12 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 from typing import Any, Dict, Tuple
 
 import torch
-
-from neural_compressor.common import logger
 
 from .auto_accelerator import auto_detect_accelerator
 from .bitpack import Packer

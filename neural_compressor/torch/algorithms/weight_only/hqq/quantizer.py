@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import torch
 
 from neural_compressor.common import logger
 
 from .auto_accelerator import auto_detect_accelerator
-from .config import ConfigMappingType, HQQModuleConfig, default_hqq_module_config, hqq_global_option
+from .config import ConfigMappingType, default_hqq_module_config, hqq_global_option
 from .core import HQQLinear
 
 

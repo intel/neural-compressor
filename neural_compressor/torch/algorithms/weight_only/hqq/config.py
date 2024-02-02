@@ -14,7 +14,6 @@
 
 
 import os
-import sys
 from collections import namedtuple
 from dataclasses import dataclass
 from typing import Dict, Optional

@@ -17,8 +17,6 @@ from typing import Tuple, Union
 
 import torch
 
-from .config import hqq_global_option
-
 __all__ = [
     "QTensor",
     "QTensorMetaInfo",
