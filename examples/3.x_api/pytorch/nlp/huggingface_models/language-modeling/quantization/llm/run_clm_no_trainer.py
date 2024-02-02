@@ -82,7 +82,7 @@ parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calib
 parser.add_argument("--double_quant_type",
                     type=str,
                     default=None,
-                    choices=['BNB_NF4'],
+                    choices=['GGML_TYPE_Q4_K', 'BNB_NF4'],
                     help="DoubleQuant parameter")
 parser.add_argument("--double_quant_dtype",
                     type=str,
