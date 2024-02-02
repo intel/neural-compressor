@@ -23,7 +23,6 @@ from collections import OrderedDict, UserDict
 import numpy as np
 import tensorflow as tf
 from google.protobuf import text_format
-
 from tensorflow.core.framework import attr_value_pb2, graph_pb2, node_def_pb2, variable_pb2
 from tensorflow.core.protobuf import config_pb2, meta_graph_pb2
 from tensorflow.python.eager import context, wrap_function
@@ -36,6 +35,7 @@ from tensorflow.python.util import nest
 
 from neural_compressor.common import logger
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer, GraphRewriterHelper
+
 
 def disable_random(seed=1):
     """A Decorator to disable tf random seed."""

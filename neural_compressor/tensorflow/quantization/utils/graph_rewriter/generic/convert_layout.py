@@ -21,8 +21,8 @@ from tensorflow.core.protobuf import config_pb2, meta_graph_pb2, rewriter_config
 from tensorflow.python.grappler import tf_optimizer
 from tensorflow.python.training import saver as saver_lib
 
-from neural_compressor.tensorflow.utils import dump_elapsed_time, version1_gt_version2
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.graph_base import GraphRewriterBase
+from neural_compressor.tensorflow.utils import dump_elapsed_time, version1_gt_version2
 
 
 class ConvertLayoutOptimizer(GraphRewriterBase):

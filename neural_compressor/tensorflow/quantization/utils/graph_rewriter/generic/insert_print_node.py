@@ -21,10 +21,10 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import tensor_util as tu
 
-from neural_compressor.tensorflow.utils import version1_gt_version2
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.graph_base import GraphRewriterBase
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper as Helper
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.graph_base import GraphRewriterBase
+from neural_compressor.tensorflow.utils import version1_gt_version2
 
 
 class InsertPrintMinMaxNode(GraphRewriterBase):

@@ -19,10 +19,10 @@
 import tensorflow as tf
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.tensorflow.utils import dump_elapsed_time
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.graph_base import GraphRewriterBase
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper as Helper
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.graph_base import GraphRewriterBase
+from neural_compressor.tensorflow.utils import dump_elapsed_time
 
 
 class InjectDummyBiasAddOptimizer(GraphRewriterBase):

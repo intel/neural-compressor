@@ -25,10 +25,7 @@ from neural_compressor.tensorflow.algorithms.smoother.calibration import (
     SmoothQuantCalibration,
     SmoothQuantCalibrationLLM,
 )
-from neural_compressor.tensorflow.algorithms.smoother.scaler import (
-    SmoothQuantScaler,
-    SmoothQuantScalerLLM,
-)
+from neural_compressor.tensorflow.algorithms.smoother.scaler import SmoothQuantScaler, SmoothQuantScalerLLM
 from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
 from neural_compressor.tensorflow.utils import SPR_BASE_VERSIONS, BaseModel, TensorflowLLMModel, framework_specific_info
@@ -122,9 +119,7 @@ class SmoothQuant:
         logger.info("Start Smoothing process for Smooth Quantization.")
 
         # Do a pre-optimization before smooth quant
-        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.pre_optimize import (
-            PreOptimization,
-        )
+        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
         pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
         pre_optimized_model = pre_optimizer_handle.get_optimized_model(self.itex_mode)
@@ -151,9 +146,7 @@ class SmoothQuant:
     def apply_smooth_quant_LLM(self, model: BaseModel):
         """Apply smooth quant to the LLM model."""
         # Do a pre-optimization before smooth quant
-        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.pre_optimize import (
-            PreOptimization,
-        )
+        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
         pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
         pre_optimized_model = pre_optimizer_handle.get_optimized_model(self.itex_mode)
