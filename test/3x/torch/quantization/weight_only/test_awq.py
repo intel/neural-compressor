@@ -36,7 +36,6 @@ class TestAWQ(unittest.TestCase):
 
     def test_awq(self):
         example_inputs = self.example_inputs
-        from neural_compressor.adaptor.torch_utils.awq import ActAwareWeightQuant
 
         class LLMCalibDataloader:
             def __init__(self):
