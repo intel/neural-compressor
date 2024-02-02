@@ -35,9 +35,10 @@ from neural_compressor.common.utils import (
     RTN,
     SMOOTH_QUANT,
     STATIC_QUANT,
+    TEQ,
 )
 from neural_compressor.torch.utils import is_hpex_available, logger
-from neural_compressor.torch.utils.constants import PRIORITY_AWQ, PRIORITY_GPTQ, PRIORITY_RTN
+from neural_compressor.torch.utils.constants import PRIORITY_AWQ, PRIORITY_GPTQ, PRIORITY_RTN, PRIORITY_TEQ
 
 __all__ = [
     "RTNConfig",
@@ -448,6 +449,133 @@ def get_default_awq_config() -> AWQConfig:
     """
     return AWQConfig()
 
+######################## TEQ Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=TEQ, priority=PRIORITY_TEQ)
+class TEQConfig(BaseConfig):
+    """Config class for TEQ.
+
+    TEQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.
+    https://arxiv.org/abs/2306.00978
+    """
+
+    supported_configs: List[OperatorConfig] = []
+    params_list = [
+        "dtype",
+        "bits",
+        "group_size",
+        "group_dim",
+        "use_sym",
+        "use_full_range",
+        "use_mse_search",
+        "use_layer_wise",
+        "export_compressed_model",
+        "use_double_quant",
+        "double_quant_dtype",
+        "double_quant_bits",
+        "double_quant_use_sym",
+        "double_quant_group_size",
+        # TEQ params
+        "absorb_to_layer",
+        "folding",
+    ]
+    name = TEQ
+
+    def __init__(
+        self,
+        dtype: str = "int",
+        bits: int = 4,
+        use_sym: bool = True,
+        group_size: int = 32,
+        group_dim: int = 1,
+        use_full_range: bool = False,
+        use_mse_search: bool = False,
+        use_layer_wise: bool = False,
+        export_compressed_model: bool = False,
+        # double quant
+        use_double_quant: bool = False,
+        double_quant_dtype: str = "int",
+        double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
+        double_quant_use_sym: bool = True,
+        double_quant_group_size: int = 256,
+        # teq
+        absorb_to_layer: dict = {},
+        folding: bool = True,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init TEQ weight-only quantization config.
+
+        Args:
+            dtype (str): Data type for weights, default is "int".
+            bits (int): Number of bits used to represent weights, default is 4.
+            use_sym (bool): Indicates whether weights are symmetric, default is True.
+            group_size (int): Size of weight groups, default is 32.
+            group_dim (int): Dimension for grouping, default is 1.
+            use_full_range (bool): Enables full range for activations, default is False.
+            use_mse_search (bool): Enables mean squared error (MSE) search, default is False.
+            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
+            use_double_quant (bool): Enables double quantization, default is False.
+            double_quant_dtype (str): Data type for double_quant scale, default is "int".
+            double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
+            double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
+            double_quant_group_size (int): Size of double_quant groups, default is 32.
+            absorb_to_layer (bool): The layer dict that scale can be absorbed, default is {}.
+            folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
+              default is False.
+        """
+        super().__init__(white_list=white_list)
+        self.dtype = dtype
+        self.bits = bits
+        self.use_sym = use_sym
+        self.group_size = group_size
+        self.group_dim = group_dim
+        self.use_full_range = use_full_range
+        self.use_mse_search = use_mse_search
+        self.use_layer_wise = use_layer_wise
+        self.export_compressed_model = export_compressed_model
+        # double quant
+        self.use_double_quant = use_double_quant
+        self.double_quant_bits = double_quant_bits
+        self.double_quant_dtype = double_quant_dtype
+        self.double_quant_use_sym = double_quant_use_sym
+        self.double_quant_group_size = double_quant_group_size
+        self.absorb_to_layer = absorb_to_layer
+        self.folding = folding
+        self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        # TODO(Yi)
+        linear_teq_config = TEQConfig()
+        operators = [torch.nn.Linear, torch.nn.functional.linear]
+        supported_configs.append(OperatorConfig(config=linear_teq_config, operators=operators))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = (torch.nn.Linear,)
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "TEQConfig", List["TEQConfig"]]:
+        # TODO fwk owner needs to update it.
+        return TEQConfig(bits=[4, 6])
+
+
+def get_default_teq_config() -> TEQConfig:
+    """Generate the default teq config.
+
+    Returns:
+        the default teq config.
+    """
+    return TEQConfig()
 
 ######################## Static Quant Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)

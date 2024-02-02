@@ -25,6 +25,8 @@ from neural_compressor.torch.quantization.config import (
     get_default_static_config,
     SmoothQuantConfig,
     get_default_sq_config,
+    TEQConfig,
+    get_default_teq_config,
 )
 
 # TODO(Yi): move config to config.py
