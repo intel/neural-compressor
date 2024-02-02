@@ -7,6 +7,7 @@ echo "${test_case}"
 echo "set up UT env..."
 pip install -r /neural-compressor/test/3x/torch/requirements.txt
 pip install coverage
+pip install pytest-html
 pip list
 
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/3x/coverage.3x_pt
@@ -29,7 +30,7 @@ ut_log_name=${LOG_DIR}/ut_3x_pt.log
 #cat run_unittest.sh | tee ${ut_log_name}
 echo "------unittest start-------"
 #bash -x run_unittest.sh 2>&1 | tee -a ${ut_log_name}
-coverage run --source="${inc_path}" -m pytest --disable-warnings -v --html=report.html --self-contained-html 2>&1 | tee -a ${ut_log_name}
+coverage run --source="${inc_path}" -m pytest ./torch --disable-warnings -v --html=report.html --self-contained-html 2>&1 | tee -a ${ut_log_name}
 echo "------unittest end -------"
 
 #if [ -s run_pytest.sh ]; then
