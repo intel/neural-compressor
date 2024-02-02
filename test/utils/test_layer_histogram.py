@@ -1,4 +1,5 @@
 """Tests for collecting layer histogram."""
+
 import unittest
 from collections import OrderedDict
 

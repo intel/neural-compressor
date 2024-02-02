@@ -1,4 +1,5 @@
 """Tests for new data type."""
+
 import os
 import shutil
 import unittest

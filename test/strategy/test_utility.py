@@ -1,4 +1,5 @@
 """Tests for strategy utility."""
+
 import unittest
 
 from neural_compressor.strategy.utils.utility import build_slave_faker_model

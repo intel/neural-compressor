@@ -1,4 +1,5 @@
 """Tests for coco_tools."""
+
 import unittest
 
 import numpy as np

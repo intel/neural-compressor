@@ -1,4 +1,5 @@
 """Tests for neural_compressor benchmark."""
+
 import os
 import re
 import shutil
