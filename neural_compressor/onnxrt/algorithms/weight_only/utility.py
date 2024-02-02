@@ -28,8 +28,15 @@ from packaging.version import Version
 
 from neural_compressor.onnxrt.utils.utility import ONNXRT1161_VERSION, dtype_mapping
 
+__all__ = [
+    "make_matmul_weight_only_node",
+    "prepare_inputs",
+    "pad_tensor",
+    "quant_tensor",
+    "qdq_tensor",
+    ]
 
-def get_blob_size(group_size, has_zp):  # pragma: no cover
+def _get_blob_size(group_size, has_zp):  # pragma: no cover
     """Get blob_size.
 
     Args:
@@ -76,7 +83,7 @@ def make_matmul_weight_only_node(
         matmul_weight_only_node: MatMulFpQ4 or MatMulNBits node
         new_inits: initializers of the new node
     """
-    blob_size = get_blob_size(group_size, zero_point is not None)
+    blob_size = _get_blob_size(group_size, zero_point is not None)
     packed = np.zeros((q_weight.shape[0], blob_size), dtype="uint8")
     q_weight_name = node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size))
     input_names = [node.input[0], q_weight_name]

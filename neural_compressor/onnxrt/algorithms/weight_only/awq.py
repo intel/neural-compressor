@@ -19,7 +19,7 @@
 import copy
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import Union, List
 
 import numpy as np
 import onnx
@@ -39,7 +39,7 @@ logger = Logger().get_logger()
 __all__ = ["apply_awq_on_model"]
 
 
-def get_weight_scale(weight, group_size):
+def _get_weight_scale(weight, group_size):
     """Get the scale of weight."""
     org_shape = weight.shape
     weight = np.reshape(weight, (-1, group_size)) if group_size != -1 else weight
@@ -47,7 +47,7 @@ def get_weight_scale(weight, group_size):
     return scale
 
 
-def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, group_size, scheme):
+def _apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, group_size, scheme):
     """Apply scale for salient weight."""
     best_scales = {}
     new_init_tensors = []
@@ -97,7 +97,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 org_w_shape = weight.shape
                 group_size = group_size if group_size != -1 else org_w_shape[0]
 
-                w_scale = get_weight_scale(weight.T, weight.shape[0])
+                w_scale = _get_weight_scale(weight.T, weight.shape[0])
                 scales = np.clip(np.power(inp_scale, ratio) / np.power(w_scale, (1 - ratio)), 1e-4, None)
                 scales = scales / np.sqrt(np.max(scales) * np.min(scales))
                 weight = weight.T * scales
@@ -218,7 +218,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
     return model, output_dicts
 
 
-def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, group_size, scheme):
+def _apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, group_size, scheme):
     """Apply clip for weight by checking mse."""
     base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
     ratios = {}
@@ -273,7 +273,7 @@ def apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, g
     return ratios
 
 
-def awq_quantize(
+def _awq_quantize(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
     dataloader: CalibrationDataReader,
     weight_config: dict = {},
@@ -381,7 +381,7 @@ def awq_quantize(
                 output_dicts.setdefault(input_name, []).append(output)
 
             if enable_auto_scale:
-                model, output_dicts = apply_awq_scale(
+                model, output_dicts = _apply_awq_scale(
                     model,
                     weight_config,
                     dump_pairs,
@@ -391,7 +391,7 @@ def awq_quantize(
                     scheme,
                 )
             if enable_mse_search:
-                ratios = apply_awq_clip(
+                ratios = _apply_awq_clip(
                     model,
                     weight_config,
                     dump_pairs,
@@ -434,4 +434,4 @@ def apply_awq_on_model(
         if isinstance(op_config, AWQConfig):
             quant_config[op_name_type] = op_config.to_dict()
 
-    return awq_quantize(model, dataloader=calibration_data_reader, weight_config=quant_config, **kwargs)
+    return _awq_quantize(model, dataloader=calibration_data_reader, weight_config=quant_config, **kwargs)

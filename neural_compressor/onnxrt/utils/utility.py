@@ -24,10 +24,23 @@ from neural_compressor.common import Logger
 logger = Logger().get_logger()
 
 __all__ = [
+    "ONNXRT116_VERSION",
+    "ONNXRT1161_VERSION",
+    "algos_mapping",
+    "WHITE_MODULE_LIST",
+    "MAXIMUM_PROTOBUF",
     "PRIORITY_RTN",
     "PRIORITY_GPTQ",
     "PRIORITY_AWQ",
     "PRIORITY_SMOOTH_QUANT",
+    "dtype_mapping",
+    "find_by_name",
+    "simple_progress_bar",
+    "register_algo",
+    "get_model_info",
+    "is_B_transposed",
+    "get_qrange_for_qType",
+    "quantize_data",
 ]
 
 ONNXRT116_VERSION = Version("1.16.0")
@@ -116,8 +129,9 @@ def register_algo(name):
 
 
 def get_model_info(
-    model: Union[onnx.ModelProto, Path, str], white_op_type_list: List[Callable]
-) -> List[Tuple[str, Callable]]:
+        model: Union[onnx.ModelProto, Path, str],
+        white_op_type_list: List[Callable]
+    ) -> List[Tuple[str, Callable]]:
     if not isinstance(model, onnx.ModelProto):
         model = onnx.load(model)
     filter_result = []
@@ -156,7 +170,7 @@ def get_qrange_for_qType(qType, reduce_range=False):
         raise ValueError("unsupported quantization data type")
 
 
-def quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
+def _quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
     """Quantize data with scale and zero point.
 
     To pack weights, we compute a linear transformation
@@ -182,7 +196,7 @@ def quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
     return quantized_data
 
 
-def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
+def _calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
     """Calculate scale and zero point."""
     if isinstance(rmax, np.ndarray):
         if scheme == "sym":
@@ -255,6 +269,6 @@ def quantize_data(data, quantize_range, qType, scheme):
     rmin = min(min(data), 0)
     rmax = max(max(data), 0)
 
-    scale, zero_point = calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
-    quantized_data = quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
+    scale, zero_point = _calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
+    quantized_data = _quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
     return rmin, rmax, zero_point, scale, quantized_data

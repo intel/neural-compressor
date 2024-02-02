@@ -35,6 +35,7 @@ from neural_compressor.onnxrt.utils import PRIORITY_AWQ, PRIORITY_GPTQ, PRIORITY
 logger = Logger().get_logger()
 
 __all__ = [
+    "FRAMEWORK_NAME",
     "RTNConfig",
     "get_default_rtn_config",
     "GPTQConfig",
@@ -48,7 +49,7 @@ __all__ = [
 FRAMEWORK_NAME = "onnxrt"
 
 
-class OperatorConfig(NamedTuple):
+class _OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
     valid_func_list: List[Callable] = []
@@ -61,7 +62,7 @@ class OperatorConfig(NamedTuple):
 class RTNConfig(BaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
-    supported_configs: List[OperatorConfig] = []
+    supported_configs: List[_OperatorConfig] = []
     node_params_list: List[str] = [
         "weight_dtype",
         "weight_bits",
@@ -117,7 +118,7 @@ class RTNConfig(BaseConfig):
         return result
 
     @classmethod
-    def register_supported_configs(cls) -> List[OperatorConfig]:
+    def register_supported_configs(cls) -> List[_OperatorConfig]:
         supported_configs = []
         linear_rtn_config = RTNConfig(
             weight_dtype=["int"],
@@ -127,7 +128,7 @@ class RTNConfig(BaseConfig):
             act_dtype=["fp32"],
         )
         operators = ["MatMul"]
-        supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators))
+        supported_configs.append(_OperatorConfig(config=linear_rtn_config, operators=operators))
         cls.supported_configs = supported_configs
 
     def to_config_mapping(self, config_list: List[BaseConfig] = None, model_info: list = None):
@@ -186,7 +187,7 @@ def get_default_rtn_config() -> RTNConfig:
 class GPTQConfig(BaseConfig):
     """Config class for gptq weight-only quantization."""
 
-    supported_configs: List[OperatorConfig] = []
+    supported_configs: List[_OperatorConfig] = []
     node_params_list: List[str] = [
         "weight_dtype",
         "weight_bits",
@@ -266,7 +267,7 @@ class GPTQConfig(BaseConfig):
         return result
 
     @classmethod
-    def register_supported_configs(cls) -> List[OperatorConfig]:
+    def register_supported_configs(cls) -> List[_OperatorConfig]:
         supported_configs = []
         linear_gptq_config = GPTQConfig(
             weight_dtype=["int"],
@@ -279,7 +280,7 @@ class GPTQConfig(BaseConfig):
             perchannel=[True, False],
         )
         operators = ["MatMul"]
-        supported_configs.append(OperatorConfig(config=linear_gptq_config, operators=operators))
+        supported_configs.append(_OperatorConfig(config=linear_gptq_config, operators=operators))
         cls.supported_configs = supported_configs
 
     def to_config_mapping(self, config_list: list = None, model_info: list = None) -> OrderedDict:
@@ -344,7 +345,7 @@ def get_default_gptq_config() -> GPTQConfig:
 class AWQConfig(BaseConfig):
     """Config class for awq weight-only quantization."""
 
-    supported_configs: List[OperatorConfig] = []
+    supported_configs: List[_OperatorConfig] = []
     node_params_list: List[str] = [
         "weight_dtype",
         "weight_bits",
@@ -412,7 +413,7 @@ class AWQConfig(BaseConfig):
         return result
 
     @classmethod
-    def register_supported_configs(cls) -> List[OperatorConfig]:
+    def register_supported_configs(cls) -> List[_OperatorConfig]:
         supported_configs = []
         linear_awq_config = AWQConfig(
             weight_dtype=["int"],
@@ -424,7 +425,7 @@ class AWQConfig(BaseConfig):
             enable_mse_search=[True, False],
         )
         operators = ["MatMul"]
-        supported_configs.append(OperatorConfig(config=linear_awq_config, operators=operators))
+        supported_configs.append(_OperatorConfig(config=linear_awq_config, operators=operators))
         cls.supported_configs = supported_configs
 
     def to_config_mapping(self, config_list: list = None, model_info: list = None) -> OrderedDict:
@@ -488,7 +489,7 @@ def get_default_awq_config() -> AWQConfig:
 class SmoohQuantConfig(BaseConfig, StaticQuantConfig):
     """Smooth quant quantization config."""
 
-    supported_configs: List[OperatorConfig] = []
+    supported_configs: List[_OperatorConfig] = []
     params_list: List[str] = [
         # smooth parameters
         "alpha",
@@ -567,11 +568,11 @@ class SmoohQuantConfig(BaseConfig, StaticQuantConfig):
         self._post_init()
 
     @classmethod
-    def register_supported_configs(cls) -> List[OperatorConfig]:
+    def register_supported_configs(cls) -> List[_OperatorConfig]:
         supported_configs = []
         smooth_quant_config = SmoohQuantConfig()
         operators = ["Gemm", "Conv", "MatMul", "FusedConv"]
-        supported_configs.append(OperatorConfig(config=smooth_quant_config, operators=operators))
+        supported_configs.append(_OperatorConfig(config=smooth_quant_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod

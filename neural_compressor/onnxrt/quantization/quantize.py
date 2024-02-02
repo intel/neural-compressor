@@ -25,8 +25,7 @@ from neural_compressor.onnxrt.utils.utility import algos_mapping
 
 logger = Logger().get_logger()
 
-
-def need_apply(quant_config: BaseConfig, algo_name):
+def _need_apply(quant_config: BaseConfig, algo_name):
     return quant_config.name == algo_name if hasattr(quant_config, "name") else False
 
 
@@ -59,7 +58,7 @@ def _quantize(
 
     # select quantization algo according to config
     for algo_name, algo_func in algos_mapping.items():
-        if need_apply(quant_config, algo_name):
+        if _need_apply(quant_config, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
             q_model = algo_func(model_input, quant_config, calibration_data_reader=calibration_data_reader)
     return q_model

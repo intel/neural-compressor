@@ -15,8 +15,8 @@
 
 import copy
 import os
+from typing import Union, List
 from pathlib import Path
-from typing import List, Union
 
 import numpy as np
 import onnx
@@ -38,7 +38,7 @@ logger = Logger().get_logger()
 
 __all__ = ["Smoother"]
 
-dtype_map = {
+_dtype_map = {
     np.dtype("float32"): 1,
     np.dtype("uint8"): 2,
     np.dtype("int8"): 3,
@@ -49,7 +49,7 @@ dtype_map = {
 }
 
 
-def get_quant_dequant_output(model, input_data, output_data, providers):
+def _get_quant_dequant_output(model, input_data, output_data, providers):
     """Get loss between fp32 output and QDQ output.
 
     Args:
@@ -60,14 +60,14 @@ def get_quant_dequant_output(model, input_data, output_data, providers):
     """
     import onnxruntime as ort
 
-    input_data = quant_dequant_data(input_data, 2, "asym")
+    input_data = _quant_dequant_data(input_data, 2, "asym")
     sess = ort.InferenceSession(model.SerializeToString(), providers=providers)
     preds = sess.run(None, {model.graph.input[0].name: input_data})
     loss = np.sum(np.abs(output_data - preds) ** 2)
     return loss
 
 
-def make_sub_graph(node, inits, input_data, output_data, opset, ir_version):
+def _make_sub_graph(node, inits, input_data, output_data, opset, ir_version):
     """Build a model with the specific node.
 
     Args:
@@ -80,15 +80,15 @@ def make_sub_graph(node, inits, input_data, output_data, opset, ir_version):
     """
     from onnx import helper
 
-    input = helper.make_tensor_value_info(node.input[0], dtype_map[input_data.dtype], input_data.shape)
-    output = helper.make_tensor_value_info(node.output[0], dtype_map[output_data.dtype], output_data.shape)
+    input = helper.make_tensor_value_info(node.input[0], _dtype_map[input_data.dtype], input_data.shape)
+    output = helper.make_tensor_value_info(node.output[0], _dtype_map[output_data.dtype], output_data.shape)
     graph = helper.make_graph([node], "sub_graph", [input], [output], inits)
     model = helper.make_model(graph, opset_imports=opset)
     model.ir_version = ir_version
     return model
 
 
-def quant_dequant_data(data, qType=3, scheme="sym"):
+def _quant_dequant_data(data, qType=3, scheme="sym"):
     """Quantize and then dequantize data.
 
     Args:
@@ -220,7 +220,8 @@ class Smoother:
             backend=self.providers,
         )
 
-        self.max_vals_per_channel, self.shape_info, self.tensors_to_node = calibrator.calib_smooth(op_types, percentile)
+        self.max_vals_per_channel, self.shape_info, self.tensors_to_node = \
+            calibrator.calib_smooth(op_types, percentile)
         for node in self.model.nodes():
             for out in node.output:
                 if (
@@ -396,7 +397,7 @@ class Smoother:
             )
             base_dir = "" if not self.model.is_large_model else os.path.dirname(self.model.model_path)
             weight = onnx.numpy_helper.to_array(self.model.get_initializer(node.input[1]), base_dir)
-            weight_q = quant_dequant_data(weight)
+            weight_q = _quant_dequant_data(weight)
 
             self.model.set_initializer(node.input[1], weight_q)
             inits = [self.model.get_initializer(i) for i in node.input if self.model.get_initializer(i) is not None]
@@ -412,7 +413,7 @@ class Smoother:
 
                 outputs = session.run(added_tensors, inputs)
                 if model is None:
-                    model = make_sub_graph(
+                    model = _make_sub_graph(
                         node,
                         inits,
                         outputs[0],
@@ -420,7 +421,7 @@ class Smoother:
                         self.model.model.opset_import,
                         self.model.model.ir_version,
                     )
-                loss += get_quant_dequant_output(model, outputs[0] * scale, outputs[1], self.providers)
+                loss += _get_quant_dequant_output(model, outputs[0] * scale, outputs[1], self.providers)
 
             self.model.remove_tensors_from_outputs([i for i in added_tensors if i not in orig_outputs])
             self.model.set_initializer(node.input[1], weight)
@@ -440,13 +441,13 @@ class Smoother:
         return scale
 
     def _auto_tune_alpha(
-        self,
-        calib_iter,
-        alpha_min: float = 0.3,
-        alpha_max: float = 0.7,
-        alpha_step: float = 0.05,
-        attn_method: str = "min",
-    ):
+            self,
+            calib_iter,
+            alpha_min: float = 0.3,
+            alpha_max: float = 0.7,
+            alpha_step: float = 0.05,
+            attn_method: str = "min"
+        ):
         """Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
 
         Args:
