@@ -19,7 +19,7 @@
 import copy
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import Union, List
 
 import numpy as np
 import onnx
@@ -42,7 +42,10 @@ from neural_compressor.onnxrt.utils.utility import (
     simple_progress_bar,
 )
 
-__all__ = ["apply_gptq_on_model"]
+__all__ = [
+    "apply_gptq_on_model",
+    "gptq_quantize",
+]
 
 
 def _gptq(
@@ -188,7 +191,7 @@ def _gptq(
     return Q
 
 
-def _gptq_quantize(
+def gptq_quantize(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
     dataloader: CalibrationDataReader,
     weight_config: dict = {},

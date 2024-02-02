@@ -19,7 +19,7 @@
 import copy
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import Union, List
 
 import numpy as np
 import onnx
@@ -36,7 +36,10 @@ from neural_compressor.onnxrt.utils.utility import ONNXRT116_VERSION, ONNXRT1161
 
 logger = Logger().get_logger()
 
-__all__ = ["apply_awq_on_model"]
+__all__ = [
+    "apply_awq_on_model",
+    "awq_quantize"
+]
 
 
 def _get_weight_scale(weight, group_size):
@@ -273,7 +276,7 @@ def _apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, 
     return ratios
 
 
-def _awq_quantize(
+def awq_quantize(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
     dataloader: CalibrationDataReader,
     weight_config: dict = {},
