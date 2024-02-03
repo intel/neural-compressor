@@ -69,7 +69,6 @@ class HQQTensorHandle:
         return QTensor(weight, scale, zero, meta_info)
 
     @classmethod
-    @dump_elapsed_time("Quantize linear module into HQQ module.")
     def quantize(cls, tensor, tensor_quant_config: QTensorConfig = None):
         nbits = tensor_quant_config.nbits
         channel_wise = tensor_quant_config.channel_wise
@@ -184,6 +183,7 @@ class HQQLinear(torch.nn.Linear):
         self.q_weight = q_weight
         self.quantized = q_weight is not None
 
+    @dump_elapsed_time("Quantize linear module into HQQ module.")
     def quantize_weight(
         self,
         W: torch.Tensor,
@@ -260,6 +260,8 @@ class HQQLinear(torch.nn.Linear):
         new_mod.out_features = float_module.out_features
         new_mod.weight = None
         new_mod.bias = float_module.bias
+        if hqq_global_option.use_half and new_mod.bias is not None:
+            new_mod.bias = torch.nn.Parameter(float_module.bias.half())
         # TODO: refine it to support cuda/hpu/cpu
         device_to_use = next(float_module.parameters()).device
         if hqq_global_option.use_half:
