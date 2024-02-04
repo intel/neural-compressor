@@ -1,8 +1,8 @@
 import copy
 import unittest
 
-import transformers
 import torch
+import transformers
 
 from neural_compressor.common import Logger
 
