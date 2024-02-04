@@ -307,7 +307,8 @@ if __name__ == "__main__":
             ptq_config = PostTrainingQuantConfig(
                 calibration_sampling_size=[8],
                 recipes={'optypes_to_exclude_output_quant': ['MatMul'],
-                         'layer_wise_quant': True},
+                         'layer_wise_quant': True,
+                         'graph_optimization_level': 'ENABLE_EXTENDED'},
                 op_type_dict={'^((?!(MatMul|Gather|Conv)).)*$': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
         else:
             ptq_config = PostTrainingQuantConfig(
