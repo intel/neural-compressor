@@ -34,14 +34,6 @@ class TestAWQ(unittest.TestCase):
         logger.info(f"Running TestAWQ test: {self.id()}")
 
     def test_awq(self):
-        class LLMCalibDataloader:
-            def __init__(self):
-                self.batch_size = 1
-
-            def __iter__(self):
-                for i in range(2):
-                    yield example_inputs
-
         example_inputs = torch.ones([1, 10], dtype=torch.long)
 
         model = transformers.AutoModelForCausalLM.from_pretrained(
