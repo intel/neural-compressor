@@ -20,8 +20,8 @@ import tensorflow as tf
 from neural_compressor.tensorflow.quantization.config import StaticQuantConfig
 
 
-class ParseKerasConfig:
-    """The class that parse StaticQuantConfig to tuning config."""
+class KerasConfigConverter:
+    """Convert `StaticQuantConfig` to the format used by static quant algo."""
 
     support_int8_weight = {"Dense", "Conv2d", "DepthwiseConv2D", "SeparableConv2D"}
 

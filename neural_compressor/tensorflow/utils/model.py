@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.tensorflow.utils.tensorflow_models import (
+from neural_compressor.tensorflow.utils.model_wrappers import (
     BaseModel,
     KerasModel,
     TensorflowModel,
