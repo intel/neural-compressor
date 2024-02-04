@@ -35,45 +35,19 @@ ipex_ver = get_ipex_version()
 ipex_config_path = os.path.join(DEFAULT_WORKSPACE, "ipex_config_tmp.json")
 
 
-def static_config_mapping(configs_mapping):
-    tune_cfg = {}
-    tune_cfg["op"] = configs_mapping
-    for (op_name, op_type), cfg in configs_mapping.items():
-        tune_cfg["op"][(op_name, op_type)] = {
-            "weight": {
-                "dtype": cfg.w_dtype,
-                "scheme": "sym",
-                "granularity": cfg.w_granularity,
-                "algorithm": cfg.w_algo,
-            },
-            "activation": {
-                "dtype": cfg.act_dtype,
-                "scheme": "sym" if cfg.act_sym else "asym",
-                "granularity": cfg.act_granularity,
-                "algorithm": cfg.act_algo,
-            },
-        }
-    return tune_cfg
-
-
-def static_quantize(model, configs_mapping, run_fn, run_args, example_inputs, inplace):
-    tune_cfg = static_config_mapping(configs_mapping)
-    assert isinstance(model, torch.nn.Module), "only support torch module"
-    q_model = quantize(model, tune_cfg, run_fn, example_inputs, inplace)
-    logger.info("Static quantization done.")
-    return q_model
-
-
-def quantize(model, tune_cfg, run_fn, example_inputs, inplace):
+def static_quantize(model, tune_cfg, run_fn, run_args, example_inputs, inplace):
     """Execute the quantize process on the specified model.
 
     Args:
-        model (object): model need to do quantization, it is Neural Compressor model.
-        tune_cfg (dict): quantization config.
-        dataloader (object): calibration dataset.
+        model: a float model to be quantized.
+        tune_cfg: quantization config for ops.
+        run_fn: a calibration function for calibrating the model.
+        run_args: positional arguments for `run_fn`.
+        example_inputs: used to trace torch model.
+        inplace: whether to carry out model transformations in-place.
 
     Returns:
-        (dict): quantized model
+        A quantized model.
     """
     # IPEX bug #1: deepcopied prepared model cannot do calibration, need model
     # q_model is useless, but we need to copy other attributes, and pass the converted
@@ -136,6 +110,17 @@ def quantize(model, tune_cfg, run_fn, example_inputs, inplace):
 
 
 def _ipex_post_quant_process(model, q_model, example_inputs, inplace=False):
+    """Convert to a jit model.
+
+    Args:
+        model: a prepared model.
+        q_model: the original model with the same attributes.
+        example_inputs: used to trace torch model.
+        inplace: whether to carry out model transformations in-place.
+
+    Returns:
+        A converted jit model.
+    """
     q_model = ipex.quantization.convert(model, inplace=inplace)
     with torch.no_grad():
         try:

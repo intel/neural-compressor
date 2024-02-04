@@ -80,15 +80,34 @@ def static_quant_entry(
     inplace=True,
 ) -> torch.nn.Module:
     logger.info("Quantize model with the static quant algorithm.")
+    # rebuild tune_cfg for static_quantize function
+    tune_cfg = {}
+    tune_cfg["op"] = configs_mapping
+    for (op_name, op_type), cfg in configs_mapping.items():
+        tune_cfg["op"][(op_name, op_type)] = {
+            "weight": {
+                "dtype": cfg.w_dtype,
+                "scheme": "sym",
+                "granularity": cfg.w_granularity,
+                "algorithm": cfg.w_algo,
+            },
+            "activation": {
+                "dtype": cfg.act_dtype,
+                "scheme": "sym" if cfg.act_sym else "asym",
+                "granularity": cfg.act_granularity,
+                "algorithm": cfg.act_algo,
+            },
+        }
 
     q_model = static_quantize(
         model=model,
-        configs_mapping=configs_mapping,
+        tune_cfg=tune_cfg,
         run_fn=run_fn,
         run_args=run_args,
         example_inputs=example_inputs,
         inplace=inplace,
     )
+    logger.info("Static quantization done.")
     return q_model
 
 
