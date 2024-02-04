@@ -180,7 +180,7 @@ def get_example_inputs(model, dataloader):
         assert False, "Please checkout the example_inputs format."
 
 
-def get_pattern(self, fallback_op, fuse_ops):  # pragma: no cover
+def get_pattern(fallback_op, fuse_ops):  # pragma: no cover
     for fuse_pattern in fuse_ops:
         if fuse_pattern[0] == fallback_op:
             if fuse_pattern[1] in ["relu_", "add_"]:

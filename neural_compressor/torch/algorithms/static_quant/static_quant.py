@@ -67,8 +67,6 @@ def static_quantize(model, tune_cfg, run_fn, run_args, example_inputs, inplace):
             logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(repr(e)))
             q_model = model
 
-    _, cfgs, default_cfgs, fuse_ops = _get_quantizable_ops_recursively(model, example_inputs)
-    qscheme = _cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops)
     iterations = 1
     model.eval()
 
@@ -97,6 +95,8 @@ def static_quantize(model, tune_cfg, run_fn, run_args, example_inputs, inplace):
         q_model = _ipex_post_quant_process(model, q_model, example_inputs, inplace=inplace)
     else:  # pragma: no cover
         # for IPEX version < 1.12
+        _, cfgs, default_cfgs, fuse_ops = _get_quantizable_ops_recursively(model, example_inputs)
+        qscheme = _cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops)
         ipex_conf = ipex.quantization.QuantConf(
             configure_file=ipex_config_path, qscheme=qscheme
         )  # pylint: disable=E1101
