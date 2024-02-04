@@ -560,12 +560,7 @@ def awq_quantize_impl(
     return qdq_model
 
 
-from typing import Callable, Dict, Tuple
-
-from neural_compressor.torch.quantization.config import AWQConfig
-
-
-def awq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], AWQConfig]):
+def awq_config_mapping(configs_mapping):
 
     weight_config = {}
     for (op_name, op_type), op_config in configs_mapping.items():
@@ -590,7 +585,7 @@ def awq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], AWQConfig]):
                 "use_double_quant": op_config.use_double_quant,
                 "double_quant_dtype": op_config.double_quant_dtype,
                 "double_quant_bits": op_config.double_quant_bits,
-                "double_quant_use_sym": op_config.double_quant_use_sym,
+                "double_quant_scheme": op_config.double_quant_use_sym,
                 "double_quant_group_size": op_config.double_quant_group_size,
             }
             nsamples = op_config.nsamples
@@ -630,15 +625,3 @@ def awq_quantize(model, configs_mapping, example_inputs, *args, **kwargs):
     )
     logger.info("AWQ quantization done.")
     return quantized_model
-
-    # model,
-    # dtype="int",
-    # bits=4,
-    # scheme="sym",
-    # group_size=32,
-    # group_dim=1,
-    # quantile=1.0,
-    # weight_config={},
-    # export_compressed_model=False,
-    # use_full_range=False,
-    # use_mse_search=False,

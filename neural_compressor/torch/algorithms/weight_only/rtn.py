@@ -81,7 +81,7 @@ def rtn_quantize(
         "double_quant": kwargs.get("use_double_quant", False),
         "double_quant_dtype": kwargs.get("double_quant_dtype", "int"),
         "double_quant_bits": kwargs.get("double_quant_bits", 8),
-        "double_quant_use_sym": kwargs.get("double_quant_use_sym", "sym"),
+        "double_quant_scheme": kwargs.get("double_quant_scheme", "sym"),
         "double_quant_group_size": kwargs.get("double_quant_group_size", 256),
     }
     if export_compressed_model:
@@ -107,10 +107,10 @@ def rtn_quantize(
                 use_optimum_format = kwargs.get("use_optimum_format", True)
             # double quant config
             double_quant_config = {
-                "use_double_quant": weight_config[name]["use_double_quant"],
+                "double_quant": weight_config[name]["use_double_quant"],
                 "double_quant_dtype": weight_config[name]["double_quant_dtype"],
                 "double_quant_bits": weight_config[name]["double_quant_bits"],
-                "double_quant_use_sym": weight_config[name]["double_quant_use_sym"],
+                "double_quant_scheme": weight_config[name]["double_quant_scheme"],
                 "double_quant_group_size": weight_config[name]["double_quant_group_size"],
             }
         log_msg = (

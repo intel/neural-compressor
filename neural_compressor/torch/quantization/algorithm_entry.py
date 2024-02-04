@@ -69,12 +69,15 @@ def gptq_entry(
 
 ###################### AWQ Algo Entry ##################################
 @register_algo(name=AWQ)
+@torch.no_grad()
 def awq_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AWQConfig], example_inputs=None, *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the AWQ algorithm.")
-
-    assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
+    dataloader = kwargs.get("run_args", None)
+    assert (
+        example_inputs is not None or dataloader is not None
+    ), "Please provide datalaoder or example_inputs for AWQ quantization."
     model = awq_quantize(model=model, configs_mapping=configs_mapping, example_inputs=example_inputs, *args, **kwargs)
     return model
 

@@ -68,7 +68,7 @@ class RTNConfig(BaseConfig):
         "dtype",
         "bits",
         "group_size",
-        "group_dim",
+        # "group_dim", TODO: RuntimeError: group_dim=0
         "use_sym",
         "use_full_range",
         "use_mse_search",
@@ -319,6 +319,7 @@ def get_default_gptq_config() -> GPTQConfig:
     return GPTQConfig()
 
 
+######################## AWQ Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=AWQ, priority=PRIORITY_AWQ)
 class AWQConfig(BaseConfig):
     """Config class for AWQ.
