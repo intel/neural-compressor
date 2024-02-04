@@ -1036,7 +1036,8 @@ def get_module_input_output(
 
 
 # -------------- Model Wrapper ---------------------------
-
+from torch.autograd import Function
+from torch.nn import functional as F
 
 class FakeAffineTensorQuantFunction(Function):
     """Fake version of affine quantization."""

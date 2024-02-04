@@ -377,7 +377,7 @@ def teq_quantize(model, configs_mapping, example_inputs, *args, **kwargs):
                 "double_quant_scheme": "sym" if quant_config.double_quant_use_sym else "asym",
                 "double_quant_group_size": quant_config.double_quant_group_size,
             }
-            absorb_to_layer = quant_config.absorb_to_config
+            absorb_to_layer = quant_config.absorb_to_layer
             folding = quant_config.folding
     assert isinstance(model, torch.nn.Module), "only support torch module"
 
@@ -386,7 +386,6 @@ def teq_quantize(model, configs_mapping, example_inputs, *args, **kwargs):
 
     quantized_model = teq_quantize_impl(
         model,
-        bits=-1,  # no quantize for op not in weight_config
         example_inputs=example_inputs,
         folding=folding,
         absorb_to_layer=absorb_to_layer,
