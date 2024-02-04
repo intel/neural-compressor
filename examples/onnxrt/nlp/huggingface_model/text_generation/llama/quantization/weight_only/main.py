@@ -129,7 +129,7 @@ def replace_architectures(json_path):
     with open(json_path, "r") as file:
         data = json.load(file)
         data["architectures"] = ["LlamaForCausalLM"]
-        
+
     with open(json_path, 'w') as file:
         json.dump(data, file, indent=4)
 
@@ -216,7 +216,7 @@ class KVDataloader:
                     key_or_value = np.zeros(shape, dtype=np.float32)
                     for key_value_input_name in self.key_value_input_names:
                         ort_input[key_value_input_name] = key_or_value
-                
+
         except StopIteration:
             return
 
@@ -230,7 +230,7 @@ class GPTQDataloader:
         self.batch_size=batch_size
         traindata = load_dataset(args.dataset, split=sub_folder)
         traindata = traindata.map(tokenize_function, batched=True)
-        traindata.set_format(type="torch", columns=["input_ids", "attention_mask"])
+        self.traindata.set_format(type="torch", columns=["input_ids", "attention_mask"])
 
         session = ort.InferenceSession(model_path)
         inputs_names = [input.name for input in session.get_inputs()]
@@ -286,7 +286,7 @@ if __name__ == "__main__":
     set_workspace(args.workspace)
 
     if args.benchmark:
-        if args.mode == 'performance':            
+        if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
             model_name = "model.onnx" # require optimum >= 1.14.0
@@ -301,7 +301,7 @@ if __name__ == "__main__":
             print("Batch size = %d" % args.batch_size)
             print("Accuracy: %.5f" % acc_result)
 
-        
+
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
