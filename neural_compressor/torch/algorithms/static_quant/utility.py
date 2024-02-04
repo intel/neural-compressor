@@ -18,6 +18,8 @@ from typing import Dict, List, Union
 import intel_extension_for_pytorch as ipex
 import prettytable as pt
 import torch
+import json
+import os
 from packaging.version import Version
 
 from neural_compressor.torch.utils import (
@@ -27,8 +29,10 @@ from neural_compressor.torch.utils import (
     get_torch_version,
     logger,
 )
+from neural_compressor.common.utils import DEFAULT_WORKSPACE
 
 version = get_torch_version()
+ipex_config_path = os.path.join(DEFAULT_WORKSPACE, "ipex_config_tmp.json")
 
 unify_op_type_mapping_ipex = {
     "Convolution_Relu": "Conv2d",
@@ -60,7 +64,7 @@ BLOCK_PATTERNS = [
 ]
 
 
-def move_input_device(input, device="cpu"):
+def move_input_device(input, device="cpu"): # pragma: no cover
     """Auto mapping input to device for all kinds of format.
 
     Args:
@@ -87,7 +91,7 @@ def move_input_device(input, device="cpu"):
     return input
 
 
-def forward_wrapper(model, input):
+def forward_wrapper(model, input): # pragma: no cover
     """Model forward with device auto mapping.
 
     Args:
@@ -121,7 +125,7 @@ def pytorch_forward_wrapper(
     conf=None,
     backend="default",
     running_mode="inference",
-):
+): # pragma: no cover
     if (
         version.release < Version("1.12.0").release and backend == "ipex" and running_mode == "calibration"
     ):  # pragma: no cover
@@ -197,76 +201,95 @@ def _simple_inference(q_model, example_inputs, iterations=1):
             q_model(example_inputs)
 
 
-'''
-def _cfg_to_qconfig(tune_cfg, smooth_quant=False):
-        """Convert tune configure to quantization config for each op.
-
-        Args:
-            tune_cfg (dict): dictionary of tune configure for each op
-            ipex_config_path: configure file of Intel PyTorch Extension
-        """
-        if version.release < Version("1.12.0").release:  # pragma: no cover
-            for key in tune_cfg["op"]:
-                try:
-                    scheme = tune_cfg["op"][key]["activation"]["scheme"]
-                except:
-                    scheme = "asym"
-                if scheme not in ["asym", "sym"]:
-                    scheme = "asym"
-                break
-            for key in tune_cfg["op"]:
-                value = tune_cfg["op"][key]
-                pattern = get_pattern(key, self.fuse_ops)
-                assert isinstance(value, dict)
-                assert "activation" in value
-                if value["activation"]["dtype"] == "fp32":
-                    if "weight" in value:
-                        assert value["weight"]["dtype"] == "fp32"
-                    for op_cfg in self.cfgs:
-                        if op_cfg["id"] == key[0]:
-                            if key[1] in ["relu_", "add_"]:
-                                continue
-                            num_inputs = len(op_cfg["inputs_quantized"])
-                            num_outputs = len(op_cfg["outputs_quantized"])
-                            for i_num in range(num_inputs):
-                                op_cfg["inputs_quantized"][i_num] = False
-                            for o_num in range(num_outputs):
-                                op_cfg["outputs_quantized"][o_num] = False
-                            if pattern:
-                                if pattern[1] in ["relu_", "add_"]:
-                                    continue
-                                tune_cfg["op"][pattern]["activation"]["dtype"] = "fp32"
-                                if "weight" in tune_cfg["op"][pattern]:
-                                    tune_cfg["op"][pattern]["weight"]["dtype"] = "fp32"
-                else:
-                    for op_cfg in self.cfgs:
-                        if op_cfg["id"] == key[0]:
-                            if key[1] in ["relu_", "add_"]:
-                                continue
-                            num_inputs = len(op_cfg["inputs_quantized"])
-                            num_outputs = len(op_cfg["outputs_quantized"])
-                            for i_num in range(num_inputs):
-                                op_cfg["inputs_quantized"][i_num] = self.default_cfgs[key[0]]["inputs_quantized"][i_num]
-                            for o_num in range(num_outputs):
-                                op_cfg["outputs_quantized"][o_num] = self.default_cfgs[key[0]]["outputs_quantized"][
-                                    o_num
-                                ]
-            with open(self.ipex_config_path, "w") as write_f:
-                json.dump(self.cfgs, write_f)
-            if scheme == "asym":
-                return torch.per_tensor_affine
-            else:
-                return torch.per_tensor_symmetric
+def _cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops): # pragma: no cover
+    assert cfgs is not None, "No configure for IPEX int8 model..."
+    for key in tune_cfg["op"]:
+        try:
+            scheme = tune_cfg["op"][key]["activation"]["scheme"]
+        except:
+            scheme = "asym"
+        if scheme not in ["asym", "sym"]:
+            scheme = "asym"
+        break
+    for key in tune_cfg["op"]:
+        value = tune_cfg["op"][key]
+        pattern = get_pattern(key, fuse_ops)
+        assert isinstance(value, dict)
+        assert "activation" in value
+        if value["activation"]["dtype"] == "fp32":
+            if "weight" in value:
+                assert value["weight"]["dtype"] == "fp32"
+            for op_cfg in cfgs:
+                if op_cfg["id"] == key[0]:
+                    if key[1] in ["relu_", "add_"]:
+                        continue
+                    num_inputs = len(op_cfg["inputs_quantized"])
+                    num_outputs = len(op_cfg["outputs_quantized"])
+                    for i_num in range(num_inputs):
+                        op_cfg["inputs_quantized"][i_num] = False
+                    for o_num in range(num_outputs):
+                        op_cfg["outputs_quantized"][o_num] = False
+                    if pattern:
+                        if pattern[1] in ["relu_", "add_"]:
+                            continue
+                        tune_cfg["op"][pattern]["activation"]["dtype"] = "fp32"
+                        if "weight" in tune_cfg["op"][pattern]:
+                            tune_cfg["op"][pattern]["weight"]["dtype"] = "fp32"
         else:
-            op_infos = copy.deepcopy(self.op_infos_from_cfgs)
-            self.cfgs = torch_utils.util.check_cfg_and_qconfig(
-                tune_cfg["op"], self.cfgs, op_infos, self.output_tensor_id_op_name, smooth_quant
-            )
+            for op_cfg in cfgs:
+                if op_cfg["id"] == key[0]:
+                    if key[1] in ["relu_", "add_"]:
+                        continue
+                    num_inputs = len(op_cfg["inputs_quantized"])
+                    num_outputs = len(op_cfg["outputs_quantized"])
+                    for i_num in range(num_inputs):
+                        op_cfg["inputs_quantized"][i_num] = default_cfgs[key[0]]["inputs_quantized"][i_num]
+                    for o_num in range(num_outputs):
+                        op_cfg["outputs_quantized"][o_num] = default_cfgs[key[0]]["outputs_quantized"][
+                            o_num
+                        ]
+    with open(ipex_config_path, "w") as write_f:
+        json.dump(cfgs, write_f)
+    if scheme == "asym":
+        return torch.per_tensor_affine
+    else:
+        return torch.per_tensor_symmetric
+    
 
-            with open(self.ipex_config_path, "w") as write_f:
-                json.dump(self.cfgs, write_f, indent=4)
-            return None
-'''
+def get_fuse_ops(default_cfgs):  # pragma: no cover
+    elt_wise = ["relu", "sigmoid", "gelu"]
+    inplace_ops = ["relu_", "add_"]
+    op_patterns = []
+    num_ops = len(default_cfgs)
+    for cur_id in range(num_ops):
+        cur_op = default_cfgs[cur_id]["name"]
+        if cur_op == "dropout":
+            continue
+        inputs = default_cfgs[cur_id]["inputs_flow"]
+        num_input = len(inputs)
+        pre_ops = {}
+        for i_num in range(num_input):
+            inp = inputs[i_num]
+            for pre_id in range(cur_id):
+                pre_op = default_cfgs[pre_id]["name"]
+                pre_out = default_cfgs[pre_id]["outputs_flow"]
+                num_out = len(pre_out)
+                for o_num in range(num_out):
+                    if pre_out[o_num] == inp:
+                        if cur_op in inplace_ops and (pre_op in ["conv2d", "conv3d", "linear"]):
+                            op_patterns.append([(pre_id, pre_op), (cur_id, cur_op)])
+                        if cur_op in elt_wise and (pre_op in ["conv2d", "conv3d", "linear", "add"]):
+                            op_patterns.append([(pre_id, pre_op), (cur_id, cur_op)])
+                        if cur_op == "add":
+                            pre_ops[i_num] = [pre_id, pre_op]
+        if len(pre_ops) > 0:
+            for key, value in pre_ops.items():
+                if (
+                    value[1] in ["conv2d", "conv3d", "linear"]
+                    and default_cfgs[cur_id]["inputs_quantized"][key] is False
+                ):
+                    op_patterns.append([(value[0], value[1]), (cur_id, cur_op)])
+    return op_patterns
 
 
 def _dump_model_op_stats(tune_cfg):
