@@ -4,13 +4,13 @@ MODEL_DIR=/your/gptj/
 
 python -u examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_weight_only/run_gptj_mlperf_int4.py \
     --model_name_or_path ${MODEL_DIR} \
-    --wbits 4 \
+    --wbits 3 \
     --sym \
-    --group_size -1 \
-    --nsamples 128 \
+    --group_size 128 \
+    --nsamples 256 \
     --calib-data-path ${CALIBRATION_DATA} \
     --val-data-path ${VALIDATION_DATA} \
-    --calib-iters 128 \
+    --calib-iters 256 \
     --use_max_length \
     --pad_max_length 2048 \
     --use_gpu

@@ -324,9 +324,11 @@ if __name__ == '__main__':
 
     q_model = quantization.fit(model, conf, calib_dataloader=dataloader,)
 
-    q_model.save("./gptj-gptq-gs128-calib128-calibration-fp16/")
+    # q_model.save("./gptj-gptq-gs128-calib128-calibration-fp16/")
     # q_model.float()
     # q_model.save("./gptj-gptq-gs128-calib128-calibration-fp32/")
+    compressed_model = q_model.export_compressed_model()
+    torch.save(compressed_model.state_dict(), "gptj_w3g128_compressed_model.pt")
     # benchmarking first 100 examples
     # if args.benchmark:
     if True:
