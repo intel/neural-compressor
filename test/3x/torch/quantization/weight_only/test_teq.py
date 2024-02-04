@@ -1,9 +1,12 @@
 import copy
 import unittest
-import transformers
+
 import torch
-from neural_compressor.torch.quantization import TEQConfig, quantize
+import transformers
+
 from neural_compressor.torch.algorithms.weight_only.teq import teq_quantize_impl
+from neural_compressor.torch.quantization import TEQConfig, quantize
+
 
 class TestTEQWeightOnlyQuant(unittest.TestCase):
     @classmethod
@@ -58,7 +61,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
                         "use_sym": True,
                         "folding": True,
                         "absorb_to_layer": {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]},
-                        },
+                    },
                     "transformer.h.0.mlp.fc_out": {
                         "dtype": "int",
                         "bits": 4,
@@ -66,17 +69,16 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
                         "use_sym": False,
                         "folding": True,
                         "absorb_to_layer": {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]},
-                        }
+                    },
                 },
             }
         }
-        
-        qdq_model = quantize(
-                model=self.gptj, quant_config=quant_config, run_args=dataloader
-        )
+
+        qdq_model = quantize(model=self.gptj, quant_config=quant_config, run_args=dataloader)
         self.assertTrue(isinstance(qdq_model, torch.nn.Module))
         out2 = qdq_model(test_input)
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-02))
-        
+
+
 if __name__ == "__main__":
     unittest.main()
