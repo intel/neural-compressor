@@ -1,0 +1,6 @@
+numpy>=1.24.4
+tqdm>=4.64.1
+accelerate
+transformers>=4.36.1
+torch
+git+https://github.com/username/repo.git@hqq3
