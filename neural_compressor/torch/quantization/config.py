@@ -318,6 +318,7 @@ def get_default_gptq_config() -> GPTQConfig:
     return GPTQConfig()
 
 
+######################## AWQ Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=AWQ, priority=PRIORITY_AWQ)
 class AWQConfig(BaseConfig):
     """Config class for AWQ.
