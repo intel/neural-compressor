@@ -1,7 +1,7 @@
 import copy
-import pytest
 
 import intel_extension_for_pytorch as ipex
+import pytest
 import torch
 
 from neural_compressor.torch.quantization import StaticQuantConfig, get_default_static_config, quantize
