@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+import os
 from collections import UserDict
 from typing import Dict, List, Union
 
 import intel_extension_for_pytorch as ipex
 import prettytable as pt
 import torch
-import json
-import os
 from packaging.version import Version
 
+from neural_compressor.common.utils import DEFAULT_WORKSPACE
 from neural_compressor.torch.utils import (
     get_depth,
     get_dict_at_depth,
@@ -29,7 +30,6 @@ from neural_compressor.torch.utils import (
     get_torch_version,
     logger,
 )
-from neural_compressor.common.utils import DEFAULT_WORKSPACE
 
 version = get_torch_version()
 ipex_config_path = os.path.join(DEFAULT_WORKSPACE, "ipex_config_tmp.json")
@@ -64,7 +64,7 @@ BLOCK_PATTERNS = [
 ]
 
 
-def move_input_device(input, device="cpu"): # pragma: no cover
+def move_input_device(input, device="cpu"):  # pragma: no cover
     """Auto mapping input to device for all kinds of format.
 
     Args:
@@ -91,7 +91,7 @@ def move_input_device(input, device="cpu"): # pragma: no cover
     return input
 
 
-def forward_wrapper(model, input): # pragma: no cover
+def forward_wrapper(model, input):  # pragma: no cover
     """Model forward with device auto mapping.
 
     Args:
@@ -125,7 +125,7 @@ def pytorch_forward_wrapper(
     conf=None,
     backend="default",
     running_mode="inference",
-): # pragma: no cover
+):  # pragma: no cover
     if (
         version.release < Version("1.12.0").release and backend == "ipex" and running_mode == "calibration"
     ):  # pragma: no cover
@@ -201,7 +201,7 @@ def _simple_inference(q_model, example_inputs, iterations=1):
             q_model(example_inputs)
 
 
-def _cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops): # pragma: no cover
+def _cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops):  # pragma: no cover
     assert cfgs is not None, "No configure for IPEX int8 model..."
     for key in tune_cfg["op"]:
         try:
@@ -245,16 +245,14 @@ def _cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops): # pragma: no cover
                     for i_num in range(num_inputs):
                         op_cfg["inputs_quantized"][i_num] = default_cfgs[key[0]]["inputs_quantized"][i_num]
                     for o_num in range(num_outputs):
-                        op_cfg["outputs_quantized"][o_num] = default_cfgs[key[0]]["outputs_quantized"][
-                            o_num
-                        ]
+                        op_cfg["outputs_quantized"][o_num] = default_cfgs[key[0]]["outputs_quantized"][o_num]
     with open(ipex_config_path, "w") as write_f:
         json.dump(cfgs, write_f)
     if scheme == "asym":
         return torch.per_tensor_affine
     else:
         return torch.per_tensor_symmetric
-    
+
 
 def get_fuse_ops(default_cfgs):  # pragma: no cover
     elt_wise = ["relu", "sigmoid", "gelu"]

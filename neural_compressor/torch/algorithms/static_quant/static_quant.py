@@ -27,22 +27,19 @@ import torch
 from packaging.version import Version
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.torch.utils import (
-    get_ipex_version, 
-    get_quantizable_ops_from_cfgs, 
-    logger, 
-    paser_cfgs,
-)
+from neural_compressor.torch.utils import get_ipex_version, get_quantizable_ops_from_cfgs, logger, paser_cfgs
+
 from .utility import (
-    _dump_model_op_stats, 
-    _simple_inference, 
-    get_example_inputs, 
-    _cfg_to_qconfig, 
-    ipex_config_path,
+    _cfg_to_qconfig,
+    _dump_model_op_stats,
+    _simple_inference,
+    get_example_inputs,
     get_fuse_ops,
+    ipex_config_path,
 )
 
 ipex_ver = get_ipex_version()
+
 
 def static_quantize(model, tune_cfg, run_fn, run_args, example_inputs, inplace):
     """Execute the quantize process on the specified model.
@@ -63,7 +60,7 @@ def static_quantize(model, tune_cfg, run_fn, run_args, example_inputs, inplace):
     # model to q_model.
     if inplace:
         q_model = model
-    else: # pragma: no cover
+    else:  # pragma: no cover
         try:
             q_model = copy.deepcopy(model)
         except Exception as e:  # pragma: no cover
@@ -98,7 +95,7 @@ def static_quantize(model, tune_cfg, run_fn, run_args, example_inputs, inplace):
         run_fn(model)
         model.save_qconf_summary(qconf_summary=ipex_config_path)
         q_model = _ipex_post_quant_process(model, q_model, example_inputs, inplace=inplace)
-    else: # pragma: no cover
+    else:  # pragma: no cover
         # for IPEX version < 1.12
         ipex_conf = ipex.quantization.QuantConf(
             configure_file=ipex_config_path, qscheme=qscheme
@@ -106,9 +103,7 @@ def static_quantize(model, tune_cfg, run_fn, run_args, example_inputs, inplace):
         run_fn(model)
         ipex_conf.save(ipex_config_path)
         ipex_conf = ipex.quantization.QuantConf(ipex_config_path)  # pylint: disable=E1101
-        q_model = ipex.quantization.convert(
-            q_model, ipex_conf, example_inputs, inplace=True
-        )  # pylint: disable=E1121
+        q_model = ipex.quantization.convert(q_model, ipex_conf, example_inputs, inplace=True)  # pylint: disable=E1121
 
     with open(ipex_config_path, "r") as f:
         q_model.tune_cfg = json.load(f)
@@ -174,7 +169,7 @@ def _get_quantizable_ops_recursively(model, example_inputs):
     if not os.path.exists(ipex_config_path):
         assert isinstance(model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
 
-    if hasattr(model, "save_qconf_summary"): # pragma: no cover
+    if hasattr(model, "save_qconf_summary"):  # pragma: no cover
         os.makedirs(os.path.dirname(ipex_config_path), exist_ok=True)
         model.save_qconf_summary(qconf_summary=ipex_config_path)
     else:
@@ -213,7 +208,7 @@ def _get_quantizable_ops_recursively(model, example_inputs):
         cfgs = json.load(f)
 
         from .utility import unify_op_type_mapping_ipex
-        
+
         default_cfgs = {}
         fuse_ops = []
         if ipex_ver.release < Version("1.12.0").release:  # pragma: no cover
