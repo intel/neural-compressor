@@ -110,7 +110,7 @@ def rtn_quantize(
                 "double_quant": weight_config[name]["use_double_quant"],
                 "double_quant_dtype": weight_config[name]["double_quant_dtype"],
                 "double_quant_bits": weight_config[name]["double_quant_bits"],
-                "double_quant_scheme": weight_config[name]["double_quant_use_scheme"],
+                "double_quant_scheme": weight_config[name]["double_quant_scheme"],
                 "double_quant_group_size": weight_config[name]["double_quant_group_size"],
             }
         log_msg = (
