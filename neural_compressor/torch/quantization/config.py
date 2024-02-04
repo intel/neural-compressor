@@ -67,7 +67,7 @@ class RTNConfig(BaseConfig):
         "dtype",
         "bits",
         "group_size",
-        "group_dim",
+        # "group_dim", TODO: RuntimeError: group_dim=0
         "use_sym",
         "use_full_range",
         "use_mse_search",
