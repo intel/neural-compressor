@@ -590,7 +590,7 @@ def awq_config_mapping(configs_mapping: Dict[Tuple[str, Callable], AWQConfig]):
                 "use_double_quant": op_config.use_double_quant,
                 "double_quant_dtype": op_config.double_quant_dtype,
                 "double_quant_bits": op_config.double_quant_bits,
-                "double_quant_use_sym": op_config.double_quant_use_sym,
+                "double_quant_scheme": op_config.double_quant_use_sym,
                 "double_quant_group_size": op_config.double_quant_group_size,
             }
             nsamples = op_config.nsamples
