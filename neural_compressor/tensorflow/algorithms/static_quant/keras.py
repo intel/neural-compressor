@@ -19,17 +19,17 @@ import copy
 import json
 import math
 import os
-import yaml
-import keras
-
-import numpy as np
-import tensorflow as tf
 from collections import OrderedDict, UserDict
 from typing import Callable, Dict
 
+import keras
+import numpy as np
+import tensorflow as tf
+import yaml
+
 from neural_compressor.common import logger
-from neural_compressor.tensorflow.utils import deep_get, dump_elapsed_time
 from neural_compressor.tensorflow.quantization.config import StaticQuantConfig
+from neural_compressor.tensorflow.utils import deep_get, dump_elapsed_time
 
 
 def _add_supported_quantized_objects(custom_objects):
