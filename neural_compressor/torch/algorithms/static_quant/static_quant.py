@@ -28,13 +28,7 @@ from packaging.version import Version
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
 from neural_compressor.torch.utils import get_ipex_version, get_quantizable_ops_from_cfgs, logger, paser_cfgs
 
-from .utility import (
-    cfg_to_qconfig,
-    dump_model_op_stats,
-    simple_inference,
-    get_fuse_ops,
-    ipex_config_path,
-)
+from .utility import cfg_to_qconfig, dump_model_op_stats, get_fuse_ops, ipex_config_path, simple_inference
 
 ipex_ver = get_ipex_version()
 
