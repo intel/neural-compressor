@@ -90,94 +90,15 @@
              
   <section id="module-neural_compressor.tensorflow.utils">
 <span id="neural-compressor-tensorflow-utils"></span><h1><a class="reference internal" href="#module-neural_compressor.tensorflow.utils" title="neural_compressor.tensorflow.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.utils</span></code></a><a class="headerlink" href="#module-neural_compressor.tensorflow.utils" title="Permalink to this heading"></a></h1>
-<section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
-<section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.version1_gte_version2" title="neural_compressor.tensorflow.utils.version1_gte_version2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">version1_gte_version2</span></code></a>(version1, version2)</p></td>
-<td><p>Check if version1 is greater than or equal to version2.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.register_algo" title="neural_compressor.tensorflow.utils.register_algo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_algo</span></code></a>(name)</p></td>
-<td><p>Decorator function to register algorithms in the algos_mapping dictionary.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.deep_get" title="neural_compressor.tensorflow.utils.deep_get"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deep_get</span></code></a>(dictionary, keys[, default])</p></td>
-<td><p>Get the dot key's item in nested dict</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.dump_elapsed_time" title="neural_compressor.tensorflow.utils.dump_elapsed_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dump_elapsed_time</span></code></a>([customized_msg])</p></td>
-<td><p>Get the elapsed time for decorated functions.</p></td>
-</tr>
-</tbody>
-</table>
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.version1_gte_version2">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.</span></span><span class="sig-name descname"><span class="pre">version1_gte_version2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.version1_gte_version2" title="Permalink to this definition"></a></dt>
-<dd><p>Check if version1 is greater than or equal to version2.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.register_algo">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.</span></span><span class="sig-name descname"><span class="pre">register_algo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.register_algo" title="Permalink to this definition"></a></dt>
-<dd><p>Decorator function to register algorithms in the algos_mapping dictionary.</p>
-<dl>
-<dt>Usage example:</dt><dd><p>&#64;register_algo(name=example_algo)
-def example_algo(model: torch.nn.Module, quant_config: RTNConfig) -&gt; torch.nn.Module:</p>
-<blockquote>
-<div><p>…</p>
-</div></blockquote>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – The name under which the algorithm function will be registered.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The decorator function to be used with algorithm functions.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>decorator</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.deep_get">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.</span></span><span class="sig-name descname"><span class="pre">deep_get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dictionary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.deep_get" title="Permalink to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Get the dot key’s item in nested dict</dt><dd><p>eg person = {‘person’:{‘name’:{‘first’:’John’}}}
-deep_get(person, “person.name.first”) will output ‘John’.</p>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>dictionary</strong> (<em>dict</em>) – The dict object to get keys</p></li>
-<li><p><strong>keys</strong> (<em>dict</em>) – The deep keys</p></li>
-<li><p><strong>default</strong> (<em>object</em>) – The return item if key not exists</p></li>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="data/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.utils.data</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_wrappers/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.utils.model_wrappers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="nets_factory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.utils.nets_factory</span></code></a></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>the item of the deep dot keys</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>item</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.dump_elapsed_time">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.</span></span><span class="sig-name descname"><span class="pre">dump_elapsed_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">customized_msg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.dump_elapsed_time" title="Permalink to this definition"></a></dt>
-<dd><p>Get the elapsed time for decorated functions.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>customized_msg</strong> (<em>string</em><em>, </em><em>optional</em>) – The parameter passed to decorator. Defaults to None.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
+</div>
 </section>
 </section>
 
@@ -195,7 +116,7 @@ deep_get(person, “person.name.first”) will output ‘John’.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fb17c50a050> 
+   <jinja2.runtime.BlockReference object at 0x7f91f8e3d6f0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

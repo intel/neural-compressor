@@ -1,0 +1,26 @@
+:orphan:
+
+:py:mod:`neural_compressor.tensorflow.quantization.utils.graph_rewriter`
+========================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   generic/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   graph_base/index.rst
+
+

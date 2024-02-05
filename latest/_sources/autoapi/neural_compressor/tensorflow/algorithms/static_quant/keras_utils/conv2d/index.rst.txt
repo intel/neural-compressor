@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.tensorflow.algorithms.static_quant.keras_utils.conv2d`
+=================================================================================
+
+.. py:module:: neural_compressor.tensorflow.algorithms.static_quant.keras_utils.conv2d
+
+

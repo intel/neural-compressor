@@ -1,0 +1,29 @@
+:orphan:
+
+:py:mod:`neural_compressor.tensorflow.utils.model`
+==================================================
+
+.. py:module:: neural_compressor.tensorflow.utils.model
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.utils.model.Model
+
+
+
+
+.. py:class:: Model
+
+
+
+
+   A wrapper to construct a Neural Compressor TF Model.
+
+

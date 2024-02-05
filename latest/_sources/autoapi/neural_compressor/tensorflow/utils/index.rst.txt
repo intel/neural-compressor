@@ -6,64 +6,14 @@
 .. py:module:: neural_compressor.tensorflow.utils
 
 
-Module Contents
----------------
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
 
-
-Functions
-~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.tensorflow.utils.version1_gte_version2
-   neural_compressor.tensorflow.utils.register_algo
-   neural_compressor.tensorflow.utils.deep_get
-   neural_compressor.tensorflow.utils.dump_elapsed_time
-
-
-
-.. py:function:: version1_gte_version2(version1, version2)
-
-   Check if version1 is greater than or equal to version2.
-
-
-.. py:function:: register_algo(name)
-
-   Decorator function to register algorithms in the algos_mapping dictionary.
-
-   Usage example:
-       @register_algo(name=example_algo)
-       def example_algo(model: torch.nn.Module, quant_config: RTNConfig) -> torch.nn.Module:
-           ...
-   :param name: The name under which the algorithm function will be registered.
-   :type name: str
-
-   :returns: The decorator function to be used with algorithm functions.
-   :rtype: decorator
-
-
-.. py:function:: deep_get(dictionary, keys, default=None)
-
-   Get the dot key's item in nested dict
-      eg person = {'person':{'name':{'first':'John'}}}
-      deep_get(person, "person.name.first") will output 'John'.
-
-   :param dictionary: The dict object to get keys
-   :type dictionary: dict
-   :param keys: The deep keys
-   :type keys: dict
-   :param default: The return item if key not exists
-   :type default: object
-
-   :returns: the item of the deep dot keys
-   :rtype: item
-
-
-.. py:function:: dump_elapsed_time(customized_msg='')
-
-   Get the elapsed time for decorated functions.
-
-   :param customized_msg: The parameter passed to decorator. Defaults to None.
-   :type customized_msg: string, optional
+   data/index.rst
+   model_wrappers/index.rst
+   nets_factory/index.rst
 
 

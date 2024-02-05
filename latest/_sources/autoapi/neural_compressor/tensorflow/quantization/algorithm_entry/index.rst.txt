@@ -1,0 +1,34 @@
+:orphan:
+
+:py:mod:`neural_compressor.tensorflow.quantization.algorithm_entry`
+===================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.algorithm_entry
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.algorithm_entry.static_quantize_entry
+
+
+
+.. py:function:: static_quantize_entry(model: neural_compressor.tensorflow.utils.BaseModel, quant_config: neural_compressor.tensorflow.quantization.config.StaticQuantConfig, calib_dataloader: Callable = None, calib_iteration: int = 100)
+
+   The main entry to apply static quantization.
+
+   :param model: a fp32 model to be quantized.
+   :param quant_config: a quantization configuration.
+   :param calib_dataloader: a data loader for calibration.
+   :param calib_iteration: the iteration of calibration.
+
+   :returns: the quantized model.
+   :rtype: q_model
+
+

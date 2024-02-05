@@ -1,0 +1,27 @@
+:orphan:
+
+:py:mod:`neural_compressor.tensorflow.algorithms.smoother.core`
+===============================================================
+
+.. py:module:: neural_compressor.tensorflow.algorithms.smoother.core
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.algorithms.smoother.core.SmoothQuant
+
+
+
+
+.. py:class:: SmoothQuant(config: neural_compressor.tensorflow.quantization.config.SmoothQuantConfig, calib_dataloader: Callable, calib_iteration: int = 1)
+
+
+   The class that performs smooth quantization.
+
+

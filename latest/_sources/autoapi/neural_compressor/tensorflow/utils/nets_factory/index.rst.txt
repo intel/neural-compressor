@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.tensorflow.utils.nets_factory`
+=========================================================
+
+.. py:module:: neural_compressor.tensorflow.utils.nets_factory
+
+.. autoapi-nested-parse::
+
+   TF-Slim nets factory.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.utils.nets_factory.TFSlimNetsFactory
+
+
+
+
+.. py:class:: TFSlimNetsFactory
+
+
+
+
+   TF-Slim nets factory.
+
+
