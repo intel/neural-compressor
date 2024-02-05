@@ -598,7 +598,7 @@ def awq_config_mapping(configs_mapping):
     return weight_config, nsamples, use_auto_scale, use_mse_search, folding, return_int, use_full_range
 
 
-def awq_quantize(model, configs_mapping, example_inputs, *args, **kwargs):
+def awq_quantize(model, configs_mapping, *args, **kwargs):
     """Apply awq."""
     # TODO: unify weight_config keys, add docstring, and support default config
     weight_config, nsamples, use_auto_scale, use_mse_search, folding, return_int, use_full_range = awq_config_mapping(
@@ -608,6 +608,7 @@ def awq_quantize(model, configs_mapping, example_inputs, *args, **kwargs):
 
     calib_func = kwargs.get("run_fn", None)
     dataloader = kwargs.get("run_args", None)
+    example_inputs = kwargs.get("example_inputs", None)
 
     quantized_model = awq_quantize_impl(
         model,
