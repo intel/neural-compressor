@@ -16,13 +16,15 @@
 # limitations under the License.
 
 import json
-
-import intel_extension_for_pytorch as ipex
-import torch
-from packaging.version import Version
-
 from neural_compressor.torch.utils import get_ipex_version
 
+try:
+    import intel_extension_for_pytorch as ipex
+except:
+    assert False, "Please install IPEX for static quantization."
+
+import torch
+from packaging.version import Version
 from .utility import (
     cfg_to_qconfig,
     dump_model_op_stats,
