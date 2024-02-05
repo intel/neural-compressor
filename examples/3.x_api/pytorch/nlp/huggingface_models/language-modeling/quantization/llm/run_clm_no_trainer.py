@@ -74,8 +74,8 @@ parser.add_argument('--gptq_percdamp', type=float, default=.01,
 parser.add_argument('--gptq_block_size', type=int, default=128, help='Block size. sub weight matrix size to run GPTQ.')
 parser.add_argument('--gptq_nsamples', type=int, default=128, help='Number of calibration data samples.')
 parser.add_argument('--gptq_use_max_length', action="store_true",
-                    help='Set all sequence length to be same length of args.gptq_pad_max_length')
-parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calibration dataset sequence max length, \
+                    help='Set all sequence length to be same length of args.gptq_max_seq_length')
+parser.add_argument('--gptq_max_seq_length', type=int, default=2048, help='Calibration dataset sequence max length, \
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
 # =============DoubleQuant configs====================
@@ -202,7 +202,7 @@ def get_user_model():
 
     # Set model's seq_len when GPTQ calibration is enabled.
     if args.woq_algo == 'GPTQ':
-        user_model.seqlen = args.gptq_pad_max_length
+        user_model.seqlen = args.gptq_max_seq_length
 
     if args.peft_model_id is not None:
         from peft import PeftModel
@@ -262,11 +262,11 @@ if args.quantize:
                 model=user_model, quant_config=quant_config
             )
         elif args.woq_algo == "GPTQ":
-            from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
+            from .utils import DataloaderPreprocessor
             dataloaderPreprocessor = DataloaderPreprocessor(
                 dataloader_original=calib_dataloader,
                 use_max_length=args.gptq_use_max_length,
-                pad_max_length=args.gptq_pad_max_length,
+                max_seq_length=args.gptq_max_seq_length,
                 nsamples=args.gptq_nsamples
             )
             dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
@@ -294,7 +294,7 @@ if args.quantize:
                         "block_size": args.gptq_block_size,
                         "nsamples": args.gptq_nsamples,
                         "use_max_length": args.gptq_use_max_length,
-                        "pad_max_length": args.gptq_pad_max_length,
+                        "pad_max_length": args.gptq_max_seq_length,
                     }
                 )
                 quant_config = GPTQConfig.from_dict(double_quant_config_dict)
@@ -310,7 +310,7 @@ if args.quantize:
                     block_size=args.gptq_block_size,
                     nsamples=args.gptq_nsamples,
                     use_max_length=args.gptq_use_max_length,
-                    pad_max_length=args.gptq_pad_max_length,
+                    pad_max_length=args.gptq_max_seq_length,
                     double_quant_bits=args.double_quant_bits,
                     double_quant_dtype=args.double_quant_dtype,
                     double_quant_sym=args.double_quant_sym,

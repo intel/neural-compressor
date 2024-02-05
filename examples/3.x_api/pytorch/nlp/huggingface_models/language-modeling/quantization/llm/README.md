@@ -34,7 +34,7 @@ python run_clm_no_trainer.py \
     --woq_bits 4 \
     --woq_scheme asym \
     --woq_group_size 128 \
-    --gptq_pad_max_length 2048 \
+    --gptq_max_seq_length 2048 \
     --gptq_use_max_length \
     --accuracy \
     --tasks "lambada_openai" \
@@ -74,7 +74,7 @@ python run_clm_no_trainer.py \
     --woq_bits 4 \
     --woq_scheme asym \
     --woq_group_size 128 \
-    --gptq_pad_max_length 2048 \
+    --gptq_max_seq_length 2048 \
     --gptq_use_max_length \
     --accuracy \
     --tasks "lambada_openai" \
@@ -111,7 +111,7 @@ python run_clm_no_trainer.py \
     --woq_bits 4 \
     --woq_scheme asym \
     --woq_group_size 128 \
-    --gptq_pad_max_length 2048 \
+    --gptq_max_seq_length 2048 \
     --gptq_use_max_length \
     --accuracy \
     --tasks "lambada_openai" \
