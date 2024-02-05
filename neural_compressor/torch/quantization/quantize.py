@@ -33,7 +33,7 @@ def quantize(
     quant_config: BaseConfig,
     run_fn: Callable = None,
     run_args: Any = None,
-    example_inputs = None,
+    example_inputs=None,
     inplace: bool = True,
 ) -> torch.nn.Module:
     """The main entry to quantize model with static mode.
