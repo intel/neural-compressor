@@ -34,7 +34,6 @@ class TestAWQ(unittest.TestCase):
 
     def test_awq(self):
         example_inputs = torch.ones([1, 10], dtype=torch.long)
-        
 
         def calib_func(model):
             for i in range(2):
