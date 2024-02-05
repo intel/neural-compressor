@@ -122,8 +122,9 @@ class OptimizedModel:
             else:  # pragma: no cover
                 model_class._keys_to_ignore_on_load_missing.extend(missing_keys_to_ignore_on_load)
 
-            if not os.path.isdir(model_name_or_path) and not os.path.isfile(model_name_or_path):   # pragma: no cover
+            if not os.path.isdir(model_name_or_path) and not os.path.isfile(model_name_or_path):  # pragma: no cover
                 from transformers.utils import cached_file
+
                 try:
                     # Load from URL or cache if already cached
                     resolved_weights_file = cached_file(
@@ -134,7 +135,7 @@ class OptimizedModel:
                         resume_download=resume_download,
                         use_auth_token=use_auth_token,
                     )
-                except EnvironmentError as err:   # pragma: no cover
+                except EnvironmentError as err:  # pragma: no cover
                     logger.error(err)
                     msg = (
                         f"Can't load weights for '{model_name_or_path}'. Make sure that:\n\n"
@@ -146,11 +147,12 @@ class OptimizedModel:
                         f"named one of {WEIGHTS_NAME}\n\n"
                     )
                     if revision is not None:
-                        msg += (f"- or '{revision}' is a valid git identifier "
-                                f"(branch name, a tag name, or a commit id) that "
-                                f"exists for this model name as listed on its model "
-                                f"page on 'https://huggingface.co/models'\n\n"
-                            )
+                        msg += (
+                            f"- or '{revision}' is a valid git identifier "
+                            f"(branch name, a tag name, or a commit id) that "
+                            f"exists for this model name as listed on its model "
+                            f"page on 'https://huggingface.co/models'\n\n"
+                        )
                     raise EnvironmentError(msg)
             else:
                 resolved_weights_file = os.path.join(model_name_or_path, WEIGHTS_NAME)
