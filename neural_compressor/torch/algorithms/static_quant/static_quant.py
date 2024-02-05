@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Copied from neural_compressor/adaptor/torch_utils/gptq.py
 
 import copy
 import json
@@ -131,13 +130,13 @@ def _ipex_post_quant_process(model, q_model, example_inputs, inplace=False):
             if isinstance(example_inputs, dict):
                 q_model = torch.jit.trace(q_model, example_kwarg_inputs=example_inputs)
             else:
-                q_model = torch.jit.trace(q_model, example_inputs)
+                q_model = torch.jit.trace(q_model, example_inputs=example_inputs)
             q_model = torch.jit.freeze(q_model.eval())
         except:
             if isinstance(example_inputs, dict):
                 q_model = torch.jit.trace(q_model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False)
             else:
-                q_model = torch.jit.trace(q_model, example_inputs, strict=False)
+                q_model = torch.jit.trace(q_model, example_inputs=example_inputs, strict=False)
             q_model = torch.jit.freeze(q_model.eval())
     # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
     # At the 2nd run, the llga pass will be triggered and the model is turned into

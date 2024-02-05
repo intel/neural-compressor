@@ -5,7 +5,7 @@ import pytest
 import torch
 
 from neural_compressor.torch.quantization import StaticQuantConfig, get_default_static_config, quantize
-from neural_compressor.torch.utils import get_model_info, logger
+from neural_compressor.torch.utils import get_model_info, logger, is_ipex_available
 
 
 def build_simple_torch_model():
@@ -38,7 +38,8 @@ class TestStaticQuant:
 
     def teardown_class(self):
         pass
-
+    
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     def test_static_quant_default(self):
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
@@ -46,6 +47,7 @@ class TestStaticQuant:
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
 
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     @pytest.mark.parametrize(
         "act_sym, act_algo",
         [

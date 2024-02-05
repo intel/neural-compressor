@@ -16,8 +16,10 @@ import json
 import os
 from collections import UserDict
 from typing import Dict, List, Union
-
-import intel_extension_for_pytorch as ipex
+try:
+    import intel_extension_for_pytorch as ipex
+except:
+    pass
 import prettytable as pt
 import torch
 from packaging.version import Version
