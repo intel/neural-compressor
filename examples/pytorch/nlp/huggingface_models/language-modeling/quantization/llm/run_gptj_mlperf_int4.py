@@ -260,6 +260,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_max_length', action='store_true', 
         help='Only select data whose length equals or more than model.seqlen, please refer to GPTQ original implementation'
     )
+    parser.add_argument('--benchmark', action='store_true', help='Whether to do benchmark on CNN datasets.')
 
     # load the gptj model
     args = parser.parse_args()
@@ -330,8 +331,7 @@ if __name__ == '__main__':
     compressed_model = q_model.export_compressed_model()
     torch.save(compressed_model.state_dict(), "gptj_w3g128_compressed_model.pt")
     # benchmarking first 100 examples
-    # if args.benchmark:
-    if True:
+    if args.benchmark:
         # use half to accerlerate inference
         model.half()
         model = model.to(DEV)
