@@ -130,7 +130,7 @@ def awq_quantize_entry(
                 "double_quant_group_size": op_config.double_quant_group_size,
             }
             use_auto_scale = op_config.use_auto_scale
-            use_mse_search = op_config.use_auto_clip # for awq clip
+            use_mse_search = op_config.use_auto_clip  # for awq clip
             folding = op_config.folding
             return_int = op_config.export_compressed_model
             use_full_range = op_config.use_full_range
