@@ -19,9 +19,9 @@ from functools import partial
 
 import torch
 
-from .modules import MulLinear
 from neural_compressor.torch.utils import logger
 
+from .modules import MulLinear
 from .utility import (
     fetch_module,
     get_absorb_layers,
