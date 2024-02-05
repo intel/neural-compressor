@@ -19,9 +19,9 @@ from typing import Dict, List, Union
 
 try:
     import intel_extension_for_pytorch as ipex
+    import prettytable as pt
 except:
     pass
-import prettytable as pt
 import torch
 from packaging.version import Version
 

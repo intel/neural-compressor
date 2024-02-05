@@ -39,14 +39,13 @@ from .utility import (
 ipex_ver = get_ipex_version()
 
 
-def static_quantize(model, tune_cfg, run_fn, run_args, example_inputs, inplace):
+def static_quantize(model, tune_cfg, run_fn, example_inputs, inplace):
     """Execute the quantize process on the specified model.
 
     Args:
         model: a float model to be quantized.
         tune_cfg: quantization config for ops.
         run_fn: a calibration function for calibrating the model.
-        run_args: positional arguments for `run_fn`.
         example_inputs: used to trace torch model.
         inplace: whether to carry out model transformations in-place.
 
@@ -128,13 +127,13 @@ def _ipex_post_quant_process(model, q_model, example_inputs, inplace=False):
             if isinstance(example_inputs, dict):
                 q_model = torch.jit.trace(q_model, example_kwarg_inputs=example_inputs)
             else:
-                q_model = torch.jit.trace(q_model, example_inputs=example_inputs)
+                q_model = torch.jit.trace(q_model, example_inputs)
             q_model = torch.jit.freeze(q_model.eval())
         except:
             if isinstance(example_inputs, dict):
                 q_model = torch.jit.trace(q_model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False)
             else:
-                q_model = torch.jit.trace(q_model, example_inputs=example_inputs, strict=False)
+                q_model = torch.jit.trace(q_model, example_inputs, strict=False)
             q_model = torch.jit.freeze(q_model.eval())
     # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
     # At the 2nd run, the llga pass will be triggered and the model is turned into

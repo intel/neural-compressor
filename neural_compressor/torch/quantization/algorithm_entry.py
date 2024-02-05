@@ -99,12 +99,7 @@ def gptq_entry(
 @register_algo(STATIC_QUANT)
 @torch.no_grad()
 def static_quant_entry(
-    model: torch.nn.Module,
-    configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig],
-    run_fn=None,
-    run_args=None,
-    example_inputs=None,
-    inplace=True,
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the static quant algorithm.")
     # rebuild tune_cfg for static_quantize function
@@ -126,11 +121,14 @@ def static_quant_entry(
             },
         }
 
+    run_fn = kwargs.get("run_fn", None)
+    example_inputs = kwargs.get("example_inputs", None)
+    inplace = kwargs.get("inplace", True)
+    assert example_inputs is not None, "Please provide example_inputs for static quantization."
     q_model = static_quantize(
         model=model,
         tune_cfg=quant_config_mapping,
         run_fn=run_fn,
-        run_args=run_args,
         example_inputs=example_inputs,
         inplace=inplace,
     )
