@@ -21,8 +21,8 @@ import torch
 
 from neural_compressor.torch.utils import logger
 
+from neural_compressor.torch.quantization.modules import MulLinear
 from .utility import (
-    MulLinear,
     fetch_module,
     get_absorb_layers,
     get_block_prefix,
