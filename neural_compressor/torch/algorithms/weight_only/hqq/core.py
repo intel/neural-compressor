@@ -39,31 +39,31 @@ __all__ = [
 
 
 class HQQTensorHandle:
-    # Refactor the code from https://github.com/mobiusml/hqq.
+    # Refactored the code from https://github.com/mobiusml/hqq.
 
     # Store meta-data (we invert the scale for dequantization)
     SUPPORTED_BITS = [8, 4, 3, 2]
     optimize_weights = optimize_weights_proximal
 
     @classmethod
-    def quantize_to_q_tensor(cls, float_tensor, tensor_quant_config: QTensorConfig = None):
-        q_weight, q_tensor_meta = cls.quantize(
+    def quantize(cls, float_tensor, tensor_quant_config: QTensorConfig = None):
+        q_weight, q_tensor_meta = cls._quantize(
             tensor=float_tensor,
             tensor_quant_config=tensor_quant_config,
         )
-        q_weight = cls._create_q_tensor_from_q_weight_and_meta(q_weight, q_tensor_meta)
+        q_weight = cls._create_q_tensor(q_weight, q_tensor_meta)
         return q_weight
 
     @classmethod
-    def dequantize_q_tensor(cls, q_weight: "QTensor") -> torch.Tensor:
+    def dequantize(cls, q_weight: "QTensor") -> torch.Tensor:
         # Dequantized the Qtensor into float tensor
         meta = q_weight.meta_info.to_dict()
         meta["zero"] = q_weight.zero
         meta["scale"] = q_weight.scale
-        return cls.dequantize(q_weight.val, meta)
+        return cls._dequantize(q_weight.val, meta)
 
     @classmethod
-    def _create_q_tensor_from_q_weight_and_meta(cls, weight, meta) -> "QTensor":
+    def _create_q_tensor(cls, weight, meta) -> "QTensor":
         scale = meta["scale"]
         zero = meta["zero"]
         meta_info = QTensorMetaInfo(
@@ -76,7 +76,7 @@ class HQQTensorHandle:
         return QTensor(weight, scale, zero, meta_info)
 
     @classmethod
-    def quantize(cls, tensor, tensor_quant_config: QTensorConfig = None):
+    def _quantize(cls, tensor, tensor_quant_config: QTensorConfig = None):
         nbits = tensor_quant_config.nbits
         channel_wise = tensor_quant_config.channel_wise
         group_size = tensor_quant_config.group_size
@@ -159,7 +159,7 @@ class HQQTensorHandle:
         return W_q, meta
 
     @classmethod
-    def dequantize(cls, W_q, meta):
+    def _dequantize(cls, W_q, meta):
         # Main dequantization: bit_unpacking > (W_q - z)*s > reshape
         if meta["packing"]:
             W_r = Packer.get_unpack_fn(meta["nbits"])(W_q)
@@ -176,7 +176,7 @@ class HQQTensorHandle:
 
 
 class HQQLinear(torch.nn.Linear):
-    # The design follows the https://github.com/pytorch-labs/ao.
+
     def __init__(
         self,
         in_features: int,
@@ -207,19 +207,19 @@ class HQQLinear(torch.nn.Linear):
         self.in_features, self.out_features = W.t().shape
 
         # Quantize weight
-        q_weight = HQQTensorHandle.quantize_to_q_tensor(float_tensor=W, tensor_quant_config=weight_quant_config)
+        q_weight = HQQTensorHandle.quantize(float_tensor=W, tensor_quant_config=weight_quant_config)
         self.q_weight = q_weight
 
         # * The dequantization process only happens in the first forward pass.
         # * It will change the `q_weight` but faster.
         # * we should not save the state after doing the forward.
         if need_quant_scale:  # Quantize scale
-            q_scale_tensor = HQQTensorHandle.quantize_to_q_tensor(
+            q_scale_tensor = HQQTensorHandle.quantize(
                 float_tensor=self.q_weight.scale, tensor_quant_config=scale_quant_config
             )
             self.q_weight.scale = q_scale_tensor
         if need_quant_zero:  # Quantize zero
-            q_zero_tensor = HQQTensorHandle.quantize_to_q_tensor(
+            q_zero_tensor = HQQTensorHandle.quantize(
                 float_tensor=self.q_weight.zero,
                 tensor_quant_config=zero_quant_config,
             )
@@ -230,14 +230,14 @@ class HQQLinear(torch.nn.Linear):
         assert self.quantized, "model was not quantized"
         # TODO: move below logic into `HQQTensorHandle`
         if self.q_weight.is_scale_quantized():
-            scale_qdq = HQQTensorHandle.dequantize_q_tensor(self.q_weight.scale)
+            scale_qdq = HQQTensorHandle.dequantize(self.q_weight.scale)
             self.q_weight.scale = scale_qdq
 
         if self.q_weight.is_zero_quantized():
-            zero_qdq = HQQTensorHandle.dequantize_q_tensor(self.q_weight.zero)
+            zero_qdq = HQQTensorHandle.dequantize(self.q_weight.zero)
             self.q_weight.zero = zero_qdq
 
-        W_qdq = HQQTensorHandle.dequantize_q_tensor(self.q_weight)
+        W_qdq = HQQTensorHandle.dequantize(self.q_weight)
         return W_qdq
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
