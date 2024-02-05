@@ -12,6 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from neural_compressor.tensorflow.algorithms.smoother import SmoothQuant
-from neural_compressor.tensorflow.algorithms.static_quant import KerasAdaptor
+from neural_compressor.tensorflow.algorithms.static_quant.keras import KerasAdaptor

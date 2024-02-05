@@ -20,16 +20,16 @@ import json
 import math
 import os
 from collections import OrderedDict, UserDict
+from typing import Callable, Dict
 
 import keras
 import numpy as np
 import tensorflow as tf
 import yaml
 
-from neural_compressor.common import Logger
+from neural_compressor.common import logger
+from neural_compressor.tensorflow.quantization.config import StaticQuantConfig
 from neural_compressor.tensorflow.utils import deep_get, dump_elapsed_time
-
-logger = Logger().get_logger()
 
 
 def _add_supported_quantized_objects(custom_objects):
@@ -294,16 +294,21 @@ class KerasAdaptor:
         return fused_model
 
     @dump_elapsed_time("Pass quantize model")
-    def quantize(self, tune_cfg, model, dataloader, q_func=None):
+    def quantize(self, quant_config, model, dataloader, iteration, q_func=None):
         """Execute the quantize process on the specified model.
 
         Args:
-            tune_cfg(dict): The chosen tuning configuration.
+            tune_cfg(dict): The user defined 'StaticQuantConfig' class.
             model (object): The model to do quantization.
-            dataloader(object): The dataloader used to load quantization dataset.
+            dataloader(object): The calibration dataloader used to load quantization dataset.
+            iteration(int): The iteration of calibration.
             q_func (optional): training function for quantization aware training mode.
         """
+        self.query_fw_capability(model)
+        converter = KerasConfigConverter(quant_config, iteration)
+        tune_cfg = converter.parse_to_tune_cfg()
         self.tuning_cfg_to_fw(tune_cfg)
+
         # just convert the input model to mixed_bfloat16
         if self.bf16_ops and not self.quantize_config["op_wise_config"]:
             converted_model = self.convert_bf16()
@@ -581,6 +586,8 @@ class KerasAdaptor:
         Args:
             model (object): The model to query quantization tuning capability.
         """
+        if not isinstance(model, tf.keras.Model):
+            model = model.model
         fp32_config = {"weight": {"dtype": "fp32"}, "activation": {"dtype": "fp32"}}
         bf16_config = {"weight": {"dtype": "bf16"}, "activation": {"dtype": "bf16"}}
         int8_type = self.query_handler.get_op_types_by_precision(precision="int8")
@@ -744,3 +751,57 @@ class KerasQuery:
         """
         assert precision in list(self.cur_config["ops"].keys())
         return self.cur_config["ops"][precision]
+
+
+class KerasConfigConverter:
+    """Convert `StaticQuantConfig` to the format used by static quant algo."""
+
+    support_int8_weight = {"Dense", "Conv2d", "DepthwiseConv2D", "SeparableConv2D"}
+
+    def __init__(self, quant_config: StaticQuantConfig, calib_iteration: int):
+        """Init parser for keras static quant config.
+
+        Args:
+            quant_config: the keras static quant config.
+            calib_iteration: the iteration of calibration.
+        """
+        self.quant_config = quant_config
+        self.calib_iteration = calib_iteration
+
+    def update_config(self, quant_config, op_key):
+        """Update op-wise config.
+
+        Args:
+            quant_config: the keras static quant config.
+            op_key: a tuple such as (layer type, layer name).
+        """
+        op_value = {"activation": {}}
+        op_value["activation"].update(
+            {
+                "dtype": quant_config.act_dtype,
+                "quant_mode": "static",
+                "scheme": ("sym" if quant_config.act_sym else "asym"),
+                "granularity": quant_config.act_granularity,
+                "algorithm": "minmax",
+            }
+        )
+        if op_key[1] not in self.support_int8_weight:
+            return op_value
+
+        op_value["weight"] = {
+            "dtype": quant_config.weight_dtype,
+            "scheme": "sym" if quant_config.weight_sym else "asym",
+            "granularity": quant_config.weight_granularity,
+            "algorithm": "minmax",
+        }
+        return op_value
+
+    def parse_to_tune_cfg(self) -> Dict:
+        """The function that parses StaticQuantConfig to keras tuning config."""
+        tune_cfg = {"op": OrderedDict()}
+        for op_key, config in self.quant_config.items():
+            op_value = self.update_config(config, op_key)
+            tune_cfg["op"].update({op_key: op_value})
+            tune_cfg["calib_iteration"] = self.calib_iteration
+
+        return tune_cfg
