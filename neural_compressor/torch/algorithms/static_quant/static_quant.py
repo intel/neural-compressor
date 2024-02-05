@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import json
+
 from neural_compressor.torch.utils import get_ipex_version
 
 try:
@@ -25,6 +26,7 @@ except:
 
 import torch
 from packaging.version import Version
+
 from .utility import (
     cfg_to_qconfig,
     dump_model_op_stats,

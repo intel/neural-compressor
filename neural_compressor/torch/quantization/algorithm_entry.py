@@ -17,8 +17,8 @@ from typing import Dict, Tuple
 import torch
 
 from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, RTN, STATIC_QUANT  # unified namespace
-from neural_compressor.torch.algorithms.weight_only import awq_quantize, gptq_quantize, rtn_quantize
 from neural_compressor.torch.algorithms.static_quant import static_quantize
+from neural_compressor.torch.algorithms.weight_only import awq_quantize, gptq_quantize, rtn_quantize
 from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, RTNConfig, StaticQuantConfig
 from neural_compressor.torch.utils import logger, register_algo
 
