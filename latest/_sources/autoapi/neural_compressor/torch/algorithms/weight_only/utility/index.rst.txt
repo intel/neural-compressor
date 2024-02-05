@@ -9,6 +9,14 @@
 Module Contents
 ---------------
 
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.utility.GraphTrace
+
+
 
 Functions
 ~~~~~~~~~
@@ -22,6 +30,42 @@ Functions
    neural_compressor.torch.algorithms.weight_only.utility.quant_tensor
    neural_compressor.torch.algorithms.weight_only.utility.search_clip
    neural_compressor.torch.algorithms.weight_only.utility.quant_weight_w_scale
+   neural_compressor.torch.algorithms.weight_only.utility.model_forward
+   neural_compressor.torch.algorithms.weight_only.utility.forward_wrapper
+   neural_compressor.torch.algorithms.weight_only.utility.move_input_to_device
+   neural_compressor.torch.algorithms.weight_only.utility.set_module
+   neural_compressor.torch.algorithms.weight_only.utility.fetch_module
+   neural_compressor.torch.algorithms.weight_only.utility.get_absorb_layers
+   neural_compressor.torch.algorithms.weight_only.utility.get_parent
+   neural_compressor.torch.algorithms.weight_only.utility.get_module
+   neural_compressor.torch.algorithms.weight_only.utility.get_block_prefix
+   neural_compressor.torch.algorithms.weight_only.utility.get_example_input
+   neural_compressor.torch.algorithms.weight_only.utility.get_hidden_states
+   neural_compressor.torch.algorithms.weight_only.utility.calibration
+   neural_compressor.torch.algorithms.weight_only.utility.get_module_input_output
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.utility.NF4
+   neural_compressor.torch.algorithms.weight_only.utility.FP4_BNB
+   neural_compressor.torch.algorithms.weight_only.utility.FP4_E2M1
+   neural_compressor.torch.algorithms.weight_only.utility.NF4_BIT
+   neural_compressor.torch.algorithms.weight_only.utility.FP4_BNB_BIT
+   neural_compressor.torch.algorithms.weight_only.utility.FP4_E2M1_BIT
+   neural_compressor.torch.algorithms.weight_only.utility.FLOAT_MAPPING
+   neural_compressor.torch.algorithms.weight_only.utility.INT_MAPPING
+
+
+
+
+
+
+
 
 
 
@@ -161,5 +205,143 @@ Functions
 
    :returns: int weight.
    :rtype: output
+
+
+
+
+
+.. py:function:: set_module(model, key, new_module)
+
+   Set new module into model by key name.
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+   :param new_module: new module to be inserted
+   :type new_module: torch.nn.Module
+
+
+.. py:function:: fetch_module(model, op_name)
+
+   Get module with a given op name.
+
+   :param model: the input model.
+   :type model: object
+   :param op_name: name of op.
+   :type op_name: str
+
+   :returns: module (object).
+
+
+.. py:function:: get_absorb_layers(model, example_inputs, supported_layers=['Linear'], folding=False)
+
+   Get absorb_to_layer and no_absorb_layer.
+
+   :param model: input model
+   :type model: torch.nn.Module
+   :param example_inputs: example_inputs
+   :param supported_layers: supported_layers. Defaults to ['Linear'].
+   :type supported_layers: list, optional
+   :param folding: whether allow self-absorption. Defaults to False.
+   :type folding: bool, optional
+
+   :returns: dict of absorb_to_layer. eg. {absorb, [absorbed_1, xx]}
+             no_absorb_layers: list of no_absorb_layers
+   :rtype: absorb_to_layer
+
+
+
+.. py:function:: get_module(model, key)
+
+   Get module from model by key name.
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+
+
+
+.. py:function:: get_block_prefix(model)
+
+   Get prefix and number of blocks.
+
+   :param model: input model
+   :type model: torch.nn.Module
+
+   :returns: block_list name in model
+             block_num(int): number of block in block_list
+   :rtype: block_prefix(str)
+
+
+.. py:function:: get_example_input(dataloader, i=1)
+
+   Get the example input.
+
+   :param dataloader: calibration dataset.
+   :type dataloader: object
+
+   :returns: example_inp (object).
+
+
+.. py:function:: get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None)
+
+   Get the input args and kwargs of first block.
+
+   :param model: input model
+   :type model: torch.nn.Module
+   :param dataloader: input dataloader. Defaults to None.
+   :type dataloader: dataloader, optional
+   :param n_samples: number samples from dataloader. Defaults to 128.
+   :type n_samples: int, optional
+   :param calib_func: a calib func to replace dataloader. Defaults to None.
+   :type calib_func: func, optional
+
+   :raises ValueError: to avoid inference of rest parts in model
+
+   :returns: a list of input args of each batch
+             total_block_kwargs(list):  a list of input kwargs of each batch
+   :rtype: total_block_args(list)
+
+
+.. py:function:: calibration(model, dataloader=None, n_samples=128, calib_func=None)
+
+   Calibration with dataloader or calib_func.
+
+   :param model: input model
+   :type model: torch.nn.Module
+   :param dataloader: dataloader. Defaults to None.
+   :param n_samples: n_samples. Defaults to 128.
+   :type n_samples: int, optional
+   :param calib_func: calib_func. Defaults to None.
+
+
+.. py:function:: get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, calib_func=None, input_func=None, output_func=None)
+
+   A help function to get input and output tensor of modules in module_name_list.
+
+   :param model: torch model.
+   :param module_hook_config: required module name for input/output. Defaults to {}.
+                              For example:
+                                  module_hook_config = {
+                                      'fc1': ['output'],
+                                      'fc2': ['input', 'output']
+                                  }
+   :type module_hook_config: dict, optional
+   :param dataloader: dataloader for model input.
+   :param iters: iterations for inference.
+   :param calib_func: a custom inference function to replace dataloader and iters.
+   :param input_func: preprocess input for less memory usage
+   :param output_func: preprocess output for less memory usage
+
+   :returns:
+
+             recorded input_values, output_values.
+                 for example:
+                     {'fc1':
+                         {'input': [], 'output': []},
+                     }
+   :rtype: total_values
 
 

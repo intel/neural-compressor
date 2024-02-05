@@ -1,0 +1,79 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.weight_only.awq`
+============================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.awq
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.awq.ActAwareWeightQuant
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.awq.awq_quantize
+
+
+
+.. py:class:: ActAwareWeightQuant(model, example_inputs=None, calib_func=None, dataloader=None, n_samples=128, data_type='int', bits=4, group_size=32, scheme='asym', use_full_range=False, weight_config={})
+
+
+   Implementation of Activation-aware Weight quantization (AWQ) algo.
+
+
+.. py:function:: awq_quantize(model, bits=4, group_size=32, scheme='asym', weight_config={}, example_inputs=None, dataloader=None, n_samples=128, calib_func=None, use_auto_scale=True, use_mse_search=True, folding=False, return_int=False, use_full_range=False, data_type='int')
+
+   Quant the model with Activation-aware Weight quantization(AWQ) method.
+
+   :param model: torch model.
+   :type model: torch.nn.Module
+   :param example_inputs: example_inputs.
+   :param weight_config: contains all info required by AWQ. Defaults to {}.
+                         For example,
+                             weight_config={
+                                 'fc2':
+                                     {
+                                         # 'absorb_layer': 'fc1',
+                                         'bits': 4,
+                                         'group_size': 32,
+                                         'scheme': 'sym'
+                                     }
+                             }
+   :type weight_config: dict, optional
+   :param absorb_dict: contains all absorb info required by AWQ.. Defaults to {}.
+                       For example,
+                           absorb_dict = {
+                               # 'absorb_layer': absorbed_layer
+                               'fc1': ['fc1', 'fc2', 'fc3']
+                           } # in this case, fc2 and fc3 need to share the same scale. fc1 is self absorbed.
+                           # self absorb module will replace with MulLinear, which contains torch.mul and module.
+   :type absorb_dict: dict, optional
+   :param n_samples: calibration sample number.
+   :param use_auto_scale: whether enable scale for salient weight. Defaults to True.
+   :type use_auto_scale: bool, optional
+   :param use_mse_search: whether enable clip for weight by checking mse. Defaults to True.
+   :type use_mse_search: bool, optional
+   :param calib_func: a custom inference function to replace dataloader and iters.
+   :param n_blocks: split model into block number to avoid OOM.
+   :param return_int: Choose return fp32 or int32 model.
+                      Defaults to False.
+   :type return_int: bool, optional
+   :param use_full_range: Choose sym range whether use -2**(bits-1).
+   :type use_full_range: bool, optional
+
+   :returns: fake quantized model
+   :rtype: model
+
+
