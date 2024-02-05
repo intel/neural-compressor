@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import tempfile
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
@@ -35,12 +37,31 @@ def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
 
 
 def autotune(
-    model_input: Tuple[Path, str],
+    model_input: Union[Path, str],
     tune_config: TuningConfig,
-    eval_fns: Optional[Union[Dict, List[Dict], Callable]] = None,
-    calibration_data_reader: Optional[CalibrationDataReader] = None,
-) -> Optional[onnx.ModelProto]:
-    """The main entry of auto-tune."""
+    eval_fns: Union[Dict, List[Dict], Callable] = None,
+    calibration_data_reader: CalibrationDataReader = None,
+) -> Union[None, onnx.ModelProto]:
+    """The main entry of auto-tune.
+
+    Args:
+        model_input (Union[Path, str]): onnx model path.
+        tune_config (TuningConfig): tuning config.
+            TuningConfig is created with algorithm configs, parameters supported tuning are in their params_list.
+            Support:
+            Expand parameters to a list of parameters like TuningConfig(config_set=[RTNConfig(weight_bits=[4, 8])])
+            Pass a list of configs like TuningConfig(config_set=[RTNConfig(), GPTQConfig()])
+        eval_fns (Union[Dict, List[Dict], Callable]): evaluate functions.
+            During evaluation, autotune will only pass model path as input into eatch function.
+            Support:
+            single eval function,
+            Dict like {"eval_fn": eval_acc} or {"eval_fn": eval_acc, "weight": 1.0, "name": "accuracy"},
+            List of Dict, like [
+                {"eval_fn": eval_acc, "weight": 0.5},
+                {"eval_fn": eval_perf, "weight": 0.5, "name": "accuracy"},
+                ]
+        calibration_data_reader (CalibrationDataReader): dataloader for calibration.
+    """
     best_quant_model = None
     evaluator.set_eval_fn_registry(eval_fns)
     evaluator.self_check()
@@ -57,7 +78,28 @@ def autotune(
         q_model = _quantize(model_input, quant_config=quant_config, calibration_data_reader=calibration_data_reader)
         tuning_logger.quantization_end()
         tuning_logger.evaluation_start()
-        eval_result: float = evaluator.evaluate(q_model)
+        with tempfile.TemporaryDirectory(prefix="ort.quant.") as tmp_dir:
+            # evaluate API requires str input
+            onnx.save_model(
+                q_model,
+                Path(tmp_dir).joinpath(Path(model_input).name).as_posix(),
+                save_as_external_data=True,
+                all_tensors_to_one_file=True,
+                location=Path(model_input).with_suffix(Path(model_input).suffix + "_data").name,
+                size_threshold=1024,
+                convert_attribute=False,
+            )
+            # copy config.json to tmp dir for evaluation, LLMs evaluation may need it
+            if isinstance(model_input, str) and os.path.exists(
+                Path(model_input).parent.joinpath("config.json").as_posix()
+            ):
+                import shutil
+
+                shutil.copyfile(
+                    Path(model_input).parent.joinpath("config.json").as_posix(),
+                    Path(tmp_dir).joinpath("config.json").as_posix(),
+                )
+            eval_result: float = evaluator.evaluate(Path(tmp_dir).joinpath(Path(model_input).name).as_posix())
         tuning_logger.evaluation_end()
         logger.info("Evaluation result: %.4f", eval_result)
         tuning_monitor.add_trial_result(trial_index, eval_result, quant_config)
