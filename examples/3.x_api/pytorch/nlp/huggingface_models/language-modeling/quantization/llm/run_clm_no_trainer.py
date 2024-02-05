@@ -82,7 +82,7 @@ parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calib
 parser.add_argument("--double_quant_type",
                     type=str,
                     default=None,
-                    choices=['GGML_TYPE_Q4_K', 'BNB'],
+                    choices=['GGML_TYPE_Q4_K', 'BNB_NF4'],
                     help="DoubleQuant parameter")
 parser.add_argument("--double_quant_dtype",
                     type=str,
@@ -230,8 +230,8 @@ if args.quantize:
 
     # 3.x api
     if args.approach == 'weight_only':
-        from neural_compressor.torch import RTNConfig, GPTQConfig, quantize
-        from neural_compressor.torch.utils.utility import get_double_quant_config
+        from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, quantize
+        from neural_compressor.torch.utils import get_double_quant_config
         weight_sym = True if args.woq_scheme == "sym" else False
         double_quant_config_dict = get_double_quant_config(args.double_quant_type, weight_sym=weight_sym)
         

@@ -261,9 +261,9 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertTrue(configs_mapping[("fc3", torch.nn.Linear)].bits == 5)
 
     def test_gptq_config(self):
-        gptq_config1 = GPTQConfig(weight_bits=8, pad_max_length=512)
+        gptq_config1 = GPTQConfig(bits=8, act_order=True)
         quant_config_dict = {
-            "gptq": {"weight_bits": 8, "pad_max_length": 512},
+            "gptq": {"bits": 8, "act_order": True},
         }
         gptq_config2 = GPTQConfig.from_dict(quant_config_dict["gptq"])
         self.assertEqual(gptq_config1.to_dict(), gptq_config2.to_dict())

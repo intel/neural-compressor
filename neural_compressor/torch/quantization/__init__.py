@@ -27,7 +27,6 @@ from neural_compressor.torch.quantization.config import (
     get_default_sq_config,
 )
 
-# TODO(Yi): move config to config.py
 from neural_compressor.torch.quantization.autotune import (
     autotune,
     TuningConfig,

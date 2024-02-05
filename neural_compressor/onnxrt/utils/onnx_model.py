@@ -25,6 +25,8 @@ from neural_compressor.onnxrt.utils.utility import MAXIMUM_PROTOBUF, find_by_nam
 
 logger = Logger().get_logger()
 
+__all__ = ["ONNXModel"]
+
 
 class ONNXModel(ORTONNXModel):
     """Build ONNX model."""

@@ -113,6 +113,9 @@ def rtn_quantize(
                 "double_quant_scheme": weight_config[name]["double_quant_scheme"],
                 "double_quant_group_size": weight_config[name]["double_quant_group_size"],
             }
+            if dtype != "int" and "int" in dtype:
+                bits = int(dtype.lstrip("int"))
+                dtype = "int"
         log_msg = (
             f"RTN quantization config: bits={bits}, group_size={group_size}, " + f"scheme={scheme}, quantile={quantile}"
         )
@@ -145,14 +148,14 @@ def rtn_quantize(
             int_weight = int_weight.t_().contiguous() if group_dim == 0 else int_weight
             scale = scale.t_().contiguous() if group_dim == 0 else scale
             zp = zp.t_().contiguous() if group_dim == 0 and zp is not None else zp
-            from neural_compressor.torch.quantization.modules import WeightOnlyLinear
+            from .modules import WeightOnlyLinear
 
             new_module = WeightOnlyLinear(
                 m.in_features,
                 m.out_features,
+                dtype=dtype,
                 bits=bits,
                 group_size=group_size,
-                dtype=dtype,
                 zp=zp is not None,
                 bias=m.bias is not None,
                 use_optimum_format=use_optimum_format,
