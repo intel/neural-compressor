@@ -57,7 +57,11 @@ def rtn_entry(
 @register_algo(GPTQ)
 @torch.no_grad()
 def gptq_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], example_inputs=None, *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], GPTQConfig],
+    example_inputs=None,
+    *args,
+    **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
     # rebuild weight_config for gptq_quantize function
@@ -106,7 +110,7 @@ def awq_quantize_entry(
     assert (
         example_inputs is not None or dataloader is not None
     ), "Please provide datalaoder or example_inputs for AWQ quantization."
-    model = awq_quantize(model=model, configs_mapping=configs_mapping, example_inputs=example_inputs, *args, **kwargs)
+    model = awq_quantize(model=model, configs_mapping=configs_mapping, *args, **kwargs)
     return model
 
 
