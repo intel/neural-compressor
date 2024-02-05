@@ -351,4 +351,3 @@ def teq_quantize(
     # quantization_data = gptq_quantizer.execute_quantization()
     logger.info("TEQ quantizing done.")
     return teq_quantizer.model
-
