@@ -43,12 +43,15 @@ def is_ipex_available():
 
 
 def get_ipex_version():
-    try:
-        ipex_version = ipex.__version__.split("+")[0]
-    except ValueError as e:  # pragma: no cover
-        assert False, "Got an unknown version of intel_extension_for_pytorch: {}".format(e)
-    version = Version(ipex_version)
-    return version
+    if _ipex_available:
+        try:
+            ipex_version = ipex.__version__.split("+")[0]
+        except ValueError as e:  # pragma: no cover
+            assert False, "Got an unknown version of intel_extension_for_pytorch: {}".format(e)
+        version = Version(ipex_version)
+        return version
+    else:
+        return None
 
 
 def get_torch_version():
