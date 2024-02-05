@@ -17,8 +17,6 @@ from typing import Dict, Tuple
 import torch
 
 from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, RTN, STATIC_QUANT  # unified namespace
-from neural_compressor.torch.algorithms.static_quant import static_quantize
-from neural_compressor.torch.algorithms.weight_only import awq_quantize, gptq_quantize, rtn_quantize
 from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, RTNConfig, StaticQuantConfig
 from neural_compressor.torch.utils import logger, register_algo
 
@@ -30,6 +28,8 @@ def rtn_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNConfig], *args, **kwargs
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
+    from neural_compressor.torch.algorithms.weight_only import rtn_quantize
+    
     # rebuild weight_config for rtn_quantize function
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
@@ -61,6 +61,8 @@ def gptq_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
+    from neural_compressor.torch.algorithms.weight_only import gptq_quantize
+
     # rebuild weight_config for gptq_quantize function
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
@@ -97,12 +99,14 @@ def gptq_entry(
 
 
 ###################### Static Quant Algo Entry ##################################
-@register_algo(STATIC_QUANT)
+@register_algo(name = STATIC_QUANT)
 @torch.no_grad()
 def static_quant_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the static quant algorithm.")
+    from neural_compressor.torch.algorithms.static_quant import static_quantize
+
     # rebuild tune_cfg for static_quantize function
     quant_config_mapping = {}
     quant_config_mapping["op"] = configs_mapping
@@ -144,6 +148,7 @@ def awq_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AWQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the AWQ algorithm.")
+    from neural_compressor.torch.algorithms.weight_only import awq_quantize
 
     weight_config = {}
     for (op_name, op_type), op_config in configs_mapping.items():
