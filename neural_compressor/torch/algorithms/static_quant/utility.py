@@ -67,122 +67,6 @@ BLOCK_PATTERNS = [
 ]
 
 
-def move_input_device(input, device="cpu"):  # pragma: no cover
-    """Auto mapping input to device for all kinds of format.
-
-    Args:
-        input (torch.tensor): input data
-        device (str, optional): target device. Defaults to "cpu".
-
-    Returns:
-        input (torch.tensor): input data on target device
-    """
-    if device == "cpu":
-        return input
-    if isinstance(input, dict) or isinstance(input, UserDict):
-        tmp_input = {}
-        for k, inp in input.items():
-            tmp_input[k] = move_input_device(inp, device)
-        input = tmp_input
-    elif isinstance(input, list) or isinstance(input, tuple):
-        tmp_input = []
-        for inp in input:
-            tmp_input.append(move_input_device(inp, device))
-        input = tmp_input
-    elif isinstance(input, torch.Tensor):
-        input = input.to(device)  # pylint: disable=no-member
-    return input
-
-
-def forward_wrapper(model, input):  # pragma: no cover
-    """Model forward with device auto mapping.
-
-    Args:
-        model (torch.nn.Module): input model
-        input (torch.tensor): input data
-
-    Returns:
-        output: output data
-    """
-    try:
-        device = next(model.parameters()).device
-    except:
-        # for RecursiveScriptModule
-        device = "cpu"
-    input = move_input_device(input, device)
-    if isinstance(input, dict) or isinstance(input, UserDict):
-        output = model(**input)
-    elif isinstance(input, list) or isinstance(input, tuple):
-        try:
-            output = model(*input)
-        except:
-            output = model(input)
-    else:
-        output = model(input)
-    return output
-
-
-def pytorch_forward_wrapper(
-    model,
-    input,
-    conf=None,
-    backend="default",
-    running_mode="inference",
-):  # pragma: no cover
-    if (
-        version.release < Version("1.12.0").release and backend == "ipex" and running_mode == "calibration"
-    ):  # pragma: no cover
-        with ipex.quantization.calibrate(conf, default_recipe=True):  # pylint: disable=E1101
-            output = forward_wrapper(model, input)
-    else:
-        output = forward_wrapper(model, input)
-    return output
-
-
-def get_example_inputs(model, dataloader):
-    # Suggest set dataloader like calib_dataloader
-    if dataloader is None:
-        return None
-    device = next(model.parameters()).device
-    try:
-        for idx, (input, label) in enumerate(dataloader):
-            input = move_input_device(input, device)
-            output = pytorch_forward_wrapper(model, input)
-            if isinstance(input, (dict, UserDict)):  # pragma: no cover
-                assert version.release >= Version("1.12.0").release, "INC support IPEX version >= 1.12.0"
-                if "label" in input.keys():
-                    input.pop("label")
-                if version.release <= Version("2.0.1").release:
-                    return tuple(input.values())
-                else:
-                    return dict(input)
-
-            if isinstance(input, (list, tuple)):
-                return tuple(input)
-            if isinstance(input, torch.Tensor):
-                return input
-            break
-    except Exception as e:  # pragma: no cover
-        for idx, input in enumerate(dataloader):
-            input = move_input_device(input, device)
-            output = pytorch_forward_wrapper(model, input)
-            if isinstance(input, (dict, UserDict)):  # pragma: no cover
-                assert version.release >= Version("1.12.0").release, "INC support IPEX version >= 1.12.0"
-                if "label" in input.keys():
-                    input.pop("label")
-                if version.release <= Version("2.0.1").release:
-                    return tuple(input.values())
-                else:
-                    return dict(input)
-            if isinstance(input, list) or isinstance(input, tuple):
-                return tuple(input)
-            if isinstance(input, torch.Tensor):
-                return input
-            break
-    if idx == 0:
-        assert False, "Please checkout the example_inputs format."
-
-
 def get_pattern(fallback_op, fuse_ops):  # pragma: no cover
     for fuse_pattern in fuse_ops:
         if fuse_pattern[0] == fallback_op:
@@ -193,7 +77,7 @@ def get_pattern(fallback_op, fuse_ops):  # pragma: no cover
     return None
 
 
-def _simple_inference(q_model, example_inputs, iterations=1):
+def simple_inference(q_model, example_inputs, iterations=1):
     """The function is used for ipex warm-up inference."""
     for _ in range(iterations):
         if isinstance(example_inputs, tuple) or isinstance(example_inputs, list):
@@ -204,7 +88,7 @@ def _simple_inference(q_model, example_inputs, iterations=1):
             q_model(example_inputs)
 
 
-def _cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops):  # pragma: no cover
+def cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops):  # pragma: no cover
     assert cfgs is not None, "No configure for IPEX int8 model..."
     for key in tune_cfg["op"]:
         try:
@@ -293,7 +177,7 @@ def get_fuse_ops(default_cfgs):  # pragma: no cover
     return op_patterns
 
 
-def _dump_model_op_stats(tune_cfg):
+def dump_model_op_stats(tune_cfg):
     """This is a function to dump quantizable ops of model to user.
 
     Args:

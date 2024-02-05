@@ -29,10 +29,9 @@ from neural_compressor.common.utils import DEFAULT_WORKSPACE
 from neural_compressor.torch.utils import get_ipex_version, get_quantizable_ops_from_cfgs, logger, paser_cfgs
 
 from .utility import (
-    _cfg_to_qconfig,
-    _dump_model_op_stats,
-    _simple_inference,
-    get_example_inputs,
+    cfg_to_qconfig,
+    dump_model_op_stats,
+    simple_inference,
     get_fuse_ops,
     ipex_config_path,
 )
@@ -66,7 +65,6 @@ def static_quantize(model, tune_cfg, run_fn, run_args, example_inputs, inplace):
             logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(repr(e)))
             q_model = model
 
-    iterations = 1
     model.eval()
 
     if ipex_ver.release >= Version("1.12.0").release:
@@ -95,7 +93,7 @@ def static_quantize(model, tune_cfg, run_fn, run_args, example_inputs, inplace):
     else:  # pragma: no cover
         # for IPEX version < 1.12
         _, cfgs, default_cfgs, fuse_ops = _get_quantizable_ops_recursively(model, example_inputs)
-        qscheme = _cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops)
+        qscheme = cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops)
         ipex_conf = ipex.quantization.QuantConf(
             configure_file=ipex_config_path, qscheme=qscheme
         )  # pylint: disable=E1101
@@ -108,7 +106,7 @@ def static_quantize(model, tune_cfg, run_fn, run_args, example_inputs, inplace):
         q_model.tune_cfg = json.load(f)
     q_model.ipex_config_path = ipex_config_path
     if ipex_ver.release >= Version("1.12.0").release:
-        _dump_model_op_stats(tune_cfg)
+        dump_model_op_stats(tune_cfg)
     return q_model
 
 
@@ -141,7 +139,7 @@ def _ipex_post_quant_process(model, q_model, example_inputs, inplace=False):
     # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
     # At the 2nd run, the llga pass will be triggered and the model is turned into
     # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-    _simple_inference(q_model, example_inputs, iterations=2)
+    simple_inference(q_model, example_inputs, iterations=2)
     return q_model
 
 
@@ -199,7 +197,7 @@ def _get_quantizable_ops_recursively(model, example_inputs):
             model = ipex.quantization.prepare(model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=True)
         else:
             model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=True)
-        _simple_inference(model, example_inputs, iterations=1)
+        simple_inference(model, example_inputs, iterations=1)
         model.save_qconf_summary(qconf_summary=ipex_config_path)
 
     map_op_name_to_fqn = {}
