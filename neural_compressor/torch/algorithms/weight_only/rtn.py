@@ -125,7 +125,10 @@ def rtn_quantize(
             continue
         logger.debug(f"RTN quantized module:{name, m}")
         logger.debug(log_msg)
-        weight = m.weight.t_().contiguous() if group_dim == 0 else m.weight
+        if group_dim == 0:
+            weight = m.weight.t_().contiguous()
+        else:
+            weight = m.weight
         if use_mse_search:
             quantile = search_clip(m, bits, group_size, scheme, dtype, use_full_range)
         if export_compressed_model:
@@ -172,6 +175,9 @@ def rtn_quantize(
                 full_range=use_full_range,
                 **double_quant_config,
             )
-            weight = weight.t_().contiguous() if group_dim == 0 else weight
+            if group_dim == 0:
+                # for group_dim is 0, we need to transpose the quantized tensor and module's weight back
+                weight = weight.t_().contiguous()
+                m.weight.t_().contiguous()
             m.weight.data.copy_(weight)
     return model
