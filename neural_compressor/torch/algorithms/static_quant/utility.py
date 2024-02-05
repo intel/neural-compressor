@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import json
 import os
-import copy
 import re
 from typing import Dict, List, Union
 
@@ -27,11 +27,7 @@ import torch
 from packaging.version import Version
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.torch.utils import (
-    get_torch_version,
-    get_ipex_version,
-    logger,
-)
+from neural_compressor.torch.utils import get_ipex_version, get_torch_version, logger
 
 version = get_torch_version()
 ipex_ver = get_ipex_version()

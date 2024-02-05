@@ -26,9 +26,9 @@ from neural_compressor.torch.utils import get_ipex_version
 from .utility import (
     cfg_to_qconfig,
     dump_model_op_stats,
-    simple_inference,
     get_quantizable_ops_recursively,
     ipex_config_path,
+    simple_inference,
 )
 
 ipex_ver = get_ipex_version()
@@ -73,7 +73,7 @@ def static_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
         run_fn(model)
         model.save_qconf_summary(qconf_summary=ipex_config_path)
         model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
-    
+
     else:  # pragma: no cover
         # for IPEX version < 1.12
         _, cfgs, default_cfgs, fuse_ops = get_quantizable_ops_recursively(model, example_inputs)
@@ -109,15 +109,13 @@ def _ipex_post_quant_process(model, example_inputs, inplace=False):
     with torch.no_grad():
         try:
             if isinstance(example_inputs, dict):
-                model = torch.jit.trace( # pylint: disable=E1123
-                    model, example_kwarg_inputs=example_inputs
-                )
+                model = torch.jit.trace(model, example_kwarg_inputs=example_inputs)  # pylint: disable=E1123
             else:
                 model = torch.jit.trace(model, example_inputs)
             model = torch.jit.freeze(model.eval())
         except:
             if isinstance(example_inputs, dict):
-                model = torch.jit.trace( # pylint: disable=E1123
+                model = torch.jit.trace(  # pylint: disable=E1123
                     model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False
                 )
             else:
