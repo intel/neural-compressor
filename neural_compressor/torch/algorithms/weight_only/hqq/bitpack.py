@@ -1,5 +1,9 @@
-# Copyright (c) 2024 Intel Corporation
-#
+# Copyright (c) 2023-2024 Mobiusml and Intel Corporation
+
+# This code is based on Mobiusml's HQQ library. It has been modified
+# from its original forms to simplify and adapt it for use in
+# the Intel® Neural Compressor.
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Copied from from https://github.com/mobiusml/hqq
+# Notice: Copied from from https://github.com/mobiusml/hqq
 # Written by Dr. Hicham Badri @Mobius Labs GmbH - 2023
 #####################################################
 

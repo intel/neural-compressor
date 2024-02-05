@@ -1,5 +1,10 @@
-# Copyright (c) 2024 Intel Corporation
-#
+# Copyright (c) 2023-2024 Microsoft Corporation and Intel Corporation
+
+# This code is based on Microsoft Corporation's DeepSpeed library and
+# the accelerators implementation in this library. It has been modified
+# from its original forms to simplify and adapt it for use in
+# the Intel® Neural Compressor.
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The design copied from
+# NOTICE: The design adapted from:
 # https://github.com/microsoft/DeepSpeed/blob/master/accelerator/abstract_accelerator.py.
 # TODO: move it into torch/utils
 

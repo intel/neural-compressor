@@ -1,4 +1,7 @@
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2023-2024 Mobiusml and Intel Corporation
+#
+# This code is based on Mobiusml's HQQ library.
+# https://github.com/mobiusml/hqq
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Refactored from https://github.com/mobiusml/hqq
 
 import numpy as np
 import torch
