@@ -102,7 +102,7 @@ def awq_quantize_entry(
 ) -> torch.nn.Module:
     logger.info("Quantize model with the AWQ algorithm.")
     dataloader = kwargs.get("run_args", None)
-    example_inputs = kwargs("example_inputs", None)
+    example_inputs = kwargs.get("example_inputs", None)
     assert (
         example_inputs is not None or dataloader is not None
     ), "Please provide datalaoder or example_inputs for AWQ quantization."
