@@ -4,8 +4,8 @@ import unittest
 import torch
 import transformers
 
-from neural_compressor.torch.algorithms.weight_only.teq import teq_quantize_impl
-from neural_compressor.torch.quantization import TEQConfig, quantize
+from neural_compressor.torch.algorithms.weight_only.teq import teq_quantize
+from neural_compressor.torch.quantization import quantize
 
 
 class TestTEQWeightOnlyQuant(unittest.TestCase):
@@ -40,7 +40,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         }
         absorb_dict = {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]}
 
-        model = teq_quantize_impl(
+        model = teq_quantize(
             model,
             weight_config=weight_config,
             absorb_to_layer=absorb_dict,
