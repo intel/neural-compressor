@@ -17,6 +17,7 @@ import sys
 import tempfile
 from importlib.util import find_spec
 from pathlib import Path
+from typing import List
 
 import numpy as np
 import onnx
@@ -24,8 +25,12 @@ import onnx.numpy_helper as numpy_helper
 import onnxruntime
 
 from neural_compressor.common import Logger
+from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
+from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 
 logger = Logger().get_logger()
+
+__all__ = ["Calibrator"]
 
 
 class Calibrator:
@@ -33,25 +38,22 @@ class Calibrator:
 
     def __init__(
         self,
-        model,
-        dataloader,
-        dump_op_types,
-        iterations=[],
-        providers=["CPUExecutionProvider"],
+        model: ONNXModel,
+        dataloader: CalibrationDataReader,
+        iterations: List[int] = [],
+        providers: List[str] = ["CPUExecutionProvider"],
         **kwargs,
     ):
-        """Initialization.
+        """Initialize a Calibrator to dump information.
 
         Args:
-            model (object): ONNXModel object
-            dataloader (object): user implemented object to read in and preprocess calibration dataset
-            dump_op_types (list): operator types to be calibrated and quantized
-            iterations (list, optional): tensor of which iteration will be collected. Defaults to [].
-            providers (list, optional): execution provider for onnxruntime. Defaults to ['CPUExecutionProvider'].
+            model (ONNXModel): ONNXModel object.
+            dataloader (CalibrationDataReader): user implemented object to read in and preprocess calibration dataset.
+            iterations (List[int], optional): tensor of which iteration will be collected. Defaults to [].
+            providers (List[str], optional): execution provider for onnxruntime. Defaults to ["CPUExecutionProvider"].
         """
         self.model_wrapper = model
         self.dataloader = dataloader
-        self.dump_op_types = dump_op_types
         self.augmented_model = None
         self.iterations = iterations
         self.providers = providers
@@ -87,17 +89,18 @@ class Calibrator:
                     return True
         return False
 
-    def _get_input_tensor_of_ops(self, op_types=["MatMul", "Gemm", "Conv", "FusedConv"]):
+    def _get_input_tensor_of_ops(self, op_types: List[str] = ["MatMul", "Gemm", "Conv", "FusedConv"]):
         """Traverse the graph and get all the data tensors flowing into layers of {op_types}.
 
         Group conv is excluded.
         # TODO: the tensors could be set/filtered in configuration.
 
         Args:
-            op_types: The op types whose input tensor will be dumped
+            op_types (List[str], optional): The op types whose input tensor will be dumped.
+                Defaults to ["MatMul", "Gemm", "Conv", "FusedConv"].
 
         Returns:
-            A dict of dumped tensor: node info
+            dict: A dict of dumped tensor to node info
         """
         tensors_to_node = {}
         initializers = {i.name: i for i in self.model_wrapper.initializer()}
@@ -111,7 +114,7 @@ class Calibrator:
                     tensors_to_node.setdefault(node.input[0], []).append([node.name, node.input, node.output])
         return tensors_to_node
 
-    def _get_max_per_channel(self, datas: list, percentile):
+    def _get_max_per_channel(self, datas, percentile):
         """Get the max values per input channel.
 
         Args:
@@ -200,14 +203,15 @@ class Calibrator:
             idx += 1
         return output_dicts
 
-    def calib_smooth(self, op_types, percentile=99.999):
+    def calib_smooth(self, op_types, percentile: float = 99.999):
         """Smooth model calibration.
 
         Mainly get the max info per channel of input tensors.
 
         Args:
-            percentile:Percentile of calibration to remove outliers
-            op_types: The op types whose input tensor will be dumped
+            op_types (_type_): The op types whose input tensor will be dumped.
+            percentile (float, optional): Percentile of calibration to remove outliers.
+                Defaults to 99.999.
 
         Returns:
             max_vals_per_channel: max values per channel of input tensors

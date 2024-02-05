@@ -61,8 +61,35 @@ def gptq_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
+    # rebuild weight_config for gptq_quantize function
+    weight_config = {}
+    for (op_name, op_type), quant_config in configs_mapping.items():
+        weight_config[op_name] = {
+            "dtype": quant_config.dtype,
+            "bits": quant_config.bits,
+            "sym": quant_config.use_sym,
+            "group_size": quant_config.group_size,
+            "mse": quant_config.use_mse_search,
+            "use_double_quant": quant_config.use_double_quant,
+            "double_quant_dtype": quant_config.double_quant_dtype,
+            "double_quant_bits": quant_config.double_quant_bits,
+            "double_quant_sym": quant_config.double_quant_use_sym,
+            "double_quant_group_size": quant_config.double_quant_group_size,
+            "act_order": quant_config.act_order,
+            "percdamp": quant_config.percdamp,
+            "block_size": quant_config.block_size,
+            "static_groups": quant_config.static_groups,
+        }
+    kwargs.update(
+        {
+            "export_compressed_model": quant_config.export_compressed_model,
+            "use_layer_wise": quant_config.use_layer_wise,
+            "model_path": quant_config.model_path,
+        }
+    )
 
-    model, quantization_perm = gptq_quantize(model=model, configs_mapping=configs_mapping, *args, **kwargs)
+    logger.warning("lm_head in transformer model is skipped by GPTQ")
+    model, quantization_perm = gptq_quantize(model=model, weight_config=weight_config, *args, **kwargs)
     # Assign the gptq config as an attribute of model
     model._gptq_quantization_perm = quantization_perm
     return model
