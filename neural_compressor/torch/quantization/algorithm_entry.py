@@ -129,9 +129,8 @@ def awq_quantize_entry(
                 "double_quant_scheme": op_config.double_quant_use_sym,
                 "double_quant_group_size": op_config.double_quant_group_size,
             }
-            nsamples = op_config.nsamples
             use_auto_scale = op_config.use_auto_scale
-            use_mse_search = op_config.use_mse_search
+            use_mse_search = op_config.use_auto_clip # for awq clip
             folding = op_config.folding
             return_int = op_config.export_compressed_model
             use_full_range = op_config.use_full_range
@@ -145,7 +144,6 @@ def awq_quantize_entry(
         example_inputs=example_inputs,  # must be required
         calib_func=calib_func,
         weight_config=weight_config,
-        n_samples=nsamples,
         use_auto_scale=use_auto_scale,
         use_mse_search=use_mse_search,
         folding=folding,

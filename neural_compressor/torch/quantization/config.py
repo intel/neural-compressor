@@ -370,8 +370,8 @@ class AWQConfig(BaseConfig):
         "double_quant_group_size",
         # AWQ params
         "use_auto_scale",
+        "use_auto_clip",
         "folding",
-        "nsamples",
     ]
     name = AWQ
 
@@ -394,8 +394,8 @@ class AWQConfig(BaseConfig):
         double_quant_group_size: int = 256,
         # awq
         use_auto_scale: bool = True,
+        use_auto_clip: bool = True,
         folding: bool = False,
-        nsamples: int = 128,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AWQ weight-only quantization config.
@@ -415,7 +415,8 @@ class AWQConfig(BaseConfig):
             double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
             double_quant_group_size (int): Size of double_quant groups, default is 32.
-            use_auto_scale (bool): Enable best scales search based on activation distribution, default is True.
+            use_auto_scale (bool): Enables best scales search based on activation distribution, default is True.
+            use_auto_clip (bool):  Enables clip range search. Defaults to True.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
         """
@@ -436,8 +437,8 @@ class AWQConfig(BaseConfig):
         self.double_quant_use_sym = double_quant_use_sym
         self.double_quant_group_size = double_quant_group_size
         self.use_auto_scale = use_auto_scale
+        self.use_auto_clip = use_auto_clip
         self.folding = folding
-        self.nsamples = nsamples
         self._post_init()
 
     @classmethod
