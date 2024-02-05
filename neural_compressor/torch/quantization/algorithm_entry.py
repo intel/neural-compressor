@@ -59,7 +59,6 @@ def rtn_entry(
 def gptq_entry(
     model: torch.nn.Module,
     configs_mapping: Dict[Tuple[str, callable], GPTQConfig],
-    example_inputs=None,
     *args,
     **kwargs
 ) -> torch.nn.Module:
@@ -105,12 +104,57 @@ def awq_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AWQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the AWQ algorithm.")
-    dataloader = kwargs.get("run_args", None)
+
+    weight_config = {}
+    for (op_name, op_type), op_config in configs_mapping.items():
+        if op_config.dtype == "fp32":
+            weight_config[op_name] = {
+                "bits": -1,
+                "dtype": "fp32",  # skip quantization
+                "group_size": 128,
+                "scheme": "asym",
+            }
+        else:
+            weight_config[op_name] = {
+                "dtype": op_config.dtype,
+                "bits": op_config.bits,
+                "group_size": op_config.group_size,
+                "group_dim": op_config.group_dim,
+                "scheme": "sym" if op_config.use_sym else "asym",
+                "use_full_range": op_config.use_full_range,
+                "use_mse_search": op_config.use_mse_search,
+                "use_layer_wise": op_config.use_layer_wise,
+                "export_compressed_model": op_config.export_compressed_model,
+                "use_double_quant": op_config.use_double_quant,
+                "double_quant_dtype": op_config.double_quant_dtype,
+                "double_quant_bits": op_config.double_quant_bits,
+                "double_quant_scheme": op_config.double_quant_use_sym,
+                "double_quant_group_size": op_config.double_quant_group_size,
+            }
+            nsamples = op_config.nsamples
+            use_auto_scale = op_config.use_auto_scale
+            use_mse_search = op_config.use_mse_search
+            folding = op_config.folding
+            return_int = op_config.export_compressed_model
+            use_full_range = op_config.use_full_range
+
+    calib_func = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
-    assert (
-        example_inputs is not None or dataloader is not None
-    ), "Please provide datalaoder or example_inputs for AWQ quantization."
-    model = awq_quantize(model=model, configs_mapping=configs_mapping, *args, **kwargs)
+    assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
+    model = awq_quantize(
+        model,
+        bits=-1,  # no quantize for op not in weight_config
+        example_inputs=example_inputs,  # must be required
+        calib_func=calib_func,
+        weight_config=weight_config,
+        n_samples=nsamples,
+        use_auto_scale=use_auto_scale,
+        use_mse_search=use_mse_search,
+        folding=folding,
+        return_int=return_int,
+        use_full_range=use_full_range,
+    )
+    logger.info("AWQ quantization done.")
     return model
 
 

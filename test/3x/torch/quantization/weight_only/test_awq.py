@@ -21,7 +21,6 @@ def get_gpt_j():
 class TestAWQ(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        self.example_inputs = torch.randn([1, 32])
         self.lm_input = torch.ones([1, 10], dtype=torch.long)
         self.gptj = get_gpt_j()
 
@@ -35,33 +34,14 @@ class TestAWQ(unittest.TestCase):
 
     def test_awq(self):
         example_inputs = torch.ones([1, 10], dtype=torch.long)
-
-        model = transformers.AutoModelForCausalLM.from_pretrained(
-            "facebook/opt-125m",
-            torchscript=True,
-        )
-
-        class LLMCalibDataloader:
-            def __init__(self):
-                self.batch_size = 1
-
-            def __iter__(self):
-                for i in range(2):
-                    yield example_inputs
-
-        out1 = model(example_inputs)
-        quant_config = AWQConfig(bits=8, group_size=-1)
-        logger.info(f"Test AWQ with config {quant_config}")
-        qdq_model = quantize(model=model, quant_config=quant_config, run_args=LLMCalibDataloader())
-        out2 = qdq_model(example_inputs)
-        # output data is up to 4, so use big atol=0.5
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=0.5))
+        
 
         def calib_func(model):
             for i in range(2):
                 model(self.lm_input)
 
         out1 = self.gptj(example_inputs)
+        quant_config = AWQConfig(bits=8, group_size=-1)
         logger.info(f"Test AWQ with config {quant_config}")
         qdq_model = quantize(
             model=self.gptj, quant_config=quant_config, example_inputs=self.lm_input, run_fn=calib_func
