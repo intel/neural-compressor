@@ -99,6 +99,12 @@
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">RTNConfig</span></code></p></td>
 <td><p>Config class for round-to-nearest weight-only quantization.</p></td>
 </tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">GPTQConfig</span></code></p></td>
+<td><p>Config class for gptq weight-only quantization.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">AWQConfig</span></code></p></td>
+<td><p>Config class for awq weight-only quantization.</p></td>
+</tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">SmoohQuantConfig</span></code></p></td>
 <td><p>Smooth quant quantization config.</p></td>
 </tr>
@@ -118,11 +124,23 @@
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rtn_quantize_entry</span></code>(→ onnx.ModelProto)</p></td>
 <td><p>The main entry to apply rtn quantization.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">smooth_quant_entry</span></code>(→ onnx.ModelProto)</p></td>
-<td><p>Apply smooth quant.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_rtn_config</span></code>(→ RTNConfig)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_rtn_config</span></code>(→ RTNConfig)</p></td>
 <td><p>Generate the default rtn config.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">gptq_quantize_entry</span></code>(→ onnx.ModelProto)</p></td>
+<td><p>The main entry to apply gptq quantization.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_gptq_config</span></code>(→ GPTQConfig)</p></td>
+<td><p>Generate the default gptq config.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">awq_quantize_entry</span></code>(→ onnx.ModelProto)</p></td>
+<td><p>The main entry to apply awq quantization.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_awq_config</span></code>(→ AWQConfig)</p></td>
+<td><p>Generate the default awq config.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">smooth_quant_entry</span></code>(→ onnx.ModelProto)</p></td>
+<td><p>Apply smooth quant.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_sq_config</span></code>(→ SmoohQuantConfig)</p></td>
 <td><p>Generate the default smooth quant config.</p></td>
@@ -147,7 +165,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f28ccee64d0> 
+   <jinja2.runtime.BlockReference object at 0x7fe6288ea170> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

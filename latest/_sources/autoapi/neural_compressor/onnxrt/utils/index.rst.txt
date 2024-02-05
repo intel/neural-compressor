@@ -33,7 +33,13 @@ Attributes
 
 .. autoapisummary::
 
+   neural_compressor.onnxrt.utils.PRIORITY_RTN
+   neural_compressor.onnxrt.utils.PRIORITY_GPTQ
+   neural_compressor.onnxrt.utils.PRIORITY_AWQ
    neural_compressor.onnxrt.utils.PRIORITY_SMOOTH_QUANT
+
+
+
 
 
 

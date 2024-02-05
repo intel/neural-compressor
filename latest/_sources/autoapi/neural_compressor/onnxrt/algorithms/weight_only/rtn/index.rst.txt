@@ -15,71 +15,12 @@ Functions
 
 .. autoapisummary::
 
-   neural_compressor.onnxrt.algorithms.weight_only.rtn.pad_tensor
-   neural_compressor.onnxrt.algorithms.weight_only.rtn.quant_tensor
-   neural_compressor.onnxrt.algorithms.weight_only.rtn.qdq_tensor
    neural_compressor.onnxrt.algorithms.weight_only.rtn.rtn_quantize
+   neural_compressor.onnxrt.algorithms.weight_only.rtn.apply_rtn_on_model
 
 
 
-.. py:function:: pad_tensor(weight, group_size, k_blocks)
-
-   Pad tensor rowi so that it can be is divisible by group_size.
-
-   :param weight: weight
-   :type weight: array
-   :param group_size: how many elements share one scale/zp
-   :type group_size: int
-   :param k_blocks: the number of block
-   :type k_blocks: int
-
-   :returns: paded weight
-   :rtype: weight
-
-
-.. py:function:: quant_tensor(data, num_bits=4, group_size=32, scheme='asym', dtype='int', ratio=1.0)
-
-   Quantize tensor per group.
-
-   :param data: input weight
-   :param num_bits: num_bits. Defaults to 4.
-   :type num_bits: int, optional
-   :param group_size: how many elements share one scale/zp. Defaults to 4.
-   :type group_size: int, optional
-   :param scheme: quantization scheme. Defaults to "asym".
-   :type scheme: str, optional
-   :param dtype: data type. Defaults to "int".
-   :type dtype: str, optional
-   :param ratio: percentile of clip. Defaults to 1.0.
-   :type ratio: float, optional
-
-   :returns: quantized weight
-             scale: scale
-             zero_point: zero point
-   :rtype: output
-
-
-.. py:function:: qdq_tensor(data, num_bits=4, group_size=32, scheme='asym', dtype='int', ratio=1.0)
-
-   Quant dequant tensor per group.
-
-   :param data: input weight
-   :param num_bits: num_bits. Defaults to 4.
-   :type num_bits: int, optional
-   :param group_size: how many elements share one scale/zp. Defaults to 4.
-   :type group_size: int, optional
-   :param scheme: quantization scheme. Defaults to "asym".
-   :type scheme: str, optional
-   :param dtype: data type. Defaults to "int".
-   :type dtype: str, optional
-   :param ratio: percentile of clip. Defaults to 1.0.
-   :type ratio: float, optional
-
-   :returns: quant-dequant weight
-   :rtype: output
-
-
-.. py:function:: rtn_quantize(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], weight_config: Optional[Dict[tuple, dict]] = {}, num_bits: Optional[int] = 4, group_size: Optional[int] = 32, scheme: Optional[str] = 'asym', ratios: Optional[int] = {}, accuracy_level: Optional[int] = 0, providers: Optional[list] = ['CPUExecutionProvider']) -> onnx.ModelProto
+.. py:function:: rtn_quantize(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], weight_config: dict = {}, num_bits: int = 4, group_size: int = 32, scheme: str = 'asym', ratios: dict = {}, accuracy_level: int = 0, providers: List[str] = ['CPUExecutionProvider']) -> onnx.ModelProto
 
    Quantize the model with round to nearst method.
 
@@ -97,23 +38,36 @@ Functions
                                      'accuracy_level': 0
                                  }
                          }. Defaults to {}.
-   :type weight_config: Optional[Dict[tuple, dict]], optional
-   :param num_bits: num_bits. Defaults to 4.
-   :type num_bits: Optional[int], optional
-   :param group_size: how many elements share one scale/zp. Defaults to 32.
-   :type group_size: Optional[int], optional
-   :param scheme: sym or asym. Defaults to "asym".
-   :type scheme: Optional[str], optional
+   :type weight_config: dict, optional
+   :param num_bits: number of bits used to represent weights. Defaults to 4.
+   :type num_bits: int, optional
+   :param group_size: size of weight groups. Defaults to 32.
+   :type group_size: int, optional
+   :param scheme: indicates whether weights are symmetric. Defaults to "asym".
+   :type scheme: str, optional
    :param ratios: percentile of clip. Defaults to {}.
-   :type ratios: Optional[int], optional
+   :type ratios: dict, optional
    :param accuracy_level: accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
                           2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
                           4 (int8 compute type of jblas kernel). Defaults to 0.
-   :type accuracy_level: Optional[int], optional
+   :type accuracy_level: int, optional
    :param providers: providers to use. Defaults to ["CPUExecutionProvider"].
-   :type providers: Optional[list], optional
+   :type providers: list, optional
 
-   :returns: quantized ONNXModel
+   :returns: quantized onnx model.
+   :rtype: onnx.ModelProto
+
+
+.. py:function:: apply_rtn_on_model(model: onnx.ModelProto, quant_config: dict) -> onnx.ModelProto
+
+   Apply RTN on onnx model.
+
+   :param model: onnx model.
+   :type model: onnx.ModelProto
+   :param quant_config: quantization config.
+   :type quant_config: dict
+
+   :returns: quantized onnx model.
    :rtype: onnx.ModelProto
 
 

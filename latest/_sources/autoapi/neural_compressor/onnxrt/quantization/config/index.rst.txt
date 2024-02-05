@@ -15,6 +15,8 @@ Classes
 .. autoapisummary::
 
    neural_compressor.onnxrt.quantization.config.RTNConfig
+   neural_compressor.onnxrt.quantization.config.GPTQConfig
+   neural_compressor.onnxrt.quantization.config.AWQConfig
    neural_compressor.onnxrt.quantization.config.SmoohQuantConfig
 
 
@@ -25,11 +27,22 @@ Functions
 .. autoapisummary::
 
    neural_compressor.onnxrt.quantization.config.get_default_rtn_config
+   neural_compressor.onnxrt.quantization.config.get_default_gptq_config
+   neural_compressor.onnxrt.quantization.config.get_default_awq_config
    neural_compressor.onnxrt.quantization.config.get_default_sq_config
 
 
 
-.. py:class:: RTNConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, act_dtype: str = 'fp32', accuracy_level: int = 0, providers: list = ['CPUExecutionProvider'], white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.quantization.config.FRAMEWORK_NAME
+
+
+
+.. py:class:: RTNConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, act_dtype: str = 'fp32', accuracy_level: int = 0, providers: List[str] = ['CPUExecutionProvider'], white_list: List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST)
 
 
 
@@ -44,7 +57,37 @@ Functions
    :returns: the default rtn config.
 
 
-.. py:class:: SmoohQuantConfig(alpha: float = 0.5, folding: bool = True, op_types: list = ['Gemm', 'Conv', 'MatMul', 'FusedConv'], calib_iter: int = 100, scales_per_op: bool = True, auto_alpha_args: Dict = {'alpha_min': 0.3, 'alpha_max': 0.7, 'alpha_step': 0.05, 'attn_method': 'min'}, providers: list = ['CPUExecutionProvider'], white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST, **kwargs)
+.. py:class:: GPTQConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, act_dtype: str = 'fp32', accuracy_level: int = 0, percdamp: float = 0.01, blocksize: int = 128, actorder: bool = False, mse: bool = False, perchannel: bool = True, providers: List[str] = ['CPUExecutionProvider'], white_list: List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST)
+
+
+
+
+   Config class for gptq weight-only quantization.
+
+
+.. py:function:: get_default_gptq_config() -> GPTQConfig
+
+   Generate the default gptq config.
+
+   :returns: the default gptq config.
+
+
+.. py:class:: AWQConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, act_dtype: str = 'fp32', accuracy_level: int = 0, enable_auto_scale: bool = True, enable_mse_search: bool = True, providers: List[str] = ['CPUExecutionProvider'], white_list: List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST)
+
+
+
+
+   Config class for awq weight-only quantization.
+
+
+.. py:function:: get_default_awq_config() -> AWQConfig
+
+   Generate the default awq config.
+
+   :returns: the default awq config.
+
+
+.. py:class:: SmoohQuantConfig(alpha: float = 0.5, folding: bool = True, op_types: List[str] = ['Gemm', 'Conv', 'MatMul', 'FusedConv'], calib_iter: int = 100, scales_per_op: bool = True, auto_alpha_args: dict = {'alpha_min': 0.3, 'alpha_max': 0.7, 'alpha_step': 0.05, 'attn_method': 'min'}, providers: List[str] = ['CPUExecutionProvider'], white_list: List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST, **kwargs)
 
 
 

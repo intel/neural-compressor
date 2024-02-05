@@ -1,0 +1,86 @@
+:orphan:
+
+:py:mod:`neural_compressor.onnxrt.algorithms.weight_only.gptq`
+==============================================================
+
+.. py:module:: neural_compressor.onnxrt.algorithms.weight_only.gptq
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.algorithms.weight_only.gptq.gptq_quantize
+   neural_compressor.onnxrt.algorithms.weight_only.gptq.apply_gptq_on_model
+
+
+
+.. py:function:: gptq_quantize(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], dataloader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader, weight_config: dict = {}, num_bits: int = 4, group_size: int = 32, scheme: str = 'asym', percdamp: float = 0.01, blocksize: int = 128, actorder: bool = False, mse: bool = False, perchannel: bool = True, accuracy_level: int = 0, providers: List[str] = ['CPUExecutionProvider']) -> onnx.ModelProto
+
+   Quant the model with GPTQ method.
+
+   :param model: onnx model.
+   :type model: Union[onnx.ModelProto, ONNXModel, Path, str]
+   :param dataloader: dataloader for calibration.
+   :type dataloader: CalibrationDataReader
+   :param weight_config: quantization config
+                         For example,
+                         weight_config = {
+                             '(fc2, "MatMul")':
+                                 {
+                                     'weight_dtype': 'int',
+                                     'weight_bits': 4,
+                                     'weight_group_size': 32,
+                                     'weight_sym': True,
+                                     'accuracy_level': 0
+                                 }. Defaults to {}.
+   :type weight_config: dict, optional
+   :param num_bits: number of bits used to represent weights. Defaults to 4.
+   :type num_bits: int, optional
+   :param group_size: size of weight groups. Defaults to 32.
+   :type group_size: int, optional
+   :param scheme: indicates whether weights are symmetric. Defaults to "asym".
+   :type scheme: str, optional
+   :param percdamp: percentage of Hessian's diagonal values' average, which will be added
+                    to Hessian's diagonal to increase numerical stability. Defaults to 0.01.
+   :type percdamp: float, optional
+   :param blocksize: execute GPTQ quantization per block. Defaults to 128.
+   :type blocksize: int, optional
+   :param actorder: whether to sort Hessian's diagonal values to rearrange channel-wise
+                    quantization order. Defaults to False.
+   :type actorder: bool, optional
+   :param mse: whether get scale and zero point with mse error. Defaults to False.
+   :type mse: bool, optional
+   :param perchannel: whether quantize weight per-channel. Defaults to True.
+   :type perchannel: bool, optional
+   :param accuracy_level: accuracy level. Support 0 (unset),
+                          1(fp32 compute type of jblas kernel), 2 (fp16 compute type of jblas kernel),
+                          3 (bf16 compute type of jblas kernel), 4 (int8 compute type of jblas kernel). Defaults to 0.
+   :type accuracy_level: int, optional
+   :param providers: providers to use. Defaults to ["CPUExecutionProvider"].
+   :type providers: list, optional
+
+   :returns: quantized onnx model
+   :rtype: onnx.ModelProto
+
+
+.. py:function:: apply_gptq_on_model(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], quant_config: dict, calibration_data_reader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader) -> onnx.ModelProto
+
+   Apply GPTQ on onnx model.
+
+   :param model: onnx model.
+   :type model: Union[onnx.ModelProto, ONNXModel, Path, str]
+   :param quant_config: quantization config.
+   :type quant_config: dict
+   :param calibration_data_reader: dataloader for calibration.
+   :type calibration_data_reader: CalibrationDataReader
+
+   :returns: quantized onnx model.
+   :rtype: onnx.ModelProto
+
+

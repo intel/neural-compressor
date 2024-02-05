@@ -17,6 +17,8 @@ Functions
 
    neural_compressor.onnxrt.quantization.algorithm_entry.smooth_quant_entry
    neural_compressor.onnxrt.quantization.algorithm_entry.rtn_quantize_entry
+   neural_compressor.onnxrt.quantization.algorithm_entry.gptq_quantize_entry
+   neural_compressor.onnxrt.quantization.algorithm_entry.awq_quantize_entry
 
 
 
@@ -28,5 +30,15 @@ Functions
 .. py:function:: rtn_quantize_entry(model: Union[pathlib.Path, str], quant_config: neural_compressor.onnxrt.quantization.config.RTNConfig, *args, **kwargs) -> onnx.ModelProto
 
    The main entry to apply rtn quantization.
+
+
+.. py:function:: gptq_quantize_entry(model: Union[pathlib.Path, str], quant_config: neural_compressor.onnxrt.quantization.config.GPTQConfig, calibration_data_reader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader, *args, **kwargs) -> onnx.ModelProto
+
+   The main entry to apply gptq quantization.
+
+
+.. py:function:: awq_quantize_entry(model: Union[pathlib.Path, str], quant_config: neural_compressor.onnxrt.quantization.config.AWQConfig, calibration_data_reader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader, *args, **kwargs) -> onnx.ModelProto
+
+   The main entry to apply awq quantization.
 
 

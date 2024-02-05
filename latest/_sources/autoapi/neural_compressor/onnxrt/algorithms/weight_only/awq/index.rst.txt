@@ -1,0 +1,81 @@
+:orphan:
+
+:py:mod:`neural_compressor.onnxrt.algorithms.weight_only.awq`
+=============================================================
+
+.. py:module:: neural_compressor.onnxrt.algorithms.weight_only.awq
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.algorithms.weight_only.awq.awq_quantize
+   neural_compressor.onnxrt.algorithms.weight_only.awq.apply_awq_on_model
+
+
+
+.. py:function:: awq_quantize(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], dataloader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader, weight_config: dict = {}, num_bits: int = 4, group_size: int = 32, scheme: str = 'asym', enable_auto_scale: bool = True, enable_mse_search: bool = True, accuracy_level: int = 0, providers: List[str] = ['CPUExecutionProvider']) -> onnx.ModelProto
+
+   Quant the model with Activation-aware Weight quantization(AWQ) method.
+
+   :param model: onnx model.
+   :type model: Union[onnx.ModelProto, ONNXModel, Path, str]
+   :param dataloader: dataloader for calibration.
+   :type dataloader: CalibrationDataReader
+   :param weight_config: quantization config
+                         For example,
+                         weight_config = {
+                             '(fc2, "MatMul")':
+                             {
+                                 'weight_dtype': 'int',
+                                 'weight_bits': 4,
+                                 'weight_group_size': 32,
+                                 'weight_sym': True,
+                                 'accuracy_level': 0
+                             }
+                         }. Defaults to {}.
+   :type weight_config: dict, optional
+   :param num_bits: number of bits used to represent weights. Defaults to 4.
+   :type num_bits: int, optional
+   :param group_size: size of weight groups. Defaults to 32.
+   :type group_size: int, optional
+   :param scheme: indicates whether weights are symmetric. Defaults to "asym".
+   :type scheme: str, optional
+   :param enable_auto_scale: whether to search for best scales based on activation
+                             distribution. Defaults to True.
+   :type enable_auto_scale: bool, optional
+   :param enable_mse_search: whether to search for the best clip range from range
+                             [0.91, 1.0, 0.01]. Defaults to True.
+   :type enable_mse_search: bool, optional
+   :param accuracy_level: accuracy level. Support 0 (unset),
+                          1(fp32 compute type of jblas kernel), 2 (fp16 compute type of jblas kernel),
+                          3 (bf16 compute type of jblas kernel), 4 (int8 compute type of jblas kernel). Defaults to 0.
+   :type accuracy_level: int, optional
+   :param providers: providers to use. Defaults to ["CPUExecutionProvider"].
+   :type providers: list, optional
+
+   :returns: quantized onnx model.
+   :rtype: onnx.ModelProto
+
+
+.. py:function:: apply_awq_on_model(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], quant_config: dict, calibration_data_reader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader) -> onnx.ModelProto
+
+   Apply Activation-aware Weight quantization(AWQ) on onnx model.
+
+   :param model: nnx model.
+   :type model: Union[onnx.ModelProto, ONNXModel, Path, str]
+   :param quant_config: quantization config.
+   :type quant_config: dict
+   :param calibration_data_reader: dataloader for calibration.
+   :type calibration_data_reader: CalibrationDataReader
+
+   :returns: quantized onnx model.
+   :rtype: onnx.ModelProto
+
+

@@ -21,62 +21,8 @@ Classes
 
 
 
-Functions
-~~~~~~~~~
 
-.. autoapisummary::
-
-   neural_compressor.onnxrt.algorithms.smoother.core.get_quant_dequant_output
-   neural_compressor.onnxrt.algorithms.smoother.core.make_sub_graph
-   neural_compressor.onnxrt.algorithms.smoother.core.quant_dequant_data
-
-
-
-.. py:function:: get_quant_dequant_output(model, input_data, output_data, providers)
-
-   Get loss between fp32 output and QDQ output.
-
-   :param model: model
-   :type model: object
-   :param input_data: fp32 input
-   :type input_data: numpy.ndarray
-   :param output_data: fp32 output
-   :type output_data: numpy.ndarray
-   :param providers: execution provider
-   :type providers: list
-
-
-.. py:function:: make_sub_graph(node, inits, input_data, output_data, opset, ir_version)
-
-   Build a model with the specific node.
-
-   :param node: node
-   :type node: object
-   :param inits: initializer inputs of this node
-   :type inits: list
-   :param input_data: fp32 input
-   :type input_data: numpy.ndarray
-   :param output_data: fp32 output
-   :type output_data: numpy.ndarray
-   :param opset: opset of the model
-   :type opset: object
-   :param ir_version: ir_version of the model
-   :type ir_version: object
-
-
-.. py:function:: quant_dequant_data(data, qType=3, scheme='sym')
-
-   Quantize and then dequantize data.
-
-   :param data: target data
-   :type data: numpy.ndarray
-   :param qType: data type
-   :type qType: int
-   :param scheme: sym or asym quantization
-   :type scheme: str
-
-
-.. py:class:: Smoother(model, dataloader, providers=['CPUExecutionProvider'])
+.. py:class:: Smoother(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], dataloader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader, providers: List[str] = ['CPUExecutionProvider'])
 
 
    Fake input channel quantization.
