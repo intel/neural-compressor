@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ def quantize(
     quant_config: BaseConfig,
     run_fn: Callable = None,
     run_args: Any = None,
+    example_inputs=None,
     inplace: bool = True,
 ) -> torch.nn.Module:
     """The main entry to quantize model with static mode.
@@ -65,5 +66,11 @@ def quantize(
     for algo_name, algo_func in algos_mapping.items():
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
-            q_model = algo_func(q_model, configs_mapping, run_fn=run_fn, run_args=run_args)
+            q_model = algo_func(
+                q_model,
+                configs_mapping,
+                run_fn=run_fn,
+                run_args=run_args,
+                example_inputs=example_inputs,
+            )
     return q_model
