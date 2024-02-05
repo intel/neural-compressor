@@ -57,10 +57,7 @@ def rtn_entry(
 @register_algo(GPTQ)
 @torch.no_grad()
 def gptq_entry(
-    model: torch.nn.Module,
-    configs_mapping: Dict[Tuple[str, callable], GPTQConfig],
-    *args,
-    **kwargs
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
     # rebuild weight_config for gptq_quantize function
