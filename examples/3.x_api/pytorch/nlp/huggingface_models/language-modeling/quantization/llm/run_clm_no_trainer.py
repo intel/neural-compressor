@@ -262,7 +262,7 @@ if args.quantize:
                 model=user_model, quant_config=quant_config
             )
         elif args.woq_algo == "GPTQ":
-            from .utils import DataloaderPreprocessor
+            from utils import DataloaderPreprocessor
             dataloaderPreprocessor = DataloaderPreprocessor(
                 dataloader_original=calib_dataloader,
                 use_max_length=args.gptq_use_max_length,
