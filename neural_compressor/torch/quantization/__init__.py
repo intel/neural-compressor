@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ from neural_compressor.torch.quantization.config import (
     get_default_teq_config,
 )
 
-# TODO(Yi): move config to config.py
 from neural_compressor.torch.quantization.autotune import (
     autotune,
     TuningConfig,

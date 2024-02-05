@@ -15,11 +15,17 @@
 from neural_compressor.onnxrt.quantization.algorithm_entry import (
     smooth_quant_entry,
     rtn_quantize_entry,
+    gptq_quantize_entry,
+    awq_quantize_entry,
 )
 from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
 from neural_compressor.onnxrt.quantization.config import (
     RTNConfig,
     get_default_rtn_config,
+    GPTQConfig,
+    get_default_gptq_config,
+    AWQConfig,
+    get_default_awq_config,
     SmoohQuantConfig,
     get_default_sq_config,
 )
@@ -27,8 +33,14 @@ from neural_compressor.onnxrt.quantization.config import (
 __all__ = [
     "smooth_quant_entry",
     "rtn_quantize_entry",
+    "gptq_quantize_entry",
+    "awq_quantize_entry",
     "RTNConfig",
     "get_default_rtn_config",
+    "GPTQConfig",
+    "get_default_gptq_config",
+    "AWQConfig",
+    "get_default_awq_config",
     "SmoohQuantConfig",
     "get_default_sq_config",
     "CalibrationDataReader",

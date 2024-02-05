@@ -14,22 +14,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import abc
-
-from onnxruntime.quantization import CalibrationDataReader as ORTCalibrationDataReader
-
-__all__ = ["CalibrationDataReader"]
-
-
-class CalibrationDataReader(ORTCalibrationDataReader):
-    """Get data for calibration.
-
-    We define our CalibrationDataReader based on the class in below link:
-    https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/python/tools/quantization/calibrate.py#L139
-    """
-
-    @abc.abstractmethod
-    def rewind(self):
-        """Regenerate data."""
-        raise NotImplementedError
+"""Torch layer-wise quantization module."""
+from .utils import *

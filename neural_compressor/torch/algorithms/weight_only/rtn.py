@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 MIT HAN Lab
+# Copyright (c) 2024 MIT HAN Lab
 # This source code is licensed under the MIT license
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -113,6 +113,9 @@ def rtn_quantize(
                 "double_quant_scheme": weight_config[name]["double_quant_scheme"],
                 "double_quant_group_size": weight_config[name]["double_quant_group_size"],
             }
+            if dtype != "int" and "int" in dtype:
+                bits = int(dtype.lstrip("int"))
+                dtype = "int"
         log_msg = (
             f"RTN quantization config: bits={bits}, group_size={group_size}, " + f"scheme={scheme}, quantile={quantile}"
         )
@@ -124,7 +127,10 @@ def rtn_quantize(
             continue
         logger.debug(f"RTN quantized module:{name, m}")
         logger.debug(log_msg)
-        weight = m.weight.t_().contiguous() if group_dim == 0 else m.weight
+        if group_dim == 0:
+            weight = m.weight.t_().contiguous()
+        else:
+            weight = m.weight
         if use_mse_search:
             quantile = search_clip(m, bits, group_size, scheme, dtype, use_full_range)
         if export_compressed_model:
@@ -142,14 +148,14 @@ def rtn_quantize(
             int_weight = int_weight.t_().contiguous() if group_dim == 0 else int_weight
             scale = scale.t_().contiguous() if group_dim == 0 else scale
             zp = zp.t_().contiguous() if group_dim == 0 and zp is not None else zp
-            from neural_compressor.torch.quantization.modules import WeightOnlyLinear
+            from .modules import WeightOnlyLinear
 
             new_module = WeightOnlyLinear(
                 m.in_features,
                 m.out_features,
+                dtype=dtype,
                 bits=bits,
                 group_size=group_size,
-                dtype=dtype,
                 zp=zp is not None,
                 bias=m.bias is not None,
                 use_optimum_format=use_optimum_format,
@@ -171,6 +177,9 @@ def rtn_quantize(
                 full_range=use_full_range,
                 **double_quant_config,
             )
-            weight = weight.t_().contiguous() if group_dim == 0 else weight
+            if group_dim == 0:
+                # for group_dim is 0, we need to transpose the quantized tensor and module's weight back
+                weight = weight.t_().contiguous()
+                m.weight.t_().contiguous()
             m.weight.data.copy_(weight)
     return model

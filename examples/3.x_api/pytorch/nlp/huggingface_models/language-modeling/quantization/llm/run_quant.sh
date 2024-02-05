@@ -50,7 +50,7 @@ function run_tuning {
         model_name_or_path="facebook/opt-125m"
         approach="weight_only"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_enable_mse_search --gptq_pad_max_length 2048 --gptq_use_max_length"
-        extra_cmd=$extra_cmd" --double_quant_type BNB"
+        extra_cmd=$extra_cmd" --double_quant_type BNB_NF4"
     elif [ "${topology}" = "opt_125m_woq_gptq_int4_dq_ggml" ]; then
         model_name_or_path="facebook/opt-125m"
         approach="weight_only"
@@ -64,7 +64,7 @@ function run_tuning {
         model_name_or_path="meta-llama/Llama-2-7b-hf"
         approach="weight_only"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_enable_mse_search --gptq_pad_max_length 2048 --gptq_use_max_length"
-        extra_cmd=$extra_cmd" --double_quant_type BNB"
+        extra_cmd=$extra_cmd" --double_quant_type BNB_NF4"
     elif [ "${topology}" = "llama2_7b_gptq_int4_dq_ggml" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
         approach="weight_only"
@@ -78,7 +78,7 @@ function run_tuning {
         model_name_or_path="EleutherAI/gpt-j-6b"
         approach="weight_only"
         extra_cmd=$extra_cmd" --woq_algo RTN --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_enable_mse_search"
-        extra_cmd=$extra_cmd" --double_quant_type BNB"
+        extra_cmd=$extra_cmd" --double_quant_type BNB_NF4"
     elif [ "${topology}" = "gpt_j_woq_rtn_int4_dq_ggml" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
         approach="weight_only"
@@ -92,7 +92,7 @@ function run_tuning {
         model_name_or_path="EleutherAI/gpt-j-6b"
         approach="weight_only"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_enable_mse_search --gptq_pad_max_length 2048 --gptq_use_max_length"
-        extra_cmd=$extra_cmd" --double_quant_type BNB"
+        extra_cmd=$extra_cmd" --double_quant_type BNB_NF4"
     elif [ "${topology}" = "gpt_j_woq_gptq_int4_dq_ggml" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
         approach="weight_only"

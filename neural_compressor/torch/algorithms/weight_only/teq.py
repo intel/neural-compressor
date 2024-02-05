@@ -30,7 +30,8 @@ except:  # pragma: no cover
 
 import transformers
 
-from .utility import MulLinear, TEQLinearFakeQuant, get_module, quant_tensor, set_module
+from .modules import MulLinear, TEQLinearFakeQuant
+from .utility import get_module, quant_tensor, set_module
 
 
 class TEQuantizer:

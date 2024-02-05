@@ -12,9 +12,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
+
 import torch
 
 from neural_compressor.torch.utils import logger
+
+__all__ = [
+    "FLOAT_MAPPING",
+    "FP4_BNB",
+    "FP4_BNB_BIT",
+    "FP4_E2M1",
+    "FP4_E2M1_BIT",
+    "GraphTrace",
+    "INT_MAPPING",
+    "NF4",
+    "NF4_BIT",
+    "calibration",
+    "fetch_module",
+    "forward_wrapper",
+    "get_absorb_layers",
+    "get_block_prefix",
+    "get_example_input",
+    "get_hidden_states",
+    "get_module",
+    "get_module_input_output",
+    "get_parent",
+    "model_forward",
+    "move_input_to_device",
+    "qdq_weight_actor",
+    "qdq_weight_asym",
+    "qdq_weight_sym",
+    "quant_tensor",
+    "quant_weight_w_scale",
+    "quantize_4bit",
+    "search_clip",
+    "set_module",
+]
 
 NF4 = [
     -1.0,
@@ -73,7 +107,7 @@ def quantize_4bit(tensor, quantile=1.0, dtype="nf4", return_int=False, **kwargs)
     mid_data = [(allow_data[i] + allow_data[i + 1]) / 2 for i in range(len(allow_data) - 1)]
     q_tensor = torch.zeros_like(tensor)
     for i in range(len(allow_data)):
-        data = allow_data_bit[i] if return_int else allow_data[i]
+        data = allow_data_bit[i] if return_int or "cast_int" in kwargs else allow_data[i]
         if i == 0:
             q_tensor += torch.where(tensor <= mid_data[i], data, 0)
         elif i == len(allow_data) - 1:
@@ -295,9 +329,9 @@ def quant_tensor(
             return weight
     if quant_scale:
         weight, scale, zp = q_state
-        scale_dtype = kwargs.get("double_quant_dtype", "fp32")
+        scale_dtype = kwargs.get("double_quant_dtype", "int")
         scale_bits = kwargs.get("double_quant_bits", 8)
-        scale_scheme = kwargs.get("double_quant_scheme", "sym")
+        scale_scheme = kwargs.get("double_quant_scheme", "asym")
         scale_group_size = kwargs.get("double_quant_group_size", 256)
         scale_return_int = kwargs.get("double_quant_return_int", return_int)
         orig_scale_shape = scale.shape
@@ -308,7 +342,7 @@ def quant_tensor(
             scale.sub_(scale_mean)
             scale_scheme = "sym"
         # process: scale
-        quant_tensor(
+        scale = quant_tensor(
             scale,
             dtype=scale_dtype,
             bits=scale_bits,
@@ -397,8 +431,8 @@ def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_ful
     return best_clip_ratio
 
 
-def quant_weight_w_scale(weight, scale, zp, group_size=-1, dtype="int"):
-    """Quant and dequant tensor with group size.
+def quant_weight_w_scale(weight, scale, zp=None, group_size=-1, dtype="int"):
+    """Quant and dequant tensor with group size. It's an in-place function.
 
     Args:
         weight: input weight
@@ -412,34 +446,36 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1, dtype="int"):
     """
     device = weight.device
     scale = scale.to(device)
-    # NF4 FP4
-    if dtype in FLOAT_MAPPING.keys():
-        int_weight = quantize_4bit(
-            weight,
-            quantile=1.0,
-            dtype=dtype,
-            return_int=True,
-            scale=scale,
-        )[0]
-        return int_weight
-    # INT
     if zp is not None:
         zp = zp.to(device)
+    # group_size = -1
     if group_size == -1:
+        if dtype in FLOAT_MAPPING.keys():  # NF4 FP4
+            return quantize_4bit(weight, scale=scale, dtype=dtype, return_int=True)[0]
         return weight.div_(scale).round_() if zp is None else weight.div_(scale).add_(zp).round_()
     int_weight = torch.zeros(weight.shape).to(device)
     leng = weight.shape[1] // group_size
     tail_flag = False if weight.shape[1] % group_size == 0 else True
+    # group_size != -1
     for i in range(leng):
-        int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size].div_(scale[:, i].unsqueeze(1))
-        if zp is not None:
-            int_weight_tmp.add_(zp[:, i].unsqueeze(1))
-        int_weight[:, i * group_size : (i + 1) * group_size].copy_(int_weight_tmp.round_())
+        if dtype in FLOAT_MAPPING.keys():  # NF4 FP4
+            int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size]
+            quantize_4bit(int_weight_tmp, scale=scale[:, i].unsqueeze(1), dtype=dtype, return_int=True)[0]
+        else:
+            int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size].div_(scale[:, i].unsqueeze(1))
+            if zp is not None:
+                int_weight_tmp.add_(zp[:, i].unsqueeze(1))
+            int_weight[:, i * group_size : (i + 1) * group_size].copy_(int_weight_tmp.round_())
+    # tail_flag
     if tail_flag:
-        int_weight_tmp = weight[:, leng * group_size :].div_(scale[:, -1].unsqueeze(1))
-        if zp is not None:
-            int_weight_tmp.add_(zp[:, -1].unsqueeze(1))
-        int_weight[:, leng * group_size :].copy_(int_weight_tmp.round_())
+        if dtype in FLOAT_MAPPING.keys():  # NF4 FP4
+            int_weight_tmp = weight[:, leng * group_size :]
+            quantize_4bit(int_weight_tmp, scale=scale[:, -1].unsqueeze(1), dtype=dtype, return_int=True)[0]
+        else:
+            int_weight_tmp = weight[:, leng * group_size :].div_(scale[:, -1].unsqueeze(1))
+            if zp is not None:
+                int_weight_tmp.add_(zp[:, -1].unsqueeze(1))
+            int_weight[:, leng * group_size :].copy_(int_weight_tmp.round_())
     return int_weight
 
 
@@ -467,7 +503,7 @@ def model_forward(model, dataloader, iters, device):
 
 
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
-##TODO potential bug, data typeR
+# TODO: potential bug, data type
 def forward_wrapper(model, input, device=torch.device("cpu")):
     try:
         model = model.to(device)
@@ -935,8 +971,6 @@ def calibration(model, dataloader=None, n_samples=128, calib_func=None):
     if calib_func is not None:
         calib_func(model)
     else:
-        import math
-
         # from .smooth_quant import model_forward, move into this file
 
         batch_size = dataloader.batch_size
@@ -1033,6 +1067,7 @@ def get_module_input_output(
     for h in hook_list:
         h.remove()
     return total_values
+<<<<<<< HEAD
 
 
 # -------------- Model Wrapper ---------------------------
@@ -1137,3 +1172,5 @@ class MulLinear(torch.nn.Module):
         scale = self.input_scale.view(1, self.input_scale.shape[0])
         with torch.no_grad():
             self.linear.weight *= scale
+=======
+>>>>>>> kaihui/awq
