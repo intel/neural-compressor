@@ -6,3 +6,12 @@
 .. py:module:: neural_compressor.torch.algorithms.weight_only
 
 
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   modules/index.rst
+
+

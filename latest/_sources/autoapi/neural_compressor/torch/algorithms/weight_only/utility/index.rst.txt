@@ -148,9 +148,9 @@ Functions
    :rtype: best_clip_ratio (float)
 
 
-.. py:function:: quant_weight_w_scale(weight, scale, zp, group_size=-1, dtype='int')
+.. py:function:: quant_weight_w_scale(weight, scale, zp=None, group_size=-1, dtype='int')
 
-   Quant and dequant tensor with group size.
+   Quant and dequant tensor with group size. It's an in-place function.
 
    :param weight: input weight
    :param scale: scale

@@ -91,43 +91,6 @@
   <section id="module-neural_compressor.torch.quantization.modules">
 <span id="neural-compressor-torch-quantization-modules"></span><h1><a class="reference internal" href="#module-neural_compressor.torch.quantization.modules" title="neural_compressor.torch.quantization.modules"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.quantization.modules</span></code></a><a class="headerlink" href="#module-neural_compressor.torch.quantization.modules" title="Permalink to this heading"></a></h1>
 <p>Torch.nn.Module Class Definition.</p>
-<section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
-<section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.modules.FakeAffineTensorQuantFunction" title="neural_compressor.torch.quantization.modules.FakeAffineTensorQuantFunction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FakeAffineTensorQuantFunction</span></code></a></p></td>
-<td><p>Fake version of affine quantization.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.modules.TEQLinearFakeQuant" title="neural_compressor.torch.quantization.modules.TEQLinearFakeQuant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TEQLinearFakeQuant</span></code></a></p></td>
-<td><p>Wrapper quantization linear.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.modules.MulLinear" title="neural_compressor.torch.quantization.modules.MulLinear"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MulLinear</span></code></a></p></td>
-<td><p>Linear wrapper to apply scale to input.</p></td>
-</tr>
-</tbody>
-</table>
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.torch.quantization.modules.FakeAffineTensorQuantFunction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.modules.</span></span><span class="sig-name descname"><span class="pre">FakeAffineTensorQuantFunction</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/quantization/modules.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.modules.FakeAffineTensorQuantFunction" title="Permalink to this definition"></a></dt>
-<dd><p>Fake version of affine quantization.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.torch.quantization.modules.TEQLinearFakeQuant">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.modules.</span></span><span class="sig-name descname"><span class="pre">TEQLinearFakeQuant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orig_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/quantization/modules.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.modules.TEQLinearFakeQuant" title="Permalink to this definition"></a></dt>
-<dd><p>Wrapper quantization linear.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.torch.quantization.modules.MulLinear">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.modules.</span></span><span class="sig-name descname"><span class="pre">MulLinear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/quantization/modules.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.modules.MulLinear" title="Permalink to this definition"></a></dt>
-<dd><p>Linear wrapper to apply scale to input.</p>
-</dd></dl>
-
-</section>
-</section>
 </section>
 
 
@@ -144,7 +107,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fe62a40b760> 
+   <jinja2.runtime.BlockReference object at 0x7fb3a7111600> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
