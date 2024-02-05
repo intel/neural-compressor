@@ -4,9 +4,10 @@ import unittest
 import torch
 import transformers
 
+from neural_compressor.common import logger
 from neural_compressor.torch.algorithms.weight_only.teq import teq_quantize
 from neural_compressor.torch.quantization import quantize
-from neural_compressor.common import logger
+
 
 def generate_random_corpus(nsamples=32):
     meta_data = []
@@ -15,6 +16,7 @@ def generate_random_corpus(nsamples=32):
         tar = torch.ones([1, 512], dtype=torch.long)
         meta_data.append((inp, tar))
     return meta_data
+
 
 def train(
     model,
@@ -28,7 +30,7 @@ def train(
     lr_scheduler_type="linear",
 ):
     """Train function."""
-    trained_alphas_list = [torch.ones([128],requires_grad=True)]
+    trained_alphas_list = [torch.ones([128], requires_grad=True)]
     optimizer = torch.optim.Adam(trained_alphas_list, lr=lr, weight_decay=weight_decay, betas=betas)
 
     lr_scheduler = transformers.get_scheduler(  # pylint: disable=E1111
@@ -70,6 +72,7 @@ def train(
     model.eval()
     return None
 
+
 class TestTEQWeightOnlyQuant(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -79,8 +82,6 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         )
         self.gptj.seqlen = 512
 
-
-
     def train_func(self):
         pass
 
@@ -88,7 +89,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         example_inputs = torch.ones([1, 512], dtype=torch.long)
         test_input = torch.ones([1, 512], dtype=torch.long)
         model = copy.deepcopy(self.gptj)
-    
+
         weight_config = {
             # 'op_name': (bit, group_size, scheme)
             "transformer.h.0.mlp.fc_in": {"bits": 8, "group_size": -1, "scheme": "sym"},
@@ -102,7 +103,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
             absorb_to_layer=absorb_dict,
             folding=True,
             calib_func=train,
-            example_inputs=example_inputs
+            example_inputs=example_inputs,
         )
         out1 = model(test_input)
         quant_config = {
@@ -131,9 +132,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
             }
         }
 
-        qdq_model = quantize(
-            model=self.gptj, quant_config=quant_config, run_fn=train, example_inputs=example_inputs
-        )
+        qdq_model = quantize(model=self.gptj, quant_config=quant_config, run_fn=train, example_inputs=example_inputs)
         self.assertTrue(isinstance(qdq_model, torch.nn.Module))
         out2 = qdq_model(test_input)
         self.assertTrue(torch.allclose(out1[0], out2[0]))

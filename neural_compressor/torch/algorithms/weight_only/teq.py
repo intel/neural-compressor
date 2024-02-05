@@ -16,10 +16,11 @@
 # limitations under the License.
 #
 
-import transformers
 import torch
+import transformers
 
 from neural_compressor.torch.utils import logger
+
 from .modules import MulLinear, TEQLinearFakeQuant
 from .utility import get_module, quant_tensor, set_module
 
