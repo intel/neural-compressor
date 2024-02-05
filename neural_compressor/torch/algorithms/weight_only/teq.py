@@ -16,20 +16,10 @@
 # limitations under the License.
 #
 
-try:
-    from neural_compressor.utils.utility import LazyImport
-
-    torch = LazyImport("torch")
-    from ...utils import logger
-except:  # pragma: no cover
-    import logging
-
-    import torch
-
-    logger = logging.getLogger()
-
 import transformers
+import torch
 
+from neural_compressor.torch.utils import logger
 from .modules import MulLinear, TEQLinearFakeQuant
 from .utility import get_module, quant_tensor, set_module
 

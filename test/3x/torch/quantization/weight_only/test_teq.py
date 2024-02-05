@@ -6,7 +6,69 @@ import transformers
 
 from neural_compressor.torch.algorithms.weight_only.teq import teq_quantize
 from neural_compressor.torch.quantization import quantize
+from neural_compressor.common import logger
 
+def generate_random_corpus(nsamples=32):
+    meta_data = []
+    for _ in range(nsamples):
+        inp = torch.ones([1, 512], dtype=torch.long)
+        tar = torch.ones([1, 512], dtype=torch.long)
+        meta_data.append((inp, tar))
+    return meta_data
+
+def train(
+    model,
+    train_steps=1000,
+    lr=1e-3,
+    warmup_ratio=0.05,
+    gradient_accumulation_steps=1,
+    logging_steps=10,
+    betas=[0.9, 0.9],
+    weight_decay=0,
+    lr_scheduler_type="linear",
+):
+    """Train function."""
+    trained_alphas_list = [torch.ones([128],requires_grad=True)]
+    optimizer = torch.optim.Adam(trained_alphas_list, lr=lr, weight_decay=weight_decay, betas=betas)
+
+    lr_scheduler = transformers.get_scheduler(  # pylint: disable=E1111
+        name=lr_scheduler_type,
+        optimizer=optimizer,
+        num_warmup_steps=int(train_steps * warmup_ratio) // gradient_accumulation_steps,
+        num_training_steps=train_steps // gradient_accumulation_steps,
+    )
+
+    logger.info("start training")
+    model.train()
+    global_steps = 0
+    dataloader = generate_random_corpus()
+    while global_steps <= train_steps:
+        for inputs in dataloader:
+            if isinstance(inputs, torch.Tensor):
+                input_id = inputs
+            elif isinstance(inputs, dict):
+                input_id = inputs["input_ids"]
+            else:
+                input_id = inputs[0]
+            output = model(input_id, labels=input_id)
+            loss = output[0] / gradient_accumulation_steps
+            loss.backward()
+            global_steps += 1
+
+            if global_steps % logging_steps == 0:
+                logger.info("steps: {}, loss: {}".format(global_steps, loss.detach().cpu().item()))
+
+            if global_steps % gradient_accumulation_steps == 0:
+                optimizer.step()
+                optimizer.zero_grad()
+                lr_scheduler.step()
+
+            if global_steps >= train_steps:  # pragma: no cover
+                break
+
+    logger.info("finish training")
+    model.eval()
+    return None
 
 class TestTEQWeightOnlyQuant(unittest.TestCase):
     @classmethod
@@ -17,22 +79,16 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         )
         self.gptj.seqlen = 512
 
-    def generate_random_corpus(self, nsamples=32):
-        meta_data = []
-        for _ in range(nsamples):
-            inp = torch.ones([1, 512], dtype=torch.long)
-            tar = torch.ones([1, 512], dtype=torch.long)
-            meta_data.append((inp, tar))
-        return meta_data
+
 
     def train_func(self):
         pass
 
     def test_teq(self):
-        dataloader = self.generate_random_corpus()
+        example_inputs = torch.ones([1, 512], dtype=torch.long)
         test_input = torch.ones([1, 512], dtype=torch.long)
         model = copy.deepcopy(self.gptj)
-
+    
         weight_config = {
             # 'op_name': (bit, group_size, scheme)
             "transformer.h.0.mlp.fc_in": {"bits": 8, "group_size": -1, "scheme": "sym"},
@@ -45,7 +101,8 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
             weight_config=weight_config,
             absorb_to_layer=absorb_dict,
             folding=True,
-            dataloader=dataloader,
+            calib_func=train,
+            example_inputs=example_inputs
         )
         out1 = model(test_input)
         quant_config = {
@@ -74,10 +131,12 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
             }
         }
 
-        qdq_model = quantize(model=self.gptj, quant_config=quant_config, run_args=dataloader)
+        qdq_model = quantize(
+            model=self.gptj, quant_config=quant_config, run_fn=train, example_inputs=example_inputs
+        )
         self.assertTrue(isinstance(qdq_model, torch.nn.Module))
         out2 = qdq_model(test_input)
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-02))
+        self.assertTrue(torch.allclose(out1[0], out2[0]))
 
 
 if __name__ == "__main__":

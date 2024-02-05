@@ -163,6 +163,7 @@ def teq_quantize_entry(
     weight_config = {}
     absorb_to_layer = {}
     example_inputs = kwargs.get("example_inputs", None)
+    assert example_inputs is not None, "Please provide example_inputs for TEQ quantization."
     calib_func = kwargs.get("run_fn", None)
     folding = True
     for (op_name, op_type), quant_config in configs_mapping.items():
