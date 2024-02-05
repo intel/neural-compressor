@@ -31,9 +31,9 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
 def quantize(
     model: torch.nn.Module,
     quant_config: BaseConfig,
-    example_inputs=None,
     run_fn: Callable = None,
     run_args: Any = None,
+    example_inputs = None,
     inplace: bool = True,
 ) -> torch.nn.Module:
     """The main entry to quantize model with static mode.

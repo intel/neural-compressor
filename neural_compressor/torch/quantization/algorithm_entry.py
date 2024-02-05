@@ -89,6 +89,7 @@ def gptq_entry(
             "model_path": quant_config.model_path,
         }
     )
+    kwargs.pop("example_inputs")
 
     logger.warning("lm_head in transformer model is skipped by GPTQ")
     model, quantization_perm = gptq_quantize(model=model, weight_config=weight_config, *args, **kwargs)
