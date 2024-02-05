@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,3 +45,4 @@ DOUBLE_QUANT_CONFIGS = {
 # Setting priorities for algorithms, a higher number indicates a higher priority.
 PRIORITY_RTN = 80
 PRIORITY_GPTQ = 90
+PRIORITY_AWQ = 70
