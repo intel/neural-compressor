@@ -16,12 +16,7 @@
 # limitations under the License.
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.tensorflow.utils.tensorflow_models import (
-    BaseModel,
-    KerasModel,
-    TensorflowModel,
-    get_tf_model_type,
-)
+from neural_compressor.tensorflow.utils.model_wrappers import BaseModel, KerasModel, TensorflowModel, get_tf_model_type
 
 framework_specific_info = {
     "device": "cpu",
