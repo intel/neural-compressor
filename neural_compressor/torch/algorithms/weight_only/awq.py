@@ -19,7 +19,7 @@ from functools import partial
 
 import torch
 
-from neural_compressor.torch.quantization.modules import MulLinear
+from .modules import MulLinear
 from neural_compressor.torch.utils import logger
 
 from .utility import (
