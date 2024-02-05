@@ -14,7 +14,8 @@
 
 import json
 import os
-from collections import UserDict
+import copy
+import re
 from typing import Dict, List, Union
 
 try:
@@ -27,14 +28,13 @@ from packaging.version import Version
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
 from neural_compressor.torch.utils import (
-    get_depth,
-    get_dict_at_depth,
-    get_element_under_depth,
     get_torch_version,
+    get_ipex_version,
     logger,
 )
 
 version = get_torch_version()
+ipex_ver = get_ipex_version()
 ipex_config_path = os.path.join(DEFAULT_WORKSPACE, "ipex_config_tmp.json")
 
 unify_op_type_mapping_ipex = {
@@ -65,6 +65,152 @@ BLOCK_PATTERNS = [
     [["Linear", 4], ["Linear", 1], ["Linear", 1]],  # Bert
     [["Linear", 4], ["Linear", 4], ["Linear", 2]],  # T5-Decoder
 ]
+
+
+def get_depth(d) -> int:
+    """Query the depth of the dict."""
+    if isinstance(d, dict):
+        return 1 + max(get_depth(v) for v in d.values())
+    return 0
+
+
+def get_dict_at_depth(d, target_depth, result, depth=0):
+    """Get all sub-dicts that are at a specified depth in a nested dict."""
+    if depth == target_depth:
+        result.append(d)
+        return
+    elif depth < target_depth and isinstance(d, dict):
+        for k, v in d.items():
+            get_dict_at_depth(v, target_depth, result, depth=depth + 1)
+
+
+def get_element_under_depth(d, ops_lst):
+    """Get all values in a nested dict."""
+    if isinstance(d, dict):
+        for k, v in d.items():
+            get_element_under_depth(v, ops_lst)
+    else:
+        ops_lst.append(d)
+
+
+def paser_cfgs(cfgs):  # pragma: no cover
+    """Parse configs.
+
+    Args:
+        cfgs (dict): the input configs.
+
+
+    Returns:
+        ops_name (list): list of op names.
+        tune_cfg (dict): dictionary of quantization configuration.
+        op_infos_from_cfgs (dict): op infos from configs.
+        output_tensor_ids_op_name (dict): dictionary of output tensor op names.
+    """
+    ops_name = []
+    layer_output_infos_ids = []
+    op_infos_from_cfgs = {}
+    # record input_tensor_id and op_name
+    # {"0": [(" ", "q_op_infos", "0"), (" ", "q_op_infos", "1")]}
+    input_tensor_ids_op_name = {}
+    output_tensor_ids_op_name = {}
+    for module_key in cfgs.keys():
+        for state in cfgs[module_key]:
+            if state == "layer_output_infos":
+                for index, op_info in enumerate(cfgs[module_key][state]):
+                    name = (module_key, state, index)
+                    ops_name.append(name)
+                    layer_output_infos_ids.append(op_info["id"])
+                    op_infos_from_cfgs[name] = op_info
+                continue
+            for op_cfg_id in cfgs[module_key][state].keys():
+                op_info = cfgs[module_key][state][op_cfg_id]
+                name = (module_key, state, op_cfg_id)
+                if name not in ops_name:
+                    ops_name.append(name)
+                else:
+                    assert False, "Please check IPEX int8 configure json whether have the same name ops"
+                op_infos_from_cfgs[name] = op_info
+                input_tensors = op_info["input_tensor_infos"]
+                for input_tensor in input_tensors:
+                    if "id" not in input_tensor.keys():
+                        continue
+                    else:
+                        input_tensor_id = input_tensor["id"]
+                    if input_tensor_id not in input_tensor_ids_op_name.keys():
+                        input_tensor_ids_op_name[input_tensor_id] = [name]
+                    else:
+                        input_tensor_ids_op_name[input_tensor_id].append(name)
+                output_tensors = op_info["output_tensor_infos"]
+                for output_tensor in output_tensors:
+                    if "id" not in output_tensor.keys():
+                        continue
+                    else:
+                        output_tensor_id = output_tensor["id"]
+                    if output_tensor_id not in output_tensor_ids_op_name.keys():
+                        output_tensor_ids_op_name[output_tensor_id] = [name]
+                    else:
+                        output_tensor_ids_op_name[output_tensor_id].append(name)
+    return ops_name, op_infos_from_cfgs, input_tensor_ids_op_name, output_tensor_ids_op_name
+
+
+def get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_ids_op_name):  # pragma: no cover
+    """Get quantizable ops from configs, combine fused ops as one op.
+
+    Args:
+        ops_name (list): list of op names.
+        op_infos_from_cfgs (dict): op infos from configs.
+        input_tensor_ids_op_name (dict): dictionary of input tensor op names.
+
+    Returns:
+        cfgs (dict).
+    """
+    quantizable_ops = []
+    seen_ops = []
+    for name in ops_name:
+        start = True
+        if name in seen_ops:
+            continue
+        elif name[1] not in ["q_op_infos"]:
+            continue
+        else:
+            # judge fuse ops the first op
+            op_info = op_infos_from_cfgs[name]
+            output_tensors = op_info["output_tensor_infos"]
+            input_tensors = op_info["input_tensor_infos"]
+            start = any(
+                [
+                    input_tensor["inf_dtype"] != "torch.float32"
+                    for input_tensor in input_tensors
+                    if "inf_dtype" in input_tensor.keys()
+                ]
+            )
+            if not start:
+                continue
+            # add quantizable ops, include op and fuse ops.
+            q_ops, stack = [], [(name, [])]
+            while stack:
+                cur_name, cur = stack.pop()
+                seen_ops.append(cur_name)
+                if cur_name[1] not in ["q_op_infos"]:
+                    q_ops.append(cur)
+                    break
+                op_info = op_infos_from_cfgs[cur_name]
+                output_tensors = op_info["output_tensor_infos"]
+                for output_tensor in output_tensors:
+                    if output_tensor["inf_dtype"] == "torch.qint8" or output_tensor["inf_dtype"] == "torch.quint8":
+                        q_ops.append(cur + [cur_name])
+                        break
+                    try:
+                        next_op_names = input_tensor_ids_op_name[output_tensor["id"]]
+                        for next_op_name in next_op_names:
+                            stack.append((next_op_name, cur + [cur_name]))
+                    except:
+                        next_op_name = None
+                    if next_op_name is None:
+                        q_ops.append(cur + [cur_name])
+            for q_op in q_ops:
+                quantizable_ops.append(q_op)
+    return quantizable_ops
 
 
 def get_pattern(fallback_op, fuse_ops):  # pragma: no cover
@@ -228,6 +374,140 @@ def dump_model_op_stats(tune_cfg):
     Statistics(
         output_data, header="Mixed Precision Statistics", field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]
     ).print_stat()
+
+
+def get_quantizable_ops_recursively(model, example_inputs):
+    """Get all quantizable ops from model.
+
+    Args:
+        model (object): input model
+        example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
+    Returns:
+        quantizable_ops (list): list of tuples of op_name and op_type.
+        cfgs (dict): dict of configuration
+    """
+    quantizable_ops = []
+    # group ops by position for transform-based model
+    from .utility import TransformerBasedModelBlockPatternDetector
+
+    detector = TransformerBasedModelBlockPatternDetector(model)
+    detect_result = detector.detect_block()
+    attention_block = detect_result.get("attention_blocks", None)
+    ffn_blocks = detect_result.get("ffn_blocks", None)
+    logger.info(f"Attention Blocks: {len(attention_block)}")
+    logger.info(f"FFN Blocks: {len(ffn_blocks)}")
+    if not os.path.exists(ipex_config_path):
+        assert isinstance(model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
+
+    if hasattr(model, "save_qconf_summary"):  # pragma: no cover
+        os.makedirs(os.path.dirname(ipex_config_path), exist_ok=True)
+        model.save_qconf_summary(qconf_summary=ipex_config_path)
+    else:
+        model.eval()
+
+        # create a quantization config file for intel pytorch extension model
+        os.makedirs(os.path.dirname(ipex_config_path), exist_ok=True)
+        assert example_inputs is not None, "IPEX need q_dataloader or example_inputs to prepare the model"
+        from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+
+        if ipex_ver.release >= Version("2.1").release:
+            # HistogramObserver will cause a performance issue.
+            # static_qconfig = ipex.quantization.default_static_qconfig_mapping
+            qconfig = QConfig(
+                activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
+            )
+            from torch.ao.quantization import QConfigMapping
+
+            static_qconfig = QConfigMapping().set_global(qconfig)
+        else:
+            static_qconfig = QConfig(
+                activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
+            )
+
+        if isinstance(example_inputs, dict):
+            model = ipex.quantization.prepare(model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=True)
+        else:
+            model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=True)
+        simple_inference(model, example_inputs, iterations=1)
+        model.save_qconf_summary(qconf_summary=ipex_config_path)
+
+    map_op_name_to_fqn = {}
+    with open(ipex_config_path, "r") as f:
+        cfgs = json.load(f)
+
+        from .utility import unify_op_type_mapping_ipex
+
+        default_cfgs = {}
+        fuse_ops = []
+        if ipex_ver.release < Version("1.12.0").release:  # pragma: no cover
+            default_cfgs = copy.deepcopy(cfgs)
+            fuse_ops = get_fuse_ops(cfgs)
+            for op_cfg in cfgs:
+                if op_cfg["name"] in unify_op_type_mapping_ipex:
+                    quantizable_ops.append((op_cfg["id"], unify_op_type_mapping_ipex[op_cfg["name"]]))
+                else:
+                    re_flag = False
+                    for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
+                        if re.match(pattern, op_cfg["name"]):
+                            re_flag = True
+                            quantizable_ops.append((op_cfg["id"], unify_op_type))
+                            break
+                    if not re_flag:
+                        quantizable_ops.append((op_cfg["id"], op_cfg["name"]))
+        else:
+            (
+                ops_name,
+                op_infos_from_cfgs,
+                input_tensor_id_op_name,
+                output_tensor_id_op_name,
+            ) = paser_cfgs(cfgs)
+            quantizable_op_names = get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_id_op_name)
+            for name in quantizable_op_names:
+                # name : list
+                if len(name) == 1:
+                    module_key = name[0][0]
+                    op_cfg_id = name[0][2]
+                    ipex_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
+                    module_fqn = cfgs[module_key]["q_op_infos"][op_cfg_id].get("fqn", None)
+
+                    if ipex_op_type in unify_op_type_mapping_ipex:
+                        quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex[ipex_op_type]))
+                        map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
+                    else:
+                        re_flag = False
+                        for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
+                            if re.match(pattern, ipex_op_type):
+                                re_flag = True
+                                quantizable_ops.append((tuple(name), unify_op_type))
+                                map_op_name_to_fqn[(tuple(name), unify_op_type)] = module_fqn
+                                break
+                        if not re_flag:
+                            quantizable_ops.append((tuple(name), ipex_op_type))
+                            map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
+                else:
+                    op_type = ""
+                    for op_name in name:
+                        module_key = op_name[0]
+                        op_cfg_id = op_name[2]
+                        single_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
+                        if single_op_type in unify_op_type_mapping_ipex:
+                            single_op_type = unify_op_type_mapping_ipex[single_op_type]
+                        op_type += "&" + single_op_type if op_type else single_op_type
+                    quantizable_ops.append((tuple(name), op_type))
+                    _module_key = name[0][0]
+                    _op_cfg_id = name[0][2]
+                    module_fqn = cfgs[_module_key]["q_op_infos"][_op_cfg_id]["fqn"]
+                    map_op_name_to_fqn[(tuple(name), op_type)] = module_fqn
+
+    logger.debug("Map op name to fqn: ")
+    logger.debug(map_op_name_to_fqn)
+    logger.info("Attention Blocks : ")
+    logger.info(attention_block)
+    logger.info("FFN Blocks : ")
+    logger.info(ffn_blocks)
+    return quantizable_ops, cfgs, default_cfgs, fuse_ops
 
 
 class TransformerBasedModelBlockPatternDetector:

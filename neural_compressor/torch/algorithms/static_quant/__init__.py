@@ -14,4 +14,4 @@
 # limitations under the License.
 
 from .utility import *
-from .static_quant import static_quantize, _get_quantizable_ops_recursively
+from .static_quant import static_quantize
