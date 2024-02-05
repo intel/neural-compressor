@@ -1033,4 +1033,3 @@ def get_module_input_output(
     for h in hook_list:
         h.remove()
     return total_values
-
