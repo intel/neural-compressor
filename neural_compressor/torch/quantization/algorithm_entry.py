@@ -29,7 +29,7 @@ def rtn_entry(
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
     from neural_compressor.torch.algorithms.weight_only import rtn_quantize
-    
+
     # rebuild weight_config for rtn_quantize function
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
@@ -99,7 +99,7 @@ def gptq_entry(
 
 
 ###################### Static Quant Algo Entry ##################################
-@register_algo(name = STATIC_QUANT)
+@register_algo(name=STATIC_QUANT)
 @torch.no_grad()
 def static_quant_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig], *args, **kwargs
