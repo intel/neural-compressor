@@ -145,9 +145,44 @@ class BaseConfigSet(_ConfigSet):
         return len(self.config_list)
 
     @classmethod
-    def from_fwk_configs(cls, fwk_configs: List[BaseConfig]) -> "BaseConfigSet":
-        # TODO: impl it
-        pass
+    def _generate_config_list_from_single_config(cls, config: BaseConfig) -> List[BaseConfig]:
+        # There are two cases for the input `config`:
+        # 1. config is expandable
+        # 2. config is not expandable
+        config_list = []
+        # TODO: impl the `is_expandable` method in `BaseConfig` class
+        if config.is_expandable():
+            config_list += config.expand()
+        else:
+            config_list.append(config)
+        return config_list
+
+    @classmethod
+    def _generate_config_list_from_list_of_configs(cls, fwk_configs: List[BaseConfig]) -> List[BaseConfig]:
+        config_list = []
+        for config in fwk_configs:
+            config_list += cls._generate_config_list_from_single_config(config)
+        return config_list
+
+    @classmethod
+    def generate_config_list(cls, fwk_configs: Union[BaseConfig, List[BaseConfig]]):
+        config_list = []
+        if isinstance(fwk_configs, BaseConfig):
+            config_list = cls._generate_config_list_from_single_config(fwk_configs)
+        elif isinstance(fwk_configs, List):
+            config_list = cls._generate_config_list_from_list_of_configs(fwk_configs)
+        else:
+            raise NotImplementedError(f"Unsupported type {type(fwk_configs)} for fwk_configs.")
+        return config_list
+
+    @classmethod
+    def from_fwk_configs(cls, fwk_configs: Union[BaseConfig, List[BaseConfig]]) -> "BaseConfigSet":
+        # There are several cases for the input `fwk_configs`:
+        # 1. fwk_configs is a single config
+        # 2. fwk_configs is a list of configs
+        # For a single config, we need to check if it can be expanded or not.
+        config_list = cls.generate_config_list(fwk_configs)
+        return cls(config_list)
 
 
 class Sampler:
