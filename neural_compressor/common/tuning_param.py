@@ -36,11 +36,20 @@ class TuningParam:
 
             params_list = [
                 ...
-                # * For complex tunable types, like a list of lists,
-                # * developers need to create the `TuningParam` explicitly.
-                TuningParam("complex_attr", tunable_type=List[List])
-                # * For simple tunable types, like a list of int, giving the param name is enough.
+                # For simple tunable types, like a list of int, giving
+                # the param name is enough. `BaseConfig` class will
+                # create the `TuningParam` implicitly.
                 "simple_attr"
+
+                # For complex tunable types, like a list of lists,
+                # developers need to create the `TuningParam` explicitly.
+                TuningParam("complex_attr", tunable_type=List[List])
+
+                # The default parameter level is `ParamLevel.OP_LEVEL`.
+                # If the parameter is at a different level, developers need
+                # to specify it explicitly.
+                TuningParam("model_attr", level=ParamLevel.MODEL_LEVEL)
+
             ...
 
     # TODO: more examples to explain the usage of `TuningParam`.
