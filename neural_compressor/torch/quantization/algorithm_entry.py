@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from typing import Dict, Tuple
 
 import torch
-import copy
 
 from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, RTN, STATIC_QUANT  # unified namespace
 from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, RTNConfig, StaticQuantConfig
