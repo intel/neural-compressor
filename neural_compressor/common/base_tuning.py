@@ -195,7 +195,7 @@ class Sampler:
 
 
 class SequentialSampler(Sampler):
-    r"""Samples elements sequentially, always in the same order.
+    """Samples elements sequentially, always in the same order.
 
     Args:
         config_source (_ConfigSet): config set to sample from
