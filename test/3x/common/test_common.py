@@ -48,7 +48,7 @@ from neural_compressor.common.base_config import (
     get_all_config_set_from_config_registry,
     register_config,
 )
-from neural_compressor.common.base_tuning import BaseConfigSet, ConfigLoader, Sampler
+from neural_compressor.common.base_tuning import ConfigLoader, ConfigSet, Sampler
 from neural_compressor.common.tuning_param import TuningParam
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE
 

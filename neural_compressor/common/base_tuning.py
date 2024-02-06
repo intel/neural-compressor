@@ -34,7 +34,7 @@ __all__ = [
     "Sampler",
     "SequentialSampler",
     "default_sampler",
-    "BaseConfigSet",
+    "ConfigSet",
 ]
 
 
@@ -127,13 +127,7 @@ class Evaluator:
 evaluator = Evaluator()
 
 
-class _ConfigSet:
-
-    def __getitem__(self, index) -> BaseConfig:
-        raise NotImplementedError
-
-
-class BaseConfigSet(_ConfigSet):
+class ConfigSet:
 
     def __init__(self, config_list: List[BaseConfig]) -> None:
         self.config_list = config_list
@@ -174,13 +168,25 @@ class BaseConfigSet(_ConfigSet):
         return config_list
 
     @classmethod
-    def from_fwk_configs(cls, fwk_configs: Union[BaseConfig, List[BaseConfig]]) -> "BaseConfigSet":
+    def from_fwk_configs(cls, fwk_configs: Union[BaseConfig, List[BaseConfig]]) -> "ConfigSet":
+        """Create a ConfigSet object from a single config or a list of configs.
+
+        Args:
+            fwk_configs: A single config or a list of configs.
+                Examples:
+                    1) single config: RTNConfig(weight_group_size=32)
+                    2) single expandable config: RTNConfig(weight_group_size=[32, 64])
+                    3) mixed 1) and 2): [RTNConfig(weight_group_size=32), RTNConfig(weight_group_size=[32, 64])]
+
+        Returns:
+            ConfigSet: A ConfigSet object.
+        """
         config_list = cls.generate_config_list(fwk_configs)
         return cls(config_list)
 
 
 class Sampler:
-    def __init__(self, config_source: Optional[_ConfigSet]) -> None:
+    def __init__(self, config_source: Optional[ConfigSet]) -> None:
         pass
 
     def __iter__(self) -> Iterator[BaseConfig]:
@@ -211,8 +217,8 @@ default_sampler = SequentialSampler
 
 
 class ConfigLoader:
-    def __init__(self, config_set: BaseConfigSet, sampler: Sampler = default_sampler) -> None:
-        self.config_set = BaseConfigSet.from_fwk_configs(config_set)
+    def __init__(self, config_set: ConfigSet, sampler: Sampler = default_sampler) -> None:
+        self.config_set = ConfigSet.from_fwk_configs(config_set)
         self._sampler = sampler(self.config_set)
 
     def __iter__(self) -> Generator[BaseConfig, Any, None]:
@@ -276,7 +282,8 @@ class TuningConfig:
 
     Args:
         config_set: quantization configs. Default value is empty.
-        timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
+            A single config or a list of configs. More details can
+            be found in the `from_fwk_configs`of `ConfigSet` class.
         max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
         tolerable_loss: This float indicates how much metric loss we can accept. \
             The metric loss is relative, it can be both positive and negative. Default is 0.01.
@@ -305,28 +312,13 @@ class TuningConfig:
         # The best tuning config is config2, because of the following:
         # 1. Not achieving the set goal. (config_metric < fp32_baseline * (1 - tolerable_loss))
         # 2. Reached maximum tuning times.
-
-        # Case 3: Timeout
-        tune_config = TuningConfig(
-            config_set=[config1, config2, ...],
-            timeout=10, # seconds
-            max_trials=3,
-            tolerable_loss=0.01
-        )
-        config1_tuning_time, config2_tuning_time, config3_tuning_time, ... = 4, 5, 6, ... # seconds
-        fp32_baseline = 100
-        config1_metric, config2_metric, config3_metric, ... = 98, 98, 97, ...
-
-        # Tuning result of case 3:
-        # The best tuning config is config2, due to timeout, the third trial was forced to exit.
     """
 
     def __init__(
-        self, config_set=None, timeout=0, max_trials=100, sampler: Sampler = default_sampler, tolerable_loss=0.01
+        self, config_set=None, max_trials=100, sampler: Sampler = default_sampler, tolerable_loss=0.01
     ) -> None:
         """Init a TuneCriterion object."""
         self.config_set = config_set
-        self.timeout = timeout
         self.max_trials = max_trials
         self.sampler = sampler
         self.tolerable_loss = tolerable_loss
