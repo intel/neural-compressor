@@ -66,7 +66,13 @@ def autotune(
     evaluator.set_eval_fn_registry(eval_fns)
     evaluator.self_check()
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
-    baseline: float = evaluator.evaluate(model_input)
+    try:
+        baseline: float = evaluator.evaluate(model_input)
+    except Exception as e:
+        print(e)
+        if "'str' object has no attribute 'SerializeToString'" in str(e):
+            logger.warning("Please refine your eval_fns to accept model path (str) as input.")
+        exit(0)
     tuning_monitor.set_baseline(baseline)
     tuning_logger.tuning_start()
     for trial_index, quant_config in enumerate(config_loader):

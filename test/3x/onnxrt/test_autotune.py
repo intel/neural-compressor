@@ -19,9 +19,11 @@ import glob
 import os
 import shutil
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import onnx
+import onnxruntime as ort
 from optimum.exporters.onnx import main_export
 
 from neural_compressor.common import Logger
@@ -73,6 +75,28 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         shutil.rmtree("./gptj", ignore_errors=True)
+
+    @patch("logging.Logger.warning")
+    def test_auto_tune_warning(self, mock_warning):
+        acc_data = iter([1.0, 0.8, 0.99, 1.0, 0.99, 0.99])
+
+        def eval_acc_fn(model) -> float:
+            session = ort.InferenceSession(model.SerializeToString(), providers=["CPUExecutionProvider"])
+            return next(acc_data)
+
+        custom_tune_config = TuningConfig(config_set=[SmoohQuantConfig(alpha=0.5), SmoohQuantConfig(alpha=0.6)])
+        with self.assertRaises(SystemExit):
+            best_model = autotune(
+                model_input=self.gptj,
+                tune_config=custom_tune_config,
+                eval_fns=eval_acc_fn,
+                calibration_data_reader=self.data_reader,
+            )
+        call_args_list = mock_warning.call_args_list
+        self.assertEqual(
+            call_args_list[0][0][0],
+            "Please refine your eval_fns to accept model path (str) as input.",
+        )
 
     def test_sq_auto_tune(self):
         acc_data = iter([1.0, 0.8, 0.99, 1.0, 0.99, 0.99])
