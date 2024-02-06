@@ -113,13 +113,13 @@ def _ipex_post_quant_process(model, example_inputs, inplace=False):
     with torch.no_grad():
         try:
             if isinstance(example_inputs, dict):
-                model = torch.jit.trace(model, example_kwarg_inputs=example_inputs)  # pylint: disable=E1120,E1123
+                model = torch.jit.trace(model, example_kwarg_inputs=example_inputs)
             else:
                 model = torch.jit.trace(model, example_inputs)
             model = torch.jit.freeze(model.eval())
         except:
             if isinstance(example_inputs, dict):
-                model = torch.jit.trace(  # pylint: disable=E1120,E1123
+                model = torch.jit.trace(
                     model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False
                 )
             else:
