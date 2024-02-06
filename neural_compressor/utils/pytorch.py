@@ -171,7 +171,7 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, example_inputs, **kwarg
                     ),
                 )
             else:
-                model = prepare_qat_fx( # pylint: disable=E1120
+                model = prepare_qat_fx(  # pylint: disable=E1120
                     model,
                     fx_op_cfgs,
                     prepare_custom_config_dict=(
@@ -393,7 +393,7 @@ def load(checkpoint_dir=None, model=None, layer_wise=False, history_cfg=None, **
                         example_inputs=example_inputs,
                     )
                 else:
-                    model = prepare_qat_fx( # pylint: disable=E1120,1123
+                    model = prepare_qat_fx(  # pylint: disable=E1120,1123
                         model, fx_op_cfgs, prepare_custom_config_dict=prepare_custom_config_dict
                     )
             else:
@@ -406,14 +406,14 @@ def load(checkpoint_dir=None, model=None, layer_wise=False, history_cfg=None, **
                         example_inputs=example_inputs,
                     )
                 else:
-                    model = prepare_fx( # pylint: disable=E1120,1123
+                    model = prepare_fx(  # pylint: disable=E1120,1123
                         model, fx_op_cfgs, prepare_custom_config_dict=prepare_custom_config_dict
                     )
             if version.release > Version("1.12.1").release:  # pragma: no cover
                 # pylint: disable=E1123
                 model = convert_fx(model, convert_custom_config=convert_custom_config_dict)
             else:
-                model = convert_fx( # pylint: disable=E1123
+                model = convert_fx(  # pylint: disable=E1123
                     model, convert_custom_config_dict=convert_custom_config_dict
                 )
             util.append_attr(model, tmp_model)

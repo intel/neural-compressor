@@ -397,12 +397,12 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type="post_training_static_quant"):
     for key, value in op_cfgs.items():
         if key == "default_qconfig":
             if version.release >= Version("1.13.0").release:  # pragma: no cover
-                fx_op_cfgs.set_global(value) # pylint: disable=E1101
+                fx_op_cfgs.set_global(value)  # pylint: disable=E1101
             else:
                 fx_op_cfgs[""] = value
             continue
         if version.release >= Version("1.13.0").release:  # pragma: no cover
-            fx_op_cfgs.set_module_name(key, value) # pylint: disable=E1101
+            fx_op_cfgs.set_module_name(key, value)  # pylint: disable=E1101
         else:
             op_tuple = (key, value)
             op_tuple_cfg_list.append(op_tuple)
@@ -413,7 +413,7 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type="post_training_static_quant"):
         from torch.ao.quantization import get_default_qconfig_mapping
 
         for name, q_config in get_default_qconfig_mapping().to_dict()["object_type"]:
-            fx_op_cfgs.set_object_type(name, q_config) # pylint: disable=E1101
+            fx_op_cfgs.set_object_type(name, q_config)  # pylint: disable=E1101
 
     return fx_op_cfgs
 
@@ -3619,7 +3619,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         prepare_custom_config=self.prepare_custom_config_dict,
                     )
                 else:
-                    q_model._model = prepare_qat_fx( # pylint: disable=E1120,1123
+                    q_model._model = prepare_qat_fx(  # pylint: disable=E1120,1123
                         q_model._model, self.fx_op_cfgs, prepare_custom_config_dict=self.prepare_custom_config_dict
                     )
             else:
@@ -3681,7 +3681,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 # pylint: disable=E1123
                 q_model._model = convert_fx(q_model._model, convert_custom_config=self.convert_custom_config_dict)
             else:
-                q_model._model = convert_fx( # pylint: disable=E1123
+                q_model._model = convert_fx(  # pylint: disable=E1123
                     q_model._model, convert_custom_config_dict=self.convert_custom_config_dict
                 )
             torch_utils.util.append_attr(q_model._model, tmp_model)
@@ -3832,7 +3832,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     ),
                 )
             else:
-                self.model._model = prepare_qat_fx( # pylint: disable=E1120,1123
+                self.model._model = prepare_qat_fx(  # pylint: disable=E1120,1123
                     self.model._model,
                     fx_op_cfgs,
                     prepare_custom_config_dict=(
@@ -3879,7 +3879,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     ),
                 )
             else:
-                self.model._model = convert_fx( # pylint: disable=E1123
+                self.model._model = convert_fx(  # pylint: disable=E1123
                     self.model._model,
                     convert_custom_config_dict=(
                         self.model.kwargs.get("convert_custom_config_dict", None)
@@ -4333,7 +4333,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 # pragma: no cover
                 if is_qat:
                     module_pre = (
-                        prepare_qat_fx(tmp_module, fx_sub_op_cfgs) # pylint: disable=E1120
+                        prepare_qat_fx(tmp_module, fx_sub_op_cfgs)  # pylint: disable=E1120
                         if version <= Version("1.12.1")
                         else prepare_qat_fx(tmp_module, fx_sub_op_cfgs, example_inputs=example_inputs)
                     )
@@ -4341,7 +4341,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 # pragma: no cover
                 else:
                     module_pre = (
-                        prepare_fx(tmp_module, fx_sub_op_cfgs) # pylint: disable=E1120
+                        prepare_fx(tmp_module, fx_sub_op_cfgs)  # pylint: disable=E1120
                         if version <= Version("1.12.1")
                         else prepare_fx(tmp_module, fx_sub_op_cfgs, example_inputs=example_inputs)
                     )
@@ -4435,7 +4435,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 fused_model = _fuse_fx(graph_module, is_qat, fuse_custom_config=prepare_custom_config_dict)
             elif self.version.release >= Version("1.11.0").release:  # pragma: no cover
                 # pylint: disable=E1124
-                fused_model = _fuse_fx( # pylint: disable=E1123
+                fused_model = _fuse_fx(  # pylint: disable=E1123
                     graph_module, is_qat, fuse_custom_config_dict=prepare_custom_config_dict
                 )
             else:

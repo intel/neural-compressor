@@ -821,7 +821,7 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
             if adaptor.version.release >= Version("1.13.0").release:  # pragma: no cover
                 tmp_model = prepare_fx(tmp_model, fx_op_cfgs, example_inp)
             else:
-                tmp_model = prepare_fx( # pylint: disable=E1120
+                tmp_model = prepare_fx(  # pylint: disable=E1120
                     tmp_model,
                     fx_op_cfgs,
                 )
@@ -877,7 +877,7 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
             if adaptor.version.release >= Version("1.13.0").release:  # pragma: no cover
                 tmp_model = prepare_fx(tmp_model, fx_op_cfgs, example_inp)
             else:
-                tmp_model = prepare_fx( # pylint: disable=E1120
+                tmp_model = prepare_fx(  # pylint: disable=E1120
                     tmp_model,
                     fx_op_cfgs,
                 )
@@ -958,7 +958,7 @@ def get_mse_order_per_int8(adaptor, fp32_model, example_input, tune_cfg):
                 if adaptor.version.release >= Version("1.13.0").release:  # pragma: no cover
                     tmp_model = prepare_fx(tmp_model, fx_op_cfgs, example_inp)
                 else:
-                    tmp_model = prepare_fx( # pylint: disable=E1120
+                    tmp_model = prepare_fx(  # pylint: disable=E1120
                         tmp_model,
                         fx_op_cfgs,
                     )

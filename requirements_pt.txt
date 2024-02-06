@@ -1,2 +1,2 @@
-torch==2.1.*
 intel_extension_for_pytorch
+torch==2.1.*
