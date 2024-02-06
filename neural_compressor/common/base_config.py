@@ -342,37 +342,42 @@ class BaseConfig(ABC):
         """
         config_list: List[BaseConfig] = []
         params_list = self.params_list
-        params_dict = OrderedDict()
         config = self
         tuning_param_list = []
         not_tuning_param_pair = {}  # key is the param name, value is the user specified value
         for param in params_list:
             # Create `TuningParam` for each param
             # There are two cases:
-            # 1. The param is a `TuningParam` instance.
-            # 2. The param is a string.
-            default_param = self.get_the_default_value_of_param(config, param)
+            #
+            # 1. The param is a string.
+            # 2. The param is a `TuningParam` instance.
             if isinstance(param, str):
+                default_param = self.get_the_default_value_of_param(config, param)
                 tuning_param = TuningParam(name=param, tunable_type=List[type(default_param)])
             elif isinstance(param, TuningParam):
                 tuning_param = param
             else:
                 raise ValueError(f"Unsupported param type: {param}")
             # Assign the options to the `TuningParam` instance
-            user_param_val = getattr(config, param)
-            if user_param_val is not None and tuning_param.is_tunable(user_param_val):
-                tuning_param.options = user_param_val
-                tuning_param_list.append(tuning_param)
-            else:
-                not_tuning_param_pair[param] = getattr(config, param, default_param)
-        logger.debug("Tuning param_list: %s", tuning_param_list)
+            param_val = getattr(config, tuning_param.name)
+            if param_val is not None:
+                if tuning_param.is_tunable(param_val):
+                    tuning_param.options = param_val
+                    tuning_param_list.append(tuning_param)
+                else:
+                    not_tuning_param_pair[tuning_param.name] = param_val
+        logger.debug("Tuning param list: %s", tuning_param_list)
         logger.debug("Not tuning param pair: %s", not_tuning_param_pair)
-        tuning_param_name_lst = [tuning_param.name for tuning_param in tuning_param_list]
-        for params_values in product(*[tuning_param.options for tuning_param in tuning_param_list]):
-            tuning_param_pair = dict(zip(tuning_param_name_lst, params_values))
-            tmp_params_dict = {**not_tuning_param_pair, **tuning_param_pair}
-            new_config = self.__class__(**tmp_params_dict)
-            config_list.append(new_config)
+        if len(tuning_param_list) == 0:
+            config_list = [config]
+        else:
+            tuning_param_name_lst = [tuning_param.name for tuning_param in tuning_param_list]
+            for params_values in product(*[tuning_param.options for tuning_param in tuning_param_list]):
+                tuning_param_pair = dict(zip(tuning_param_name_lst, params_values))
+                tmp_params_dict = {**not_tuning_param_pair, **tuning_param_pair}
+                new_config = self.__class__(**tmp_params_dict)
+                logger.info(new_config.to_dict())
+                config_list.append(new_config)
         logger.info("Expanded the %s and got %d configs.", self.__class__.name, len(config_list))
         return config_list
 

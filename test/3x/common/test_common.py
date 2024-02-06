@@ -49,6 +49,7 @@ from neural_compressor.common.base_config import (
     register_config,
 )
 from neural_compressor.common.base_tuning import BaseConfigSet, ConfigLoader, Sampler
+from neural_compressor.common.tuning_param import TuningParam
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE
 
 PRIORITY_FAKE_ALGO = 100
@@ -66,6 +67,7 @@ class FakeAlgoConfig(BaseConfig):
     params_list = [
         "weight_dtype",
         "weight_bits",
+        TuningParam("target_op_type_list", tunable_type=List[str]),
     ]
     name = FAKE_CONFIG_NAME
 
@@ -73,6 +75,7 @@ class FakeAlgoConfig(BaseConfig):
         self,
         weight_dtype: str = "int",
         weight_bits: int = 4,
+        target_op_type_list: List[str] = ["Conv", "Gemm"],
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init fake config.
@@ -84,6 +87,7 @@ class FakeAlgoConfig(BaseConfig):
         super().__init__(white_list=white_list)
         self.weight_bits = weight_bits
         self.weight_dtype = weight_dtype
+        self.target_op_type_list = target_op_type_list
         self._post_init()
 
     def to_dict(self):
