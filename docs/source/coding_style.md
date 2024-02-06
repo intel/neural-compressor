@@ -85,7 +85,7 @@ logger.warning(
 - Not recommend
 
 ```python
-logger.info(f"Current TensorFlow Version is: {tf.__version__}")  # Not use f-string
+logger.info(f"Current TensorFlow Version is: {tf.__version__}")  # Use f-string
 
 logger.info("Current $PAGER is:")  # One sentence in two lines
 logger.info(os.getenv("PAGER", default=""))
