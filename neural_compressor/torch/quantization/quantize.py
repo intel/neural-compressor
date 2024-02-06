@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, Tuple
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
+from neural_compressor.torch.quantization.config import SmoothQuantConfig, StaticQuantConfig
 from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
@@ -61,7 +62,9 @@ def quantize(
     logger.info(quant_config.to_dict())
     # select quantization algo according to config
 
-    if is_ipex_available:
+    if is_ipex_available and (
+        isinstance(quant_config, StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
+    ):
         model_info = quant_config.get_model_info(q_model, example_inputs)
     else:
         model_info = quant_config.get_model_info(model=q_model)
