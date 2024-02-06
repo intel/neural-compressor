@@ -35,6 +35,10 @@ Functions
    neural_compressor.onnxrt.quantization.get_default_gptq_config
    neural_compressor.onnxrt.quantization.get_default_awq_config
    neural_compressor.onnxrt.quantization.get_default_sq_config
+   neural_compressor.onnxrt.quantization.autotune
+   neural_compressor.onnxrt.quantization.get_all_config_set
+
+
 
 
 

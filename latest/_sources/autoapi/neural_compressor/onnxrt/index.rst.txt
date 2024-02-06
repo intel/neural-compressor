@@ -36,6 +36,8 @@ Functions
    neural_compressor.onnxrt.get_default_awq_config
    neural_compressor.onnxrt.smooth_quant_entry
    neural_compressor.onnxrt.get_default_sq_config
+   neural_compressor.onnxrt.get_all_config_set
+
 
 
 
