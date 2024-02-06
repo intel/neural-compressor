@@ -16,7 +16,7 @@
 import copy
 import inspect
 import uuid
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Sized, Tuple, Union
 
 from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig
@@ -31,6 +31,10 @@ __all__ = [
     "TuningMonitor",
     "TuningLogger",
     "init_tuning",
+    "Sampler",
+    "SequentialSampler",
+    "default_sampler",
+    "BaseConfigSet",
 ]
 
 
@@ -123,9 +127,6 @@ class Evaluator:
 evaluator = Evaluator()
 
 
-from typing import Iterator, Optional, Sized
-
-
 class _ConfigSet:
 
     def __getitem__(self, index) -> BaseConfig:
@@ -213,31 +214,17 @@ class SequentialSampler(Sampler):
         return len(self.config_source)
 
 
+default_sampler = SequentialSampler
+
+
 class ConfigLoader:
-    def __init__(self, config_set, sampler: Sampler) -> None:
-        self.config_set = config_set
-        self.sampler = sampler
-
-    @staticmethod
-    def parse_quant_config(quant_config: BaseConfig) -> List[BaseConfig]:
-        if isinstance(quant_config, ComposableConfig):
-            result = []
-            for q_config in quant_config.config_list:
-                result += q_config.expand()
-            return result
-        else:
-            return quant_config.expand()
-
-    def parse_quant_configs(self) -> List[BaseConfig]:
-        # TODO (Yi) separate this functionality into `Sampler` in the next PR
-        quant_config_list = []
-        for quant_config in self.config_set:
-            quant_config_list.extend(ConfigLoader.parse_quant_config(quant_config))
-        return quant_config_list
+    def __init__(self, config_set: BaseConfigSet, sampler: Sampler = default_sampler) -> None:
+        self.config_set = BaseConfigSet.from_fwk_configs(config_set)
+        self._sampler = sampler(self.config_set)
 
     def __iter__(self) -> Generator[BaseConfig, Any, None]:
-        for config in self.parse_quant_configs():
-            yield config
+        for index in self._sampler:
+            yield self.config_set[index]
 
 
 class TuningLogger:
@@ -341,7 +328,7 @@ class TuningConfig:
     """
 
     def __init__(
-        self, config_set=None, timeout=0, max_trials=100, sampler: Sampler = None, tolerable_loss=0.01
+        self, config_set=None, timeout=0, max_trials=100, sampler: Sampler = default_sampler, tolerable_loss=0.01
     ) -> None:
         """Init a TuneCriterion object."""
         self.config_set = config_set

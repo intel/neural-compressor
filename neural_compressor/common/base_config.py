@@ -295,6 +295,10 @@ class BaseConfig(ABC):
         else:
             return ComposableConfig(configs=[self, other])
 
+    def is_expandable(self) -> bool:
+        # TODO: implement it
+        return True
+
     def expand(self) -> List[BaseConfig]:
         """Expand the config.
 
