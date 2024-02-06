@@ -23,7 +23,7 @@ from typing import Any, Dict, Tuple
 
 import torch
 
-from neural_compressor.common import logger
+from neural_compressor.torch.utils import logger
 
 from .auto_accelerator import auto_detect_accelerator
 from .bitpack import Packer

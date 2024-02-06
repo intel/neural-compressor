@@ -30,7 +30,7 @@ from typing import Any, Callable, List
 
 import torch
 
-from neural_compressor.common import logger
+from neural_compressor.torch.utils import logger
 
 PRIORITY_CUDA = 100
 PRIORITY_CPU = 90

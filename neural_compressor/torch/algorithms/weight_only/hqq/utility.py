@@ -20,7 +20,7 @@ import numpy as np
 import psutil
 import torch
 
-from neural_compressor.common import logger
+from neural_compressor.torch.utils import logger
 
 __all__ = [
     "is_divisible",
