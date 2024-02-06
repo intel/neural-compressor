@@ -20,13 +20,20 @@ import onnx
 from onnxruntime.quantization import quantize
 
 from neural_compressor.common import Logger
-from neural_compressor.common.utils import RTN, SMOOTH_QUANT
+from neural_compressor.common.utils import AWQ, GPTQ, RTN, SMOOTH_QUANT
 from neural_compressor.onnxrt.algorithms import Smoother
 from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
-from neural_compressor.onnxrt.quantization.config import RTNConfig, SmoohQuantConfig
+from neural_compressor.onnxrt.quantization.config import AWQConfig, GPTQConfig, RTNConfig, SmoohQuantConfig
 from neural_compressor.onnxrt.utils.utility import register_algo
 
 logger = Logger().get_logger()
+
+__all__ = [
+    "smooth_quant_entry",
+    "rtn_quantize_entry",
+    "gptq_quantize_entry",
+    "awq_quantize_entry",
+]
 
 
 ###################### SmoothQuant Entry ##################################
@@ -87,11 +94,59 @@ def smooth_quant_entry(
 @register_algo(name=RTN)
 def rtn_quantize_entry(model: Union[Path, str], quant_config: RTNConfig, *args, **kwargs) -> onnx.ModelProto:
     """The main entry to apply rtn quantization."""
-    from neural_compressor.onnxrt.algorithms.weight_only.rtn import apply_rtn_on_model
+    from neural_compressor.onnxrt.algorithms import apply_rtn_on_model
 
     # map config to each op
     model_info = quant_config.get_model_info(model=model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
     logger.debug(configs_mapping)
     model = apply_rtn_on_model(model, configs_mapping)
+    return model
+
+
+###################### GPTQ Algo Entry ##################################
+@register_algo(name=GPTQ)
+def gptq_quantize_entry(
+    model: Union[Path, str], quant_config: GPTQConfig, calibration_data_reader: CalibrationDataReader, *args, **kwargs
+) -> onnx.ModelProto:
+    """The main entry to apply gptq quantization."""
+    assert calibration_data_reader is not None, "Please provide calibration_data_reader"
+    assert isinstance(
+        calibration_data_reader, CalibrationDataReader
+    ), "Please follow neural_compressor/onnxrt/quantization/calibrate.py to implement calibration_data_reader"
+
+    from neural_compressor.onnxrt.algorithms import apply_gptq_on_model
+
+    # map config to each op
+    model_info = quant_config.get_model_info(model=model)
+    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+    logger.debug(configs_mapping)
+
+    # regenerate to ensure data exists
+    calibration_data_reader.rewind()
+    model = apply_gptq_on_model(model, configs_mapping, calibration_data_reader)
+    return model
+
+
+###################### AWQ Algo Entry ##################################
+@register_algo(name=AWQ)
+def awq_quantize_entry(
+    model: Union[Path, str], quant_config: AWQConfig, calibration_data_reader: CalibrationDataReader, *args, **kwargs
+) -> onnx.ModelProto:
+    """The main entry to apply awq quantization."""
+    assert calibration_data_reader is not None, "Please provide calibration_data_reader"
+    assert isinstance(
+        calibration_data_reader, CalibrationDataReader
+    ), "Please follow neural_compressor/onnxrt/quantization/calibrate.py to implement calibration_data_reader"
+
+    from neural_compressor.onnxrt.algorithms import apply_awq_on_model
+
+    # map config to each op
+    model_info = quant_config.get_model_info(model=model)
+    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+    logger.debug(configs_mapping)
+
+    # regenerate to ensure data exists
+    calibration_data_reader.rewind()
+    model = apply_awq_on_model(model, configs_mapping, calibration_data_reader)
     return model

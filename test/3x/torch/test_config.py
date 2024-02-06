@@ -5,6 +5,7 @@ import torch
 import transformers
 
 from neural_compressor.torch.quantization import (
+    AWQConfig,
     GPTQConfig,
     HQQConfig,
     RTNConfig,
@@ -262,12 +263,20 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertTrue(configs_mapping[("fc3", torch.nn.Linear)].bits == 5)
 
     def test_gptq_config(self):
-        gptq_config1 = GPTQConfig(weight_bits=8, pad_max_length=512)
+        gptq_config1 = GPTQConfig(bits=8, act_order=True)
         quant_config_dict = {
-            "gptq": {"weight_bits": 8, "pad_max_length": 512},
+            "gptq": {"bits": 8, "act_order": True},
         }
         gptq_config2 = GPTQConfig.from_dict(quant_config_dict["gptq"])
         self.assertEqual(gptq_config1.to_dict(), gptq_config2.to_dict())
+
+    def test_awq_config(self):
+        awq_config1 = AWQConfig(bits=8, use_auto_scale=True, folding=False)
+        quant_config_dict = {
+            "awq": {"bits": 8, "use_auto_scale": True, "folding": False},
+        }
+        awq_config2 = AWQConfig.from_dict(quant_config_dict["awq"])
+        self.assertEqual(awq_config1.to_dict(), awq_config2.to_dict())
 
     def test_static_quant_config(self):
         static_config1 = StaticQuantConfig(w_dtype="int8", act_sym=True, act_algo="minmax")

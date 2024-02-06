@@ -16,16 +16,10 @@ from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import FP8_QUANT, GPTQ, HQQ, RTN  # unified namespace
-from neural_compressor.torch.algorithms.weight_only import (
-    HQQModuleConfig,
-    HQQuantizer,
-    QTensorConfig,
-    gptq_quantize,
-    rtn_quantize,
-)
-from neural_compressor.torch.quantization import GPTQConfig, HQQConfig, RTNConfig
-from neural_compressor.torch.utils import OP_NAME_AND_TYPE_TUPLE_TYPE, logger, register_algo
+from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, RTN  # unified namespace
+from neural_compressor.torch.algorithms.weight_only import awq_quantize, gptq_quantize, rtn_quantize
+from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, RTNConfig
+from neural_compressor.torch.utils import logger, register_algo
 
 
 ###################### RTN Algo Entry ##################################
@@ -66,57 +60,98 @@ def gptq_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
+    # rebuild weight_config for gptq_quantize function
+    weight_config = {}
+    for (op_name, op_type), quant_config in configs_mapping.items():
+        weight_config[op_name] = {
+            "dtype": quant_config.dtype,
+            "bits": quant_config.bits,
+            "sym": quant_config.use_sym,
+            "group_size": quant_config.group_size,
+            "mse": quant_config.use_mse_search,
+            "use_double_quant": quant_config.use_double_quant,
+            "double_quant_dtype": quant_config.double_quant_dtype,
+            "double_quant_bits": quant_config.double_quant_bits,
+            "double_quant_sym": quant_config.double_quant_use_sym,
+            "double_quant_group_size": quant_config.double_quant_group_size,
+            "act_order": quant_config.act_order,
+            "percdamp": quant_config.percdamp,
+            "block_size": quant_config.block_size,
+            "static_groups": quant_config.static_groups,
+        }
+    kwargs.update(
+        {
+            "export_compressed_model": quant_config.export_compressed_model,
+            "use_layer_wise": quant_config.use_layer_wise,
+            "model_path": quant_config.model_path,
+        }
+    )
+    kwargs.pop("example_inputs")
 
-    model, quantization_perm = gptq_quantize(model=model, configs_mapping=configs_mapping, *args, **kwargs)
+    logger.warning("lm_head in transformer model is skipped by GPTQ")
+    model, quantization_perm = gptq_quantize(model=model, weight_config=weight_config, *args, **kwargs)
     # Assign the gptq config as an attribute of model
     model._gptq_quantization_perm = quantization_perm
     return model
 
 
-###################### HHQ Algo Entry ##################################
-
-
-def _convert_hqq_module_config(config: HQQConfig) -> HQQModuleConfig:
-    nbits = config.nbits
-    group_size = config.group_size
-    quant_zero = config.quant_zero
-    quant_scale = config.quant_scale
-    scale_quant_group_size = config.scale_quant_group_size
-
-    weight_qconfig = QTensorConfig(
-        nbits=nbits, channel_wise=True, group_size=group_size, optimize=True, round_zero=True if nbits == 4 else False
-    )
-    zero_qconfig = None
-    if quant_zero:
-        zero_qconfig = QTensorConfig(nbits=8, channel_wise=False, group_size=None, optimize=False)
-    scale_qconfig = None
-    if quant_scale:
-        scale_qconfig = QTensorConfig(nbits=8, channel_wise=True, group_size=scale_quant_group_size, optimize=False)
-    hqq_module_config = HQQModuleConfig(weight=weight_qconfig, scale=scale_qconfig, zero=zero_qconfig)
-    logger.debug(hqq_module_config)
-    return hqq_module_config
-
-
-def _parse_hqq_configs_mapping(configs_mapping: Dict[OP_NAME_AND_TYPE_TUPLE_TYPE, HQQConfig]):
-    qconfig_mapping = {}
-    for (op_name, op_type), quant_config in configs_mapping.items():
-        if quant_config.skip_lm_head and "lm_head" in op_name:
-            logger.warning("Skip quantizing %s due to `skip_lm_head` is True.", op_name)
-            continue
-        qconfig_mapping[op_name] = _convert_hqq_module_config(quant_config)
-    return qconfig_mapping
-
-
-@register_algo(name=HQQ)
+###################### AWQ Algo Entry ##################################
+@register_algo(name=AWQ)
 @torch.no_grad()
-def hqq_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, Callable], HQQConfig], *args, **kwargs
+def awq_quantize_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AWQConfig], *args, **kwargs
 ) -> torch.nn.Module:
-    logger.info("Quantize model with the HQQ algorithm.")
-    qconfig_mapping = _parse_hqq_configs_mapping(configs_mapping)
-    hqq_quantizer = HQQuantizer(qconfig_mapping)
-    q_model = hqq_quantizer.prepare(model)
-    return q_model
+    logger.info("Quantize model with the AWQ algorithm.")
+
+    weight_config = {}
+    for (op_name, op_type), op_config in configs_mapping.items():
+        if op_config.dtype == "fp32":
+            weight_config[op_name] = {
+                "bits": -1,
+                "dtype": "fp32",  # skip quantization
+                "group_size": 128,
+                "scheme": "asym",
+            }
+        else:
+            weight_config[op_name] = {
+                "dtype": op_config.dtype,
+                "bits": op_config.bits,
+                "group_size": op_config.group_size,
+                "group_dim": op_config.group_dim,
+                "scheme": "sym" if op_config.use_sym else "asym",
+                "use_full_range": op_config.use_full_range,
+                "use_mse_search": op_config.use_mse_search,
+                "use_layer_wise": op_config.use_layer_wise,
+                "export_compressed_model": op_config.export_compressed_model,
+                "use_double_quant": op_config.use_double_quant,
+                "double_quant_dtype": op_config.double_quant_dtype,
+                "double_quant_bits": op_config.double_quant_bits,
+                "double_quant_scheme": op_config.double_quant_use_sym,
+                "double_quant_group_size": op_config.double_quant_group_size,
+            }
+            use_auto_scale = op_config.use_auto_scale
+            use_mse_search = op_config.use_auto_clip  # for awq clip
+            folding = op_config.folding
+            return_int = op_config.export_compressed_model
+            use_full_range = op_config.use_full_range
+
+    calib_func = kwargs.get("run_fn", None)
+    example_inputs = kwargs.get("example_inputs", None)
+    assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
+    model = awq_quantize(
+        model,
+        bits=-1,  # no quantize for op not in weight_config
+        example_inputs=example_inputs,  # must be required
+        calib_func=calib_func,
+        weight_config=weight_config,
+        use_auto_scale=use_auto_scale,
+        use_mse_search=use_mse_search,
+        folding=folding,
+        return_int=return_int,
+        use_full_range=use_full_range,
+    )
+    logger.info("AWQ quantization done.")
+    return model
 
 
 ###################### Habana FP8 Algo Entry ##################################
