@@ -393,7 +393,7 @@ def load(checkpoint_dir=None, model=None, layer_wise=False, history_cfg=None, **
                         example_inputs=example_inputs,
                     )
                 else:
-                    model = prepare_qat_fx(  # pylint: disable=E1120,1123
+                    model = prepare_qat_fx(  # pylint: disable=E1120,E1123
                         model, fx_op_cfgs, prepare_custom_config_dict=prepare_custom_config_dict
                     )
             else:
@@ -406,7 +406,7 @@ def load(checkpoint_dir=None, model=None, layer_wise=False, history_cfg=None, **
                         example_inputs=example_inputs,
                     )
                 else:
-                    model = prepare_fx(  # pylint: disable=E1120,1123
+                    model = prepare_fx(  # pylint: disable=E1120,E1123
                         model, fx_op_cfgs, prepare_custom_config_dict=prepare_custom_config_dict
                     )
             if version.release > Version("1.12.1").release:  # pragma: no cover

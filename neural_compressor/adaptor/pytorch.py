@@ -3619,7 +3619,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         prepare_custom_config=self.prepare_custom_config_dict,
                     )
                 else:
-                    q_model._model = prepare_qat_fx(  # pylint: disable=E1120,1123
+                    q_model._model = prepare_qat_fx(  # pylint: disable=E1120,E1123
                         q_model._model, self.fx_op_cfgs, prepare_custom_config_dict=self.prepare_custom_config_dict
                     )
             else:
@@ -3651,7 +3651,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         prepare_custom_config=self.prepare_custom_config_dict,
                     )
                 else:
-                    q_model._model = prepare_fx(
+                    q_model._model = prepare_fx( # pylint: disable=E1120,E1123
                         q_model._model, self.fx_op_cfgs, prepare_custom_config_dict=self.prepare_custom_config_dict
                     )
             else:
@@ -3832,7 +3832,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     ),
                 )
             else:
-                self.model._model = prepare_qat_fx(  # pylint: disable=E1120,1123
+                self.model._model = prepare_qat_fx(  # pylint: disable=E1120,E1123
                     self.model._model,
                     fx_op_cfgs,
                     prepare_custom_config_dict=(
