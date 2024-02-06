@@ -15,6 +15,7 @@
 from typing import Dict, Tuple
 
 import torch
+import copy
 
 from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, RTN, STATIC_QUANT  # unified namespace
 from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, RTNConfig, StaticQuantConfig
@@ -109,8 +110,9 @@ def static_quant_entry(
 
     # rebuild tune_cfg for static_quantize function
     quant_config_mapping = {}
-    quant_config_mapping["op"] = configs_mapping
-    for (op_name, op_type), cfg in configs_mapping.items():
+    cfgs = copy.deepcopy(configs_mapping)
+    quant_config_mapping["op"] = cfgs
+    for (op_name, op_type), cfg in cfgs.items():
         quant_config_mapping["op"][(op_name, op_type)] = {
             "weight": {
                 "dtype": cfg.w_dtype,
