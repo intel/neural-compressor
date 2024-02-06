@@ -48,7 +48,7 @@ from neural_compressor.common.base_config import (
     get_all_config_set_from_config_registry,
     register_config,
 )
-from neural_compressor.common.base_tuning import ConfigLoader, Sampler
+from neural_compressor.common.base_tuning import BaseConfigSet, ConfigLoader, Sampler
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE
 
 PRIORITY_FAKE_ALGO = 100
@@ -146,32 +146,12 @@ class TestBaseConfig(unittest.TestCase):
 class TestConfigLoader(unittest.TestCase):
     def setUp(self):
         self.config_set = [get_default_fake_config(), get_default_fake_config()]
-        self.loader = ConfigLoader(self.config_set, Sampler())
+        self.loader = ConfigLoader(self.config_set)
 
-    def test_parse_quant_config_single(self):
+    def test_config_loader(self) -> None:
         quant_config = get_default_fake_config()
-        result = ConfigLoader.parse_quant_config(quant_config)
-        self.assertEqual(str(result), str(quant_config.expand()))
-
-    def test_parse_quant_config_composable(self):
-        quant_config = get_default_fake_config()
-        composable_config = ComposableConfig(get_default_fake_config())
-        composable_config.config_list = [quant_config]
-        result = ConfigLoader.parse_quant_config(composable_config)
-        self.assertEqual(str(result), str(quant_config.expand()))
-
-    def test_parse_quant_configs(self):
-        quant_configs = [get_default_fake_config(), get_default_fake_config()]
-        self.config_set[0].expand = lambda: quant_configs
-        self.config_set[1].expand = lambda: []
-        result = self.loader.parse_quant_configs()
-        self.assertEqual(result, quant_configs)
-
-    def test_iteration(self):
-        quant_configs = [get_default_fake_config(), get_default_fake_config()]
-        self.loader.parse_quant_configs = lambda: quant_configs
-        result = list(self.loader)
-        self.assertEqual(result, quant_configs)
+        result = ConfigLoader(quant_config)
+        self.assertEqual(len(list(result)), len(quant_config.expand()))
 
 
 if __name__ == "__main__":

@@ -96,5 +96,5 @@ class TuningParam:
             new_args = DynamicInputArgsModel(input_args=value)
             return True
         except Exception as e:
-            logger.error(f"Failed to validate the input_args: {e}")
+            logger.warning(f"Failed to validate the input_args: {e}")
             return False
