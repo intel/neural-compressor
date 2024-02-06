@@ -138,7 +138,8 @@ class BaseConfigSet(_ConfigSet):
         self.config_list = config_list
 
     def __getitem__(self, index) -> BaseConfig:
-        pass
+        assert 0 <= index < len(self.config_list), f"Index {index} out of range."
+        return self.config_list[index]
 
     def __len__(self) -> int:
         return len(self.config_list)
