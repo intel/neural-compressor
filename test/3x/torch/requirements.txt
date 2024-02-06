@@ -1,2 +1,3 @@
+pydantic
 pytest
 transformers
