@@ -1,4 +1,5 @@
 """Tests for the TensorFlow pruning with distributed training and inference."""
+
 import hashlib
 import os
 import re

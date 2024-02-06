@@ -1,3 +1,5 @@
-intel-extension-for-tensorflow[cpu]
+prettytable
+psutil
+py-cpuinfo
 pyyaml
 tensorflow

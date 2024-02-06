@@ -1,4 +1,5 @@
 """Tests for quantization."""
+
 import shutil
 import unittest
 

@@ -1,4 +1,5 @@
 """Tests for the metrics module."""
+
 import platform
 import unittest
 

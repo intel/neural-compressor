@@ -1,4 +1,5 @@
 """Weight Squeezer."""
+
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #

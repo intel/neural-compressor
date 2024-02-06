@@ -92,9 +92,9 @@ class TestDistillation(unittest.TestCase):
             loss_weights=[0.5, 0.2, 0.3],
         )
 
-        distillation_criterion_conf.config.IntermediateLayersKnowledgeDistillationLoss.layer_mappings[2][1][
-            -1
-        ] = lambda x: x[:, :2, ...]
+        distillation_criterion_conf.config.IntermediateLayersKnowledgeDistillationLoss.layer_mappings[2][1][-1] = (
+            lambda x: x[:, :2, ...]
+        )
         optimizer = torch.optim.SGD(self.student_model.parameters(), lr=0.0001)
         conf = DistillationConfig(self.teacher_model, distillation_criterion_conf)
         compression_manager = prepare_compression(copy.deepcopy(self.student_model), conf)

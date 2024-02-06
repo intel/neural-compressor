@@ -160,29 +160,29 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, example_inputs, **kwarg
                     model,
                     fx_op_cfgs,
                     example_inputs=example_inputs,
-                    prepare_custom_config=kwargs.get("prepare_custom_config_dict", None)
-                    if kwargs is not None
-                    else None,
+                    prepare_custom_config=(
+                        kwargs.get("prepare_custom_config_dict", None) if kwargs is not None else None
+                    ),
                 )
                 model = convert_fx(
                     model,
-                    convert_custom_config=kwargs.get("convert_custom_config_dict", None)
-                    if kwargs is not None
-                    else None,
+                    convert_custom_config=(
+                        kwargs.get("convert_custom_config_dict", None) if kwargs is not None else None
+                    ),
                 )
             else:
                 model = prepare_qat_fx(
                     model,
                     fx_op_cfgs,
-                    prepare_custom_config_dict=kwargs.get("prepare_custom_config_dict", None)
-                    if kwargs is not None
-                    else None,
+                    prepare_custom_config_dict=(
+                        kwargs.get("prepare_custom_config_dict", None) if kwargs is not None else None
+                    ),
                 )
                 model = convert_fx(
                     model,
-                    convert_custom_config_dict=kwargs.get("convert_custom_config_dict", None)
-                    if kwargs is not None
-                    else None,
+                    convert_custom_config_dict=(
+                        kwargs.get("convert_custom_config_dict", None) if kwargs is not None else None
+                    ),
                 )
         else:
             logger.info("Fx trace of the entire model failed. " + "We will conduct auto quantization")

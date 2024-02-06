@@ -314,9 +314,11 @@ class MultiObjective:
         if self.relative:
             if len(base_acc) == 1:
                 acc_target = [
-                    base_acc[0] * (1 - float(self.acc_goal))
-                    if self.higher_is_better
-                    else base_acc[0] * (1 + float(self.acc_goal))
+                    (
+                        base_acc[0] * (1 - float(self.acc_goal))
+                        if self.higher_is_better
+                        else base_acc[0] * (1 + float(self.acc_goal))
+                    )
                 ]
             else:
                 # use metric_criterion to replace acc_criterion
@@ -361,9 +363,11 @@ class MultiObjective:
         if self.relative:
             if len(base_acc) == 1:
                 acc_target = [
-                    base_acc[0] * (1 - float(self.acc_goal))
-                    if self.higher_is_better
-                    else base_acc[0] * (1 + float(self.acc_goal))
+                    (
+                        base_acc[0] * (1 - float(self.acc_goal))
+                        if self.higher_is_better
+                        else base_acc[0] * (1 + float(self.acc_goal))
+                    )
                 ]
             else:
                 # use metric_criterion to replace acc_criterion
@@ -538,9 +542,11 @@ class MultiObjective:
         if len(base_acc) == 1:
             if self.relative:
                 acc_target = [
-                    base_acc[0] * (1 - float(self.acc_goal))
-                    if self.higher_is_better
-                    else base_acc[0] * (1 + float(self.acc_goal))
+                    (
+                        base_acc[0] * (1 - float(self.acc_goal))
+                        if self.higher_is_better
+                        else base_acc[0] * (1 + float(self.acc_goal))
+                    )
                 ]
             else:
                 acc_target = [
