@@ -14,3 +14,4 @@
 
 from .quantizer import HQQuantizer
 from .config import HQQModuleConfig, QTensorConfig
+from .quant_api import hqq_quantize
