@@ -24,7 +24,8 @@ __all__ = ["hqq_quantize"]
 
 
 def _convert_hqq_module_config(config) -> HQQModuleConfig:
-    nbits = config.nbits
+    # * 3.x API use `bits` for woq while HQQ internal API use `nbits`
+    nbits = config.bits
     group_size = config.group_size
     quant_zero = config.quant_zero
     quant_scale = config.quant_scale

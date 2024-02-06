@@ -675,7 +675,7 @@ class HQQConfig(BaseConfig):
 
     name = HQQ
     params_list = [
-        "nbits",
+        "bits",
         "group_size",
         "quant_zero",
         "quant_scale",
@@ -686,7 +686,7 @@ class HQQConfig(BaseConfig):
 
     def __init__(
         self,
-        nbits: int = 4,
+        bits: int = 4,
         group_size: int = 64,
         quant_zero: bool = True,
         quant_scale: bool = False,
@@ -695,7 +695,7 @@ class HQQConfig(BaseConfig):
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         super().__init__(white_list=white_list)
-        self.nbits = nbits
+        self.bits = bits
         self.group_size = group_size
         self.quant_zero = quant_zero
         self.quant_scale = quant_scale

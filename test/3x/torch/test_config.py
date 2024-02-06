@@ -291,8 +291,8 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertEqual(sq_config1.to_dict(), sq_config2.to_dict())
 
     def test_hqq_config(self):
-        hqq_config = HQQConfig(nbits=4, group_size=64, quant_zero=True)
-        quant_config_dict = {"hqq": {"nbits": 4, "group_size": 64, "quant_zero": True}}
+        hqq_config = HQQConfig(bits=4, group_size=64, quant_zero=True)
+        quant_config_dict = {"hqq": {"bits": 4, "group_size": 64, "quant_zero": True}}
         hqq_config2 = HQQConfig.from_dict(quant_config_dict["hqq"])
         self.assertEqual(hqq_config.to_dict(), hqq_config2.to_dict())
 
