@@ -123,9 +123,59 @@ class Evaluator:
 evaluator = Evaluator()
 
 
+from typing import Iterator, Optional, Sized
+
+
+class _ConfigSet:
+
+    def __getitem__(self, index) -> BaseConfig:
+        raise NotImplementedError
+
+
+class BaseConfigSet(_ConfigSet):
+
+    def __init__(self, config_list: List[BaseConfig]) -> None:
+        self.config_list = config_list
+
+    def __getitem__(self, index) -> BaseConfig:
+        pass
+
+    def __len__(self) -> int:
+        # TODO: impl it
+        pass
+
+    @classmethod
+    def from_fwk_configs(cls, fwk_configs: List[BaseConfig]) -> "BaseConfigSet":
+        # TODO: impl it
+        pass
+
+
 class Sampler:
-    # TODO Separate sorting functionality of `ConfigLoader` into `Sampler` in the follow-up PR.
-    pass
+    def __init__(self, config_source: Optional[_ConfigSet]) -> None:
+        pass
+
+    def __iter__(self) -> Iterator[BaseConfig]:
+        """Iterate over indices of config set elements."""
+        raise NotImplementedError
+
+
+class SequentialSampler(Sampler):
+    r"""Samples elements sequentially, always in the same order.
+
+    Args:
+        config_source (_ConfigSet): config set to sample from
+    """
+
+    config_source: Sized
+
+    def __init__(self, config_source: Sized) -> None:
+        self.config_source = config_source
+
+    def __iter__(self) -> Iterator[int]:
+        return iter(range(len(self.config_source)))
+
+    def __len__(self) -> int:
+        return len(self.config_source)
 
 
 class ConfigLoader:
