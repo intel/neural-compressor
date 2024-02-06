@@ -304,7 +304,6 @@ class BaseConfig(ABC):
 
         # Get the parameters and their default values
         parameters = signature.parameters
-        # defaults = {name: param.default for name, param in parameters.items() if param.default != inspect.Parameter.empty}
         return parameters.get(param).default
 
     def expand(self) -> List[BaseConfig]:
