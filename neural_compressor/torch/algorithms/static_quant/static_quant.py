@@ -119,9 +119,7 @@ def _ipex_post_quant_process(model, example_inputs, inplace=False):
             model = torch.jit.freeze(model.eval())
         except:
             if isinstance(example_inputs, dict):
-                model = torch.jit.trace(
-                    model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False
-                )
+                model = torch.jit.trace(model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False)
             else:
                 model = torch.jit.trace(model, example_inputs, strict=False)
             model = torch.jit.freeze(model.eval())
