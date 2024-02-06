@@ -724,7 +724,7 @@ class HQQConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "HQQConfig", List["HQQConfig"]]:
-        return HQQConfig(nbits=[4, 8])
+        return HQQConfig(bits=[4, 8])
 
 
 def get_default_hqq_config() -> HQQConfig:
