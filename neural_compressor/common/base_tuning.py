@@ -141,8 +141,7 @@ class BaseConfigSet(_ConfigSet):
         pass
 
     def __len__(self) -> int:
-        # TODO: impl it
-        pass
+        return len(self.config_list)
 
     @classmethod
     def from_fwk_configs(cls, fwk_configs: List[BaseConfig]) -> "BaseConfigSet":
