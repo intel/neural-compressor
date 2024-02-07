@@ -29,7 +29,7 @@ def quant_hqq(args):
     from neural_compressor.torch.quantization import HQQConfig, quantize
 
     hqq_config = HQQConfig(
-        nbits=args.nbits,
+        bits=args.bits,
         group_size=args.group_size,
         quant_zero=args.quant_zero,
         quant_scale=args.quant_scale,
@@ -46,7 +46,7 @@ def quant_hqq(args):
 def main():
     parser = argparse.ArgumentParser(description="HQQ quantization")
     parser.add_argument("--model_id", type=str, default="facebook/opt-125m", help="Model id")
-    parser.add_argument("--nbits", type=int, default=4, help="Number of bits")
+    parser.add_argument("--bits", type=int, default=4, help="Number of bits")
     parser.add_argument("--group_size", type=int, default=64, help="Group size")
     parser.add_argument("--quant_zero", action="store_true", default=False, help="Quantize zero")
     parser.add_argument("--quant_scale", action="store_true", default=False, help="Quantize scale")
@@ -61,6 +61,6 @@ def main():
 if __name__ == "__main__":
     main()
 
-# python quant_model.py --model_id /models/opt-125m --nbits 4 --group_size 64 --quant_zero --quant_scale --scale_quant_group_size 128 --eval
-# python quant_model.py --model_id /models/Llama-2-7b-hf --nbits 4 --group_size 64 --quant_zero --quant_scale --scale_quant_group_size 128 --eval
-# python quant_model.py --model_id /mnt/disk4/modelHub/opt-125m --nbits 4 --group_size 64 --quant_zero --quant_scale --scale_quant_group_size 128  --eval
+# python quant_model.py --model_id /models/opt-125m --bits 4 --group_size 64 --quant_zero --quant_scale --scale_quant_group_size 128 --eval
+# python quant_model.py --model_id /models/Llama-2-7b-hf --bits 4 --group_size 64 --quant_zero --quant_scale --scale_quant_group_size 128 --eval
+# python quant_model.py --model_id /mnt/disk4/modelHub/opt-125m --bits 4 --group_size 64 --quant_zero --quant_scale --scale_quant_group_size 128  --eval
