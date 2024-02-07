@@ -16,6 +16,7 @@ Classes
 
    neural_compressor.torch.quantization.config.RTNConfig
    neural_compressor.torch.quantization.config.GPTQConfig
+   neural_compressor.torch.quantization.config.HQQConfig
 
 
 
@@ -26,6 +27,7 @@ Functions
 
    neural_compressor.torch.quantization.config.get_default_rtn_config
    neural_compressor.torch.quantization.config.get_default_gptq_config
+   neural_compressor.torch.quantization.config.get_default_hqq_config
 
 
 
@@ -60,5 +62,20 @@ Functions
    Generate the default gptq config.
 
    :returns: the default gptq config.
+
+
+.. py:class:: HQQConfig(bits: int = 4, group_size: int = 64, quant_zero: bool = True, quant_scale: bool = False, scale_quant_group_size: int = 128, skip_lm_head: bool = True, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+
+
+
+
+   The base config for all algorithm configs.
+
+
+.. py:function:: get_default_hqq_config() -> HQQConfig
+
+   Generate the default HQQ config.
+
+   :returns: the default HQQ config.
 
 

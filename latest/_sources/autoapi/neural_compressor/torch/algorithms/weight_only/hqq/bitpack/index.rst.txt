@@ -1,0 +1,22 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.weight_only.hqq.bitpack`
+====================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.hqq.bitpack
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.bitpack.Packer
+
+
+
+
+

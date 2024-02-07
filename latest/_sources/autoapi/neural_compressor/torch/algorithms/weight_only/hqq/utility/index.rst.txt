@@ -1,0 +1,31 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.weight_only.hqq.utility`
+====================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.hqq.utility
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.utility.is_divisible
+   neural_compressor.torch.algorithms.weight_only.hqq.utility.dump_elapsed_time
+
+
+
+
+.. py:function:: dump_elapsed_time(customized_msg='')
+
+   Get the elapsed time for decorated functions.
+
+   :param customized_msg: The parameter passed to decorator. Defaults to None.
+   :type customized_msg: string, optional
+
+

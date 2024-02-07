@@ -1,0 +1,71 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.weight_only.hqq.auto_accelerator`
+=============================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.hqq.auto_accelerator
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.auto_accelerator.Auto_Accelerator
+   neural_compressor.torch.algorithms.weight_only.hqq.auto_accelerator.CPU_Accelerator
+   neural_compressor.torch.algorithms.weight_only.hqq.auto_accelerator.CUDA_Accelerator
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.auto_accelerator.register_accelerator
+
+
+
+.. py:function:: register_accelerator(name: str, priority: float = 0) -> Callable[Ellipsis, Any]
+
+   Register new accelerator.
+
+   Usage example:
+       @register_accelerator(name="cuda", priority=100)
+       class CUDA_Accelerator:
+           ...
+
+   :param name: the accelerator name.
+   :param priority: the priority of the accelerator. A larger number indicates a higher priority,
+
+
+.. py:class:: Auto_Accelerator
+
+
+
+
+   Helper class that provides a standard way to create an ABC using
+   inheritance.
+
+
+.. py:class:: CPU_Accelerator
+
+
+
+
+   Helper class that provides a standard way to create an ABC using
+   inheritance.
+
+
+.. py:class:: CUDA_Accelerator
+
+
+
+
+   Helper class that provides a standard way to create an ABC using
+   inheritance.
+
+

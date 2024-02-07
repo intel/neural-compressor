@@ -1,0 +1,55 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.weight_only.hqq.config`
+===================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.hqq.config
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.config.QTensorConfig
+   neural_compressor.torch.algorithms.weight_only.hqq.config.HQQModuleConfig
+
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.config.hqq_global_option
+   neural_compressor.torch.algorithms.weight_only.hqq.config.default_weight_quant_config
+   neural_compressor.torch.algorithms.weight_only.hqq.config.default_scale_quant_config
+   neural_compressor.torch.algorithms.weight_only.hqq.config.default_zero_quant_config
+   neural_compressor.torch.algorithms.weight_only.hqq.config.default_hqq_module_config
+   neural_compressor.torch.algorithms.weight_only.hqq.config.ConfigMappingType
+
+
+
+
+
+
+
+.. py:class:: HQQModuleConfig
+
+
+
+
+   Built-in immutable sequence.
+
+   If no argument is given, the constructor returns an empty tuple.
+   If iterable is specified the tuple is initialized from iterable's items.
+
+   If the argument is a tuple, the return value is the same object.
+
+
+
+

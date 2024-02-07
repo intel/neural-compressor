@@ -1,0 +1,24 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.weight_only.hqq.core`
+=================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.hqq.core
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.core.HQQTensorHandle
+   neural_compressor.torch.algorithms.weight_only.hqq.core.HQQLinear
+
+
+
+
+
+
