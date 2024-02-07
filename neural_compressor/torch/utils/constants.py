@@ -43,6 +43,7 @@ DOUBLE_QUANT_CONFIGS = {
 }
 
 # Setting priorities for algorithms, a higher number indicates a higher priority.
-PRIORITY_RTN = 80
 PRIORITY_GPTQ = 90
+PRIORITY_RTN = 80
+PRIORITY_HQQ = 75
 PRIORITY_AWQ = 70

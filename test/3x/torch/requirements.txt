@@ -1,2 +1,5 @@
+numpy
+psutil
 pytest
+torch
 transformers
