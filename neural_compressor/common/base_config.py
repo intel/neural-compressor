@@ -348,7 +348,6 @@ class BaseConfig(ABC):
         for param in params_list:
             # Create `TuningParam` for each param
             # There are two cases:
-            #
             # 1. The param is a string.
             # 2. The param is a `TuningParam` instance.
             if isinstance(param, str):
