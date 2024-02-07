@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, Tuple
+from copy import deepcopy
+from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, RTN  # unified namespace
-from neural_compressor.torch.algorithms.weight_only import awq_quantize, gptq_quantize, rtn_quantize
-from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, RTNConfig
+from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT
+from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, HQQConfig, RTNConfig, StaticQuantConfig
 from neural_compressor.torch.utils import logger, register_algo
 
 
@@ -29,6 +29,8 @@ def rtn_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNConfig], *args, **kwargs
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
+    from neural_compressor.torch.algorithms.weight_only import rtn_quantize
+
     # rebuild weight_config for rtn_quantize function
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
@@ -60,6 +62,8 @@ def gptq_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
+    from neural_compressor.torch.algorithms.weight_only import gptq_quantize
+
     # rebuild weight_config for gptq_quantize function
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
@@ -95,6 +99,50 @@ def gptq_entry(
     return model
 
 
+###################### Static Quant Algo Entry ##################################
+@register_algo(name=STATIC_QUANT)
+@torch.no_grad()
+def static_quant_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig], *args, **kwargs
+) -> torch.nn.Module:
+    logger.info("Quantize model with the static quant algorithm.")
+    from neural_compressor.torch.algorithms.static_quant import static_quantize
+
+    # rebuild tune_cfg for static_quantize function
+    quant_config_mapping = {}
+    cfgs = deepcopy(configs_mapping)
+    quant_config_mapping["op"] = cfgs
+    for (op_name, op_type), cfg in cfgs.items():
+        quant_config_mapping["op"][(op_name, op_type)] = {
+            "weight": {
+                "dtype": cfg.w_dtype,
+                "scheme": "sym",
+                "granularity": cfg.w_granularity,
+                "algorithm": cfg.w_algo,
+            },
+            "activation": {
+                "dtype": cfg.act_dtype,
+                "scheme": "sym" if cfg.act_sym else "asym",
+                "granularity": cfg.act_granularity,
+                "algorithm": cfg.act_algo,
+            },
+        }
+
+    run_fn = kwargs.get("run_fn", None)
+    example_inputs = kwargs.get("example_inputs", None)
+    inplace = kwargs.get("inplace", True)
+    assert example_inputs is not None, "Please provide example_inputs for static quantization."
+    q_model = static_quantize(
+        model=model,
+        tune_cfg=quant_config_mapping,
+        run_fn=run_fn,
+        example_inputs=example_inputs,
+        inplace=inplace,
+    )
+    logger.info("Static quantization done.")
+    return q_model
+
+
 ###################### AWQ Algo Entry ##################################
 @register_algo(name=AWQ)
 @torch.no_grad()
@@ -102,6 +150,7 @@ def awq_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AWQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the AWQ algorithm.")
+    from neural_compressor.torch.algorithms.weight_only import awq_quantize
 
     weight_config = {}
     for (op_name, op_type), op_config in configs_mapping.items():
@@ -152,6 +201,19 @@ def awq_quantize_entry(
     )
     logger.info("AWQ quantization done.")
     return model
+
+
+###################### HQQ Algo Entry ##################################
+@register_algo(name=HQQ)
+@torch.no_grad()
+def hqq_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, Callable], HQQConfig], *args, **kwargs
+) -> torch.nn.Module:
+    from neural_compressor.torch.algorithms.weight_only import hqq_quantize
+
+    logger.info("Quantize model with the HQQ algorithm.")
+    q_model = hqq_quantize(model, configs_mapping)
+    return q_model
 
 
 ###################### Habana FP8 Algo Entry ##################################

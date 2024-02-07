@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .rtn import rtn_quantize
-from .gptq import gptq_quantize
-from .awq import awq_quantize
-from .hqq import hqq_quantize
-from .modules import WeightOnlyLinear
-from .utility import *
+from .quantizer import HQQuantizer
+from .config import HQQModuleConfig, QTensorConfig
+from .quant_api import hqq_quantize
