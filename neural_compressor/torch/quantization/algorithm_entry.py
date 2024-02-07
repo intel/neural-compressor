@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import copy
-from typing import Dict, Tuple
+from copy import deepcopy
+from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, RTN, STATIC_QUANT  # unified namespace
-from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, RTNConfig, StaticQuantConfig
+from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT
+from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, HQQConfig, RTNConfig, StaticQuantConfig
 from neural_compressor.torch.utils import logger, register_algo
 
 
@@ -110,7 +110,7 @@ def static_quant_entry(
 
     # rebuild tune_cfg for static_quantize function
     quant_config_mapping = {}
-    cfgs = copy.deepcopy(configs_mapping)
+    cfgs = deepcopy(configs_mapping)
     quant_config_mapping["op"] = cfgs
     for (op_name, op_type), cfg in cfgs.items():
         quant_config_mapping["op"][(op_name, op_type)] = {
@@ -201,6 +201,19 @@ def awq_quantize_entry(
     )
     logger.info("AWQ quantization done.")
     return model
+
+
+###################### HQQ Algo Entry ##################################
+@register_algo(name=HQQ)
+@torch.no_grad()
+def hqq_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, Callable], HQQConfig], *args, **kwargs
+) -> torch.nn.Module:
+    from neural_compressor.torch.algorithms.weight_only import hqq_quantize
+
+    logger.info("Quantize model with the HQQ algorithm.")
+    q_model = hqq_quantize(model, configs_mapping)
+    return q_model
 
 
 ###################### Habana FP8 Algo Entry ##################################

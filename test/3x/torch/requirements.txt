@@ -1,3 +1,6 @@
+numpy
 prettytable
+psutil
 pytest
+torch
 transformers
