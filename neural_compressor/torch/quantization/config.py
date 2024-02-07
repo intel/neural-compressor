@@ -16,6 +16,7 @@
 # limitations under the License.
 # pylint:disable=import-error
 
+from collections import OrderedDict
 from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import torch
@@ -531,20 +532,15 @@ class StaticQuantConfig(BaseConfig):
         cls.supported_configs = supported_configs
 
     @staticmethod
-    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
-        filter_result = []
-        for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
-                pair = (op_name, type(module).__name__)
-                filter_result.append(pair)
-        logger.debug(f"Get model info: {filter_result}")
-        return filter_result
+    def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
+        from neural_compressor.torch.algorithms.static_quant import get_quantizable_ops_recursively
+
+        model_info, _, _, _ = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
+        return model_info
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
-        # TODO fwk owner needs to update it.
-        return StaticQuantConfig(w_sym=[True, False])
+        return StaticQuantConfig(act_sym=[True, False], act_algo=["kl", "minmax"])
 
 
 def get_default_static_config() -> StaticQuantConfig:

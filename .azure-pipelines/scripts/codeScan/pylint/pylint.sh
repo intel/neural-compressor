@@ -22,7 +22,7 @@ apt-get install -y --no-install-recommends --fix-missing \
 pip install -r /neural-compressor/requirements.txt
 pip install cmake
 
-pip install torch==1.12.0 \
+pip install torch \
             horovod \
             google \
             autograd \
