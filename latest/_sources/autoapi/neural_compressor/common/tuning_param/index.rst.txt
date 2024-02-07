@@ -1,0 +1,63 @@
+:orphan:
+
+:py:mod:`neural_compressor.common.tuning_param`
+===============================================
+
+.. py:module:: neural_compressor.common.tuning_param
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.common.tuning_param.ParamLevel
+   neural_compressor.common.tuning_param.TuningParam
+
+
+
+
+.. py:class:: ParamLevel
+
+
+
+
+   Generic enumeration.
+
+   Derive from this class to define new enumerations.
+
+
+.. py:class:: TuningParam(name: str, default_val: Any = None, tunable_type=None, options=None, level: ParamLevel = ParamLevel.OP_LEVEL)
+
+
+   Define the tunable parameter for the algorithm.
+
+   .. rubric:: Example
+
+   Class FakeAlgoConfig(BaseConfig):
+       '''Fake algo config.'''.
+
+       params_list = [
+           ...
+           # For simple tunable types, like a list of int, giving
+           # the param name is enough. `BaseConfig` class will
+           # create the `TuningParam` implicitly.
+           "simple_attr"
+
+           # For complex tunable types, like a list of lists,
+           # developers need to create the `TuningParam` explicitly.
+           TuningParam("complex_attr", tunable_type=List[List[str]])
+
+           # The default parameter level is `ParamLevel.OP_LEVEL`.
+           # If the parameter is at a different level, developers need
+           # to specify it explicitly.
+           TuningParam("model_attr", level=ParamLevel.MODEL_LEVEL)
+
+       ...
+
+   # TODO: more examples to explain the usage of `TuningParam`.
+
+

@@ -27,6 +27,7 @@ Functions
    neural_compressor.common.set_resume_from
    neural_compressor.common.set_workspace
    neural_compressor.common.set_tensorboard
+   neural_compressor.common.dump_elapsed_time
 
 
 
@@ -37,6 +38,7 @@ Attributes
 
    neural_compressor.common.level
    neural_compressor.common.options
+
 
 
 

@@ -15,11 +15,20 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.common.utils.utility.dump_elapsed_time
    neural_compressor.common.utils.utility.set_random_seed
    neural_compressor.common.utils.utility.set_workspace
    neural_compressor.common.utils.utility.set_resume_from
    neural_compressor.common.utils.utility.set_tensorboard
 
+
+
+.. py:function:: dump_elapsed_time(customized_msg='')
+
+   Get the elapsed time for decorated functions.
+
+   :param customized_msg: The parameter passed to decorator. Defaults to None.
+   :type customized_msg: string, optional
 
 
 .. py:function:: set_random_seed(seed: int)
