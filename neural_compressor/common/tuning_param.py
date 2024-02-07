@@ -43,7 +43,7 @@ class TuningParam:
 
                 # For complex tunable types, like a list of lists,
                 # developers need to create the `TuningParam` explicitly.
-                TuningParam("complex_attr", tunable_type=List[List])
+                TuningParam("complex_attr", tunable_type=List[List[str]])
 
                 # The default parameter level is `ParamLevel.OP_LEVEL`.
                 # If the parameter is at a different level, developers need
@@ -96,5 +96,5 @@ class TuningParam:
             new_args = DynamicInputArgsModel(input_args=value)
             return True
         except Exception as e:
-            logger.warning(f"Failed to validate the input_args: {e}")
+            logger.debug(f"Failed to validate the input_args: {e}")
             return False

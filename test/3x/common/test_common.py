@@ -48,7 +48,7 @@ from neural_compressor.common.base_config import (
     get_all_config_set_from_config_registry,
     register_config,
 )
-from neural_compressor.common.base_tuning import ConfigLoader, ConfigSet, Sampler
+from neural_compressor.common.base_tuning import ConfigLoader, ConfigSet, SequentialSampler
 from neural_compressor.common.tuning_param import TuningParam
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE
 
@@ -67,7 +67,7 @@ class FakeAlgoConfig(BaseConfig):
     params_list = [
         "weight_dtype",
         "weight_bits",
-        TuningParam("target_op_type_list", tunable_type=List[str]),
+        TuningParam("target_op_type_list", tunable_type=List[List[str]]),
     ]
     name = FAKE_CONFIG_NAME
 
@@ -146,16 +146,43 @@ class TestBaseConfig(unittest.TestCase):
         self.assertEqual(len(config_set), 1)
         self.assertEqual(config_set[0].weight_bits, DEFAULT_WEIGHT_BITS)
 
+    def test_config_expand_complex_tunable_type(self):
+        target_op_type_list_options = [["Conv", "Gemm"], ["Conv", "Matmul"]]
+        configs = FakeAlgoConfig(target_op_type_list=target_op_type_list_options)
+        configs_list = configs.expand()
+        self.assertEqual(len(configs_list), len(target_op_type_list_options))
+        for i in range(len(configs_list)):
+            self.assertEqual(configs_list[i].target_op_type_list, target_op_type_list_options[i])
+
+
+class TestConfigSet(unittest.TestCase):
+    def setUp(self):
+        self.config_set = [get_default_fake_config(), get_default_fake_config()]
+        self.config_set_obj = ConfigSet.from_fwk_configs(self.config_set)
+
+    def test_config_set(self) -> None:
+        self.assertEqual(len(self.config_set_obj), len(self.config_set))
+        self.assertEqual(self.config_set_obj[0].weight_bits, self.config_set[0].weight_bits)
+
+
+class TestConfigSampler(unittest.TestCase):
+    def setUp(self):
+        self.config_set = [get_default_fake_config(), get_default_fake_config()]
+        self.seq_sampler = SequentialSampler(self.config_set)
+
+    def test_config_sampler(self) -> None:
+        self.assertEqual(list(self.seq_sampler), list(range(len(self.config_set))))
+
 
 class TestConfigLoader(unittest.TestCase):
     def setUp(self):
-        self.config_set = [get_default_fake_config(), get_default_fake_config()]
+        self.config_set = [FakeAlgoConfig(weight_bits=4), FakeAlgoConfig(weight_bits=8)]
         self.loader = ConfigLoader(self.config_set)
 
     def test_config_loader(self) -> None:
-        quant_config = get_default_fake_config()
-        result = ConfigLoader(quant_config)
-        self.assertEqual(len(list(result)), len(quant_config.expand()))
+        self.assertEqual(len(list(self.loader)), len(self.config_set))
+        for i, config in enumerate(self.loader):
+            self.assertEqual(config, self.config_set[i])
 
 
 if __name__ == "__main__":
