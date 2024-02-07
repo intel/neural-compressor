@@ -39,7 +39,8 @@ pip install torch \
             prettytable \
             psutil \
             py-cpuinfo \
-            pyyaml
+            pyyaml \
+            pydantic \
 
 if [ "${scan_module}" = "neural_solution" ]; then
     cd /neural-compressor
