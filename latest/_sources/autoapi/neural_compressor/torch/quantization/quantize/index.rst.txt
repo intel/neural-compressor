@@ -19,7 +19,7 @@ Functions
 
 
 
-.. py:function:: quantize(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig, run_fn: Callable = None, run_args: Any = None, example_inputs=None, inplace: bool = True) -> torch.nn.Module
+.. py:function:: quantize(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig, run_fn: Callable = None, run_args: Any = None, inplace: bool = True, example_inputs: Any = None) -> torch.nn.Module
 
    The main entry to quantize model with static mode.
 
@@ -27,6 +27,7 @@ Functions
    :param quant_config: a quantization configuration.
    :param run_fn: a calibration function for calibrating the model. Defaults to None.
    :param run_args: positional arguments for `run_fn`. Defaults to None.
+   :param example_inputs: used to trace torch model.
 
    :returns: The quantized model.
 

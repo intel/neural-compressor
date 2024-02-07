@@ -1,0 +1,121 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.static_quant.utility`
+=================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.static_quant.utility
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.static_quant.utility.TransformerBasedModelBlockPatternDetector
+   neural_compressor.torch.algorithms.static_quant.utility.Statistics
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.static_quant.utility.get_depth
+   neural_compressor.torch.algorithms.static_quant.utility.get_dict_at_depth
+   neural_compressor.torch.algorithms.static_quant.utility.get_element_under_depth
+   neural_compressor.torch.algorithms.static_quant.utility.paser_cfgs
+   neural_compressor.torch.algorithms.static_quant.utility.get_quantizable_ops_from_cfgs
+   neural_compressor.torch.algorithms.static_quant.utility.simple_inference
+   neural_compressor.torch.algorithms.static_quant.utility.dump_model_op_stats
+   neural_compressor.torch.algorithms.static_quant.utility.get_quantizable_ops_recursively
+
+
+
+.. py:function:: get_depth(d) -> int
+
+   Query the depth of the dict.
+
+
+.. py:function:: get_dict_at_depth(d, target_depth, result, depth=0)
+
+   Get all sub-dicts that are at a specified depth in a nested dict.
+
+
+.. py:function:: get_element_under_depth(d, ops_lst)
+
+   Get all values in a nested dict.
+
+
+.. py:function:: paser_cfgs(cfgs)
+
+   Parse configs.
+
+   :param cfgs: the input configs.
+   :type cfgs: dict
+
+   :returns: list of op names.
+             tune_cfg (dict): dictionary of quantization configuration.
+             op_infos_from_cfgs (dict): op infos from configs.
+             output_tensor_ids_op_name (dict): dictionary of output tensor op names.
+   :rtype: ops_name (list)
+
+
+.. py:function:: get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_ids_op_name)
+
+   Get quantizable ops from configs, combine fused ops as one op.
+
+   :param ops_name: list of op names.
+   :type ops_name: list
+   :param op_infos_from_cfgs: op infos from configs.
+   :type op_infos_from_cfgs: dict
+   :param input_tensor_ids_op_name: dictionary of input tensor op names.
+   :type input_tensor_ids_op_name: dict
+
+   :returns: cfgs (dict).
+
+
+.. py:function:: simple_inference(q_model, example_inputs, iterations=1)
+
+   The function is used for ipex warm-up inference.
+
+
+.. py:function:: dump_model_op_stats(tune_cfg)
+
+   This is a function to dump quantizable ops of model to user.
+
+   :param tune_cfg: quantization config
+   :type tune_cfg: dict
+
+   :returns: None
+
+
+.. py:function:: get_quantizable_ops_recursively(model, example_inputs)
+
+   Get all quantizable ops from model.
+
+   :param model: input model
+   :type model: object
+   :param example_inputs: used to trace torch model.
+   :type example_inputs: dict|list|tuple|torch.Tensor
+
+   :returns: list of tuples of op_name and op_type.
+             cfgs (dict): dict of configuration
+   :rtype: quantizable_ops (list)
+
+
+.. py:class:: TransformerBasedModelBlockPatternDetector(model: torch.nn.Module, pattern_lst: List[List[Union[str, int]]] = BLOCK_PATTERNS)
+
+
+   Detect the attention block and FFN block in transformer-based model.
+
+
+.. py:class:: Statistics(data, header, field_names, output_handle=logger.info)
+
+
+   The statistics printer.
+
+
