@@ -16,9 +16,9 @@ from typing import Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import FP8_QUANT, GPTQ, RTN  # unified namespace
-from neural_compressor.torch.algorithms.weight_only import gptq_quantize, rtn_quantize
-from neural_compressor.torch.quantization import GPTQConfig, RTNConfig
+from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, RTN  # unified namespace
+from neural_compressor.torch.algorithms.weight_only import awq_quantize, gptq_quantize, rtn_quantize
+from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, RTNConfig
 from neural_compressor.torch.utils import logger, register_algo
 
 
@@ -60,10 +60,97 @@ def gptq_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
+    # rebuild weight_config for gptq_quantize function
+    weight_config = {}
+    for (op_name, op_type), quant_config in configs_mapping.items():
+        weight_config[op_name] = {
+            "dtype": quant_config.dtype,
+            "bits": quant_config.bits,
+            "sym": quant_config.use_sym,
+            "group_size": quant_config.group_size,
+            "mse": quant_config.use_mse_search,
+            "use_double_quant": quant_config.use_double_quant,
+            "double_quant_dtype": quant_config.double_quant_dtype,
+            "double_quant_bits": quant_config.double_quant_bits,
+            "double_quant_sym": quant_config.double_quant_use_sym,
+            "double_quant_group_size": quant_config.double_quant_group_size,
+            "act_order": quant_config.act_order,
+            "percdamp": quant_config.percdamp,
+            "block_size": quant_config.block_size,
+            "static_groups": quant_config.static_groups,
+        }
+    kwargs.update(
+        {
+            "export_compressed_model": quant_config.export_compressed_model,
+            "use_layer_wise": quant_config.use_layer_wise,
+            "model_path": quant_config.model_path,
+        }
+    )
+    kwargs.pop("example_inputs")
 
-    model, quantization_perm = gptq_quantize(model=model, configs_mapping=configs_mapping, *args, **kwargs)
+    logger.warning("lm_head in transformer model is skipped by GPTQ")
+    model, quantization_perm = gptq_quantize(model=model, weight_config=weight_config, *args, **kwargs)
     # Assign the gptq config as an attribute of model
     model._gptq_quantization_perm = quantization_perm
+    return model
+
+
+###################### AWQ Algo Entry ##################################
+@register_algo(name=AWQ)
+@torch.no_grad()
+def awq_quantize_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AWQConfig], *args, **kwargs
+) -> torch.nn.Module:
+    logger.info("Quantize model with the AWQ algorithm.")
+
+    weight_config = {}
+    for (op_name, op_type), op_config in configs_mapping.items():
+        if op_config.dtype == "fp32":
+            weight_config[op_name] = {
+                "bits": -1,
+                "dtype": "fp32",  # skip quantization
+                "group_size": 128,
+                "scheme": "asym",
+            }
+        else:
+            weight_config[op_name] = {
+                "dtype": op_config.dtype,
+                "bits": op_config.bits,
+                "group_size": op_config.group_size,
+                "group_dim": op_config.group_dim,
+                "scheme": "sym" if op_config.use_sym else "asym",
+                "use_full_range": op_config.use_full_range,
+                "use_mse_search": op_config.use_mse_search,
+                "use_layer_wise": op_config.use_layer_wise,
+                "export_compressed_model": op_config.export_compressed_model,
+                "use_double_quant": op_config.use_double_quant,
+                "double_quant_dtype": op_config.double_quant_dtype,
+                "double_quant_bits": op_config.double_quant_bits,
+                "double_quant_scheme": op_config.double_quant_use_sym,
+                "double_quant_group_size": op_config.double_quant_group_size,
+            }
+            use_auto_scale = op_config.use_auto_scale
+            use_mse_search = op_config.use_auto_clip  # for awq clip
+            folding = op_config.folding
+            return_int = op_config.export_compressed_model
+            use_full_range = op_config.use_full_range
+
+    calib_func = kwargs.get("run_fn", None)
+    example_inputs = kwargs.get("example_inputs", None)
+    assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
+    model = awq_quantize(
+        model,
+        bits=-1,  # no quantize for op not in weight_config
+        example_inputs=example_inputs,  # must be required
+        calib_func=calib_func,
+        weight_config=weight_config,
+        use_auto_scale=use_auto_scale,
+        use_mse_search=use_mse_search,
+        folding=folding,
+        return_int=return_int,
+        use_full_range=use_full_range,
+    )
+    logger.info("AWQ quantization done.")
     return model
 
 

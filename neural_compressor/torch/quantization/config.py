@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ from neural_compressor.common.base_config import (
     register_supported_configs_for_fwk,
 )
 from neural_compressor.common.utils import (
+    AWQ,
     DEFAULT_WHITE_LIST,
     FP8_QUANT,
     GPTQ,
@@ -36,7 +37,7 @@ from neural_compressor.common.utils import (
     STATIC_QUANT,
 )
 from neural_compressor.torch.utils import is_hpex_available, logger
-from neural_compressor.torch.utils.constants import PRIORITY_GPTQ, PRIORITY_RTN
+from neural_compressor.torch.utils.constants import PRIORITY_AWQ, PRIORITY_GPTQ, PRIORITY_RTN
 
 __all__ = [
     "RTNConfig",
@@ -65,12 +66,16 @@ class RTNConfig(BaseConfig):
     params_list = [
         "dtype",
         "bits",
-        "group_size",
         "use_sym",
+        "group_size",
+        "group_dim",
         "use_full_range",
         "use_mse_search",
-        "use_layer_wise",
         "export_compressed_model",
+        # layer wise params
+        "use_layer_wise",
+        "model_path",
+        # double quant
         "use_double_quant",
         "double_quant_dtype",
         "double_quant_bits",
@@ -88,13 +93,15 @@ class RTNConfig(BaseConfig):
         group_dim: int = 1,
         use_full_range: bool = False,
         use_mse_search: bool = False,
-        use_layer_wise: bool = False,
         export_compressed_model: bool = False,
+        # layer wise
+        use_layer_wise: bool = False,
+        model_path: str = "",
         # double quant
         use_double_quant: bool = False,
         double_quant_dtype: str = "int",
         double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
-        double_quant_use_sym: bool = True,
+        double_quant_use_sym: bool = False,
         double_quant_group_size: int = 256,
         # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
@@ -102,20 +109,21 @@ class RTNConfig(BaseConfig):
         """Init RTN weight-only quantization config.
 
         Args:
-            dtype (str): Data type for weights, default is "int".
-            bits (int): Number of bits used to represent weights, default is 4.
-            use_sym (bool): Indicates whether weights are symmetric, default is True.
-            group_size (int): Size of weight groups, default is 32.
-            group_dim (int): Dimension for grouping, default is 1.
-            use_full_range (bool): Enables full range for activations, default is False.
-            use_mse_search (bool): Enables mean squared error (MSE) search, default is False.
-            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            dtype (str): Data type for weights. Default is "int".
+            bits (int): Number of bits used to represent weights. Default is 4.
+            use_sym (bool): Indicates whether weights are symmetric. Default is True.
+            group_size (int): Size of weight groups. Default is 32.
+            group_dim (int): Dimension for grouping. Default is 1.
+            use_full_range (bool): Enables full range for activations. Default is False.
+            use_mse_search (bool): Enables mean squared error (MSE) search. Default is False.
             export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
-            use_double_quant (bool): Enables double quantization, default is False.
-            double_quant_dtype (str): Data type for double_quant scale, default is "int".
-            double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
-            double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
-            double_quant_group_size (int): Size of double_quant groups, default is 32.
+            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            model_path (str): Model path that is used to load state_dict per layer.
+            use_double_quant (bool): Enables double quantization. Default is False.
+            double_quant_dtype (str): Data type for double_quant scale. Default is "int".
+            double_quant_bits (int): Number of bits used to represent double_quant scale. Default is 4.
+            double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric. Default is True.
+            double_quant_group_size (int): Size of double_quant groups. Default is 32.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
@@ -125,15 +133,16 @@ class RTNConfig(BaseConfig):
         self.group_dim = group_dim
         self.use_full_range = use_full_range
         self.use_mse_search = use_mse_search
-        self.use_layer_wise = use_layer_wise
         self.export_compressed_model = export_compressed_model
+        self.use_layer_wise = use_layer_wise
+        self.model_path = model_path
         # double quant
         self.use_double_quant = use_double_quant
         self.double_quant_bits = double_quant_bits
         self.double_quant_dtype = double_quant_dtype
         self.double_quant_use_sym = double_quant_use_sym
         self.double_quant_group_size = double_quant_group_size
-        self._post_init()  # initialize local configuration
+        self._post_init()  # initialize global & local configuration
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
@@ -204,89 +213,107 @@ class GPTQConfig(BaseConfig):
     name = GPTQ
     supported_configs: List[OperatorConfig] = []
     params_list = [
-        "weight_dtype",
-        "weight_bits",
-        "weight_group_size",
-        "weight_sym",
-        "block_size",
-        "act_dtype",
-        "group_dim",
-        "nsamples",
-        "dataloader_len",
-        "percdamp",
-        "act_order",
-        "use_max_length",
-        "pad_max_length",
-        "enable_mse_search",
-        "device",
-        "layer_wise",
-        "return_int",
+        "dtype",
+        "bits",
+        "use_sym",
+        "group_size",
+        "use_mse_search",
+        "export_compressed_model",
+        "use_double_quant",
         "double_quant_dtype",
         "double_quant_bits",
-        "double_quant_sym",
+        "double_quant_use_sym",
         "double_quant_group_size",
+        # layer wise params
+        "use_layer_wise",
+        "model_path",
+        # gptq params
+        "act_order",
+        "percdamp",
+        "block_size",
+        "static_groups",
     ]
 
     def __init__(
         self,
-        weight_dtype: str = "int",
-        weight_bits: int = 4,
-        weight_group_size: int = 32,
-        weight_sym: bool = True,
-        block_size: int = 128,
-        act_dtype: str = "fp32",
-        group_dim: int = 1,
-        nsamples: int = 128,
-        dataloader_len: int = 10,
-        percdamp: float = 0.01,
-        act_order: bool = False,
-        use_max_length: bool = True,
-        pad_max_length: int = 2048,
-        enable_mse_search: bool = False,
-        device=None,
-        layer_wise: bool = False,
-        return_int: bool = False,
-        double_quant_dtype: str = "fp32",
-        double_quant_bits: int = 8,
-        double_quant_sym: bool = True,
+        dtype: str = "int",
+        bits: int = 4,
+        use_sym: bool = True,
+        group_size: int = 32,
+        use_mse_search: bool = False,
+        export_compressed_model: bool = False,
+        # layer wise
+        use_layer_wise: bool = False,
+        model_path: str = "",
+        # double quant
+        use_double_quant: bool = False,
+        double_quant_dtype: str = "int",
+        double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
+        double_quant_use_sym: bool = False,
         double_quant_group_size: int = 256,
+        # gptq params
+        act_order: bool = False,
+        percdamp: float = 0.01,
+        block_size: int = 2048,
+        static_groups: bool = False,
+        # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
-        """Init GPTQ config.
+        """Init RTN weight-only quantization config.
 
         Args:
+            dtype (str): Data type for weights. Default is "int".
+            bits (int): Number of bits used to represent weights. Default is 4.
+            use_sym (bool): Indicates whether weights are symmetric. Default is True.
+            group_size (int): Size of weight groups. Default is 32.
+            use_mse_search (bool): Enables mean squared error (MSE) search. Default is False.
+            export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
+            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            model_path (str): Model path that is used to load state_dict per layer.
+            use_double_quant (bool): Enables double quantization. Default is False.
+            double_quant_dtype (str): Data type for double_quant scale. Default is "int".
+            double_quant_bits (int): Number of bits used to represent double_quant scale. Default is 4.
+            double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric. Default is True.
+            double_quant_group_size (int): Size of double_quant groups. Default is 32.
+            act_order (bool): Whether to sort Hessian's diagonal values to rearrange channel-wise
+                              quantization order. Default is False.
+            percdamp (float): Percentage of Hessian's diagonal values' average, which will be added to
+                              Hessian's diagonal to increase numerical stability. Default is 0.01.
+            block_size (int): Execute GPTQ quantization per block, block shape = [C_out, block_size].
+                              Default is 128.
+            static_groups (bool): Whether to calculate group wise quantization parameters in advance.
+                                  This option mitigate actorder's extra computational requirements.
+                                  Default is False.
         """
         super().__init__(white_list=white_list)
-        self.weight_dtype = weight_dtype
-        self.weight_bits = weight_bits
-        self.weight_group_size = weight_group_size
-        self.weight_sym = weight_sym
-        self.act_dtype = act_dtype
-        self.block_size = block_size
-        self.enable_mse_search = enable_mse_search
-        self.group_dim = group_dim
-        self.nsamples = nsamples
-        # TODO(Yi) detect it auto
-        self.dataloader_len = dataloader_len
-        self.percdamp = percdamp
-        self.act_order = act_order
-        self.use_max_length = use_max_length
-        self.pad_max_length = pad_max_length
-        self.layer_wise = layer_wise
-        self.device = device
-        self.return_int = return_int
+        self.dtype = dtype
+        self.bits = bits
+        self.use_sym = use_sym
+        self.group_size = group_size
+        self.use_mse_search = use_mse_search
+        self.export_compressed_model = export_compressed_model
+        # layer wise
+        self.use_layer_wise = use_layer_wise
+        self.model_path = model_path
+        # double quant
+        self.use_double_quant = use_double_quant
         self.double_quant_bits = double_quant_bits
         self.double_quant_dtype = double_quant_dtype
-        self.double_quant_sym = double_quant_sym
+        self.double_quant_use_sym = double_quant_use_sym
         self.double_quant_group_size = double_quant_group_size
-        self._post_init()
+        # gptq
+        self.act_order = act_order
+        self.percdamp = percdamp
+        self.block_size = block_size
+        self.static_groups = static_groups
+        self._post_init()  # initialize global & local configuration
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         # TODO(Yi)
         linear_gptq_config = GPTQConfig()
-        operators = [torch.nn.Linear, torch.nn.functional.linear]
+        operators = [torch.nn.Linear]
         supported_configs.append(OperatorConfig(config=linear_gptq_config, operators=operators))
         cls.supported_configs = supported_configs
 
@@ -304,7 +331,7 @@ class GPTQConfig(BaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "GPTQConfig", List["GPTQConfig"]]:
         # TODO fwk owner needs to update it.
-        return GPTQConfig(weight_bits=[4, 6])
+        return GPTQConfig(act_order=[True, False], use_sym=[False, True])
 
 
 def get_default_gptq_config() -> GPTQConfig:
@@ -314,6 +341,139 @@ def get_default_gptq_config() -> GPTQConfig:
         the default gptq config.
     """
     return GPTQConfig()
+
+
+######################## AWQ Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=AWQ, priority=PRIORITY_AWQ)
+class AWQConfig(BaseConfig):
+    """Config class for AWQ.
+
+    AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.
+    https://arxiv.org/abs/2306.00978
+    """
+
+    supported_configs: List[OperatorConfig] = []
+    params_list = [
+        "dtype",
+        "bits",
+        "group_size",
+        "group_dim",
+        "use_sym",
+        "use_full_range",
+        "use_mse_search",
+        "use_layer_wise",
+        "export_compressed_model",
+        "use_double_quant",
+        "double_quant_dtype",
+        "double_quant_bits",
+        "double_quant_use_sym",
+        "double_quant_group_size",
+        # AWQ params
+        "use_auto_scale",
+        "use_auto_clip",
+        "folding",
+    ]
+    name = AWQ
+
+    def __init__(
+        self,
+        dtype: str = "int",
+        bits: int = 4,
+        use_sym: bool = True,
+        group_size: int = 32,
+        group_dim: int = 1,
+        use_full_range: bool = False,
+        use_mse_search: bool = False,
+        use_layer_wise: bool = False,
+        export_compressed_model: bool = False,
+        # double quant
+        use_double_quant: bool = False,
+        double_quant_dtype: str = "int",
+        double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
+        double_quant_use_sym: bool = True,
+        double_quant_group_size: int = 256,
+        # awq
+        use_auto_scale: bool = True,
+        use_auto_clip: bool = True,
+        folding: bool = False,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init AWQ weight-only quantization config.
+
+        Args:
+            dtype (str): Data type for weights, default is "int".
+            bits (int): Number of bits used to represent weights, default is 4.
+            use_sym (bool): Indicates whether weights are symmetric, default is True.
+            group_size (int): Size of weight groups, default is 32.
+            group_dim (int): Dimension for grouping, default is 1.
+            use_full_range (bool): Enables full range for activations, default is False.
+            use_mse_search (bool): Enables mean squared error (MSE) search, default is False.
+            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
+            use_double_quant (bool): Enables double quantization, default is False.
+            double_quant_dtype (str): Data type for double_quant scale, default is "int".
+            double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
+            double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
+            double_quant_group_size (int): Size of double_quant groups, default is 32.
+            use_auto_scale (bool): Enables best scales search based on activation distribution, default is True.
+            use_auto_clip (bool):  Enables clip range search. Defaults to True.
+            folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
+              default is False.
+        """
+        super().__init__(white_list=white_list)
+        self.dtype = dtype
+        self.bits = bits
+        self.use_sym = use_sym
+        self.group_size = group_size
+        self.group_dim = group_dim
+        self.use_full_range = use_full_range
+        self.use_mse_search = use_mse_search
+        self.use_layer_wise = use_layer_wise
+        self.export_compressed_model = export_compressed_model
+        # double quant
+        self.use_double_quant = use_double_quant
+        self.double_quant_bits = double_quant_bits
+        self.double_quant_dtype = double_quant_dtype
+        self.double_quant_use_sym = double_quant_use_sym
+        self.double_quant_group_size = double_quant_group_size
+        self.use_auto_scale = use_auto_scale
+        self.use_auto_clip = use_auto_clip
+        self.folding = folding
+        self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        # TODO(Yi)
+        linear_awq_config = AWQConfig()
+        operators = [torch.nn.Linear, torch.nn.functional.linear]
+        supported_configs.append(OperatorConfig(config=linear_awq_config, operators=operators))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = (torch.nn.Linear,)
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "AWQConfig", List["AWQConfig"]]:
+        # TODO fwk owner needs to update it.
+        return AWQConfig(bits=[4, 6])
+
+
+def get_default_awq_config() -> AWQConfig:
+    """Generate the default awq config.
+
+    Returns:
+        the default awq config.
+    """
+    return AWQConfig()
 
 
 ######################## Static Quant Config ###############################

@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ def quantize(
     quant_config: BaseConfig,
     run_fn: Callable = None,
     run_args: Any = None,
+    example_inputs=None,
     inplace: bool = True,
 ) -> torch.nn.Module:
     """The main entry to quantize model with static mode.
@@ -55,7 +56,8 @@ def quantize(
         assert isinstance(
             quant_config, BaseConfig
         ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-    logger.info(f"Quantize model with config: \n {quant_config.to_json_string()} \n")
+    logger.info("Quantize model with config:")
+    logger.info(quant_config.to_dict())
     # select quantization algo according to config
 
     model_info = quant_config.get_model_info(model=q_model)
@@ -64,5 +66,11 @@ def quantize(
     for algo_name, algo_func in algos_mapping.items():
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
-            q_model = algo_func(q_model, configs_mapping, run_fn=run_fn, run_args=run_args)
+            q_model = algo_func(
+                q_model,
+                configs_mapping,
+                run_fn=run_fn,
+                run_args=run_args,
+                example_inputs=example_inputs,
+            )
     return q_model
