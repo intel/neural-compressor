@@ -74,12 +74,17 @@ parser.add_argument("--gptq_actorder", action="store_true",
 parser.add_argument('--gptq_percdamp', type=float, default=.01,
                     help='Percent of the average Hessian diagonal to use for dampening.')
 parser.add_argument('--gptq_block_size', type=int, default=128, help='Block size. sub weight matrix size to run GPTQ.')
+parser.add_argument('--gptq_static_groups', action="store_true",
+                    help="Whether to calculate group wise quantization parameters in advance. "
+                        "This option mitigate actorder's extra computational requirements.")
 parser.add_argument('--gptq_nsamples', type=int, default=128, help='Number of calibration data samples.')
 parser.add_argument('--gptq_use_max_length', action="store_true",
                     help='Set all sequence length to be same length of args.gptq_max_seq_length')
-parser.add_argument('--gptq_max_seq_length', type=int, default=2048, help='Calibration dataset sequence max length, \
-                                                                           this should align with your model config, \
-                                                                           and your dataset builder args: args.pad_max_length')
+parser.add_argument('--gptq_max_seq_length', type=int, default=2048,
+                    help='Calibration dataset sequence max length, '
+                        'this should align with your model config, '
+                        'and your dataset builder args: args.pad_max_length')
+
 # =============DoubleQuant configs====================
 parser.add_argument("--double_quant_type",
                     type=str,
@@ -274,7 +279,6 @@ if args.quantize:
                 dataloader_original=calib_dataloader,
                 use_max_length=args.gptq_use_max_length,
                 max_seq_length=args.gptq_max_seq_length,
-                nsamples=args.gptq_nsamples
             )
             dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
             from neural_compressor.torch.algorithms.weight_only.gptq import move_input_to_device
@@ -295,36 +299,34 @@ if args.quantize:
             if args.double_quant_type is not None:
                 double_quant_config_dict.update(
                     {
-                        "dataloader_len": len(dataloader_for_calibration),
+                        "use_mse_search": args.woq_use_mse_search,
+                        "export_compressed_model": args.woq_export_compressed_model,
                         "percdamp": args.gptq_percdamp,
                         "act_order": args.gptq_actorder,
                         "block_size": args.gptq_block_size,
-                        "nsamples": args.gptq_nsamples,
-                        "use_max_length": args.gptq_use_max_length,
-                        "pad_max_length": args.gptq_max_seq_length,
+                        "static_groups": args.gptq_static_groups,
                     }
                 )
                 quant_config = GPTQConfig.from_dict(double_quant_config_dict)
             else:
                 quant_config = GPTQConfig(
-                    weight_dtype=args.woq_dtype,
-                    weight_bits=args.woq_bits,
-                    weight_group_size=args.woq_group_size,
-                    weight_sym=weight_sym,
-                    dataloader_len=len(dataloader_for_calibration),
+                    dtype=args.woq_dtype,
+                    bits=args.woq_bits,
+                    use_sym=weight_sym,
+                    group_size=args.woq_group_size,
+                    use_mse_search=args.woq_use_mse_search,
+                    export_compressed_model=args.woq_export_compressed_model,
                     percdamp=args.gptq_percdamp,
                     act_order=args.gptq_actorder,
                     block_size=args.gptq_block_size,
-                    nsamples=args.gptq_nsamples,
-                    use_max_length=args.gptq_use_max_length,
-                    pad_max_length=args.gptq_max_seq_length,
+                    static_groups=args.gptq_static_groups,
+                    use_double_quant=False,
                     double_quant_bits=args.double_quant_bits,
                     double_quant_dtype=args.double_quant_dtype,
-                    double_quant_sym=args.double_quant_sym,
+                    double_quant_use_sym=args.double_quant_use_sym,
                     double_quant_group_size=args.double_quant_group_size,
                 )
-            quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
-
+            quant_config.set_local("lm_head", GPTQConfig(dtype="fp32"))
             user_model = quantize(
                 model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=dataloader_for_calibration
             )
