@@ -61,11 +61,13 @@ parser.add_argument("--alpha", default="auto", help="Smooth quant parameter.")
 parser.add_argument("--woq_algo", default="RTN", choices=['RTN', 'AWQ', 'TEQ', 'GPTQ'],
                     help="Weight-only parameter.")
 parser.add_argument("--woq_bits", type=int, default=8)
-parser.add_argument("--woq_group_size", type=int, default=-1)
-parser.add_argument("--woq_scheme", default="sym")
-parser.add_argument("--woq_enable_mse_search", action="store_true")
-parser.add_argument("--woq_enable_full_range", action="store_true")
 parser.add_argument("--woq_dtype", type=str, default="int")
+parser.add_argument("--woq_group_size", type=int, default=-1)
+parser.add_argument("--woq_group_dim", type=int, default=1)
+parser.add_argument("--woq_scheme", default="sym")
+parser.add_argument("--woq_use_mse_search", action="store_true")
+parser.add_argument("--woq_use_full_range", action="store_true")
+parser.add_argument("--woq_export_compressed_model", action="store_true")
 # =============GPTQ configs====================
 parser.add_argument("--gptq_actorder", action="store_true",
                     help="Whether to apply the activation order GPTQ heuristic.")
@@ -92,7 +94,7 @@ parser.add_argument("--double_quant_bits",
                     type=int,
                     default=8,
                     help="Number of bits used to represent double_quant scale.")
-parser.add_argument("--double_quant_sym",
+parser.add_argument("--double_quant_use_sym",
                     type=bool,
                     default=True,
                     help="Indicates whether double quant scale are symmetric.")
@@ -233,31 +235,36 @@ if args.quantize:
         from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, quantize
         from neural_compressor.torch.utils import get_double_quant_config
         weight_sym = True if args.woq_scheme == "sym" else False
-        double_quant_config_dict = get_double_quant_config(args.double_quant_type, weight_sym=weight_sym)
+        double_quant_config_dict = get_double_quant_config(args.double_quant_type)
         
         if args.woq_algo == "RTN":
             if args.double_quant_type is not None:
                 double_quant_config_dict.update(
                     {
-                        "enable_full_range": args.woq_enable_full_range,
-                        "enable_mse_search": args.woq_enable_mse_search,
+                        # TODO: add group_dim into double quant config?
+                        "use_full_range": args.woq_use_full_range,
+                        "use_mse_search": args.woq_use_mse_search,
+                        "export_compressed_model": args.woq_export_compressed_model,
                     }
                 )
                 quant_config = RTNConfig.from_dict(double_quant_config_dict)
             else:
                 quant_config = RTNConfig(
-                    weight_dtype=args.woq_dtype,
-                    weight_bits=args.woq_bits,
-                    weight_group_size=args.woq_group_size,
-                    weight_sym=weight_sym,
-                    enable_full_range = args.woq_enable_full_range,
-                    enable_mse_search = args.woq_enable_mse_search,
+                    dtype=args.woq_dtype,
+                    bits=args.woq_bits,
+                    use_sym=weight_sym,
+                    group_size=args.woq_group_size,
+                    group_dim=args.woq_group_dim,
+                    use_full_range = args.woq_use_full_range,
+                    use_mse_search = args.woq_use_mse_search,
+                    export_compressed_model=args.woq_export_compressed_model,
+                    use_double_quant=False,
                     double_quant_bits=args.double_quant_bits,
                     double_quant_dtype=args.double_quant_dtype,
-                    double_quant_sym=args.double_quant_sym,
+                    double_quant_use_sym=args.double_quant_use_sym,
                     double_quant_group_size=args.double_quant_group_size,
                 )
-            quant_config.set_local("lm_head", RTNConfig(weight_dtype="fp32"))
+            quant_config.set_local("lm_head", RTNConfig(dtype="fp32"))
             user_model = quantize(
                 model=user_model, quant_config=quant_config
             )
@@ -322,7 +329,7 @@ if args.quantize:
                 model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=dataloader_for_calibration
             )
     else:
-        # sq TODO
+        # TODO: smooth quant
         print("Only support WeightOnlyQuant now")
         pass
 

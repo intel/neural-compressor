@@ -52,7 +52,7 @@ python run_clm_no_trainer.py \
     --woq_group_size 128 \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant_type "BNB"
+    --double_quant_type "BNB_NF4"
 ```
 **Notes**: Weight-only quantization based on fake quantization is previewly supported and supports RTN, GPTQ[1], AWQ[2], TEQ algorithms. For more details, please refer to [link](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_weight_only.md). Our GPTQ API support various CLMs including GPTJ, OPTs, Blooms, Llamas, Falcons, MPTs, ChatGLMs, etc. Simply replace the "--model" argument with other models to quantize different CLMs with GPTQ.
 
