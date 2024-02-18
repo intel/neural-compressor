@@ -73,7 +73,7 @@ function run_tuning {
 	    --tokenizer ${tokenizer-meta-llama/Llama-2-7b-hf} \
             --output_model ${output_model} \
             --batch_size ${batch_size-1} \
-            --smooth_quant_alpha ${alpha-0.6} \
+            --smooth_quant_alpha ${alpha-0.75} \
             --dataset ${dataset-NeelNanda/pile-10k} \
             --tune \
             ${extra_cmd}

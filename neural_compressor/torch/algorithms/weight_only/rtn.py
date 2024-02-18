@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 MIT HAN Lab
+# Copyright (c) 2024 MIT HAN Lab
 # This source code is licensed under the MIT license
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -92,6 +92,8 @@ def rtn_quantize(
         if name in weight_config:  # pragma: no cover
             # initialize op configuration
             dtype = weight_config[name].get("dtype", "int")
+            if dtype == "fp32":
+                continue
             bits = weight_config[name].get("bits", 4)
             group_size = weight_config[name]["group_size"]
             scheme = weight_config[name]["scheme"]

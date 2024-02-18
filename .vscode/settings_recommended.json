@@ -1,0 +1,25 @@
+{
+
+    // ========== Anylysis ==========
+    // It is a placeholder to let you know that we can include the extra paths for the better analysis(like go to definition of an extra package).
+    "python.analysis.extraPaths":[
+    ],
+
+    // ========== Type Hints ==========
+    // Use Pylance for insert tpype hints automatically
+    // Rrequired Plugins:
+    //  - Python, https://marketplace.visualstudio.com/items?itemName=ms-python.python
+    //  - Pylance, https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance
+    "python.languageServer": "Default",
+    "python.analysis.inlayHints.callArgumentNames": "off",
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.inlayHints.pytestParameters": true,
+    "python.analysis.inlayHints.variableTypes": true,
+
+    // ========== Better comments ==========
+    // Rrequired Plugins:
+    //   - Better Comments, https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments
+    // It is a placeholder to let you know that we can use Better Comments plugin. We use the default settings.
+    "better-comments.highlightPlainText": false,
+
+}

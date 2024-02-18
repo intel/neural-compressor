@@ -22,7 +22,7 @@ apt-get install -y --no-install-recommends --fix-missing \
 pip install -r /neural-compressor/requirements.txt
 pip install cmake
 
-pip install torch==1.12.0 \
+pip install torch \
             horovod \
             google \
             autograd \
@@ -35,7 +35,12 @@ pip install torch==1.12.0 \
             accelerate \
             flask==2.1.3 \
             xgboost \
-            datasets
+            datasets \
+            prettytable \
+            psutil \
+            py-cpuinfo \
+            pyyaml \
+            pydantic \
 
 if [ "${scan_module}" = "neural_solution" ]; then
     cd /neural-compressor
