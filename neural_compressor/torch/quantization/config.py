@@ -40,7 +40,13 @@ from neural_compressor.common.utils import (
     TEQ,
 )
 from neural_compressor.torch.utils import is_hpex_available, logger
-from neural_compressor.torch.utils.constants import PRIORITY_AWQ, PRIORITY_GPTQ, PRIORITY_HQQ, PRIORITY_RTN, PRIORITY_TEQ
+from neural_compressor.torch.utils.constants import (
+    PRIORITY_AWQ,
+    PRIORITY_GPTQ,
+    PRIORITY_HQQ,
+    PRIORITY_RTN,
+    PRIORITY_TEQ,
+)
 
 __all__ = [
     "RTNConfig",

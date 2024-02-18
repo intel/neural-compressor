@@ -18,7 +18,14 @@ from typing import Any, Callable, Dict, Tuple
 import torch
 
 from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT, TEQ
-from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, HQQConfig, RTNConfig, StaticQuantConfig, TEQConfig
+from neural_compressor.torch.quantization import (
+    AWQConfig,
+    GPTQConfig,
+    HQQConfig,
+    RTNConfig,
+    StaticQuantConfig,
+    TEQConfig,
+)
 from neural_compressor.torch.utils import logger, register_algo
 
 
@@ -209,6 +216,7 @@ def teq_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], TEQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     from neural_compressor.torch.algorithms.weight_only import teq_quantize
+
     logger.info("Quantize model with the TEQ algorithm.")
     weight_config = {}
     absorb_to_layer = {}
