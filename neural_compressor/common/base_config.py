@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import inspect
 import json
 import re
 from abc import ABC, abstractmethod
@@ -25,6 +26,7 @@ from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from neural_compressor.common import Logger
+from neural_compressor.common.tuning_param import TuningParam
 from neural_compressor.common.utils import (
     BASE_CONFIG,
     COMPOSABLE_CONFIG,
@@ -295,6 +297,15 @@ class BaseConfig(ABC):
         else:
             return ComposableConfig(configs=[self, other])
 
+    @staticmethod
+    def get_the_default_value_of_param(config: BaseConfig, param: str) -> Any:
+        # Get the signature of the __init__ method
+        signature = inspect.signature(config.__init__)
+
+        # Get the parameters and their default values
+        parameters = signature.parameters
+        return parameters.get(param).default
+
     def expand(self) -> List[BaseConfig]:
         """Expand the config.
 
@@ -331,19 +342,42 @@ class BaseConfig(ABC):
         """
         config_list: List[BaseConfig] = []
         params_list = self.params_list
-        params_dict = OrderedDict()
         config = self
+        tuning_param_list = []
+        not_tuning_param_pair = {}  # key is the param name, value is the user specified value
         for param in params_list:
-            param_val = getattr(config, param)
-            # TODO (Yi) to handle param_val itself is a list
-            if isinstance(param_val, list):
-                params_dict[param] = param_val
+            # Create `TuningParam` for each param
+            # There are two cases:
+            # 1. The param is a string.
+            # 2. The param is a `TuningParam` instance.
+            if isinstance(param, str):
+                default_param = self.get_the_default_value_of_param(config, param)
+                tuning_param = TuningParam(name=param, tunable_type=List[type(default_param)])
+            elif isinstance(param, TuningParam):
+                tuning_param = param
             else:
-                params_dict[param] = [param_val]
-        for params_values in product(*params_dict.values()):
-            new_config = self.__class__(**dict(zip(params_list, params_values)))
-            config_list.append(new_config)
-        logger.info(f"Expanded the {self.__class__.name} and got {len(config_list)} configs.")
+                raise ValueError(f"Unsupported param type: {param}")
+            # Assign the options to the `TuningParam` instance
+            param_val = getattr(config, tuning_param.name)
+            if param_val is not None:
+                if tuning_param.is_tunable(param_val):
+                    tuning_param.options = param_val
+                    tuning_param_list.append(tuning_param)
+                else:
+                    not_tuning_param_pair[tuning_param.name] = param_val
+        logger.debug("Tuning param list: %s", tuning_param_list)
+        logger.debug("Not tuning param pair: %s", not_tuning_param_pair)
+        if len(tuning_param_list) == 0:
+            config_list = [config]
+        else:
+            tuning_param_name_lst = [tuning_param.name for tuning_param in tuning_param_list]
+            for params_values in product(*[tuning_param.options for tuning_param in tuning_param_list]):
+                tuning_param_pair = dict(zip(tuning_param_name_lst, params_values))
+                tmp_params_dict = {**not_tuning_param_pair, **tuning_param_pair}
+                new_config = self.__class__(**tmp_params_dict)
+                logger.info(new_config.to_dict())
+                config_list.append(new_config)
+        logger.info("Expanded the %s and got %d configs.", self.__class__.name, len(config_list))
         return config_list
 
     def _get_op_name_op_type_config(self):

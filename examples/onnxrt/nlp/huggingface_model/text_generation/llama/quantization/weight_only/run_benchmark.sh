@@ -22,6 +22,9 @@ function init_params {
       --tokenizer=*)
           tokenizer=$(echo $var |cut -f2 -d=)
       ;;
+      --mode=*)
+          mode=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -41,6 +44,7 @@ function run_benchmark {
             --batch_size=${batch_size-1} \
             --tokenizer=${tokenizer-meta-llama/Llama-2-7b-hf} \
             --tasks=${tasks-lambada_openai} \
+            --mode=${mode} \
             --benchmark
             
 }

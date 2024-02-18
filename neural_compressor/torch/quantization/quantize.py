@@ -18,7 +18,8 @@ from typing import Any, Callable, Dict, Tuple
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
-from neural_compressor.torch.utils import logger
+from neural_compressor.torch.quantization.config import SmoothQuantConfig, StaticQuantConfig
+from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
 FRAMEWORK_NAME = "torch"
@@ -33,8 +34,8 @@ def quantize(
     quant_config: BaseConfig,
     run_fn: Callable = None,
     run_args: Any = None,
-    example_inputs=None,
     inplace: bool = True,
+    example_inputs: Any = None,
 ) -> torch.nn.Module:
     """The main entry to quantize model with static mode.
 
@@ -43,6 +44,7 @@ def quantize(
         quant_config: a quantization configuration.
         run_fn: a calibration function for calibrating the model. Defaults to None.
         run_args: positional arguments for `run_fn`. Defaults to None.
+        example_inputs: used to trace torch model.
 
     Returns:
         The quantized model.
@@ -60,7 +62,12 @@ def quantize(
     logger.info(quant_config.to_dict())
     # select quantization algo according to config
 
-    model_info = quant_config.get_model_info(model=q_model)
+    if is_ipex_available and (
+        isinstance(quant_config, StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
+    ):
+        model_info = quant_config.get_model_info(q_model, example_inputs)
+    else:
+        model_info = quant_config.get_model_info(model=q_model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
     logger.debug(configs_mapping)
     for algo_name, algo_func in algos_mapping.items():

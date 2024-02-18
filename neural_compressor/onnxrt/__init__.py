@@ -29,6 +29,8 @@ from neural_compressor.onnxrt.quantization import (
     SmoohQuantConfig,
     get_default_sq_config,
     CalibrationDataReader,
+    autotune,
+    get_all_config_set,
 )
 
 __all__ = [
@@ -49,4 +51,6 @@ __all__ = [
     "QuantType",
     "QuantFormat",
     "CalibrationMethod",
+    "autotune",
+    "get_all_config_set",
 ]
