@@ -24,7 +24,7 @@ Here is how to run the scripts:
 ```bash
 # "--approach weight_only" is used to enable weight only quantization.
 # "--woq_algo GPTQ" is used to enable GPTQ algorithms
-# "--double_quant_type BNB" is used to enable double quant algorithms
+# "--double_quant_type BNB_NF4" is used to enable double quant algorithms
 python run_clm_no_trainer.py \
     --model EleutherAI/gpt-j-6B \
     --dataset NeelNanda/pile-10k \
@@ -38,7 +38,7 @@ python run_clm_no_trainer.py \
     --gptq_use_max_length \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant_type "BNB"
+    --double_quant_type "BNB_NF4"
 
 # "--woq_algo RTN" is used to enable RTN algorithms
 python run_clm_no_trainer.py \
@@ -64,7 +64,7 @@ python run_clm_no_trainer.py \
 ```bash
 # "--approach weight_only" is used to enable weight only quantization.
 # "--woq_algo GPTQ" is used to enable GPTQ algorithms
-# "--double_quant_type BNB" is used to enable double quant algorithms
+# "--double_quant_type BNB_NF4" is used to enable double quant algorithms
 python run_clm_no_trainer.py \
     --model facebook/opt-125m \
     --dataset NeelNanda/pile-10k \
@@ -78,7 +78,7 @@ python run_clm_no_trainer.py \
     --gptq_use_max_length \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant_type "BNB"
+    --double_quant_type "BNB_NF4"
 
 # "--woq_algo RTN" is used to enable RTN algorithms
 python run_clm_no_trainer.py \
@@ -92,7 +92,7 @@ python run_clm_no_trainer.py \
     --woq_group_size 128 \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant_type "BNB"
+    --double_quant_type "BNB_NF4"
 ```
 
 ### LLAMA2-7b/13b/30b
@@ -100,7 +100,7 @@ python run_clm_no_trainer.py \
 
 ```bash
 # "--approach weight_only" is used to enable weight only quantization.
-# "--double_quant_type BNB" is used to enable double quant algorithms
+# "--double_quant_type BNB_NF4" is used to enable double quant algorithms
 # "--woq_algo GPTQ" is used to enable GPTQ algorithms
 python run_clm_no_trainer.py \
     --model meta-llama/Llama-2-7b-hf \
@@ -115,7 +115,7 @@ python run_clm_no_trainer.py \
     --gptq_use_max_length \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant_type "BNB"
+    --double_quant_type "BNB_NF4"
 
 # "--woq_algo RTN" is used to enable RTN algorithms
 python run_clm_no_trainer.py \
@@ -129,7 +129,7 @@ python run_clm_no_trainer.py \
     --woq_group_size 128 \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant_type "BNB"
+    --double_quant_type "BNB_NF4"
 ```
 
 
