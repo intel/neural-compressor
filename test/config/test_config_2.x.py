@@ -1,4 +1,5 @@
 """Tests for 2.x config file."""
+
 import unittest
 
 from neural_compressor import set_random_seed, set_resume_from, set_tensorboard, set_workspace

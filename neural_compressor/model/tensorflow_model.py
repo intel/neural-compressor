@@ -1085,11 +1085,11 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
             g = tf.compat.v1.get_default_graph()
             inp = [get_tensor_by_name(g, x) for x in self._input_tensor_names]
             out = [get_tensor_by_name(g, x) for x in self._output_tensor_names]
-            sigs[
-                signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY
-            ] = tf.compat.v1.saved_model.signature_def_utils.predict_signature_def(
-                {k: v for k, v in zip(self._input_tensor_names, inp)},
-                {k: v for k, v in zip(self._output_tensor_names, out)},
+            sigs[signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY] = (
+                tf.compat.v1.saved_model.signature_def_utils.predict_signature_def(
+                    {k: v for k, v in zip(self._input_tensor_names, inp)},
+                    {k: v for k, v in zip(self._output_tensor_names, out)},
+                )
             )
             builder.add_meta_graph_and_variables(sess, [tag_constants.SERVING], signature_def_map=sigs)
         return root, builder

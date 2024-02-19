@@ -1,4 +1,5 @@
 """Tests for logging utilities."""
+
 import unittest
 
 from neural_compressor.utils import logger

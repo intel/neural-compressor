@@ -19,6 +19,7 @@
 # limitations under the License.
 
 import struct
+import sys
 
 import numpy as np
 import onnx
@@ -27,8 +28,16 @@ from packaging.version import Version
 
 from neural_compressor.onnxrt.utils.utility import ONNXRT1161_VERSION, dtype_mapping
 
+__all__ = [
+    "make_matmul_weight_only_node",
+    "prepare_inputs",
+    "pad_tensor",
+    "quant_tensor",
+    "qdq_tensor",
+]
 
-def get_blob_size(group_size, has_zp):  # pragma: no cover
+
+def _get_blob_size(group_size, has_zp):  # pragma: no cover
     """Get blob_size.
 
     Args:
@@ -45,36 +54,37 @@ def get_blob_size(group_size, has_zp):  # pragma: no cover
 
 
 def make_matmul_weight_only_node(
-    node,
-    weight_shape,
-    num_bits,
-    group_size,
-    k_blocks,
-    q_weight,
-    scale,
-    zero_point,
-    accuracy_level=0,
-):  # pragma: no cover
-    """Build MatMulFpQ4 node.
+    node: onnx.NodeProto,
+    weight_shape: tuple,
+    num_bits: int,
+    group_size: int,
+    k_blocks: int,
+    q_weight: np.array,
+    scale: np.array,
+    zero_point: np.array,
+    accuracy_level: int = 0,
+):
+    """Build MatMulFpQ4/MatMulNBits node.
 
     Args:
-        node: original matmul node
-        weight_shape: original weight shape
-        num_bits (int): num_bits
+        node (onnx.NodeProto): original matmul node
+        weight_shape (tuple): original weight shape
+        num_bits (int): number of bits used to represent weights.
         group_size (int): how many elements share one scale/zp
         k_blocks (int): block number
-        q_weight (array): quantized weight
-        scale (array): scale
-        zero_point (array): zero point
-        accuracy_level (int): accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
-                              2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
-                              4 (int8 compute type of jblas kernel)
+        q_weight (np.array): quantized weight
+        scale (np.array): scale
+        zero_point (np.array): zero point
+        accuracy_level (int, optional): accuracy level.
+            Support 0 (unset), 1(fp32 compute type of jblas kernel),
+            2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+            4 (int8 compute type of jblas kernel) Defaults to 0.
 
     Returns:
         matmul_weight_only_node: MatMulFpQ4 or MatMulNBits node
         new_inits: initializers of the new node
     """
-    blob_size = get_blob_size(group_size, zero_point is not None)
+    blob_size = _get_blob_size(group_size, zero_point is not None)
     packed = np.zeros((q_weight.shape[0], blob_size), dtype="uint8")
     q_weight_name = node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size))
     input_names = [node.input[0], q_weight_name]
@@ -181,3 +191,153 @@ def make_matmul_weight_only_node(
         **kwargs,
     )
     return matmul_weight_only_node, new_inits
+
+
+def prepare_inputs(model, data_reader, providers):
+    """Prepare inputs for weight only quantization.
+
+    Args:
+        model (ModelProto or ONNXModel): onnx model.
+        data_reader (CalibrationDataReader): a calibration data reader.
+        providers (list): providers to use.
+
+    Returns:
+        inputs: prepared inputs.
+        so: session options
+    """
+    from importlib.util import find_spec
+
+    so = ort.SessionOptions()
+    if sys.version_info < (3, 11) and find_spec("onnxruntime_extensions"):  # pragma: no cover
+        from onnxruntime_extensions import get_library_path
+
+        so.register_custom_ops_library(get_library_path())
+    if model.is_large_model:
+        onnx.save_model(
+            model.model,
+            model.model_path + "_augment.onnx",
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            convert_attribute=False,
+        )
+
+    session = (
+        ort.InferenceSession(model.model.SerializeToString(), so, providers=providers)
+        if not model.is_large_model
+        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=providers)
+    )
+    inputs_names = [i.name for i in session.get_inputs()]
+    del session
+
+    inputs_list = []
+    while True:
+        inputs = data_reader.get_next()
+        if not inputs:
+            break
+        inputs_list.append(inputs)
+    return inputs_list, so
+
+
+def pad_tensor(weight, group_size, k_blocks):
+    """Pad tensor rowi so that it can be is divisible by group_size.
+
+    Args:
+        weight (array): weight
+        group_size (int): how many elements share one scale/zp
+        k_blocks (int): the number of block
+
+    Returns:
+        weight: paded weight
+    """
+    if group_size == -1:
+        return weight
+
+    org_w_shape = weight.shape
+    padded_rows = k_blocks * group_size
+    pad_len = padded_rows - org_w_shape[0]
+
+    if pad_len > 0:
+        weight = np.pad(weight, ((0, pad_len), (0, 0)), "constant")
+
+    return weight
+
+
+def quant_tensor(
+    data: np.array,
+    num_bits: int = 4,
+    group_size: int = 32,
+    scheme: str = "asym",
+    dtype: str = "int",
+    ratio: float = 1.0,
+):
+    """Quantize tensor per group.
+
+    Args:
+        data (np.array): input weight
+        num_bits (int, optional): number of bits used to represent weights. Defaults to 4.
+        group_size (int, optional): how many elements share one scale/zp. Defaults to 4.
+        scheme (str, optional): _quantization scheme. Defaults to "asym".
+        dtype (str, optional): data type. Defaults to "int".
+        ratio (float, optional): percentile of clip. Defaults to 1.0.
+
+    Returns:
+        output: quantized weight
+        scale: scale
+        zero_point: zero point
+    """
+    data = np.reshape(data, (-1, group_size))
+    if scheme == "asym" or dtype == "uint":
+        maxq = 2**num_bits - 1
+        minq = 0
+    elif scheme == "sym":
+        maxq = 2 ** (num_bits - 1) - 1 if num_bits != 1 else 0
+        minq = -(2 ** (num_bits - 1)) if num_bits != 1 else -1
+
+    rmin = np.min(data, axis=1, keepdims=True) * ratio
+    rmax = np.max(data, axis=1, keepdims=True) * ratio
+    if scheme == "sym":
+        max_range = np.maximum(np.abs(rmin), np.abs(rmax))
+        scale = np.ones(rmax.shape)
+        scale[max_range > 0] = np.array(
+            [float(i) / (maxq - minq) for i in (max_range[max_range > 0] * 2.0).flatten().tolist()]
+        )
+        zero_point = (
+            np.zeros(scale.shape) if dtype == "int" else np.ones(rmax.shape, dtype="uint8") * (1 << (num_bits - 1))
+        )
+    else:
+        scale = np.ones(rmax.shape)
+        scale[rmin != rmax] = np.array(
+            [float(i) / (maxq - minq) for i in (rmax - rmin)[rmin != rmax].flatten().tolist()]
+        )
+        zero_point = (
+            ((np.zeros(scale.shape) - rmin) / scale).round()
+            if dtype == "int"
+            else np.maximum(0, np.minimum(maxq, ((np.zeros(scale.shape) - rmin) / scale).round())).astype("uint8")
+        )
+    return np.clip((data / scale + zero_point).round(), minq, maxq), scale, zero_point
+
+
+def qdq_tensor(
+    data: np.array,
+    num_bits: int = 4,
+    group_size: int = 32,
+    scheme: str = "asym",
+    dtype: str = "int",
+    ratio: float = 1.0,
+):
+    """Quant dequant tensor per group.
+
+    Args:
+        data (np.array): input weight
+        num_bits (int, optional): number of bits used to represent weights. Defaults to 4.
+        group_size (int, optional):  how many elements share one scale/zp. Defaults to 32.
+        scheme (str, optional): quantization scheme. Defaults to "asym".
+        dtype (str, optional): data type. Defaults to "int".
+        ratio (float, optional): percentile of clip. Defaults to 1.0.
+
+    Returns:
+        output: quant-dequant weight
+    """
+    org_shape = data.shape
+    weight, scale, zp = quant_tensor(data, num_bits, group_size, scheme, dtype, ratio)
+    return np.reshape(scale * (weight - zp), org_shape)

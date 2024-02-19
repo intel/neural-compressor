@@ -5,8 +5,8 @@ onnx
 onnxruntime
 onnxruntime-extensions; python_version < '3.11'
 datasets
-optimum==1.13.3
+optimum
 evaluate
+intel-extension-for-transformers
 peft
 git+https://github.com/EleutherAI/lm-evaluation-harness.git@cc9778fbe4fa1a709be2abed9deb6180fd40e7e2
-git+https://github.com/intel/intel-extension-for-transformers.git@abce937aa70ed2e30fbdf0aefd38cc3dd9d1d32a
