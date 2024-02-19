@@ -64,13 +64,6 @@ Functions
    :returns: the default gptq config.
 
 
-.. py:class:: HQQConfig(bits: int = 4, group_size: int = 64, quant_zero: bool = True, quant_scale: bool = False, scale_quant_group_size: int = 128, skip_lm_head: bool = True, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
-
-
-
-
-   The base config for all algorithm configs.
-
 
 .. py:function:: get_default_hqq_config() -> HQQConfig
 
