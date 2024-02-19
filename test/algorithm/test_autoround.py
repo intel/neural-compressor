@@ -14,7 +14,7 @@ class TestAutoRoundLinear(unittest.TestCase):
             model_name,
             low_cpu_mem_usage=True,
             torch_dtype="auto",
-            trust_remote_code=True
+            trust_remote_code=True,
             ##low_cpu_mem_usage has impact to acc, changed the random seed?
         )
         self.model = self.model.eval()
@@ -40,7 +40,7 @@ class TestAutoRoundConv1D(unittest.TestCase):
             model_name,
             low_cpu_mem_usage=True,
             torch_dtype="auto",
-            trust_remote_code=True
+            trust_remote_code=True,
             ##low_cpu_mem_usage has impact to acc, changed the random seed?
         )
         self.model = self.model.eval()

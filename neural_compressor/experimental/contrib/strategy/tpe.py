@@ -114,9 +114,11 @@ class TpeTuneStrategy(TuneStrategy):
         self.hpopt_trials = hyperopt.Trials()
         self.max_trials = conf.usr_cfg.tuning.exit_policy.get("max_trials", 200)
         self.loss_function_config = {
-            "acc_th": conf.usr_cfg.tuning.accuracy_criterion.relative
-            if conf.usr_cfg.tuning.accuracy_criterion and conf.usr_cfg.tuning.accuracy_criterion.relative
-            else 0.01,
+            "acc_th": (
+                conf.usr_cfg.tuning.accuracy_criterion.relative
+                if conf.usr_cfg.tuning.accuracy_criterion and conf.usr_cfg.tuning.accuracy_criterion.relative
+                else 0.01
+            ),
             "acc_weight": conf.usr_cfg.tuning.strategy.get("accuracy_weight", 1.0),
             "lat_weight": conf.usr_cfg.tuning.strategy.get("latency_weight", 1.0),
         }

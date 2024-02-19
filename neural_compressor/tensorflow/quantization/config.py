@@ -161,7 +161,7 @@ class StaticQuantConfig(BaseConfig):
         return StaticQuantConfig(weight_sym=[True, False])
 
 
-register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
+register_supported_configs_for_fwk(fwk_name="keras")
 
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:

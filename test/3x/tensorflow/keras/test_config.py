@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ class MyDataloader:
         return self.length
 
 
-class TestKeras3xNewApi(unittest.TestCase):
+class TestTF3xNewApi(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_model()
@@ -117,7 +117,6 @@ class TestKeras3xNewApi(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         shutil.rmtree("baseline_model", ignore_errors=True)
-        shutil.rmtree("int8_model", ignore_errors=True)
 
     def test_static_quant_from_dict_default(self):
         logger.info("test_static_quant_from_dict_default")

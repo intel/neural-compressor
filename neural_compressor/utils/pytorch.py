@@ -160,29 +160,29 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, example_inputs, **kwarg
                     model,
                     fx_op_cfgs,
                     example_inputs=example_inputs,
-                    prepare_custom_config=kwargs.get("prepare_custom_config_dict", None)
-                    if kwargs is not None
-                    else None,
+                    prepare_custom_config=(
+                        kwargs.get("prepare_custom_config_dict", None) if kwargs is not None else None
+                    ),
                 )
                 model = convert_fx(
                     model,
-                    convert_custom_config=kwargs.get("convert_custom_config_dict", None)
-                    if kwargs is not None
-                    else None,
+                    convert_custom_config=(
+                        kwargs.get("convert_custom_config_dict", None) if kwargs is not None else None
+                    ),
                 )
             else:
-                model = prepare_qat_fx(
+                model = prepare_qat_fx(  # pylint: disable=E1120
                     model,
                     fx_op_cfgs,
-                    prepare_custom_config_dict=kwargs.get("prepare_custom_config_dict", None)
-                    if kwargs is not None
-                    else None,
+                    prepare_custom_config_dict=(
+                        kwargs.get("prepare_custom_config_dict", None) if kwargs is not None else None
+                    ),
                 )
                 model = convert_fx(
                     model,
-                    convert_custom_config_dict=kwargs.get("convert_custom_config_dict", None)
-                    if kwargs is not None
-                    else None,
+                    convert_custom_config_dict=(
+                        kwargs.get("convert_custom_config_dict", None) if kwargs is not None else None
+                    ),
                 )
         else:
             logger.info("Fx trace of the entire model failed. " + "We will conduct auto quantization")
@@ -393,7 +393,9 @@ def load(checkpoint_dir=None, model=None, layer_wise=False, history_cfg=None, **
                         example_inputs=example_inputs,
                     )
                 else:
-                    model = prepare_qat_fx(model, fx_op_cfgs, prepare_custom_config_dict=prepare_custom_config_dict)
+                    model = prepare_qat_fx(  # pylint: disable=E1120,E1123
+                        model, fx_op_cfgs, prepare_custom_config_dict=prepare_custom_config_dict
+                    )
             else:
                 if version.release > Version("1.12.1").release:  # pragma: no cover
                     # pylint: disable=E1123
@@ -404,12 +406,16 @@ def load(checkpoint_dir=None, model=None, layer_wise=False, history_cfg=None, **
                         example_inputs=example_inputs,
                     )
                 else:
-                    model = prepare_fx(model, fx_op_cfgs, prepare_custom_config_dict=prepare_custom_config_dict)
+                    model = prepare_fx(  # pylint: disable=E1120,E1123
+                        model, fx_op_cfgs, prepare_custom_config_dict=prepare_custom_config_dict
+                    )
             if version.release > Version("1.12.1").release:  # pragma: no cover
                 # pylint: disable=E1123
                 model = convert_fx(model, convert_custom_config=convert_custom_config_dict)
             else:
-                model = convert_fx(model, convert_custom_config_dict=convert_custom_config_dict)
+                model = convert_fx(  # pylint: disable=E1123
+                    model, convert_custom_config_dict=convert_custom_config_dict
+                )
             util.append_attr(model, tmp_model)
             del tmp_model
         else:

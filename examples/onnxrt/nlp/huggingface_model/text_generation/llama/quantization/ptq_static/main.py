@@ -84,7 +84,7 @@ parser.add_argument(
 parser.add_argument(
     '--quant_format',
     type=str,
-    default='QOperator', 
+    default='QOperator',
     choices=['QOperator', 'QDQ'],
     help="quantization format"
 )
@@ -124,8 +124,9 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-# load model
+# load model tokenize and config
 tokenizer = LlamaTokenizer.from_pretrained(args.tokenizer)
+config = LlamaConfig.from_pretrained(args.model_path)
 
 def tokenize_function(examples):
     example = tokenizer(examples['text'])
@@ -134,29 +135,20 @@ def tokenize_function(examples):
 def benchmark(model):
     import json
     import time
-    config = LlamaConfig.from_pretrained(args.model_path)
     sess_options = ort.SessionOptions()
     sess_options.intra_op_num_threads = args.intra_op_num_threads
-    
-    if os.path.exists(os.path.join(model, "decoder_with_past_model.onnx")):
-        sessions = ORTModelForCausalLM.load_model(  # pylint: disable=E1123
-            os.path.join(model, "decoder_model.onnx"),
-            os.path.join(model, "decoder_with_past_model.onnx"),
-            session_options=sess_options)
-        model = ORTModelForCausalLM(sessions[0],  # pylint: disable=E1121
-                                    config,
-                                    model,
-                                    sessions[1],
-                                    use_cache=True)
-    else:
-        sessions = ORTModelForCausalLM.load_model(  # pylint: disable=E1123
-            os.path.join(model, "decoder_model.onnx"),
-            session_options=sess_options)
-        model = ORTModelForCausalLM(sessions[0],  # pylint: disable=E1121
-                                    config,
-                                    model,
-                                    use_cache=False,
-                                    use_io_binding=False)
+
+    session = ORTModelForCausalLM.load_model(  # pylint: disable=E1123
+                os.path.join(model, "model.onnx"),
+                session_options=sess_options)
+    inputs_names = session.get_inputs()
+    key_value_input_names = [key.name for key in inputs_names if (".key" in key.name) or (".value" in key.name)]
+    use_cache = len(key_value_input_names) > 0
+
+    model = ORTModelForCausalLM(session,  # pylint: disable=E1121
+                                config,
+                                use_cache=True if use_cache else False,
+                                use_io_binding=True if use_cache else False,)
 
     input_tokens = '32'
     max_new_tokens = 32
@@ -192,7 +184,7 @@ def benchmark(model):
     print(args)
     throughput = (num_iter - num_warmup) / total_time
     print("Throughput: {} samples/s".format(throughput))
-    
+
 
 def replace_architectures(json_path):
     # replace 'LLaMATokenizer' to lowercase 'LlamaTokenizer'
@@ -201,7 +193,7 @@ def replace_architectures(json_path):
     with open(json_path, "r") as file:
         data = json.load(file)
         data["architectures"] = ["LlamaForCausalLM"]
-        
+
     with open(json_path, 'w') as file:
         json.dump(data, file, indent=4)
 
@@ -234,6 +226,7 @@ def eval_func(model):
 
     return eval_acc
 
+
 class KVDataloader:
     def __init__(self, model_path, pad_max=196, batch_size=1, sub_folder='train'):
         self.pad_max = pad_max
@@ -247,10 +240,11 @@ class KVDataloader:
             shuffle=False,
             collate_fn=self.collate_batch,
         )
-        self.sess = None
-        if not model_path.endswith('decoder_model.onnx'):
-            self.sess = ort.InferenceSession(os.path.join(os.path.dirname(model_path), 'decoder_model.onnx'))
-
+        session = ort.InferenceSession(model_path)
+        inputs_names = [input.name for input in session.get_inputs()]
+        self.key_value_input_names = [key for key in inputs_names if (".key" in key) or (".value" in key)]
+        self.use_cache = len(self.key_value_input_names) > 0
+        self.session = session if self.use_cache else None
 
     def collate_batch(self, batch):
 
@@ -269,23 +263,26 @@ class KVDataloader:
             attention_mask_padded.append(attention_mask)
         return (torch.vstack(input_ids_padded), torch.vstack(attention_mask_padded)), torch.tensor(last_ind)
 
-
     def __iter__(self):
         try:
             for (input_ids, attention_mask), last_ind in self.dataloader:
-                if self.sess is None:
-                    yield {'input_ids': input_ids[:, :-1].detach().cpu().numpy().astype('int64'),
-                           'attention_mask':attention_mask[:, :-1].detach().cpu().numpy().astype('int64')}, last_ind.detach().cpu().numpy()
-                else:
-                    outputs = self.sess.run(None, {'input_ids': input_ids[:, :-1].detach().cpu().numpy().astype('int64'),
-                                                   'attention_mask':attention_mask[:, :-1].detach().cpu().numpy().astype('int64')})
-                    ort_input = {}
-                    ort_input['input_ids'] = input_ids[:, -1].unsqueeze(0).detach().cpu().numpy().astype('int64')
-                    for i in range(int((len(outputs) - 1) / 2)):
-                        ort_input['past_key_values.{}.key'.format(i)] = outputs[i*2+1]
-                        ort_input['past_key_values.{}.value'.format(i)] = outputs[i*2+2]
-                    ort_input['attention_mask'] =  np.zeros([self.batch_size, ort_input['past_key_values.0.key'].shape[2]+1], dtype='int64')
-                    yield ort_input, last_ind.detach().cpu().numpy()
+                ort_input = {}
+                ort_input["input_ids"] = input_ids[:, :-1].detach().cpu().numpy().astype("int64")
+                ort_input["attention_mask"] = attention_mask[:, :-1].detach().cpu().numpy().astype("int64")
+                position_ids = attention_mask.long().cumsum(-1) - 1
+                position_ids.masked_fill_(attention_mask == 0, 1)
+                ort_input["position_ids"] = position_ids[:,:-1].detach().cpu().numpy().astype("int64")
+                if self.use_cache:
+                    # Create dummy past_key_values for decoder
+                    num_attention_heads = config.num_key_value_heads
+                    embed_size_per_head = config.hidden_size // config.num_attention_heads
+                    shape = (self.batch_size, num_attention_heads, 0, embed_size_per_head)
+                    key_or_value = np.zeros(shape, dtype=np.float32)
+                    for key_value_input_name in self.key_value_input_names:
+                        ort_input[key_value_input_name] = key_or_value
+
+                yield ort_input, last_ind.detach().cpu().numpy()
+
         except StopIteration:
             return
 
@@ -294,43 +291,38 @@ if __name__ == "__main__":
     set_workspace(args.workspace)
 
     if args.benchmark:
-        if args.mode == 'performance':            
+        if args.mode == 'performance':
             benchmark(args.model_path)
         elif args.mode == 'accuracy':
             eval_func(args.model_path)
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
+
+        model_name = "model.onnx" # require optimum >= 1.14.0
+        model_path = os.path.join(args.model_path, model_name)
+
         if args.layer_wise:
             # layer-wise quantization for ONNX models is still under development and only support W8A8 quantization now
-            config = PostTrainingQuantConfig(
+            ptq_config = PostTrainingQuantConfig(
                 calibration_sampling_size=[8],
                 recipes={'optypes_to_exclude_output_quant': ['MatMul'],
-                        'layer_wise_quant': True},
+                         'layer_wise_quant': True,
+                         'graph_optimization_level': 'ENABLE_EXTENDED'},
                 op_type_dict={'^((?!(MatMul|Gather|Conv)).)*$': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
-            for model in ['decoder_model.onnx']:
-                # only test decoder_model
-                q_model = quantization.fit(
-                        os.path.join(args.model_path, model),
-                        config,
-                        calib_dataloader=KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1))
-                q_model.save(os.path.join(args.output_model, model))
-            
-            tokenizer.save_pretrained(args.output_model)
-
         else:
-            config = PostTrainingQuantConfig(
+            ptq_config = PostTrainingQuantConfig(
                 calibration_sampling_size=[8],
                 recipes={'optypes_to_exclude_output_quant': ['MatMul'],
-                        'smooth_quant': True,
-                        'smooth_quant_args': {'alpha': args.smooth_quant_alpha},
-                        },
+                         'smooth_quant': True,
+                         'smooth_quant_args': {'alpha': args.smooth_quant_alpha},
+                         'graph_optimization_level': 'ENABLE_EXTENDED'},
                 op_type_dict={'^((?!(MatMul|Gather|Conv)).)*$': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
-            for model in ['decoder_model.onnx', 'decoder_with_past_model.onnx']:
-                q_model = quantization.fit(
-                        os.path.join(args.model_path, model),
-                        config,
-                        calib_dataloader=KVDataloader(os.path.join(args.model_path, model), pad_max=args.pad_max, batch_size=1))
-                q_model.save(os.path.join(args.output_model, model))
-            
-            tokenizer.save_pretrained(args.output_model)
+
+        q_model = quantization.fit(
+                model_path,
+                ptq_config,
+                calib_dataloader=KVDataloader(model_path, pad_max=args.pad_max, batch_size=1))
+        q_model.save(os.path.join(args.output_model, model_name))
+
+        tokenizer.save_pretrained(args.output_model)
