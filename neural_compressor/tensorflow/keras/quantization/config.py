@@ -24,7 +24,14 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 import tensorflow as tf
 
 from neural_compressor.common import logger
-from neural_compressor.common.base_config import BaseConfig, config_registry, register_config
+from neural_compressor.common.base_config import (
+    DEFAULT_WHITE_LIST,
+    OP_NAME_OR_MODULE_TYPE,
+    BaseConfig,
+    config_registry,
+    register_config,
+    register_supported_configs_for_fwk,
+)
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE, STATIC_QUANT
 
 FRAMEWORK_NAME = "keras"
@@ -132,23 +139,13 @@ class StaticQuantConfig(BaseConfig):
         return StaticQuantConfig(weight_sym=[True, False])
 
 
-# TODO(Yi) run `register_supported_configs` for all registered config.
-StaticQuantConfig.register_supported_configs()
+register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
     """Get all registered configs for keras framework."""
     registered_configs = config_registry.get_cls_configs()
     return registered_configs.get(FRAMEWORK_NAME, {})
-
-
-def parse_keras_config_from_dict(config_dict: Dict) -> BaseConfig:
-    """Generate a BaseConfig instance from a dict."""
-    keras_registered_configs = get_all_registered_configs()
-    for key, val in config_dict.items():
-        if key in keras_registered_configs:
-            config = keras_registered_configs[key].from_dict(val)
-            return config
 
 
 def get_default_static_quant_config() -> StaticQuantConfig:
@@ -158,61 +155,3 @@ def get_default_static_quant_config() -> StaticQuantConfig:
         the default keras config.
     """
     return StaticQuantConfig()
-
-
-support_int8_weight = {"Dense", "Conv2d", "DepthwiseConv2D", "SeparableConv2D"}
-
-support_int8_activation = {
-    "Dense",
-    "Conv2d",
-    "DepthwiseConv2D",
-    "SeparableConv2D",
-    "AvgPool2D",
-    "AveragePooling2D",
-    "MaxPool2D",
-    "MaxPooling2D",
-}
-
-
-def update_config(op_value: Dict, quant_config: StaticQuantConfig, op_key: Tuple):
-    """Update op-wise config from global config or operator name config or operator type config."""
-    op_value["activation"].update(
-        {
-            "dtype": quant_config.act_dtype,
-            "quant_mode": "static",
-            "scheme": ("sym" if quant_config.act_sym else "asym"),
-            "granularity": quant_config.act_granularity,
-            "algorithm": "minmax",
-        }
-    )
-    if op_key[1] not in support_int8_weight:
-        return
-    op_value["weight"] = {
-        "dtype": quant_config.weight_dtype,
-        "scheme": "sym" if quant_config.weight_sym else "asym",
-        "granularity": quant_config.weight_granularity,
-        "algorithm": "minmax",
-    }
-
-
-def parse_to_keras_tune_cfg(model: tf.keras.Model, quant_config: StaticQuantConfig, calib_iteration: int) -> Dict:
-    """The function that parses StaticQuantConfig to keras tuning config.
-
-    Args:
-        model: a fp32 model to be quantized.
-        quant_config: a quantization configuration.
-        calib_iteration: the iteration of calibration.
-
-    Returns:
-        tune_cfg: the tuning config for keras adaptor.
-    """
-    tune_cfg = {"op": OrderedDict()}
-    for op_key, config in quant_config.items():
-        op_value = {"activation": {}}
-
-        update_config(op_value, config, op_key)
-
-        tune_cfg["op"].update({op_key: op_value})
-        tune_cfg["calib_iteration"] = calib_iteration
-
-    return tune_cfg

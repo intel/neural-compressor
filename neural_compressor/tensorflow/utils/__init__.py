@@ -15,7 +15,7 @@
 from neural_compressor.tensorflow.utils.model import Model, framework_specific_info
 from neural_compressor.tensorflow.utils.data import BaseDataLoader, DummyDataset, DummyDatasetV2
 from neural_compressor.tensorflow.utils.constants import SPR_BASE_VERSIONS, DEFAULT_SQ_ALPHA_ARGS
-from neural_compressor.tensorflow.utils.tensorflow_models import (
+from neural_compressor.tensorflow.utils.model_wrappers import (
     get_tf_model_type,
     BaseModel,
     KerasModel,
@@ -24,6 +24,7 @@ from neural_compressor.tensorflow.utils.tensorflow_models import (
     TensorflowSavedModelModel,
 )
 from neural_compressor.tensorflow.utils.utility import (
+    disable_random,
     algos_mapping,
     version1_lt_version2,
     version1_gt_version2,

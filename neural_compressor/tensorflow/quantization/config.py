@@ -29,6 +29,7 @@ from neural_compressor.common.base_config import (
     BaseConfig,
     config_registry,
     register_config,
+    register_supported_configs_for_fwk,
 )
 from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.tensorflow.utils import DEFAULT_SQ_ALPHA_ARGS
@@ -160,23 +161,13 @@ class StaticQuantConfig(BaseConfig):
         return StaticQuantConfig(weight_sym=[True, False])
 
 
-# TODO(Yi) run `register_supported_configs` for all registered config.
-StaticQuantConfig.register_supported_configs()
+register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
     """Get all registered configs for keras framework."""
     registered_configs = config_registry.get_cls_configs()
     return registered_configs.get(FRAMEWORK_NAME, {})
-
-
-def parse_tf_config_from_dict(config_dict: Dict) -> BaseConfig:
-    """Generate a BaseConfig instance from a dict."""
-    tf_registered_configs = get_all_registered_configs()
-    for key, val in config_dict.items():
-        if key in tf_registered_configs:
-            config = tf_registered_configs[key].from_dict(val)
-            return config
 
 
 def get_default_static_quant_config() -> StaticQuantConfig:

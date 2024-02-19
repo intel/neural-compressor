@@ -7,8 +7,7 @@ from tensorflow.compat.v1 import graph_util
 
 from neural_compressor.common import set_random_seed
 from neural_compressor.tensorflow import SmoothQuantConfig, get_default_sq_config, quantize_model
-from neural_compressor.tensorflow.quantization.tf_utils.util import disable_random
-from neural_compressor.tensorflow.utils import DummyDataset
+from neural_compressor.tensorflow.utils import DummyDataset, disable_random
 
 
 def build_conv_graph():
@@ -73,7 +72,6 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
     def tearDownClass(self):
         pass
 
-    @disable_random()
     def test_conv(self):
         set_random_seed(9527)
         quant_config = SmoothQuantConfig(alpha=0.5)

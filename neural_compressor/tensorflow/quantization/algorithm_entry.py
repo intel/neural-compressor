@@ -15,13 +15,10 @@
 
 from typing import Callable, Dict
 
-import tensorflow as tf
-
-from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
+from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.tensorflow.algorithms import KerasAdaptor, TensorFlowAdaptor
-from neural_compressor.tensorflow.quantization.auto_tune import generate_tune_config
-from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig, StaticQuantConfig
+from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig
 from neural_compressor.tensorflow.utils import BaseModel, KerasModel, framework_specific_info, register_algo
 
 
@@ -43,11 +40,8 @@ def static_quantize_entry(
     Returns:
         q_model: the quantized model.
     """
-    Adaptor = KerasAdaptor if isinstance(model, KerasModel) else TensorFlowAdaptor
-    adaptor = Adaptor(framework_specific_info)
-    capability = adaptor.query_fw_capability(model)
-    tune_cfg = generate_tune_config(model, quant_config, calib_dataloader, calib_iteration, capability)
-    q_model = adaptor.quantize(tune_cfg, model, calib_dataloader)
+    keras_adaptor = KerasAdaptor(framework_specific_info)
+    q_model = keras_adaptor.quantize(quant_config, model, calib_dataloader, calib_iteration)
     return q_model
 
 
@@ -62,14 +56,7 @@ def smooth_quant_entry(
 
     from neural_compressor.tensorflow.algorithms import SmoothQuant
 
-    adaptor = TensorFlowAdaptor(framework_specific_info)
-    model = SmoothQuant(model, smooth_quant_config, adaptor, calib_dataloader, calib_iteration)()
+    converter = SmoothQuant(smooth_quant_config, calib_dataloader, calib_iteration)
+    sq_model = converter(model)
 
-    quant_config = StaticQuantConfig()
-    model_info = quant_config.get_model_info(model=model)
-    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
-
-    capability = adaptor.query_fw_capability(model)
-    tune_cfg = generate_tune_config(model, configs_mapping, calib_dataloader, calib_iteration, capability)
-    q_model = adaptor.quantize(tune_cfg, model, calib_dataloader)
-    return q_model
+    return sq_model

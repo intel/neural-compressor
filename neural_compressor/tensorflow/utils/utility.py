@@ -238,6 +238,22 @@ def singleton(cls):
     return _singleton
 
 
+def disable_random(seed=1):
+    """A Decorator to disable tf random seed."""
+    import tensorflow as tf
+
+    def decorator(func):
+        def wrapper(*args, **kw):
+            tf.compat.v1.disable_eager_execution()
+            tf.compat.v1.reset_default_graph()
+            tf.compat.v1.set_random_seed(seed)
+            return func(*args, **kw)
+
+        return wrapper
+
+    return decorator
+
+
 @singleton
 class CpuInfo(object):
     """Get CPU Info."""

@@ -175,7 +175,7 @@ class TensorFlowAdaptor:
         Returns:
             [float]: evaluation result, the larger is better.
         """
-        from neural_compressor.tensorflow.quantization.tf_utils.util import iterator_sess_run
+        from neural_compressor.tensorflow.quantization.utils.utility import iterator_sess_run
 
         outputs = model.output_tensor_names
 
@@ -211,7 +211,7 @@ class TensorFlowAdaptor:
         if tensorboard:
             from tensorflow.python.framework import tensor_util
 
-            from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer
+            from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
 
             output_postfix = "_fp32.output"
             inspect_node_types = [
@@ -382,7 +382,7 @@ class TensorFlowAdaptor:
             results = eval_func(dataloader)
 
         if self.fp32_preds_as_label:
-            from neural_compressor.tensorflow.quantization.tf_utils.util import collate_tf_preds
+            from neural_compressor.tensorflow.quantization.utils.utility import collate_tf_preds
 
             if fp32_baseline:
                 results = collate_tf_preds(self.fp32_results)
@@ -488,7 +488,7 @@ class TensorFlowAdaptor:
         self.bf16_ops.extend(self.smooth_quant_mul_ops)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_converter import GraphConverter
+        from neural_compressor.tensorflow.quantization.utils.graph_converter import GraphConverter
 
         calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
         if isinstance(data_loader, BaseDataLoader):
@@ -522,7 +522,7 @@ class TensorFlowAdaptor:
                     use_bf16=self.use_bf16,
                 ).convert()
             except Exception:  # pragma: no cover
-                from neural_compressor.tensorflow.quantization.tf_utils.util import get_model_input_shape
+                from neural_compressor.tensorflow.quantization.utils.utility import get_model_input_shape
 
                 batch_size = get_model_input_shape(model)
                 logger.warning(
@@ -771,8 +771,8 @@ class TensorFlowAdaptor:
     def _filter_unquantizable_concat(self, matched_nodes):
         """Filter out unquantizable ConcatV2 Ops based on the positive input rule."""
         target_concat_nodes = [i[0] for i in matched_nodes if i[-1][0] == "ConcatV2"]
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphRewriterHelper
-        from neural_compressor.tensorflow.quantization.tf_utils.util import GraphAnalyzer
+        from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper
+        from neural_compressor.tensorflow.quantization.utils.utility import GraphAnalyzer
 
         g = GraphAnalyzer()
         g.graph = self.pre_optimized_model.graph_def
@@ -800,8 +800,8 @@ class TensorFlowAdaptor:
     def _filter_unquantizable_concat_performance_only(self, matched_nodes):
         """OOB filter out unquantizable ConcatV2 OPs by checking the control flow rule."""
         target_concat_nodes = [i[0] for i in matched_nodes if i[-1][0] == "ConcatV2"]
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphRewriterHelper
-        from neural_compressor.tensorflow.quantization.tf_utils.util import GraphAnalyzer
+        from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper
+        from neural_compressor.tensorflow.quantization.utils.utility import GraphAnalyzer
 
         g = GraphAnalyzer()
         g.graph = self.pre_optimized_model.graph_def
@@ -833,9 +833,7 @@ class TensorFlowAdaptor:
             [dict]: model-wise & op-wise configuration for quantization.
         """
         if self.pre_optimized_model is None:
-            from neural_compressor.tensorflow.quantization.tf_utils.graph_rewriter.generic.pre_optimize import (
-                PreOptimization,
-            )
+            from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
             self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
             self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
@@ -893,7 +891,7 @@ class TensorFlowAdaptor:
 
     def set_tensor(self, model, tensor_dict):
         """Quantize the bias and weight tensors in tensor_dict."""
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer
+        from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
 
         g = GraphAnalyzer()
         g.graph = model.graph_def
@@ -920,7 +918,7 @@ class TensorFlowAdaptor:
         from tensorflow.core.framework import attr_value_pb2
         from tensorflow.python.framework import dtypes, tensor_util
 
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphRewriterHelper as Helper
+        from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper as Helper
 
         qint32_type = dtypes.qint32.as_datatype_enum
 
@@ -980,7 +978,7 @@ class TensorFlowAdaptor:
                 )
                 min_filter_node = graph_info[current_node.input[5]].node
                 per_channel = True if min_filter_node.attr["value"].tensor.tensor_shape else False
-                from neural_compressor.tensorflow.quantization.tf_utils.quantize_graph_common import QuantizeGraphHelper
+                from neural_compressor.tensorflow.quantization.utils.quantize_graph_common import QuantizeGraphHelper
 
                 original_fp32_op = current_node.op.split("With")[0].split("Quantized")[-1]
                 if original_fp32_op.find("Depthwise") != -1:
@@ -997,7 +995,7 @@ class TensorFlowAdaptor:
 
     def inspect_weight_and_bias(self, node_list, graph_def, graph_info, graph_node_name_mapping):
         """Inspect the weights and biases."""
-        from neural_compressor.tensorflow.quantization.tf_utils.util import (
+        from neural_compressor.tensorflow.quantization.utils.utility import (
             get_tensor_val_from_graph_node,
             int8_node_name_reverse,
         )
@@ -1200,8 +1198,8 @@ class TensorFlowAdaptor:
                  ]
                }
         """
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer
-        from neural_compressor.tensorflow.quantization.tf_utils.util import int8_node_name_reverse
+        from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
+        from neural_compressor.tensorflow.quantization.utils.utility import int8_node_name_reverse
         from neural_compressor.tensorflow.utils import TensorflowBaseModel, dump_data_to_local, load_data_from_pkl
 
         if isinstance(model, TensorflowBaseModel):
@@ -1293,7 +1291,7 @@ class TensorFlowAdaptor:
         quantize_node_input = node_name_mapping[quantize_node.input[0]]
         quantize_node_outputs = [node for node in graph_def.node if quantize_node.name in node.input]
 
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphRewriterHelper
+        from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper
 
         if quantize_node_input.op == "Pad":
             pad_node_input = node_name_mapping[quantize_node_input.input[0]]
@@ -1412,7 +1410,7 @@ class TensorFlowAdaptor:
                         is_asymmetric,
                         weight_bit,
                     )
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_converter import GraphConverter
+        from neural_compressor.tensorflow.quantization.utils.graph_converter import GraphConverter
 
         tmp_graphdef = copy.deepcopy(model.graph_def)
         for i in tmp_graphdef.node:
@@ -1453,8 +1451,8 @@ class TensorFlowAdaptor:
             "Sequential",
         ], "Only `Functional` or `Sequential` keras model is supported for QAT."
 
-        from neural_compressor.tensorflow.quantization.tf_utils.quantize_graph.qat.quantize_config import global_config
-        from neural_compressor.tensorflow.quantization.tf_utils.quantize_graph.qat.quantize_helper import (
+        from neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_config import global_config
+        from neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_helper import (
             init_quantize_config,
             qat_clone_function,
         )
@@ -1477,15 +1475,13 @@ class TensorFlowAdaptor:
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_rewriter.generic.pre_optimize import (
-            PreOptimization,
-        )
+        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
         self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
         model.graph_def = self.pre_optimized_model.graph_def
 
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_converter_without_calib import (
+        from neural_compressor.tensorflow.quantization.utils.graph_converter_without_calib import (
             GraphConverterWithoutCalib,
         )
 
@@ -1501,13 +1497,13 @@ class TensorFlowAdaptor:
 
     def diagnosis_helper(self, fp32_model, quan_model, tune_cfg, save_path):
         """Tensorflow diagnosis helper function."""
-        from neural_compressor.tensorflow.quantization.tf_utils.util import tf_diagnosis_helper
+        from neural_compressor.tensorflow.quantization.utils.utility import tf_diagnosis_helper
 
         return tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path)
 
     def get_output_op_names(self, qmodel):
         """Get the oupur OPs's names."""
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_util import GraphAnalyzer
+        from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
 
         graph_def = GraphAnalyzer().parse_graph(qmodel.graph_def)
         output_op_names = set()
@@ -1661,7 +1657,7 @@ class TensorFlowAdaptor:
 
     def _inference_model_on_batches(self, model, tune_cfg, dataloader, output_op_names):
         """Inference model on batches."""
-        from neural_compressor.tensorflow.quantization.tf_utils.util import generate_feed_dict
+        from neural_compressor.tensorflow.quantization.utils.utility import generate_feed_dict
 
         input_tensors = model.input_tensor
         output_tensors = []
@@ -1709,7 +1705,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
         self._tuning_cfg_to_fw(tune_cfg)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
-        from neural_compressor.tensorflow.quantization.tf_utils.graph_converter import GraphConverter
+        from neural_compressor.tensorflow.quantization.utils.graph_converter import GraphConverter
 
         calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
         if isinstance(data_loader, BaseDataLoader):
@@ -1744,7 +1740,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                     use_bf16=self.use_bf16,
                 ).convert()
             except Exception:  # pragma: no cover
-                from neural_compressor.tensorflow.quantization.tf_utils.util import get_model_input_shape
+                from neural_compressor.tensorflow.quantization.utils.utility import get_model_input_shape
 
                 batch_size = get_model_input_shape(model)
                 logger.warning(
