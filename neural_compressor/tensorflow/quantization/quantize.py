@@ -17,9 +17,10 @@ from typing import Any, Callable, Dict, Tuple, Union
 import tensorflow as tf
 
 from neural_compressor.common import logger
-from neural_compressor.common.utils import STATIC_QUANT
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
+from neural_compressor.common.utils import STATIC_QUANT
 from neural_compressor.tensorflow.utils import BaseModel, KerasModel, Model, algos_mapping
+
 
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
     return any(config.name == algo_name for config in configs_mapping.values())

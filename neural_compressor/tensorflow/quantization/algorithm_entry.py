@@ -15,8 +15,8 @@
 
 from typing import Callable, Dict
 
-from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.common.base_config import BaseConfig
+from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.tensorflow.algorithms import KerasAdaptor, TensorFlowAdaptor
 from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig
 from neural_compressor.tensorflow.utils import BaseModel, KerasModel, framework_specific_info, register_algo

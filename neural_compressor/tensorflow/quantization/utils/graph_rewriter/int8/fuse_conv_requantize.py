@@ -289,9 +289,11 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                             dtypes.int32.as_datatype_enum,
                             dtypes.qint8.as_datatype_enum,
                             input_data_type.as_datatype_enum,
-                            dtypes.float32.as_datatype_enum
-                            if new_node.attr["Tbias"].type == dtypes.float32
-                            else dtypes.qint32.as_datatype_enum,
+                            (
+                                dtypes.float32.as_datatype_enum
+                                if new_node.attr["Tbias"].type == dtypes.float32
+                                else dtypes.qint32.as_datatype_enum
+                            ),
                             dtypes.float32.as_datatype_enum,
                             dtypes.float32.as_datatype_enum,
                             dtypes.float32.as_datatype_enum,
@@ -307,9 +309,11 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                         [
                             input_data_type.as_datatype_enum,
                             dtypes.qint8.as_datatype_enum,
-                            dtypes.float32.as_datatype_enum
-                            if new_node.attr["Tbias"].type == dtypes.float32
-                            else dtypes.qint32.as_datatype_enum,
+                            (
+                                dtypes.float32.as_datatype_enum
+                                if new_node.attr["Tbias"].type == dtypes.float32
+                                else dtypes.qint32.as_datatype_enum
+                            ),
                             dtypes.float32.as_datatype_enum,
                             dtypes.float32.as_datatype_enum,
                             dtypes.float32.as_datatype_enum,
@@ -530,9 +534,11 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                         [
                             input_data_type.as_datatype_enum,
                             dtypes.qint8.as_datatype_enum,
-                            dtypes.float32.as_datatype_enum
-                            if new_node.attr["Tbias"].type == dtypes.float32
-                            else dtypes.qint32.as_datatype_enum,
+                            (
+                                dtypes.float32.as_datatype_enum
+                                if new_node.attr["Tbias"].type == dtypes.float32
+                                else dtypes.qint32.as_datatype_enum
+                            ),
                             dtypes.float32.as_datatype_enum,
                             dtypes.float32.as_datatype_enum,
                             dtypes.float32.as_datatype_enum,
@@ -549,9 +555,11 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                         [
                             input_data_type.as_datatype_enum,
                             dtypes.qint8.as_datatype_enum,
-                            dtypes.float32.as_datatype_enum
-                            if new_node.attr["Tbias"].type == dtypes.float32
-                            else dtypes.qint32.as_datatype_enum,
+                            (
+                                dtypes.float32.as_datatype_enum
+                                if new_node.attr["Tbias"].type == dtypes.float32
+                                else dtypes.qint32.as_datatype_enum
+                            ),
                             dtypes.float32.as_datatype_enum,
                             dtypes.float32.as_datatype_enum,
                             dtypes.float32.as_datatype_enum,
@@ -568,9 +576,11 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                         [
                             input_data_type.as_datatype_enum,
                             dtypes.qint8.as_datatype_enum,
-                            dtypes.float32.as_datatype_enum
-                            if new_node.attr["Tbias"].type == dtypes.float32
-                            else dtypes.qint32.as_datatype_enum,
+                            (
+                                dtypes.float32.as_datatype_enum
+                                if new_node.attr["Tbias"].type == dtypes.float32
+                                else dtypes.qint32.as_datatype_enum
+                            ),
                             dtypes.float32.as_datatype_enum,
                             dtypes.float32.as_datatype_enum,
                             dtypes.float32.as_datatype_enum,
@@ -587,9 +597,11 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                         [
                             input_data_type.as_datatype_enum,
                             dtypes.qint8.as_datatype_enum,
-                            dtypes.float32.as_datatype_enum
-                            if new_node.attr["Tbias"].type == dtypes.float32
-                            else dtypes.qint32.as_datatype_enum,
+                            (
+                                dtypes.float32.as_datatype_enum
+                                if new_node.attr["Tbias"].type == dtypes.float32
+                                else dtypes.qint32.as_datatype_enum
+                            ),
                             dtypes.float32.as_datatype_enum,
                             dtypes.float32.as_datatype_enum,
                             dtypes.float32.as_datatype_enum,
@@ -739,9 +751,11 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                         input_data_type.as_datatype_enum,
                         dtypes.qint8.as_datatype_enum,
                         dtypes.float32.as_datatype_enum,
-                        dtypes.quint8.as_datatype_enum
-                        if summand_op_type != int8_type
-                        else dtypes.qint8.as_datatype_enum,
+                        (
+                            dtypes.quint8.as_datatype_enum
+                            if summand_op_type != int8_type
+                            else dtypes.qint8.as_datatype_enum
+                        ),
                         dtypes.float32.as_datatype_enum,
                         dtypes.float32.as_datatype_enum,
                         dtypes.float32.as_datatype_enum,

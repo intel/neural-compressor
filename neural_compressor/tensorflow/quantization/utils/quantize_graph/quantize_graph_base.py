@@ -24,11 +24,7 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
 
 from neural_compressor.tensorflow.quantization.utils.quantize_graph_common import QuantizeGraphHelper as helper
-from neural_compressor.tensorflow.utils import (
-    version1_eq_version2,
-    version1_gt_version2,
-    version1_lt_version2,
-)
+from neural_compressor.tensorflow.utils import version1_eq_version2, version1_gt_version2, version1_lt_version2
 
 
 class QuantizeGraphBase:
@@ -627,9 +623,11 @@ class QuantizeNodeBase:
         if not self.fake_quant:
             # Add a RequantizationRange node for finding the min and max values.
             requant_range_node = helper.create_node(
-                "RequantizationRangePerChannel"
-                if self.per_channel or original_node.op == "DepthwiseConv2dNative"
-                else "RequantizationRange",
+                (
+                    "RequantizationRangePerChannel"
+                    if self.per_channel or original_node.op == "DepthwiseConv2dNative"
+                    else "RequantizationRange"
+                ),
                 original_node.name + "_eightbit_requant_range",
                 quantized_outputs,
             )
