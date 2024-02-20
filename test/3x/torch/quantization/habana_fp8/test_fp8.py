@@ -2,7 +2,9 @@ import copy
 import os
 import shutil
 import unittest
+
 import habana_frameworks.torch.core as htcore
+
 from neural_compressor.torch.utils import is_hpex_available
 
 if not is_hpex_available():
@@ -11,16 +13,17 @@ import torch
 
 from neural_compressor.torch.algorithms.habana_fp8 import quantize_dynamic
 from neural_compressor.torch.algorithms.habana_fp8.modules import (
+    BatchMatmul,
     FP8BatchMatmul,
     FP8DynamicBatchMatmul,
     FP8DynamicLinear,
     FP8DynamicMatmul,
     FP8Linear,
     FP8Matmul,
+    Matmul,
 )
 from neural_compressor.torch.quantization import quantize
 from neural_compressor.torch.quantization.config import FP8Config, get_default_fp8_config
-from neural_compressor.torch.algorithms.habana_fp8.modules import BatchMatmul, Matmul
 
 torch.set_grad_enabled(False)
 
@@ -132,18 +135,19 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         # Will remove after Habana torch applies below patch:
         # https://github.com/pytorch/pytorch/pull/114662
         # e4m3
-        fp8_inp = torch.ops.hpu.cast_to_fp8_v2(self.inp, 500, dtype=torch.float8_e4m3fn)[0].to('cpu')
+        fp8_inp = torch.ops.hpu.cast_to_fp8_v2(self.inp, 500, dtype=torch.float8_e4m3fn)[0].to("cpu")
         import fp8_convert
+
         int8_inp = fp8_convert.to_u8(fp8_inp)
-        torch.save(int8_inp, 'tmp.pt')
-        saved_int8_inp = torch.load('tmp.pt')
+        torch.save(int8_inp, "tmp.pt")
+        saved_int8_inp = torch.load("tmp.pt")
         recovered_inp = fp8_convert.from_u8(saved_int8_inp, 1)
-        self.assertTrue((fp8_inp==recovered_inp).all())
+        self.assertTrue((fp8_inp == recovered_inp).all())
         # e5m2
-        fp8_inp = torch.ops.hpu.cast_to_fp8_v2(self.inp, 500, dtype=torch.float8_e5m2)[0].to('cpu')
+        fp8_inp = torch.ops.hpu.cast_to_fp8_v2(self.inp, 500, dtype=torch.float8_e5m2)[0].to("cpu")
         int8_inp = fp8_convert.to_u8(fp8_inp)
         recovered_inp = fp8_convert.from_u8(int8_inp, 0)
-        self.assertTrue((fp8_inp==recovered_inp).all())
+        self.assertTrue((fp8_inp == recovered_inp).all())
 
     def test_save_load(self):
         m = copy.deepcopy(self.model)
@@ -158,6 +162,7 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         m.save("saved_results")
 
         from neural_compressor.torch.quantization import load
+
         m = copy.deepcopy(self.model)
         m = load(m, "saved_results")
         recovered_out = m(inp)

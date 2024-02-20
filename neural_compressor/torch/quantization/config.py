@@ -800,6 +800,7 @@ class FP8Config(BaseConfig):
         # TODO fwk owner needs to update it.
         return FP8Config(act_algo=["minmax", "kl"])
 
+
 def get_default_fp8_config() -> FP8Config:
     """Generate the default gptq config.
 
@@ -807,6 +808,7 @@ def get_default_fp8_config() -> FP8Config:
         the default gptq config.
     """
     return FP8Config()
+
 
 ##################### Algo Configs End ###################################
 

@@ -17,33 +17,29 @@ import copy
 import os
 
 import habana_frameworks.torch.core as htcore
-from habana_frameworks.torch.core.quantization import _check_params_as_const, _mark_params_as_const
 import torch
 from deepspeed.module_inject import LinearAllreduce, LinearLayer
 from deepspeed.module_inject.layers import LmHeadLinearAllreduce
+from habana_frameworks.torch.core.quantization import _check_params_as_const, _mark_params_as_const
 
-from neural_compressor.torch.utils import logger, fetch_module, set_module
+from neural_compressor.torch.utils import fetch_module, logger, set_module
 
-from .modules import (
-    # fp32
+from .modules import (  # fp32; dynamic modules; static modules; dtype amax
+    E4M3_AMAX,
+    E5M2_AMAX,
     Autocast,
     BatchMatmul,
-    Matmul,
-    # dynamic modules
+    FP8BatchMatmul,
+    FP8Cast,
     FP8DynamicBatchMatmul,
     FP8DynamicLinear,
     FP8DynamicMatmul,
-    # static modules
-    FP8BatchMatmul,
-    FP8Cast,
     FP8Linear,
     FP8LinearAllreduce,
     FP8LinearLayer,
     FP8LmHeadLinearAllreduce,
     FP8Matmul,
-    # dtype amax
-    E4M3_AMAX,
-    E5M2_AMAX,
+    Matmul,
     _map_guadi2_scale,
 )
 

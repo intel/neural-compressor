@@ -54,8 +54,9 @@ PKG_INSTALL_CFG = {
         "package_data": {"": ["*.yaml"]},
         "install_requires": fetch_requirements("requirements.txt"),
         "ext_modules": [
-            CppExtension('fp8_convert',
-                ['neural_compressor/torch/algorithms/habana_fp8/tensor/convert.cpp'],
+            CppExtension(
+                "fp8_convert",
+                ["neural_compressor/torch/algorithms/habana_fp8/tensor/convert.cpp"],
             ),
         ],
         "cmdclass": {"build_ext": BuildExtension},
@@ -98,8 +99,9 @@ PKG_INSTALL_CFG = {
         ),
         "install_requires": fetch_requirements("requirements_pt.txt"),
         "ext_modules": [
-            CppExtension('fp8_convert',
-                ['neural_compressor/torch/algorithms/habana_fp8/tensor/convert.cpp'],
+            CppExtension(
+                "fp8_convert",
+                ["neural_compressor/torch/algorithms/habana_fp8/tensor/convert.cpp"],
             ),
         ],
         "cmdclass": {"build_ext": BuildExtension},
