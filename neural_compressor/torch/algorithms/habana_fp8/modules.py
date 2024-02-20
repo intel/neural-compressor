@@ -18,13 +18,50 @@ import os
 import habana_frameworks.torch.core as htcore
 import habana_frameworks.torch.hpex
 import torch
+import torch.nn as nn
 from torch.nn import functional as F
 
 from neural_compressor.common import logger
 
-# without scale factor 0.9, the output will be abnormal.
-E4M3_AMAX = torch.tensor(240 * 0.9, dtype=torch.float).to("hpu")
-E5M2_AMAX = torch.tensor(57344 * 0.9, dtype=torch.float).to("hpu")
+E4M3_AMAX = torch.tensor(240, dtype=torch.float).to("hpu")
+E5M2_AMAX = torch.tensor(57344, dtype=torch.float).to("hpu")
+
+
+##################### FP32 modules #######################
+class Matmul(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x, y):
+        return torch.matmul(x, y)
+
+
+class BatchMatmul(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x, y):
+        return torch.bmm(x, y)
+
+
+class Autocast(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x):
+        return x
+
+
+##################### FP8 modules #######################
+def _map_guadi2_scale(scale):
+    USE_GUADI2_SCALE = os.environ.get("USE_GUADI2_SCALE")
+    if USE_GUADI2_SCALE:
+        scale_list = torch.tensor([16, 1, 1/16, 1/256])
+        for i in scale_list:
+            if scale > i or i == torch.tensor(1/256):
+                return i
+    else:
+        return scale
 
 
 class FP8DynamicLinear(torch.nn.Module):
@@ -60,6 +97,7 @@ class FP8DynamicLinear(torch.nn.Module):
         # scale = HF_max /amax
         if self.use_amax:
             self.weight_scale = self.dtype_amax / org_module.weight.data.abs().max()
+            self.weight_scale = _map_guadi2_scale(self.weight_scale)
             self.weight_scale_inv = torch.reciprocal(self.weight_scale)
         else:
             self.weight_scale = None
@@ -198,25 +236,25 @@ class FP8Linear(torch.nn.Module):
                 dtype=self.out_dtype,
             ),
         )
-        assert hasattr(org_module, "scale"), "scale is not recorded when convert to FP8Linear."
+        scale = org_module.scale if hasattr(org_module, "scale") else 1.0
         self.register_buffer(
             "scale",
             torch.tensor(
-                org_module.scale,
+                scale,
                 device="hpu",
                 dtype=torch.float32,
             ),
         )
-        self.scale_inv = torch.reciprocal(self.scale)
 
         self.weight_scale = self.dtype_amax / org_module.weight.data.abs().max()
+        self.weight_scale = _map_guadi2_scale(self.weight_scale)
         self.weight_scale_inv = torch.reciprocal(self.weight_scale)
-        self.weight = torch.ops.hpu.cast_to_fp8_v2(org_module.weight.data, self.weight_scale, False, False, self.dtype)[
-            0
-        ]
+        self.weight.data.copy_(
+            torch.ops.hpu.cast_to_fp8_v2(org_module.weight.data, self.weight_scale, False, False, self.dtype)[0]
+        )
 
         if org_module.bias is not None:
-            self.bias = org_module.bias.data.type(self.out_dtype)
+            self.bias.data.copy_(org_module.bias.data.type(self.out_dtype))
         else:
             self.bias = None
 
@@ -225,6 +263,7 @@ class FP8Linear(torch.nn.Module):
         org_middle_shape = inp.shape[1:-1]
         inp = inp.view((-1, self.in_features))
         inp = torch.ops.hpu.cast_to_fp8_v2(inp, self.scale, False, False, self.dtype)[0]
+        self.scale_inv = torch.reciprocal(self.scale)
         out = torch.ops.hpu.fp8_gemm_v2(
             inp,
             False,
@@ -257,27 +296,24 @@ class FP8Matmul(torch.nn.Module):
         self.dtype = dtype
         self.dtype_amax = E4M3_AMAX if self.dtype == torch.float8_e4m3fn else E5M2_AMAX
         self.out_dtype = torch.float32
-        assert hasattr(org_module, "scale") and hasattr(
-            org_module, "scale1"
-        ), "scale is not recorded when convert to FP8Linear."
-        self.register_buffer(
-            "scale",
-            torch.tensor(
-                org_module.scale,
-                device="hpu",
-                dtype=self.out_dtype,
-            ),
-        )
+        scale1 = org_module.scale1 if hasattr(org_module, "scale1") else 1.0
+        scale2 = org_module.scale2 if hasattr(org_module, "scale2") else 1.0
         self.register_buffer(
             "scale1",
             torch.tensor(
-                org_module.scale1,
+                scale1,
                 device="hpu",
                 dtype=self.out_dtype,
             ),
         )
-        self.input1_scale_inv = torch.reciprocal(self.scale)
-        self.input2_scale_inv = torch.reciprocal(self.scale1)
+        self.register_buffer(
+            "scale2",
+            torch.tensor(
+                scale2,
+                device="hpu",
+                dtype=self.out_dtype,
+            ),
+        )
 
     def forward(self, input1, input2):
         dim1 = input1.shape[-1]
@@ -286,12 +322,14 @@ class FP8Matmul(torch.nn.Module):
 
         if input1.dtype not in [torch.float8_e4m3fn, torch.float8_e5m2]:
             self.out_dtype = input1.dtype
-            input1 = torch.ops.hpu.cast_to_fp8_v2(input1, self.scale, False, False, self.dtype)[0]
+            input1 = torch.ops.hpu.cast_to_fp8_v2(input1, self.scale1, False, False, self.dtype)[0]
+            self.input1_scale_inv = torch.reciprocal(self.scale1)
         else:
             self.input1_scale_inv = None
         if input2.dtype not in [torch.float8_e4m3fn, torch.float8_e5m2]:
             self.out_dtype = input2.dtype
-            input2 = torch.ops.hpu.cast_to_fp8_v2(input2, self.scale1, False, False, self.dtype)[0]
+            input2 = torch.ops.hpu.cast_to_fp8_v2(input2, self.scale2, False, False, self.dtype)[0]
+            self.input2_scale_inv = torch.reciprocal(self.scale2)
         else:
             self.input2_scale_inv = None
         out = torch.ops.hpu.fp8_gemm_v2(
@@ -326,11 +364,11 @@ class FP8Cast(torch.nn.Module):
         self.dtype_amax = E4M3_AMAX if self.dtype == torch.float8_e4m3fn else E5M2_AMAX
         if org_module is not None:
             org_module.to("hpu")
-            assert hasattr(org_module, "scale"), "scale is not recorded when convert to FP8Cast."
+            scale = org_module.scale if hasattr(org_module, "scale") else 1.0
             self.register_buffer(
                 "scale",
                 torch.tensor(
-                    org_module.scale,
+                    scale,
                     device="hpu",
                     dtype=torch.float32,
                 ),
@@ -373,19 +411,19 @@ class FP8LinearLayer(torch.nn.Module):
                 dtype=self.weight_dtype,
             ),
         )
-        assert hasattr(org_module, "scale"), "scale is not recorded when convert to FP8Linear."
+        scale = org_module.scale if hasattr(org_module, "scale") else 1.0
         self.register_buffer(
             "scale",
             torch.tensor(
-                org_module.scale,
+                scale,
                 device="hpu",
                 dtype=torch.float32,
             ),
         )
-        self.scale_inv = 1.0 / self.scale
         # user configuration
         # scale = HF_max /amax
         self.weight_scale = self.dtype_amax / org_module.weight.data.abs().max()
+        self.weight_scale = _map_guadi2_scale(self.weight_scale)
         self.weight_scale_inv = 1.0 / self.weight_scale
         self.weight = torch.ops.hpu.cast_to_fp8_v2(org_module.weight.data, self.weight_scale, False, False, self.dtype)[
             0
@@ -407,6 +445,7 @@ class FP8LinearLayer(torch.nn.Module):
         assert inp.shape[-1] == self.in_features, "GEMM not possible"
         inputmat = inp.view((-1, self.in_features))
         inputmat = torch.ops.hpu.cast_to_fp8_v2(inputmat, self.scale, False, False, self.dtype)[0]
+        self.scale_inv = torch.reciprocal(self.scale)
         out = torch.ops.hpu.fp8_gemm_v2(
             inputmat,
             False,
@@ -453,19 +492,19 @@ class FP8LinearAllreduce(torch.nn.Module):
                 dtype=self.weight_dtype,
             ),
         )
-        assert hasattr(org_module, "scale"), "scale is not recorded when convert to FP8Linear."
+        scale = org_module.scale if hasattr(org_module, "scale") else 1.0
         self.register_buffer(
             "scale",
             torch.tensor(
-                org_module.scale,
+                scale,
                 device="hpu",
                 dtype=torch.float32,
             ),
         )
-        self.scale_inv = 1.0 / self.scale
         # user configuration
         # scale = HF_max /amax
         self.weight_scale = self.dtype_amax / org_module.weight.data.abs().max()
+        self.weight_scale = _map_guadi2_scale(self.weight_scale)
         self.weight_scale_inv = 1.0 / self.weight_scale
         self.weight = torch.ops.hpu.cast_to_fp8_v2(org_module.weight.data, self.weight_scale, False, False, self.dtype)[
             0
@@ -488,6 +527,7 @@ class FP8LinearAllreduce(torch.nn.Module):
         assert inp.shape[-1] == self.in_features, "GEMM not possible"
         inputmat = inp.view((-1, self.in_features))
         inputmat = torch.ops.hpu.cast_to_fp8_v2(inputmat, self.scale, False, False, self.dtype)[0]
+        self.scale_inv = torch.reciprocal(self.scale)
         out = torch.ops.hpu.fp8_gemm_v2(
             inputmat,
             False,
@@ -538,19 +578,19 @@ class FP8LmHeadLinearAllreduce(torch.nn.Module):
                 dtype=self.weight_dtype,
             ),
         )
-        assert hasattr(org_module, "scale"), "scale is not recorded when convert to FP8Linear."
+        scale = org_module.scale if hasattr(org_module, "scale") else 1.0
         self.register_buffer(
             "scale",
             torch.tensor(
-                org_module.scale,
+                scale,
                 device="hpu",
                 dtype=torch.float32,
             ),
         )
-        self.scale_inv = 1.0 / self.scale
         # user configuration
         # scale = HF_max /amax
         self.weight_scale = self.dtype_amax / org_module.weight.data.abs().max()
+        self.weight_scale = _map_guadi2_scale(self.weight_scale)
         self.weight_scale_inv = 1.0 / self.weight_scale
         self.weight = torch.ops.hpu.cast_to_fp8_v2(org_module.weight.data, self.weight_scale, False, False, self.dtype)[
             0
@@ -583,6 +623,7 @@ class FP8LmHeadLinearAllreduce(torch.nn.Module):
         input_shard = inp.shape[-1] // self.world_size
         inputmat = inp[:, :, self.rank * input_shard : (self.rank + 1) * input_shard]
         inputmat = torch.ops.hpu.cast_to_fp8_v2(inputmat, self.scale, False, False, self.dtype)[0]
+        self.scale_inv = torch.reciprocal(self.scale)
         out = torch.ops.hpu.fp8_gemm_v2(
             inputmat,
             False,

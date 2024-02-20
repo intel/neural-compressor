@@ -2,7 +2,7 @@ import copy
 import os
 import shutil
 import unittest
-
+import habana_frameworks.torch.core as htcore
 from neural_compressor.torch.utils import is_hpex_available
 
 if not is_hpex_available():
@@ -19,8 +19,8 @@ from neural_compressor.torch.algorithms.habana_fp8.modules import (
     FP8Matmul,
 )
 from neural_compressor.torch.quantization import quantize
-from neural_compressor.torch.quantization.config import FP8QConfig, get_default_fp8_qconfig
-from neural_compressor.torch.quantization.modules import BatchMatmul, Matmul
+from neural_compressor.torch.quantization.config import FP8Config, get_default_fp8_config
+from neural_compressor.torch.algorithms.habana_fp8.modules import BatchMatmul, Matmul
 
 torch.set_grad_enabled(False)
 
@@ -59,7 +59,7 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         shutil.rmtree("./.graph_dumps", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
 
-    def test_dynamic(self):
+    def test_dynamic_accu(self):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
@@ -85,7 +85,7 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
-        qconfig = FP8QConfig(approach="dynamic")
+        qconfig = FP8Config(approach="dynamic")
         m = quantize(m, qconfig, inplace=True)
         self.assertTrue(isinstance(m.fc1, FP8DynamicLinear))
         self.assertTrue(isinstance(m.mm, FP8DynamicMatmul))
@@ -94,11 +94,11 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         fp8_out = m(inp)
         print("Dynamic quantization FP8_E4M3 MSE:", (fp32_out - fp8_out).pow(2).sum())
 
-    def test_static(self):
+    def test_static_accu(self):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
-        qconfig = FP8QConfig(weight_dtype=torch.float8_e5m2, act_dtype=torch.float8_e5m2, approach="static")
+        qconfig = FP8Config(weight_dtype=torch.float8_e5m2, act_dtype=torch.float8_e5m2, approach="static")
 
         def calib_func(model):
             model(inp)
@@ -114,7 +114,7 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
-        qconfig = get_default_fp8_qconfig()
+        qconfig = get_default_fp8_config()
 
         def calib_func(model):
             model(inp)
@@ -126,6 +126,45 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         print(m)
         fp8_out = m(inp)
         print("Static quantization FP8_E4M3 MSE:", (fp32_out - fp8_out).pow(2).sum())
+
+    def test_convert(self):
+        # Temporary implementation of fp8 tensor saving and loading
+        # Will remove after Habana torch applies below patch:
+        # https://github.com/pytorch/pytorch/pull/114662
+        # e4m3
+        fp8_inp = torch.ops.hpu.cast_to_fp8_v2(self.inp, 500, dtype=torch.float8_e4m3fn)[0].to('cpu')
+        import fp8_convert
+        int8_inp = fp8_convert.to_u8(fp8_inp)
+        torch.save(int8_inp, 'tmp.pt')
+        saved_int8_inp = torch.load('tmp.pt')
+        recovered_inp = fp8_convert.from_u8(saved_int8_inp, 1)
+        self.assertTrue((fp8_inp==recovered_inp).all())
+        # e5m2
+        fp8_inp = torch.ops.hpu.cast_to_fp8_v2(self.inp, 500, dtype=torch.float8_e5m2)[0].to('cpu')
+        int8_inp = fp8_convert.to_u8(fp8_inp)
+        recovered_inp = fp8_convert.from_u8(int8_inp, 0)
+        self.assertTrue((fp8_inp==recovered_inp).all())
+
+    def test_save_load(self):
+        m = copy.deepcopy(self.model)
+        inp = self.inp
+        qconfig = get_default_fp8_config()
+
+        def calib_func(model):
+            model(inp)
+
+        m = quantize(m, qconfig, run_fn=calib_func, inplace=True)
+        fp8_out = m(inp)
+        m.save("saved_results")
+
+        from neural_compressor.torch.quantization import load
+        m = copy.deepcopy(self.model)
+        m = load(m, "saved_results")
+        recovered_out = m(inp)
+        self.assertTrue((recovered_out == fp8_out).all())
+        self.assertTrue(isinstance(m.fc1, FP8Linear))
+        self.assertTrue(isinstance(m.mm, FP8Matmul))
+        self.assertTrue(isinstance(m.bmm, FP8BatchMatmul))
 
 
 if __name__ == "__main__":

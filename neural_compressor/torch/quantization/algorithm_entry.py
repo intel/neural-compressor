@@ -18,7 +18,9 @@ from typing import Any, Callable, Dict, Tuple
 import torch
 
 from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT
-from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, HQQConfig, RTNConfig, StaticQuantConfig
+from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, HQQConfig, RTNConfig, StaticQuantConfig, FP8Config
+from types import MethodType
+from typing import Dict, Tuple
 from neural_compressor.torch.utils import logger, register_algo
 
 
@@ -220,8 +222,17 @@ def hqq_entry(
 from neural_compressor.torch.utils import is_hpex_available
 
 if is_hpex_available():
-    from neural_compressor.torch.algorithms.habana_fp8 import quantize
+    from neural_compressor.torch.algorithms.habana_fp8 import quantize, save
 
     @register_algo(FP8_QUANT)
-    def fp8_quant_entry(model, qconfig_mapping, run_fn=None, run_args=None, inplace=True):
-        return quantize(model, qconfig_mapping, run_fn=run_fn, run_args=run_args, inplace=inplace)
+    def fp8_quant_entry(
+        model: torch.nn.Module, configs_mapping: Dict[Tuple[str], FP8Config], *args, **kwargs
+    ) -> torch.nn.Module:
+        model = quantize(model, configs_mapping, *args, **kwargs)
+        # prepare qconfig and save function.
+        qconfig = {"algorithm": FP8_QUANT, "per_module_qconfig": {}}
+        for (op_name, op_type), quant_config in configs_mapping.items():
+            qconfig["per_module_qconfig"][op_name] = quant_config.to_dict()
+        model.qconfig = qconfig
+        model.save = MethodType(save, model)
+        return model

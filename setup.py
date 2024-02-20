@@ -4,6 +4,7 @@ import sys
 from io import open
 
 from setuptools import find_packages, setup
+from torch.utils.cpp_extension import BuildExtension, CppExtension
 
 
 def fetch_requirements(path):
@@ -52,6 +53,12 @@ PKG_INSTALL_CFG = {
         ),
         "package_data": {"": ["*.yaml"]},
         "install_requires": fetch_requirements("requirements.txt"),
+        "ext_modules": [
+            CppExtension('fp8_convert',
+                ['neural_compressor/torch/algorithms/habana_fp8/tensor/convert.cpp'],
+            ),
+        ],
+        "cmdclass": {"build_ext": BuildExtension},
     },
     # 2.x binary build config, pip install neural-compressor
     "neural_compressor_2x": {
@@ -90,6 +97,12 @@ PKG_INSTALL_CFG = {
             ],
         ),
         "install_requires": fetch_requirements("requirements_pt.txt"),
+        "ext_modules": [
+            CppExtension('fp8_convert',
+                ['neural_compressor/torch/algorithms/habana_fp8/tensor/convert.cpp'],
+            ),
+        ],
+        "cmdclass": {"build_ext": BuildExtension},
     },
     # 3.x tf binary build config, pip install neural-compressor[tf], install 2.x API + 3.x TensorFlow API.
     "neural_compressor_3x_tf": {
@@ -182,6 +195,11 @@ if __name__ == "__main__":
     install_requires = PKG_INSTALL_CFG[cfg_key].get("install_requires") or []
     entry_points = PKG_INSTALL_CFG[cfg_key].get("entry_points") or {}
     extras_require = PKG_INSTALL_CFG[cfg_key].get("extras_require") or {}
+    # Temporary implementation of fp8 tensor saving and loading
+    # Will remove after Habana torch applies below patch:
+    # https://github.com/pytorch/pytorch/pull/114662
+    ext_modules = PKG_INSTALL_CFG[cfg_key].get("ext_modules") or []
+    cmdclass = PKG_INSTALL_CFG[cfg_key].get("cmdclass") or {}
 
     setup(
         name=project_name,
@@ -199,6 +217,8 @@ if __name__ == "__main__":
         include_package_data=True,
         package_data=package_data,
         install_requires=install_requires,
+        ext_modules=ext_modules,  # for fp8
+        cmdclass=cmdclass,  # for fp8
         entry_points=entry_points,
         extras_require=extras_require,
         python_requires=">=3.7.0",

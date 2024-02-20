@@ -17,25 +17,34 @@ import copy
 import os
 
 import habana_frameworks.torch.core as htcore
+from habana_frameworks.torch.core.quantization import _check_params_as_const, _mark_params_as_const
 import torch
 from deepspeed.module_inject import LinearAllreduce, LinearLayer
 from deepspeed.module_inject.layers import LmHeadLinearAllreduce
 
-from neural_compressor.common.utils import FP8_QUANT
-from neural_compressor.torch.quantization.modules import Autocast, BatchMatmul, Matmul
-from neural_compressor.torch.utils.utility import fetch_module, logger, register_algo, set_module
+from neural_compressor.torch.utils import logger, fetch_module, set_module
 
 from .modules import (
-    FP8BatchMatmul,
-    FP8Cast,
+    # fp32
+    Autocast,
+    BatchMatmul,
+    Matmul,
+    # dynamic modules
     FP8DynamicBatchMatmul,
     FP8DynamicLinear,
     FP8DynamicMatmul,
+    # static modules
+    FP8BatchMatmul,
+    FP8Cast,
     FP8Linear,
     FP8LinearAllreduce,
     FP8LinearLayer,
     FP8LmHeadLinearAllreduce,
     FP8Matmul,
+    # dtype amax
+    E4M3_AMAX,
+    E5M2_AMAX,
+    _map_guadi2_scale,
 )
 
 quantization_mapping = {
@@ -51,20 +60,20 @@ quantization_mapping = {
 white_list = tuple(quantization_mapping.keys())
 
 
-# without scale factor 0.9, the output will be abnormal.
-E4M3_AMAX = torch.tensor(240 * 0.9, dtype=torch.float).to("hpu")
-E5M2_AMAX = torch.tensor(57344 * 0.9, dtype=torch.float).to("hpu")
-FP8_DTYPE = [torch.float8_e5m2, torch.float8_e4m3fn]
+FP8_DTYPE = [torch.float8_e5m2, torch.float8_e4m3fn, "fp8_e5m2", "fp8_e4m3"]
+dtype_mapping = {"fp8_e5m2": torch.float8_e5m2, "fp8_e4m3": torch.float8_e4m3fn}
+# enable inference optimizations
+htcore.hpu_initialize()
 
 
 def _replace_module(module, qconfig):
     if qconfig.approach == "static":
         if isinstance(module, white_list):
             QModule = quantization_mapping[type(module)]
-            assert qconfig.weight_dtype == qconfig.act_dtype, "weight and activation should be the same dtype."
-            module = QModule(module, qconfig.act_dtype)
+            assert qconfig.w_dtype == qconfig.act_dtype, "weight and activation should be the same dtype."
+            module = QModule(module, dtype_mapping[qconfig.act_dtype])
     elif qconfig.approach == "dynamic":
-        dtype = qconfig.act_dtype
+        dtype = dtype_mapping[qconfig.act_dtype]
         if isinstance(module, torch.nn.Linear):
             # need module for initialization
             module = FP8DynamicLinear(module, dtype)
@@ -74,12 +83,14 @@ def _replace_module(module, qconfig):
             module = FP8DynamicBatchMatmul(dtype)
         elif isinstance(module, Autocast):
             module = FP8Cast(dtype=dtype)
-    htcore.mark_step()
+        htcore.mark_step()
     return module
 
 
 def quantize_dynamic(model, dtype=torch.float8_e4m3fn, inplace=True):
     q_model = model if inplace else copy.deepcopy(model)
+    if isinstance(dtype, str):
+        dtype = dtype_mapping[dtype]
     for n, m in q_model.named_modules():
         if isinstance(m, torch.nn.Linear):
             new_m = FP8DynamicLinear(m, dtype)  # need m for init
@@ -94,6 +105,8 @@ def quantize_dynamic(model, dtype=torch.float8_e4m3fn, inplace=True):
             new_m = FP8Cast(dtype=dtype)
             set_module(q_model, n, new_m)
         htcore.mark_step()
+    _mark_params_as_const(q_model)
+    _check_params_as_const(q_model)
     return q_model
 
 
@@ -129,7 +142,7 @@ def _remove_observer(module, qconfig):
     import deepspeed.comm as dist
     from torch.distributed import ReduceOp
 
-    HF_max = E4M3_AMAX if qconfig.act_dtype == torch.float8_e4m3fn else E5M2_AMAX
+    HF_max = E4M3_AMAX if qconfig.act_dtype == "fp8_e4m3" else E5M2_AMAX
     if hasattr(module, "input_activation_post_process"):
         if hasattr(module.input_activation_post_process, "_non_linear_param_search"):  # kl
             min_val, max_val = module.input_activation_post_process._non_linear_param_search()
@@ -141,7 +154,11 @@ def _remove_observer(module, qconfig):
             amax = amax.to("hpu")
             dist.all_reduce(amax, op=ReduceOp.MAX)
         scale = HF_max / amax
-        module.register_parameter("scale", torch.nn.Parameter(scale))
+        scale = _map_guadi2_scale(scale)
+        if hasattr(module, "input_activation_post_process1"):
+            module.register_parameter("scale1", torch.nn.Parameter(scale))
+        else:
+            module.register_parameter("scale", torch.nn.Parameter(scale))
         delattr(module, "input_activation_post_process")
     if hasattr(module, "input_activation_post_process1"):
         if hasattr(module.input_activation_post_process1, "_non_linear_param_search"):
@@ -154,7 +171,8 @@ def _remove_observer(module, qconfig):
             amax = amax.to("hpu")
             dist.all_reduce(amax, op=ReduceOp.MAX)
         scale = HF_max / amax
-        module.register_parameter("scale1", torch.nn.Parameter(scale))
+        scale = _map_guadi2_scale(scale)
+        module.register_parameter("scale2", torch.nn.Parameter(scale))
         delattr(module, "input_activation_post_process1")
 
     # remove observer hooks
@@ -171,7 +189,7 @@ def prepare(model, qconfig_mapping):
     for (op_name, op_type), qconfig in qconfig_mapping.items():
         if qconfig.approach == "dynamic":
             continue
-        if qconfig.weight_dtype not in FP8_DTYPE:
+        if qconfig.w_dtype not in FP8_DTYPE:
             continue
         module = fetch_module(model, op_name)
         if module is None:
@@ -184,7 +202,7 @@ def prepare(model, qconfig_mapping):
 
 def convert(model, qconfig_mapping):
     for (op_name, op_type), qconfig in qconfig_mapping.items():
-        if qconfig.weight_dtype not in FP8_DTYPE:
+        if qconfig.w_dtype not in FP8_DTYPE:
             continue
         module = fetch_module(model, op_name)
         if module is None:
@@ -207,4 +225,6 @@ def quantize(model, qconfig_mapping, run_fn=None, run_args=None, inplace=True):
         else:
             run_fn(q_model)
     q_model = convert(q_model, qconfig_mapping)
+    _mark_params_as_const(q_model)
+    _check_params_as_const(q_model)
     return q_model

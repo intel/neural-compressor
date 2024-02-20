@@ -1,19 +1,28 @@
+import os
+os.environ["EXPERIMENTAL_WEIGHT_SHARING"] = "False"
+# os.environ["GRAPH_VISUALIZATION"] = "True"
+import shutil
+shutil.rmtree(".graph_dumps", ignore_errors=True)
 import argparse
 import time
 import json
 import re
 import torch
-import transformers
-import os
-import deepspeed
-from transformers import AutoModelForCausalLM, AutoTokenizer
 import habana_frameworks.torch.hpex
-from habana_frameworks.torch.hpu import memory_stats
+import torch.nn.functional as F
+import deepspeed
+import transformers
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import habana_frameworks.torch.core as htcore
 import numpy as np
 import lm_eval
 import lm_eval.tasks
 import lm_eval.evaluator
+
+
 torch.set_grad_enabled(False)
+htcore.hpu_set_env()
+torch.device('hpu')
 
 
 def itrex_bootstrap_stderr(f, xs, iters):
@@ -57,8 +66,8 @@ parser.add_argument("--pad_max_length", default=512, type=int,
                     help="Pad input ids to max length.")
 parser.add_argument("--calib_iters", default=100, type=int,
                     help="calibration iters.")
-parser.add_argument("--tasks", nargs='+', default=["lambada_openai"], type=str, \
-                    choices=["winogrande", "copa", "piqa", "rte", "hellaswag", \
+parser.add_argument("--tasks", nargs='+', default=["hellaswag", "lambada_openai", "piqa", "winogrande"], \
+                    type=str, choices=["winogrande", "copa", "piqa", "rte", "hellaswag", \
                     "openbookqa", "lambada_openai", "lambada_standard", "wikitext"],
                     help="tasks list for accuracy validation")
 parser.add_argument("--limit", default=None, type=int,
@@ -66,7 +75,7 @@ parser.add_argument("--limit", default=None, type=int,
 parser.add_argument("--max_new_tokens", default=100, type=int,
                     help="calibration iters.")
 parser.add_argument('--buckets', type=int, nargs='+', \
-                    help="Input length buckets to use with static_shapes", default=[129])
+                    help="Input length buckets to use with static_shapes", default=[256, 512])
 parser.add_argument("--local_rank",
                     type=int,
                     default=-1,
@@ -78,39 +87,30 @@ args = parser.parse_args()
 world_size = int(os.getenv('WORLD_SIZE', '1'))
 local_rank = int(os.getenv('LOCAL_RANK', '-1'))
 
-#if local_rank == 0:
-#    os.environ["ENABLE_CONSOLE"] = 'True'
-#    os.environ["LOG_LEVEL_ALL"] = '0'
 
-# model
+model_dtype = torch.float32
 if re.search("llama", args.model.lower()) or re.search("bloom", args.model.lower()):
     from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
-    torch.device('hpu')
     config = AutoConfig.from_pretrained(args.model)
     if world_size > 1:
-        model_dtype = torch.bfloat16
+        model_dtype = torch.float16
         deepspeed.init_distributed(dist_backend="hccl")
         with deepspeed.OnDevice(dtype=model_dtype, device="meta"):
             user_model = AutoModelForCausalLM.from_config(config, torch_dtype=model_dtype)
         import tempfile
         checkpoints_json = tempfile.NamedTemporaryFile(suffix=".json", mode="+w")
-        from utils import write_checkpoints_json
+        from optimum.habana.checkpoint_utils import write_checkpoints_json # in optimum-habana
         write_checkpoints_json(
              args.model,
              local_rank,
              checkpoints_json,
              token=None,
         )
-    elif re.search("llama", args.model.lower()):
-        from models.modeling_llama import LlamaForCausalLM
-        user_model = LlamaForCausalLM.from_pretrained(
-            args.model,
-            device_map='hpu',
-        )
     else:
         user_model = AutoModelForCausalLM.from_pretrained(
             args.model,
             device_map='hpu',
+            torch_dtype=model_dtype,
         )
 elif re.search("chatglm", args.model.lower()):
     from models.modeling_chatglm import ChatGLMForConditionalGeneration
@@ -118,13 +118,17 @@ elif re.search("chatglm", args.model.lower()):
         args.model,
         revision=args.revision,
         device_map='hpu',
+        torch_dtype=model_dtype,
     )
+    # print(user_model.transformer.output_layer.weight.dtype) # always fp16
+    user_model.float() # static fp8 need float32 for graph compiler
 else:
     user_model = AutoModelForCausalLM.from_pretrained(
         args.model,
         trust_remote_code=args.trust_remote_code,
         revision=args.revision,
         device_map='hpu',
+        torch_dtype=model_dtype,
     )
 
 # tokenizer
@@ -139,6 +143,8 @@ else:
         args.model,
         trust_remote_code=args.trust_remote_code
     )
+
+tokenizer.pad_token = tokenizer.eos_token
 
 if world_size > 1:
     if re.search("llama", args.model.lower()):
@@ -160,7 +166,7 @@ user_model.eval()
 
 if args.approach in ["dynamic", "static"]:
     print("device:", next(user_model.parameters()).device)
-    from neural_compressor.torch.quantization.config import FP8QConfig, get_default_fp8_qconfig
+    from neural_compressor.torch.quantization.config import FP8Config, get_default_fp8_config
     from neural_compressor.torch.algorithms.habana_fp8 import quantize_dynamic
     from neural_compressor.torch.quantization import quantize
     if args.precision == "fp8_e4m3":
@@ -169,15 +175,15 @@ if args.approach in ["dynamic", "static"]:
         dtype = torch.float8_e5m2
     if args.approach == "dynamic":
         #user_model = quantize_dynamic(user_model, dtype, inplace=True)
-        qconfig = FP8QConfig(weight_dtype=dtype, act_dtype=dtype, approach="dynamic")
+        qconfig = FP8Config(weight_dtype=dtype, act_dtype=dtype, approach="dynamic")
         if args.skip_lm_head:
-            fp32_config = FP8QConfig(weight_dtype=torch.float32, act_dtype=torch.float32)
+            fp32_config = FP8Config(weight_dtype=torch.float32, act_dtype=torch.float32)
             qconfig.set_local("lm_head", fp32_config)
         user_model = quantize_dynamic(user_model, qconfig, inplace=True)
     elif args.approach == "static":
-        qconfig = FP8QConfig(weight_dtype=dtype, act_dtype=dtype, approach="static")
+        qconfig = FP8Config(weight_dtype=dtype, act_dtype=dtype, approach="static")
         if args.skip_lm_head:
-            fp32_config = FP8QConfig(weight_dtype=torch.float32, act_dtype=torch.float32)
+            fp32_config = FP8Config(weight_dtype=torch.float32, act_dtype=torch.float32)
             qconfig.set_local("lm_head", fp32_config)
         # dataset
         from datasets import load_dataset
@@ -186,7 +192,13 @@ if args.approach in ["dynamic", "static"]:
         calib_data = []
         for examples in calib_dataset:
             calib_data.append(
-                tokenizer(examples["text"], return_tensors="pt", max_length=128)
+                tokenizer(
+                    examples["text"], 
+                    return_tensors="pt", 
+                    max_length=64, 
+                    padding="max_length", 
+                    truncation=True
+                )
             )
 
         def calib_func(model):
@@ -199,6 +211,17 @@ if args.approach in ["dynamic", "static"]:
                 )
 
         user_model = quantize(user_model, qconfig, calib_func, inplace=True)
+        # replace torch.matmul and toch.bmm by injection
+        def replace_torch_mm_bmm():
+            from neural_compressor.torch.amp.fp8.functions import fp8_matmul
+            torch.matmul = fp8_matmul
+            torch.bmm = fp8_matmul
+
+        replace_torch_mm_bmm()
+        # It enables weights constant folding
+        from habana_frameworks.torch.core.quantization import _check_params_as_const, _mark_params_as_const
+        _mark_params_as_const(user_model)  # can reduce memory allocated and speed up
+        _check_params_as_const(user_model)
     print(user_model, flush=True)
 
 if args.to_graph:
@@ -243,6 +266,16 @@ if args.performance:
     print("Duration of generating 100 tokens :", time.perf_counter() - eval_start)
 
 if args.accuracy:
+
+    def save_to_excel(dict):
+        import pandas as pd
+        df_new = pd.DataFrame(dict)
+        try:
+            df_existing = pd.read_excel('output.xlsx')
+        except FileNotFoundError:
+            df_existing = pd.DataFrame()
+        df_combined = pd.concat([df_existing, df_new], axis=0, ignore_index=True)
+        df_combined.to_excel('output.xlsx', index=False, engine='openpyxl', header=True)
 
     class HabanaModelAdapter(lm_eval.base.BaseLM):
         def __init__(self, tokenizer, model, args, options):
@@ -292,16 +325,14 @@ if args.accuracy:
             return [b for b in self.buckets if b >= length][0]
 
         def _model_call(self, inps):
-            #print(inps.shape)
             seq_length = inps.shape[-1]
+            padding_length = 0
             bucket_length = self.find_bucket(seq_length)
             padding_length = bucket_length - seq_length
-            if True:
-                import torch.nn.functional as F
-                inps = F.pad(inps, (0, padding_length), value=self.model.config.pad_token_id)
+            inps = F.pad(inps, (0, padding_length), value=self.model.config.pad_token_id)
+            logits = self.model(inps.to(self._device))["logits"].cpu()
 
-            logits = self.model(inps.to(self._device))['logits']
-            if True and padding_length > 0:
+            if padding_length > 0:
                 logits = logits[:, :-padding_length, :]
             logits = logits.to(torch.float32)
             return logits
@@ -333,18 +364,31 @@ if args.accuracy:
 
 
     dumped = json.dumps(results, indent=2)
+    accu_dict = {}
+    case_name =  args.approach + "-" + args.precision
     for task_name in args.tasks:
         if task_name == "wikitext":
             print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["word_perplexity"]), flush=True)
+            accu_dict[task_name] = [args.model, case_name, results["results"][task_name]["word_perplexity"]]
         else:
             print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["acc"]), flush=True)
+            accu_dict[task_name] = [args.model, case_name, results["results"][task_name]["acc"]]
+    save_to_excel(accu_dict)
+
 
 # show memory usage
-mem_stats = memory_stats()
-mem_dict = {
-    "memory_allocated (GB)": np.round(mem_stats["InUse"] / 1024**3, 2),
-    "max_memory_allocated (GB)": np.round(mem_stats["MaxInUse"] / 1024**3, 2),
-    "total_memory_available (GB)": np.round(mem_stats["Limit"] / 1024**3, 2),
-}
-for k, v in mem_dict.items():
-    print("{:35} = {} GB".format(k[:-5].replace("_", " ").capitalize(), v))
+def show_msg():
+    import numpy as np
+    import glob
+    from habana_frameworks.torch.hpu import memory_stats
+    print("Number of HPU graphs:", len(glob.glob(".graph_dumps/*PreGraph*")))
+    mem_stats = memory_stats()
+    mem_dict = {
+        "memory_allocated (GB)": np.round(mem_stats["InUse"] / 1024**3, 2),
+        "max_memory_allocated (GB)": np.round(mem_stats["MaxInUse"] / 1024**3, 2),
+        "total_memory_available (GB)": np.round(mem_stats["Limit"] / 1024**3, 2),
+    }
+    for k, v in mem_dict.items():
+        print("{:35} = {} GB".format(k[:-5].replace("_", " ").capitalize(), v))
+
+show_msg()
