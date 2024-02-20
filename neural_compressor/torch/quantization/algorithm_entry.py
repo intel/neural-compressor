@@ -34,6 +34,8 @@ def rtn_entry(
     # rebuild weight_config for rtn_quantize function
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
+        if quant_config.name != RTN:
+            continue
         weight_config[op_name] = {
             "dtype": quant_config.dtype,
             "bits": quant_config.bits,
@@ -67,6 +69,8 @@ def gptq_entry(
     # rebuild weight_config for gptq_quantize function
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
+        if quant_config.name != GPTQ:
+            continue
         weight_config[op_name] = {
             "dtype": quant_config.dtype,
             "bits": quant_config.bits,
