@@ -16,6 +16,7 @@
 # limitations under the License.
 """Logger: handles logging functionalities."""
 
+import inspect
 import logging
 import os
 
@@ -23,6 +24,7 @@ __all__ = [
     "level",
     "Logger",  # TODO: not expose it
     "logger",
+    "TuningLogger",
 ]
 
 
@@ -75,58 +77,105 @@ class Logger(object):
     @staticmethod
     def log(level, msg, *args, **kwargs):
         """Output log with the level as a parameter."""
+        kwargs.setdefault("stacklevel", 2)
         if isinstance(msg, dict):
             for _, line in enumerate(_pretty_dict(msg).split("\n")):
-                Logger().get_logger().log(level, line, *args, **kwargs, stacklevel=2)
+                Logger().get_logger().log(level, line, *args, **kwargs)
         else:
-            Logger().get_logger().log(level, msg, *args, **kwargs, stacklevel=2)
+            Logger().get_logger().log(level, msg, *args, **kwargs)
 
     @staticmethod
     def debug(msg, *args, **kwargs):
         """Output log with the debug level."""
+        kwargs.setdefault("stacklevel", 2)
         if isinstance(msg, dict):
             for _, line in enumerate(_pretty_dict(msg).split("\n")):
-                Logger().get_logger().debug(line, *args, **kwargs, stacklevel=2)
+                Logger().get_logger().debug(line, *args, **kwargs)
         else:
-            Logger().get_logger().debug(msg, *args, **kwargs, stacklevel=2)
+            Logger().get_logger().debug(msg, *args, **kwargs)
 
     @staticmethod
     def error(msg, *args, **kwargs):
         """Output log with the error level."""
+        kwargs.setdefault("stacklevel", 2)
         if isinstance(msg, dict):
             for _, line in enumerate(_pretty_dict(msg).split("\n")):
-                Logger().get_logger().error(line, *args, **kwargs, stacklevel=2)
+                Logger().get_logger().error(line, *args, **kwargs)
         else:
-            Logger().get_logger().error(msg, *args, **kwargs, stacklevel=2)
+            Logger().get_logger().error(msg, *args, **kwargs)
 
     @staticmethod
     def fatal(msg, *args, **kwargs):
         """Output log with the fatal level."""
+        kwargs.setdefault("stacklevel", 2)
         if isinstance(msg, dict):
             for _, line in enumerate(_pretty_dict(msg).split("\n")):
-                Logger().get_logger().fatal(line, *args, **kwargs, stacklevel=2)
+                Logger().get_logger().fatal(line, *args, **kwargs)
         else:
-            Logger().get_logger().fatal(msg, *args, **kwargs, stacklevel=2)
+            Logger().get_logger().fatal(msg, *args, **kwargs)
 
     @staticmethod
     def info(msg, *args, **kwargs):
         """Output log with the info level."""
+        kwargs.setdefault("stacklevel", 2)
         if isinstance(msg, dict):
             for _, line in enumerate(_pretty_dict(msg).split("\n")):
-                Logger().get_logger().info(line, *args, **kwargs, stacklevel=2)
+                Logger().get_logger().info(line, *args, **kwargs)
         else:
-            Logger().get_logger().info(msg, *args, **kwargs, stacklevel=2)
+            Logger().get_logger().info(msg, *args, **kwargs)
 
     @staticmethod
     def warning(msg, *args, **kwargs):
         """Output log with the warning level (Alias of the method warn)."""
+        kwargs.setdefault("stacklevel", 2)
         if isinstance(msg, dict):
             for _, line in enumerate(_pretty_dict(msg).split("\n")):
-                Logger().get_logger().warning(line, *args, **kwargs, stacklevel=2)
+                Logger().get_logger().warning(line, *args, **kwargs)
         else:
-            Logger().get_logger().warning(msg, *args, **kwargs, stacklevel=2)
+            Logger().get_logger().warning(msg, *args, **kwargs)
 
 
 level = Logger().get_logger().level
 
 logger = Logger
+
+
+class TuningLogger:
+    """A unified logger for the tuning/quantization process.
+
+    It assists validation teams in retrieving logs.
+    """
+
+    @classmethod
+    def tuning_start(cls) -> None:
+        logger.info("Tuning started.")
+
+    @classmethod
+    def trial_start(cls, trial_index: int = None) -> None:
+        logger.info(
+            f" {trial_index}-trail started.",
+        )
+
+    @classmethod
+    def quantization_start(cls, stacklevel=2) -> None:
+        logger.info("Quantization started.", stacklevel=stacklevel)
+
+    @classmethod
+    def quantization_end(cls, stacklevel=2) -> None:
+        logger.info("Quantization end.", stacklevel=stacklevel)
+
+    @classmethod
+    def evaluation_start(cls) -> None:
+        logger.info("Evaluation started.")
+
+    @classmethod
+    def evaluation_end(cls) -> None:
+        logger.info("Evaluation end.")
+
+    @classmethod
+    def trial_end(cls, trial_index: int = None) -> None:
+        logger.info(f" {trial_index}-trail end.")
+
+    @classmethod
+    def tuning_end(cls) -> None:
+        logger.info("Tuning completed.")

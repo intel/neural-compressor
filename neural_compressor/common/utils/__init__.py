@@ -13,5 +13,7 @@
 # limitations under the License.
 
 from neural_compressor.common.utils.constants import *
-from neural_compressor.common.utils.utility import *
 from neural_compressor.common.utils.logger import *
+
+# ! Put the following import utility in the after the logger import as it is dependent on the logger
+from neural_compressor.common.utils.utility import *
