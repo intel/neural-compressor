@@ -15,5 +15,5 @@
 from neural_compressor.common.utils.constants import *
 from neural_compressor.common.utils.logger import *
 
-# ! Put the following import utility in the after the logger import as it is dependent on the logger
+# ! Put the following `utility` import after the `logger` import as `utility` used `logger`
 from neural_compressor.common.utils.utility import *
