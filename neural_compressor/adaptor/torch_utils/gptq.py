@@ -133,7 +133,8 @@ def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Co
         return {name: module}
     else:
         # use string type to find name:
-        if type(module).__name__ in ["Linear"]:
+        # if type(module).__name__ in ["Linear"]:
+        if isinstance(module, (nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D)):
             return {name: module}
         else:
             pass
@@ -232,6 +233,7 @@ class GPTQuantizer(object):
         self.percdamp_default = 0.01
         self.sym_default = False
         self.act_order_default = False
+        self.static_groups_default = False
         self.perchannel_default = True
         self.mse_default = False
         self.check_layer_config()
@@ -406,6 +408,9 @@ class GPTQuantizer(object):
                 tmp_weight_config[name]["percdamp"] = self.weight_config.get("pecdamp", self.percdamp_default)
                 tmp_weight_config[name]["sym"] = self.weight_config.get("sym", self.sym_default)
                 tmp_weight_config[name]["act_order"] = self.weight_config.get("act_order", self.act_order_default)
+                tmp_weight_config[name]["static_groups"] = self.weight_config.get(
+                    "static_groups", self.static_groups_default
+                )
                 tmp_weight_config[name]["perchannel"] = self.weight_config.get("perchannel", self.perchannel_default)
                 tmp_weight_config[name]["mse"] = self.weight_config.get("mse", self.mse_default)
             self.weight_config = tmp_weight_config
@@ -417,6 +422,9 @@ class GPTQuantizer(object):
                 self.weight_config[layer_name]["percdamp"] = config.get("pecdamp", self.percdamp_default)
                 self.weight_config[layer_name]["sym"] = config.get("sym", self.sym_default)
                 self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
+                self.weight_config[layer_name]["static_groups"] = config.get(
+                    "static_groups", self.static_groups_default
+                )
                 self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
                 self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
 
@@ -631,6 +639,7 @@ class GPTQuantizer(object):
                     percdamp=weight_config_this_layer["percdamp"],
                     groupsize=weight_config_this_layer["group_size"],
                     act_order=weight_config_this_layer["act_order"],
+                    static_groups=weight_config_this_layer["static_groups"],
                 )
                 if self.layer_wise:
                     from ..torch_utils.layer_wise_quant.utils import (
@@ -745,7 +754,7 @@ class GPTQ:
         # self.H += 2 / self.nsamples * inp.matmul(inp.t())
         self.H += inp.matmul(inp.t())  # H = X*X, which should be a sysm matrix
 
-    def fasterquant(self, W, blocksize=128, percdamp=0.01, groupsize=-1, act_order=False):
+    def fasterquant(self, W, blocksize=128, percdamp=0.01, groupsize=-1, act_order=False, static_groups=False):
         # W = self.layer.weight.data.clone()
         weight_shape, weight_dtype = W.shape, W.data.dtype
         if isinstance(self.layer, nn.Conv2d):
@@ -764,6 +773,17 @@ class GPTQ:
         dead = torch.diag(H) == 0
         H[dead, dead] = 1
         W[:, dead] = 0  # such channel makes no contribution to quantization computation
+
+        # enable static_groups
+        # calculate the quantization parameters for original group in advance.
+        if static_groups:
+            import copy
+
+            groups = []
+            for i in range(0, self.columns, groupsize):
+                quantizer = copy.deepcopy(self.quantizer)
+                quantizer.find_params(W[:, i : (i + groupsize)], weight=True)
+                groups.append(quantizer)
 
         # rearrange considering the diag's value
         if act_order:
@@ -801,10 +821,16 @@ class GPTQ:
                 d = Hinv1[i, i]
 
                 if groupsize != -1:
-                    if (i1 + i) % groupsize == 0:
-                        self.quantizer.find_params(W[:, (i1 + i) : (i1 + i + groupsize)], weight=True)
-                        scale.append(self.quantizer.scale)
-                        zero.append(self.quantizer.zero)
+                    if not static_groups:
+                        if (i1 + i) % groupsize == 0:
+                            self.quantizer.find_params(W[:, (i1 + i) : (i1 + i + groupsize)], weight=True)
+                            scale.append(self.quantizer.scale)
+                            zero.append(self.quantizer.zero)
+                    else:
+                        idx = i1 + i
+                        if act_order:
+                            idx = perm[idx]
+                        self.quantizer = groups[idx // groupsize]
 
                 q = quantize(w.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq).flatten()
                 Q1[:, i] = q

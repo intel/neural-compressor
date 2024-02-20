@@ -397,12 +397,12 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type="post_training_static_quant"):
     for key, value in op_cfgs.items():
         if key == "default_qconfig":
             if version.release >= Version("1.13.0").release:  # pragma: no cover
-                fx_op_cfgs.set_global(value)
+                fx_op_cfgs.set_global(value)  # pylint: disable=E1101
             else:
                 fx_op_cfgs[""] = value
             continue
         if version.release >= Version("1.13.0").release:  # pragma: no cover
-            fx_op_cfgs.set_module_name(key, value)
+            fx_op_cfgs.set_module_name(key, value)  # pylint: disable=E1101
         else:
             op_tuple = (key, value)
             op_tuple_cfg_list.append(op_tuple)
@@ -413,7 +413,7 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type="post_training_static_quant"):
         from torch.ao.quantization import get_default_qconfig_mapping
 
         for name, q_config in get_default_qconfig_mapping().to_dict()["object_type"]:
-            fx_op_cfgs.set_object_type(name, q_config)
+            fx_op_cfgs.set_object_type(name, q_config)  # pylint: disable=E1101
 
     return fx_op_cfgs
 
@@ -1220,9 +1220,11 @@ class TemplateAdaptor(Adaptor):
                 bf16_ops.append(
                     (
                         op_name,
-                        unify_op_type_mapping[str(child.__class__.__name__)]
-                        if str(child.__class__.__name__) in unify_op_type_mapping
-                        else str(child.__class__.__name__),
+                        (
+                            unify_op_type_mapping[str(child.__class__.__name__)]
+                            if str(child.__class__.__name__) in unify_op_type_mapping
+                            else str(child.__class__.__name__)
+                        ),
                     )
                 )
             elif self.is_fused_module(child):
@@ -1386,9 +1388,13 @@ class TemplateAdaptor(Adaptor):
                             for index in range(len(value)):
                                 summary[op_name].update(
                                     {
-                                        op_name + ".output" + str(index): dequantize(value[index]).numpy()
-                                        if value[index].is_quantized
-                                        else value[index].numpy()
+                                        op_name
+                                        + ".output"
+                                        + str(index): (
+                                            dequantize(value[index]).numpy()
+                                            if value[index].is_quantized
+                                            else value[index].numpy()
+                                        )
                                     }
                                 )
                         else:
@@ -1408,16 +1414,19 @@ class TemplateAdaptor(Adaptor):
                                                     {
                                                         tensor_name
                                                         + ".output"
-                                                        + str(index): dequantize(value[index]).numpy()
-                                                        if value[index].is_quantized
-                                                        else value[index].numpy()
+                                                        + str(index): (
+                                                            dequantize(value[index]).numpy()
+                                                            if value[index].is_quantized
+                                                            else value[index].numpy()
+                                                        )
                                                     }
                                                 )
                                         else:
                                             summary[tensor_name] = {
-                                                tensor_name + ".output0": dequantize(value).numpy()
-                                                if value.is_quantized
-                                                else value.numpy()
+                                                tensor_name
+                                                + ".output0": (
+                                                    dequantize(value).numpy() if value.is_quantized else value.numpy()
+                                                )
                                             }
                             else:
                                 for a in fp32_int8_map:  # pragma: no cover
@@ -1430,16 +1439,19 @@ class TemplateAdaptor(Adaptor):
                                                     {
                                                         tensor_name
                                                         + ".output"
-                                                        + str(index): dequantize(value[index]).numpy()
-                                                        if value[index].is_quantized
-                                                        else value[index].numpy()
+                                                        + str(index): (
+                                                            dequantize(value[index]).numpy()
+                                                            if value[index].is_quantized
+                                                            else value[index].numpy()
+                                                        )
                                                     }
                                                 )
                                         else:
                                             summary[tensor_name] = {
-                                                tensor_name + ".output0": dequantize(value).numpy()
-                                                if value.is_quantized
-                                                else value.numpy()
+                                                tensor_name
+                                                + ".output0": (
+                                                    dequantize(value).numpy() if value.is_quantized else value.numpy()
+                                                )
                                             }
 
                 ret["activation"].append(summary)
@@ -1461,16 +1473,20 @@ class TemplateAdaptor(Adaptor):
                     if op in ret["weight"]:
                         ret["weight"][op].update(
                             {
-                                key: dequantize(state_dict[key]).numpy()
-                                if state_dict[key].is_quantized
-                                else state_dict[key].detach().numpy()
+                                key: (
+                                    dequantize(state_dict[key]).numpy()
+                                    if state_dict[key].is_quantized
+                                    else state_dict[key].detach().numpy()
+                                )
                             }
                         )
                     else:
                         ret["weight"][op] = {
-                            key: dequantize(state_dict[key]).numpy()
-                            if state_dict[key].is_quantized
-                            else state_dict[key].detach().numpy()
+                            key: (
+                                dequantize(state_dict[key]).numpy()
+                                if state_dict[key].is_quantized
+                                else state_dict[key].detach().numpy()
+                            )
                         }
                 else:
                     if bool(self.fused_dict):
@@ -1481,16 +1497,20 @@ class TemplateAdaptor(Adaptor):
                                     if tensor_name in ret["weight"]:
                                         ret["weight"][tensor_name].update(
                                             {
-                                                key: dequantize(state_dict[key]).numpy()
-                                                if state_dict[key].is_quantized
-                                                else state_dict[key].detach().numpy()
+                                                key: (
+                                                    dequantize(state_dict[key]).numpy()
+                                                    if state_dict[key].is_quantized
+                                                    else state_dict[key].detach().numpy()
+                                                )
                                             }
                                         )
                                     else:
                                         ret["weight"][tensor_name] = {
-                                            key: dequantize(state_dict[key]).numpy()
-                                            if state_dict[key].is_quantized
-                                            else state_dict[key].detach().numpy()
+                                            key: (
+                                                dequantize(state_dict[key]).numpy()
+                                                if state_dict[key].is_quantized
+                                                else state_dict[key].detach().numpy()
+                                            )
                                         }
                                     break
         else:
@@ -2375,9 +2395,11 @@ class PyTorchAdaptor(TemplateAdaptor):
                 quantizable_ops.append(
                     (
                         op_name,
-                        unify_op_type_mapping[str(child.__class__.__name__)]
-                        if str(child.__class__.__name__) in unify_op_type_mapping
-                        else str(child.__class__.__name__),
+                        (
+                            unify_op_type_mapping[str(child.__class__.__name__)]
+                            if str(child.__class__.__name__) in unify_op_type_mapping
+                            else str(child.__class__.__name__)
+                        ),
                     )
                 )
 
@@ -3597,7 +3619,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         prepare_custom_config=self.prepare_custom_config_dict,
                     )
                 else:
-                    q_model._model = prepare_qat_fx(
+                    q_model._model = prepare_qat_fx(  # pylint: disable=E1120,E1123
                         q_model._model, self.fx_op_cfgs, prepare_custom_config_dict=self.prepare_custom_config_dict
                     )
             else:
@@ -3629,7 +3651,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         prepare_custom_config=self.prepare_custom_config_dict,
                     )
                 else:
-                    q_model._model = prepare_fx(
+                    q_model._model = prepare_fx(  # pylint: disable=E1120,E1123
                         q_model._model, self.fx_op_cfgs, prepare_custom_config_dict=self.prepare_custom_config_dict
                     )
             else:
@@ -3659,7 +3681,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 # pylint: disable=E1123
                 q_model._model = convert_fx(q_model._model, convert_custom_config=self.convert_custom_config_dict)
             else:
-                q_model._model = convert_fx(q_model._model, convert_custom_config_dict=self.convert_custom_config_dict)
+                q_model._model = convert_fx(  # pylint: disable=E1123
+                    q_model._model, convert_custom_config_dict=self.convert_custom_config_dict
+                )
             torch_utils.util.append_attr(q_model._model, tmp_model)
             del tmp_model
             gc.collect()
@@ -3801,17 +3825,21 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     self.model._model,
                     fx_op_cfgs,
                     example_inputs=self.example_inputs,
-                    prepare_custom_config=self.model.kwargs.get("prepare_custom_config_dict", None)
-                    if self.model.kwargs is not None
-                    else None,
+                    prepare_custom_config=(
+                        self.model.kwargs.get("prepare_custom_config_dict", None)
+                        if self.model.kwargs is not None
+                        else None
+                    ),
                 )
             else:
-                self.model._model = prepare_qat_fx(
+                self.model._model = prepare_qat_fx(  # pylint: disable=E1120,E1123
                     self.model._model,
                     fx_op_cfgs,
-                    prepare_custom_config_dict=self.model.kwargs.get("prepare_custom_config_dict", None)
-                    if self.model.kwargs is not None
-                    else None,
+                    prepare_custom_config_dict=(
+                        self.model.kwargs.get("prepare_custom_config_dict", None)
+                        if self.model.kwargs is not None
+                        else None
+                    ),
                 )
         else:
             logger.info("Fx trace of the entire model failed. " + "We will conduct auto quantization")
@@ -3844,16 +3872,20 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 # pylint: disable=E1123
                 self.model._model = convert_fx(
                     self.model._model,
-                    convert_custom_config=self.model.kwargs.get("convert_custom_config_dict", None)
-                    if self.model.kwargs is not None
-                    else None,
+                    convert_custom_config=(
+                        self.model.kwargs.get("convert_custom_config_dict", None)
+                        if self.model.kwargs is not None
+                        else None
+                    ),
                 )
             else:
-                self.model._model = convert_fx(
+                self.model._model = convert_fx(  # pylint: disable=E1123
                     self.model._model,
-                    convert_custom_config_dict=self.model.kwargs.get("convert_custom_config_dict", None)
-                    if self.model.kwargs is not None
-                    else None,
+                    convert_custom_config_dict=(
+                        self.model.kwargs.get("convert_custom_config_dict", None)
+                        if self.model.kwargs is not None
+                        else None
+                    ),
                 )
         else:
             PyTorch_FXAdaptor.convert_sub_graph(self.sub_module_list, self.model._model, prefix="")
@@ -4132,9 +4164,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 quantizable_ops.append(
                     (
                         op_name,
-                        unify_op_type_mapping[str(child.__class__.__name__)]
-                        if str(child.__class__.__name__) in unify_op_type_mapping
-                        else str(child.__class__.__name__),
+                        (
+                            unify_op_type_mapping[str(child.__class__.__name__)]
+                            if str(child.__class__.__name__) in unify_op_type_mapping
+                            else str(child.__class__.__name__)
+                        ),
                     )
                 )
                 q_ops_set.add(op_name)
@@ -4299,7 +4333,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 # pragma: no cover
                 if is_qat:
                     module_pre = (
-                        prepare_qat_fx(tmp_module, fx_sub_op_cfgs)
+                        prepare_qat_fx(tmp_module, fx_sub_op_cfgs)  # pylint: disable=E1120
                         if version <= Version("1.12.1")
                         else prepare_qat_fx(tmp_module, fx_sub_op_cfgs, example_inputs=example_inputs)
                     )
@@ -4307,7 +4341,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 # pragma: no cover
                 else:
                     module_pre = (
-                        prepare_fx(tmp_module, fx_sub_op_cfgs)
+                        prepare_fx(tmp_module, fx_sub_op_cfgs)  # pylint: disable=E1120
                         if version <= Version("1.12.1")
                         else prepare_fx(tmp_module, fx_sub_op_cfgs, example_inputs=example_inputs)
                     )
@@ -4401,7 +4435,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 fused_model = _fuse_fx(graph_module, is_qat, fuse_custom_config=prepare_custom_config_dict)
             elif self.version.release >= Version("1.11.0").release:  # pragma: no cover
                 # pylint: disable=E1124
-                fused_model = _fuse_fx(graph_module, is_qat, fuse_custom_config_dict=prepare_custom_config_dict)
+                fused_model = _fuse_fx(  # pylint: disable=E1123
+                    graph_module, is_qat, fuse_custom_config_dict=prepare_custom_config_dict
+                )
             else:
                 fused_model = _fuse_fx(graph_module, prepare_custom_config_dict)
         except:
@@ -4709,6 +4745,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     "percdamp": self.recipes["gptq_args"].get("percdamp", 0.01),
                     "act_order": self.recipes["gptq_args"].get("act_order", False),
                     "block_size": self.recipes["gptq_args"].get("block_size", True),
+                    "static_groups": self.recipes["gptq_args"].get("static_groups", False),
                 }
         nsamples = self.recipes["gptq_args"].get("nsamples", 128)
         use_max_length = self.recipes["gptq_args"].get("use_max_length", False)

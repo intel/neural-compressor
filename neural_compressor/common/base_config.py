@@ -17,15 +17,16 @@
 
 from __future__ import annotations
 
+import inspect
 import json
 import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from copy import deepcopy
 from itertools import product
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from neural_compressor.common import Logger
+from neural_compressor.common.tuning_param import TuningParam
 from neural_compressor.common.utils import (
     BASE_CONFIG,
     COMPOSABLE_CONFIG,
@@ -40,17 +41,17 @@ from neural_compressor.common.utils import (
 logger = Logger().get_logger()
 
 __all__ = [
-    "ConfigRegistry",
-    "register_config",
-    "BaseConfig",
-    "ComposableConfig",
-    "Options",
     "options",
+    "register_config",
+    "get_all_config_set_from_config_registry",
+    "register_supported_configs_for_fwk",
+    "BaseConfig",
+    "ConfigRegistry",
+    "ComposableConfig",
 ]
 
-# Dictionary to store registered configurations
 
-
+# Config registry to store all registered configs.
 class ConfigRegistry:
     registered_configs = {}
 
@@ -103,6 +104,13 @@ class ConfigRegistry:
             for algo_name, config_data in algos.items():
                 cls_configs[framework_name][algo_name] = config_data["cls"]
         return cls_configs
+
+    @classmethod
+    def get_all_config_cls_by_fwk_name(cls, fwk_name: str) -> List[Type[BaseConfig]]:
+        configs_cls = []
+        for algo_name, config_pairs in cls.registered_configs.get(fwk_name, {}).items():
+            configs_cls.append(config_pairs["cls"])
+        return configs_cls
 
 
 config_registry = ConfigRegistry()
@@ -189,7 +197,7 @@ class BaseConfig(ABC):
         self.local_config[operator_name] = config
         return self
 
-    def to_dict(self, params_list=[], operator2str=None):
+    def to_dict(self):
         result = {}
         global_config = self.get_params_dict()
         if bool(self.local_config):
@@ -204,17 +212,17 @@ class BaseConfig(ABC):
 
     def get_params_dict(self):
         result = dict()
-        for param in self.params_list:
-            result[param] = getattr(self, param)
+        for param, value in self.__dict__.items():
+            if param not in ["_global_config", "_local_config", "_white_list"]:
+                result[param] = value
         return result
 
     @classmethod
-    def from_dict(cls, config_dict, str2operator=None):
+    def from_dict(cls, config_dict):
         """Construct config from a dict.
 
         Args:
             config_dict: _description_
-            str2operator: _description_. Defaults to None.
 
         Returns:
             The constructed config.
@@ -289,6 +297,15 @@ class BaseConfig(ABC):
         else:
             return ComposableConfig(configs=[self, other])
 
+    @staticmethod
+    def get_the_default_value_of_param(config: BaseConfig, param: str) -> Any:
+        # Get the signature of the __init__ method
+        signature = inspect.signature(config.__init__)
+
+        # Get the parameters and their default values
+        parameters = signature.parameters
+        return parameters.get(param).default
+
     def expand(self) -> List[BaseConfig]:
         """Expand the config.
 
@@ -325,19 +342,42 @@ class BaseConfig(ABC):
         """
         config_list: List[BaseConfig] = []
         params_list = self.params_list
-        params_dict = OrderedDict()
         config = self
+        tuning_param_list = []
+        not_tuning_param_pair = {}  # key is the param name, value is the user specified value
         for param in params_list:
-            param_val = getattr(config, param)
-            # TODO (Yi) to handle param_val itself is a list
-            if isinstance(param_val, list):
-                params_dict[param] = param_val
+            # Create `TuningParam` for each param
+            # There are two cases:
+            # 1. The param is a string.
+            # 2. The param is a `TuningParam` instance.
+            if isinstance(param, str):
+                default_param = self.get_the_default_value_of_param(config, param)
+                tuning_param = TuningParam(name=param, tunable_type=List[type(default_param)])
+            elif isinstance(param, TuningParam):
+                tuning_param = param
             else:
-                params_dict[param] = [param_val]
-        for params_values in product(*params_dict.values()):
-            new_config = self.__class__(**dict(zip(params_list, params_values)))
-            config_list.append(new_config)
-        logger.info(f"Expanded the {self.__class__.name} and got {len(config_list)} configs.")
+                raise ValueError(f"Unsupported param type: {param}")
+            # Assign the options to the `TuningParam` instance
+            param_val = getattr(config, tuning_param.name)
+            if param_val is not None:
+                if tuning_param.is_tunable(param_val):
+                    tuning_param.options = param_val
+                    tuning_param_list.append(tuning_param)
+                else:
+                    not_tuning_param_pair[tuning_param.name] = param_val
+        logger.debug("Tuning param list: %s", tuning_param_list)
+        logger.debug("Not tuning param pair: %s", not_tuning_param_pair)
+        if len(tuning_param_list) == 0:
+            config_list = [config]
+        else:
+            tuning_param_name_lst = [tuning_param.name for tuning_param in tuning_param_list]
+            for params_values in product(*[tuning_param.options for tuning_param in tuning_param_list]):
+                tuning_param_pair = dict(zip(tuning_param_name_lst, params_values))
+                tmp_params_dict = {**not_tuning_param_pair, **tuning_param_pair}
+                new_config = self.__class__(**tmp_params_dict)
+                logger.info(new_config.to_dict())
+                config_list.append(new_config)
+        logger.info("Expanded the %s and got %d configs.", self.__class__.name, len(config_list))
         return config_list
 
     def _get_op_name_op_type_config(self):
@@ -373,6 +413,11 @@ class BaseConfig(ABC):
     def _is_op_type(name: str) -> bool:
         # TODO (Yi), ort and tf need override it
         return not isinstance(name, str)
+
+    @classmethod
+    @abstractmethod
+    def get_config_set_for_tuning(cls):
+        raise NotImplementedError
 
 
 class ComposableConfig(BaseConfig):
@@ -420,6 +465,35 @@ class ComposableConfig(BaseConfig):
     def register_supported_configs(cls):
         """Add all supported configs."""
         raise NotImplementedError
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> None:
+        # TODO (Yi) handle the composable config in `tuning_config`
+        return None
+
+
+def get_all_config_set_from_config_registry(fwk_name: str) -> Union[BaseConfig, List[BaseConfig]]:
+    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls_by_fwk_name(fwk_name)
+    config_set = []
+    for config_cls in all_registered_config_cls:
+        config_set.append(config_cls.get_config_set_for_tuning())
+    return config_set
+
+
+def register_supported_configs_for_fwk(fwk_name: str):
+    """Register supported configs for specific framework.
+
+    Args:
+        fwk_name: the framework name.
+    """
+    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls_by_fwk_name(fwk_name)
+    for config_cls in all_registered_config_cls:
+        config_cls.register_supported_configs()
+
+
+#######################################################
+####   Options
+#######################################################
 
 
 def _check_value(name, src, supported_type, supported_value=[]):

@@ -1,4 +1,5 @@
 """Tests for neural_compressor quantization."""
+
 import importlib
 import os
 import random

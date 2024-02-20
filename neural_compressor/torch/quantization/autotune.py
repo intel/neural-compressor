@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,30 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import deepcopy
 from typing import Dict, List, Optional, Union
 
 import torch
 
-from neural_compressor.common import Logger
-from neural_compressor.common.base_config import BaseConfig
+from neural_compressor.common.base_config import BaseConfig, get_all_config_set_from_config_registry
 from neural_compressor.common.base_tuning import TuningConfig, evaluator, init_tuning
-from neural_compressor.torch import quantize
-from neural_compressor.torch.quantization.config import GPTQConfig, RTNConfig
-
-logger = Logger().get_logger()
-
+from neural_compressor.common.utils import dump_elapsed_time
+from neural_compressor.torch.quantization import quantize
+from neural_compressor.torch.quantization.config import FRAMEWORK_NAME, RTNConfig
+from neural_compressor.torch.utils import constants, logger
 
 __all__ = [
-    "get_default_tune_config",
     "autotune",
+    "get_all_config_set",
+    "get_rtn_double_quant_config_set",
 ]
 
 
-def get_default_tune_config() -> TuningConfig:
-    # TODO use the registered default tuning config in the next PR
-    return TuningConfig(quant_configs=[GPTQConfig(weight_bits=[4, 8]), RTNConfig(weight_bits=[4, 8])])
+def get_rtn_double_quant_config_set() -> List[RTNConfig]:
+    rtn_double_quant_config_set = []
+    for double_quant_type, double_quant_config in constants.DOUBLE_QUANT_CONFIGS.items():
+        rtn_double_quant_config_set.append(RTNConfig.from_dict(double_quant_config))
+    return rtn_double_quant_config_set
 
 
+def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
+    return get_all_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
+
+
+@dump_elapsed_time("Pass auto-tune")
 def autotune(
     model: torch.nn.Module,
     tune_config: TuningConfig,
@@ -48,20 +55,27 @@ def autotune(
     evaluator.set_eval_fn_registry(eval_fns)
     evaluator.self_check()
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
+    baseline: float = evaluator.evaluate(model)
+    tuning_monitor.set_baseline(baseline)
     tuning_logger.tuning_start()
     for trial_index, quant_config in enumerate(config_loader):
         tuning_logger.trial_start(trial_index=trial_index)
         tuning_logger.quantization_start()
-        q_model = quantize(model, quant_config=quant_config, run_fn=run_fn, run_args=run_args)
+        logger.info(quant_config.to_dict())
+        # !!! Make sure to use deepcopy only when inplace is set to `True`.
+        q_model = quantize(deepcopy(model), quant_config=quant_config, run_fn=run_fn, run_args=run_args, inplace=True)
         tuning_logger.quantization_end()
         tuning_logger.evaluation_start()
         eval_result: float = evaluator.evaluate(q_model)
         tuning_logger.evaluation_end()
         tuning_monitor.add_trial_result(trial_index, eval_result, quant_config)
-        if tuning_monitor.need_stop():
-            best_quant_config: BaseConfig = tuning_monitor.get_best_quant_config()
-            quantize(model, quant_config=best_quant_config, run_fn=run_fn, run_args=run_args, inplace=True)
-            best_quant_model = model  # quantize model inplace
         tuning_logger.trial_end(trial_index)
+        if tuning_monitor.need_stop():
+            logger.info("Stopped tuning.")
+            best_quant_config: BaseConfig = tuning_monitor.get_best_quant_config()
+            # !!! Make sure to use deepcopy only when inplace is set to `True`.
+            quantize(deepcopy(model), quant_config=best_quant_config, run_fn=run_fn, run_args=run_args, inplace=True)
+            best_quant_model = model  # quantize model inplace
+            break
     tuning_logger.tuning_end()
     return best_quant_model

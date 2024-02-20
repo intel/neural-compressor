@@ -11,8 +11,10 @@ pr:
       - neural_compressor/common
       - neural_compressor/torch
       - test/3x/torch
+      - test/3x/common
       - setup.py
       - requirements_pt.txt
+      - .azure-pipelines/scripts/ut/3x/collect_log_3x.sh
 
 pool: ICX-16C
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
-from neural_compressor.torch.quantization.config import FRAMEWORK_NAME
+from neural_compressor.torch.quantization.config import SmoothQuantConfig, StaticQuantConfig
+from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
-logger = Logger().get_logger()
+FRAMEWORK_NAME = "torch"
 
 
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
@@ -35,6 +35,7 @@ def quantize(
     run_fn: Callable = None,
     run_args: Any = None,
     inplace: bool = True,
+    example_inputs: Any = None,
 ) -> torch.nn.Module:
     """The main entry to quantize model with static mode.
 
@@ -43,6 +44,7 @@ def quantize(
         quant_config: a quantization configuration.
         run_fn: a calibration function for calibrating the model. Defaults to None.
         run_args: positional arguments for `run_fn`. Defaults to None.
+        example_inputs: used to trace torch model.
 
     Returns:
         The quantized model.
@@ -56,55 +58,26 @@ def quantize(
         assert isinstance(
             quant_config, BaseConfig
         ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-    logger.info(f"Quantize model with config: \n {quant_config.to_json_string()} \n")
+    logger.info("Quantize model with config:")
+    logger.info(quant_config.to_dict())
     # select quantization algo according to config
 
-    model_info = quant_config.get_model_info(model=q_model)
-    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
-    logger.debug(configs_mapping)
-    for algo_name, algo_func in algos_mapping.items():
-        if need_apply(configs_mapping, algo_name):
-            logger.info(f"Start to apply {algo_name} on the model.")
-            q_model = algo_func(q_model, configs_mapping, run_fn=run_fn, run_args=run_args)
-    return q_model
-
-
-def quantize_dynamic(
-    model: torch.nn.Module,
-    quant_config: BaseConfig,
-    run_fn: Callable = None,
-    run_args: Any = None,
-    inplace: bool = True,
-) -> torch.nn.Module:
-    """The main entry to quantize model with dynamic mode.
-
-    Args:
-        model: a float model to be quantized.
-        quant_config: a quantization configuration.
-        run_fn: a calibration function for calibrating the model. Defaults to None.
-        run_args: positional arguments for `run_fn`. Defaults to None.
-        inplace: carry out model transformations in-place, the original module is mutated. Default is True.
-
-    Returns:
-        The quantized model.
-    """
-    q_model = model if inplace else copy.deepcopy(model)
-    registered_configs = config_registry.get_cls_configs()
-    if isinstance(quant_config, dict):
-        quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs[FRAMEWORK_NAME])
-        logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
+    if is_ipex_available and (
+        isinstance(quant_config, StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
+    ):
+        model_info = quant_config.get_model_info(q_model, example_inputs)
     else:
-        assert isinstance(
-            quant_config, BaseConfig
-        ), "Please pass a dict or config instance as the quantization configuration."
-    logger.info(f"Quantize model with config: \n {quant_config.to_json_string()} \n")
-    # select quantization algo according to config
-
-    model_info = quant_config.get_model_info(model=q_model)
+        model_info = quant_config.get_model_info(model=q_model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
     logger.debug(configs_mapping)
     for algo_name, algo_func in algos_mapping.items():
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
-            q_model = algo_func(q_model, configs_mapping, run_fn=run_fn, run_args=run_args)
+            q_model = algo_func(
+                q_model,
+                configs_mapping,
+                run_fn=run_fn,
+                run_args=run_args,
+                example_inputs=example_inputs,
+            )
     return q_model

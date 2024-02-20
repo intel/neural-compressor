@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,16 +13,18 @@
 # limitations under the License.
 
 
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple, Union
 
-from neural_compressor.common import Logger
+import torch
+from typing_extensions import TypeAlias
 
-logger = Logger().get_logger()
+from neural_compressor.common.utils import logger
+
+OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
 algos_mapping: Dict[str, Callable] = {}
 
-import torch
 
 # All constants for torch
 WHITE_MODULE_LIST = [torch.nn.Linear, torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d]
@@ -119,17 +121,3 @@ def get_double_quant_config(double_quant_type, weight_sym=True):
     )
     DOUBLE_QUANT_CONFIGS[double_quant_type]["weight_sym"] = weight_sym
     return DOUBLE_QUANT_CONFIGS[double_quant_type]
-
-
-# pylint:disable=import-error
-try:
-    import deepspeed
-    import habana_frameworks.torch.hpex
-
-    _hpex_avalible = True
-except:
-    _hpex_avalible = False
-
-
-def is_hpex_avaliable():
-    return _hpex_avalible
