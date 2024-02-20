@@ -831,6 +831,9 @@ class GPTQ:
                         if act_order:
                             idx = perm[idx]
                         self.quantizer = groups[idx // groupsize]
+                        if (i1 + i) % groupsize == 0:
+                            scale.append(self.quantizer.scale)
+                            zero.append(self.quantizer.zero)
 
                 q = quantize(w.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq).flatten()
                 Q1[:, i] = q
