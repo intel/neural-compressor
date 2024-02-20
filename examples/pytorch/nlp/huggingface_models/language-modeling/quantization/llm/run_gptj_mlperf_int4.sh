@@ -2,7 +2,7 @@ CALIBRATION_DATA=/your/data/calibration-data/cnn_dailymail_calibration.json
 VALIDATION_DATA=/your/data/validation-data/cnn_dailymail_validation.json
 MODEL_DIR=/your/gptj/
 
-python -u examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_weight_only/run_gptj_mlperf_int4.py \
+python -u examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm/run_gptj_mlperf_int4.py \
     --model_name_or_path ${MODEL_DIR} \
     --wbits 3 \
     --sym \
