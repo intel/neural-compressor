@@ -1798,6 +1798,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         self.__dict__.update(d)
 
     def get_best_qmodel(self):
+        """Get the best quantized model."""
         self._recover_best_qmodel_from_tuning_cfg()
         return self.best_qmodel
 
