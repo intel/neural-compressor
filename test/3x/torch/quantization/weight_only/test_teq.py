@@ -89,6 +89,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         example_inputs = torch.ones([1, 512], dtype=torch.long)
         test_input = torch.ones([1, 512], dtype=torch.long)
         model = copy.deepcopy(self.gptj)
+        out0 = model(test_input)
 
         weight_config = {
             # 'op_name': (bit, group_size, scheme)
@@ -106,6 +107,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
             example_inputs=example_inputs,
         )
         out1 = model(test_input)
+        self.assertTrue(torch.allclose(out1[0], out0[0], atol=0.03))
         quant_config = {
             "teq": {
                 "global": {
@@ -136,6 +138,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         self.assertTrue(isinstance(qdq_model, torch.nn.Module))
         out2 = qdq_model(test_input)
         self.assertTrue(torch.allclose(out1[0], out2[0]))
+        self.assertTrue(torch.allclose(out2[0], out0[0], atol=0.03))
 
 
 if __name__ == "__main__":
