@@ -17,8 +17,15 @@ from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT
-from neural_compressor.torch.quantization import AWQConfig, GPTQConfig, HQQConfig, RTNConfig, StaticQuantConfig
+from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT, TEQ
+from neural_compressor.torch.quantization import (
+    AWQConfig,
+    GPTQConfig,
+    HQQConfig,
+    RTNConfig,
+    StaticQuantConfig,
+    TEQConfig,
+)
 from neural_compressor.torch.utils import logger, register_algo
 
 
@@ -200,6 +207,56 @@ def awq_quantize_entry(
         use_full_range=use_full_range,
     )
     logger.info("AWQ quantization done.")
+    return model
+
+
+###################### TEQ Algo Entry ##################################
+@register_algo(name=TEQ)
+def teq_quantize_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], TEQConfig], *args, **kwargs
+) -> torch.nn.Module:
+    from neural_compressor.torch.algorithms.weight_only import teq_quantize
+
+    logger.info("Quantize model with the TEQ algorithm.")
+    weight_config = {}
+    absorb_to_layer = {}
+    example_inputs = kwargs.get("example_inputs", None)
+    assert example_inputs is not None, "Please provide example_inputs for TEQ quantization."
+    calib_func = kwargs.get("run_fn", None)
+    folding = True
+    for (op_name, op_type), quant_config in configs_mapping.items():
+        if quant_config.dtype == "fp32":
+            continue
+        else:
+            weight_config[op_name] = {
+                "dtype": quant_config.dtype,
+                "bits": quant_config.bits,
+                "scheme": "sym" if quant_config.use_sym else "asym",
+                "group_size": quant_config.group_size,
+                "group_dim": quant_config.group_dim,
+                "use_full_range": quant_config.use_full_range,
+                "use_mse_search": quant_config.use_mse_search,
+                "use_layer_wise": quant_config.use_layer_wise,
+                "export_compressed_model": quant_config.export_compressed_model,
+                "use_double_quant": quant_config.use_double_quant,
+                "double_quant_dtype": quant_config.double_quant_dtype,
+                "double_quant_bits": quant_config.double_quant_bits,
+                "double_quant_scheme": "sym" if quant_config.double_quant_use_sym else "asym",
+                "double_quant_group_size": quant_config.double_quant_group_size,
+            }
+            absorb_to_layer = quant_config.absorb_to_layer
+            folding = quant_config.folding
+    assert isinstance(model, torch.nn.Module), "only support torch module"
+
+    model = teq_quantize(
+        model,
+        example_inputs=example_inputs,
+        folding=folding,
+        absorb_to_layer=absorb_to_layer,
+        calib_func=calib_func,
+        weight_config=weight_config,
+    )
+    logger.info("TEQ quantization done.")
     return model
 
 
