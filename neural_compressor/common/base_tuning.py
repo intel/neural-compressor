@@ -20,6 +20,7 @@ from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Siz
 
 from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig
+from neural_compressor.common.utils import TuningLogger
 
 logger = Logger().get_logger()
 
@@ -29,7 +30,6 @@ __all__ = [
     "Sampler",
     "ConfigLoader",
     "TuningMonitor",
-    "TuningLogger",
     "init_tuning",
     "Sampler",
     "SequentialSampler",
@@ -224,57 +224,6 @@ class ConfigLoader:
     def __iter__(self) -> Generator[BaseConfig, Any, None]:
         for index in self._sampler:
             yield self.config_set[index]
-
-
-class TuningLogger:
-    """A unified logger for the tuning process.
-
-    It assists validation teams in retrieving logs.
-    """
-
-    @classmethod
-    def _log_call_info(cls, message: str) -> str:
-        frame = inspect.currentframe().f_back.f_back
-        # Extract file name and line number
-        file_path = frame.f_code.co_filename
-        file_name = file_path.split("/")[-1]
-        line_number = frame.f_lineno
-        # Log the call position along with the message
-        logger.info(f"[{file_name}:{line_number}(Call position)] {message}")
-
-    @classmethod
-    def tuning_start(cls) -> None:
-        cls._log_call_info("Tuning started.")
-
-    @classmethod
-    def trial_start(cls, trial_index: int = None) -> None:
-        cls._log_call_info(
-            f" {trial_index}-trail started.",
-        )
-
-    @classmethod
-    def quantization_start(cls) -> None:
-        cls._log_call_info("Quantization started.")
-
-    @classmethod
-    def quantization_end(cls) -> None:
-        cls._log_call_info("Quantization end.")
-
-    @classmethod
-    def evaluation_start(cls) -> None:
-        cls._log_call_info("Evaluation started.")
-
-    @classmethod
-    def evaluation_end(cls) -> None:
-        cls._log_call_info("Evaluation end.")
-
-    @classmethod
-    def trial_end(cls, trial_index: int = None) -> None:
-        cls._log_call_info(f" {trial_index}-trail end.")
-
-    @classmethod
-    def tuning_end(cls) -> None:
-        cls._log_call_info("Tuning completed.")
 
 
 class TuningConfig:
