@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -304,7 +304,7 @@ class TEQuantizer:
 def teq_quantize(
     model, weight_config={}, absorb_to_layer={}, folding=True, dataloader=None, calib_func=None, example_inputs=None
 ):
-    """Run weight-only quantization with."""
+    """Run TEQ weight-only quantization."""
     assert isinstance(model, torch.nn.Module), "only support torch module"
     logger.info("TEQ quantizing start.")
     if example_inputs is None:
@@ -339,6 +339,5 @@ def teq_quantize(
     # 4. get quantized model
     teq_quantizer.quantize()
 
-    # quantization_data = gptq_quantizer.execute_quantization()
     logger.info("TEQ quantizing done.")
     return teq_quantizer.model
