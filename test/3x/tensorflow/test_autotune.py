@@ -1,17 +1,16 @@
 import math
 import shutil
 import unittest
-
-import numpy as np
 from functools import wraps
 from unittest.mock import patch
 
+import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
 from neural_compressor.common import logger
 from neural_compressor.common.base_tuning import TuningConfig, evaluator
-from neural_compressor.tensorflow.quantization import StaticQuantConfig, SmoothQuantConfig, autotune
+from neural_compressor.tensorflow.quantization import SmoothQuantConfig, StaticQuantConfig, autotune
 
 
 def reset_tuning_target(test_func):
@@ -123,7 +122,12 @@ class TestAutoTune(unittest.TestCase):
             return next(acc_data)
 
         calib_dataloader = MyDataloader(dataset=Dataset())
-        custom_tune_config = TuningConfig(config_set=[StaticQuantConfig(weight_sym=True, act_sym=True), StaticQuantConfig(weight_sym=False, act_sym=False)])
+        custom_tune_config = TuningConfig(
+            config_set=[
+                StaticQuantConfig(weight_sym=True, act_sym=True),
+                StaticQuantConfig(weight_sym=False, act_sym=False),
+            ]
+        )
         with self.assertRaises(SystemExit):
             best_model = autotune(
                 model="baseline_model",
@@ -156,7 +160,12 @@ class TestAutoTune(unittest.TestCase):
             },
         ]
         calib_dataloader = MyDataloader(dataset=Dataset())
-        custom_tune_config = TuningConfig(config_set=[StaticQuantConfig(weight_sym=True, act_sym=True), StaticQuantConfig(weight_sym=False, act_sym=False)])
+        custom_tune_config = TuningConfig(
+            config_set=[
+                StaticQuantConfig(weight_sym=True, act_sym=True),
+                StaticQuantConfig(weight_sym=False, act_sym=False),
+            ]
+        )
         best_model = autotune(
             model="baseline_model",
             tune_config=custom_tune_config,
@@ -206,9 +215,7 @@ class TestAutoTune(unittest.TestCase):
         self.assertEqual(len(evaluator.eval_fn_registry), 2)
         self.assertIsNotNone(best_model)
         op_names = [
-            i.name
-            for i in best_model.graph.node
-            if i.op_type.startswith("MatMul") and i.input[0].endswith("mul")
+            i.name for i in best_model.graph.node if i.op_type.startswith("MatMul") and i.input[0].endswith("mul")
         ]
         self.assertTrue(len(op_names) > 0)
 

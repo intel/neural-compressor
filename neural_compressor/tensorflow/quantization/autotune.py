@@ -13,18 +13,17 @@
 # limitations under the License.
 
 from copy import deepcopy
-from typing import Dict, List, Optional, Union, Callable
+from typing import Callable, Dict, List, Optional, Union
 
 import tensorflow as tf
 
 from neural_compressor.common import logger
-from neural_compressor.common.utils import dump_elapsed_time
 from neural_compressor.common.base_config import BaseConfig, get_all_config_set_from_config_registry
 from neural_compressor.common.base_tuning import TuningConfig, evaluator, init_tuning
-from neural_compressor.tensorflow.utils import constants, BaseModel
+from neural_compressor.common.utils import dump_elapsed_time
 from neural_compressor.tensorflow.quantization import quantize_model
 from neural_compressor.tensorflow.quantization.config import FRAMEWORK_NAME, StaticQuantConfig
-
+from neural_compressor.tensorflow.utils import BaseModel, constants
 
 __all__ = [
     "autotune",

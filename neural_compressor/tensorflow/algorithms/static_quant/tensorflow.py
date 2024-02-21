@@ -16,26 +16,26 @@
 # limitations under the License.
 """Tensorflow Adaptor Classes."""
 
-import os
-import re
 import copy
 import math
-import yaml
+import os
+import re
+from collections import OrderedDict, UserDict
+from copy import deepcopy
+from typing import Callable, Dict
 
 import numpy as np
 import tensorflow as tf
-from copy import deepcopy
-
-from typing import Callable, Dict
+import yaml
 from pkg_resources import parse_version
-from collections import OrderedDict, UserDict
 
 from neural_compressor.common import logger
+from neural_compressor.tensorflow import StaticQuantConfig
 from neural_compressor.tensorflow.utils import (
     SPR_BASE_VERSIONS,
     BaseDataLoader,
-    CpuInfo,
     BaseModel,
+    CpuInfo,
     Dequantize,
     Statistics,
     deep_get,
@@ -45,7 +45,6 @@ from neural_compressor.tensorflow.utils import (
     version1_gte_version2,
     version1_lt_version2,
 )
-from neural_compressor.tensorflow import StaticQuantConfig
 
 spr_base_verions = SPR_BASE_VERSIONS
 
@@ -460,7 +459,7 @@ class TensorFlowAdaptor:
         self.bf16_ops = bf16_ops
 
     @dump_elapsed_time("Pass quantize model")
-    def quantize(self, 
+    def quantize(self,
                  quant_config: StaticQuantConfig,
                  model: BaseModel,
                  calib_dataloader: Callable = None,
@@ -496,7 +495,7 @@ class TensorFlowAdaptor:
             return self.convert(Model(qat_model), "QAT", "default")
 
         assert q_func is None, "post-training quantization mode is not support calibration function for Tensorflow!"
-        
+
         self.calib_sampling_size = calib_dataloader.batch_size * calib_iteration
         tune_cfg = self.parse_quant_config(quant_config, model, calib_iteration)
         self._tuning_cfg_to_fw(tune_cfg)
@@ -2430,8 +2429,8 @@ class TensorflowQuery:
 
 class TensorflowConfigConverter:
     """Convert `StaticQuantConfig` to the format used by static quant algo."""
-    def __init__(self, 
-                 quant_config: StaticQuantConfig, 
+    def __init__(self,
+                 quant_config: StaticQuantConfig,
                  capability: Dict):
         """Init parser for TF static quant config.
 
@@ -2441,7 +2440,7 @@ class TensorflowConfigConverter:
         """
         self.quant_config = quant_config
         self.capability = capability
-    
+
     def update_opwise_config(self):
         """Update op-wise config.
 
@@ -2456,7 +2455,7 @@ class TensorflowConfigConverter:
             single_op_config["activation"]["dtype"] = op_config.act_dtype \
                 if op_config.act_dtype in single_op_cap["activation"]["dtype"] \
                 else single_op_cap["activation"]["dtype"][0]
-        
+
             single_op_config["activation"]["scheme"] = "sym" if op_config.act_sym else "asym"
             if single_op_config["activation"]["scheme"] not in single_op_cap["activation"]["scheme"]:
                 single_op_config["activation"]["scheme"] = single_op_cap["activation"]["scheme"][0]
@@ -2476,7 +2475,7 @@ class TensorflowConfigConverter:
             single_op_config["weight"]["dtype"] = op_config.weight_dtype \
                 if op_config.weight_dtype in single_op_cap["weight"]["dtype"] \
                 else single_op_cap["weight"]["dtype"][0]
-        
+
             single_op_config["weight"]["scheme"] = "sym" if op_config.weight_sym else "asym"
             if single_op_config["weight"]["scheme"] not in single_op_cap["weight"]["scheme"]:
                 single_op_config["weight"]["scheme"] = single_op_cap["weight"]["scheme"][0]
@@ -2497,5 +2496,5 @@ class TensorflowConfigConverter:
         """The function that parses StaticQuantConfig to keras tuning config."""
         op_wise_config = self.update_opwise_config()
         tune_cfg = {"op": op_wise_config}
-        
+
         return op_wise_config
