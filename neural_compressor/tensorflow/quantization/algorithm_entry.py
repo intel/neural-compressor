@@ -40,8 +40,9 @@ def static_quantize_entry(
     Returns:
         q_model: the quantized model.
     """
-    keras_adaptor = KerasAdaptor(framework_specific_info)
-    q_model = keras_adaptor.quantize(quant_config, model, calib_dataloader, calib_iteration)
+    framework = KerasAdaptor if isinstance(model, KerasModel) else TensorFlowAdaptor
+    quantizer = framework(framework_specific_info)
+    q_model = quantizer.quantize(quant_config, model, calib_dataloader, calib_iteration)
     return q_model
 
 

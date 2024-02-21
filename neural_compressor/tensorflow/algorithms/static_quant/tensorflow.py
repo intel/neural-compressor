@@ -16,21 +16,26 @@
 # limitations under the License.
 """Tensorflow Adaptor Classes."""
 
+import os
+import re
 import copy
 import math
-import os
-from collections import OrderedDict, UserDict
+import yaml
 
 import numpy as np
 import tensorflow as tf
-import yaml
+from copy import deepcopy
+
+from typing import Callable, Dict
 from pkg_resources import parse_version
+from collections import OrderedDict, UserDict
 
 from neural_compressor.common import logger
 from neural_compressor.tensorflow.utils import (
     SPR_BASE_VERSIONS,
     BaseDataLoader,
     CpuInfo,
+    BaseModel,
     Dequantize,
     Statistics,
     deep_get,
@@ -40,6 +45,7 @@ from neural_compressor.tensorflow.utils import (
     version1_gte_version2,
     version1_lt_version2,
 )
+from neural_compressor.tensorflow import StaticQuantConfig
 
 spr_base_verions = SPR_BASE_VERSIONS
 
@@ -454,14 +460,20 @@ class TensorFlowAdaptor:
         self.bf16_ops = bf16_ops
 
     @dump_elapsed_time("Pass quantize model")
-    def quantize(self, tune_cfg, model, data_loader, q_func=None):
+    def quantize(self, 
+                 quant_config: StaticQuantConfig,
+                 model: BaseModel,
+                 calib_dataloader: Callable = None,
+                 calib_iteration: int = 100,
+                 q_func=None):
         """Execute the quantize process on the specified model.
 
         Args:
-            tune_cfg (dict): quantization configuration
-            model (tf.compat.v1.GraphDef): fp32 model
-            data_loader (generator): generator the data and labels
-            q_func (optional): training function for quantization aware training mode,
+            quant_config: a quantization configuration.
+            model: the fp32 model to be quantized.
+            calib_dataloader: a data loader for calibration.
+            calib_iteration: the iteration of calibration.
+            q_func: training function for quantization aware training mode,
                                 which not enabled for tensorflow yet.
 
         Returns:
@@ -484,6 +496,9 @@ class TensorFlowAdaptor:
             return self.convert(Model(qat_model), "QAT", "default")
 
         assert q_func is None, "post-training quantization mode is not support calibration function for Tensorflow!"
+        
+        self.calib_sampling_size = calib_dataloader.batch_size * calib_iteration
+        tune_cfg = self.parse_quant_config(quant_config, model, calib_iteration)
         self._tuning_cfg_to_fw(tune_cfg)
         self.bf16_ops.extend(self.smooth_quant_mul_ops)
         logger.debug("Dump quantization configurations:")
@@ -491,8 +506,8 @@ class TensorFlowAdaptor:
         from neural_compressor.tensorflow.quantization.utils.graph_converter import GraphConverter
 
         calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
-        if isinstance(data_loader, BaseDataLoader):
-            batch_size = data_loader.batch_size
+        if isinstance(calib_dataloader, BaseDataLoader):
+            batch_size = calib_dataloader.batch_size
             try:
                 for i in range(batch_size):
                     if calib_sampling_size % (batch_size - i) == 0:
@@ -505,7 +520,7 @@ class TensorFlowAdaptor:
                             )
                         break
                 tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
-                data_loader.batch(calib_batch_size)
+                calib_dataloader.batch(calib_batch_size)
                 self.quantize_config["calib_iteration"] = tmp_iterations
                 converted_model = GraphConverter(
                     model,
@@ -514,7 +529,7 @@ class TensorFlowAdaptor:
                     int8_sequences=self.op_wise_sequences,
                     fp32_ops=self.fp32_ops,
                     bf16_ops=self.bf16_ops,
-                    data_loader=data_loader,
+                    data_loader=calib_dataloader,
                     calib_func=q_func,
                     qdq_enabled=self.qdq_enabled,
                     new_api=self.new_api,
@@ -528,7 +543,7 @@ class TensorFlowAdaptor:
                 logger.warning(
                     "Fail to forward with batch size={}, set to {} now.".format(data_loader.batch_size, batch_size)
                 )
-                data_loader.batch(batch_size)
+                calib_dataloader.batch(batch_size)
                 self.quantize_config["calib_iteration"] = calib_sampling_size
                 converted_model = GraphConverter(
                     model,
@@ -537,7 +552,7 @@ class TensorFlowAdaptor:
                     int8_sequences=self.op_wise_sequences,
                     fp32_ops=self.fp32_ops,
                     bf16_ops=self.bf16_ops,
-                    data_loader=data_loader,
+                    data_loader=calib_dataloader,
                     calib_func=q_func,
                     qdq_enabled=self.qdq_enabled,
                     new_api=self.new_api,
@@ -545,13 +560,13 @@ class TensorFlowAdaptor:
                     use_bf16=self.use_bf16,
                 ).convert()
         else:  # pragma: no cover
-            if hasattr(data_loader, "batch_size") and calib_sampling_size % data_loader.batch_size != 0:
+            if hasattr(calib_dataloader, "batch_size") and calib_sampling_size % calib_dataloader.batch_size != 0:
                 iter = self.quantize_config["calib_iteration"]
                 logger.warning(
                     "Please note that calibration sampling size {} "
                     "isn't divisible exactly by batch size {}. "
                     "So the real sampling size is {}.".format(
-                        calib_sampling_size, data_loader.batch_size, data_loader.batch_size * iter
+                        calib_sampling_size, calib_dataloader.batch_size, calib_dataloader.batch_size * iter
                     )
                 )
             converted_model = GraphConverter(
@@ -561,7 +576,7 @@ class TensorFlowAdaptor:
                 int8_sequences=self.op_wise_sequences,
                 fp32_ops=self.fp32_ops,
                 bf16_ops=self.bf16_ops,
-                data_loader=data_loader,
+                data_loader=calib_dataloader,
                 calib_func=q_func,
                 qdq_enabled=self.qdq_enabled,
                 new_api=self.new_api,
@@ -823,7 +838,27 @@ class TensorFlowAdaptor:
             if control_flow:
                 matched_nodes.remove(i)
 
-    def query_fw_capability(self, model):
+    def parse_quant_config(self, quant_config, model, self.calib_sampling_size):
+        """Parse the quant_config to tune_cfg.
+
+        Args:
+            quant_config: a quantization configuration.
+            model: the fp32 model to be quantized.
+            self.calib_sampling_size: the number of iteration for calibration.
+
+        Returns:
+            tune_cfg: a dict composed by necessary information for quantization.
+        """
+        capability = self._query_fw_capability(model)
+        config_converter = TensorflowConfigConverter(quant_config, capability)
+        tune_cfg = config_converter.parse_to_tune_cfg()
+        tune_cfg["calib_sampling_size"] = self.calib_sampling_size
+        tune_cfg["calib_iteration"] = calib_iteration
+        tune_cfg["approach"] = "post_training_static_quant"
+        tune_cfg["recipe_cfgs"] = tune_cfg.get("recipe_cfgs", {})
+        tune_cfg["trial_number"] = 1
+
+    def _query_fw_capability(self, model):
         """Collect the model-wise and op-wise configuration for quantization.
 
         Args:
@@ -1387,7 +1422,7 @@ class TensorFlowAdaptor:
             destination (string): The destination model format.
         """
         assert source.lower() == "qat" and destination.lower() == "default"
-        capability = self.query_fw_capability(model)
+        capability = self._query_fw_capability(model)
 
         quantize_config = {"op_wise_config": {}}
         for each_op_info in capability["opwise"]:
@@ -2389,3 +2424,76 @@ class TensorflowQuery:
                 final_out.append(_generate_pattern(similar_sequences))
 
         return final_out
+
+
+class TensorflowConfigConverter:
+    """Convert `StaticQuantConfig` to the format used by static quant algo."""
+    def __init__(self, 
+                 quant_config: StaticQuantConfig, 
+                 capability: Dict):
+        """Init parser for TF static quant config.
+
+        Args:
+            quant_config: the keras static quant config.
+            capability: the supported config lists for each op.
+        """
+        self.quant_config = quant_config
+        self.capability = capability
+    
+    def update_opwise_config(self):
+        """Update op-wise config.
+
+        Args:
+            quant_config: the Tensorflow static quant config.
+        """
+        op_wise_config = {}
+        for op_name, op_config in self.quant_config.items():
+            single_op_cap = self.capability["opwise"][op_name][0]
+            single_op_config = {"weight": {}, "activation": {}}
+
+            single_op_config["activation"]["dtype"] = op_config.act_dtype \
+                if op_config.act_dtype in single_op_cap["activation"]["dtype"] \
+                else single_op_cap["activation"]["dtype"][0]
+        
+            single_op_config["activation"]["scheme"] = "sym" if op_config.act_sym else "asym"
+            if single_op_config["activation"]["scheme"] not in single_op_cap["activation"]["scheme"]:
+                single_op_config["activation"]["scheme"] = single_op_cap["activation"]["scheme"][0]
+
+            single_op_config["activation"]["granularity"] = op_config.act_granularity \
+                if op_config.act_granularity in single_op_cap["activation"]["granularity"] \
+                else single_op_cap["activation"]["granularity"][0]
+
+            single_op_config["activation"]["algorithm"] = op_config.act_algorithm \
+                if op_config.act_algorithm in single_op_cap["activation"]["algorithm"] \
+                else single_op_cap["activation"]["algorithm"][0]
+
+            if "weight" not in single_op_cap:
+                op_wise_config.update({op_name: single_op_config})
+                continue
+
+            single_op_config["weight"]["dtype"] = op_config.weight_dtype \
+                if op_config.weight_dtype in single_op_cap["weight"]["dtype"] \
+                else single_op_cap["weight"]["dtype"][0]
+        
+            single_op_config["weight"]["scheme"] = "sym" if op_config.weight_sym else "asym"
+            if single_op_config["weight"]["scheme"] not in single_op_cap["weight"]["scheme"]:
+                single_op_config["weight"]["scheme"] = single_op_cap["weight"]["scheme"][0]
+
+            single_op_config["weight"]["granularity"] = op_config.weight_granularity \
+                if op_config.weight_granularity in single_op_cap["weight"]["granularity"] \
+                else single_op_cap["weight"]["granularity"][0]
+
+            single_op_config["weight"]["algorithm"] = op_config.weight_algorithm \
+                if op_config.weight_algorithm in single_op_cap["weight"]["algorithm"] \
+                else single_op_cap["weight"]["algorithm"][0]
+
+            op_wise_config.update({op_name: single_op_config})
+
+        return op_wise_config
+
+    def parse_to_tune_cfg(self):
+        """The function that parses StaticQuantConfig to keras tuning config."""
+        op_wise_config = self.update_opwise_config()
+        tune_cfg = {"op": op_wise_config}
+        
+        return op_wise_config
