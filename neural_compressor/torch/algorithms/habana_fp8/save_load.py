@@ -92,7 +92,8 @@ def load(model, output_dir="./saved_results"):
                 module = FP8Cast(dtype=dtype)
         set_module(model, op_name, module)
         htcore.mark_step()
-    model.load_state_dict(stat_dict)
+    model.load_state_dict(stat_dict, assign=True)
+    model.to('hpu')
     htcore.mark_step()
     logger.info("Quantized model loading successful.")
     return model

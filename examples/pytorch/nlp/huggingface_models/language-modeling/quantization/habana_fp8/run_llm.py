@@ -1,7 +1,7 @@
 import os
 os.environ["EXPERIMENTAL_WEIGHT_SHARING"] = "False"
 os.environ["USE_GAUDI2_SCALE"] = "True"
-os.environ.pop("USE_GAUDI2_SCALE")  # gaudi2 scale does not work
+os.environ.pop("USE_GAUDI2_SCALE")  # gaudi scale work
 # os.environ["GRAPH_VISUALIZATION"] = "True"
 import shutil
 shutil.rmtree(".graph_dumps", ignore_errors=True)
@@ -14,12 +14,13 @@ import habana_frameworks.torch.hpex
 import torch.nn.functional as F
 import deepspeed
 import transformers
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 import habana_frameworks.torch.core as htcore
 import numpy as np
 import lm_eval
 import lm_eval.tasks
 import lm_eval.evaluator
+from accelerate import init_empty_weights, load_checkpoint_and_dispatch
 
 
 torch.set_grad_enabled(False)
@@ -110,11 +111,16 @@ if re.search("llama", args.model.lower()) or re.search("bloom", args.model.lower
              token=None,
         )
     else:
-        user_model = AutoModelForCausalLM.from_pretrained(
-            args.model,
-            device_map='hpu',
-            torch_dtype=model_dtype,
-        )
+        if args.load:
+            config = AutoConfig.from_pretrained(args.model, torch_dtype=model_dtype)
+            with init_empty_weights():
+                user_model = AutoModelForCausalLM.from_config(config)
+        else:
+            user_model = AutoModelForCausalLM.from_pretrained(
+                args.model,
+                device_map='hpu',
+                torch_dtype=model_dtype,
+            )
 elif re.search("chatglm", args.model.lower()):
     from models.modeling_chatglm import ChatGLMForConditionalGeneration
     user_model = ChatGLMForConditionalGeneration.from_pretrained(
@@ -126,13 +132,18 @@ elif re.search("chatglm", args.model.lower()):
     # print(user_model.transformer.output_layer.weight.dtype) # always fp16
     user_model.float() # static fp8 need float32 for graph compiler
 else:
-    user_model = AutoModelForCausalLM.from_pretrained(
-        args.model,
-        trust_remote_code=args.trust_remote_code,
-        revision=args.revision,
-        device_map='hpu',
-        torch_dtype=model_dtype,
-    )
+    if args.load:
+        config = AutoConfig.from_pretrained(args.model, torch_dtype=model_dtype)
+        with init_empty_weights():
+            user_model = AutoModelForCausalLM.from_config(config)
+    else:
+        user_model = AutoModelForCausalLM.from_pretrained(
+            args.model,
+            trust_remote_code=args.trust_remote_code,
+            revision=args.revision,
+            device_map='hpu',
+            torch_dtype=model_dtype,
+        )
 
 # tokenizer
 if re.search("baichuan", args.model.lower()):
@@ -219,11 +230,40 @@ if args.approach in ["dynamic", "static"] and not args.load:
         _check_params_as_const(user_model)
         # saving
         user_model.save("saved_results")
-    print(user_model, flush=True)
+    #print(user_model, flush=True)
+    def show_msg():
+        import numpy as np
+        import glob
+        from habana_frameworks.torch.hpu import memory_stats
+        print("Number of HPU graphs:", len(glob.glob(".graph_dumps/*PreGraph*")))
+        mem_stats = memory_stats()
+        mem_dict = {
+            "memory_allocated (GB)": np.round(mem_stats["InUse"] / 1024**3, 2),
+            "max_memory_allocated (GB)": np.round(mem_stats["MaxInUse"] / 1024**3, 2),
+            "total_memory_available (GB)": np.round(mem_stats["Limit"] / 1024**3, 2),
+        }
+        for k, v in mem_dict.items():
+            print("{:35} = {} GB".format(k[:-5].replace("_", " ").capitalize(), v))
+    show_msg()
 
 if args.load:
+    def show_msg():
+        import numpy as np
+        import glob
+        from habana_frameworks.torch.hpu import memory_stats
+        print("Number of HPU graphs:", len(glob.glob(".graph_dumps/*PreGraph*")))
+        mem_stats = memory_stats()
+        mem_dict = {
+            "memory_allocated (GB)": np.round(mem_stats["InUse"] / 1024**3, 2),
+            "max_memory_allocated (GB)": np.round(mem_stats["MaxInUse"] / 1024**3, 2),
+            "total_memory_available (GB)": np.round(mem_stats["Limit"] / 1024**3, 2),
+        }
+        for k, v in mem_dict.items():
+            print("{:35} = {} GB".format(k[:-5].replace("_", " ").capitalize(), v))
+    show_msg()
     from neural_compressor.torch.quantization import load
     user_model = load(user_model, "saved_results")
+    show_msg()
     # replace torch.matmul and toch.bmm by injection
     def replace_torch_mm_bmm():
         from neural_compressor.torch.amp.fp8.functions import fp8_matmul
@@ -235,7 +275,8 @@ if args.load:
     from habana_frameworks.torch.core.quantization import _check_params_as_const, _mark_params_as_const
     _mark_params_as_const(user_model)  # can reduce memory allocated and speed up
     _check_params_as_const(user_model)
-    print(user_model, flush=True)
+    #print(user_model, flush=True)
+    show_msg()
 
 if args.to_graph:
     import habana_frameworks.torch.hpu.graphs as htgraphs
