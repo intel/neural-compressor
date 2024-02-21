@@ -965,8 +965,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                     "alpha_step": 0.1,
                     "shared_criterion": "mean",
                     "do_blockwise": False,
+                    "enable_bias_shift": False,
                 },
-            )  # default alpha search space parameters. By default, do_blockwise is set to False.
+            )  # default alpha search space parameters. By default, do_blockwise/enable_bias-shift is set to False.
             sq_algo.default_alpha = smooth_quant_args.get(
                 "default_alpha", 0.5
             )  # default value for alpha in auto-tuning
