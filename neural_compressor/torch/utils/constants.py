@@ -37,7 +37,7 @@ DOUBLE_QUANT_CONFIGS = {
         "use_double_quant": True,
         "double_quant_bits": 6,
         "double_quant_dtype": "int",
-        "double_quant_use_sym": False,
+        "double_quant_use_sym": True,
         "double_quant_group_size": 8,
     },
 }
