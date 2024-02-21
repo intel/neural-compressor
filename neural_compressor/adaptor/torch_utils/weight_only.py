@@ -704,7 +704,7 @@ def autoround_quantize(
     data_type: str = "int",  ##only support data_type
     scale_dtype="fp16",
     **kwargs,
-    ):
+):
     """Run autoround weight-only quantization.
     Args:
     model: The PyTorch model to be quantized.
