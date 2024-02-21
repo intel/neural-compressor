@@ -4914,11 +4914,13 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         )
         return model
 
-    def autoround_quantize():
+    def autoround_quantize(self, model, tokenizer):
         logger.info("quantizing with the AutoRound algorithm")
         from .torch_utils.weight_only import autoround_quantize
-        pass
-
+        device = "cpu"
+        model, autoround_config = autoround_quantize(model, tokenizer, n_samples=20, device=device, amp=False, seqlen=10, iters=10, scale_dtype='fp32')
+        return model, autoround_config
+    
     def _dump_model_op_stats(self, model, tune_cfg):
         """This is a function to dump quantizable ops of model to user.
 
