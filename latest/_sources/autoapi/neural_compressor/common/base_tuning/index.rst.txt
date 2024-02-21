@@ -19,7 +19,6 @@ Classes
    neural_compressor.common.base_tuning.Sampler
    neural_compressor.common.base_tuning.SequentialSampler
    neural_compressor.common.base_tuning.ConfigLoader
-   neural_compressor.common.base_tuning.TuningLogger
    neural_compressor.common.base_tuning.TuningConfig
    neural_compressor.common.base_tuning.TuningMonitor
 
@@ -78,14 +77,6 @@ Attributes
    :type config_source: _ConfigSet
 
 
-
-
-.. py:class:: TuningLogger
-
-
-   A unified logger for the tuning process.
-
-   It assists validation teams in retrieving logs.
 
 
 .. py:class:: TuningConfig(config_set=None, max_trials=100, sampler: Sampler = default_sampler, tolerable_loss=0.01)

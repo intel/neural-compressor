@@ -18,6 +18,7 @@ Classes
 .. autoapisummary::
 
    neural_compressor.common.utils.logger.Logger
+   neural_compressor.common.utils.logger.TuningLogger
 
 
 
@@ -39,5 +40,13 @@ Attributes
    Logger class.
 
 
+
+
+.. py:class:: TuningLogger
+
+
+   A unified logger for the tuning/quantization process.
+
+   It assists validation teams in retrieving logs.
 
 

@@ -20,6 +20,7 @@ Functions
    neural_compressor.common.utils.utility.set_workspace
    neural_compressor.common.utils.utility.set_resume_from
    neural_compressor.common.utils.utility.set_tensorboard
+   neural_compressor.common.utils.utility.log_quant_execution
 
 
 
@@ -49,5 +50,6 @@ Functions
 .. py:function:: set_tensorboard(tensorboard: bool)
 
    Set the tensorboard in config.
+
 
 
