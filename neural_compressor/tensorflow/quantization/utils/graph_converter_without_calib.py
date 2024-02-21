@@ -24,7 +24,7 @@ import os
 import tensorflow as tf
 from tensorflow.python.platform import gfile
 
-from neural_compressor.tensorflow.utils import deep_get, Model
+from neural_compressor.tensorflow.utils import Model, deep_get
 
 from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer

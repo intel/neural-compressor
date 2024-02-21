@@ -405,9 +405,11 @@ class GraphConverter:
                 self._tmp_model = Model(
                     self.model._model,
                     **self.model.kwargs,
-                    backend="itex"
-                    if self.itex_mode and not isinstance(self.model, TensorflowSavedModelModel)
-                    else "default"
+                    backend=(
+                        "itex"
+                        if self.itex_mode and not isinstance(self.model, TensorflowSavedModelModel)
+                        else "default"
+                    )
                 )
             self._tmp_model.graph_def = self.model.graph_def
             self._tmp_model.output_tensor_names = self.output_tensor_names
@@ -677,9 +679,11 @@ class GraphConverter:
             model = Model(
                 tmp_path,
                 **self._tmp_model.kwargs,
-                backend="itex"
-                if self.itex_mode and not isinstance(self._tmp_model, TensorflowSavedModelModel)
-                else "default"
+                backend=(
+                    "itex"
+                    if self.itex_mode and not isinstance(self._tmp_model, TensorflowSavedModelModel)
+                    else "default"
+                )
             )
         model.output_tensor_names = self.output_tensor_names
         model.input_tensor_names = self.input_tensor_names

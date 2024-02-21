@@ -868,7 +868,9 @@ class TensorFlowAdaptor:
             [dict]: model-wise & op-wise configuration for quantization.
         """
         if self.pre_optimized_model is None:
-            from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.pre_optimize import PreOptimization
+            from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.pre_optimize import (
+                PreOptimization,
+            )
 
             self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
             self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
