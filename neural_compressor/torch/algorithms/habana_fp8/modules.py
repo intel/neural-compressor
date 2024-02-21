@@ -54,8 +54,8 @@ class Autocast(nn.Module):
 
 ##################### FP8 modules #######################
 def _map_guadi2_scale(scale):
-    USE_GUADI2_SCALE = os.environ.get("USE_GUADI2_SCALE")
-    if USE_GUADI2_SCALE:
+    USE_GAUDI2_SCALE = os.environ.get("USE_GAUDI2_SCALE")
+    if USE_GAUDI2_SCALE:
         scale_list = torch.tensor([16, 1, 1 / 16, 1 / 256])
         for i in scale_list:
             if scale > i or i == torch.tensor(1 / 256):

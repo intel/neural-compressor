@@ -1,5 +1,7 @@
 import os
 os.environ["EXPERIMENTAL_WEIGHT_SHARING"] = "False"
+os.environ["USE_GAUDI2_SCALE"] = "True"
+os.environ.pop("USE_GAUDI2_SCALE")  # gaudi2 scale does not work
 # os.environ["GRAPH_VISUALIZATION"] = "True"
 import shutil
 shutil.rmtree(".graph_dumps", ignore_errors=True)
@@ -60,15 +62,16 @@ parser.add_argument("--precision", type=str, default='fp8_e4m3',
 parser.add_argument("--accuracy", action="store_true")
 parser.add_argument("--performance", action="store_true")
 parser.add_argument("--generate", action="store_true")
+parser.add_argument("--load", action="store_true")
 parser.add_argument("--batch_size", default=1, type=int,
                     help="For accuracy measurement only.")
 parser.add_argument("--pad_max_length", default=512, type=int,
                     help="Pad input ids to max length.")
 parser.add_argument("--calib_iters", default=100, type=int,
                     help="calibration iters.")
-parser.add_argument("--tasks", nargs='+', default=["hellaswag", "lambada_openai", "piqa", "winogrande"], \
-                    type=str, choices=["winogrande", "copa", "piqa", "rte", "hellaswag", \
-                    "openbookqa", "lambada_openai", "lambada_standard", "wikitext"],
+parser.add_argument("--tasks", nargs='+', default=["lambada_openai"], \
+                    type=str, choices=["hellaswag", "lambada_openai", "piqa", "winogrande", "copa", 
+                                       "rte", "openbookqa", "lambada_standard", "wikitext"],
                     help="tasks list for accuracy validation")
 parser.add_argument("--limit", default=None, type=int,
                     help="the sample num of evaluation.")
@@ -164,26 +167,18 @@ if world_size > 1:
 
 user_model.eval()
 
-if args.approach in ["dynamic", "static"]:
+if args.approach in ["dynamic", "static"] and not args.load:
     print("device:", next(user_model.parameters()).device)
     from neural_compressor.torch.quantization.config import FP8Config, get_default_fp8_config
-    from neural_compressor.torch.algorithms.habana_fp8 import quantize_dynamic
     from neural_compressor.torch.quantization import quantize
-    if args.precision == "fp8_e4m3":
-        dtype = torch.float8_e4m3fn
-    else:
-        dtype = torch.float8_e5m2
+    dtype = args.precision
     if args.approach == "dynamic":
-        #user_model = quantize_dynamic(user_model, dtype, inplace=True)
-        qconfig = FP8Config(weight_dtype=dtype, act_dtype=dtype, approach="dynamic")
-        if args.skip_lm_head:
-            fp32_config = FP8Config(weight_dtype=torch.float32, act_dtype=torch.float32)
-            qconfig.set_local("lm_head", fp32_config)
-        user_model = quantize_dynamic(user_model, qconfig, inplace=True)
+        from neural_compressor.torch.algorithms.habana_fp8 import quantize_dynamic
+        user_model = quantize_dynamic(user_model, dtype, inplace=True)
     elif args.approach == "static":
-        qconfig = FP8Config(weight_dtype=dtype, act_dtype=dtype, approach="static")
+        qconfig = FP8Config(w_dtype=dtype, act_dtype=dtype, approach="static")
         if args.skip_lm_head:
-            fp32_config = FP8Config(weight_dtype=torch.float32, act_dtype=torch.float32)
+            fp32_config = FP8Config(w_dtype="fp32", act_dtype="fp32")
             qconfig.set_local("lm_head", fp32_config)
         # dataset
         from datasets import load_dataset
@@ -222,6 +217,24 @@ if args.approach in ["dynamic", "static"]:
         from habana_frameworks.torch.core.quantization import _check_params_as_const, _mark_params_as_const
         _mark_params_as_const(user_model)  # can reduce memory allocated and speed up
         _check_params_as_const(user_model)
+        # saving
+        user_model.save("saved_results")
+    print(user_model, flush=True)
+
+if args.load:
+    from neural_compressor.torch.quantization import load
+    user_model = load(user_model, "saved_results")
+    # replace torch.matmul and toch.bmm by injection
+    def replace_torch_mm_bmm():
+        from neural_compressor.torch.amp.fp8.functions import fp8_matmul
+        torch.matmul = fp8_matmul
+        torch.bmm = fp8_matmul
+
+    replace_torch_mm_bmm()
+    # It enables weights constant folding
+    from habana_frameworks.torch.core.quantization import _check_params_as_const, _mark_params_as_const
+    _mark_params_as_const(user_model)  # can reduce memory allocated and speed up
+    _check_params_as_const(user_model)
     print(user_model, flush=True)
 
 if args.to_graph:
