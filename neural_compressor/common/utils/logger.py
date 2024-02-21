@@ -152,7 +152,7 @@ class TuningLogger:
 
     @classmethod
     def trial_start(cls, trial_index: int = None) -> None:
-        logger.info("%d -trail started.", trial_index)
+        logger.info("%d-trail started.", trial_index)
 
     @classmethod
     def quantization_start(cls, stacklevel=2) -> None:
