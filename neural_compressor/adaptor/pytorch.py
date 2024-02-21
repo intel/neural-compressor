@@ -4615,6 +4615,9 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             q_model._model = self.awq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
         if "RTN" in all_algo:
             q_model._model = self.rtn_quantize(q_model._model, tune_cfg)
+        if "AUTOROUND" in all_algo:
+            q_model._model, autoround_config = self.autoround_quantize(q_model._model, tune_cfg)
+            q_model.autoround_config = autoround_config
 
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         q_model.is_quantized = True
@@ -4910,6 +4913,11 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             enable_full_range=enable_full_range,
         )
         return model
+
+    def autoround_quantize():
+        logger.info("quantizing with the AutoRound algorithm")
+        from .torch_utils.weight_only import autoround_quantize
+        pass
 
     def _dump_model_op_stats(self, model, tune_cfg):
         """This is a function to dump quantizable ops of model to user.
