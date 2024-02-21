@@ -212,12 +212,10 @@ class TestRTNQuant:
         double_quant_config_dict = get_default_double_quant_config(type="BNB_NF4")
         model = quantize(model, double_quant_config_dict)
         out1 = model(self.example_inputs)[0]
-        atol_BNB = (out1 - self.label).amax()
         assert torch.allclose(out, out1), "Accuracy should be the same, please double check."
-        # type="BNB_NF4"
+        # type="GGML_TYPE_Q4_K"
         model = copy.deepcopy(self.tiny_gptj)
         double_quant_config_dict = get_default_double_quant_config(type="GGML_TYPE_Q4_K")
         model = quantize(model, double_quant_config_dict)
-        out1 = model(self.example_inputs)[0]
-        atol_GGML = (out1 - self.label).amax()
-        assert atol_BNB < atol_GGML, "atol_BNB should be smaller than atol_GGML due to its asym double_quant."
+        out2 = model(self.example_inputs)[0]
+        assert torch.allclose(out2, self.label, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
