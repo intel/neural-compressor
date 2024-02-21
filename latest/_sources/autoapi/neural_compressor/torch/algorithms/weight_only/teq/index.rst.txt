@@ -1,0 +1,40 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.weight_only.teq`
+============================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.teq
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.teq.TEQuantizer
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.teq.teq_quantize
+
+
+
+.. py:class:: TEQuantizer(model, weight_config={}, absorb_to_layer={}, folding=True, example_inputs=None)
+
+
+   Weight-only quantization, Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input.
+
+
+.. py:function:: teq_quantize(model, weight_config={}, absorb_to_layer={}, folding=True, dataloader=None, calib_func=None, example_inputs=None)
+
+   Run TEQ weight-only quantization.
+
+
