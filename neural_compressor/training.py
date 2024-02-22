@@ -341,7 +341,7 @@ def fit(compression_manager, train_func, eval_func=None, eval_dataloader=None, e
 
         traceback.print_exc()
     finally:
-        if strategy.best_qmodel:
+        if strategy.get_best_qmodel():
             logger.info(
                 "Specified timeout or max trials is reached! " "Found a quantized model which meet accuracy goal. Exit."
             )
@@ -352,7 +352,7 @@ def fit(compression_manager, train_func, eval_func=None, eval_dataloader=None, e
                 "Not found any quantized model which meet accuracy goal. Exit."
             )
 
-        compression_manager.model = strategy.best_qmodel
+        compression_manager.model = strategy.get_best_qmodel()
 
     return compression_manager.model
 

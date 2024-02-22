@@ -25,6 +25,8 @@ from neural_compressor.torch.quantization.config import (
     get_default_static_config,
     SmoothQuantConfig,
     get_default_sq_config,
+    TEQConfig,
+    get_default_teq_config,
     HQQConfig,
     get_default_hqq_config,
 )

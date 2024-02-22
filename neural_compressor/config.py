@@ -652,7 +652,7 @@ class TuningCriterion:
     @timeout.setter
     def timeout(self, timeout):
         """Set timeout."""
-        if _check_value("timeout", timeout, int):
+        if _check_value("timeout", timeout, (int, float)):
             self._timeout = timeout
 
     @property
