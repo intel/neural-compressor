@@ -315,9 +315,8 @@ def _get_graph_from_saved_model_v2(saved_model_dir, input_tensor_names, output_t
 
     saved_model_exported_names = [signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY]
     saved_model_tags = set([tag_constants.SERVING])
-    
-    return load_saved_model(saved_model_dir, saved_model_tags, input_tensor_names, output_tensor_names)
 
+    return load_saved_model(saved_model_dir, saved_model_tags, input_tensor_names, output_tensor_names)
 
 
 def _get_graph_from_original_keras_v2(model, output_dir):
@@ -463,9 +462,10 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
                 graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
             except:
                 keras_format = "saved_model_general"
-        if keras_format == "saved_model_general": #pargma: no cover
+        if keras_format == "saved_model_general":  # pargma: no cover
             try:
                 from neural_compressor.adaptor.tf_utils.util import parse_saved_model
+
                 graph_def, _saved_model, _, _, input_names, output_names = parse_saved_model(
                     temp_dir, True, input_tensor_names, output_tensor_names
                 )
