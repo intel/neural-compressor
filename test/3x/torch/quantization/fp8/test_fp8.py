@@ -5,8 +5,8 @@ import unittest
 
 from neural_compressor.torch.utils import is_hpex_available
 
-if not is_hpex_available():
-    exit()
+# if not is_hpex_available():
+#     exit()
 import torch
 
 from neural_compressor.torch.algorithms.habana_fp8 import quantize_dynamic
