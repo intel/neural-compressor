@@ -101,7 +101,7 @@ class TestTF3xNewApi(unittest.TestCase):
             if "Quantized" in node.op:
                 conv2d_quantized = True
                 break
-            
+
         self.assertEqual(conv2d_quantized, True)
 
     def test_static_quant_from_dict_beginner(self):

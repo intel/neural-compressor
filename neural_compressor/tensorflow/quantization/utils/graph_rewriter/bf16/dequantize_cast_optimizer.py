@@ -20,9 +20,9 @@ import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.tensorflow.utils import dump_elapsed_time, SPR_BASE_VERSIONS
-from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.graph_base import GraphRewriterBase
+from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
+from neural_compressor.tensorflow.utils import SPR_BASE_VERSIONS, dump_elapsed_time
 
 
 class DequantizeCastOptimizer(GraphRewriterBase):

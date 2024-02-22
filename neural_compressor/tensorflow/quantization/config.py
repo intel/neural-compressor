@@ -164,7 +164,7 @@ class StaticQuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
-        return StaticQuantConfig(            
+        return StaticQuantConfig(
             weight_dtype=["int8", "fp32"],
             weight_sym=[True, False],
             weight_granularity=["per_tensor", "per_channel"],

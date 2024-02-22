@@ -171,9 +171,7 @@ class TestAutoTune(unittest.TestCase):
         self.assertEqual(len(evaluator.eval_fn_registry), 2)
         self.assertIsNotNone(best_model)
 
-        op_names = [
-            i.name for i in best_model.graph_def.node if i.op == "MatMul" and "_mul" in i.input[0]
-        ]
+        op_names = [i.name for i in best_model.graph_def.node if i.op == "MatMul" and "_mul" in i.input[0]]
         self.assertTrue(len(op_names) > 0)
 
 

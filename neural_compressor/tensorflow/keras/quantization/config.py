@@ -22,7 +22,6 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 import tensorflow as tf
 
 from neural_compressor.common import logger
-from neural_compressor.common.utils import STATIC_QUANT
 from neural_compressor.common.base_config import (
     DEFAULT_WHITE_LIST,
     OP_NAME_OR_MODULE_TYPE,
@@ -31,6 +30,7 @@ from neural_compressor.common.base_config import (
     register_config,
     register_supported_configs_for_fwk,
 )
+from neural_compressor.common.utils import STATIC_QUANT
 
 FRAMEWORK_NAME = "keras"
 
