@@ -462,7 +462,7 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
                 graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
             except:
                 keras_format = "saved_model_general"
-        if keras_format == "saved_model_general": # pargma: no cover
+        if keras_format == "saved_model_general":  # pargma: no cover
             try:
                 from neural_compressor.adaptor.tf_utils.util import parse_saved_model
 
