@@ -527,7 +527,7 @@ class TensorFlowAdaptor:
 
                 batch_size = get_model_input_shape(model)
                 logger.warning(
-                    "Fail to forward with batch size={}, set to {} now.".format(data_loader.batch_size, batch_size)
+                    "Fail to forward with batch size={}, set to {} now.".format(calib_dataloader.batch_size, batch_size)
                 )
                 calib_dataloader.batch(batch_size)
                 self.quantize_config["calib_iteration"] = calib_sampling_size
@@ -2443,54 +2443,44 @@ class TensorflowConfigConverter:
             single_op_cap = self.capability["opwise"][op_key_name][0]
             single_op_config = {"activation": {}}
 
-            single_op_config["activation"]["dtype"] = (
-                op_config.act_dtype
-                if op_config.act_dtype in single_op_cap["activation"]["dtype"]
+            single_op_config["activation"]["dtype"] = op_config.act_dtype \
+                if op_config.act_dtype in single_op_cap["activation"]["dtype"] \
+                    or op_config.act_dtype in ("fp32", "bf16") \
                 else single_op_cap["activation"]["dtype"][0]
-            )
 
             single_op_config["activation"]["scheme"] = "sym" if op_config.act_sym else "asym"
             if single_op_config["activation"]["scheme"] not in single_op_cap["activation"]["scheme"]:
                 single_op_config["activation"]["scheme"] = single_op_cap["activation"]["scheme"][0]
 
-            single_op_config["activation"]["granularity"] = (
-                op_config.act_granularity
-                if op_config.act_granularity in single_op_cap["activation"]["granularity"]
+            single_op_config["activation"]["granularity"] = op_config.act_granularity \
+                if op_config.act_granularity in single_op_cap["activation"]["granularity"] \
                 else single_op_cap["activation"]["granularity"][0]
-            )
 
-            single_op_config["activation"]["algorithm"] = (
-                op_config.act_algorithm
-                if op_config.act_algorithm in single_op_cap["activation"]["algorithm"]
+            single_op_config["activation"]["algorithm"] = op_config.act_algorithm \
+                if op_config.act_algorithm in single_op_cap["activation"]["algorithm"] \
                 else single_op_cap["activation"]["algorithm"][0]
-            )
 
             if "weight" not in single_op_cap:
                 op_wise_config.update({op_key_name: single_op_config})
                 continue
 
             single_op_config["weight"] = {}
-            single_op_config["weight"]["dtype"] = (
-                op_config.weight_dtype
-                if op_config.weight_dtype in single_op_cap["weight"]["dtype"]
+            single_op_config["weight"]["dtype"] = op_config.weight_dtype \
+                if op_config.weight_dtype in single_op_cap["weight"]["dtype"] \
+                    or op_config.weight_dtype in ("fp32", "bf16") \
                 else single_op_cap["weight"]["dtype"][0]
-            )
 
             single_op_config["weight"]["scheme"] = "sym" if op_config.weight_sym else "asym"
             if single_op_config["weight"]["scheme"] not in single_op_cap["weight"]["scheme"]:
                 single_op_config["weight"]["scheme"] = single_op_cap["weight"]["scheme"][0]
 
-            single_op_config["weight"]["granularity"] = (
-                op_config.weight_granularity
-                if op_config.weight_granularity in single_op_cap["weight"]["granularity"]
+            single_op_config["weight"]["granularity"] = op_config.weight_granularity \
+                if op_config.weight_granularity in single_op_cap["weight"]["granularity"] \
                 else single_op_cap["weight"]["granularity"][0]
-            )
 
-            single_op_config["weight"]["algorithm"] = (
-                op_config.weight_algorithm
-                if op_config.weight_algorithm in single_op_cap["weight"]["algorithm"]
+            single_op_config["weight"]["algorithm"] = op_config.weight_algorithm \
+                if op_config.weight_algorithm in single_op_cap["weight"]["algorithm"] \
                 else single_op_cap["weight"]["algorithm"][0]
-            )
 
             op_wise_config.update({op_key_name: single_op_config})
 
@@ -2502,3 +2492,4 @@ class TensorflowConfigConverter:
         tune_cfg = {"op": op_wise_config}
 
         return tune_cfg
+

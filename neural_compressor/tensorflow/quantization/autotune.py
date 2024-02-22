@@ -28,7 +28,6 @@ from neural_compressor.tensorflow.utils import BaseModel, constants
 __all__ = [
     "autotune",
     "get_all_config_set",
-    "get_rtn_double_quant_config_set",
 ]
 
 
