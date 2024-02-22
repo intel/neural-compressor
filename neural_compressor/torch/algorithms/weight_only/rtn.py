@@ -79,6 +79,7 @@ def rtn_quantize(
     device = runtime_accelerator.name()
 
     # Put model on device explicitly
+    # TODO: refine it later, Put module on device one by one instead of the whole model
     model.to(device)
 
     assert isinstance(model, torch.nn.Module), "only support torch module"
