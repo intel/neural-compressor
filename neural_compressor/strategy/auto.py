@@ -104,7 +104,7 @@ class AutoTuneStrategy(TuneStrategy):
 
             pre_strategy = strategy
             strategy.traverse()
-            self.best_qmodel = strategy.best_qmodel
+            self.best_qmodel = strategy.get_best_qmodel()
             if self.best_qmodel:
                 return
 
