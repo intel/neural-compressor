@@ -2,8 +2,9 @@ import copy
 import shutil
 import unittest
 
-from neural_compressor.torch.utils import is_hpex_available
 import torch
+
+from neural_compressor.torch.utils import is_hpex_available
 
 if is_hpex_available():
     from neural_compressor.torch.algorithms.habana_fp8 import quantize_dynamic
