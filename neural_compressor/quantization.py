@@ -249,7 +249,7 @@ def fit(
 
         traceback.print_exc()
     finally:
-        if strategy.best_qmodel:
+        if strategy.get_best_qmodel():
             logger.info(
                 "Specified timeout or max trials is reached! " "Found a quantized model which meet accuracy goal. Exit."
             )
@@ -260,4 +260,4 @@ def fit(
                 "Not found any quantized model which meet accuracy goal. Exit."
             )
 
-        return strategy.best_qmodel
+        return strategy.get_best_qmodel()
