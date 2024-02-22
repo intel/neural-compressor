@@ -50,8 +50,8 @@ def quantize_model(
     else:
         q_model = quantize_model_with_single_config(q_model, quant_config, calib_dataloader, calib_iteration)
 
-
     return q_model
+
 
 def quantize_model_with_single_config(
     q_model: BaseModel,
