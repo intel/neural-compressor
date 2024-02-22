@@ -57,7 +57,7 @@ ut_log_name=${LOG_DIR}/ut_tf_${tensorflow_version}_pt_${pytorch_version}.log
 #cat run.sh | tee ${ut_log_name}
 echo "------UT start-------"
 # bash -x run.sh 2>&1 | tee -a ${ut_log_name}
-coverage run --source="${lpot_path}" -m pytest --disable-warnings -v --html=report.html --self-contained-html 2>&1 | tee -a ${ut_log_name}
+coverage run --source="${lpot_path}" -m pytest --disable-warnings -vs --html=report.html --self-contained-html 2>&1 | tee -a ${ut_log_name}
 cp .coverage ${LOG_DIR}/.coverage.others
 cp report.html ${LOG_DIR}/
 echo "------UT end -------"
