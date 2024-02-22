@@ -27,13 +27,14 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes, op_def_registry, tensor_util
 from tensorflow.python.framework.kernels import get_registered_kernels_for_op
 
-from neural_compressor.tensorflow.utils import SPR_BASE_VERSIONS
-from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
-from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper as Helper
-
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.bf16.dequantize_cast_optimizer import (
+    DequantizeCastOptimizer,
+)
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.graph_cse_optimizer import GraphCseOptimizer
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.graph_base import GraphRewriterBase
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.bf16.dequantize_cast_optimizer import DequantizeCastOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
+from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper as Helper
+from neural_compressor.tensorflow.utils import SPR_BASE_VERSIONS
 
 DT_FLOAT32 = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
 DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)

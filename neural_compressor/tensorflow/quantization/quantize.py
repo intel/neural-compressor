@@ -46,11 +46,10 @@ def quantize_model(
     q_model = Model(model)
     if isinstance(quant_config, list):
         for config in quant_config:
-            q_model = quantize_model_with_single_config(q_model, config,
-                                        calib_dataloader, calib_iteration)
+            q_model = quantize_model_with_single_config(q_model, config, calib_dataloader, calib_iteration)
     else:
-        q_model = quantize_model_with_single_config(q_model, quant_config,
-                            calib_dataloader, calib_iteration)
+        q_model = quantize_model_with_single_config(q_model, quant_config, calib_dataloader, calib_iteration)
+
 
 def quantize_model_with_single_config(
     q_model: BaseModel,
