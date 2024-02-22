@@ -6,7 +6,7 @@ import unittest
 import torch
 
 from neural_compressor.torch.amp import autocast
-from neural_compressor.torch.utils import is_hpex_available, logger
+from neural_compressor.torch.utils import is_hpex_available
 
 # if not is_hpex_available():
 #     exit()

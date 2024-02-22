@@ -30,7 +30,7 @@ ut_log_name=${LOG_DIR}/ut_3x_pt.log
 #cat run_unittest.sh | tee ${ut_log_name}
 echo "------unittest start-------"
 #bash -x run_unittest.sh 2>&1 | tee -a ${ut_log_name}
-coverage run --source="${inc_path}" -m pytest --disable-warnings -v --html=report.html --self-contained-html ./torch 2>&1 | tee -a ${ut_log_name}
+coverage run --source="${inc_path}" -m pytest --disable-warnings --html=report.html --self-contained-html . 2>&1 | tee -a ${ut_log_name}
 echo "------unittest end -------"
 
 #if [ -s run_pytest.sh ]; then
