@@ -39,53 +39,50 @@ from neural_compressor.tensorflow.utils import (
     deep_get,
     get_all_fp32_data,
     get_tensor_histogram,
-)
-
-from .graph_rewriter.bf16.bf16_convert import BF16Convert
-from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
-from .graph_rewriter.generic.fuse_pad_with_conv import FusePadWithConv2DOptimizer
-from .graph_rewriter.generic.fuse_pad_with_fp32_conv import FusePadWithFP32Conv2DOptimizer
-from .graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOptimizer
-from .graph_rewriter.generic.strip_equivalent_nodes import StripEquivalentNodesOptimizer
-from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
-from .graph_rewriter.int8.freeze_fake_quant import FreezeFakeQuantOpOptimizer
-from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
-from .graph_rewriter.int8.fuse_conv_redundant_dequantize import FuseConvRedundantDequantizeTransformer
-from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
-from .graph_rewriter.int8.fuse_matmul_redundant_dequantize import FuseMatMulRedundantDequantizeTransformer
-from .graph_rewriter.int8.fuse_matmul_requantize import (
-    FuseMatMulRequantizeDequantizeNewAPITransformer,
-    FuseMatMulRequantizeDequantizeTransformer,
-    FuseMatMulRequantizeNewAPITransformer,
-    FuseMatMulRequantizeTransformer,
-)
-from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
-from .graph_rewriter.int8.post_hostconst_converter import PostHostConstConverter
-from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
-from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
-from .graph_rewriter.qdq.insert_qdq_pattern import GenerateGraphWithQDQPattern
-from .graph_rewriter.qdq.merge_duplicated_qdq import MergeDuplicatedQDQOptimizer
-from .graph_rewriter.qdq.share_qdq_y_pattern import ShareQDQForItexYPatternOptimizer
-from .graph_util import GraphAnalyzer
-from .graph_util import GraphRewriterHelper as Helper
-from .quantize_graph.qdq.optimize_qdq import OptimizeQDQGraph
-from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from .quantize_graph_common import QuantizeGraphHelper
-from .transform_graph.bias_correction import BiasCorrection
-from .transform_graph.insert_logging import InsertLogging
-from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
-from .util import (
-    TF_SPR_BASE_VERSIONS,
-    generate_feed_dict,
-    iterator_sess_run,
     version1_eq_version2,
     version1_gt_version2,
     version1_gte_version2,
     version1_lt_version2,
     version1_lte_version2,
+    SPR_BASE_VERSIONS,
 )
 
-TF_SUPPORTED_MAX_VERSION = "2.14.0"
+from neural_compressor.tensorflow.quantization.utils.utility import generate_feed_dict, iterator_sess_run
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.bf16.bf16_convert import BF16Convert
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_pad_with_conv import FusePadWithConv2DOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_pad_with_fp32_conv import FusePadWithFP32Conv2DOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.strip_equivalent_nodes import StripEquivalentNodesOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.freeze_fake_quant import FreezeFakeQuantOpOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.freeze_value import FreezeValueTransformer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.fuse_conv_redundant_dequantize import FuseConvRedundantDequantizeTransformer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.fuse_matmul_redundant_dequantize import FuseMatMulRedundantDequantizeTransformer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.fuse_matmul_requantize import (
+    FuseMatMulRequantizeDequantizeNewAPITransformer,
+    FuseMatMulRequantizeDequantizeTransformer,
+    FuseMatMulRequantizeNewAPITransformer,
+    FuseMatMulRequantizeTransformer,
+)
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.post_hostconst_converter import PostHostConstConverter
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.insert_qdq_pattern import GenerateGraphWithQDQPattern
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.merge_duplicated_qdq import MergeDuplicatedQDQOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.share_qdq_y_pattern import ShareQDQForItexYPatternOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
+from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper as Helper
+from neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.optimize_qdq import OptimizeQDQGraph
+from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from neural_compressor.tensorflow.quantization.utils.quantize_graph_common import QuantizeGraphHelper
+from neural_compressor.tensorflow.quantization.utils.transform_graph.bias_correction import BiasCorrection
+from neural_compressor.tensorflow.quantization.utils.transform_graph.insert_logging import InsertLogging
+from neural_compressor.tensorflow.quantization.utils.transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
+
+TF_SUPPORTED_MAX_VERSION = "2.15.0"
 TF_SUPPORTED_MIN_VERSION = "1.14.0"
 
 logger = logging.getLogger("neural_compressor")
@@ -338,7 +335,7 @@ class GraphConverter:
             if tf.version.VERSION == "1.15.0-up3":
                 is_supported_version = True
 
-            if tf.version.VERSION in TF_SPR_BASE_VERSIONS:
+            if tf.version.VERSION in SPR_BASE_VERSIONS:
                 is_supported_version = True
                 is_sprbase_version = True
 

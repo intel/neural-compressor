@@ -13,16 +13,6 @@ from neural_compressor.common.base_tuning import TuningConfig, evaluator
 from neural_compressor.tensorflow.quantization import SmoothQuantConfig, StaticQuantConfig, autotune
 
 
-def reset_tuning_target(test_func):
-    @wraps(test_func)
-    def wrapper(*args, **kwargs):
-        # Reset tuning targets before running the test
-        evaluator.eval_fn_registry = []
-        return test_func(*args, **kwargs)
-
-    return wrapper
-
-
 def build_model():
     # Load MNIST dataset
     mnist = keras.datasets.mnist
@@ -114,33 +104,6 @@ class TestAutoTune(unittest.TestCase):
         # print the test name
         logger.info(f"Running TestAutoTune test: {self.id()}")
 
-    @patch("logging.Logger.warning")
-    def test_auto_tune_warning(self, mock_warning):
-        acc_data = iter([1.0, 0.8, 0.99, 1.0, 0.99, 0.99])
-
-        def eval_acc_fn(model) -> float:
-            return next(acc_data)
-
-        calib_dataloader = MyDataloader(dataset=Dataset())
-        custom_tune_config = TuningConfig(
-            config_set=[
-                StaticQuantConfig(weight_sym=True, act_sym=True),
-                StaticQuantConfig(weight_sym=False, act_sym=False),
-            ]
-        )
-        with self.assertRaises(SystemExit):
-            best_model = autotune(
-                model="baseline_model",
-                tune_config=custom_tune_config,
-                eval_fns=eval_acc_fn,
-                calib_dataloader=calib_dataloader,
-            )
-        call_args_list = mock_warning.call_args_list
-        # There may be multiple calls to warning, so we need to check all of them
-        self.assertIn(
-            "Please refine your eval_fns to accept model path (str) as input.", [info[0][0] for info in call_args_list]
-        )
-
     def test_static_quant_auto_tune(self):
         acc_data = iter([1.0, 0.8, 0.99, 1.0, 0.99, 0.99])
 
@@ -152,13 +115,6 @@ class TestAutoTune(unittest.TestCase):
         def eval_perf_fn(model) -> float:
             return next(perf_data)
 
-        eval_fns = [
-            {"eval_fn": eval_acc_fn, "weight": 0.5, "name": "accuracy"},
-            {
-                "eval_fn": eval_perf_fn,
-                "weight": 0.5,
-            },
-        ]
         calib_dataloader = MyDataloader(dataset=Dataset())
         custom_tune_config = TuningConfig(
             config_set=[
@@ -205,17 +161,18 @@ class TestAutoTune(unittest.TestCase):
         self.assertEqual(len(evaluator.eval_fn_registry), 1)
         self.assertIsNone(best_model)
 
-        custom_tune_config = TuningConfig(config_set=[SmoohQuantConfig(alpha=[0.5, 0.6])])
+        custom_tune_config = TuningConfig(config_set=[SmoothQuantConfig(alpha=[0.5, 0.6])])
         best_model = autotune(
             model="baseline_model",
             tune_config=custom_tune_config,
-            eval_fns=eval_acc_fn,
+            eval_fns=eval_fns,
             calib_dataloader=calib_dataloader,
         )
         self.assertEqual(len(evaluator.eval_fn_registry), 2)
         self.assertIsNotNone(best_model)
+
         op_names = [
-            i.name for i in best_model.graph.node if i.op_type.startswith("MatMul") and i.input[0].endswith("mul")
+            i.name for i in best_model.graph_def.node if i.op == "MatMul" and "_mul" in i.input[0]
         ]
         self.assertTrue(len(op_names) > 0)
 

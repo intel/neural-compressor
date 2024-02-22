@@ -100,6 +100,8 @@ class TestTF3xNewApi(unittest.TestCase):
         for node in qmodel.graph_def.node:
             if "Quantized" in node.op:
                 conv2d_quantized = True
+                break
+            
         self.assertEqual(conv2d_quantized, True)
 
     def test_static_quant_from_dict_beginner(self):
@@ -119,6 +121,7 @@ class TestTF3xNewApi(unittest.TestCase):
         dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
         calib_dataloader = MyDataLoader(dataset=dataset)
         fp32_model = self.graph
+
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
@@ -126,6 +129,8 @@ class TestTF3xNewApi(unittest.TestCase):
         for node in qmodel.graph_def.node:
             if "Quantize" in node.op:
                 quantized = True
+                break
+
         self.assertEqual(quantized, False)
 
     def test_static_quant_from_class_default(self):
@@ -144,6 +149,8 @@ class TestTF3xNewApi(unittest.TestCase):
         for node in qmodel.graph_def.node:
             if "Quantized" in node.op:
                 conv2d_quantized = True
+                break
+
         self.assertEqual(conv2d_quantized, True)
 
     def test_static_quant_from_class_beginner(self):
@@ -165,6 +172,8 @@ class TestTF3xNewApi(unittest.TestCase):
         for node in qmodel.graph_def.node:
             if "Quantize" in node.op:
                 quantized = True
+                break
+
         self.assertEqual(quantized, False)
 
     def test_static_quant_from_dict_advance(self):
@@ -200,6 +209,8 @@ class TestTF3xNewApi(unittest.TestCase):
         for node in qmodel.graph_def.node:
             if node.name == "conv1" and "Quantize" not in node.op:
                 conv2d_quantized = False
+                break
+
         self.assertEqual(conv2d_quantized, False)
 
     def test_static_quant_from_class_advance(self):
@@ -230,6 +241,8 @@ class TestTF3xNewApi(unittest.TestCase):
         for node in qmodel.graph_def.node:
             if node.name == "conv1" and "Quantize" not in node.op:
                 conv2d_quantized = False
+                break
+
         self.assertEqual(conv2d_quantized, False)
 
     def test_config_from_dict(self):

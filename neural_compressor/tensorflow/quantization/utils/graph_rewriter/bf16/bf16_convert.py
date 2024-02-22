@@ -27,13 +27,13 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes, op_def_registry, tensor_util
 from tensorflow.python.framework.kernels import get_registered_kernels_for_op
 
+from neural_compressor.tensorflow.utils import SPR_BASE_VERSIONS
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper as Helper
-from neural_compressor.tensorflow.quantization.utils.utility import TF_SPR_BASE_VERSIONS
 
-from ..generic.graph_cse_optimizer import GraphCseOptimizer
-from ..graph_base import GraphRewriterBase
-from .dequantize_cast_optimizer import DequantizeCastOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.graph_cse_optimizer import GraphCseOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.graph_base import GraphRewriterBase
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.bf16.dequantize_cast_optimizer import DequantizeCastOptimizer
 
 DT_FLOAT32 = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
 DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
@@ -185,7 +185,7 @@ class BF16Convert(GraphRewriterBase):
                 "Dequantize" == input_node.op
                 and len(input_node_outputs) == 1
                 and input_node.attr["mode"].s != b"MIN_FIRST"
-                and tf.version.VERSION in TF_SPR_BASE_VERSIONS
+                and tf.version.VERSION in SPR_BASE_VERSIONS
             ):
                 # Dequantize with mode MIN_FIRST does not support bf16 in both eigen and mkl
                 _, outputs_dt_input_node = self._dtype(input_node)

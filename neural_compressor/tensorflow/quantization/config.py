@@ -164,8 +164,16 @@ class StaticQuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
-        # TODO fwk owner needs to update it.
-        return StaticQuantConfig(weight_sym=[True, False])
+        return StaticQuantConfig(            
+            weight_dtype=["int8", "fp32"],
+            weight_sym=[True, False],
+            weight_granularity=["per_tensor", "per_channel"],
+            weight_algorithm=["minmax", "kl"],
+            act_dtype=["int8", "fp32"],
+            act_sym=[True, False],
+            act_granularity=["per_tensor", "per_channel"],
+            act_algorithm=["minmax", "kl"],
+        )
 
 
 register_supported_configs_for_fwk(fwk_name="keras")

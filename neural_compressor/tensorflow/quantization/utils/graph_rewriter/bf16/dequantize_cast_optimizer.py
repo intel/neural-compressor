@@ -20,11 +20,9 @@ import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
 
+from neural_compressor.tensorflow.utils import dump_elapsed_time, SPR_BASE_VERSIONS
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
-from neural_compressor.tensorflow.quantization.utils.utility import TF_SPR_BASE_VERSIONS
-from neural_compressor.tensorflow.utils import dump_elapsed_time
-
-from ..graph_base import GraphRewriterBase
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.graph_base import GraphRewriterBase
 
 
 class DequantizeCastOptimizer(GraphRewriterBase):
@@ -42,7 +40,7 @@ class DequantizeCastOptimizer(GraphRewriterBase):
         """
         # stock TF _MklDequantize doesn't support BF16 currently.
         # TODO remove this when spr-base upstream to stock TF.
-        if tf.version.VERSION not in TF_SPR_BASE_VERSIONS:
+        if tf.version.VERSION not in SPR_BASE_VERSIONS:
             return self.model
 
         DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)

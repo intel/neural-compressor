@@ -6,7 +6,7 @@ import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
 from neural_compressor.common import set_random_seed
-from neural_compressor.tensorflow import SmoothQuantConfig, get_default_sq_config, quantize_model
+from neural_compressor.tensorflow import SmoothQuantConfig, get_default_sq_config, quantize_model, StaticQuantConfig
 from neural_compressor.tensorflow.utils import DummyDataset, disable_random
 
 
@@ -118,6 +118,24 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
                 mul_count += 1
 
         self.assertEqual(mul_count, 2)
+
+    def test_sq_completed_workflow(self):
+        sq_config = SmoothQuantConfig(alpha=0.5)
+        static_config = StaticQuantConfig()
+        dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
+        calib_dataloader = MyDataLoader(dataset=dataset, batch_size=1)
+        q_model = quantize_model(self.conv_graph, [sq_config, static_config], calib_dataloader, calib_iteration=500)
+
+        mul_count = 0
+        quantized = False
+        for i in q_model.graph_def.node:
+            if i.op == "Mul":
+                mul_count += 1
+            if "quantize" in i.op:
+                quantized = True
+
+        self.assertEqual(mul_count, 2)
+        self.assertEqual(quantized, True)
 
     @disable_random()
     def test_matmul(self):

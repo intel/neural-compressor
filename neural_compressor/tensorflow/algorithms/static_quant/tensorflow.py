@@ -30,7 +30,6 @@ import yaml
 from pkg_resources import parse_version
 
 from neural_compressor.common import logger
-from neural_compressor.tensorflow import StaticQuantConfig
 from neural_compressor.tensorflow.utils import (
     SPR_BASE_VERSIONS,
     BaseDataLoader,
@@ -44,7 +43,9 @@ from neural_compressor.tensorflow.utils import (
     version1_eq_version2,
     version1_gte_version2,
     version1_lt_version2,
+    UNIFY_OP_TYPE_MAPPING,
 )
+from neural_compressor.tensorflow.quantization.config import StaticQuantConfig
 
 spr_base_verions = SPR_BASE_VERSIONS
 
@@ -52,23 +53,7 @@ spr_base_verions = SPR_BASE_VERSIONS
 class TensorFlowAdaptor:
     """Adaptor Layer for stock tensorflow and spr-base."""
 
-    unify_op_type_mapping = {
-        "Conv2D": "conv2d",
-        "Conv3D": "conv3d",
-        "DepthwiseConv2dNative": "conv2d",
-        "FusedBatchNormV3": "batchnorm",
-        "_MklFusedInstanceNorm": "instancenorm",
-        "MaxPool": "pooling",
-        "MaxPool3D": "pooling",
-        "AvgPool": "pooling",
-        "ConcatV2": "concat",
-        "MatMul": "matmul",
-        "BatchMatMul": "matmul",
-        "BatchMatMulV2": "matmul",
-        "Pad": "pad",
-        "Conv2DBackpropInput": "deconv2d",
-        "Conv3DBackpropInputV2": "deconv3d",
-    }
+    unify_op_type_mapping = UNIFY_OP_TYPE_MAPPING
 
     def __init__(self, framework_specific_info):
         """Initialization.
@@ -837,13 +822,13 @@ class TensorFlowAdaptor:
             if control_flow:
                 matched_nodes.remove(i)
 
-    def parse_quant_config(self, quant_config, model, self.calib_sampling_size):
+    def parse_quant_config(self, quant_config, model, calib_iteration):
         """Parse the quant_config to tune_cfg.
 
         Args:
             quant_config: a quantization configuration.
             model: the fp32 model to be quantized.
-            self.calib_sampling_size: the number of iteration for calibration.
+            calib_iteration: the number of iteration for calibration.
 
         Returns:
             tune_cfg: a dict composed by necessary information for quantization.
@@ -856,6 +841,8 @@ class TensorFlowAdaptor:
         tune_cfg["approach"] = "post_training_static_quant"
         tune_cfg["recipe_cfgs"] = tune_cfg.get("recipe_cfgs", {})
         tune_cfg["trial_number"] = 1
+
+        return tune_cfg
 
     def _query_fw_capability(self, model):
         """Collect the model-wise and op-wise configuration for quantization.
@@ -2429,6 +2416,9 @@ class TensorflowQuery:
 
 class TensorflowConfigConverter:
     """Convert `StaticQuantConfig` to the format used by static quant algo."""
+
+    unify_op_type_mapping = UNIFY_OP_TYPE_MAPPING
+
     def __init__(self,
                  quant_config: StaticQuantConfig,
                  capability: Dict):
@@ -2449,8 +2439,9 @@ class TensorflowConfigConverter:
         """
         op_wise_config = {}
         for op_name, op_config in self.quant_config.items():
-            single_op_cap = self.capability["opwise"][op_name][0]
-            single_op_config = {"weight": {}, "activation": {}}
+            op_key_name = (op_name[0], self.unify_op_type_mapping[op_name[1]])
+            single_op_cap = self.capability["opwise"][op_key_name][0]
+            single_op_config = {"activation": {}}
 
             single_op_config["activation"]["dtype"] = op_config.act_dtype \
                 if op_config.act_dtype in single_op_cap["activation"]["dtype"] \
@@ -2469,9 +2460,10 @@ class TensorflowConfigConverter:
                 else single_op_cap["activation"]["algorithm"][0]
 
             if "weight" not in single_op_cap:
-                op_wise_config.update({op_name: single_op_config})
+                op_wise_config.update({op_key_name: single_op_config})
                 continue
 
+            single_op_config["weight"] = {}
             single_op_config["weight"]["dtype"] = op_config.weight_dtype \
                 if op_config.weight_dtype in single_op_cap["weight"]["dtype"] \
                 else single_op_cap["weight"]["dtype"][0]
@@ -2488,7 +2480,7 @@ class TensorflowConfigConverter:
                 if op_config.weight_algorithm in single_op_cap["weight"]["algorithm"] \
                 else single_op_cap["weight"]["algorithm"][0]
 
-            op_wise_config.update({op_name: single_op_config})
+            op_wise_config.update({op_key_name: single_op_config})
 
         return op_wise_config
 
@@ -2497,4 +2489,4 @@ class TensorflowConfigConverter:
         op_wise_config = self.update_opwise_config()
         tune_cfg = {"op": op_wise_config}
 
-        return op_wise_config
+        return tune_cfg

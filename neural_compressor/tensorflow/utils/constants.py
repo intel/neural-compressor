@@ -29,3 +29,21 @@ DEFAULT_SQ_ALPHA_ARGS = {
     "shared_criterion": "mean",
     "do_blockwise": False,
 }
+
+UNIFY_OP_TYPE_MAPPING = {
+    "Conv2D": "conv2d",
+    "Conv3D": "conv3d",
+    "DepthwiseConv2dNative": "conv2d",
+    "FusedBatchNormV3": "batchnorm",
+    "_MklFusedInstanceNorm": "instancenorm",
+    "MaxPool": "pooling",
+    "MaxPool3D": "pooling",
+    "AvgPool": "pooling",
+    "ConcatV2": "concat",
+    "MatMul": "matmul",
+    "BatchMatMul": "matmul",
+    "BatchMatMulV2": "matmul",
+    "Pad": "pad",
+    "Conv2DBackpropInput": "deconv2d",
+    "Conv3DBackpropInputV2": "deconv3d",
+}

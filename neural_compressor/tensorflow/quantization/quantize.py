@@ -28,7 +28,7 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
 
 def quantize_model(
     model: Union[str, tf.keras.Model, BaseModel],
-    quant_config: BaseConfig,
+    quant_config: Union[BaseConfig, list],
     calib_dataloader: Callable = None,
     calib_iteration: int = 100,
 ):
@@ -36,7 +36,7 @@ def quantize_model(
 
     Args:
         model: a fp32 model to be quantized.
-        quant_config: a quantization configuration.
+        quant_config: single or lists of quantization configuration.
         calib_dataloader: a data loader for calibration.
         calib_iteration: the iteration of calibration.
 
@@ -44,6 +44,31 @@ def quantize_model(
         q_model: the quantized model.
     """
     q_model = Model(model)
+    if isinstance(quant_config, list):
+        for config in quant_config:
+            q_model = quantize_model_with_single_config(q_model, config,
+                                        calib_dataloader, calib_iteration)
+    else:
+        q_model = quantize_model_with_single_config(q_model, quant_config,
+                            calib_dataloader, calib_iteration)
+
+def quantize_model_with_single_config(
+    q_model: BaseModel,
+    quant_config: BaseConfig,
+    calib_dataloader: Callable = None,
+    calib_iteration: int = 100,
+):
+    """Quantize model using single config.
+
+    Args:
+        model: a model wrapped by INC TF model class.
+        quant_config: a quantization configuration.
+        calib_dataloader: a data loader for calibration.
+        calib_iteration: the iteration of calibration.
+
+    Returns:
+        q_model: the quantized model.
+    """
     framework_name = "keras" if isinstance(q_model, KerasModel) else "tensorflow"
     registered_configs = config_registry.get_cls_configs()
     if isinstance(quant_config, dict):
