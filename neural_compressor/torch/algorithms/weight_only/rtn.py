@@ -22,6 +22,7 @@
 import torch
 
 from neural_compressor.torch.utils import logger, set_module
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 from .utility import quant_tensor, search_clip
 
@@ -73,7 +74,13 @@ def rtn_quantize(
     Returns:
         model: fake quantized torch module
     """
-    device = "cpu"
+    device_name = kwargs.pop("device", "auto")
+    runtime_accelerator = auto_detect_accelerator(device_name)
+    device = runtime_accelerator.name()
+
+    # Put model on device explicitly
+    model.to(device)
+
     assert isinstance(model, torch.nn.Module), "only support torch module"
     supported_layers = ["Linear"]
     # initialize global configuration
@@ -94,6 +101,7 @@ def rtn_quantize(
             dtype = weight_config[name].get("dtype", "int")
             if dtype == "fp32":
                 continue
+            logger.debug("Apply RTN on module %s.", name)
             bits = weight_config[name].get("bits", 4)
             group_size = weight_config[name]["group_size"]
             scheme = weight_config[name]["scheme"]
