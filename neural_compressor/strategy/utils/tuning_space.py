@@ -279,12 +279,6 @@ class TuningSpace:
                     cap["op"][op_name_type], op_user_cfg, fw_cap["op"][op_name_type]
                 )
 
-    def _merge_model_wise_cfg(self, cap: Dict, model_wise_usr_cfg: Dict, fw_cap: Dict):
-        for op_name_type in cap["op"].keys():
-            cap["op"][op_name_type] = self._merge_op_cfg(
-                cap["op"][op_name_type], model_wise_usr_cfg, fw_cap["op"][op_name_type]
-            )
-
     def _merge_op_wise_cfg(self, cap: Dict, op_wise_usr_cfg: Dict, fw_cap: Dict):
         op_name_types = {key[0]: key for key in cap["op"].keys()}
         for op_name_pattern, op_user_cfg in op_wise_usr_cfg.items():
@@ -406,8 +400,6 @@ class TuningSpace:
         :return:
         """
         fw_capability = deepcopy(capability)
-        if user_cfg["model_wise"] is not None:
-            self._merge_model_wise_cfg(capability, user_cfg["model_wise"], fw_capability)
         if user_cfg["optype_wise"] is not None:
             self._merge_optype_wise_cfg(capability, user_cfg["optype_wise"], fw_capability)
         if user_cfg["op_wise"] is not None:
