@@ -12,9 +12,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
+
 import torch
 
 from neural_compressor.torch.utils import logger
+
+__all__ = [
+    "FLOAT_MAPPING",
+    "FP4_BNB",
+    "FP4_BNB_BIT",
+    "FP4_E2M1",
+    "FP4_E2M1_BIT",
+    "GraphTrace",
+    "INT_MAPPING",
+    "NF4",
+    "NF4_BIT",
+    "calibration",
+    "fetch_module",
+    "forward_wrapper",
+    "get_absorb_layers",
+    "get_block_prefix",
+    "get_example_input",
+    "get_hidden_states",
+    "get_module",
+    "get_module_input_output",
+    "get_parent",
+    "model_forward",
+    "move_input_to_device",
+    "qdq_weight_actor",
+    "qdq_weight_asym",
+    "qdq_weight_sym",
+    "quant_tensor",
+    "quant_weight_w_scale",
+    "quantize_4bit",
+    "search_clip",
+    "set_module",
+]
 
 NF4 = [
     -1.0,
@@ -73,7 +107,7 @@ def quantize_4bit(tensor, quantile=1.0, dtype="nf4", return_int=False, **kwargs)
     mid_data = [(allow_data[i] + allow_data[i + 1]) / 2 for i in range(len(allow_data) - 1)]
     q_tensor = torch.zeros_like(tensor)
     for i in range(len(allow_data)):
-        data = allow_data_bit[i] if return_int else allow_data[i]
+        data = allow_data_bit[i] if return_int or "cast_int" in kwargs else allow_data[i]
         if i == 0:
             q_tensor += torch.where(tensor <= mid_data[i], data, 0)
         elif i == len(allow_data) - 1:
@@ -115,6 +149,7 @@ def qdq_weight_asym(weight, bits=4, quantile=1.0, return_int=False, **kwargs):
     zp.unsqueeze_(dim=-1)
     weight.div_(scale)
     weight.round_()
+    weight.add_(zp)
     weight.clamp_(0, maxq)
     keep_scale = kwargs.get("double_quant", False)
     if return_int or keep_scale:
@@ -295,9 +330,9 @@ def quant_tensor(
             return weight
     if quant_scale:
         weight, scale, zp = q_state
-        scale_dtype = kwargs.get("double_quant_dtype", "fp32")
+        scale_dtype = kwargs.get("double_quant_dtype", "int")
         scale_bits = kwargs.get("double_quant_bits", 8)
-        scale_scheme = kwargs.get("double_quant_scheme", "sym")
+        scale_scheme = kwargs.get("double_quant_scheme", "asym")
         scale_group_size = kwargs.get("double_quant_group_size", 256)
         scale_return_int = kwargs.get("double_quant_return_int", return_int)
         orig_scale_shape = scale.shape
@@ -308,7 +343,7 @@ def quant_tensor(
             scale.sub_(scale_mean)
             scale_scheme = "sym"
         # process: scale
-        quant_tensor(
+        scale = quant_tensor(
             scale,
             dtype=scale_dtype,
             bits=scale_bits,
@@ -397,8 +432,8 @@ def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_ful
     return best_clip_ratio
 
 
-def quant_weight_w_scale(weight, scale, zp, group_size=-1, dtype="int"):
-    """Quant and dequant tensor with group size.
+def quant_weight_w_scale(weight, scale, zp=None, group_size=-1, dtype="int"):
+    """Quant and dequant tensor with group size. It's an in-place function.
 
     Args:
         weight: input weight
@@ -412,32 +447,624 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1, dtype="int"):
     """
     device = weight.device
     scale = scale.to(device)
-    # NF4 FP4
-    if dtype in FLOAT_MAPPING.keys():
-        int_weight = quantize_4bit(
-            weight,
-            quantile=1.0,
-            dtype=dtype,
-            return_int=True,
-            scale=scale,
-        )[0]
-        return int_weight
-    # INT
     if zp is not None:
         zp = zp.to(device)
+    # group_size = -1
     if group_size == -1:
+        if dtype in FLOAT_MAPPING.keys():  # NF4 FP4
+            return quantize_4bit(weight, scale=scale, dtype=dtype, return_int=True)[0]
         return weight.div_(scale).round_() if zp is None else weight.div_(scale).add_(zp).round_()
     int_weight = torch.zeros(weight.shape).to(device)
     leng = weight.shape[1] // group_size
     tail_flag = False if weight.shape[1] % group_size == 0 else True
+    # group_size != -1
     for i in range(leng):
-        int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size].div_(scale[:, i].unsqueeze(1))
-        if zp is not None:
-            int_weight_tmp.add_(zp[:, i].unsqueeze(1))
-        int_weight[:, i * group_size : (i + 1) * group_size].copy_(int_weight_tmp.round_())
+        if dtype in FLOAT_MAPPING.keys():  # NF4 FP4
+            int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size]
+            quantize_4bit(int_weight_tmp, scale=scale[:, i].unsqueeze(1), dtype=dtype, return_int=True)[0]
+        else:
+            int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size].div_(scale[:, i].unsqueeze(1))
+            if zp is not None:
+                int_weight_tmp.add_(zp[:, i].unsqueeze(1))
+            int_weight[:, i * group_size : (i + 1) * group_size].copy_(int_weight_tmp.round_())
+    # tail_flag
     if tail_flag:
-        int_weight_tmp = weight[:, leng * group_size :].div_(scale[:, -1].unsqueeze(1))
-        if zp is not None:
-            int_weight_tmp.add_(zp[:, -1].unsqueeze(1))
-        int_weight[:, leng * group_size :].copy_(int_weight_tmp.round_())
+        if dtype in FLOAT_MAPPING.keys():  # NF4 FP4
+            int_weight_tmp = weight[:, leng * group_size :]
+            quantize_4bit(int_weight_tmp, scale=scale[:, -1].unsqueeze(1), dtype=dtype, return_int=True)[0]
+        else:
+            int_weight_tmp = weight[:, leng * group_size :].div_(scale[:, -1].unsqueeze(1))
+            if zp is not None:
+                int_weight_tmp.add_(zp[:, -1].unsqueeze(1))
+            int_weight[:, leng * group_size :].copy_(int_weight_tmp.round_())
     return int_weight
+
+
+# -------------- AWQ ---------------------------
+from collections import UserDict
+from functools import partial
+
+
+# AWQ Required, copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
+def model_forward(model, dataloader, iters, device):
+    try:
+        cnt = 0
+        for idx, (input, label) in enumerate(dataloader):
+            output = forward_wrapper(model, input, device)
+            cnt += 1
+            if iters != -1 and cnt >= iters:
+                break
+    except Exception as e:
+        cnt = 0
+        for idx, input in enumerate(dataloader):
+            output = forward_wrapper(model, input, device)
+            cnt += 1
+            if iters != -1 and cnt >= iters:
+                break
+
+
+# copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
+# TODO: potential bug, data type
+def forward_wrapper(model, input, device=torch.device("cpu")):
+    try:
+        model = model.to(device)
+        input = move_input_to_device(input, device)
+    except Exception as e:
+        logger.warning(e)
+        logger.warning("Please check the input device if the error raised.")
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        output = model(**input)
+    elif isinstance(input, list) or isinstance(input, tuple):
+        try:
+            output = model(*input)
+        except:
+            output = model(input)
+    else:
+        output = model(input)
+    return output
+
+
+# copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
+def move_input_to_device(input, device=torch.device("cpu")):
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        tmp_input = {}
+        for k, inp in input.items():
+            tmp_input[k] = move_input_to_device(inp, device)
+        input = tmp_input
+    elif isinstance(input, list) or isinstance(input, tuple):
+        is_tuple = isinstance(input, tuple)
+        tmp_input = []
+        for inp in input:
+            tmp_input.append(move_input_to_device(inp, device))
+        input = tuple(tmp_input) if is_tuple else tmp_input
+    elif isinstance(input, torch.Tensor):
+        input = input.to(device)  # pylint: disable=no-member
+    return input
+
+
+# copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
+def set_module(model, key, new_module):
+    """Set new module into model by key name.
+
+    Args:
+        model (torch.nn.Module): original model
+        key (str): module name to be replaced
+        new_module (torch.nn.Module): new module to be inserted
+    """
+    module = model
+    name_list = key.split(".")
+    for name in name_list[:-1]:
+        if hasattr(module, name):
+            module = getattr(module, name)
+        elif hasattr(module, ("sq_linear")):  # for peft models that Linears are contained in Linear
+            module = getattr(module, "sq_linear")
+            module = getattr(module, name)
+        elif hasattr(module, ("orig_layer")):  # for peft models and auto alpha
+            module = getattr(module, "orig_layer")
+            module = getattr(module, name)
+        else:
+            module = module
+
+    if hasattr(module, "sq_linear") and name_list[-1] != "sq_linear":  # for peft models
+        module = getattr(module, "sq_linear")
+    if hasattr(module, "orig_layer") and name_list[-1] != "orig_layer":  # for peft models and auto alpha
+        module = getattr(module, "orig_layer")
+    setattr(module, name_list[-1], new_module)
+
+
+# copy from neural_compressor/adaptor/torch_utils/util.py
+def fetch_module(model, op_name):
+    """Get module with a given op name.
+
+    Args:
+        model (object): the input model.
+        op_name (str): name of op.
+
+    Returns:
+        module (object).
+    """
+    module = model
+    name_list = op_name.split(".")
+    for name in name_list:
+        if hasattr(module, name):
+            module = getattr(module, name)
+        else:
+            module = module
+    return module
+
+
+# copy from neural_compressor/adaptor/torch_utils/util.py
+def get_absorb_layers(model, example_inputs, supported_layers=["Linear"], folding=False):
+    """Get absorb_to_layer and no_absorb_layer.
+
+    Args:
+        model (torch.nn.Module): input model
+        example_inputs: example_inputs
+        supported_layers (list, optional): supported_layers. Defaults to ['Linear'].
+        folding (bool, optional): whether allow self-absorption. Defaults to False.
+
+    Returns:
+        absorb_to_layer: dict of absorb_to_layer. eg. {absorb, [absorbed_1, xx]}
+        no_absorb_layers: list of no_absorb_layers
+    """
+    # get modules that can be absorbed.
+    # from .smooth_quant import GraphTrace, move GraphTrace into this file
+
+    tg = GraphTrace()
+    absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(model, example_inputs, supported_layers)
+    if absorb_to_layer is None or absorb_to_layer == {}:
+        absorb_to_layer = {}
+        logger.warning("No absorb layer is detected.")
+        # if no_absorb_layers is None, jit trace failed.
+        # collect all linears for next step
+        if no_absorb_layers is None:
+            no_absorb_layers = []
+            op_types = ["Linear"]
+            for name, module in model.named_modules():
+                for op_type in op_types:
+                    if op_type == str(module.__class__.__name__):
+                        no_absorb_layers.append(name)
+    return absorb_to_layer, no_absorb_layers
+
+
+# copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
+def get_parent(node, all_parents=False):
+    if node.inputs() is None:
+        return None
+    elif len(list(node.inputs())) == 0:
+        return None
+    if not all_parents:
+        return list(node.inputs())[0].node()
+    else:
+        return list(node.inputs())
+
+
+# copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
+def get_module(model, key):
+    """Get module from model by key name.
+
+    Args:
+        model (torch.nn.Module): original model
+        key (str): module name to be replaced
+    """
+    module = model
+    name_list = key.split(".")
+    for name in name_list:
+        if hasattr(module, name):
+            module = getattr(module, name)
+        elif hasattr(module, "sq_linear"):  # for peft models
+            module = getattr(module, "sq_linear")
+            module = getattr(module, name)
+        elif hasattr(module, "orig_layer"):  # for peft models and auto alpha
+            module = getattr(module, "orig_layer")
+            module = getattr(module, name)
+        else:
+            module = module
+    return module
+
+
+# copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
+class GraphTrace:
+    """"""
+
+    def __init__(self):
+        self.supported_torch_module_to_aten = {
+            "Linear": "aten::linear",
+            "Conv2d": "aten::_convolution",
+            "ConvTranspose2d": "aten::_convolution",
+            "LayerNorm": "aten::layer_norm",
+            "BatchNorm2d": "aten::batch_norm",
+            "GroupNorm": "aten::group_norm",
+            "InstanceNorm2d": "aten::instance_norm",
+            "LlamaRMSNorm": "aten::mul",
+            "T5LayerNorm": "aten::mul",
+            "LPLayerNorm": "aten::layer_norm",  ##mpt_chat
+        }
+
+        ##TODO potential bug, need to check only have one bug
+        ##TODO, must satisfy af(x)=f(ax),current skip layer may be incomplete
+        self.skip_ops_to_find_absorb = ["aten::to", "aten::relu", "aten::leaky_relu", "aten::hardtanh"]
+
+        self.could_absorb_layers = [
+            "aten::layer_norm",
+            "aten::batch_norm",
+            "aten::linear",
+            "aten::_convolution",
+            "aten::group_norm",
+            "aten::instance_norm",
+            "aten::mul",
+        ]  ##TODO,support more norm
+
+    def trace(self, model, dummy_input):
+        traced_model = None
+        optimize_numerics = False
+        orig_device = str(next(model.parameters()).device)
+        if orig_device != "cpu" and orig_device != "meta":  # pragma: no cover
+            model = model.to("cpu")
+            dummy_input = move_input_to_device(dummy_input, "cpu")
+        if isinstance(dummy_input, dict) or isinstance(dummy_input, UserDict):
+            try:
+                # pylint: disable=E1123, E1120
+                traced_model = torch.jit.trace(
+                    model, example_kwarg_inputs=dict(dummy_input), strict=False, check_trace=False
+                )
+                traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
+            except Exception as e:
+                logger.warning(e)
+                logger.warning("Jit trace in GraphTrace failed, absorb layer detection is skipped")
+        else:
+            try:
+                traced_model = torch.jit.trace(model, dummy_input, strict=False)
+                traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
+            except:
+                try:
+                    traced_model = torch.jit.trace(model, dummy_input[0], strict=False)
+                    traced_model = torch.jit.freeze(traced_model.eval(), optimize_numerics=optimize_numerics)
+                except Exception as e:
+                    logger.warning(e)
+                    logger.warning("Jit trace in GraphTrace failed, absorb layer detection is skipped")
+        model = model.to(orig_device)
+        return traced_model
+
+    def get_nodes(self, traced_model, op_types=["Linear"]):
+        if isinstance(op_types, str):
+            op_types = [op_types]
+        nodes = []
+        for node in traced_model.graph.nodes():
+            node_type = node.kind()
+            for op_type in op_types:
+                if node_type == op_type:
+                    nodes.append((node, op_type))
+                    break
+        return nodes
+
+    def get_prev_absorb_layer(self, nodes):
+        prev_absorb_layer = []
+        for node in nodes:
+            parent = get_parent(node)
+            while 1:
+                if parent.kind() in self.skip_ops_to_find_absorb:
+                    parent = get_parent(parent)
+                    continue
+                if parent.kind() in self.could_absorb_layers:
+                    parent_out_kinds = []
+                    for val_user in list(parent.outputs())[0].uses():
+                        next_node = val_user.user
+                        parent_out_kinds.append(next_node.kind())
+                    parent_out_kinds = set(parent_out_kinds)
+                    parent_out_kinds.discard("aten::size")
+
+                    if parent_out_kinds == parent_out_kinds.intersection(self.could_absorb_layers):
+                        prev_absorb_layer.append(parent)
+                    elif parent_out_kinds.intersection(self.skip_ops_to_find_absorb):
+                        res = self.skip_op_absorb_helper(parent)
+                        prev_absorb_layer.append(parent) if res else prev_absorb_layer.append(None)
+                    else:  # When parent to multiple ops, sq transformation could be wrong.
+                        prev_absorb_layer.append(None)
+                else:
+                    prev_absorb_layer.append(None)
+                break
+        return prev_absorb_layer
+
+    def skip_op_absorb_helper(self, parent_node):
+        for val_user in list(parent_node.outputs())[0].uses():
+            next_node = val_user.user
+            if next_node.kind() == "aten::size":
+                continue
+            elif next_node.kind() in self.could_absorb_layers:
+                continue
+            elif next_node.kind() in self.skip_ops_to_find_absorb:
+                node_res = self.skip_op_absorb_helper(next_node)
+                if not node_res:
+                    return False
+            else:
+                return False
+        return True
+
+    def mapping_torch_module_to_aten(self, op_types):
+        res = []
+        for op in op_types:
+            if op not in self.supported_torch_module_to_aten.keys():
+                logger.warning(f"{op} is not supported in smooth quant, ignoring...")
+                continue
+            res.append(self.supported_torch_module_to_aten[op])
+        res = list(set(res))
+        return res
+
+    def _check_valid_conv(self, module):
+        """Remove group conv except depthwise conv
+        :param module:
+
+        :return:
+        """
+        if not isinstance(module, torch.nn.Conv2d):
+            return True
+        if module.groups > 1:
+            if module.in_channels == module.out_channels and module.groups == module.in_channels:
+                return True
+            else:
+                return False
+        return True
+
+    def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True):
+        traced_model = self.trace(model, example_input)
+        if traced_model is None:
+            return None, None
+
+        aten_op_types = self.mapping_torch_module_to_aten(op_types)
+        nodes_types = self.get_nodes(traced_model, aten_op_types)
+        nodes = [node_type[0] for node_type in nodes_types]
+        nodes_prev_absorb = self.get_prev_absorb_layer(nodes)
+        absorb_to_layer = {}
+        no_absorb_layers = []
+        for index, absorb in enumerate(nodes_prev_absorb):
+            if absorb is None:
+                no_absorb_layers.append(".".join(nodes[index].scopeName().split("/")[-1].split(".")[1:]))
+                continue
+            node = nodes[index]
+            layer_name = ".".join(node.scopeName().split("/")[-1].split(".")[1:])
+            absorb_name = ".".join(absorb.scopeName().split("/")[-1].split(".")[1:])
+            if layer_name == "" or absorb_name == "":
+                continue
+            if absorb_name in absorb_to_layer.keys():
+                absorb_to_layer[absorb_name].append(layer_name)
+            else:
+                absorb_to_layer[absorb_name] = [layer_name]
+        if skip_unsupported_layers:
+            absorb_to_layer = self.remove_unsupported_layers(model, absorb_to_layer, no_absorb_layers)
+        return absorb_to_layer, no_absorb_layers
+
+    def remove_unsupported_layers(self, model, absorb_to_layer, no_absorb_layers):
+        res = {}
+        for key in absorb_to_layer.keys():
+            absorb_layer = get_module(model, key)
+            layer_type = absorb_layer.__class__.__name__
+            if layer_type not in self.supported_torch_module_to_aten.keys():
+                no_absorb_layers.extend(absorb_to_layer[key])
+                continue
+            supported = True
+            for layer_name in absorb_to_layer[key]:
+                layer = get_module(model, layer_name)
+                layer_type = layer.__class__.__name__
+                if (layer_type not in self.supported_torch_module_to_aten.keys()) or not self._check_valid_conv(layer):
+                    supported = False
+                    no_absorb_layers.extend(absorb_to_layer[key])
+                    break
+            if supported:
+                res[key] = absorb_to_layer[key]
+        return res
+
+
+# copy from neural_compressor/adaptor/torch_utils/util.py
+def get_block_prefix(model):
+    """Get prefix and number of blocks.
+
+    Args:
+        model (torch.nn.Module): input model
+
+    Returns:
+        block_prefix(str): block_list name in model
+        block_num(int): number of block in block_list
+    """
+    module_types = [torch.nn.ModuleList]
+    for n, m in model.named_modules():
+        if type(m) in module_types:
+            block_prefix = n
+            block_num = len(m)
+            logger.debug(f"block_prefix: {block_prefix}, block_num: {block_num} ")
+            break
+    assert block_num > 0, "block num shouldn't be zero!"
+    return block_prefix, block_num
+
+
+# copy from neural_compressor/adaptor/torch_utils/util.py
+def get_example_input(dataloader, i=1):
+    """Get the example input.
+
+    Args:
+        dataloader (object): calibration dataset.
+
+    Returns:
+        example_inp (object).
+    """
+    iter = 0
+    try:
+        for example_inp, label in dataloader:
+            if iter == i:
+                break
+            else:
+                iter += 1
+    except:
+        for example_inp in dataloader:
+            if iter == i:
+                break
+            else:
+                iter += 1
+    return example_inp
+
+
+# copy from neural_compressor/adaptor/torch_utils/util.py
+def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
+    """Get the input args and kwargs of first block.
+
+    Args:
+        model (torch.nn.Module): input model
+        dataloader (dataloader, optional): input dataloader. Defaults to None.
+        n_samples (int, optional): number samples from dataloader. Defaults to 128.
+        calib_func (func, optional): a calib func to replace dataloader. Defaults to None.
+
+    Raises:
+        ValueError: to avoid inference of rest parts in model
+
+    Returns:
+        total_block_args(list): a list of input args of each batch
+        total_block_kwargs(list):  a list of input kwargs of each batch
+    """
+    # Step 1: replace block_forward to collect block inputs and avoid entire inference
+    total_block_args = []
+    total_block_kwargs = []
+
+    def forward(layer, *args, **kwargs):
+        # update total_hidden_states, total_block_kwargs, per batch
+        total_block_args.append(list(args))
+        total_block_kwargs.append(kwargs)
+        raise ValueError
+
+    block_prefix, block_num = get_block_prefix(model)
+    block_list = fetch_module(model, block_prefix)
+    first_block = block_list[0]
+    block_forward_cache = first_block.forward
+    first_block.forward = partial(forward, first_block)
+
+    # Step 2: replace model_forward to avoid ValueError
+    model_forward_cache = model.forward
+
+    def model_forward(model, *args, **kwargs):
+        nonlocal model_forward_cache
+        try:
+            model_forward_cache(*args, **kwargs)
+        except ValueError:
+            pass
+
+    model.forward = partial(model_forward, model)
+
+    # Step 3: execute calibration
+    calibration(model, dataloader=dataloader, n_samples=n_samples, calib_func=calib_func)
+    logger.info("The hidden_states collection is done.")
+
+    # Step 4: recover model and block forward
+    model.forward = model_forward_cache
+    first_block.forward = block_forward_cache
+    return total_block_args, total_block_kwargs
+
+
+# copy from neural_compressor/adaptor/torch_utils/util.py
+def calibration(model, dataloader=None, n_samples=128, calib_func=None):
+    """Calibration with dataloader or calib_func.
+
+    Args:
+        model (torch.nn.Module): input model
+        dataloader: dataloader. Defaults to None.
+        n_samples (int, optional): n_samples. Defaults to 128.
+        calib_func: calib_func. Defaults to None.
+    """
+    # calibration with dataloader or calib_func
+    if calib_func is not None:
+        calib_func(model)
+    else:
+        # from .smooth_quant import model_forward, move into this file
+
+        batch_size = dataloader.batch_size
+        iters = int(math.ceil(n_samples / batch_size))
+        if n_samples % batch_size != 0:
+            logger.info(
+                "calibration samples increase from {} to {} due to batch_size is {}".format(
+                    n_samples,
+                    iters * batch_size,
+                    batch_size,
+                )
+            )
+        model_forward(model, dataloader, iters, next(model.parameters()).device)
+
+
+# copy from neural_compressor/adaptor/torch_utils/util.py
+def get_module_input_output(
+    model, module_hook_config={}, dataloader=None, iters=-1, calib_func=None, input_func=None, output_func=None
+):
+    """A help function to get input and output tensor of modules in module_name_list.
+
+    Args:
+        model: torch model.
+        module_hook_config (dict, optional): required module name for input/output. Defaults to {}.
+            For example:
+                module_hook_config = {
+                    'fc1': ['output'],
+                    'fc2': ['input', 'output']
+                }
+        dataloader: dataloader for model input.
+        iters: iterations for inference.
+        calib_func: a custom inference function to replace dataloader and iters.
+        input_func: preprocess input for less memory usage
+        output_func: preprocess output for less memory usage
+
+    Returns:
+        total_values: recorded input_values, output_values.
+            for example:
+                {'fc1':
+                    {'input': [], 'output': []},
+                }
+    """
+    from collections import defaultdict
+
+    total_values = defaultdict(defaultdict)
+
+    def _save_input_output_hook(name, record_input=False, record_output=False):
+        """
+        A forward hook to save input and output values of a module
+            param name: the module name
+            return: A hook function
+        """
+
+        def _hook(module, inputs, outputs):
+            if record_input:
+                input = inputs[0]
+                if input_func is not None:
+                    input = input_func(input)
+                if name in total_values and "input" in total_values[name]:
+                    total_values[name]["input"].append(input)
+                else:
+                    total_values[name]["input"] = [input]
+            if record_output:
+                output = outputs[0] if isinstance(outputs, tuple) else outputs
+                if output_func is not None:
+                    output = output_func(output)
+                if input_func is not None:
+                    input = input_func(input)
+                if name in total_values and "output" in total_values[name]:
+                    total_values[name]["output"].append(output)
+                else:
+                    total_values[name]["output"] = [output]
+
+        return _hook
+
+    hook_list = []
+    for name, module in model.named_modules():
+        if name in module_hook_config:
+            require_list = module_hook_config[name]
+            logger.debug(f"required hooks {name}: {require_list}")
+            _hook = _save_input_output_hook(
+                name,
+                record_input="input" in require_list,
+                record_output="output" in require_list,
+            )
+            require_list = module_hook_config[name]
+            hook_list.append(module.register_forward_hook(_hook))
+    if calib_func:
+        calib_func(model)
+    else:
+        # from .smooth_quant import model_forward, move into this file
+
+        model_forward(model, dataloader, iters, device=next(model.parameters()).device)
+    for h in hook_list:
+        h.remove()
+    return total_values

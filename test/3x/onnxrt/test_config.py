@@ -66,10 +66,6 @@ class TestQuantizationConfig(unittest.TestCase):
         # print the test name
         logger.info(f"Running TestQuantizationConfig test: {self.id()}")
 
-    def _check_model_is_quantized(self, model):
-        node_optypes = [node.op_type for node in model.graph.node]
-        return "MatMulNBits" in node_optypes or "MatMulFpQ4" in node_optypes
-
     def _check_node_is_quantized(self, model, node_name):
         for node in model.graph.node:
             if (node.name == node_name or node.name == node_name + "_Q4") and node.op_type in [
@@ -86,101 +82,6 @@ class TestQuantizationConfig(unittest.TestCase):
             if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(bits, group_size))
         ]
         return len(op_names)
-
-    def test_quantize_rtn_from_dict_default(self):
-        logger.info("test_quantize_rtn_from_dict_default")
-        from neural_compressor.onnxrt import get_default_rtn_config
-        from neural_compressor.onnxrt.quantization.quantize import _quantize
-
-        fp32_model = self.simple_onnx_model
-        qmodel = _quantize(fp32_model, quant_config=get_default_rtn_config())
-        self.assertIsNotNone(qmodel)
-        self.assertTrue(self._check_model_is_quantized(qmodel))
-
-    def test_quantize_rtn_from_dict_beginner(self):
-        from neural_compressor.onnxrt.quantization.quantize import _quantize
-
-        quant_config = {
-            "rtn": {
-                "weight_bits": 4,
-                "weight_group_size": 32,
-            },
-        }
-        fp32_model = self.simple_onnx_model
-        qmodel = _quantize(fp32_model, quant_config)
-        self.assertIsNotNone(qmodel)
-        self.assertIsNotNone(qmodel)
-        self.assertTrue(self._check_model_is_quantized(qmodel))
-
-    def test_quantize_rtn_from_class_beginner(self):
-        from neural_compressor.onnxrt import RTNConfig
-        from neural_compressor.onnxrt.quantization.quantize import _quantize
-
-        quant_config = RTNConfig(weight_bits=4, weight_group_size=32)
-        fp32_model = self.simple_onnx_model
-        qmodel = _quantize(fp32_model, quant_config)
-        self.assertIsNotNone(qmodel)
-
-    def test_quantize_rtn_fallback_from_class_beginner(self):
-        from neural_compressor.onnxrt import RTNConfig
-        from neural_compressor.onnxrt.quantization.quantize import _quantize
-
-        fp32_config = RTNConfig(weight_dtype="fp32")
-        fp32_model = self.gptj
-        quant_config = RTNConfig(
-            weight_bits=4,
-            weight_dtype="int",
-            weight_sym=False,
-            weight_group_size=32,
-        )
-        quant_config.set_local("/h.4/mlp/fc_out/MatMul", fp32_config)
-        qmodel = _quantize(fp32_model, quant_config)
-        self.assertIsNotNone(qmodel)
-        self.assertEqual(self._count_woq_matmul(qmodel), 29)
-        self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
-
-    def test_quantize_rtn_from_dict_advance(self):
-        from neural_compressor.onnxrt.quantization.quantize import _quantize
-
-        fp32_model = self.gptj
-        quant_config = {
-            "rtn": {
-                "global": {
-                    "weight_bits": 4,
-                    "weight_group_size": 32,
-                },
-                "local": {
-                    "/h.4/mlp/fc_out/MatMul": {
-                        "weight_dtype": "fp32",
-                    }
-                },
-            }
-        }
-        qmodel = _quantize(fp32_model, quant_config)
-        self.assertIsNotNone(qmodel)
-        self.assertEqual(self._count_woq_matmul(qmodel), 29)
-        self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
-
-        fp32_model = self.gptj
-        quant_config = {
-            "rtn": {
-                "global": {
-                    "weight_bits": 4,
-                    "weight_group_size": 32,
-                },
-                "local": {
-                    "/h.4/mlp/fc_out/MatMul": {
-                        "weight_bits": 8,
-                        "weight_group_size": 32,
-                    }
-                },
-            }
-        }
-        qmodel = _quantize(fp32_model, quant_config)
-        self.assertIsNotNone(qmodel)
-        for node in qmodel.graph.node:
-            if node.name == "/h.4/mlp/fc_out/MatMul":
-                self.assertTrue(node.input[1].endswith("Q8G32"))
 
     def test_config_white_lst(self):
         from neural_compressor.onnxrt import RTNConfig
@@ -317,6 +218,23 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertTrue(configs_mapping[("/h.2/mlp/fc_out/MatMul", "MatMul")].weight_bits == 3)
         self.assertTrue(configs_mapping[("/h.1/mlp/fc_out/MatMul", "MatMul")].weight_bits == 3)
 
+    def test_diff_types_configs_addition(self):
+        from neural_compressor.onnxrt import GPTQConfig, RTNConfig
+
+        quant_config1 = {
+            "rtn": {
+                "weight_bits": 4,
+                "weight_group_size": 32,
+            },
+        }
+        q_config = RTNConfig.from_dict(quant_config1["rtn"])
+        d_config = GPTQConfig(weight_group_size=128)
+        combined_config = q_config + d_config
+        combined_config_d = combined_config.to_dict()
+        logger.info(combined_config)
+        self.assertIn("rtn", combined_config_d)
+        self.assertIn("gptq", combined_config_d)
+
 
 class TestQuantConfigForAutotune(unittest.TestCase):
     def test_expand_config(self):
@@ -327,14 +245,6 @@ class TestQuantConfigForAutotune(unittest.TestCase):
         expand_config_list = RTNConfig.expand(tune_config)
         self.assertEqual(expand_config_list[0].weight_bits, 4)
         self.assertEqual(expand_config_list[1].weight_bits, 8)
-
-    def test_config_set_api(self):
-        # *Note: this test is only for improving the code coverage and can be removed once the test_common is enabled.
-        from neural_compressor.common.base_config import config_registry, get_all_config_set_from_config_registry
-        from neural_compressor.onnxrt.quantization.config import FRAMEWORK_NAME
-
-        config_set = get_all_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
-        self.assertEqual(len(config_set), len(config_registry.registered_configs[FRAMEWORK_NAME]))
 
 
 if __name__ == "__main__":

@@ -16,10 +16,11 @@
 import copy
 import inspect
 import uuid
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Sized, Tuple, Union
 
 from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig
+from neural_compressor.common.utils import TuningLogger
 
 logger = Logger().get_logger()
 
@@ -29,8 +30,11 @@ __all__ = [
     "Sampler",
     "ConfigLoader",
     "TuningMonitor",
-    "TuningLogger",
     "init_tuning",
+    "Sampler",
+    "SequentialSampler",
+    "default_sampler",
+    "ConfigSet",
 ]
 
 
@@ -123,87 +127,103 @@ class Evaluator:
 evaluator = Evaluator()
 
 
+class ConfigSet:
+
+    def __init__(self, config_list: List[BaseConfig]) -> None:
+        self.config_list = config_list
+
+    def __getitem__(self, index) -> BaseConfig:
+        assert 0 <= index < len(self.config_list), f"Index {index} out of range."
+        return self.config_list[index]
+
+    def __len__(self) -> int:
+        return len(self.config_list)
+
+    @classmethod
+    def _from_single_config(cls, config: BaseConfig) -> List[BaseConfig]:
+        config_list = []
+        config_list = config.expand()
+        return config_list
+
+    @classmethod
+    def _from_list_of_configs(cls, fwk_configs: List[BaseConfig]) -> List[BaseConfig]:
+        config_list = []
+        for config in fwk_configs:
+            config_list += cls._from_single_config(config)
+        return config_list
+
+    @classmethod
+    def generate_config_list(cls, fwk_configs: Union[BaseConfig, List[BaseConfig]]):
+        # There are several cases for the input `fwk_configs`:
+        # 1. fwk_configs is a single config
+        # 2. fwk_configs is a list of configs
+        # For a single config, we need to check if it can be expanded or not.
+        config_list = []
+        if isinstance(fwk_configs, BaseConfig):
+            config_list = cls._from_single_config(fwk_configs)
+        elif isinstance(fwk_configs, List):
+            config_list = cls._from_list_of_configs(fwk_configs)
+        else:
+            raise NotImplementedError(f"Unsupported type {type(fwk_configs)} for fwk_configs.")
+        return config_list
+
+    @classmethod
+    def from_fwk_configs(cls, fwk_configs: Union[BaseConfig, List[BaseConfig]]) -> "ConfigSet":
+        """Create a ConfigSet object from a single config or a list of configs.
+
+        Args:
+            fwk_configs: A single config or a list of configs.
+                Examples:
+                    1) single config: RTNConfig(weight_group_size=32)
+                    2) single expandable config: RTNConfig(weight_group_size=[32, 64])
+                    3) mixed 1) and 2): [RTNConfig(weight_group_size=32), RTNConfig(weight_group_size=[32, 64])]
+
+        Returns:
+            ConfigSet: A ConfigSet object.
+        """
+        config_list = cls.generate_config_list(fwk_configs)
+        return cls(config_list)
+
+
 class Sampler:
-    # TODO Separate sorting functionality of `ConfigLoader` into `Sampler` in the follow-up PR.
-    pass
+    def __init__(self, config_source: Optional[ConfigSet]) -> None:
+        pass
+
+    def __iter__(self) -> Iterator[BaseConfig]:
+        """Iterate over indices of config set elements."""
+        raise NotImplementedError
+
+
+class SequentialSampler(Sampler):
+    """Samples elements sequentially, always in the same order.
+
+    Args:
+        config_source (_ConfigSet): config set to sample from
+    """
+
+    config_source: Sized
+
+    def __init__(self, config_source: Sized) -> None:
+        self.config_source = config_source
+
+    def __iter__(self) -> Iterator[int]:
+        return iter(range(len(self.config_source)))
+
+    def __len__(self) -> int:
+        return len(self.config_source)
+
+
+default_sampler = SequentialSampler
 
 
 class ConfigLoader:
-    def __init__(self, config_set, sampler: Sampler) -> None:
-        self.config_set = config_set
-        self.sampler = sampler
-
-    @staticmethod
-    def parse_quant_config(quant_config: BaseConfig) -> List[BaseConfig]:
-        if isinstance(quant_config, ComposableConfig):
-            result = []
-            for q_config in quant_config.config_list:
-                result += q_config.expand()
-            return result
-        else:
-            return quant_config.expand()
-
-    def parse_quant_configs(self) -> List[BaseConfig]:
-        # TODO (Yi) separate this functionality into `Sampler` in the next PR
-        quant_config_list = []
-        for quant_config in self.config_set:
-            quant_config_list.extend(ConfigLoader.parse_quant_config(quant_config))
-        return quant_config_list
+    def __init__(self, config_set: ConfigSet, sampler: Sampler = default_sampler) -> None:
+        self.config_set = ConfigSet.from_fwk_configs(config_set)
+        self._sampler = sampler(self.config_set)
 
     def __iter__(self) -> Generator[BaseConfig, Any, None]:
-        for config in self.parse_quant_configs():
-            yield config
-
-
-class TuningLogger:
-    """A unified logger for the tuning process.
-
-    It assists validation teams in retrieving logs.
-    """
-
-    @classmethod
-    def _log_call_info(cls, message: str) -> str:
-        frame = inspect.currentframe().f_back.f_back
-        # Extract file name and line number
-        file_path = frame.f_code.co_filename
-        file_name = file_path.split("/")[-1]
-        line_number = frame.f_lineno
-        # Log the call position along with the message
-        logger.info(f"[{file_name}:{line_number}(Call position)] {message}")
-
-    @classmethod
-    def tuning_start(cls) -> None:
-        cls._log_call_info("Tuning started.")
-
-    @classmethod
-    def trial_start(cls, trial_index: int = None) -> None:
-        cls._log_call_info(
-            f" {trial_index}-trail started.",
-        )
-
-    @classmethod
-    def quantization_start(cls) -> None:
-        cls._log_call_info("Quantization started.")
-
-    @classmethod
-    def quantization_end(cls) -> None:
-        cls._log_call_info("Quantization end.")
-
-    @classmethod
-    def evaluation_start(cls) -> None:
-        cls._log_call_info("Evaluation started.")
-
-    @classmethod
-    def evaluation_end(cls) -> None:
-        cls._log_call_info("Evaluation end.")
-
-    @classmethod
-    def trial_end(cls, trial_index: int = None) -> None:
-        cls._log_call_info(f" {trial_index}-trail end.")
-
-    @classmethod
-    def tuning_end(cls) -> None:
-        cls._log_call_info("Tuning completed.")
+        for index in self._sampler:
+            yield self.config_set[index]
 
 
 class TuningConfig:
@@ -211,12 +231,14 @@ class TuningConfig:
 
     Args:
         config_set: quantization configs. Default value is empty.
-        timeout: Tuning timeout (seconds). Default value is 0 which means early stop.
+            A single config or a list of configs. More details can
+            be found in the `from_fwk_configs`of `ConfigSet` class.
         max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
         tolerable_loss: This float indicates how much metric loss we can accept. \
             The metric loss is relative, it can be both positive and negative. Default is 0.01.
 
     Examples:
+        # TODO: to refine it
         from neural_compressor import TuningConfig
         tune_config = TuningConfig(
             config_set=[config1, config2, ...],
@@ -239,28 +261,13 @@ class TuningConfig:
         # The best tuning config is config2, because of the following:
         # 1. Not achieving the set goal. (config_metric < fp32_baseline * (1 - tolerable_loss))
         # 2. Reached maximum tuning times.
-
-        # Case 3: Timeout
-        tune_config = TuningConfig(
-            config_set=[config1, config2, ...],
-            timeout=10, # seconds
-            max_trials=3,
-            tolerable_loss=0.01
-        )
-        config1_tuning_time, config2_tuning_time, config3_tuning_time, ... = 4, 5, 6, ... # seconds
-        fp32_baseline = 100
-        config1_metric, config2_metric, config3_metric, ... = 98, 98, 97, ...
-
-        # Tuning result of case 3:
-        # The best tuning config is config2, due to timeout, the third trial was forced to exit.
     """
 
     def __init__(
-        self, config_set=None, timeout=0, max_trials=100, sampler: Sampler = None, tolerable_loss=0.01
+        self, config_set=None, max_trials=100, sampler: Sampler = default_sampler, tolerable_loss=0.01
     ) -> None:
         """Init a TuneCriterion object."""
         self.config_set = config_set
-        self.timeout = timeout
         self.max_trials = max_trials
         self.sampler = sampler
         self.tolerable_loss = tolerable_loss

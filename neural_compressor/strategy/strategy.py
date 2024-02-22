@@ -1045,11 +1045,9 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             self.show_baseline_info()
 
     def _recover_best_qmodel_from_tuning_cfg(self):
-        """Recover the best quantized model from tuning config."""
         if self.best_tuning_cfg and not self.best_qmodel:
             logger.info(
-                f"[Strategy] Recover the {self.best_tuning_cfg.get('trial_number', 'N/A')}-trial\
-                as the tuning result."
+                "[Strategy] Recover the %s-trial as the tuning result.", self.best_tuning_cfg.get("trial_number", "N/A")
             )
             self.best_qmodel = self.adaptor.quantize(
                 copy.deepcopy(self.best_tuning_cfg), self.model, self.calib_dataloader, self.q_func
@@ -1796,6 +1794,11 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             d (dict): The dict to load.
         """
         self.__dict__.update(d)
+
+    def get_best_qmodel(self):
+        """Get the best quantized model."""
+        self._recover_best_qmodel_from_tuning_cfg()
+        return self.best_qmodel
 
     def stop(self, timeout, trials_count):
         """Check if need to stop traverse.

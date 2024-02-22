@@ -13,12 +13,13 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Union
 
 import onnx
 
 from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
+from neural_compressor.common.utils import log_quant_execution
 from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
 from neural_compressor.onnxrt.quantization.config import FRAMEWORK_NAME
 from neural_compressor.onnxrt.utils.utility import algos_mapping
@@ -26,21 +27,24 @@ from neural_compressor.onnxrt.utils.utility import algos_mapping
 logger = Logger().get_logger()
 
 
-def need_apply(quant_config: BaseConfig, algo_name):
+def _need_apply(quant_config: BaseConfig, algo_name):
     return quant_config.name == algo_name if hasattr(quant_config, "name") else False
 
 
-# only for internal usage now
+# * only for internal usage now
+@log_quant_execution
 def _quantize(
-    model_input: Tuple[Path, str],
+    model_input: Union[Path, str],
     quant_config: BaseConfig,
-    calibration_data_reader: Optional[CalibrationDataReader] = None,
+    calibration_data_reader: CalibrationDataReader = None,
 ) -> onnx.ModelProto:
     """The main entry to quantize a model.
 
     Args:
-        model_input (Tuple[Path, str]): Path or str to the model to quantize.
+        model_input (Union[Path, str]): Path or str to the model to quantize.
         quant_config (BaseConfig): a quantization configuration.
+        calibration_data_reader (CalibrationDataReader, optional): dataloader for calibration.
+            Defaults to None.
 
     Returns:
         onnx.ModelProto: The quantized model.
@@ -57,7 +61,7 @@ def _quantize(
 
     # select quantization algo according to config
     for algo_name, algo_func in algos_mapping.items():
-        if need_apply(quant_config, algo_name):
+        if _need_apply(quant_config, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
             q_model = algo_func(model_input, quant_config, calibration_data_reader=calibration_data_reader)
     return q_model

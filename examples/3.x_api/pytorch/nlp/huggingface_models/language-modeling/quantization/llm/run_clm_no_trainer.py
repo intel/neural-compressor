@@ -61,28 +61,35 @@ parser.add_argument("--alpha", default="auto", help="Smooth quant parameter.")
 parser.add_argument("--woq_algo", default="RTN", choices=['RTN', 'AWQ', 'TEQ', 'GPTQ'],
                     help="Weight-only parameter.")
 parser.add_argument("--woq_bits", type=int, default=8)
-parser.add_argument("--woq_group_size", type=int, default=-1)
-parser.add_argument("--woq_scheme", default="sym")
-parser.add_argument("--woq_enable_mse_search", action="store_true")
-parser.add_argument("--woq_enable_full_range", action="store_true")
 parser.add_argument("--woq_dtype", type=str, default="int")
+parser.add_argument("--woq_group_size", type=int, default=-1)
+parser.add_argument("--woq_group_dim", type=int, default=1)
+parser.add_argument("--woq_scheme", default="sym")
+parser.add_argument("--woq_use_mse_search", action="store_true")
+parser.add_argument("--woq_use_full_range", action="store_true")
+parser.add_argument("--woq_export_compressed_model", action="store_true")
 # =============GPTQ configs====================
 parser.add_argument("--gptq_actorder", action="store_true",
                     help="Whether to apply the activation order GPTQ heuristic.")
 parser.add_argument('--gptq_percdamp', type=float, default=.01,
                     help='Percent of the average Hessian diagonal to use for dampening.')
 parser.add_argument('--gptq_block_size', type=int, default=128, help='Block size. sub weight matrix size to run GPTQ.')
+parser.add_argument('--gptq_static_groups', action="store_true",
+                    help="Whether to calculate group wise quantization parameters in advance. "
+                        "This option mitigate actorder's extra computational requirements.")
 parser.add_argument('--gptq_nsamples', type=int, default=128, help='Number of calibration data samples.')
 parser.add_argument('--gptq_use_max_length', action="store_true",
-                    help='Set all sequence length to be same length of args.gptq_pad_max_length')
-parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calibration dataset sequence max length, \
-                                                                           this should align with your model config, \
-                                                                           and your dataset builder args: args.pad_max_length')
+                    help='Set all sequence length to be same length of args.gptq_max_seq_length')
+parser.add_argument('--gptq_max_seq_length', type=int, default=2048,
+                    help='Calibration dataset sequence max length, '
+                        'this should align with your model config, '
+                        'and your dataset builder args: args.pad_max_length')
+
 # =============DoubleQuant configs====================
 parser.add_argument("--double_quant_type",
                     type=str,
                     default=None,
-                    choices=['GGML_TYPE_Q4_K', 'BNB'],
+                    choices=['GGML_TYPE_Q4_K', 'BNB_NF4'],
                     help="DoubleQuant parameter")
 parser.add_argument("--double_quant_dtype",
                     type=str,
@@ -92,7 +99,7 @@ parser.add_argument("--double_quant_bits",
                     type=int,
                     default=8,
                     help="Number of bits used to represent double_quant scale.")
-parser.add_argument("--double_quant_sym",
+parser.add_argument("--double_quant_use_sym",
                     type=bool,
                     default=True,
                     help="Indicates whether double quant scale are symmetric.")
@@ -202,7 +209,7 @@ def get_user_model():
 
     # Set model's seq_len when GPTQ calibration is enabled.
     if args.woq_algo == 'GPTQ':
-        user_model.seqlen = args.gptq_pad_max_length
+        user_model.seqlen = args.gptq_max_seq_length
 
     if args.peft_model_id is not None:
         from peft import PeftModel
@@ -230,44 +237,48 @@ if args.quantize:
 
     # 3.x api
     if args.approach == 'weight_only':
-        from neural_compressor.torch import RTNConfig, GPTQConfig, quantize
-        from neural_compressor.torch.utils.utility import get_double_quant_config
+        from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, quantize
+        from neural_compressor.torch.utils import get_double_quant_config
         weight_sym = True if args.woq_scheme == "sym" else False
-        double_quant_config_dict = get_double_quant_config(args.double_quant_type, weight_sym=weight_sym)
+        double_quant_config_dict = get_double_quant_config(args.double_quant_type)
         
         if args.woq_algo == "RTN":
             if args.double_quant_type is not None:
                 double_quant_config_dict.update(
                     {
-                        "enable_full_range": args.woq_enable_full_range,
-                        "enable_mse_search": args.woq_enable_mse_search,
+                        # TODO: add group_dim into double quant config?
+                        "use_full_range": args.woq_use_full_range,
+                        "use_mse_search": args.woq_use_mse_search,
+                        "export_compressed_model": args.woq_export_compressed_model,
                     }
                 )
                 quant_config = RTNConfig.from_dict(double_quant_config_dict)
             else:
                 quant_config = RTNConfig(
-                    weight_dtype=args.woq_dtype,
-                    weight_bits=args.woq_bits,
-                    weight_group_size=args.woq_group_size,
-                    weight_sym=weight_sym,
-                    enable_full_range = args.woq_enable_full_range,
-                    enable_mse_search = args.woq_enable_mse_search,
+                    dtype=args.woq_dtype,
+                    bits=args.woq_bits,
+                    use_sym=weight_sym,
+                    group_size=args.woq_group_size,
+                    group_dim=args.woq_group_dim,
+                    use_full_range = args.woq_use_full_range,
+                    use_mse_search = args.woq_use_mse_search,
+                    export_compressed_model=args.woq_export_compressed_model,
+                    use_double_quant=False,
                     double_quant_bits=args.double_quant_bits,
                     double_quant_dtype=args.double_quant_dtype,
-                    double_quant_sym=args.double_quant_sym,
+                    double_quant_use_sym=args.double_quant_use_sym,
                     double_quant_group_size=args.double_quant_group_size,
                 )
-            quant_config.set_local("lm_head", RTNConfig(weight_dtype="fp32"))
+            quant_config.set_local("lm_head", RTNConfig(dtype="fp32"))
             user_model = quantize(
                 model=user_model, quant_config=quant_config
             )
         elif args.woq_algo == "GPTQ":
-            from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
+            from utils import DataloaderPreprocessor
             dataloaderPreprocessor = DataloaderPreprocessor(
                 dataloader_original=calib_dataloader,
                 use_max_length=args.gptq_use_max_length,
-                pad_max_length=args.gptq_pad_max_length,
-                nsamples=args.gptq_nsamples
+                max_seq_length=args.gptq_max_seq_length,
             )
             dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
             from neural_compressor.torch.algorithms.weight_only.gptq import move_input_to_device
@@ -288,41 +299,39 @@ if args.quantize:
             if args.double_quant_type is not None:
                 double_quant_config_dict.update(
                     {
-                        "dataloader_len": len(dataloader_for_calibration),
+                        "use_mse_search": args.woq_use_mse_search,
+                        "export_compressed_model": args.woq_export_compressed_model,
                         "percdamp": args.gptq_percdamp,
                         "act_order": args.gptq_actorder,
                         "block_size": args.gptq_block_size,
-                        "nsamples": args.gptq_nsamples,
-                        "use_max_length": args.gptq_use_max_length,
-                        "pad_max_length": args.gptq_pad_max_length,
+                        "static_groups": args.gptq_static_groups,
                     }
                 )
                 quant_config = GPTQConfig.from_dict(double_quant_config_dict)
             else:
                 quant_config = GPTQConfig(
-                    weight_dtype=args.woq_dtype,
-                    weight_bits=args.woq_bits,
-                    weight_group_size=args.woq_group_size,
-                    weight_sym=weight_sym,
-                    dataloader_len=len(dataloader_for_calibration),
+                    dtype=args.woq_dtype,
+                    bits=args.woq_bits,
+                    use_sym=weight_sym,
+                    group_size=args.woq_group_size,
+                    use_mse_search=args.woq_use_mse_search,
+                    export_compressed_model=args.woq_export_compressed_model,
                     percdamp=args.gptq_percdamp,
                     act_order=args.gptq_actorder,
                     block_size=args.gptq_block_size,
-                    nsamples=args.gptq_nsamples,
-                    use_max_length=args.gptq_use_max_length,
-                    pad_max_length=args.gptq_pad_max_length,
+                    static_groups=args.gptq_static_groups,
+                    use_double_quant=False,
                     double_quant_bits=args.double_quant_bits,
                     double_quant_dtype=args.double_quant_dtype,
-                    double_quant_sym=args.double_quant_sym,
+                    double_quant_use_sym=args.double_quant_use_sym,
                     double_quant_group_size=args.double_quant_group_size,
                 )
-            quant_config.set_local("lm_head", GPTQConfig(weight_dtype="fp32"))
-
+            quant_config.set_local("lm_head", GPTQConfig(dtype="fp32"))
             user_model = quantize(
                 model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=dataloader_for_calibration
             )
     else:
-        # sq TODO
+        # TODO: smooth quant
         print("Only support WeightOnlyQuant now")
         pass
 

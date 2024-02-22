@@ -1,12 +1,36 @@
 import unittest
 from functools import wraps
+from unittest.mock import patch
 
 import torch
 import transformers
 
-from neural_compressor.torch.algorithms.weight_only.gptq import DataloaderPreprocessor
 from neural_compressor.torch.quantization import RTNConfig, TuningConfig, autotune, get_all_config_set
-from neural_compressor.torch.utils import logger
+from neural_compressor.torch.utils import constants, logger
+
+FAKE_DOUBLE_QUANT_CONFIGS = {
+    "BNB_NF4": {
+        "dtype": "nf4",
+        "bits": 4,
+        "group_size": 32,
+        "use_double_quant": True,
+        "double_quant_bits": 8,
+        "double_quant_dtype": "int",
+        "double_quant_use_sym": False,
+        "double_quant_group_size": 256,
+    },
+    "GGML_TYPE_Q4_K": {
+        "dtype": "int",
+        "bits": 4,
+        "use_sym": False,
+        "group_size": 32,
+        "use_double_quant": True,
+        "double_quant_bits": 6,
+        "double_quant_dtype": "int",
+        "double_quant_use_sym": True,
+        "double_quant_group_size": 8,
+    },
+}
 
 
 def reset_tuning_target(test_func):
@@ -79,7 +103,7 @@ from tqdm import tqdm
 from neural_compressor.torch.algorithms.weight_only.gptq import move_input_to_device
 
 
-def run_fn_for_gptq(model, dataloader_for_calibration, *args):
+def run_fn_for_gptq(model, dataloader_for_calibration, calibration_mode=False):
     logger.info("Collecting calibration inputs...")
     for batch in tqdm(dataloader_for_calibration):
         batch = move_input_to_device(batch, device=None)
@@ -92,7 +116,8 @@ def run_fn_for_gptq(model, dataloader_for_calibration, *args):
                 model(batch)
         except ValueError:
             pass
-    return
+    if not calibration_mode:
+        print("Accuracy: 1.0")  # demo the usage
 
 
 class TestAutoTune(unittest.TestCase):
@@ -154,38 +179,31 @@ class TestAutoTune(unittest.TestCase):
 
     @reset_tuning_target
     def test_autotune_get_config_set_api(self):
-        dataloader = GPTQLLMDataLoader()
+        for dataloader in [GPTQLLMDataLoader(), GPTQLLMDataLoaderList(), GPTQLLMDataLoaderDict()]:
+            model = get_gpt_j()
 
-        model = get_gpt_j()
-        input = torch.ones([1, 512], dtype=torch.long)
+            def eval_acc_fn(model) -> float:
+                return 1.0
 
-        dataloaderPreprocessor = DataloaderPreprocessor(
-            dataloader_original=dataloader, use_max_length=False, pad_max_length=512, nsamples=128
-        )
-        dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
+            def eval_perf_fn(model) -> float:
+                return 1.0
 
-        def eval_acc_fn(model) -> float:
-            return 1.0
-
-        def eval_perf_fn(model) -> float:
-            return 1.0
-
-        eval_fns = [
-            {"eval_fn": eval_acc_fn, "weight": 0.5, "name": "accuracy"},
-            {
-                "eval_fn": eval_perf_fn,
-                "weight": 0.5,
-            },
-        ]
-        custom_tune_config = TuningConfig(config_set=get_all_config_set(), max_trials=4)
-        best_model = autotune(
-            model=get_gpt_j(),
-            tune_config=custom_tune_config,
-            eval_fns=eval_fns,
-            run_fn=run_fn_for_gptq,
-            run_args=dataloader_for_calibration,
-        )
-        self.assertIsNotNone(best_model)
+            eval_fns = [
+                {"eval_fn": eval_acc_fn, "weight": 0.5, "name": "accuracy"},
+                {
+                    "eval_fn": eval_perf_fn,
+                    "weight": 0.5,
+                },
+            ]
+            custom_tune_config = TuningConfig(config_set=get_all_config_set(), max_trials=4)
+            best_model = autotune(
+                model=model,
+                tune_config=custom_tune_config,
+                eval_fns=eval_fns,
+                run_fn=run_fn_for_gptq,
+                run_args=(dataloader, True),  # run_args should be a tuple
+            )
+            self.assertIsNotNone(best_model)
 
     @reset_tuning_target
     def test_autotune_not_eval_func(self):
@@ -237,6 +255,59 @@ class TestAutoTune(unittest.TestCase):
         acc_res_lst = baseline + [0.9] * 2 + [0.9] + [0.9]
         custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6, 5, 8])], tolerable_loss=0.01)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_acc_fn)
+        self.assertIsNone(best_model)
+
+    @reset_tuning_target
+    def test_rtn_double_quant_config_set(self) -> None:
+        from neural_compressor.torch.quantization import TuningConfig, autotune, get_rtn_double_quant_config_set
+        from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
+
+        rtn_double_quant_config_set = get_rtn_double_quant_config_set()
+        self.assertEqual(len(rtn_double_quant_config_set), len(DOUBLE_QUANT_CONFIGS))
+
+        def eval_acc_fn(model) -> float:
+            return 1.0
+
+        custom_tune_config = TuningConfig(config_set=get_rtn_double_quant_config_set(), max_trials=10)
+        best_model = autotune(
+            model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
+        )
+        self.assertIsNotNone(best_model)
+
+    @reset_tuning_target
+    def test_rtn_double_quant_config_set2(self) -> None:
+        from neural_compressor.torch.quantization import TuningConfig, autotune, get_rtn_double_quant_config_set
+        from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
+
+        rtn_double_quant_config_set = get_rtn_double_quant_config_set()
+        self.assertEqual(len(rtn_double_quant_config_set), len(DOUBLE_QUANT_CONFIGS))
+
+        def eval_acc_fn(model) -> float:
+            return 1.0
+
+        custom_tune_config = TuningConfig(
+            config_set=get_rtn_double_quant_config_set(), max_trials=10, tolerable_loss=-1
+        )
+        best_model = autotune(
+            model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
+        )
+        self.assertIsNone(best_model)
+
+    @patch("neural_compressor.torch.utils.constants.DOUBLE_QUANT_CONFIGS", FAKE_DOUBLE_QUANT_CONFIGS)
+    def test_rtn_double_quant_config_set3(self) -> None:
+        from neural_compressor.torch.quantization import get_rtn_double_quant_config_set
+
+        rtn_double_quant_config_set = get_rtn_double_quant_config_set()
+        print(len(rtn_double_quant_config_set))
+        self.assertEqual(len(constants.DOUBLE_QUANT_CONFIGS), len(FAKE_DOUBLE_QUANT_CONFIGS))
+
+        def eval_acc_fn(model) -> float:
+            return 1.0
+
+        custom_tune_config = TuningConfig(config_set=get_rtn_double_quant_config_set(), tolerable_loss=-1)
+        best_model = autotune(
+            model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
+        )
         self.assertIsNone(best_model)
 
 

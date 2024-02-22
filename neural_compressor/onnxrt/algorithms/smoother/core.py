@@ -1,6 +1,3 @@
-#
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +15,8 @@
 
 import copy
 import os
+from pathlib import Path
+from typing import List, Union
 
 import numpy as np
 import onnx
@@ -26,6 +25,7 @@ from onnx import onnx_pb as onnx_proto
 
 from neural_compressor.common import Logger
 from neural_compressor.onnxrt.algorithms.smoother.calibrator import Calibrator
+from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.onnxrt.utils.utility import (
     get_qrange_for_qType,
@@ -36,7 +36,9 @@ from neural_compressor.onnxrt.utils.utility import (
 
 logger = Logger().get_logger()
 
-dtype_map = {
+__all__ = ["Smoother"]
+
+_dtype_map = {
     np.dtype("float32"): 1,
     np.dtype("uint8"): 2,
     np.dtype("int8"): 3,
@@ -47,7 +49,7 @@ dtype_map = {
 }
 
 
-def get_quant_dequant_output(model, input_data, output_data, providers):
+def _get_quant_dequant_output(model, input_data, output_data, providers):
     """Get loss between fp32 output and QDQ output.
 
     Args:
@@ -58,14 +60,14 @@ def get_quant_dequant_output(model, input_data, output_data, providers):
     """
     import onnxruntime as ort
 
-    input_data = quant_dequant_data(input_data, 2, "asym")
+    input_data = _quant_dequant_data(input_data, 2, "asym")
     sess = ort.InferenceSession(model.SerializeToString(), providers=providers)
     preds = sess.run(None, {model.graph.input[0].name: input_data})
     loss = np.sum(np.abs(output_data - preds) ** 2)
     return loss
 
 
-def make_sub_graph(node, inits, input_data, output_data, opset, ir_version):
+def _make_sub_graph(node, inits, input_data, output_data, opset, ir_version):
     """Build a model with the specific node.
 
     Args:
@@ -78,15 +80,15 @@ def make_sub_graph(node, inits, input_data, output_data, opset, ir_version):
     """
     from onnx import helper
 
-    input = helper.make_tensor_value_info(node.input[0], dtype_map[input_data.dtype], input_data.shape)
-    output = helper.make_tensor_value_info(node.output[0], dtype_map[output_data.dtype], output_data.shape)
+    input = helper.make_tensor_value_info(node.input[0], _dtype_map[input_data.dtype], input_data.shape)
+    output = helper.make_tensor_value_info(node.output[0], _dtype_map[output_data.dtype], output_data.shape)
     graph = helper.make_graph([node], "sub_graph", [input], [output], inits)
     model = helper.make_model(graph, opset_imports=opset)
     model.ir_version = ir_version
     return model
 
 
-def quant_dequant_data(data, qType=3, scheme="sym"):
+def _quant_dequant_data(data, qType=3, scheme="sym"):
     """Quantize and then dequantize data.
 
     Args:
@@ -113,9 +115,9 @@ class Smoother:
 
     def __init__(
         self,
-        model,
-        dataloader,
-        providers=["CPUExecutionProvider"],
+        model: Union[onnx.ModelProto, ONNXModel, Path, str],
+        dataloader: CalibrationDataReader,
+        providers: List[str] = ["CPUExecutionProvider"],
     ):
         """Initialize the attributes of class."""
         self.model = model if isinstance(model, ONNXModel) else ONNXModel(model, load_external_data=True)
@@ -138,30 +140,37 @@ class Smoother:
 
     def transform(
         self,
-        alpha=0.5,
-        folding=True,
-        percentile=99.999,
-        op_types=["Gemm", "Conv", "MatMul", "FusedConv"],
-        scales_per_op=True,
-        calib_iter=100,
-        auto_alpha_args={"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
+        alpha: Union[float, str] = 0.5,
+        folding: bool = True,
+        percentile: float = 99.999,
+        op_types: List[str] = ["Gemm", "Conv", "MatMul", "FusedConv"],
+        scales_per_op: bool = True,
+        calib_iter: int = 100,
+        auto_alpha_args: dict = {"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
         *args,
         **kwargs
     ):
         """The main entry of smooth quant.
 
         Args:
-            alpha (float or str): alpha value to balance the quantization difficulty of activation and weight.
-            folding (bool): whether fold those foldable Mul which are inserted for smooth quant
-            percentile (float): percentile of calibration to remove outliers
-            op_types (list): the op type to be smooth quantized
-            scales_per_op (bool): True, each op will have an individual scale, mainlyfor accuracy
-                                  False, ops with the same input will share a scale, mainly for performance
-            calib_iter (int): iteration num for calibration
+            alpha (float, optional): alpha value to balance the quantization difficulty of activation and weight.
+                Defaults to 0.5.
+            folding (bool, optional): whether fold those foldable Mul which are inserted for smooth quant.
+                Defaults to True.
+            percentile (float, optional): percentile of calibration to remove outliers.
+                Defaults to 99.999.
+            op_types (list, optional): the op type to be smooth quantized.
+                Defaults to ["Gemm", "Conv", "MatMul", "FusedConv"].
+            scales_per_op (bool, optional): True, each op will have an individual scale, mainlyfor accuracy
+                False, ops with the same input will share a scale, mainly for performance.
+                Defaults to True.
+            calib_iter (int, optional): iteration num for calibration. Defaults to 100.
+            auto_alpha_args (_type_, optional): alpha args for auto smooth.
+                Defaults to {"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"}.
 
         Returns:
-            A FP32 model with the same architecture as the orig model but with different weight which will be
-            benefit to quantization
+            onnx.ModelProto: A FP32 model with the same architecture as the orig model
+                but with different weight which will be benefit to quantization
         """
         self.scales_per_op = scales_per_op
         self.clean()
@@ -207,7 +216,6 @@ class Smoother:
         calibrator = Calibrator(
             self.model,
             self.dataloader,
-            [],
             iterations=list(range(0, iterations)),
             backend=self.providers,
         )
@@ -388,7 +396,7 @@ class Smoother:
             )
             base_dir = "" if not self.model.is_large_model else os.path.dirname(self.model.model_path)
             weight = onnx.numpy_helper.to_array(self.model.get_initializer(node.input[1]), base_dir)
-            weight_q = quant_dequant_data(weight)
+            weight_q = _quant_dequant_data(weight)
 
             self.model.set_initializer(node.input[1], weight_q)
             inits = [self.model.get_initializer(i) for i in node.input if self.model.get_initializer(i) is not None]
@@ -404,7 +412,7 @@ class Smoother:
 
                 outputs = session.run(added_tensors, inputs)
                 if model is None:
-                    model = make_sub_graph(
+                    model = _make_sub_graph(
                         node,
                         inits,
                         outputs[0],
@@ -412,7 +420,7 @@ class Smoother:
                         self.model.model.opset_import,
                         self.model.model.ir_version,
                     )
-                loss += get_quant_dequant_output(model, outputs[0] * scale, outputs[1], self.providers)
+                loss += _get_quant_dequant_output(model, outputs[0] * scale, outputs[1], self.providers)
 
             self.model.remove_tensors_from_outputs([i for i in added_tensors if i not in orig_outputs])
             self.model.set_initializer(node.input[1], weight)
@@ -431,7 +439,14 @@ class Smoother:
             scale = np.reshape(self.tensor_scales_info[key], (1, self.tensor_scales_info[key].shape[0]))
         return scale
 
-    def _auto_tune_alpha(self, calib_iter, alpha_min=0.3, alpha_max=0.7, alpha_step=0.05, attn_method="min"):
+    def _auto_tune_alpha(
+        self,
+        calib_iter,
+        alpha_min: float = 0.3,
+        alpha_max: float = 0.7,
+        alpha_step: float = 0.05,
+        attn_method: str = "min",
+    ):
         """Perform alpha-tuning to obtain layer-wise optimal alpha values and adjust parameters accordingly.
 
         Args:

@@ -84,7 +84,7 @@ fi
 # install special test env requirements
 # common deps
 pip install cmake
-pip install transformers==4.36.2
+pip install transformers
 
 if [[ $(echo "${test_case}" | grep -c "others") != 0 ]];then
     pip install tf_slim xgboost accelerate==0.21.0 peft
