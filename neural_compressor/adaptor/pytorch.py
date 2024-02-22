@@ -4616,7 +4616,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         if "RTN" in all_algo:
             q_model._model = self.rtn_quantize(q_model._model, tune_cfg)
         if "AUTOROUND" in all_algo:
-            q_model._model, autoround_config = self.autoround_quantize(q_model._model, tune_cfg)
+            q_model._model, autoround_config = self.autoround_quantize(q_model._model, tune_cfg, dataloader)
             q_model.autoround_config = autoround_config
 
         q_model.q_config = copy.deepcopy(self.tune_cfg)
@@ -4914,13 +4914,13 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         )
         return model
 
-    def autoround_quantize(self, model, tokenizer):
+    def autoround_quantize(self, model, tune_cfg, dataloader):
         logger.info("quantizing with the AutoRound algorithm")
         from .torch_utils.weight_only import autoround_quantize
 
         device = "cpu"
         model, autoround_config = autoround_quantize(
-            model, tokenizer, n_samples=20, device=device, amp=False, seqlen=10, iters=10, scale_dtype="fp32"
+            model, tokenizer=None, dataloader=dataloader, n_samples=20, device=device, amp=False, seqlen=10, iters=10, scale_dtype="fp32"
         )
         return model, autoround_config
 
