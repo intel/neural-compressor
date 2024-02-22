@@ -60,7 +60,7 @@ ops_schema = Schema(
             ),
             Optional("algorithm"): And(
                 list,  # TODO: allow AWQ+GPTQ algo
-                lambda s: all(i in ["minmax", "RTN", "AWQ", "GPTQ", "TEQ"] for i in s),
+                lambda s: all(i in ["minmax", "RTN", "AWQ", "GPTQ", "TEQ", "AUTOROUND"] for i in s),
             ),
             Optional("bits"): And(list, lambda s: all(0 < i <= 8 and type(i) == int for i in s)),
             Optional("group_size"): And(list, lambda s: all(i >= -1 and i != 0 and type(i) == int for i in s)),

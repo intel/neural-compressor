@@ -738,6 +738,45 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out2 = q_model.model(input)
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
 
+    def test_AutoRound_quant(self):
+        from neural_compressor.adaptor.torch_utils.auto_round import get_dataloader
+
+        tokenizer = transformers.AutoTokenizer.from_pretrained(
+            "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
+        )
+        dataloader = get_dataloader(tokenizer, seqlen=10, seed=42, train_bs=8, dataset_split="train", dataset_name="NeelNanda/pile-10k")
+        fp32_model = copy.deepcopy(self.gptj)
+        
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "bits": 4,  # 1-8 bits
+                        "group_size": 32,  # -1 (per-channel)
+                        "scheme": "sym",
+                        "algorithm": "AUTOROUND",
+                    },
+                },
+                ".*lm_head": {  # re.match
+                    "weight": {"dtype": "fp32"},
+                },
+            },
+        )
+
+        input = torch.ones([1, 512], dtype=torch.long)
+        fp32_model = copy.deepcopy(self.gptj)
+        out1 = fp32_model(input)
+        q_model = quantization.fit(
+            fp32_model,
+            conf,
+            calib_dataloader=dataloader,
+        )
+        out2 = q_model.model(input)
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
+        q_model.save("./test")
+        print(q_model.autoround_config)
+        
 
 if __name__ == "__main__":
     unittest.main()
