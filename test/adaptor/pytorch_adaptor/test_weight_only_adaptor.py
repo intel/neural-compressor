@@ -744,9 +744,11 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         tokenizer = transformers.AutoTokenizer.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
-        dataloader = get_dataloader(tokenizer, seqlen=10, seed=42, train_bs=8, dataset_split="train", dataset_name="NeelNanda/pile-10k")
+        dataloader = get_dataloader(
+            tokenizer, seqlen=10, seed=42, train_bs=8, dataset_split="train", dataset_name="NeelNanda/pile-10k"
+        )
         fp32_model = copy.deepcopy(self.gptj)
-        
+
         conf = PostTrainingQuantConfig(
             approach="weight_only",
             op_type_dict={
@@ -776,7 +778,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
         q_model.save("./test")
         print(q_model.autoround_config)
-        
+
 
 if __name__ == "__main__":
     unittest.main()

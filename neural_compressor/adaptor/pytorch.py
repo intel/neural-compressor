@@ -4920,7 +4920,15 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
 
         device = "cpu"
         model, autoround_config = autoround_quantize(
-            model, tokenizer=None, dataloader=dataloader, n_samples=20, device=device, amp=False, seqlen=10, iters=10, scale_dtype="fp32"
+            model,
+            tokenizer=None,
+            dataloader=dataloader,
+            n_samples=20,
+            device=device,
+            amp=False,
+            seqlen=10,
+            iters=10,
+            scale_dtype="fp32",
         )
         return model, autoround_config
 
