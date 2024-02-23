@@ -4967,7 +4967,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             data_type = self.recipes["autoround_args"].get("data_type", "int")  ##only support data_type
             scale_dtype = self.recipes["autoround_args"].get("scale_dtype", "fp16")
         else:
-            enable_full_range: bool = False  ##for symmetric, TODO support later
+            enable_full_range: bool = False
             bs: int = 8
             amp: bool = True
             device="cpu"
@@ -4998,12 +4998,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             group_size=128,
             scheme="asym",
             weight_config=weight_config,
-            enable_full_range=enable_full_range,  ##for symmetric, TODO support later
+            enable_full_range=enable_full_range,
             bs=bs,
             amp=amp,
             device=device,
             lr_scheduler=lr_scheduler,
-            dataloader=dataloader,  ## to support later
+            dataloader=dataloader,
             dataset_name=dataset_name,
             dataset_split=dataset_split,
             use_quant_input=use_quant_input,
@@ -5020,7 +5020,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             gradient_accumulate_steps=gradient_accumulate_steps,
             not_use_best_mse=not_use_best_mse,
             dynamic_max_gap=dynamic_max_gap,
-            data_type=data_type,  ## only support data_type
+            data_type=data_type,
             scale_dtype=scale_dtype,
         )
         return model, autoround_config

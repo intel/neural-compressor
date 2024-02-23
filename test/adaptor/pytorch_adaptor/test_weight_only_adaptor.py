@@ -774,6 +774,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     "seq_len": 10,
                     "iters": 10,
                     "scale_dtype": "fp32",
+                    "device": "cpu",
                 },
             },
         )

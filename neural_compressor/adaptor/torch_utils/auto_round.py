@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from auto_round.calib_dataset import CALIB_DATASETS
+from auto_round.calib_dataset import CALIB_DATASETS # pylint: disable=E1120
 
 def get_dataloader(tokenizer, seqlen=2048, seed=42, train_bs=8, dataset_split="train", dataset_name="NeelNanda/pile-10k"):
     get_dataloader = CALIB_DATASETS.get(dataset_name,
