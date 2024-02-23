@@ -15,15 +15,20 @@
 import json
 import os
 
-from neural_compressor.common.utils import FP8_QUANT, GPTQ, RTN  # unified namespace
-
+from neural_compressor.common.utils import load_qconfig  # unified namespace
+from neural_compressor.common.utils import FP8_QUANT  # unified namespace
+from neural_compressor.torch.quantization.config import FP8Config
+config_name_mapping = {
+    FP8_QUANT: FP8Config,
+}
 
 def load(model, output_dir="./saved_results"):
-    qmodel_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), "quantized_model.pt")
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), "qconfig.json")
-    with open(qconfig_file_path, "r") as f:
-        model_qconfig = json.load(f)
-    if model_qconfig["algorithm"] == FP8_QUANT:
+    config_mapping = load_qconfig(qconfig_file_path, config_name_mapping)
+    model.qconfig = config_mapping
+    # select load function
+    config_object = config_mapping[next(iter(config_mapping))]
+    if isinstance(config_object, FP8Config):
         from neural_compressor.torch.algorithms.habana_fp8 import load
 
         return load(model, output_dir)

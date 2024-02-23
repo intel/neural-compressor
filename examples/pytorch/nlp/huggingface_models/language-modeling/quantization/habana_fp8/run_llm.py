@@ -3,8 +3,8 @@ os.environ["EXPERIMENTAL_WEIGHT_SHARING"] = "False"
 os.environ["USE_GAUDI2_SCALE"] = "True"
 os.environ.pop("USE_GAUDI2_SCALE")  # gaudi scale work
 # os.environ["GRAPH_VISUALIZATION"] = "True"
-import shutil
-shutil.rmtree(".graph_dumps", ignore_errors=True)
+# import shutil
+# shutil.rmtree(".graph_dumps", ignore_errors=True)
 import argparse
 import time
 import json
@@ -20,23 +20,14 @@ import numpy as np
 import lm_eval
 import lm_eval.tasks
 import lm_eval.evaluator
-from accelerate import init_empty_weights, load_checkpoint_and_dispatch
+from accelerate import init_empty_weights
+from utils import itrex_bootstrap_stderr, show_msg, save_to_excel
 
 
 torch.set_grad_enabled(False)
 htcore.hpu_set_env()
 torch.device('hpu')
 
-
-def itrex_bootstrap_stderr(f, xs, iters):
-    from lm_eval.metrics import _bootstrap_internal, sample_stddev
-    res = []
-    chunk_size = min(1000, iters)
-    it = _bootstrap_internal(f, chunk_size)
-    for i in range(iters // chunk_size):
-        bootstrap = it((i, xs))
-        res.extend(bootstrap)
-    return sample_stddev(res)
 
 # to avoid out-of-memory caused by Popen for large language models.
 lm_eval.metrics.bootstrap_stderr = itrex_bootstrap_stderr
@@ -63,6 +54,8 @@ parser.add_argument("--precision", type=str, default='fp8_e4m3',
 parser.add_argument("--accuracy", action="store_true")
 parser.add_argument("--performance", action="store_true")
 parser.add_argument("--generate", action="store_true")
+parser.add_argument("--skip_fp8_mm", action="store_true")
+parser.add_argument("--save", action="store_true")
 parser.add_argument("--load", action="store_true")
 parser.add_argument("--batch_size", default=1, type=int,
                     help="For accuracy measurement only.")
@@ -97,7 +90,7 @@ if re.search("llama", args.model.lower()) or re.search("bloom", args.model.lower
     from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
     config = AutoConfig.from_pretrained(args.model)
     if world_size > 1:
-        model_dtype = torch.float16
+        model_dtype = torch.bfloat16 # RuntimeErrorCastToFp8V2 input must be of float or bfloat16 dtype
         deepspeed.init_distributed(dist_backend="hccl")
         with deepspeed.OnDevice(dtype=model_dtype, device="meta"):
             user_model = AutoModelForCausalLM.from_config(config, torch_dtype=model_dtype)
@@ -105,10 +98,10 @@ if re.search("llama", args.model.lower()) or re.search("bloom", args.model.lower
         checkpoints_json = tempfile.NamedTemporaryFile(suffix=".json", mode="+w")
         from optimum.habana.checkpoint_utils import write_checkpoints_json # in optimum-habana
         write_checkpoints_json(
-             args.model,
-             local_rank,
-             checkpoints_json,
-             token=None,
+            args.model,
+            local_rank,
+            checkpoints_json,
+            token=None,
         )
     else:
         if args.load:
@@ -122,13 +115,18 @@ if re.search("llama", args.model.lower()) or re.search("bloom", args.model.lower
                 torch_dtype=model_dtype,
             )
 elif re.search("chatglm", args.model.lower()):
-    from models.modeling_chatglm import ChatGLMForConditionalGeneration
-    user_model = ChatGLMForConditionalGeneration.from_pretrained(
-        args.model,
-        revision=args.revision,
-        device_map='hpu',
-        torch_dtype=model_dtype,
-    )
+    if args.load:
+        config = AutoConfig.from_pretrained(args.model, torch_dtype=model_dtype)
+        with init_empty_weights():
+            user_model = AutoModelForCausalLM.from_config(config)
+    else:
+        from models.modeling_chatglm import ChatGLMForConditionalGeneration
+        user_model = ChatGLMForConditionalGeneration.from_pretrained(
+            args.model,
+            revision=args.revision,
+            device_map='hpu',
+            torch_dtype=model_dtype,
+        )
     # print(user_model.transformer.output_layer.weight.dtype) # always fp16
     user_model.float() # static fp8 need float32 for graph compiler
 else:
@@ -145,6 +143,23 @@ else:
             torch_dtype=model_dtype,
         )
 
+
+if world_size > 1:
+    if re.search("llama", args.model.lower()):
+        ds_inference_kwargs = {"dtype": model_dtype}
+        ds_inference_kwargs["tensor_parallel"] = {"tp_size": world_size}
+        ds_inference_kwargs["enable_cuda_graph"] = False
+        from transformers.models.llama.modeling_llama import LlamaDecoderLayer
+        ds_inference_kwargs["injection_policy"] = {LlamaDecoderLayer: ("self_attn.o_proj", "mlp.down_proj")}
+        ds_inference_kwargs["checkpoint"] = checkpoints_json.name
+        ds_model = deepspeed.init_inference(user_model, **ds_inference_kwargs)
+    else:
+        ds_model = deepspeed.init_inference(user_model,
+                                        mp_size=world_size,
+                                        replace_with_kernel_inject=False)
+    user_model = ds_model.module
+
+
 # tokenizer
 if re.search("baichuan", args.model.lower()):
     from models.tokenization_baichuan import BaichuanTokenizer
@@ -160,23 +175,8 @@ else:
 
 tokenizer.pad_token = tokenizer.eos_token
 
-if world_size > 1:
-    if re.search("llama", args.model.lower()):
-        ds_inference_kwargs = {"dtype": model_dtype}
-        ds_inference_kwargs["tensor_parallel"] = {"tp_size": world_size}
-        ds_inference_kwargs["enable_cuda_graph"] = False
-        from transformers.models.llama.modeling_llama import LlamaDecoderLayer
-        ds_inference_kwargs["injection_policy"] = {LlamaDecoderLayer: ("self_attn.o_proj", "mlp.down_proj")}
-        ds_inference_kwargs["checkpoint"] = checkpoints_json.name
-
-        ds_model = deepspeed.init_inference(user_model, **ds_inference_kwargs)
-    else:
-        ds_model = deepspeed.init_inference(user_model,
-                                        mp_size=world_size,
-                                        replace_with_kernel_inject=False)
-    user_model = ds_model.module
-
 user_model.eval()
+
 
 if args.approach in ["dynamic", "static"] and not args.load:
     print("device:", next(user_model.parameters()).device)
@@ -217,70 +217,42 @@ if args.approach in ["dynamic", "static"] and not args.load:
                 )
 
         user_model = quantize(user_model, qconfig, calib_func, inplace=True)
-        # replace torch.matmul and toch.bmm by injection
-        def replace_torch_mm_bmm():
-            from neural_compressor.torch.amp.fp8.functions import fp8_matmul
-            torch.matmul = fp8_matmul
-            torch.bmm = fp8_matmul
-
-        replace_torch_mm_bmm()
         # It enables weights constant folding
         from habana_frameworks.torch.core.quantization import _check_params_as_const, _mark_params_as_const
         _mark_params_as_const(user_model)  # can reduce memory allocated and speed up
         _check_params_as_const(user_model)
         # saving
-        user_model.save("saved_results")
-    #print(user_model, flush=True)
-    def show_msg():
-        import numpy as np
-        import glob
-        from habana_frameworks.torch.hpu import memory_stats
-        print("Number of HPU graphs:", len(glob.glob(".graph_dumps/*PreGraph*")))
-        mem_stats = memory_stats()
-        mem_dict = {
-            "memory_allocated (GB)": np.round(mem_stats["InUse"] / 1024**3, 2),
-            "max_memory_allocated (GB)": np.round(mem_stats["MaxInUse"] / 1024**3, 2),
-            "total_memory_available (GB)": np.round(mem_stats["Limit"] / 1024**3, 2),
-        }
-        for k, v in mem_dict.items():
-            print("{:35} = {} GB".format(k[:-5].replace("_", " ").capitalize(), v))
+        if args.save:
+            user_model.save("saved_results")
+    print(user_model, flush=True)
     show_msg()
 
+
 if args.load:
-    def show_msg():
-        import numpy as np
-        import glob
-        from habana_frameworks.torch.hpu import memory_stats
-        print("Number of HPU graphs:", len(glob.glob(".graph_dumps/*PreGraph*")))
-        mem_stats = memory_stats()
-        mem_dict = {
-            "memory_allocated (GB)": np.round(mem_stats["InUse"] / 1024**3, 2),
-            "max_memory_allocated (GB)": np.round(mem_stats["MaxInUse"] / 1024**3, 2),
-            "total_memory_available (GB)": np.round(mem_stats["Limit"] / 1024**3, 2),
-        }
-        for k, v in mem_dict.items():
-            print("{:35} = {} GB".format(k[:-5].replace("_", " ").capitalize(), v))
-    show_msg()
     from neural_compressor.torch.quantization import load
     user_model = load(user_model, "saved_results")
+    # It enables weights constant folding
+    from habana_frameworks.torch.core.quantization import _check_params_as_const, _mark_params_as_const
+    _mark_params_as_const(user_model)  # can reduce memory allocated and speed up
+    _check_params_as_const(user_model)
     show_msg()
-    # replace torch.matmul and toch.bmm by injection
+
+
+if not args.skip_fp8_mm:
+    # If torch.matmul and toch.bmm are not replaced by INC module, 
+    # Below codes can make torch.matmul and toch.bmm run on fp8 by injection.
     def replace_torch_mm_bmm():
         from neural_compressor.torch.amp.fp8.functions import fp8_matmul
         torch.matmul = fp8_matmul
         torch.bmm = fp8_matmul
 
     replace_torch_mm_bmm()
-    # It enables weights constant folding
-    from habana_frameworks.torch.core.quantization import _check_params_as_const, _mark_params_as_const
-    _mark_params_as_const(user_model)  # can reduce memory allocated and speed up
-    _check_params_as_const(user_model)
-    #print(user_model, flush=True)
-    show_msg()
+
 
 if args.to_graph:
     import habana_frameworks.torch.hpu.graphs as htgraphs
     user_model = htgraphs.wrap_in_hpu_graph(user_model)
+
 
 if args.generate:
     input_prompt = "Here is my prompt"
@@ -311,6 +283,7 @@ if args.generate:
     print("Generated sentence:", output_sentence)
     print("Duration:", eval_end - eval_start)
 
+
 if args.performance:
     eval_start = time.perf_counter()
     input_prompt = "Intel is a company which"
@@ -319,17 +292,8 @@ if args.performance:
     outputs = user_model.generate(input_tokens, **generation_config)
     print("Duration of generating 100 tokens :", time.perf_counter() - eval_start)
 
-if args.accuracy:
 
-    def save_to_excel(dict):
-        import pandas as pd
-        df_new = pd.DataFrame(dict)
-        try:
-            df_existing = pd.read_excel('output.xlsx')
-        except FileNotFoundError:
-            df_existing = pd.DataFrame()
-        df_combined = pd.concat([df_existing, df_new], axis=0, ignore_index=True)
-        df_combined.to_excel('output.xlsx', index=False, engine='openpyxl', header=True)
+if args.accuracy:
 
     class HabanaModelAdapter(lm_eval.base.BaseLM):
         def __init__(self, tokenizer, model, args, options):
@@ -429,20 +393,5 @@ if args.accuracy:
             accu_dict[task_name] = [args.model, case_name, results["results"][task_name]["acc"]]
     save_to_excel(accu_dict)
 
-
-# show memory usage
-def show_msg():
-    import numpy as np
-    import glob
-    from habana_frameworks.torch.hpu import memory_stats
-    print("Number of HPU graphs:", len(glob.glob(".graph_dumps/*PreGraph*")))
-    mem_stats = memory_stats()
-    mem_dict = {
-        "memory_allocated (GB)": np.round(mem_stats["InUse"] / 1024**3, 2),
-        "max_memory_allocated (GB)": np.round(mem_stats["MaxInUse"] / 1024**3, 2),
-        "total_memory_available (GB)": np.round(mem_stats["Limit"] / 1024**3, 2),
-    }
-    for k, v in mem_dict.items():
-        print("{:35} = {} GB".format(k[:-5].replace("_", " ").capitalize(), v))
 
 show_msg()

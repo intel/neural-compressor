@@ -230,10 +230,6 @@ if is_hpex_available():
     ) -> torch.nn.Module:
         kwargs.pop("example_inputs")
         model = quantize(model, configs_mapping, *args, **kwargs)
-        # prepare qconfig and save function.
-        qconfig = {"algorithm": FP8_QUANT, "per_module_qconfig": {}}
-        for (op_name, op_type), quant_config in configs_mapping.items():
-            qconfig["per_module_qconfig"][op_name] = quant_config.to_dict()
-        model.qconfig = qconfig
+        model.qconfig = configs_mapping
         model.save = MethodType(save, model)
         return model
