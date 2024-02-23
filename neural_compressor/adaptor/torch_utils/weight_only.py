@@ -751,7 +751,7 @@ def autoround_quantize(
     Returns:
         The quantized model.
     """
-    from auto_round import AutoRound
+    from auto_round import AutoRound # pylint: disable=E0401
 
     rounder = AutoRound(
         model=model,

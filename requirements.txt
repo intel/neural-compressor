@@ -12,3 +12,4 @@ pyyaml
 requests
 schema
 scikit-learn
+git+https://github.com/intel/auto-round.git

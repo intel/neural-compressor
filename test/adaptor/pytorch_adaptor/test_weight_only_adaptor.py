@@ -11,6 +11,11 @@ from neural_compressor.adaptor.torch_utils.model_wrapper import MulLinear, Weigh
 from neural_compressor.model import Model as INCModel
 from neural_compressor.utils.load_huggingface import export_compressed_model
 from neural_compressor.utils.pytorch import load
+try:
+    import auto_round
+    auto_round_installed = True
+except ImportError:
+    auto_round_installed = False
 
 
 class Model(torch.nn.Module):
@@ -738,6 +743,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out2 = q_model.model(input)
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
 
+    @unittest.skipIf(not auto_round_installed, "auto_round module is not installed")
     def test_AutoRound_quant(self):
         from neural_compressor.adaptor.torch_utils.auto_round import get_dataloader
 
