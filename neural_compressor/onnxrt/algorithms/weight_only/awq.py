@@ -323,8 +323,8 @@ def awq_quantize(
     full_ratio = {}
 
     if enable_mse_search:
-        inputs, so = prepare_inputs(model, dataloader, providers)
-        del dataloader
+        inputs, so = prepare_inputs(model, data_reader, providers)
+        del data_reader
 
         org_output = copy.deepcopy(model.model.graph.output)
         model.remove_tensors_from_outputs([i.name for i in org_output])
