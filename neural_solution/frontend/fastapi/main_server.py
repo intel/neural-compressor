@@ -38,6 +38,7 @@ from neural_solution.frontend.utility import (
     get_res_during_tuning,
     list_to_string,
     serialize,
+    is_valid_task,
 )
 from neural_solution.utils.utility import get_db_path, get_task_log_workspace, get_task_workspace
 
@@ -153,10 +154,14 @@ async def submit_task(task: Task):
     Returns:
         json: status , id of task and messages.
     """
+    if not is_valid_task:
+        raise HTTPException(status_code=422, detail="Invalid task")
+
     msg = "Task submitted successfully"
     status = "successfully"
     # search the current
     db_path = get_db_path(config.workspace)
+
     if os.path.isfile(db_path):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()

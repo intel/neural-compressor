@@ -118,13 +118,27 @@ class TestMain(unittest.TestCase):
     def test_submit_task(self, mock_submit_task):
         task = {
             "script_url": "http://example.com/script.py",
-            "optimized": True,
+            "optimized": "True",
             "arguments": ["arg1", "arg2"],
-            "approach": "approach1",
+            "approach": "static",
             "requirements": ["req1", "req2"],
             "workers": 3,
         }
-
+        
+        # test invalid task
+        task_invalid = {
+            "script_url": "http://example.com/script.py",
+            "optimized": "True",
+            "arguments": 'invalid str, should be list',
+            "approach": "static",
+            "requirements": ["req1", "req2"],
+            "workers": 3,
+        }
+        response = client.post("/task/submit/", json=task_invalid)
+        print(response)
+        self.assertEqual(response.status_code, 422)
+        self.assertIn("arguments", response.text)
+        
         # test no db case
         delete_db()
         response = client.post("/task/submit/", json=task)
@@ -174,7 +188,7 @@ class TestMain(unittest.TestCase):
             "script_url": "http://example.com/script.py",
             "optimized": True,
             "arguments": ["arg1", "arg2"],
-            "approach": "approach1",
+            "approach": "static",
             "requirements": ["req1", "req2"],
             "workers": 3,
         }
@@ -200,7 +214,7 @@ class TestMain(unittest.TestCase):
             "script_url": "http://example.com/script.py",
             "optimized": True,
             "arguments": ["arg1", "arg2"],
-            "approach": "approach1",
+            "approach": "static",
             "requirements": ["req1", "req2"],
             "workers": 3,
         }

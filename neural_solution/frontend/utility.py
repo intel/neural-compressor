@@ -295,3 +295,30 @@ def list_to_string(lst: list):
         str: string
     """
     return " ".join(str(i) for i in lst)
+
+def is_valid_task(task: dict) -> bool:
+    required_fields = ["script_url", "optimized", "arguments", "approach", "requirements", "workers"]
+
+    for field in required_fields:
+        if field not in task:
+            return False
+
+    if not isinstance(task["script_url"], str):
+        return False
+
+    if not isinstance(task["optimized"], str) or task["optimized"] not in ["True", "False"]:
+        return False
+
+    if not isinstance(task["arguments"], list):
+        return False
+
+    if not isinstance(task["approach"], str) or task["approach"] not in ["static", "dynamic"]:
+        return False
+
+    if not isinstance(task["requirements"], list):
+        return False
+
+    if not isinstance(task["workers"], int) or task["workers"] < 1:
+        return False
+
+    return True
