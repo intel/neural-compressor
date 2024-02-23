@@ -6,12 +6,24 @@
 .. py:module:: neural_compressor.tensorflow.quantization.utils
 
 
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   quantize_graph/index.rst
+   transform_graph/index.rst
+
+
 Submodules
 ----------
 .. toctree::
    :titlesonly:
    :maxdepth: 1
 
+   graph_converter/index.rst
+   graph_converter_without_calib/index.rst
    graph_util/index.rst
    quantize_graph_common/index.rst
    utility/index.rst

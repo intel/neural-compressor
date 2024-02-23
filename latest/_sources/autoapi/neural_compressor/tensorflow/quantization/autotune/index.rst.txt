@@ -1,0 +1,28 @@
+:orphan:
+
+:py:mod:`neural_compressor.tensorflow.quantization.autotune`
+============================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.autotune
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.autotune.get_all_config_set
+   neural_compressor.tensorflow.quantization.autotune.autotune
+
+
+
+
+.. py:function:: autotune(model: Union[str, tensorflow.keras.Model, neural_compressor.tensorflow.utils.BaseModel], tune_config: neural_compressor.common.base_tuning.TuningConfig, eval_fns: Optional[Union[Dict, List[Dict]]] = None, calib_dataloader: Callable = None, calib_iteration: int = 100) -> Optional[neural_compressor.tensorflow.utils.BaseModel]
+
+   The main entry of auto-tune.
+
+

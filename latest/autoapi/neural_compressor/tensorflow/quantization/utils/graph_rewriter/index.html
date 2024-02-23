@@ -94,6 +94,11 @@
 <h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading"></a></h2>
 <div class="toctree-wrapper compound">
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="bf16/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.bf16</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bf16/bf16_convert/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.bf16.bf16_convert</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="bf16/dequantize_cast_optimizer/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.bf16.dequantize_cast_optimizer</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="generic/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="generic/convert_add_to_biasadd/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_add_to_biasadd</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="generic/convert_layout/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_layout</span></code></a></li>
@@ -129,6 +134,27 @@
 <li class="toctree-l2"><a class="reference internal" href="generic/switch_optimizer/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.switch_optimizer</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="int8/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="int8/freeze_fake_quant/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.freeze_fake_quant</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="int8/freeze_value/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.freeze_value</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="int8/freeze_value_without_calib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.freeze_value_without_calib</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="int8/fuse_conv_redundant_dequantize/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.fuse_conv_redundant_dequantize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="int8/fuse_conv_requantize/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.fuse_conv_requantize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="int8/fuse_matmul_redundant_dequantize/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.fuse_matmul_redundant_dequantize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="int8/fuse_matmul_requantize/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.fuse_matmul_requantize</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="int8/meta_op_optimizer/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.meta_op_optimizer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="int8/post_hostconst_converter/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.post_hostconst_converter</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="int8/post_quantized_op_cse/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.post_quantized_op_cse</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="int8/rnn_convert/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.rnn_convert</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="int8/scale_propagation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.scale_propagation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="qdq/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="qdq/insert_qdq_pattern/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.insert_qdq_pattern</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qdq/merge_duplicated_qdq/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.merge_duplicated_qdq</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qdq/share_qdq_y_pattern/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.share_qdq_y_pattern</span></code></a></li>
+</ul>
+</li>
 </ul>
 </div>
 </section>
@@ -156,7 +182,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f04c47e4700> 
+   <jinja2.runtime.BlockReference object at 0x7f33e78c8a00> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.tensorflow.keras.layers.quantizer`
+=============================================================
+
+.. py:module:: neural_compressor.tensorflow.keras.layers.quantizer
+
+

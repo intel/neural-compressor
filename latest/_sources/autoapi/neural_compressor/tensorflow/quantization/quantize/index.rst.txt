@@ -16,14 +16,28 @@ Functions
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.quantize.quantize_model
+   neural_compressor.tensorflow.quantization.quantize.quantize_model_with_single_config
 
 
 
-.. py:function:: quantize_model(model: Union[str, tensorflow.keras.Model, neural_compressor.tensorflow.utils.BaseModel], quant_config: neural_compressor.common.base_config.BaseConfig, calib_dataloader: Callable = None, calib_iteration: int = 100)
+.. py:function:: quantize_model(model: Union[str, tensorflow.keras.Model, neural_compressor.tensorflow.utils.BaseModel], quant_config: Union[neural_compressor.common.base_config.BaseConfig, list], calib_dataloader: Callable = None, calib_iteration: int = 100)
 
    The main entry to quantize model.
 
    :param model: a fp32 model to be quantized.
+   :param quant_config: single or lists of quantization configuration.
+   :param calib_dataloader: a data loader for calibration.
+   :param calib_iteration: the iteration of calibration.
+
+   :returns: the quantized model.
+   :rtype: q_model
+
+
+.. py:function:: quantize_model_with_single_config(q_model: neural_compressor.tensorflow.utils.BaseModel, quant_config: neural_compressor.common.base_config.BaseConfig, calib_dataloader: Callable = None, calib_iteration: int = 100)
+
+   Quantize model using single config.
+
+   :param model: a model wrapped by INC TF model class.
    :param quant_config: a quantization configuration.
    :param calib_dataloader: a data loader for calibration.
    :param calib_iteration: the iteration of calibration.

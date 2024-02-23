@@ -15,11 +15,11 @@ Functions
 
 .. autoapisummary::
 
-   neural_compressor.tensorflow.quantization.algorithm_entry.static_quantize_entry
+   neural_compressor.tensorflow.quantization.algorithm_entry.static_quant_entry
 
 
 
-.. py:function:: static_quantize_entry(model: neural_compressor.tensorflow.utils.BaseModel, quant_config: neural_compressor.tensorflow.quantization.config.StaticQuantConfig, calib_dataloader: Callable = None, calib_iteration: int = 100)
+.. py:function:: static_quant_entry(model: neural_compressor.tensorflow.utils.BaseModel, quant_config: neural_compressor.common.base_config.BaseConfig, calib_dataloader: Callable = None, calib_iteration: int = 100)
 
    The main entry to apply static quantization.
 

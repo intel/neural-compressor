@@ -6,3 +6,12 @@
 .. py:module:: neural_compressor.tensorflow.algorithms.static_quant
 
 
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   tensorflow/index.rst
+
+

@@ -1,0 +1,21 @@
+:py:mod:`neural_compressor.tensorflow.quantization.utils.graph_rewriter.bf16`
+=============================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.bf16
+
+.. autoapi-nested-parse::
+
+   Tensorflow BF16 Graph Rewriter.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   bf16_convert/index.rst
+   dequantize_cast_optimizer/index.rst
+
+
