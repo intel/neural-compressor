@@ -6,7 +6,7 @@ echo "${test_case}"
 # install requirements
 echo "set up UT env..."
 pip install -r /neural-compressor/test/3x/torch/requirements.txt
-pip install coverage
+pip install pytest-cov
 pip install pytest-html
 pip list
 
@@ -30,7 +30,7 @@ ut_log_name=${LOG_DIR}/ut_3x_pt.log
 #cat run_unittest.sh | tee ${ut_log_name}
 echo "------unittest start-------"
 #bash -x run_unittest.sh 2>&1 | tee -a ${ut_log_name}
-coverage run --source="${inc_path}" -m pytest -vs --disable-warnings --html=report.html --self-contained-html . 2>&1 | tee -a ${ut_log_name}
+pytest --cov="${inc_path}" -vs --disable-warnings --html=report.html --self-contained-html . 2>&1 | tee -a ${ut_log_name}
 echo "------unittest end -------"
 
 #if [ -s run_pytest.sh ]; then
