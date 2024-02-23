@@ -124,12 +124,12 @@ class TestMain(unittest.TestCase):
             "requirements": ["req1", "req2"],
             "workers": 3,
         }
-        
+
         # test invalid task
         task_invalid = {
             "script_url": "http://example.com/script.py",
             "optimized": "True",
-            "arguments": 'invalid str, should be list',
+            "arguments": "invalid str, should be list",
             "approach": "static",
             "requirements": ["req1", "req2"],
             "workers": 3,
@@ -138,7 +138,7 @@ class TestMain(unittest.TestCase):
         print(response)
         self.assertEqual(response.status_code, 422)
         self.assertIn("arguments", response.text)
-        
+
         # test no db case
         delete_db()
         response = client.post("/task/submit/", json=task)

@@ -10,9 +10,9 @@ from neural_solution.frontend.utility import (
     get_cluster_info,
     get_cluster_table,
     get_res_during_tuning,
+    is_valid_task,
     list_to_string,
     serialize,
-    is_valid_task,
 )
 
 NEURAL_SOLUTION_WORKSPACE = os.path.join(os.getcwd(), "ns_workspace")
@@ -110,7 +110,7 @@ class TestMyModule(unittest.TestCase):
         lst = ["Hello", "Neural", "Solution"]
         expected_result = "Hello Neural Solution"
         self.assertEqual(list_to_string(lst), expected_result)
-    
+
     def test_is_valid_task(self):
         task_sql_injection = {
             "script_url": "https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py",
@@ -118,86 +118,74 @@ class TestMyModule(unittest.TestCase):
             "arguments": [],
             "approach": "5', '6', 7, 'pending'), ('1b9ff5c2fd2143d58522bd71d18845a3', '2', 3, '4', '5', '6', 7, 'pending') ON CONFLICT (id) DO UPDATE SET id = '1b9ff5c2fd2143d58522bd71d18845a3', q_model_path = '/home/victim/.ssh' --",
             "requirements": [],
-            "workers": 1
+            "workers": 1,
         }
         self.assertFalse(is_valid_task(task_sql_injection))
-        
+
         task_lack_field = {
             "optimized": "True",
         }
         self.assertFalse(is_valid_task(task_lack_field))
-        
+
         task_script_url_not_str = {
             "script_url": ["custom_models_optimized/tf_example1"],
             "optimized": "True",
-            "arguments": [
-                "--dataset_location=dataset --model_path=model"
-            ],
+            "arguments": ["--dataset_location=dataset --model_path=model"],
             "approach": "static",
-            "requirements": ["tensorflow"
-            ],
-            "workers": 1
+            "requirements": ["tensorflow"],
+            "workers": 1,
         }
         self.assertFalse(is_valid_task(task_script_url_not_str))
-        
+
         task_optimized_not_bool_str = {
             "script_url": ["custom_models_optimized/tf_example1"],
             "optimized": "True or False",
-            "arguments": [
-                "--dataset_location=dataset --model_path=model"
-            ],
+            "arguments": ["--dataset_location=dataset --model_path=model"],
             "approach": "static",
-            "requirements": ["tensorflow"
-            ],
-            "workers": 1
+            "requirements": ["tensorflow"],
+            "workers": 1,
         }
         self.assertFalse(is_valid_task(task_optimized_not_bool_str))
-        
+
         task_arguments_not_list = {
             "script_url": ["custom_models_optimized/tf_example1"],
             "optimized": "True",
             "arguments": 123,
             "approach": "static",
-            "requirements": ["tensorflow"
-            ],
-            "workers": 1
+            "requirements": ["tensorflow"],
+            "workers": 1,
         }
         self.assertFalse(is_valid_task(task_arguments_not_list))
-        
+
         task_approach_is_invalid = {
             "script_url": ["custom_models_optimized/tf_example1"],
             "optimized": "True",
             "arguments": [],
             "approach": "static or dynamic",
-            "requirements": ["tensorflow"
-            ],
-            "workers": 1
+            "requirements": ["tensorflow"],
+            "workers": 1,
         }
         self.assertFalse(is_valid_task(task_approach_is_invalid))
-        
+
         task_requirements_not_list = {
             "script_url": ["custom_models_optimized/tf_example1"],
             "optimized": "True",
             "arguments": [],
             "approach": "static",
             "requirements": "tensorflow",
-            "workers": 1
+            "workers": 1,
         }
         self.assertFalse(is_valid_task(task_requirements_not_list))
 
         task_normal = {
             "script_url": "custom_models_optimized/tf_example1",
             "optimized": "True",
-            "arguments": [
-                "--dataset_location=dataset --model_path=model"
-            ],
+            "arguments": ["--dataset_location=dataset --model_path=model"],
             "approach": "static",
-            "requirements": ["tensorflow"
-            ],
-            "workers": 1
+            "requirements": ["tensorflow"],
+            "workers": 1,
         }
         self.assertTrue(is_valid_task(task_normal))
-        
 
 
 if __name__ == "__main__":
