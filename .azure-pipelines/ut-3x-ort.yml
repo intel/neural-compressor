@@ -11,8 +11,10 @@ pr:
       - neural_compressor/common
       - neural_compressor/onnxrt
       - test/3x/onnxrt
+      - test/3x/common
       - setup.py
       - requirements_ort.txt
+      - .azure-pipelines/scripts/ut/3x/run_3x_ort.sh
 
 pool: ICX-16C
 
