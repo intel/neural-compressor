@@ -1589,8 +1589,6 @@ class TensorFlowAdaptor:
         Returns:
           A list of op names, sorted by its MSE sensitivity.
         """
-        from copy import deepcopy
-
         fp32_op_cfg = {"activation": {"dtype": "fp32", "quant_mode": "fp32"}, "weight": {"dtype": "fp32"}}
 
         if fallback:
@@ -2492,4 +2490,3 @@ class TensorflowConfigConverter:
         tune_cfg = {"op": op_wise_config}
 
         return tune_cfg
-
