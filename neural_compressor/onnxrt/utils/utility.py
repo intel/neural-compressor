@@ -18,6 +18,7 @@ from typing import Callable, Dict, List, Tuple, Union
 import numpy as np
 import onnx
 from packaging.version import Version
+import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
 
 from neural_compressor.common import Logger
 
@@ -41,6 +42,7 @@ __all__ = [
     "is_B_transposed",
     "get_qrange_for_qType",
     "quantize_data",
+    "check_model_with_infer_shapes",
 ]
 
 ONNXRT116_VERSION = Version("1.16.0")
@@ -271,3 +273,15 @@ def quantize_data(data, quantize_range, qType, scheme):
     scale, zero_point = _calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
     quantized_data = _quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
     return rmin, rmax, zero_point, scale, quantized_data
+
+def check_model_with_infer_shapes(model):
+    """Check if the model has been shape inferred."""
+    from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
+
+    if isinstance(model, (Path, str)):
+        model = onnx.load(model, load_external_data=False)
+    elif isinstance(model, ONNXModel):
+        model = model.model
+    if len(model.graph.value_info) > 0:
+        return True
+    return False

@@ -19,7 +19,7 @@ import re
 from collections import OrderedDict
 from enum import Enum
 from pathlib import Path
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Callable, List, NamedTuple, Union
 
 import numpy as np
 import onnx
@@ -71,7 +71,10 @@ class RTNConfig(BaseConfig):
         "act_dtype",
         "accuracy_level",
     ]
-    model_params_list: List[str] = ["providers"]
+    model_params_list: List[str] = [
+        "providers",
+        "layer_wise_quant",
+    ]
     params_list: List[str] = node_params_list + model_params_list
     name: str = RTN
 
@@ -84,6 +87,7 @@ class RTNConfig(BaseConfig):
         act_dtype: str = "fp32",
         accuracy_level: int = 0,
         providers: List[str] = ["CPUExecutionProvider"],
+        layer_wise_quant: bool = False,
         white_list: List[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST,
     ):
         """Init RTN weight-only quantization config.
@@ -98,6 +102,10 @@ class RTNConfig(BaseConfig):
                 2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
                 4 (int8 compute type of jblas kernel). Defaults to 0.
             providers (list, optional): execution providers to use. Defaults to ["CPUExecutionProvider"].
+            layer_wise_quant (bool, optional): wheter to quantize model layer by layer to save memory footprint.
+                Check below link for details
+                https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_layer_wise.md,
+                default is False.
             white_list (list, optional): op in white_list will be applied current config.
                 Defaults to DEFAULT_WHITE_LIST.
         """
@@ -109,6 +117,7 @@ class RTNConfig(BaseConfig):
         self.act_dtype = act_dtype
         self.accuracy_level = accuracy_level
         self.providers = providers
+        self.layer_wise_quant = layer_wise_quant
         self._post_init()
 
     def get_model_params_dict(self):
@@ -155,7 +164,7 @@ class RTNConfig(BaseConfig):
     @staticmethod
     def get_model_info(model: Union[onnx.ModelProto, Path, str]) -> list:
         if not isinstance(model, onnx.ModelProto):
-            model = onnx.load(model)
+            model = onnx.load(model, load_external_data=False)
         white_list = ["MatMul"]
         filter_result = []
         for node in model.graph.node:
@@ -203,6 +212,7 @@ class GPTQConfig(BaseConfig):
         "mse",
         "perchannel",
         "providers",
+        "layer_wise_quant",
     ]
     params_list: List[str] = node_params_list + model_params_list
     name: str = GPTQ
@@ -221,6 +231,7 @@ class GPTQConfig(BaseConfig):
         mse: bool = False,
         perchannel: bool = True,
         providers: List[str] = ["CPUExecutionProvider"],
+        layer_wise_quant: bool = False,
         white_list: List[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST,
     ):
         """Init GPTQ weight-only quantization config.
@@ -242,6 +253,10 @@ class GPTQConfig(BaseConfig):
             mse (bool, optional): whether get scale and zero point with mse error. Defaults to False.
             perchannel (bool, optional): whether quantize weight per-channel. Defaults to True.
             providers (list, optional): execution providers to use. Defaults to ["CPUExecutionProvider"].
+            layer_wise_quant (bool, optional): wheter to quantize model layer by layer to save memory footprint.
+                Check below link for details
+                https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_layer_wise.md,
+                default is False.
             white_list (list, optional): op in white_list will be applied current config.
                 Defaults to DEFAULT_WHITE_LIST.
         """
@@ -258,6 +273,7 @@ class GPTQConfig(BaseConfig):
         self.mse = mse
         self.perchannel = perchannel
         self.providers = providers
+        self.layer_wise_quant = layer_wise_quant
         self._post_init()
 
     def get_model_params_dict(self):
@@ -307,7 +323,7 @@ class GPTQConfig(BaseConfig):
     @staticmethod
     def get_model_info(model: Union[onnx.ModelProto, Path, str]) -> list:
         if not isinstance(model, onnx.ModelProto):
-            model = onnx.load(model)
+            model = onnx.load(model, load_external_data=False)
         white_list = ["MatMul"]
         filter_result = []
         for node in model.graph.node:
@@ -452,7 +468,7 @@ class AWQConfig(BaseConfig):
     @staticmethod
     def get_model_info(model: Union[onnx.ModelProto, Path, str]) -> list:
         if not isinstance(model, onnx.ModelProto):
-            model = onnx.load(model)
+            model = onnx.load(model, load_external_data=False)
         white_list = ["MatMul"]
         filter_result = []
         for node in model.graph.node:

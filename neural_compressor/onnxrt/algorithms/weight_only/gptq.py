@@ -193,7 +193,7 @@ def _gptq(
 
 def gptq_quantize(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
-    dataloader: CalibrationDataReader,
+    data_reader: CalibrationDataReader,
     weight_config: dict = {},
     num_bits: int = 4,
     group_size: int = 32,
@@ -205,12 +205,13 @@ def gptq_quantize(
     perchannel: bool = True,
     accuracy_level: int = 0,
     providers: List[str] = ["CPUExecutionProvider"],
-) -> onnx.ModelProto:
+    return_modelproto: bool = True,
+):
     """Quant the model with GPTQ method.
 
     Args:
         model (Union[onnx.ModelProto, ONNXModel, Path, str]): onnx model.
-        dataloader (CalibrationDataReader): dataloader for calibration.
+        data_reader (CalibrationDataReader): data_reader for calibration.
         weight_config (dict, optional): quantization config
             For example,
             weight_config = {
@@ -236,6 +237,8 @@ def gptq_quantize(
             1(fp32 compute type of jblas kernel), 2 (fp16 compute type of jblas kernel),
             3 (bf16 compute type of jblas kernel), 4 (int8 compute type of jblas kernel). Defaults to 0.
         providers (list, optional): providers to use. Defaults to ["CPUExecutionProvider"].
+        return_modelproto (bool, optionmal): whether to return onnx.Modelproto. set False for layer-wise quant.
+            Default to True
 
     Returns:
         onnx.ModelProto: quantized onnx model
@@ -244,8 +247,8 @@ def gptq_quantize(
         model = ONNXModel(model)
     base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
 
-    inputs, so = prepare_inputs(model, dataloader, providers)
-    del dataloader
+    inputs, so = prepare_inputs(model, data_reader, providers)
+    del data_reader
     org_output = copy.deepcopy(model.model.graph.output)
     model.remove_tensors_from_outputs([i.name for i in org_output])
     output_names = []
@@ -395,7 +398,10 @@ def gptq_quantize(
 
         load_external_data_for_model(model.model, os.path.split(model.model_path)[0])
 
-    return model.model
+    if return_modelproto:
+        return model.model
+    else:
+        return model
 
 
 def apply_gptq_on_model(
@@ -408,18 +414,39 @@ def apply_gptq_on_model(
     Args:
         model (Union[onnx.ModelProto, ONNXModel, Path, str]): onnx model.
         quant_config (dict): quantization config.
-        calibration_data_reader (CalibrationDataReader): dataloader for calibration.
+        calibration_data_reader (CalibrationDataReader): data_reader for calibration.
 
     Returns:
         onnx.ModelProto: quantized onnx model.
     """
-    # set model params
-    kwargs = {}
-    kwargs = {key: quant_config.pop(key) for key in GPTQConfig.model_params_list if key in quant_config}
+    # check whether to do layer_wise quant
+    layer_wise = quant_config.pop("layer_wise_quant", False)
+
+    # set other model params
+    quant_kwargs = {}
+    quant_kwargs = {key: quant_config.pop(key) for key in GPTQConfig.model_params_list if key in quant_config}
 
     # change op config to dict type
     for op_name_type, op_config in quant_config.items():
         if isinstance(op_config, GPTQConfig):
             quant_config[op_name_type] = op_config.to_dict()
 
-    return gptq_quantize(model, dataloader=calibration_data_reader, weight_config=quant_config, **kwargs)
+    if layer_wise:
+        from neural_compressor.onnxrt.algorithms import layer_wise_quant
+
+        quantized_model = layer_wise_quant(
+            model,
+            quant_func=gptq_quantize,
+            weight_config=quant_config,
+            data_reader=calibration_data_reader,
+            **quant_kwargs)
+    else:
+        quantized_model = gptq_quantize(
+            model,
+            data_reader=calibration_data_reader,
+            weight_config=quant_config,
+            **quant_kwargs)
+
+    if isinstance(quantized_model, ONNXModel):
+        quantized_model = quantized_model.model
+    return quantized_model
