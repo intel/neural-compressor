@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from neural_compressor.tensorflow.algorithms.smoother import SmoothQuant
-from neural_compressor.tensorflow.algorithms.static_quant import KerasAdaptor, TensorFlowAdaptor
+from neural_compressor.tensorflow.keras.quantization.config import (
+    StaticQuantConfig,
+    get_default_static_quant_config,
+)

@@ -15,18 +15,17 @@
 
 from typing import Callable, Dict
 
-import tensorflow as tf
-
+from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
-from neural_compressor.tensorflow.algorithms import KerasAdaptor
-from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig, StaticQuantConfig
+from neural_compressor.tensorflow.algorithms import KerasAdaptor, TensorFlowAdaptor
+from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig
 from neural_compressor.tensorflow.utils import BaseModel, KerasModel, framework_specific_info, register_algo
 
 
 @register_algo(name=STATIC_QUANT)
-def static_quantize_entry(
+def static_quant_entry(
     model: BaseModel,
-    quant_config: StaticQuantConfig,
+    quant_config: BaseConfig,
     calib_dataloader: Callable = None,
     calib_iteration: int = 100,
 ):
@@ -41,8 +40,9 @@ def static_quantize_entry(
     Returns:
         q_model: the quantized model.
     """
-    keras_adaptor = KerasAdaptor(framework_specific_info)
-    q_model = keras_adaptor.quantize(quant_config, model, calib_dataloader, calib_iteration)
+    framework = KerasAdaptor if isinstance(model, KerasModel) else TensorFlowAdaptor
+    quantizer = framework(framework_specific_info)
+    q_model = quantizer.quantize(quant_config, model, calib_dataloader, calib_iteration)
     return q_model
 
 
