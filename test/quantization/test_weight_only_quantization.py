@@ -14,11 +14,14 @@ from neural_compressor.adaptor.torch_utils.weight_only import (
     rtn_quantize,
     teq_quantize,
 )
+
 try:
     import auto_round
+
     auto_round_installed = True
 except ImportError:
     auto_round_installed = False
+
 
 class Model(torch.nn.Module):
     def __init__(self):
@@ -239,6 +242,7 @@ class LLMDataLoader:
     def __iter__(self):
         for i in range(2):
             yield torch.ones([1, 10], dtype=torch.long)
+
 
 @unittest.skipIf(not auto_round_installed, "auto_round module is not installed")
 class TestAutoRoundWeightOnlyQuant(unittest.TestCase):

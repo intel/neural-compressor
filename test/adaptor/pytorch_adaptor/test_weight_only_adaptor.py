@@ -11,8 +11,10 @@ from neural_compressor.adaptor.torch_utils.model_wrapper import MulLinear, Weigh
 from neural_compressor.model import Model as INCModel
 from neural_compressor.utils.load_huggingface import export_compressed_model
 from neural_compressor.utils.pytorch import load
+
 try:
     import auto_round
+
     auto_round_installed = True
 except ImportError:
     auto_round_installed = False
