@@ -297,6 +297,14 @@ def list_to_string(lst: list):
     return " ".join(str(i) for i in lst)
 
 def is_valid_task(task: dict) -> bool:
+    """Verify whether the task is valid.
+
+    Args:
+        task (dict): task request
+
+    Returns:
+        bool: valid or invalid
+    """
     required_fields = ["script_url", "optimized", "arguments", "approach", "requirements", "workers"]
 
     for field in required_fields:
