@@ -769,7 +769,7 @@ def autoround_quantize(
         dataset_name=dataset_name,
         dataset_split=dataset_split,
         use_quant_input=use_quant_input,
-        enable_minmax_tuning=enable_full_range,
+        enable_minmax_tuning=enable_minmax_tuning,
         lr=lr,
         minmax_lr=minmax_lr,
         low_gpu_mem_usage=low_gpu_mem_usage,

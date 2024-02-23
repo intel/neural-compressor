@@ -754,14 +754,26 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             op_type_dict={
                 ".*": {  # re.match
                     "weight": {
-                        "bits": 4,  # 1-8 bits
+                        "dtype": "int",
+                        "bits": 4,
                         "group_size": 32,  # -1 (per-channel)
                         "scheme": "sym",
                         "algorithm": "AUTOROUND",
                     },
                 },
+            },
+            op_name_dict={
                 ".*lm_head": {  # re.match
                     "weight": {"dtype": "fp32"},
+                },
+            },
+            recipes={
+                "autoround_args": {
+                    "n_samples": 20,
+                    "amp": False,
+                    "seq_len": 10,
+                    "iters": 10,
+                    "scale_dtype": "fp32",
                 },
             },
         )
@@ -776,9 +788,9 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         out2 = q_model.model(input)
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
-        q_model.save("./test")
-        print(q_model.autoround_config)
-
+        self.assertTrue("transformer.h.0.attn.k_proj" in q_model.autoround_config.keys())
+        self.assertTrue("scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys())
+        self.assertTrue(torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"])
 
 if __name__ == "__main__":
     unittest.main()

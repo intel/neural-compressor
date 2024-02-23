@@ -941,6 +941,12 @@ class _BaseQuantizationConfig:
             else:
                 return {}
 
+        def autoround_args(val=None):
+            if val is not None:
+                return _check_value("autoround_args", val, dict)
+            else:
+                return {}
+
         def fast_bias_correction(val=None):
             if val is not None:
                 return _check_value("fast_bias_correction", val, bool)
@@ -1025,6 +1031,7 @@ class _BaseQuantizationConfig:
             "awq_args": awq_args,
             "gptq_args": gptq_args,
             "teq_args": teq_args,
+            "autoround_args": autoround_args,
         }
         self._recipes = {}
         for k in RECIPES.keys():
