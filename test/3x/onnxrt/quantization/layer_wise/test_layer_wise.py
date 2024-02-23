@@ -56,26 +56,28 @@ class DummyNLPDataloader(CalibrationDataReader):
 class TestLayerWiseQuant(unittest.TestCase):
     @classmethod
     def setUpClass(self):
+        # onnx model exported with transformers==4.38.2 is different with low version
+        # limit transformers to 4.37.2
         llama_id = "yujiepan/llama-2-tiny-3layers-random"
-        main_export(llama_id, output="llama-2-tiny", task="text-generation")
-        model_path = find_onnx_file("llama-2-tiny")
+        main_export(llama_id, output="llama-2-tiny-3layers-random", task="text-generation")
+        model_path = find_onnx_file("llama-2-tiny-3layers-random")
 
         model = onnx.load(model_path)
         model = symbolic_shape_infer.SymbolicShapeInference.infer_shapes(model, auto_merge=True)
-        infer_shape_model_path = "llama-2-tiny/model-infer-shape.onnx"
+        infer_shape_model_path = "llama-2-tiny-3layers-random/model-infer-shape.onnx"
         onnx.save(model, infer_shape_model_path)
 
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
-        sess_options.optimized_model_filepath = "llama-2-tiny/optimized_model.onnx"
+        sess_options.optimized_model_filepath = "llama-2-tiny-3layers-random/optimized_model.onnx"
         ort.InferenceSession(infer_shape_model_path, sess_options)
 
-        self.llama = "llama-2-tiny/optimized_model.onnx"
+        self.llama = "llama-2-tiny-3layers-random/optimized_model.onnx"
         self.calibration_data_reader = DummyNLPDataloader(llama_id)
 
     @classmethod
     def tearDownClass(self):
-        shutil.rmtree("llama-2-tiny", ignore_errors=True)
+        shutil.rmtree("llama-2-tiny-3layers-random", ignore_errors=True)
 
     def setUp(self):
         # print the test name
@@ -118,25 +120,25 @@ class TestLayerWiseQuant(unittest.TestCase):
         self.assertIsNotNone(qmodel)
         return qmodel
 
-    # def test_rtn_layer_wise(self):
-    #     from neural_compressor.onnxrt.quantization import RTNConfig
+    def test_rtn_layer_wise(self):
+        from neural_compressor.onnxrt.quantization import RTNConfig
 
-    #     rtn_config = RTNConfig(layer_wise_quant=True)
-    #     qmodel_lwq = self._apply_quantize(rtn_config)
-    #     self.assertTrue(self._check_model_is_quantized(qmodel_lwq))
+        rtn_config = RTNConfig(layer_wise_quant=True)
+        qmodel_lwq = self._apply_quantize(rtn_config)
+        self.assertTrue(self._check_model_is_quantized(qmodel_lwq))
 
-    #     rtn_config = RTNConfig(layer_wise_quant=False)
-    #     qmodel = self._apply_quantize(rtn_config)
-    #     self.assertTrue(self._check_model_is_quantized(qmodel))
+        rtn_config = RTNConfig(layer_wise_quant=False)
+        qmodel = self._apply_quantize(rtn_config)
+        self.assertTrue(self._check_model_is_quantized(qmodel))
 
-    #     self.calibration_data_reader.rewind()
-    #     while True:
-    #         inputs = self.calibration_data_reader.get_next()
-    #         if not inputs:
-    #             break
-    #         layerwise_q_out = self.inference(qmodel_lwq, inputs)
-    #         q_out = self.inference(qmodel, inputs)
-    #         self.assertTrue((layerwise_q_out[0] == q_out[0]).all())
+        self.calibration_data_reader.rewind()
+        while True:
+            inputs = self.calibration_data_reader.get_next()
+            if not inputs:
+                break
+            layerwise_q_out = self.inference(qmodel_lwq, inputs)
+            q_out = self.inference(qmodel, inputs)
+            self.assertTrue((layerwise_q_out[0] == q_out[0]).all())
 
     def test_gptq_layer_wise(self):
         from neural_compressor.onnxrt.quantization import GPTQConfig
