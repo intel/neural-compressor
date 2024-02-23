@@ -14,15 +14,12 @@
 
 from auto_round.calib_dataset import CALIB_DATASETS
 
-def get_dataloader(tokenizer, seqlen=2048, seed=42, train_bs=8, dataset_split="train", dataset_name="NeelNanda/pile-10k"):
-    get_dataloader = CALIB_DATASETS.get(dataset_name,
-                                        CALIB_DATASETS["NeelNanda/pile-10k"])
+
+def get_dataloader(
+    tokenizer, seqlen=2048, seed=42, train_bs=8, dataset_split="train", dataset_name="NeelNanda/pile-10k"
+):
+    get_dataloader = CALIB_DATASETS.get(dataset_name, CALIB_DATASETS["NeelNanda/pile-10k"])
     dataloader = get_dataloader(
-        tokenizer,
-        seqlen=seqlen,
-        seed=seed,
-        bs=train_bs,
-        split=dataset_split,
-        dataset_name=dataset_name
+        tokenizer, seqlen=seqlen, seed=seed, bs=train_bs, split=dataset_split, dataset_name=dataset_name
     )
     return dataloader

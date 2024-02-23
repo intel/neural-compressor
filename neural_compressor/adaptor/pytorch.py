@@ -4917,7 +4917,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
     def autoround_quantize(self, model, tune_cfg, dataloader):
         logger.info("quantizing with the AutoRound algorithm")
         from .torch_utils.weight_only import autoround_quantize
-        
+
         # build weight_config
         """
             weight_config={
@@ -4941,19 +4941,19 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             weight_config[op_name]["bits"] = config["weight"]["bits"]
             weight_config[op_name]["group_size"] = config["weight"]["group_size"]
             weight_config[op_name]["scheme"] = config["weight"]["scheme"]
-    
+
         if "autoround_args" in self.recipes:
             enable_full_range = self.recipes["autoround_args"].get("enable_full_range", False)
             bs = self.recipes["autoround_args"].get("bs", 8)
             amp = self.recipes["autoround_args"].get("amp", True)
             device = self.recipes["autoround_args"].get("device", "cpu")
-            lr_scheduler= self.recipes["autoround_args"].get("lr_scheduler", None)
+            lr_scheduler = self.recipes["autoround_args"].get("lr_scheduler", None)
             dataset_name = self.recipes["autoround_args"].get("dataset_name", "NeelNanda/pile-10k")
             dataset_split = self.recipes["autoround_args"].get("dataset_split", "train")
             use_quant_input = self.recipes["autoround_args"].get("use_quant_input", True)
             enable_minmax_tuning = self.recipes["autoround_args"].get("enable_minmax_tuning", True)
-            lr = self.recipes["autoround_args"].get("lr",None)
-            minmax_lr = self.recipes["autoround_args"].get("minmax_lr",None)
+            lr = self.recipes["autoround_args"].get("lr", None)
+            minmax_lr = self.recipes["autoround_args"].get("minmax_lr", None)
             low_gpu_mem_usage = self.recipes["autoround_args"].get("low_gpu_mem_usage", True)
             iters = self.recipes["autoround_args"].get("iters", 200)
             seqlen = self.recipes["autoround_args"].get("seqlen", 2048)
@@ -4962,16 +4962,16 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             seed = self.recipes["autoround_args"].get("seed", 42)
             n_blocks = self.recipes["autoround_args"].get("n_blocks", 1)
             gradient_accumulate_steps = self.recipes["autoround_args"].get("gradient_accumulate_steps", 1)
-            not_use_best_mse= self.recipes["autoround_args"].get("not_use_best_mse", False)
-            dynamic_max_gap= self.recipes["autoround_args"].get("dynamic_max_gap", -1)
+            not_use_best_mse = self.recipes["autoround_args"].get("not_use_best_mse", False)
+            dynamic_max_gap = self.recipes["autoround_args"].get("dynamic_max_gap", -1)
             data_type = self.recipes["autoround_args"].get("data_type", "int")  ##only support data_type
             scale_dtype = self.recipes["autoround_args"].get("scale_dtype", "fp16")
         else:
             enable_full_range: bool = False  ##for symmetric, TODO support later
             bs: int = 8
             amp: bool = True
-            device="cpu"
-            lr_scheduler=None
+            device = "cpu"
+            lr_scheduler = None
             dataset_name: str = "NeelNanda/pile-10k"
             dataset_split: str = "train"
             use_quant_input: bool = True
@@ -4989,8 +4989,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             not_use_best_mse: bool = False
             dynamic_max_gap: int = -1
             data_type: str = "int"  ##only support data_type
-            scale_dtype="fp16"
-        
+            scale_dtype = "fp16"
+
         model, autoround_config = autoround_quantize(
             model=model,
             tokenizer=None,

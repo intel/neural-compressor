@@ -792,5 +792,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue("scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys())
         self.assertTrue(torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"])
 
+
 if __name__ == "__main__":
     unittest.main()
