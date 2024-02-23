@@ -17,8 +17,8 @@ from typing import Callable, Dict, List, Tuple, Union
 
 import numpy as np
 import onnx
-from packaging.version import Version
 import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
+from packaging.version import Version
 
 from neural_compressor.common import Logger
 
@@ -273,6 +273,7 @@ def quantize_data(data, quantize_range, qType, scheme):
     scale, zero_point = _calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
     quantized_data = _quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
     return rmin, rmax, zero_point, scale, quantized_data
+
 
 def check_model_with_infer_shapes(model):
     """Check if the model has been shape inferred."""

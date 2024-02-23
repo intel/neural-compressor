@@ -1,17 +1,17 @@
 import os
-import torch
 import shutil
 import unittest
 from copy import deepcopy
-from transformers import AutoTokenizer
 
 import onnx
-from optimum.exporters.onnx import main_export
 import onnxruntime as ort
 import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
+import torch
+from optimum.exporters.onnx import main_export
+from transformers import AutoTokenizer
 
-from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
 from neural_compressor.common import Logger
+from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
 
 logger = Logger().get_logger()
 
@@ -23,6 +23,7 @@ def find_onnx_file(folder_path):
             if file.endswith(".onnx"):
                 return os.path.join(root, file)
     return None
+
 
 class DummyNLPDataloader(CalibrationDataReader):
     def __init__(self, model_name):
@@ -51,6 +52,7 @@ class DummyNLPDataloader(CalibrationDataReader):
     def rewind(self):
         self.iter_next = iter(self.encoded_list)
 
+
 class TestLayerWiseQuant(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -60,7 +62,7 @@ class TestLayerWiseQuant(unittest.TestCase):
 
         model = onnx.load(model_path)
         model = symbolic_shape_infer.SymbolicShapeInference.infer_shapes(model, auto_merge=True)
-        infer_shape_model_path = 'llama-2-tiny/model-infer-shape.onnx'
+        infer_shape_model_path = "llama-2-tiny/model-infer-shape.onnx"
         onnx.save(model, infer_shape_model_path)
 
         sess_options = ort.SessionOptions()

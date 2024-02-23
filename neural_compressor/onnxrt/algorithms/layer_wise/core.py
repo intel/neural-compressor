@@ -21,21 +21,22 @@
 import os
 from copy import deepcopy
 from pathlib import Path
-from typing import Union, Callable, List
+from typing import Callable, List, Union
 
 import onnx
 import onnxruntime as ort
 
+from neural_compressor.common import Logger
 from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
 from neural_compressor.onnxrt.utils.onnx_model import ONNXModel
 from neural_compressor.onnxrt.utils.utility import check_model_with_infer_shapes
-from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
 __all__ = [
     "layer_wise_quant",
 ]
+
 
 def layer_wise_quant(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
@@ -95,9 +96,7 @@ def layer_wise_quant(
         )
     )
     logger.debug(
-        "Will split model with these nodes for layer-wise quantization: {}".format(
-            [node.name for node in split_nodes]
-        )
+        "Will split model with these nodes for layer-wise quantization: {}".format([node.name for node in split_nodes])
     )
 
     split_idx = 1
@@ -129,8 +128,12 @@ def layer_wise_quant(
         logger.info("Quantize split model {}".format(split_idx))
         if require_data_reader:
             # process data_reader for current split and next split
-            current_data_reader = _filter_data_reader_for_current_split_model(split_model_part_1.model, current_data_reader)
-            next_data_reader = _prepare_data_reader_for_next_split_model(split_model_part_1.model_path, current_data_reader, providers)
+            current_data_reader = _filter_data_reader_for_current_split_model(
+                split_model_part_1.model, current_data_reader
+            )
+            next_data_reader = _prepare_data_reader_for_next_split_model(
+                split_model_part_1.model_path, current_data_reader, providers
+            )
             lwq_data_reader.append(next_data_reader)
 
             # perform quantization
@@ -144,18 +147,17 @@ def layer_wise_quant(
         else:
             # perform quantization
             split_model_part_1_quantized = quant_func(
-                split_model_part_1,
-                weight_config=weight_config,
-                return_modelproto=False,
-                **kwargs
+                split_model_part_1, weight_config=weight_config, return_modelproto=False, **kwargs
             )
 
         # check split model is valid
         try:
             ort.InferenceSession(split_model_part_1_quantized.model.SerializeToString(), providers=providers)
         except Exception as e:
-            logger.error("Layer-wise quantized model {} can't be inferred correctly. "
-                         "Please check the raise exception".format(split_idx))
+            logger.error(
+                "Layer-wise quantized model {} can't be inferred correctly. "
+                "Please check the raise exception".format(split_idx)
+            )
             raise e
 
         # merge split quantized model
@@ -174,7 +176,9 @@ def layer_wise_quant(
             if require_data_reader:
                 # process data_reader for current split
                 current_data_reader = lwq_data_reader.pop(0)
-                current_data_reader = _filter_data_reader_for_current_split_model(split_model_part_2.model, current_data_reader)
+                current_data_reader = _filter_data_reader_for_current_split_model(
+                    split_model_part_2.model, current_data_reader
+                )
 
                 # perform quantization
                 split_model_part_2_quantized = quant_func(
@@ -187,18 +191,17 @@ def layer_wise_quant(
             else:
                 # perform quantization
                 split_model_part_2_quantized = quant_func(
-                    split_model_part_2,
-                    weight_config=weight_config,
-                    return_modelproto=False,
-                    **kwargs
+                    split_model_part_2, weight_config=weight_config, return_modelproto=False, **kwargs
                 )
 
             # check split model is valid
             try:
                 ort.InferenceSession(split_model_part_2_quantized.model.SerializeToString(), providers=providers)
             except Exception as e:
-                logger.error("Layer-wise quantized model {} can't be inferred correctly. "
-                            "Please check the raise exception".format(split_idx))
+                logger.error(
+                    "Layer-wise quantized model {} can't be inferred correctly. "
+                    "Please check the raise exception".format(split_idx)
+                )
                 raise e
 
             # merge split quantized model
@@ -210,6 +213,7 @@ def layer_wise_quant(
 
     # reload external data to prevent external data file path errors
     from onnx.external_data_helper import load_external_data_for_model
+
     load_external_data_for_model(quantized_model_merged.model, os.path.dirname(quantized_model_merged.model_path))
 
     return quantized_model_merged
@@ -246,12 +250,11 @@ def _filter_data_reader_for_current_split_model(model: onnx.ModelProto, data_rea
         if not inputs:
             break
         filter_input = {
-            input_name: input_tensor
-            for input_name, input_tensor in inputs.items()
-            if input_name in input_names
+            input_name: input_tensor for input_name, input_tensor in inputs.items() if input_name in input_names
         }
         filter_inputs.append(filter_input)
     return DataReader(filter_inputs)
+
 
 def _prepare_data_reader_for_next_split_model(
     model_path: str,

@@ -74,6 +74,7 @@ class ONNXModel(ORTONNXModel):
     def check_is_large_model(self):
         """Check model > 2GB."""
         from neural_compressor.onnxrt.utils.utility import MAXIMUM_PROTOBUF
+
         init_size = 0
         for init in self.model.graph.initializer:
             # if initializer has external data location, return True
@@ -417,7 +418,9 @@ class ONNXModel(ORTONNXModel):
     def get_nodes_chain(self, start, stop, result_chain=[]):
         """Get nodes chain with given start node and stop node."""
         from collections import deque
+
         from onnx import NodeProto
+
         from neural_compressor.onnxrt.utils.utility import find_by_name
 
         # process start node list
@@ -818,9 +821,7 @@ class ONNXModel(ORTONNXModel):
         split_nodes = self.find_split_node_for_layer_wise_quantization()
         return split_nodes
 
-    def split_model_with_node(
-        self, split_node_name, path_of_model_to_split, save_both_split_models=True
-    ):
+    def split_model_with_node(self, split_node_name, path_of_model_to_split, save_both_split_models=True):
         """Split model into two parts at a given node.
 
         Args:

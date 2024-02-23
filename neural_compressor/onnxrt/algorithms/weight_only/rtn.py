@@ -213,11 +213,9 @@ def apply_rtn_on_model(model: Union[onnx.ModelProto, ONNXModel, Path, str], quan
     if layer_wise:
         from neural_compressor.onnxrt.algorithms import layer_wise_quant
 
-        quantized_model = layer_wise_quant(
-            model, quant_func=rtn_quantize, weight_config=quant_config, **quant_kwargs)
+        quantized_model = layer_wise_quant(model, quant_func=rtn_quantize, weight_config=quant_config, **quant_kwargs)
     else:
-        quantized_model = rtn_quantize(
-            model, weight_config=quant_config, **quant_kwargs)
+        quantized_model = rtn_quantize(model, weight_config=quant_config, **quant_kwargs)
 
     if isinstance(quantized_model, ONNXModel):
         quantized_model = quantized_model.model

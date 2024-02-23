@@ -439,13 +439,12 @@ def apply_gptq_on_model(
             quant_func=gptq_quantize,
             weight_config=quant_config,
             data_reader=calibration_data_reader,
-            **quant_kwargs)
+            **quant_kwargs
+        )
     else:
         quantized_model = gptq_quantize(
-            model,
-            data_reader=calibration_data_reader,
-            weight_config=quant_config,
-            **quant_kwargs)
+            model, data_reader=calibration_data_reader, weight_config=quant_config, **quant_kwargs
+        )
 
     if isinstance(quantized_model, ONNXModel):
         quantized_model = quantized_model.model
