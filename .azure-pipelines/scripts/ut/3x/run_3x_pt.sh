@@ -24,7 +24,7 @@ pytest --cov="${inc_path}" -vs --disable-warnings --html=report.html --self-cont
 cp .coverage ${LOG_DIR}/.coverage
 cp report.html ${LOG_DIR}/
 
-if [ $(grep -c '== FAILURES ==' ${ut_log_name}) != 0 ] || [ $(grep -c '== ERRORS ==' ${ut_log_name}) != 0 ] || [ $(grep -c ' passed ' ${ut_log_name}) == 0 ]; then
+if [ $(grep -c '== FAILURES ==' ${ut_log_name}) != 0 ] || [ $(grep -c '== ERRORS ==' ${ut_log_name}) != 0 ] || [ $(grep -c ' passed' ${ut_log_name}) == 0 ]; then
     echo "Find errors in pytest case, please check the output..."
     echo "Please search for '== FAILURES ==' or '== ERRORS =='"
     exit 1

@@ -34,9 +34,10 @@ pytest_html_merger -i ./report -o ./report.html
 cp .coverage ${LOG_DIR}/.coverage
 cp report.html ${LOG_DIR}/
 
-if [ $(grep -c "FAILED" ${ut_log_name}) != 0 ] || [ $(grep -c "core dumped" ${ut_log_name}) != 0 ] \
-|| [ $(grep -c "ModuleNotFoundError:" ${ut_log_name}) != 0 ] || [ $(grep -c "ImportError:" ${ut_log_name}) != 0 ] || [ $(grep -c "OK" ${ut_log_name}) == 0 ];then
-    echo "Find errors in UT test, please check the output..."
+if [ $(grep -c '== FAILURES ==' ${ut_log_name}) != 0 ] || [ $(grep -c '== ERRORS ==' ${ut_log_name}) != 0 ] || [ $(grep -c ' passed' ${ut_log_name}) == 0 ]; then
+    echo "Find errors in pytest case, please check the output..."
+    echo "Please search for '== FAILURES ==' or '== ERRORS =='"
     exit 1
 fi
+
 echo "UT finished successfully! "
