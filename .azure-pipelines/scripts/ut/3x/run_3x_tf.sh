@@ -6,35 +6,33 @@ echo "${test_case}"
 # install requirements
 echo "set up UT env..."
 pip install -r /neural-compressor/test/3x/tensorflow/requirements.txt
-pip install coverage
+pip install pytest-cov
+pip install pytest-html
+pip install pytest-html-merger
 pip list
 
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/3x/coverage.3x_tf
 inc_path=$(python -c 'import neural_compressor; print(neural_compressor.__path__[0])')
-cd /neural-compressor/test || exit 1
-find ./3x/tensorflow/* -name "test*.py" | sed 's,\.\/,coverage run --source='"${inc_path}"' --append ,g' | sed 's/$/ --verbose/'> run.sh
-find ./3x/common/* -name "test*.py" | sed 's,\.\/,coverage run --source='"${inc_path}"' --append ,g' | sed 's/$/ --verbose/'>> run.sh
-sed -i '/tensorflow\/keras\//d' run.sh
-
-find ./3x/tensorflow/keras/* -name "test*.py" | sed 's,\.\/,coverage run --source='"${inc_path}"' --append ,g' | sed 's/$/ --verbose/'> run_keras.sh
+cd /neural-compressor/test/3x || exit 1
+rm -rf torch
+rm -rf onnxrt
+mv tensorflow/keras .
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_3x_tf.log
+pytest --cov="${inc_path}" -vs --disable-warnings --html=report_tf.html --self-contained-html ./tensorflow 2>&1 | tee -a ${ut_log_name}
+pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_common.html --self-contained-html ./common 2>&1 | tee -a ${ut_log_name}
 
-echo "cat run.sh..."
-sort run.sh -o run.sh
-cat run.sh | tee ${ut_log_name}
-echo "cat run_keras.sh..."
-sort run_keras.sh -o run_keras.sh
-cat run_keras.sh | tee ${ut_log_name}
-echo "------UT start-------"
-bash -x run.sh 2>&1 | tee -a ${ut_log_name}
 pip install intel-extension-for-tensorflow[cpu]
-bash -x run_keras.sh 2>&1 | tee -a ${ut_log_name}
-cp .coverage ${LOG_DIR}/.coverage
+pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_keras.html --self-contained-html ./keras 2>&1 | tee -a ${ut_log_name}
 
-echo "------UT end -------"
+mkdir -p report
+mv *.html report
+pytest_html_merger -i ./report -o ./report.html
+
+cp .coverage ${LOG_DIR}/.coverage
+cp report.html ${LOG_DIR}/
 
 if [ $(grep -c "FAILED" ${ut_log_name}) != 0 ] || [ $(grep -c "core dumped" ${ut_log_name}) != 0 ] \
 || [ $(grep -c "ModuleNotFoundError:" ${ut_log_name}) != 0 ] || [ $(grep -c "ImportError:" ${ut_log_name}) != 0 ] || [ $(grep -c "OK" ${ut_log_name}) == 0 ];then
