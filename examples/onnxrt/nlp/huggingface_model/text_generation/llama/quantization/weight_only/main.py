@@ -176,11 +176,10 @@ class KVDataloader:
             shuffle=False,
             collate_fn=self.collate_batch,
         )
-        session = ort.InferenceSession(model_path)
-        inputs_names = [input.name for input in session.get_inputs()]
+        model = onnx.load(model_path, load_external_data=False)
+        inputs_names = [input.name for input in model.graph.input]
         self.key_value_input_names = [key for key in inputs_names if (".key" in key) or (".value" in key)]
         self.use_cache = len(self.key_value_input_names) > 0
-        self.session = session if self.use_cache else None
 
     def collate_batch(self, batch):
 
@@ -229,7 +228,7 @@ class GPTQDataloader:
 
         self.batch_size=batch_size
         traindata = load_dataset(args.dataset, split=sub_folder)
-        traindata = traindata.map(tokenize_function, batched=True)
+        self.traindata = traindata.map(tokenize_function, batched=True)
         self.traindata.set_format(type="torch", columns=["input_ids", "attention_mask"])
 
         session = ort.InferenceSession(model_path)
