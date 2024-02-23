@@ -23,7 +23,7 @@ from neural_compressor.tensorflow.utils import BaseModel, KerasModel, framework_
 
 
 @register_algo(name=STATIC_QUANT)
-def static_quantize_entry(
+def static_quant_entry(
     model: BaseModel,
     quant_config: BaseConfig,
     calib_dataloader: Callable = None,
