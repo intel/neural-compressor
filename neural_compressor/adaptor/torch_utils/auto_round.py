@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from auto_round.calib_dataset import CALIB_DATASETS # pylint: disable=E1120
+from auto_round.calib_dataset import CALIB_DATASETS  # pylint: disable=E1120
 
 
 def get_dataloader(
