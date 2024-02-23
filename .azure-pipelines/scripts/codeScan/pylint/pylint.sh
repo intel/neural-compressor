@@ -22,7 +22,7 @@ apt-get install -y --no-install-recommends --fix-missing \
 pip install -r /neural-compressor/requirements.txt
 pip install cmake
 
-pip install torch==1.12.0 \
+pip install torch \
             horovod \
             google \
             autograd \
@@ -39,7 +39,9 @@ pip install torch==1.12.0 \
             prettytable \
             psutil \
             py-cpuinfo \
-            pyyaml
+            pyyaml \
+            pydantic \
+            protobuf
 
 if [ "${scan_module}" = "neural_solution" ]; then
     cd /neural-compressor
@@ -56,6 +58,10 @@ elif [ "${scan_module}" = "neural_insights" ]; then
     bash /neural-compressor/.azure-pipelines/scripts/install_neural_insights.sh
 
 fi
+
+echo "[DEBUG] list pipdeptree..."
+pip install pipdeptree
+pipdeptree
 
 python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto \
 --ignored-modules=tensorflow,keras,torch,torch.quantization,torch.tensor,torchvision,fairseq,mxnet,onnx,onnxruntime,intel_extension_for_pytorch,intel_extension_for_tensorflow,torchinfo,horovod,transformers \

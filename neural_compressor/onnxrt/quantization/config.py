@@ -63,7 +63,7 @@ class RTNConfig(BaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
     supported_configs: List[_OperatorConfig] = []
-    node_params_list: List[str] = [
+    params_list: List[str] = [
         "weight_dtype",
         "weight_bits",
         "weight_group_size",
@@ -75,7 +75,6 @@ class RTNConfig(BaseConfig):
         "providers",
         "layer_wise_quant",
     ]
-    params_list: List[str] = node_params_list + model_params_list
     name: str = RTN
 
     def __init__(
@@ -197,7 +196,7 @@ class GPTQConfig(BaseConfig):
     """Config class for gptq weight-only quantization."""
 
     supported_configs: List[_OperatorConfig] = []
-    node_params_list: List[str] = [
+    params_list: List[str] = [
         "weight_dtype",
         "weight_bits",
         "weight_group_size",
@@ -214,7 +213,6 @@ class GPTQConfig(BaseConfig):
         "providers",
         "layer_wise_quant",
     ]
-    params_list: List[str] = node_params_list + model_params_list
     name: str = GPTQ
 
     def __init__(
@@ -362,7 +360,7 @@ class AWQConfig(BaseConfig):
     """Config class for awq weight-only quantization."""
 
     supported_configs: List[_OperatorConfig] = []
-    node_params_list: List[str] = [
+    params_list: List[str] = [
         "weight_dtype",
         "weight_bits",
         "weight_group_size",
@@ -375,7 +373,6 @@ class AWQConfig(BaseConfig):
         "enable_mse_search",
         "providers",
     ]
-    params_list: List[str] = node_params_list + model_params_list
     name: str = AWQ
 
     def __init__(
@@ -513,20 +510,6 @@ class SmoohQuantConfig(BaseConfig, StaticQuantConfig):
         "auto_alpha_args",
         "calib_iter",
         "scales_per_op",
-        "op_types",
-        "providers",
-        # quant parameters
-        "calibrate_method",
-        "quant_format",
-        "activation_type",
-        "weight_type",
-        "op_types_to_quantize",
-        "nodes_to_quantize",
-        "nodes_to_exclude",
-        "per_channel",
-        "reduce_range",
-        "use_external_data_format",
-        "extra_options",
     ]
     name: str = SMOOTH_QUANT
 

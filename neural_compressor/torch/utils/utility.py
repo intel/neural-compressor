@@ -13,11 +13,14 @@
 # limitations under the License.
 
 
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple, Union
 
 import torch
+from typing_extensions import TypeAlias
 
 from neural_compressor.common.utils import logger
+
+OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
 algos_mapping: Dict[str, Callable] = {}
@@ -108,7 +111,7 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
     return filter_result
 
 
-def get_double_quant_config(double_quant_type, weight_sym=True):
+def get_double_quant_config(double_quant_type):
     from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
 
     if double_quant_type is None:
@@ -116,5 +119,4 @@ def get_double_quant_config(double_quant_type, weight_sym=True):
     assert double_quant_type in DOUBLE_QUANT_CONFIGS, "Supported double quant configs: {}".format(
         list(DOUBLE_QUANT_CONFIGS.keys())
     )
-    DOUBLE_QUANT_CONFIGS[double_quant_type]["weight_sym"] = weight_sym
     return DOUBLE_QUANT_CONFIGS[double_quant_type]

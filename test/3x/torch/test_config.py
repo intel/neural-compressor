@@ -7,9 +7,12 @@ import transformers
 from neural_compressor.torch.quantization import (
     AWQConfig,
     GPTQConfig,
+    HQQConfig,
     RTNConfig,
     SmoothQuantConfig,
     StaticQuantConfig,
+    TEQConfig,
+    get_default_hqq_config,
     get_default_rtn_config,
     quantize,
 )
@@ -276,6 +279,15 @@ class TestQuantizationConfig(unittest.TestCase):
         awq_config2 = AWQConfig.from_dict(quant_config_dict["awq"])
         self.assertEqual(awq_config1.to_dict(), awq_config2.to_dict())
 
+    def test_teq_config(self):
+        absorb_dict = {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]}
+        teq_config1 = TEQConfig(bits=8, absorb_to_layer=absorb_dict, folding=False)
+        quant_config_dict = {
+            "teq": {"bits": 8, "absorb_to_layer": absorb_dict, "folding": False},
+        }
+        teq_config2 = TEQConfig.from_dict(quant_config_dict["teq"])
+        self.assertEqual(teq_config1.to_dict(), teq_config2.to_dict())
+
     def test_static_quant_config(self):
         static_config1 = StaticQuantConfig(w_dtype="int8", act_sym=True, act_algo="minmax")
         quant_config_dict = {"static": {"w_dtype": "int8", "act_sym": True, "act_algo": "minmax"}}
@@ -287,6 +299,12 @@ class TestQuantizationConfig(unittest.TestCase):
         quant_config_dict = {"sq": {"alpha": 0.8, "folding": True}}
         sq_config2 = SmoothQuantConfig.from_dict(quant_config_dict["sq"])
         self.assertEqual(sq_config1.to_dict(), sq_config2.to_dict())
+
+    def test_hqq_config(self):
+        hqq_config = HQQConfig(bits=4, group_size=64, quant_zero=True)
+        quant_config_dict = {"hqq": {"bits": 4, "group_size": 64, "quant_zero": True}}
+        hqq_config2 = HQQConfig.from_dict(quant_config_dict["hqq"])
+        self.assertEqual(hqq_config.to_dict(), hqq_config2.to_dict())
 
 
 class TestQuantConfigForAutotune(unittest.TestCase):

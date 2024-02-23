@@ -19,6 +19,7 @@ import onnx
 
 from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
+from neural_compressor.common.utils import log_quant_execution
 from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
 from neural_compressor.onnxrt.quantization.config import FRAMEWORK_NAME
 from neural_compressor.onnxrt.utils.utility import algos_mapping
@@ -31,6 +32,7 @@ def _need_apply(quant_config: BaseConfig, algo_name):
 
 
 # * only for internal usage now
+@log_quant_execution
 def _quantize(
     model_input: Union[Path, str],
     quant_config: BaseConfig,

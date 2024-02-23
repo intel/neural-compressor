@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ class MyDataloader:
         return self.length
 
 
-class TestKeras3xNewApi(unittest.TestCase):
+class TestTF3xNewApi(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_model()
@@ -117,11 +117,11 @@ class TestKeras3xNewApi(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         shutil.rmtree("baseline_model", ignore_errors=True)
-        shutil.rmtree("int8_model", ignore_errors=True)
 
     def test_static_quant_from_dict_default(self):
         logger.info("test_static_quant_from_dict_default")
-        from neural_compressor.tensorflow import get_default_static_quant_config, quantize_model
+        from neural_compressor.tensorflow import quantize_model
+        from neural_compressor.tensorflow.keras import get_default_static_quant_config
 
         calib_dataloader = MyDataloader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
@@ -159,7 +159,8 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_class_default(self):
         logger.info("test_static_quant_from_class_default")
-        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
+        from neural_compressor.tensorflow import quantize_model
+        from neural_compressor.tensorflow.keras import StaticQuantConfig
 
         calib_dataloader = MyDataloader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
@@ -173,7 +174,8 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_class_beginner(self):
         logger.info("test_static_quant_from_class_beginner")
-        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
+        from neural_compressor.tensorflow import quantize_model
+        from neural_compressor.tensorflow.keras import StaticQuantConfig
 
         calib_dataloader = MyDataloader(dataset=Dataset())
         fp32_model = keras.models.load_model("./baseline_model")
@@ -225,7 +227,8 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_static_quant_from_class_advance(self):
         logger.info("test_static_quant_from_class_advance")
-        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
+        from neural_compressor.tensorflow import quantize_model
+        from neural_compressor.tensorflow.keras import StaticQuantConfig
 
         calib_dataloader = MyDataloader(dataset=Dataset())
         quant_config = StaticQuantConfig(
@@ -252,7 +255,7 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_config_from_dict(self):
         logger.info("test_config_from_dict")
-        from neural_compressor.tensorflow import StaticQuantConfig
+        from neural_compressor.tensorflow.keras import StaticQuantConfig
 
         quant_config = {
             "static_quant": {
@@ -277,7 +280,7 @@ class TestKeras3xNewApi(unittest.TestCase):
 
     def test_config_to_dict(self):
         logger.info("test_config_to_dict")
-        from neural_compressor.tensorflow import StaticQuantConfig
+        from neural_compressor.tensorflow.keras import StaticQuantConfig
 
         quant_config = StaticQuantConfig(
             weight_dtype="int8",
@@ -300,7 +303,7 @@ class TestKeras3xNewApi(unittest.TestCase):
 class TestQuantConfigForAutotune(unittest.TestCase):
     def test_expand_config(self):
         # test the expand functionalities, the user is not aware it
-        from neural_compressor.tensorflow import StaticQuantConfig
+        from neural_compressor.tensorflow.keras import StaticQuantConfig
 
         quant_configs = StaticQuantConfig(
             weight_dtype="int8",
@@ -314,13 +317,6 @@ class TestQuantConfigForAutotune(unittest.TestCase):
         expand_config_list = StaticQuantConfig.expand(quant_configs)
         self.assertEqual(expand_config_list[0].weight_granularity, "per_channel")
         self.assertEqual(expand_config_list[1].weight_granularity, "per_tensor")
-
-    def test_config_set_api(self):
-        # *Note: this test is only for improving the code coverage and can be removed once the test_common is enabled.
-        from neural_compressor.common.base_config import config_registry, get_all_config_set_from_config_registry
-
-        config_set = get_all_config_set_from_config_registry(fwk_name="keras")
-        self.assertEqual(len(config_set), len(config_registry.registered_configs["keras"]))
 
 
 if __name__ == "__main__":

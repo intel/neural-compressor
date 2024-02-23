@@ -16,10 +16,13 @@ from neural_compressor.common.utils import (
     level,
     logger,
     Logger,
+    TuningLogger,
+    log_quant_execution,
     set_random_seed,
     set_resume_from,
     set_workspace,
     set_tensorboard,
+    dump_elapsed_time,
 )
 from neural_compressor.common.base_config import options
 
@@ -33,4 +36,5 @@ __all__ = [
     "set_random_seed",
     "set_resume_from",
     "set_tensorboard",
+    "dump_elapsed_time",
 ]

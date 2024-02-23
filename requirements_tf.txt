@@ -1,5 +1,6 @@
 prettytable
 psutil
 py-cpuinfo
+pydantic
 pyyaml
 tensorflow
