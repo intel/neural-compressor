@@ -36,9 +36,9 @@ from neural_solution.frontend.utility import (
     get_cluster_info,
     get_cluster_table,
     get_res_during_tuning,
+    is_valid_task,
     list_to_string,
     serialize,
-    is_valid_task,
 )
 from neural_solution.utils.utility import get_db_path, get_task_log_workspace, get_task_workspace
 
