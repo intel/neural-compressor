@@ -101,7 +101,7 @@ class RTNConfig(BaseConfig):
                 2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
                 4 (int8 compute type of jblas kernel). Defaults to 0.
             providers (list, optional): execution providers to use. Defaults to ["CPUExecutionProvider"].
-            layer_wise_quant (bool, optional): wheter to quantize model layer by layer to save memory footprint.
+            layer_wise_quant (bool, optional): whether to quantize model layer by layer to save memory footprint.
                 Check below link for details
                 https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_layer_wise.md,
                 default is False.
@@ -251,7 +251,7 @@ class GPTQConfig(BaseConfig):
             mse (bool, optional): whether get scale and zero point with mse error. Defaults to False.
             perchannel (bool, optional): whether quantize weight per-channel. Defaults to True.
             providers (list, optional): execution providers to use. Defaults to ["CPUExecutionProvider"].
-            layer_wise_quant (bool, optional): wheter to quantize model layer by layer to save memory footprint.
+            layer_wise_quant (bool, optional): whether to quantize model layer by layer to save memory footprint.
                 Check below link for details
                 https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_layer_wise.md,
                 default is False.
