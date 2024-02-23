@@ -1,0 +1,21 @@
+custom_service_name: "CI checker"
+subprojects:
+  - id: "Code Scan Tests workflow"
+    paths:
+      - "neural_compressor/**"
+      - "setup.py"
+      - "requirements.txt"
+      - ".azure-pipelines/code-scan.yml"
+      - ".azure-pipelines/scripts/codeScan/**"
+    checks:
+      - "Code-Scan"
+      - "Code-Scan (Bandit Code Scan Bandit)"
+      - "Code-Scan (CopyRight Code Scan CopyRight)"
+      - "Code-Scan (DocStyle Code Scan DocStyle)"
+      - "Code-Scan (Pylint Code Scan Pylint)"
+
+  - id: "DCO check workflow"
+    paths:
+      - "**/*"
+    checks:
+      - "DCO"
