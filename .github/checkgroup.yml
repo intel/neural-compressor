@@ -13,9 +13,11 @@ subprojects:
       - "Code-Scan (CopyRight Code Scan CopyRight)"
       - "Code-Scan (DocStyle Code Scan DocStyle)"
       - "Code-Scan (Pylint Code Scan Pylint)"
+      - "Code-Scan-Neural-Insights"
+      - "Code-Scan-Neural-Solution"
 
   - id: "DCO check workflow"
     paths:
-      - "**/*"
+      - "**"
     checks:
       - "DCO"
