@@ -20,7 +20,7 @@ if is_hpex_available():
     from neural_compressor.torch.quantization.config import FP8QConfig, get_default_fp8_qconfig
     from neural_compressor.torch.quantization.modules import BatchMatmul, Matmul
 
-torch.set_grad_enabled(False)
+    torch.set_grad_enabled(False)
 
 
 class M(torch.nn.Module):
