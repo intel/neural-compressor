@@ -15,3 +15,4 @@
 from neural_compressor.common.utils.constants import *
 from neural_compressor.common.utils.utility import *
 from neural_compressor.common.utils.logger import *
+from neural_compressor.common.utils.save_load import save_qconfig, load_qconfig
