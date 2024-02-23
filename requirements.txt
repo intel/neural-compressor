@@ -1,5 +1,4 @@
 deprecated >= 1.2.13
-git+https://github.com/intel/auto-round.git
 numpy
 opencv-python-headless
 pandas
