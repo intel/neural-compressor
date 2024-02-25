@@ -12,6 +12,13 @@ from neural_compressor.model import Model as INCModel
 from neural_compressor.utils.load_huggingface import export_compressed_model
 from neural_compressor.utils.pytorch import load
 
+try:
+    import auto_round
+
+    auto_round_installed = True
+except ImportError:
+    auto_round_installed = False
+
 
 class Model(torch.nn.Module):
     def __init__(self):
@@ -737,6 +744,62 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         out2 = q_model.model(input)
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
+
+    @unittest.skipIf(not auto_round_installed, "auto_round module is not installed")
+    def test_AutoRound_quant(self):
+        from neural_compressor.adaptor.torch_utils.auto_round import get_dataloader
+
+        tokenizer = transformers.AutoTokenizer.from_pretrained(
+            "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
+        )
+        dataloader = get_dataloader(
+            tokenizer, seqlen=10, seed=42, train_bs=8, dataset_split="train", dataset_name="NeelNanda/pile-10k"
+        )
+        fp32_model = copy.deepcopy(self.gptj)
+
+        conf = PostTrainingQuantConfig(
+            approach="weight_only",
+            op_type_dict={
+                ".*": {  # re.match
+                    "weight": {
+                        "dtype": "int",
+                        "bits": 4,
+                        "group_size": 32,  # -1 (per-channel)
+                        "scheme": "sym",
+                        "algorithm": "AUTOROUND",
+                    },
+                },
+            },
+            op_name_dict={
+                ".*lm_head": {  # re.match
+                    "weight": {"dtype": "fp32"},
+                },
+            },
+            recipes={
+                "autoround_args": {
+                    "n_samples": 20,
+                    "amp": False,
+                    "seq_len": 10,
+                    "iters": 10,
+                    "scale_dtype": "fp32",
+                    "device": "cpu",
+                },
+            },
+        )
+
+        input = torch.ones([1, 512], dtype=torch.long)
+        fp32_model = copy.deepcopy(self.gptj)
+        out1 = fp32_model(input)
+        q_model = quantization.fit(
+            fp32_model,
+            conf,
+            calib_dataloader=dataloader,
+        )
+        out2 = q_model.model(input)
+        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
+        self.assertTrue("transformer.h.0.attn.k_proj" in q_model.autoround_config.keys())
+        self.assertTrue("scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys())
+        self.assertTrue(torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"])
 
 
 if __name__ == "__main__":
