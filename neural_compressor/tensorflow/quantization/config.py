@@ -34,6 +34,15 @@ from neural_compressor.common.base_config import (
 from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.tensorflow.utils import DEFAULT_SQ_ALPHA_ARGS
 
+FRAMEWORK_NAME = "tensorflow"
+
+__all__ = [
+    "StaticQuantConfig",
+    "get_default_static_quant_config",
+    "SmoothQuantConfig",
+    "get_default_sq_config",
+]
+
 
 class OperatorConfig(NamedTuple):
     config: BaseConfig
@@ -41,18 +50,20 @@ class OperatorConfig(NamedTuple):
     valid_func_list: List[Callable] = []
 
 
-@register_config(framework_name="keras", algo_name=STATIC_QUANT)
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
 class StaticQuantConfig(BaseConfig):
-    """Config class for keras static quantization."""
+    """Config class for tf static quantization."""
 
     supported_configs: List[OperatorConfig] = []
     params_list = [
         "weight_dtype",
         "weight_sym",
         "weight_granularity",
+        "weight_algorithm",
         "act_dtype",
         "act_sym",
         "act_granularity",
+        "act_algorithm",
     ]
 
     name = STATIC_QUANT
@@ -62,9 +73,11 @@ class StaticQuantConfig(BaseConfig):
         weight_dtype: str = "int8",
         weight_sym: bool = True,
         weight_granularity: str = "per_tensor",
+        weight_algorithm: str = "minmax",
         act_dtype: str = "int8",
         act_sym: bool = True,
         act_granularity: str = "per_tensor",
+        act_algorithm: str = "minmax",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init static quantization config.
@@ -73,17 +86,21 @@ class StaticQuantConfig(BaseConfig):
             weight_dtype (str): Data type for weights, default is "int".
             weight_sym (bool): Indicates whether weights are symmetric, default is True.
             weight_granularity (str): Calculate tensor-wise scales or channel-wise scales for weights.
+            weight_algorithm (str): Choose quantization algorithms for weights.
             act_dtype (str): Data type for activations, default is "int8".
             act_sym (bool): Indicates whether activations are symmetric, default is True.
             act_granularity (str): Calculate tensor-wise scales or channel-wise scales for activations.
+            act_algorithm (str): Choose quantization algorithms for activations.
         """
         super().__init__(white_list=white_list)
         self.weight_dtype = weight_dtype
         self.weight_sym = weight_sym
         self.weight_granularity = weight_granularity
+        self.weight_algorithm = weight_algorithm
         self.act_dtype = act_dtype
         self.act_sym = act_sym
         self.act_granularity = act_granularity
+        self.act_algorithm = act_algorithm
         self._post_init()
 
     @classmethod
@@ -93,19 +110,26 @@ class StaticQuantConfig(BaseConfig):
             weight_dtype=["int8", "fp32"],
             weight_sym=[True, False],
             weight_granularity=["per_tensor", "per_channel"],
+            weight_algorithm=["minmax", "kl"],
             act_dtype=["int8", "fp32"],
             act_sym=[True, False],
             act_granularity=["per_tensor", "per_channel"],
+            act_algorithm=["minmax", "kl"],
         )
         operators = [
-            tf.keras.layers.Dense,
-            tf.keras.layers.Conv2D,
-            tf.keras.layers.DepthwiseConv2D,
-            tf.keras.layers.SeparableConv2D,
-            tf.keras.layers.AvgPool2D,
-            tf.keras.layers.MaxPool2D,
-            tf.keras.layers.AveragePooling2D,
-            tf.keras.layers.MaxPooling2D,
+            tf.nn.conv2d,
+            tf.raw_ops.FusedBatchNormV3,
+            tf.nn.conv3d,
+            tf.raw_ops.MatMul,
+            tf.raw_ops.BatchMatMul,
+            tf.raw_ops.BatchMatMulV2,
+            tf.nn.depthwise_conv2d,
+            tf.raw_ops.ConcatV2,
+            tf.compat.v1.nn.fused_batch_norm,
+            tf.nn.max_pool,
+            tf.nn.avg_pool,
+            tf.compat.v1.nn.conv2d_backprop_input,
+            tf.raw_ops.Conv3DBackpropInputV2,
         ]
         supported_configs.append(OperatorConfig(config=static_quant_config, operators=operators))
         cls.supported_configs = supported_configs
@@ -113,28 +137,43 @@ class StaticQuantConfig(BaseConfig):
     @staticmethod
     def get_model_info(model) -> List[Tuple[str, Callable]]:
         white_list = [
-            "Dense",
-            "Conv2d",
-            "DepthwiseConv2D",
-            "SeparableConv2D",
-            "AvgPool2D",
-            "AveragePooling2D",
-            "MaxPool2D",
-            "MaxPooling2D",
+            "MatMul",
+            "Conv2D",
+            "Conv3D",
+            "_MklFusedInstanceNorm",
+            "BatchMatMul",
+            "BatchMatMulV2",
+            "DepthwiseConv2dNative",
+            "ConcatV2",
+            "FusedBatchNorm",
+            "FusedBatchNormV2",
+            "MaxPool",
+            "MaxPool3D",
+            "AvgPool",
+            "_MklFusedInstanceNorm",
+            "Conv2DBackpropInput",
+            "Conv2DBackpropInputV2",
         ]
         filter_result = []
-
-        for layer in model.model.layers:
-            if layer.__class__.__name__ in white_list:
-                pair = (layer.name, layer.__class__.__name__)
+        for node in model.graph_def.node:
+            if node.op in white_list:
+                pair = (node.name, node.op)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
-        # TODO fwk owner needs to update it.
-        return StaticQuantConfig(weight_sym=[True, False])
+        return StaticQuantConfig(
+            weight_dtype=["int8", "fp32"],
+            weight_sym=[True, False],
+            weight_granularity=["per_tensor", "per_channel"],
+            weight_algorithm=["minmax", "kl"],
+            act_dtype=["int8", "fp32"],
+            act_sym=[True, False],
+            act_granularity=["per_tensor", "per_channel"],
+            act_algorithm=["minmax", "kl"],
+        )
 
 
 register_supported_configs_for_fwk(fwk_name="keras")
@@ -143,19 +182,19 @@ register_supported_configs_for_fwk(fwk_name="keras")
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
     """Get all registered configs for keras framework."""
     registered_configs = config_registry.get_cls_configs()
-    return registered_configs.get("keras", {})
+    return registered_configs.get(FRAMEWORK_NAME, {})
 
 
 def get_default_static_quant_config() -> StaticQuantConfig:
     """Generate the default static quant config.
 
     Returns:
-        the default keras config.
+        the default tf config.
     """
     return StaticQuantConfig()
 
 
-@register_config(framework_name="tensorflow", algo_name=SMOOTH_QUANT)
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT)
 class SmoothQuantConfig(BaseConfig):
     """Config class for tf smooth quantization."""
 
@@ -184,18 +223,10 @@ class SmoothQuantConfig(BaseConfig):
         auto_alpha_args: Dict = DEFAULT_SQ_ALPHA_ARGS,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
-        """Init smooth quantization config.
+        """Init RTN weight-only quantization config.
 
         Args:
-            alpha (float or str): alpha value to balance the quantization difficulty of activation and weight.
-            folding (bool): whether fold those foldable Mul which are inserted for smooth quant.
-            percentile (float): percentile of calibration to remove outliers
-            op_types (list): the op type to be smooth quantized.
-            scales_per_op (bool): True, each op will have an individual scale, mainlyfor accuracy.
-                                  False, ops with the same input will share a scale, mainly for performance.
-            record_max_info (bool): whether record the max info in model for alpha tuning.
-            weight_clip (bool): whether to clip weight when calculating scales; by default it is on.
-            auto_alpha_args (dict): settings for alpha tuning.
+            weight_dtype (str): Data type for weights, default is "int".
         """
         super().__init__()
         self.alpha = alpha

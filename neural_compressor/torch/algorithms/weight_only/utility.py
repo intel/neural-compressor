@@ -149,6 +149,7 @@ def qdq_weight_asym(weight, bits=4, quantile=1.0, return_int=False, **kwargs):
     zp.unsqueeze_(dim=-1)
     weight.div_(scale)
     weight.round_()
+    weight.add_(zp)
     weight.clamp_(0, maxq)
     keep_scale = kwargs.get("double_quant", False)
     if return_int or keep_scale:

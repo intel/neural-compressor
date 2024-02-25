@@ -670,3 +670,121 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1):
             int_weight_tmp.add_(zp[:, -1].unsqueeze(1))
         int_weight[:, leng * group_size :].copy_(int_weight_tmp.round_())
     return int_weight
+
+
+def autoround_quantize(
+    model,
+    tokenizer,
+    bits: int = 4,
+    group_size: int = 128,
+    scheme: str = "asym",
+    weight_config: dict = {},
+    enable_full_range: bool = False,  ##for symmetric, TODO support later
+    bs: int = 8,
+    amp: bool = True,
+    device="cuda:0",
+    lr_scheduler=None,
+    dataloader=None,  ## to support later
+    dataset_name: str = "NeelNanda/pile-10k",
+    dataset_split: str = "train",
+    use_quant_input: bool = True,
+    enable_minmax_tuning: bool = True,
+    lr: float = None,
+    minmax_lr: float = None,
+    low_gpu_mem_usage: bool = True,
+    iters: int = 200,
+    seqlen: int = 2048,
+    n_samples: int = 512,
+    sampler: str = "rand",
+    seed: int = 42,
+    n_blocks: int = 1,
+    gradient_accumulate_steps: int = 1,
+    not_use_best_mse: bool = False,
+    dynamic_max_gap: int = -1,
+    data_type: str = "int",  ##only support data_type
+    scale_dtype="fp16",
+    **kwargs,
+):
+    """Run autoround weight-only quantization.
+    Args:
+    model: The PyTorch model to be quantized.
+    tokenizer: Tokenizer for processing input data. Temporarily set as a mandatory parameter.
+    bits (int): Number of bits for quantization (default is 4).
+    group_size (int): Size of the quantization group (default is 128).
+    scheme (str): The quantization scheme to be used (default is "asym").
+    weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
+    weight_config={
+                'layer1':##layer_name
+                {
+                    'data_type': 'int',
+                    'bits': 4,
+                    'group_size': 32,
+                    'scheme': "asym", ## or sym
+                }
+                ...
+            }
+    enable_full_range (bool): Whether to enable full range quantization (default is False).
+    bs (int): Batch size for training (default is 8).
+    amp (bool): Whether to use automatic mixed precision (default is True).
+    device: The device to be used for tuning (default is "cuda:0").
+    lr_scheduler: The learning rate scheduler to be used.
+    dataloader: The dataloader for input data (to be supported in future).
+    dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
+    dataset_split (str): The split of the dataset to be used (default is "train").
+    use_quant_input (bool): Whether to use quantized input data (default is True).
+    enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
+    lr (float): The learning rate (default is 0.005).
+    minmax_lr (float): The learning rate for min-max tuning (default is None).
+    low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
+    iters (int): Number of iterations (default is 200).
+    seqlen (int): Length of the sequence.
+    n_samples (int): Number of samples (default is 512).
+    sampler (str): The sampling method (default is "rand").
+    seed (int): The random seed (default is 42).
+    n_blocks (int): Number of blocks (default is 1).
+    gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
+    not_use_best_mse (bool): Whether to use mean squared error (default is False).
+    dynamic_max_gap (int): The dynamic maximum gap (default is -1).
+    data_type (str): The data type to be used (default is "int").
+    **kwargs: Additional keyword arguments.
+
+    Returns:
+        The quantized model.
+    """
+    from auto_round import AutoRound  # pylint: disable=E0401
+
+    rounder = AutoRound(
+        model=model,
+        tokenizer=tokenizer,
+        bits=bits,
+        group_size=group_size,
+        scheme=scheme,
+        weight_config=weight_config,
+        enable_full_range=enable_full_range,  ##for symmetric, TODO support later
+        bs=bs,
+        amp=amp,
+        device=device,
+        lr_scheduler=lr_scheduler,
+        dataloader=dataloader,  ## to support later
+        dataset_name=dataset_name,
+        dataset_split=dataset_split,
+        use_quant_input=use_quant_input,
+        enable_minmax_tuning=enable_minmax_tuning,
+        lr=lr,
+        minmax_lr=minmax_lr,
+        low_gpu_mem_usage=low_gpu_mem_usage,
+        iters=iters,
+        seqlen=seqlen,
+        n_samples=n_samples,
+        sampler=sampler,
+        seed=seed,
+        n_blocks=n_blocks,
+        gradient_accumulate_steps=gradient_accumulate_steps,
+        not_use_best_mse=not_use_best_mse,
+        dynamic_max_gap=dynamic_max_gap,
+        data_type=data_type,  ## only support data_type
+        scale_dtype=scale_dtype,
+        **kwargs,
+    )
+    qdq_model, weight_config = rounder.quantize()
+    return qdq_model, weight_config
