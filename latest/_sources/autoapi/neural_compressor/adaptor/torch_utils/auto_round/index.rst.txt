@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.torch_utils.auto_round`
+==========================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.auto_round
+
+
