@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import json
+import os
 
 
 def save_qconfig(config_mapping, qconfig_file_path):
@@ -35,8 +35,9 @@ def save_qconfig(config_mapping, qconfig_file_path):
     with open(qconfig_file_path, "w") as f:
         json.dump(per_op_qconfig, f, indent=4)
 
+
 def load_qconfig(qconfig_file_path, config_name_mapping):
-    """reload config mapping from json file.
+    """Reload config mapping from json file.
 
     Args:
         qconfig_file_path (str): path to saved json file.

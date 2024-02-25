@@ -302,7 +302,6 @@ class FP8Linear(torch.nn.Module):
             if org_module.bias is not None:
                 self.bias.data.copy_(org_module.bias.data.type(self.out_dtype))
 
-
     def forward(self, inp):
         assert inp.shape[-1] == self.in_features, "GEMM not possible"
         org_middle_shape = inp.shape[1:-1]
@@ -639,6 +638,7 @@ class FP8LinearAllreduce(torch.nn.Module):
             False,
         )
         from deepspeed import comm as dist
+
         if self.mp_group is not None:
             dist.inference_all_reduce(out, group=self.mp_group)
         if self.bias is not None:
@@ -763,6 +763,7 @@ class FP8LmHeadLinearAllreduce(torch.nn.Module):
             False,
         )
         from deepspeed import comm as dist
+
         if self.mp_group is not None:
             dist.inference_all_reduce(out, group=self.mp_group)
         if self.bias is not None:

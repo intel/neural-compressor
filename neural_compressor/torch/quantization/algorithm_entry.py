@@ -21,12 +21,12 @@ import torch
 from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT, TEQ
 from neural_compressor.torch.quantization import (
     AWQConfig,
+    FP8Config,
     GPTQConfig,
     HQQConfig,
     RTNConfig,
-    TEQConfig,
     StaticQuantConfig,
-    FP8Config,
+    TEQConfig,
 )
 from neural_compressor.torch.utils import logger, register_algo
 

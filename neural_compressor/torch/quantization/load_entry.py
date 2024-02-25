@@ -15,12 +15,14 @@
 import json
 import os
 
-from neural_compressor.common.utils import load_qconfig  # unified namespace
 from neural_compressor.common.utils import FP8_QUANT  # unified namespace
+from neural_compressor.common.utils import load_qconfig  # unified namespace
 from neural_compressor.torch.quantization.config import FP8Config
+
 config_name_mapping = {
     FP8_QUANT: FP8Config,
 }
+
 
 def load(model, output_dir="./saved_results"):
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), "qconfig.json")

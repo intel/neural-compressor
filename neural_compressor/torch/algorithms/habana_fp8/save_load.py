@@ -20,8 +20,8 @@ import os
 import habana_frameworks.torch.core as htcore
 import torch
 
-from neural_compressor.torch.utils import logger, WEIGHT_NAME, QCONFIG_NAME
-from neural_compressor.common.utils import save_qconfig, load_qconfig
+from neural_compressor.common.utils import load_qconfig, save_qconfig
+from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, logger
 
 from .fp8_quant import FP8_DTYPE, dtype_mapping
 from .modules import (  # fp32; dynamic modules
@@ -64,7 +64,7 @@ def load(model, output_dir="./saved_results"):
     qmodel_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     stat_dict = torch.load(qmodel_file_path)
     import fp8_convert
-    
+
     for (op_name, op_type), op_qconfig in model.qconfig.items():
         dtype = op_qconfig.w_dtype
         choice = 1 if dtype == "fp8_e4m3" else 0
@@ -92,7 +92,7 @@ def load(model, output_dir="./saved_results"):
         set_module(model, op_name, module)
         htcore.mark_step()
     model.load_state_dict(stat_dict, assign=True)
-    model.to('hpu')
+    model.to("hpu")
     htcore.mark_step()
     logger.info("Quantized model loading successful.")
     return model
