@@ -13,3 +13,4 @@
 # limitations under the License.
 
 from neural_compressor.tensorflow.algorithms.static_quant.keras import KerasAdaptor
+from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorFlowAdaptor
