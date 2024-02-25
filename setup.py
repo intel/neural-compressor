@@ -53,13 +53,6 @@ PKG_INSTALL_CFG = {
         ),
         "package_data": {"": ["*.yaml"]},
         "install_requires": fetch_requirements("requirements.txt"),
-        "ext_modules": [
-            CppExtension(
-                "fp8_convert",
-                ["neural_compressor/torch/algorithms/habana_fp8/tensor/convert.cpp"],
-            ),
-        ],
-        "cmdclass": {"build_ext": BuildExtension},
     },
     # 2.x binary build config, pip install neural-compressor
     "neural_compressor_2x": {
