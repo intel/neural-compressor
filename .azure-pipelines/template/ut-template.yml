@@ -35,6 +35,7 @@ steps:
     displayName: "Run UT"
 
   - task: PublishPipelineArtifact@1
+    condition: always()
     inputs:
       targetPath: ${{ parameters.uploadPath }}
       artifact: ${{ parameters.utArtifact }}
