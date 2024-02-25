@@ -160,6 +160,8 @@ class TestLayerWiseQuant(unittest.TestCase):
                 break
             layerwise_q_out = self.inference(qmodel_lwq, inputs)
             q_out = self.inference(qmodel, inputs)
+            print('test_gptq_layer_wise', layerwise_q_out[0])
+            print('test_gptq_layer_wise', q_out[0])
             self.assertTrue((layerwise_q_out[0] == q_out[0]).all())
 
 
