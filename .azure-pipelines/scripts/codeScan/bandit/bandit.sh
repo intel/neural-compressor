@@ -9,8 +9,6 @@ do
   esac
 done
 
-echo "for test"
-
 source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 RESET="echo -en \\E[0m \\n" # close color
 

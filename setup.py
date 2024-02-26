@@ -5,6 +5,7 @@ from io import open
 
 from setuptools import find_packages, setup
 
+print("for test")
 
 def fetch_requirements(path):
     with open(path, "r") as fd:
