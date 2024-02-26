@@ -75,10 +75,8 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     if hasattr(model, "_smoothquant_optimized") and model._smoothquant_optimized:
         logger.info("The model is already optimized by SmoothQuant algorithm, skip it.")
         return model
-    
-    sq = TorchSmoothQuant(
-        model, dataloader=None, example_inputs=example_inputs, q_func=run_fn, record_max_info=True
-    )
+
+    sq = TorchSmoothQuant(model, dataloader=None, example_inputs=example_inputs, q_func=run_fn, record_max_info=True)
     model = sq.transform(
         alpha=recipe_cfgs["smooth_quant_args"]["alpha"],
         folding=folding,
@@ -128,7 +126,9 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     return model
 
 
-def qdq_quantize(model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, sq):
+def qdq_quantize(
+    model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, sq
+):
     smoothquant_scale_info = {}
     sq_max_info = {}
     sq_minmax_init = True if tune_cfg.get("act_algo", "kl") == "minmax" else False
