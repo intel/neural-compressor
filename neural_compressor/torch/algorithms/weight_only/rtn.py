@@ -21,7 +21,7 @@
 
 import torch
 
-from neural_compressor.torch.utils import logger, set_module
+from neural_compressor.torch.utils import get_device, logger, set_module
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 from .utility import quant_tensor, search_clip
@@ -74,9 +74,7 @@ def rtn_quantize(
     Returns:
         model: fake quantized torch module
     """
-    device_name = kwargs.pop("device", "auto")
-    runtime_accelerator = auto_detect_accelerator(device_name)
-    device = runtime_accelerator.name()
+    device = get_device(kwargs.pop("device", "auto"))
 
     # Put model on device explicitly
     # TODO: refine it later, Put module on device one by one instead of the whole model

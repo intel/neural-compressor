@@ -239,10 +239,3 @@ class TestRTNQuant:
         quant_config = get_default_rtn_config()
         q_model = quantize(model, quant_config)
         assert "cuda" in str(q_model.device), f"Expect qmodel device is cuda, got {q_model.device}"
-
-
-t = TestGPTQ()
-t.test_GPTQ_fixed_length_quant()
-
-t = TestRTNQuant()
-t.test_rtn()
