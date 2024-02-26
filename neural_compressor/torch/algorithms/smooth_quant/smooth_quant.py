@@ -58,9 +58,7 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     """
     assert not ipex_ver.release < Version("2.1").release, "IPEX version >= 2.1 is required for SmoothQuant."
 
-    _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name = get_quantizable_ops_recursively(
-        model, example_inputs
-    )
+    _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name = get_quantizable_ops_recursively(model, example_inputs)
     # check smoothquant folding value
     recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
     if "smooth_quant_args" in recipe_cfgs and "folding" in recipe_cfgs["smooth_quant_args"]:
@@ -77,7 +75,7 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
         return qdq_quantize(
             model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name
         )
-    
+
     # Update model parameter when smoothquant folding = True
     if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding:
         _apply_pre_optimization(model, tune_cfg, run_fn, example_inputs)

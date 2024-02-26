@@ -407,7 +407,9 @@ def check_cfg_and_qconfig(
     return cfgs
 
 
-def cfg_to_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=False):  # pragma: no cover
+def cfg_to_qconfig(
+    tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=False
+):  # pragma: no cover
     assert cfgs is not None, "No configure for IPEX int8 model..."
     if ipex_ver.release < Version("1.12.0").release:  # pragma: no cover
         for key in tune_cfg["op"]:
@@ -1343,7 +1345,9 @@ class TorchSmoothQuant:
     to recover the weights if needed
     """
 
-    def __init__(self, model, dataloader=None, example_inputs=None, q_func=None, traced_model=None, record_max_info=False):
+    def __init__(
+        self, model, dataloader=None, example_inputs=None, q_func=None, traced_model=None, record_max_info=False
+    ):
         """
         :param model: Torch model :param dataloader: Calibration dataloader :param traced_model: A specific model
         shares the same architecture as the model and could be traced by torch.jit. If not supplied, we use model
