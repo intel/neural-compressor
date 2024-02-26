@@ -60,7 +60,7 @@ ops_schema = Schema(
             ),
             Optional("algorithm"): And(
                 list,  # TODO: allow AWQ+GPTQ algo
-                lambda s: all(i in ["minmax", "RTN", "AWQ", "GPTQ", "TEQ"] for i in s),
+                lambda s: all(i in ["minmax", "RTN", "AWQ", "GPTQ", "TEQ", "AUTOROUND"] for i in s),
             ),
             Optional("bits"): And(list, lambda s: all(0 < i <= 8 and type(i) == int for i in s)),
             Optional("group_size"): And(list, lambda s: all(i >= -1 and i != 0 and type(i) == int for i in s)),
@@ -652,7 +652,7 @@ class TuningCriterion:
     @timeout.setter
     def timeout(self, timeout):
         """Set timeout."""
-        if _check_value("timeout", timeout, int):
+        if _check_value("timeout", timeout, (int, float)):
             self._timeout = timeout
 
     @property
@@ -941,6 +941,12 @@ class _BaseQuantizationConfig:
             else:
                 return {}
 
+        def autoround_args(val=None):
+            if val is not None:
+                return _check_value("autoround_args", val, dict)
+            else:
+                return {}
+
         def fast_bias_correction(val=None):
             if val is not None:
                 return _check_value("fast_bias_correction", val, bool)
@@ -1025,6 +1031,7 @@ class _BaseQuantizationConfig:
             "awq_args": awq_args,
             "gptq_args": gptq_args,
             "teq_args": teq_args,
+            "autoround_args": autoround_args,
         }
         self._recipes = {}
         for k in RECIPES.keys():

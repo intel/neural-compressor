@@ -28,19 +28,23 @@ import tensorflow as tf
 import yaml
 
 from neural_compressor.common import logger
+from neural_compressor.tensorflow.keras.layers import (
+    DeQuantize,
+    FakeQuant,
+    QAvgPool2D,
+    QConv2D,
+    QDense,
+    QDepthwiseConv2D,
+    QMaxPool2D,
+    QSeparableConv2D,
+    Quantize,
+)
 from neural_compressor.tensorflow.quantization.config import StaticQuantConfig
 from neural_compressor.tensorflow.utils import deep_get, dump_elapsed_time
 
 
 def _add_supported_quantized_objects(custom_objects):
     """Map all the quantized objects."""
-    from .keras_utils.conv2d import QConv2D
-    from .keras_utils.dense import QDense
-    from .keras_utils.depthwise_conv2d import QDepthwiseConv2D
-    from .keras_utils.pool2d import QAvgPool2D, QMaxPool2D
-    from .keras_utils.quantizer import DeQuantize, FakeQuant, Quantize
-    from .keras_utils.separable_conv2d import QSeparableConv2D
-
     custom_objects["Quantize"] = Quantize
     custom_objects["DeQuantize"] = DeQuantize
     custom_objects["FakeQuant"] = FakeQuant

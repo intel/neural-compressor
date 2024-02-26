@@ -14,7 +14,7 @@ pr:
       - test/3x/common
       - setup.py
       - requirements_pt.txt
-      - .azure-pipelines/scripts/ut/3x/collect_log_3x.sh
+      - .azure-pipelines/scripts/ut/3x/run_3x_pt.sh
 
 pool: ICX-16C
 
