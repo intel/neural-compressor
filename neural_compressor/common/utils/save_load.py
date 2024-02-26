@@ -19,7 +19,7 @@ import json
 import os
 
 
-def save_qconfig(config_mapping, qconfig_file_path):
+def save_config_mapping(config_mapping, file_path):
     """Save config mapping to json file.
 
     Args:
