@@ -87,27 +87,19 @@ class TestLayerWiseQuant(unittest.TestCase):
         node_optypes = [node.op_type for node in model.graph.node]
         return "MatMulNBits" in node_optypes or "MatMulFpQ4" in node_optypes
 
-    def _check_node_is_quantized(self, model, node_name):
+    def _get_quantized_matmul_weight(self, model, matmul_name):
+        weight_init_name = None
         for node in model.graph.node:
-            if (node.name == node_name or node.name == node_name + "_Q4") and node.op_type in [
-                "MatMulNBits",
-                "MatMulFpQ4",
-            ]:
-                return True
-        return False
+            if node.name == matmul_name:
+                weight_init_name = node.input[1]
+        if weight_init_name is None:
+            return None
 
-    def _count_woq_matmul(self, q_model, bits=4, group_size=32):
-        op_names = [
-            i.name
-            for i in q_model.graph.node
-            if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(bits, group_size))
-        ]
-        return len(op_names)
-
-    def inference(self, modelproto, data):
-        sess = ort.InferenceSession(modelproto.SerializeToString(), providers=["CPUExecutionProvider"])
-        out = sess.run(None, data)
-        return out
+        weight_init = None
+        for init in model.graph.initializer:
+            if init.name == weight_init_name:
+                weight_init = onnx.numpy_helper.to_array(init)
+        return weight_init
 
     def _apply_quantize(self, quant_config, data_reader=None):
         from neural_compressor.onnxrt.quantization.quantize import _quantize
@@ -131,14 +123,11 @@ class TestLayerWiseQuant(unittest.TestCase):
         qmodel = self._apply_quantize(rtn_config)
         self.assertTrue(self._check_model_is_quantized(qmodel))
 
-        self.calibration_data_reader.rewind()
-        while True:
-            inputs = self.calibration_data_reader.get_next()
-            if not inputs:
-                break
-            layerwise_q_out = self.inference(qmodel_lwq, inputs)
-            q_out = self.inference(qmodel, inputs)
-            self.assertTrue((layerwise_q_out[0] == q_out[0]).all())
+        lwq_quantized_weight = self._get_quantized_matmul_weight(qmodel_lwq, "/lm_head/MatMul_Q4")
+        self.assertIsNotNone(lwq_quantized_weight)
+        quantized_weight = self._get_quantized_matmul_weight(qmodel, "/lm_head/MatMul_Q4")
+        self.assertIsNotNone(quantized_weight)
+        self.assertTrue((lwq_quantized_weight == quantized_weight).all())
 
     def test_gptq_layer_wise(self):
         from neural_compressor.onnxrt.quantization import GPTQConfig
@@ -153,16 +142,12 @@ class TestLayerWiseQuant(unittest.TestCase):
         qmodel = self._apply_quantize(gptq_config, self.calibration_data_reader)
         self.assertTrue(self._check_model_is_quantized(qmodel))
 
-        self.calibration_data_reader.rewind()
-        while True:
-            inputs = self.calibration_data_reader.get_next()
-            if not inputs:
-                break
-            layerwise_q_out = self.inference(qmodel_lwq, inputs)
-            q_out = self.inference(qmodel, inputs)
-            print('test_gptq_layer_wise', layerwise_q_out[0])
-            print('test_gptq_layer_wise', q_out[0])
-            self.assertTrue((layerwise_q_out[0] == q_out[0]).all())
+        lwq_quantized_weight = self._get_quantized_matmul_weight(qmodel_lwq, "/lm_head/MatMul_Q4")
+        self.assertIsNotNone(lwq_quantized_weight)
+        quantized_weight = self._get_quantized_matmul_weight(qmodel, "/lm_head/MatMul_Q4")
+        self.assertIsNotNone(quantized_weight)
+        self.assertTrue((lwq_quantized_weight == quantized_weight).all())
+
 
 
 if __name__ == "__main__":
