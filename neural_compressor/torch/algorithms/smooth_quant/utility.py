@@ -411,62 +411,11 @@ def cfg_to_qconfig(
     tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=False
 ):  # pragma: no cover
     assert cfgs is not None, "No configure for IPEX int8 model..."
-    if ipex_ver.release < Version("1.12.0").release:  # pragma: no cover
-        for key in tune_cfg["op"]:
-            try:
-                scheme = tune_cfg["op"][key]["activation"]["scheme"]
-            except:
-                scheme = "asym"
-            if scheme not in ["asym", "sym"]:
-                scheme = "asym"
-            break
-        for key in tune_cfg["op"]:
-            value = tune_cfg["op"][key]
-            pattern = get_pattern(key, fuse_ops)
-            assert isinstance(value, dict)
-            assert "activation" in value
-            if value["activation"]["dtype"] == "fp32":
-                if "weight" in value:
-                    assert value["weight"]["dtype"] == "fp32"
-                for op_cfg in cfgs:
-                    if op_cfg["id"] == key[0]:
-                        if key[1] in ["relu_", "add_"]:
-                            continue
-                        num_inputs = len(op_cfg["inputs_quantized"])
-                        num_outputs = len(op_cfg["outputs_quantized"])
-                        for i_num in range(num_inputs):
-                            op_cfg["inputs_quantized"][i_num] = False
-                        for o_num in range(num_outputs):
-                            op_cfg["outputs_quantized"][o_num] = False
-                        if pattern:
-                            if pattern[1] in ["relu_", "add_"]:
-                                continue
-                            tune_cfg["op"][pattern]["activation"]["dtype"] = "fp32"
-                            if "weight" in tune_cfg["op"][pattern]:
-                                tune_cfg["op"][pattern]["weight"]["dtype"] = "fp32"
-            else:
-                for op_cfg in cfgs:
-                    if op_cfg["id"] == key[0]:
-                        if key[1] in ["relu_", "add_"]:
-                            continue
-                        num_inputs = len(op_cfg["inputs_quantized"])
-                        num_outputs = len(op_cfg["outputs_quantized"])
-                        for i_num in range(num_inputs):
-                            op_cfg["inputs_quantized"][i_num] = default_cfgs[key[0]]["inputs_quantized"][i_num]
-                        for o_num in range(num_outputs):
-                            op_cfg["outputs_quantized"][o_num] = default_cfgs[key[0]]["outputs_quantized"][o_num]
-        with open(ipex_config_path, "w") as write_f:
-            json.dump(cfgs, write_f)
-        if scheme == "asym":
-            return torch.per_tensor_affine
-        else:
-            return torch.per_tensor_symmetric
-    else:
-        op_infos = copy.deepcopy(op_infos_from_cfgs)
-        cfgs = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name, smooth_quant)
-        with open(ipex_config_path, "w") as write_f:
-            json.dump(cfgs, write_f, indent=4)
-        return None
+    op_infos = copy.deepcopy(op_infos_from_cfgs)
+    cfgs = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name, smooth_quant)
+    with open(ipex_config_path, "w") as write_f:
+        json.dump(cfgs, write_f, indent=4)
+    return None
 
 
 def get_fuse_ops(default_cfgs):  # pragma: no cover

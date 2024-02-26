@@ -1,11 +1,12 @@
 import copy
-
-import intel_extension_for_pytorch as ipex
 import pytest
 import torch
 
 from neural_compressor.torch.quantization import SmoothQuantConfig, get_default_sq_config, quantize
 from neural_compressor.torch.utils import is_ipex_available
+
+if is_ipex_available():
+    import intel_extension_for_pytorch as ipex
 
 
 def build_simple_torch_model():

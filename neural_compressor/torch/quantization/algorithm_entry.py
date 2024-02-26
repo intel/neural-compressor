@@ -120,7 +120,7 @@ def static_quant_entry(
     logger.info("Quantize model with the static quant algorithm.")
     from neural_compressor.torch.algorithms.static_quant import static_quantize
 
-    # rebuild tune_cfg for static_quantize function
+    # convert the user config into internal format
     quant_config_mapping = {}
     cfgs = deepcopy(configs_mapping)
     quant_config_mapping["op"] = cfgs
@@ -166,7 +166,7 @@ def smooth_quant_entry(
     logger.info("Quantize model with the smooth quant algorithm.")
     from neural_compressor.torch.algorithms.smooth_quant.smooth_quant import smooth_quantize
 
-    # rebuild tune_cfg for smooth_quant function
+    # convert the user config into internal format
     quant_config_mapping = {}
     cfgs = deepcopy(configs_mapping)
     quant_config_mapping["op"] = cfgs
