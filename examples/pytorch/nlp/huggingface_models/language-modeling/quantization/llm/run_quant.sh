@@ -80,7 +80,7 @@ function run_tuning {
     elif [ "${topology}" = "gpt_j_woq_gptq_int4" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
         approach="weight_only"
-        extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --gptq_use_max_length"
+        extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_enable_mse_search --gptq_use_max_length"
     elif [ "${topology}" = "falcon_7b_sq" ]; then
         model_name_or_path="tiiuae/falcon-7b-instruct"
         extra_cmd=$extra_cmd" --sq --alpha 0.5"
@@ -88,6 +88,10 @@ function run_tuning {
         model_name_or_path="tiiuae/falcon-7b-instruct"
         approach="weight_only"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --gptq_use_max_length"
+    elif [ "${topology}" = "llama2_7b_gptq_int4" ]; then
+        model_name_or_path="meta-llama/Llama-2-7b-hf"
+        approach="weight_only"
+        extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_enable_mse_search --gptq_use_max_length"
     fi
 
     python -u run_clm_no_trainer.py \
