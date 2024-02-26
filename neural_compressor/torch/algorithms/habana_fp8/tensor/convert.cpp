@@ -18,8 +18,6 @@
 
 
 #include <torch/extension.h>
-#include <iostream>
-#include <vector>
 
 
 // function prototype declaration
