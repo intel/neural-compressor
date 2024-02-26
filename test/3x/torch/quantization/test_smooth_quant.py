@@ -63,7 +63,8 @@ class TestSmoothQuant:
     def test_static_quant_params(self, act_sym, act_algo, alpha, folding, scale_sharing):
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = SmoothQuantConfig(
-            act_sym=act_sym, act_algo=act_algo, alpha=alpha, folding=folding, scale_sharing=scale_sharing)
+            act_sym=act_sym, act_algo=act_algo, alpha=alpha, folding=folding, scale_sharing=scale_sharing
+        )
         example_inputs = self.input
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"

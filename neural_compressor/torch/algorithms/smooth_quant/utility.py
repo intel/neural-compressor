@@ -1295,8 +1295,14 @@ class TorchSmoothQuant:
     """
 
     def __init__(
-        self, model, dataloader=None, example_inputs=None, q_func=None, traced_model=None, scale_sharing=True,
-          record_max_info=False
+        self,
+        model,
+        dataloader=None,
+        example_inputs=None,
+        q_func=None,
+        traced_model=None,
+        scale_sharing=True,
+        record_max_info=False,
     ):
         """
         :param model: Torch model :param dataloader: Calibration dataloader :param traced_model: A specific model
@@ -2169,7 +2175,7 @@ class TorchSmoothQuant:
             if need_calibration:  ##avoid multiple calibaration during tuning if the only difference is alpha
                 if self.insert_mul:
                     self.self_absorb_layers = self._get_all_layer_names(op_types)  # TODO: only support linear now.
-                    if self.scale_sharing:    
+                    if self.scale_sharing:
                         # fetch modules with the same input
                         group_modules = self._trace(str_op_types, skip_unsupported_layers=False)
                         if group_modules is not None:
