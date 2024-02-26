@@ -223,7 +223,7 @@ if args.approach in ["dynamic", "static"] and not args.load:
         _mark_params_as_const(user_model)  # can reduce memory allocated and speed up
         _check_params_as_const(user_model)
         # saving
-        if args.save:
+        if args.save and local_rank in [-1, 0]:
             user_model.save("saved_results")
     # print(user_model, flush=True)
     show_msg()
@@ -392,7 +392,7 @@ if args.accuracy:
         else:
             print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["acc"]), flush=True)
             accu_dict[task_name] = [args.model, case_name, results["results"][task_name]["acc"]]
-    if args.dump_to_excel:
+    if args.dump_to_excel and local_rank in [-1, 0]:
         save_to_excel(accu_dict)
 
 
