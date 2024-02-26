@@ -63,6 +63,7 @@ class LLMCalibDataloader:
 
 
 class TestSqDepthwiseConv(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         class RandDataloader:
@@ -74,7 +75,6 @@ class TestSqDepthwiseConv(unittest.TestCase):
 
         self.conv_dl = RandDataloader()
 
-    @classmethod
     def test_sq_dw_conv_relu6_auto(self):
         datasets = Datasets("pytorch")
         dummy_dataset = datasets["dummy"](shape=(10, 3, 1, 1), low=0.0, high=1.0)
@@ -106,7 +106,6 @@ class TestSqDepthwiseConv(unittest.TestCase):
         assert torch.sum(torch.abs(output - output_sq)) < 1e-3
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_dw_conv_relu6(self):
         datasets = Datasets("pytorch")
         dummy_dataset = datasets["dummy"](shape=(10, 3, 1, 1), low=0.0, high=1.0)
@@ -140,6 +139,7 @@ class TestSqDepthwiseConv(unittest.TestCase):
 
 
 class TestSqConvOpFuseAuto(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         class RandDataloader:
@@ -151,7 +151,6 @@ class TestSqConvOpFuseAuto(unittest.TestCase):
 
         self.conv_dl = RandDataloader()
 
-    @classmethod
     def test_sq_conv_relu6(self):
         datasets = Datasets("pytorch")
         dummy_dataset = datasets["dummy"](shape=(10, 3, 2, 2), low=0.0, high=1.0)
@@ -180,6 +179,7 @@ class TestSqConvOpFuseAuto(unittest.TestCase):
 
 
 class TestSqConvOpFuse(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         class RandDataloader:
@@ -191,7 +191,6 @@ class TestSqConvOpFuse(unittest.TestCase):
 
         self.conv_dl = RandDataloader()
 
-    @classmethod
     def test_sq_conv_relu6(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -214,7 +213,6 @@ class TestSqConvOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_conv_relu(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -237,7 +235,6 @@ class TestSqConvOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=2, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_conv_gelu(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -260,7 +257,6 @@ class TestSqConvOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=2, folding=True)
         assert len(sq.absorb_to_layer) == 0
 
-    @classmethod
     def test_sq_conv_bn(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -385,6 +381,7 @@ class T5LayerNorm(nn.Module):
 
 
 class TestSqListInput(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         class ListDataloader:
@@ -414,7 +411,6 @@ class TestSqListInput(unittest.TestCase):
         self.tuple_dl = TupleDataloader()
         self.list_tuple_dl = ListTupleDataLoader()
 
-    @classmethod
     def test_sq_linear_LlamaRMSNorm(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -437,7 +433,6 @@ class TestSqListInput(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_linear_LlamaRMSNorm_tuple(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -460,7 +455,6 @@ class TestSqListInput(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_linear_LlamaRMSNorm_list_tuple(self):
         class Model(torch.nn.Module):
             def __init__(self):
@@ -498,6 +492,7 @@ class TestSqListInput(unittest.TestCase):
 
 
 class TestAlphaAutoLinear(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         class RandDataloader:
@@ -509,7 +504,6 @@ class TestAlphaAutoLinear(unittest.TestCase):
 
         self.linear_dl = RandDataloader()
 
-    @classmethod
     def test_sq_linear_LlamaRMSNorm_auto(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -534,6 +528,7 @@ class TestAlphaAutoLinear(unittest.TestCase):
 
 
 class TestSqLinearOpFuse(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         class RandDataloader:
@@ -545,7 +540,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
 
         self.linear_dl = RandDataloader()
 
-    @classmethod
     def test_sq_linear_LlamaRMSNorm(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -568,7 +562,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_linear_T5Norm(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -591,7 +584,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_linear_relu6(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -614,7 +606,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_linear_norm(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -637,7 +628,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_linear_norm_linear(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -662,7 +652,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 2
 
-    @classmethod
     def test_sq_linear_gelu_norm(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -957,6 +946,7 @@ class TestExample(unittest.TestCase):
 
 
 class TestSqSkipOp(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         class RandDataloader:
@@ -968,7 +958,6 @@ class TestSqSkipOp(unittest.TestCase):
 
         self.linear_dl = RandDataloader()
 
-    @classmethod
     def test_sq_skip_op_auto(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -1014,6 +1003,7 @@ class TestSqSkipOp(unittest.TestCase):
 
 
 class TestSqSkipOp_attn(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         class RandDataloader:
@@ -1025,7 +1015,6 @@ class TestSqSkipOp_attn(unittest.TestCase):
 
         self.linear_dl = RandDataloader()
 
-    @classmethod
     def test_sq_skip_op_attn_auto(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -1068,6 +1057,7 @@ class TestSqSkipOp_attn(unittest.TestCase):
 
 
 class TestTuneSqAlpha(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         self.ns_workspace = "./nc_workspace"
@@ -1236,6 +1226,7 @@ class TestTuneSqAlpha(unittest.TestCase):
 
 
 class TestTextGeneration(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         from modeling_gptj import GPTJForCausalLM
@@ -1445,7 +1436,7 @@ class TestPeftModel(unittest.TestCase):
         )  # Linear that is not called in calibration
 
     @unittest.skipIf(
-        IPEX_VERSION.release <= Version("2.1.0").release and ipex.__version__ != "2.1.0+cpu",
+        not TEST_IPEX or (IPEX_VERSION.release <= Version("2.1.0").release and ipex.__version__ != "2.1.0+cpu"),
         "Please use Intel extension for Pytorch version higher or equal to 2.1.0",
     )
     def test_peft_model_quantization_ipex(self):
@@ -1480,6 +1471,7 @@ class TestPeftModel(unittest.TestCase):
 
 
 class TestInputConfig(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         class RandDataloader:
@@ -1491,7 +1483,6 @@ class TestInputConfig(unittest.TestCase):
 
         self.linear_dl = RandDataloader()
 
-    @classmethod
     def test_sq_weight_clipping(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -1514,7 +1505,6 @@ class TestInputConfig(unittest.TestCase):
         sq.transform(alpha="auto", calib_iter=1, folding=True, weight_clip=False)
         assert sq.weight_clip is False
 
-    @classmethod
     def test_sq_auto_alpha_arg(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -1546,7 +1536,7 @@ class TestInputConfig(unittest.TestCase):
 
 
 class TestAlphaAutoLinearBlockwise(unittest.TestCase):
-    @classmethod
+
     def test_sq_linear_Blockwise_auto(self):
         model = transformers.AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
