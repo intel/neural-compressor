@@ -671,7 +671,7 @@ class StaticQuantConfig(BaseConfig):
     def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
         from neural_compressor.torch.algorithms.static_quant import get_quantizable_ops_recursively
 
-        model_info, _, _, _ = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
+        model_info, _, _, _, _, _, _ = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
         return model_info
 
     @classmethod
@@ -773,20 +773,15 @@ class SmoothQuantConfig(BaseConfig):
         cls.supported_configs = supported_configs
 
     @staticmethod
-    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
-        filter_result = []
-        for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
-                pair = (op_name, type(module).__name__)
-                filter_result.append(pair)
-        logger.debug(f"Get model info: {filter_result}")
-        return filter_result
+    def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
+        from neural_compressor.torch.algorithms.smooth_quant.utility import get_quantizable_ops_recursively
+
+        model_info, _, _, _, _, _= get_quantizable_ops_recursively(model, example_inputs=example_inputs)
+        return model_info
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:
-        # TODO fwk owner needs to update it.
-        return SmoothQuantConfig(alpha=[0.1, 0.5])
+        return SmoothQuantConfig(alpha=[0.1, 0.5], folding=[True, False])
 
 
 def get_default_sq_config() -> SmoothQuantConfig:

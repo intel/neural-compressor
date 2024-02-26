@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT, TEQ
+from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT, TEQ, SMOOTH_QUANT
 from neural_compressor.torch.quantization import (
     AWQConfig,
     GPTQConfig,
@@ -25,6 +25,7 @@ from neural_compressor.torch.quantization import (
     RTNConfig,
     StaticQuantConfig,
     TEQConfig,
+    SmoothQuantConfig,
 )
 from neural_compressor.torch.utils import logger, register_algo
 
@@ -147,6 +148,62 @@ def static_quant_entry(
         inplace=inplace,
     )
     logger.info("Static quantization done.")
+    return q_model
+
+
+###################### Smooth Quant Algo Entry ##################################
+@register_algo(name=SMOOTH_QUANT)
+@torch.no_grad()
+def smooth_quant_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], SmoothQuantConfig], *args, **kwargs
+) -> torch.nn.Module:
+    logger.info("Quantize model with the smooth quant algorithm.")
+    from neural_compressor.torch.algorithms.smooth_quant.smooth_quant import smooth_quantize
+
+    # rebuild tune_cfg for smooth_quant function
+    quant_config_mapping = {}
+    cfgs = deepcopy(configs_mapping)
+    quant_config_mapping["op"] = cfgs
+    for (op_name, op_type), cfg in cfgs.items():
+        quant_config_mapping["op"][(op_name, op_type)] = {
+            "weight": {
+                "dtype": cfg.w_dtype,
+                "scheme": "sym",
+                "granularity": cfg.w_granularity,
+                "algorithm": cfg.w_algo,
+            },
+            "activation": {
+                "dtype": cfg.act_dtype,
+                "scheme": "sym" if cfg.act_sym else "asym",
+                "granularity": cfg.act_granularity,
+                "algorithm": cfg.act_algo,
+            },
+        }
+        quant_config_mapping["recipe_cfgs"] = {
+        "smooth_quant": True,
+        "smooth_quant_args": {
+            "alpha": cfg.alpha,
+            "folding": cfg.folding,
+            "auto_alpha_args": cfg.auto_alpha_args if cfg.auto_alpha_args is not None else {}
+        },
+        "layer_wise_quant_args": {},
+        "first_conv_or_matmul_quantization": True,
+        "last_conv_or_matmul_quantization": True,
+        "pre_post_process_quantization": True,
+        }
+    
+    run_fn = kwargs.get("run_fn", None)
+    example_inputs = kwargs.get("example_inputs", None)
+    inplace = kwargs.get("inplace", True)
+    assert example_inputs is not None, "Please provide example_inputs for smooth quantization."
+    q_model = smooth_quantize(
+        model=model,
+        tune_cfg=quant_config_mapping,
+        run_fn=run_fn,
+        example_inputs=example_inputs,
+        inplace=inplace,
+    )
+    logger.info("Smooth quantization done.")
     return q_model
 
 
