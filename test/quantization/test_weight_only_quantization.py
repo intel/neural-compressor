@@ -22,6 +22,7 @@ try:
 except ImportError:
     auto_round_installed = False
 
+
 class Model(torch.nn.Module):
     def __init__(self):
         super(Model, self).__init__()
