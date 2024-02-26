@@ -40,11 +40,10 @@ from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from neural_compressor.common.base_config import (
     BaseConfig,
-    ComposableConfig,
     config_registry,
     get_all_config_set_from_config_registry,
     register_config,
