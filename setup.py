@@ -1,5 +1,5 @@
-import re
 import os
+import re
 import subprocess
 import sys
 from io import open
@@ -186,6 +186,7 @@ if __name__ == "__main__":
 
     if bool(os.getenv("USE_FP8_CONVERT", False)):
         from torch.utils.cpp_extension import BuildExtension, CppExtension
+
         ext_modules = [
             CppExtension(
                 "fp8_convert",

@@ -55,7 +55,7 @@ def load_config_mapping(qconfig_file_path, config_name_mapping):
         # value here is a dict, so we convert it to an object with config_name_mapping,
         # which is defined in a specific framework.
         config_name = next(iter(value))
-        config_obj = config_name_mapping[config_name]['cls']()
+        config_obj = config_name_mapping[config_name]["cls"]()
         config_obj.from_dict(value[config_name])
         config_mapping[(op_name, op_type)] = config_obj
     return config_mapping
