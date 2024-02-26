@@ -17,15 +17,15 @@ from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT, TEQ, SMOOTH_QUANT
+from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, SMOOTH_QUANT, STATIC_QUANT, TEQ
 from neural_compressor.torch.quantization import (
     AWQConfig,
     GPTQConfig,
     HQQConfig,
     RTNConfig,
+    SmoothQuantConfig,
     StaticQuantConfig,
     TEQConfig,
-    SmoothQuantConfig,
 )
 from neural_compressor.torch.utils import logger, register_algo
 
@@ -180,18 +180,18 @@ def smooth_quant_entry(
             },
         }
         quant_config_mapping["recipe_cfgs"] = {
-        "smooth_quant": True,
-        "smooth_quant_args": {
-            "alpha": cfg.alpha,
-            "folding": cfg.folding,
-            "auto_alpha_args": cfg.auto_alpha_args if cfg.auto_alpha_args is not None else {}
-        },
-        "layer_wise_quant_args": {},
-        "first_conv_or_matmul_quantization": True,
-        "last_conv_or_matmul_quantization": True,
-        "pre_post_process_quantization": True,
+            "smooth_quant": True,
+            "smooth_quant_args": {
+                "alpha": cfg.alpha,
+                "folding": cfg.folding,
+                "auto_alpha_args": cfg.auto_alpha_args if cfg.auto_alpha_args is not None else {},
+            },
+            "layer_wise_quant_args": {},
+            "first_conv_or_matmul_quantization": True,
+            "last_conv_or_matmul_quantization": True,
+            "pre_post_process_quantization": True,
         }
-    
+
     run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)

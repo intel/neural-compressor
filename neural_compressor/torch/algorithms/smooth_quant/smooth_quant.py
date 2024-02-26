@@ -29,15 +29,15 @@ import torch
 from packaging.version import Version
 
 from .utility import (
+    SQLinearWrapper,
+    TorchSmoothQuant,
     cfg_to_qconfig,
     dump_model_op_stats,
+    get_module,
     get_quantizable_ops_recursively,
     ipex_config_path,
     simple_inference,
-    get_module,
-    SQLinearWrapper,
     update_sq_scale,
-    TorchSmoothQuant,
 )
 
 ipex_ver = get_ipex_version()
@@ -58,8 +58,9 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     """
     assert not ipex_ver.release < Version("1.10.0").release, "INC support IPEX version >= 1.10.0"
 
-    _, cfgs, default_cfgs, fuse_ops, op_infos_from_cfgs, output_tensor_id_op_name \
-        = get_quantizable_ops_recursively(model, example_inputs)
+    _, cfgs, default_cfgs, fuse_ops, op_infos_from_cfgs, output_tensor_id_op_name = get_quantizable_ops_recursively(
+        model, example_inputs
+    )
 
     # check smoothquant folding value
     recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
@@ -72,13 +73,10 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
         else:
             folding = recipe_cfgs["smooth_quant_args"]["folding"]
     # Update model parameter when smoothquant folding = False
-    if (
-        recipe_cfgs
-        and recipe_cfgs.get("smooth_quant", False)
-        and not folding
-    ):
-        return qdq_quantize(model, tune_cfg, run_fn, example_inputs, inplace, cfgs,
-                             op_infos_from_cfgs, output_tensor_id_op_name)
+    if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and not folding:
+        return qdq_quantize(
+            model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name
+        )
     # Update model parameter when smoothquant folding = True
     if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding:
         _apply_pre_optimization(model, tune_cfg)
@@ -138,14 +136,10 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     return model
 
 
-def qdq_quantize(
-        model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name
-    ):
+def qdq_quantize(model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name):
     assert not ipex_ver.release < Version("2.1").release, "IPEX version >= 2.1 is required for SmoothQuant."
     sq_minmax_init = True if tune_cfg.get("act_algo", "kl") == "minmax" else False
-    sq = TorchSmoothQuant(
-        model, dataloader=None, example_inputs=example_inputs, q_func=run_fn
-    )
+    sq = TorchSmoothQuant(model, dataloader=None, example_inputs=example_inputs, q_func=run_fn)
     sq_max_info = sq.record_max_info
     smoothquant_scale_info = {}
     if sq_max_info:
@@ -181,9 +175,7 @@ def qdq_quantize(
         from torch.ao.quantization.observer import MinMaxObserver
 
         if ipex_ver.release >= Version("2.1.1").release:
-            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                alpha=0.5, act_observer=MinMaxObserver
-            )
+            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5, act_observer=MinMaxObserver)
         else:
             if sq_minmax_init:
                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
@@ -200,9 +192,7 @@ def qdq_quantize(
                 model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=inplace
             )
         else:
-            model = ipex.quantization.prepare(
-                model, static_qconfig, example_inputs=example_inputs, inplace=inplace
-            )
+            model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
 
     # The IPEX SmoothQuant observer can only use save/load_qconf_summary once.
     # The save_qconf_summary API will freeze the scale used in model and calibration won't work anymore.
@@ -237,9 +227,7 @@ def qdq_quantize(
 
 
 def _apply_pre_optimization(model, tune_cfg, run_fn, example_inputs, recover=False):
-    sq = TorchSmoothQuant(
-        model, dataloader=None, example_inputs=example_inputs, q_func=run_fn
-    )
+    sq = TorchSmoothQuant(model, dataloader=None, example_inputs=example_inputs, q_func=run_fn)
     sq_max_info = sq.record_max_info
     if sq_max_info:
         tsq = TorchSmoothQuant(model, None)

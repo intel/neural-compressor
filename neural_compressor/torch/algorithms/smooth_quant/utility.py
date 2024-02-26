@@ -16,13 +16,14 @@ import copy
 import json
 import os
 import re
-import numpy
-import tqdm
-import cpuinfo
-import psutil
 import subprocess
-from typing import Dict, List, Union
 from collections import UserDict
+from typing import Dict, List, Union
+
+import cpuinfo
+import numpy
+import psutil
+import tqdm
 
 try:
     import intel_extension_for_pytorch as ipex
@@ -407,8 +408,8 @@ def check_cfg_and_qconfig(
 
 
 def cfg_to_qconfig(
-        tune_cfg, cfgs, default_cfgs, fuse_ops, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=False
-    ):  # pragma: no cover
+    tune_cfg, cfgs, default_cfgs, fuse_ops, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=False
+):  # pragma: no cover
     assert cfgs is not None, "No configure for IPEX int8 model..."
     if ipex_ver.release < Version("1.12.0").release:  # pragma: no cover
         for key in tune_cfg["op"]:
@@ -462,9 +463,7 @@ def cfg_to_qconfig(
             return torch.per_tensor_symmetric
     else:
         op_infos = copy.deepcopy(op_infos_from_cfgs)
-        cfgs = check_cfg_and_qconfig(
-            tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name, smooth_quant
-        )
+        cfgs = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name, smooth_quant)
         with open(ipex_config_path, "w") as write_f:
             json.dump(cfgs, write_f, indent=4)
         return None
@@ -869,7 +868,7 @@ def cal_scale(input_max, weights, alpha, scale_type="orig"):
         if input_power.size() == weight_power.size():
             scale[weight_power == 0] = 0.0  ##FIXME
         return scale
-    
+
 
 def model_forward_per_sample(model, sample, device):
     try:
@@ -879,7 +878,7 @@ def model_forward_per_sample(model, sample, device):
     except Exception as e:
         output = forward_wrapper(model, sample[0], device)
         return output
-    
+
 
 def quant_dequant_w(m, num_bits=8, scheme="sym"):
     eps = torch.finfo(torch.float32).eps
