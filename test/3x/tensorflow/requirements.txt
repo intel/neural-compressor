@@ -1,1 +1,2 @@
+cpuinfo
 pytest
