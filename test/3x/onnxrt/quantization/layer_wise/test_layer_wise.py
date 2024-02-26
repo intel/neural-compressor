@@ -56,8 +56,10 @@ class DummyNLPDataloader(CalibrationDataReader):
 class TestLayerWiseQuant(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        # onnx model exported with transformers==4.38.2 is different with low version
+        # onnx model exported with transformers>=4.38.0 is different with low version
+        # which will cause layer-wise quant ut to fail
         # limit transformers to 4.37.2
+        # TODO: remove transformers version limitation
         llama_id = "yujiepan/llama-2-tiny-3layers-random"
         main_export(llama_id, output="llama-2-tiny-3layers-random", task="text-generation")
         model_path = find_onnx_file("llama-2-tiny-3layers-random")
@@ -147,6 +149,7 @@ class TestLayerWiseQuant(unittest.TestCase):
         quantized_weight = self._get_quantized_matmul_weight(qmodel, "/lm_head/MatMul_Q4")
         self.assertIsNotNone(quantized_weight)
         self.assertTrue((lwq_quantized_weight == quantized_weight).all())
+
 
 
 if __name__ == "__main__":
