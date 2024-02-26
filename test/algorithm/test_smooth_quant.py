@@ -13,11 +13,10 @@ sys.path.append("./")
 
 import logging
 
-from transformers import AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoTokenizer
-
 from neural_compressor import PostTrainingQuantConfig, quantization
 from neural_compressor.adaptor.torch_utils.model_wrapper import SQLinearWrapper
-from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
+from neural_compressor.adaptor.torch_utils.waq import TorchSmoothQuant
+from neural_compressor.adaptor.torch_utils.waq.auto_alpha import AutoAlpha
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
@@ -175,7 +174,7 @@ class TestSqConvOpFuseAuto(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, dummy_dataloader)
-        sq.transform(alpha="auto", calib_iter=3, folding=True)
+        sq.transform(alpha="auto", calib_iter=3, folding=True, op_types=[torch.nn.Linear, torch.nn.Conv2d])
         assert len(sq.absorb_to_layer) == 1
 
 
@@ -492,7 +491,7 @@ class TestSqListInput(unittest.TestCase):
         input1 = torch.rand((1, 3))
         input2 = torch.rand((1, 3))
         example_input = {"k": [input1, ((input2, input1)), input2]}
-        from neural_compressor.adaptor.torch_utils.smooth_quant import move_input_to_device
+        from neural_compressor.adaptor.torch_utils.waq import move_input_to_device
 
         move_input_to_device(example_input)
 
@@ -1534,15 +1533,27 @@ class TestInputConfig(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.linear_dl)
-        sq.transform(
-            alpha="auto",
-            calib_iter=1,
-            folding=False,
-            auto_alpha_args={"alpha_min": 0.5, "alpha_max": 0.9, "alpha_step": 0.1, "shared_criterion": "mean"},
-            default_alpha=0.7,
+        auto_alpha_args = {
+            "alpha_min": 0.5,
+            "alpha_max": 0.9,
+            "alpha_step": 0.1,
+            "shared_criterion": "mean",
+            "init_alpha": 0.7,
+            "n_samples": 32,
+        }
+        alpha_tuner = AutoAlpha(
+            model,
+            sq.dataloader,
+            sq.absorb_to_layer,
+            op_types=[torch.nn.Linear, torch.nn.Conv2d],
+            device=sq.device,
+            q_func=sq.q_func,
+            example_inputs=sq.example_inputs,
+            **auto_alpha_args,
         )
-        assert sq.default_alpha == 0.7
-        assert sq.auto_alpha_args["alpha_min"] == 0.5
+        tuned_alpha = alpha_tuner.tune()
+        assert alpha_tuner.init_alpha == 0.7
+        assert alpha_tuner.alpha_min == 0.5
 
 
 class TestAlphaAutoLinearBlockwise(unittest.TestCase):
@@ -1553,22 +1564,18 @@ class TestAlphaAutoLinearBlockwise(unittest.TestCase):
             torchscript=True,
         )
         sq = TorchSmoothQuant(model, LLMCalibDataloader())
-        sq.transform(
-            alpha="auto",
-            calib_iter=1,
-            folding=False,
-            auto_alpha_args={
-                "alpha_min": 0.45,
-                "alpha_max": 0.55,
-                "alpha_step": 0.01,
-                "shared_criterion": "mean",
-                "do_blockwise": True,
-            },
-        )
+        auto_alpha_args = {
+            "alpha_min": 0.45,
+            "alpha_max": 0.55,
+            "alpha_step": 0.01,
+            "shared_criterion": "mean",
+            "do_blockwise": True,
+        }
+        sq.transform(alpha="auto", calib_iter=1, folding=False, auto_alpha_args=auto_alpha_args)
         for i in range(12):
             op_name1 = "model.decoder.layers." + str(i) + ".self_attn.out_proj"
             op_name2 = "model.decoder.layers." + str(i) + ".fc1"
-            assert sq.alpha_per_layer[op_name1] == sq.alpha_per_layer[op_name2]
+            assert sq.alpha[op_name1] == sq.alpha[op_name2]
         assert len(sq.block_names) == 13
 
 

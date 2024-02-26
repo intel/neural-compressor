@@ -304,7 +304,7 @@ In our experiments, an $\alpha$ range of [0.0, 1.0] with a step_size of 0.1 is f
 *fully automated*: users only need to pass a model and dataloader.
 
 ```python
-from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
+from neural_compressor.adaptor.torch_utils.waq import TorchSmoothQuant
 
 sq = TorchSmoothQuant(model, dataloader)
 alpha = "auto"  ##alpha could be a float number to disable auto-tuning and enable fixed-value alpha smoothquant.

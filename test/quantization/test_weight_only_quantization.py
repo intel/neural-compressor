@@ -6,7 +6,7 @@ import torch
 import transformers
 
 from neural_compressor.adaptor.torch_utils.model_wrapper import WeightOnlyLinear
-from neural_compressor.adaptor.torch_utils.smooth_quant import GraphTrace
+from neural_compressor.adaptor.torch_utils.waq import GraphTrace
 from neural_compressor.adaptor.torch_utils.weight_only import (
     autoround_quantize,
     awq_quantize,
@@ -21,7 +21,6 @@ try:
     auto_round_installed = True
 except ImportError:
     auto_round_installed = False
-
 
 class Model(torch.nn.Module):
     def __init__(self):
