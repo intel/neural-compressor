@@ -25,8 +25,10 @@ config_name_mapping = {
 
 
 def load(model, output_dir="./saved_results"):
+    from neural_compressor.common.base_config import ConfigRegistry
+
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), "qconfig.json")
-    config_mapping = load_qconfig(qconfig_file_path, config_name_mapping)
+    config_mapping = load_qconfig(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
     model.qconfig = config_mapping
     # select load function
     config_object = config_mapping[next(iter(config_mapping))]

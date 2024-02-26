@@ -42,16 +42,10 @@ def load_qconfig(qconfig_file_path, config_name_mapping):
     Args:
         qconfig_file_path (str): path to saved json file.
         config_name_mapping (dict): map config name to config object.
+                                    For example: ConfigRegistry.get_all_configs()["torch"]
 
     Returns:
         config_mapping (dict): config mapping.
-                config_mapping = {
-                    (op_name, op_type): {
-                        config_name: {
-                            dtype: xxx
-                        }
-                    }
-                }
     """
     config_mapping = {}
     with open(qconfig_file_path, "r") as f:
@@ -61,7 +55,7 @@ def load_qconfig(qconfig_file_path, config_name_mapping):
         # value here is a dict, so we convert it to an object with config_name_mapping,
         # which is defined in a specific framework.
         config_name = next(iter(value))
-        config_obj = config_name_mapping[config_name]()
+        config_obj = config_name_mapping[config_name]['cls']()
         config_obj.from_dict(value[config_name])
         config_mapping[(op_name, op_type)] = config_obj
     return config_mapping
