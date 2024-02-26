@@ -1,4 +1,5 @@
 import re
+import os
 import subprocess
 import sys
 from io import open
@@ -174,14 +175,6 @@ if __name__ == "__main__":
     if "pt" in sys.argv:
         sys.argv.remove("pt")
         cfg_key = "neural_compressor_3x_pt"
-        from torch.utils.cpp_extension import BuildExtension, CppExtension
-        ext_modules = [
-            CppExtension(
-                "fp8_convert",
-                ["neural_compressor/torch/algorithms/habana_fp8/tensor/convert.cpp"],
-            ),
-        ]
-        cmdclass = {"build_ext": BuildExtension}
 
     if "tf" in sys.argv:
         sys.argv.remove("tf")
@@ -190,6 +183,16 @@ if __name__ == "__main__":
     if "ort" in sys.argv:
         sys.argv.remove("ort")
         cfg_key = "neural_compressor_3x_ort"
+
+    if bool(os.getenv("USE_FP8_CONVERT", False)):
+        from torch.utils.cpp_extension import BuildExtension, CppExtension
+        ext_modules = [
+            CppExtension(
+                "fp8_convert",
+                ["neural_compressor/torch/algorithms/habana_fp8/tensor/convert.cpp"],
+            ),
+        ]
+        cmdclass = {"build_ext": BuildExtension}
 
     project_name = PKG_INSTALL_CFG[cfg_key].get("project_name")
     include_packages = PKG_INSTALL_CFG[cfg_key].get("include_packages") or {}
