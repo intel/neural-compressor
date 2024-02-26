@@ -149,6 +149,5 @@ class TestLayerWiseQuant(unittest.TestCase):
         self.assertTrue((lwq_quantized_weight == quantized_weight).all())
 
 
-
 if __name__ == "__main__":
     unittest.main()
