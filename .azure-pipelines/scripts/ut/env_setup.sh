@@ -105,6 +105,7 @@ fi
 # test deps
 pip install coverage
 pip install pytest
+pip install pytest-html
 
 pip list
 echo "[DEBUG] list pipdeptree..."
