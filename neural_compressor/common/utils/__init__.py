@@ -13,8 +13,8 @@
 # limitations under the License.
 
 from neural_compressor.common.utils.constants import *
-from neural_compressor.common.utils.logger import
-from neural_compressor.common.utils.save_load import save_qconfig, load_qconfig
+from neural_compressor.common.utils.logger import *
+from neural_compressor.common.utils.save_load import save_config_mapping, load_config_mapping
 
 # ! Put the following `utility` import after the `logger` import as `utility` used `logger`
 from neural_compressor.common.utils.utility import *

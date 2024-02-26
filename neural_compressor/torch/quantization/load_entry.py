@@ -16,7 +16,7 @@ import json
 import os
 
 from neural_compressor.common.utils import FP8_QUANT  # unified namespace
-from neural_compressor.common.utils import load_qconfig  # unified namespace
+from neural_compressor.common.utils import load_config_mapping  # unified namespace
 from neural_compressor.torch.quantization.config import FP8Config
 
 config_name_mapping = {
@@ -28,7 +28,7 @@ def load(model, output_dir="./saved_results"):
     from neural_compressor.common.base_config import ConfigRegistry
 
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), "qconfig.json")
-    config_mapping = load_qconfig(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
+    config_mapping = load_config_mapping(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
     model.qconfig = config_mapping
     # select load function
     config_object = config_mapping[next(iter(config_mapping))]

@@ -20,7 +20,7 @@ import os
 import habana_frameworks.torch.core as htcore
 import torch
 
-from neural_compressor.common.utils import load_qconfig, save_qconfig
+from neural_compressor.common.utils import load_config_mapping, save_config_mapping
 from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, logger
 
 from .fp8_quant import FP8_DTYPE, dtype_mapping
@@ -41,7 +41,7 @@ def save(model, output_dir="./saved_results"):
     qmodel_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
     # saving process
-    save_qconfig(model.qconfig, qconfig_file_path)
+    save_config_mapping(model.qconfig, qconfig_file_path)
 
     import fp8_convert
 

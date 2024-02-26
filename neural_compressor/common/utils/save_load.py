@@ -19,7 +19,7 @@ import json
 import os
 
 
-def save_config_mapping(config_mapping, file_path):
+def save_config_mapping(config_mapping, qconfig_file_path):
     """Save config mapping to json file.
 
     Args:
@@ -36,7 +36,7 @@ def save_config_mapping(config_mapping, file_path):
         json.dump(per_op_qconfig, f, indent=4)
 
 
-def load_qconfig(qconfig_file_path, config_name_mapping):
+def load_config_mapping(qconfig_file_path, config_name_mapping):
     """Reload config mapping from json file.
 
     Args:
