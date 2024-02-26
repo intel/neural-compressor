@@ -56,12 +56,11 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     Returns:
         A quantized model.
     """
-    assert not ipex_ver.release < Version("1.10.0").release, "INC support IPEX version >= 1.10.0"
+    assert not ipex_ver.release < Version("2.1").release, "IPEX version >= 2.1 is required for SmoothQuant."
 
-    _, cfgs, default_cfgs, fuse_ops, op_infos_from_cfgs, output_tensor_id_op_name = get_quantizable_ops_recursively(
+    _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name = get_quantizable_ops_recursively(
         model, example_inputs
     )
-
     # check smoothquant folding value
     recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
     if "smooth_quant_args" in recipe_cfgs and "folding" in recipe_cfgs["smooth_quant_args"]:
@@ -72,52 +71,34 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
                 folding = False
         else:
             folding = recipe_cfgs["smooth_quant_args"]["folding"]
+
     # Update model parameter when smoothquant folding = False
     if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and not folding:
         return qdq_quantize(
             model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name
         )
+    
     # Update model parameter when smoothquant folding = True
     if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding:
-        _apply_pre_optimization(model, tune_cfg)
+        _apply_pre_optimization(model, tune_cfg, run_fn, example_inputs)
 
     model.eval()
 
-    if ipex_ver.release >= Version("1.12.0").release:
-        # Check save_qconf_summary part is a workaround for IPEX bug.
-        # Sometimes the prepared model from get_op_capablitiy loss this attribute
-        if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):
-            from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+    # Check save_qconf_summary part is a workaround for IPEX bug.
+    # Sometimes the prepared model from get_op_capablitiy loss this attribute
+    if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):
+        static_qconfig = ipex.quantization.default_static_qconfig_mapping
+        if isinstance(example_inputs, dict):
+            model = ipex.quantization.prepare(
+                model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=inplace
+            )
+        else:
+            model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
 
-            if ipex_ver.release >= Version("2.1").release:
-                static_qconfig = ipex.quantization.default_static_qconfig_mapping
-            else:
-                static_qconfig = QConfig(
-                    activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                    weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
-                )
-            if isinstance(example_inputs, dict):
-                model = ipex.quantization.prepare(
-                    model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=inplace
-                )
-            else:
-                model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
-
-        model.load_qconf_summary(qconf_summary=ipex_config_path)
-        run_fn(model)
-        model.save_qconf_summary(qconf_summary=ipex_config_path)
-        model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
-
-    else:  # pragma: no cover
-        # for IPEX version < 1.12
-        qscheme = cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops, None, None)
-        ipex_conf = ipex.quantization.QuantConf(
-            configure_file=ipex_config_path, qscheme=qscheme
-        )  # pylint: disable=E1101
-        run_fn(model)
-        ipex_conf.save(ipex_config_path)
-        ipex_conf = ipex.quantization.QuantConf(ipex_config_path)  # pylint: disable=E1101
-        model = ipex.quantization.convert(model, ipex_conf, example_inputs, inplace=True)  # pylint: disable=E1121
+    model.load_qconf_summary(qconf_summary=ipex_config_path)
+    run_fn(model)
+    model.save_qconf_summary(qconf_summary=ipex_config_path)
+    model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
 
     # Recover model parameter when smoothquant folding = True
     if (
@@ -131,17 +112,17 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     with open(ipex_config_path, "r") as f:
         model.tune_cfg = json.load(f)
     model.ipex_config_path = ipex_config_path
-    if ipex_ver.release >= Version("1.12.0").release:
-        dump_model_op_stats(tune_cfg)
+    dump_model_op_stats(tune_cfg)
     return model
 
 
 def qdq_quantize(model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name):
-    assert not ipex_ver.release < Version("2.1").release, "IPEX version >= 2.1 is required for SmoothQuant."
-    sq_minmax_init = True if tune_cfg.get("act_algo", "kl") == "minmax" else False
-    sq = TorchSmoothQuant(model, dataloader=None, example_inputs=example_inputs, q_func=run_fn)
-    sq_max_info = sq.record_max_info
     smoothquant_scale_info = {}
+    sq_max_info = {}
+    sq_minmax_init = True if tune_cfg.get("act_algo", "kl") == "minmax" else False
+    sq = TorchSmoothQuant(model, dataloader=None, example_inputs=example_inputs, q_func=run_fn, record_max_info=True)
+    if sq.record_max_info:
+        sq_max_info = sq.max_value_info
     if sq_max_info:
         for _, info in sq_max_info.items():
             alpha = info["alpha"]
@@ -199,7 +180,7 @@ def qdq_quantize(model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_info
     # The load_qconf_summary will overwrite the scales used in model but only work in the first call.
     # Here, we use INC collected scale for Linear and set normal observer instead of SQObserver \
     # to make sure calibration works for other ops, like add, bmm.
-    cfg_to_qconfig(tune_cfg, cfgs, None, None, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=True)
+    cfg_to_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=True)
     update_sq_scale(ipex_config_path, smoothquant_scale_info)
     model.load_qconf_summary(qconf_summary=ipex_config_path)
     # real calibration for other operators
@@ -213,6 +194,7 @@ def qdq_quantize(model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_info
             + "using scale info from SmoothQuant for Linear and "
             + "one iter calibration for other ops."
         )
+
     model.save_qconf_summary(qconf_summary=ipex_config_path)
     if ipex_ver.release > Version("2.1.0").release:
         update_sq_scale(ipex_config_path, smoothquant_scale_info)
@@ -227,8 +209,10 @@ def qdq_quantize(model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_info
 
 
 def _apply_pre_optimization(model, tune_cfg, run_fn, example_inputs, recover=False):
+    sq_max_info = {}
     sq = TorchSmoothQuant(model, dataloader=None, example_inputs=example_inputs, q_func=run_fn)
-    sq_max_info = sq.record_max_info
+    if sq.record_max_info:
+        sq_max_info = sq.max_value_info
     if sq_max_info:
         tsq = TorchSmoothQuant(model, None)
         alpha = tune_cfg["recipe_cfgs"]["smooth_quant_args"]["alpha"]
