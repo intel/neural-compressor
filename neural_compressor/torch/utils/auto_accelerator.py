@@ -203,16 +203,23 @@ class CUDA_Accelerator(Auto_Accelerator):
         return torch.cuda.empty_cache()
 
 
-def auto_detect_accelerator() -> Auto_Accelerator:
-    # if runtime_accelerator.accelerator:
-    #     return runtime_accelerator.accelerator
+def auto_detect_accelerator(device_name="auto") -> Auto_Accelerator:
+    # The environment variable `FORCE_DEVICE` has higher priority than the `device_name`.
+    # TODO: refine the docs and logic later
     FORCE_DEVICE = os.environ.get("FORCE_DEVICE", None)
     if FORCE_DEVICE and accelerator_registry.get_accelerator_cls_by_name(FORCE_DEVICE) is not None:
         logger.warning("Force use %s accelerator.", FORCE_DEVICE)
         return accelerator_registry.get_accelerator_cls_by_name(FORCE_DEVICE)()
+    if device_name != "auto":
+        if accelerator_registry.get_accelerator_cls_by_name(device_name) is not None:
+            accelerator_cls = accelerator_registry.get_accelerator_cls_by_name(device_name)
+            logger.warning("Selected accelerator %s by device_name.", accelerator_cls.__name__)
+            return accelerator_cls()
+        else:
+            logger.warning("The device name %s is not supported, use auto detect instead.", device_name)
     for accelerator_cls in accelerator_registry.get_sorted_accelerators():
         if accelerator_cls.is_available():
-            logger.debug("Auto detect accelerator: %s.", accelerator_cls.__name__)
+            logger.warning("Auto detect accelerator: %s.", accelerator_cls.__name__)
             accelerator = accelerator_cls()
             return accelerator
 

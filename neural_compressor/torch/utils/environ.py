@@ -61,3 +61,11 @@ def get_torch_version():
         assert False, "Got an unknown version of torch: {}".format(e)
     version = Version(torch_version)
     return version
+
+
+def get_device(device_name="auto"):
+    from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
+    runtime_accelerator = auto_detect_accelerator(device_name)
+    device = runtime_accelerator.name()
+    return device
