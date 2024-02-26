@@ -19,14 +19,14 @@
 # limitations under the License.
 
 import os
+import transformers
 from copy import deepcopy
 from pathlib import Path
 from typing import Callable, List, Union
+from packaging.version import Version
 
 import onnx
 import onnxruntime as ort
-import transformers
-from packaging.version import Version
 
 from neural_compressor.common import Logger
 from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
@@ -59,11 +59,11 @@ def layer_wise_quant(
     Returns:
         _type_: _description_
     """
+    # TODO: remove the limitation for lwq
     if Version(transformers.__version__) > Version("4.37.2"):
-        logger.warning(
-            "Model (such as llama-2) exported with transformers {} may fail in layer-wise quant. "
-            "we recommand downgrading transformers to 4.37.2 and try again.".format(transformers.__version__)
-        )
+        logger.warning("Model (such as llama-2) exported with transformers {} may fail in layer-wise quant. "
+                       "we recommand downgrading transformers to 4.37.2 and try again.".format(
+                        transformers.__version__))
 
     # check whether model shape is inferred
     if not check_model_with_infer_shapes(model):
