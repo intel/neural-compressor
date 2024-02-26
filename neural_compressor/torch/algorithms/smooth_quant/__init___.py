@@ -13,5 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .utility import *
 from .smooth_quant import smooth_quantize
+from .utility import *
