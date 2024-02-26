@@ -10,16 +10,16 @@ from neural_compressor.torch.utils import is_ipex_available
 
 def build_simple_torch_model():
     class Model(torch.nn.Module):
+        device = torch.device("cpu")
+
         def __init__(self):
             super(Model, self).__init__()
-            self.fc1 = torch.nn.Linear(30, 50)
-            self.fc2 = torch.nn.Linear(50, 30)
-            self.fc3 = torch.nn.Linear(30, 5)
+            self.fc1 = torch.nn.Linear(3, 4)
+            self.fc2 = torch.nn.Linear(4, 3)
 
         def forward(self, x):
             out = self.fc1(x)
             out = self.fc2(out)
-            out = self.fc3(out)
             return out
 
     model = Model()
@@ -27,14 +27,13 @@ def build_simple_torch_model():
 
 
 def run_fn(model):
-    model(torch.rand((1, 30)))
-    model(torch.rand((1, 30)))
+    model(torch.randn([1, 3]))
 
 
 class TestSmoothQuant:
     def setup_class(self):
         self.fp32_model = build_simple_torch_model()
-        self.input = torch.randn(1, 30)
+        self.input = torch.randn([1, 3])
 
     def teardown_class(self):
         pass
@@ -63,3 +62,4 @@ class TestSmoothQuant:
         example_inputs = self.input
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
+    

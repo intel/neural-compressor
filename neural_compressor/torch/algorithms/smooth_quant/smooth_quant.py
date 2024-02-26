@@ -59,6 +59,7 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     assert not ipex_ver.release < Version("2.1").release, "IPEX version >= 2.1 is required for SmoothQuant."
 
     _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name = get_quantizable_ops_recursively(model, example_inputs)
+
     # check smoothquant folding value
     recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
     if "smooth_quant_args" in recipe_cfgs and "folding" in recipe_cfgs["smooth_quant_args"]:
@@ -70,16 +71,29 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
         else:
             folding = recipe_cfgs["smooth_quant_args"]["folding"]
 
+    # Note: we should make sure smoothquant is only executed once with inplacing fp32 model.
+    if hasattr(model, "_smoothquant_optimized") and model._smoothquant_optimized:
+        logger.info("The model is already optimized by SmoothQuant algorithm, skip it.")
+        return model
+    
+    sq = TorchSmoothQuant(
+        model, dataloader=None, example_inputs=example_inputs, q_func=run_fn, record_max_info=True
+    )
+    model = sq.transform(
+        alpha=recipe_cfgs["smooth_quant_args"]["alpha"],
+        folding=folding,
+        auto_alpha_args=recipe_cfgs["smooth_quant_args"]["auto_alpha_args"],
+    )
+
     # Update model parameter when smoothquant folding = False
     if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and not folding:
         return qdq_quantize(
-            model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name
+            model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, sq
         )
 
     # Update model parameter when smoothquant folding = True
     if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding:
-        _apply_pre_optimization(model, tune_cfg, run_fn, example_inputs)
-
+        _apply_pre_optimization(model, tune_cfg, sq)
     model.eval()
 
     # Check save_qconf_summary part is a workaround for IPEX bug.
@@ -105,7 +119,7 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
         and recipe_cfgs["smooth_quant_args"]["folding"]
         and not inplace
     ):
-        _apply_pre_optimization(model, tune_cfg, run_fn, example_inputs, recover=True)
+        _apply_pre_optimization(model, tune_cfg, sq, recover=True)
 
     with open(ipex_config_path, "r") as f:
         model.tune_cfg = json.load(f)
@@ -114,11 +128,10 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     return model
 
 
-def qdq_quantize(model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name):
+def qdq_quantize(model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, sq):
     smoothquant_scale_info = {}
     sq_max_info = {}
     sq_minmax_init = True if tune_cfg.get("act_algo", "kl") == "minmax" else False
-    sq = TorchSmoothQuant(model, dataloader=None, example_inputs=example_inputs, q_func=run_fn, record_max_info=True)
     if sq.record_max_info:
         sq_max_info = sq.max_value_info
     if sq_max_info:
@@ -193,7 +206,6 @@ def qdq_quantize(model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_info
             + "one iter calibration for other ops."
         )
 
-    model.save_qconf_summary(qconf_summary=ipex_config_path)
     if ipex_ver.release > Version("2.1.0").release:
         update_sq_scale(ipex_config_path, smoothquant_scale_info)
         model.load_qconf_summary(qconf_summary=ipex_config_path)
@@ -206,9 +218,8 @@ def qdq_quantize(model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_info
     return model
 
 
-def _apply_pre_optimization(model, tune_cfg, run_fn, example_inputs, recover=False):
+def _apply_pre_optimization(model, tune_cfg, sq, recover=False):
     sq_max_info = {}
-    sq = TorchSmoothQuant(model, dataloader=None, example_inputs=example_inputs, q_func=run_fn)
     if sq.record_max_info:
         sq_max_info = sq.max_value_info
     if sq_max_info:
