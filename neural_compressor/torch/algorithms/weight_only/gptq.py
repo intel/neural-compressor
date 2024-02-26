@@ -28,7 +28,8 @@ import torch.nn as nn
 import transformers
 from tqdm import tqdm
 
-from neural_compressor.torch.utils import fetch_module, logger, set_module
+from neural_compressor.torch.utils import fetch_module, get_device, logger, set_module
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 from .modules import WeightOnlyLinear
 
@@ -255,7 +256,7 @@ class GPTQuantizer(object):
         self.check_layer_config()
 
         # device
-        self.device = device
+        self.device = get_device(kwargs.pop("device", "auto"))
         if str(self.model.device).startswith("cuda"):
             self.device = self.model.device
         self.is_ready = False

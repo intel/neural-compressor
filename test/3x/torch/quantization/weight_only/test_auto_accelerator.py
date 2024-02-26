@@ -3,10 +3,7 @@ import os
 import pytest
 import torch
 
-from neural_compressor.torch.algorithms.weight_only.hqq.auto_accelerator import (
-    accelerator_registry,
-    auto_detect_accelerator,
-)
+from neural_compressor.torch.utils.auto_accelerator import accelerator_registry, auto_detect_accelerator
 
 
 class Test_CPU_Accelerator:
