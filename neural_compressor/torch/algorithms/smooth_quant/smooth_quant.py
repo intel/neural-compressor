@@ -81,6 +81,7 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
         alpha=recipe_cfgs["smooth_quant_args"]["alpha"],
         folding=folding,
         auto_alpha_args=recipe_cfgs["smooth_quant_args"]["auto_alpha_args"],
+        scale_sharing=recipe_cfgs["smooth_quant_args"]["scale_sharing"]
     )
 
     # Update model parameter when smoothquant folding = False

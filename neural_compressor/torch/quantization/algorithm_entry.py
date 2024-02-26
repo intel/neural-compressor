@@ -190,6 +190,7 @@ def smooth_quant_entry(
             "smooth_quant_args": {
                 "alpha": cfg.alpha,
                 "folding": cfg.folding,
+                "scale_sharing": cfg.scale_sharing,
                 "auto_alpha_args": cfg.auto_alpha_args if cfg.auto_alpha_args is not None else {},
             },
             "layer_wise_quant_args": {},

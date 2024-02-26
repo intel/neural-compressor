@@ -1295,7 +1295,8 @@ class TorchSmoothQuant:
     """
 
     def __init__(
-        self, model, dataloader=None, example_inputs=None, q_func=None, traced_model=None, record_max_info=False
+        self, model, dataloader=None, example_inputs=None, q_func=None, traced_model=None, scale_sharing=True,
+          record_max_info=False
     ):
         """
         :param model: Torch model :param dataloader: Calibration dataloader :param traced_model: A specific model
@@ -1321,6 +1322,7 @@ class TorchSmoothQuant:
             self.traced_model = self.model
         self.weight_scale_info = {}
         self.absorb_scales_info = {}
+        self.scale_sharing = scale_sharing
         self.insert_mul = False
         self.allow_absorb = True
         self.record_max_info = record_max_info
@@ -2107,6 +2109,7 @@ class TorchSmoothQuant:
         percentile=100,
         op_types=[torch.nn.Linear, torch.nn.Conv2d],
         scales_per_op=False,
+        scale_sharing=True,
         calib_iter=100,
         auto_alpha_args={
             "alpha_min": 0.0,
@@ -2166,16 +2169,17 @@ class TorchSmoothQuant:
             if need_calibration:  ##avoid multiple calibaration during tuning if the only difference is alpha
                 if self.insert_mul:
                     self.self_absorb_layers = self._get_all_layer_names(op_types)  # TODO: only support linear now.
-                    # fetch modules with the same input
-                    group_modules = self._trace(str_op_types, skip_unsupported_layers=False)
-                    if group_modules is not None:
-                        # use one input for qkv
-                        for k, v in group_modules.items():
-                            for i in v:
-                                if i in self.self_absorb_layers:
-                                    self.self_absorb_layers.pop(i)
-                            self.self_absorb_layers[v[0]] = v
-                        logger.debug(f"self_absorb_layers:{self.self_absorb_layers}")
+                    if self.scale_sharing:    
+                        # fetch modules with the same input
+                        group_modules = self._trace(str_op_types, skip_unsupported_layers=False)
+                        if group_modules is not None:
+                            # use one input for qkv
+                            for k, v in group_modules.items():
+                                for i in v:
+                                    if i in self.self_absorb_layers:
+                                        self.self_absorb_layers.pop(i)
+                                self.self_absorb_layers[v[0]] = v
+                            logger.debug(f"self_absorb_layers:{self.self_absorb_layers}")
                 if self.allow_absorb:
                     self.absorb_to_layer, no_absorb_layers = self._trace(
                         str_op_types
