@@ -66,7 +66,7 @@ class TestBasicTuningStrategy(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         shutil.rmtree("saved", ignore_errors=True)
-        shutil.rmtree(self.workspace)
+        shutil.rmtree(self.workspace, ignore_errors=True)
 
     def test_run_basic_one_trial_new_api(self):
         from neural_compressor.config import PostTrainingQuantConfig

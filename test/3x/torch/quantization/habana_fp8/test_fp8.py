@@ -1,31 +1,27 @@
 import copy
-import os
 import shutil
 import unittest
 
-import habana_frameworks.torch.core as htcore
+import torch
 
 from neural_compressor.torch.utils import is_hpex_available
 
-if not is_hpex_available():
-    exit()
-import torch
+if is_hpex_available():
+    from neural_compressor.torch.algorithms.habana_fp8 import quantize_dynamic
+    from neural_compressor.torch.algorithms.habana_fp8.modules import (
+        BatchMatmul,
+        FP8BatchMatmul,
+        FP8DynamicBatchMatmul,
+        FP8DynamicLinear,
+        FP8DynamicMatmul,
+        FP8Linear,
+        FP8Matmul,
+        Matmul,
+    )
+    from neural_compressor.torch.quantization import quantize
+    from neural_compressor.torch.quantization.config import FP8Config, get_default_fp8_config
 
-from neural_compressor.torch.algorithms.habana_fp8 import quantize_dynamic
-from neural_compressor.torch.algorithms.habana_fp8.modules import (
-    BatchMatmul,
-    FP8BatchMatmul,
-    FP8DynamicBatchMatmul,
-    FP8DynamicLinear,
-    FP8DynamicMatmul,
-    FP8Linear,
-    FP8Matmul,
-    Matmul,
-)
-from neural_compressor.torch.quantization import quantize
-from neural_compressor.torch.quantization.config import FP8Config, get_default_fp8_config
-
-torch.set_grad_enabled(False)
+    torch.set_grad_enabled(False)
 
 
 class M(torch.nn.Module):
