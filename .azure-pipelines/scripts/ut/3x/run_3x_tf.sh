@@ -23,7 +23,7 @@ mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_3x_tf.log
 pytest --cov="${inc_path}" -vs --disable-warnings --html=report_tf_quant.html --self-contained-html ./tensorflow/quantization 2>&1 | tee -a ${ut_log_name}
 rm -rf tensorflow/quantization
-pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_tf.html --self-contained-html ./tensorflow 2>&1 | tee -a ${ut_log_name}
+pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_tf.html --self-contained-html . 2>&1 | tee -a ${ut_log_name}
 
 rm -rf tensorflow/*
 mv ../3x_keras tensorflow/keras
