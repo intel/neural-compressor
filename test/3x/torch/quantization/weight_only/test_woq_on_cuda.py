@@ -1,5 +1,3 @@
-# ! Rename it
-
 import random
 
 import pytest
