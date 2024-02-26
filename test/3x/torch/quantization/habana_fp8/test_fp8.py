@@ -1,7 +1,7 @@
 import copy
 import shutil
-import unittest
 
+import pytest
 import torch
 
 from neural_compressor.torch.utils import is_hpex_available
@@ -45,15 +45,13 @@ class M(torch.nn.Module):
         return out
 
 
-@unittest.skipIf(not is_hpex_available(), "HPEX is required for HPU inference")
-class TestPytorchFP8Adaptor(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
+@pytest.mark.skipif(not is_hpex_available(), reason="no hpex in environment here.")
+class TestPytorchFP8Adaptor:
+    def setup_class(self):
         self.model = M().to("hpu")
         self.inp = torch.randn(1, 10).to("hpu")
 
-    @classmethod
-    def tearDownClass(self):
+    def teardown_class(self):
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("./.graph_dumps", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
@@ -62,7 +60,7 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
-        m = quantize_dynamic(m, dtype=torch.float8_e5m2, inplace=True)
+        m = quantize_dynamic(m, dtype="fp8_e5m2", inplace=True)
         self.assertTrue(isinstance(m.fc1, FP8DynamicLinear))
         self.assertTrue(isinstance(m.mm, FP8DynamicMatmul))
         self.assertTrue(isinstance(m.bmm, FP8DynamicBatchMatmul))
@@ -73,7 +71,7 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
-        m = quantize_dynamic(m, dtype=torch.float8_e4m3fn, inplace=True)
+        m = quantize_dynamic(m, dtype="fp8_e4m3", inplace=True)
         self.assertTrue(isinstance(m.fc1, FP8DynamicLinear))
         self.assertTrue(isinstance(m.mm, FP8DynamicMatmul))
         self.assertTrue(isinstance(m.bmm, FP8DynamicBatchMatmul))
@@ -97,7 +95,7 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         m = copy.deepcopy(self.model)
         inp = self.inp
         fp32_out = m(inp)
-        qconfig = FP8Config(weight_dtype=torch.float8_e5m2, act_dtype=torch.float8_e5m2, approach="static")
+        qconfig = FP8Config(w_dtype="fp8_e5m2", act_dtype="fp8_e5m2", approach="static")
 
         def calib_func(model):
             model(inp)
@@ -166,7 +164,3 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         self.assertTrue(isinstance(m.fc1, FP8Linear))
         self.assertTrue(isinstance(m.mm, FP8Matmul))
         self.assertTrue(isinstance(m.bmm, FP8BatchMatmul))
-
-
-if __name__ == "__main__":
-    unittest.main()

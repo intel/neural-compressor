@@ -55,6 +55,7 @@ parser.add_argument("--accuracy", action="store_true")
 parser.add_argument("--performance", action="store_true")
 parser.add_argument("--generate", action="store_true")
 parser.add_argument("--skip_fp8_mm", action="store_true")
+parser.add_argument("--dump_to_excel", action="store_true")
 parser.add_argument("--save", action="store_true")
 parser.add_argument("--load", action="store_true")
 parser.add_argument("--batch_size", default=1, type=int,
@@ -224,7 +225,7 @@ if args.approach in ["dynamic", "static"] and not args.load:
         # saving
         if args.save:
             user_model.save("saved_results")
-    print(user_model, flush=True)
+    # print(user_model, flush=True)
     show_msg()
 
 
@@ -391,7 +392,8 @@ if args.accuracy:
         else:
             print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["acc"]), flush=True)
             accu_dict[task_name] = [args.model, case_name, results["results"][task_name]["acc"]]
-    save_to_excel(accu_dict)
+    if args.dump_to_excel:
+        save_to_excel(accu_dict)
 
 
 show_msg()
