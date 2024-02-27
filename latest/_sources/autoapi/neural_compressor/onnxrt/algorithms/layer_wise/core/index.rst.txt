@@ -1,0 +1,38 @@
+:orphan:
+
+:py:mod:`neural_compressor.onnxrt.algorithms.layer_wise.core`
+=============================================================
+
+.. py:module:: neural_compressor.onnxrt.algorithms.layer_wise.core
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.algorithms.layer_wise.core.layer_wise_quant
+
+
+
+.. py:function:: layer_wise_quant(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], quant_func: Callable, weight_config: dict, data_reader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader = None, *args, **kwargs) -> neural_compressor.onnxrt.utils.onnx_model.ONNXModel
+
+   Quantize model layer by layer to save memory.
+
+   :param model: onnx model.
+   :type model: Union[onnx.ModelProto, ONNXModel, Path, str]
+   :param quant_func: quantization algo function.
+   :type quant_func: Callable
+   :param weight_config: quantization config.
+   :type weight_config: dict
+   :param data_reader: data_reader for calibration. Defaults to None.
+   :type data_reader: CalibrationDataReader, optional
+
+   :returns: _description_
+   :rtype: _type_
+
+

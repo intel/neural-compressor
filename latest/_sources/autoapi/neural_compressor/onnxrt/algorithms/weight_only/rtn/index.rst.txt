@@ -20,7 +20,7 @@ Functions
 
 
 
-.. py:function:: rtn_quantize(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], weight_config: dict = {}, num_bits: int = 4, group_size: int = 32, scheme: str = 'asym', ratios: dict = {}, accuracy_level: int = 0, providers: List[str] = ['CPUExecutionProvider']) -> onnx.ModelProto
+.. py:function:: rtn_quantize(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], weight_config: dict = {}, num_bits: int = 4, group_size: int = 32, scheme: str = 'asym', ratios: dict = {}, accuracy_level: int = 0, providers: List[str] = ['CPUExecutionProvider'], return_modelproto: bool = True)
 
    Quantize the model with round to nearst method.
 
@@ -53,17 +53,20 @@ Functions
    :type accuracy_level: int, optional
    :param providers: providers to use. Defaults to ["CPUExecutionProvider"].
    :type providers: list, optional
+   :param return_modelproto: whether to return onnx.Modelproto. set False for layer-wise quant.
+                             Default to True
+   :type return_modelproto: bool, optionmal
 
    :returns: quantized onnx model.
    :rtype: onnx.ModelProto
 
 
-.. py:function:: apply_rtn_on_model(model: onnx.ModelProto, quant_config: dict) -> onnx.ModelProto
+.. py:function:: apply_rtn_on_model(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], quant_config: dict) -> onnx.ModelProto
 
    Apply RTN on onnx model.
 
    :param model: onnx model.
-   :type model: onnx.ModelProto
+   :type model: Union[onnx.ModelProto, ONNXModel, Path, str]
    :param quant_config: quantization config.
    :type quant_config: dict
 

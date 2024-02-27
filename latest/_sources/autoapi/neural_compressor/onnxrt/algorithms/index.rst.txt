@@ -26,6 +26,8 @@ Functions
    neural_compressor.onnxrt.algorithms.apply_rtn_on_model
    neural_compressor.onnxrt.algorithms.apply_gptq_on_model
    neural_compressor.onnxrt.algorithms.apply_awq_on_model
+   neural_compressor.onnxrt.algorithms.layer_wise_quant
+
 
 
 

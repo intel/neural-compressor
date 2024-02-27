@@ -1,0 +1,22 @@
+:orphan:
+
+:py:mod:`neural_compressor.onnxrt.algorithms.layer_wise`
+========================================================
+
+.. py:module:: neural_compressor.onnxrt.algorithms.layer_wise
+
+
+Package Contents
+----------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.algorithms.layer_wise.layer_wise_quant
+
+
+
+

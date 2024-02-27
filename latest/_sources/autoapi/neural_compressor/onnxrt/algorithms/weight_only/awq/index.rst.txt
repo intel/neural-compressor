@@ -20,14 +20,14 @@ Functions
 
 
 
-.. py:function:: awq_quantize(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], dataloader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader, weight_config: dict = {}, num_bits: int = 4, group_size: int = 32, scheme: str = 'asym', enable_auto_scale: bool = True, enable_mse_search: bool = True, accuracy_level: int = 0, providers: List[str] = ['CPUExecutionProvider']) -> onnx.ModelProto
+.. py:function:: awq_quantize(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], data_reader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader, weight_config: dict = {}, num_bits: int = 4, group_size: int = 32, scheme: str = 'asym', enable_auto_scale: bool = True, enable_mse_search: bool = True, accuracy_level: int = 0, providers: List[str] = ['CPUExecutionProvider']) -> onnx.ModelProto
 
    Quant the model with Activation-aware Weight quantization(AWQ) method.
 
    :param model: onnx model.
    :type model: Union[onnx.ModelProto, ONNXModel, Path, str]
-   :param dataloader: dataloader for calibration.
-   :type dataloader: CalibrationDataReader
+   :param data_reader: data_reader for calibration.
+   :type data_reader: CalibrationDataReader
    :param weight_config: quantization config
                          For example,
                          weight_config = {
@@ -72,7 +72,7 @@ Functions
    :type model: Union[onnx.ModelProto, ONNXModel, Path, str]
    :param quant_config: quantization config.
    :type quant_config: dict
-   :param calibration_data_reader: dataloader for calibration.
+   :param calibration_data_reader: data_reader for calibration.
    :type calibration_data_reader: CalibrationDataReader
 
    :returns: quantized onnx model.

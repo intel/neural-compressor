@@ -22,6 +22,7 @@ Functions
    neural_compressor.onnxrt.utils.utility.is_B_transposed
    neural_compressor.onnxrt.utils.utility.get_qrange_for_qType
    neural_compressor.onnxrt.utils.utility.quantize_data
+   neural_compressor.onnxrt.utils.utility.check_model_with_infer_shapes
 
 
 
@@ -118,5 +119,10 @@ Attributes
    :type qType: int
    :param scheme: sym or asym quantization.
    :type scheme: string
+
+
+.. py:function:: check_model_with_infer_shapes(model)
+
+   Check if the model has been shape inferred.
 
 

@@ -42,7 +42,7 @@ Attributes
 
 
 
-.. py:class:: RTNConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, act_dtype: str = 'fp32', accuracy_level: int = 0, providers: List[str] = ['CPUExecutionProvider'], white_list: List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST)
+.. py:class:: RTNConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, act_dtype: str = 'fp32', accuracy_level: int = 0, providers: List[str] = ['CPUExecutionProvider'], layer_wise_quant: bool = False, white_list: List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST)
 
 
 
@@ -57,7 +57,7 @@ Attributes
    :returns: the default rtn config.
 
 
-.. py:class:: GPTQConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, act_dtype: str = 'fp32', accuracy_level: int = 0, percdamp: float = 0.01, blocksize: int = 128, actorder: bool = False, mse: bool = False, perchannel: bool = True, providers: List[str] = ['CPUExecutionProvider'], white_list: List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST)
+.. py:class:: GPTQConfig(weight_dtype: str = 'int', weight_bits: int = 4, weight_group_size: int = 32, weight_sym: bool = True, act_dtype: str = 'fp32', accuracy_level: int = 0, percdamp: float = 0.01, blocksize: int = 128, actorder: bool = False, mse: bool = False, perchannel: bool = True, providers: List[str] = ['CPUExecutionProvider'], layer_wise_quant: bool = False, white_list: List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST)
 
 
 
