@@ -668,6 +668,33 @@ def build_gemm_model():
     return model
 
 
+def build_model_share_init():
+    initializers = []
+    input = helper.make_tensor_value_info("input", TensorProto.FLOAT, [1, 3, 224, 224])
+    conv_weight_initializer = numpy_helper.from_array(
+        np.random.randint(-1, 2, [222, 3, 3, 3]).astype(np.float32), name="conv_weight"
+    )
+    conv_bias_initializer = numpy_helper.from_array(np.random.randint(1, 2, [222]).astype(np.float32), name="conv_bias")
+    conv_node = helper.make_node("Conv", ["input", "conv_weight", "conv_bias"], ["conv_output"], name="conv")
+
+    add_node = helper.make_node("Add", ["conv_bias", "conv_output"], ["add_output"], name="add")
+
+    div_node = helper.make_node("Div", ["add_output", "conv_bias"], ["div_output"], name="div")
+
+    output = helper.make_tensor_value_info("div_output", TensorProto.FLOAT, [1, 222, 222, 222])
+    initializers = [conv_weight_initializer, conv_bias_initializer]
+    graph = helper.make_graph(
+        [conv_node, add_node, div_node],
+        "test",
+        [input],
+        [output],
+        initializer=initializers,
+    )
+    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
+    model.ir_version = 7
+    return model
+
+
 def build_benchmark():
     seq = """
 from neural_compressor.experimental import Benchmark
@@ -864,6 +891,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.gemm_model = build_gemm_model()
         self.conv_model2 = build_conv_model2()
         self.conv_model3 = build_conv_model3()
+        self.shared_init_model = build_model_share_init()
         export_onnx_nlp_model(self.distilbert_model, self.distilbert_export_path, 14)
         export_onnx_nlp_model(self.albert_model, self.albert_export_path, 14)
         self.distilbert_model = onnx.load(self.distilbert_export_path)
@@ -1808,6 +1836,24 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
         # check TENSORRT is not loaded if backend is not onnxrt_trt_ep
         self.assertEqual(os.environ.get("ORT_TENSORRT_UNAVAILABLE"), "1")
+
+    def test_model_share_init(self):
+        config = PostTrainingQuantConfig(approach="static")
+        q_model = quantization.fit(self.shared_init_model, config, calib_dataloader=self.cv_dataloader)
+        self.assertNotEqual(q_model, None)
+        ort.InferenceSession(q_model.model.SerializeToString(), providers=ort.get_available_providers())
+
+        config = PostTrainingQuantConfig(approach="dynamic")
+        q_model = quantization.fit(self.shared_init_model, config, calib_dataloader=self.cv_dataloader)
+        self.assertNotEqual(q_model, None)
+        ort.InferenceSession(q_model.model.SerializeToString(), providers=ort.get_available_providers())
+
+        config = PostTrainingQuantConfig(
+            approach="static", quant_format="QDQ", recipes={"add_qdq_pair_to_weight": True}
+        )
+        q_model = quantization.fit(self.shared_init_model, config, calib_dataloader=self.cv_dataloader)
+        self.assertNotEqual(q_model, None)
+        ort.InferenceSession(q_model.model.SerializeToString(), providers=ort.get_available_providers())
 
 
 if __name__ == "__main__":
