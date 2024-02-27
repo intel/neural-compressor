@@ -17,6 +17,7 @@
 
 import copy
 import json
+
 import torch
 
 try:
@@ -27,12 +28,13 @@ except:
 from packaging.version import Version
 
 from neural_compressor.torch.utils import (
-    get_ipex_version, 
-    logger, 
-    dump_model_op_stats, 
-    simple_inference, 
-    ipex_config_path
+    dump_model_op_stats,
+    get_ipex_version,
+    ipex_config_path,
+    logger,
+    simple_inference,
 )
+
 from .utility import (
     SQLinearWrapper,
     TorchSmoothQuant,

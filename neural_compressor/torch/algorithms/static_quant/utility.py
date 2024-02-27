@@ -16,22 +16,23 @@ import copy
 import json
 import os
 import re
-import torch
+
 import intel_extension_for_pytorch as ipex
+import torch
 from packaging.version import Version
 
 from neural_compressor.torch.utils import (
-    get_ipex_version,
-    get_torch_version, 
-    logger, 
-    simple_inference, 
-    unify_op_type_mapping_ipex, 
     TransformerBasedModelBlockPatternDetector,
-    get_pattern,
-    ipex_config_path,
     get_fuse_ops,
-    paser_cfgs,
+    get_ipex_version,
+    get_pattern,
     get_quantizable_ops_from_cfgs,
+    get_torch_version,
+    ipex_config_path,
+    logger,
+    paser_cfgs,
+    simple_inference,
+    unify_op_type_mapping_ipex,
 )
 
 version = get_torch_version()
@@ -91,7 +92,7 @@ def cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops):  # pragma: no cover
         return torch.per_tensor_symmetric
 
 
-def get_quantizable_ops_recursively(model, example_inputs): # pragma: no cover
+def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
     """Get all quantizable ops from model.
 
     Args:

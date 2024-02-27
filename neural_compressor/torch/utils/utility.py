@@ -13,12 +13,14 @@
 # limitations under the License.
 
 import json
-import torch
 import os
-import prettytable as pt
-from typing_extensions import TypeAlias
 from typing import Callable, Dict, List, Tuple, Union
-from neural_compressor.common.utils import logger, DEFAULT_WORKSPACE
+
+import prettytable as pt
+import torch
+from typing_extensions import TypeAlias
+
+from neural_compressor.common.utils import DEFAULT_WORKSPACE, logger
 
 OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 
@@ -476,6 +478,7 @@ class Statistics:
 
 class TransformerBasedModelBlockPatternDetector:
     """Detect the attention block and FFN block in transformer-based model."""
+
     from . import BLOCK_PATTERNS
 
     def __init__(self, model: torch.nn.Module, pattern_lst: List[List[Union[str, int]]] = BLOCK_PATTERNS) -> None:
