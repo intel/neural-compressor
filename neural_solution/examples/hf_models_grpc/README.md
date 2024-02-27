@@ -68,7 +68,7 @@ optional arguments:
     "script_url": "https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py",
     "optimized": "False",
     "arguments": [
-        "--model_name_or_path bert-base-cased --task_name mrpc --do_eval --output_dir result"
+        "--model_name_or_path=bert-base-cased", "--task_name=mrpc", "--do_eval", "--output_dir=result"
     ],
     "approach": "static",
     "requirements": [],
