@@ -16,6 +16,14 @@ from neural_compressor.torch.quantization import (
 )
 
 
+def get_gpt_j():
+    tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
+        "hf-internal-testing/tiny-random-GPTJForCausalLM",
+        torchscript=True,
+    )
+    return tiny_gptj
+
+
 class GPTQDataloaderPreprocessor:
     def __init__(self, dataloader_original, use_max_length=False, max_seq_length=2048, nsamples=128):
         self.dataloader_original = dataloader_original
@@ -219,9 +227,7 @@ class TestGPTQ:
                     pass
             return
 
-        user_model = transformers.AutoModelForCausalLM.from_pretrained(
-            "hf-internal-testing/tiny-random-GPTJForCausalLM",
-        )
+        user_model = get_gpt_j()
 
         user_model = quantize(
             model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=dataloader_for_calibration
@@ -234,9 +240,7 @@ class TestRTNQuant:
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="test requires a GPU")
     def test_rtn(self):
-        self.tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
-            "hf-internal-testing/tiny-random-GPTJForCausalLM",
-        )
+        self.tiny_gptj = get_gpt_j()
         self.example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long)
         model = self.tiny_gptj
         # record label for comparison
@@ -245,14 +249,6 @@ class TestRTNQuant:
         quant_config = get_default_rtn_config()
         q_model = quantize(model, quant_config)
         assert "cuda" in str(q_model.device), f"Expect qmodel device is cuda, got {q_model.device}"
-
-
-def get_gpt_j():
-    tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
-        "hf-internal-testing/tiny-random-GPTJForCausalLM",
-        torchscript=True,
-    )
-    return tiny_gptj
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="test requires a GPU")
