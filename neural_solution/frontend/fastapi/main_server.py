@@ -154,7 +154,7 @@ async def submit_task(task: Task):
     Returns:
         json: status , id of task and messages.
     """
-    if not is_valid_task:
+    if not is_valid_task(task.dict()):
         raise HTTPException(status_code=422, detail="Invalid task")
 
     msg = "Task submitted successfully"
