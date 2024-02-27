@@ -9,14 +9,6 @@
 Module Contents
 ---------------
 
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.torch.algorithms.weight_only.awq.ActAwareWeightQuant
-
-
 
 Functions
 ~~~~~~~~~
@@ -25,12 +17,6 @@ Functions
 
    neural_compressor.torch.algorithms.weight_only.awq.awq_quantize
 
-
-
-.. py:class:: ActAwareWeightQuant(model, example_inputs=None, calib_func=None, dataloader=None, n_samples=128, data_type='int', bits=4, group_size=32, scheme='asym', use_full_range=False, weight_config={})
-
-
-   Implementation of Activation-aware Weight quantization (AWQ) algo.
 
 
 .. py:function:: awq_quantize(model, bits=4, group_size=32, scheme='asym', weight_config={}, example_inputs=None, dataloader=None, n_samples=128, calib_func=None, use_auto_scale=True, use_mse_search=True, folding=False, return_int=False, use_full_range=False, data_type='int')
