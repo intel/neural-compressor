@@ -164,7 +164,7 @@ def smooth_quant_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], SmoothQuantConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the smooth quant algorithm.")
-    from neural_compressor.torch.algorithms.smooth_quant.smooth_quant import smooth_quantize
+    from neural_compressor.torch.algorithms.smooth_quant import smooth_quantize
 
     # convert the user config into internal format
     quant_config_mapping = {}
