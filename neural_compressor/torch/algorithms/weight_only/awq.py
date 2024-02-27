@@ -33,6 +33,8 @@ from .utility import (
     set_module,
 )
 
+__all__ = ["awq_quantize"]
+
 
 def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}):
     """Get absorbed layer per block.

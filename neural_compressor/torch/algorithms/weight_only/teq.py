@@ -24,6 +24,8 @@ from neural_compressor.torch.utils import get_device, logger
 from .modules import MulLinear, TEQLinearFakeQuant
 from .utility import get_module, quant_tensor, set_module
 
+__all__ = ["teq_quantize", "TEQuantizer"]
+
 
 class TEQuantizer:
     """Weight-only quantization, Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input."""
