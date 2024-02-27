@@ -15,7 +15,7 @@ jobs:
     if: github.event.pull_request.draft == false
     timeout-minutes: 361 # in case something is wrong with the internal timeout
     steps:
-      - uses: XuehaoSun/probot@0.1
+      - uses: XuehaoSun/probot@0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
