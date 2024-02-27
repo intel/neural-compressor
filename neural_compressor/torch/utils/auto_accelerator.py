@@ -204,14 +204,18 @@ class CUDA_Accelerator(Auto_Accelerator):
 
 def auto_detect_accelerator(device_name="auto") -> Auto_Accelerator:
     # Force use the cpu on node has both cpu and gpu: `FORCE_DEVICE=cpu` python main.py ...
+    # The `FORCE_DEVICE` is case insensitive.
     # The environment variable `FORCE_DEVICE` has higher priority than the `device_name`.
     # TODO: refine the docs and logic later
+    # 1. Get the device setting from environment variable `FORCE_DEVICE`.
     FORCE_DEVICE = os.environ.get("FORCE_DEVICE", None)
     if FORCE_DEVICE:
         FORCE_DEVICE = FORCE_DEVICE.lower()
+    # 2. If the `FORCE_DEVICE` is set and the accelerator is available, use it.
     if FORCE_DEVICE and accelerator_registry.get_accelerator_cls_by_name(FORCE_DEVICE) is not None:
         logger.warning("Force use %s accelerator.", FORCE_DEVICE)
         return accelerator_registry.get_accelerator_cls_by_name(FORCE_DEVICE)()
+    # 3. If the `device_name` is set and the accelerator is available, use it.
     if device_name != "auto":
         if accelerator_registry.get_accelerator_cls_by_name(device_name) is not None:
             accelerator_cls = accelerator_registry.get_accelerator_cls_by_name(device_name)
@@ -219,6 +223,7 @@ def auto_detect_accelerator(device_name="auto") -> Auto_Accelerator:
             return accelerator_cls()
         else:
             logger.warning("The device name %s is not supported, use auto detect instead.", device_name)
+    # 4. Select the accelerator by priority.
     for accelerator_cls in accelerator_registry.get_sorted_accelerators():
         if accelerator_cls.is_available():
             logger.warning("Auto detect accelerator: %s.", accelerator_cls.__name__)
@@ -228,5 +233,7 @@ def auto_detect_accelerator(device_name="auto") -> Auto_Accelerator:
 
 # Force use cpu accelerator even if cuda is available.
 # FORCE_DEVICE = "cpu" python ...
+# or
+# FORCE_DEVICE = "CPU" python ...
 # or
 # CUDA_VISIBLE_DEVICES="" python ...
