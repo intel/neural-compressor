@@ -89,8 +89,8 @@ local_rank = int(os.getenv('LOCAL_RANK', '-1'))
 model_dtype = torch.float32
 if re.search("llama", args.model.lower()) or re.search("bloom", args.model.lower()):
     from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
-    config = AutoConfig.from_pretrained(args.model)
     if world_size > 1:
+        config = AutoConfig.from_pretrained(args.model)
         model_dtype = torch.bfloat16 # RuntimeErrorCastToFp8V2 input must be of float or bfloat16 dtype
         deepspeed.init_distributed(dist_backend="hccl")
         with deepspeed.OnDevice(dtype=model_dtype, device="meta"):
@@ -106,9 +106,9 @@ if re.search("llama", args.model.lower()) or re.search("bloom", args.model.lower
         )
     else:
         if args.load:
-            config = AutoConfig.from_pretrained(args.model, torch_dtype=model_dtype)
+            config = AutoConfig.from_pretrained(args.model)
             with init_empty_weights():
-                user_model = AutoModelForCausalLM.from_config(config)
+                user_model = AutoModelForCausalLM.from_config(config, torch_dtype=model_dtype)
         else:
             user_model = AutoModelForCausalLM.from_pretrained(
                 args.model,
@@ -132,9 +132,9 @@ elif re.search("chatglm", args.model.lower()):
     user_model.float() # static fp8 need float32 for graph compiler
 else:
     if args.load:
-        config = AutoConfig.from_pretrained(args.model, torch_dtype=model_dtype)
+        config = AutoConfig.from_pretrained(args.model)
         with init_empty_weights():
-            user_model = AutoModelForCausalLM.from_config(config)
+            user_model = AutoModelForCausalLM.from_config(config, torch_dtype=model_dtype)
     else:
         user_model = AutoModelForCausalLM.from_pretrained(
             args.model,
@@ -174,11 +174,11 @@ else:
         trust_remote_code=args.trust_remote_code
     )
 
-tokenizer.pad_token = tokenizer.eos_token
 
 user_model.eval()
 
 
+### dynamic & static quantization ###
 if args.approach in ["dynamic", "static"] and not args.load:
     print("device:", next(user_model.parameters()).device)
     from neural_compressor.torch.quantization.config import FP8Config, get_default_fp8_config
@@ -218,30 +218,27 @@ if args.approach in ["dynamic", "static"] and not args.load:
                 )
 
         user_model = quantize(user_model, qconfig, calib_func, inplace=True)
-        # It enables weights constant folding
-        from habana_frameworks.torch.core.quantization import _check_params_as_const, _mark_params_as_const
-        _mark_params_as_const(user_model)  # can reduce memory allocated and speed up
-        _check_params_as_const(user_model)
         # saving
         if args.save and local_rank in [-1, 0]:
             user_model.save("saved_results")
-    # print(user_model, flush=True)
-    show_msg()
 
 
 if args.load:
     from neural_compressor.torch.quantization import load
     user_model = load(user_model, "saved_results")
+
+
+if args.approach in ["dynamic", "static"] or  args.load:
     # It enables weights constant folding
     from habana_frameworks.torch.core.quantization import _check_params_as_const, _mark_params_as_const
     _mark_params_as_const(user_model)  # can reduce memory allocated and speed up
     _check_params_as_const(user_model)
-    show_msg()
 
 
-if not args.skip_fp8_mm:
-    # If torch.matmul and toch.bmm are not replaced by INC module, 
-    # Below codes can make torch.matmul and toch.bmm run on fp8 by injection.
+
+# If torch.matmul and torch.bmm are not replaced by INC module, 
+# Below codes can make torch.matmul and torch.bmm run on fp8 by injection.
+if not args.skip_fp8_mm and args.precision in ['fp8_e4m3', 'fp8_e5m2']:
     def replace_torch_mm_bmm():
         from neural_compressor.torch.amp.fp8.functions import fp8_matmul
         torch.matmul = fp8_matmul
@@ -250,11 +247,17 @@ if not args.skip_fp8_mm:
     replace_torch_mm_bmm()
 
 
+# inference optimization
 if args.to_graph:
     import habana_frameworks.torch.hpu.graphs as htgraphs
     user_model = htgraphs.wrap_in_hpu_graph(user_model)
 
 
+# dump message of HPU after quantization or reloading
+show_msg()
+
+
+### generation, performance and accuracy validation ###
 if args.generate:
     input_prompt = "Here is my prompt"
     print("Prompt sentence:", input_prompt)
@@ -396,4 +399,5 @@ if args.accuracy:
         save_to_excel(accu_dict)
 
 
+# dump final message of HPU
 show_msg()
