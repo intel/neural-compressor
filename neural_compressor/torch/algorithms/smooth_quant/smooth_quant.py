@@ -18,25 +18,29 @@
 import copy
 import json
 
-from neural_compressor.torch.utils import get_ipex_version, logger
+import torch
 
 try:
     import intel_extension_for_pytorch as ipex
 except:
     assert False, "Please install IPEX for smooth quantization."
 
-import torch
 from packaging.version import Version
+
+from neural_compressor.torch.utils import (
+    dump_model_op_stats,
+    get_ipex_version,
+    ipex_config_path,
+    logger,
+    simple_inference,
+)
 
 from .utility import (
     SQLinearWrapper,
     TorchSmoothQuant,
     cfg_to_qconfig,
-    dump_model_op_stats,
     get_module,
     get_quantizable_ops_recursively,
-    ipex_config_path,
-    simple_inference,
     update_sq_scale,
 )
 
