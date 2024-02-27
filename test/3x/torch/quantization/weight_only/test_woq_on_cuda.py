@@ -12,6 +12,7 @@ from neural_compressor.torch.quantization import (
     GPTQConfig,
     get_default_awq_config,
     get_default_rtn_config,
+    get_default_teq_config,
     quantize,
 )
 
@@ -263,9 +264,115 @@ class TestAWQOnCuda:
             for i in range(2):
                 model(self.lm_input.to(model.device))
 
-        quant_config = AWQConfig(bits=8, group_size=-1)
-        logger.info(f"Test AWQ with config {quant_config}")
-        q_model = quantize(model=self.gptj, quant_config=quant_config, example_inputs=self.lm_input, run_fn=calib_func)
+        quant_config = get_default_awq_config()
+        logger.info("Test quantization with config", quant_config)
+        q_model = quantize(
+            model=self.gptj, quant_config=quant_config, example_inputs=self.lm_input, run_fn=calib_func, inplace=False
+        )
         out2 = q_model(example_inputs.to(q_model.device))
         assert "cuda" in str(q_model.device), f"Expect qmodel device is cuda, got {q_model.device}"
+        assert "cuda" in str(out2[0].device), f"Expect out2 device is cuda, got {out2.device}"
+
+
+def generate_random_corpus(nsamples=32):
+    meta_data = []
+    for _ in range(nsamples):
+        inp = torch.ones([1, 512], dtype=torch.long)
+        tar = torch.ones([1, 512], dtype=torch.long)
+        meta_data.append((inp, tar))
+    return meta_data
+
+
+def train(
+    model,
+    train_steps=1000,
+    lr=1e-3,
+    warmup_ratio=0.05,
+    gradient_accumulation_steps=1,
+    logging_steps=10,
+    betas=[0.9, 0.9],
+    weight_decay=0,
+    lr_scheduler_type="linear",
+):
+    """Train function."""
+    trained_alphas_list = [torch.ones([128], requires_grad=True)]
+    optimizer = torch.optim.Adam(trained_alphas_list, lr=lr, weight_decay=weight_decay, betas=betas)
+
+    lr_scheduler = transformers.get_scheduler(  # pylint: disable=E1111
+        name=lr_scheduler_type,
+        optimizer=optimizer,
+        num_warmup_steps=int(train_steps * warmup_ratio) // gradient_accumulation_steps,
+        num_training_steps=train_steps // gradient_accumulation_steps,
+    )
+
+    logger.info("start training")
+    model.train()
+    global_steps = 0
+    dataloader = generate_random_corpus()
+    while global_steps <= train_steps:
+        for inputs in dataloader:
+            if isinstance(inputs, torch.Tensor):
+                input_id = inputs
+            elif isinstance(inputs, dict):
+                input_id = inputs["input_ids"]
+            else:
+                input_id = inputs[0]
+            output = model(input_id.to(model.device), labels=input_id.to(model.device))
+            loss = output[0] / gradient_accumulation_steps
+            loss.backward()
+            global_steps += 1
+
+            if global_steps % logging_steps == 0:
+                logger.info("steps: {}, loss: {}".format(global_steps, loss.detach().cpu().item()))
+
+            if global_steps % gradient_accumulation_steps == 0:
+                optimizer.step()
+                optimizer.zero_grad()
+                lr_scheduler.step()
+
+            if global_steps >= train_steps:  # pragma: no cover
+                break
+
+    logger.info("finish training")
+    model.eval()
+    return None
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="test requires a GPU")
+class TestTEQOnCuda:
+
+    def test_teq(self):
+        quant_config = {
+            "teq": {
+                "global": {
+                    "dtype": "fp32",
+                },
+                "local": {
+                    "transformer.h.0.mlp.fc_in": {
+                        "dtype": "int",
+                        "bits": 8,
+                        "group_size": -1,
+                        "use_sym": True,
+                        "folding": True,
+                        "absorb_to_layer": {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]},
+                    },
+                    "transformer.h.0.mlp.fc_out": {
+                        "dtype": "int",
+                        "bits": 4,
+                        "group_size": 32,
+                        "use_sym": False,
+                        "folding": True,
+                        "absorb_to_layer": {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]},
+                    },
+                },
+            }
+        }
+        example_inputs = torch.ones([1, 512], dtype=torch.long)
+        test_input = torch.ones([1, 512], dtype=torch.long)
+        model = get_gpt_j()
+
+        qdq_model = quantize(model=model, quant_config=quant_config, run_fn=train, example_inputs=example_inputs)
+        assert isinstance(qdq_model, torch.nn.Module), "Expect qdq_model is a torch module"
+        out2 = qdq_model(test_input.to(qdq_model.device))
+        assert "cuda" in str(qdq_model.device), f"Expect qmodel device is cuda, got {qdq_model.device}"
         assert "cuda" in str(out2[0].device), f"Expect out2 device is cuda, got {out2.device}"
