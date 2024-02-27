@@ -1428,7 +1428,16 @@ class TorchSmoothQuant:
     to recover the weights if needed
     """
 
-    def __init__(self, model, dataloader=None, example_inputs=None, q_func=None, traced_model=None, scale_sharing=True, record_max_info=False):
+    def __init__(
+        self,
+        model,
+        dataloader=None,
+        example_inputs=None,
+        q_func=None,
+        traced_model=None,
+        scale_sharing=True,
+        record_max_info=False,
+    ):
         """
         :param model: Torch model :param dataloader: Calibration dataloader :param traced_model: A specific model
         shares the same architecture as the model and could be traced by torch.jit. If not supplied, we use model
@@ -1816,7 +1825,7 @@ class TorchSmoothQuant:
                                         self.self_absorb_layers.pop(i)
                                 self.self_absorb_layers[v[0]] = v
                             logger.debug(f"self_absorb_layers:{self.self_absorb_layers}")
-        
+
         self.absorb_to_layer = self._parse_absorb_to_layers(
             op_types, folding
         )  ##need to forward to check modules not used in forward
