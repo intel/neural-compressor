@@ -570,20 +570,21 @@ class Quantizer:
                 if self.add_qdq_pair_to_weight and self.mode == "qdq":
                     weight = self._get_quantized_weight(initializer, dtype, scheme)
                     self._update_weight(weight)
+                    node.input[idx] = weight.name
                     q_weight_name = weight.name + "_quantized"
                     zp_name = weight.name + "_zero_point"
                     scale_name = weight.name + "_scale"
                     qlinear_node = make_quant_node(
-                        tensor_name + "_QuantizeLinear",
+                        weight.name + "_QuantizeLinear",
                         [tensor_name, scale_name, zp_name],
-                        [tensor_name + "_quantized"],
+                        [weight.name + "_quantized"],
                     )
                     dequant_node = make_dquant_node(
-                        tensor_name + "_DequantizeLinear",
-                        [tensor_name + "_quantized", scale_name, zp_name],
-                        [tensor_name + "_dequantized"],
+                        weight.name + "_DequantizeLinear",
+                        [weight.name + "_quantized", scale_name, zp_name],
+                        [weight.name + "_dequantized"],
                     )
-                    self.replace_input.append([node, tensor_name, dequant_node.output[0]])
+                    self.replace_input.append([node, weight.name, dequant_node.output[0]])
                     self.new_nodes.extend([qlinear_node, dequant_node])
                     quantized_value = QuantizedValue(
                         weight.name, q_weight_name, scale_name, zp_name, QuantizedValueType.Initializer, None, dtype
@@ -593,6 +594,7 @@ class Quantizer:
                 else:
                     weight = self._get_quantized_weight(initializer, dtype, scheme)
                     self._update_weight(weight)
+                    node.input[idx] = weight.name
                     q_weight_name = weight.name + "_quantized"
                     zp_name = weight.name + "_zero_point"
                     scale_name = weight.name + "_scale"
@@ -600,10 +602,10 @@ class Quantizer:
                     inputs = [q_weight_name, scale_name, zp_name]
                     output_name = tensor_name + "_DequantizeLinear"
                     dequant_node = onnx.helper.make_node(
-                        "DequantizeLinear", inputs, [tensor_name + "_dequantized"], tensor_name + "_DequantizeLinear"
+                        "DequantizeLinear", inputs, [weight.name + "_dequantized"], weight.name + "_DequantizeLinear"
                     )
                     self.new_nodes.append(dequant_node)
-                    self.replace_input.append([node, tensor_name, dequant_node.output[0]])
+                    self.replace_input.append([node, weight.name, dequant_node.output[0]])
                     quantized_value = QuantizedValue(
                         weight.name, q_weight_name, scale_name, zp_name, QuantizedValueType.Initializer, None, dtype
                     )
@@ -721,7 +723,8 @@ class Quantizer:
                 if len(beta_attribute):
                     beta = onnx.helper.get_attribute_value(beta_attribute[0])
             _, quant_value = self.quantize_bias(bias_name, input_name, weight_name, beta)
-            self.model.remove_initializer(find_by_name(bias_name, self.model.initializer()))
+            if self.model.get_initializer_share_num(bias_name) == 1:
+                self.model.remove_initializer(find_by_name(bias_name, self.model.initializer()))
             inputs = [quant_value.q_name, quant_value.scale_name, quant_value.zp_name]
             axis = None
             if find_by_name(weight_name + "_DequantizeLinear", self.new_nodes):
@@ -855,26 +858,35 @@ class Quantizer:
             self.quantize_inputs(node, indices)
             return
 
-        for idx, weight_name in enumerate(node.input):
+        for idx, inp in enumerate(node.input):
             if idx not in indices:
                 continue
 
             if self.add_qdq_pair_to_weight and self.mode == "qdq":
-                q_name, zp_name, scale_name = self.quantize_weight_per_channel(weight_name, weight_qType, scheme, axis)
+                q_name, zp_name, scale_name = self.quantize_weight_per_channel(inp, weight_qType, scheme, axis)
+                weight_name = (
+                    ("_").join([inp, str(weight_qType)]) if self.model.get_initializer_share_num(inp) > 1 else inp
+                )
                 qlinear_node = make_quant_node(
-                    weight_name + "_QuantizeLinear", [weight_name, scale_name, zp_name], [weight_name + "_quantized"]
+                    weight_name + "_QuantizeLinear",
+                    [inp, scale_name, zp_name],
+                    [q_name],
+                    axis,
                 )
                 dequant_node = make_dquant_node(
                     weight_name + "_DequantizeLinear",
-                    [weight_name + "_quantized", scale_name, zp_name],
+                    [q_name, scale_name, zp_name],
                     [weight_name + "_dequantized"],
                     axis,
                 )
+                node.input[idx] = weight_name
                 self.replace_input.append([node, weight_name, dequant_node.output[0]])
                 self.new_nodes.extend([qlinear_node, dequant_node])
             else:
-                q_name, zp_name, scale_name = self.quantize_weight_per_channel(weight_name, weight_qType, scheme, axis)
-                inputs = [q_name, scale_name, zp_name]
+                q_name, zp_name, scale_name = self.quantize_weight_per_channel(inp, weight_qType, scheme, axis)
+                weight_name = (
+                    ("_").join([inp, str(weight_qType)]) if self.model.get_initializer_share_num(inp) > 1 else inp
+                )
                 dequant_node = make_dquant_node(
                     weight_name + "_DequantizeLinear",
                     [q_name, scale_name, zp_name],
@@ -882,52 +894,60 @@ class Quantizer:
                     axis,
                 )
                 self.new_nodes.append(dequant_node)
+                node.input[idx] = weight_name
 
                 # Replace weight_name with output of DequantizeLinear
                 self.replace_input.append([node, weight_name, dequant_node.output[0]])
 
     def quantize_weight_per_channel(self, weight_name, weight_qType, scheme, channel_axis):
         """Quantize weight per-channel."""
+        name = (
+            ("_").join([weight_name, str(weight_qType)])
+            if self.model.get_initializer_share_num(weight_name) > 1
+            else weight_name
+        )
+        if name in self.quantized_value_map:
+            return (name + "_quantized", name + "_zero_point", name + "_scale")
+
         initializer = find_by_name(weight_name, self.model.initializer())
         if initializer is None:
             raise ValueError("{} is not an initializer", weight_name)
 
-        if initializer.name not in self.quantized_value_map:
-            weights = (
-                self.tensor_proto_to_array(initializer, os.path.dirname(self.model.model_path))
-                if self.model.model_path is not None
-                else self.tensor_proto_to_array(initializer)
-            )
-            rmin, rmax, zero_point, scale, quantized_weights = quantize_data_per_channel(
-                weights, channel_axis, _get_qrange_for_qType(weight_qType, self.reduce_range), weight_qType, scheme
-            )
+        weights = (
+            self.tensor_proto_to_array(initializer, os.path.dirname(self.model.model_path))
+            if self.model.model_path is not None
+            else self.tensor_proto_to_array(initializer)
+        )
+        rmin, rmax, zero_point, scale, quantized_weights = quantize_data_per_channel(
+            weights, channel_axis, _get_qrange_for_qType(weight_qType, self.reduce_range), weight_qType, scheme
+        )
 
-            weight = QuantizedInitializer(
-                initializer.name,
-                initializer,
-                rmin,
-                rmax,
-                zero_point,
-                scale,
-                weights,
-                quantized_weights.flatten().tolist(),
-                channel_axis,
-                weight_qType,
-            )
+        weight = QuantizedInitializer(
+            name,
+            initializer,
+            rmin,
+            rmax,
+            zero_point,
+            scale,
+            weights,
+            quantized_weights.flatten().tolist(),
+            channel_axis,
+            weight_qType,
+        )
 
-            self._update_weight(weight)
-            quantized_value = QuantizedValue(
-                weight.name,
-                weight.name + "_quantized",
-                weight.name + "_scale",
-                weight.name + "_zero_point",
-                QuantizedValueType.Initializer,
-                None,
-                weight_qType,
-            )
-            self.quantized_value_map[weight.name] = quantized_value
+        self._update_weight(weight)
+        quantized_value = QuantizedValue(
+            weight.name,
+            weight.name + "_quantized",
+            weight.name + "_scale",
+            weight.name + "_zero_point",
+            QuantizedValueType.Initializer,
+            None,
+            weight_qType,
+        )
+        self.quantized_value_map[weight.name] = quantized_value
 
-        return (initializer.name + "_quantized", initializer.name + "_zero_point", initializer.name + "_scale")
+        return (weight.name + "_quantized", weight.name + "_zero_point", weight.name + "_scale")
 
     def _update_weight(self, weight):
         """Update weight.
@@ -1018,8 +1038,13 @@ class Quantizer:
 
     def _get_quantized_weight(self, initializer, qType, scheme):
         """Get quantized weight."""
-        if initializer.name in self.quantized_value_map:
-            return self.quantized_value_map[initializer.name]
+        name = (
+            ("_").join([initializer.name, str(qType)])
+            if self.model.get_initializer_share_num(initializer.name) > 1
+            else initializer.name
+        )
+        if name in self.quantized_value_map:
+            return self.quantized_value_map[name]
         weights_data = (
             self.tensor_proto_to_array(initializer, os.path.dirname(self.model.model_path))
             if self.model.model_path is not None
@@ -1029,7 +1054,7 @@ class Quantizer:
             weights_data.flatten().tolist(), _get_qrange_for_qType(qType, self.reduce_range), qType, scheme
         )
         weight = QuantizedInitializer(
-            initializer.name,
+            name,
             initializer,
             [rmin],
             [rmax],

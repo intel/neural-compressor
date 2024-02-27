@@ -24,8 +24,8 @@ from typing import Any, Dict, Tuple
 import torch
 
 from neural_compressor.torch.utils import logger
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
-from .auto_accelerator import auto_detect_accelerator
 from .bitpack import Packer
 from .config import HQQModuleConfig, QTensorConfig, default_hqq_module_config, hqq_global_option
 from .optimizer import optimize_weights_proximal
