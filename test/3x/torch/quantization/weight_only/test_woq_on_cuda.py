@@ -7,7 +7,13 @@ from tqdm import tqdm
 
 from neural_compressor.common.utils import logger
 from neural_compressor.torch.algorithms.weight_only.gptq import move_input_to_device
-from neural_compressor.torch.quantization import GPTQConfig, get_default_rtn_config, quantize
+from neural_compressor.torch.quantization import (
+    AWQConfig,
+    GPTQConfig,
+    get_default_awq_config,
+    get_default_rtn_config,
+    quantize,
+)
 
 
 class GPTQDataloaderPreprocessor:
@@ -239,3 +245,31 @@ class TestRTNQuant:
         quant_config = get_default_rtn_config()
         q_model = quantize(model, quant_config)
         assert "cuda" in str(q_model.device), f"Expect qmodel device is cuda, got {q_model.device}"
+
+
+def get_gpt_j():
+    tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
+        "hf-internal-testing/tiny-random-GPTJForCausalLM",
+        torchscript=True,
+    )
+    return tiny_gptj
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="test requires a GPU")
+class TestAWQOnCuda:
+
+    def test_awq(self):
+        self.lm_input = torch.ones([1, 10], dtype=torch.long)
+        self.gptj = get_gpt_j()
+        example_inputs = torch.ones([1, 10], dtype=torch.long)
+
+        def calib_func(model):
+            for i in range(2):
+                model(self.lm_input.to(model.device))
+
+        quant_config = AWQConfig(bits=8, group_size=-1)
+        logger.info(f"Test AWQ with config {quant_config}")
+        q_model = quantize(model=self.gptj, quant_config=quant_config, example_inputs=self.lm_input, run_fn=calib_func)
+        out2 = q_model(example_inputs.to(q_model.device))
+        assert "cuda" in str(q_model.device), f"Expect qmodel device is cuda, got {q_model.device}"
+        assert "cuda" in str(out2[0].device), f"Expect out2 device is cuda, got {out2.device}"
