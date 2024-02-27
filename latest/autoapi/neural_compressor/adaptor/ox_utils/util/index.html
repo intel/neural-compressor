@@ -134,7 +134,7 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.dtype_to_name" title="neural_compressor.adaptor.ox_utils.util.dtype_to_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dtype_to_name</span></code></a>(dtype_mapping, dtype)</p></td>
 <td><p>Map data type and its string representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.make_quant_node" title="neural_compressor.adaptor.ox_utils.util.make_quant_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_quant_node</span></code></a>(name, inputs, outputs)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.make_quant_node" title="neural_compressor.adaptor.ox_utils.util.make_quant_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_quant_node</span></code></a>(name, inputs, outputs[, axis])</p></td>
 <td><p>Make a QuantizeLinear node.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.make_dquant_node" title="neural_compressor.adaptor.ox_utils.util.make_dquant_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_dquant_node</span></code></a>(name, inputs, outputs[, axis])</p></td>
@@ -225,7 +225,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.make_quant_node">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">make_quant_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.make_quant_node" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">make_quant_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/ox_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.make_quant_node" title="Permalink to this definition"></a></dt>
 <dd><p>Make a QuantizeLinear node.</p>
 </dd></dl>
 
@@ -463,7 +463,7 @@ z: zero point</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f2eb83cb580> 
+   <jinja2.runtime.BlockReference object at 0x7fa68ff58dc0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
