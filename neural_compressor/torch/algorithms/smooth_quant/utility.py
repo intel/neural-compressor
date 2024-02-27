@@ -1980,7 +1980,7 @@ class TorchSmoothQuant:
             logger.info(f"Auto-tuning failed due to no dataloader, using {best_alphas} instead.")
             self._qdq_model_unwrapper_for_auto()
             return best_alphas
-        bar = tqdm(self.dataloader, total=calib_sample_num, desc="auto tune alpha")
+        bar = tqdm(self.dataloader, total=calib_sample_num, desc="auto tune alpha") # pylint: disable=E1102
         try:
             for input, label in bar:
                 loss_alphas = {}
