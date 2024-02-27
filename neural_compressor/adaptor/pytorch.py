@@ -20,7 +20,7 @@ import gc
 import math
 import os
 import re
-from collections import OrderedDict, UserDict
+from collections import OrderedDict, UserDict, namedtuple
 from functools import partial
 
 import yaml
@@ -1800,7 +1800,7 @@ class TemplateAdaptor(Adaptor):
                 assert folding, "IPEX version >= 2.1 is required for SmoothQuant folding=False."
 
         if not hasattr(self, "sq") or force_re_smooth:
-            from neural_compressor.adaptor.torch_utils.waq import TorchSmoothQuant
+            from .torch_utils.smooth_quant import TorchSmoothQuant
 
             self.sq = TorchSmoothQuant(
                 model._model, dataloader=dataloader, example_inputs=self.example_inputs, q_func=self.q_func
@@ -1813,18 +1813,17 @@ class TemplateAdaptor(Adaptor):
             kwargs["percentile"] = percentile
         if scales_per_op is not None:
             kwargs["scales_per_op"] = scales_per_op
-        auto_alpha_args["init_alpha"] = default_alpha
         model._model = self.sq.transform(
             alpha=alpha,
             folding=folding,
             calib_iter=calib_iter,
             weight_clip=weight_clip,
+            default_alpha=default_alpha,
             auto_alpha_args=auto_alpha_args,
             **kwargs,
         )
         if self.sq.record_max_info:
             model.sq_max_info = self.sq.max_value_info
-            model.sq_scale_info = self.sq.sq_scale_info
         return model
 
     def _apply_pre_optimization(self, model, tune_cfg, recover=False):
@@ -1841,7 +1840,7 @@ class TemplateAdaptor(Adaptor):
         q_model = model._model
         sq_max_info = model.sq_max_info
         if sq_max_info:
-            from neural_compressor.adaptor.torch_utils.waq import TorchSmoothQuant
+            from .torch_utils.smooth_quant import TorchSmoothQuant
 
             tsq = TorchSmoothQuant(q_model, None)
             alpha = tune_cfg["recipe_cfgs"]["smooth_quant_args"]["alpha"]
@@ -1877,9 +1876,8 @@ class TemplateAdaptor(Adaptor):
             model: qdq quantized model.
         """
         q_model = model._model
-        from neural_compressor.adaptor.torch_utils.waq import get_module, set_module
-
         from .torch_utils.model_wrapper import QDQLinear, SQLinearWrapper
+        from .torch_utils.smooth_quant import get_module, set_module
 
         smoothquant_scale_info = {}
         fallback_op_name_list = []
@@ -3319,7 +3317,37 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         inplace = True if self.performance_only else False
 
         # fetch SmoothQuant scale info from pre-optimized model
-        smoothquant_scale_info = model.sq_scale_info
+        sq_max_info = model.sq_max_info
+        if sq_max_info:
+            smoothquant_scale_info = {}
+            from .torch_utils.model_wrapper import SQLinearWrapper
+            from .torch_utils.smooth_quant import get_module
+
+            for _, info in sq_max_info.items():
+                alpha = info["alpha"]
+                absorbed_layer = info["absorbed_layer"]
+                input_minmax = info["input_minmax"]
+                # for peft model,lora_B weights is 0.
+                weight_max = info["weight_max"]
+                if self.sq.weight_clip:
+                    weight_max = weight_max.clamp(min=1e-5)
+                abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
+                input_power = torch.pow(abs_input_max, alpha)
+                weight_power = torch.pow(weight_max, 1 - alpha)
+                scale = torch.clip(input_power / weight_power, min=1e-5)
+                for op_name in absorbed_layer:
+                    module = copy.deepcopy(get_module(q_model._model, op_name))
+                    new_module = SQLinearWrapper(module, 1.0 / scale, input_minmax, alpha)
+                    weight_scale = new_module._get_weight_scale()
+                    smoothquant_scale_info[op_name] = {
+                        "alpha": new_module.alpha,
+                        "input_scale_for_mul": new_module.input_scale,
+                        "input_scale_after_mul": new_module.scale,
+                        "input_zero_point_after_mul": new_module.zero_point,
+                        "input_dtype": new_module.dtype,
+                        "weight_scale_after_mul": weight_scale,
+                    }
+                    logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
 
         # Check save_qconf_summary part is a workaround for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
@@ -4767,7 +4795,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
 
         supported_layers = ["Linear"]
         if folding:  # pragma: no cover
-            from neural_compressor.adaptor.torch_utils.waq import GraphTrace
+            from .torch_utils.smooth_quant import GraphTrace
 
             tg = GraphTrace()
             absorb_to_layer, _ = tg.get_absorb_to_layer(model, self.example_inputs, supported_layers)
