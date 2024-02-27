@@ -19,7 +19,7 @@
 import torch
 import transformers
 
-from neural_compressor.torch.utils import logger
+from neural_compressor.torch.utils import get_device, logger
 
 from .modules import MulLinear, TEQLinearFakeQuant
 from .utility import get_module, quant_tensor, set_module
@@ -38,7 +38,8 @@ class TEQuantizer:
         self.weight_config = weight_config
         self.folding = folding
         self.example_inputs = example_inputs
-        self.device, self.dtype = self._get_device()
+        self.device = self._get_device()
+        self.dtype = self._get_dtype()
         self.model.eval()
         self.trained_alphas = {}
         self.absorb_to_layer = absorb_to_layer
@@ -46,8 +47,13 @@ class TEQuantizer:
     def _get_device(self):
         """Get the model device
         :return:Model device."""
+        device = get_device()
+        self.model.to(device)
+        return device
+
+    def _get_dtype(self):
         for _, p in self.model.named_parameters():
-            return p.data.device, p.data.dtype
+            return p.data.dtype
 
     def add_tuning_scale(self, sqrt_w_init=False):
         """The main entry of smooth quant
