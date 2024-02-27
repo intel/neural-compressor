@@ -1,0 +1,79 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.torch_utils.waq.utils`
+=========================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.waq.utils
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.waq.utils.get_module
+   neural_compressor.adaptor.torch_utils.waq.utils.set_module
+   neural_compressor.adaptor.torch_utils.waq.utils.reshape_in_channel_to_last
+   neural_compressor.adaptor.torch_utils.waq.utils.reshape_scale_as_input
+   neural_compressor.adaptor.torch_utils.waq.utils.reshape_scale_as_weight
+   neural_compressor.adaptor.torch_utils.waq.utils.register_autotune
+
+
+
+.. py:function:: get_module(model, key)
+
+   Get module from model by key name.
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+
+
+.. py:function:: set_module(model, key, new_module)
+
+   Set new module into model by key name.
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+   :param new_module: new module to be inserted
+   :type new_module: torch.nn.Module
+
+
+.. py:function:: reshape_in_channel_to_last(layer_name, model)
+
+   Move the input channel to the last dim
+   :param layer_name: Layer name
+   :return: The reshaped weight.
+
+
+.. py:function:: reshape_scale_as_input(layer, scale)
+
+   Reshape the scale for input feature in channel
+   :param layer:
+
+   :param scale:
+   :return:
+
+
+.. py:function:: reshape_scale_as_weight(layer, scale)
+
+   Reshape the scale for weight input channel, depthwise output channel
+   :param layer:  torch module
+   :param scale: orig scale
+   :return: reshaped scale.
+
+
+.. py:function:: register_autotune(name)
+
+   Class decorator to register a smoothquant auto-tune subclass.
+
+   :return: the class of register
+
+
