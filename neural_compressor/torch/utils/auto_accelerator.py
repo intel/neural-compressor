@@ -19,7 +19,6 @@
 
 # NOTICE: The design adapted from:
 # https://github.com/microsoft/DeepSpeed/blob/master/accelerator/abstract_accelerator.py.
-# TODO: move it into torch/utils
 
 
 # To keep it simply, only add the APIs we need.
@@ -204,9 +203,12 @@ class CUDA_Accelerator(Auto_Accelerator):
 
 
 def auto_detect_accelerator(device_name="auto") -> Auto_Accelerator:
+    # Force use the cpu on node has both cpu and gpu: `FORCE_DEVICE=cpu` python main.py ...
     # The environment variable `FORCE_DEVICE` has higher priority than the `device_name`.
     # TODO: refine the docs and logic later
     FORCE_DEVICE = os.environ.get("FORCE_DEVICE", None)
+    if FORCE_DEVICE:
+        FORCE_DEVICE = FORCE_DEVICE.lower()
     if FORCE_DEVICE and accelerator_registry.get_accelerator_cls_by_name(FORCE_DEVICE) is not None:
         logger.warning("Force use %s accelerator.", FORCE_DEVICE)
         return accelerator_registry.get_accelerator_cls_by_name(FORCE_DEVICE)()
