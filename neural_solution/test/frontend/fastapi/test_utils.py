@@ -121,16 +121,14 @@ class TestMyModule(unittest.TestCase):
             "workers": 1,
         }
         self.assertFalse(is_valid_task(task_sql_injection))
-        
+
         task_cmd_injection = {
-            "script_url": "https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py & eval \"$(echo ZWNobyAiRG9tYWluIGV4cGFuc2lvbiIgPiB+L2F0dGFjay5weSI= | base64 --decode)\"",
+            "script_url": 'https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py & eval "$(echo ZWNobyAiRG9tYWluIGV4cGFuc2lvbiIgPiB+L2F0dGFjay5weSI= | base64 --decode)"',
             "optimized": "False",
-            "arguments": [
-                "--model_name_or_path bert-base-cased --task_name mrpc --do_eval --output_dir result"
-            ],
+            "arguments": ["--model_name_or_path bert-base-cased --task_name mrpc --do_eval --output_dir result"],
             "approach": "static",
             "requirements": [],
-            "workers": 1
+            "workers": 1,
         }
         self.assertFalse(is_valid_task(task_cmd_injection))
 
@@ -168,7 +166,7 @@ class TestMyModule(unittest.TestCase):
             "workers": 1,
         }
         self.assertFalse(is_valid_task(task_arguments_not_list))
-        
+
         task_arguments_invalid = {
             "script_url": ["custom_models_optimized/tf_example1"],
             "optimized": "True",

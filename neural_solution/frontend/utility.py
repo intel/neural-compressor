@@ -296,6 +296,7 @@ def list_to_string(lst: list):
     """
     return " ".join(str(i) for i in lst)
 
+
 def is_invalid_str(to_test_str: str):
     """Verify whether the to_test_str is valid.
 
@@ -305,7 +306,8 @@ def is_invalid_str(to_test_str: str):
     Returns:
         bool: valid or invalid
     """
-    return any(char in to_test_str for char in [' ', '"', "'", "&", "|", ";", "`", ">"])
+    return any(char in to_test_str for char in [" ", '"', "'", "&", "|", ";", "`", ">"])
+
 
 def is_valid_task(task: dict) -> bool:
     """Verify whether the task is valid.
@@ -325,8 +327,9 @@ def is_valid_task(task: dict) -> bool:
     if not isinstance(task["script_url"], str) or is_invalid_str(task["script_url"]):
         return False
 
-    if (isinstance(task["optimized"], str) and task["optimized"] not in ["True", "False"]) or \
-        (not isinstance(task["optimized"], str) and not isinstance(task["optimized"], bool)):
+    if (isinstance(task["optimized"], str) and task["optimized"] not in ["True", "False"]) or (
+        not isinstance(task["optimized"], str) and not isinstance(task["optimized"], bool)
+    ):
         return False
 
     if not isinstance(task["arguments"], list):
