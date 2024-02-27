@@ -63,8 +63,9 @@ class LLMCalibDataloader:
 
 
 class TestSqDepthwiseConv(unittest.TestCase):
+
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         class RandDataloader:
             def __init__(self):
                 self.batch_size = 1
@@ -72,9 +73,8 @@ class TestSqDepthwiseConv(unittest.TestCase):
             def __iter__(self):
                 yield torch.rand((1, 3, 1, 1))
 
-        self.conv_dl = RandDataloader()
+        cls.conv_dl = RandDataloader()
 
-    @classmethod
     def test_sq_dw_conv_relu6_auto(self):
         datasets = Datasets("pytorch")
         dummy_dataset = datasets["dummy"](shape=(10, 3, 1, 1), low=0.0, high=1.0)
@@ -106,7 +106,6 @@ class TestSqDepthwiseConv(unittest.TestCase):
         assert torch.sum(torch.abs(output - output_sq)) < 1e-3
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_dw_conv_relu6(self):
         datasets = Datasets("pytorch")
         dummy_dataset = datasets["dummy"](shape=(10, 3, 1, 1), low=0.0, high=1.0)
@@ -140,8 +139,9 @@ class TestSqDepthwiseConv(unittest.TestCase):
 
 
 class TestSqConvOpFuseAuto(unittest.TestCase):
+
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         class RandDataloader:
             def __init__(self):
                 self.batch_size = 1
@@ -149,9 +149,8 @@ class TestSqConvOpFuseAuto(unittest.TestCase):
             def __iter__(self):
                 yield torch.rand((1, 3, 1, 1))
 
-        self.conv_dl = RandDataloader()
+        cls.conv_dl = RandDataloader()
 
-    @classmethod
     def test_sq_conv_relu6(self):
         datasets = Datasets("pytorch")
         dummy_dataset = datasets["dummy"](shape=(10, 3, 2, 2), low=0.0, high=1.0)
@@ -180,8 +179,9 @@ class TestSqConvOpFuseAuto(unittest.TestCase):
 
 
 class TestSqConvOpFuse(unittest.TestCase):
+
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         class RandDataloader:
             def __init__(self):
                 self.batch_size = 1
@@ -189,9 +189,8 @@ class TestSqConvOpFuse(unittest.TestCase):
             def __iter__(self):
                 yield torch.rand((1, 3, 1, 1))
 
-        self.conv_dl = RandDataloader()
+        cls.conv_dl = RandDataloader()
 
-    @classmethod
     def test_sq_conv_relu6(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -214,7 +213,6 @@ class TestSqConvOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_conv_relu(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -237,7 +235,6 @@ class TestSqConvOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=2, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_conv_gelu(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -260,7 +257,6 @@ class TestSqConvOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=2, folding=True)
         assert len(sq.absorb_to_layer) == 0
 
-    @classmethod
     def test_sq_conv_bn(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -385,8 +381,9 @@ class T5LayerNorm(nn.Module):
 
 
 class TestSqListInput(unittest.TestCase):
+
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         class ListDataloader:
             def __init__(self):
                 self.batch_size = 1
@@ -410,11 +407,10 @@ class TestSqListInput(unittest.TestCase):
                 input2 = torch.rand((1, 3))
                 yield [input1, ((input2, input1)), input2]
 
-        self.list_dl = ListDataloader()
-        self.tuple_dl = TupleDataloader()
-        self.list_tuple_dl = ListTupleDataLoader()
+        cls.list_dl = ListDataloader()
+        cls.tuple_dl = TupleDataloader()
+        cls.list_tuple_dl = ListTupleDataLoader()
 
-    @classmethod
     def test_sq_linear_LlamaRMSNorm(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -437,7 +433,6 @@ class TestSqListInput(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_linear_LlamaRMSNorm_tuple(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -460,7 +455,6 @@ class TestSqListInput(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_linear_LlamaRMSNorm_list_tuple(self):
         class Model(torch.nn.Module):
             def __init__(self):
@@ -498,8 +492,9 @@ class TestSqListInput(unittest.TestCase):
 
 
 class TestAlphaAutoLinear(unittest.TestCase):
+
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         class RandDataloader:
             def __init__(self):
                 self.batch_size = 1
@@ -507,9 +502,8 @@ class TestAlphaAutoLinear(unittest.TestCase):
             def __iter__(self):
                 yield torch.rand((1, 3))
 
-        self.linear_dl = RandDataloader()
+        cls.linear_dl = RandDataloader()
 
-    @classmethod
     def test_sq_linear_LlamaRMSNorm_auto(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -534,8 +528,9 @@ class TestAlphaAutoLinear(unittest.TestCase):
 
 
 class TestSqLinearOpFuse(unittest.TestCase):
+
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         class RandDataloader:
             def __init__(self):
                 self.batch_size = 1
@@ -543,9 +538,8 @@ class TestSqLinearOpFuse(unittest.TestCase):
             def __iter__(self):
                 yield torch.rand((1, 3))
 
-        self.linear_dl = RandDataloader()
+        cls.linear_dl = RandDataloader()
 
-    @classmethod
     def test_sq_linear_LlamaRMSNorm(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -568,7 +562,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_linear_T5Norm(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -591,7 +584,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_linear_relu6(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -614,7 +606,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_linear_norm(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -637,7 +628,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 1
 
-    @classmethod
     def test_sq_linear_norm_linear(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -662,7 +652,6 @@ class TestSqLinearOpFuse(unittest.TestCase):
         sq.transform(alpha=0.5, calib_iter=1, folding=True)
         assert len(sq.absorb_to_layer) == 2
 
-    @classmethod
     def test_sq_linear_gelu_norm(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -957,8 +946,9 @@ class TestExample(unittest.TestCase):
 
 
 class TestSqSkipOp(unittest.TestCase):
+
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         class RandDataloader:
             def __init__(self):
                 self.batch_size = 1
@@ -966,9 +956,8 @@ class TestSqSkipOp(unittest.TestCase):
             def __iter__(self):
                 yield torch.rand((1, 4))
 
-        self.linear_dl = RandDataloader()
+        cls.linear_dl = RandDataloader()
 
-    @classmethod
     def test_sq_skip_op_auto(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -1014,8 +1003,9 @@ class TestSqSkipOp(unittest.TestCase):
 
 
 class TestSqSkipOp_attn(unittest.TestCase):
+
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         class RandDataloader:
             def __init__(self):
                 self.batch_size = 1
@@ -1023,9 +1013,8 @@ class TestSqSkipOp_attn(unittest.TestCase):
             def __iter__(self):
                 yield torch.rand((1, 4))
 
-        self.linear_dl = RandDataloader()
+        cls.linear_dl = RandDataloader()
 
-    @classmethod
     def test_sq_skip_op_attn_auto(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -1068,9 +1057,10 @@ class TestSqSkipOp_attn(unittest.TestCase):
 
 
 class TestTuneSqAlpha(unittest.TestCase):
+
     @classmethod
-    def setUpClass(self):
-        self.ns_workspace = "./nc_workspace"
+    def setUpClass(cls):
+        cls.ns_workspace = "./nc_workspace"
 
     @classmethod
     def tearDownClass(self):
@@ -1236,11 +1226,12 @@ class TestTuneSqAlpha(unittest.TestCase):
 
 
 class TestTextGeneration(unittest.TestCase):
+
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         from modeling_gptj import GPTJForCausalLM
 
-        self.clm_model = GPTJForCausalLM.from_pretrained("hf-internal-testing/tiny-random-gptj", torchscript=True)
+        cls.clm_model = GPTJForCausalLM.from_pretrained("hf-internal-testing/tiny-random-gptj", torchscript=True)
 
     def test_text_generation(self):
         input_ids = torch.tensor([[531, 574, 658, 492, 156], [309, 296, 471, 817, 435], [182, 176, 756, 944, 768]])
@@ -1445,7 +1436,7 @@ class TestPeftModel(unittest.TestCase):
         )  # Linear that is not called in calibration
 
     @unittest.skipIf(
-        IPEX_VERSION.release <= Version("2.1.0").release and ipex.__version__ != "2.1.0+cpu",
+        (not TEST_IPEX) or (IPEX_VERSION.release <= Version("2.1.0").release and ipex.__version__ != "2.1.0+cpu"),
         "Please use Intel extension for Pytorch version higher or equal to 2.1.0",
     )
     def test_peft_model_quantization_ipex(self):
@@ -1480,8 +1471,9 @@ class TestPeftModel(unittest.TestCase):
 
 
 class TestInputConfig(unittest.TestCase):
+
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         class RandDataloader:
             def __init__(self):
                 self.batch_size = 1
@@ -1489,9 +1481,8 @@ class TestInputConfig(unittest.TestCase):
             def __iter__(self):
                 yield torch.rand((1, 3))
 
-        self.linear_dl = RandDataloader()
+        cls.linear_dl = RandDataloader()
 
-    @classmethod
     def test_sq_weight_clipping(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -1514,7 +1505,6 @@ class TestInputConfig(unittest.TestCase):
         sq.transform(alpha="auto", calib_iter=1, folding=True, weight_clip=False)
         assert sq.weight_clip is False
 
-    @classmethod
     def test_sq_auto_alpha_arg(self):
         class Model(torch.nn.Module):
             device = torch.device("cpu")
@@ -1546,7 +1536,7 @@ class TestInputConfig(unittest.TestCase):
 
 
 class TestAlphaAutoLinearBlockwise(unittest.TestCase):
-    @classmethod
+
     def test_sq_linear_Blockwise_auto(self):
         model = transformers.AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
