@@ -1384,7 +1384,7 @@ class TorchSmoothQuant:
         :return:
         """
         need_calib = True
-        from peft import PeftModel # pylint: disable=E0401
+        from peft import PeftModel  # pylint: disable=E0401
 
         is_peft, is_auto = isinstance(self.model, PeftModel), alpha == "auto"
         if len(self.input_maxes) == 0:  ## the first time
