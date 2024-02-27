@@ -457,9 +457,20 @@ class ComposableConfig(BaseConfig):
         return f"{self.__class__.__name__} {self.to_json_string()}"
 
     def to_config_mapping(
-        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+        self, config_list: List[BaseConfig] = None, model_info: Dict[str, Any] = None
     ) -> OrderedDict[str, BaseConfig]:
-        return super().to_config_mapping(self.config_list, model_info)
+        config_mapping = OrderedDict()
+        for config in self.config_list:
+            global_config = config.global_config
+            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
+            single_config_model_info = model_info.get(config.name, None)
+            for op_name, op_type in single_config_model_info:
+                if op_type in op_type_config_dict:
+                    config_mapping[(op_name, op_type)] = op_name_config_dict[op_type]
+                for op_name_pattern in op_name_config_dict:
+                    if re.match(op_name_pattern, op_name):
+                        config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
+        return config_mapping
 
     @classmethod
     def register_supported_configs(cls):
@@ -470,6 +481,12 @@ class ComposableConfig(BaseConfig):
     def get_config_set_for_tuning(cls) -> None:
         # TODO (Yi) handle the composable config in `tuning_config`
         return None
+
+    def get_model_info(self, model, *args, **kwargs):
+        model_info_dict = dict()
+        for config in self.config_list:
+            model_info_dict.update({config.name: config.get_model_info(model, *args, **kwargs)})
+        return model_info_dict
 
 
 def get_all_config_set_from_config_registry(fwk_name: str) -> Union[BaseConfig, List[BaseConfig]]:

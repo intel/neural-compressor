@@ -17,8 +17,8 @@ from typing import Callable, List, Optional, Tuple
 import torch
 
 from neural_compressor.torch.utils import logger
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
-from .auto_accelerator import auto_detect_accelerator
 from .config import ConfigMappingType, default_hqq_module_config, hqq_global_option
 from .core import HQQLinear
 
