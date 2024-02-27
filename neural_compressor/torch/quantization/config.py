@@ -868,83 +868,85 @@ def get_default_hqq_config() -> HQQConfig:
 
 
 ######################## FP8 Config ###############################
-if is_hpex_available():
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
+class FP8Config(BaseConfig):
+    """Config class for FP8 quantization."""
 
-    @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
-    class FP8Config(BaseConfig):
-        """Config class for FP8 quantization."""
+    name = FP8_QUANT
+    supported_configs: List[OperatorConfig] = []
+    params_list = [
+        "w_dtype",
+        "act_dtype",
+        "act_algo",
+        "approach",
+        "device",
+    ]
 
-        name = FP8_QUANT
-        supported_configs: List[OperatorConfig] = []
-        params_list = [
-            "w_dtype",
-            "act_dtype",
-            "act_algo",
-            "approach",
-            "device",
-        ]
+    def __init__(
+        self,
+        w_dtype: str = "fp8_e4m3",
+        act_dtype: str = "fp8_e4m3",
+        act_algo: Union[str, List[str]] = "minmax",
+        approach: Union[str, List[str]] = "static",
+        device: Union[str, List[str]] = "hpu",
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init FP8 config.
 
-        def __init__(
-            self,
-            w_dtype: str = "fp8_e4m3",
-            act_dtype: str = "fp8_e4m3",
-            act_algo: Union[str, List[str]] = "minmax",
-            approach: Union[str, List[str]] = "static",
-            device: Union[str, List[str]] = "hpu",
-            white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        ):
-            """Init FP8 config.
+        Args:
+        """
+        super().__init__(white_list=white_list)
+        self.w_dtype = w_dtype
+        self.act_dtype = act_dtype
+        self.act_algo = act_algo
+        self.approach = approach
+        self.device = device
+        self._post_init()
 
-            Args:
-            """
-            super().__init__(white_list=white_list)
-            self.w_dtype = w_dtype
-            self.act_dtype = act_dtype
-            self.act_algo = act_algo
-            self.approach = approach
-            self.device = device
-            self._post_init()
-
-        @classmethod
-        def register_supported_configs(cls) -> List[OperatorConfig]:
-            supported_configs = []
-            fp8_config = FP8Config(
-                w_dtype=["fp8_e5m2", "fp8_e4m3"],
-                act_dtype=["fp8_e5m2", "fp8_e4m3"],
-                act_algo=["minmax", "kl"],
-                approach=["static", "dynamic"],
-                device=["hpu"],
-            )
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        fp8_config = FP8Config(
+            w_dtype=["fp8_e5m2", "fp8_e4m3"],
+            act_dtype=["fp8_e5m2", "fp8_e4m3"],
+            act_algo=["minmax", "kl"],
+            approach=["static", "dynamic"],
+            device=["hpu"],
+        )
+        if is_hpex_available():
             from neural_compressor.torch.algorithms.habana_fp8 import white_list
 
             operators = white_list
-            supported_configs.append(OperatorConfig(config=fp8_config, operators=operators))
-            cls.supported_configs = supported_configs
+        else:
+            operators = ()
+        supported_configs.append(OperatorConfig(config=fp8_config, operators=operators))
+        cls.supported_configs = supported_configs
 
-        @staticmethod
-        def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-            from neural_compressor.torch.algorithms.habana_fp8 import white_list
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        from neural_compressor.torch.algorithms.habana_fp8 import white_list
 
-            filter_result = []
-            for op_name, module in model.named_modules():
-                if isinstance(module, white_list):
-                    pair = (op_name, type(module).__name__)
-                    filter_result.append(pair)
-            logger.debug(f"Get model info: {filter_result}")
-            return filter_result
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
 
-        @classmethod
-        def get_config_set_for_tuning(cls) -> Union[None, "FP8Config", List["FP8Config"]]:
-            # TODO fwk owner needs to update it.
-            return FP8Config(act_algo=["minmax", "kl"])
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "FP8Config", List["FP8Config"]]:
+        # TODO fwk owner needs to update it.
+        return FP8Config(act_algo=["minmax", "kl"])
 
-    def get_default_fp8_config() -> FP8Config:
-        """Generate the default gptq config.
 
-        Returns:
-            the default gptq config.
-        """
-        return FP8Config()
+def get_default_fp8_config() -> FP8Config:
+    """Generate the default gptq config.
+
+    Returns:
+        the default gptq config.
+    """
+    return FP8Config()
 
 
 ##################### Algo Configs End ###################################

@@ -61,9 +61,9 @@ class TestPytorchFP8Adaptor:
         inp = self.inp
         fp32_out = m(inp)
         m = quantize_dynamic(m, dtype="fp8_e5m2", inplace=True)
-        self.assertTrue(isinstance(m.fc1, FP8DynamicLinear))
-        self.assertTrue(isinstance(m.mm, FP8DynamicMatmul))
-        self.assertTrue(isinstance(m.bmm, FP8DynamicBatchMatmul))
+        assert isinstance(m.fc1, FP8DynamicLinear), "Unexpected result. Please double check."
+        assert isinstance(m.mm, FP8DynamicMatmul), "Unexpected result. Please double check."
+        assert isinstance(m.bmm, FP8DynamicBatchMatmul), "Unexpected result. Please double check."
         print(m)
         fp8_out = m(inp)
         print("Dynamic quantization FP8_E5M2 MSE:", (fp32_out - fp8_out).pow(2).sum())
@@ -72,9 +72,9 @@ class TestPytorchFP8Adaptor:
         inp = self.inp
         fp32_out = m(inp)
         m = quantize_dynamic(m, dtype="fp8_e4m3", inplace=True)
-        self.assertTrue(isinstance(m.fc1, FP8DynamicLinear))
-        self.assertTrue(isinstance(m.mm, FP8DynamicMatmul))
-        self.assertTrue(isinstance(m.bmm, FP8DynamicBatchMatmul))
+        assert isinstance(m.fc1, FP8DynamicLinear), "Unexpected result. Please double check."
+        assert isinstance(m.mm, FP8DynamicMatmul), "Unexpected result. Please double check."
+        assert isinstance(m.bmm, FP8DynamicBatchMatmul), "Unexpected result. Please double check."
         print(m)
         fp8_out = m(inp)
         print("Dynamic quantization FP8_E4M3 MSE:", (fp32_out - fp8_out).pow(2).sum())
@@ -84,9 +84,9 @@ class TestPytorchFP8Adaptor:
         fp32_out = m(inp)
         qconfig = FP8Config(approach="dynamic")
         m = quantize(m, qconfig, inplace=True)
-        self.assertTrue(isinstance(m.fc1, FP8DynamicLinear))
-        self.assertTrue(isinstance(m.mm, FP8DynamicMatmul))
-        self.assertTrue(isinstance(m.bmm, FP8DynamicBatchMatmul))
+        assert isinstance(m.fc1, FP8DynamicLinear), "Unexpected result. Please double check."
+        assert isinstance(m.mm, FP8DynamicMatmul), "Unexpected result. Please double check."
+        assert isinstance(m.bmm, FP8DynamicBatchMatmul), "Unexpected result. Please double check."
         print(m)
         fp8_out = m(inp)
         print("Dynamic quantization FP8_E4M3 MSE:", (fp32_out - fp8_out).pow(2).sum())
@@ -101,9 +101,9 @@ class TestPytorchFP8Adaptor:
             model(inp)
 
         m = quantize(m, qconfig, run_fn=calib_func, inplace=True)
-        self.assertTrue(isinstance(m.fc1, FP8Linear))
-        self.assertTrue(isinstance(m.mm, FP8Matmul))
-        self.assertTrue(isinstance(m.bmm, FP8BatchMatmul))
+        assert isinstance(m.fc1, FP8Linear), "Unexpected result. Please double check."
+        assert isinstance(m.mm, FP8Matmul), "Unexpected result. Please double check."
+        assert isinstance(m.bmm, FP8BatchMatmul), "Unexpected result. Please double check."
         print(m)
         fp8_out = m(inp)
         print("Static quantization FP8_E5M2 MSE:", (fp32_out - fp8_out).pow(2).sum())
@@ -117,9 +117,9 @@ class TestPytorchFP8Adaptor:
             model(inp)
 
         m = quantize(m, qconfig, run_fn=calib_func, inplace=True)
-        self.assertTrue(isinstance(m.fc1, FP8Linear))
-        self.assertTrue(isinstance(m.mm, FP8Matmul))
-        self.assertTrue(isinstance(m.bmm, FP8BatchMatmul))
+        assert isinstance(m.fc1, FP8Linear), "Unexpected result. Please double check."
+        assert isinstance(m.mm, FP8Matmul), "Unexpected result. Please double check."
+        assert isinstance(m.bmm, FP8BatchMatmul), "Unexpected result. Please double check."
         print(m)
         fp8_out = m(inp)
         print("Static quantization FP8_E4M3 MSE:", (fp32_out - fp8_out).pow(2).sum())
@@ -136,12 +136,12 @@ class TestPytorchFP8Adaptor:
         torch.save(int8_inp, "tmp.pt")
         saved_int8_inp = torch.load("tmp.pt")
         recovered_inp = fp8_convert.from_u8(saved_int8_inp, 1)
-        self.assertTrue((fp8_inp == recovered_inp).all())
+        assert (fp8_inp == recovered_inp).all(), "Unexpected result. Please double check."
         # e5m2
         fp8_inp = torch.ops.hpu.cast_to_fp8_v2(self.inp, 500, dtype=torch.float8_e5m2)[0].to("cpu")
         int8_inp = fp8_convert.to_u8(fp8_inp)
         recovered_inp = fp8_convert.from_u8(int8_inp, 0)
-        self.assertTrue((fp8_inp == recovered_inp).all())
+        assert (fp8_inp == recovered_inp).all(), "Unexpected result. Please double check."
 
     def test_save_load(self):
         m = copy.deepcopy(self.model)
@@ -160,7 +160,7 @@ class TestPytorchFP8Adaptor:
         m = copy.deepcopy(self.model)
         m = load(m, "saved_results")
         recovered_out = m(inp)
-        self.assertTrue((recovered_out == fp8_out).all())
-        self.assertTrue(isinstance(m.fc1, FP8Linear))
-        self.assertTrue(isinstance(m.mm, FP8Matmul))
-        self.assertTrue(isinstance(m.bmm, FP8BatchMatmul))
+        assert (recovered_out == fp8_out).all(), "Unexpected result. Please double check."
+        assert isinstance(m.fc1, FP8Linear), "Unexpected result. Please double check."
+        assert isinstance(m.mm, FP8Matmul), "Unexpected result. Please double check."
+        assert isinstance(m.bmm, FP8BatchMatmul), "Unexpected result. Please double check."

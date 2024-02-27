@@ -391,7 +391,7 @@ class FP8Matmul(torch.nn.Module):
 
     def extra_repr(self) -> str:
         return "scales={}, format={}".format(
-            (self.scale, self.scale1),
+            (self.scale1, self.scale2),
             self.dtype,
         )
 
