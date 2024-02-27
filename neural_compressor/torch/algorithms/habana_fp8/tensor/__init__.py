@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,10 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from neural_compressor.common.utils.constants import *
-from neural_compressor.common.utils.logger import *
-from neural_compressor.common.utils.save_load import save_config_mapping, load_config_mapping
-
-# ! Put the following `utility` import after the `logger` import as `utility` used `logger`
-from neural_compressor.common.utils.utility import *

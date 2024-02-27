@@ -29,6 +29,8 @@ from neural_compressor.torch.quantization.config import (
     get_default_teq_config,
     HQQConfig,
     get_default_hqq_config,
+    FP8Config,
+    get_default_fp8_config,
 )
 
 from neural_compressor.torch.quantization.autotune import (
@@ -40,3 +42,4 @@ from neural_compressor.torch.quantization.autotune import (
 
 ### Quantization Function Registration ###
 import neural_compressor.torch.quantization.algorithm_entry
+from neural_compressor.torch.quantization.load_entry import load
