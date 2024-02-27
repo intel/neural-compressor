@@ -51,7 +51,7 @@ flags.DEFINE_integer("batch_size", 64, "run batch size")
 flags.DEFINE_integer("iters", 100, "The iteration used for benchmark.")
 
 
-def evaluate(model, dataloader, metric, postprocess):
+def evaluate(model, dataloader, postprocess):
     """Custom evaluate function to estimate the accuracy of the bert model.
 
     Args:
@@ -60,6 +60,7 @@ def evaluate(model, dataloader, metric, postprocess):
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
+    from neural_compressor.metric import SquadF1
     from neural_compressor.adaptor.tf_utils.util import iterator_sess_run
     from neural_compressor.objective import Performance
     from neural_compressor.model import Model, BaseModel
@@ -70,12 +71,12 @@ def evaluate(model, dataloader, metric, postprocess):
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]
+    warmup = 5
     iteration = -1
+    metric = SquadF1()
+    measurer = Performance()
     if FLAGS.benchmark and FLAGS.mode == 'performance':
         iteration = FLAGS.iters
-    measurer = Performance()
-
-    warmup = 5
     for idx, (inputs, labels) in enumerate(dataloader):
         # dataloader should keep the order and len of inputs same with input_tensor
         assert len(input_tensor) == len(inputs), \
@@ -125,8 +126,6 @@ def strip_iterator(graph_def):
 
 def main(_):
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
-    from neural_compressor.metric import SquadF1
-    metric = SquadF1()
     from neural_compressor.utils.create_obj_from_config import create_dataloader
     data_path = os.path.join(FLAGS.dataset_location, 'eval.tf_record')
     label_path = os.path.join(FLAGS.dataset_location, 'dev-v1.1.json')
@@ -142,7 +141,7 @@ def main(_):
     from neural_compressor.data import TFSquadV1PostTransform
     postprocess = TFSquadV1PostTransform(label_file=label_path, vocab_file=vocab_path)
     def eval(model):
-        return evaluate(model, dataloader, metric, postprocess)
+        return evaluate(model, dataloader, postprocess)
     if FLAGS.benchmark:
         if FLAGS.mode == 'performance':
             from neural_compressor.benchmark import fit
