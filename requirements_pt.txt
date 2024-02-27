@@ -1,4 +1,4 @@
-cpuinfo
 intel_extension_for_pytorch
+py-cpuinfo
 pydantic
 torch
