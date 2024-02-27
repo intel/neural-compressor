@@ -30,9 +30,8 @@ except:  # pragma: no cover
 
 import transformers
 
-from neural_compressor.adaptor.torch_utils.waq import get_module, set_module
-
 from .model_wrapper import MulLinear, TEQLinearFakeQuant
+from .smooth_quant import GraphTrace, get_module, set_module
 from .weight_only import quant_weight
 
 
