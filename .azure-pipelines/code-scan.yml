@@ -38,12 +38,12 @@ stages:
     dependsOn: []
     jobs:
       - job: Bandit
-        displayName: bandit
+        displayName: Bandit
         steps:
           - template: template/code-scan-template.yml
             parameters:
               codeScanFileName: "bandit"
-              uploadPath: bandit.log"
+              uploadPath: "bandit.log"
 
   - stage: PylintCodeScan
     displayName: Pylint Code Scan
