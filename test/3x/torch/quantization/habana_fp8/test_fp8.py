@@ -195,6 +195,6 @@ class TestPytorchFP8Adaptor:
             run_fn=calib_func,
             eval_fns=eval_func,
         )
-        assert isinstance(m.fc1, FP8Linear), "Unexpected result. Please double check."
-        assert isinstance(m.mm, FP8Matmul), "Unexpected result. Please double check."
-        assert isinstance(m.bmm, FP8BatchMatmul), "Unexpected result. Please double check."
+        assert isinstance(best_model.fc1, FP8Linear), "Unexpected result. Please double check."
+        assert isinstance(best_model.mm, FP8Matmul), "Unexpected result. Please double check."
+        assert isinstance(best_model.bmm, FP8BatchMatmul), "Unexpected result. Please double check."
