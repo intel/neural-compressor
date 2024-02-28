@@ -57,4 +57,3 @@ stages:
               codeScanFileName: "pylint"
               uploadPath: "pylint.json"
               scanModule: "neural_solution"
-
