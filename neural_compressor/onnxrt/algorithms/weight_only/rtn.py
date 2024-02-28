@@ -55,7 +55,8 @@ def rtn_quantize(
     ratios: dict = {},
     accuracy_level: int = 0,
     providers: List[str] = ["CPUExecutionProvider"],
-) -> onnx.ModelProto:
+    return_modelproto: bool = True,
+):
     """Quantize the model with round to nearst method.
 
     Args:
@@ -81,7 +82,8 @@ def rtn_quantize(
             2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
             4 (int8 compute type of jblas kernel). Defaults to 0.
         providers (list, optional): providers to use. Defaults to ["CPUExecutionProvider"].
-
+        return_modelproto (bool, optionmal): whether to return onnx.Modelproto. set False for layer-wise quant.
+            Default to True
     Returns:
         onnx.ModelProto: quantized onnx model.
     """
@@ -180,25 +182,41 @@ def rtn_quantize(
 
         load_external_data_for_model(model.model, os.path.split(model.model_path)[0])
 
-    return model.model
+    if return_modelproto:
+        return model.model
+    else:
+        return model
 
 
-def apply_rtn_on_model(model: onnx.ModelProto, quant_config: dict) -> onnx.ModelProto:
+def apply_rtn_on_model(model: Union[onnx.ModelProto, ONNXModel, Path, str], quant_config: dict) -> onnx.ModelProto:
     """Apply RTN on onnx model.
 
     Args:
-        model (onnx.ModelProto): onnx model.
+        model (Union[onnx.ModelProto, ONNXModel, Path, str]): onnx model.
         quant_config (dict): quantization config.
 
     Returns:
         onnx.ModelProto: quantized onnx model.
     """
-    if "providers" in quant_config:
-        providers = quant_config.pop("providers")
+    # check whether to do layer_wise quant
+    layer_wise = quant_config.pop("layer_wise_quant", False)
+
+    # set other model params
+    quant_kwargs = {}
+    quant_kwargs = {key: quant_config.pop(key) for key in RTNConfig.model_params_list if key in quant_config}
 
     # change op config to dict type
     for op_name_type, op_config in quant_config.items():
         if isinstance(op_config, RTNConfig):
             quant_config[op_name_type] = op_config.to_dict()
 
-    return rtn_quantize(model, weight_config=quant_config, providers=providers)
+    if layer_wise:
+        from neural_compressor.onnxrt.algorithms import layer_wise_quant
+
+        quantized_model = layer_wise_quant(model, quant_func=rtn_quantize, weight_config=quant_config, **quant_kwargs)
+    else:
+        quantized_model = rtn_quantize(model, weight_config=quant_config, **quant_kwargs)
+
+    if isinstance(quantized_model, ONNXModel):
+        quantized_model = quantized_model.model
+    return quantized_model

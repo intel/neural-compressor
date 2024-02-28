@@ -17,9 +17,7 @@ from typing import Tuple
 import torch
 from torch.ao.quantization.observer import *
 
-# without scale factor 0.9, the output will be abnormal.
-E4M3_AMAX = torch.tensor(240 * 0.9, dtype=torch.float).to("hpu")
-E5M2_AMAX = torch.tensor(57344 * 0.9, dtype=torch.float).to("hpu")
+from .modules import E4M3_AMAX, E5M2_AMAX
 
 
 class FP8HistogramObserver(HistogramObserver):

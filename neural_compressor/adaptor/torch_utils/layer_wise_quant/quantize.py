@@ -24,10 +24,10 @@ from accelerate.utils import set_module_tensor_to_device
 from torch.quantization import convert, prepare
 from tqdm import tqdm
 
+from neural_compressor.adaptor.torch_utils.waq import TorchSmoothQuant
 from neural_compressor.config import default_workspace
 
 from ..model_wrapper import QDQLayer
-from ..smooth_quant import TorchSmoothQuant
 from .utils import (
     _get_path,
     clean_module_weight,

@@ -30,6 +30,10 @@ algos_mapping: Dict[str, Callable] = {}
 WHITE_MODULE_LIST = [torch.nn.Linear, torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d]
 
 
+WEIGHT_NAME = "quantized_model.pt"
+QCONFIG_NAME = "qconfig.json"
+
+
 def register_algo(name):
     """Decorator function to register algorithms in the algos_mapping dictionary.
 
