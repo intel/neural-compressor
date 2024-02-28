@@ -37,10 +37,9 @@ repos:
           )$
       - id: debug-statements
       - id: file-contents-sorter
-        files: |
+        exclude: |
           (?x)^(
-              .azure-pipelines/scripts/codeScan/pyspelling/inc_dict.txt|
-              .azure-pipelines/scripts/codeScan/pydocstyle/scan_path*.txt
+              examples/.+
           )$
         args: [--unique]
       - id: requirements-txt-fixer
