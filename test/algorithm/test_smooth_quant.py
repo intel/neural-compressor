@@ -926,9 +926,6 @@ class TestExample(unittest.TestCase):
         output2 = q_model.model(input_ids)
         # set a big atol to avoid random issue
         self.assertTrue(torch.allclose(output1, output2, atol=2e-02))
-        import pdb
-
-        pdb.set_trace()
 
         conf = PostTrainingQuantConfig(
             backend="ipex",

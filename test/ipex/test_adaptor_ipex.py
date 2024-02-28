@@ -327,8 +327,9 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
                 x = x + x
                 return x
 
-        example_input = torch.randn(3, 2)
+        example_input = torch.tensor([[torch.finfo(torch.float32).max, -torch.finfo(torch.float32).max]])
         model = M()
+        model.linear.weight = torch.nn.Parameter(torch.tensor([[0.0, 1.0], [1.0, 0.0]]))
 
         def calib_func(model):
             model(example_input)
@@ -339,14 +340,10 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
             backend="ipex",
             example_inputs=example_input,
             op_name_dict={".*": {"activation": {"algorithm": "minmax"}}},
+            recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5}},
         )
-        output1 = model(example_input)
         q_model = quantization.fit(model, conf, calib_func=calib_func)
-        output2 = q_model(example_input)
         self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
-        import pdb
-
-        pdb.set_trace()
 
     @unittest.skipIf(
         IPEX_VERSION.release < Version("2.1.0").release,
