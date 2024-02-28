@@ -42,7 +42,7 @@ stages:
         steps:
           - template: template/code-scan-template.yml
             parameters:
-              codeScanFileName: ${SYSTEM_JOBATTEMPT}_bandit
+              codeScanFileName: $(System.JobAttempt)_bandit
               uploadPath: "bandit.log"
 
   - stage: PylintCodeScan
