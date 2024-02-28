@@ -42,8 +42,8 @@ stages:
         steps:
           - template: template/code-scan-template.yml
             parameters:
-              codeScanFileName: "$(System.JobAttempt)_bandit"
-              uploadPath: "bandit.log"
+              codeScanFileName: "bandit"
+              uploadPath: "$(System.JobAttempt)_bandit.log"
 
   - stage: PylintCodeScan
     displayName: Pylint Code Scan
