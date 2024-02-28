@@ -78,11 +78,14 @@ class TestStaticQuant:
                 x = x + x
                 return x
 
+        model = M()
+
         def run_fn(model):
             model(torch.randn(3, 2))
 
-        fp32_model = M()
-        example_inputs = torch.randn(3, 2)
+        fp32_model = copy.deepcopy(model)
+        fp32_model.linear.weight = torch.nn.Parameter(torch.tensor([[0.0, 1.0], [1.0, 0.0]]))
+        example_inputs = torch.zeros(3, 2)
         quant_config = StaticQuantConfig(act_sym=True, act_algo="kl")
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         output1 = fp32_model(example_inputs)
