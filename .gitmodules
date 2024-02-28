@@ -1,0 +1,3 @@
+[submodule "3rd-party/picoGPT"]
+	path = 3rd-party/picoGPT
+	url = https://github.com/jaymody/picoGPT.git
