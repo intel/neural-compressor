@@ -77,7 +77,7 @@ class TestStaticQuant:
                 x = self.linear(x)
                 x = x + x
                 return x
-        
+
         def run_fn(model):
             model(torch.randn(3, 2))
 
