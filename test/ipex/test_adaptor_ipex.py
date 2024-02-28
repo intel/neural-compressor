@@ -344,7 +344,9 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         q_model = quantization.fit(model, conf, calib_func=calib_func)
         output2 = q_model(example_input)
         self.assertTrue(isinstance(q_model._model, torch.jit.ScriptModule))
-        import pdb; pdb.set_trace()
+        import pdb
+
+        pdb.set_trace()
 
     @unittest.skipIf(
         IPEX_VERSION.release < Version("2.1.0").release,

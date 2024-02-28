@@ -23,6 +23,7 @@ class Model(torch.nn.Module):
         out = self.fc2(out)
         return out
 
+
 model = Model()
 
 
