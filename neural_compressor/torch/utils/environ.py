@@ -18,7 +18,6 @@ from packaging.version import Version
 
 # pylint:disable=import-error
 try:
-    import deepspeed
     import habana_frameworks.torch.hpex
 
     _hpex_available = True

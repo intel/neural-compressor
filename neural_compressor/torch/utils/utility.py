@@ -33,6 +33,10 @@ WHITE_MODULE_LIST = [torch.nn.Linear, torch.nn.Conv1d, torch.nn.Conv2d, torch.nn
 ipex_config_path = os.path.join(DEFAULT_WORKSPACE, "ipex_config_tmp.json")
 
 
+WEIGHT_NAME = "quantized_model.pt"
+QCONFIG_NAME = "qconfig.json"
+
+
 def register_algo(name):
     """Decorator function to register algorithms in the algos_mapping dictionary.
 

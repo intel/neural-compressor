@@ -275,7 +275,7 @@ def _apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, 
 
 def awq_quantize(
     model: Union[onnx.ModelProto, ONNXModel, Path, str],
-    dataloader: CalibrationDataReader,
+    data_reader: CalibrationDataReader,
     weight_config: dict = {},
     num_bits: int = 4,
     group_size: int = 32,
@@ -289,7 +289,7 @@ def awq_quantize(
 
     Args:
         model (Union[onnx.ModelProto, ONNXModel, Path, str]): onnx model.
-        dataloader (CalibrationDataReader): dataloader for calibration.
+        data_reader (CalibrationDataReader): data_reader for calibration.
         weight_config (dict, optional): quantization config
             For example,
             weight_config = {
@@ -323,8 +323,8 @@ def awq_quantize(
     full_ratio = {}
 
     if enable_mse_search:
-        inputs, so = prepare_inputs(model, dataloader, providers)
-        del dataloader
+        inputs, so = prepare_inputs(model, data_reader, providers)
+        del data_reader
 
         org_output = copy.deepcopy(model.model.graph.output)
         model.remove_tensors_from_outputs([i.name for i in org_output])
@@ -420,7 +420,7 @@ def apply_awq_on_model(
     Args:
         model (Union[onnx.ModelProto, ONNXModel, Path, str]): nnx model.
         quant_config (dict): quantization config.
-        calibration_data_reader (CalibrationDataReader): dataloader for calibration.
+        calibration_data_reader (CalibrationDataReader): data_reader for calibration.
 
     Returns:
         onnx.ModelProto: quantized onnx model.
@@ -434,4 +434,4 @@ def apply_awq_on_model(
         if isinstance(op_config, AWQConfig):
             quant_config[op_name_type] = op_config.to_dict()
 
-    return awq_quantize(model, dataloader=calibration_data_reader, weight_config=quant_config, **kwargs)
+    return awq_quantize(model, data_reader=calibration_data_reader, weight_config=quant_config, **kwargs)

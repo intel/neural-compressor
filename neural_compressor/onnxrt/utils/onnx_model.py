@@ -21,7 +21,6 @@ import onnx
 from onnxruntime.quantization.onnx_model import ONNXModel as ORTONNXModel
 
 from neural_compressor.common import Logger
-from neural_compressor.onnxrt.utils.utility import MAXIMUM_PROTOBUF, find_by_name
 
 logger = Logger().get_logger()
 
@@ -74,6 +73,8 @@ class ONNXModel(ORTONNXModel):
 
     def check_is_large_model(self):
         """Check model > 2GB."""
+        from neural_compressor.onnxrt.utils.utility import MAXIMUM_PROTOBUF
+
         init_size = 0
         for init in self.model.graph.initializer:
             # if initializer has external data location, return True
@@ -420,6 +421,8 @@ class ONNXModel(ORTONNXModel):
 
         from onnx import NodeProto
 
+        from neural_compressor.onnxrt.utils.utility import find_by_name
+
         # process start node list
         start_node = deque()
         for node in start:
@@ -499,7 +502,7 @@ class ONNXModel(ORTONNXModel):
                         start_node,
                         ["Reshape", "Gemm", "Reshape", "Reshape", "Transpose", "MatMul"],
                         [None, 0, 0, 0, 0, 0],
-                        output_name_to_node=self.output_name_to_node,
+                        output_name_to_node_dict=self._output_name_to_node,
                         return_indice=[],
                     ),
                     # match bart attention structure
@@ -579,7 +582,7 @@ class ONNXModel(ORTONNXModel):
                         start_node,
                         ["Reshape", "Gemm", "Reshape", "Reshape", "Transpose", "MatMul"],
                         [None, 0, 0, 0, 0, 0],
-                        output_name_to_node=self.output_name_to_node,
+                        output_name_to_node_dict=self._output_name_to_node,
                         return_indice=[],
                     ),
                     # match bart attention structure
@@ -601,7 +604,7 @@ class ONNXModel(ORTONNXModel):
             qkv_nodes = [qkv for qkv in qkv_nodes_list if qkv is not None][-1]
             other_inputs = []
             for input in start_node.input:
-                if input not in self.output_name_to_node:
+                if input not in self._output_name_to_node:
                     continue
                 if input == qkv_nodes[0].output[0]:
                     continue
@@ -689,7 +692,7 @@ class ONNXModel(ORTONNXModel):
         for output in removed_outputs:
             self.model.graph.output.remove(output)
 
-    def match_first_parent(self, node, parent_op_type, output_name_to_node, exclude=[]):
+    def match_first_parent(self, node, parent_op_type, output_name_to_node_dict, exclude=[]):
         """Find parent node based on constraints on op_type.
 
         Args:
@@ -703,8 +706,8 @@ class ONNXModel(ORTONNXModel):
             index: The input index of matched parent node. None if not found.
         """
         for i, input in enumerate(node.input):
-            if input in output_name_to_node:
-                parent = output_name_to_node[input]
+            if input in output_name_to_node_dict:
+                parent = output_name_to_node_dict[input]
                 if parent.op_type == parent_op_type and parent not in exclude:
                     return parent, i
         return None, None
@@ -714,7 +717,7 @@ class ONNXModel(ORTONNXModel):
         node,
         parent_op_type,
         input_index=None,
-        output_name_to_node=None,
+        output_name_to_node_dict=None,
         exclude=[],
         return_indice=None,
     ):
@@ -734,13 +737,13 @@ class ONNXModel(ORTONNXModel):
         assert node is not None
         assert input_index is None or input_index >= 0
 
-        if output_name_to_node is None:
+        if output_name_to_node_dict is None:
             if len(self._output_name_to_node) == 0:
                 self._output_name_to_node = self.output_name_to_node()
-            output_name_to_node = self._output_name_to_node
+            output_name_to_node_dict = self._output_name_to_node
 
         if input_index is None:
-            parent, index = self.match_first_parent(node, parent_op_type, output_name_to_node, exclude)
+            parent, index = self.match_first_parent(node, parent_op_type, output_name_to_node_dict, exclude)
             if return_indice is not None:
                 return_indice.append(index)
             return parent
@@ -748,7 +751,7 @@ class ONNXModel(ORTONNXModel):
         if input_index >= len(node.input):
             return None
 
-        parent = self.get_parent(node, input_index, output_name_to_node)
+        parent = self.get_parent(node, input_index, output_name_to_node_dict)
         if parent is not None and parent.op_type == parent_op_type and parent not in exclude:
             return parent
 
@@ -759,7 +762,7 @@ class ONNXModel(ORTONNXModel):
         node,
         parent_op_types,
         parent_input_index,
-        output_name_to_node=None,
+        output_name_to_node_dict=None,
         return_indice=None,
     ):
         """Find a sequence of input edges based on constraints on parent op_type and index.
@@ -778,10 +781,10 @@ class ONNXModel(ORTONNXModel):
         """
         assert len(parent_input_index) == len(parent_op_types)
 
-        if output_name_to_node is None:
+        if output_name_to_node_dict is None:
             if len(self._output_name_to_node) == 0:
                 self._output_name_to_node = self.output_name_to_node()
-            output_name_to_node = self._output_name_to_node
+            output_name_to_node_dict = self._output_name_to_node
 
         current_node = node
         matched_parents = []
@@ -790,7 +793,7 @@ class ONNXModel(ORTONNXModel):
                 current_node,
                 op_type,
                 parent_input_index[i],
-                output_name_to_node,
+                output_name_to_node_dict,
                 exclude=[],
                 return_indice=return_indice,
             )
@@ -818,15 +821,12 @@ class ONNXModel(ORTONNXModel):
         split_nodes = self.find_split_node_for_layer_wise_quantization()
         return split_nodes
 
-    def split_model_with_node(
-        self, split_node_name, path_of_model_to_split, shape_infer=True, save_both_split_models=True
-    ):
+    def split_model_with_node(self, split_node_name, path_of_model_to_split, save_both_split_models=True):
         """Split model into two parts at a given node.
 
         Args:
             split_node_name (str): name of the node where the model is split at>
             path_of_model_to_split (str): path of model to be split.
-            shape_infer (bool): do shape inference. Default is True.
             save_both_split_models (bool): whether to save the two split models.
                 False means only save the first split model.
                 True means save both the two split models.
@@ -865,21 +865,6 @@ class ONNXModel(ORTONNXModel):
         )
         split_tensor_name = split_node_output[0]
 
-        # infer shape of the model to be split
-        if shape_infer:
-            try:
-                from neural_compressor.adaptor.ox_utils.util import infer_shapes
-
-                self.model = infer_shapes(self.model, auto_merge=True, base_dir=os.path.dirname(self._model_path))
-            except Exception as e:  # pragma: no cover
-                logger.error(
-                    "Shape infer fails for layer-wise quantization. "
-                    "We would recommend checking the graph optimization level of your model "
-                    "and setting it to 'DISABLE_ALL' or 'ENABLE_BASIC', "
-                    "as this may help avoid this error."
-                )
-                raise e
-
         split_tensor_type, split_tensor_shape = self._get_output_type_shape_by_tensor_name(split_tensor_name)
         split_tensor = onnx.helper.make_tensor_value_info(split_tensor_name, split_tensor_type, split_tensor_shape)
 
@@ -895,8 +880,8 @@ class ONNXModel(ORTONNXModel):
 
         insert_output_for_model_1 = []
         insert_input_for_model_2 = []
-        for output in split_model_part_1.output_name_to_node.keys():
-            if output in split_model_part_2.input_name_to_nodes.keys():
+        for output in split_model_part_1._output_name_to_node.keys():
+            if output in split_model_part_2._input_name_to_nodes.keys():
                 output_type, output_shape = self._get_output_type_shape_by_tensor_name(output)
                 output_tensor = onnx.helper.make_tensor_value_info(output, output_type, output_shape)
                 if output_tensor not in split_model_part_1.model.graph.output:
@@ -984,11 +969,11 @@ class ONNXModel(ORTONNXModel):
         if len(self._input_name_to_nodes) == 0:
             self._input_name_to_nodes = self.input_name_to_nodes()
         for output in self.model.graph.output:
-            if output.name not in self.output_name_to_node.keys():
+            if output.name not in self._output_name_to_node.keys():
                 remove_outputs.append(output)
 
         for input in self.model.graph.input:
-            if input.name not in self.input_name_to_nodes.keys():
+            if input.name not in self._input_name_to_nodes.keys():
                 remove_inputs.append(input)
 
         for output in remove_outputs:
@@ -1002,7 +987,7 @@ class ONNXModel(ORTONNXModel):
         if len(self._input_name_to_nodes) == 0:
             self._input_name_to_nodes = self.input_name_to_nodes()
         for init in self.model.graph.initializer:
-            if init.name not in self.input_name_to_nodes.keys():
+            if init.name not in self._input_name_to_nodes.keys():
                 remov_inits.append(init)
         self.remove_initializers(remov_inits)
 
@@ -1062,7 +1047,7 @@ class ONNXModel(ORTONNXModel):
             if (
                 input.name not in self.input()
                 and input.name not in self.output()
-                and input.name not in self.output_name_to_node.keys()
+                and input.name not in self._output_name_to_node.keys()
             ):
                 self.model.graph.input.append(input)
 

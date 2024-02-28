@@ -28,15 +28,14 @@ _torch_bmm = torch.bmm
 
 
 DATA_TYPE = torch.float8_e4m3fn
-# without scale factor 0.9, the output will be abnormal.
-E4M3_AMAX = torch.tensor(240 * 0.9, dtype=torch.float).to("hpu")
-E5M2_AMAX = torch.tensor(57344 * 0.9, dtype=torch.float).to("hpu")
+E4M3_AMAX = torch.tensor(240, dtype=torch.float).to("hpu")
+E5M2_AMAX = torch.tensor(57344, dtype=torch.float).to("hpu")
 
 DTYPE_AMAX = E4M3_AMAX if DATA_TYPE == torch.float8_e4m3fn else E5M2_AMAX
 USE_AMAX = False if os.getenv("PT_USE_FP8_AMAX") is None else True
 
 
-def fp8_linear_forward(input, weight, bias):
+def fp8_linear_forward(input, weight, bias=None):
     out_dtype = torch.float32
     org_middle_shape = input.shape[1:-1]
     input = input.view((-1, weight.shape[-1]))

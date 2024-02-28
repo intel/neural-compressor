@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from copy import deepcopy
+from types import MethodType
 from typing import Any, Callable, Dict, Tuple
 
 import torch
@@ -20,6 +21,7 @@ import torch
 from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, SMOOTH_QUANT, STATIC_QUANT, TEQ
 from neural_compressor.torch.quantization import (
     AWQConfig,
+    FP8Config,
     GPTQConfig,
     HQQConfig,
     RTNConfig,
@@ -343,8 +345,14 @@ def hqq_entry(
 from neural_compressor.torch.utils import is_hpex_available
 
 if is_hpex_available():
-    from neural_compressor.torch.algorithms.habana_fp8 import quantize
+    from neural_compressor.torch.algorithms.habana_fp8 import quantize, save
 
     @register_algo(FP8_QUANT)
-    def fp8_quant_entry(model, qconfig_mapping, run_fn=None, run_args=None, inplace=True):
-        return quantize(model, qconfig_mapping, run_fn=run_fn, run_args=run_args, inplace=inplace)
+    def fp8_quant_entry(
+        model: torch.nn.Module, configs_mapping: Dict[Tuple[str], FP8Config], *args, **kwargs
+    ) -> torch.nn.Module:
+        kwargs.pop("example_inputs")
+        model = quantize(model, configs_mapping, *args, **kwargs)
+        model.qconfig = configs_mapping
+        model.save = MethodType(save, model)
+        return model
