@@ -38,11 +38,11 @@ stages:
     dependsOn: []
     jobs:
       - job: Bandit
-        displayName: Bandit
+        displayName: $(System.JobAttempt)_bandit
         steps:
           - template: template/code-scan-template.yml
             parameters:
-              codeScanFileName: $(System.JobAttempt)_bandit
+              codeScanFileName: "$(System.JobAttempt)_bandit"
               uploadPath: "bandit.log"
 
   - stage: PylintCodeScan
