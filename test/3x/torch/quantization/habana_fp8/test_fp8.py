@@ -18,8 +18,14 @@ if is_hpex_available():
         FP8Matmul,
         Matmul,
     )
-    from neural_compressor.torch.quantization import quantize
-    from neural_compressor.torch.quantization.config import FP8Config, get_default_fp8_config
+    from neural_compressor.torch.quantization import (
+        FP8Config,
+        TuningConfig,
+        autotune,
+        get_default_fp8_config,
+        get_default_fp8_config_set,
+        quantize,
+    )
 
     torch.set_grad_enabled(False)
 
@@ -164,3 +170,31 @@ class TestPytorchFP8Adaptor:
         assert isinstance(m.fc1, FP8Linear), "Unexpected result. Please double check."
         assert isinstance(m.mm, FP8Matmul), "Unexpected result. Please double check."
         assert isinstance(m.bmm, FP8BatchMatmul), "Unexpected result. Please double check."
+
+    def test_autotune(self):
+        m = copy.deepcopy(self.model)
+        inp = self.inp
+        fp32_out = m(inp)
+
+        def calib_func(model):
+            model(inp)
+
+        accu_list = [1.0, 0.9, 0.99]
+
+        def eval_func(model):
+            nonlocal accu_list
+            return accu_list.pop()
+
+        tune_config = TuningConfig(
+            config_set=get_default_fp8_config_set(),
+            tolerable_loss=0.01,
+        )
+        best_model = autotune(
+            model=m,
+            tune_config=tune_config,
+            run_fn=calib_func,
+            eval_fns=eval_func,
+        )
+        assert isinstance(best_model.fc1, FP8Linear), "Unexpected result. Please double check."
+        assert isinstance(best_model.mm, FP8Matmul), "Unexpected result. Please double check."
+        assert isinstance(best_model.bmm, FP8BatchMatmul), "Unexpected result. Please double check."
