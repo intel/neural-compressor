@@ -83,8 +83,9 @@ class TestStaticQuant:
 
         fp32_model = M()
         example_inputs = torch.randn(3, 2)
-        output1 = fp32_model(example_inputs)
         quant_config = StaticQuantConfig(act_sym=True, act_algo="kl")
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        output1 = fp32_model(example_inputs)
         output2 = q_model(example_inputs)
+        # set a big atol to avoid random issue
         assert torch.allclose(output1, output2, atol=2e-2), "Accuracy gap atol > 0.02 is unexpected. Please check."

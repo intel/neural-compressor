@@ -23,7 +23,6 @@ class Model(torch.nn.Module):
         out = self.fc2(out)
         return out
 
-
 model = Model()
 
 
@@ -75,3 +74,15 @@ class TestSmoothQuant:
         example_inputs = torch.randn([1, 3])
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_sq_accuracy(self):
+        fp32_model = copy.deepcopy(model)
+        quant_config = SmoothQuantConfig(alpha="auto", folding=True, scale_sharing=True)
+        example_inputs = torch.randn([1, 3])
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"
+        output1 = fp32_model(example_inputs)
+        output2 = q_model(example_inputs)
+        # set a big atol to avoid random issue
+        assert torch.allclose(output1, output2, atol=2e-2), "Accuracy gap atol > 0.02 is unexpected. Please check."
