@@ -268,7 +268,7 @@ class TuningConfig:
             sampler: tuning sampler that decide the trials order. Defaults to default_sampler.
             tolerable_loss: This float indicates how much metric loss we can accept.
                 The metric loss is relative, it can be both positive and negative. Default is 0.01.
-            max_trials: Max tuning times. Combine with timeout field to decide when to exit. Default is 100.
+            max_trials: Max tuning times. Combine with `tolerable_loss` field to decide when to stop. Default is 100.
         """
         self.config_set = config_set
         self.sampler = sampler
