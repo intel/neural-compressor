@@ -941,12 +941,21 @@ class FP8Config(BaseConfig):
 
 
 def get_default_fp8_config() -> FP8Config:
-    """Generate the default gptq config.
+    """Generate the default fp8 config.
 
     Returns:
-        the default gptq config.
+        the default fp8 config.
     """
     return FP8Config()
+
+
+def get_default_fp8_config_set() -> FP8Config:
+    """Generate the default fp8 config set.
+
+    Returns:
+        the default fp8 config.
+    """
+    return FP8Config.get_config_set_for_tuning()
 
 
 ##################### Algo Configs End ###################################
