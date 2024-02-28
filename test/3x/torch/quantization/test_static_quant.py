@@ -65,3 +65,26 @@ class TestStaticQuant:
         example_inputs = self.input
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_static_quant_accuracy(self):
+        class M(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.linear = torch.nn.Linear(2, 2, False)
+
+            def forward(self, x):
+                x = self.linear(x)
+                x = x + x
+                return x
+        
+        def run_fn(model):
+            model(torch.randn(3, 2))
+
+        fp32_model = M()
+        example_inputs = torch.randn(3, 2)
+        output1 = fp32_model(example_inputs)
+        quant_config = StaticQuantConfig(act_sym=True, act_algo="kl")
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        output2 = q_model(example_inputs)
+        assert torch.allclose(output1, output2, atol=2e-2), "Accuracy gap atol > 0.02 is unexpected. Please check."
