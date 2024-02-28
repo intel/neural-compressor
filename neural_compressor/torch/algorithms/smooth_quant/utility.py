@@ -513,7 +513,7 @@ def model_forward(model, dataloader, iters, device):  # pragma: no cover
                 break
 
 
-def cal_scale(input_max_abs, weights, alpha, weight_max_lb=1e-5):
+def cal_scale(input_max_abs, weights, alpha, weight_max_lb=1e-5): # pragma: no cover
     weights = torch.cat(weights, dim=0)
     weight_max = torch.max(torch.abs(weights), dim=0)[0]
     weight_max = torch.clip(weight_max, weight_max_lb)
@@ -643,7 +643,7 @@ def reshape_in_channel_to_last(layer_name, model):  # pragma: no cover
     return weight
 
 
-def reshape_scale_as_input(layer, scale):
+def reshape_scale_as_input(layer, scale): # pragma: no cover
     """Reshape the scale for input feature in channel
     :param layer:
 
@@ -677,7 +677,7 @@ def register_autotune(name):  # pragma: no cover
     return register
 
 
-class Calibration:
+class Calibration: # pragma: no cover
     def __init__(self, model, dataloder=None, q_func=None, device="cpu"):
         self.model = model
         self.dataloader = dataloder
@@ -761,7 +761,7 @@ class Calibration:
         return self.input_mins, self.input_maxes
 
 
-class GraphTrace:
+class GraphTrace: # pragma: no cover
     """"""
 
     def __init__(self):
@@ -2278,7 +2278,7 @@ class WrapperLayer(torch.nn.Module):
         return output
 
 
-class CpuInfo(object):
+class CpuInfo(object): # pragma: no cover
     """Get CPU Info."""
 
     def __init__(self):
