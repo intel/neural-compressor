@@ -79,21 +79,15 @@ Attributes
 
 
 
-.. py:class:: TuningConfig(config_set=None, max_trials=100, sampler: Sampler = default_sampler, tolerable_loss=0.01)
+.. py:class:: TuningConfig(config_set: Union[neural_compressor.common.base_config.BaseConfig, List[neural_compressor.common.base_config.BaseConfig]] = None, sampler: Sampler = default_sampler, tolerable_loss=0.01, max_trials=100)
 
 
-   Base Class for Tuning Criterion.
-
-   :param config_set: quantization configs. Default value is empty.
-                      A single config or a list of configs. More details can
-                      be found in the `from_fwk_configs`of `ConfigSet` class.
-   :param max_trials: Max tuning times. Default value is 100. Combine with timeout field to decide when to exit.
-   :param tolerable_loss: This float indicates how much metric loss we can accept.             The metric loss is relative, it can be both positive and negative. Default is 0.01.
+   Config for auto tuning pipeline.
 
    .. rubric:: Examples
 
    # TODO: to refine it
-   from neural_compressor import TuningConfig
+   from neural_compressor.torch.quantization import TuningConfig
    tune_config = TuningConfig(
        config_set=[config1, config2, ...],
        max_trials=3,
