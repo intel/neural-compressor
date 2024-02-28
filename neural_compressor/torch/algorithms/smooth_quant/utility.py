@@ -17,7 +17,6 @@ import json
 import os
 import re
 import subprocess
-import tqdm
 from collections import UserDict
 
 import cpuinfo
@@ -25,6 +24,7 @@ import intel_extension_for_pytorch as ipex
 import numpy
 import psutil
 import torch
+import tqdm
 from packaging.version import Version
 
 from neural_compressor.torch.utils import (
@@ -535,7 +535,7 @@ def model_forward_per_sample(model, sample, device):  # pragma: no cover
         return output
 
 
-def quant_dequant_w_v1(m, num_bits=8, scheme="sym"): # pragma: no cover
+def quant_dequant_w_v1(m, num_bits=8, scheme="sym"):  # pragma: no cover
     eps = torch.finfo(torch.float32).eps
     if isinstance(m, torch.nn.Linear):
         x = m.weight
@@ -593,7 +593,7 @@ def quant_dequant_w_v1(m, num_bits=8, scheme="sym"): # pragma: no cover
         logger.warning("unsupported layer type, please have a check")
 
 
-def quant_dequant_x_v1(x, min_x=None, max_x=None, num_bits=8): # pragma: no cover
+def quant_dequant_x_v1(x, min_x=None, max_x=None, num_bits=8):  # pragma: no cover
     eps = torch.finfo(torch.float32).eps
     q_min, q_max = 0, 2.0**num_bits - 1.0
     if max_x is None or min_x is None:
@@ -1455,7 +1455,7 @@ class AutoAlpha:
             logger.info(f"Auto-tuning failed due to no dataloader, using {best_alphas} instead.")
             self._qdq_model_unwrapper_for_auto()
             return best_alphas
-        bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha") # pylint: disable=E1102
+        bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha")  # pylint: disable=E1102
         for input in bar:
             if isinstance(input, tuple) or isinstance(input, list):
                 if len(input) == 2:
@@ -1524,7 +1524,7 @@ class AutoAlpha:
             logger.info(f"Auto-tuning failed due to no dataloader, using {best_alphas} instead.")
             self._qdq_model_unwrapper_for_auto()
             return best_alphas
-        bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha") # pylint: disable=E1102
+        bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha")  # pylint: disable=E1102
         for input in bar:
             if isinstance(input, tuple):  # Extract input when both input and label are yielded by dataloader.
                 input = input[0]
@@ -1837,7 +1837,7 @@ class TorchSmoothQuant:
         :return:
         """
         need_calib = True
-        from peft import PeftModel # pylint: disable=E0401
+        from peft import PeftModel  # pylint: disable=E0401
 
         is_peft, is_auto = isinstance(self.model, PeftModel), alpha == "auto"
         if len(self.input_maxes) == 0:  ## the first time

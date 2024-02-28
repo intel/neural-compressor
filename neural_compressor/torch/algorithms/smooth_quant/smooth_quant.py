@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import json
+
 import torch
 
 try:
@@ -33,12 +34,7 @@ from neural_compressor.torch.utils import (
     simple_inference,
 )
 
-from .utility import (
-    TorchSmoothQuant,
-    cfg_to_qconfig,
-    get_quantizable_ops_recursively,
-    update_sq_scale,
-)
+from .utility import TorchSmoothQuant, cfg_to_qconfig, get_quantizable_ops_recursively, update_sq_scale
 
 ipex_ver = get_ipex_version()
 
