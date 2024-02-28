@@ -728,7 +728,7 @@ class SmoothQuantConfig(BaseConfig):
         alpha_max: float = 1.0,
         alpha_step: float = 0.1,
         shared_criterion: str = "max",
-        enable_blockwise_loss: bool = False,
+        do_blockwise: bool = False,
         auto_alpha_args: dict = None,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
@@ -751,14 +751,14 @@ class SmoothQuantConfig(BaseConfig):
         self.alpha_max = alpha_max
         self.alpha_step = alpha_step
         self.shared_criterion = shared_criterion
-        self.enable_blockwise_loss = enable_blockwise_loss
+        self.do_blockwise = do_blockwise
         self.auto_alpha_args = {
             "init_alpha": self.init_alpha,
             "alpha_min": self.alpha_min,
             "alpha_max": self.alpha_max,
             "alpha_step": self.alpha_step,
             "shared_criterion": self.shared_criterion,
-            "enable_blockwise_loss": self.enable_blockwise_loss,
+            "do_blockwise": self.do_blockwise,
         }
         self._post_init()
 

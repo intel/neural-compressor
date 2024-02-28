@@ -1,5 +1,4 @@
 import copy
-
 import pytest
 import torch
 
@@ -10,43 +9,34 @@ if is_ipex_available():
     import intel_extension_for_pytorch as ipex
 
 
-def build_simple_torch_model():
-    class Model(torch.nn.Module):
-        device = torch.device("cpu")
+class Model(torch.nn.Module):
+    device = torch.device("cpu")
 
-        def __init__(self):
-            super(Model, self).__init__()
-            self.fc1 = torch.nn.Linear(3, 4)
-            self.fc2 = torch.nn.Linear(4, 3)
+    def __init__(self):
+        super(Model, self).__init__()
+        self.fc1 = torch.nn.Linear(3, 4)
+        self.fc2 = torch.nn.Linear(4, 3)
 
-        def forward(self, x):
-            out = self.fc1(x)
-            out = self.fc2(out)
-            return out
+    def forward(self, x):
+        out = self.fc1(x)
+        out = self.fc2(out)
+        return out
 
-    model = Model()
-    return model
-
+model = Model()
 
 def run_fn(model):
     model(torch.randn([1, 3]))
 
 
 class TestSmoothQuant:
-    def setup_class(self):
-        self.fp32_model = build_simple_torch_model()
-        self.input = torch.randn([1, 3])
-
-    def teardown_class(self):
-        pass
-
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     def test_smooth_quant_default(self):
-        fp32_model = copy.deepcopy(self.fp32_model)
+        fp32_model = copy.deepcopy(model)
         quant_config = get_default_sq_config()
-        example_inputs = self.input
+        example_inputs = torch.randn([1, 3])
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
+
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     @pytest.mark.parametrize(
@@ -60,11 +50,27 @@ class TestSmoothQuant:
             (False, "kl", 0.5, True, False),
         ],
     )
-    def test_static_quant_params(self, act_sym, act_algo, alpha, folding, scale_sharing):
-        fp32_model = copy.deepcopy(self.fp32_model)
+    def test_sq_linear_params(self, act_sym, act_algo, alpha, folding, scale_sharing):
+        fp32_model = copy.deepcopy(model)
         quant_config = SmoothQuantConfig(
             act_sym=act_sym, act_algo=act_algo, alpha=alpha, folding=folding, scale_sharing=scale_sharing
         )
-        example_inputs = self.input
+        example_inputs = torch.randn([1, 3])
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"
+    
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_smooth_quant_auto(self):
+        fp32_model = copy.deepcopy(model)
+        auto_alpha_args = {
+            "alpha_min": 0.45,
+            "alpha_max": 0.55,
+            "alpha_step": 0.01,
+            "shared_criterion": "mean",
+            "do_blockwise": True,
+        }
+        quant_config = SmoothQuantConfig(alpha="auto", auto_alpha_args=auto_alpha_args, folding=False)
+        example_inputs = torch.randn([1, 3])
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
