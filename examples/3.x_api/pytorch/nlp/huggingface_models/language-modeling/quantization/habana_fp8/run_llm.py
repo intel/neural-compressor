@@ -1,7 +1,8 @@
 import os
 os.environ["EXPERIMENTAL_WEIGHT_SHARING"] = "False"
 os.environ["USE_GAUDI2_SCALE"] = "True"
-os.environ.pop("USE_GAUDI2_SCALE")  # gaudi scale work
+# USE_GAUDI2_SCALE requires PT_USE_FP8_AMAX for torch.mm/bmm, or got failure
+os.environ["PT_USE_FP8_AMAX"] = "True"  
 # os.environ["GRAPH_VISUALIZATION"] = "True"
 # import shutil
 # shutil.rmtree(".graph_dumps", ignore_errors=True)
@@ -173,7 +174,7 @@ else:
         args.model,
         trust_remote_code=args.trust_remote_code
     )
-
+tokenizer.pad_token = tokenizer.eos_token
 
 user_model.eval()
 
@@ -219,6 +220,7 @@ if args.approach in ["dynamic", "static"] and not args.load:
 
         user_model = quantize(user_model, qconfig, calib_func, inplace=True)
         # saving
+        print(user_model)
         if args.save and local_rank in [-1, 0]:
             user_model.save("saved_results")
 

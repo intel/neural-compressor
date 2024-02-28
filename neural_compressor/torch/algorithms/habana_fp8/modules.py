@@ -55,7 +55,7 @@ class Autocast(nn.Module):
 
 ##################### FP8 modules #######################
 def _map_guadi2_scale(scale):
-    USE_GAUDI2_SCALE = os.environ.get("USE_GAUDI2_SCALE")
+    USE_GAUDI2_SCALE = bool(os.getenv("USE_GAUDI2_SCALE", False))
     if USE_GAUDI2_SCALE:
         scale_list = torch.tensor([16, 1, 1 / 16, 1 / 256])
         for i in scale_list:
@@ -135,6 +135,7 @@ class FP8DynamicLinear(torch.nn.Module):
         if inp.dtype not in [torch.float8_e4m3fn, torch.float8_e5m2]:
             if self.use_amax:
                 input_scale = self.dtype_amax / inp.abs().max()
+                input_scale = _map_guadi2_scale(input_scale)
                 input_scale_inv = torch.reciprocal(input_scale)
             else:
                 input_scale, input_scale_inv = None, None
@@ -183,6 +184,7 @@ class FP8DynamicMatmul(torch.nn.Module):
             self.out_dtype = input1.dtype
             if self.use_amax:
                 input1_scale = self.dtype_amax / input1.data.abs().max()
+                input1_scale = _map_guadi2_scale(input1_scale)
                 input1_scale_inv = torch.reciprocal(input1_scale)
             else:
                 input1_scale, input1_scale_inv = None, None
@@ -195,6 +197,7 @@ class FP8DynamicMatmul(torch.nn.Module):
             self.out_dtype = input2.dtype
             if self.use_amax:
                 input2_scale = self.dtype_amax / input2.data.abs().max()
+                input2_scale = _map_guadi2_scale(input2_scale)
                 input2_scale_inv = torch.reciprocal(input2_scale)
             else:
                 input2_scale, input2_scale_inv = None, None
