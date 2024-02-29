@@ -33,5 +33,6 @@ stages:
               dockerConfigName: 'commonDockerConfig'
               utScriptFileName: 'run_itrex'
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: 'ut-itrex'
+              utArtifact: 'ut_itrex'
+              utTestMode: "no-coverage"
               utContainerName: "utTest-itrex"

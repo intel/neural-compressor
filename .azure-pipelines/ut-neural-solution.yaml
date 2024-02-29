@@ -27,5 +27,6 @@ stages:
               dockerConfigName: 'commonDockerConfig'
               utScriptFileName: 'run_neural_solution'
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: 'ut-neural-solution'
+              utArtifact: 'ut_neural-solution'
+              utTestMode: "no-coverage"
               utContainerName: "utTest-nSolution"

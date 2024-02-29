@@ -39,7 +39,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "3x/run_3x_pt"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_coverage_3x"
+              utArtifact: "ut_3x"
 
 
   - stage: Torch_baseline
@@ -54,7 +54,7 @@ stages:
               dockerConfigName: "gitCloneDockerConfig"
               utScriptFileName: "3x/run_3x_pt"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_coverage_3x_baseline"
+              utArtifact: "ut_3x_baseline"
               repo: $(REPO)
 
   - stage: Coverage
@@ -79,6 +79,7 @@ stages:
           - task: DownloadPipelineArtifact@2
             inputs:
               artifact:
+              patterns: '*_coverage/.coverage'
               path: $(DOWNLOAD_PATH)
 
           - script: |

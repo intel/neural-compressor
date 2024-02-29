@@ -45,7 +45,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "run_basic_adaptor"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-adaptor"
+              utArtifact: "ut_adaptor"
 
   - stage: API
     displayName: Unit Test User facing API
@@ -59,7 +59,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "run_basic_api"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-api"
+              utArtifact: "ut_api"
 
   - stage: Pruning
     displayName: Unit Test Pruning
@@ -73,7 +73,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "run_basic_pt_pruning"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-pt-pruning"
+              utArtifact: "ut_pt-pruning"
       - job:
         displayName: Test TensorFlow Pruning
         steps:
@@ -82,7 +82,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "run_basic_tf_pruning"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-tf-pruning"
+              utArtifact: "ut_tf-pruning"
 
   - stage: TFNewAPI
     displayName: Unit Test TF newAPI
@@ -96,7 +96,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "run_basic_adaptor_tfnewapi"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-tfnewapi"
+              utArtifact: "ut_tfnewapi"
 
   - stage: ITEX
     displayName: Unit Test ITEX
@@ -110,7 +110,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "run_basic_itex"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-itex"
+              utArtifact: "ut_itex"
 
   - stage: Others
     displayName: Unit Test other basic case
@@ -124,7 +124,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "run_basic_others"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-others"
+              utArtifact: "ut_others"
 
   - stage: Adaptor_base
     displayName: Unit Test FWKs adaptor baseline
@@ -138,7 +138,7 @@ stages:
               dockerConfigName: "gitCloneDockerConfig"
               utScriptFileName: "run_basic_adaptor"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-adaptor-base"
+              utArtifact: "ut-base_adaptor"
               repo: $(REPO)
 
   - stage: API_base
@@ -153,7 +153,7 @@ stages:
               dockerConfigName: "gitCloneDockerConfig"
               utScriptFileName: "run_basic_api"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-api-base"
+              utArtifact: "ut-base_api"
               repo: $(REPO)
 
   - stage: Pruning_base
@@ -168,7 +168,7 @@ stages:
               dockerConfigName: "gitCloneDockerConfig"
               utScriptFileName: "run_basic_pt_pruning"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-pt-pruning-base"
+              utArtifact: "ut-base_pt-pruning"
               repo: $(REPO)
       - job:
         displayName: Test TensorFlow Pruning baseline
@@ -178,7 +178,7 @@ stages:
               dockerConfigName: "gitCloneDockerConfig"
               utScriptFileName: "run_basic_tf_pruning"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-tf-pruning-base"
+              utArtifact: "ut-base_tf-pruning"
               repo: $(REPO)
 
   - stage: TFNewAPI_base
@@ -193,7 +193,7 @@ stages:
               dockerConfigName: "gitCloneDockerConfig"
               utScriptFileName: "run_basic_adaptor_tfnewapi"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-tfnewapi-base"
+              utArtifact: "ut-base_tfnewapi"
               repo: $(REPO)
 
   - stage: ITEX_base
@@ -208,7 +208,7 @@ stages:
               dockerConfigName: "gitCloneDockerConfig"
               utScriptFileName: "run_basic_itex"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-itex-base"
+              utArtifact: "ut-base_itex"
               repo: $(REPO)
 
   - stage: Others_base
@@ -223,7 +223,7 @@ stages:
               dockerConfigName: "gitCloneDockerConfig"
               utScriptFileName: "run_basic_others"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-others-base"
+              utArtifact: "ut-base_others"
               repo: $(REPO)
 
   - stage: Coverage
@@ -248,6 +248,7 @@ stages:
           - task: DownloadPipelineArtifact@2
             inputs:
               artifact:
+              patterns: '*_coverage/.coverage.*'
               path: $(DOWNLOAD_PATH)
 
           - script: |

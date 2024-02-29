@@ -41,11 +41,12 @@ steps:
       artifact: $(System.JobAttempt)_${{ parameters.utArtifact }}_report
       publishLocation: "pipeline"
 
-  - task: PublishPipelineArtifact@1
-    inputs:
-      targetPath: ${{ parameters.uploadPath }}
-      artifact: ${{ parameters.utArtifact }}_coverage
-      publishLocation: "pipeline"
+  - ${{ if eq(parameters.utTestMode, 'coverage') }}:
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: ${{ parameters.uploadPath }}
+        artifact: ${{ parameters.utArtifact }}_coverage
+        publishLocation: "pipeline"
 
   - task: Bash@3
     condition: always()
