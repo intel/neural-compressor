@@ -279,6 +279,7 @@ if args.quantize:
             'use_max_length': args.gptq_use_max_length,
             'pad_max_length': args.gptq_pad_max_length,
             'static_groups': args.gptq_static_groups,
+            "enable_mse_search": args.woq_enable_mse_search,
         }
         # GPTQ: use assistive functions to modify calib_dataloader and calib_func
         # TEQ: set calib_func=None, use default training func as calib_func
