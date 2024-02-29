@@ -1,0 +1,34 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.smooth_quant.smooth_quant`
+======================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.smooth_quant.smooth_quant
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.smooth_quant.smooth_quant.smooth_quantize
+
+
+
+.. py:function:: smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True)
+
+   Execute the quantize process on the specified model.
+
+   :param model: a float model to be quantized.
+   :param tune_cfg: quantization config for ops.
+   :param run_fn: a calibration function for calibrating the model.
+   :param example_inputs: used to trace torch model.
+   :param inplace: whether to carry out model transformations in-place.
+
+   :returns: A quantized model.
+
+
