@@ -79,6 +79,7 @@ stages:
           - task: DownloadPipelineArtifact@2
             inputs:
               artifact:
+              patterns: '*_coverage/.coverage'
               path: $(DOWNLOAD_PATH)
 
           - script: |
