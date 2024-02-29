@@ -39,7 +39,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "3x/run_3x_ort"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_coverage_3x"
+              utArtifact: "ut_3x"
 
 
   - stage: ONNXRT_baseline
@@ -54,7 +54,7 @@ stages:
               dockerConfigName: "gitCloneDockerConfig"
               utScriptFileName: "3x/run_3x_ort"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_coverage_3x_baseline"
+              utArtifact: "ut_3x_baseline"
               repo: $(REPO)
 
   - stage: Coverage

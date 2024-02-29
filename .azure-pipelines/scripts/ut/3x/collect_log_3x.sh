@@ -9,7 +9,7 @@ coverage_compare="/neural-compressor/log_dir/coverage_compare.html"
 cd /neural-compressor/log_dir
 
 $BOLD_YELLOW && echo "collect coverage for PR branch" && $RESET
-cp ut_coverage_3x/.coverage /neural-compressor/
+cp ut_3x_coverage/.coverage /neural-compressor/
 mkdir -p coverage_PR
 cd /neural-compressor
 coverage report -m --rcfile=${COVERAGE_RCFILE} | tee ${coverage_log}
@@ -31,7 +31,7 @@ coverage erase
 cd /neural-compressor/log_dir
 mkdir -p coverage_base
 rm -rf /neural-compressor/.coverage || true
-cp ut_coverage_3x_baseline/.coverage /neural-compressor
+cp ut_3x_baseline_coverage/.coverage /neural-compressor
 
 cd /neural-compressor
 coverage report -m --rcfile=${COVERAGE_RCFILE} | tee ${coverage_log_base}
