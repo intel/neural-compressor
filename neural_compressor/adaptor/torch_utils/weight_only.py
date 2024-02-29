@@ -792,5 +792,5 @@ def autoround_quantize(
     qdq_model, weight_config = rounder.quantize()
     if export_args["format"] is not None:
         model = rounder.save_quantized(format=export_args["format"], inplace=export_args["inplace"])
-        return model , weight_config
+        return model, weight_config
     return qdq_model, weight_config
