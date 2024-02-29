@@ -20,7 +20,7 @@ import gc
 import math
 import os
 import re
-from collections import OrderedDict, UserDict, namedtuple
+from collections import OrderedDict, UserDict
 from functools import partial
 
 import yaml
@@ -1800,7 +1800,7 @@ class TemplateAdaptor(Adaptor):
                 assert folding, "IPEX version >= 2.1 is required for SmoothQuant folding=False."
 
         if not hasattr(self, "sq") or force_re_smooth:
-            from .torch_utils.smooth_quant import TorchSmoothQuant
+            from neural_compressor.adaptor.torch_utils.waq import TorchSmoothQuant
 
             self.sq = TorchSmoothQuant(
                 model._model, dataloader=dataloader, example_inputs=self.example_inputs, q_func=self.q_func
@@ -1813,17 +1813,18 @@ class TemplateAdaptor(Adaptor):
             kwargs["percentile"] = percentile
         if scales_per_op is not None:
             kwargs["scales_per_op"] = scales_per_op
+        auto_alpha_args["init_alpha"] = default_alpha
         model._model = self.sq.transform(
             alpha=alpha,
             folding=folding,
             calib_iter=calib_iter,
             weight_clip=weight_clip,
-            default_alpha=default_alpha,
             auto_alpha_args=auto_alpha_args,
             **kwargs,
         )
         if self.sq.record_max_info:
             model.sq_max_info = self.sq.max_value_info
+            model.sq_scale_info = self.sq.sq_scale_info
         return model
 
     def _apply_pre_optimization(self, model, tune_cfg, recover=False):
@@ -1840,7 +1841,7 @@ class TemplateAdaptor(Adaptor):
         q_model = model._model
         sq_max_info = model.sq_max_info
         if sq_max_info:
-            from .torch_utils.smooth_quant import TorchSmoothQuant
+            from neural_compressor.adaptor.torch_utils.waq import TorchSmoothQuant
 
             tsq = TorchSmoothQuant(q_model, None)
             alpha = tune_cfg["recipe_cfgs"]["smooth_quant_args"]["alpha"]
@@ -1876,8 +1877,9 @@ class TemplateAdaptor(Adaptor):
             model: qdq quantized model.
         """
         q_model = model._model
+        from neural_compressor.adaptor.torch_utils.waq import get_module, set_module
+
         from .torch_utils.model_wrapper import QDQLinear, SQLinearWrapper
-        from .torch_utils.smooth_quant import get_module, set_module
 
         smoothquant_scale_info = {}
         fallback_op_name_list = []
@@ -3317,37 +3319,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         inplace = True if self.performance_only else False
 
         # fetch SmoothQuant scale info from pre-optimized model
-        sq_max_info = model.sq_max_info
-        if sq_max_info:
-            smoothquant_scale_info = {}
-            from .torch_utils.model_wrapper import SQLinearWrapper
-            from .torch_utils.smooth_quant import get_module
-
-            for _, info in sq_max_info.items():
-                alpha = info["alpha"]
-                absorbed_layer = info["absorbed_layer"]
-                input_minmax = info["input_minmax"]
-                # for peft model,lora_B weights is 0.
-                weight_max = info["weight_max"]
-                if self.sq.weight_clip:
-                    weight_max = weight_max.clamp(min=1e-5)
-                abs_input_max = torch.max(torch.abs(input_minmax[0]), torch.abs(input_minmax[1]))
-                input_power = torch.pow(abs_input_max, alpha)
-                weight_power = torch.pow(weight_max, 1 - alpha)
-                scale = torch.clip(input_power / weight_power, min=1e-5)
-                for op_name in absorbed_layer:
-                    module = copy.deepcopy(get_module(q_model._model, op_name))
-                    new_module = SQLinearWrapper(module, 1.0 / scale, input_minmax, alpha)
-                    weight_scale = new_module._get_weight_scale()
-                    smoothquant_scale_info[op_name] = {
-                        "alpha": new_module.alpha,
-                        "input_scale_for_mul": new_module.input_scale,
-                        "input_scale_after_mul": new_module.scale,
-                        "input_zero_point_after_mul": new_module.zero_point,
-                        "input_dtype": new_module.dtype,
-                        "weight_scale_after_mul": weight_scale,
-                    }
-                    logger.debug(f"Current SmoothQuant alpha of {op_name} is {alpha}")
+        smoothquant_scale_info = model.sq_scale_info
 
         # Check save_qconf_summary part is a workaround for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
@@ -4615,6 +4587,9 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             q_model._model = self.awq_quantize(q_model._model, tune_cfg, dataloader, calib_func)
         if "RTN" in all_algo:
             q_model._model = self.rtn_quantize(q_model._model, tune_cfg)
+        if "AUTOROUND" in all_algo:
+            q_model._model, autoround_config = self.autoround_quantize(q_model._model, tune_cfg, dataloader)
+            q_model.autoround_config = autoround_config
 
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         q_model.is_quantized = True
@@ -4792,7 +4767,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
 
         supported_layers = ["Linear"]
         if folding:  # pragma: no cover
-            from .torch_utils.smooth_quant import GraphTrace
+            from neural_compressor.adaptor.torch_utils.waq import GraphTrace
 
             tg = GraphTrace()
             absorb_to_layer, _ = tg.get_absorb_to_layer(model, self.example_inputs, supported_layers)
@@ -4910,6 +4885,93 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             enable_full_range=enable_full_range,
         )
         return model
+
+    def autoround_quantize(self, model, tune_cfg, dataloader):
+        logger.info("quantizing with the AutoRound algorithm")
+        from .torch_utils.weight_only import autoround_quantize
+
+        # build weight_config
+        """
+            weight_config={
+                        'layer1':##layer_name
+                        {
+                            'data_type': 'int',
+                            'bits': 4,
+                            'group_size': 32,
+                            'scheme': "asym", ## or sym
+                        }
+                        ...
+                    }
+        """
+        weight_config = {}
+        for key, config in tune_cfg["op"].items():
+            if config["weight"]["dtype"] == "fp32":
+                continue
+            op_name, op_type = key
+            weight_config[op_name] = {}
+            weight_config[op_name]["data_type"] = config["weight"]["dtype"]
+            weight_config[op_name]["bits"] = config["weight"]["bits"]
+            weight_config[op_name]["group_size"] = config["weight"]["group_size"]
+            weight_config[op_name]["scheme"] = config["weight"]["scheme"]
+
+        # auto round recipes
+        enable_full_range = self.recipes["autoround_args"].get("enable_full_range", False)
+        bs = self.recipes["autoround_args"].get("bs", 8)
+        amp = self.recipes["autoround_args"].get("amp", True)
+        device = self.recipes["autoround_args"].get("device", "cpu")
+        lr_scheduler = self.recipes["autoround_args"].get("lr_scheduler", None)
+        dataset_name = self.recipes["autoround_args"].get("dataset_name", "NeelNanda/pile-10k")
+        dataset_split = self.recipes["autoround_args"].get("dataset_split", "train")
+        use_quant_input = self.recipes["autoround_args"].get("use_quant_input", True)
+        enable_minmax_tuning = self.recipes["autoround_args"].get("enable_minmax_tuning", True)
+        lr = self.recipes["autoround_args"].get("lr", None)
+        minmax_lr = self.recipes["autoround_args"].get("minmax_lr", None)
+        low_gpu_mem_usage = self.recipes["autoround_args"].get("low_gpu_mem_usage", True)
+        iters = self.recipes["autoround_args"].get("iters", 200)
+        seqlen = self.recipes["autoround_args"].get("seqlen", 2048)
+        n_samples = self.recipes["autoround_args"].get("n_samples", 512)
+        sampler = self.recipes["autoround_args"].get("sampler", "rand")
+        seed = self.recipes["autoround_args"].get("seed", 42)
+        n_blocks = self.recipes["autoround_args"].get("n_blocks", 1)
+        gradient_accumulate_steps = self.recipes["autoround_args"].get("gradient_accumulate_steps", 1)
+        not_use_best_mse = self.recipes["autoround_args"].get("not_use_best_mse", False)
+        dynamic_max_gap = self.recipes["autoround_args"].get("dynamic_max_gap", -1)
+        data_type = self.recipes["autoround_args"].get("data_type", "int")  ##only support data_type
+        scale_dtype = self.recipes["autoround_args"].get("scale_dtype", "fp16")
+
+        model, autoround_config = autoround_quantize(
+            model=model,
+            tokenizer=None,
+            bits=4,
+            group_size=128,
+            scheme="asym",
+            weight_config=weight_config,
+            enable_full_range=enable_full_range,
+            bs=bs,
+            amp=amp,
+            device=device,
+            lr_scheduler=lr_scheduler,
+            dataloader=dataloader,
+            dataset_name=dataset_name,
+            dataset_split=dataset_split,
+            use_quant_input=use_quant_input,
+            enable_minmax_tuning=enable_minmax_tuning,
+            lr=lr,
+            minmax_lr=minmax_lr,
+            low_gpu_mem_usage=low_gpu_mem_usage,
+            iters=iters,
+            seqlen=seqlen,
+            n_samples=n_samples,
+            sampler=sampler,
+            seed=seed,
+            n_blocks=n_blocks,
+            gradient_accumulate_steps=gradient_accumulate_steps,
+            not_use_best_mse=not_use_best_mse,
+            dynamic_max_gap=dynamic_max_gap,
+            data_type=data_type,
+            scale_dtype=scale_dtype,
+        )
+        return model, autoround_config
 
     def _dump_model_op_stats(self, model, tune_cfg):
         """This is a function to dump quantizable ops of model to user.

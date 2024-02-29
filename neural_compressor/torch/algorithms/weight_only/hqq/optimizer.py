@@ -20,8 +20,7 @@ import numpy as np
 import torch
 
 from neural_compressor.torch.utils import logger
-
-from .auto_accelerator import auto_detect_accelerator
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 
 # Proximal solver || W - dequantize(quantize(W))||_p^p

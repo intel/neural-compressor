@@ -1,12 +1,26 @@
 import copy
+import shutil
 import unittest
 
 import torch
 import transformers
 
 from neural_compressor.adaptor.torch_utils.model_wrapper import WeightOnlyLinear
-from neural_compressor.adaptor.torch_utils.smooth_quant import GraphTrace
-from neural_compressor.adaptor.torch_utils.weight_only import awq_quantize, gptq_quantize, rtn_quantize, teq_quantize
+from neural_compressor.adaptor.torch_utils.waq import GraphTrace
+from neural_compressor.adaptor.torch_utils.weight_only import (
+    autoround_quantize,
+    awq_quantize,
+    gptq_quantize,
+    rtn_quantize,
+    teq_quantize,
+)
+
+try:
+    import auto_round
+
+    auto_round_installed = True
+except ImportError:
+    auto_round_installed = False
 
 
 class Model(torch.nn.Module):
@@ -219,6 +233,64 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
             dataloader=dataloader,
         )
         self.assertTrue(isinstance(model, torch.nn.Module))
+
+
+class LLMDataLoader:
+    def __init__(self):
+        self.batch_size = 1
+
+    def __iter__(self):
+        for i in range(2):
+            yield torch.ones([1, 10], dtype=torch.long)
+
+
+@unittest.skipIf(not auto_round_installed, "auto_round module is not installed")
+class TestAutoRoundWeightOnlyQuant(unittest.TestCase):
+    approach = "weight_only"
+
+    @classmethod
+    def setUpClass(self):
+        self.dataloader = SimpleDataLoader()
+        self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
+            "hf-internal-testing/tiny-random-GPTJForCausalLM",
+            torchscript=True,
+        )
+        self.tokenizer = transformers.AutoTokenizer.from_pretrained(
+            "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
+        )
+        self.gptj_no_jit = transformers.AutoModelForCausalLM.from_pretrained(
+            "hf-internal-testing/tiny-random-GPTJForCausalLM",
+        )
+        self.llm_dataloader = LLMDataLoader()
+        self.lm_input = torch.ones([1, 10], dtype=torch.long)
+
+    @classmethod
+    def tearDownClass(self):
+        shutil.rmtree("./saved", ignore_errors=True)
+        shutil.rmtree("runs", ignore_errors=True)
+
+    def test_autoround_int_quant(self):
+        model = copy.deepcopy(self.gptj)
+        device = "cpu"
+        model = model
+        out1 = model(self.lm_input)
+        q_model, weight_config1 = autoround_quantize(
+            model=model,
+            tokenizer=self.tokenizer,
+            n_samples=20,
+            device=device,
+            amp=False,
+            seqlen=10,
+            iters=10,
+            scale_dtype="fp32",
+        )
+        q_model = q_model
+        model = model
+        out2 = model(self.lm_input)
+        out3 = q_model(self.lm_input)
+        self.assertTrue(torch.all(torch.isclose(out1[0], out2[0], atol=1e-1)))
+        self.assertFalse(torch.all(out1[0] == out2[0]))
+        self.assertTrue(torch.all(out2[0] == out3[0]))
 
 
 if __name__ == "__main__":
