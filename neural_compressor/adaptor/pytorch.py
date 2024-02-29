@@ -4938,6 +4938,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         dynamic_max_gap = self.recipes["autoround_args"].get("dynamic_max_gap", -1)
         data_type = self.recipes["autoround_args"].get("data_type", "int")  ##only support data_type
         scale_dtype = self.recipes["autoround_args"].get("scale_dtype", "fp16")
+        # autoround export
+        export_args = self.recipes["autoround_args"].get("export_args", {"format": None})
 
         model, autoround_config = autoround_quantize(
             model=model,
@@ -4970,6 +4972,8 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             dynamic_max_gap=dynamic_max_gap,
             data_type=data_type,
             scale_dtype=scale_dtype,
+            # export arguments
+            export_args=export_args,
         )
         return model, autoround_config
 

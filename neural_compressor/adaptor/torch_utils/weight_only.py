@@ -703,6 +703,7 @@ def autoround_quantize(
     dynamic_max_gap: int = -1,
     data_type: str = "int",  ##only support data_type
     scale_dtype="fp16",
+    export_args: dict = {"format": None, "inplace": True},
     **kwargs,
 ):
     """Run autoround weight-only quantization.
@@ -746,6 +747,8 @@ def autoround_quantize(
     not_use_best_mse (bool): Whether to use mean squared error (default is False).
     dynamic_max_gap (int): The dynamic maximum gap (default is -1).
     data_type (str): The data type to be used (default is "int").
+    export_args (dict): The arguments for exporting compressed model, default is {"format": None, "inplace": True}.
+      Supported format: "itrex", "auto_gptq".
     **kwargs: Additional keyword arguments.
 
     Returns:
@@ -787,4 +790,7 @@ def autoround_quantize(
         **kwargs,
     )
     qdq_model, weight_config = rounder.quantize()
+    if export_args["format"] is not None:
+        model = rounder.save_quantized(format=export_args["format"], inplace=export_args["inplace"])
+        return model , weight_config
     return qdq_model, weight_config
