@@ -94,11 +94,12 @@ function extract_diff_data() {
 }
 
 function write_compare_details() {
-    local file=$1 miss1=$2 branch1=$3 cover1=$4 miss2=$5 branch2=$6 cover2=$7
+    local file=$1 stmts1=$2 miss1=$3 branch1=$4 cover1=$5 stmts2=$6 miss2=$7 branch2=$8 cover2=$9
     echo """
             <tr>
                 <td>PR | BASE</td>
                 <td style=\"text-align:left\">${file}</td>
+                <td style=\"text-align:left\">${stmts1} | ${stmts2}</td>
                 <td style=\"text-align:left\">${miss1} | ${miss2}</td>
                 <td style=\"text-align:left\">${branch1} | ${branch2}</td>
                 <td style=\"text-align:left\">${cover1} | ${cover2}</td>
