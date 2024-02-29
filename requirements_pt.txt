@@ -1,3 +1,2 @@
-intel_extension_for_pytorch
 pydantic
 torch

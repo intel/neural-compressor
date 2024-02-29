@@ -154,7 +154,7 @@ class Scheduler:
         if not task.optimized:
             # Generate quantization code with Neural Coder API
             neural_coder_cmd = ["python -m neural_coder --enable --approach"]
-            # for users to define approach: "static, ""static_ipex", "dynamic", "auto"
+            # for users to define approach: "static", "static_ipex", "dynamic", "auto"
             approach = task.approach
             neural_coder_cmd.append(approach)
             if is_remote_url(task.script_url):

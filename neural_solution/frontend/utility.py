@@ -295,3 +295,61 @@ def list_to_string(lst: list):
         str: string
     """
     return " ".join(str(i) for i in lst)
+
+
+def is_invalid_str(to_test_str: str):
+    """Verify whether the to_test_str is valid.
+
+    Args:
+        to_test_str (str): string to be tested.
+
+    Returns:
+        bool: valid or invalid
+    """
+    return any(char in to_test_str for char in [" ", '"', "'", "&", "|", ";", "`", ">"])
+
+
+def is_valid_task(task: dict) -> bool:
+    """Verify whether the task is valid.
+
+    Args:
+        task (dict): task request
+
+    Returns:
+        bool: valid or invalid
+    """
+    required_fields = ["script_url", "optimized", "arguments", "approach", "requirements", "workers"]
+
+    for field in required_fields:
+        if field not in task:
+            return False
+
+    if not isinstance(task["script_url"], str) or is_invalid_str(task["script_url"]):
+        return False
+
+    if (isinstance(task["optimized"], str) and task["optimized"] not in ["True", "False"]) or (
+        not isinstance(task["optimized"], str) and not isinstance(task["optimized"], bool)
+    ):
+        return False
+
+    if not isinstance(task["arguments"], list):
+        return False
+    else:
+        for argument in task["arguments"]:
+            if is_invalid_str(argument):
+                return False
+
+    if not isinstance(task["approach"], str) or task["approach"] not in ["static", "static_ipex", "dynamic", "auto"]:
+        return False
+
+    if not isinstance(task["requirements"], list):
+        return False
+    else:
+        for requirement in task["requirements"]:
+            if is_invalid_str(requirement):
+                return False
+
+    if not isinstance(task["workers"], int) or task["workers"] < 1:
+        return False
+
+    return True

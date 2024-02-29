@@ -17,5 +17,6 @@ from neural_compressor.onnxrt.algorithms.smoother import Smoother
 from neural_compressor.onnxrt.algorithms.weight_only.rtn import apply_rtn_on_model
 from neural_compressor.onnxrt.algorithms.weight_only.gptq import apply_gptq_on_model
 from neural_compressor.onnxrt.algorithms.weight_only.awq import apply_awq_on_model
+from neural_compressor.onnxrt.algorithms.layer_wise import layer_wise_quant
 
-__all__ = ["Smoother", "apply_rtn_on_model", "apply_gptq_on_model", "apply_awq_on_model"]
+__all__ = ["Smoother", "apply_rtn_on_model", "apply_gptq_on_model", "apply_awq_on_model", "layer_wise_quant"]

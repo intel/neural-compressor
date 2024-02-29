@@ -1,3 +1,4 @@
+import os
 import re
 import subprocess
 import sys
@@ -153,6 +154,13 @@ PKG_INSTALL_CFG = {
 
 if __name__ == "__main__":
     cfg_key = "neural_compressor"
+
+    # Temporary implementation of fp8 tensor saving and loading
+    # Will remove after Habana torch applies below patch:
+    # https://github.com/pytorch/pytorch/pull/114662
+    ext_modules = []
+    cmdclass = {}
+
     if "neural_insights" in sys.argv:
         sys.argv.remove("neural_insights")
         cfg_key = "neural_insights"
@@ -177,6 +185,17 @@ if __name__ == "__main__":
         sys.argv.remove("ort")
         cfg_key = "neural_compressor_3x_ort"
 
+    if bool(os.getenv("USE_FP8_CONVERT", False)):
+        from torch.utils.cpp_extension import BuildExtension, CppExtension
+
+        ext_modules = [
+            CppExtension(
+                "fp8_convert",
+                ["neural_compressor/torch/algorithms/habana_fp8/tensor/convert.cpp"],
+            ),
+        ]
+        cmdclass = {"build_ext": BuildExtension}
+
     project_name = PKG_INSTALL_CFG[cfg_key].get("project_name")
     include_packages = PKG_INSTALL_CFG[cfg_key].get("include_packages") or {}
     package_data = PKG_INSTALL_CFG[cfg_key].get("package_data") or {}
@@ -200,6 +219,8 @@ if __name__ == "__main__":
         include_package_data=True,
         package_data=package_data,
         install_requires=install_requires,
+        ext_modules=ext_modules,  # for fp8
+        cmdclass=cmdclass,  # for fp8
         entry_points=entry_points,
         extras_require=extras_require,
         python_requires=">=3.7.0",

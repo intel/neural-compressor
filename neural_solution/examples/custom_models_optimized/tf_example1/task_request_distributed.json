@@ -2,7 +2,7 @@
     "script_url": "custom_models_optimized/tf_example1",
     "optimized": "True",
     "arguments": [
-        "--dataset_location=dataset --model_path=model"
+        "--dataset_location=dataset", "--model_path=model"
     ],
     "approach": "static",
     "requirements": ["tensorflow"
