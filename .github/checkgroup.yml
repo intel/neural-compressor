@@ -10,7 +10,6 @@ subprojects:
     checks:
       - "Code-Scan"
       - "Code-Scan (Bandit Code Scan Bandit)"
-      - "Code-Scan (CopyRight Code Scan CopyRight)"
       - "Code-Scan (DocStyle Code Scan DocStyle)"
       - "Code-Scan (Pylint Code Scan Pylint)"
 
@@ -193,10 +192,3 @@ subprojects:
       - "UT-3x-ONNXRT (Coverage Combine CollectDatafiles)"
       - "UT-3x-ONNXRT (Unit Test 3x ONNXRT Unit Test 3x ONNXRT)"
       - "UT-3x-ONNXRT (Unit Test 3x ONNXRT baseline Unit Test 3x ONNXRT baseline)"
-
-  - id: "DCO check workflow"
-    paths:
-      - "**"
-      - "*/**"
-    checks:
-      - "DCO"
