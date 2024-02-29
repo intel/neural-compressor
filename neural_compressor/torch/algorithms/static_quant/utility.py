@@ -16,9 +16,10 @@ import copy
 import json
 import os
 import re
+from typing import Dict, List, Union
+
 import torch
 from packaging.version import Version
-from typing import Dict, List, Union
 
 try:
     import intel_extension_for_pytorch as ipex
@@ -27,11 +28,7 @@ except:
     pass
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.torch.utils import (
-    get_ipex_version,
-    get_torch_version,
-    logger
-)
+from neural_compressor.torch.utils import get_ipex_version, get_torch_version, logger
 
 version = get_torch_version()
 ipex_ver = get_ipex_version()
@@ -504,7 +501,7 @@ def get_pattern(fallback_op, fuse_ops):  # pragma: no cover
     return None
 
 
-class Statistics: # pragma: no cover
+class Statistics:  # pragma: no cover
     """The statistics printer."""
 
     def __init__(self, data, header, field_names, output_handle=logger.info):
@@ -546,8 +543,9 @@ class Statistics: # pragma: no cover
             self.output_handle(i)
 
 
-class TransformerBasedModelBlockPatternDetector: # pragma: no cover
+class TransformerBasedModelBlockPatternDetector:  # pragma: no cover
     """Detect the attention block and FFN block in transformer-based model."""
+
     def __init__(self, model: torch.nn.Module, pattern_lst: List[List[Union[str, int]]] = BLOCK_PATTERNS) -> None:
         """Init the block detector.
 

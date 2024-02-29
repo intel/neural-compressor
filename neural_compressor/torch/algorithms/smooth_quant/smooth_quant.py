@@ -27,15 +27,15 @@ except:
 from packaging.version import Version
 
 from .utility import (
-    TorchSmoothQuant, 
-    cfg_to_qconfig, 
-    get_quantizable_ops_recursively, 
-    update_sq_scale,
+    TorchSmoothQuant,
+    cfg_to_qconfig,
     dump_model_op_stats,
     get_ipex_version,
+    get_quantizable_ops_recursively,
     ipex_config_path,
     logger,
     simple_inference,
+    update_sq_scale,
 )
 
 ipex_ver = get_ipex_version()

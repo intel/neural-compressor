@@ -13,10 +13,12 @@
 # limitations under the License.
 
 
-import torch
-from neural_compressor.common.utils import logger
 from typing import Callable, Dict, List, Tuple, Union
+
+import torch
 from typing_extensions import TypeAlias
+
+from neural_compressor.common.utils import logger
 
 OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 

@@ -27,12 +27,12 @@ except:
 from packaging.version import Version
 
 from .utility import (
-    cfg_to_qconfig, 
-    get_quantizable_ops_recursively, 
-    dump_model_op_stats, 
-    get_ipex_version, 
-    ipex_config_path, 
-    simple_inference
+    cfg_to_qconfig,
+    dump_model_op_stats,
+    get_ipex_version,
+    get_quantizable_ops_recursively,
+    ipex_config_path,
+    simple_inference,
 )
 
 ipex_ver = get_ipex_version()
