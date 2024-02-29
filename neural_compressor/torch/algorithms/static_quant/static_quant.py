@@ -26,9 +26,14 @@ except:
 
 from packaging.version import Version
 
-from neural_compressor.torch.utils import dump_model_op_stats, get_ipex_version, ipex_config_path, simple_inference
-
-from .utility import cfg_to_qconfig, get_quantizable_ops_recursively
+from .utility import (
+    cfg_to_qconfig, 
+    get_quantizable_ops_recursively, 
+    dump_model_op_stats, 
+    get_ipex_version, 
+    ipex_config_path, 
+    simple_inference
+)
 
 ipex_ver = get_ipex_version()
 

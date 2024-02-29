@@ -26,15 +26,17 @@ except:
 
 from packaging.version import Version
 
-from neural_compressor.torch.utils import (
+from .utility import (
+    TorchSmoothQuant, 
+    cfg_to_qconfig, 
+    get_quantizable_ops_recursively, 
+    update_sq_scale,
     dump_model_op_stats,
     get_ipex_version,
     ipex_config_path,
     logger,
     simple_inference,
 )
-
-from .utility import TorchSmoothQuant, cfg_to_qconfig, get_quantizable_ops_recursively, update_sq_scale
 
 ipex_ver = get_ipex_version()
 

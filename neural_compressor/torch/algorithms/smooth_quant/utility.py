@@ -28,14 +28,18 @@ import tqdm
 from packaging.version import Version
 
 from neural_compressor.torch.utils import (
-    TransformerBasedModelBlockPatternDetector,
     get_ipex_version,
-    get_quantizable_ops_from_cfgs,
     get_torch_version,
-    ipex_config_path,
     logger,
+)
+
+from neural_compressor.torch.algorithms.static_quant import (
+    TransformerBasedModelBlockPatternDetector,
+    get_quantizable_ops_from_cfgs,
+    ipex_config_path,
     paser_cfgs,
     simple_inference,
+    dump_model_op_stats,
     unify_op_type_mapping_ipex,
 )
 

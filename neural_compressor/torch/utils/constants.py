@@ -43,36 +43,6 @@ DOUBLE_QUANT_CONFIGS = {
 }
 
 
-unify_op_type_mapping_ipex = {
-    "Convolution_Relu": "Conv2d",
-    "Convolution_Sum_Relu": "Conv2d",
-    "Convolution_BatchNorm": "Conv2d",
-    "<class 'torch.nn.modules.conv.Conv1d'>": "Conv1d",
-    "<class 'torch.nn.modules.conv.Conv2d'>": "Conv2d",
-    "<class 'torch.nn.modules.conv.Conv3d'>": "Conv3d",
-    "<class 'torch.nn.modules.activation.ReLU'>": "ReLU",
-    "<method 'add' of 'torch._C._TensorBase' objects>": "add",  # for IPEX < 2.2
-    "<method 'add' of 'torch._C.TensorBase' objects>": "add",  # for IPEX >= 2.2
-    "<class 'torch.nn.modules.pooling.AdaptiveAvgPool2d'>": "AdaptiveAvgPool2d",
-    "Linear_Relu": "Linear",
-    "<class 'torch.nn.modules.linear.Linear'>": "Linear",
-    "<class 'torch.nn.modules.pooling.MaxPool2d'>": "MaxPool2d",
-    "re": {"<built-in method matmul of type object at": "matmul"},
-}
-
-
-BLOCK_PATTERNS = [
-    # [['OP_TYPE1', NUM_OPS], ['OP_TYPE2', NUM_OPS], ...]
-    [["Linear", 4], ["Linear", 4]],  # TODO add model name
-    [["Linear", 2], ["Linear", 2]],  # TODO add model name
-    [["Conv1D", 2], ["Conv1D", 2]],  # GPT-2
-    [["Linear", 4], ["Linear", 3]],  # Llama
-    [["Linear", 4], ["Linear", 2]],  # T5-Encoder, OPT
-    [["Linear", 4], ["Linear", 1], ["Linear", 1]],  # Bert
-    [["Linear", 4], ["Linear", 4], ["Linear", 2]],  # T5-Decoder
-]
-
-
 # Setting priorities for algorithms, a higher number indicates a higher priority.
 PRIORITY_GPTQ = 90
 PRIORITY_RTN = 80
