@@ -15,7 +15,7 @@ RESET="echo -en \\E[0m \\n" # close color
 log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
 mkdir -p $log_dir
 
-python -m bandit -r "/neural-compressor/${scan_module}" >$log_dir/bandit.log
+python -m bandit -r -lll -iii "/neural-compressor/${scan_module}" >$log_dir/bandit.log
 exit_code=$?
 
 $BOLD_YELLOW && echo " -----------------  Current bandit cmd start --------------------------" && $RESET
