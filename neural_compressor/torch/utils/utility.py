@@ -25,8 +25,10 @@ OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Calla
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
 algos_mapping: Dict[str, Callable] = {}
 
+
 # All constants for torch
 WHITE_MODULE_LIST = [torch.nn.Linear, torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d]
+
 
 WEIGHT_NAME = "quantized_model.pt"
 QCONFIG_NAME = "qconfig.json"
