@@ -85,11 +85,12 @@ eof
 function extract_diff_data() {
     local file_name=$1 diff_file=$2 reg=$3
     local file=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "${reg}.*" | sed "s/${reg}[ \t]*//g" | awk '{print $1}')
+    local stmts=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "${reg}.*" | sed "s/${reg}[ \t]*//g" | awk '{print $2}')
     local miss=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "${reg}.*" | sed "s/${reg}[ \t]*//g" | awk '{print $3}')
     local cover=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "${reg}.*" | sed "s/${reg}[ \t]*//g" | awk '{print $6}')
     local branch=$(cat $file_name | grep "${diff_file}" | grep -v ".*/${diff_file}" | grep -Po "${reg}.*" | sed "s/${reg}[ \t]*//g" | awk '{print $4}')
 
-    echo "$file $miss $cover $branch"
+    echo "$file $stmts $miss $cover $branch"
 }
 
 function write_compare_details() {
@@ -159,6 +160,7 @@ function generate_coverage_details() {
             <tr>
                 <th>Commit</th>
                 <th>FileName</th>
+                <th>Stmts</th>
                 <th>Miss</th>
                 <th>Branch</th>
                 <th>Cover</th>
@@ -172,8 +174,8 @@ function generate_coverage_details() {
             for diff_file in ${diff_file_name}; do
                 diff_file=$(echo "${diff_file}" | sed 's/[ \t]*//g')
                 diff_coverage_data=$(extract_diff_data ${file_name} ${diff_file} ">")
-                read file miss cover branch <<<"$diff_coverage_data"
-                write_compare_details $file "NA" "NA" "NA" $miss $branch $cover
+                read file stmts miss cover branch <<<"$diff_coverage_data"
+                write_compare_details $file "NA" "NA" "NA" "NA" $stmts $miss $branch $cover
             done
         elif [[ $(echo $line | grep "[0-9]c[0-9]") ]] && [[ $(cat ${file_name} | grep -A 1 "$line" | grep "<") ]]; then
             diff_lines=$(sed -n "/${line}/,/^[0-9]/p" ${file_name} | grep "<")
@@ -181,10 +183,10 @@ function generate_coverage_details() {
             for diff_file in ${diff_file_name}; do
                 diff_file=$(echo "${diff_file}" | sed 's/[ \t]*//g')
                 diff_coverage_data1=$(extract_diff_data ${file_name} ${diff_file} "<")
-                read file1 miss1 cover1 branch1 <<<"$diff_coverage_data1"
+                read file1 stmts1 miss1 cover1 branch1 <<<"$diff_coverage_data1"
                 diff_coverage_data2=$(extract_diff_data ${file_name} ${diff_file} ">")
-                read file2 miss2 cover2 branch2 <<<"$diff_coverage_data2"
-                write_compare_details $file1 $miss1 $branch1 $cover1 $miss2 $branch2 $cover2
+                read file2 stmts2 miss2 cover2 branch2 <<<"$diff_coverage_data2"
+                write_compare_details $file1 $stmts1 $miss1 $branch1 $cover1 $stmts2 $miss2 $branch2 $cover2
             done
         elif [[ $(echo $line | grep "[0-9]d[0-9]") ]] && [[ $(cat ${file_name} | grep -A 1 "$line" | grep "<") ]]; then
             diff_lines=$(sed -n "/${line}/,/^[0-9]/p" ${file_name} | grep "<")
@@ -192,8 +194,8 @@ function generate_coverage_details() {
             for diff_file in ${diff_file_name}; do
                 diff_file=$(echo "${diff_file}" | sed 's/[ \t]*//g')
                 diff_coverage_data=$(extract_diff_data ${file_name} ${diff_file} "<")
-                read file miss cover branch <<<"$diff_coverage_data"
-                write_compare_details $file $miss $branch $cover "NA" "NA" "NA"
+                read file stmts miss cover branch <<<"$diff_coverage_data"
+                write_compare_details $file $stmts $miss $branch $cover "NA" "NA" "NA" "NA"
             done
         fi
     done
