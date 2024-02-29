@@ -18,8 +18,9 @@ from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT, TEQ
+from neural_compressor.common.utils import AUTOROUND, AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT, TEQ
 from neural_compressor.torch.quantization import (
+    AUTOROUNDConfig,
     AWQConfig,
     FP8Config,
     GPTQConfig,
@@ -269,6 +270,80 @@ def teq_quantize_entry(
     logger.info("TEQ quantization done.")
     return model
 
+###################### AUTOROUND Algo Entry ##################################
+@register_algo(name=AUTOROUND)
+def teq_quantize_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AUTOROUNDConfig], *args, **kwargs
+) -> torch.nn.Module:
+    from neural_compressor.torch.algorithms.weight_only import autoround_quantize
+
+    logger.info("Quantize model with the AUTOROUND algorithm.")
+    calib_func = kwargs.get("run_fn", None)
+    weight_config = {}
+    for (op_name, op_type), quant_config in configs_mapping.items():
+        if quant_config.dtype == "fp32":
+            continue
+        else:
+            weight_config[op_name] = {
+                "data_type": quant_config.dtype,
+                "bits": quant_config.bits,
+                "scheme": "sym" if quant_config.use_sym else "asym",
+                "group_size": quant_config.group_size,
+            }
+            enable_full_range = quant_config.enable_full_range,
+            bs = quant_config.bs,
+            amp = quant_config.amp,
+            device = quant_config.device,
+            lr_scheduler = quant_config.lr_scheduler,
+            dataset_name = quant_config.dataset_name,
+            dataset_split = quant_config.dataset_split,
+            use_quant_input = quant_config.use_quant_input,
+            enable_minmax_tuning = quant_config.enable_minmax_tuning,
+            lr = quant_config.lr,
+            minmax_lr = quant_config.minmax_lr,
+            low_gpu_mem_usage = quant_config.low_gpu_mem_usage,
+            iters = quant_config.iters,
+            seqlen = quant_config.seqlen,
+            n_samples = quant_config.n_samples,
+            sampler = quant_config.sampler,
+            seed = quant_config.seed,
+            n_blocks = quant_config.n_blocks,
+            gradient_accumulate_steps = quant_config.gradient_accumulate_steps,
+            not_use_best_mse = quant_config.not_use_best_mse,
+            dynamic_max_gap = quant_config.dynamic_max_gap,
+            scale_dtype = quant_config.scale_dtype,
+    
+    kwargs.pop("example_inputs")
+    # TODO: tokenizer=tokenizer, dataloader=dataloader,
+    model = autoround_quantize(
+        model=model,
+        weight_config=weight_config,
+        enable_full_range=enable_full_range,
+        bs=bs,
+        amp=amp,
+        device=device,
+        lr_scheduler=lr_scheduler,
+        dataset_name=dataset_name,
+        dataset_split=dataset_split,
+        use_quant_input=use_quant_input,
+        enable_minmax_tuning=enable_minmax_tuning,
+        lr=lr,
+        minmax_lr=minmax_lr,
+        low_gpu_mem_usage=low_gpu_mem_usage,
+        iters=iters,
+        seqlen=seqlen,
+        n_samples=n_samples,
+        sampler=sampler,
+        seed=seed,
+        n_blocks=n_blocks,
+        gradient_accumulate_steps=gradient_accumulate_steps,
+        not_use_best_mse=not_use_best_mse,
+        dynamic_max_gap=dynamic_max_gap,
+        scale_dtype=scale_dtype,
+        **kwargs
+    )
+    logger.info("AUTOROUND quantization done.")
+    return model
 
 ###################### HQQ Algo Entry ##################################
 @register_algo(name=HQQ)
