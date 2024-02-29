@@ -668,7 +668,8 @@ class GPTQuantizer(object):
                 gptq_config[self.get_full_layer_name(layer_name, block_idx)] = {"scale": scale}
                 if not weight_config_this_layer["sym"]:
                     gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"] = zp
-                if weight_config_this_layer["act_order"]:  # save perm for restoring the weights
+                if weight_config_this_layer["act_order"] and not weight_config_this_layer["static_groups"]:
+                    # save perm for restoring the weights, but only when static_groups is not enabled.
                     gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"] = gptq_for_this_block[
                         layer_name
                     ].perm
@@ -828,6 +829,11 @@ class GPTQ:
                             zero.append(self.quantizer.zero)
                     else:
                         idx = i1 + i
+                        if (i1 + i) % groupsize == 0:
+                            # load the pre-calculated quantization parameters in groups
+                            static_quantizer = groups[(i1 + i) // groupsize]
+                            scale.append(static_quantizer.scale)
+                            zero.append(static_quantizer.zero)
                         if act_order:
                             idx = perm[idx]
                         self.quantizer = groups[idx // groupsize]
