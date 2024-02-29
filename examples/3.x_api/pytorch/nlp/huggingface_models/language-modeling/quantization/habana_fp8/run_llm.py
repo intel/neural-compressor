@@ -17,12 +17,8 @@ import deepspeed
 import transformers
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 import habana_frameworks.torch.core as htcore
-import numpy as np
-import lm_eval
-import lm_eval.tasks
-import lm_eval.evaluator
 from accelerate import init_empty_weights
-from utils import itrex_bootstrap_stderr, show_msg, save_to_excel
+from utils import show_msg, eval_func
 
 
 torch.set_grad_enabled(False)
@@ -30,8 +26,6 @@ htcore.hpu_set_env()
 torch.device('hpu')
 
 
-# to avoid out-of-memory caused by Popen for large language models.
-lm_eval.metrics.bootstrap_stderr = itrex_bootstrap_stderr
 
 
 parser = argparse.ArgumentParser()
@@ -52,6 +46,7 @@ parser.add_argument("--approach", type=str, default=None,
 parser.add_argument("--precision", type=str, default='fp8_e4m3',
                     help="Select from ['fp8_e4m3', 'fp8_e5m2', 'bf16', 'fp16'], \
                         ['bf16', 'fp16'] only work with cast approach")
+parser.add_argument("--autotune", action="store_true")
 parser.add_argument("--accuracy", action="store_true")
 parser.add_argument("--performance", action="store_true")
 parser.add_argument("--generate", action="store_true")
@@ -182,8 +177,9 @@ user_model.eval()
 ### dynamic & static quantization ###
 if args.approach in ["dynamic", "static"] and not args.load:
     print("device:", next(user_model.parameters()).device)
-    from neural_compressor.torch.quantization.config import FP8Config, get_default_fp8_config
-    from neural_compressor.torch.quantization import quantize
+    from neural_compressor.torch.quantization import (
+        quantize, autotune, FP8Config, get_default_fp8_config, TuningConfig, get_default_fp8_config_set
+    )
     dtype = args.precision
     if args.approach == "dynamic":
         from neural_compressor.torch.algorithms.habana_fp8 import quantize_dynamic
@@ -300,106 +296,7 @@ if args.performance:
 
 
 if args.accuracy:
-
-    class HabanaModelAdapter(lm_eval.base.BaseLM):
-        def __init__(self, tokenizer, model, args, options):
-            super().__init__()
-            self.tokenizer = tokenizer
-            self.model = model.eval()
-            self._batch_size = args.batch_size
-            self.buckets = list(sorted(args.buckets))
-            self.options = options
-            self._device = "hpu"
-            torch.set_grad_enabled(False)
-
-        @property
-        def eot_token_id(self):
-            return self.model.config.eos_token_id
-
-        @property
-        def max_length(self):
-            return self.buckets[-1]
-
-        @property
-        def max_gen_toks(self):
-            raise NotImplementedError()
-
-        @property
-        def batch_size(self):
-            return self._batch_size
-
-        @property
-        def device(self):
-            # We need to do padding ourselves, otherwise we'll end up with recompilations
-            # Returning 'cpu' to keep tensors on CPU in lm_eval code
-            return 'cpu' # 'hpu'
-
-        def tok_encode(self, string):
-            if re.search("chatglm3", args.model.lower()) or re.search("llama", args.model.lower()) :
-                string = string.lstrip()
-            return self.tokenizer.encode(string, add_special_tokens=False)
-
-        def tok_decode(self, tokens):
-            return self.tokenizer.decode(tokens, skip_special_tokens=True)
-
-        def _model_generate(self, context, max_length, eos_token_id):
-            raise NotImplementedError()
-
-        def find_bucket(self, length):
-            return [b for b in self.buckets if b >= length][0]
-
-        def _model_call(self, inps):
-            seq_length = inps.shape[-1]
-            padding_length = 0
-            bucket_length = self.find_bucket(seq_length)
-            padding_length = bucket_length - seq_length
-            inps = F.pad(inps, (0, padding_length), value=self.model.config.pad_token_id)
-            logits = self.model(inps.to(self._device))["logits"].cpu()
-
-            if padding_length > 0:
-                logits = logits[:, :-padding_length, :]
-            logits = logits.to(torch.float32)
-            return logits
-
-    lm_tasks = lm_eval.tasks.get_task_dict(args.tasks)
-    options = None
-    lm = HabanaModelAdapter(tokenizer, user_model, args, options)
-
-    eval_start = time.perf_counter()
-    if args.approach == "cast":
-        from neural_compressor.torch.amp import autocast
-        if args.precision == "fp8_e4m3":
-            dtype = torch.float8_e4m3fn
-        elif args.precision == "fp8_e5m2":
-            dtype = torch.float8_e5m2
-        elif args.precision == "fp16":
-            dtype = torch.float16
-        elif args.precision == "bf16":
-            dtype = torch.bfloat16
-        with autocast('hpu', dtype=dtype):
-            results = lm_eval.evaluator.evaluate(lm, lm_tasks, limit=args.limit)
-    else:
-        results = lm_eval.evaluator.evaluate(lm, lm_tasks, limit=args.limit)
-    print(lm_eval.evaluator.make_table(results))
-    eval_end = time.perf_counter()
-    print("Duration:", eval_end - eval_start)
-    results['args'] = vars(args)
-    results['duration'] = eval_end - eval_start
-
-
-    dumped = json.dumps(results, indent=2)
-    accu_dict = {}
-    case_name =  args.approach + "-" + args.precision
-    for task_name in args.tasks:
-        if task_name == "wikitext":
-            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["word_perplexity"]), flush=True)
-            accu_dict[task_name] = [args.model, case_name, results["results"][task_name]["word_perplexity"]]
-        else:
-            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["acc"]), flush=True)
-            accu_dict[task_name] = [args.model, case_name, results["results"][task_name]["acc"]]
-    if args.dump_to_excel and local_rank in [-1, 0]:
-        save_to_excel(accu_dict)
-
+    eval_func(user_model, tokenizer=tokenizer, args=args)
 
 # dump final message of HPU
 show_msg()

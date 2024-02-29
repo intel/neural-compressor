@@ -1,5 +1,6 @@
 transformers
 datasets
+accelerate
 SentencePiece
-intel_extension_for_transformers
-lm_eval
+lm_eval==0.3.0
+openpyxl
