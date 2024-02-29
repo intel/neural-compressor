@@ -58,7 +58,7 @@ stages:
               repo: $(REPO)
 
   - stage: Coverage
-    displayName: "Coverage Combine"
+    displayName: "Coverage Compare"
     pool:
       vmImage: "ubuntu-latest"
     dependsOn: [Torch, Torch_baseline]

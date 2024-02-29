@@ -227,7 +227,7 @@ stages:
               repo: $(REPO)
 
   - stage: Coverage
-    displayName: "Coverage Combine"
+    displayName: "Coverage Compare"
     pool:
       vmImage: "ubuntu-latest"
     dependsOn: [Adaptor, API, Pruning, TFNewAPI, ITEX, Others, Adaptor_base, API_base, Pruning_base, TFNewAPI_base, ITEX_base, Others_base]
