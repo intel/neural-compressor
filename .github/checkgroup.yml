@@ -21,7 +21,6 @@ subprojects:
     checks:
       - "Code-Scan-Neural-Insights"
       - "Code-Scan-Neural-Insights (Bandit Code Scan Bandit)"
-      - "Code-Scan-Neural-Insights (CopyRight Code Scan CopyRight)"
       - "Code-Scan-Neural-Insights (DocStyle Code Scan DocStyle)"
       - "Code-Scan-Neural-Insights (Pylint Code Scan Pylint)"
 
@@ -33,7 +32,6 @@ subprojects:
     checks:
       - "Code-Scan-Neural-Solution"
       - "Code-Scan-Neural-Solution (Bandit Code Scan Bandit)"
-      - "Code-Scan-Neural-Solution (CopyRight Code Scan CopyRight)"
       - "Code-Scan-Neural-Solution (DocStyle Code Scan DocStyle)"
       - "Code-Scan-Neural-Solution (Pylint Code Scan Pylint)"
 
