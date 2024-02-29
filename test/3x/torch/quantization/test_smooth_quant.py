@@ -41,6 +41,21 @@ class TestSmoothQuant:
         assert q_model is not None, "Quantization failed!"
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_smooth_quant_auto(self):
+        fp32_model = copy.deepcopy(model)
+        auto_alpha_args = {
+            "alpha_min": 0.45,
+            "alpha_max": 0.55,
+            "alpha_step": 0.01,
+            "shared_criterion": "mean",
+            "do_blockwise": True,
+        }
+        quant_config = SmoothQuantConfig(alpha="auto", auto_alpha_args=auto_alpha_args, folding=False)
+        example_inputs = torch.randn([1, 3])
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     @pytest.mark.parametrize(
         "act_sym, act_algo, alpha, folding, scale_sharing",
         [
@@ -57,32 +72,11 @@ class TestSmoothQuant:
         quant_config = SmoothQuantConfig(
             act_sym=act_sym, act_algo=act_algo, alpha=alpha, folding=folding, scale_sharing=scale_sharing
         )
-        example_inputs = torch.randn([1, 3])
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
-        assert q_model is not None, "Quantization failed!"
-
-    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
-    def test_smooth_quant_auto(self):
-        fp32_model = copy.deepcopy(model)
-        auto_alpha_args = {
-            "alpha_min": 0.45,
-            "alpha_max": 0.55,
-            "alpha_step": 0.01,
-            "shared_criterion": "mean",
-            "do_blockwise": True,
-        }
-        quant_config = SmoothQuantConfig(alpha="auto", auto_alpha_args=auto_alpha_args, folding=False)
-        example_inputs = torch.randn([1, 3])
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
-        assert q_model is not None, "Quantization failed!"
-
-    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
-    def test_sq_accuracy(self):
-        fp32_model = copy.deepcopy(model)
-        quant_config = SmoothQuantConfig(act_sym=True, act_algo="kl", alpha="auto", folding=True, scale_sharing=True)
         example_inputs = torch.zeros([1, 3])
+        def run_fn(model):
+            model(example_inputs)
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
-        output1 = model(example_inputs)
+        output1 = fp32_model(example_inputs)
         output2 = q_model(example_inputs)
         assert torch.allclose(output1, output2, atol=2e-2), "Accuracy gap atol > 0.02 is unexpected. Please check."
