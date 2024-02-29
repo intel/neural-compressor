@@ -73,8 +73,10 @@ class TestSmoothQuant:
             act_sym=act_sym, act_algo=act_algo, alpha=alpha, folding=folding, scale_sharing=scale_sharing
         )
         example_inputs = torch.zeros([1, 3])
+
         def run_fn(model):
             model(example_inputs)
+
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
         output1 = fp32_model(example_inputs)
