@@ -257,8 +257,7 @@ class GPTQuantizer(object):
 
         # device
         self.device = get_device(kwargs.pop("device", "auto"))
-        if str(self.model.device).startswith("cuda"):
-            self.device = self.model.device
+        self.model.to(self.device)
         self.is_ready = False
 
         self.export_compressed_model = export_compressed_model

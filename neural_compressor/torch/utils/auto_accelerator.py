@@ -31,6 +31,7 @@ import torch
 
 from neural_compressor.torch.utils import logger
 
+PRIORITY_HPU = 100
 PRIORITY_CUDA = 100
 PRIORITY_CPU = 90
 
@@ -200,6 +201,42 @@ class CUDA_Accelerator(Auto_Accelerator):
 
     def empty_cache(self):
         return torch.cuda.empty_cache()
+
+
+@register_accelerator(name="hpu", priority=PRIORITY_HPU)
+class HPU_Accelerator(Auto_Accelerator):
+    def __init__(self) -> None:
+        self._name = "hpu"
+
+    def name(self) -> str:
+        return self._name
+
+    @classmethod
+    def is_available(cls) -> bool:
+        return torch.hpu.is_available()
+
+    def device_name(self, device_indx) -> str:
+        if device_indx is None:
+            return "hpu"
+        return f"hpu:{device_indx}"
+
+    def synchronize(self):
+        return torch.hpu.synchronize()
+
+    def set_device(self, device_index):
+        return torch.hpu.set_device(device_index)
+
+    def current_device(self):
+        return torch.hpu.current_device()
+
+    def current_device_name(self):
+        return "hpu:{}".format(torch.hpu.current_device())
+
+    def device(self, device_index=None):
+        return torch.hpu.device(device_index)
+
+    def empty_cache(self):
+        return torch.hpu.empty_cache()
 
 
 def auto_detect_accelerator(device_name="auto") -> Auto_Accelerator:
