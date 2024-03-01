@@ -17,19 +17,19 @@
 
 import json
 
-from neural_compressor.torch.utils import get_ipex_version
+import torch
 
 try:
     import intel_extension_for_pytorch as ipex
 except:
     assert False, "Please install IPEX for static quantization."
 
-import torch
 from packaging.version import Version
 
 from .utility import (
     cfg_to_qconfig,
     dump_model_op_stats,
+    get_ipex_version,
     get_quantizable_ops_recursively,
     ipex_config_path,
     simple_inference,
