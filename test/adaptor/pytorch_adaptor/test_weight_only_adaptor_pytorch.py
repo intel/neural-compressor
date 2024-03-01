@@ -833,7 +833,14 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
         )
-
+        """ All export arguments.
+            "export_args": {
+                "format": "itrex", # "iterx", "auto_gptq", default is None
+                "output_dir": None, # saved path
+                "inplace": False,
+                "use_triton": False,
+            }
+        """
         input = torch.ones([1, 512], dtype=torch.long)
         fp32_model = copy.deepcopy(self.gptj)
         out1 = fp32_model(input)

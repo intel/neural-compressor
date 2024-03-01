@@ -791,6 +791,12 @@ def autoround_quantize(
     )
     qdq_model, weight_config = rounder.quantize()
     if export_args["format"] is not None:
-        model = rounder.save_quantized(format=export_args["format"], inplace=export_args["inplace"])
+        output_dir = export_args.get("output_dir", None)
+        format= export_args["format"]
+        inplace = export_args.get("inplace", None)
+        use_triton = export_args.get("use_triton", False)
+        model = rounder.save_quantized(
+            output_dir=output_dir, format=format, inplace=inplace, use_triton=use_triton
+        )
         return model , weight_config
     return qdq_model, weight_config
