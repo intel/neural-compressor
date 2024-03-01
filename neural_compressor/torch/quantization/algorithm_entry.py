@@ -13,16 +13,19 @@
 # limitations under the License.
 
 from copy import deepcopy
+from types import MethodType
 from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT, TEQ
+from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, SMOOTH_QUANT, STATIC_QUANT, TEQ
 from neural_compressor.torch.quantization import (
     AWQConfig,
+    FP8Config,
     GPTQConfig,
     HQQConfig,
     RTNConfig,
+    SmoothQuantConfig,
     StaticQuantConfig,
     TEQConfig,
 )
@@ -41,6 +44,8 @@ def rtn_entry(
     # rebuild weight_config for rtn_quantize function
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
+        if quant_config.name != RTN:
+            continue
         weight_config[op_name] = {
             "dtype": quant_config.dtype,
             "bits": quant_config.bits,
@@ -74,6 +79,8 @@ def gptq_entry(
     # rebuild weight_config for gptq_quantize function
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
+        if quant_config.name != GPTQ:
+            continue
         weight_config[op_name] = {
             "dtype": quant_config.dtype,
             "bits": quant_config.bits,
@@ -115,11 +122,13 @@ def static_quant_entry(
     logger.info("Quantize model with the static quant algorithm.")
     from neural_compressor.torch.algorithms.static_quant import static_quantize
 
-    # rebuild tune_cfg for static_quantize function
+    # convert the user config into internal format
     quant_config_mapping = {}
     cfgs = deepcopy(configs_mapping)
     quant_config_mapping["op"] = cfgs
     for (op_name, op_type), cfg in cfgs.items():
+        if cfg.name != STATIC_QUANT:
+            continue
         quant_config_mapping["op"][(op_name, op_type)] = {
             "weight": {
                 "dtype": cfg.w_dtype,
@@ -150,6 +159,63 @@ def static_quant_entry(
     return q_model
 
 
+###################### Smooth Quant Algo Entry ##################################
+@register_algo(name=SMOOTH_QUANT)
+@torch.no_grad()
+def smooth_quant_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], SmoothQuantConfig], *args, **kwargs
+) -> torch.nn.Module:
+    logger.info("Quantize model with the smooth quant algorithm.")
+    from neural_compressor.torch.algorithms.smooth_quant import smooth_quantize
+
+    # convert the user config into internal format
+    quant_config_mapping = {}
+    cfgs = deepcopy(configs_mapping)
+    quant_config_mapping["op"] = cfgs
+    for (op_name, op_type), cfg in cfgs.items():
+        quant_config_mapping["op"][(op_name, op_type)] = {
+            "weight": {
+                "dtype": cfg.w_dtype,
+                "scheme": "sym",
+                "granularity": cfg.w_granularity,
+                "algorithm": cfg.w_algo,
+            },
+            "activation": {
+                "dtype": cfg.act_dtype,
+                "scheme": "sym" if cfg.act_sym else "asym",
+                "granularity": cfg.act_granularity,
+                "algorithm": cfg.act_algo,
+            },
+        }
+        quant_config_mapping["recipe_cfgs"] = {
+            "smooth_quant": True,
+            "smooth_quant_args": {
+                "alpha": cfg.alpha,
+                "folding": cfg.folding,
+                "scale_sharing": cfg.scale_sharing,
+                "auto_alpha_args": cfg.auto_alpha_args if cfg.auto_alpha_args is not None else {},
+            },
+            "layer_wise_quant_args": {},
+            "first_conv_or_matmul_quantization": True,
+            "last_conv_or_matmul_quantization": True,
+            "pre_post_process_quantization": True,
+        }
+
+    run_fn = kwargs.get("run_fn", None)
+    example_inputs = kwargs.get("example_inputs", None)
+    inplace = kwargs.get("inplace", True)
+    assert example_inputs is not None, "Please provide example_inputs for smooth quantization."
+    q_model = smooth_quantize(
+        model=model,
+        tune_cfg=quant_config_mapping,
+        run_fn=run_fn,
+        example_inputs=example_inputs,
+        inplace=inplace,
+    )
+    logger.info("Smooth quantization done.")
+    return q_model
+
+
 ###################### AWQ Algo Entry ##################################
 @register_algo(name=AWQ)
 @torch.no_grad()
@@ -161,6 +227,8 @@ def awq_quantize_entry(
 
     weight_config = {}
     for (op_name, op_type), op_config in configs_mapping.items():
+        if op_config.name != AWQ:
+            continue
         if op_config.dtype == "fp32":
             weight_config[op_name] = {
                 "bits": -1,
@@ -277,8 +345,14 @@ def hqq_entry(
 from neural_compressor.torch.utils import is_hpex_available
 
 if is_hpex_available():
-    from neural_compressor.torch.algorithms.habana_fp8 import quantize
+    from neural_compressor.torch.algorithms.habana_fp8 import quantize, save
 
     @register_algo(FP8_QUANT)
-    def fp8_quant_entry(model, qconfig_mapping, run_fn=None, run_args=None, inplace=True):
-        return quantize(model, qconfig_mapping, run_fn=run_fn, run_args=run_args, inplace=inplace)
+    def fp8_quant_entry(
+        model: torch.nn.Module, configs_mapping: Dict[Tuple[str], FP8Config], *args, **kwargs
+    ) -> torch.nn.Module:
+        kwargs.pop("example_inputs")
+        model = quantize(model, configs_mapping, *args, **kwargs)
+        model.qconfig = configs_mapping
+        model.save = MethodType(save, model)
+        return model

@@ -221,14 +221,6 @@ def prepare_inputs(model, data_reader, providers):
             convert_attribute=False,
         )
 
-    session = (
-        ort.InferenceSession(model.model.SerializeToString(), so, providers=providers)
-        if not model.is_large_model
-        else ort.InferenceSession(model.model_path + "_augment.onnx", so, providers=providers)
-    )
-    inputs_names = [i.name for i in session.get_inputs()]
-    del session
-
     inputs_list = []
     while True:
         inputs = data_reader.get_next()

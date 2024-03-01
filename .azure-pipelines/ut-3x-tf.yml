@@ -11,8 +11,10 @@ pr:
       - neural_compressor/common
       - neural_compressor/tensorflow
       - test/3x/tensorflow
+      - test/3x/common
       - setup.py
       - requirements_tf.txt
+      - .azure-pipelines/scripts/ut/3x/run_3x_tf.sh
 
 pool: ICX-16C
 

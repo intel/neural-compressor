@@ -91,7 +91,7 @@ optional arguments:
     "script_url": "tf_example1",
     "optimized": "True",
     "arguments": [
-        "--dataset_location=dataset --model_path=model"
+        "--dataset_location=dataset", "--model_path=model"
     ],
     "approach": "static",
     "requirements": [
@@ -106,7 +106,7 @@ When using distributed quantization, the `workers` needs to be set to greater th
     "script_url": "tf_example1",
     "optimized": "True",
     "arguments": [
-        "--dataset_location=dataset --model_path=model"
+        "--dataset_location=dataset", "--model_path=model"
     ],
     "approach": "static",
     "requirements": [

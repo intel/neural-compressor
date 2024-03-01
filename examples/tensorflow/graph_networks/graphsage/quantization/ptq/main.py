@@ -138,7 +138,7 @@ def evaluate(model):
             labels.append(batch_labels)
             iter_num += 1
             total_time += time_consume
-            if iteration and iter_num >= iteration:
+            if iteration != -1 and iter_num >= iteration:
                 break
         tf_logging.warn('\n---> Stop iteration {0}'.format(str(iter_num)))
         val_preds = np.vstack(val_preds)
