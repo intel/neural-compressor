@@ -32,7 +32,7 @@ import torch
 from neural_compressor.torch.utils import logger
 
 PRIORITY_HPU = 100
-PRIORITY_CUDA = 100
+PRIORITY_CUDA = 95
 PRIORITY_CPU = 90
 
 
