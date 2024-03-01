@@ -800,7 +800,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue("transformer.h.0.attn.k_proj" in q_model.autoround_config.keys())
         self.assertTrue("scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys())
         self.assertTrue(torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"])
-        
+
         fp32_model = copy.deepcopy(self.gptj)
 
         conf = PostTrainingQuantConfig(
@@ -852,6 +852,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         out2 = export_model.model(input)
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
         from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear
+
         self.assertTrue(isinstance(export_model.model.transformer.h[0].attn.k_proj, WeightOnlyLinear))
 
 
