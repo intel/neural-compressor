@@ -78,7 +78,7 @@ subprojects:
       - "!.azure-pipelines/scripts/ut/3x/**"
     checks:
       - "UT-Basic"
-      - "UT-Basic (Coverage Combine CollectDatafiles)"
+      - "UT-Basic (Coverage Compare CollectDatafiles)"
       - "UT-Basic (Unit Test FWKs adaptor Test FWKs adaptor)"
       - "UT-Basic (Unit Test FWKs adaptor baseline Test FWKs adaptor baseline)"
       - "UT-Basic (Unit Test ITEX Test ITEX)"
@@ -116,7 +116,7 @@ subprojects:
       - "UT-Basic-No-Coverage (Unit Test User facing API Test User facing API)"
       - "UT-Basic-No-Coverage (Unit Test other basic case Test other basic case)"
 
-  - id: "Unit Tests itrex workflow"
+  - id: "Unit Tests ITREX workflow"
     paths:
       - "neural_compressor/**"
       - "setup.py"
@@ -159,7 +159,7 @@ subprojects:
       - "requirements_tf.txt"
     checks:
       - "UT-3x-TensorFlow"
-      - "UT-3x-TensorFlow (Coverage Combine CollectDatafiles)"
+      - "UT-3x-TensorFlow (Coverage Compare CollectDatafiles)"
       - "UT-3x-TensorFlow (Unit Test 3x TensorFlow Unit Test 3x TensorFlow)"
       - "UT-3x-TensorFlow (Unit Test 3x TensorFlow baseline Unit Test 3x TensorFlow baseline)"
 
@@ -174,7 +174,7 @@ subprojects:
       - ".azure-pipelines/scripts/ut/3x/collect_log_3x.sh"
     checks:
       - "UT-3x-Torch"
-      - "UT-3x-Torch (Coverage Combine CollectDatafiles)"
+      - "UT-3x-Torch (Coverage Compare CollectDatafiles)"
       - "UT-3x-Torch (Unit Test 3x Torch Unit Test 3x Torch)"
       - "UT-3x-Torch (Unit Test 3x Torch baseline Unit Test 3x Torch baseline)"
 
@@ -187,6 +187,6 @@ subprojects:
       - "requirements_ort.txt"
     checks:
       - "UT-3x-ONNXRT"
-      - "UT-3x-ONNXRT (Coverage Combine CollectDatafiles)"
+      - "UT-3x-ONNXRT (Coverage Compare CollectDatafiles)"
       - "UT-3x-ONNXRT (Unit Test 3x ONNXRT Unit Test 3x ONNXRT)"
       - "UT-3x-ONNXRT (Unit Test 3x ONNXRT baseline Unit Test 3x ONNXRT baseline)"
