@@ -1187,7 +1187,7 @@ def get_module_input_output(
     if calib_func:
         calib_func(model)
     else:
-        from neural_compressor.adaptor.torch_utils.waq import model_forward
+        from .smooth_quant import model_forward
 
         model_forward(model, dataloader, iters, device=next(model.parameters()).device)
     for h in hook_list:
@@ -1209,7 +1209,7 @@ def get_absorb_layers(model, example_inputs, supported_layers=["Linear"], foldin
         no_absorb_layers: list of no_absorb_layers
     """
     # get modules that can be absorbed.
-    from neural_compressor.adaptor.torch_utils.waq import GraphTrace
+    from .smooth_quant import GraphTrace
 
     tg = GraphTrace()
     absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(model, example_inputs, supported_layers)
@@ -1264,7 +1264,7 @@ def calibration(model, dataloader=None, n_samples=128, calib_func=None):
     else:
         import math
 
-        from neural_compressor.adaptor.torch_utils.waq import model_forward
+        from .smooth_quant import model_forward
 
         batch_size = dataloader.batch_size
         iters = int(math.ceil(n_samples / batch_size))
