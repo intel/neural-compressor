@@ -10,6 +10,7 @@ pr:
     include:
       - neural_solution
       - setup.py
+      - .azure-pipelines/ut-neural-solution.yaml
 
 pool: ICX-16C
 

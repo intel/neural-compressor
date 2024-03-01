@@ -10,6 +10,7 @@ pr:
     include:
       - neural_insights
       - setup.py
+      - .azure-pipelines/ut-neural-insights.yaml
 
 pool: ICX-16C
 
