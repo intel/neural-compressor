@@ -34,7 +34,6 @@ mkdir -p report
 mv *.html report
 pytest_html_merger -i ./report -o ./report.html
 
-cp .coverage ${LOG_DIR}/.coverage
 cp report.html ${LOG_DIR}/
 
 if [ $(grep -c '== FAILURES ==' ${ut_log_name}) != 0 ] || [ $(grep -c '== ERRORS ==' ${ut_log_name}) != 0 ] || [ $(grep -c ' passed' ${ut_log_name}) == 0 ]; then
@@ -42,5 +41,8 @@ if [ $(grep -c '== FAILURES ==' ${ut_log_name}) != 0 ] || [ $(grep -c '== ERRORS
     echo "Please search for '== FAILURES ==' or '== ERRORS =='"
     exit 1
 fi
+
+# if ut pass, collect the coverage file into artifacts
+cp .coverage ${LOG_DIR}/.coverage
 
 echo "UT finished successfully! "
