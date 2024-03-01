@@ -1813,7 +1813,8 @@ class TemplateAdaptor(Adaptor):
             kwargs["percentile"] = percentile
         if scales_per_op is not None:
             kwargs["scales_per_op"] = scales_per_op
-        auto_alpha_args["init_alpha"] = default_alpha
+        if alpha == 'auto':
+            auto_alpha_args["init_alpha"] = default_alpha
         model._model = self.sq.transform(
             alpha=alpha,
             folding=folding,
