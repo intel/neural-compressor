@@ -4,3 +4,4 @@ accelerate
 SentencePiece
 lm_eval==0.3.0
 openpyxl
+einops
