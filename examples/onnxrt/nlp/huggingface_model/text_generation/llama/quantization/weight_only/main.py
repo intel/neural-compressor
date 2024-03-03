@@ -217,6 +217,8 @@ class KVDataloader:
                     for key_value_input_name in self.key_value_input_names:
                         ort_input[key_value_input_name] = key_or_value
 
+                yield ort_input, last_ind.detach().cpu().numpy()
+
         except StopIteration:
             return
 
@@ -266,15 +268,6 @@ class GPTQDataloader:
                     key_or_value = np.zeros(shape, dtype=np.float32)
                     for key_value_input_name in self.key_value_input_names:
                         ort_input[key_value_input_name] = key_or_value
-
-                    outputs = self.session.run(None, ort_input)
-
-                    # regenerate input
-                    ort_input['input_ids'] = inp[:, -1].unsqueeze(0).detach().cpu().numpy().astype('int64')
-                    for i in range(int((len(outputs) - 1) / 2)):
-                        ort_input['past_key_values.{}.key'.format(i)] = outputs[i*2+1]
-                        ort_input['past_key_values.{}.value'.format(i)] = outputs[i*2+2]
-                    ort_input['attention_mask'] =  np.zeros([self.batch_size, ort_input['past_key_values.0.key'].shape[2]+1], dtype='int64')
 
                 yield ort_input, 0
 
