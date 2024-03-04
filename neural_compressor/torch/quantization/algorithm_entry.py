@@ -20,7 +20,7 @@ import torch
 
 from neural_compressor.common.utils import AUTOROUND, AWQ, FP8_QUANT, GPTQ, HQQ, RTN, SMOOTH_QUANT, STATIC_QUANT, TEQ
 from neural_compressor.torch.quantization import (
-    AUTOROUNDConfig,
+    AutoRoundConfig,
     AWQConfig,
     FP8Config,
     GPTQConfig,
@@ -332,7 +332,7 @@ def teq_quantize_entry(
 ###################### AUTOROUND Algo Entry ##################################
 @register_algo(name=AUTOROUND)
 def teq_quantize_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AUTOROUNDConfig], *args, **kwargs
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig], *args, **kwargs
 ) -> torch.nn.Module:
     from neural_compressor.torch.algorithms.weight_only import autoround_quantize
 
