@@ -213,7 +213,12 @@ class HPU_Accelerator(Auto_Accelerator):
 
     @classmethod
     def is_available(cls) -> bool:
-        return torch.hpu.is_available()
+        from .environ import is_hpex_available
+
+        if is_hpex_available():
+            return torch.hpu.is_available()
+        else:
+            return False
 
     def device_name(self, device_indx) -> str:
         if device_indx is None:

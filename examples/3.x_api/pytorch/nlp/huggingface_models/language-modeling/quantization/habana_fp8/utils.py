@@ -84,7 +84,11 @@ def eval_func(user_model, tokenizer, args):
             return 'cpu' # 'hpu'
 
         def tok_encode(self, string):
-            if re.search("chatglm3", args.model.lower()) or re.search("llama", args.model.lower()) :
+            if (
+                re.search("chatglm3", args.model.lower()) or
+                re.search("llama", args.model.lower()) or
+                re.search("mistral", args.model.lower())
+            ):
                 string = string.lstrip()
             return self.tokenizer.encode(string, add_special_tokens=False)
 
