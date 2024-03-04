@@ -12,25 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from auto_round import AutoRound  # pylint: disable=E0401
-from auto_round.calib_dataset import CALIB_DATASETS # pylint: disable=E0401
 # from auto_round.utils import logger # TODO: logger issue
 import torch
+from auto_round import AutoRound  # pylint: disable=E0401
+from auto_round.calib_dataset import CALIB_DATASETS  # pylint: disable=E0401
+
 from neural_compressor.torch.utils import logger
+
 
 @torch.no_grad()
 def get_autoround_default_run_fn(
-        model,
-        tokenizer,
-        dataset_name="NeelNanda/pile-10k", 
-        n_samples=512,
-        seqlen=2048,
-        seed=42,
-        bs=8,
-        dataset_split: str = "train",
-        dataloader=None,
-    ):
-
+    model,
+    tokenizer,
+    dataset_name="NeelNanda/pile-10k",
+    n_samples=512,
+    seqlen=2048,
+    seed=42,
+    bs=8,
+    dataset_split: str = "train",
+    dataloader=None,
+):
     """Perform calibration for quantization.
 
     This method calibrates the model for quantization by processing a specified
@@ -91,9 +92,8 @@ def get_autoround_default_run_fn(
             f"Insufficient number of samples collected may affect the quantification. "
             f"Effective samples size:{total_cnt}, Target sample size:{n_samples}"
         )
-    
-    
-    
+
+
 class INCAutoRound(AutoRound):
     """Class for automatic rounding-based quantization with optimizers like adamw of a PyTorch model.
 
@@ -165,7 +165,7 @@ class INCAutoRound(AutoRound):
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
         data_type: str = "int",
-        run_fn = None,
+        run_fn=None,
         *args,
         **kwargs,
     ):
@@ -203,7 +203,7 @@ class INCAutoRound(AutoRound):
         )
         self.run_fn = run_fn
         self.run_args = kwargs.get("run_args", None)
-            
+
     @torch.no_grad()
     def save_first_block_inputs(self, block_name, n_samples):
         """Save the inputs of the first block for calibration.
@@ -226,13 +226,13 @@ class INCAutoRound(AutoRound):
         if self.run_args:
             self.run_fn(self.model, *self.run_args)
         else:
-            self.run_fn(self.model)            
-        
+            self.run_fn(self.model)
+
         self._recover_forward()
         res = self.inputs[self.tmp_block_name]
         del self.tmp_block_name
         return res
-        
+
 
 def autoround_quantize(
     model,
@@ -314,7 +314,7 @@ def autoround_quantize(
     Returns:
         The quantized model.
     """
-    if run_fn is None or run_fn==get_autoround_default_run_fn:
+    if run_fn is None or run_fn == get_autoround_default_run_fn:
         assert run_args is not None, "Please provide tokenizer for AutoRound default calibration."
         run_fn = get_autoround_default_run_fn
 

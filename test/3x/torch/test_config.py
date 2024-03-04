@@ -288,7 +288,7 @@ class TestQuantizationConfig(unittest.TestCase):
         }
         teq_config2 = TEQConfig.from_dict(quant_config_dict["teq"])
         self.assertEqual(teq_config1.to_dict(), teq_config2.to_dict())
-        
+
     def test_autoround_config(self):
         autoround_config1 = AUTOROUNDConfig(bs=16, amp=False)
         quant_config_dict = {

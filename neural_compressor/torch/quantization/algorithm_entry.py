@@ -328,6 +328,7 @@ def teq_quantize_entry(
     logger.info("TEQ quantization done.")
     return model
 
+
 ###################### AUTOROUND Algo Entry ##################################
 @register_algo(name=AUTOROUND)
 def teq_quantize_entry(
@@ -370,7 +371,7 @@ def teq_quantize_entry(
             not_use_best_mse = quant_config.not_use_best_mse
             dynamic_max_gap = quant_config.dynamic_max_gap
             scale_dtype = quant_config.scale_dtype
-    
+
     kwargs.pop("example_inputs")
     model, autoround_config = autoround_quantize(
         model=model,
@@ -402,6 +403,7 @@ def teq_quantize_entry(
     model.autoround_config = autoround_config
     logger.info("AUTOROUND quantization done.")
     return model
+
 
 ###################### HQQ Algo Entry ##################################
 @register_algo(name=HQQ)

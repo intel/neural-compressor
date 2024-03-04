@@ -28,6 +28,7 @@ from neural_compressor.common.base_config import (
     register_supported_configs_for_fwk,
 )
 from neural_compressor.common.utils import (
+    AUTOROUND,
     AWQ,
     DEFAULT_WHITE_LIST,
     FP8_QUANT,
@@ -38,7 +39,6 @@ from neural_compressor.common.utils import (
     SMOOTH_QUANT,
     STATIC_QUANT,
     TEQ,
-    AUTOROUND,
 )
 from neural_compressor.torch.utils import is_hpex_available, logger
 from neural_compressor.torch.utils.constants import (
@@ -730,31 +730,31 @@ class AUTOROUNDConfig(BaseConfig):
         self.bits = bits
         self.use_sym = use_sym
         self.group_size = group_size
-        self.tokenizer=tokenizer
-        self.enable_full_range=enable_full_range
-        self.bs=bs
-        self.amp=amp
-        self.device=device
-        self.lr_scheduler=lr_scheduler
-        self.dataloader=dataloader  ## to support later
-        self.dataset_name=dataset_name
-        self.dataset_split=dataset_split
-        self.use_quant_input=use_quant_input
-        self.enable_minmax_tuning=enable_minmax_tuning
-        self.lr=lr
-        self.minmax_lr=minmax_lr
-        self.low_gpu_mem_usage=low_gpu_mem_usage
-        self.iters=iters
-        self.seqlen=seqlen
-        self.n_samples=n_samples
-        self.sampler=sampler
-        self.seed=seed
-        self.n_blocks=n_blocks
-        self.gradient_accumulate_steps=gradient_accumulate_steps
-        self.not_use_best_mse=not_use_best_mse
-        self.dynamic_max_gap=dynamic_max_gap
-        self.data_type=data_type
-        self.scale_dtype=scale_dtype
+        self.tokenizer = tokenizer
+        self.enable_full_range = enable_full_range
+        self.bs = bs
+        self.amp = amp
+        self.device = device
+        self.lr_scheduler = lr_scheduler
+        self.dataloader = dataloader  ## to support later
+        self.dataset_name = dataset_name
+        self.dataset_split = dataset_split
+        self.use_quant_input = use_quant_input
+        self.enable_minmax_tuning = enable_minmax_tuning
+        self.lr = lr
+        self.minmax_lr = minmax_lr
+        self.low_gpu_mem_usage = low_gpu_mem_usage
+        self.iters = iters
+        self.seqlen = seqlen
+        self.n_samples = n_samples
+        self.sampler = sampler
+        self.seed = seed
+        self.n_blocks = n_blocks
+        self.gradient_accumulate_steps = gradient_accumulate_steps
+        self.not_use_best_mse = not_use_best_mse
+        self.dynamic_max_gap = dynamic_max_gap
+        self.data_type = data_type
+        self.scale_dtype = scale_dtype
         self._post_init()
 
     @classmethod
