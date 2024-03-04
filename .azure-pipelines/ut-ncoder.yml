@@ -28,5 +28,6 @@ stages:
           dockerConfigName: 'commonDockerConfig'
           utScriptFileName: 'run_ncoder'
           uploadPath: $(UPLOAD_PATH)
-          utArtifact: 'ut-ncoder'
+          utArtifact: 'ut_ncoder'
+          utTestMode: "no-coverage"
           utContainerName: "utTest-ncoder"

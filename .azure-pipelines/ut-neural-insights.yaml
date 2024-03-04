@@ -10,6 +10,7 @@ pr:
     include:
       - neural_insights
       - setup.py
+      - .azure-pipelines/ut-neural-insights.yaml
 
 pool: ICX-16C
 
@@ -27,5 +28,6 @@ stages:
               dockerConfigName: 'commonDockerConfig'
               utScriptFileName: 'run_neural_insights'
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: 'ut-neural-insights'
+              utArtifact: 'ut_neural-insights'
+              utTestMode: "no-coverage"
               utContainerName: "utTest-nInsights"
