@@ -1,11 +1,15 @@
 import os
 os.environ["EXPERIMENTAL_WEIGHT_SHARING"] = "False"
-os.environ["USE_GAUDI2_SCALE"] = "True"
-# USE_GAUDI2_SCALE requires PT_USE_FP8_AMAX for torch.mm/bmm, or got failure
-os.environ["PT_USE_FP8_AMAX"] = "True"  
+
+### USE_GAUDI2_SCALE requires PT_USE_FP8_AMAX for torch.mm/bmm, or got failure
+# os.environ["USE_GAUDI2_SCALE"] = "True"
+# os.environ["PT_USE_FP8_AMAX"] = "True"
+
+### graphs will dump to .graph_dumps folder
 # os.environ["GRAPH_VISUALIZATION"] = "True"
 # import shutil
 # shutil.rmtree(".graph_dumps", ignore_errors=True)
+
 import argparse
 import time
 import json

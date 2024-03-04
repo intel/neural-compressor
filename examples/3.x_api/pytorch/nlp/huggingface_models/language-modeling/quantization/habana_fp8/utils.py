@@ -144,7 +144,7 @@ def eval_func(user_model, tokenizer, args):
     if local_rank in [-1, 0]:
         dumped = json.dumps(results, indent=2)
         accu_dict = {}
-        case_name =  args.approach + "-" + args.precision
+        case_name = str(args.approach) + "-" + args.precision
         for task_name in args.tasks:
             if task_name == "wikitext":
                 print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["word_perplexity"]), flush=True)
