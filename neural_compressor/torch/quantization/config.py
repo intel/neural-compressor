@@ -619,7 +619,7 @@ def get_default_teq_config() -> TEQConfig:
 
 ######################## AUTOROUND Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=AUTOROUND, priority=PRIORITY_AUTOROUND)
-class AUTOROUNDConfig(BaseConfig):
+class AutoRoundConfig(BaseConfig):
     """Config class for AUTOROUND.
 
     AUTOROUND: Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs.
@@ -761,7 +761,7 @@ class AUTOROUNDConfig(BaseConfig):
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         # TODO(Yi)
-        linear_AUTOROUND_config = AUTOROUNDConfig()
+        linear_AUTOROUND_config = AutoRoundConfig()
         operators = [torch.nn.Linear, torch.nn.functional.linear]
         supported_configs.append(OperatorConfig(config=linear_AUTOROUND_config, operators=operators))
         cls.supported_configs = supported_configs
@@ -778,18 +778,18 @@ class AUTOROUNDConfig(BaseConfig):
         return filter_result
 
     @classmethod
-    def get_config_set_for_tuning(cls) -> Union[None, "AUTOROUNDConfig", List["AUTOROUNDConfig"]]:
+    def get_config_set_for_tuning(cls) -> Union[None, "AutoRoundConfig", List["AutoRoundConfig"]]:
         # TODO fwk owner needs to update it.
-        return AUTOROUNDConfig(bits=[4, 6])
+        return AutoRoundConfig(bits=[4, 6])
 
 
-def get_default_AUTOROUND_config() -> AUTOROUNDConfig:
+def get_default_AUTOROUND_config() -> AutoRoundConfig:
     """Generate the default AUTOROUND config.
 
     Returns:
         the default AUTOROUND config.
     """
-    return AUTOROUNDConfig()
+    return AutoRoundConfig()
 
 
 ######################## Static Quant Config ###############################

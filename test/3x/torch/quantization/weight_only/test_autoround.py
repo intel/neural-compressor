@@ -3,7 +3,7 @@ import unittest
 import torch
 import transformers
 
-from neural_compressor.torch.quantization import AUTOROUNDConfig, quantize
+from neural_compressor.torch.quantization import AutoRoundConfig, quantize
 from neural_compressor.torch.utils import logger
 
 try:
@@ -51,7 +51,7 @@ class TestAutoRound(unittest.TestCase):
         )
 
         out1 = self.gptj(inp)
-        quant_config = AUTOROUNDConfig(n_samples=20, amp=False, seqlen=10, iters=10, scale_dtype="fp32", device="cpu")
+        quant_config = AutoRoundConfig(n_samples=20, amp=False, seqlen=10, iters=10, scale_dtype="fp32", device="cpu")
         logger.info(f"Test AutoRound with config {quant_config}")
         from neural_compressor.torch.algorithms.weight_only.autoround import get_autoround_default_run_fn
 

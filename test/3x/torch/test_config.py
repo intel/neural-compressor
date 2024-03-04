@@ -5,7 +5,7 @@ import torch
 import transformers
 
 from neural_compressor.torch.quantization import (
-    AUTOROUNDConfig,
+    AutoRoundConfig,
     AWQConfig,
     GPTQConfig,
     HQQConfig,
@@ -290,11 +290,11 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertEqual(teq_config1.to_dict(), teq_config2.to_dict())
 
     def test_autoround_config(self):
-        autoround_config1 = AUTOROUNDConfig(bs=16, amp=False)
+        autoround_config1 = AutoRoundConfig(bs=16, amp=False)
         quant_config_dict = {
             "autoround": {"bs": 16, "amp": False},
         }
-        autoround_config2 = AUTOROUNDConfig.from_dict(quant_config_dict["autoround"])
+        autoround_config2 = AutoRoundConfig.from_dict(quant_config_dict["autoround"])
         self.assertEqual(autoround_config1.to_dict(), autoround_config2.to_dict())
 
     def test_static_quant_config(self):
