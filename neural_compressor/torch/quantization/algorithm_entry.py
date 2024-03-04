@@ -290,32 +290,31 @@ def teq_quantize_entry(
                 "scheme": "sym" if quant_config.use_sym else "asym",
                 "group_size": quant_config.group_size,
             }
-            enable_full_range = quant_config.enable_full_range,
-            bs = quant_config.bs,
-            amp = quant_config.amp,
-            device = quant_config.device,
-            lr_scheduler = quant_config.lr_scheduler,
-            dataset_name = quant_config.dataset_name,
-            dataset_split = quant_config.dataset_split,
-            use_quant_input = quant_config.use_quant_input,
-            enable_minmax_tuning = quant_config.enable_minmax_tuning,
-            lr = quant_config.lr,
-            minmax_lr = quant_config.minmax_lr,
-            low_gpu_mem_usage = quant_config.low_gpu_mem_usage,
-            iters = quant_config.iters,
-            seqlen = quant_config.seqlen,
-            n_samples = quant_config.n_samples,
-            sampler = quant_config.sampler,
-            seed = quant_config.seed,
-            n_blocks = quant_config.n_blocks,
-            gradient_accumulate_steps = quant_config.gradient_accumulate_steps,
-            not_use_best_mse = quant_config.not_use_best_mse,
-            dynamic_max_gap = quant_config.dynamic_max_gap,
-            scale_dtype = quant_config.scale_dtype,
+            enable_full_range = quant_config.enable_full_range
+            bs = quant_config.bs
+            amp = quant_config.amp
+            device = quant_config.device
+            lr_scheduler = quant_config.lr_scheduler
+            dataset_name = quant_config.dataset_name
+            dataset_split = quant_config.dataset_split
+            use_quant_input = quant_config.use_quant_input
+            enable_minmax_tuning = quant_config.enable_minmax_tuning
+            lr = quant_config.lr
+            minmax_lr = quant_config.minmax_lr
+            low_gpu_mem_usage = quant_config.low_gpu_mem_usage
+            iters = quant_config.iters
+            seqlen = quant_config.seqlen
+            n_samples = quant_config.n_samples
+            sampler = quant_config.sampler
+            seed = quant_config.seed
+            n_blocks = quant_config.n_blocks
+            gradient_accumulate_steps = quant_config.gradient_accumulate_steps
+            not_use_best_mse = quant_config.not_use_best_mse
+            dynamic_max_gap = quant_config.dynamic_max_gap
+            scale_dtype = quant_config.scale_dtype
     
     kwargs.pop("example_inputs")
-    # TODO: tokenizer=tokenizer, dataloader=dataloader,
-    model = autoround_quantize(
+    model, autoround_config = autoround_quantize(
         model=model,
         weight_config=weight_config,
         enable_full_range=enable_full_range,
@@ -342,6 +341,7 @@ def teq_quantize_entry(
         scale_dtype=scale_dtype,
         **kwargs
     )
+    model.autoround_config = autoround_config
     logger.info("AUTOROUND quantization done.")
     return model
 
