@@ -932,7 +932,7 @@ class FP8Config(BaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "FP8Config", List["FP8Config"]]:
         # TODO fwk owner needs to update it.
-        return [FP8Config(act_algo=["minmax", "kl"])]
+        return FP8Config(act_algo=["minmax", "kl"])
 
 
 def get_default_fp8_config() -> FP8Config:
