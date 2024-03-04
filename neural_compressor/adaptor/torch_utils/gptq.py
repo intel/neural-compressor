@@ -22,16 +22,18 @@ import re
 import time
 from collections import UserDict, defaultdict
 from functools import partial
+import copy
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import transformers
 from tqdm import tqdm
 
 from ...utils import logger
 
 DEBUG = False
-
+linear_layers = [nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D]
 
 # ================ device related ===================
 def move_input_to_device(input, device=torch.device("cpu")):
@@ -127,9 +129,11 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn
     return gptq_related_blocks
 
 
-def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=""):
+def find_layers(module, layers=linear_layers, name=""):
     """Get all layers with target types."""
     if type(module) in layers:
+        return {name: module}
+    elif type(module).__name__ == "LinearGLUExperts":
         return {name: module}
     else:
         # use string type to find name:
@@ -142,7 +146,6 @@ def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Co
     for name1, child in module.named_children():
         res.update(find_layers(child, layers=layers, name=name + "." + name1 if name != "" else name1))
     return res
-
 
 def find_layers_name(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=""):
     """Get all layers with target types."""
@@ -578,27 +581,42 @@ class GPTQuantizer(object):
             # Step 2.2: Initialize GPTQ quantizers for collected layers.
             gptq_for_this_block = {}
             # initialize gptq quantizer for every layer in a transformer block
+            # import pdb;pdb.set_trace()
             for layer_name in sub_layers:
-                # weight_config_this_layer = self.weight_config.get(
-                #     self.get_full_layer_name(layer_name, block_idx), None
-                # )
-                full_layer_name = self.get_full_layer_name(layer_name, block_idx)
-                weight_config_this_layer = self.get_layer_config(full_layer_name)
-                if self.layer_wise:
-                    from ..torch_utils.layer_wise_quant.utils import load_value
+                if type(sub_layers[layer_name]) in linear_layers:
+                    # weight_config_this_layer = self.weight_config.get(
+                    #     self.get_full_layer_name(layer_name, block_idx), None
+                    # )
+                    full_layer_name = self.get_full_layer_name(layer_name, block_idx)
+                    weight_config_this_layer = self.get_layer_config(full_layer_name)
+                    if self.layer_wise:
+                        from ..torch_utils.layer_wise_quant.utils import load_value
 
-                    W = load_value(self.model, full_layer_name + ".weight", model_path)
+                        W = load_value(self.model, full_layer_name + ".weight", model_path)
+                    else:
+                        W = sub_layers[layer_name].weight.data.clone()
+
+                    gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name], W, self.device)
+                    # gptq_for_this_block[layer_name].quantizer = Quantizer()
+                    gptq_for_this_block[layer_name].quantizer.configure(
+                        weight_config_this_layer["wbits"],
+                        weight_config_this_layer["perchannel"],
+                        weight_config_this_layer["sym"],
+                        weight_config_this_layer["mse"],
+                    )
+                elif type(sub_layers[layer_name]).__name__ == "LinearGLUExperts":
+                    # import pdb;pdb.set_trace()
+                    full_layer_name = self.get_full_layer_name(layer_name, block_idx)
+                    weight_config_this_layer = self.get_layer_config(full_layer_name)
+                    gptq_for_this_block[layer_name] = GPTQMoEExpert(sub_layers[layer_name], self.device)
+                    gptq_for_this_block[layer_name].quantizer.configure(
+                        weight_config_this_layer["wbits"],
+                        weight_config_this_layer["perchannel"],
+                        weight_config_this_layer["sym"],
+                        weight_config_this_layer["mse"],
+                    )
                 else:
-                    W = sub_layers[layer_name].weight.data.clone()
-
-                gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name], W, self.device)
-                # gptq_for_this_block[layer_name].quantizer = Quantizer()
-                gptq_for_this_block[layer_name].quantizer.configure(
-                    weight_config_this_layer["wbits"],
-                    weight_config_this_layer["perchannel"],
-                    weight_config_this_layer["sym"],
-                    weight_config_this_layer["mse"],
-                )
+                    raise NotImplementedError
 
             # Step 2.3: modify forward functions to hook inputs data (used in gptq execution)
             def add_batch(_name):
@@ -611,11 +629,13 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
             idx = self.cache_key_arguments.pop("i")
+            # import pdb;pdb.set_trace()
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                 out = self.track_hidden_states(out)
+            # import pdb;pdb.set_trace()
             self.cache_key_arguments["i"] = idx
             for h in handles:
                 h.remove()
@@ -626,21 +646,31 @@ class GPTQuantizer(object):
                 # )
                 weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
                 logger.info(f"Quantizing layer {layer_name}")
-                if self.layer_wise:
-                    from ..torch_utils.layer_wise_quant.utils import load_value
+                if isinstance(gptq_for_this_block[layer_name], GPTQ):
+                    if self.layer_wise:
+                        from ..torch_utils.layer_wise_quant.utils import load_value
 
-                    full_layer_name = self.get_full_layer_name(layer_name, block_idx)
-                    W = load_value(self.model, full_layer_name + ".weight", model_path)
-                else:
-                    W = sub_layers[layer_name].weight.data.clone()
-                scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(
-                    W,
-                    blocksize=weight_config_this_layer["block_size"],
-                    percdamp=weight_config_this_layer["percdamp"],
-                    groupsize=weight_config_this_layer["group_size"],
-                    act_order=weight_config_this_layer["act_order"],
-                    static_groups=weight_config_this_layer["static_groups"],
-                )
+                        full_layer_name = self.get_full_layer_name(layer_name, block_idx)
+                        W = load_value(self.model, full_layer_name + ".weight", model_path)
+                    else:
+                        W = sub_layers[layer_name].weight.data.clone()
+                    scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(
+                        W,
+                        blocksize=weight_config_this_layer["block_size"],
+                        percdamp=weight_config_this_layer["percdamp"],
+                        groupsize=weight_config_this_layer["group_size"],
+                        act_order=weight_config_this_layer["act_order"],
+                        static_groups=weight_config_this_layer["static_groups"],
+                    )
+                elif isinstance(gptq_for_this_block[layer_name], GPTQMoEExpert):
+                    gptq_moe_parameters = gptq_for_this_block[layer_name].fasterquant(
+                        blocksize=weight_config_this_layer["block_size"],
+                        percdamp=weight_config_this_layer["percdamp"],
+                        groupsize=weight_config_this_layer["group_size"],
+                        act_order=weight_config_this_layer["act_order"],
+                        static_groups=weight_config_this_layer["static_groups"],
+                        perchannel=weight_config_this_layer["perchannel"],
+                    )
                 if self.layer_wise:
                     from ..torch_utils.layer_wise_quant.utils import (
                         LWQ_WORKSPACE,
@@ -664,14 +694,20 @@ class GPTQuantizer(object):
                     del Q
                     gc.collect()
                 else:
-                    sub_layers[layer_name].weight.data = Q
-                gptq_config[self.get_full_layer_name(layer_name, block_idx)] = {"scale": scale}
-                if not weight_config_this_layer["sym"]:
-                    gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"] = zp
-                if weight_config_this_layer["act_order"]:  # save perm for restoring the weights
-                    gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"] = gptq_for_this_block[
-                        layer_name
-                    ].perm
+                    if isinstance(gptq_for_this_block[layer_name], GPTQ):
+                        # linear
+                        sub_layers[layer_name].weight.data = Q
+                        gptq_config[self.get_full_layer_name(layer_name, block_idx)] = {"scale": scale}
+                        if not weight_config_this_layer["sym"]:
+                            gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"] = zp
+                        if weight_config_this_layer["act_order"]:  # save perm for restoring the weights
+                            gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"] = gptq_for_this_block[
+                                layer_name
+                            ].perm
+                    elif isinstance(gptq_for_this_block[layer_name], GPTQMoEExpert):
+                        # moe
+                        gptq_config[self.get_full_layer_name(layer_name, block_idx)] = gptq_moe_parameters
+
                 gptq_for_this_block[layer_name].free()
 
             # Step 2.5: replace output data with quantized weights
@@ -700,9 +736,265 @@ class GPTQuantizer(object):
         # obtain model (all weight only quantization API function should return)
         for k, v in gptq_config.items():
             for m, n in v.items():
-                gptq_config[k][m] = n.tolist()
+                try:
+                    # to do align the moe gptq_config with INC team.
+                    gptq_config[k][m] = n.tolist()
+                except:
+                    continue
         return self.model, gptq_config
 
+class GPTQMoEExpert:
+    """
+    Please refer to:
+    GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers (https://arxiv.org/abs/2210.17323)
+    Original GPTQ implementation only suits nn.module which contains 2d or 3d parameters
+    This class is specially designed for MoE's LinearGLUMoELayer
+    """
+    def __init__(self, layer, device="cpu"):
+        self.layer = layer
+        self.device = device
+        # W = layer.weight.data.clone()
+        # self.rows = W.shape[0]  # output channels
+        # self.columns = W.shape[1]  # input channels
+        # self.H = torch.zeros((self.columns, self.columns), device=self.device)
+        self.nsamples = 0
+        self.perm = None  # act_order choice
+        self.quantizer = Quantizer()
+
+        # save ParameterList's inputs to calculate Hessian Matrix respectively
+        gate_row    = self.layer.weight_gate[0].shape[0]
+        gate_column = self.layer.weight_gate[0].shape[1]
+        up_row      = self.layer.weight_up[0].shape[0]
+        up_column   = self.layer.weight_up[0].shape[1]
+        down_row    = self.layer.weight_down[0].shape[0]
+        down_column = self.layer.weight_down[0].shape[1]
+        # Hessian matrix should be a list, to store all parameter lists' weights
+        self.H_gate = [torch.zeros((gate_column, gate_column), device=self.device) for i in range(self.layer.num_experts)]
+        self.H_up = [torch.zeros((up_column, up_column), device=self.device) for i in range(self.layer.num_experts)]
+        self.H_down = [torch.zeros((down_column, down_column), device=self.device) for i in range(self.layer.num_experts)]
+    
+    def add_batch(self, inp, out):
+        # import pdb;pdb.set_trace()
+        # print("Entrace of add_batch function")
+        # inp can be used to calculate the gate and up
+        inp_1 = inp.clone()
+        inp_2 = inp.clone() 
+        if len(inp_1.shape) == 2:
+            inp_1 = inp_1.unsqueeze(0)
+        tmp = inp_1.shape[0]
+        if isinstance(self.layer, nn.Linear) or isinstance(self.layer, transformers.Conv1D) or type(self.layer).__name__ == "LinearGLUExperts":
+            if len(inp_1.shape) == 3:
+                inp_1 = inp_1.reshape((-1, inp_1.shape[-1]))
+            inp_1 = inp_1.t()
+        
+        self.nsamples += tmp
+
+        for i in range(self.layer.num_experts):
+            self.H_gate[i] *= self.nsamples / (self.nsamples + tmp)
+            self.H_up[i]   *= self.nsamples / (self.nsamples + tmp)
+            # inp = inp.float()
+            inp_1 = math.sqrt(2 / self.nsamples) * inp_1.float()
+            # self.H += 2 / self.nsamples * inp.matmul(inp.t())
+            self.H_gate[i] += inp_1.matmul(inp_1.t())  # H = X*X, which should be a sysm matrix
+            self.H_up[i]   += inp_1.matmul(inp_1.t())  # H = X*X, which should be a sysm matrix
+        
+        # simulate a process for inference
+        # import pdb;pdb.set_trace()
+        for i in range(self.layer.num_experts):
+            gate_tmp = self.layer.act_fn(
+                F.linear(
+                    inp_2,
+                    self.layer.weight_gate[i],
+                    self.layer.bias_gate[i] if self.layer.bias_gate is not None else None,
+                )
+            )
+            up_tmp = F.linear(
+                    inp_2,
+                    self.layer.weight_up[i],
+                    self.layer.bias_up[i] if self.layer.bias_up is not None else None,
+            )
+            down_inp = gate_tmp * up_tmp
+            down_inp = down_inp.t()
+            self.H_down[i] *= self.nsamples / (self.nsamples + tmp)
+            down_inp = math.sqrt(2 / self.nsamples) * down_inp.float()
+            self.H_down[i] += down_inp.matmul(down_inp.t())  # H = X*X, which should be a sysm matrix
+    
+    def fasterquant(self, blocksize=128, percdamp=0.01, groupsize=-1, act_order=False, static_groups=False, perchannel=False):
+        # import pdb;pdb.set_trace()
+        weight_gate_gptq_configs = []
+        weight_up_gptq_configs   = []
+        weight_down_gptq_configs = []
+        for i in range(self.layer.num_experts):
+            weight_gate_i = self.layer.weight_gate[i]
+            weight_up_i = self.layer.weight_up[i]
+            weight_down_i = self.layer.weight_down[i]
+            H_gate_i = self.H_gate[i]
+            H_up_i = self.H_up[i]
+            H_down_i = self.H_down[i]
+            scale_wg, zero_wg, Q_wg = self.fasterquant_one(
+                weight_gate_i, 
+                H_gate_i, 
+                blocksize, 
+                percdamp, 
+                groupsize, 
+                act_order, 
+                static_groups,
+                perchannel
+            )
+            scale_wu, zero_wu, Q_wu = self.fasterquant_one(
+                weight_up_i, 
+                H_up_i, 
+                blocksize, 
+                percdamp, 
+                groupsize, 
+                act_order, 
+                static_groups,
+                perchannel
+            )
+            scale_wd, zero_wd, Q_wd = self.fasterquant_one(
+                weight_down_i, 
+                H_down_i, 
+                blocksize, 
+                percdamp, 
+                groupsize, 
+                act_order, 
+                static_groups,
+                perchannel
+            )
+            # replace with quantized weights
+            self.layer.weight_gate[i] = Q_wg
+            self.layer.weight_up[i]   = Q_wu
+            self.layer.weight_down[i] = Q_wd
+            # store quantization results
+            weight_gate_gptq_configs.append({"scale": scale_wg, "zero": zero_wg})
+            weight_up_gptq_configs.append({"scale": scale_wu, "zero": zero_wu})
+            weight_down_gptq_configs.append({"scale": scale_wd, "zero": zero_wd})
+        return {"weight_gate": weight_gate_gptq_configs, "weight_up": weight_up_gptq_configs, "weight_down": weight_down_gptq_configs}
+    
+    def fasterquant_one(self, W, H, blocksize=128, percdamp=0.01, groupsize=-1, act_order=False, static_groups=False, perchannel=False):
+        # W = self.layer.weight.data.clone()
+        quantizer_ori = copy.deepcopy(self.quantizer)
+        weight_shape, weight_dtype = W.shape, W.data.dtype
+        row = W.shape[0]
+        column = W.shape[1]
+        if isinstance(self.layer, nn.Conv2d):
+            W = W.flatten(1)
+        if isinstance(self.layer, transformers.Conv1D):
+            W = W.t()
+        W = W.float()
+
+        tick = time.time()
+
+        if not quantizer_ori.ready():
+            quantizer_ori.find_params(W, weight=True)
+
+        dead = torch.diag(H) == 0
+        H[dead, dead] = 1
+        W[:, dead] = 0  # such channel makes no contribution to quantization computation
+
+        # enable static_groups
+        # calculate the quantization parameters for original group in advance.
+        if static_groups:
+            groups = []
+            for i in range(0, column, groupsize):
+                quantizer = copy.deepcopy(quantizer_ori)
+                quantizer.find_params(W[:, i : (i + groupsize)], weight=True)
+                groups.append(quantizer)
+
+        # rearrange considering the diag's value
+        if act_order:
+            perm = torch.argsort(torch.diag(H), descending=True)
+            W = W[:, perm]
+            H = H[perm][:, perm]
+            self.perm = perm.clone()
+
+        Losses = torch.zeros_like(W)
+        Q = torch.zeros_like(W)
+
+        damp = percdamp * torch.mean(torch.diag(H))
+        diag = torch.arange(column, device=self.device)
+        H[diag, diag] += damp  # add a average value of
+        H = torch.linalg.cholesky(H)
+        H = torch.cholesky_inverse(H)
+        H = torch.linalg.cholesky(H, upper=True)
+        Hinv = H
+
+        scale = []
+        zero = []
+
+        for i1 in range(0, column, blocksize):
+            i2 = min(i1 + blocksize, column)
+            count = i2 - i1
+
+            W1 = W[:, i1:i2].clone()
+            Q1 = torch.zeros_like(W1)
+            Err1 = torch.zeros_like(W1)
+            Losses1 = torch.zeros_like(W1)
+            Hinv1 = Hinv[i1:i2, i1:i2]
+
+            for i in range(count):  # within a block, channel wise
+                w = W1[:, i]
+                d = Hinv1[i, i]
+
+                if groupsize != -1:
+                    if not static_groups:
+                        if (i1 + i) % groupsize == 0:
+                            quantizer_ori.find_params(W[:, (i1 + i) : (i1 + i + groupsize)], weight=True)
+                            scale.append(quantizer_ori.scale)
+                            zero.append(quantizer_ori.zero)
+                    else:
+                        idx = i1 + i
+                        if act_order:
+                            idx = perm[idx]
+                        quantizer_ori = groups[idx // groupsize]
+
+                q = quantize(w.unsqueeze(1), quantizer_ori.scale, quantizer_ori.zero, quantizer_ori.maxq).flatten()
+                Q1[:, i] = q
+                Losses1[:, i] = (w - q) ** 2 / d**2
+
+                err1 = (w - q) / d
+                W1[:, i:] -= err1.unsqueeze(1).matmul(Hinv1[i, i:].unsqueeze(0))
+                Err1[:, i] = err1
+
+            Q[:, i1:i2] = Q1
+            Losses[:, i1:i2] = Losses1 / 2
+
+            W[:, i2:] -= Err1.matmul(Hinv[i1:i2, i2:])
+
+            # if DEBUG:
+            #     self.layer.weight.data[:, :i2] = Q[:, :i2]
+            #     self.layer.weight.data[:, i2:] = W[:, i2:]
+            #     logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
+            #     logger.info(f"{torch.sum(Losses)}")
+
+        if str(self.device).startswith("cuda"):
+            torch.cuda.synchronize()
+        logger.info(f"time {(time.time() - tick)}")
+        logger.info(f"error {torch.sum(Losses).item()}")
+
+        if act_order:
+            invperm = torch.argsort(perm)
+            Q = Q[:, invperm]
+
+        if isinstance(self.layer, transformers.Conv1D):
+            Q = Q.t()
+        # self.layer.weight.data = Q.reshape(self.layer.weight.shape).to(self.layer.weight.data.dtype)
+        Q = Q.reshape(weight_shape).to(weight_dtype)
+        if DEBUG:
+            logger.info(f"{torch.sum((self.layer(self.inp1) - self.out1) ** 2)}")
+
+        if scale == []:
+            scale.append(quantizer_ori.scale)
+            zero.append(quantizer_ori.zero)
+        scale = torch.cat(scale, dim=1)
+        zero = torch.cat(zero, dim=1)
+        return scale, zero, Q
+
+    def free(self):
+        if DEBUG:
+            self.inp1 = None
+            self.out1 = None
+        torch.cuda.empty_cache()
 
 class GPTQ:
     """
@@ -726,6 +1018,7 @@ class GPTQ:
         self.perm = None  # act_order choice
 
     def add_batch(self, inp, out):
+        # import pdb;pdb.set_trace()
         # if DEBUG:
         #     self.inp1 = inp
         #     self.out1 = out
