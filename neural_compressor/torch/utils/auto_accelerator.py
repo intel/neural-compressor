@@ -54,8 +54,9 @@ class AcceleratorRegistry:
         """
 
         def decorator(accelerator_cls):
-            cls.registered_accelerators.setdefault(name, {})
-            cls.registered_accelerators[name] = (accelerator_cls, priority)
+            if accelerator_cls.is_available():
+                cls.registered_accelerators.setdefault(name, {})
+                cls.registered_accelerators[name] = (accelerator_cls, priority)
             return accelerator_cls
 
         return decorator
