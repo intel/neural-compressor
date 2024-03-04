@@ -1,0 +1,26 @@
+name: Probot
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize] # added `ready_for_review` since draft is skipped
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  required-jobs:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    timeout-minutes: 361 # in case something is wrong with the internal timeout
+    steps:
+      - uses: XuehaoSun/probot@0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          job: check-group
+          interval: 180 # seconds
+          timeout: 360 # minutes
+          maintainers: ""
+          owner: ""

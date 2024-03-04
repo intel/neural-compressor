@@ -9,7 +9,7 @@ coverage_compare="/neural-compressor/log_dir/coverage_compare.html"
 cd /neural-compressor/log_dir
 
 $BOLD_YELLOW && echo "collect coverage for PR branch" && $RESET
-cp ut_coverage_3x/.coverage /neural-compressor/
+cp ut_3x_coverage/.coverage /neural-compressor/
 mkdir -p coverage_PR
 cd /neural-compressor
 coverage report -m --rcfile=${COVERAGE_RCFILE} | tee ${coverage_log}
@@ -20,18 +20,19 @@ ls -l log_dir/coverage_PR/htmlcov
 
 $BOLD_YELLOW && echo "collect coverage for baseline" && $RESET
 cd /neural-compressor
+cp -r /neural-compressor/.azure-pipelines .azure-pipelines-pr
 git config --global --add safe.directory /neural-compressor
 git fetch
 git checkout master
 rm -rf build dist *egg-info
 echo y | pip uninstall neural_compressor_${1}
-cd /neural-compressor/.azure-pipelines/scripts && bash install_nc.sh ${1}
+cd /neural-compressor/.azure-pipelines-pr/scripts && bash install_nc.sh ${1}
 
 coverage erase
 cd /neural-compressor/log_dir
 mkdir -p coverage_base
 rm -rf /neural-compressor/.coverage || true
-cp ut_coverage_3x_baseline/.coverage /neural-compressor
+cp ut_3x_baseline_coverage/.coverage /neural-compressor
 
 cd /neural-compressor
 coverage report -m --rcfile=${COVERAGE_RCFILE} | tee ${coverage_log_base}
@@ -123,10 +124,10 @@ if [[ ${#fail_items[@]} -ne 0 ]]; then
         $BOLD_RED && echo "Unit Test failed with ${item} coverage decrease ${decrease}%" && $RESET
     done
     $BOLD_RED && echo "compare coverage to give detail info" && $RESET
-    bash /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "FAILED" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
+    bash /neural-compressor/.azure-pipelines-pr/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "FAILED" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
     exit 1
 else
     $BOLD_GREEN && echo "Unit Test success with coverage lines: ${coverage_PR_lines_rate}%, branches: ${coverage_PR_branches_rate}%" && $RESET
     $BOLD_GREEN && echo "compare coverage to give detail info" && $RESET
-    bash /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "SUCCESS" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
+    bash /neural-compressor/.azure-pipelines-pr/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "SUCCESS" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
 fi

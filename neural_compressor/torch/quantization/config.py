@@ -905,7 +905,7 @@ class SmoothQuantConfig(BaseConfig):
         alpha_max: float = 1.0,
         alpha_step: float = 0.1,
         shared_criterion: str = "max",
-        enable_blockwise_loss: bool = False,
+        do_blockwise: bool = False,
         auto_alpha_args: dict = None,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
@@ -928,14 +928,14 @@ class SmoothQuantConfig(BaseConfig):
         self.alpha_max = alpha_max
         self.alpha_step = alpha_step
         self.shared_criterion = shared_criterion
-        self.enable_blockwise_loss = enable_blockwise_loss
+        self.do_blockwise = do_blockwise
         self.auto_alpha_args = {
             "init_alpha": self.init_alpha,
             "alpha_min": self.alpha_min,
             "alpha_max": self.alpha_max,
             "alpha_step": self.alpha_step,
             "shared_criterion": self.shared_criterion,
-            "enable_blockwise_loss": self.enable_blockwise_loss,
+            "do_blockwise": self.do_blockwise,
         }
         self._post_init()
 
@@ -949,20 +949,15 @@ class SmoothQuantConfig(BaseConfig):
         cls.supported_configs = supported_configs
 
     @staticmethod
-    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
-        filter_result = []
-        for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
-                pair = (op_name, type(module).__name__)
-                filter_result.append(pair)
-        logger.debug(f"Get model info: {filter_result}")
-        return filter_result
+    def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
+        from neural_compressor.torch.algorithms.smooth_quant import get_quantizable_ops_recursively
+
+        model_info, _, _, _ = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
+        return model_info
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:
-        # TODO fwk owner needs to update it.
-        return SmoothQuantConfig(alpha=[0.1, 0.5])
+        return SmoothQuantConfig(alpha=[0.1, 0.5], folding=[True, False], scale_sharing=[True, False])
 
 
 def get_default_sq_config() -> SmoothQuantConfig:
@@ -1118,12 +1113,21 @@ class FP8Config(BaseConfig):
 
 
 def get_default_fp8_config() -> FP8Config:
-    """Generate the default gptq config.
+    """Generate the default fp8 config.
 
     Returns:
-        the default gptq config.
+        the default fp8 config.
     """
     return FP8Config()
+
+
+def get_default_fp8_config_set() -> FP8Config:
+    """Generate the default fp8 config set.
+
+    Returns:
+        the default fp8 config.
+    """
+    return FP8Config.get_config_set_for_tuning()
 
 
 ##################### Algo Configs End ###################################

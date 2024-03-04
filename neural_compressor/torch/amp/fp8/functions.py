@@ -20,7 +20,8 @@ import habana_frameworks.torch.hpex
 import torch
 from torch.nn import functional as F
 
-from neural_compressor.common import logger
+from neural_compressor.torch.algorithms.habana_fp8.modules import _map_guadi2_scale
+from neural_compressor.torch.utils import logger
 
 _F_linear = F.linear
 _torch_matmul = torch.matmul
@@ -32,7 +33,7 @@ E4M3_AMAX = torch.tensor(240, dtype=torch.float).to("hpu")
 E5M2_AMAX = torch.tensor(57344, dtype=torch.float).to("hpu")
 
 DTYPE_AMAX = E4M3_AMAX if DATA_TYPE == torch.float8_e4m3fn else E5M2_AMAX
-USE_AMAX = False if os.getenv("PT_USE_FP8_AMAX") is None else True
+USE_AMAX = bool(os.getenv("PT_USE_FP8_AMAX", False))
 
 
 def fp8_linear_forward(input, weight, bias=None):
@@ -44,6 +45,7 @@ def fp8_linear_forward(input, weight, bias=None):
         out_dtype = input.dtype
         if USE_AMAX:
             input_scale = DTYPE_AMAX / input.data.abs().max()
+            input_scale = _map_guadi2_scale(input_scale)
             input_scale_inv = torch.reciprocal(input_scale)
         else:
             input_scale, input_scale_inv = None, None
@@ -56,6 +58,7 @@ def fp8_linear_forward(input, weight, bias=None):
         out_dtype = weight.dtype
         if USE_AMAX:
             weight_scale = DTYPE_AMAX / weight.data.abs().max()
+            weight_scale = _map_guadi2_scale(weight_scale)
             weight_scale_inv = torch.reciprocal(weight_scale)
         else:
             weight_scale, weight_scale_inv = None, None
@@ -86,6 +89,7 @@ def fp8_matmul(input1, input2):
         out_dtype = input1.dtype
         if USE_AMAX:
             input1_scale = DTYPE_AMAX / input1.data.abs().max()
+            input1_scale = _map_guadi2_scale(input1_scale)
             input1_scale_inv = torch.reciprocal(input1_scale)
         else:
             input1_scale, input1_scale_inv = None, None
@@ -98,6 +102,7 @@ def fp8_matmul(input1, input2):
         out_dtype = input2.dtype
         if USE_AMAX:
             input2_scale = DTYPE_AMAX / input2.data.abs().max()
+            input2_scale = _map_guadi2_scale(input2_scale)
             input2_scale_inv = torch.reciprocal(input2_scale)
         else:
             input2_scale, input2_scale_inv = None, None
