@@ -122,6 +122,7 @@ subprojects:
       - "setup.py"
       - "requirements.txt"
       - ".azure-pipelines/scripts/ut/run_itrex.sh"
+      - ".azure-pipelines/ut-itrex.yml"
       - "!neural_compressor/common/**"
       - "!neural_compressor/torch/**"
       - "!neural_compressor/tensorflow/**"
