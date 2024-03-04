@@ -17,6 +17,7 @@ Classes
    neural_compressor.torch.utils.auto_accelerator.Auto_Accelerator
    neural_compressor.torch.utils.auto_accelerator.CPU_Accelerator
    neural_compressor.torch.utils.auto_accelerator.CUDA_Accelerator
+   neural_compressor.torch.utils.auto_accelerator.HPU_Accelerator
 
 
 
@@ -61,6 +62,15 @@ Functions
 
 
 .. py:class:: CUDA_Accelerator
+
+
+
+
+   Helper class that provides a standard way to create an ABC using
+   inheritance.
+
+
+.. py:class:: HPU_Accelerator
 
 
 
