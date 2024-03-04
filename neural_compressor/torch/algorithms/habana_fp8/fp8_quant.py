@@ -41,7 +41,7 @@ from .modules import (  # fp32; dynamic modules; static modules; dtype amax
     FP8LmHeadLinearAllreduce,
     FP8Matmul,
     Matmul,
-    _map_guadi2_scale,
+    _map_gaudi2_scale,
 )
 
 quantization_mapping = {
@@ -151,7 +151,7 @@ def _remove_observer(module, qconfig):
             amax = amax.to("hpu")
             dist.all_reduce(amax, op=ReduceOp.MAX)
         scale = HF_max / amax
-        scale = _map_guadi2_scale(scale)
+        scale = _map_gaudi2_scale(scale)
         if hasattr(module, "input_activation_post_process1"):
             module.register_parameter("scale1", torch.nn.Parameter(scale))
         else:
@@ -168,7 +168,7 @@ def _remove_observer(module, qconfig):
             amax = amax.to("hpu")
             dist.all_reduce(amax, op=ReduceOp.MAX)
         scale = HF_max / amax
-        scale = _map_guadi2_scale(scale)
+        scale = _map_gaudi2_scale(scale)
         module.register_parameter("scale2", torch.nn.Parameter(scale))
         delattr(module, "input_activation_post_process1")
 

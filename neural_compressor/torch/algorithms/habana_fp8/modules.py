@@ -54,7 +54,7 @@ class Autocast(nn.Module):
 
 
 ##################### FP8 modules #######################
-def _map_guadi2_scale(scale):
+def _map_gaudi2_scale(scale):
     USE_GAUDI2_SCALE = bool(os.getenv("USE_GAUDI2_SCALE", False))
     if USE_GAUDI2_SCALE:
         scale_list = torch.tensor([16, 1, 1 / 16, 1 / 256])
@@ -100,7 +100,7 @@ class FP8DynamicLinear(torch.nn.Module):
         # register scale
         if not org_module.weight.device.type == "meta":
             weight_scale = self.dtype_amax / org_module.weight.data.abs().max()
-            weight_scale = _map_guadi2_scale(weight_scale)
+            weight_scale = _map_gaudi2_scale(weight_scale)
         else:
             weight_scale = torch.tensor(1.0)
         self.register_buffer(
@@ -135,7 +135,7 @@ class FP8DynamicLinear(torch.nn.Module):
         if inp.dtype not in [torch.float8_e4m3fn, torch.float8_e5m2]:
             if self.use_amax:
                 input_scale = self.dtype_amax / inp.abs().max()
-                input_scale = _map_guadi2_scale(input_scale)
+                input_scale = _map_gaudi2_scale(input_scale)
                 input_scale_inv = torch.reciprocal(input_scale)
             else:
                 input_scale, input_scale_inv = None, None
@@ -184,7 +184,7 @@ class FP8DynamicMatmul(torch.nn.Module):
             self.out_dtype = input1.dtype
             if self.use_amax:
                 input1_scale = self.dtype_amax / input1.data.abs().max()
-                input1_scale = _map_guadi2_scale(input1_scale)
+                input1_scale = _map_gaudi2_scale(input1_scale)
                 input1_scale_inv = torch.reciprocal(input1_scale)
             else:
                 input1_scale, input1_scale_inv = None, None
@@ -197,7 +197,7 @@ class FP8DynamicMatmul(torch.nn.Module):
             self.out_dtype = input2.dtype
             if self.use_amax:
                 input2_scale = self.dtype_amax / input2.data.abs().max()
-                input2_scale = _map_guadi2_scale(input2_scale)
+                input2_scale = _map_gaudi2_scale(input2_scale)
                 input2_scale_inv = torch.reciprocal(input2_scale)
             else:
                 input2_scale, input2_scale_inv = None, None
@@ -258,7 +258,7 @@ class FP8Linear(torch.nn.Module):
             )
         else:
             self.bias = None
-        input_scale = _map_guadi2_scale(org_module.scale) if hasattr(org_module, "scale") else torch.tensor(1.0)
+        input_scale = _map_gaudi2_scale(org_module.scale) if hasattr(org_module, "scale") else torch.tensor(1.0)
         self.register_buffer(
             "input_scale",
             torch.tensor(
@@ -277,7 +277,7 @@ class FP8Linear(torch.nn.Module):
         )
         if not org_module.weight.device.type == "meta":
             weight_scale = self.dtype_amax / org_module.weight.data.abs().max()
-            weight_scale = _map_guadi2_scale(weight_scale)
+            weight_scale = _map_gaudi2_scale(weight_scale)
         else:
             weight_scale = torch.tensor(1.0)
         self.register_buffer(
@@ -471,7 +471,7 @@ class FP8LinearLayer(torch.nn.Module):
         # register scale
         if not org_module.weight.device.type == "meta":
             weight_scale = self.dtype_amax / org_module.weight.data.abs().max()
-            weight_scale = _map_guadi2_scale(weight_scale)
+            weight_scale = _map_gaudi2_scale(weight_scale)
         else:
             weight_scale = torch.tensor(1.0)
         self.register_buffer(
@@ -498,7 +498,7 @@ class FP8LinearLayer(torch.nn.Module):
             )
             if org_module.bias is not None:
                 self.bias.data.copy_(org_module.bias.data.type(self.out_dtype))
-        input_scale = _map_guadi2_scale(org_module.scale) if hasattr(org_module, "scale") else torch.tensor(1.0)
+        input_scale = _map_gaudi2_scale(org_module.scale) if hasattr(org_module, "scale") else torch.tensor(1.0)
         self.register_buffer(
             "input_scale",
             torch.tensor(
@@ -578,7 +578,7 @@ class FP8LinearAllreduce(torch.nn.Module):
         # register scale
         if not org_module.weight.device.type == "meta":
             weight_scale = self.dtype_amax / org_module.weight.data.abs().max()
-            weight_scale = _map_guadi2_scale(weight_scale)
+            weight_scale = _map_gaudi2_scale(weight_scale)
         else:
             weight_scale = torch.tensor(1.0)
         self.register_buffer(
@@ -606,7 +606,7 @@ class FP8LinearAllreduce(torch.nn.Module):
             if org_module.bias is not None:
                 self.bias.data.copy_(org_module.bias.data.type(self.out_dtype))
             self.mp_group = org_module.mp_group
-        input_scale = _map_guadi2_scale(org_module.scale) if hasattr(org_module, "scale") else torch.tensor(1.0)
+        input_scale = _map_gaudi2_scale(org_module.scale) if hasattr(org_module, "scale") else torch.tensor(1.0)
         self.register_buffer(
             "input_scale",
             torch.tensor(
@@ -692,7 +692,7 @@ class FP8LmHeadLinearAllreduce(torch.nn.Module):
         # register scale
         if not org_module.weight.device.type == "meta":
             weight_scale = self.dtype_amax / org_module.weight.data.abs().max()
-            weight_scale = _map_guadi2_scale(weight_scale)
+            weight_scale = _map_gaudi2_scale(weight_scale)
         else:
             weight_scale = torch.tensor(1.0)
         self.register_buffer(
@@ -722,7 +722,7 @@ class FP8LmHeadLinearAllreduce(torch.nn.Module):
             self.mp_group = org_module.mp_group
             self.rank = org_module.rank
             self.world_size = org_module.world_size
-        input_scale = _map_guadi2_scale(org_module.scale) if hasattr(org_module, "scale") else torch.tensor(1.0)
+        input_scale = _map_gaudi2_scale(org_module.scale) if hasattr(org_module, "scale") else torch.tensor(1.0)
         self.register_buffer(
             "input_scale",
             torch.tensor(
