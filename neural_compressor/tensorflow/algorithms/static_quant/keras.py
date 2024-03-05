@@ -16,8 +16,8 @@
 # limitations under the License.
 
 import copy
-import json
 import math
+import re
 import os
 from collections import OrderedDict, UserDict
 from typing import Callable, Dict
@@ -28,6 +28,8 @@ import tensorflow as tf
 import yaml
 
 from neural_compressor.common import logger
+from neural_compressor.common.utils import DEFAULT_WORKSPACE
+
 from neural_compressor.tensorflow.keras.layers import (
     DeQuantize,
     FakeQuant,
@@ -91,6 +93,10 @@ class KerasAdaptor:
         self.callbacks = []
 
         self.conv_format = {}
+        self.layer_name_mapping = {}
+        self.input_layer_dict = {}
+        self.custom_layers = _add_supported_quantized_objects({})
+        self.tmp_dir = DEFAULT_WORKSPACE + "/tmp_saved_model_dir"
 
     def _check_itex(self):
         """Check if the Intel® Extension for TensorFlow has been installed."""
@@ -154,32 +160,22 @@ class KerasAdaptor:
 
     def _check_quantize_format(self, model):
         """The function that checks format for conv ops."""
-        json_model = copy.deepcopy(json.loads(model.to_json()))
-        config = json_model["config"]
-        fp32_layers = config["layers"]
-        name_op_map = {}
+        for layer in model.layers:
+            if layer.__class__.__name__ in self.supported_op:
+                self.conv_format[layer.name] = "s8"
+                input_layer_names = self.input_layer_dict[layer.name]
+                for input_layer_name in input_layer_names:
+                    check_layer = self.layer_name_mapping[input_layer_name]
+                    if check_layer.__class__.__name__  == "Activation" \
+                            and check_layer.activation.__name__ in ["relu"]:
+                        self.conv_format[layer.name] = "u8"
+                        break
 
-        for idx, layer in enumerate(copy.deepcopy(fp32_layers)):
-            name_op_map[layer["config"]["name"]] = layer
-
-        for idx, layer in enumerate(copy.deepcopy(fp32_layers)):
-            layer_config = layer["config"]
-            if layer["class_name"] in self.supported_op:
-                if "inbound_nodes" in layer:
-                    check_layer = name_op_map[layer["inbound_nodes"][0][0][0]]
-                else:
-                    check_layer = fp32_layers[idx - 1]
-                if check_layer["class_name"] in ["Activation"] and check_layer["config"]["activation"] in ["relu"]:
-                    self.conv_format[layer["config"]["name"]] = "u8"
-                else:
-                    self.conv_format[layer["config"]["name"]] = "s8"
         return model
 
     def _fuse_bn(self, model):
         """Fusing Batch Normalization."""
-        json_model = copy.deepcopy(json.loads(model.to_json()))
-        config = json_model["config"]
-        fp32_layers = config["layers"]
+        fp32_layers = model.layers
 
         def fuse_conv_bn(conv_weight, bn_weight, conv_type="Conv2D", eps=1.0e-5):
             assert conv_type in [
@@ -225,60 +221,56 @@ class KerasAdaptor:
             bias = bias.reshape(-1)
             return [depth_weight, weight, bias] if conv_type == "SeparableConv2D" else [weight, bias]
 
-        node_map = {}
-        for idx, layer in enumerate(copy.deepcopy(fp32_layers)):
-            layer_config = layer["config"]
-            if "inbound_nodes" in layer:
-                node_map[layer["name"]] = layer
-
         fuse_layers = []
         fold_conv = []
-        for idx, layer in enumerate(copy.deepcopy(fp32_layers)):
-            layer_config = layer["config"]
-            if "inbound_nodes" in layer:
-                if layer["class_name"] in ["BatchNormalization"]:
-                    bn_inbound_node = node_map[layer_config["name"]]["inbound_nodes"][0][0]
-                    if bn_inbound_node[0] in self.conv_weights.keys():
-                        conv_weight = self.conv_weights[bn_inbound_node[0]]
-                        conv_layer = node_map[bn_inbound_node[0]]
-                        bn_weight = self.bn_weights[layer_config["name"]]
-                        self.layer_weights[bn_inbound_node[0]] = fuse_conv_bn(
-                            conv_weight, bn_weight, conv_layer["class_name"], layer["config"]["epsilon"]
+        for idx, layer in enumerate(fp32_layers):
+            if hasattr(layer, "inbound_nodes"):
+                if layer.__class__.__name__ in ("BatchNormalization"):
+                    bn_inbound_node = layer.inbound_nodes[0]
+                    inbound_layer = bn_inbound_node.inbound_layers
+                    if inbound_layer.name in self.conv_weights.keys():
+                        conv_layer = inbound_layer
+                        conv_weight = self.conv_weights[conv_layer.name]
+                        bn_weight = self.bn_weights[layer.name]
+                        self.layer_weights[conv_layer.name] = fuse_conv_bn(
+                            conv_weight, bn_weight, conv_layer.__class__.__name__, layer.epsilon
                         )
-                        fold_conv.append(bn_inbound_node[0])
+                        fold_conv.append(conv_layer.name)
                     else:
                         fuse_layers.append(layer)
-                elif len(layer["inbound_nodes"]):
+                elif len(layer.inbound_nodes):
                     new_bound_nodes = []
                     # OpLambda node will have different bound node
-                    if layer["class_name"] in ["TFOpLambda", "SlicingOpLambda"]:
+                    if layer.__class__.__name__ in ("TFOpLambda", "SlicingOpLambda"):
                         fuse_layers.append(layer)
                     else:
-                        for bound_node in layer["inbound_nodes"][0]:
-                            if bound_node[0] in self.bn_weights.keys():
-                                bn_inbound_node = node_map[bound_node[0]]["inbound_nodes"][0][0]
-                                if bn_inbound_node[0] in self.conv_weights.keys():
+                        for bound_node in layer.inbound_nodes[0]:
+                            inbound_layer = bound_node.inbound_layers
+                            if inbound_layer in self.bn_weights.keys():
+                                bn_inbound_node = inbound_layer.inbound_nodes[0]
+                                bn_inbound_layer = bn_inbound_node.inbound_layers
+                                if bn_inbound_layer.name in self.conv_weights.keys():
                                     new_bound_nodes.append(bn_inbound_node)
                                 else:
                                     new_bound_nodes.append(bound_node)
                             else:
                                 new_bound_nodes.append(bound_node)
-                        layer["inbound_nodes"] = [new_bound_nodes]
+                        layer.inbound_nodes = new_bound_nodes
                         fuse_layers.append(layer)
                 else:
                     fuse_layers.append(layer)
             else:
                 if (
                     idx > 0
-                    and layer["class_name"] in ["BatchNormalization"]
-                    and fp32_layers[idx - 1]["class_name"] in ["Conv2D"]
+                    and layer.__class__.__name__ == "BatchNormalization"
+                    and fp32_layers[idx - 1].__class__.__name__ == "Conv2D"
                 ):
-                    conv_name = fp32_layers[idx - 1]["config"]["name"]
+                    conv_name = fp32_layers[idx - 1].name
                     conv_weight = self.conv_weights[conv_name]
-                    bn_weight = self.bn_weights[layer_config["name"]]
-                    conv_type = fp32_layers[idx - 1]["class_name"]
+                    bn_weight = self.bn_weights[layer.name]
+                    conv_type = fp32_layers[idx - 1].__class__.__name__
                     self.layer_weights[conv_name] = fuse_conv_bn(
-                        conv_weight, bn_weight, conv_type, layer["config"]["epsilon"]
+                        conv_weight, bn_weight, conv_type, layer.epsilon
                     )
                     fold_conv.append(conv_name)
                 else:
@@ -286,15 +278,13 @@ class KerasAdaptor:
 
         # bn folding will have a shift bias
         for idx, layer in enumerate(fuse_layers):
-            layer_config = layer["config"]
             if (
-                layer["class_name"] in ["Conv2D", "DepthwiseConv2D", "SeparableConv2D"]
-                and layer_config["name"] in fold_conv
+                layer.__class__.__name__ in ("Conv2D", "DepthwiseConv2D", "SeparableConv2D")
+                and layer.name in fold_conv
             ):
-                layer_config["use_bias"] = True
+                layer.use_bias = True
 
-        json_model["config"]["layers"] = fuse_layers
-        fused_model = self._restore_model_from_json(json_model)
+        fused_model = self._rebuild_model_from_layers(model, fuse_layers)
         return fused_model
 
     @dump_elapsed_time("Pass quantize model")
@@ -318,8 +308,8 @@ class KerasAdaptor:
             converted_model = self.convert_bf16()
             return converted_model
 
-        # if self.backend == "itex":
-        #     self._check_itex()
+        if self.backend == "itex":
+            self._check_itex()
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
@@ -337,23 +327,20 @@ class KerasAdaptor:
         q_layers = []
         self.inbound_nodes_map = {}
         for idx, layer in enumerate(copy.deepcopy(self.fp32_layers)):
-            layer_config = layer["config"]
             if (
-                layer["class_name"] in self.supported_op
-                and layer["config"]["name"] in self.quantize_config["op_wise_config"]
+                layer.__class__.__name__ in self.supported_op
+                and layer.name in self.quantize_config["op_wise_config"]
             ):
-                op_config = self.quantize_config["op_wise_config"][layer["config"]["name"]]
+                op_config = self.quantize_config["op_wise_config"][layer.name]
                 mode = "per_channel" if op_config[0] else "per_tensor"
                 fake_q_name = "fake_quant_" + str(idx)
-                fake_q_layer = {
-                    "class_name": "FakeQuant",
-                    "name": fake_q_name,
-                    "T": self.conv_format[layer["config"]["name"]],
-                    "config": {"mode": "per_tensor", "name": fake_q_name},
-                }
-                if "inbound_nodes" in layer:
-                    fake_q_layer["inbound_nodes"] = layer["inbound_nodes"]
-                    layer["inbound_nodes"] = [[[fake_q_name, 0, 0, {}]]]
+                fake_q_layer = FakeQuant(name=fake_q_name, 
+                                         T=self.conv_format[layer.name],
+                                         mode="per_tensor"
+                                         )
+                if hasattr(layer, "inbound_nodes"):
+                    fake_q_layer.inbound_nodes[0].inbound_layers = layer.inbound_nodes[0].inbound_layers
+                    layer.inbound_nodes[0].inbound_layers = fake_q_layer
                     self.inbound_nodes_map[fake_q_name] = layer
 
                 q_layers.append(fake_q_layer)
@@ -361,10 +348,7 @@ class KerasAdaptor:
             else:
                 q_layers.append(layer)
 
-        json_model = copy.deepcopy(json.loads(self.pre_optimized_object.to_json()))
-        json_model["config"]["layers"] = q_layers
-        quantized_model = self._restore_model_from_json(json_model)
-
+        quantized_model = self._rebuild_model_from_layers(self.pre_optimized_object, q_layers)
         converted_model = self._calibrate(quantized_model, dataloader, self.quantize_config["calib_iteration"])
 
         return converted_model
@@ -376,141 +360,133 @@ class KerasAdaptor:
         results = {}
         for idx, (inputs, labels) in enumerate(dataloader):
             outputs = model.predict_on_batch(inputs)
-            json_model = copy.deepcopy(json.loads(model.to_json()))
-            config = json_model["config"]
-            layers = config["layers"]
-            for layer in layers:
-                if layer["class_name"] == "FakeQuant":
-                    min_value = layer["config"]["min_value"]
-                    max_value = layer["config"]["max_value"]
-                    if layer["config"]["name"] not in results:
-                        results[layer["config"]["name"]] = {"min": [min_value], "max": [max_value]}
+            for layer in model.layers:
+                if layer.__class__.__name__ == "FakeQuant":
+                    min_value = layer.min_value
+                    max_value = layer.max_value
+                    if layer.name not in results:
+                        results[layer.name] = {"min": [min_value], "max": [max_value]}
                     else:
-                        results[layer["config"]["name"]]["min"].append(min_value)
-                        results[layer["config"]["name"]]["max"].append(max_value)
+                        results[layer.name]["min"].append(min_value)
+                        results[layer.name]["max"].append(max_value)
             if idx + 1 == calib_interation:
                 break
 
-        # insert the calibrated min/max to Q/DQ
-        json_model = copy.deepcopy(json.loads(model.to_json()))
-        config = json_model["config"]
-        layers = config["layers"]
         q_layers = []
-        # quantize_mode = self._check_quantize_mode(json_model)
         inbound_reverse_map = {}
-        for idx, layer in enumerate(layers):
-            layer_config = copy.deepcopy(layer["config"])
-            if layer["class_name"] == "FakeQuant":
-                min_value = min(results[layer["config"]["name"]]["min"])
-                max_value = max(results[layer["config"]["name"]]["max"])
-                quantize_layer = {
-                    "class_name": "Quantize",
-                    "name": "quantize_" + str(idx),
-                    "config": {
-                        "min_range": min_value,
-                        "max_range": max_value,
-                        "T": layer_config["T"],
-                        "name": "quantize_" + str(idx),
-                    },
-                }
-                dequantize_layer = {
-                    "class_name": "DeQuantize",
-                    "name": "dequantize_" + str(idx),
-                    "config": {
-                        "min_range": min_value,
-                        "max_range": max_value,
-                        # 'mode': quantize_mode,
-                        "name": "dequantize_" + str(idx),
-                    },
-                }
-                if "inbound_nodes" in layer:
-                    quantize_layer["inbound_nodes"] = layer["inbound_nodes"]
-                    dequantize_layer["inbound_nodes"] = [[["quantize_" + str(idx), 0, 0, {}]]]
+        for idx, layer in enumerate(model.layers):
+            if layer.__class__.__name__ == "FakeQuant":
+                min_value = min(results[layer.name]["min"])
+                max_value = max(results[layer.name]["max"])
+                quantize_layer = Quantize(
+                    name = "quantize_" + str(idx),
+                    min_range = min_value,
+                    max_range = max_value,
+                    T = layer.T,
+                )
+                dequantize_layer = DeQuantize(
+                    name = "dequantize_" + str(idx),
+                    min_range = min_value,
+                    max_range = max_value,
+                )
+
+                if hasattr(layer, "inbound_nodes"):
+                    quantize_layer.inbound_nodes = layer.inbound_nodes
+                    dequantize_layer.inbound_nodes[0].inbound_layers = quantize_layer
                     # find the conv/dense layer from fake quant map and
                     # change the conv/dense node inbound to dequantize
-                    layer_name = self.inbound_nodes_map[layer["name"]]["name"]
-                    inbound_reverse_map[layer_name] = [[["dequantize_" + str(idx), 0, 0, {}]]]
+                    layer_name = self.inbound_nodes_map[layer.name].name
+                    inbound_reverse_map[layer_name] = dequantize_layer
 
                 q_layers.append(quantize_layer)
                 q_layers.append(dequantize_layer)
             elif (
-                layer["class_name"] in self.supported_op
-                and layer["config"]["name"] in self.quantize_config["op_wise_config"]
+                layer.__class__.__name__ in self.supported_op
+                and layer.name in self.quantize_config["op_wise_config"]
             ):
                 # index 0 is weight, index 1 is bias
-                q_layer_name = "Q" + layer["class_name"]
+                q_layer_class = "Q" + layer.__class__.__name__
                 # this is for inbounds search
-                q_name = layer["config"]["name"]
+                q_name = layer.name
                 # for layers that have weights
-                if layer["config"]["name"] in self.layer_weights:
-                    kernel = self.layer_weights[layer["config"]["name"]][0]
+                if layer.name in self.layer_weights:
+                    kernel = self.layer_weights[layer.name][0]
                     dim = list(range(0, kernel.ndim))
                     t_dim = [dim.pop(-1)]
                     t_dim.extend(dim)
                     channel_size = kernel.shape[-1]
                     kernel_channel = kernel.transpose(t_dim).reshape(channel_size, -1)
-                    layer_config["min_value"] = json.dumps(np.min(kernel_channel, axis=1).tolist())
-                    layer_config["max_value"] = json.dumps(np.max(kernel_channel, axis=1).tolist())
+                    layer.min_value = np.min(kernel_channel, axis=1).tolist()
+                    layer.max_value = np.max(kernel_channel, axis=1).tolist()
                 else:
                     # default value, but never expected to be used
                     # cause no kernel weights for this layer
-                    layer_config["min_value"] = json.dumps([-10000])
-                    layer_config["max_value"] = json.dumps([10000])
+                    layer.min_value = [-10000]
+                    layer.max_value = [10000]
+                layer.name = q_name
+                layer_config = layer.get_config()
                 layer_config["name"] = q_name
-                q_layer = {"class_name": q_layer_name, "name": q_name, "config": layer_config}
-                if "inbound_nodes" in layer:
-                    q_layer["inbound_nodes"] = inbound_reverse_map[layer["name"]]
+                q_layer = self.custom_layers[q_layer_class].from_config(layer_config)
+                if hasattr(layer, "inbound_nodes"):
+                    q_layer.inbound_nodes = inbound_reverse_map[layer.name]
                 q_layers.append(q_layer)
             else:
                 q_layers.append(layer)
 
-        json_model["config"]["layers"] = q_layers
-        quantized_model = self._restore_model_from_json(json_model)
+        quantized_model = self._rebuild_model_from_layers(model ,q_layers)
         return quantized_model
 
     def convert_bf16(self):
         """Execute the BF16 conversion."""
         tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
-        json_model = copy.deepcopy(json.loads(self.pre_optimized_object.to_json()))
+        model = self.pre_optimized_object
 
-        for layer in json_model["config"]["layers"]:
-            if layer["config"]["name"] in self.bf16_ops:
-                layer["config"]["dtype"] = "mixed_bfloat16"
+        for layer in model.layers:
+            if layer.name in self.bf16_ops:
+                layer.dtype = "mixed_bfloat16"
 
-        converted_model = self._restore_model_from_json(json_model)
+        model.save(self.tmp_dir)
+        converted_model = tf.keras.saved_model.load(self.tmp_dir)
         tf.keras.mixed_precision.set_global_policy("float32")
 
         return converted_model
 
     # (TODO) choose the properly quantize mode
-    def _check_quantize_mode(self, json_model):
+    def _check_quantize_mode(self, model):
         """Check what quantize mode to use."""
-        config = json_model["config"]
-        layers = config["layers"]
-        for idx, layer in enumerate(layers):
-            if "ReLU" in layer["class_name"]:
+        for idx, layer in enumerate(model.layers):
+            if "ReLU" in layer.__class__.__name__:
                 return "MIN_FIRST"
         return "SCALED"
 
-    def _restore_model_from_json(self, json_model):
-        """Generate a keras model from json files."""
-        from tensorflow.keras.models import model_from_json
+    def _rebuild_model_from_layers(self, model, layers):
+        """Insert a layer before the target layer."""
+        model_outputs = []
+        input_layer_dict = {}
+        output_tensor_dict = {layers[0].name: model.input}
 
-        from neural_compressor.tensorflow.utils import version1_gte_version2
+        for layer in layers:
+            for node in layer._outbound_nodes:
+                layer_name = node.outbound_layer.name
+                if layer_name not in input_layer_dict:
+                    input_layer_dict[layer_name] = [layer.name]
+                else:
+                    input_layer_dict[layer_name].append(layer.name)
 
-        if version1_gte_version2(keras.__version__, "2.13.1"):
-            from keras.src.saving import serialization_lib
-
-            serialization_lib.enable_unsafe_deserialization()
-
-        custom_objects = {}
-        # We need to keep a dictionary of custom objects as our quantized library
-        # is not recognized by keras.
-        custom_objects = _add_supported_quantized_objects(custom_objects)
-        json_model_file = json.dumps(json_model)
-        qmodel = model_from_json(json_model_file, custom_objects=custom_objects)
-        qmodel = self._set_weights(qmodel, self.layer_weights)
-        return qmodel
+        for layer in layers[1:]:
+            input_tensors = [output_tensor_dict[input_layer] 
+                    for input_layer in input_layer_dict[layer.name]]
+            if len(input_tensors) == 1:
+                input_tensors = input_tensors[0]
+            x = layer(input_tensors)
+            output_tensor_dict[layer.name] = x
+            if layer_name in model.output_names:
+                model_outputs.append(x)
+        
+        new_model = tf.keras.models.Model(inputs=model.inputs, outputs=model_outputs)
+        new_model = self._set_weights(new_model, self.layer_weights)
+        new_model.save(self.tmp_dir)
+        return tf.keras.saved_model.load(self.tmp_dir)
 
     # set fp32 weights to qmodel
     def _set_weights(self, qmodel, layer_weights):
@@ -622,28 +598,26 @@ class KerasAdaptor:
                 self.layer_weights[layer.name] = copy.deepcopy(layer.get_weights())
         self.pre_optimized_object = self._pre_optimize(keras_object)
 
-        json_model = copy.deepcopy(json.loads(self.pre_optimized_object.to_json()))
-        config = json_model["config"]
-        self.fp32_layers = config["layers"]
 
-        quantizable_op_details = OrderedDict()
-        for details in self.fp32_layers:
-            node_op = details["class_name"]
-            node_name = details["config"]["name"]
-            if node_op == "Conv2D":
-                quantizable_op_details[(node_name, node_op)] = [conv_config, bf16_config, fp32_config]
-            elif node_op == "Dense":
-                quantizable_op_details[(node_name, node_op)] = [dense_config, bf16_config, fp32_config]
-            elif node_op in {"AveragePooling2D", "AvgPool2D"}:
-                quantizable_op_details[(node_name, node_op)] = [avgpool_config, bf16_config, fp32_config]
-            elif node_op in {"MaxPooling2D", "MaxPool2D"}:
-                quantizable_op_details[(node_name, node_op)] = [maxpool_config, bf16_config, fp32_config]
+        self.fp32_layers = keras_object.layers
+
+        quantizable_layer_details = OrderedDict()
+        for layer in self.fp32_layers:
+            layer_class = layer.__class__.__name__
+            if layer_class == "Conv2D":
+                quantizable_layer_details[(layer.name, layer_class)] = [conv_config, bf16_config, fp32_config]
+            elif layer_class == "Dense":
+                quantizable_layer_details[(layer.name, layer_class)] = [dense_config, bf16_config, fp32_config]
+            elif layer_class in {"AveragePooling2D", "AvgPool2D"}:
+                quantizable_layer_details[(layer.name, layer_class)] = [avgpool_config, bf16_config, fp32_config]
+            elif layer_class in {"MaxPooling2D", "MaxPool2D"}:
+                quantizable_layer_details[(layer.name, layer_class)] = [maxpool_config, bf16_config, fp32_config]
             else:
-                quantizable_op_details[(node_name, node_op)] = [bf16_config, fp32_config]
+                quantizable_layer_details[(layer.name, layer_class)] = [bf16_config, fp32_config]
 
         capability = {
-            "opwise": copy.deepcopy(quantizable_op_details),
-            "optypewise": self.get_optype_wise_ability(quantizable_op_details),
+            "opwise": copy.deepcopy(quantizable_layer_details),
+            "optypewise": self.get_optype_wise_ability(quantizable_layer_details),
         }
         logger.debug("Dump framework quantization capability:")
         logger.debug(capability)
