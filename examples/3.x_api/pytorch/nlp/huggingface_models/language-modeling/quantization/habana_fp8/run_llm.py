@@ -47,8 +47,8 @@ parser.add_argument("--output_dir", nargs="?", default="./saved_results")
 parser.add_argument("--to_graph", action="store_true")
 parser.add_argument("--approach", type=str, default=None,
                     help="Select from ['dynamic', 'static' 'cast']")
-parser.add_argument("--precision", type=str, default='fp8_e4m3',
-                    help="Select from ['fp8_e4m3', 'fp8_e5m2', 'bf16', 'fp16'], \
+parser.add_argument("--precision", type=str, default='fp32',
+                    help="Select from ['fp8_e4m3', 'fp8_e5m2', 'bf16', 'fp16', 'fp32'], \
                         ['bf16', 'fp16'] only work with cast approach")
 parser.add_argument("--autotune", action="store_true")
 parser.add_argument("--accuracy", action="store_true")
