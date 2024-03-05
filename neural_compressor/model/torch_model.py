@@ -496,6 +496,9 @@ class PyTorchModel(PyTorchBaseModel):
                 gptq_config = json.load(f)
         else:
             gptq_config = self.gptq_config if hasattr(self, "gptq_config") else {}
+
+        autoround_config = self.autoround_config if hasattr(self, "autoround_config") else {}
+
         if gptq_config:
             for k, v in weight_config.items():
                 logger.debug(f"Compressing {k} on device {device}")
@@ -555,6 +558,19 @@ class PyTorchModel(PyTorchBaseModel):
                 )
                 new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
                 set_module(self.model, k, new_module)
+        elif autoround_config:
+            from auto_round.export.export_to_itrex import compress_model  # pylint: disable=E0401
+
+            self.model = compress_model(
+                self.model,
+                weight_config=autoround_config,
+                enable_full_range=enable_full_range,
+                compression_dtype=compression_dtype,
+                compression_dim=compression_dim,
+                device=device,
+                use_optimum_format=use_optimum_format,
+                inplace=True,
+            )
         else:
             for k, v in weight_config.items():
                 logger.debug(f"Compressing {k} on device {device}")
