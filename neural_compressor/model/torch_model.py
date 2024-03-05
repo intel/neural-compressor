@@ -560,6 +560,7 @@ class PyTorchModel(PyTorchBaseModel):
                 set_module(self.model, k, new_module)
         elif autoround_config:
             from auto_round.export.export_to_itrex import compress_model
+
             self.model = compress_model(
                 self.model,
                 weight_config=autoround_config,
@@ -568,7 +569,8 @@ class PyTorchModel(PyTorchBaseModel):
                 compression_dim=compression_dim,
                 device=device,
                 use_optimum_format=use_optimum_format,
-                inplace=True)
+                inplace=True,
+            )
         else:
             for k, v in weight_config.items():
                 logger.debug(f"Compressing {k} on device {device}")
