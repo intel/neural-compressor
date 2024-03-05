@@ -331,12 +331,12 @@ def teq_quantize_entry(
 
 ###################### AUTOROUND Algo Entry ##################################
 @register_algo(name=AUTOROUND)
-def teq_quantize_entry(
+def autoround_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig], *args, **kwargs
 ) -> torch.nn.Module:
     from neural_compressor.torch.algorithms.weight_only import autoround_quantize
 
-    logger.info("Quantize model with the AUTOROUND algorithm.")
+    logger.info("Quantize model with the AutoRound algorithm.")
     calib_func = kwargs.get("run_fn", None)
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
@@ -401,7 +401,7 @@ def teq_quantize_entry(
         **kwargs
     )
     model.autoround_config = autoround_config
-    logger.info("AUTOROUND quantization done.")
+    logger.info("AutoRound quantization done.")
     return model
 
 
