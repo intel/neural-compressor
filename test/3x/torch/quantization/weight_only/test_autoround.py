@@ -41,8 +41,7 @@ class TestAutoRound(unittest.TestCase):
         "n_samples": 20,
         "seq_len": 10,
         "iters": 10,
-        "scale_dtype": "fp32",
-        """
+        "scale_dtype": "fp32","""
         inp = torch.ones([1, 10], dtype=torch.long)
 
         tokenizer = transformers.AutoTokenizer.from_pretrained(
