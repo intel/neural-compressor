@@ -624,6 +624,7 @@ class AutoRoundConfig(BaseConfig):
 
     AUTOROUND: Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs.
     https://arxiv.org/abs/2309.05516
+    code: https://github.com/intel/auto-round
     """
 
     supported_configs: List[OperatorConfig] = []
@@ -633,29 +634,18 @@ class AutoRoundConfig(BaseConfig):
         "group_size",
         "use_sym",
         # autoround params
-        "tokenizer",
         "enable_full_range",
-        "bs",
-        "lr_scheduler",
-        "dataloader",
-        "dataset_name",
-        "dataset_split",
-        "use_quant_input",
+        "batch_size",
         "enable_minmax_tuning",
         "lr",
         "minmax_lr",
-        "low_gpu_mem_usage",
         "iters",
         "seqlen",
         "n_samples",
-        "sampler",
-        "seed",
         "n_blocks",
         "gradient_accumulate_steps",
         "not_use_best_mse",
         "dynamic_max_gap",
-        "data_type",
-        "scale_dtype",
     ]
     name = AUTOROUND
 
@@ -668,7 +658,7 @@ class AutoRoundConfig(BaseConfig):
         # AUTOROUND
         tokenizer=None,
         enable_full_range: bool = False,
-        bs: int = 8,
+        batch_size: int = 8,
         lr_scheduler=None,
         dataloader=None,
         dataset_name: str = "NeelNanda/pile-10k",
@@ -699,7 +689,7 @@ class AutoRoundConfig(BaseConfig):
             use_sym (bool): Indicates whether weights are symmetric, default is False.
             group_size (int): Size of weight groups, default is 128.
             enable_full_range (bool): Whether to enable full range quantization (default is False).
-            bs (int): Batch size for training (default is 8).
+            batch_size (int): Batch size for training (default is 8).
             lr_scheduler: The learning rate scheduler to be used.
             dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
             dataset_split (str): The split of the dataset to be used (default is "train").
@@ -726,7 +716,7 @@ class AutoRoundConfig(BaseConfig):
         self.group_size = group_size
         self.tokenizer = tokenizer
         self.enable_full_range = enable_full_range
-        self.bs = bs
+        self.batch_size = batch_size
         self.lr_scheduler = lr_scheduler
         self.dataloader = dataloader  ## to support later
         self.dataset_name = dataset_name

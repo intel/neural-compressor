@@ -37,11 +37,6 @@ class TestAutoRound(unittest.TestCase):
         logger.info(f"Running TestAutoRound test: {self.id()}")
 
     def test_autoround(self):
-        """ "
-        "n_samples": 20,
-        "seq_len": 10,
-        "iters": 10,
-        "scale_dtype": "fp32","""
         inp = torch.ones([1, 10], dtype=torch.long)
 
         tokenizer = transformers.AutoTokenizer.from_pretrained(

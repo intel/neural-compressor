@@ -74,8 +74,9 @@ def get_autoround_default_run_fn(
                 model(data_new)
             elif isinstance(data_new, dict):
                 model(**data_new)
-        except NotImplementedError:
-            pass
+            else:
+                # Handle cases where data_new is neither a Tensor nor a dict
+                raise NotImplementedError(f"Handling not implemented for data type {type(data)}")
         except Exception as error:
             logger.error(error)
         total_cnt += input_ids.shape[0]
@@ -83,14 +84,14 @@ def get_autoround_default_run_fn(
             break
     if total_cnt == 0:
         logger.error(
-            f"no data has been cached, please provide more data with sequence length >={seqlen} in the "
-            f"dataloader or decease the sequence length"
+            "no data has been cached, please provide more data with sequence length >= {} in the ".format(seqlen) +
+            "dataloader or decease the sequence length."
         )
         exit()
     elif total_cnt < n_samples:
         logger.warning(
-            f"Insufficient number of samples collected may affect the quantification. "
-            f"Effective samples size:{total_cnt}, Target sample size:{n_samples}"
+            "Insufficient number of samples collected may affect the quantification. "
+            "Effective samples size: {}, Target sample size: {}".format(total_cnt, n_samples)
         )
 
 
