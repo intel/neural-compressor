@@ -5,3 +5,4 @@ psutil
 pytest
 torch
 transformers
+git+https://github.com/intel/auto-round.git@6815f8b66be456ecbef2d0beb33dbc4efeefdc04
