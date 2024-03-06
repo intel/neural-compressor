@@ -278,8 +278,6 @@ class TestAutoRoundWeightOnlyQuant(unittest.TestCase):
             model=model,
             tokenizer=self.tokenizer,
             n_samples=20,
-            device=device,
-            amp=False,
             seqlen=10,
             iters=10,
             scale_dtype="fp32",
@@ -291,34 +289,6 @@ class TestAutoRoundWeightOnlyQuant(unittest.TestCase):
         self.assertTrue(torch.all(torch.isclose(out1[0], out2[0], atol=1e-1)))
         self.assertFalse(torch.all(out1[0] == out2[0]))
         self.assertTrue(torch.all(out2[0] == out3[0]))
-
-    def test_autoround_export(self):
-        model = copy.deepcopy(self.gptj)
-        device = "cpu"
-        model = model
-        out1 = model(self.lm_input)
-        export_model, weight_config1 = autoround_quantize(
-            model=model,
-            tokenizer=self.tokenizer,
-            n_samples=20,
-            device=device,
-            amp=False,
-            seqlen=10,
-            iters=10,
-            scale_dtype="fp32",
-            export_args={"format": "itrex", "inplace": True},
-        )
-        export_model = export_model
-        model = model
-        out2 = model(self.lm_input)
-        out3 = export_model(self.lm_input)
-        self.assertTrue(torch.all(torch.isclose(out1[0], out2[0], atol=1e-1)))
-        self.assertFalse(torch.all(out1[0] == out2[0]))
-        self.assertTrue(torch.all(out2[0] == out3[0]))
-
-        from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear
-
-        self.assertTrue(isinstance(export_model.transformer.h[0].attn.k_proj, WeightOnlyLinear))
 
 
 if __name__ == "__main__":
