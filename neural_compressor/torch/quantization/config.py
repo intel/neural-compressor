@@ -636,8 +636,6 @@ class AutoRoundConfig(BaseConfig):
         "tokenizer",
         "enable_full_range",
         "bs",
-        "amp",
-        "device",
         "lr_scheduler",
         "dataloader",
         "dataset_name",
@@ -671,8 +669,6 @@ class AutoRoundConfig(BaseConfig):
         tokenizer=None,
         enable_full_range: bool = False,
         bs: int = 8,
-        amp: bool = True,
-        device="cuda:0",
         lr_scheduler=None,
         dataloader=None,
         dataset_name: str = "NeelNanda/pile-10k",
@@ -704,8 +700,6 @@ class AutoRoundConfig(BaseConfig):
             group_size (int): Size of weight groups, default is 128.
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             bs (int): Batch size for training (default is 8).
-            amp (bool): Whether to use automatic mixed precision (default is True).
-            device: The device to be used for tuning (default is "cuda:0").
             lr_scheduler: The learning rate scheduler to be used.
             dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
             dataset_split (str): The split of the dataset to be used (default is "train").
@@ -733,8 +727,6 @@ class AutoRoundConfig(BaseConfig):
         self.tokenizer = tokenizer
         self.enable_full_range = enable_full_range
         self.bs = bs
-        self.amp = amp
-        self.device = device
         self.lr_scheduler = lr_scheduler
         self.dataloader = dataloader  ## to support later
         self.dataset_name = dataset_name

@@ -39,11 +39,10 @@ class TestAutoRound(unittest.TestCase):
     def test_autoround(self):
         """ "
         "n_samples": 20,
-        "amp": False,
         "seq_len": 10,
         "iters": 10,
         "scale_dtype": "fp32",
-        "device": "cpu","""
+        """
         inp = torch.ones([1, 10], dtype=torch.long)
 
         tokenizer = transformers.AutoTokenizer.from_pretrained(
@@ -51,7 +50,7 @@ class TestAutoRound(unittest.TestCase):
         )
 
         out1 = self.gptj(inp)
-        quant_config = AutoRoundConfig(n_samples=20, amp=False, seqlen=10, iters=10, scale_dtype="fp32", device="cpu")
+        quant_config = AutoRoundConfig(n_samples=20, seqlen=10, iters=10, scale_dtype="fp32")
         logger.info(f"Test AutoRound with config {quant_config}")
         from neural_compressor.torch.algorithms.weight_only.autoround import get_autoround_default_run_fn
 

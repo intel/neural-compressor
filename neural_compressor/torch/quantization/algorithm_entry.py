@@ -351,8 +351,6 @@ def autoround_quantize_entry(
             }
             enable_full_range = quant_config.enable_full_range
             bs = quant_config.bs
-            amp = quant_config.amp
-            device = quant_config.device
             lr_scheduler = quant_config.lr_scheduler
             dataset_name = quant_config.dataset_name
             dataset_split = quant_config.dataset_split
@@ -378,8 +376,6 @@ def autoround_quantize_entry(
         weight_config=weight_config,
         enable_full_range=enable_full_range,
         bs=bs,
-        amp=amp,
-        device=device,
         lr_scheduler=lr_scheduler,
         dataset_name=dataset_name,
         dataset_split=dataset_split,

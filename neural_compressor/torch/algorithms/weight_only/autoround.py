@@ -205,7 +205,7 @@ class INCAutoRound(AutoRound):
         self.run_args = kwargs.get("run_args", None)
 
     @torch.no_grad()
-    def save_first_block_inputs(self, block_name, n_samples):
+    def cache_block_input(self, block_name, n_samples):
         """Save the inputs of the first block for calibration.
 
         This method temporarily replaces the forward method of the model to capture
@@ -244,7 +244,7 @@ def autoround_quantize(
     enable_full_range: bool = False,  ##for symmetric, TODO support later
     bs: int = 8,
     amp: bool = True,
-    device="cuda:0",
+    device=None,
     lr_scheduler=None,
     dataloader=None,  ## to support later
     dataset_name: str = "NeelNanda/pile-10k",
@@ -288,8 +288,8 @@ def autoround_quantize(
             }
     enable_full_range (bool): Whether to enable full range quantization (default is False).
     bs (int): Batch size for training (default is 8).
-    amp (bool): Whether to use automatic mixed precision (default is True).
-    device: The device to be used for tuning (default is "cuda:0").
+    amp (bool): Whether to use automatic mixed precision (default is True). Automatically detect and set.
+    device: The device to be used for tuning (default is None). Automatically detect and set.
     lr_scheduler: The learning rate scheduler to be used.
     dataloader: The dataloader for input data (to be supported in future).
     dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
