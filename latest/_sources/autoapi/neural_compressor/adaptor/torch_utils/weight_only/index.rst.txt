@@ -264,7 +264,7 @@ Functions
    :rtype: output
 
 
-.. py:function:: autoround_quantize(model, tokenizer, bits: int = 4, group_size: int = 128, scheme: str = 'asym', weight_config: dict = {}, enable_full_range: bool = False, bs: int = 8, amp: bool = True, device='cuda:0', lr_scheduler=None, dataloader=None, dataset_name: str = 'NeelNanda/pile-10k', dataset_split: str = 'train', use_quant_input: bool = True, enable_minmax_tuning: bool = True, lr: float = None, minmax_lr: float = None, low_gpu_mem_usage: bool = True, iters: int = 200, seqlen: int = 2048, n_samples: int = 512, sampler: str = 'rand', seed: int = 42, n_blocks: int = 1, gradient_accumulate_steps: int = 1, not_use_best_mse: bool = False, dynamic_max_gap: int = -1, data_type: str = 'int', scale_dtype='fp16', export_args: dict = {'format': None, 'inplace': True}, **kwargs)
+.. py:function:: autoround_quantize(model, tokenizer, bits: int = 4, group_size: int = 128, scheme: str = 'asym', weight_config: dict = {}, enable_full_range: bool = False, bs: int = 8, amp: bool = True, device=None, lr_scheduler=None, dataloader=None, dataset_name: str = 'NeelNanda/pile-10k', dataset_split: str = 'train', use_quant_input: bool = True, enable_minmax_tuning: bool = True, lr: float = None, minmax_lr: float = None, low_gpu_mem_usage: bool = True, iters: int = 200, seqlen: int = 2048, n_samples: int = 512, sampler: str = 'rand', seed: int = 42, n_blocks: int = 1, gradient_accumulate_steps: int = 1, not_use_best_mse: bool = False, dynamic_max_gap: int = -1, data_type: str = 'int', scale_dtype='fp16', **kwargs)
 
    Run autoround weight-only quantization.
    Args:
@@ -286,8 +286,8 @@ Functions
            }
    enable_full_range (bool): Whether to enable full range quantization (default is False).
    bs (int): Batch size for training (default is 8).
-   amp (bool): Whether to use automatic mixed precision (default is True).
-   device: The device to be used for tuning (default is "cuda:0").
+   amp (bool): Whether to use automatic mixed precision (default is True). Automatically detect and set.
+   device: The device to be used for tuning (default is None). Automatically detect and set.
    lr_scheduler: The learning rate scheduler to be used.
    dataloader: The dataloader for input data (to be supported in future).
    dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
@@ -307,8 +307,6 @@ Functions
    not_use_best_mse (bool): Whether to use mean squared error (default is False).
    dynamic_max_gap (int): The dynamic maximum gap (default is -1).
    data_type (str): The data type to be used (default is "int").
-   export_args (dict): The arguments for exporting compressed model, default is {"format": None, "inplace": True}.
-     Supported format: "itrex", "auto_gptq".
    **kwargs: Additional keyword arguments.
 
    :returns: The quantized model.
