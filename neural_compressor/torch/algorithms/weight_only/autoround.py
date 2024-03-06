@@ -239,10 +239,10 @@ def autoround_quantize(
     tokenizer=None,
     bits: int = 4,
     group_size: int = 128,
-    scheme: str = "asym",
+    sym: bool = False,
     weight_config: dict = {},
     enable_full_range: bool = False,  ##for symmetric, TODO support later
-    bs: int = 8,
+    batch_size: int = 8,
     amp: bool = True,
     device=None,
     lr_scheduler=None,
@@ -274,7 +274,7 @@ def autoround_quantize(
     tokenizer: Tokenizer for processing input data. Temporarily set as a mandatory parameter.
     bits (int): Number of bits for quantization (default is 4).
     group_size (int): Size of the quantization group (default is 128).
-    scheme (str): The quantization scheme to be used (default is "asym").
+    sym (bool): Whether to use symmetric quantization. (default is ).
     weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
     weight_config={
                 'layer1':##layer_name
@@ -282,12 +282,12 @@ def autoround_quantize(
                     'data_type': 'int',
                     'bits': 4,
                     'group_size': 32,
-                    'scheme': "asym", ## or sym
+                    'sym': False,
                 }
                 ...
             }
     enable_full_range (bool): Whether to enable full range quantization (default is False).
-    bs (int): Batch size for training (default is 8).
+    batch_size (int): Batch size for training (default is 8).
     amp (bool): Whether to use automatic mixed precision (default is True). Automatically detect and set.
     device: The device to be used for tuning (default is None). Automatically detect and set.
     lr_scheduler: The learning rate scheduler to be used.
@@ -323,10 +323,10 @@ def autoround_quantize(
         tokenizer=tokenizer,
         bits=bits,
         group_size=group_size,
-        scheme=scheme,
+        sym=sym,
         weight_config=weight_config,
         enable_full_range=enable_full_range,  ##for symmetric, TODO support later
-        bs=bs,
+        batch_size=batch_size,
         amp=amp,
         device=device,
         lr_scheduler=lr_scheduler,

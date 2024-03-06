@@ -346,11 +346,11 @@ def autoround_quantize_entry(
             weight_config[op_name] = {
                 "data_type": quant_config.dtype,
                 "bits": quant_config.bits,
-                "scheme": "sym" if quant_config.use_sym else "asym",
+                "sym": quant_config.use_sym,
                 "group_size": quant_config.group_size,
             }
             enable_full_range = quant_config.enable_full_range
-            bs = quant_config.bs
+            batch_size = quant_config.batch_size
             lr_scheduler = quant_config.lr_scheduler
             dataset_name = quant_config.dataset_name
             dataset_split = quant_config.dataset_split
@@ -375,7 +375,7 @@ def autoround_quantize_entry(
         model=model,
         weight_config=weight_config,
         enable_full_range=enable_full_range,
-        bs=bs,
+        batch_size=batch_size,
         lr_scheduler=lr_scheduler,
         dataset_name=dataset_name,
         dataset_split=dataset_split,
