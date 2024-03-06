@@ -1,6 +1,6 @@
+git+https://github.com/intel/auto-round.git@6815f8b66be456ecbef2d0beb33dbc4efeefdc04
 intel_extension_for_pytorch
 peft
 py-cpuinfo
 pydantic
 torch
-git+https://github.com/intel/auto-round.git@6815f8b66be456ecbef2d0beb33dbc4efeefdc04
