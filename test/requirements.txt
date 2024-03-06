@@ -1,7 +1,7 @@
 --find-links https://download.pytorch.org/whl/torch_stable.html
 accelerate==0.21.0
 dynast==1.6.0rc1
-git+https://github.com/intel/auto-round.git@b65830f3f6cb32d92a5c8ba5f80ace12d517357b
+git+https://github.com/intel/auto-round.git@6815f8b66be456ecbef2d0beb33dbc4efeefdc04
 horovod
 intel-extension-for-pytorch
 intel-tensorflow>=2.12.0
