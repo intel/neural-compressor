@@ -84,8 +84,8 @@ def get_autoround_default_run_fn(
             break
     if total_cnt == 0:
         logger.error(
-            "no data has been cached, please provide more data with sequence length >= {} in the ".format(seqlen) +
-            "dataloader or decease the sequence length."
+            "no data has been cached, please provide more data with sequence length >= {} in the ".format(seqlen)
+            + "dataloader or decease the sequence length."
         )
         exit()
     elif total_cnt < n_samples:
