@@ -4918,8 +4918,6 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         # auto round recipes
         enable_full_range = self.recipes["autoround_args"].get("enable_full_range", False)
         bs = self.recipes["autoround_args"].get("bs", 8)
-        amp = self.recipes["autoround_args"].get("amp", True)
-        device = self.recipes["autoround_args"].get("device", "cpu")
         lr_scheduler = self.recipes["autoround_args"].get("lr_scheduler", None)
         dataset_name = self.recipes["autoround_args"].get("dataset_name", "NeelNanda/pile-10k")
         dataset_split = self.recipes["autoround_args"].get("dataset_split", "train")
@@ -4939,8 +4937,6 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         dynamic_max_gap = self.recipes["autoround_args"].get("dynamic_max_gap", -1)
         data_type = self.recipes["autoround_args"].get("data_type", "int")  ##only support data_type
         scale_dtype = self.recipes["autoround_args"].get("scale_dtype", "fp16")
-        # autoround export
-        export_args = self.recipes["autoround_args"].get("export_args", {"format": None})
 
         model, autoround_config = autoround_quantize(
             model=model,
@@ -4951,8 +4947,6 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             weight_config=weight_config,
             enable_full_range=enable_full_range,
             bs=bs,
-            amp=amp,
-            device=device,
             lr_scheduler=lr_scheduler,
             dataloader=dataloader,
             dataset_name=dataset_name,
@@ -4973,8 +4967,6 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             dynamic_max_gap=dynamic_max_gap,
             data_type=data_type,
             scale_dtype=scale_dtype,
-            # export arguments
-            export_args=export_args,
         )
         return model, autoround_config
 
