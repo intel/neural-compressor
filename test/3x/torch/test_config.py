@@ -290,9 +290,9 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertEqual(teq_config1.to_dict(), teq_config2.to_dict())
 
     def test_autoround_config(self):
-        autoround_config1 = AutoRoundConfig(bs=16, scale_dtype="fp32")
+        autoround_config1 = AutoRoundConfig(batch_size=16, scale_dtype="fp32")
         quant_config_dict = {
-            "autoround": {"bs": 16, "scale_dtype": "fp32"},
+            "autoround": {"batch_size": 16, "scale_dtype": "fp32"},
         }
         autoround_config2 = AutoRoundConfig.from_dict(quant_config_dict["autoround"])
         self.assertEqual(autoround_config1.to_dict(), autoround_config2.to_dict())
