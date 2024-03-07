@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from copy import deepcopy
-from typing import Dict, List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import torch
 
@@ -46,9 +46,11 @@ def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
 def autotune(
     model: torch.nn.Module,
     tune_config: TuningConfig,
-    eval_fns: Optional[Union[Dict, List[Dict]]] = None,
+    eval_fns: Callable,
+    eval_args=None,
     run_fn=None,
     run_args=None,
+    example_inputs=None,
 ) -> Optional[torch.nn.Module]:
     """The main entry of auto-tune."""
     best_quant_model = None
@@ -76,7 +78,12 @@ def autotune(
             best_quant_config: BaseConfig = tuning_monitor.get_best_quant_config()
             # !!! Make sure to use deepcopy only when inplace is set to `True`.
             q_model = quantize(
-                deepcopy(model), quant_config=best_quant_config, run_fn=run_fn, run_args=run_args, inplace=True
+                deepcopy(model),
+                quant_config=best_quant_config,
+                run_fn=run_fn,
+                run_args=run_args,
+                inplace=True,
+                example_inputs=example_inputs,
             )
             best_quant_model = q_model  # quantize model inplace
             break
