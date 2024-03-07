@@ -22,5 +22,5 @@ jobs:
           job: check-group
           interval: 180 # seconds
           timeout: 360 # minutes
-          maintainers: ""
-          owner: ""
+          maintainers: "[XuehaoSun](https://github.com/XuehaoSun)"
+          owner: "[chensuyue](https://github.com/chensuyue) or [XuehaoSun](https://github.com/XuehaoSun)"
