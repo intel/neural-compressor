@@ -14,7 +14,7 @@
 
 import typing
 from enum import Enum, auto
-from typing import Any, List
+from typing import Any
 
 from pydantic import BaseModel
 

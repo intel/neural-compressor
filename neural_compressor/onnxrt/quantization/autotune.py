@@ -19,9 +19,9 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import onnx
 
+from neural_compressor.common import logger
 from neural_compressor.common.base_config import BaseConfig, get_all_config_set_from_config_registry
 from neural_compressor.common.base_tuning import TuningConfig, evaluator, init_tuning
-from neural_compressor.common.utils import logger
 from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
 from neural_compressor.onnxrt.quantization.config import FRAMEWORK_NAME
 from neural_compressor.onnxrt.quantization.quantize import _quantize
