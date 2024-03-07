@@ -411,7 +411,7 @@ class BaseConfig(ABC):
 
     @staticmethod
     def _is_op_type(name: str) -> bool:
-        # TODO (Yi), ort and tf need override it
+        # * Ort and TF may override this method.
         return not isinstance(name, str)
 
     @classmethod
@@ -461,7 +461,6 @@ class ComposableConfig(BaseConfig):
     ) -> OrderedDict[str, BaseConfig]:
         config_mapping = OrderedDict()
         for config in self.config_list:
-            global_config = config.global_config
             op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
             single_config_model_info = model_info.get(config.name, None)
             for op_name, op_type in single_config_model_info:
