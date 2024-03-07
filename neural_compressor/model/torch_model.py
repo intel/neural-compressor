@@ -559,9 +559,9 @@ class PyTorchModel(PyTorchBaseModel):
                 new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
                 set_module(self.model, k, new_module)
         elif autoround_config:
-            from auto_round.export.export_to_itrex.export import _pack_model  # pylint: disable=E0401
+            from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
 
-            self.model = _pack_model(
+            self.model = pack_model(
                 self.model,
                 weight_config=autoround_config,
                 enable_full_range=enable_full_range,
