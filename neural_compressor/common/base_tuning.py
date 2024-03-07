@@ -17,11 +17,8 @@ import copy
 import uuid
 from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Sized, Tuple, Union
 
-from neural_compressor.common import Logger
 from neural_compressor.common.base_config import BaseConfig
-from neural_compressor.common.utils import TuningLogger
-
-logger = Logger().get_logger()
+from neural_compressor.common.utils import TuningLogger, logger
 
 __all__ = [
     "Evaluator",
@@ -82,7 +79,6 @@ class Evaluator:
         return result
 
     def _update_the_objective_score(self, eval_pair, eval_result, overall_result) -> float:
-        # TODO update the result according to the weight and algo_name
         return overall_result + eval_result * eval_pair[self.WEIGHT]
 
     def get_number_of_eval_functions(self) -> int:
@@ -229,29 +225,25 @@ class TuningConfig:
     """Config for auto tuning pipeline.
 
     Examples:
-        # TODO: to refine it
         from neural_compressor.torch.quantization import TuningConfig
         tune_config = TuningConfig(
             config_set=[config1, config2, ...],
             max_trials=3,
-            tolerable_loss=0.01
-        )
+            tolerable_loss=0.01)
 
-        # Case 1: Tolerable Loss
-        fp32_baseline = 100
-        config1_metric, config2_metric, ... = 98, 99, ...
+        The tuning process stops when either of the following conditions is met:
+            1) The number of trials reaches the maximum trials.
+            2) The metric loss is within the tolerable loss.
 
-        # Tuning result of case 1:
-        # The best tuning config is config2, because config2_metric >= fp32_baseline * (1 - tolerable_loss)
-
-        # Case 2: Maximum Trials
-        fp32_baseline = 100
-        config1_metric, config2_metric, config3_metric, ... = 98, 98, 97, ...
-
-        # Tuning result of case 2:
-        # The best tuning config is config2, because of the following:
-        # 1. Not achieving the set goal. (config_metric < fp32_baseline * (1 - tolerable_loss))
-        # 2. Reached maximum tuning times.
+        For condition 2), we calculate the metric loss as follows:
+            relative_loss = (fp32_baseline - eval_result_of_q_model) / fp32_baseline
+            If relative_loss <= tolerable_loss, we stop the tuning process.
+            For example:
+                tolerable_loss = 0.01
+                fp32_baseline = 100
+                eval_result_of_q_model = 99
+                relative_loss = (100 - 99) / 100 = 0.01
+                The metric loss is within the tolerable loss, so the tuning process is stopped.
     """
 
     def __init__(
@@ -321,10 +313,9 @@ class TuningMonitor:
         """Check if need to stop tuning. Either accuracy goal is met, max trials is reached or timeout is reached.
 
         Returns:
-            bool: True if need to stop, otherwise False.
+            stop_flag: True if need to stop, otherwise False.
         """
 
-        # TODO: Support more stop criteria in the next PR, such as `timeout`, and so on.
         # reach max trials
         reach_max_trials = self.trial_cnt >= self.tuning_config.max_trials
         # reach accuracy goal

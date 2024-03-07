@@ -25,7 +25,8 @@ from collections import OrderedDict
 from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
-from neural_compressor.common import Logger
+from typing_extensions import Self
+
 from neural_compressor.common.tuning_param import TuningParam
 from neural_compressor.common.utils import (
     BASE_CONFIG,
@@ -36,9 +37,8 @@ from neural_compressor.common.utils import (
     GLOBAL,
     LOCAL,
     OP_NAME_OR_MODULE_TYPE,
+    logger,
 )
-
-logger = Logger().get_logger()
 
 __all__ = [
     "options",
@@ -52,8 +52,15 @@ __all__ = [
 
 
 # Config registry to store all registered configs.
-class ConfigRegistry:
+class ConfigRegistry(object):
     registered_configs = {}
+    _config_registry = None
+
+    def __new__(cls) -> Self:
+        if cls._config_registry is None:
+            cls._config_registry = super(ConfigRegistry, cls).__new__(cls)
+
+        return cls._config_registry
 
     @classmethod
     def register_config_impl(cls, framework_name: str, algo_name: str, priority: Union[float, int] = 0):
