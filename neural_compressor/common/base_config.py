@@ -56,7 +56,7 @@ class ConfigRegistry:
     registered_configs = {}
 
     @classmethod
-    def register_config_impl(cls, framework_name="None", algo_name=None, priority=0):
+    def register_config_impl(cls, framework_name: str, algo_name: str, priority: Union[float, int] = 0):
         """Register config decorator.
 
         The register the configuration classes for different algorithms within specific frameworks.
@@ -67,8 +67,8 @@ class ConfigRegistry:
                 # Configuration details for the ExampleAlgorithm
 
         Args:
-            framework_name: the framework name. Defaults to "None".
-            algo_name: the algorithm name. Defaults to None.
+            framework_name: the framework name.
+            algo_name: the algorithm name.
             priority: priority: the priority of the configuration. A larger number indicates a higher priority,
                 which will be tried first at the auto-tune stage. Defaults to 0.
         """
@@ -116,7 +116,7 @@ class ConfigRegistry:
 config_registry = ConfigRegistry()
 
 
-def register_config(framework_name="None", algo_name=None, priority=0):
+def register_config(framework_name: str, algo_name: str, priority: Union[float, int] = 0):
     """Register config decorator.
 
     The register the configuration classes for different algorithms within specific frameworks.
@@ -127,8 +127,8 @@ def register_config(framework_name="None", algo_name=None, priority=0):
             # Configuration details for the ExampleAlgorithm
 
     Args:
-        framework_name: the framework name. Defaults to "None".
-        algo_name: the algorithm name. Defaults to None.
+        framework_name: the framework name.
+        algo_name: the algorithm name.
         priority: the priority of the configuration. A larger number indicates a higher priority,
             which will be tried first at the auto-tune stage. Defaults to 0.
     """
