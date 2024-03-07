@@ -264,7 +264,7 @@ Functions
    :rtype: output
 
 
-.. py:function:: autoround_quantize(model, tokenizer, bits: int = 4, group_size: int = 128, scheme: str = 'asym', weight_config: dict = {}, enable_full_range: bool = False, bs: int = 8, amp: bool = True, device=None, lr_scheduler=None, dataloader=None, dataset_name: str = 'NeelNanda/pile-10k', dataset_split: str = 'train', use_quant_input: bool = True, enable_minmax_tuning: bool = True, lr: float = None, minmax_lr: float = None, low_gpu_mem_usage: bool = True, iters: int = 200, seqlen: int = 2048, n_samples: int = 512, sampler: str = 'rand', seed: int = 42, n_blocks: int = 1, gradient_accumulate_steps: int = 1, not_use_best_mse: bool = False, dynamic_max_gap: int = -1, data_type: str = 'int', scale_dtype='fp16', **kwargs)
+.. py:function:: autoround_quantize(model, tokenizer, bits: int = 4, group_size: int = 128, sym: bool = False, weight_config: dict = {}, enable_full_range: bool = False, batch_size: int = 8, amp: bool = True, device=None, lr_scheduler=None, dataloader=None, dataset_name: str = 'NeelNanda/pile-10k', dataset_split: str = 'train', use_quant_input: bool = True, enable_minmax_tuning: bool = True, lr: float = None, minmax_lr: float = None, low_gpu_mem_usage: bool = True, iters: int = 200, seqlen: int = 2048, n_samples: int = 512, sampler: str = 'rand', seed: int = 42, n_blocks: int = 1, gradient_accumulate_steps: int = 1, not_use_best_mse: bool = False, dynamic_max_gap: int = -1, data_type: str = 'int', scale_dtype='fp16', **kwargs)
 
    Run autoround weight-only quantization.
    Args:
@@ -272,7 +272,7 @@ Functions
    tokenizer: Tokenizer for processing input data. Temporarily set as a mandatory parameter.
    bits (int): Number of bits for quantization (default is 4).
    group_size (int): Size of the quantization group (default is 128).
-   scheme (str): The quantization scheme to be used (default is "asym").
+   sym (bool): Whether the symmetric quantization is to be used.
    weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
    weight_config={
                'layer1':##layer_name
