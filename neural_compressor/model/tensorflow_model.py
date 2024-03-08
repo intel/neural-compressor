@@ -53,6 +53,7 @@ def get_model_type(model):
         string: model type
     """
     from neural_compressor.adaptor.tf_utils.util import is_ckpt_format, is_saved_model_format
+
     if isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
         if (
@@ -308,6 +309,7 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
         opt = tf_optimizer.OptimizeGraph(grappler_session_config, grappler_meta_graph_def, graph_id=b"tf_graph")
         return opt, input_tensor_names, output_tensor_names
 
+
 def _get_graph_from_saved_model_v3(model, input_tensor_names, output_tensor_names):
     """The version 3 function that get graph from saved_model.
 
@@ -322,17 +324,17 @@ def _get_graph_from_saved_model_v3(model, input_tensor_names, output_tensor_name
         outputs (list of string): validated output names.
     """
     from neural_compressor.adaptor.tf_utils.util import parse_saved_model
-    
+
     if isinstance(model, tf.keras.Model):
         tmp_dir = cfg.default_workspace + "/saved_model"
         model.save(tmp_dir)
         model = tmp_dir
-    graph_def, _, _, _, input_names, output_names = parse_saved_model(model, 
-                                                                      True,
-                                                                      input_tensor_names,
-                                                                      output_tensor_names)
+    graph_def, _, _, _, input_names, output_names = parse_saved_model(
+        model, True, input_tensor_names, output_tensor_names
+    )
 
     return graph_def, input_names, output_names
+
 
 def _get_graph_from_saved_model_v2(saved_model_dir, input_tensor_names, output_tensor_names):
     """The version 2 function that get graph from the original keras model.
@@ -1505,4 +1507,3 @@ class TensorflowModel(object):
         model = TENSORFLOW_MODELS[model_type](root, **kwargs)
         model.model_type = model_type
         return model
-
