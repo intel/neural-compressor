@@ -91,7 +91,7 @@ class TestSmoothQuant:
         qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
         user_model = copy.deepcopy(model)
         user_model = prepare(user_model.eval(), qconfig, example_inputs=example_inputs, inplace=True)
-        
+
         def run_fn(model):
             model(example_inputs)
 
