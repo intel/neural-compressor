@@ -5,7 +5,7 @@ import pytest
 import torch
 import transformers
 
-from neural_compressor.common.utils import logger
+from neural_compressor.common import logger
 from neural_compressor.torch.quantization import GPTQConfig, RTNConfig, quantize
 
 
