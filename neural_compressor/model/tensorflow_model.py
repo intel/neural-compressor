@@ -53,6 +53,7 @@ def get_model_type(model):
         string: model type
     """
     from neural_compressor.adaptor.tf_utils.util import is_ckpt_format, is_saved_model_format
+
     if isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
         if (
@@ -308,19 +309,20 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
         opt = tf_optimizer.OptimizeGraph(grappler_session_config, grappler_meta_graph_def, graph_id=b"tf_graph")
         return opt, input_tensor_names, output_tensor_names
 
+
 def _get_graph_from_saved_model_v3(model, input_tensor_names, output_tensor_names):
     from neural_compressor.adaptor.tf_utils.util import parse_saved_model
-    
+
     if isinstance(model, tf.keras.Model):
         tmp_dir = cfg.default_workspace + "/saved_model"
         model.save(tmp_dir)
         model = tmp_dir
-    graph_def, _, _, _, input_names, output_names = parse_saved_model(model, 
-                                                                      True,
-                                                                      input_tensor_names,
-                                                                      output_tensor_names)
+    graph_def, _, _, _, input_names, output_names = parse_saved_model(
+        model, True, input_tensor_names, output_tensor_names
+    )
 
     return graph_def, input_names, output_names
+
 
 def _get_graph_from_saved_model_v2(saved_model_dir, input_tensor_names, output_tensor_names):
     from tensorflow.python.saved_model import signature_constants, tag_constants
@@ -435,6 +437,7 @@ def _get_graph_from_saved_model_v1(model):
         graph_def = tf_graph_util.convert_variables_to_constants(sess, graph.as_graph_def(), output_nodes)
     return graph_def, inputs, outputs
 
+
 def try_loading_keras(model, temp_dir, input_tensor_names, output_tensor_names):
     if not isinstance(model, tf.keras.Model):
         model = tf.keras.models.load_model(model)
@@ -462,8 +465,9 @@ def try_loading_keras(model, temp_dir, input_tensor_names, output_tensor_names):
             graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
         except:
             raise ValueError("Not supported keras model type...")
-    
+
     return graph_def, input_names, output_names
+
 
 def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with keras model.
@@ -485,8 +489,9 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
                 model, input_tensor_names, output_tensor_names
             )
         except:
-            graph_def, input_names, output_names = try_loading_keras(model, 
-                temp_dir, input_tensor_names, output_tensor_names)
+            graph_def, input_names, output_names = try_loading_keras(
+                model, temp_dir, input_tensor_names, output_tensor_names
+            )
     # tensorflow 1.x use v1 convert method
     else:
         tf.keras.backend.set_learning_phase(0)
