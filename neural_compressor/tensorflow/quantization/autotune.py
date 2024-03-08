@@ -46,9 +46,9 @@ def autotune(
 ) -> Optional[BaseModel]:
     """The main entry of auto-tune."""
     best_quant_model = None
-    evaluator = EvaluationFuncWrapper(eval_fn, eval_args)
+    eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
-    baseline: float = evaluator.evaluate(model)
+    baseline: float = eval_func_wrapper.evaluate(model)
     tuning_monitor.set_baseline(baseline)
     tuning_logger.tuning_start()
     for trial_index, quant_config in enumerate(config_loader):
@@ -58,7 +58,7 @@ def autotune(
         q_model = quantize_model(model, quant_config, calib_dataloader, calib_iteration)
         tuning_logger.quantization_end()
         tuning_logger.evaluation_start()
-        eval_result: float = evaluator.evaluate(q_model)
+        eval_result: float = eval_func_wrapper.evaluate(q_model)
         tuning_logger.evaluation_end()
         tuning_monitor.add_trial_result(trial_index, eval_result, quant_config)
         tuning_logger.trial_end(trial_index)

@@ -60,10 +60,10 @@ def autotune(
         calibration_data_reader (CalibrationDataReader): dataloader for calibration.
     """
     best_quant_model = None
-    evaluator = EvaluationFuncWrapper(eval_fn, eval_args)
+    eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
     try:
-        baseline: float = evaluator.evaluate(model_input)
+        baseline: float = eval_func_wrapper.evaluate(model_input)
     except Exception as e:
         print(e)
         if "'str' object has no attribute 'SerializeToString'" in str(e):
@@ -101,7 +101,7 @@ def autotune(
                     Path(model_input).parent.joinpath("config.json").as_posix(),
                     Path(tmp_dir).joinpath("config.json").as_posix(),
                 )
-            eval_result: float = evaluator.evaluate(Path(tmp_dir).joinpath(Path(model_input).name).as_posix())
+            eval_result: float = eval_func_wrapper.evaluate(Path(tmp_dir).joinpath(Path(model_input).name).as_posix())
         tuning_logger.evaluation_end()
         logger.info("Evaluation result: %.4f", eval_result)
         tuning_monitor.add_trial_result(trial_index, eval_result, quant_config)
