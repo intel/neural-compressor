@@ -1,10 +1,10 @@
 import unittest
 from functools import wraps
+from typing import Any, Callable, Dict, List, Optional, Union
 from unittest.mock import patch
 
 import torch
 import transformers
-from helper import create_evaluator_for_eval_fns
 
 from neural_compressor.common import logger
 from neural_compressor.torch.quantization import RTNConfig, TuningConfig, autotune, get_all_config_set
@@ -33,6 +33,14 @@ FAKE_DOUBLE_QUANT_CONFIGS = {
         "double_quant_group_size": 8,
     },
 }
+
+from neural_compressor.common.base_tuning import Evaluator
+
+
+def _create_evaluator_for_eval_fns(eval_fns: Optional[Union[Callable, Dict, List[Dict]]] = None) -> Evaluator:
+    evaluator = Evaluator()
+    evaluator.set_eval_fn_registry(eval_fns)
+    return evaluator
 
 
 def reset_tuning_target(test_func):
@@ -171,7 +179,7 @@ class TestAutoTune(unittest.TestCase):
             },
         ]
 
-        evaluator = create_evaluator_for_eval_fns(eval_fns)
+        evaluator = _create_evaluator_for_eval_fns(eval_fns)
 
         def eval_fn_wrapper(model):
             result = evaluator.evaluate(model)
@@ -203,7 +211,7 @@ class TestAutoTune(unittest.TestCase):
                 },
             ]
 
-            evaluator = create_evaluator_for_eval_fns(eval_fns)
+            evaluator = _create_evaluator_for_eval_fns(eval_fns)
 
             def eval_fn_wrapper(model):
                 result = evaluator.evaluate(model)
