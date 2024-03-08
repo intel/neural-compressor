@@ -195,6 +195,96 @@ def make_matmul_weight_only_node(
     return matmul_weight_only_node, new_inits
 
 
+def make_weight_only_dequant_node(node, block_size, k_blocks, num_bits, q_weight, scale, zero_point, axis=1):
+    """Build DequantizeLinear node.
+
+    Args:
+        node: original matmul node
+        block_size (int): how many elements share one scale/zp
+        k_blocks (int): block number
+        num_bits (int): num_bits
+        q_weight (array): quantized weight
+        scale (array): scale
+        zero_point (array): zero point
+        axis (int): the axis of the dequantizing dimension of the input tensor
+
+    Returns:
+        weight_only_dequant_node: DequantizeLinear node for weight dequantization
+        new_inits: initializers of the new node
+    """
+    new_inits = []
+    input_names = []
+    kwargs = {
+        "block_size": block_size,
+        "axis": axis
+        }
+    blob_size = get_blob_size(block_size, zero_point is not None)
+
+    # pack quantized weight
+    packed = np.zeros((q_weight.shape[0], blob_size), dtype="uint8")
+    for i in range(q_weight.shape[0]):
+        for k in range(0, block_size, 2):
+            packed[i][k // 2] = q_weight[i][k] | q_weight[i][k + 1] << 4
+    packed = np.reshape(packed, (-1, k_blocks, blob_size))
+
+    q_weight_tensor = onnx.helper.make_tensor(
+        name=node.input[1] + "_Q{}G{}".format(str(num_bits), str(block_size)),
+        data_type=21,
+        dims=q_weight.shape,
+        vals=packed.tobytes(),
+        raw=True,
+    )
+    new_inits.append(q_weight_tensor)
+    input_names.append(q_weight_tensor.name)
+
+    scale_tensor = onnx.helper.make_tensor(
+        name=node.input[1] + "_scale",
+        data_type=dtype_mapping[str(scale.dtype)],
+        dims=scale.shape,
+        vals=scale.tobytes(),
+        raw=True,
+    )
+    input_names.append(scale_tensor.name)
+    new_inits.append(scale_tensor)
+
+    # build zero_point tensor
+    if zero_point is not None:
+        zp_shape = zero_point.shape
+        if num_bits > 4:
+            packed_zp = np.reshape(zero_point, (1, -1)).astype("uint8")
+        else:
+            packed_zp = np.full((zero_point.shape[0] + 1) // 2, 136, dtype="uint8")
+            for i in range(zero_point.shape[0] // k_blocks):
+                for j in range(k_blocks):
+                    idx = i * k_blocks + j
+                    zp = zero_point[idx]
+                    packed_zp[idx // 2] = (
+                        ((packed_zp[idx // 2] & 0x0F) | (zp << 4))
+                        if (idx & 1)
+                        else ((packed_zp[idx // 2] & 0xF0) | zp)
+                    )
+
+        zp_tensor = onnx.helper.make_tensor(
+            name=node.input[1] + "_zp",
+            data_type=21,
+            dims=zp_shape,
+            vals=packed_zp.tobytes(),
+            raw=True,
+        )
+        input_names.append(zp_tensor.name)
+        new_inits.append(zp_tensor)
+
+    dequant_node = onnx.helper.make_node(
+        "DequantizeLinear",
+        inputs=input_names,
+        outputs=[q_weight_tensor.name + "_dequant"],
+        name=node.name + "_woq_dequant",
+        **kwargs,
+    )
+    node.input[1] = dequant_node.output[0]
+    return dequant_node, new_inits
+
+
 def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ratio=1.0):
     """Quantize tensor per group.
 
@@ -362,7 +452,24 @@ def rtn_quantize(
             satisfy_MatMulFpQ4_condition = (
                 Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
             )
-            if ("CUDAExecutionProvider" in providers and satisfy_MatMulNBits_condition) or (
+            if "DnnlExecutionProvider" in providers and model.model.opset_import[0].version > 20:
+                q_weight, scale, zp = quant_tensor(
+                    weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
+                )
+                dequant_node, new_inits = make_weight_only_dequant_node(
+                    node=node,
+                    num_bits=num_bits,
+                    k_blocks=k_blocks,
+                    q_weight=q_weight.astype("uint8"),
+                    scale=scale.astype(dtype),
+                    axis=1,
+                    block_size=group_size,
+                    zero_point=zp if scheme == "asym" else None,
+                )
+                model.add_initializers(new_inits)
+                new_nodes.append(dequant_node)
+            elif ("CUDAExecutionProvider" in providers and satisfy_MatMulNBits_condition) or (
+                "DnnlExecutionProvider" in providers and satisfy_MatMulNBits_condition) or (
                 "CUDAExecutionProvider" not in providers
                 and (satisfy_MatMulFpQ4_condition or satisfy_MatMulNBits_condition)
             ):  # pragma: no cover
@@ -1124,7 +1231,24 @@ def gptq_quantize(
             satisfy_MatMulFpQ4_condition = (
                 Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
             )
-            if ("CUDAExecutionProvider" in providers and satisfy_MatMulNBits_condition) or (
+            if "DnnlExecutionProvider" in providers and model.model.opset_import[0].version > 20:
+                q_weight, scale, zp = quant_tensor(
+                    weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
+                )
+                k_blocks = (org_shape[0] + group_size - 1) // group_size
+                dequant_node, new_inits = make_weight_only_dequant_node(
+                    node=node,
+                    q_weight=q_weight.astype("uint8"),
+                    k_blocks=k_blocks,
+                    scale=scale.astype(dtype),
+                    axis=1,
+                    block_size=group_size,
+                    zero_point=zp if scheme == "asym" else None,
+                )
+                model.add_initializers(new_inits)
+                new_nodes.append(dequant_node)
+            elif ("CUDAExecutionProvider" in providers and satisfy_MatMulNBits_condition) or (
+                "DnnlExecutionProvider" in providers and satisfy_MatMulNBits_condition) or (
                 "CUDAExecutionProvider" not in providers
                 and (satisfy_MatMulFpQ4_condition or satisfy_MatMulNBits_condition)
             ):  # pragma: no cover

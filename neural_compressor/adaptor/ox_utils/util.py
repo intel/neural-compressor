@@ -75,6 +75,8 @@ dtype_mapping = {
     "complex128": 15,
     "bf16": 16,
     "bfloat16": 16,
+    "uint4": 21,
+    "int4": 22,
 }
 
 PROVIDERS = {
