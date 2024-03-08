@@ -88,7 +88,11 @@ if __name__ == "__main__":
         config=AutoConfig.from_pretrained(args.input_model))
 
     if args.input_model == 'Intel/bart-large-mrpc':
-        import os
-        os.system('python -m transformers.onnx --model=Intel/bart-large-mrpc --feature=sequence-classification --export_with_transformers bart-large-mrpc/')
+        import shutil
+        from optimum.exporters.onnx import main_export
+
+        main_export(args.input_model, output="bart-large-mrpc", task="text-classification")
+        shutil.move("bart-large-mrpc/model.onnx", args.output_model)
+        shutil.rmtree("bart-large-mrpc")
     else:
         export_onnx_model(args, model)
