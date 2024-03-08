@@ -14,6 +14,7 @@ Classes
 
 .. autoapisummary::
 
+   neural_compressor.common.base_tuning.EvaluationFuncWrapper
    neural_compressor.common.base_tuning.Evaluator
    neural_compressor.common.base_tuning.ConfigSet
    neural_compressor.common.base_tuning.Sampler
@@ -41,10 +42,13 @@ Attributes
    neural_compressor.common.base_tuning.default_sampler
 
 
+
 .. py:class:: Evaluator
 
 
    Evaluator is a collection of evaluation functions.
+
+   Note: will deprecate this class in the future.
 
    .. rubric:: Examples
 
@@ -86,29 +90,25 @@ Attributes
 
    .. rubric:: Examples
 
-   # TODO: to refine it
    from neural_compressor.torch.quantization import TuningConfig
    tune_config = TuningConfig(
        config_set=[config1, config2, ...],
        max_trials=3,
-       tolerable_loss=0.01
-   )
+       tolerable_loss=0.01)
 
-   # Case 1: Tolerable Loss
-   fp32_baseline = 100
-   config1_metric, config2_metric, ... = 98, 99, ...
+   The tuning process stops when either of the following conditions is met:
+       1) The number of trials reaches the maximum trials.
+       2) The metric loss is within the tolerable loss.
 
-   # Tuning result of case 1:
-   # The best tuning config is config2, because config2_metric >= fp32_baseline * (1 - tolerable_loss)
-
-   # Case 2: Maximum Trials
-   fp32_baseline = 100
-   config1_metric, config2_metric, config3_metric, ... = 98, 98, 97, ...
-
-   # Tuning result of case 2:
-   # The best tuning config is config2, because of the following:
-   # 1. Not achieving the set goal. (config_metric < fp32_baseline * (1 - tolerable_loss))
-   # 2. Reached maximum tuning times.
+   For condition 2), we calculate the metric loss as follows:
+       relative_loss = (fp32_baseline - eval_result_of_q_model) / fp32_baseline
+       If relative_loss <= tolerable_loss, we stop the tuning process.
+       For example:
+           tolerable_loss = 0.01
+           fp32_baseline = 100
+           eval_result_of_q_model = 99
+           relative_loss = (100 - 99) / 100 = 0.01
+           The metric loss is within the tolerable loss, so the tuning process is stopped.
 
 
 

@@ -21,7 +21,7 @@ Functions
 
 
 
-.. py:function:: autotune(model_input: Union[pathlib.Path, str], tune_config: neural_compressor.common.base_tuning.TuningConfig, eval_fns: Union[Dict, List[Dict], Callable] = None, calibration_data_reader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader = None) -> Union[None, onnx.ModelProto]
+.. py:function:: autotune(model_input: Union[pathlib.Path, str], tune_config: neural_compressor.common.base_tuning.TuningConfig, eval_fn: Callable, eval_args: Optional[Tuple[Any]] = None, calibration_data_reader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader = None) -> Union[None, onnx.ModelProto]
 
    The main entry of auto-tune.
 
@@ -33,16 +33,12 @@ Functions
                        Expand parameters to a list of parameters like TuningConfig(config_set=[RTNConfig(weight_bits=[4, 8])])
                        Pass a list of configs like TuningConfig(config_set=[RTNConfig(), GPTQConfig()])
    :type tune_config: TuningConfig
-   :param eval_fns: evaluate functions.
-                    During evaluation, autotune will only pass model path as input into eatch function.
-                    Support:
-                    single eval function,
-                    Dict like {"eval_fn": eval_acc} or {"eval_fn": eval_acc, "weight": 1.0, "name": "accuracy"},
-                    List of Dict, like [
-                        {"eval_fn": eval_acc, "weight": 0.5},
-                        {"eval_fn": eval_perf, "weight": 0.5, "name": "accuracy"},
-                        ]
-   :type eval_fns: Union[Dict, List[Dict], Callable]
+   :param eval_fn: evaluate function.
+                   During evaluation, autotune will only pass model path as the input of function.
+   :type eval_fn: Callable
+   :param eval_args: evaluate arguments.
+                     Positional arguments for `eval_fn`.
+   :type eval_args: Optional[Tuple[Any]]
    :param calibration_data_reader: dataloader for calibration.
    :type calibration_data_reader: CalibrationDataReader
 

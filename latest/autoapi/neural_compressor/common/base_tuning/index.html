@@ -96,25 +96,28 @@
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.Evaluator" title="neural_compressor.common.base_tuning.Evaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Evaluator</span></code></a></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">EvaluationFuncWrapper</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.Evaluator" title="neural_compressor.common.base_tuning.Evaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Evaluator</span></code></a></p></td>
 <td><p>Evaluator is a collection of evaluation functions.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConfigSet</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConfigSet</span></code></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Sampler</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Sampler</span></code></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.SequentialSampler" title="neural_compressor.common.base_tuning.SequentialSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SequentialSampler</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.SequentialSampler" title="neural_compressor.common.base_tuning.SequentialSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SequentialSampler</span></code></a></p></td>
 <td><p>Samples elements sequentially, always in the same order.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConfigLoader</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConfigLoader</span></code></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.TuningConfig" title="neural_compressor.common.base_tuning.TuningConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TuningConfig</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.TuningConfig" title="neural_compressor.common.base_tuning.TuningConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TuningConfig</span></code></a></p></td>
 <td><p>Config for auto tuning pipeline.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">TuningMonitor</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">TuningMonitor</span></code></p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -143,6 +146,7 @@
 <dt class="sig sig-object py" id="neural_compressor.common.base_tuning.Evaluator">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.base_tuning.</span></span><span class="sig-name descname"><span class="pre">Evaluator</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.Evaluator" title="Permalink to this definition"></a></dt>
 <dd><p>Evaluator is a collection of evaluation functions.</p>
+<p>Note: will deprecate this class in the future.</p>
 <p class="rubric">Examples</p>
 <dl class="simple">
 <dt>def eval_acc(model):</dt><dd><p>…</p>
@@ -178,27 +182,31 @@ user_eval_fns4 = [</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.base_tuning.</span></span><span class="sig-name descname"><span class="pre">TuningConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_set</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig"><span class="pre">neural_compressor.common.base_config.BaseConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig"><span class="pre">neural_compressor.common.base_config.BaseConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../data/dataloaders/sampler/index.html#neural_compressor.data.dataloaders.sampler.Sampler" title="neural_compressor.data.dataloaders.sampler.Sampler"><span class="pre">Sampler</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">default_sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerable_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.TuningConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config for auto tuning pipeline.</p>
 <p class="rubric">Examples</p>
-<p># TODO: to refine it
-from neural_compressor.torch.quantization import TuningConfig
+<p>from neural_compressor.torch.quantization import TuningConfig
 tune_config = TuningConfig(</p>
 <blockquote>
 <div><p>config_set=[config1, config2, …],
 max_trials=3,
-tolerable_loss=0.01</p>
+tolerable_loss=0.01)</p>
 </div></blockquote>
-<p>)</p>
-<p># Case 1: Tolerable Loss
+<dl>
+<dt>The tuning process stops when either of the following conditions is met:</dt><dd><ol class="arabic simple">
+<li><p>The number of trials reaches the maximum trials.</p></li>
+<li><p>The metric loss is within the tolerable loss.</p></li>
+</ol>
+</dd>
+<dt>For condition 2), we calculate the metric loss as follows:</dt><dd><p>relative_loss = (fp32_baseline - eval_result_of_q_model) / fp32_baseline
+If relative_loss &lt;= tolerable_loss, we stop the tuning process.
+For example:</p>
+<blockquote>
+<div><p>tolerable_loss = 0.01
 fp32_baseline = 100
-config1_metric, config2_metric, … = 98, 99, …</p>
-<p># Tuning result of case 1:
-# The best tuning config is config2, because config2_metric &gt;= fp32_baseline * (1 - tolerable_loss)</p>
-<p># Case 2: Maximum Trials
-fp32_baseline = 100
-config1_metric, config2_metric, config3_metric, … = 98, 98, 97, …</p>
-<p># Tuning result of case 2:
-# The best tuning config is config2, because of the following:
-# 1. Not achieving the set goal. (config_metric &lt; fp32_baseline * (1 - tolerable_loss))
-# 2. Reached maximum tuning times.</p>
+eval_result_of_q_model = 99
+relative_loss = (100 - 99) / 100 = 0.01
+The metric loss is within the tolerable loss, so the tuning process is stopped.</p>
+</div></blockquote>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -219,7 +227,7 @@ config1_metric, config2_metric, config3_metric, … = 98, 98, 97, …</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fe12ea59a80> 
+   <jinja2.runtime.BlockReference object at 0x7fe8a4150850> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

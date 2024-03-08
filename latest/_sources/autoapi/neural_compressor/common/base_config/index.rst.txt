@@ -40,7 +40,7 @@ Attributes
 
 
 
-.. py:function:: register_config(framework_name='None', algo_name=None, priority=0)
+.. py:function:: register_config(framework_name: str, algo_name: str, priority: Union[float, int] = 0)
 
    Register config decorator.
 
@@ -51,8 +51,8 @@ Attributes
        class ExampleAlgorithmConfig:
            # Configuration details for the ExampleAlgorithm
 
-   :param framework_name: the framework name. Defaults to "None".
-   :param algo_name: the algorithm name. Defaults to None.
+   :param framework_name: the framework name.
+   :param algo_name: the algorithm name.
    :param priority: the priority of the configuration. A larger number indicates a higher priority,
                     which will be tried first at the auto-tune stage. Defaults to 0.
 

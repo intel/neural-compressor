@@ -21,7 +21,7 @@ Functions
 
 
 
-.. py:function:: autotune(model: Union[str, tensorflow.keras.Model, neural_compressor.tensorflow.utils.BaseModel], tune_config: neural_compressor.common.base_tuning.TuningConfig, eval_fns: Optional[Union[Dict, List[Dict]]] = None, calib_dataloader: Callable = None, calib_iteration: int = 100) -> Optional[neural_compressor.tensorflow.utils.BaseModel]
+.. py:function:: autotune(model: Union[str, tensorflow.keras.Model, neural_compressor.tensorflow.utils.BaseModel], tune_config: neural_compressor.common.base_tuning.TuningConfig, eval_fn: Callable, eval_args: Optional[Tuple[Any]] = None, calib_dataloader: Callable = None, calib_iteration: int = 100) -> Optional[neural_compressor.tensorflow.utils.BaseModel]
 
    The main entry of auto-tune.
 

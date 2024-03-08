@@ -23,7 +23,7 @@ Functions
 
 
 
-.. py:function:: autotune(model: torch.nn.Module, tune_config: neural_compressor.common.base_tuning.TuningConfig, eval_fns: Optional[Union[Dict, List[Dict]]] = None, run_fn=None, run_args=None) -> Optional[torch.nn.Module]
+.. py:function:: autotune(model: torch.nn.Module, tune_config: neural_compressor.common.base_tuning.TuningConfig, eval_fn: Callable, eval_args=None, run_fn=None, run_args=None, example_inputs=None) -> Optional[torch.nn.Module]
 
    The main entry of auto-tune.
 
