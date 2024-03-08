@@ -93,6 +93,5 @@ if __name__ == "__main__":
 
         main_export(args.input_model, output="bart-large-mrpc", task="text-classification")
         shutil.move("bart-large-mrpc/model.onnx", args.output_model)
-        shutil.rmtree("bart-large-mrpc")
     else:
         export_onnx_model(args, model)
