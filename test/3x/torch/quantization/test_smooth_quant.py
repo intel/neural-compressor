@@ -82,3 +82,37 @@ class TestSmoothQuant:
         output1 = fp32_model(example_inputs)
         output2 = q_model(example_inputs)
         assert torch.allclose(output1, output2, atol=2e-2), "Accuracy gap atol > 0.02 is unexpected. Please check."
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_sq_ipex_save_load(self):
+        from intel_extension_for_pytorch.quantization import convert, prepare
+
+        def run_fn(model):
+            model(torch.zeros([1, 3]))
+
+        example_inputs = torch.zeros([1, 3])
+        qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
+        user_model = copy.deepcopy(model)
+        user_model = prepare(user_model.eval(), qconfig, example_inputs=example_inputs, inplace=True)
+        run_fn(user_model)
+        with torch.no_grad():
+            user_model = convert(user_model.eval(), inplace=True).eval()
+            user_model(example_inputs)
+            user_model = torch.jit.trace(user_model.eval(), example_inputs, strict=False)
+            user_model = torch.jit.freeze(user_model.eval())
+            user_model(example_inputs)
+            user_model(example_inputs)
+        ipex_out = user_model(example_inputs)
+        
+        fp32_model = copy.deepcopy(model)
+        quant_config = get_default_sq_config()
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"
+        inc_out = q_model(example_inputs)
+        q_model.save("saved")
+        
+        # load
+        loaded_model = torch.jit.load("saved")
+        loaded_out = loaded_model(example_inputs)
+        assert torch.allclose(inc_out, ipex_out, atol=1e-02), "Unexpected result. Please double check."
+        assert torch.allclose(inc_out, loaded_out, atol=1e-05), "Unexpected result. Please double check."
