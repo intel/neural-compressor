@@ -22,6 +22,7 @@ from neural_compressor.common.utils import TuningLogger, logger
 
 __all__ = [
     "Evaluator",
+    "EvaluationFuncWrapper",
     "TuningConfig",
     "Sampler",
     "ConfigLoader",

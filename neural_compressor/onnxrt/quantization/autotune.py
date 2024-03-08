@@ -54,6 +54,8 @@ def autotune(
             Pass a list of configs like TuningConfig(config_set=[RTNConfig(), GPTQConfig()])
         eval_fn (Callable): evaluate function.
             During evaluation, autotune will only pass model path as the input of function.
+        eval_args (Optional[Tuple[Any]]): evaluate arguments.
+            Positional arguments for `eval_fn`.
 
         calibration_data_reader (CalibrationDataReader): dataloader for calibration.
     """
