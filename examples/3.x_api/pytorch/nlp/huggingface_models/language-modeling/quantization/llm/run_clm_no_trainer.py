@@ -328,7 +328,7 @@ if args.quantize:
                 )
             quant_config.set_local("lm_head", GPTQConfig(dtype="fp32"))
             user_model = quantize(
-                model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=dataloader_for_calibration
+                model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=(dataloader_for_calibration, )
             )
     else:
         # TODO: smooth quant
