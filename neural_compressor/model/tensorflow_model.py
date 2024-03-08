@@ -555,13 +555,12 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
                 model, input_tensor_names, output_tensor_names
             )
         except:
-            graph_def, input_names, output_names = try_loading_keras(model, 
-                                        input_tensor_names, output_tensor_names)
+            graph_def, input_names, output_names = try_loading_keras(model, input_tensor_names, output_tensor_names)
     # tensorflow 1.x use v1 convert method
     else:
         tf.keras.backend.set_learning_phase(0)
         graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
-    
+
     return graph_def_session(graph_def, input_names, output_names, **kwargs)
 
 
