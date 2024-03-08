@@ -87,13 +87,14 @@ class TestSmoothQuant:
     def test_sq_ipex_save_load(self):
         from intel_extension_for_pytorch.quantization import convert, prepare
 
-        def run_fn(model):
-            model(torch.zeros([1, 3]))
-
         example_inputs = torch.zeros([1, 3])
         qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
         user_model = copy.deepcopy(model)
         user_model = prepare(user_model.eval(), qconfig, example_inputs=example_inputs, inplace=True)
+        
+        def run_fn(model):
+            model(example_inputs)
+
         run_fn(user_model)
         with torch.no_grad():
             user_model = convert(user_model.eval(), inplace=True).eval()
