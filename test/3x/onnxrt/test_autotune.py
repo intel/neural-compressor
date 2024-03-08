@@ -101,7 +101,7 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         call_args_list = mock_warning.call_args_list
         # There may be multiple calls to warning, so we need to check all of them
         self.assertIn(
-            "Please refine your eval_fns to accept model path (str) as input.", [info[0][0] for info in call_args_list]
+            "Please refine your eval_fn to accept model path (str) as input.", [info[0][0] for info in call_args_list]
         )
 
     def test_sq_auto_tune(self):
