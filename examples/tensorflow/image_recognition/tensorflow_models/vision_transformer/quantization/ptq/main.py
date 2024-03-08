@@ -133,12 +133,33 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
+            
+            excluded_op_type = {
+                                    'conv2d': {
+                                        'weight':{
+                                            'dtype':['fp32']
+                                        }, 
+                                        'activation':{
+                                            'dtype':['fp32']
+                                        } 
+                                    }
+                                }
+            excluded_op_name = {
+                        'StatefulPartitionedCall/vit/encoder/layer_._9/output/dense/Tensordot/MatMul': {
+                            'weight':{
+                                'dtype':['fp32']
+                            }, 
+                            'activation':{
+                                'dtype':['fp32']
+                            } 
+                        }
+                    }
 
-            conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100],
-                                           accuracy_criterion = AccuracyCriterion(tolerable_loss=0.01),
-                                           op_type_dict={'conv2d':{ 'weight':{'dtype':['fp32']}, 'activation':{'dtype':['fp32']} }}
-                                           )
-            from tensorflow.core.protobuf import saved_model_pb2
+            conf = PostTrainingQuantConfig(op_type_dict=excluded_op_type,
+                                           op_name_dict=excluded_op_name,
+                                           calibration_sampling_size=[50, 100],
+                                           accuracy_criterion = AccuracyCriterion(tolerable_loss=0.01))
+
             sm = saved_model_pb2.SavedModel()
             with tf.io.gfile.GFile(args.input_graph, "rb") as f:
                 sm.ParseFromString(f.read())
@@ -165,7 +186,6 @@ class eval_classifier_optimized_graph:
             if args.int8 or args.input_graph.endswith("-tune.pb"):
                 input_graph = args.input_graph
             else:
-                from tensorflow.core.protobuf import saved_model_pb2
                 sm = saved_model_pb2.SavedModel()
                 with tf.io.gfile.GFile(args.input_graph, "rb") as f:
                     sm.ParseFromString(f.read())
