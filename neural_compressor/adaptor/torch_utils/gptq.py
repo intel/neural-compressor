@@ -234,6 +234,7 @@ class GPTQuantizer(object):
         self.sym_default = False
         self.act_order_default = False
         self.static_groups_default = False
+        self.true_sequential_default = None
         self.perchannel_default = True
         self.mse_default = False
         self.check_layer_config()
@@ -411,6 +412,9 @@ class GPTQuantizer(object):
                 tmp_weight_config[name]["static_groups"] = self.weight_config.get(
                     "static_groups", self.static_groups_default
                 )
+                tmp_weight_config[name]["true_sequential"] = self.weight_config.get(
+                    "true_sequential", self.true_sequential_default
+                )
                 tmp_weight_config[name]["perchannel"] = self.weight_config.get("perchannel", self.perchannel_default)
                 tmp_weight_config[name]["mse"] = self.weight_config.get("mse", self.mse_default)
             self.weight_config = tmp_weight_config
@@ -424,6 +428,9 @@ class GPTQuantizer(object):
                 self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
                 self.weight_config[layer_name]["static_groups"] = config.get(
                     "static_groups", self.static_groups_default
+                )
+                self.weight_config[name]["true_sequential"] = self.weight_config.get(
+                    "true_sequential", self.true_sequential_default
                 )
                 self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
                 self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
@@ -544,6 +551,15 @@ class GPTQuantizer(object):
         else:
             self.cache_positional_arguments[0] = outs[:]
 
+    def rearrange_sequential(self, sub_layers, true_sequential):
+        rearranged_sub_layers = []
+        for level_layer in true_sequential:
+            level = {}
+            for layer in level_layer:
+                level[layer] = sub_layers[layer]
+            rearranged_sub_layers.append(level)
+        return rearranged_sub_layers
+
     @torch.no_grad()
     def execute_quantization(self, means=None, stds=None, model_path=None):
         """Run quantization."""
@@ -564,6 +580,8 @@ class GPTQuantizer(object):
                 transformer_block = self.gptq_related_blocks["transformers"][block_idx]  # .to(self.device)
             # Step2.1: obtain all layers (Linear, Conv2d, etc) in the block which can be quantized.
             sub_layers = find_layers(transformer_block)
+            if true_sequential[block_id] is not None:
+                sub_layers = self.rearrange_sequential(sub_layer, true_sequential[block_id])
             sub_layers_to_quant = {}
             for layer_name, layer_obj in sub_layers.items():
                 # filter sub_layers with included layer_names in self.weight_config
