@@ -104,14 +104,14 @@ class TestSmoothQuant:
             user_model(example_inputs)
             user_model(example_inputs)
         ipex_out = user_model(example_inputs)
-        
+
         fp32_model = copy.deepcopy(model)
         quant_config = get_default_sq_config()
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
         inc_out = q_model(example_inputs)
         q_model.save("saved")
-        
+
         # load
         loaded_model = torch.jit.load("saved")
         loaded_out = loaded_model(example_inputs)
