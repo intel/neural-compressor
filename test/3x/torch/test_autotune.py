@@ -156,9 +156,7 @@ class TestAutoTune(unittest.TestCase):
             return 1.0
 
         custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6])], max_trials=2)
-        best_model = autotune(
-            model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
-        )
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         self.assertIsNotNone(best_model)
 
     @reset_tuning_target
@@ -186,9 +184,7 @@ class TestAutoTune(unittest.TestCase):
             return result
 
         custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6])], max_trials=2)
-        best_model = autotune(
-            model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_fn_wrapper
-        )
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_fn_wrapper)
         self.assertIsNotNone(best_model)
         self.assertEqual(len(evaluator.eval_fn_registry), 2)
 
@@ -221,7 +217,7 @@ class TestAutoTune(unittest.TestCase):
             best_model = autotune(
                 model=model,
                 tune_config=custom_tune_config,
-                eval_fns=eval_fn_wrapper,
+                eval_fn=eval_fn_wrapper,
                 run_fn=run_fn_for_gptq,
                 run_args=(dataloader, True),  # run_args should be a tuple
             )
@@ -241,28 +237,28 @@ class TestAutoTune(unittest.TestCase):
             return res
 
         custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6, 5, 8])], max_trials=6)
-        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_acc_fn)
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         self.assertIsNotNone(best_model)
 
         # case 2
         # Where tolerable_loss is 0.1, we expect the tuning to end with a "0-trail end" output logged.
         acc_res_lst = baseline + [0.9] * 2 + [0.99] + [1.01]
         custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6, 5, 8])], tolerable_loss=0.1)
-        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_acc_fn)
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         self.assertIsNotNone(best_model)
 
         # case 3
         # Where tolerable_loss is -0.01, we expect the tuning to end with a "3-trail end" output logged.
         acc_res_lst = baseline + [0.9] * 2 + [0.99] + [1.01]
         custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6, 5, 8])], tolerable_loss=-0.01)
-        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_acc_fn)
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         self.assertIsNotNone(best_model)
 
         # case 4
         # Where tolerable_loss is 0.01 and accuracy meets the goal, we expect best model is None.
         acc_res_lst = baseline + [0.9] * 2 + [0.9] + [0.9]
         custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6, 5, 8])], tolerable_loss=0.01)
-        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=eval_acc_fn)
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         self.assertIsNone(best_model)
 
     @reset_tuning_target
@@ -277,9 +273,7 @@ class TestAutoTune(unittest.TestCase):
             return 1.0
 
         custom_tune_config = TuningConfig(config_set=get_rtn_double_quant_config_set(), max_trials=10)
-        best_model = autotune(
-            model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
-        )
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         self.assertIsNotNone(best_model)
 
     @reset_tuning_target
@@ -296,9 +290,7 @@ class TestAutoTune(unittest.TestCase):
         custom_tune_config = TuningConfig(
             config_set=get_rtn_double_quant_config_set(), max_trials=10, tolerable_loss=-1
         )
-        best_model = autotune(
-            model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
-        )
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         self.assertIsNone(best_model)
 
     @patch("neural_compressor.torch.utils.constants.DOUBLE_QUANT_CONFIGS", FAKE_DOUBLE_QUANT_CONFIGS)
@@ -313,9 +305,7 @@ class TestAutoTune(unittest.TestCase):
             return 1.0
 
         custom_tune_config = TuningConfig(config_set=get_rtn_double_quant_config_set(), tolerable_loss=-1)
-        best_model = autotune(
-            model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fns=[{"eval_fn": eval_acc_fn}]
-        )
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         self.assertIsNone(best_model)
 
 

@@ -18,7 +18,7 @@ from typing import Callable, List, Optional, Union
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, get_all_config_set_from_config_registry
-from neural_compressor.common.base_tuning import TuningConfig, evaluator, init_tuning
+from neural_compressor.common.base_tuning import EvaluationFuncWrapper, TuningConfig, init_tuning
 from neural_compressor.common.utils import dump_elapsed_time
 from neural_compressor.torch.quantization import quantize
 from neural_compressor.torch.quantization.config import FRAMEWORK_NAME, RTNConfig
@@ -46,7 +46,7 @@ def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
 def autotune(
     model: torch.nn.Module,
     tune_config: TuningConfig,
-    eval_fns: Callable,
+    eval_fn: Callable,
     eval_args=None,
     run_fn=None,
     run_args=None,
@@ -54,8 +54,7 @@ def autotune(
 ) -> Optional[torch.nn.Module]:
     """The main entry of auto-tune."""
     best_quant_model = None
-    evaluator.set_eval_fn_registry(eval_fns)
-    evaluator.self_check()
+    evaluator = EvaluationFuncWrapper(eval_fn, eval_args)
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
     baseline: float = evaluator.evaluate(model)
     tuning_monitor.set_baseline(baseline)

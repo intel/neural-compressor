@@ -34,8 +34,26 @@ __all__ = [
 ]
 
 
+class EvaluationFuncWrapper:
+    def __init__(self, eval_fn: Callable, eval_args=None):
+        """Evaluation function wrapper.
+
+        Args:
+            eval_fn: a function for evaluated the float or quantized model
+            eval_args: positional arguments for `eval_fn`
+        """
+        self.eval_fn = eval_fn
+        self.eval_args = eval_args
+
+    def evaluate(self, model) -> Union[float, int]:
+        result = self.eval_fn(model, *self.eval_args) if self.eval_args else self.eval_fn(model)
+        return result
+
+
 class Evaluator:
     """Evaluator is a collection of evaluation functions.
+
+    Note: will deprecate this class in the future.
 
     Examples:
         def eval_acc(model):

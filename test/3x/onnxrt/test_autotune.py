@@ -19,6 +19,7 @@ import glob
 import os
 import shutil
 import unittest
+from typing import Callable, Dict, List, Optional, Union
 from unittest.mock import patch
 
 import numpy as np
@@ -27,12 +28,17 @@ import onnxruntime as ort
 from optimum.exporters.onnx import main_export
 
 from neural_compressor.common import Logger
-from neural_compressor.common.base_tuning import TuningConfig, evaluator
+from neural_compressor.common.base_tuning import Evaluator, TuningConfig
 from neural_compressor.onnxrt import AWQConfig, CalibrationDataReader, GPTQConfig, RTNConfig, SmoohQuantConfig
-from neural_compressor.onnxrt.quantization import autotune, get_all_config_set
-from neural_compressor.onnxrt.quantization.quantize import _quantize
+from neural_compressor.onnxrt.quantization import autotune
 
 logger = Logger().get_logger()
+
+
+def _create_evaluator_for_eval_fns(eval_fns: Optional[Union[Callable, Dict, List[Dict]]] = None) -> Evaluator:
+    evaluator = Evaluator()
+    evaluator.set_eval_fn_registry(eval_fns)
+    return evaluator
 
 
 class DataReader(CalibrationDataReader):
@@ -89,7 +95,7 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             best_model = autotune(
                 model_input=self.gptj,
                 tune_config=custom_tune_config,
-                eval_fns=eval_acc_fn,
+                eval_fn=eval_acc_fn,
                 calibration_data_reader=self.data_reader,
             )
         call_args_list = mock_warning.call_args_list
@@ -117,21 +123,26 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             },
         ]
 
+        evaluator = _create_evaluator_for_eval_fns(eval_fns)
+
+        def eval_fn_wrapper(model):
+            result = evaluator.evaluate(model)
+            return result
+
         custom_tune_config = TuningConfig(config_set=[SmoohQuantConfig(alpha=0.5), SmoohQuantConfig(alpha=0.6)])
         best_model = autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
-            eval_fns=eval_acc_fn,
+            eval_fn=eval_acc_fn,
             calibration_data_reader=self.data_reader,
         )
-        self.assertEqual(len(evaluator.eval_fn_registry), 1)
         self.assertIsNotNone(best_model)
 
         custom_tune_config = TuningConfig(config_set=[SmoohQuantConfig(alpha=[0.5, 0.6])])
         best_model = autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
-            eval_fns=eval_fns,
+            eval_fn=eval_fn_wrapper,
             calibration_data_reader=self.data_reader,
         )
         self.assertEqual(len(evaluator.eval_fn_registry), 2)
@@ -156,21 +167,26 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             },
         ]
 
+        evaluator = _create_evaluator_for_eval_fns(eval_fns)
+
+        def eval_fn_wrapper(model):
+            result = evaluator.evaluate(model)
+            return result
+
         custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_group_size=32), RTNConfig(weight_group_size=64)])
         best_model = autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
-            eval_fns=eval_acc_fn,
+            eval_fn=eval_acc_fn,
             calibration_data_reader=self.data_reader,
         )
-        self.assertEqual(len(evaluator.eval_fn_registry), 1)
         self.assertIsNone(best_model)
 
         custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_group_size=[32, 64])])
         best_model = autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
-            eval_fns=eval_fns,
+            eval_fn=eval_fn_wrapper,
             calibration_data_reader=self.data_reader,
         )
         self.assertEqual(len(evaluator.eval_fn_registry), 2)
@@ -201,21 +217,26 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             },
         ]
 
+        evaluator = _create_evaluator_for_eval_fns(eval_fns)
+
+        def eval_fn_wrapper(model):
+            result = evaluator.evaluate(model)
+            return result
+
         custom_tune_config = TuningConfig(config_set=[AWQConfig(weight_group_size=32), AWQConfig(weight_group_size=64)])
         best_model = autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
-            eval_fns=eval_acc_fn,
+            eval_fn=eval_acc_fn,
             calibration_data_reader=self.data_reader,
         )
-        self.assertEqual(len(evaluator.eval_fn_registry), 1)
         self.assertIsNone(best_model)
 
         custom_tune_config = TuningConfig(config_set=[AWQConfig(weight_group_size=[32, 64])])
         best_model = autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
-            eval_fns=eval_fns,
+            eval_fn=eval_fn_wrapper,
             calibration_data_reader=self.data_reader,
         )
         self.assertEqual(len(evaluator.eval_fn_registry), 2)
@@ -245,6 +266,11 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
                 "weight": 0.5,
             },
         ]
+        evaluator = _create_evaluator_for_eval_fns(eval_fns)
+
+        def eval_fn_wrapper(model):
+            result = evaluator.evaluate(model)
+            return result
 
         custom_tune_config = TuningConfig(
             config_set=[GPTQConfig(weight_group_size=32), GPTQConfig(weight_group_size=64)]
@@ -252,17 +278,16 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         best_model = autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
-            eval_fns=eval_acc_fn,
+            eval_fn=eval_acc_fn,
             calibration_data_reader=self.data_reader,
         )
-        self.assertEqual(len(evaluator.eval_fn_registry), 1)
         self.assertIsNone(best_model)
 
         custom_tune_config = TuningConfig(config_set=[GPTQConfig(weight_group_size=[32, 64])])
         best_model = autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
-            eval_fns=eval_fns,
+            eval_fn=eval_fn_wrapper,
             calibration_data_reader=self.data_reader,
         )
         self.assertEqual(len(evaluator.eval_fn_registry), 2)

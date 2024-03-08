@@ -13,13 +13,13 @@
 # limitations under the License.
 
 from copy import deepcopy
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import tensorflow as tf
 
 from neural_compressor.common import logger
 from neural_compressor.common.base_config import BaseConfig, get_all_config_set_from_config_registry
-from neural_compressor.common.base_tuning import TuningConfig, evaluator, init_tuning
+from neural_compressor.common.base_tuning import EvaluationFuncWrapper, TuningConfig, init_tuning
 from neural_compressor.common.utils import dump_elapsed_time
 from neural_compressor.tensorflow.quantization import quantize_model
 from neural_compressor.tensorflow.quantization.config import FRAMEWORK_NAME, StaticQuantConfig
@@ -39,14 +39,14 @@ def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
 def autotune(
     model: Union[str, tf.keras.Model, BaseModel],
     tune_config: TuningConfig,
-    eval_fns: Optional[Union[Dict, List[Dict]]] = None,
+    eval_fn: Callable,
+    eval_args: Optional[Tuple[Any]] = None,
     calib_dataloader: Callable = None,
     calib_iteration: int = 100,
 ) -> Optional[BaseModel]:
     """The main entry of auto-tune."""
     best_quant_model = None
-    evaluator.set_eval_fn_registry(eval_fns)
-    evaluator.self_check()
+    evaluator = EvaluationFuncWrapper(eval_fn, eval_args)
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
     baseline: float = evaluator.evaluate(model)
     tuning_monitor.set_baseline(baseline)

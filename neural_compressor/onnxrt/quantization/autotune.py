@@ -15,13 +15,13 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import onnx
 
 from neural_compressor.common import logger
 from neural_compressor.common.base_config import BaseConfig, get_all_config_set_from_config_registry
-from neural_compressor.common.base_tuning import TuningConfig, evaluator, init_tuning
+from neural_compressor.common.base_tuning import EvaluationFuncWrapper, TuningConfig, init_tuning
 from neural_compressor.onnxrt.quantization.calibrate import CalibrationDataReader
 from neural_compressor.onnxrt.quantization.config import FRAMEWORK_NAME
 from neural_compressor.onnxrt.quantization.quantize import _quantize
@@ -39,7 +39,8 @@ def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
 def autotune(
     model_input: Union[Path, str],
     tune_config: TuningConfig,
-    eval_fns: Union[Dict, List[Dict], Callable] = None,
+    eval_fn: Callable,
+    eval_args: Optional[Tuple[Any]] = None,
     calibration_data_reader: CalibrationDataReader = None,
 ) -> Union[None, onnx.ModelProto]:
     """The main entry of auto-tune.
@@ -51,27 +52,20 @@ def autotune(
             Support:
             Expand parameters to a list of parameters like TuningConfig(config_set=[RTNConfig(weight_bits=[4, 8])])
             Pass a list of configs like TuningConfig(config_set=[RTNConfig(), GPTQConfig()])
-        eval_fns (Union[Dict, List[Dict], Callable]): evaluate functions.
-            During evaluation, autotune will only pass model path as input into eatch function.
-            Support:
-            single eval function,
-            Dict like {"eval_fn": eval_acc} or {"eval_fn": eval_acc, "weight": 1.0, "name": "accuracy"},
-            List of Dict, like [
-                {"eval_fn": eval_acc, "weight": 0.5},
-                {"eval_fn": eval_perf, "weight": 0.5, "name": "accuracy"},
-                ]
+        eval_fn (Callable): evaluate function.
+            During evaluation, autotune will only pass model path as the input of function.
+
         calibration_data_reader (CalibrationDataReader): dataloader for calibration.
     """
     best_quant_model = None
-    evaluator.set_eval_fn_registry(eval_fns)
-    evaluator.self_check()
+    evaluator = EvaluationFuncWrapper(eval_fn, eval_args)
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
     try:
         baseline: float = evaluator.evaluate(model_input)
     except Exception as e:
         print(e)
         if "'str' object has no attribute 'SerializeToString'" in str(e):
-            logger.warning("Please refine your eval_fns to accept model path (str) as input.")
+            logger.warning("Please refine your eval_fn to accept model path (str) as input.")
         exit(0)
     tuning_monitor.set_baseline(baseline)
     tuning_logger.tuning_start()
