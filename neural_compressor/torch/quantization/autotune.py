@@ -64,7 +64,14 @@ def autotune(
         tuning_logger.quantization_start()
         logger.info(quant_config.to_dict())
         # !!! Make sure to use deepcopy only when inplace is set to `True`.
-        q_model = quantize(deepcopy(model), quant_config=quant_config, run_fn=run_fn, run_args=run_args, inplace=True)
+        q_model = quantize(
+            deepcopy(model),
+            quant_config=quant_config,
+            run_fn=run_fn,
+            run_args=run_args,
+            inplace=True,
+            example_inputs=example_inputs,
+        )
         tuning_logger.quantization_end()
         tuning_logger.evaluation_start()
         eval_result: float = eval_func_wrapper.evaluate(q_model)
