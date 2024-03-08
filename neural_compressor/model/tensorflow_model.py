@@ -53,7 +53,6 @@ def get_model_type(model):
         string: model type
     """
     from neural_compressor.adaptor.tf_utils.util import is_ckpt_format, is_saved_model_format
-
     if isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
         if (
@@ -309,6 +308,19 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
         opt = tf_optimizer.OptimizeGraph(grappler_session_config, grappler_meta_graph_def, graph_id=b"tf_graph")
         return opt, input_tensor_names, output_tensor_names
 
+def _get_graph_from_saved_model_v3(model, input_tensor_names, output_tensor_names):
+    from neural_compressor.adaptor.tf_utils.util import parse_saved_model
+    
+    if isinstance(model, tf.keras.Model):
+        tmp_dir = cfg.default_workspace + "/saved_model"
+        model.save(tmp_dir)
+        model = tmp_dir
+    graph_def, _, _, _, input_names, output_names = parse_saved_model(model, 
+                                                                      True,
+                                                                      input_tensor_names,
+                                                                      output_tensor_names)
+
+    return graph_def, input_names, output_names
 
 def _get_graph_from_saved_model_v2(saved_model_dir, input_tensor_names, output_tensor_names):
     from tensorflow.python.saved_model import signature_constants, tag_constants
@@ -423,6 +435,35 @@ def _get_graph_from_saved_model_v1(model):
         graph_def = tf_graph_util.convert_variables_to_constants(sess, graph.as_graph_def(), output_nodes)
     return graph_def, inputs, outputs
 
+def try_loading_keras(model, temp_dir, input_tensor_names, output_tensor_names):
+    if not isinstance(model, tf.keras.Model):
+        model = tf.keras.models.load_model(model)
+    keras_format = _check_keras_format(model, temp_dir)
+
+    if keras_format == "saved_model_v2":
+        try:
+            graph_def, input_names, output_names = _get_graph_from_saved_model_v2(
+                temp_dir, input_tensor_names, output_tensor_names
+            )
+            if "_FusedBatchNormEx" in [node.op for node in graph_def.node]:
+                keras_format = "trackable_object"
+        except:
+            keras_format = "trackable_object"
+
+    if keras_format == "trackable_object":
+        try:
+            graph_def, input_names, output_names = _get_graph_from_original_keras_v2(model, temp_dir)
+        except:
+            keras_format = "saved_model_v1"
+
+    if keras_format == "saved_model_v1":  # pragma: no cover
+        try:
+            tf.keras.backend.set_learning_phase(0)
+            graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
+        except:
+            raise ValueError("Not supported keras model type...")
+    
+    return graph_def, input_names, output_names
 
 def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with keras model.
@@ -439,39 +480,13 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """
     temp_dir = tempfile.mkdtemp()
     if tf.version.VERSION > "2.1.0":
-        if not isinstance(model, tf.keras.Model):
-            model = tf.keras.models.load_model(model)
-        keras_format = _check_keras_format(model, temp_dir)
-        if keras_format == "saved_model_v2":
-            try:
-                graph_def, input_names, output_names = _get_graph_from_saved_model_v2(
-                    temp_dir, input_tensor_names, output_tensor_names
-                )
-                if "_FusedBatchNormEx" in [node.op for node in graph_def.node]:
-                    keras_format = "trackable_object"
-            except:
-                keras_format = "trackable_object"
-        if keras_format == "trackable_object":
-            try:
-                graph_def, input_names, output_names = _get_graph_from_original_keras_v2(model, temp_dir)
-            except:
-                keras_format = "saved_model_v1"
-        if keras_format == "saved_model_v1":  # pragma: no cover
-            try:
-                tf.keras.backend.set_learning_phase(0)
-                graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
-            except:
-                keras_format = "saved_model_general"
-        if keras_format == "saved_model_general":  # pargma: no cover
-            try:
-                from neural_compressor.adaptor.tf_utils.util import parse_saved_model
-
-                graph_def, _saved_model, _, _, input_names, output_names = parse_saved_model(
-                    temp_dir, True, input_tensor_names, output_tensor_names
-                )
-            except:
-                raise ValueError("Not supported keras model type...")
-
+        try:
+            graph_def, input_names, output_names = _get_graph_from_saved_model_v3(
+                model, input_tensor_names, output_tensor_names
+            )
+        except:
+            graph_def, input_names, output_names = try_loading_keras(model, 
+                temp_dir, input_tensor_names, output_tensor_names)
     # tensorflow 1.x use v1 convert method
     else:
         tf.keras.backend.set_learning_phase(0)
@@ -645,12 +660,19 @@ def saved_model_session(model, input_tensor_names, output_tensor_names, **kwargs
         output_tensor_names (list of string): validated output_tensor_names.
     """
     try:
-        graph_def, input_names, output_names = _get_graph_from_saved_model_v2(
+        graph_def, input_names, output_names = _get_graph_from_saved_model_v3(
             model, input_tensor_names, output_tensor_names
         )
     except:
-        graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
+        try:
+            graph_def, input_names, output_names = _get_graph_from_saved_model_v2(
+                model, input_tensor_names, output_tensor_names
+            )
+        except:
+            graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
+
     assert graph_def is not None, "Can not parse the saved model..."
+
     return graph_def_session(graph_def, input_names, output_names, **kwargs)
 
 
