@@ -103,10 +103,10 @@ class InputCaptureMolde(torch.nn.Module):
         self.device = "cpu"
 
     def forward(self, *args, **kwargs):
-        if kwargs and len(args)==0:
+        if kwargs and len(args) == 0:
             # Handle cases where input data is a dict
             self.data_pairs.append(kwargs)
-        elif args and len(args)==1:
+        elif args and len(args) == 1:
             # Handle cases where input data is a Tensor
             self.data_pairs.append(args[0])
         else:
