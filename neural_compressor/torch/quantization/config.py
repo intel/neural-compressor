@@ -871,8 +871,9 @@ class FP8Config(BaseConfig):
     supported_configs: List[OperatorConfig] = []
     params_list = [
         "w_dtype",
+        "w_observer",
         "act_dtype",
-        "act_algo",
+        "act_observer",
         "approach",
         "device",
     ]
@@ -880,8 +881,9 @@ class FP8Config(BaseConfig):
     def __init__(
         self,
         w_dtype: str = "fp8_e4m3",
+        w_observer: Union[str, List[str]] = "minmax_per_channel",
         act_dtype: str = "fp8_e4m3",
-        act_algo: Union[str, List[str]] = "minmax",
+        act_observer: Union[str, List[str]] = "minmax",
         approach: Union[str, List[str]] = "static",
         device: Union[str, List[str]] = "hpu",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
@@ -892,8 +894,9 @@ class FP8Config(BaseConfig):
         """
         super().__init__(white_list=white_list)
         self.w_dtype = w_dtype
+        self.w_observer = w_observer
         self.act_dtype = act_dtype
-        self.act_algo = act_algo
+        self.act_observer = act_observer
         self.approach = approach
         self.device = device
         self._post_init()
@@ -903,8 +906,9 @@ class FP8Config(BaseConfig):
         supported_configs = []
         fp8_config = FP8Config(
             w_dtype=["fp8_e5m2", "fp8_e4m3"],
+            w_observer=["minmax", "minmax_per_channel"],
             act_dtype=["fp8_e5m2", "fp8_e4m3"],
-            act_algo=["minmax", "kl"],
+            act_observer=["minmax", "kl"],
             approach=["static", "dynamic"],
             device=["hpu"],
         )
@@ -932,7 +936,7 @@ class FP8Config(BaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "FP8Config", List["FP8Config"]]:
         # TODO fwk owner needs to update it.
-        return FP8Config(act_algo=["minmax", "kl"])
+        return FP8Config(act_observer=["minmax", "kl"])
 
 
 def get_default_fp8_config() -> FP8Config:

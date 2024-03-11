@@ -33,6 +33,7 @@ from .modules import (  # fp32; dynamic modules
     FP8DynamicMatmul,
     Matmul,
 )
+from .observer import observer_mapping
 
 
 def save(model, output_dir="./saved_results"):
@@ -67,6 +68,9 @@ def load(model, output_dir="./saved_results"):
 
     for (op_name, op_type), op_qconfig in model.qconfig.items():
         dtype = op_qconfig.w_dtype
+        # only modules that have weight should use this observer
+        observer_cls = observer_mapping[op_qconfig.w_observer]
+        observer_obj = observer_cls(dtype=op_qconfig.w_dtype)
         choice = 1 if dtype == "fp8_e4m3" else 0
         if op_name + ".weight" in stat_dict:
             stat_dict[op_name + ".weight"] = fp8_convert.from_u8(stat_dict[op_name + ".weight"], choice)
@@ -78,18 +82,22 @@ def load(model, output_dir="./saved_results"):
         if op_qconfig.approach == "static":
             if isinstance(module, white_list):
                 QModule = quantization_mapping[type(module)]
-                module = QModule(module, dtype)
+                qmodule = QModule(module, dtype)
         else:
             if isinstance(module, torch.nn.Linear):
                 # need module for initialization
-                module = FP8DynamicLinear(module, dtype)
+                qmodule = FP8DynamicLinear(module, dtype)
             elif isinstance(module, Matmul):
-                module = FP8DynamicMatmul(dtype)
+                qmodule = FP8DynamicMatmul(dtype)
             elif isinstance(module, BatchMatmul):
-                module = FP8DynamicBatchMatmul(dtype)
+                qmodule = FP8DynamicBatchMatmul(dtype)
             elif isinstance(module, Autocast):
-                module = FP8Cast(dtype=dtype)
-        set_module(model, op_name, module)
+                qmodule = FP8Cast(dtype=dtype)
+        # only modules that have weight should use this API
+        if hasattr(qmodule, "from_float"):
+            qmodule.from_float(module, observer_obj)
+        # replace module with qmodule
+        set_module(model, op_name, qmodule)
         htcore.mark_step()
     model.load_state_dict(stat_dict, assign=True)
     model.to("hpu")
