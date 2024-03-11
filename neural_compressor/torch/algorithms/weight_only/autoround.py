@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# from auto_round.utils import logger # TODO: logger issue
 import torch
 from auto_round import AutoRound  # pylint: disable=E0401
 from auto_round.calib_dataset import CALIB_DATASETS  # pylint: disable=E0401
@@ -95,7 +94,7 @@ def get_autoround_default_run_fn(
         )
 
 
-class InputCaptureMolde(torch.nn.Module):
+class InputCaptureModule(torch.nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
@@ -114,7 +113,7 @@ class InputCaptureMolde(torch.nn.Module):
 
 
 def recover_dataloader_from_calib_fn(run_fn, run_args):
-    input_capture_model = InputCaptureMolde()
+    input_capture_model = InputCaptureModule()
     input_capture_model.eval()
     run_fn(input_capture_model, *run_args)
     dataloader = torch.utils.data.DataLoader(input_capture_model.data_pairs)
@@ -147,7 +146,7 @@ def autoround_quantize(
     run_fn=None,
     run_args=None,
 ):
-    """Run autoround weight-only quantization.
+    """The entry point of the autoround weight-only quantization.
     Args:
     model: The PyTorch model to be quantized.
     weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
@@ -185,7 +184,10 @@ def autoround_quantize(
     gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
     not_use_best_mse (bool): Whether to use mean squared error (default is False).
     dynamic_max_gap (int): The dynamic maximum gap (default is -1).
-    **kwargs: Additional keyword arguments.
+    scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
+                           have different choices.
+    run_fn: a calibration function for calibrating the model. Defaults to None.
+    run_args: positional arguments for `run_fn`. Defaults to None.
 
     Returns:
         The quantized model.

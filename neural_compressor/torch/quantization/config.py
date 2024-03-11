@@ -673,7 +673,7 @@ class AutoRoundConfig(BaseConfig):
         gradient_accumulate_steps: int = 1,
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
-        scale_dtype="fp16",
+        scale_dtype: str="fp16",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.
@@ -700,6 +700,8 @@ class AutoRoundConfig(BaseConfig):
             gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
             not_use_best_mse (bool): Whether to use mean squared error (default is False).
             dynamic_max_gap (int): The dynamic maximum gap (default is -1).
+            scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
+                        have different choices.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
@@ -752,7 +754,7 @@ class AutoRoundConfig(BaseConfig):
         return AutoRoundConfig(bits=[4, 6])
 
 
-def get_default_AUTOROUND_config() -> AutoRoundConfig:
+def get_default_AutoRound_config() -> AutoRoundConfig:
     """Generate the default AUTOROUND config.
 
     Returns:

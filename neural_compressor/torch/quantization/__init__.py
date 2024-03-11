@@ -28,7 +28,7 @@ from neural_compressor.torch.quantization.config import (
     TEQConfig,
     get_default_teq_config,
     AutoRoundConfig,
-    get_default_AUTOROUND_config,
+    get_default_AutoRound_config,
     HQQConfig,
     get_default_hqq_config,
     FP8Config,

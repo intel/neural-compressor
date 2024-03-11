@@ -340,7 +340,7 @@ def autoround_quantize_entry(
     calib_func = kwargs.get("run_fn", None)
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
-        if quant_config.dtype == "fp32":
+        if quant_config.name != AUTOROUND or quant_config.dtype == "fp32":
             continue
         else:
             weight_config[op_name] = {
