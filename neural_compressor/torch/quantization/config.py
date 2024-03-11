@@ -673,7 +673,7 @@ class AutoRoundConfig(BaseConfig):
         gradient_accumulate_steps: int = 1,
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
-        scale_dtype: str="fp16",
+        scale_dtype: str = "fp16",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.
