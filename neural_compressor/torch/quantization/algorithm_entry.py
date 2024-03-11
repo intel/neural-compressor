@@ -352,8 +352,6 @@ def autoround_quantize_entry(
             enable_full_range = quant_config.enable_full_range
             batch_size = quant_config.batch_size
             lr_scheduler = quant_config.lr_scheduler
-            dataset_name = quant_config.dataset_name
-            dataset_split = quant_config.dataset_split
             use_quant_input = quant_config.use_quant_input
             enable_minmax_tuning = quant_config.enable_minmax_tuning
             lr = quant_config.lr
@@ -377,8 +375,6 @@ def autoround_quantize_entry(
         enable_full_range=enable_full_range,
         batch_size=batch_size,
         lr_scheduler=lr_scheduler,
-        dataset_name=dataset_name,
-        dataset_split=dataset_split,
         use_quant_input=use_quant_input,
         enable_minmax_tuning=enable_minmax_tuning,
         lr=lr,

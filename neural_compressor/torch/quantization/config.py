@@ -656,13 +656,9 @@ class AutoRoundConfig(BaseConfig):
         use_sym: bool = False,
         group_size: int = 128,
         # AUTOROUND
-        tokenizer=None,
         enable_full_range: bool = False,
         batch_size: int = 8,
         lr_scheduler=None,
-        dataloader=None,
-        dataset_name: str = "NeelNanda/pile-10k",
-        dataset_split: str = "train",
         use_quant_input: bool = True,
         enable_minmax_tuning: bool = True,
         lr: float = None,
@@ -677,7 +673,6 @@ class AutoRoundConfig(BaseConfig):
         gradient_accumulate_steps: int = 1,
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
-        data_type: str = "int",
         scale_dtype="fp16",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
@@ -691,8 +686,6 @@ class AutoRoundConfig(BaseConfig):
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             batch_size (int): Batch size for training (default is 8).
             lr_scheduler: The learning rate scheduler to be used.
-            dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
-            dataset_split (str): The split of the dataset to be used (default is "train").
             use_quant_input (bool): Whether to use quantized input data (default is True).
             enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
             lr (float): The learning rate (default is 0.005).
@@ -707,20 +700,15 @@ class AutoRoundConfig(BaseConfig):
             gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
             not_use_best_mse (bool): Whether to use mean squared error (default is False).
             dynamic_max_gap (int): The dynamic maximum gap (default is -1).
-            data_type (str): The data type to be used (default is "int").
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
         self.bits = bits
         self.use_sym = use_sym
         self.group_size = group_size
-        self.tokenizer = tokenizer
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
         self.lr_scheduler = lr_scheduler
-        self.dataloader = dataloader  ## to support later
-        self.dataset_name = dataset_name
-        self.dataset_split = dataset_split
         self.use_quant_input = use_quant_input
         self.enable_minmax_tuning = enable_minmax_tuning
         self.lr = lr
@@ -735,7 +723,6 @@ class AutoRoundConfig(BaseConfig):
         self.gradient_accumulate_steps = gradient_accumulate_steps
         self.not_use_best_mse = not_use_best_mse
         self.dynamic_max_gap = dynamic_max_gap
-        self.data_type = data_type
         self.scale_dtype = scale_dtype
         self._post_init()
 

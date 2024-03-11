@@ -95,161 +95,38 @@ def get_autoround_default_run_fn(
         )
 
 
-class INCAutoRound(AutoRound):
-    """Class for automatic rounding-based quantization with optimizers like adamw of a PyTorch model.
+class InputCaptureMolde(torch.nn.Module):
 
-    Args:
-        model: The PyTorch model to be quantized.
-        tokenizer: An optional tokenizer for processing input data.
-        bits (int): Number of bits for quantization (default is 4).
-        group_size (int): Size of the quantization group (default is 128).
-        sym (bool): Whether to use symmetric quantization. (default is None).
-        weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
-        enable_full_range (bool): Whether to enable full range quantization (default is False).
-        batch_size (int): Batch size for training (default is 8).
-        amp (bool): Whether to use automatic mixed precision (default is True).
-        device: The device to be used for training (default is "cuda:0").
-        lr_scheduler: The learning rate scheduler to be used.
-        dataloader: The dataloader for input data (to be supported in future).
-        dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
-        dataset_split (str): The split of the dataset to be used (default is "train").
-        use_quant_input (bool): Whether to use quantized input data (default is True).
-        enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
-        lr (float): The learning rate (default is 0.005).
-        minmax_lr (float): The learning rate for min-max tuning (default is None).
-        low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
-        iters (int): Number of iterations (default is 200).
-        seqlen (int): Length of the sequence.
-        n_samples (int): Number of samples (default is 512).
-        sampler (str): The sampling method (default is "rand").
-        seed (int): The random seed (default is 42).
-        n_blocks (int): Number of blocks (default is 1).
-        gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
-        not_use_best_mse (bool): Whether to use mean squared error (default is False).
-        dynamic_max_gap (int): The dynamic maximum gap (default is -1).
-        data_type (str): The data type to be used (default is "int").
-        optimizer: string or object
-        **kwargs: Additional keyword arguments.
+    def __init__(self) -> None:
+        super().__init__()
+        self.data_pairs = []
+        self.device = "cpu"
 
-    Returns:
-        The quantized model.
-    """
-
-    def __init__(
-        self,
-        model,
-        tokenizer=None,
-        bits: int = 4,
-        group_size: int = 128,
-        sym: bool = False,
-        weight_config: dict = {},
-        enable_full_range: bool = False,
-        batch_size: int = 8,
-        amp: bool = True,
-        device="cuda:0",
-        lr_scheduler=None,
-        dataloader=None,
-        dataset_name: str = "NeelNanda/pile-10k",
-        dataset_split: str = "train",
-        use_quant_input: bool = True,
-        enable_minmax_tuning: bool = True,
-        lr: float = None,
-        minmax_lr: float = None,
-        low_gpu_mem_usage: bool = True,
-        iters: int = 200,
-        seqlen: int = 2048,
-        n_samples: int = 512,
-        sampler: str = "rand",
-        seed: int = 42,
-        n_blocks: int = 1,
-        gradient_accumulate_steps: int = 1,
-        not_use_best_mse: bool = False,
-        dynamic_max_gap: int = -1,
-        data_type: str = "int",
-        run_fn=None,
-        *args,
-        **kwargs,
-    ):
-        super(INCAutoRound, self).__init__(
-            model,
-            tokenizer,
-            bits,
-            group_size,
-            sym,
-            weight_config,
-            enable_full_range,
-            batch_size,
-            amp,
-            device,
-            lr_scheduler,
-            dataloader,
-            dataset_name,
-            dataset_split,
-            use_quant_input,
-            enable_minmax_tuning,
-            lr,
-            minmax_lr,
-            low_gpu_mem_usage,
-            iters,
-            seqlen,
-            n_samples,
-            sampler,
-            seed,
-            n_blocks,
-            gradient_accumulate_steps,
-            not_use_best_mse,
-            dynamic_max_gap,
-            data_type,
-            **kwargs,
-        )
-        self.run_fn = run_fn
-        self.run_args = kwargs.get("run_args", None)
-
-    @torch.no_grad()
-    def cache_block_input(self, block_name, n_samples):
-        """Save the inputs of the first block for calibration.
-
-        This method temporarily replaces the forward method of the model to capture
-        the inputs passing through the specified block. It then calibrates the model
-        using a specified number of samples. Finally, it restores the original forward
-        method and returns the inputs for the specified block.
-
-        Args:
-            block_name (str): The name of the block for which inputs are to be saved.
-            n_samples (int): The number of samples to use for calibration.
-
-        Returns:
-            dict: A dictionary containing the inputs for the specified block.
-        """
-        self.inputs = {}
-        self.tmp_block_name = block_name
-        self._replace_forward()
-        if self.run_args:
-            self.run_fn(self.model, *self.run_args)
+    def forward(self, *args, **kwargs):
+        if kwargs:
+            self.data_pairs.append(kwargs)
+        elif args:
+            self.data_pairs.append(args[0])
         else:
-            self.run_fn(self.model)
+            logger.error("No data provided")
 
-        self._recover_forward()
-        res = self.inputs[self.tmp_block_name]
-        del self.tmp_block_name
-        return res
+
+def recover_dataloader_from_calib_fn(run_fn, run_args):
+    input_capture_model = InputCaptureMolde()
+    input_capture_model.eval()
+    run_fn(input_capture_model, *run_args)
+    dataloader = torch.utils.data.DataLoader(input_capture_model.data_pairs)
+    return dataloader
 
 
 def autoround_quantize(
     model,
-    tokenizer=None,
-    bits: int = 4,
-    group_size: int = 128,
-    sym: bool = False,
     weight_config: dict = {},
     enable_full_range: bool = False,  ##for symmetric, TODO support later
     batch_size: int = 8,
     amp: bool = True,
     device=None,
     lr_scheduler=None,
-    dataloader=None,  ## to support later
-    dataset_name: str = "NeelNanda/pile-10k",
-    dataset_split: str = "train",
     use_quant_input: bool = True,
     enable_minmax_tuning: bool = True,
     lr: float = None,
@@ -264,7 +141,6 @@ def autoround_quantize(
     gradient_accumulate_steps: int = 1,
     not_use_best_mse: bool = False,
     dynamic_max_gap: int = -1,
-    data_type: str = "int",  ##only support data_type
     scale_dtype="fp16",
     run_fn=None,
     run_args=None,
@@ -272,10 +148,6 @@ def autoround_quantize(
     """Run autoround weight-only quantization.
     Args:
     model: The PyTorch model to be quantized.
-    tokenizer: Tokenizer for processing input data. Temporarily set as a mandatory parameter.
-    bits (int): Number of bits for quantization (default is 4).
-    group_size (int): Size of the quantization group (default is 128).
-    sym (bool): Whether to use symmetric quantization. (default is None).
     weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
     weight_config={
                 'layer1':##layer_name
@@ -287,14 +159,16 @@ def autoround_quantize(
                 }
                 ...
             }
+        keys:
+            data_type (str): The data type to be used (default is "int").
+            bits (int): Number of bits for quantization (default is 4).
+            group_size (int): Size of the quantization group (default is 128).
+            sym (bool): Whether to use symmetric quantization. (default is None).
     enable_full_range (bool): Whether to enable full range quantization (default is False).
     batch_size (int): Batch size for training (default is 8).
     amp (bool): Whether to use automatic mixed precision (default is True). Automatically detect and set.
     device: The device to be used for tuning (default is None). Automatically detect and set.
     lr_scheduler: The learning rate scheduler to be used.
-    dataloader: The dataloader for input data (to be supported in future).
-    dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
-    dataset_split (str): The split of the dataset to be used (default is "train").
     use_quant_input (bool): Whether to use quantized input data (default is True).
     enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
     lr (float): The learning rate (default is 0.005).
@@ -309,7 +183,6 @@ def autoround_quantize(
     gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
     not_use_best_mse (bool): Whether to use mean squared error (default is False).
     dynamic_max_gap (int): The dynamic maximum gap (default is -1).
-    data_type (str): The data type to be used (default is "int").
     **kwargs: Additional keyword arguments.
 
     Returns:
@@ -318,22 +191,21 @@ def autoround_quantize(
     if run_fn is None or run_fn == get_autoround_default_run_fn:
         assert run_args is not None, "Please provide tokenizer for AutoRound default calibration."
         run_fn = get_autoround_default_run_fn
+    dataloader = recover_dataloader_from_calib_fn(run_fn, run_args)
 
-    rounder = INCAutoRound(
+    rounder = AutoRound(
         model=model,
-        tokenizer=tokenizer,
-        bits=bits,
-        group_size=group_size,
-        sym=sym,
+        tokenizer=None,
+        bits=4,
+        group_size=128,
+        sym=False,
         weight_config=weight_config,
         enable_full_range=enable_full_range,  ##for symmetric, TODO support later
         batch_size=batch_size,
         amp=amp,
         device=device,
         lr_scheduler=lr_scheduler,
-        dataloader=dataloader,  ## to support later
-        dataset_name=dataset_name,
-        dataset_split=dataset_split,
+        dataloader=dataloader,
         use_quant_input=use_quant_input,
         enable_minmax_tuning=enable_minmax_tuning,
         lr=lr,
@@ -348,7 +220,7 @@ def autoround_quantize(
         gradient_accumulate_steps=gradient_accumulate_steps,
         not_use_best_mse=not_use_best_mse,
         dynamic_max_gap=dynamic_max_gap,
-        data_type=data_type,  ## only support data_type
+        data_type="int",
         scale_dtype=scale_dtype,
         run_fn=run_fn,
         run_args=run_args,
