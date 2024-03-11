@@ -49,7 +49,7 @@ if [[ "${torchvision_version}" != "" ]]; then
 fi
 
 if [[ "${ipex_version}" != "" ]]; then
-    pip install intel-extension-for-pytorch=="${pytorch_version%+cpu}"
+    pip install intel-extension-for-pytorch=="${ipex_version%+cpu}"
 fi
 
 if [[ "${onnx_version}" != "" ]]; then
