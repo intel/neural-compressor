@@ -115,5 +115,6 @@ class TestSmoothQuant:
         # load
         loaded_model = torch.jit.load("saved")
         loaded_out = loaded_model(example_inputs)
-        assert torch.allclose(inc_out, ipex_out, atol=1e-02), "Unexpected result. Please double check."
+        assert torch.allclose(inc_out, ipex_out, atol=1e-05), "Unexpected result. Please double check."
+
         assert torch.allclose(inc_out, loaded_out, atol=1e-05), "Unexpected result. Please double check."
