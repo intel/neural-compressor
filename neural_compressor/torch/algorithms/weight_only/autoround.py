@@ -103,12 +103,14 @@ class InputCaptureMolde(torch.nn.Module):
         self.device = "cpu"
 
     def forward(self, *args, **kwargs):
-        if kwargs:
+        if kwargs and len(args)==0:
+            # Handle cases where input data is a dict
             self.data_pairs.append(kwargs)
-        elif args:
+        elif args and len(args)==1:
+            # Handle cases where input data is a Tensor
             self.data_pairs.append(args[0])
         else:
-            logger.error("No data provided")
+            logger.error("Handle cases where input data is neither a Tensor nor a dict")
 
 
 def recover_dataloader_from_calib_fn(run_fn, run_args):
