@@ -67,17 +67,16 @@ def load(model, output_dir="./saved_results"):
     import fp8_convert
 
     for (op_name, op_type), op_qconfig in model.qconfig.items():
-        dtype = op_qconfig.w_dtype
+        dtype = dtype_mapping[op_qconfig.w_dtype]
         # only modules that have weight should use this observer
         observer_cls = observer_mapping[op_qconfig.w_observer]
-        observer_obj = observer_cls(dtype=op_qconfig.w_dtype)
-        choice = 1 if dtype == "fp8_e4m3" else 0
+        observer_obj = observer_cls(dtype=dtype)
+        choice = 1 if dtype == torch.float8_e4m3fn else 0
         if op_name + ".weight" in stat_dict:
             stat_dict[op_name + ".weight"] = fp8_convert.from_u8(stat_dict[op_name + ".weight"], choice)
         if dtype not in FP8_DTYPE:
             continue
         module = fetch_module(model, op_name)
-        dtype = dtype_mapping[dtype]
         # replace module
         if op_qconfig.approach == "static":
             if isinstance(module, white_list):

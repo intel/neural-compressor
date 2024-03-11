@@ -62,17 +62,16 @@ htcore.hpu_initialize()
 
 
 def _replace_module(module, qconfig):
+    assert qconfig.w_dtype == qconfig.act_dtype, "weight and activation should be the same dtype."
+    dtype = dtype_mapping[qconfig.w_dtype]
     # only modules that have weight should use this observer
     observer_cls = observer_mapping[qconfig.w_observer]
-    observer_obj = observer_cls(dtype=qconfig.w_dtype)
-    module.qconfig = qconfig
+    observer_obj = observer_cls(dtype=dtype)
     if qconfig.approach == "static":
         if isinstance(module, white_list):
             QModule = quantization_mapping[type(module)]
-            assert qconfig.w_dtype == qconfig.act_dtype, "weight and activation should be the same dtype."
-            qmodule = QModule(module, dtype_mapping[qconfig.act_dtype])
+            qmodule = QModule(module, dtype)
     elif qconfig.approach == "dynamic":
-        dtype = dtype_mapping[qconfig.act_dtype]
         if isinstance(module, torch.nn.Linear):
             # need module for initialization
             qmodule = FP8DynamicLinear(module, dtype)
@@ -149,7 +148,7 @@ def _remove_observer(module):
         scale = module.input_activation_post_process.calculate_qparams()
         if dist.is_initialized():
             scale = scale.to("hpu")
-            dist.all_reduce(scale, op=ReduceOp.MIN)
+            dist.all_reduce(scale, op=ReduceOp.MAX)
         if hasattr(module, "input_activation_post_process1"):
             module.register_parameter("scale1", torch.nn.Parameter(scale))
         else:
@@ -159,7 +158,7 @@ def _remove_observer(module):
         scale = module.input_activation_post_process1.calculate_qparams()
         if dist.is_initialized():
             scale = scale.to("hpu")
-            dist.all_reduce(scale, op=ReduceOp.MIN)
+            dist.all_reduce(scale, op=ReduceOp.MAX)
         module.register_parameter("scale2", torch.nn.Parameter(scale))
         delattr(module, "input_activation_post_process1")
 

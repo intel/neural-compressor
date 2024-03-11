@@ -30,20 +30,21 @@ def observer_registry(name):
     def new_observer(observer_cls):
         global observer_mapping
         observer_mapping[name] = observer_cls
+        return observer_cls
 
     return new_observer
 
 
 def _map_gaudi_scale(scale):
     if USE_HW_SCALE:
-        scale_list = torch.tensor([256, 16, 1, 1 / 16])
+        scale_list = torch.tensor([16, 1, 1 / 16, 1 / 256])
         return torch.clip(
-            2 ** (torch.floor(torch.log2(scale) / 4) * 4),
+            2 ** (torch.ceil(torch.log2(scale) / 4) * 4),
             torch.tensor(scale_list[-1], dtype=scale.dtype, device=scale.device),
             torch.tensor(scale_list[0], dtype=scale.dtype, device=scale.device),
         )
     elif USE_POW2_SCALE:
-        return 2 ** torch.floor(torch.log2(scale))
+        return 2 ** torch.ceil(torch.log2(scale))
     else:
         return scale
 
@@ -51,8 +52,9 @@ def _map_gaudi_scale(scale):
 def calculate_qparams(min_val, max_val, dtype):
     amax = torch.max(torch.abs(min_val), torch.abs(max_val))
     dtype_amax = E4M3_AMAX if dtype == torch.float8_e4m3fn else E5M2_AMAX
-    scale = dtype_amax / amax
-    scale = scale.unsqueeze(0)
+    scale = amax / dtype_amax
+    scale = scale.reshape(-1)
+    print(scale)  # TODO: Printing is required, otherwise the program will pause
     return _map_gaudi_scale(scale)
 
 
@@ -64,6 +66,7 @@ class FP8MinMaxObserver(ObserverBase):
     ) -> None:
         # bins: The number of bins used for histogram calculation.
         super().__init__(dtype=dtype)
+        assert isinstance(dtype, torch.dtype), "Please make sure the dtype of observer is torch.dtype."
         factory_kwargs = {"device": "hpu", "dtype": torch.float32}
         self.register_buffer("min_val", torch.tensor(float("inf"), **factory_kwargs))
         self.register_buffer("max_val", torch.tensor(float("-inf"), **factory_kwargs))
@@ -72,7 +75,7 @@ class FP8MinMaxObserver(ObserverBase):
         r"""Records the running minimum and maximum of ``x``."""
         if x_orig.numel() == 0:
             return x_orig
-        x = x_orig.detach()  # avoid keeping autograd tape
+        x = x_orig
         x = x.to(self.min_val.dtype)
         min_val_cur, max_val_cur = torch.aminmax(x)
         min_val = torch.min(min_val_cur, self.min_val)
@@ -81,16 +84,14 @@ class FP8MinMaxObserver(ObserverBase):
         self.max_val.copy_(max_val)
         return x_orig
 
-    @torch.jit.export
     def calculate_qparams(self):
         r"""Calculates the quantization parameters."""
-        return calculate_qparams(self.min_val, self.max_val, self.dtype)
+        scale = calculate_qparams(self.min_val, self.max_val, self.dtype)
+        return scale
 
-    @torch.jit.export
     def extra_repr(self):
         return f"min_val={self.min_val}, max_val={self.max_val}"
 
-    @torch.jit.export
     def reset_min_max_vals(self):
         """Resets the min/max values."""
         self.min_val.copy_(torch.tensor(float("inf")))
@@ -102,10 +103,11 @@ class FP8PerChannelMinMaxObserver(ObserverBase):
     def __init__(
         self,
         dtype: torch.dtype = torch.float8_e4m3fn,
-        ch_axis=1,  # weight_shape = (out_features, in_features)
+        ch_axis=0,  # weight_shape = (out_features, in_features)
     ) -> None:
         # bins: The number of bins used for histogram calculation.
         super().__init__(dtype=dtype)
+        assert isinstance(dtype, torch.dtype), "Please make sure the dtype of observer is torch.dtype."
         self.ch_axis = ch_axis
         factory_kwargs = {"device": "hpu", "dtype": torch.float32}
         self.register_buffer("min_val", torch.tensor([], **factory_kwargs))
@@ -114,7 +116,7 @@ class FP8PerChannelMinMaxObserver(ObserverBase):
     def forward(self, x_orig):
         if x_orig.numel() == 0:
             return x_orig
-        x = x_orig.detach()  # avoid keeping autograd tape
+        x = x_orig
         min_val = self.min_val
         max_val = self.max_val
         x_dim = x.size()
@@ -139,16 +141,14 @@ class FP8PerChannelMinMaxObserver(ObserverBase):
         self.max_val.copy_(max_val)
         return x_orig
 
-    @torch.jit.export
     def calculate_qparams(self):
         r"""Calculates the quantization parameters."""
-        return calculate_qparams(self.min_val, self.max_val, self.dtype)
+        scale = calculate_qparams(self.min_val, self.max_val, self.dtype)
+        return scale
 
-    @torch.jit.export
     def extra_repr(self):
         return f"min_val={self.min_val}, max_val={self.max_val}"
 
-    @torch.jit.export
     def reset_min_max_vals(self):
         """Resets the min/max values."""
         self.min_val.copy_(torch.tensor(float("inf")))
@@ -167,19 +167,18 @@ class FP8HistogramObserver(ObserverBase):
     ) -> None:
         # bins: The number of bins used for histogram calculation.
         super().__init__(dtype=dtype)
+        assert isinstance(dtype, torch.dtype), "Please make sure the dtype of observer is torch.dtype."
         self.bins = bins
         factory_kwargs = {"device": "hpu", "dtype": torch.float32}
         self.register_buffer("histogram", torch.zeros(self.bins, **factory_kwargs))
         self.register_buffer("min_val", torch.tensor(float("inf"), **factory_kwargs))
         self.register_buffer("max_val", torch.tensor(float("-inf"), **factory_kwargs))
-        self.dst_nbins = 2 ** torch.iinfo(self.dtype).bits
+        self.dst_nbins = 2 ** torch.finfo(self.dtype).bits
         self.upsample_rate = upsample_rate
 
     def calculate_qparams(self, **kwargs):
         new_min, new_max = self._non_linear_param_search()
-        amax = torch.max(torch.abs(new_max), torch.abs(new_min))
-        dtype_amax = E4M3_AMAX if self.dtype == torch.float8_e4m3fn else E5M2_AMAX
-        scale = dtype_amax / amax
+        scale = calculate_qparams(new_min, new_max, self.dtype)
         return scale
 
     def _get_norm(self, delta_begin: torch.Tensor, delta_end: torch.Tensor, density: torch.Tensor) -> torch.Tensor:
@@ -386,7 +385,7 @@ class FP8HistogramObserver(ObserverBase):
     def forward(self, x_orig: torch.Tensor) -> torch.Tensor:
         if x_orig.numel() == 0:
             return x_orig
-        x = x_orig.detach()
+        x = x_orig
         # use abs due to fp8 symmetry
         x = torch.abs(x)
         min_val = self.min_val
