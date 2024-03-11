@@ -2,6 +2,7 @@ import math
 import shutil
 import unittest
 from functools import wraps
+from typing import Callable, Dict, List, Optional, Union
 from unittest.mock import patch
 
 import numpy as np
@@ -9,8 +10,14 @@ import tensorflow as tf
 from tensorflow import keras
 
 from neural_compressor.common import logger
-from neural_compressor.common.base_tuning import TuningConfig, evaluator
+from neural_compressor.common.base_tuning import Evaluator, TuningConfig
 from neural_compressor.tensorflow.quantization import SmoothQuantConfig, StaticQuantConfig, autotune
+
+
+def _create_evaluator_for_eval_fns(eval_fns: Optional[Union[Callable, Dict, List[Dict]]] = None) -> Evaluator:
+    evaluator = Evaluator()
+    evaluator.set_eval_fn_registry(eval_fns)
+    return evaluator
 
 
 def build_model():
@@ -125,10 +132,9 @@ class TestAutoTune(unittest.TestCase):
         best_model = autotune(
             model="baseline_model",
             tune_config=custom_tune_config,
-            eval_fns=eval_acc_fn,
+            eval_fn=eval_acc_fn,
             calib_dataloader=calib_dataloader,
         )
-        self.assertEqual(len(evaluator.eval_fn_registry), 1)
         self.assertIsNotNone(best_model)
 
     def test_sq_auto_tune(self):
@@ -150,22 +156,27 @@ class TestAutoTune(unittest.TestCase):
             },
         ]
 
+        evaluator = _create_evaluator_for_eval_fns(eval_fns)
+
+        def eval_fn_wrapper(model):
+            result = evaluator.evaluate(model)
+            return result
+
         calib_dataloader = MyDataloader(dataset=Dataset())
         custom_tune_config = TuningConfig(config_set=[SmoothQuantConfig(alpha=0.5), SmoothQuantConfig(alpha=0.6)])
         best_model = autotune(
             model="baseline_model",
             tune_config=custom_tune_config,
-            eval_fns=eval_acc_fn,
+            eval_fn=eval_acc_fn,
             calib_dataloader=calib_dataloader,
         )
-        self.assertEqual(len(evaluator.eval_fn_registry), 1)
         self.assertIsNone(best_model)
 
         custom_tune_config = TuningConfig(config_set=[SmoothQuantConfig(alpha=[0.5, 0.6])])
         best_model = autotune(
             model="baseline_model",
             tune_config=custom_tune_config,
-            eval_fns=eval_fns,
+            eval_fn=eval_fn_wrapper,
             calib_dataloader=calib_dataloader,
         )
         self.assertEqual(len(evaluator.eval_fn_registry), 2)
