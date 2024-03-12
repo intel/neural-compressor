@@ -49,7 +49,7 @@ done
 
 SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
 log_dir="/neural-compressor/.azure-pipelines/scripts/models"
-if [[ "${inc_new_api}" == "3x" ]]; then
+if [[ "${inc_new_api}" == "3x"* ]]; then
     WORK_SOURCE_DIR="/neural-compressor/examples/3.x_api/${framework}"
 else
     WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
@@ -67,7 +67,7 @@ else
 fi
 
 $BOLD_YELLOW && echo "====== install requirements ======" && $RESET
-/bin/bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh
+/bin/bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh ${inc_new_api}
 
 mkdir -p ${WORK_SOURCE_DIR}
 cd ${WORK_SOURCE_DIR}

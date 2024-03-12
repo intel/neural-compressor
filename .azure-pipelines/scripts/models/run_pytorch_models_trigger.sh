@@ -59,15 +59,15 @@ elif [ "${model}" == "resnet18_fx" ]; then
     benchmark_cmd="bash run_benchmark.sh --topology=resnet18 --dataset_location=${dataset_location} --mode=performance --batch_size=${batch_size} --iters=500"
 elif [ "${model}" == "opt_125m_woq_gptq_int4" ]; then
     model_src_dir="nlp/huggingface_models/language-modeling/quantization/llm"
-    inc_new_api=3x
+    inc_new_api=3x_pt
     tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4"
 elif [ "${model}" == "opt_125m_woq_gptq_int4_dq_bnb" ]; then
     model_src_dir="nlp/huggingface_models/language-modeling/quantization/llm"
-    inc_new_api=3x
+    inc_new_api=3x_pt
     tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4_dq_bnb"
 elif [ "${model}" == "opt_125m_woq_gptq_int4_dq_ggml" ]; then
     model_src_dir="nlp/huggingface_models/language-modeling/quantization/llm"
-    inc_new_api=3x
+    inc_new_api=3x_pt
     tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4_dq_ggml"
 fi
 
