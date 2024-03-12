@@ -149,7 +149,7 @@ def collect_log():
         if args.inc_new_api.split("_")[0] == "3x":
             tmp["fp32_acc"], tmp["tuning_trials"], tmp["strategy"] = "unknown", "unknown", "unknown"
 
-        if tmp["acc_bs"]:
+        if "acc_bs" in tmp:
             acc_bs = tmp["acc_bs"]
         else:
             acc_bs = 1
