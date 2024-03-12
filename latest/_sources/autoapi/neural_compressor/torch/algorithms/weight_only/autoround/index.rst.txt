@@ -1,0 +1,84 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.weight_only.autoround`
+==================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.autoround
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.autoround.get_autoround_default_run_fn
+   neural_compressor.torch.algorithms.weight_only.autoround.autoround_quantize
+
+
+
+.. py:function:: get_autoround_default_run_fn(model, tokenizer, dataset_name='NeelNanda/pile-10k', n_samples=512, seqlen=2048, seed=42, bs=8, dataset_split: str = 'train', dataloader=None)
+
+   Perform calibration for quantization.
+
+   This method calibrates the model for quantization by processing a specified
+   number of samples from the calibration dataset. It ensures that the data is
+   properly formatted and feeds it to the model. If the number of samples processed
+   is less than the specified number, it logs a warning. If no samples are processed,
+   it logs an error and exits.
+
+   :param n_samples: The number of samples to use for calibration.
+   :type n_samples: int
+
+
+.. py:function:: autoround_quantize(model, weight_config: dict = {}, enable_full_range: bool = False, batch_size: int = 8, amp: bool = True, device=None, lr_scheduler=None, use_quant_input: bool = True, enable_minmax_tuning: bool = True, lr: float = None, minmax_lr: float = None, low_gpu_mem_usage: bool = True, iters: int = 200, seqlen: int = 2048, n_samples: int = 512, sampler: str = 'rand', seed: int = 42, n_blocks: int = 1, gradient_accumulate_steps: int = 1, not_use_best_mse: bool = False, dynamic_max_gap: int = -1, scale_dtype='fp16', run_fn=None, run_args=None)
+
+   The entry point of the autoround weight-only quantization.
+   Args:
+   model: The PyTorch model to be quantized.
+   weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
+   weight_config={
+               'layer1':##layer_name
+               {
+                   'data_type': 'int',
+                   'bits': 4,
+                   'group_size': 32,
+                   'sym': False,
+               }
+               ...
+           }
+       keys:
+           data_type (str): The data type to be used (default is "int").
+           bits (int): Number of bits for quantization (default is 4).
+           group_size (int): Size of the quantization group (default is 128).
+           sym (bool): Whether to use symmetric quantization. (default is None).
+   enable_full_range (bool): Whether to enable full range quantization (default is False).
+   batch_size (int): Batch size for training (default is 8).
+   amp (bool): Whether to use automatic mixed precision (default is True). Automatically detect and set.
+   device: The device to be used for tuning (default is None). Automatically detect and set.
+   lr_scheduler: The learning rate scheduler to be used.
+   use_quant_input (bool): Whether to use quantized input data (default is True).
+   enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
+   lr (float): The learning rate (default is 0.005).
+   minmax_lr (float): The learning rate for min-max tuning (default is None).
+   low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
+   iters (int): Number of iterations (default is 200).
+   seqlen (int): Length of the sequence.
+   n_samples (int): Number of samples (default is 512).
+   sampler (str): The sampling method (default is "rand").
+   seed (int): The random seed (default is 42).
+   n_blocks (int): Number of blocks (default is 1).
+   gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
+   not_use_best_mse (bool): Whether to use mean squared error (default is False).
+   dynamic_max_gap (int): The dynamic maximum gap (default is -1).
+   scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
+                          have different choices.
+   run_fn: a calibration function for calibrating the model. Defaults to None.
+   run_args: positional arguments for `run_fn`. Defaults to None.
+
+   :returns: The quantized model.
+
+
