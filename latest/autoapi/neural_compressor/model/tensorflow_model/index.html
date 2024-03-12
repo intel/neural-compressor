@@ -143,19 +143,22 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.load_saved_model" title="neural_compressor.model.tensorflow_model.load_saved_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_saved_model</span></code></a>(model, saved_model_tags, ...)</p></td>
 <td><p>Load graph_def from saved model with the default serving signature key.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.keras_session" title="neural_compressor.model.tensorflow_model.keras_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">keras_session</span></code></a>(model, input_tensor_names, ...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.try_loading_keras" title="neural_compressor.model.tensorflow_model.try_loading_keras"><code class="xref py py-obj docutils literal notranslate"><span class="pre">try_loading_keras</span></code></a>(model, input_tensor_names, ...)</p></td>
+<td><p>Try different ways of loading keras models.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.keras_session" title="neural_compressor.model.tensorflow_model.keras_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">keras_session</span></code></a>(model, input_tensor_names, ...)</p></td>
 <td><p>Build session with keras model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.slim_session" title="neural_compressor.model.tensorflow_model.slim_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slim_session</span></code></a>(model, input_tensor_names, ...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.slim_session" title="neural_compressor.model.tensorflow_model.slim_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slim_session</span></code></a>(model, input_tensor_names, ...)</p></td>
 <td><p>Build session with slim model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.checkpoint_session" title="neural_compressor.model.tensorflow_model.checkpoint_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">checkpoint_session</span></code></a>(model, input_tensor_names, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.checkpoint_session" title="neural_compressor.model.tensorflow_model.checkpoint_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">checkpoint_session</span></code></a>(model, input_tensor_names, ...)</p></td>
 <td><p>Build session with ckpt model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.estimator_session" title="neural_compressor.model.tensorflow_model.estimator_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">estimator_session</span></code></a>(model, input_tensor_names, ...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.estimator_session" title="neural_compressor.model.tensorflow_model.estimator_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">estimator_session</span></code></a>(model, input_tensor_names, ...)</p></td>
 <td><p>Build session with estimator model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.saved_model_session" title="neural_compressor.model.tensorflow_model.saved_model_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saved_model_session</span></code></a>(model, input_tensor_names, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.saved_model_session" title="neural_compressor.model.tensorflow_model.saved_model_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saved_model_session</span></code></a>(model, input_tensor_names, ...)</p></td>
 <td><p>Build session with saved model.</p></td>
 </tr>
 </tbody>
@@ -308,6 +311,29 @@ output_tensors: List of output tensors.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.try_loading_keras">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">try_loading_keras</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.try_loading_keras" title="Permalink to this definition"></a></dt>
+<dd><p>Try different ways of loading keras models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>string</em><em> or </em><em>tf.keras.Model</em>) – model path or tf.keras.Model object.</p></li>
+<li><p><strong>input_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – input tensor names of the model.</p></li>
+<li><p><strong>output_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – output tensor names of the model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tf.compat.v1.Session object.
+input_names (list of string): validated input names.
+output_names (list of string): validated output names.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>graph_def (tf.compat.v1.Session)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.keras_session">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">keras_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.keras_session" title="Permalink to this definition"></a></dt>
 <dd><p>Build session with keras model.</p>
@@ -320,9 +346,7 @@ output_tensors: List of output tensors.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>tf.compat.v1.Session object.
-input_tensor_names (list of string): validated input_tensor_names.
-output_tensor_names (list of string): validated output_tensor_names.</p>
+<dd class="field-even"><p>tf.compat.v1.Session object.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>sess (tf.compat.v1.Session)</p>
@@ -477,7 +501,7 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f5650168b80> 
+   <jinja2.runtime.BlockReference object at 0x7f78c5c2a770> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
