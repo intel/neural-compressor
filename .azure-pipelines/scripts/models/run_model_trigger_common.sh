@@ -89,7 +89,7 @@ elif [ "${mode}" == "tuning" ]; then
         --strategy=${strategy} \
         2>&1 | tee -a ${log_dir}/${model}/${framework}-${model}-tune.log
     $BOLD_YELLOW && echo "====== check tuning status. ======" && $RESET
-    if [[ "${inc_new_api}" == "3x" ]]; then
+    if [[ "${inc_new_api}" == "3x"* ]]; then
         control_phrase="Quantization end."
     else
         control_phrase="model which meet accuracy goal."
