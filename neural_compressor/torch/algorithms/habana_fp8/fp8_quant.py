@@ -205,6 +205,8 @@ def convert(model):
 
 
 def quantize(model, qconfig_mapping, run_fn=None, run_args=None, inplace=True):
+    htcore.hpu_set_env()
+    torch.set_grad_enabled(False)
     q_model = model if inplace else copy.deepcopy(model)
     q_model = prepare(q_model, qconfig_mapping)
     if run_fn is not None:

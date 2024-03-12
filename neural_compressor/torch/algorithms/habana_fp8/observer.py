@@ -54,7 +54,6 @@ def calculate_qparams(min_val, max_val, dtype):
     dtype_amax = E4M3_AMAX if dtype == torch.float8_e4m3fn else E5M2_AMAX
     scale = amax / dtype_amax
     scale = scale.reshape(-1)
-    print(scale)  # TODO: Printing is required, otherwise the program will pause
     return _map_gaudi_scale(scale)
 
 
@@ -67,7 +66,7 @@ class FP8MinMaxObserver(ObserverBase):
         # bins: The number of bins used for histogram calculation.
         super().__init__(dtype=dtype)
         assert isinstance(dtype, torch.dtype), "Please make sure the dtype of observer is torch.dtype."
-        factory_kwargs = {"device": "hpu", "dtype": torch.float32}
+        factory_kwargs = {"device": "cpu", "dtype": torch.float32}
         self.register_buffer("min_val", torch.tensor(float("inf"), **factory_kwargs))
         self.register_buffer("max_val", torch.tensor(float("-inf"), **factory_kwargs))
 
@@ -75,7 +74,7 @@ class FP8MinMaxObserver(ObserverBase):
         r"""Records the running minimum and maximum of ``x``."""
         if x_orig.numel() == 0:
             return x_orig
-        x = x_orig
+        x = x_orig.detach()
         x = x.to(self.min_val.dtype)
         min_val_cur, max_val_cur = torch.aminmax(x)
         min_val = torch.min(min_val_cur, self.min_val)
@@ -109,14 +108,14 @@ class FP8PerChannelMinMaxObserver(ObserverBase):
         super().__init__(dtype=dtype)
         assert isinstance(dtype, torch.dtype), "Please make sure the dtype of observer is torch.dtype."
         self.ch_axis = ch_axis
-        factory_kwargs = {"device": "hpu", "dtype": torch.float32}
+        factory_kwargs = {"device": "cpu", "dtype": torch.float32}
         self.register_buffer("min_val", torch.tensor([], **factory_kwargs))
         self.register_buffer("max_val", torch.tensor([], **factory_kwargs))
 
     def forward(self, x_orig):
         if x_orig.numel() == 0:
             return x_orig
-        x = x_orig
+        x = x_orig.detach()
         min_val = self.min_val
         max_val = self.max_val
         x_dim = x.size()
@@ -169,7 +168,7 @@ class FP8HistogramObserver(ObserverBase):
         super().__init__(dtype=dtype)
         assert isinstance(dtype, torch.dtype), "Please make sure the dtype of observer is torch.dtype."
         self.bins = bins
-        factory_kwargs = {"device": "hpu", "dtype": torch.float32}
+        factory_kwargs = {"device": "cpu", "dtype": torch.float32}
         self.register_buffer("histogram", torch.zeros(self.bins, **factory_kwargs))
         self.register_buffer("min_val", torch.tensor(float("inf"), **factory_kwargs))
         self.register_buffer("max_val", torch.tensor(float("-inf"), **factory_kwargs))
@@ -198,10 +197,10 @@ class FP8HistogramObserver(ObserverBase):
         scale = FP8_amax / dst_bin_max
         if torch.isinf(torch.tensor(scale)):
             scale = torch.tensor(3.4e38)
-        tmp = torch.ops.hpu.cast_to_fp8_v2(src_bin_begin, scale, False, False, self.dtype)[0]
-        dst_bin_begin = torch.ops.hpu.cast_from_fp8(tmp, None, torch.float32)
-        tmp = torch.ops.hpu.cast_to_fp8_v2(src_bin_end, scale, False, False, self.dtype)[0]
-        dst_bin_end = torch.ops.hpu.cast_from_fp8(tmp, None, torch.float32)
+        tmp = torch.ops.hpu.cast_to_fp8_v2(src_bin_begin.to("hpu"), scale.to("hpu"), False, False, self.dtype)[0]
+        dst_bin_begin = torch.ops.hpu.cast_from_fp8(tmp, None, torch.float32).to("cpu")
+        tmp = torch.ops.hpu.cast_to_fp8_v2(src_bin_end.to("hpu"), scale.to("hpu"), False, False, self.dtype)[0]
+        dst_bin_end = torch.ops.hpu.cast_from_fp8(tmp, None, torch.float32).to("cpu")
         # get bin width of dst bin value, dst_bin_begin must contain 0 and the max qvalue.
         dst_bin = list(set(dst_bin_begin.detach().cpu().numpy()))
         dst_bin.sort()
@@ -385,7 +384,7 @@ class FP8HistogramObserver(ObserverBase):
     def forward(self, x_orig: torch.Tensor) -> torch.Tensor:
         if x_orig.numel() == 0:
             return x_orig
-        x = x_orig
+        x = x_orig.detach()
         # use abs due to fp8 symmetry
         x = torch.abs(x)
         min_val = self.min_val

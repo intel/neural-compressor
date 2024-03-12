@@ -318,7 +318,7 @@ class FP8Linear(torch.nn.Module):
             self.in_features,
             self.out_features,
             self.bias is not None,
-            self.input_scale if hasattr(self, "input_scale") else None,
+            self.input_scale.tolist() if hasattr(self, "input_scale") else None,
             self.dtype,
         )
 
@@ -381,7 +381,7 @@ class FP8Matmul(torch.nn.Module):
 
     def extra_repr(self) -> str:
         return "scales={}, format={}".format(
-            (self.scale1, self.scale2),
+            (self.scale1.tolist(), self.scale2.tolist()),
             self.dtype,
         )
 
