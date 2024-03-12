@@ -147,7 +147,7 @@ def collect_log():
 
         # set for 3x woq models
         if args.inc_new_api == "3x":
-            tmp["fp32_acc"], tmp["tuning_trials"], tmp["strategy"] = "unknown",  "unknown",  "unknown"
+            tmp["fp32_acc"], tmp["tuning_trials"], tmp["strategy"] = "unknown", "unknown", "unknown"
 
         if tmp["acc_bs"]:
             acc_bs = tmp["acc_bs"]
@@ -232,9 +232,7 @@ def parse_tuning_line(line, tmp):
         tmp["int8_acc"] = float(tuned_acc.group(1))
 
     if args.inc_new_api == "3x":
-        quant_acc = re.search(
-            r"Accuracy:\s+(\d+(\.\d+)?)", line
-        )
+        quant_acc = re.search(r"Accuracy:\s+(\d+(\.\d+)?)", line)
         if quant_acc and quant_acc.group(1):
             tmp["int8_acc"] = float(quant_acc.group(1))
         batch_size = re.search(r"Batch size = ([0-9]+)", line)
