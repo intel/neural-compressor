@@ -33,6 +33,7 @@ parameters:
       - opt_125m_woq_gptq_int4_dq_bnb
       - opt_125m_woq_gptq_int4_dq_ggml
 
+stages:
   - stage: PyTorchModels
     displayName: Run PyTorch Model
     pool: MODEL_PERF_TEST
