@@ -27,7 +27,14 @@ FRAMEWORK="pytorch"
 FRAMEWORK_VERSION=${pytorch_version}
 TORCH_VISION_VERSION=${torchvision_version}
 
-inc_new_api=false
+dataset_location=""
+input_model=""
+yaml=""
+strategy=""
+batch_size=""
+new_benchmark=true
+inc_new_api=true
+benchmark_cmd=""
 # ======== set up config for pytorch models ========
 if [ "${model}" == "resnet18" ]; then
     model_src_dir="image_recognition/torchvision_models/quantization/ptq/cpu/eager"
@@ -43,13 +50,25 @@ elif [ "${model}" == "resnet18_fx" ]; then
     model_src_dir="image_recognition/torchvision_models/quantization/ptq/cpu/fx/"
     dataset_location="/tf_dataset2/datasets/mini-imageraw"
     input_model="resnet18"
-    yaml="conf.yaml"
+    yaml=""
     strategy="basic"
     batch_size=1
     new_benchmark=true
     inc_new_api=true
     tuning_cmd="bash run_quant.sh --topology=resnet18 --dataset_location=${dataset_location} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --topology=resnet18 --dataset_location=${dataset_location} --mode=performance --batch_size=${batch_size} --iters=500"
+elif [ "${model}" == "opt_125m_woq_gptq_int4" ]; then
+    model_src_dir="nlp/huggingface_models/language-modeling/quantization/llm"
+    inc_new_api=3x
+    tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4"
+elif [ "${model}" == "opt_125m_woq_gptq_int4_dq_bnb" ]; then
+    model_src_dir="nlp/huggingface_models/language-modeling/quantization/llm"
+    inc_new_api=3x
+    tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4_dq_bnb"
+elif [ "${model}" == "opt_125m_woq_gptq_int4_dq_ggml" ]; then
+    model_src_dir="nlp/huggingface_models/language-modeling/quantization/llm"
+    inc_new_api=3x
+    tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4_dq_ggml"
 fi
 
 

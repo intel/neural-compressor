@@ -49,8 +49,12 @@ do
 done
 
 log_dir="/neural-compressor/.azure-pipelines/scripts/models"
-WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
 SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
+if [[ "${inc_new_api}" == "3x" ]]; then
+    WORK_SOURCE_DIR="/neural-compressor/examples/3.x_api/${framework}"
+else
+    WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
+fi
 $BOLD_YELLOW && echo "processing ${framework}-${fwk_ver}-${model}" && $RESET
 
 if [ "${mode}" == "env_setup" ]; then
@@ -85,14 +89,18 @@ elif [ "${mode}" == "tuning" ]; then
         --strategy=${strategy} \
         2>&1 | tee -a ${log_dir}/${model}/${framework}-${model}-tune.log
     $BOLD_YELLOW && echo "====== check tuning status. ======" && $RESET
-    control_phrase="model which meet accuracy goal."
+    if [[ "${inc_new_api}" == "3x" ]]; then
+        control_phrase="Quantization end."
+    else
+        control_phrase="model which meet accuracy goal."
+    fi
     if [ $(grep "${control_phrase}" ${log_dir}/${model}/${framework}-${model}-tune.log | wc -l) == 0 ];then
-        $BOLD_RED && echo "====== tuning FAILED!! ======" && $RESET; exit 1
+        $BOLD_RED && echo "====== Quantization FAILED!! ======" && $RESET; exit 1
     fi
     if [ $(grep "${control_phrase}" ${log_dir}/${model}/${framework}-${model}-tune.log | grep "Not found" | wc -l) == 1 ];then
-        $BOLD_RED && echo "====== tuning FAILED!! ======" && $RESET; exit 1
+        $BOLD_RED && echo "====== Quantization FAILED!! ======" && $RESET; exit 1
     fi
-    $BOLD_GREEN && echo "====== tuning SUCCEED!! ======" && $RESET
+    $BOLD_GREEN && echo "====== Quantization SUCCEED!! ======" && $RESET
 elif [ "${mode}" == "fp32_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "workspace ${WORK_SOURCE_DIR}/${model_src_dir}" && $RESET
@@ -148,6 +156,7 @@ elif [ "${mode}" == "collect_log" ]; then
         --logs_dir="${log_dir}/${model}" \
         --output_dir="${log_dir}/${model}" \
         --build_id=${BUILD_BUILDID} \
-        --stage=${mode}
+        --stage=${mode} \
+        --inc_new_api="${inc_new_api}"
     $BOLD_YELLOW && echo "====== Finish collect logs =======" && $RESET
 fi

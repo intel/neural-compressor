@@ -11,6 +11,7 @@ parser.add_argument("--output_dir", type=str, default=".")
 parser.add_argument("--build_id", type=str, default="0")
 parser.add_argument("--stage", type=str, default="collect_log")
 parser.add_argument("--gap", type=float, default=0.05)
+parser.add_argument("--inc_new_api", type=str, default="")
 args = parser.parse_args()
 print("====== collecting model test log =======")
 OS = "linux"
@@ -130,10 +131,10 @@ def get_refer_data():
 def collect_log():
     results = []
     tuning_infos = []
-    print(f"tuning log dir is {tuning_log}")
+    print(f"quantization log dir is {tuning_log}")
     # get model tuning results
     if os.path.exists(tuning_log):
-        print("tuning log found")
+        print("quantization log found")
         tmp = {"fp32_acc": 0, "int8_acc": 0, "tuning_trials": 0}
         with open(tuning_log, "r") as f:
             for line in f:
@@ -144,14 +145,22 @@ def collect_log():
         if (args.model in OOB_MODEL_LIST) and args.framework == "tensorflow":
             tmp["fp32_acc"], tmp["int8_acc"] = "unknown", "unknown"
 
+        # set for 3x woq models
+        if args.inc_new_api == "3x":
+            tmp["fp32_acc"], tmp["tuning_trials"], tmp["strategy"] = "unknown",  "unknown",  "unknown"
+
+        if tmp["acc_bs"]:
+            acc_bs = tmp["acc_bs"]
+        else:
+            acc_bs = 1
         results.append(
-            "{};{};{};{};FP32;{};Inference;Accuracy;1;{};{}\n".format(
-                OS, PLATFORM, args.framework, args.fwk_ver, args.model, tmp["fp32_acc"], "<url>"
+            "{};{};{};{};FP32;{};Inference;Accuracy;{};{};{}\n".format(
+                OS, PLATFORM, args.framework, args.fwk_ver, args.model, acc_bs, tmp["fp32_acc"], "<url>"
             )
         )
         results.append(
-            "{};{};{};{};INT8;{};Inference;Accuracy;1;{};{}\n".format(
-                OS, PLATFORM, args.framework, args.fwk_ver, args.model, tmp["int8_acc"], "<url>"
+            "{};{};{};{};INT8;{};Inference;Accuracy;{};{};{}\n".format(
+                OS, PLATFORM, args.framework, args.fwk_ver, args.model, acc_bs, tmp["int8_acc"], "<url>"
             )
         )
         tuning_infos.append(
@@ -173,25 +182,27 @@ def collect_log():
         )
 
     # get model benchmark results
-    for precision in ["int8", "fp32"]:
-        throughput = 0.0
-        bs = 1
-        for root, dirs, files in os.walk(args.logs_dir):
-            for name in files:
-                file_name = os.path.join(root, name)
-                print(file_name)
-                if "performance-" + precision in name:
-                    for line in open(file_name, "r"):
-                        result = parse_perf_line(line)
-                        if result.get("throughput"):
-                            throughput += result.get("throughput")
-                        if result.get("batch_size"):
-                            bs = result.get("batch_size")
-        results.append(
-            "{};{};{};{};{};{};Inference;Performance;{};{};{}\n".format(
-                OS, PLATFORM, args.framework, args.fwk_ver, precision.upper(), args.model, bs, throughput, URL
+    if args.inc_new_api != "3x":
+        for precision in ["int8", "fp32"]:
+            throughput = 0.0
+            bs = 1
+            for root, dirs, files in os.walk(args.logs_dir):
+                for name in files:
+                    file_name = os.path.join(root, name)
+                    print(file_name)
+                    if "performance-" + precision in name:
+                        for line in open(file_name, "r"):
+                            result = parse_perf_line(line)
+                            if result.get("throughput"):
+                                throughput += result.get("throughput")
+                            if result.get("batch_size"):
+                                bs = result.get("batch_size")
+            results.append(
+                "{};{};{};{};{};{};Inference;Performance;{};{};{}\n".format(
+                    OS, PLATFORM, args.framework, args.fwk_ver, precision.upper(), args.model, bs, throughput, URL
+                )
             )
-        )
+
     # write model logs
     f = open(args.output_dir + "/" + args.framework + "_" + args.model + "_summary.log", "a")
     f.writelines("OS;Platform;Framework;Version;Precision;Model;Mode;Type;BS;Value;Url\n")
@@ -219,6 +230,16 @@ def parse_tuning_line(line, tmp):
     )
     if tuned_acc and tuned_acc.group(1):
         tmp["int8_acc"] = float(tuned_acc.group(1))
+
+    if args.inc_new_api == "3x":
+        quant_acc = re.search(
+            r"Accuracy:\s+(\d+(\.\d+)?)", line
+        )
+        if quant_acc and quant_acc.group(1):
+            tmp["int8_acc"] = float(quant_acc.group(1))
+        batch_size = re.search(r"Batch size = ([0-9]+)", line)
+        if batch_size and batch_size.group(1):
+            tmp["acc_bs"] = int(batch_size.group(1))
 
     tune_trial = re.search(r"Tune \d*\s*result is:", line)
     if tune_trial:
