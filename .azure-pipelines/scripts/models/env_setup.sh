@@ -87,7 +87,11 @@ pip install ruamel.yaml==0.17.40
 pip install psutil
 pip install protobuf==4.23.4
 if [[ "${framework}" == "tensorflow" ]]; then
-    pip install intel-tensorflow==${fwk_ver}
+    if [[ "${fwk_ver}" == *"-official" ]]; then
+        pip install tensorflow==${fwk_ver%-official}
+    else
+        pip install intel-tensorflow==${fwk_ver}
+    fi
 elif [[ "${framework}" == "pytorch" ]]; then
     pip install torch==${fwk_ver} -f https://download.pytorch.org/whl/torch_stable.html
     pip install torchvision==${torch_vision_ver} -f https://download.pytorch.org/whl/torch_stable.html
