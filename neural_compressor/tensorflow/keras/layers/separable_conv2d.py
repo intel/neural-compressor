@@ -23,6 +23,10 @@ from tensorflow.keras import activations, constraints, initializers, regularizer
 
 from neural_compressor.tensorflow.utils import version1_gte_version2
 
+if version1_gte_version2(tf.__version__, "2.16.1"):
+    from keras.src.layers.convolutional.base_separable_conv import BaseSeparableConv  # pylint: disable=E0401
+    from keras.src.utils import conv_utils  # pylint: disable=E0401
+    SeparableConv = BaseSeparableConv
 if version1_gte_version2(tf.__version__, "2.13.0"):
     from keras.src.layers.convolutional.base_separable_conv import SeparableConv  # pylint: disable=E0401
     from keras.src.utils import conv_utils  # pylint: disable=E0401

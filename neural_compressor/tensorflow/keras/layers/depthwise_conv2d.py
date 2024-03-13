@@ -23,7 +23,11 @@ from tensorflow.keras import activations, constraints, initializers, regularizer
 
 from neural_compressor.tensorflow.utils import version1_gte_version2
 
-if version1_gte_version2(tf.__version__, "2.13.0"):
+if version1_gte_version2(tf.__version__, "2.16.1"):
+    from keras.src.layers.convolutional.base_depthwise_conv import BaseDepthwiseConv  # pylint: disable=E0401
+    from keras.src.utils import conv_utils, tf_utils  # pylint: disable=E0401
+    DepthwiseConv = BaseDepthwiseConv
+elif version1_gte_version2(tf.__version__, "2.13.0"):
     from keras.src.layers.convolutional.base_depthwise_conv import DepthwiseConv  # pylint: disable=E0401
     from keras.src.utils import conv_utils, tf_utils  # pylint: disable=E0401
 else:
