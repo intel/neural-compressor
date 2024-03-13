@@ -32,7 +32,7 @@ import tensorflow as tf
 
 from neural_compressor.common import logger
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.tensorflow.utils.utility import version1_lt_version2
+from neural_compressor.tensorflow.utils.utility import version1_gte_version2, version1_lt_version2
 
 tensor_to_node = lambda s: list(set([x.split(":")[0] for x in s]))
 
@@ -91,7 +91,9 @@ def get_model_type(model):
         return "graph"
     elif isinstance(model, tf.compat.v1.GraphDef):
         return "graph_def"
-    elif isinstance(model, tf.compat.v1.estimator.Estimator):
+    elif not version1_gte_version2(tf.version.VERSION, "2.16.1") and isinstance(
+        model, tf.compat.v1.estimator.Estimator
+    ):
         return "estimator"
     elif isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
