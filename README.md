@@ -36,39 +36,30 @@ pip install neural-compressor
 
 ## Getting Started
 
-### Weight-Only Quantization
+### Weight-Only Quantization (LLMs)
 ```python
-# Get the float model
 from transformers import AutoModel
 
-float_model = AutoModel.from_pretrained("bert-base-uncased")
-
-# Apply weight-only quantization to the model
-from neural_compressor.quantization import fit
 from neural_compressor.config import PostTrainingQuantConfig
+from neural_compressor.quantization import fit
 
+float_model = AutoModel.from_pretrained("bert-base-uncased")
 woq_conf = PostTrainingQuantConfig(approach="weight_only")
 quantized_model = fit(model=float_model, conf=woq_conf)
 ```
 
-### Static Quantization
+### Static Quantization (Non-LLMs)
 
 ```python
-# Get the float model
 from torchvision import models
 
-float_model = models.resnet18()
-
-# Prepare the data for calibration
 from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.data import DataLoader, Datasets
-
-dataset = Datasets("pytorch")["dummy"](shape=(1, 3, 224, 224))
-calib_dataloader = DataLoader(framework="pytorch", dataset=dataset)
-
-# Apply static quantization to the model
 from neural_compressor.quantization import fit
 
+float_model = models.resnet18()
+dataset = Datasets("pytorch")["dummy"](shape=(1, 3, 224, 224))
+calib_dataloader = DataLoader(framework="pytorch", dataset=dataset)
 static_quant_conf = PostTrainingQuantConfig()
 quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloader=calib_dataloader)
 ```
