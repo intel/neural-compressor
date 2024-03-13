@@ -15,7 +15,7 @@ find ./adaptor -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_pat
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
-ut_log_name=${LOG_DIR}/ut_adaptor.log
+ut_log_name=${LOG_DIR}/ut_tf_${tensorflow_version}_pt_${pytorch_version}.log
 
 echo "cat run.sh..."
 sort run.sh -o run.sh

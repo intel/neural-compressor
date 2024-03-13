@@ -55,6 +55,7 @@ subprojects:
       - "Model-Test (Run PyTorch Model resnet18)"
       - "Model-Test (Run PyTorch Model resnet18_fx)"
       - "Model-Test (Run TensorFlow Model darknet19)"
+      - "Model-Test (Run TensorFlow Model densenet-121)"
       - "Model-Test (Run TensorFlow Model inception_v1)"
       - "Model-Test (Run TensorFlow Model resnet-101)"
       - "Model-Test (Run TensorFlow Model resnet50v1.5)"
