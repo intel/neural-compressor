@@ -36,7 +36,7 @@ pip install neural-compressor
 
 ## Getting Started
 
-### Weight-only quantization
+### Weight-Only Quantization
 ```python
 # Get the float model
 from transformers import AutoModel
@@ -51,7 +51,7 @@ woq_conf = PostTrainingQuantConfig(approach="weight_only")
 quantized_model = fit(model=float_model, conf=woq_conf)
 ```
 
-### Static quantization
+### Static Quantization
 
 ```python
 # Get the float model
