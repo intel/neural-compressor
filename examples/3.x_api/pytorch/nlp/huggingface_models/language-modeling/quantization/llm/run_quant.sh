@@ -54,7 +54,7 @@ function run_tuning {
     elif [ "${topology}" = "opt_125m_woq_gptq_int4_dq_ggml" ]; then
         model_name_or_path="facebook/opt-125m"
         approach="weight_only"
-        extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --gptq_use_max_length"
+        extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --gptq_use_max_length --gptq_percdamp 0.1 --gptq_actorder"
         extra_cmd=$extra_cmd" --double_quant_type GGML_TYPE_Q4_K"
     elif [ "${topology}" = "llama2_7b_gptq_int4" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
