@@ -44,7 +44,7 @@ class M(torch.nn.Module):
         x3 = self.mm(inp.T, x2)
         x3 = x3.unsqueeze(0)
         x4 = self.mm(inp.T, x2)
-        x4 = x4.unsqueeze(0)
+        x4 = x4.unsqueeze(0) + 1  ## SW-178838
         x5 = self.bmm(x3, x4)
         x6 = self.bmm(x3, x4)
         out = x5 + x6
@@ -56,6 +56,7 @@ class TestPytorchFP8Adaptor:
     def setup_class(self):
         self.model = M().to("hpu")
         self.inp = torch.randn(1, 10).to("hpu")
+        self.fp32_out = self.model(self.inp)
 
     def teardown_class(self):
         shutil.rmtree("./saved", ignore_errors=True)
@@ -97,11 +98,15 @@ class TestPytorchFP8Adaptor:
         fp8_out = m(inp)
         print("Dynamic quantization FP8_E4M3 MSE:", (fp32_out - fp8_out).pow(2).sum())
 
-    def test_static_accu(self):
+    @pytest.mark.parametrize("dtype", ["fp8_e5m2", "fp8_e4m3"])
+    @pytest.mark.parametrize("w_observer", ["minmax", "minmax_per_channel"])
+    @pytest.mark.parametrize("act_observer", ["minmax", "kl"])
+    def test_static_accu(self, dtype, w_observer, act_observer):
         m = copy.deepcopy(self.model)
         inp = self.inp
-        fp32_out = m(inp)
-        qconfig = FP8Config(w_dtype="fp8_e5m2", act_dtype="fp8_e5m2", approach="static")
+        qconfig = FP8Config(
+            w_dtype=dtype, w_observer=w_observer, act_dtype=dtype, act_observer=act_observer, approach="static"
+        )
 
         def calib_func(model):
             model(inp)
@@ -110,25 +115,9 @@ class TestPytorchFP8Adaptor:
         assert isinstance(m.fc1, FP8Linear), "Unexpected result. Please double check."
         assert isinstance(m.mm, FP8Matmul), "Unexpected result. Please double check."
         assert isinstance(m.bmm, FP8BatchMatmul), "Unexpected result. Please double check."
-        print(m)
         fp8_out = m(inp)
-        print("Static quantization FP8_E5M2 MSE:", (fp32_out - fp8_out).pow(2).sum())
-
-        m = copy.deepcopy(self.model)
-        inp = self.inp
-        fp32_out = m(inp)
-        qconfig = get_default_fp8_config()
-
-        def calib_func(model):
-            model(inp)
-
-        m = quantize(m, qconfig, run_fn=calib_func, inplace=True)
-        assert isinstance(m.fc1, FP8Linear), "Unexpected result. Please double check."
-        assert isinstance(m.mm, FP8Matmul), "Unexpected result. Please double check."
-        assert isinstance(m.bmm, FP8BatchMatmul), "Unexpected result. Please double check."
-        print(m)
-        fp8_out = m(inp)
-        print("Static quantization FP8_E4M3 MSE:", (fp32_out - fp8_out).pow(2).sum())
+        print("Static quantization config:", dtype, w_observer, act_observer)
+        print("Static quantization MSE:", (self.fp32_out - fp8_out).pow(2).sum())
 
     def test_convert(self):
         # Temporary implementation of fp8 tensor saving and loading

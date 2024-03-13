@@ -65,8 +65,9 @@ def _replace_module(module, qconfig):
     assert qconfig.w_dtype == qconfig.act_dtype, "weight and activation should be the same dtype."
     dtype = dtype_mapping[qconfig.w_dtype]
     # only modules that have weight should use this observer
-    observer_cls = observer_mapping[qconfig.w_observer]
-    observer_obj = observer_cls(dtype=dtype)
+    if hasattr(module, "weight"):
+        observer_cls = observer_mapping[qconfig.w_observer]
+        observer_obj = observer_cls(dtype=dtype)
     if qconfig.approach == "static":
         if isinstance(module, white_list):
             QModule = quantization_mapping[type(module)]
@@ -88,6 +89,7 @@ def _replace_module(module, qconfig):
 
 
 def quantize_dynamic(model, dtype=torch.float8_e4m3fn, inplace=True):
+    torch.set_grad_enabled(False)
     q_model = model if inplace else copy.deepcopy(model)
     if isinstance(dtype, str):
         dtype = dtype_mapping[dtype]
@@ -205,7 +207,6 @@ def convert(model):
 
 
 def quantize(model, qconfig_mapping, run_fn=None, run_args=None, inplace=True):
-    htcore.hpu_set_env()
     torch.set_grad_enabled(False)
     q_model = model if inplace else copy.deepcopy(model)
     q_model = prepare(q_model, qconfig_mapping)

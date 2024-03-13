@@ -19,8 +19,8 @@ import habana_frameworks.torch.core as htcore
 import torch
 from torch.ao.quantization.observer import *
 
-E4M3_AMAX = torch.tensor(240, dtype=torch.float).to("hpu")
-E5M2_AMAX = torch.tensor(57344, dtype=torch.float).to("hpu")
+E4M3_AMAX = torch.tensor(240, dtype=torch.float).to("cpu")
+E5M2_AMAX = torch.tensor(57344, dtype=torch.float).to("cpu")
 USE_HW_SCALE = bool(os.getenv("USE_HW_SCALE", False))
 USE_POW2_SCALE = bool(os.getenv("USE_POW2_SCALE", False))
 observer_mapping = {}
