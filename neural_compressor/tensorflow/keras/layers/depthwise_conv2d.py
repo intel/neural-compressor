@@ -34,6 +34,7 @@ else:
     from keras.utils import conv_utils, tf_utils  # pylint: disable=E0401
 
 if version1_gte_version2(tf.__version__, "2.16.1"):
+
     class QDepthwiseConv2D(BaseDepthwiseConv):
         def __init__(
             self,
@@ -103,13 +104,9 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
             if self.use_bias:
                 if self.data_format == "channels_last":
-                    bias_shape = (1,) * (self.rank + 1) + (
-                        self.depth_multiplier * input_channel,
-                    )
+                    bias_shape = (1,) * (self.rank + 1) + (self.depth_multiplier * input_channel,)
                 else:
-                    bias_shape = (1, self.depth_multiplier * input_channel) + (
-                        1,
-                    ) * self.rank
+                    bias_shape = (1, self.depth_multiplier * input_channel) + (1,) * self.rank
                 bias = ops.reshape(self.bias, bias_shape)
                 outputs += bias
 
@@ -118,6 +115,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             return outputs
 
 else:
+
     class QDepthwiseConv2D(DepthwiseConv):
         def __init__(
             self,

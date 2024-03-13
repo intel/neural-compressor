@@ -34,6 +34,7 @@ else:
     from keras.utils import conv_utils  # pylint: disable=E0401
 
 if version1_gte_version2(tf.__version__, "2.16.1"):
+
     class QSeparableConv2D(BaseSeparableConv):
         def __init__(
             self,
@@ -122,8 +123,8 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                 return self.activation(outputs)
             return outputs
 
-
 else:
+
     class QSeparableConv2D(SeparableConv):
         def __init__(
             self,
