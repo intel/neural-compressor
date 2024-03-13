@@ -35,29 +35,42 @@ pip install neural-compressor
 > More installation methods can be found at [Installation Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/installation_guide.md). Please check out our [FAQ](https://github.com/intel/neural-compressor/blob/master/docs/source/faq.md) for more details.
 
 ## Getting Started
-### Quantization with Python API
 
-```shell
-# Install Intel Neural Compressor and TensorFlow
-pip install neural-compressor
-pip install tensorflow
-# Prepare fp32 model
-wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
-```
+### Quantize LLMs
 ```python
-from neural_compressor.data import DataLoader, Datasets
+# Get the float model
+from transformers import AutoModel
+
+float_model = AutoModel.from_pretrained("bert-base-uncased")
+
+# Apply weight-only quantization to the model
+from neural_compressor.quantization import fit
 from neural_compressor.config import PostTrainingQuantConfig
 
-dataset = Datasets("tensorflow")["dummy"](shape=(1, 224, 224, 3))
-dataloader = DataLoader(framework="tensorflow", dataset=dataset)
+woq_conf = PostTrainingQuantConfig(approach="weight_only")
+quantized_model = fit(model=float_model, conf=woq_conf)
+```
 
+### Quantize vision models
+
+```python
+# Get the float model
+from torchvision import models
+
+float_model = models.resnet18()
+
+# Prepare the data for calibration
+from neural_compressor.config import PostTrainingQuantConfig
+from neural_compressor.data import DataLoader, Datasets
+
+dataset = Datasets("pytorch")["dummy"](shape=(1, 3, 224, 224))
+calib_dataloader = DataLoader(framework="pytorch", dataset=dataset)
+
+# Apply static quantization to the model
 from neural_compressor.quantization import fit
 
-q_model = fit(
-    model="./mobilenet_v1_1.0_224_frozen.pb",
-    conf=PostTrainingQuantConfig(),
-    calib_dataloader=dataloader,
-)
+static_quant_conf = PostTrainingQuantConfig()
+quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloader=calib_dataloader)
 ```
 
 ## Documentation
