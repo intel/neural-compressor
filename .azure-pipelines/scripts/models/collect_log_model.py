@@ -147,7 +147,7 @@ def collect_log():
 
         # set for 3x woq models
         if args.inc_new_api.split("_")[0] == "3x":
-            tmp["fp32_acc"], tmp["tuning_trials"], tmp["strategy"] = "unknown", "unknown", "unknown"
+            tmp["fp32_acc"], tmp["tuning_trials"], tmp["strategy"] = "unknown", "", ""
 
         if "acc_bs" in tmp:
             acc_bs = tmp["acc_bs"]
