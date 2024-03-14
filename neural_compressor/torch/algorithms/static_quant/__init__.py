@@ -15,3 +15,4 @@
 
 from .utility import *
 from .static_quant import static_quantize
+from .save_load import save, load, recover_model_from_json
