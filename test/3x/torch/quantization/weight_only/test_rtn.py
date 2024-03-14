@@ -11,7 +11,7 @@ from neural_compressor.torch.quantization import (
     get_default_rtn_config,
     quantize,
 )
-
+from neural_compressor.torch.utils import is_cuda_available
 
 class TestRTNQuant:
     def setup_class(self):
@@ -219,3 +219,14 @@ class TestRTNQuant:
         model = quantize(model, double_quant_config_dict)
         out2 = model(self.example_inputs)[0]
         assert torch.allclose(out2, self.label, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
+
+    @pytest.mark.skipif(not is_cuda_available())
+    def test_fp16_param(self):
+        # test_default_rtn_config
+        model = copy.deepcopy(self.tiny_gptj)
+        model.half()
+        org_dtype = model.lm_head.weight.dtype
+        quant_config = get_default_rtn_config()
+        model = quantize(model, quant_config)
+        new_dtype = model.lm_head.weight.dtype
+        assert new_dtype == org_dtype, "dtype should not be changed after quantization"

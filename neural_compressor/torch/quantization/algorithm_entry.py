@@ -30,7 +30,7 @@ from neural_compressor.torch.quantization import (
     StaticQuantConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import logger, register_algo
+from neural_compressor.torch.utils import is_cuda_available, logger, register_algo
 
 
 ###################### RTN Algo Entry ##################################
@@ -106,6 +106,12 @@ def gptq_entry(
         }
     )
     kwargs.pop("example_inputs")
+    if is_cuda_available():
+        device = "cuda"
+        kwargs.update(
+            {
+                "device": "cuda",
+            }
 
     logger.warning("lm_head in transformer model is skipped by GPTQ")
     model, quantization_perm = gptq_quantize(model=model, weight_config=weight_config, *args, **kwargs)

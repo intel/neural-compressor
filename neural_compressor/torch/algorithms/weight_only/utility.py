@@ -97,6 +97,12 @@ def quantize_4bit(tensor, quantile=1.0, dtype="nf4", return_int=False, **kwargs)
     assert dtype in FLOAT_MAPPING, "unexpected data type."
     allow_data = FLOAT_MAPPING[dtype]
     allow_data_bit = INT_MAPPING[dtype]
+    # preprocess dtype
+    dtype_copy = False
+    if tensor.dtype != torch.float32:
+        dtype_copy = True
+        org_tensor = tensor  # record id to copy_()
+        tensor = org_tensor.type(torch.float32)
     # get scale and update tensor
     if "scale" in kwargs:
         scale = kwargs["scale"]
@@ -118,7 +124,12 @@ def quantize_4bit(tensor, quantile=1.0, dtype="nf4", return_int=False, **kwargs)
     keep_scale = kwargs.get("double_quant", False)
     if return_int or keep_scale:
         return tensor, scale, None
-    return tensor.mul_(scale)
+    tensor.mul_(scale)
+    # postprocess dtype
+    if dtype_copy:
+        org_tensor.copy_(tensor.type(org_tensor.dtype))
+        return org_tensor
+    return tensor
 
 
 def qdq_weight_asym(weight, bits=4, quantile=1.0, return_int=False, **kwargs):
@@ -134,6 +145,12 @@ def qdq_weight_asym(weight, bits=4, quantile=1.0, return_int=False, **kwargs):
     Returns:
         output: qdq weight
     """
+    # preprocess dtype
+    dtype_copy = False
+    if weight.dtype != torch.float32:
+        dtype_copy = True
+        org_weight = weight  # record id to copy_()
+        weight = org_weight.type(torch.float32)
     maxq = torch.tensor(2**bits - 1)
     zeros = torch.zeros(weight.shape[0], device=weight.device)
     wmin = torch.minimum(weight.min(1)[0], zeros)
@@ -155,7 +172,12 @@ def qdq_weight_asym(weight, bits=4, quantile=1.0, return_int=False, **kwargs):
     if return_int or keep_scale:
         return weight, scale, zp
     weight.sub_(zp)
-    return weight.mul_(scale)
+    weight.mul_(scale)
+    # postprocess dtype
+    if dtype_copy:
+        org_weight.copy_(weight.type(org_weight.dtype))
+        return org_weight
+    return weight
 
 
 def qdq_weight_sym(weight, bits=4, quantile=1.0, return_int=False, full_range=False, **kwargs):
@@ -176,6 +198,12 @@ def qdq_weight_sym(weight, bits=4, quantile=1.0, return_int=False, full_range=Fa
     Returns:
         output: qdq weight
     """
+    # preprocess dtype
+    dtype_copy = False
+    if weight.dtype != torch.float32:
+        dtype_copy = True
+        org_weight = weight  # record id to copy_()
+        weight = org_weight.type(torch.float32)
     # assert bits > 1, "symmetric scheme only supports bits > 1"
     maxq = torch.tensor(2 ** (bits - 1) - 1).to(weight.device)
     minq = torch.tensor(-(2 ** (bits - 1))).to(weight.device)
@@ -203,7 +231,12 @@ def qdq_weight_sym(weight, bits=4, quantile=1.0, return_int=False, full_range=Fa
     keep_scale = kwargs.get("double_quant", False)
     if return_int or keep_scale:
         return weight, scale, None
-    return weight.mul_(scale)
+    weight.mul_(scale)
+    # postprocess dtype
+    if dtype_copy:
+        org_weight.copy_(weight.type(org_weight.dtype))
+        return org_weight
+    return weight
 
 
 def qdq_weight_actor(weight, bits, scheme, quantile=1.0, dtype="int", return_int=False, full_range=False, **kwargs):

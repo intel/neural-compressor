@@ -16,6 +16,14 @@
 import torch
 from packaging.version import Version
 
+import torch
+
+_cuda_available = torch.cuda.is_available()
+
+
+def is_cuda_available():
+    return _cuda_available
+
 # pylint:disable=import-error
 try:
     import habana_frameworks.torch.hpex
