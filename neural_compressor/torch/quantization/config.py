@@ -28,6 +28,7 @@ from neural_compressor.common.base_config import (
     register_supported_configs_for_fwk,
 )
 from neural_compressor.common.utils import (
+    AUTOROUND,
     AWQ,
     DEFAULT_WHITE_LIST,
     FP8_QUANT,
@@ -41,6 +42,7 @@ from neural_compressor.common.utils import (
 )
 from neural_compressor.torch.utils import is_hpex_available, logger
 from neural_compressor.torch.utils.constants import (
+    PRIORITY_AUTOROUND,
     PRIORITY_AWQ,
     PRIORITY_GPTQ,
     PRIORITY_HQQ,
@@ -613,6 +615,152 @@ def get_default_teq_config() -> TEQConfig:
         the default teq config.
     """
     return TEQConfig()
+
+
+######################## AUTOROUND Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=AUTOROUND, priority=PRIORITY_AUTOROUND)
+class AutoRoundConfig(BaseConfig):
+    """Config class for AUTOROUND.
+
+    AUTOROUND: Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs.
+    https://arxiv.org/abs/2309.05516
+    code: https://github.com/intel/auto-round
+    """
+
+    supported_configs: List[OperatorConfig] = []
+    params_list = [
+        "dtype",
+        "bits",
+        "group_size",
+        "use_sym",
+        # autoround params
+        "enable_full_range",
+        "batch_size",
+        "enable_minmax_tuning",
+        "lr",
+        "minmax_lr",
+        "iters",
+        "seqlen",
+        "n_samples",
+        "n_blocks",
+        "gradient_accumulate_steps",
+        "not_use_best_mse",
+        "dynamic_max_gap",
+    ]
+    name = AUTOROUND
+
+    def __init__(
+        self,
+        dtype: str = "int",
+        bits: int = 4,
+        use_sym: bool = False,
+        group_size: int = 128,
+        # AUTOROUND
+        enable_full_range: bool = False,
+        batch_size: int = 8,
+        lr_scheduler=None,
+        use_quant_input: bool = True,
+        enable_minmax_tuning: bool = True,
+        lr: float = None,
+        minmax_lr: float = None,
+        low_gpu_mem_usage: bool = True,
+        iters: int = 200,
+        seqlen: int = 2048,
+        n_samples: int = 512,
+        sampler: str = "rand",
+        seed: int = 42,
+        n_blocks: int = 1,
+        gradient_accumulate_steps: int = 1,
+        not_use_best_mse: bool = False,
+        dynamic_max_gap: int = -1,
+        scale_dtype: str = "fp16",
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init AUTOROUND weight-only quantization config.
+
+        Args:
+            dtype (str): Data type for weights, default is "int".
+            bits (int): Number of bits used to represent weights, default is 4.
+            use_sym (bool): Indicates whether weights are symmetric, default is False.
+            group_size (int): Size of weight groups, default is 128.
+            enable_full_range (bool): Whether to enable full range quantization (default is False).
+            batch_size (int): Batch size for training (default is 8).
+            lr_scheduler: The learning rate scheduler to be used.
+            use_quant_input (bool): Whether to use quantized input data (default is True).
+            enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
+            lr (float): The learning rate (default is 0.005).
+            minmax_lr (float): The learning rate for min-max tuning (default is None).
+            low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
+            iters (int): Number of iterations (default is 200).
+            seqlen (int): Length of the sequence.
+            n_samples (int): Number of samples (default is 512).
+            sampler (str): The sampling method (default is "rand").
+            seed (int): The random seed (default is 42).
+            n_blocks (int): Number of blocks (default is 1).
+            gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
+            not_use_best_mse (bool): Whether to use mean squared error (default is False).
+            dynamic_max_gap (int): The dynamic maximum gap (default is -1).
+            scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
+                        have different choices.
+        """
+        super().__init__(white_list=white_list)
+        self.dtype = dtype
+        self.bits = bits
+        self.use_sym = use_sym
+        self.group_size = group_size
+        self.enable_full_range = enable_full_range
+        self.batch_size = batch_size
+        self.lr_scheduler = lr_scheduler
+        self.use_quant_input = use_quant_input
+        self.enable_minmax_tuning = enable_minmax_tuning
+        self.lr = lr
+        self.minmax_lr = minmax_lr
+        self.low_gpu_mem_usage = low_gpu_mem_usage
+        self.iters = iters
+        self.seqlen = seqlen
+        self.n_samples = n_samples
+        self.sampler = sampler
+        self.seed = seed
+        self.n_blocks = n_blocks
+        self.gradient_accumulate_steps = gradient_accumulate_steps
+        self.not_use_best_mse = not_use_best_mse
+        self.dynamic_max_gap = dynamic_max_gap
+        self.scale_dtype = scale_dtype
+        self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        # TODO(Yi)
+        linear_AUTOROUND_config = AutoRoundConfig()
+        operators = [torch.nn.Linear, torch.nn.functional.linear]
+        supported_configs.append(OperatorConfig(config=linear_AUTOROUND_config, operators=operators))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = (torch.nn.Linear,)
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "AutoRoundConfig", List["AutoRoundConfig"]]:
+        # TODO fwk owner needs to update it.
+        return AutoRoundConfig(bits=[4, 6])
+
+
+def get_default_AutoRound_config() -> AutoRoundConfig:
+    """Generate the default AUTOROUND config.
+
+    Returns:
+        the default AUTOROUND config.
+    """
+    return AutoRoundConfig()
 
 
 ######################## Static Quant Config ###############################

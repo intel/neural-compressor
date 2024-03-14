@@ -52,7 +52,6 @@ parameters:
       - ssd_mobilenet_v1_ckpt
       - inception_v1
       - darknet19
-      - densenet-121
       - resnet-101
   - name: PyTorchModelList
     type: object

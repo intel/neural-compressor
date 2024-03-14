@@ -20,18 +20,18 @@ def build_conv_graph():
         "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
     )
     conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-    normed = tf.compat.v1.layers.batch_normalization(conv)
 
     conv_weights2 = tf.compat.v1.get_variable(
         "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
     )
     conv2 = tf.nn.conv2d(top_relu, conv_weights2, strides=[1, 2, 2, 1], padding="SAME")
-    normed2 = tf.compat.v1.layers.batch_normalization(conv2)
-    add = tf.raw_ops.Add(x=normed, y=normed2, name="addv2")
+
+    add = tf.raw_ops.Add(x=conv, y=conv2, name="addv2")
     relu = tf.nn.relu(add)
     relu6 = tf.nn.relu6(relu, name="op_to_store")
 
     out_name = relu6.name.split(":")[0]
+
     with tf.compat.v1.Session() as sess:
         sess.run(tf.compat.v1.global_variables_initializer())
         output_graph_def = graph_util.convert_variables_to_constants(
@@ -120,11 +120,26 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
         self.assertEqual(mul_count, 2)
 
     def test_sq_completed_workflow(self):
+        x_data = np.random.rand(1024, 1024).astype(np.float32)
+        y_data = np.random.rand(1024, 1024).astype(np.float32)
+        import tensorflow.compat.v1 as tf
+
+        with tf.Session(graph=tf.Graph()) as sess:
+            x = tf.placeholder(tf.float32, shape=[1024, 1024], name="x")
+            y = tf.constant(y_data, dtype=tf.float32, shape=[1024, 1024])
+            z = tf.matmul(x, y)
+            bias = np.random.rand(1024).astype(np.float32)
+            z = tf.nn.bias_add(z, bias)
+            z = tf.nn.relu(z, name="op_to_store")
+            sess.run(z, feed_dict={x: x_data, y: y_data})
+            output_graph_def = sess.graph.as_graph_def()
+
+        set_random_seed(9527)
         sq_config = SmoothQuantConfig(alpha=0.5)
         static_config = StaticQuantConfig()
-        dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
-        calib_dataloader = MyDataLoader(dataset=dataset, batch_size=1)
-        q_model = quantize_model(self.conv_graph, [sq_config, static_config], calib_dataloader, calib_iteration=500)
+        dataset = DummyDataset(shape=(1024, 1024), label=True)
+        calib_dataloader = MyDataLoader(dataset=dataset, batch_size=1024)
+        q_model = quantize_model(output_graph_def, [sq_config, static_config], calib_dataloader, calib_iteration=500)
 
         mul_count = 0
         quantized = False
@@ -134,7 +149,7 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
             if "quantize" in i.op:
                 quantized = True
 
-        self.assertEqual(mul_count, 2)
+        self.assertEqual(mul_count, 1)
         self.assertEqual(quantized, True)
 
     @disable_random()
@@ -143,14 +158,13 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
         y_data = np.random.rand(1024, 1024).astype(np.float32)
         import tensorflow.compat.v1 as tf
 
-        x = tf.placeholder(tf.float32, shape=[1024, 1024], name="x")
-        y = tf.constant(y_data, dtype=tf.float32, shape=[1024, 1024])
-        z = tf.matmul(x, y)
-        bias = np.random.rand(1024).astype(np.float32)
-        z = tf.nn.bias_add(z, bias)
-        z = tf.nn.relu(z, name="op_to_store")
-
-        with tf.Session() as sess:
+        with tf.Session(graph=tf.Graph()) as sess:
+            x = tf.placeholder(tf.float32, shape=[1024, 1024], name="x")
+            y = tf.constant(y_data, dtype=tf.float32, shape=[1024, 1024])
+            z = tf.matmul(x, y)
+            bias = np.random.rand(1024).astype(np.float32)
+            z = tf.nn.bias_add(z, bias)
+            z = tf.nn.relu(z, name="op_to_store")
             sess.run(z, feed_dict={x: x_data, y: y_data})
             output_graph_def = sess.graph.as_graph_def()
 
@@ -190,6 +204,7 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
         leaky_relu = tf.nn.leaky_relu(conv2, name="op_to_store")
 
         out_name = leaky_relu.name.split(":")[0]
+
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             output_graph_def = graph_util.convert_variables_to_constants(

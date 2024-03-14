@@ -13,12 +13,12 @@
 # limitations under the License.
 
 from copy import deepcopy
-from typing import Dict, List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, get_all_config_set_from_config_registry
-from neural_compressor.common.base_tuning import TuningConfig, evaluator, init_tuning
+from neural_compressor.common.base_tuning import EvaluationFuncWrapper, TuningConfig, init_tuning
 from neural_compressor.common.utils import dump_elapsed_time
 from neural_compressor.torch.quantization import quantize
 from neural_compressor.torch.quantization.config import FRAMEWORK_NAME, RTNConfig
@@ -46,16 +46,17 @@ def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
 def autotune(
     model: torch.nn.Module,
     tune_config: TuningConfig,
-    eval_fns: Optional[Union[Dict, List[Dict]]] = None,
+    eval_fn: Callable,
+    eval_args=None,
     run_fn=None,
     run_args=None,
+    example_inputs=None,
 ) -> Optional[torch.nn.Module]:
     """The main entry of auto-tune."""
     best_quant_model = None
-    evaluator.set_eval_fn_registry(eval_fns)
-    evaluator.self_check()
+    eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
-    baseline: float = evaluator.evaluate(model)
+    baseline: float = eval_func_wrapper.evaluate(model)
     tuning_monitor.set_baseline(baseline)
     tuning_logger.tuning_start()
     for trial_index, quant_config in enumerate(config_loader):
@@ -63,10 +64,17 @@ def autotune(
         tuning_logger.quantization_start()
         logger.info(quant_config.to_dict())
         # !!! Make sure to use deepcopy only when inplace is set to `True`.
-        q_model = quantize(deepcopy(model), quant_config=quant_config, run_fn=run_fn, run_args=run_args, inplace=True)
+        q_model = quantize(
+            deepcopy(model),
+            quant_config=quant_config,
+            run_fn=run_fn,
+            run_args=run_args,
+            inplace=True,
+            example_inputs=example_inputs,
+        )
         tuning_logger.quantization_end()
         tuning_logger.evaluation_start()
-        eval_result: float = evaluator.evaluate(q_model)
+        eval_result: float = eval_func_wrapper.evaluate(q_model)
         tuning_logger.evaluation_end()
         tuning_monitor.add_trial_result(trial_index, eval_result, quant_config)
         tuning_logger.trial_end(trial_index)
@@ -76,7 +84,12 @@ def autotune(
             best_quant_config: BaseConfig = tuning_monitor.get_best_quant_config()
             # !!! Make sure to use deepcopy only when inplace is set to `True`.
             q_model = quantize(
-                deepcopy(model), quant_config=best_quant_config, run_fn=run_fn, run_args=run_args, inplace=True
+                deepcopy(model),
+                quant_config=best_quant_config,
+                run_fn=run_fn,
+                run_args=run_args,
+                inplace=True,
+                example_inputs=example_inputs,
             )
             best_quant_model = q_model  # quantize model inplace
             break

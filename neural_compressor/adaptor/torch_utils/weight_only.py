@@ -677,12 +677,12 @@ def autoround_quantize(
     tokenizer,
     bits: int = 4,
     group_size: int = 128,
-    scheme: str = "asym",
+    sym: bool = False,
     weight_config: dict = {},
     enable_full_range: bool = False,  ##for symmetric, TODO support later
-    bs: int = 8,
+    batch_size: int = 8,
     amp: bool = True,
-    device="cuda:0",
+    device=None,
     lr_scheduler=None,
     dataloader=None,  ## to support later
     dataset_name: str = "NeelNanda/pile-10k",
@@ -703,7 +703,6 @@ def autoround_quantize(
     dynamic_max_gap: int = -1,
     data_type: str = "int",  ##only support data_type
     scale_dtype="fp16",
-    export_args: dict = {"format": None, "inplace": True},
     **kwargs,
 ):
     """Run autoround weight-only quantization.
@@ -712,7 +711,7 @@ def autoround_quantize(
     tokenizer: Tokenizer for processing input data. Temporarily set as a mandatory parameter.
     bits (int): Number of bits for quantization (default is 4).
     group_size (int): Size of the quantization group (default is 128).
-    scheme (str): The quantization scheme to be used (default is "asym").
+    sym (bool): Whether the symmetric quantization is to be used.
     weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
     weight_config={
                 'layer1':##layer_name
@@ -726,8 +725,8 @@ def autoround_quantize(
             }
     enable_full_range (bool): Whether to enable full range quantization (default is False).
     bs (int): Batch size for training (default is 8).
-    amp (bool): Whether to use automatic mixed precision (default is True).
-    device: The device to be used for tuning (default is "cuda:0").
+    amp (bool): Whether to use automatic mixed precision (default is True). Automatically detect and set.
+    device: The device to be used for tuning (default is None). Automatically detect and set.
     lr_scheduler: The learning rate scheduler to be used.
     dataloader: The dataloader for input data (to be supported in future).
     dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
@@ -747,8 +746,6 @@ def autoround_quantize(
     not_use_best_mse (bool): Whether to use mean squared error (default is False).
     dynamic_max_gap (int): The dynamic maximum gap (default is -1).
     data_type (str): The data type to be used (default is "int").
-    export_args (dict): The arguments for exporting compressed model, default is {"format": None, "inplace": True}.
-      Supported format: "itrex", "auto_gptq".
     **kwargs: Additional keyword arguments.
 
     Returns:
@@ -761,10 +758,10 @@ def autoround_quantize(
         tokenizer=tokenizer,
         bits=bits,
         group_size=group_size,
-        scheme=scheme,
+        sym=sym,
         weight_config=weight_config,
         enable_full_range=enable_full_range,  ##for symmetric, TODO support later
-        bs=bs,
+        batch_size=batch_size,
         amp=amp,
         device=device,
         lr_scheduler=lr_scheduler,
@@ -790,11 +787,4 @@ def autoround_quantize(
         **kwargs,
     )
     qdq_model, weight_config = rounder.quantize()
-    if export_args["format"] is not None:
-        output_dir = export_args.get("output_dir", None)
-        format = export_args["format"]
-        inplace = export_args.get("inplace", True)
-        use_triton = export_args.get("use_triton", False)
-        model = rounder.save_quantized(output_dir=output_dir, format=format, inplace=inplace, use_triton=use_triton)
-        return model, weight_config
     return qdq_model, weight_config
