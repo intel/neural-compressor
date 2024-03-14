@@ -37,6 +37,8 @@ Attributes
 .. autoapisummary::
 
    neural_compressor.common.level
+   neural_compressor.common.options
+
 
 
 
