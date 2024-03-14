@@ -38,6 +38,10 @@ class FakeQuant(Layer):
             self.max_value = tf.math.reduce_max(inputs, axis=self.axis)
         return inputs
 
+    def compute_output_shape(self, input_shape):
+        input_shape = tf.TensorShape(input_shape).as_list()
+        return input_shape
+
     @classmethod
     def from_config(cls, config):
         return cls(**config)
@@ -87,6 +91,10 @@ class Quantize(Layer):
         )
         return outputs
 
+    def compute_output_shape(self, input_shape):
+        input_shape = tf.TensorShape(input_shape).as_list()
+        return input_shape
+
     def get_config(self):
         return {
             "min_range": self.min_range,
@@ -121,6 +129,10 @@ class DeQuantize(Layer):
             narrow_range=self.narrow_range,
             axis=self.axis,
         )
+
+    def compute_output_shape(self, input_shape):
+        input_shape = tf.TensorShape(input_shape).as_list()
+        return input_shape
 
     def get_config(self):
         return {
