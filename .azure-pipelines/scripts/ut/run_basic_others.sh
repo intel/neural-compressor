@@ -34,7 +34,7 @@ cp -r /tf_dataset/ut-localfile/ofa_mbv3_d234_e346_k357_w1.2 .torch/ofa_nets || t
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
-ut_log_name=${LOG_DIR}/ut_tf_${tensorflow_version}_pt_${pytorch_version}.log
+ut_log_name=${LOG_DIR}/ut_others.log
 
 echo "cat run.sh..."
 sort run.sh -o run.sh

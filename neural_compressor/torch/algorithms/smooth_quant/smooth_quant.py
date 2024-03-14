@@ -179,7 +179,8 @@ def qdq_quantize(
     if ipex_ver.release > Version("2.1.0").release:
         update_sq_scale(ipex_config_path, smoothquant_scale_info)
         model.load_qconf_summary(qconf_summary=ipex_config_path)
-    _ipex_post_quant_process(model, example_inputs, inplace=inplace)
+    model.save_qconf_summary(qconf_summary=ipex_config_path)
+    model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
 
     with open(ipex_config_path, "r") as f:
         model.tune_cfg = json.load(f)
