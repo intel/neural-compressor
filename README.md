@@ -53,7 +53,6 @@ quantized_model = fit(model=float_model, conf=woq_conf)
 ```python
 from torchvision import models
 
-
 from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.data import DataLoader, Datasets
 from neural_compressor.quantization import fit
