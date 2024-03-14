@@ -440,8 +440,9 @@ class ONNXRTAugment:
                 ),
             )
             calibrator = CALIBRATOR["minmax"]()  # use minmax method to calibrate initializer tensors
-            calibrator.collect(initializer_tensor)
-            weight_tensors_calib_range[initializer_tensor_name] = [list(calibrator.calib_range)]
+            if initializer_tensor.flatten().size > 0:
+                calibrator.collect(initializer_tensor)
+                weight_tensors_calib_range[initializer_tensor_name] = [list(calibrator.calib_range)]
             calibrator.clear()
             del calibrator
         return weight_tensors_calib_range
