@@ -15,6 +15,7 @@
 # pylint:disable=import-error
 import json
 import os
+
 import torch
 
 try:
@@ -36,7 +37,7 @@ def save_config_mapping(config_mapping, qconfig_file_path):
     for op_name, q_op_infos in config_mapping.items():
         value = {}
         for k, v in q_op_infos.items():
-            if k == 'op_type':
+            if k == "op_type":
                 op = (op_name, str(v))
             else:
                 value[k] = v
@@ -102,7 +103,7 @@ def save(model, output_dir="./saved_results"):
 
     qmodel_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
-    save_config_mapping(model.tune_cfg[' ']['q_op_infos'], qconfig_file_path)
+    save_config_mapping(model.tune_cfg[" "]["q_op_infos"], qconfig_file_path)
     model.save(qmodel_file_path)
 
     logger.info("Save quantized model to {}.".format(qmodel_file_path))
