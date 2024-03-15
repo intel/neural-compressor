@@ -38,10 +38,10 @@ def save_config_mapping(config_mapping, qconfig_file_path):
         value = {}
         for k, v in q_op_infos.items():
             if k == "op_type":
-                op = (op_name, str(v))
+                op = f"('{op_name}', '{v}')"
             else:
                 value[k] = v
-        per_op_qconfig[str(op)] = value
+        per_op_qconfig[op] = value
 
     with open(qconfig_file_path, "w") as f:
         json.dump(per_op_qconfig, f, indent=4)
