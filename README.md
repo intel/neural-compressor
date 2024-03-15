@@ -36,7 +36,13 @@ pip install neural-compressor
 
 ## Getting Started
 
-### Weight-Only Quantization (LLMs)
+Setting up the environment:
+```bash
+pip install "neural-compressor>=2.3" "transformers>=4.34.0" torch torchvision
+```
+After successfully installing these packages, try your first quantization program.
+
+### Weight-Only Quantization (LLMs) 
 ```python
 from transformers import AutoModel
 
